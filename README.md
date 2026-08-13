@@ -438,25 +438,32 @@ Recorded because the research raised it from two directions and the answer is no
 
 ### Settled 2026-08-13
 
-| # | Decision |
+| Decision | Outcome |
 |---|---|
-| 1 | **One MCP registration.** `init` returns a short handle; every other tool takes it for instance routing. See [§C](#c-the-init-tool-and-instance-handles). |
-| 2, 3 | **Profile and artifact locations are arguments to `init`**, not a global policy. The caller states where its data goes, per session — so "shared or per-directory" becomes the caller's choice rather than BrowserAI's. This is what removes the relative-path hazard. |
-| 6 | **Full Chromium, batteries included, NativeAOT single-file.** No host dependency on Node, .NET or Chrome. ~806 MB installed / ~239 MB compressed. See [§A](#a-ship-and-own-the-runtime). |
+| **MCP registrations** | **One.** `init` returns a short server-minted handle; every other tool takes it for instance routing. See [§C](#c-the-init-tool-and-instance-handles). |
+| **Profile and artifact locations** | **Arguments to `init`**, not global policy. The caller states where its data goes, per session — so "shared or per-directory" is the caller's choice, not BrowserAI's. This is what removes the relative-path hazard. |
+| **Path validation** | **Any path is accepted.** Correct use is the calling agent's responsibility. See below. |
+| **Child process model** | **One node child per handle.** Stays firmly on the proxy side of the scope boundary; costs ~300 ms and one process per instance. |
+| **Browser and packaging** | **Full Chromium, batteries included, NativeAOT single-file.** No host dependency on Node, .NET or Chrome. ~806 MB installed / ~239 MB compressed. See [§A](#a-ship-and-own-the-runtime). |
+
+**On accepting any path.** `init` does not constrain `userDataDir` or artifact paths to a sanctioned root. The consequence, recorded so it is inherited rather than rediscovered: an agent may point an instance at the user's **real Chrome profile** and read live browser state, or write artifacts anywhere the process can reach.
+
+This is consistent with the trust model already in force — the current `persistent` mode grants any calling agent every login stored in its profile, and the workspace runs in `bypassPermissions`. BrowserAI is not the boundary; the agent's own instructions are.
+
+Two things follow, and they are design obligations rather than caveats:
+
+- **The `init` tool description is a security surface.** It is the only place the calling agent is told what a path argument means. Write it as guidance an agent will actually follow — name the sensible default location, and say plainly what pointing at an existing browser profile does.
+- **Log the resolved absolute paths at instance creation.** If BrowserAI does not enforce a boundary, it must at least make crossings visible after the fact. This is the same principle as §E: the failure that cannot be seen is the one that costs five days.
+
+**On one child per handle.** Research verified a single node process *can* serve several configurations — two servers with correctly divergent surfaces (42 vs 59 tools), no module-global browser state, browsers created lazily on first tool call. That path is rejected not on capability but on scope: it is reachable only through the programmatic `createConnection` API, which means writing a JS shim and moving toward the boundary [Scope](#scope-proxy-not-implementation) forbids. Spawning `cli.js` per handle keeps the proxy a proxy.
 
 ### Still open
 
-1. **Does `init` accept an arbitrary path, or only paths under a sanctioned root?** This is a security decision, not an ergonomic one. If any absolute path is allowed, an agent can point `userDataDir` at the user's **real Chrome profile** and read live browser state, or scatter artifacts anywhere on disk. A sanctioned root (`%LOCALAPPDATA%\BrowserAI\instances\<name>` plus an explicit opt-in list) costs flexibility and buys a boundary that cannot be argued around. **Recommendation: sanctioned root by default, arbitrary paths behind explicit configuration.**
+1. **What ends an instance?** Explicit teardown tool, idle timeout, stdin EOF, or all three — and what happens to a handle whose child died underneath it. Affects §D locking directly: a lock held by a dead instance is the exact failure the current launcher needed a signature heuristic to survive.
 
-2. **One node child per handle, or one process serving many?** Research verified a single node process *can* serve several configurations — two servers with correctly divergent surfaces (42 vs 59 tools), no module-global browser state, browsers created lazily on first tool call. But that is the **programmatic** `createConnection` path, reachable only by writing a JS shim, which sits closer to the forbidden boundary than spawning `cli.js` does. One child per handle stays firmly on the proxy side and costs ~300 ms plus one process per instance. **Recommendation: one child per handle for v1.**
+2. **Which capabilities ship by default?** Current: `vision`, `devtools`, `config` on all modes; `storage` on persistent only. `testing`, `network`, and `pdf` are off. Measured cost per instance: base 24 tools, `vision` +6, `devtools` +11, `config` +1, `storage` +17.
 
-3. **What ends an instance?** Explicit teardown tool, idle timeout, stdin EOF, or all three — and what happens to a handle whose child died underneath it. Affects §D locking directly: a lock held by a dead instance is the exact failure the current launcher needed a signature heuristic to survive.
-
-4. **Which capabilities ship by default?** Current: `vision`, `devtools`, `config` on all modes; `storage` on persistent only. `testing`, `network`, and `pdf` are off. Measured cost per server: base 24 tools, `vision` +6, `devtools` +11, `config` +1, `storage` +17.
-
-5. **How aggressively should the tool surface be curated?** BrowserAI can rename, re-describe and drop tools. Dropping reduces what the model can do; renaming diverges from upstream documentation.
-
-6. **Ship the headless shell only, or the full Chromium too?** Headless-only is 268 MB and keeps the three headed modes on system Chrome via `channel: "chrome"` — matching today's behaviour exactly. Adding the full build costs **+426.88 MB installed / +134 MB compressed** and buys one thing: headed modes that do not depend on the user having Google Chrome installed. **Recommendation: headless-only for v1.** It matches the current configs, and the dependency it would remove is one every target machine already satisfies.
+3. **How aggressively should the tool surface be curated?** BrowserAI can rename, re-describe and drop tools. Dropping reduces what the model can do; renaming diverges from upstream documentation.
 
 ---
 
@@ -505,8 +512,8 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | Injecting `handle` into ~69 schemas can perturb tool ordering | Spec SHOULDs deterministic order for prompt-cache hit rates; an unstable rewrite quietly costs cache hits on every session | §C |
 | Handle→type lookup is shared mutable state on every call's hot path | With N concurrent instances, a lookup race is a session-type enforcement bypass. Must be tested under concurrency, not assumed | §trade-offs |
 | N children means N stderr streams | Undemultiplexed, diagnostics become unreadable at exactly the moment they matter | §C |
-| A handle can outlive the child it points at | A lock held by a dead instance is the precise failure the current launcher needed a signature heuristic to survive | §open-2 |
-| An `init` that accepts arbitrary paths can target the user's **real Chrome profile** | `userDataDir` pointed at live browser state reads every cookie the user has. A sanctioned root is the only boundary that cannot be argued around | §open-1 |
+| A handle can outlive the child it points at | A lock held by a dead instance is the precise failure the current launcher needed a signature heuristic to survive | §still-open |
+| `init` accepts **any** path, by decision | An instance can be pointed at the user's real Chrome profile and read live browser state, or write anywhere the process can reach. **Accepted** — correct use is the calling agent's responsibility. Mitigation is descriptive, not enforced: a tool description an agent will follow, plus logging resolved absolute paths at creation | §settled |
 
 ### Bundling and AOT
 
@@ -595,10 +602,12 @@ The `playwright/README.md` settings table carries `Verified <date> @ <version>` 
 
 Feasibility research completed 2026-08-13 across five streams: MCP SDK capability, Windows auto-update, Node/Chromium bundling, .NET process supervision, and test harness design. Everything marked *measured* or *verified* in this document was executed on a real machine against `@playwright/mcp` 0.0.79 — not inferred from documentation. Three claims in the first draft of this charter were wrong and have been corrected: the tool count, the framing of the protocol split as a risk, and the assumption that a bundled Chromium is used by default.
 
-Architecture settled 2026-08-13: **one MCP registration with `init`-issued handles**, **profile and artifact locations as `init` arguments**, and **full batteries-included bundling as a NativeAOT single-file binary with no host dependencies**.
+**Architecture is settled.** One MCP registration with `init`-issued handles · profile and artifact locations as `init` arguments · any path accepted, correct use being the calling agent's responsibility · one node child per handle · full batteries-included bundling as a NativeAOT single-file binary with no host dependencies.
 
-Outstanding before a build starts: [open decisions](#still-open) 1 (sanctioned root vs arbitrary paths — a security boundary) and 2 (one child per handle vs one process serving many). Both have recommendations. Decision 1 should be made deliberately rather than inherited from whatever the first implementation happens to do.
+The three [remaining open items](#still-open) — instance teardown policy, default capabilities, and how far to curate the tool surface — are implementation-shaping rather than architecture-shaping. They can be closed during the build.
 
-One verification task, not a decision: **confirm `ModelContextProtocol` 2.2.0 is NativeAOT-compatible** before committing to single-file AOT.
+One verification task, not a decision: **confirm `ModelContextProtocol` 2.2.0 is NativeAOT-compatible** before committing to single-file AOT. The `JsonElement` passthrough at the proxy's core is AOT-friendly; the SDK's internals are unaudited. The fallback — self-contained trimmed, ~70 MB — is noise against ~806 MB of payload.
+
+**This document is a specification, not a plan of work.** It states what to build and what is known to go wrong. The build happens in this repository, from here.
 
 This document is the charter and is expected to be revised as the build proceeds. Carry the provenance convention with it — a bare "Default: X" claim cannot tell you when it was last true.
