@@ -621,7 +621,7 @@ The three [remaining open items](#still-open) — instance teardown policy, defa
 
 One verification task, not a decision: **confirm `ModelContextProtocol` 2.2.0 is NativeAOT-compatible** before committing to single-file AOT. The `JsonElement` passthrough at the proxy's core is AOT-friendly; the SDK's internals are unaudited. The fallback — self-contained trimmed, ~70 MB — is noise against ~806 MB of payload.
 
-**This document is a specification, not a plan of work.** It states what to build and what is known to go wrong. The build happens in this repository, from here.
+**This document is a specification, not a plan of work.** It states what to build and what is known to go wrong. The build happens in this repository, from here. Work items — settled in intent, not yet done — live in [`TODO.md`](TODO.md); open design questions and hazards stay here.
 
 This document is the charter and is expected to be revised as the build proceeds. Carry the provenance convention with it — a bare "Default: X" claim cannot tell you when it was last true.
 
