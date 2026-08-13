@@ -194,6 +194,10 @@ This replaces four static configurations with one dynamic one, and eliminates th
 
 Keyed on the **resolved absolute directory**, not on a repository name. Must handle: stale locks from crashed processes, alive-but-orphaned holders, and PID recycling. The existing launcher's mutex + sibling-lockfile + signature-check pattern solves all three and is worth porting rather than redesigning.
 
+**You cannot put a path in a mutex name.** Backslashes are illegal after the `Global\` prefix — `"Global\C:\Source\..."` throws `DirectoryNotFoundException`. Canonicalise and hash instead: `Path.GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant()` → SHA-256 → hex, then `$"Global\BrowserAI-{hash[..32]}"`. (The real length limit is ~32,000 characters, not the documented 260, but hashing is required regardless.) `Global\` also needs `SeCreateGlobalPrivilege`, which interactive users have and low-integrity/AppContainer processes do not.
+
+Prefer a `FileStream` with `FileShare.None` for the sibling lockfile over the current signature-heuristic approach: the OS releases the handle on process death, so "stale" and "alive" become distinguishable without guessing. Keep the mutex as well — it gives the fast no-IO path.
+
 ### E. Lifecycle and observability
 
 Non-negotiable, because every bug this month was a visibility failure. The .NET MCP SDK already implements roughly half of this — `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type that makes bug #2 in the table above structurally impossible.
@@ -251,11 +255,13 @@ Verified 2026-08-13. Versions carry the same provenance convention as `playwrigh
 | Assertions | Built-in `Assert` | The SDK uses no assertion library. **Avoid FluentAssertions** — v8+ is commercial at $129.95/seat. `Shouldly` 4.3.0 (BSD-3) or `AwesomeAssertions` 9.5.0 (Apache-2.0) if a fluent style is wanted. |
 | External smoke | `@modelcontextprotocol/inspector` **2.2.0** | Language-independent CI check. Exit code **5** means the tool reported `isError` — the signal `claude mcp` does not give you. |
 
-### Two places where the SDK must be deviated from
+### Three places where the SDK must be deviated from
 
 **1. Write your own `IClientTransport`.** The SDK's `StdioClientTransport` prepends `cmd.exe /c` to every non-cmd command on Windows, unconditionally. That directly contradicts §"Windows process spawning" below: it adds a shell layer, an extra process between BrowserAI and `node` (complicating tree ownership and exit-code attribution), and cmd.exe quoting semantics. The interface is two members (`Name`, `ConnectAsync`) and the replacement is ~120 lines. Port `StdioClientTransportOptions`' stderr and shutdown handling rather than reinventing it.
 
-**2. Proxy `tools/call` at the message-filter layer, not the typed layer.** The SDK's `ContentBlock` converter **silently drops unknown properties** (it has tests asserting this — correct forward-compatibility for a client, data loss for a proxy) and **throws on unknown content *types***, which fails the entire call at deserialization before any BrowserAI logic runs. `WithMessageFilters` operates on `JsonRpcMessage` where `JsonRpcResponse.Result` is a raw `JsonNode?`. Rewrite `tools/list` typed; let `tools/call` results pass through as raw JSON.
+**2. Use the raw `ListToolsAsync` overload.** The convenience overload `ListToolsAsync(RequestOptions?, ct)` **silently drops** any tool whose `x-mcp-header` annotations fail SEP-2243 validation. A proxy must call `ListToolsAsync(ListToolsRequestParams, ct)`, which returns the server's result unfiltered. Using the wrong one shrinks the exposed surface with no error anywhere — the same failure class as everything in the opening table.
+
+**3. Proxy `tools/call` at the message-filter layer, not the typed layer.** The SDK's `ContentBlock` converter **silently drops unknown properties** (it has tests asserting this — correct forward-compatibility for a client, data loss for a proxy) and **throws on unknown content *types***, which fails the entire call at deserialization before any BrowserAI logic runs. `WithMessageFilters` operates on `JsonRpcMessage` where `JsonRpcResponse.Result` is a raw `JsonNode?`. Rewrite `tools/list` typed; let `tools/call` results pass through as raw JSON.
 
 Both of these are places where the SDK's design goal (a forward-compatible *client*) and BrowserAI's (a lossless *proxy*) genuinely differ. Decide them now rather than discovering them later — and note that both failure modes are silent, which is the class this project exists to eliminate.
 
@@ -423,6 +429,86 @@ Not yet settled. Each changes the shape of the build.
 Claude Code defers MCP tool schemas — they arrive as bare names and load on demand. **The entire achievable saving in that client is ~650 tokens**, around 0.3% of a 200k window. Dropping the `devtools` capability from four JSON files saves a comparable amount for no engineering effort at all.
 
 The number only becomes significant in clients without deferred loading, where a consolidated surface saves ~65%. Worth knowing it exists. Not worth building for, and **not a justification to cite in design arguments.**
+
+---
+
+## Hazard index
+
+Every failure mode surfaced during research, in one checkable list. The overwhelming majority are **silent** — that is why they are enumerated rather than left to prose. Items discussed above are cross-referenced; the rest are recorded here only.
+
+**If you find a new hazard, add it here.** This list is what a reviewer checks the implementation against.
+
+### Protocol and SDK
+
+| Hazard | Consequence | See |
+|---|---|---|
+| `ListToolsAsync(RequestOptions?, ct)` drops tools failing SEP-2243 `x-mcp-header` validation | Exposed surface shrinks, no error. Use the raw `ListToolsRequestParams` overload | §stack |
+| `ContentBlock` converter drops unknown properties | Data loss on passthrough; the SDK has tests asserting this behaviour | §stack |
+| `ContentBlock` converter **throws** on unknown content *types* | An additive upstream change fails the entire call at deserialization, before any BrowserAI code runs | §stack |
+| Typed client flattens JSON-RPC `error.data` to primitives | Nested error structures are lost. Affects protocol errors only — tool failures travel as `isError:true` data | — |
+| A tools-only proxy does not forward **resources or prompts** | `@playwright/mcp` advertises only `tools` today, so nothing is lost now — but a future release adding either would silently not appear | — |
+| `McpServerToolCreateOptions` has `OutputSchema` but **no `InputSchema`** | The obvious factory API always reflects the schema from the .NET signature — unusable for a proxy, and it is the one that will be reached for first | — |
+| Spec 2026-07-28 SHOULDs a **deterministic tool order** for client-side and prompt-cache hit rates | The rewrite step must be order-stable, not incidentally ordered | — |
+| `DiscoverProbeTimeout` is 5 s when the client version is unpinned | Flat 5 s per child spawn against a ~300 ms baseline; presents as "slow", never as an error | §B |
+| The child never *rejects* a protocol version — it caps or echoes silently | A mis-negotiation produces nothing to catch. Assert on the negotiated value | §B |
+| Progress and cancellation relay are **not** automatic across a proxy | A cancelled `browser_navigate` can leave an orphan running in the child | §data-path |
+| `_meta.json` / `_meta.cwd` / `_meta.raw` are read by the child before zod parsing | Undocumented but real, and stripped before the tool sees them — available for BrowserAI to inject (JSON error format, relative-path base) | — |
+
+### Child runtime and configuration
+
+| Hazard | Consequence | See |
+|---|---|---|
+| `browserName` defaults to system Chrome, `headless:false` on Windows | The bundled Chromium is never consulted. Verified against an empty browsers directory | §A |
+| 40 `PLAYWRIGHT_MCP_*` env vars override the generated config | Silent override of every opinion, including a capability wipe | §trade-offs |
+| `loadConfig` is a bare `JSON.parse` with no schema validation | Unknown or renamed keys are silently discarded | §why-3 |
+| `core-install` is declared in `config.d.ts` but **no tool carries it** in 0.0.79 | A dead capability string; setting it does nothing | — |
+| Relative `PLAYWRIGHT_BROWSERS_PATH` resolves against `INIT_CWD` before `cwd` | Points at a directory inherited from any npm ancestor | §A |
+| Outer browser dirs use underscores, inner ones dashes | `chromium_headless_shell-1237\chrome-headless-shell-win64\` — a path built consistently is wrong | §A |
+| Playwright writes `DEPENDENCIES_VALIDATED` into the browsers root on first launch | Under `Program Files` that write silently fails and re-runs every launch. Prefer `%LOCALAPPDATA%` or `%ProgramData%` with write ACLs | §A |
+| `.links/` records the **build machine's** absolute paths | Leaks build paths into the shipped tree; useless on the target. Strip it | §A |
+| Playwright's stale-browser GC deletes registry dirs not referenced by `.links` | Blast radius is "deletes BrowserAI's shipped Chromium". Pin `PLAYWRIGHT_SKIP_BROWSER_GC=1` | §trade-offs |
+| `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` writes to stderr when set | Trips the error-shaped-stderr detection in §E. Do not set it | §trade-offs |
+| The `playwright` package (4.85 MB) is a declared dependency that is **never loaded** | Prunable, but `npm ls` will call the tree broken. Deliberate choice, not an oversight | — |
+| Upstream publishes **daily alpha** builds | The `@latest` float is sharper than it appears; another argument for the pin | §why-2 |
+
+### Process and OS (Windows)
+
+| Hazard | Consequence | See |
+|---|---|---|
+| Backslashes are illegal in a mutex name after `Global\` | A path-keyed lock cannot use the path. Canonicalise and hash | §D |
+| `Global\` requires `SeCreateGlobalPrivilege` | Fine for interactive users; fails under low-integrity / AppContainer | §D |
+| `Process.ExitCode` throws after `Dispose()`; always throws for `GetProcessById` | Worse than PowerShell's `$null`. Cache the `int` immediately | §E |
+| `WaitForExit(int)` does not drain async readers | Truncated stderr. Only `WaitForExit()` and `WaitForExitAsync` drain | §E |
+| `Console` stdio defaults to CP437 in **both** directions; `TextWriter` adds CRLF; hand-rolled `StreamWriter` adds a BOM | Corrupts JSON-RPC on the first non-ASCII byte | §E |
+| `Process.Kill(entireProcessTree:true)` needs BrowserAI alive and running code | Cannot help when BrowserAI is the thing killed. Job object required | §E |
+| Race between `CreateProcess` and `AssignProcessToJobObject` | A grandchild can spawn outside the job. Self-assign before spawning anything closes it | §E |
+| `psi.Environment` is pre-populated and assignment **merges** | An allowlist requires `Clear()` first | §trade-offs |
+| `psi.WorkingDirectory` unset passes `null` to `CreateProcess` | Child inherits BrowserAI's cwd — reason 5, verbatim | §trade-offs |
+| `ArgumentList` and `Arguments` are **mutually exclusive** | Setting both is undefined behaviour. Use `ArgumentList` for its quoting rules | — |
+
+### Packaging and updates
+
+| Hazard | Consequence | See |
+|---|---|---|
+| `SetAutoApplyOnStartup` defaults to **true** | BrowserAI exits(0) at handshake time and relaunches with dead pipes | §G |
+| The Velopack execution stub is `windows_subsystem = "windows"` and returns immediately | A stdio client sees the child die instantly with no pipes | §G |
+| `force_stop_package` kills every process under the install root | Three other live sessions destroyed mid-task | §G |
+| Velopack prunes `packages\` to the current full `.nupkg`; deltas are forward-only | Every rollback is a full ~105 MB download unless you archive packages yourself | §G |
+| `current\` is wholly replaced on update | All state must resolve from `VelopackLocator.Current.RootAppDir` | §G |
+| The swap holds old + new `current\` simultaneously | Budget ~600–700 MB transient disk, plus full re-extraction of ~380 MB per update | — |
+| `vpk` rejects 4-part version numbers | Semver2 three-part only — a build-pipeline failure, not a runtime one | — |
+| Every unsigned `Setup.exe` is a new file to SmartScreen | Lands precisely on colleague onboarding. Azure Artifact Signing ≈ $10/mo buys instant reputation | — |
+| MSIX cannot re-register while a package process is running | Disqualifying for a long-lived child. Two production AI tools hit this in 2026 | §G |
+
+### Tooling and CI
+
+| Hazard | Consequence | See |
+|---|---|---|
+| `claude mcp list` / `get` **exit 0 even when the server is dead** | Unusable as a CI gate without grepping stdout for `✘`. Itself an instance of "reports healthy while broken" | — |
+| The official MCP conformance suite is **HTTP-only** (`--url`) | Not directly usable against a stdio server. Needs a test-only listener or a ~50-line bridge | §testing |
+| Inspector CLI cannot spawn `.cmd` shims on Windows | Same root cause as #58510. Address `cli.js` with an absolute path | §testing |
+| Real screenshots are not byte-stable across runs | Fidelity assertions need a canned blob from the fake child, not a live capture | §testing |
+| The SDK's test fixtures are **not published** to NuGet | Vendor ~300 lines from `tests/Common/Utils/` + `ClientServerTestBase.cs` (MIT) and record the upstream versions — they will drift | §stack |
 
 ---
 
