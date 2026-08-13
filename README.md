@@ -131,7 +131,7 @@ This means in-process tool manipulation is *available* if the proxy approach eve
 | Component | Requirement | Measured size |
 |---|---|---|
 | Node.js | Bundled — a **single `node.exe`**, nothing else. Verified driving the full MCP protocol with no npm, no `node_modules`, no `.cmd` shims. | v24.19.0 LTS, **88.53 MB** |
-| `@playwright/mcp` + `playwright-core` | Vendored at an exact pinned version, never `@latest`. Zero native binaries — the tree is portable JS. | 0.0.79, **18.11 MB** |
+| `@playwright/mcp` + `playwright-core` | Resolved to latest at **build** time, then vendored into the artifact as an exact tree — never `@latest` at **spawn** time. Zero native binaries; the tree is portable JS. See [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). | 0.0.79, **18.11 MB** |
 | `chromium-headless-shell` | Bundled at the revision the pin requires. | rev 1237, **268.49 MB** |
 | `ffmpeg` | Required for video capture; without it the `video` artifact type throws. | rev 1011, **3.35 MB** |
 | `winldd` | Not currently required — its validation path is a no-op on Windows due to a `chrome-win` / `chrome-win64` mismatch upstream. Ship it as insurance against that being fixed. | rev 1007, **0.25 MB** |
@@ -152,7 +152,7 @@ Two consequences worth taking deliberately, because both are real costs of that 
 
 "Single file" means BrowserAI.exe carries no .NET runtime dependency. The *payload* — `node.exe`, the vendored packages, both browsers — remains a directory tree beside it, which is what Velopack's per-file delta needs to stay cheap.
 
-**NativeAOT is not free, and one dependency is unverified.** AOT forbids runtime reflection-based serialization, so `System.Text.Json` needs source-generated contexts (`JsonSerializerContext`). Velopack declares `IsAotCompatible=true` for net8.0+. **`ModelContextProtocol` 2.2.0's AOT compatibility has not been confirmed** — the `JsonElement` passthrough at the heart of the proxy is AOT-friendly, but the SDK's internals are unaudited on this point. Verify before committing to AOT; the fallback is self-contained trimmed (~70 MB), which against ~806 MB of payload is noise. **AOT buys cold-start latency and the dropped runtime dependency here, not size.**
+**NativeAOT is not free.** AOT forbids runtime reflection-based serialization, so `System.Text.Json` needs source-generated contexts (`JsonSerializerContext`). Velopack declares `IsAotCompatible=true` for net8.0+, and **so does `ModelContextProtocol`** — verified in-source on 2026-08-14, set on every target except `netstandard2.0`, at both `v1.4.1` and `v2.2.0`. That is a meaningful signal and **not a proof for our usage**: the `JsonElement` passthrough at the heart of the proxy is AOT-friendly, but a declaration is the author's claim about their code, not about how we drive it. Publish AOT and run the suite against it before committing. The fallback is self-contained trimmed (~70 MB), which against ~806 MB of payload is noise. **AOT buys cold-start latency and the dropped runtime dependency here, not size.**
 
 Shipping the browser deletes an entire subsystem from the current design: the preflight, the install mutex, the staleness timeout, the detached installer, and the retry instructions written for an LLM to read. That machinery exists solely because the browser arrives on demand.
 
@@ -261,25 +261,106 @@ It wins on delta granularity. Its scheme is per-file zstd `--patch-from`, and un
 
 Go **per-user, not per-machine**. The `--msi PerMachine` layout installs to `Program Files`, which makes the updater self-elevate — and a UAC prompt cannot be answered by a background MCP server. Per-user also matches how MCP registrations and browser profiles already work. Ship the MSI as a *second* artifact for IT deployment if a colleague ever needs it, never as the update path.
 
-Three landmines, all of which fail silently:
+**One track.** No beta channel. A second track doubles the release matrix and makes the version string load-bearing — UCC derives its runtime track by testing the version for a `-beta` suffix, so a formatting change silently breaks track detection. Single-track does **not** mean the channel can be ignored: Velopack still stamps one into the manifest and package names (`releases.win.json`, `BrowserAI-1.0.0-win-full.nupkg`), `vpk pack --channel` still sets it, and landmine 1 is entirely about how that channel reaches the client.
 
-1. **`SetAutoApplyOnStartup(false)` is mandatory.** The default is `true`: on finding a staged package, `VelopackApp.Run()` applies it, exits(0), and relaunches — with no inherited stdio. Claude Code sees its MCP server exit at handshake time.
-2. **Register `%LocalAppData%\BrowserAI\current\BrowserAI.exe` directly**, never the execution stub. The stub is compiled `#![windows_subsystem = "windows"]` and returns immediately without waiting, so a stdio client sees the child die instantly with no pipes attached.
-3. **`force_stop_package` kills every process under the install root** without asking. With four registrations that is three other live sessions destroyed mid-task. Gate the apply on "am I the last instance" using the same directory-keyed lock from §D, then spawn `Update.exe apply --silent --norestart --waitPid <ownPid>` and exit. The next session starts the new version from the identical path — in normal use there is no "restart to apply" prompt at all.
+Landmines, in descending order of blast radius. All of them fail silently:
 
-Rollback needs hand-rolling: Velopack prunes `packages\` down to the current full `.nupkg` and deltas are forward-only, so archive each full package yourself or every rollback is a fresh ~105 MB download. State must live **outside** `current\`, which is wholly replaced on update — resolve every path from `VelopackLocator.Current.RootAppDir`.
+1. **Never put the channel in the feed URL.** `SimpleWebSource` composes the request as `{BaseUrl}/releases.{channel}.json`. Build the base URL as `{BaseUrl}/{channel}` and Velopack fetches `{BaseUrl}/{channel}/releases.{channel}.json` — a 404, surfaced to the user as *"no update available"* and nothing else. Set the channel through `UpdateOptions.ExplicitChannel`, never in the URL path. This is the worst hazard in the section because **it is unrecoverable in the field**: a client that cannot reach the feed cannot be told to roll back either, so every install already shipped needs a manual reinstall. Rollback does not cover it — rollback assumes the feed works. It follows that the update test must resolve the **real feed URL**; a local-directory source composes paths differently and will pass where production 404s.
+2. **`SetAutoApplyOnStartup(false)` is mandatory.** The default is `true`: on finding a staged package, `VelopackApp.Run()` applies it, exits(0), and relaunches — with no inherited stdio. Claude Code sees its MCP server exit at handshake time.
+3. **Register `%LocalAppData%\BrowserAI\current\BrowserAI.exe` directly**, never the execution stub. The stub is compiled `#![windows_subsystem = "windows"]` and returns immediately without waiting, so a stdio client sees the child die instantly with no pipes attached.
+4. **`force_stop_package` kills every process under the install root** without asking. With four registrations that is three other live sessions destroyed mid-task. Gate the apply on "am I the last instance" using the same directory-keyed lock from §D, then spawn `Update.exe apply --silent --norestart --waitPid <ownPid>` and exit. The next session starts the new version from the identical path — in normal use there is no "restart to apply" prompt at all.
+5. **Reading the installed version must not touch the network.** `UpdateManager` is network-capable, so constructing one merely to read the current version issues a request. `VelopackLocator` reads local metadata only. For BrowserAI this sits on the stdio startup path, where a stray network call is a handshake delay at best and a hang behind a captive portal at worst.
+6. **`NotInstalledException` is the normal outcome under `dotnet run` and every test host.** Neither is a Velopack install, so every Velopack call throws. Do not guard on `Debugger.IsAttached` — a test runner attaches no debugger. Put an injectable seam around every Velopack call from day one; without it a server that self-restarts relaunches itself out of the test suite.
+7. **Do not call `ApplyUpdatesAndRestart(null)` to mean "just restart".** It works — the internals skip the `--package` argument when there is no local full package — but the behaviour is undocumented and rests on an implementation detail. `UpdateExe.Start(waitPid)` is the supported restart.
+8. **`IVelopackLogger` must be bridged on both paths.** The runtime `UpdateManager` and the `VelopackApp.Build()` startup hooks take *separate* logger registrations. Bridge only the first and the installer, first-run and post-restart hooks are silent — which is the path that runs precisely when something has already gone wrong. §E applies to the updater too.
+9. **Velopack's Windows floor is separate from BrowserAI's.** Two layers: the .NET SDK's minimum, and the Rust `Setup.exe`/`Update.exe` minimum. The Rust binaries can fail *before* the managed app exists — before 0.0.530 they statically linked `IsWow64Process2` and crashed below Windows 10 1709. Setting `--runtime win7` does not help if the installer binary itself cannot run.
+
+**`Update.exe` is also the restart coordinator, not only the update applier.** It is a separate Rust binary that outlives BrowserAI, so it can wait for full termination before launching the replacement — which is what guarantees the §D directory-keyed lock is released first. The two races it removes are both real: spawning before exit means the new instance finds the lock held and does the wrong thing; releasing the lock before spawning opens a window in which an unrelated launch takes primacy. Use `ApplyUpdatesAndRestart` when a package is staged and `UpdateExe.Start(waitPid)` when one is not — never one for both.
+
+**A download needs three independent timers.** An absolute cap, a stall timeout reset on every progress callback, and an outer deadline that is a crash tripwire rather than flow control — all linked to the process lifetime token. A single timeout either aborts a healthy slow link or hangs forever on a stalled one. The check and download must also run off the message loop: a `tools/call` has to stay answerable while a ~105 MB full package is in flight.
+
+Rollback needs hand-rolling: Velopack prunes `packages\` down to the current full `.nupkg` and deltas are forward-only, so archive each full package yourself or every rollback is a fresh ~105 MB download. **Two halves have to agree.** On the client, `AllowVersionDowngrade` is what makes an older version acceptable — it *is* the rollback mechanism and must be on. On the pipeline, a release-validation rule enforcing strictly increasing versions makes a rollback impossible to publish. Write that rule as "monotonic **or** an explicit rollback republish" or the runtime will accept a rollback the build refuses to emit — which is exactly the state UCC is in.
+
+State must live **outside** `current\`, which is wholly replaced on update — resolve every path from `VelopackLocator.Current.RootAppDir`. The trap is `AppContext.BaseDirectory`: it reads as "next to the binary", which is precisely where logs and caches must not go, and any retention policy written against it is silently reset by every update. Nor should update state be persisted alongside the binary — **derive it from the installed version instead.** Anything stored out-of-band desyncs across an exit-and-relaunch: a config edited between stage and swap, a save that never completed, a binary replaced by hand.
 
 **MSIX is disqualified on evidence, not theory.** Two production AI tools hit exactly this in 2026: claude-code [#63397](https://github.com/anthropics/claude-code/issues/63397) (`0x80073D02` / `ERROR_SHARING_VIOLATION`, and the report names the cause — "Claude Code runs as a child process of Claude Desktop") and openai/codex [#25770](https://github.com/openai/codex/issues/25770). A package cannot re-register while any process in its family is running, and BrowserAI's entire design is to be a long-lived child. Hydraulic Conveyor emits MSIX on Windows and inherits the same failure.
+
+#### Prior art: ExoFabric/UCC
+
+Landmines 1 and 5–9 above were not found in documentation. They were found in a working Velopack deployment: **`ExoFabric/UCC`** ships Velopack today — per-user `%LocalAppData%\UCC\current\`, no elevation, S3-compatible feed, silent background check — and is the only in-house evidence that exists. Two caveats before borrowing anything from it:
+
+- **It runs Velopack 0.0.1298, not 1.2.0.** That is the pre-1.0 line; behaviour and API surface have both moved. Re-verify every claim against 1.2.0 and stamp it with the `Verified <date> @ <version>` convention when you do.
+- **UCC is single-instance; BrowserAI is not.** A named mutex means exactly one UCC process ever runs under the install root, which makes `force_stop_package` harmless there. Landmine 4 — the one that matters most for four concurrent registrations — is therefore **untested by the only prior art available.**
+
+What UCC proves, and what it does not:
+
+| Area | State in UCC | Implication for BrowserAI |
+|---|---|---|
+| Per-user install, no elevation, `current\` swap | Works, in production | The §G layout is not theoretical |
+| **Delta packages** | **Never produced.** Every shipped artifact is a full `.nupkg`; delta validation is still an open TODO | Delta granularity is the stated reason Velopack won §G. It is unproven in-house — make it a release gate, not an assumption |
+| Feed URL composition | Bricked auto-update for three shipped versions, manual reinstall only | Landmine 1, from the field rather than from theory |
+| `SetAutoApplyOnStartup(false)` | Never called; runs the default | Landmine 2 is live in a shipping app. Survivable for a foreground tray app, fatal for a stdio child |
+| Rollback | No code, no doc. The client would accept one; the version-validation script refuses to emit one | Build both halves together or neither works |
+| Logs | Written to `AppContext.BaseDirectory` — inside `current\`, with 10-day retention | Wiped by every update; the retention can never apply |
+| Restart choreography | Cooperative shutdown with per-component acks, a 10 s hard-kill backstop, log flush, *then* apply | Worth copying wholesale. The apply message has to be allowed through during exit, which needs deliberate handling |
+| Test seam | Update wrapper unsealed with `virtual` network methods; 48 hermetic tests over the agent driving it | Copy this. It is the reason UCC can test the update path at all |
+| Coverage of the wrapper itself | **Zero tests** | And that is exactly where the feed-URL bug lived |
+| Signing | None — no certificate, no `--signParams`, package signature verification unexplored | Decide before first colleague handoff; see the SmartScreen hazard |
+
+The wider point: UCC's update path has been in production for multiple releases, and **five of the nine landmines above are ones it hit rather than avoided** — 1, 2, 5, 6 and 8, of which 2 and 8 are still live. None of them announced itself. That is the same failure class as everything in the opening table, and it is why §G is enumerated rather than described.
+
+---
+
+## Versioning policy: everything floats, the build freezes it
+
+Adopted from `SixFive7/Jeeves` — `V1.md` § *Versioning policy: never pin* and its *Modernity doctrine* — and applied here **without exception, including to the shipped payload**.
+
+**Every dependency floats to the latest release at build time.** NuGet packages, `@playwright/mcp` and the `playwright-core` it carries, `node.exe`, both Chromium builds, `ffmpeg`, `winldd` — the build resolves each to the newest available version and then **freezes what it resolved into the artifact**. For .NET, the newest **GA** major, adopted at each annual GA, **including when that major is STS rather than LTS**. `LangVersion` is `latestMajor`, never `preview`.
+
+**Every version number in this document is a floor and a provenance stamp, never a target.** The versions named in [Implementation stack](#implementation-stack) and [§A](#a-ship-and-own-the-runtime) record what was current when each claim was verified, so a reader can tell how stale the prose is. **The build does not read them.**
+
+> **Why:** stale dependencies are a defect, not a safety measure. Riding the newest release keeps each upgrade small instead of saving them into one nobody ever takes, and [Testing](#testing-a-hard-requirement-and-the-release-gate) is what catches breakage. A version pin is not a substitute for a test suite — it is a way of not finding out.
+
+**Latest patterns are the house style**, not merely latest versions. Code is written with the newest stable idioms the GA toolchain actually compiles, and rewritten toward them; familiar-but-dated patterns are style defects. Style is law rather than advice — analyzers run at error severity, and a severity is never weakened to make code pass.
+
+### The pin is an output, not an input
+
+This is the whole model, and it needs stating precisely because the charter's founding complaint was *about* floating:
+
+| | Today (`launch.ps1`) | BrowserAI |
+|---|---|---|
+| **When** the version resolves | Every spawn | Once, at build time |
+| **Where** it resolves | The user's machine | Ours |
+| **What validates it** | Nothing | The full suite, which must be green |
+| **What the client runs** | Whatever npm served that minute | Exactly the bytes we tested |
+| **Failure surfaces** | Silently, in production, five days later | As a red test, before anything ships |
+
+[Why-reason 2](#2-the-version-chain-floats-and-it-breaks-silently) is not weakened by this — it is sharpened. **The defect was never that the version moved. It was that it moved untested, unobserved, and on someone else's machine.** Moving it under a test suite before anything ships inverts every row in that table. The artifact a client installs is still exactly fixed; what changed is that its contents are *derived from a green build* rather than hand-typed into a config file and left there.
+
+### The four rules that make floating safe
+
+1. **The resolved set is recorded, not remembered.** `packages.lock.json` for NuGet with `--locked-mode` on the release build; the resolved `package-lock.json` for the vendored npm tree; browser revisions read from the resolved package's own `browsers.json`, never a hand-typed URL. **An artifact that cannot state exactly what went into it is not releasable** — that is also what makes a rollback meaningful and a regression bisectable.
+2. **The shipped artifact never floats.** The client resolves nothing at runtime: no `npx`, no `@latest`, no network at spawn. What was tested is what runs. This property is the non-negotiable one, and it is why [§A](#a-ship-and-own-the-runtime) vendors the tree at all.
+3. **GA is a hard floor.** No preview or RC builds a released artifact. Upstream Playwright publishes **daily alphas**, but `@playwright/mcp@latest` is the released dist-tag — the `playwright-core` alpha beneath it arrives as that package's own exact dependency, not as a choice we make.
+4. **Green is the only gate, and it gates the *release*, not the *update*.** The response to a breaking upstream change is to make the newest version work. Holding the previous version is not a fix, and "pin it back for now" is the failure this policy exists to prevent.
+
+### Never assert a version from memory
+
+**If it was not looked up this session, it is unverified — say so.** Model training knowledge lags this toolchain by design, and a confident stale version is worse than an admitted gap. Same discipline as the `Verified <date> @ <version>` stamps in [Reference material](#reference-material), applied to the act of writing a version rather than to the value written.
+
+> **In-house evidence, and it is three weeks old.** `SixFive7/OutlookAI` pins `ModelContextProtocol` **1.4.1**, with a csproj comment reading *"1.4.1 = latest stable on nuget.org as of 2026-07-23 (2.0.0 is still preview)."* That was true when written. Re-checked against nuget.org's flat-container index on **2026-08-14**: 2.0.0, 2.1.0 and 2.2.0 have all shipped stable, so the comment's central claim is now false and nothing in that build says so.
+>
+> The comment was **correctly stamped with its date**, which is the only reason the staleness is detectable at all — an unstamped "latest stable" claim would still read as current. Stamp the date; never trust one that lacks it.
 
 ---
 
 ## Implementation stack
 
-Verified 2026-08-13. Versions carry the same provenance convention as `playwright/README.md`: re-verify on every bump.
+Verified 2026-08-13. **The versions below are provenance stamps, not targets** — see [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). The build resolves the latest of each; these record what was current when the surrounding claims were checked, and carry the same convention as `playwright/README.md`: re-verify on every bump.
 
 | Concern | Choice | Notes |
 |---|---|---|
-| MCP protocol | `ModelContextProtocol` **2.2.0** | Official C# SDK, Apache-2.0, Microsoft co-maintained, 23.5M downloads. Full `2026-07-28`. The main package's hosting dependency is abstractions-only — it does **not** drag in ASP.NET. |
+| MCP protocol | `ModelContextProtocol` (latest; **2.2.0** as of 2026-08-13) | Apache-2.0, 23.6M downloads. **Tier 1** SDK under the MCP project — which Anthropic donated to the Linux Foundation's **Agentic AI Foundation** on 2025-12-09, so "official" now means LF-governed, with day-to-day engineering by the Microsoft .NET team. Began as `PederHP/mcpdotnet` (now archived). Full `2026-07-28`. The main package's hosting dependency is abstractions-only — it does **not** drag in ASP.NET. `ModelContextProtocol.Core` alone is a viable smaller surface (`McpServer.Create` + `StdioServerTransport`, and the `[McpServerTool]` attributes already live there) at the cost of `AddMcpServer()` and assembly scanning — not worth it unless the hosting stack becomes a problem. Verified 2026-08-14. |
 | Updates | **Velopack 1.2.0** + `vpk` 1.2.0 | MIT. See §G. |
 | Node runtime | **v24.19.0 LTS**, `node.exe` only | v26 is Current, not LTS, and its `node.exe` is 10 MB larger. |
 | Job objects | Hand-rolled `[LibraryImport]` | No credible NuGet wrapper exists — the candidates have <6K downloads and the newest was published in 2017. `dotnet/runtime` [#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in support and was closed as not planned. ~60 lines. `Microsoft.Windows.CsWin32` is the reasonable alternative once a seventh Win32 API is needed. |
@@ -301,7 +382,17 @@ Both of these are places where the SDK's design goal (a forward-compatible *clie
 
 ---
 
-## Testing: the smoke test is the whole point
+## Testing: a hard requirement, and the release gate
+
+> **This section is a requirement, not an aspiration, and it is not severable from the section above.**
+>
+> [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it) puts every dependency on latest at build time. That makes the suite **the only thing standing between an upstream change and a shipped regression** — floating without a suite that can catch a breaking change is strictly worse than pinning. The two decisions are one decision: neither is valid alone, and weakening the suite silently converts the versioning policy into a liability.
+>
+> Three rules follow, and none of them are negotiable per-release:
+>
+> - **No release is cut with a red test.** Not "a known failure", not "unrelated to this change", not "it passes locally".
+> - **No release is cut with a skipped, quarantined or conditionally-ignored test.** A `Skip` attribute in the tree at release time is a red build wearing a disguise. Flakiness is a defect to fix, not a state to tolerate.
+> - **Coverage of the boundary is mandatory, not incidental.** Every tool classified by session type, every config key validated against the shipped runtime, every `PLAYWRIGHT_MCP_*` override accounted for. An unclassified tool fails the build — that rule is what makes an upstream addition a red build instead of a security incident.
 
 The founding bug was reproduced during research. Pointing `executablePath` at a non-existent binary produces:
 
@@ -325,22 +416,44 @@ Assert.Contains(result.Content.OfType<TextContentBlock>(),
 
 Use `data:`, not `about:blank` — the latter succeeds too trivially and its snapshot is empty.
 
-Four layers, run at different cadences:
+Five layers, run at different cadences:
 
 | Layer | Drives | Cost | When |
 |---|---|---|---|
-| **Unit** | stderr classifier, artifact prefix sort, tool filter/rename, **session-type enforcement**, lock signature and PID-recycle logic, config validator | ms | every push |
-| **Fake child** | Full proxy over an in-process `Pipe` pair — no `Process`, no Node. Passthrough fidelity, error shapes, image bytes, cancellation, child death, stderr back-pressure | ms | every push |
-| **Real-child contract** | Real `node` + pinned `cli.js`, **no browser**. Golden `tools/list` snapshot, negotiated protocol version, argv contract, config-key validation | 2–5 s | main + nightly |
-| **Smoke** | Real child **and real browser**. `browser_navigate`, `isError`, real stderr classification, process-tree lifecycle | 10–30 s | main + pre-release |
+| **Unit** | stderr classifier, artifact prefix sort, tool filter/rename, **session-type enforcement**, lock signature and PID-recycle logic, config validator | ms | every build |
+| **Fake child** | Full proxy over an in-process `Pipe` pair — no `Process`, no Node. Passthrough fidelity, error shapes, image bytes, cancellation, child death, stderr back-pressure | ms | every build |
+| **Real-child contract** | Real `node` + the **resolved** `cli.js`, **no browser**. Golden `tools/list` snapshot, negotiated protocol version, argv contract, config-key validation | 2–5 s | **every build** |
+| **Smoke** | Real child **and real browser**. `browser_navigate`, `isError`, real stderr classification, process-tree lifecycle | 10–30 s | every build · **mandatory before release** |
+| **Update** | Real feed URL resolves and returns a manifest; `vpk pack` emits a delta; N→N+1 applies and the installed version moves | 1–3 min | **mandatory before release** |
+
+**The real-child contract layer changes character under a floating build.** When the payload was hand-pinned it was a slow-moving regression check that could reasonably run nightly. Now it is *the* mechanism that detects an upstream Playwright change, and it runs on **every build** — 2–5 seconds is nothing against the alternative of finding out from a user. Its golden snapshots are the tripwire; a diff there is not a test failure to suppress but the notification this whole design exists to produce.
 
 `McpClient.CreateAsync` accepts the `IClientTransport` *interface*, so the fake child is an in-process `McpServer` joined by two `Pipe`s — no processes, no ports, fully parallel-safe.
 
 **The most important test in the suite** is mechanical and follows from §"Known trade-offs": read the real child's `tools/list`, then assert **every** tool name carries an explicit session-type classification. An unclassified tool fails the build. That turns "a new upstream tool leaks into interactive mode" from a security incident into a red CI run.
 
-**Add a nightly drift job** that installs `@playwright/mcp@latest` (not the pin) and runs only the golden snapshots. It is *expected* to fail when upstream moves; that failure is the notification the current setup does not have. Upstream publishes daily alphas, so this is the highest-value piece of CI in the plan.
+**A nightly run still earns its place, for a narrower reason than before.** Every build now resolves latest, so every build is already a drift check — the standalone drift job's original purpose is absorbed. What remains is the gap between builds: upstream publishes **daily alphas**, and a week with no commits is a week in which the tree silently diverges from what was last proven green. A nightly full-suite run against a freshly resolved payload closes that gap and makes the first build after a quiet period predictable rather than a surprise. Its failure is *expected* when upstream moves, and it is a notification, not an incident.
 
 Lifecycle tests must wrap themselves in their own job object (`KILL_ON_CLOSE`, `using`-scoped) so a failed assertion cannot leave a stray `chrome.exe`, and must never match processes by image name — a test that kills `chrome.exe` by name will one day close the developer's browser.
+
+**The update path needs its own tests, and one of them has to be a real upgrade.** Put every Velopack call behind an interface with `virtual` network methods so the check → download → apply state machine can be driven hermetically; that seam is what lets UCC hold 48 update tests without ever touching the network. But both bugs that actually shipped in UCC sat *outside* that seam — the feed-URL composition, and the wrapper class itself, which has no tests at all. So the pre-release lane must also spend real time on two assertions the hermetic tests structurally cannot make: **resolve the production feed URL** over HTTP and assert a manifest comes back (a local-directory source composes paths differently and will pass where production 404s), and **publish N→N+1, apply it, and assert both that a delta package was generated and that the installed version moved**. Delta granularity is the reason [§G](#g-updates) chose Velopack at all, and nothing in-house has ever proved `vpk` produces one.
+
+### The release gate
+
+**Releases are triggered manually, by the maintainer, through the agent. There is no release pipeline, no scheduled publish, and no auto-merge on green.** That simplification is affordable *only* because the gate itself is mechanical: when to release is a human decision, whether a release is permitted is not.
+
+The sequence, in order, no step skippable:
+
+1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
+2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
+3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change".
+4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](#the-four-rules-that-make-floating-safe).
+5. **The maintainer decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
+6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
+
+**Why manual is right here, and the condition under which it stops being right.** With one maintainer and a single track, a release pipeline is ceremony around a decision one person makes anyway — and [§G](#g-updates) is already the most hazard-dense section in this document without adding pipeline-authored releases to it. The honest cost: **the gate is only as good as the person invoking it.** It rests entirely on step 3 being *run* rather than assumed. The day a second person can cut a release, that assumption breaks and the gate has to move into automation.
+
+**What manual does not mean.** It does not mean the suite runs when someone remembers. Steps 1–4 are the ordinary build and run on every build, whether or not a release is in view. Manual governs step 5 alone.
 
 ---
 
@@ -349,7 +462,7 @@ Lifecycle tests must wrap themselves in their own job object (`KILL_ON_CLOSE`, `
 | | Today (`Workspace657/playwright/`) | BrowserAI |
 |---|---|---|
 | Update path | Copy-paste to 13 checkouts | One release, one channel |
-| Playwright version | `@latest`, floats silently | Pinned, updated deliberately |
+| Playwright version | `@latest`, re-resolved at every spawn, on the user's machine, untested | Resolved to latest at build time, gated by the suite, frozen into the artifact |
 | Chromium | Downloaded on first use, ~300 MB, needs preflight + retry protocol | Shipped in the installer, both builds, before first use |
 | Node | Must exist on the host | Bundled (`node.exe`, 88.5 MB) |
 | .NET / Chrome | n/a / required for headed modes | Neither — NativeAOT single-file, bundled Chromium |
@@ -467,6 +580,9 @@ Two things follow, and they are design obligations rather than caveats:
 | **License** | **Source-available**, under a bespoke five-year variant of the Functional Source License 1.1 (MIT Future License). Fixed before any code exists, and it constrains dependency selection from here. See [License](#license). |
 | **Repository visibility** | **Private for now.** Source-available is the licensing posture, not a commitment to publish. Opening the repository is a separate decision and has not been made. |
 | **Third-party payload** | Keeps its own terms. Bundling creates redistribution obligations that bite at first installer handoff *regardless* of which license BrowserAI itself carries — enumerated under [Third-party components](#third-party-components). |
+| **Update tracks** | **One.** No beta channel. A second track doubles the release matrix and makes the version string load-bearing — UCC derives its runtime track from a `-beta` suffix, so a formatting change breaks track detection silently. A single track still requires the channel to be set explicitly, for the reason in [§G](#g-updates) landmine 1. |
+| **Dependency versioning** | **Everything floats at build time; the build freezes it.** Nothing is pinned by hand, the payload included. The build resolves latest, the suite gates it, the release records exactly what shipped, and the client resolves nothing at runtime. Adopted from `SixFive7/Jeeves` and applied without exception. See [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). |
+| **Release trigger** | **Manual, by the maintainer, through the agent.** No release pipeline, no scheduled publish, no auto-merge on green. Green is necessary and not sufficient — a human decides when a green build becomes a release. See [The release gate](#the-release-gate). |
 
 **Why not permissive.** Apache-2.0 was the runner-up and is the smoothest technical fit: it is what `@playwright/mcp` and the C# SDK already carry, and its §4(b) change-statement requirement is real protection for something distributed as a binary installer nobody reads the source of. It was rejected only because it gives the commercial market away outright. AGPL-3.0 was considered and rejected on the merits — BrowserAI is stdio-only, one machine, one user, **no processes and no ports**, so §13's network-interaction clause could never fire and the license would be inert boilerplate.
 
@@ -534,7 +650,8 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 |---|---|---|
 | Bundling Chromium transfers **CVE response** from Google to us | Every install stays vulnerable until BrowserAI cuts a release. "Update on our schedule" cuts the wrong way here | §A |
 | Chromium is not Chrome | No proprietary codecs, no Widevine, different UA and fingerprint surface. Verify the portals actually in use before cutting over | §A |
-| NativeAOT forbids reflection-based serialization | `System.Text.Json` needs source-generated contexts. **`ModelContextProtocol` 2.2.0's AOT compatibility is unverified** — confirm before committing | §A |
+| NativeAOT forbids reflection-based serialization | `System.Text.Json` needs source-generated contexts. The SDK declares `IsAotCompatible=true` on all non-`netstandard2.0` targets (in-source, `v1.4.1` and `v2.2.0`, 2026-08-14) — the author's claim about their code, not a proof for our usage. Publish AOT and run the suite before committing | §A |
+| A floating build with a weakened suite | The versioning policy stops being safe the moment a test is skipped, quarantined or waived. This is the one hazard here that is **self-inflicted rather than upstream** — and the only one whose mitigation is a habit rather than a mechanism | §testing |
 
 ### Child runtime and configuration
 
@@ -572,13 +689,26 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 
 | Hazard | Consequence | See |
 |---|---|---|
+| Feed base URL built as `{BaseUrl}/{channel}` | `SimpleWebSource` then requests `{channel}/releases.{channel}.json` → 404, reported as "no update available". **Unrecoverable in the field** — every shipped install needs a manual reinstall. Use `UpdateOptions.ExplicitChannel` | §G |
+| A local-directory update source composes feed paths differently from `SimpleWebSource` | An update test that passes against a local folder still 404s in production. The test must resolve the real URL | §testing |
 | `SetAutoApplyOnStartup` defaults to **true** | BrowserAI exits(0) at handshake time and relaunches with dead pipes | §G |
 | The Velopack execution stub is `windows_subsystem = "windows"` and returns immediately | A stdio client sees the child die instantly with no pipes | §G |
 | `force_stop_package` kills every process under the install root | Three other live sessions destroyed mid-task | §G |
+| `UpdateManager` constructed merely to read the installed version issues a **network request** | A network call on the stdio startup path. `VelopackLocator` reads local metadata only | §G |
+| `NotInstalledException` is thrown by every Velopack call under `dotnet run` and any test host | Not an error — the normal case. `Debugger.IsAttached` does not detect a test runner, so an ungated self-restart relaunches out of the suite | §G |
+| `ApplyUpdatesAndRestart(null)` restarts without a package by undocumented fall-through | Works today, breaks silently on any Velopack refactor. Use `UpdateExe.Start(waitPid)` | §G |
+| `VelopackApp.Build()` takes a **separate** logger registration from `UpdateManager` | Installer, first-run and post-restart hooks log nothing — the path that runs when something has already gone wrong | §G |
+| Spawning the replacement before exit, or releasing the lock before spawning | Both race the §D directory-keyed lock. `Update.exe` outlives the process specifically to close this | §G, §D |
+| A single download timeout | Aborts a healthy slow link or hangs forever on a stalled one. Needs absolute + stall + lifetime, and the download must run off the message loop | §G |
 | Velopack prunes `packages\` to the current full `.nupkg`; deltas are forward-only | Every rollback is a full ~105 MB download unless you archive packages yourself | §G |
+| `AllowVersionDowngrade` off, **or** a strictly-increasing version rule in the release script | Rollback fails at one end or the other. Both halves must agree; UCC has the mismatch today | §G |
 | `current\` is wholly replaced on update | All state must resolve from `VelopackLocator.Current.RootAppDir` | §G |
+| `AppContext.BaseDirectory` resolves *inside* `current\` | Reads as "next to the binary". Logs and caches written there are wiped by every update, and any retention policy is silently reset | §G |
+| Update state persisted alongside the binary | Desyncs across exit-and-relaunch. Derive it from the installed version instead | §G |
 | The swap holds old + new `current\` simultaneously | Budget ~600–700 MB transient disk, plus full re-extraction of ~380 MB per update | — |
+| Velopack's Rust `Setup.exe`/`Update.exe` carry their **own** Windows floor, separate from .NET's | Can fail before the managed app exists. `--runtime win7` does not help if the installer binary cannot run | §G |
 | `vpk` rejects 4-part version numbers | Semver2 three-part only — a build-pipeline failure, not a runtime one | — |
+| Delta generation is assumed, not verified | UCC has shipped Velopack for multiple releases and **never produced a delta package**. Delta granularity is why §G chose Velopack | §G |
 | Every unsigned `Setup.exe` is a new file to SmartScreen | Lands precisely on colleague onboarding. Azure Artifact Signing ≈ $10/mo buys instant reputation | — |
 | MSIX cannot re-register while a package process is running | Disqualifying for a long-lived child. Two production AI tools hit this in 2026 | §G |
 
@@ -619,7 +749,7 @@ Feasibility research completed 2026-08-13 across five streams: MCP SDK capabilit
 
 The three [remaining open items](#still-open) — instance teardown policy, default capabilities, and how far to curate the tool surface — are implementation-shaping rather than architecture-shaping. They can be closed during the build.
 
-One verification task, not a decision: **confirm `ModelContextProtocol` 2.2.0 is NativeAOT-compatible** before committing to single-file AOT. The `JsonElement` passthrough at the proxy's core is AOT-friendly; the SDK's internals are unaudited. The fallback — self-contained trimmed, ~70 MB — is noise against ~806 MB of payload.
+One verification task, not a decision: **confirm the MCP SDK is NativeAOT-compatible in our usage** before committing to single-file AOT. Partially discharged on 2026-08-14 — the SDK declares `IsAotCompatible=true` on every non-`netstandard2.0` target, and the `JsonElement` passthrough at the proxy's core is AOT-friendly — but a declaration is not a publish-and-run. The fallback, self-contained trimmed at ~70 MB, is noise against ~806 MB of payload.
 
 **This document is a specification, not a plan of work.** It states what to build and what is known to go wrong. The build happens in this repository, from here. Work items — settled in intent, not yet done — live in [`TODO.md`](TODO.md); open design questions and hazards stay here.
 
