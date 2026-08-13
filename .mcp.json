@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "nuget": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "dnx", "NuGet.Mcp.Server",
+        "--source", "https://api.nuget.org/v3/index.json",
+        "--yes"
+      ]
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/readonly",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_MCP_TOKEN}",
+        "X-MCP-Toolsets": "context,repos,issues,pull_requests,actions,dependabot"
+      }
+    }
+  }
+}
