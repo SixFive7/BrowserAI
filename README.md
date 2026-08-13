@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+
 # BrowserAI
 
 A self-contained, system-installed MCP server that fronts a **pinned** `@playwright/mcp` runtime and exposes browser automation to AI agents through a small, opinionated, centrally-updatable surface.
@@ -281,7 +284,7 @@ Verified 2026-08-13. Versions carry the same provenance convention as `playwrigh
 | Node runtime | **v24.19.0 LTS**, `node.exe` only | v26 is Current, not LTS, and its `node.exe` is 10 MB larger. |
 | Job objects | Hand-rolled `[LibraryImport]` | No credible NuGet wrapper exists — the candidates have <6K downloads and the newest was published in 2017. `dotnet/runtime` [#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in support and was closed as not planned. ~60 lines. `Microsoft.Windows.CsWin32` is the reasonable alternative once a seventh Win32 API is needed. |
 | Parent PID | `NtQueryInformationProcess` | ~0.77 µs/call vs ~3.3 ms for `Process.GetProcessById` and milliseconds for WMI. This is what `dotnet/runtime` itself uses. |
-| Tests | xUnit **v3 3.2.2** | Matches the SDK's own suite, so `ClientServerTestBase` and `tests/Common/Utils/*` vendor in unmodified (~300 lines, MIT). |
+| Tests | xUnit **v3 3.2.2** | Matches the SDK's own suite, so `ClientServerTestBase` and `tests/Common/Utils/*` vendor in unmodified (~300 lines, **Apache-2.0** — the SDK is mid-transition from MIT; keep the upstream file headers). |
 | Snapshots | `Verify.XunitV3` **31.28.0** | Not `Verify.Xunit` — that ID targets xUnit v2. |
 | Assertions | Built-in `Assert` | The SDK uses no assertion library. **Avoid FluentAssertions** — v8+ is commercial at $129.95/seat. `Shouldly` 4.3.0 (BSD-3) or `AwesomeAssertions` 9.5.0 (Apache-2.0) if a fluent style is wanted. |
 | External smoke | `@modelcontextprotocol/inspector` **2.2.0** | Language-independent CI check. Exit code **5** means the tool reported `isError` — the signal `claude mcp` does not give you. |
@@ -457,6 +460,16 @@ Two things follow, and they are design obligations rather than caveats:
 
 **On one child per handle.** Research verified a single node process *can* serve several configurations — two servers with correctly divergent surfaces (42 vs 59 tools), no module-global browser state, browsers created lazily on first tool call. That path is rejected not on capability but on scope: it is reachable only through the programmatic `createConnection` API, which means writing a JS shim and moving toward the boundary [Scope](#scope-proxy-not-implementation) forbids. Spawning `cli.js` per handle keeps the proxy a proxy.
 
+### Settled 2026-08-14
+
+| Decision | Outcome |
+|---|---|
+| **License** | **Source-available**, under a bespoke five-year variant of the Functional Source License 1.1 (MIT Future License). Fixed before any code exists, and it constrains dependency selection from here. See [License](#license). |
+| **Repository visibility** | **Private for now.** Source-available is the licensing posture, not a commitment to publish. Opening the repository is a separate decision and has not been made. |
+| **Third-party payload** | Keeps its own terms. Bundling creates redistribution obligations that bite at first installer handoff *regardless* of which license BrowserAI itself carries — enumerated under [Third-party components](#third-party-components). |
+
+**Why not permissive.** Apache-2.0 was the runner-up and is the smoothest technical fit: it is what `@playwright/mcp` and the C# SDK already carry, and its §4(b) change-statement requirement is real protection for something distributed as a binary installer nobody reads the source of. It was rejected only because it gives the commercial market away outright. AGPL-3.0 was considered and rejected on the merits — BrowserAI is stdio-only, one machine, one user, **no processes and no ports**, so §13's network-interaction clause could never fire and the license would be inert boilerplate.
+
 ### Still open
 
 1. **What ends an instance?** Explicit teardown tool, idle timeout, stdin EOF, or all three — and what happens to a handle whose child died underneath it. Affects §D locking directly: a lock held by a dead instance is the exact failure the current launcher needed a signature heuristic to survive.
@@ -577,7 +590,7 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | The official MCP conformance suite is **HTTP-only** (`--url`) | Not directly usable against a stdio server. Needs a test-only listener or a ~50-line bridge | §testing |
 | Inspector CLI cannot spawn `.cmd` shims on Windows | Same root cause as #58510. Address `cli.js` with an absolute path | §testing |
 | Real screenshots are not byte-stable across runs | Fidelity assertions need a canned blob from the fake child, not a live capture | §testing |
-| The SDK's test fixtures are **not published** to NuGet | Vendor ~300 lines from `tests/Common/Utils/` + `ClientServerTestBase.cs` (MIT) and record the upstream versions — they will drift | §stack |
+| The SDK's test fixtures are **not published** to NuGet | Vendor ~300 lines from `tests/Common/Utils/` + `ClientServerTestBase.cs` (**Apache-2.0**, keep the upstream headers) and record the upstream versions — they will drift | §stack |
 
 ---
 
@@ -611,3 +624,32 @@ One verification task, not a decision: **confirm `ModelContextProtocol` 2.2.0 is
 **This document is a specification, not a plan of work.** It states what to build and what is known to go wrong. The build happens in this repository, from here.
 
 This document is the charter and is expected to be revised as the build proceeds. Carry the provenance convention with it — a bare "Default: X" claim cannot tell you when it was last true.
+
+---
+
+## License
+
+BrowserAI is **source-available** under a **bespoke variant of the Functional Source License 1.1 (MIT Future License)**, modified so the Change Date is the **fifth** anniversary of each release rather than the canonical second. On that date the release additionally becomes available under the **MIT License**. In spirit: read it, run it, modify it, deploy it inside your organisation — but do not ship a commercial product or service that competes with it, for five years, after which it becomes MIT.
+
+This is **not** the canonical FSL and must not be referred to by, or distributed under, the SPDX identifier `FSL-1.1-MIT`. Where an SPDX expression is required, use `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr`. The authoritative terms are in [`LICENSE`](LICENSE) and prevail over this summary.
+
+Copyright 2026 Jori Huisman.
+
+Source files carry the two-line header used at the top of this document. Use the `LicenseRef-` form — never the bare `FSL-1.1-MIT` identifier, which this license forbids.
+
+### Third-party components
+
+The license above covers **BrowserAI's own code and this document**. It does not cover the bundled payload, which keeps its own terms. Shipping that payload creates obligations that attach at first installer handoff, independent of BrowserAI's own license. Verified 2026-08-14 against the versions pinned in [§A](#a-ship-and-own-the-runtime):
+
+| Component | Terms | Obligation on redistribution |
+|---|---|---|
+| `@playwright/mcp`, `playwright-core` 0.0.79 | Apache-2.0 | Keeping the vendored `node_modules` tree intact ships the package's `LICENSE` and satisfies §4. Upstream publishes no `NOTICE` file, so §4(d) has nothing to propagate. [Scope](#scope-proxy-not-implementation) forbids modification, so §4(b) is clean by construction. |
+| `ModelContextProtocol` 2.2.0 | Apache-2.0 | Mid-transition from MIT; unrelicensed contributions remain MIT. Vendored fixture files keep their upstream headers. |
+| Velopack 1.2.0 | MIT | Notice. |
+| Node.js v24 | MIT, plus aggregate terms for OpenSSL, ICU, V8, zlib, c-ares | **Ship Node's full `LICENSE`.** "A single `node.exe`, nothing else" drops it. Not optional. |
+| `chromium-headless-shell` 1237 | BSD-3-Clause + 40,178-line credits file | Ship `LICENSE.headless_shell` and the credits file unchanged. Binary is unbranded. |
+| `ffmpeg` 1011 | LGPL-2.1 | `COPYING.LGPLv2.1` already ships in the directory. Identify the version and offer corresponding source. Spawned as an unmodified separate executable by `playwright-core`, so §6's relink requirement does not bite and it does not reach BrowserAI's own code. |
+| `winldd` 1007 | **no license file shipped** | Source one from `microsoft/playwright` before redistributing. |
+| **full `chromium` 1237** | **Google Chrome for Testing — Google-branded, no OSS license file anywhere in the tree** | Not an open-source question. `chrome.exe` reports CompanyName "Google LLC" and "Copyright 2026 Google LLC. All rights reserved."; its `ABOUT` points at Google's Chrome Terms of Service. Redistributing it inside a third-party installer needs a decision taken against those terms. **Unresolved.** |
+
+Playwright is a trademark of Microsoft Corporation. Chrome and Chromium are trademarks of Google LLC. BrowserAI is not affiliated with, endorsed by, or sponsored by either. Apache-2.0 §6 grants no trademark rights, and the inherited `browser_*` tool names surface upstream branding directly in BrowserAI's own API — ship a short disclaimer in the installed artifact.

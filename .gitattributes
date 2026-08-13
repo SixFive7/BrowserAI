@@ -1,0 +1,59 @@
+###############################################################################
+# Line-ending & attribute policy. The baseline below MUST stay the first rule.
+# LF in history and working tree, every OS. text=auto auto-exempts binaries.
+###############################################################################
+* text=auto eol=lf
+
+# Windows batch files — keep CRLF (cheap insurance for older cmd.exe hosts).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Explicit text intent.
+*.cs      text diff=csharp
+*.csproj  text
+*.slnx    text
+*.props   text
+*.targets text
+*.json    text
+*.yml     text
+*.yaml    text
+*.ps1     text
+*.md      text
+
+# Binary — never normalize, never diff.
+*.exe    binary
+*.dll    binary
+*.pdb    binary
+*.lib    binary
+*.obj    binary
+*.so     binary
+*.node   binary
+*.msi    binary
+*.nupkg  binary
+*.zip    binary
+*.7z     binary
+*.gz     binary
+*.tar    binary
+*.pak    binary
+*.bin    binary
+*.dat    binary
+*.pfx    binary
+*.p12    binary
+*.snk    binary
+*.cer    binary
+*.crt    binary
+*.key    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+*.mp4    binary
+*.webm   binary
+*.pdf    binary
+*.zst    binary
