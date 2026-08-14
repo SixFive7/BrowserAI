@@ -230,14 +230,11 @@ the next session starts from them, not from scratch.**
       directories need a pointer list (a list of paths, holding no state, is not the
       registry that was dropped).
 
-- [ ] **Do the four named modes survive, and in what form?** With `--isolated`
-      dropped, `headless` / `interactive` / `tracing` / `persistent` are exactly four
-      of the eight combinations of three orthogonal switches — headed?, storage?,
-      tracing? Options: keep four named modes; keep three and make tracing a
-      modifier; or expose the switches directly. Note the earlier forgeability
-      argument is weaker than stated — flags bound at `init` and carried by the
-      handle are equally unforgeable. The real difference is the size of the
-      classification matrix and whether a name carries intent.
+- [x] **The four named modes become three plus a modifier.** ✅ Settled and encoded
+      2026-08-15 as [Three modes](README.md#three-modes-and-tracing-as-a-modifier),
+      with the eight-combination table, the reason rows 3–4 stay closed, and
+      discoverability as a hard requirement across four model-facing channels
+      generated from one table.
 
 - [x] **"Reap" was the wrong word.** ✅ Encoded 2026-08-15 in §E. Confirmed by
       measurement — 16 runs, 106 processes, 0 survivors — so a dead BrowserAI leaves

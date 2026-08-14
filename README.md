@@ -226,6 +226,36 @@ The label exists because `checkout-flow-bug\` is navigable and `2026-08-14T04-11
 
 **Check free disk space at `init`, and only with an O(1) query.** First-run browser provisioning peaks near 0.9 GB and a session then grows unbounded. A refusal at `init` that names the number is recoverable in one turn; a failure partway through a 323 MB download is the `spawn EFTYPE` shape — success-shaped, stderr empty, discovered at first navigation. **This must be a volume free-space query, never a directory walk**: `init` sits on the hot path of every session, and a check that scans the output tree would make the fix slower than the failure it prevents.
 
+#### Three modes, and tracing as a modifier
+
+The legacy setup had four modes — `headless`, `interactive`, `tracing`, `persistent`. With `--isolated` dropped they are exactly four of the eight combinations of three independent switches: **headed?**, **storage?**, **tracing?**
+
+| # | headed | storage | tracing | Legacy name | |
+|---|:---:|:---:|:---:|---|---|
+| 1 | ✗ | ✗ | ✗ | `headless` | the workhorse |
+| 2 | ✗ | ✗ | ✓ | — | gap |
+| 3 | ✗ | ✓ | ✗ | — | credentialed and invisible |
+| 4 | ✗ | ✓ | ✓ | — | as 3 |
+| 5 | ✓ | ✗ | ✗ | `interactive` | a human types credentials the agent must never capture |
+| 6 | ✓ | ✗ | ✓ | `tracing` | interactive, plus a trace |
+| 7 | ✓ | ✓ | ✗ | `persistent` | logged-in agent work |
+| 8 | ✓ | ✓ | ✓ | — | gap |
+
+**Settled: three modes — `headless`, `interactive`, `persistent` — with `tracing` a boolean on any of them.** `tracing` was never a mode; row 6 is `interactive` with a flag, which is why it was the odd one out. Promoting it to a modifier *removes* a mode while *adding* capability: rows 2 and 8 arrive for free, the classification matrix shrinks from four rows to three, and rows 3–4 stay closed.
+
+Rows 3 and 4 are deliberately not offered. They would be genuinely useful — routine work in a logged-in profile has no need to put a window on screen — but they are the only combination that grants full credential access with no visible signal that anything is driving the session. A window is not a security control; it is the sole cue a human gets. Opening that should be a decision taken on its own merits, never a side effect of making the switches orthogonal.
+
+> **The mode is bound at `init` and carried by the handle**, exactly like the browser choice. `resume` reads it from `lock.json` and never accepts one, so a session cannot change what it is. Note the older argument in this section — that a named mode is harder to forge than a flag — is **weaker than it reads**: a flag bound at `init` and carried by the handle is equally unforgeable. The real reasons to keep names are the size of the classification matrix and the fact that a name carries intent to whoever reads it later.
+
+**Discoverability is a requirement, not a nicety.** A mode nobody knows about is a mode nobody picks correctly, and the failure is silent — an agent that does not know `persistent` exists just fails to log in and reports the site as broken. All three channels below carry part of it:
+
+- **Server `instructions`** — one compact line naming the three modes and the one-sentence rule for choosing. This is the only channel that reaches the model *before* it calls anything, so it must contain the choice, not a pointer to it. Costs perhaps 150 of the 2 KB.
+- **`init`'s description** — the full table: what each mode grants, what it refuses, that `tracing` is a boolean orthogonal to all three, and that the choice is permanent for the directory's life.
+- **`resume`'s description and result** — the recorded mode, played back, alongside the recorded purpose. An agent meeting an existing directory learns what it is without guessing.
+- **Refusal text is the fourth channel and the most effective one.** A storage tool called on a `headless` handle must not fail with "not permitted"; it must name the mode that would permit it and what to do — a mode error is a teaching moment arriving exactly when the model is ready to learn. This channel has no budget, so it carries the detail the capped ones cannot.
+
+Pin all of it with tests, as `SixFive7/OutlookAI` does for its instructions string: the mode list in `instructions`, in `init`'s description, and in the refusal text must all be generated from **one** table, so a fourth mode cannot ever be added in one place and missed in the other three.
+
 #### Where guidance lives: three channels, two of them capped
 
 An MCP server can address the model in three places, and they are seen at different times. Putting the wrong content in the wrong one is why agents forget handles.
@@ -254,7 +284,7 @@ It does not close the gap entirely: a connection holding both an interactive and
 - **Missing, unknown and expired handles need three distinct, LLM-readable errors.** That text is read by a model deciding what to do next, not by a human tailing a console — the same principle as the current launcher's browser-preflight message, which exists precisely because "the server is stuck" was the wrong conclusion to invite.
 - **The first call after a cold start will forget the handle.** Design for it: the error must name `init`, state what it needs, and be recoverable in one turn.
 - **Instance lifetime is BrowserAI's to define.** At minimum: explicit teardown, an idle timeout, and **stdin EOF as the backstop** that reaps everything — EOF fires instantly when the parent holding the pipe is `TerminateProcess`d (measured), and the SDK already treats it as shutdown.
-- **N children per process.** One BrowserAI now supervises several `node` children, each with its own config, stderr stream and directory locks. One job object should contain them all; stderr must be demultiplexed per handle or diagnostics become unreadable at exactly the moment they matter.
+- **N children per process.** One BrowserAI now supervises several `node` children, each with its own config, stderr stream and directory locks. **One job object per child, never one shared job** — a shared job fuses every instance's tree together, so tearing down one handle would kill them all, and assigning BrowserAI itself would make it a casualty too. See [the job object contract](#zero-process-leakage-the-job-object-contract). Stderr must be demultiplexed per handle or diagnostics become unreadable at exactly the moment they matter.
 - **`browser_get_config` becomes per-handle** — and is the natural per-instance drift check.
 
 ### D. Locking and single-instance
@@ -598,6 +628,8 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - artifact prefix sort across all nine generator prefixes; a hand-named file is never swept into a machine folder
 - tool filter / rename / re-describe, **order-stable** (the spec SHOULDs deterministic ordering for prompt-cache hit rates)
 - **session-type enforcement, deny-by-default**, exercised against every tool in the surface
+- **the mode list is generated from one table** and appears identically in the server `instructions`, in `init`'s description, in `resume`'s playback and in the refusal text — a mode added in one place and missed in another fails the build
+- **a mode refusal names the mode that would permit the call**, not merely that the call was refused
 - handle lifecycle: missing, unknown and expired produce **three distinct LLM-readable errors**, each naming `init` and recoverable in one turn
 - lock-name derivation: `GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → `Global\BrowserAI-{hash[..32]}`
 - PID-recycle logic keyed on `(pid, creationFileTime)`, not a bare PID
@@ -825,6 +857,7 @@ Two things follow, and they are design obligations rather than caveats:
 | **`--isolated`** | **Never set, in any mode.** It puts the profile in a temp directory deleted on close. Three of the four legacy modes set it; BrowserAI gives every mode a real directory and deletes nothing automatically. |
 | **`--output-max-size`** | **Never set, and `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE` stripped from the child's environment.** It is a recursive oldest-first deleter pointed at directories agents choose. Retention is the calling agent's decision, supported by an explicit cleanup tool, not by an eviction threshold. |
 | **Console level** | **Exposed on `init`.** The upstream default of `info` silently drops `debug` messages; which trade-off is right is per-session, not global. |
+| **Session modes** | **Three — `headless`, `interactive`, `persistent` — with `tracing` a boolean on any of them.** `tracing` was never a mode; it is `interactive` plus a flag. Promoting it removes a mode *and* adds capability. Headless-with-storage is deliberately not offered: it is the one combination granting full credential access with no visible signal, and that should be its own decision rather than a side effect. Mode is bound at `init`, recorded in `lock.json`, and read back by `resume`. Discoverability is a hard requirement across all four model-facing channels, generated from one table and pinned by tests. See [Three modes](#three-modes-and-tracing-as-a-modifier). |
 
 ### Still open
 
