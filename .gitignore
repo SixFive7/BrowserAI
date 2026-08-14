@@ -477,3 +477,23 @@ trace.zip
 # approved snapshots are committed.
 TestResults/
 *.trx
+
+# --- Agent scratch space -----------------------------------------------------
+# CLAUDE.md, "Scratch work": agent-produced temporary files go here. In practice
+# that means multi-gigabyte browser trees and probe output, so leaving it
+# untracked rather than ignored puts the whole lot one `git add -A` away from
+# history. Deliberately not slash-anchored, unlike the paths above -- a leading
+# dot already rules out the source-folder collision this file's header warns
+# about, and every other repo in the estate writes it bare.
+.work/
+
+# --- Claude Code local state -------------------------------------------------
+# Deny-by-default, then re-admit the two shared files. Ignoring only
+# settings.local.json is the older habit here and it leaks: runtime state
+# (session locks, MCP approval caches) is not covered by that one name and
+# reaches a commit. `hooks/` must be negated as a directory -- Git does not
+# descend into an excluded one, so a file inside cannot be negated back on
+# its own.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
