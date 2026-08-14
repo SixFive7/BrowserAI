@@ -161,6 +161,12 @@ Shipping the browser deletes an entire subsystem from the current design: the pr
 >
 > Omit `browserName` and the entire shipping-Chromium premise is silently dead code. This is the same failure shape as every bug in the table above.
 
+> ### The sandbox is off, and the config key that should enable it does nothing
+>
+> Measured 2026-08-15: with `"launchOptions": { "chromiumSandbox": true }` set explicitly in a config file, the browser and **every** child still ran with `--no-sandbox`. Only the CLI flag `--sandbox` actually enabled it. `validateBrowserConfig` intends `chromiumSandbox = true` on non-Linux, so this is upstream behaviour contradicting upstream intent.
+>
+> Two consequences. **BrowserAI must pass `--sandbox` on the command line, never the config key** — and must assert the absence of `--no-sandbox` from the child's resolved browser command line, because the key reads fine and has no effect. **And today's setup runs Chromium unsandboxed**, which is a security posture nobody chose. This is [§why-3](#3-two-failure-classes-exist-that-no-configuration-can-fix) with a live instance attached: a config key that parses, validates, and is discarded. Raise it upstream.
+
 `PLAYWRIGHT_BROWSERS_PATH` must be **absolute** — a relative value resolves against `INIT_CWD` (inherited from any npm ancestor) before `cwd`. The expected layout, verified by execution:
 
 ```
@@ -259,6 +265,19 @@ Keyed on the **resolved absolute directory**, not on a repository name. Must han
 
 Prefer a `FileStream` with `FileShare.None` for the sibling lockfile over the current signature-heuristic approach: the OS releases the handle on process death, so "stale" and "alive" become distinguishable without guessing. Keep the mutex as well — it gives the fast no-IO path.
 
+#### Never by image name
+
+**Killing a user's own `chrome.exe` or `firefox.exe` must be impossible by construction, not merely avoided.** This is a structural rule, not a review item, because a review already passed on code that would have violated it: our own Chromium probes counted and killed by image name — harmless for Chromium on that machine, and it would have killed ~40 personal `firefox.exe` processes if adapted naively.
+
+The invariant: **BrowserAI can only terminate a process that belongs to a job object it created, or whose identity it verified against a path it owns.** Two mechanisms, no third:
+
+- **The job object** covers everything spawned in this process's lifetime. Closing the handle terminates exactly its members — no name, no PID list, no filter, so there is nothing to get wrong. A user's browser cannot be a member; it was never assigned.
+- **Path-keyed identification** covers anything that outlived us. The match is on *our own* session directory, which by construction cannot name a personal profile in `%LOCALAPPDATA%\Google\Chrome\User Data`.
+
+Forbidden outright, and enforceable as an analyzer at error severity: `Process.GetProcessesByName`, `taskkill /IM`, and any WMI or toolhelp query filtered by executable name. Assert zero occurrences in the tree.
+
+> ⚠️ `--user-data-dir` alone is **not** an ownership signal. Measured on the maintainer's machine 2026-08-15: Discord, VS Code, Signal, Teams, WhatsApp, Steam, ChatGPT and four `msedgewebview2.exe` processes all pass it. Only an exact match against a directory BrowserAI created is safe.
+
 ### E. Lifecycle and observability
 
 Non-negotiable, because every bug this month was a visibility failure. The .NET MCP SDK already implements roughly half of this — `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type that makes bug #2 in the table above structurally impossible.
@@ -267,10 +286,46 @@ Non-negotiable, because every bug this month was a visibility failure. The .NET 
 - **Record the child's real exit code and cache it as an `int` immediately.** .NET is *worse* than PowerShell here, not better: `Process.ExitCode` **throws** after `Dispose()`, and `Process.GetProcessById(pid).ExitCode` **always** throws. Microsoft's own SDK carries a `beforeDispose` callback commented "to read ExitCode before Dispose() invalidates it" — they hit this too.
 - **Use `await WaitForExitAsync(ct)`**, never `WaitForExit(int)`. Only the former drains the async readers.
 - **Distinguish error-shaped stderr from benign output.** Port the two regexes verbatim; a healthy start prints `Session: <path>` every time.
-- **Kill the descendant tree with a Windows Job Object**, not `Process.Kill(entireProcessTree: true)`. The latter requires BrowserAI to be alive and running code — which is exactly the case that fails. A job object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` survives `TerminateProcess` of BrowserAI itself (measured against a 3-deep tree, including nested inside an existing job). **Assign BrowserAI itself to the job before spawning anything**, so descendants inherit membership at `CreateProcess` time and the assign-after-spawn race disappears. The job handle must be non-inheritable and unnamed.
-- **Reap orphans keyed on `(pid, creationFileTime)`** — a bare PID identifies nothing once PIDs recycle. Better still, hold an `OpenProcess` handle on the parent: Windows will not recycle a PID while a handle is open, and the handle is signalled on exit, so liveness becomes event-driven instead of a poll loop.
+- **Kill the descendant tree with a Windows Job Object**, not `Process.Kill(entireProcessTree: true)`. The latter requires BrowserAI to be alive and running code — which is exactly the case that fails. The full contract, measured end to end, is [below](#zero-process-leakage-the-job-object-contract).
+- **Identify a process by `(pid, creationFileTime)`** — never by a bare PID, which identifies nothing once PIDs recycle, and never by image name (see [§D](#never-by-image-name)). Better still, hold an `OpenProcess` handle: Windows will not recycle a PID while a handle is open, and the handle is signalled on exit, so liveness becomes event-driven instead of a poll loop.
+- **There are no orphaned processes to collect after a crash.** The job object takes the whole tree with it, so a dead BrowserAI leaves no running children — an earlier draft of this document said the opposite. What *can* survive is a stale lockfile, and that is a file problem solved by `FileShare.None` plus the holder record, not a process problem.
 
 **stdout is the protocol channel and it is wrong by default.** Measured: `Console.Out` writes CP437, not UTF-8 (`é` → `0x82`); `Console.InputEncoding` also defaults to CP437; any `TextWriter` emits CRLF; and a hand-rolled `new StreamWriter(stream, Encoding.UTF8)` emits a BOM. Own the raw streams, never touch `Console.Out`, and let no code anywhere in the process call `Console.WriteLine` — including inside a `catch`. This should be a reviewed invariant owned by one wrapper type, not a convention.
+
+#### Zero process leakage: the job object contract
+
+Verified end to end 2026-08-15 against real Chromium and Firefox trees: **16 runs, 106 spawned processes, 0 escapees, 0 survivors.** The measurement harness lives at `.work/jobtest/` and is the working prototype of the acceptance test below.
+
+**The rule, and why the intuition runs backwards.** On Windows, job membership is inherited *automatically* by every descendant created with `CreateProcess`. A component that spawns children "the normal way" is precisely the case that works. Escaping requires an explicit opt-in **that our job must grant** — and when a process requests `CREATE_BREAKAWAY_FROM_JOB` from a job that does not permit it, `CreateProcess` **fails with `ERROR_ACCESS_DENIED` rather than escaping**. A job that grants no breakaway flags therefore converts every escape attempt into a launch failure. This is the inverse of Linux process-group semantics; do not reason about it by analogy, and do not assume a component that "just spawns normally" is a hole.
+
+Nested jobs make the chain safer, not weaker. Per [Nested Jobs](https://learn.microsoft.com/windows/win32/procthread/nested-jobs), a breakaway "moves up the hierarchy until it reaches a job that does not permit breakaway" — so a nested job that permits *silent* breakaway still cannot launder a process out of ours. That matters because the production chain already contains one: **libuv creates a global job with `JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK`** and assigns every non-detached child to it, and Playwright spawns the browser with `detached: false` on Windows (`coreBundle.js`). Firefox's launcher process stacks a second such job. Containment held through both — the strongest available confirmation, because that is the exact configuration that would leak if our job were misconfigured.
+
+Neither browser fights us. Every Chromium caller of `CREATE_BREAKAWAY_FROM_JOB` is installer, updater or remote-desktop code; no renderer, GPU, utility, network-service or crashpad path requests it. Firefox's `NeedToBreakAwayFromJob()` returns false unless the job carries **both** `KILL_ON_JOB_CLOSE` and `BREAKAWAY_OK` — ours carries only the first, so Firefox checks and declines.
+
+**Must do:**
+
+1. Create the job with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` via `SetInformationJobObject(JobObjectExtendedLimitInformation)`, **and nothing else**.
+2. **Create the job handle non-inheritable** (`NULL` security attributes) and never duplicate it into the child. Measured fatal otherwise: with an inherited handle, BrowserAI's death no longer closes the *last* handle, `KILL_ON_JOB_CLOSE` never fires, and **every child survived**. Redirecting stdio forces `bInheritHandles=TRUE`, so this is one flag away at all times.
+3. **Assign at creation** with `PROC_THREAD_ATTRIBUTE_JOB_LIST` + `EXTENDED_STARTUPINFO_PRESENT` on `CreateProcessW`. Membership becomes part of process creation, so the race window does not exist rather than being closed after the fact. Windows 10+, which matches the floor. Preferred over `CREATE_SUSPENDED` → assign → `ResumeThread`, which also works but leaks a suspended process if BrowserAI dies mid-sequence.
+4. **One job per instance, created fresh at each spawn.** Never assign BrowserAI itself to a job: with N instances in one process that fuses every tree together and makes BrowserAI a casualty of any single teardown.
+5. **Check every return value and fail loudly** — `CreateJobObject`, `SetInformationJobObject`, `CreateProcessW`, and `AssignProcessToJobObject` if ever used as a fallback. libuv swallows `ERROR_ACCESS_DENIED` from this call; BrowserAI must not. A swallowed failure here is exactly the reported-healthy-while-broken class this project exists to eliminate.
+6. **Hold the job handle for the instance's whole life** and let process death close it. Never `CloseHandle` it early.
+
+**Must never do:**
+
+1. **Never `JOB_OBJECT_LIMIT_BREAKAWAY_OK` or `JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK`.** Either turns the guarantee into a suggestion, and `BREAKAWAY_OK` specifically flips Firefox's `NeedToBreakAwayFromJob()` to true — actively arming an escape that is otherwise disarmed.
+2. **Never `JobObjectBasicUIRestrictions`.** Jobs nest only if neither sets UI limits; setting them can stop Chromium's sandbox job from nesting inside ours.
+3. **Never `Process.Start` followed by `AssignProcessToJobObject`.** Measured: 2 escapees, because the child spawns grandchildren before the assign lands. `.NET` cannot express the correct pattern — `ProcessStartInfo` has no creation-flags surface and .NET exposes no job-object API — so a P/Invoke is mandatory, not a preference.
+4. **Never `Process.Kill(entireProcessTree: true)`.** It walks parent-child links, which are re-parentable and PID-reusable. The job is neither.
+5. **Never rely on libuv's job as the containment mechanism.** It is a happy accident of Playwright's `detached: false` on Windows and could change in any release — exactly the floating-dependency risk the test suite exists to catch. Useful as a second, independent kill path; never as the first.
+
+**Expected side effect, not a defect.** Firefox's background tasks (`BackgroundTasksRunner`) and its crash reporter request breakaway, so inside our job their `CreateProcess` fails with `ERROR_ACCESS_DENIED`. That is the correct trade — a failed helper launch beats an escaped `firefox.exe --backgroundtask`. If Firefox ever logs a failed background task, this is why, and it is not a bug to fix.
+
+**NativeAOT.** Use `[LibraryImport]`, not `DllImport` — the latter relies on runtime IL-stub generation. `LibraryImport` does not support `StringBuilder`, so pass the command line as a writable `char[]`/`Span<char>`: `CreateProcessW` mutates the buffer, so a `string` literal is not valid. Keep `JOBOBJECT_EXTENDED_LIMIT_INFORMATION` and `STARTUPINFOEX` blittable and consider `DisableRuntimeMarshalling`. Nothing here touches AOT's limitation list — no dynamic loading, no `Reflection.Emit`, no built-in COM.
+
+**BrowserAI running inside someone else's job is safe**, measured in all three ancestor configurations: an outer job with `KILL_ON_JOB_CLOSE` only (a CI runner), one that also permits breakaway, and one with `SILENT_BREAKAWAY_OK` — which is the realistic case, since any MCP client that spawns BrowserAI through Node `child_process` puts us in libuv's job.
+
+**The acceptance test.** Launch the child, enumerate via `QueryInformationJobObject(JobObjectBasicProcessIdList)`, assert `IsProcessInJob` is true for every PID in the descendant tree, hard-kill the launcher from outside, assert every PID is gone and every profile directory can be deleted — a directory that still holds a lock proves an escaped browser. Cross-check the job's PID list against a toolhelp descendant walk seeded from an I/O completion port on the job, so a process whose parent already exited is not missed. **Never match, count or terminate by image name at any step**; act only on PIDs recorded at spawn, validated against recorded creation time.
 
 ### F. Artifact management
 
@@ -547,7 +602,9 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - lock-name derivation: `GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → `Global\BrowserAI-{hash[..32]}`
 - PID-recycle logic keyed on `(pid, creationFileTime)`, not a bare PID
 - config generator and validator
-- environment allowlist: `Clear()` runs first; `INIT_CWD`, `NODE_OPTIONS`, `NODE_PATH`, `DEBUG`, `DEBUG_FILE` stripped; `PLAYWRIGHT_SKIP_BROWSER_GC=1` and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` set; `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` **not** set
+- environment allowlist: `Clear()` runs first; `INIT_CWD`, `NODE_OPTIONS`, `NODE_PATH`, `DEBUG`, `DEBUG_FILE`, **`PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE`** and the four `PLAYWRIGHT_DOWNLOAD_HOST` variants stripped; `PLAYWRIGHT_SKIP_BROWSER_GC=1` and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` set; `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` **not** set; `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY`/`ALL_PROXY`/`NODE_EXTRA_CA_CERTS` passed through
+- **job object construction**, asserted on the flags actually set: `KILL_ON_JOB_CLOSE` present; `BREAKAWAY_OK`, `SILENT_BREAKAWAY_OK` and `JobObjectBasicUIRestrictions` absent; the handle non-inheritable; assignment performed through `PROC_THREAD_ATTRIBUTE_JOB_LIST` rather than after the fact
+- **no process is reachable by name**: zero occurrences of `Process.GetProcessesByName`, `taskkill /IM` or name-filtered WMI in the tree, at analyzer-error severity
 - stdout wrapper: UTF-8, LF, no BOM — and no path in the process can reach `Console.Out`
 - **model-facing text stays inside its budget**: the server `instructions` string and every tool description measured at build time, failing over **2 KB**. Claude Code truncates both silently, so the tail of any guidance that exceeds it does not exist and nothing reports that. Same shape as *an unclassified tool fails the build*; `SixFive7/OutlookAI` already pins its instructions string with a test
 - artifact routing: a `filename` maps to the right typed subfolder, a duplicate name is suffixed rather than overwritten, `..` is refused rather than normalised, and the result carries **both** the absolute and the repository-relative path
@@ -578,7 +635,8 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - **the resolved `executablePath` is *our* Chromium.** A bare navigation assertion is insufficient: verified 2026-08-13, with an **empty** browsers directory `initialize`, `tools/list` *and* `browser_navigate` all succeed via system Chrome
 - **an empty browsers directory must FAIL this layer.** Without this the entire batteries-included premise can be silently dead code with the suite green
 - error-shaped stderr classified correctly against a real start
-- the process tree is reaped after a hard kill of BrowserAI
+- **the browser command line carries `--sandbox` and not `--no-sandbox`** — the config key is silently discarded, so only the resolved command line proves it
+- **zero process leakage after a hard kill.** Enumerate via `QueryInformationJobObject(JobObjectBasicProcessIdList)`, assert `IsProcessInJob` for every PID in the descendant tree, `TerminateProcess` the launcher from outside, then assert every PID is gone **and every profile directory deletes cleanly** — a directory that still holds a lock proves an escaped browser. Cross-check the job's PID list against a toolhelp walk seeded from an I/O completion port on the job, so a process whose parent already exited is not missed. Run it against both browsers: Firefox stacks two `SILENT_BREAKAWAY_OK` jobs between ours and its content processes and is the harder case. A working prototype is at `.work/jobtest/`
 
 **Update** — see the paragraph above: real feed URL, real delta, real N→N+1, plus rollback under `AllowVersionDowngrade`.
 
@@ -753,6 +811,21 @@ Two things follow, and they are design obligations rather than caveats:
 
 **Why not permissive.** Apache-2.0 was the runner-up and is the smoothest technical fit: it is what `@playwright/mcp` and the C# SDK already carry, and its §4(b) change-statement requirement is real protection for something distributed as a binary installer nobody reads the source of. It was rejected only because it gives the commercial market away outright. AGPL-3.0 was considered and rejected on the merits — BrowserAI is stdio-only, one machine, one user, **no processes and no ports**, so §13's network-interaction clause could never fire and the license would be inert boilerplate.
 
+### Settled 2026-08-15
+
+| Decision | Outcome |
+|---|---|
+| **Process containment** | **One job object per instance, `KILL_ON_JOB_CLOSE` and nothing else, assigned at creation via `PROC_THREAD_ATTRIBUTE_JOB_LIST`.** Verified end to end against real Chromium and Firefox trees: 16 runs, 106 processes, **0 escapees, 0 survivors**. The guarantee is conditional on our implementation, not on the browsers — two of the failure modes were proven fatal by measurement. See [the job object contract](#zero-process-leakage-the-job-object-contract). |
+| **Never by image name** | **Structural, not procedural.** BrowserAI can only terminate a process belonging to a job it created, or one identified against a path it owns. `GetProcessesByName`, `taskkill /IM` and name-filtered WMI are forbidden and analyzer-enforced. See [§D](#never-by-image-name). |
+| **Chromium binary** | **Full Chromium in every mode**, headless included; `chrome-headless-shell` is not shipped. It makes the payload ~120 MB *smaller*, gives Chromium's own `lockfile` and `Chrome_MessageWindow` in every mode, and removes a per-mode branch. The shell's only advantage — it cannot be resurrected after a reboot — is worth less than being findable when it leaks, and the sweep it would avoid must exist anyway for the three headed modes. |
+| **Chromium sandbox** | **Passed as the `--sandbox` CLI flag, never the config key**, which is silently discarded. Asserted by a test on the child's resolved browser command line. |
+| **Firefox restart registration** | **Disabled on every launch** via `firefoxUserPrefs: { "toolkit.winRegisterApplicationRestart": false }`. The pref is observed at runtime and calls `UnregisterApplicationRestart`. The only place browser resurrection can be prevented outright rather than cleaned up after. |
+| **Windows `RestartApps`** | **Never touched.** The maintainer's machine has it enabled, which is the direct cause of the resurrection incident, but it is a personal, global, per-user setting. BrowserAI reads nothing and writes nothing there. |
+| **`browser_annotate`** | **`interactive` sessions only.** It opens a dashboard window and blocks until a human finishes drawing; `interactive` is the one mode with a human at the keyboard by design. In `headless` it must be hidden regardless — its window appears even there, breaking the only promise that mode makes. |
+| **`--isolated`** | **Never set, in any mode.** It puts the profile in a temp directory deleted on close. Three of the four legacy modes set it; BrowserAI gives every mode a real directory and deletes nothing automatically. |
+| **`--output-max-size`** | **Never set, and `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE` stripped from the child's environment.** It is a recursive oldest-first deleter pointed at directories agents choose. Retention is the calling agent's decision, supported by an explicit cleanup tool, not by an eviction threshold. |
+| **Console level** | **Exposed on `init`.** The upstream default of `info` silently drops `debug` messages; which trade-off is right is per-session, not global. |
+
 ### Still open
 
 1. **What ends an instance?** Explicit teardown tool, idle timeout, stdin EOF, or all three — and what happens to a handle whose child died underneath it. Affects §D locking directly: a lock held by a dead instance is the exact failure the current launcher needed a signature heuristic to survive.
@@ -843,6 +916,9 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | 40 `PLAYWRIGHT_MCP_*` env vars override the generated config | Silent override of every opinion, including a capability wipe | §trade-offs |
 | `loadConfig` is a bare `JSON.parse` with no schema validation | Unknown or renamed keys are silently discarded | §why-3 |
 | `core-install` is declared in `config.d.ts` but **no tool carries it** in 0.0.79 | A dead capability string; setting it does nothing | — |
+| `chromiumSandbox:true` in a **config file** is discarded; only the `--sandbox` CLI flag works | The browser and every child run `--no-sandbox` while the config says otherwise. Pass the flag, and assert `--no-sandbox` is absent from the child's browser command line | §A |
+| `--output-max-size` evicts files it did not create | Recursively lists the whole output dir, sorts oldest-first and unlinks past the threshold, skipping only the current response's writes. Unset by default and it must stay unset — **also strip `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE`** | §A |
+| `--isolated` puts the profile in a temp dir **deleted on close** | Silent total data loss. Structurally impossible for us — `validateBrowserConfig` throws on `isolated` + `userDataDir` — but three of the four legacy modes set it | §A |
 | Relative `PLAYWRIGHT_BROWSERS_PATH` resolves against `INIT_CWD` before `cwd` | Points at a directory inherited from any npm ancestor | §A |
 | Outer browser dirs use underscores, inner ones dashes | `chromium_headless_shell-1237\chrome-headless-shell-win64\` — a path built consistently is wrong | §A |
 | Playwright writes `DEPENDENCIES_VALIDATED` into the browsers root on first launch | Under `Program Files` that write silently fails and re-runs every launch. Prefer `%LOCALAPPDATA%` or `%ProgramData%` with write ACLs | §A |
@@ -862,7 +938,15 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `WaitForExit(int)` does not drain async readers | Truncated stderr. Only `WaitForExit()` and `WaitForExitAsync` drain | §E |
 | `Console` stdio defaults to CP437 in **both** directions; `TextWriter` adds CRLF; hand-rolled `StreamWriter` adds a BOM | Corrupts JSON-RPC on the first non-ASCII byte | §E |
 | `Process.Kill(entireProcessTree:true)` needs BrowserAI alive and running code | Cannot help when BrowserAI is the thing killed. Job object required | §E |
-| Race between `CreateProcess` and `AssignProcessToJobObject` | A grandchild can spawn outside the job. Self-assign before spawning anything closes it | §E |
+| `Process.Start` then `AssignProcessToJobObject` races the child's own spawns | **Measured: 2 escapees.** .NET cannot express the fix; `PROC_THREAD_ATTRIBUTE_JOB_LIST` via P/Invoke is mandatory | §E |
+| An **inheritable** job handle is inherited by the child | BrowserAI's death no longer closes the last handle, so `KILL_ON_JOB_CLOSE` never fires. **Measured: every child survived.** Redirecting stdio forces `bInheritHandles=TRUE`, so this is always one flag away | §E |
+| `JOB_OBJECT_LIMIT_BREAKAWAY_OK` also **arms** Firefox's escape | `NeedToBreakAwayFromJob()` returns true only when the job carries `KILL_ON_JOB_CLOSE` **and** `BREAKAWAY_OK`. Setting it does not merely permit escape, it causes one | §E |
+| `JobObjectBasicUIRestrictions` blocks job nesting | Can prevent Chromium's sandbox job from nesting inside ours | §E |
+| libuv assigns every non-detached child to its own `SILENT_BREAKAWAY_OK` job | A second kill path exists for free, but it is an accident of Playwright's `detached:false` on Windows. Never depend on it | §E |
+| Firefox background tasks and crash reporter request breakaway | Their `CreateProcess` fails `ERROR_ACCESS_DENIED` inside our job. Correct trade, not a bug — do not "fix" it | §E |
+| Full Chromium calls `RegisterApplicationRestart` unconditionally | Windows relaunches it after a reboot with `--user-data-dir` intact, plus `--restart --restore-last-session`. The only guard upstream is `--browser-test`. **No supported way to disable it** | §E |
+| Firefox registers too, but honours a pref | `toolkit.winRegisterApplicationRestart:false` calls `UnregisterApplicationRestart` at runtime. Pass it via `firefoxUserPrefs` on every launch | §E |
+| `chrome-headless-shell` creates no `Chrome_MessageWindow` and no `lockfile` | The one binary that can leak but cannot be cheaply found. Reason enough to run full Chromium in every mode | §A |
 | `psi.Environment` is pre-populated and assignment **merges** | An allowlist requires `Clear()` first | §trade-offs |
 | `psi.WorkingDirectory` unset passes `null` to `CreateProcess` | Child inherits BrowserAI's cwd — reason 5, verbatim | §trade-offs |
 | `ArgumentList` and `Arguments` are **mutually exclusive** | Setting both is undefined behaviour. Use `ArgumentList` for its quoting rules | — |

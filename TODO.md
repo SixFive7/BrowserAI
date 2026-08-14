@@ -210,34 +210,66 @@ the next session starts from them, not from scratch.**
       but a synchronisation problem. **Do not carry the registry forward by
       inertia** — make it justify itself or drop it.
 
-- [ ] **Label reuse — probably moot.** If the label is the directory, the question
-      cannot arise. Resolve only if labels survive as a separate concept.
+## Open after 2026-08-15
 
-- [ ] **"Reap" was the wrong word, and the correction matters.** An earlier note
-      said the registry gives free crash recovery by reaping orphans. The
-      maintainer correctly pushed back: if BrowserAI died, the job object took its
-      children with it, so **there are no orphaned processes to reap**. What can
-      genuinely be left behind is a **stale lockfile** — and that is a file
-      problem, solved by `FileShare.None` plus the holder record, not by a
-      registry. This weakens the case for the registry further.
+- [ ] **Post-reboot resurrection: the sweep is not sufficient as designed.** The
+      mechanism is now fully understood — full Chromium calls
+      `RegisterApplicationRestart` unconditionally, Windows relaunches it at sign-in
+      with `--user-data-dir` intact, and the maintainer's machine has
+      `RestartApps = 1` with ARSO at its default, so it happens into a locked
+      session before anyone signs in. Detection is solved: an exact-title
+      `FindWindowExW(HWND_MESSAGE, NULL, "Chrome_MessageWindow", <our dir>)` lookup
+      costs ~60 µs and structurally cannot name a foreign profile.
 
-- [ ] **Never kill by image name — reaffirm as a construction-level rule.** The
-      maintainer's position: killing user-space `chrome.exe` / `firefox.exe` that
-      have nothing to do with BrowserAI must be **impossible by construction**, not
-      merely avoided. The charter already says never match processes by image name;
-      this makes it structural. BrowserAI kills only what its own job object owns.
-      A near-miss occurred in our own test scripts: the Chromium probes counted and
-      killed by image name, which was safe for Chromium but would have killed ~40
-      personal `firefox.exe` processes if adapted naively. Tree-walk from the child
-      PID instead.
+      **What is not solved is when the sweep runs.** The maintainer's objection is
+      correct: BrowserAI may not run for weeks, and may never open a given directory
+      again, so a sweep-on-start leaves strays alive indefinitely — which is exactly
+      the incident. Options recorded for decision: sweep-on-start only; sweep-on-start
+      plus a logon scheduled task; or a resident watcher. A logon task needs a way to
+      know where sessions live — the default root covers most, and out-of-root
+      directories need a pointer list (a list of paths, holding no state, is not the
+      registry that was dropped).
 
-- [ ] **Explain `--output-max-size` properly, then decide.** It bounds the
-      **artifact output directory** — screenshots, video, traces, network logs —
-      and evicts *old output files* past the threshold. Verified 2026-08-14: the
-      CLI declares it with a parser and **no default**, so eviction is off unless
-      set. Recommendation stands (never set it; assert it is unset in the
-      real-child contract layer), but the next session should confirm no default is
-      applied during config merge, not just at the CLI declaration.
+- [ ] **Do the four named modes survive, and in what form?** With `--isolated`
+      dropped, `headless` / `interactive` / `tracing` / `persistent` are exactly four
+      of the eight combinations of three orthogonal switches — headed?, storage?,
+      tracing? Options: keep four named modes; keep three and make tracing a
+      modifier; or expose the switches directly. Note the earlier forgeability
+      argument is weaker than stated — flags bound at `init` and carried by the
+      handle are equally unforgeable. The real difference is the size of the
+      classification matrix and whether a name carries intent.
+
+- [x] **"Reap" was the wrong word.** ✅ Encoded 2026-08-15 in §E. Confirmed by
+      measurement — 16 runs, 106 processes, 0 survivors — so a dead BrowserAI leaves
+      no running children at all. Only a stale lockfile survives, which is a file
+      problem. The registry lost its last independent justification here.
+
+- [x] **`winldd`, explained.** ✅ No action required; it is informational. Upstream
+      passes `["chrome-win"]` while Chromium extracts to `chrome-win64`, so the
+      dependency check is a **permanent no-op for Chromium** (and for
+      `chromium-headless-shell`, which extracts to `chrome-headless-shell-win64`).
+      Firefox passes `["firefox"]`, the real directory, so it runs — 39 binaries,
+      +329 ms, cached 30 days. One line belongs in `UPSTREAM-REVIEW.md`: if upstream
+      fixes the directory name, Chromium suddenly starts validating 39 binaries on
+      cold start, and a one-character upstream fix becomes a latency regression.
+
+- [x] **Label reuse.** ✅ Moot. Labels are gone — the directory is the identity.
+
+- [x] **Never kill by image name.** ✅ Encoded 2026-08-15 as
+      [§D → Never by image name](README.md#never-by-image-name), with the
+      two-mechanism invariant (job object for the living, path-keyed identification
+      for survivors), the forbidden-API list at analyzer-error severity, and the
+      measured warning that `--user-data-dir` alone is **not** an ownership signal —
+      Discord, VS Code, Signal, Teams, WhatsApp, Steam, ChatGPT and four WebView2
+      processes all carry it on this machine.
+
+- [x] **`--output-max-size`.** ✅ Resolved and encoded 2026-08-15. Verified in
+      `coreBundle.js`: `defaultConfig` contains only `browser` and `timeouts`, and
+      `mergeConfig` filters through `pickDefined`, so **no default is applied at any
+      merge stage** — the open half of the question is closed. It runs on every tool
+      response, recursively lists the whole output directory, and unlinks
+      oldest-first past the threshold, sparing only the current response's writes.
+      Never set; env var stripped; retention is the calling agent's decision.
 
 - [ ] **First-run download: the requirement is self-healing years later.**
       Maintainer's framing, and it is the right one: a pinned version may need
