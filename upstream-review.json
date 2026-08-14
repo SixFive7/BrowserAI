@@ -1,0 +1,50 @@
+{
+  "_what_this_is": "Records the version of each upstream dependency that a human has actually REVIEWED. A test asserts each of these equals the version the build RESOLVED. Every dependency floats to latest at build time, so when upstream publishes, that test goes red and the release gate cannot pass until this file is updated.",
+
+  "_stop_before_you_edit_this_file": "Read UPSTREAM-REVIEW.md and follow it. Bumping a version here without doing the review defeats the only mechanism that catches upstream behaviour changes, renamed config keys and changed defaults. None of those are visible to the golden tools/list snapshot, and loadConfig is a bare JSON.parse with no schema validation, so a renamed key is discarded in silence.",
+
+  "_notes_are_not_optional": "Every bump records what changed, what was adopted, and what was explicitly declined and why. A decline with a reason is worth as much as an adoption: it stops the same question being re-litigated at the next bump. An empty note is a review that did not happen.",
+
+  "_procedure": "UPSTREAM-REVIEW.md",
+  "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
+
+  "upstreams": {
+    "@playwright/mcp": {
+      "reviewed": "0.0.79",
+      "date": "2026-08-13",
+      "source": "https://github.com/microsoft/playwright-mcp",
+      "why_it_matters": "Ships in the payload. Its CLI surface and config schema are what BrowserAI generates against, and both change without notice.",
+      "notes": "Baseline; the charter was researched against this version. 78-entry internal tool registry, 69 maximum ever exposed over MCP (9 are skillOnly), 24 by default. Caps at protocol 2025-11-25. Defaults to channel:chrome and headless:false on Windows -- browserName:chromium must be set explicitly or the bundled tree is never consulted. --output-mode was verified to be a no-op for its entire life."
+    },
+    "playwright-core": {
+      "reviewed": "1.63.0-alpha-2026-08-05",
+      "date": "2026-08-13",
+      "source": "https://github.com/microsoft/playwright",
+      "why_it_matters": "Carries the actual tool implementations and the browsers.json that pins the Chromium revision. Arrives as @playwright/mcp's own exact dependency, not as a choice we make.",
+      "notes": "Baseline. browsers.json -> chromium-headless-shell rev 1237 (152.0.7977.8). Upstream publishes daily alphas."
+    },
+    "ModelContextProtocol": {
+      "reviewed": "2.2.0",
+      "date": "2026-08-14",
+      "source": "https://github.com/modelcontextprotocol/csharp-sdk",
+      "why_it_matters": "The protocol implementation on both sides of the proxy. Its typed layer drops unknown properties and throws on unknown content types, which is correct for a client and lossy for a proxy.",
+      "notes": "Baseline. Tier 1 SDK under the Linux Foundation's Agentic AI Foundation; day-to-day engineering by the Microsoft .NET team. Declares IsAotCompatible=true on every non-netstandard2.0 target -- the author's claim about their code, not a proof for our usage. Full 2026-07-28 protocol support. Note 2.x drops MTP v1 in the 4.0.0 line of xUnit only; unrelated to this package."
+    },
+    "Velopack": {
+      "reviewed": "1.2.0",
+      "date": "2026-08-13",
+      "source": "https://github.com/velopack/velopack",
+      "why_it_matters": "Owns the update path, which is the most hazard-dense section of the charter. Five of its nine documented landmines were hit in production by ExoFabric/UCC rather than avoided.",
+      "notes": "Baseline. UCC runs 0.0.1298 (pre-1.0), so nothing learned there transfers without re-verification against 1.2.0."
+    },
+    "node": {
+      "reviewed": "v24.19.0",
+      "date": "2026-08-13",
+      "source": "https://github.com/nodejs/node",
+      "why_it_matters": "Bundled in the payload as a single node.exe. A major bump changes size and can change process/stdio behaviour.",
+      "notes": "Baseline, LTS line. v26 is Current rather than LTS and its node.exe is ~10 MB larger. Ship Node's full LICENSE with the payload -- it aggregates OpenSSL, ICU, V8, zlib and c-ares terms."
+    }
+  },
+
+  "_chromium_is_derived": "Chromium, ffmpeg and winldd revisions are NOT listed here. They follow from the resolved playwright-core's browsers.json and are recorded in the release's resolved-set manifest instead. Reviewing playwright-core covers them."
+}

@@ -362,9 +362,9 @@ Verified 2026-08-13. **The versions below are provenance stamps, not targets** �
 | Node runtime | **v24.19.0 LTS**, `node.exe` only | v26 is Current, not LTS, and its `node.exe` is 10 MB larger. |
 | Job objects | Hand-rolled `[LibraryImport]` | No credible NuGet wrapper exists — the candidates have <6K downloads and the newest was published in 2017. `dotnet/runtime` [#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in support and was closed as not planned. ~60 lines. `Microsoft.Windows.CsWin32` is the reasonable alternative once a seventh Win32 API is needed. |
 | Parent PID | `NtQueryInformationProcess` | ~0.77 µs/call vs ~3.3 ms for `Process.GetProcessById` and milliseconds for WMI. This is what `dotnet/runtime` itself uses. |
-| Tests | xUnit **v3 3.2.2** | Matches the SDK's own suite, so `ClientServerTestBase` and `tests/Common/Utils/*` vendor in unmodified (~300 lines, **Apache-2.0** — the SDK is mid-transition from MIT; keep the upstream file headers). |
-| Snapshots | `Verify.XunitV3` **31.28.0** | Not `Verify.Xunit` — that ID targets xUnit v2. |
-| Assertions | Built-in `Assert` | The SDK uses no assertion library. **Avoid FluentAssertions** — v8+ is commercial at $129.95/seat. `Shouldly` 4.3.0 (BSD-3) or `AwesomeAssertions` 9.5.0 (Apache-2.0) if a fluent style is wanted. |
+| Tests | **TUnit** (latest; 1.65.0 as of 2026-08-13) | MIT, source-generated, reflection-free, **MTP-native**. Matches `SixFive7/Jeeves`. 1.0 shipped 2025-11-05; ~623K downloads/mo and growing 2.24× YoY. Chosen over xUnit v3 because [we do not vendor the SDK's fixtures](#we-write-our-own-harness) — that was xUnit's only argument here. |
+| Snapshots | `Verify.TUnit` (latest; **31.28.0** as of 2026-07-31) | Exact parity with `Verify.XunitV3` — same monorepo, same release, and Verify's own repo carries *more* test projects for the TUnit integration than the xUnit v3 one. |
+| Assertions | TUnit built-ins | `await Assert.That(actual).IsEqualTo(expected)`. **Never add FluentAssertions** — it relicensed at exactly 8.0.0 to a bespoke non-SPDX licence with a commercial tier. Jeeves carries the identical prohibition for the identical reason. |
 | External smoke | `@modelcontextprotocol/inspector` **2.2.0** | Language-independent CI check. Exit code **5** means the tool reported `isError` — the signal `claude mcp` does not give you. |
 
 ### Three places where the SDK must be deviated from
@@ -435,6 +435,90 @@ Lifecycle tests must wrap themselves in their own job object (`KILL_ON_CLOSE`, `
 
 **The update path needs its own tests, and one of them has to be a real upgrade.** Put every Velopack call behind an interface with `virtual` network methods so the check → download → apply state machine can be driven hermetically; that seam is what lets UCC hold 48 update tests without ever touching the network. But both bugs that actually shipped in UCC sat *outside* that seam — the feed-URL composition, and the wrapper class itself, which has no tests at all. So the pre-release lane must also spend real time on two assertions the hermetic tests structurally cannot make: **resolve the production feed URL** over HTTP and assert a manifest comes back (a local-directory source composes paths differently and will pass where production 404s), and **publish N→N+1, apply it, and assert both that a delta package was generated and that the installed version moved**. Delta granularity is the reason [§G](#g-updates) chose Velopack at all, and nothing in-house has ever proved `vpk` produces one.
 
+### We write our own harness
+
+We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines (Apache-2.0, unpublished to NuGet), they wire a single client↔server pipe pair where a proxy needs two hops, and copying them means a permanent three-way merge against an upstream that edits `tests/` weekly. Writing ~100–200 lines ourselves buys a harness shaped for *this* product and frees the framework choice.
+
+Two lessons are inherited deliberately rather than by copying, because they cost upstream real time to find:
+
+- **Pin `DiscoverProbeTimeout` in test clients.** The SDK's own base class sets it explicitly, citing [csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701) — CI slowness spuriously tripped the probe. This is the same 5-second hazard as [§B](#b-be-the-mcp-server), met from the other side.
+- **Disposal order is load-bearing:** cancel the token → complete *both* pipe writers → await the server task → dispose the provider. Any other order hangs or throws.
+
+What we build, and what each replaces:
+
+| Component | Purpose | Replaces |
+|---|---|---|
+| `McpTestHarness` | The **two-hop** topology: test client → BrowserAI (server) … BrowserAI (client) → fake child. Two pipe pairs, not one. | `ClientServerTestBase` |
+| `FakePlaywrightChild` | Scriptable in-process MCP server standing in for `@playwright/mcp`: canned `tools/list`, programmable `tools/call` results, injectable errors, delays, oversized payloads, unknown content types, mid-call death | `TestServerTransport` |
+| `TUnitLoggerProvider` | Routes `ILogger` into TUnit's per-test output | `XunitLoggerProvider` + `DelegatingTestOutputHelper` |
+| `CapturingLoggerProvider` | Captures log records for assertions | `MockLoggerProvider` |
+| `TestDefaults` | Shared timeouts, including the probe-timeout pin above | `TestConstants` |
+| `JobObjectScope` | `using`-scoped job object so a failed assertion cannot leak a `chrome.exe` | *(nothing upstream)* |
+
+Nothing from `NodeHelpers.cs` (577 lines of `npm install` machinery for the SDK's conformance suite) is wanted.
+
+### The tests, enumerated
+
+Extensive is a requirement, so it is written down rather than implied. **Every item below is a release gate.**
+
+**Unit** — no processes, no pipes:
+
+- stderr classifier: error-shaped vs. the benign `Session: <path>` a healthy start always prints
+- artifact prefix sort across all nine generator prefixes; a hand-named file is never swept into a machine folder
+- tool filter / rename / re-describe, **order-stable** (the spec SHOULDs deterministic ordering for prompt-cache hit rates)
+- **session-type enforcement, deny-by-default**, exercised against every tool in the surface
+- handle lifecycle: missing, unknown and expired produce **three distinct LLM-readable errors**, each naming `init` and recoverable in one turn
+- lock-name derivation: `GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → `Global\BrowserAI-{hash[..32]}`
+- PID-recycle logic keyed on `(pid, creationFileTime)`, not a bare PID
+- config generator and validator
+- environment allowlist: `Clear()` runs first; `INIT_CWD`, `NODE_OPTIONS`, `NODE_PATH`, `DEBUG`, `DEBUG_FILE` stripped; `PLAYWRIGHT_SKIP_BROWSER_GC=1` and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` set; `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` **not** set
+- stdout wrapper: UTF-8, LF, no BOM — and no path in the process can reach `Console.Out`
+
+**Fake child** — full proxy over in-process pipes:
+
+- `tools/call` results pass through **byte-identical**, including image and binary payloads
+- **unknown content *types* pass through** rather than throwing (the SDK's typed layer throws; a proxy must not)
+- **unknown *properties* survive** (the SDK's converter drops them, with tests asserting it does)
+- `isError: true` bodies preserved verbatim; nested JSON-RPC `error.data` not flattened
+- `handle` injected into every schema, order-stable
+- cancellation relay: an upstream `notifications/cancelled` produces a downstream one, not just a local abort
+- progress relay: the child's token is remapped to the caller's
+- child death mid-call; stderr back-pressure with a full pipe; oversized payload
+
+**Real-child contract** — real `node`, resolved `cli.js`, **no browser**:
+
+- golden `tools/list` snapshot
+- **every tool carries an explicit session-type classification; an unclassified tool fails the build**
+- negotiated protocol version asserted (the child caps or echoes silently — it never rejects)
+- argv contract; `--caps` is never passed
+- **config round-trip via `browser_get_config`** — every opinion BrowserAI generated survived into the child. This is where silently-discarded config keys are caught, and it needs no browser
+
+**Smoke** — real child **and** real browser:
+
+- `browser_navigate` to `data:text/html,<h1>ok</h1>` returns not-`isError`
+- **the resolved `executablePath` is *our* Chromium.** A bare navigation assertion is insufficient: verified 2026-08-13, with an **empty** browsers directory `initialize`, `tools/list` *and* `browser_navigate` all succeed via system Chrome
+- **an empty browsers directory must FAIL this layer.** Without this the entire batteries-included premise can be silently dead code with the suite green
+- error-shaped stderr classified correctly against a real start
+- the process tree is reaped after a hard kill of BrowserAI
+
+**Update** — see the paragraph above: real feed URL, real delta, real N→N+1, plus rollback under `AllowVersionDowngrade`.
+
+**Marker** — resolved version equals reviewed version, for every upstream in [`upstream-review.json`](upstream-review.json).
+
+### The upstream-review marker
+
+Our suite passing after a version bump means *our assumptions still hold*. It cannot mean *we noticed what upstream learned*. The golden snapshot catches surface changes; it is blind to behaviour changes, new config keys, changed defaults and fixed bugs.
+
+So adopting a new upstream version is gated. [`upstream-review.json`](upstream-review.json) records the version each dependency was last **reviewed** at; a test asserts that equals the version the build **resolved**. When the float moves, that test goes red and the release gate cannot pass until someone edits the marker — and editing it is what forces the look. The procedure lives in [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md); three layers point an agent at it before it can change the file:
+
+| Layer | Mechanism |
+|---|---|
+| The file | `_instructions` keys naming the procedure, in-band |
+| The repo | A rule in [`CLAUDE.md`](CLAUDE.md) |
+| The harness | A `PreToolUse` hook on `Edit|Write` that returns `permissionDecision: "ask"` with the procedure as its reason |
+
+**This is a speed bump, not a proof.** Nothing verifies the diff was actually read. What it buys is that skipping the review becomes a deliberate act, recorded in git history, at the moment it matters — rather than the silent default. Requiring a `notes` entry means discharging it leaves an artifact, so an empty note is visible in review.
+
 ### The release gate
 
 **Releases are triggered manually, by the maintainer, through the agent. There is no release pipeline, no scheduled publish, and no auto-merge on green.** That simplification is affordable *only* because the gate itself is mechanical: when to release is a human decision, whether a release is permitted is not.
@@ -443,7 +527,7 @@ The sequence, in order, no step skippable:
 
 1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
 2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
-3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change".
+3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review marker](#the-upstream-review-marker) fires: if the resolved version moved past the reviewed one, the suite is red and there is nothing to decide at step 5.
 4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](#the-four-rules-that-make-floating-safe).
 5. **The maintainer decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
 6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
@@ -580,6 +664,9 @@ Two things follow, and they are design obligations rather than caveats:
 | **Update tracks** | **One.** No beta channel. A second track doubles the release matrix and makes the version string load-bearing — UCC derives its runtime track from a `-beta` suffix, so a formatting change breaks track detection silently. A single track still requires the channel to be set explicitly, for the reason in [§G](#g-updates) landmine 1. |
 | **Dependency versioning** | **Everything floats at build time; the build freezes it.** Nothing is pinned by hand, the payload included. The build resolves latest, the suite gates it, the release records exactly what shipped, and the client resolves nothing at runtime. Adopted from `SixFive7/Jeeves` and applied without exception. See [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). |
 | **Release trigger** | **Manual, by the maintainer, through the agent.** No release pipeline, no scheduled publish, no auto-merge on green. Green is necessary and not sufficient — a human decides when a green build becomes a release. See [The release gate](#the-release-gate). |
+| **Test framework** | **TUnit**, matching `SixFive7/Jeeves`. Source-generated, reflection-free, MTP-native, MIT. See [Implementation stack](#implementation-stack). |
+| **SDK test fixtures** | **Not vendored. We write our own harness.** The MCP SDK's `ClientServerTestBase` + `tests/Common/Utils/*` (1,082 lines, Apache-2.0, unpublished to NuGet) wire *one* pipe pair; a proxy needs two hops. Copying them would mean a permanent three-way merge against an upstream that edits `tests/` weekly, and would lock the framework to xUnit. See [We write our own harness](#we-write-our-own-harness). |
+| **Upstream review** | **Gated by a marker that fails closed.** A version bump cannot reach a release until someone has reviewed what upstream changed and recorded it. See [The upstream-review marker](#the-upstream-review-marker). |
 
 **Why not permissive.** Apache-2.0 was the runner-up and is the smoothest technical fit: it is what `@playwright/mcp` and the C# SDK already carry, and its §4(b) change-statement requirement is real protection for something distributed as a binary installer nobody reads the source of. It was rejected only because it gives the commercial market away outright. AGPL-3.0 was considered and rejected on the merits — BrowserAI is stdio-only, one machine, one user, **no processes and no ports**, so §13's network-interaction clause could never fire and the license would be inert boilerplate.
 
@@ -649,6 +736,11 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | Chromium is not Chrome | No proprietary codecs, no Widevine, different UA and fingerprint surface. Verify the portals actually in use before cutting over | §A |
 | NativeAOT forbids reflection-based serialization | `System.Text.Json` needs source-generated contexts. The SDK declares `IsAotCompatible=true` on all non-`netstandard2.0` targets (in-source, `v1.4.1` and `v2.2.0`, 2026-08-14) — the author's claim about their code, not a proof for our usage. Publish AOT and run the suite before committing | §A |
 | A floating build with a weakened suite | The versioning policy stops being safe the moment a test is skipped, quarantined or waived. This is the one hazard here that is **self-inflicted rather than upstream** — and the only one whose mitigation is a habit rather than a mechanism | §testing |
+| **TUnit: a test passes silently if its assertion is not awaited** | Listed first on TUnit's own troubleshooting page. Green-when-broken — precisely the class this project exists to eliminate. **Mitigation is not optional here:** TUnit's analyzers must run at error severity, never merely enabled | §testing |
+| TUnit is MTP-only and conflicts with `Microsoft.NET.Test.Sdk` | The package must be absent, not merely unused. Mixing VSTest-based and MTP-based projects in one solution is explicitly unsupported | §stack |
+| Coverlet does not work under MTP | Coverage needs `Microsoft.Testing.Extensions.CodeCoverage`. Diverges permanently from any VSTest-based sibling repo | §stack |
+| IDE test discovery is not zero-config under MTP | Visual Studio needs *Use testing platform server mode*; Rider needs Testing Platform support enabled. A developer seeing "no tests" is a config gap, not a broken suite | §stack |
+| The upstream-review marker can be discharged without reading anything | It is a speed bump, not a proof. Accepted deliberately — the value is that skipping becomes deliberate and recorded, not that it becomes impossible | §testing |
 
 ### Child runtime and configuration
 
