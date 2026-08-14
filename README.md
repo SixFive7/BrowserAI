@@ -63,7 +63,9 @@ A setup that cannot distinguish "this setting is applied" from "this setting is 
 
 ### 4. Exclusivity is keyed on the wrong thing
 
-Mutexes are named `Global\<RepoName>-PlaywrightInteractive`. That locks a *repository folder name*, which is arbitrary: two clones of the same repo collide, and two different repos wanting the same profile do not. The thing that actually requires exclusivity is **the browser profile directory**. Chrome's own `SingletonLock` already gets this right for the persistent mode; nothing else does.
+Mutexes are named `Global\<RepoName>-PlaywrightInteractive`. That locks a *repository folder name*, which is arbitrary: two clones of the same repo collide, and two different repos wanting the same profile do not. The thing that actually requires exclusivity is **the browser profile directory**.
+
+> **And nothing else enforces it in the mode that matters.** Measured 2026-08-14: the **full** chromium build writes a `lockfile` into the profile and a second instance is refused (`Browser is already in use for <dir>`). **`chrome-headless-shell` writes no `lockfile` at all** — two headless instances opened the same profile directory, both launched, both worked, and no error was raised anywhere. Two browsers writing one profile's cookie and storage databases is silent corruption, and headless is the default mode. An earlier draft of this document said *"Chrome's own `SingletonLock` already gets this right for the persistent mode"*; that is true only of the headed build. **[§D](#d-locking-and-single-instance)'s directory-keyed lock is therefore the only protection that exists, not defence in depth.**
 
 ### 5. Relative paths make silent data loss possible
 
@@ -204,6 +206,34 @@ The point of the handle is separation: **the MCP server's lifetime is decoupled 
 
 This also replaces four static configurations with one dynamic one, and eliminates the relative-path hazard by making the directory an explicit argument rather than an implicit consequence of cwd.
 
+#### The `init` contract
+
+**Takes:** the session type; an output root (optional — defaults outside any repository, see [§F](#f-artifact-management)); a **label** (optional, defaults to the handle); and the profile directory where that applies.
+
+The label exists because `checkout-flow-bug\` is navigable and `2026-08-14T04-11-50-882Z\` is not. Three months of the current setup produced 346 session directories and 1.5 GB, and the reason nobody pruned them is that nobody could tell what any of them had been.
+
+**Returns:** the handle, **and the resolved absolute paths.** [§settled](#settled-2026-08-13) already requires logging those at instance creation; returning them costs nothing extra and puts them where the agent can act on them — it can tell the user where the screenshot is instead of guessing, and the paths become auditable from the transcript rather than only from a log file nobody opens.
+
+**Per-instance paths are unconstrained; per-call filenames are not.** These look like the same decision and are not. `init`'s directory arguments are deliberately unrestricted — [§settled](#settled-2026-08-13) accepts any path, because the caller is declaring where its data lives. A per-call `filename` names a file *within* a workspace already declared, so normalising it into that workspace is not a restriction on the caller's choice; it is honouring the choice already made. Record this distinction, because the two rules read as contradictory to anyone meeting them cold.
+
+**Reject traversal rather than normalising it.** A `filename` of `..\..\..\foo.png` must resolve, be recognised as an escape, and be refused with an LLM-readable error — never silently collapsed into a path that happens to land somewhere.
+
+**Check free disk space at `init`, and only with an O(1) query.** First-run browser provisioning peaks near 0.9 GB and a session then grows unbounded. A refusal at `init` that names the number is recoverable in one turn; a failure partway through a 323 MB download is the `spawn EFTYPE` shape — success-shaped, stderr empty, discovered at first navigation. **This must be a volume free-space query, never a directory walk**: `init` sits on the hot path of every session, and a check that scans the output tree would make the fix slower than the failure it prevents.
+
+#### Where guidance lives: three channels, two of them capped
+
+An MCP server can address the model in three places, and they are seen at different times. Putting the wrong content in the wrong one is why agents forget handles.
+
+| Channel | Seen | Budget | Carries |
+|---|---|---|---|
+| **Server `instructions`** (on `initialize`) | Always, at session start — Claude Code loads tool *names* and server instructions eagerly and defers schemas | **2 KB, truncated silently** | That `init` comes first, and why. The fact that is useless once it is needed |
+| **`init`'s description** | When the model reaches for `init` | **2 KB, truncated silently** | Argument meanings, the real-Chrome-profile warning, and the retention policy — the spec requires retention to be stated *here*, in the creation tool's description |
+| **`init`'s result** | Immediately after the call | none | Resolved absolute paths, the layout, the session label |
+
+The server instructions exist to pre-empt the cold-start failure named above: **the first call after a restart will forget the handle.** Only an eagerly-loaded string can reach the model before it makes that mistake. Detail belongs in the result, where there is no budget and the paths are concrete — spending a third of a 2 KB allowance on a directory diagram every agent re-reads at the wrong moment is the wrong trade.
+
+`SixFive7/OutlookAI` is the in-house precedent for treating this as a contract rather than prose: its instructions string lives in `ServerMetadata.cs` and is pinned by tests.
+
 **Why a handle beats a `mode` enum.** A handle is *minted by the server*. The model cannot invent one for a session type it never created, so `browser_cookie_list` cannot be aimed at an interactive session by choosing the wrong string — an interactive handle simply does not permit storage tools. A `mode` parameter, by contrast, is a value the model composes fresh on every call and can compose wrongly. The handle converts a model-authored assertion into a server-issued capability reference, which is a materially stronger position.
 
 It does not close the gap entirely: a connection holding both an interactive and a persistent handle can still route a call to the persistent one. But that grants nothing new — an agent holding a persistent handle was already entitled to those cookies. **The interactive guarantee holds**, and that is the one that matters.
@@ -246,7 +276,53 @@ Non-negotiable, because every bug this month was a visibility failure. The .NET 
 
 Playwright writes every artifact flat into one directory with a generated name, mixing machine churn with hand-named work. Nine fixed generator prefixes make classification exact rather than heuristic: `console`, `download`, `network`, `page`, `request`, `response`, `result`, `storage-state`, `video`.
 
-Port the prefix-based sort. **Classification must be by generator prefix, never by date** — that is precisely what keeps a hand-named file out of the machine-generated folders, and no date rule can make that distinction. Nothing is ever auto-deleted.
+Port the prefix-based sort. **Classification must be by generator prefix, never by date** — that is precisely what keeps a hand-named file out of the machine-generated folders, and no date rule can make that distinction.
+
+### Route on the way in, do not sort on the way out
+
+A sort is cleanup; a proxy can do better. BrowserAI sees every `tools/call` before the child does and every result before the caller does, so **files can be born in the right place instead of being swept there.** Three levers, in increasing order of effort:
+
+1. **Set the child's `WorkingDirectory` to the instance's output root.** Already required by [§Windows process spawning](#windows-process-spawning) for a different reason. It makes the stray-file failure *impossible* rather than *caught*: a bare `foo.png` resolves inside the instance tree by construction. Ten repositories currently run a `deny` hook because upstream resolves a relative `filename` against the child's cwd — this closes that without a hook.
+2. **Normalise `filename` on the way in.** Route it to the typed subfolder its generator prefix implies, so the agent never has to construct a path.
+3. **Return the resolved absolute path on the way out.** Non-negotiable if lever 2 is used. Silently relocating a file while telling the model it went somewhere else produces an agent that confidently reports the wrong location — a new silent failure introduced by the fix for an old one.
+
+**The default root must be outside any repository.** When `init` is given no path, artifacts go to `%LocalAppData%\BrowserAI\sessions\<label>\` — never the current working directory. The founding stray-file problem is files landing in repo roots; a default that cannot land there makes the common case safe without relying on the caller.
+
+Layout beneath the root, following the nine generator prefixes rather than inventing new ones:
+
+```
+<root>\<label>\
+  screenshots\   video\      traces\
+  network\       console\    downloads\
+  storage\       results\
+```
+
+**`downloads\` is the one exception to routing** — a browser-initiated download lands where the browser puts it, not where a `filename` argument says. It is classified after the fact like the old sort, and that difference should be visible in the code rather than discovered.
+
+### Three obligations that follow
+
+- **Names must be legible.** Upstream generates `page-2026-08-14T04-11-50-882Z.png`. Prefer the caller's own name where one was given, and a page-derived slug plus a counter where none was — `checkout-step-3.png` survives a month, a timestamp does not. This is what made 346 session directories unnavigable.
+- **Never overwrite silently.** Two screenshots named `login.png` in one session is data loss. Suffix, and say so in the result.
+- **Report cumulative session size in the result.** The current setup reached 1.5 GB in three months with nothing saying so. BrowserAI routes every file and therefore knows; not reporting it is a choice to stay blind.
+- **Return a repository-relative path alongside the absolute one.** When an agent writes a commit message, a PR body or a report, `docs/screenshots/login.png` is what it needs; an absolute path is machine-specific and useless there. BrowserAI resolves both anyway — emitting only one of them discards work already done.
+
+### The session index
+
+Routing means BrowserAI knows, at write time, every fact worth recording: which tool produced a file, when, at which URL, under which handle and session type. Not writing that down throws away information that cannot be reconstructed afterwards — which is exactly how 346 session directories became untriageable. **The label tells you what a session was; the index tells you what is in it.**
+
+Write `session.json` into each session folder as artifacts are routed: label, handle, session type, created and last-touched timestamps, resolved absolute paths, and one entry per artifact with its tool, timestamp, page URL, size and both path forms.
+
+**Scope the roll-up by root, never by machine.** BrowserAI is registered once and serves every repository on the host, so an index that aggregates everything would pull sessions from unrelated projects into whatever context happens to be open. That is a **noise problem rather than a security boundary** — the paths were the caller's own choice and [§settled](#settled-2026-08-13) accepts any of them — but noise in an agent's context is a real cost, and the cheap fix is to default the aggregate to the root in play:
+
+- A roll-up index sits at each **output root**, covering sessions beneath that root only.
+- `init`'s result names prior sessions under the same root — count and labels, nothing wider.
+- A machine-wide view stays available and is **opt-in**: an explicit request for everything, or for a root that happens to contain everything, returns everything. Scoping is a default, not a restriction.
+
+**No new tool is needed for any of this, and none should be added.** The index is a file; the calling agent reads it with its own filesystem tools. A `browser_list_artifacts` tool would be BrowserAI composing a capability out of its own state — the boundary this document holds everywhere else, and there is no reason to cross it for something `Read` already does.
+
+### Retention is no longer ours alone to promise
+
+An earlier draft of this section said *"Nothing is ever auto-deleted."* That is **no longer true of the runtime**: `@playwright/mcp` now carries `--output-max-size <bytes>`, *"Threshold for evicting old output files, in bytes."* Unless BrowserAI sets it explicitly and asserts it through `browser_get_config`, the promise in this document is not the promise the child keeps — and a silently evicted artifact is precisely the failure class in the opening table. **Its default value is unverified; establish it before restating any retention guarantee.**
 
 ### G. Updates
 
@@ -336,7 +412,7 @@ This is the whole model, and it needs stating precisely because the charter's fo
 
 ### The four rules that make floating safe
 
-1. **The resolved set is recorded, not remembered.** `packages.lock.json` for NuGet with `--locked-mode` on the release build; the resolved `package-lock.json` for the vendored npm tree; browser revisions read from the resolved package's own `browsers.json`, never a hand-typed URL. **An artifact that cannot state exactly what went into it is not releasable** — that is also what makes a rollback meaningful and a regression bisectable.
+1. **The resolved set is recorded, not remembered.** For NuGet this is **two steps, not one**: `dotnet restore --force-evaluate` to resolve the float, then a locked-mode restore to verify. They are mutually exclusive in a single invocation — with a lock file present and no `--force-evaluate`, NuGet **does not re-resolve**, and the float is silently dead ([NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512); warned by default from the .NET 11 SDK). A one-step `--locked-mode` build is the `browserName: "chromium"` failure again. It also yields the cheapest possible drift detector: `git diff --exit-code -- "**/packages.lock.json"` after the resolve. Then the resolved `package-lock.json` for the vendored npm tree, and browser revisions read from the resolved package's own `browsers.json`, never a hand-typed URL. **An artifact that cannot state exactly what went into it is not releasable** — that is also what makes a rollback meaningful and a regression bisectable.
 2. **The shipped artifact never floats.** The client resolves nothing at runtime: no `npx`, no `@latest`, no network at spawn. What was tested is what runs. This property is the non-negotiable one, and it is why [§A](#a-ship-and-own-the-runtime) vendors the tree at all.
 3. **GA is a hard floor.** No preview or RC builds a released artifact. Upstream Playwright publishes **daily alphas**, but `@playwright/mcp@latest` is the released dist-tag — the `playwright-core` alpha beneath it arrives as that package's own exact dependency, not as a choice we make.
 4. **Green is the only gate, and it gates the *release*, not the *update*.** The response to a breaking upstream change is to make the newest version work. Holding the previous version is not a fix, and "pin it back for now" is the failure this policy exists to prevent.
@@ -473,6 +549,9 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - config generator and validator
 - environment allowlist: `Clear()` runs first; `INIT_CWD`, `NODE_OPTIONS`, `NODE_PATH`, `DEBUG`, `DEBUG_FILE` stripped; `PLAYWRIGHT_SKIP_BROWSER_GC=1` and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` set; `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` **not** set
 - stdout wrapper: UTF-8, LF, no BOM — and no path in the process can reach `Console.Out`
+- **model-facing text stays inside its budget**: the server `instructions` string and every tool description measured at build time, failing over **2 KB**. Claude Code truncates both silently, so the tail of any guidance that exceeds it does not exist and nothing reports that. Same shape as *an unclassified tool fails the build*; `SixFive7/OutlookAI` already pins its instructions string with a test
+- artifact routing: a `filename` maps to the right typed subfolder, a duplicate name is suffixed rather than overwritten, `..` is refused rather than normalised, and the result carries **both** the absolute and the repository-relative path
+- the session index records one entry per routed artifact, and its roll-up is scoped to the output root rather than the machine
 
 **Fake child** — full proxy over in-process pipes:
 
@@ -666,6 +745,10 @@ Two things follow, and they are design obligations rather than caveats:
 | **Release trigger** | **Manual, by the maintainer, through the agent.** No release pipeline, no scheduled publish, no auto-merge on green. Green is necessary and not sufficient — a human decides when a green build becomes a release. See [The release gate](#the-release-gate). |
 | **Test framework** | **TUnit**, matching `SixFive7/Jeeves`. Source-generated, reflection-free, MTP-native, MIT. See [Implementation stack](#implementation-stack). |
 | **SDK test fixtures** | **Not vendored. We write our own harness.** The MCP SDK's `ClientServerTestBase` + `tests/Common/Utils/*` (1,082 lines, Apache-2.0, unpublished to NuGet) wire *one* pipe pair; a proxy needs two hops. Copying them would mean a permanent three-way merge against an upstream that edits `tests/` weekly, and would lock the framework to xUnit. See [We write our own harness](#we-write-our-own-harness). |
+| **Instance teardown** | **Explicit close tool + client-liveness watcher** (stdin EOF, plus an `OpenProcess` handle on the client PID — never ping-based; `ping` is removed at 2026-07-28). **Expiry is reclaim, not destruction:** a torn-down handle stays resumable against its recorded config and directory, because the durable thing is the profile, not the process. Measured 2026-08-14: resume costs **515 ms** and loses only `sessionStorage`. Timer values remain open — see [Still open](#still-open). |
+| **`browser_run_code_unsafe`** | **Hidden in `interactive` sessions.** Demonstrated 2026-08-14: against the default 24-tool surface with zero `browser_cookie_*` exposed, `async (page) => page.context().cookies()` returned an `httpOnly` bearer token. It is in `core`, so no capability setting disables it, and it was the only hole — `browser_evaluate` → `document.cookie` returns `""`, and `browser_network_request` strips `Cookie` and `Set-Cookie`. Hiding it in the one mode that exists to keep human credentials from the agent makes [§trade-offs](#the-init-design-weakens-a-security-boundary)' claim true for the first time; it stays available elsewhere as an escape hatch. |
+| **Artifact placement** | **Routed on the way in, not sorted on the way out.** The child's cwd is the instance output root, `filename` arguments are normalised into typed subfolders, and every result carries the resolved absolute path. The default root is outside any repository. Per-instance paths stay unconstrained; per-call filenames do not. See [§F](#f-artifact-management) and [the `init` contract](#the-init-contract). |
+| **Tool naming** | **Never renamed.** Names are upstream's byte-for-byte; the only name BrowserAI authors is `init`. Descriptions are append-only. A `deny` hook keyed on `browser_take_screenshot` exists in ten repositories and a rename would disable it silently — but the deciding argument is maintenance: upstream renamed one of its own tools inside four months, and a rename map is a second surface to re-review on every bump. |
 | **Upstream review** | **Gated by a marker that fails closed.** A version bump cannot reach a release until someone has reviewed what upstream changed and recorded it. See [The upstream-review marker](#the-upstream-review-marker). |
 
 **Why not permissive.** Apache-2.0 was the runner-up and is the smoothest technical fit: it is what `@playwright/mcp` and the C# SDK already carry, and its §4(b) change-statement requirement is real protection for something distributed as a binary installer nobody reads the source of. It was rejected only because it gives the commercial market away outright. AGPL-3.0 was considered and rejected on the merits — BrowserAI is stdio-only, one machine, one user, **no processes and no ports**, so §13's network-interaction clause could never fire and the license would be inert boilerplate.
@@ -740,6 +823,16 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | TUnit is MTP-only and conflicts with `Microsoft.NET.Test.Sdk` | The package must be absent, not merely unused. Mixing VSTest-based and MTP-based projects in one solution is explicitly unsupported | §stack |
 | Coverlet does not work under MTP | Coverage needs `Microsoft.Testing.Extensions.CodeCoverage`. Diverges permanently from any VSTest-based sibling repo | §stack |
 | IDE test discovery is not zero-config under MTP | Visual Studio needs *Use testing platform server mode*; Rider needs Testing Platform support enabled. A developer seeing "no tests" is a config gap, not a broken suite | §stack |
+| **`chrome-headless-shell` writes no profile `lockfile`** | Two headless instances share one profile directory with **no error anywhere** — silent corruption of the cookie and storage databases, in the default mode. Measured 2026-08-14. §D's lock is the only protection | §D |
+| Killed children leak `browser@<guid>` descriptors | Each is a JSON file in the browsers-registry root holding the absolute `userDataDir` and `workspaceDir`; `BrowserServer.stop()` only removes them when there is **no** `userDataDir`. §A puts that root inside the Velopack payload — a tree that should be read-only and is wiped on update. 28 observed and removed on 2026-08-14 | §A |
+| `browser_storage_state` never captures IndexedDB | It calls `storageState()` with no options, so `{indexedDB:true}` is never passed. A "saved" session silently omits it — and the persistent profile carries it, so the tool is *weaker* than doing nothing | §C |
+| The `PLAYWRIGHT_MCP_*` count is **42**, not 40 | `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN` are read outside the config env mapping. The allowlist test must derive the count from the resolved bundle, never carry a literal | §trade-offs |
+| §C's `tools/list_changed` evidence is stale | *"Claude Code registers no handler"* was accurate at 2.0.65 (Dec 2025). At **2.1.231 it is false** — measured twice; the client re-listed in 1–2 ms and the model called a tool that appeared only in the second list. This does **not** unlock a per-connection tool list (SEP-2567 stands), but the cited issues need re-dating | §C |
+| Rewriting a `filename` without rewriting the result path | The agent reports a location the file is not at. A new silent failure introduced by the fix for an old one — levers 2 and 3 ship together or neither ships | §F |
+| A `filename` containing `..` | Normalising traversal instead of refusing it turns a routing feature into an arbitrary-write primitive | §C |
+| Two artifacts with the same caller-supplied name in one session | Silent overwrite is data loss. Suffix and say so | §F |
+| `--output-max-size` evicting artifacts BrowserAI promised to keep | Upstream now auto-evicts; §F's retention guarantee is not the runtime's unless BrowserAI sets the flag and asserts it. **Default value unverified** | §F |
+| Server `instructions` or a tool description exceeding 2 KB | Claude Code truncates both **silently**. The tail of the guidance simply does not exist, and nothing reports it | §C |
 | The upstream-review marker can be discharged without reading anything | It is a speed bump, not a proof. Accepted deliberately — the value is that skipping becomes deliberate and recorded, not that it becomes impossible | §testing |
 
 ### Child runtime and configuration
