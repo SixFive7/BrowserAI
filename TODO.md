@@ -123,11 +123,24 @@ produced them ran out of room to write them properly.
       instead of a silent resurrection. **The lockfile is what actually prevents
       two agents colliding.** Spec-sanctioned family — SEP-2567 names `destroy_*`
       and `list_*` companions to a creation tool.
-    - **`init` is idempotent via the registry.** Called against a directory that
-      already has a live or reclaimable instance, it returns the **existing**
-      handle. That kills duplicate instances and separates the two tools cleanly:
-      `init` = "an instance for this directory"; `resume` = "this specific handle
-      back".
+    - **`init` REFUSES a directory that already has an instance.** Decided
+      2026-08-14, and deliberately *not* idempotent. A silent reuse would let an
+      agent believe it created something fresh when it inherited another agent's
+      live session — the surprise this design exists to prevent. Instead `init`
+      fails with an error naming the existing handle and directing the caller to
+      `resume`. **Being made to say "resume" is the point:** it converts an
+      accidental collision into a stated intent, and an agent that did not expect
+      an existing session now knows one exists. Clean separation follows: `init`
+      = "create", `resume` = "reclaim", and neither can be mistaken for the other.
+    - **`resume`'s warning text is a security surface**, like `init`'s description.
+      It is the only place a model is told that reclaiming may stomp another
+      agent's work. Write it with that weight and pin it with a test, as
+      `SixFive7/OutlookAI` does for its instructions string.
+    - **Version the registry schema from day one**, as a required top-level field.
+      It is an on-disk format that outlives releases and will be read by a newer
+      BrowserAI than wrote it. Unversioned means the first format change is a field
+      migration with no way to detect the old shape — and a registry that cannot be
+      read is a machine full of orphaned locks.
     - **Two locks, different scopes.** One machine-wide mutex around each registry
       read-modify-write, held for milliseconds; one per-directory profile lock held
       for the instance's life. Conflating them serialises every session.
@@ -166,6 +179,101 @@ produced them ran out of room to write them properly.
       pre-flight is Chromium-shaped, checking `lockfile`. All three matter: the
       second is why BrowserAI's own lock is load-bearing, and the third would be an
       invisible hang in a background MCP server.
+
+## Open questions carried into the next session (2026-08-14)
+
+The maintainer proposed a substantial simplification and asked several questions
+the session ran out of room to answer properly. **Recorded verbatim in intent so
+the next session starts from them, not from scratch.**
+
+- [ ] **The no-timer proposal, and whether the registry is needed at all.**
+      Maintainer's design: *no* handle/idle expiry timers. `init` refuses any
+      existing directory and redirects to `resume` — **including a cleanly closed
+      one**, on the grounds that there is no meaningful difference between a lost
+      session and a neatly closed one; both must be resumed, so both should behave
+      identically. That leaves exactly **one** timer: browser-idle at 10 min,
+      reset by any activity (a tool call, or a `resume` followed by one), closing
+      the browser but keeping the node child. The reason a session went idle —
+      timeout, explicit close, client disconnect — stops mattering entirely.
+
+      **First reaction: this is better than the two-stage design and should
+      probably be adopted.** It removes a whole state machine and the three
+      distinct error texts collapse toward one. Two follow-ups the next session
+      must resolve rather than assume:
+
+    - **Could the label simply *be* the directory?** Maintainer's suggestion, for
+      full transparency. Likely yes, and it would delete the label-reuse question
+      (see below) outright.
+    - **Is the registry then still needed?** Genuinely open, and the answer may be
+      no. If the lockfile lives *in* the profile directory and carries its holder,
+      and the directory is the identity, then a central registry may add nothing
+      but a synchronisation problem. **Do not carry the registry forward by
+      inertia** — make it justify itself or drop it.
+
+- [ ] **Label reuse — probably moot.** If the label is the directory, the question
+      cannot arise. Resolve only if labels survive as a separate concept.
+
+- [ ] **"Reap" was the wrong word, and the correction matters.** An earlier note
+      said the registry gives free crash recovery by reaping orphans. The
+      maintainer correctly pushed back: if BrowserAI died, the job object took its
+      children with it, so **there are no orphaned processes to reap**. What can
+      genuinely be left behind is a **stale lockfile** — and that is a file
+      problem, solved by `FileShare.None` plus the holder record, not by a
+      registry. This weakens the case for the registry further.
+
+- [ ] **Never kill by image name — reaffirm as a construction-level rule.** The
+      maintainer's position: killing user-space `chrome.exe` / `firefox.exe` that
+      have nothing to do with BrowserAI must be **impossible by construction**, not
+      merely avoided. The charter already says never match processes by image name;
+      this makes it structural. BrowserAI kills only what its own job object owns.
+      A near-miss occurred in our own test scripts: the Chromium probes counted and
+      killed by image name, which was safe for Chromium but would have killed ~40
+      personal `firefox.exe` processes if adapted naively. Tree-walk from the child
+      PID instead.
+
+- [ ] **Explain `--output-max-size` properly, then decide.** It bounds the
+      **artifact output directory** — screenshots, video, traces, network logs —
+      and evicts *old output files* past the threshold. Verified 2026-08-14: the
+      CLI declares it with a parser and **no default**, so eviction is off unless
+      set. Recommendation stands (never set it; assert it is unset in the
+      real-child contract layer), but the next session should confirm no default is
+      applied during config merge, not just at the CLI declaration.
+
+- [ ] **First-run download: the requirement is self-healing years later.**
+      Maintainer's framing, and it is the right one: a pinned version may need
+      downloading *years* after the release that pinned it. That raises questions
+      the current design only partly answers — what happens when Google prunes an
+      old Chrome-for-Testing build (not observed back to Jul 2023, but undocumented
+      and unguaranteed); whether a fallback mirror or a side-load path is needed;
+      and how a corrupt or partial tree self-heals without human help. Re-explain
+      the mechanism from first principles next session; the current TODO entry
+      assumes context the maintainer did not have.
+
+- [ ] **`winldd`, explained.** A small Playwright helper (`PrintDeps.exe`) that
+      checks a browser's DLL dependencies are present before launch. It matters
+      because measurement showed the validation **actually runs for Firefox** (39
+      binaries, +329 ms) and is a **permanent no-op for Chromium** — Playwright
+      passes `["chrome-win"]` while the real directory is `chrome-win64`. It is
+      gated by a `DEPENDENCIES_VALIDATED` marker with a 30-day revalidation period,
+      so for Firefox it is a **recurring monthly cost**, not a one-off.
+
+- [ ] **New: record why an instance exists.** Maintainer's proposal — a reason
+      field on `init` and `resume`, plus a tool to update it, stored in the
+      registry or in the directory. Played back on a refused `init`, on `resume`,
+      or via a dedicated "what was this" call, so an agent meeting an existing
+      directory can find out what was going on. Strong idea: it is the missing
+      human-readable half of the session index, and it directly serves the
+      forked-agent case the `resume` redirect exists for.
+
+- [ ] **New: per-`init` browser choice.** Let the caller pick Chromium or Firefox
+      per instance. Measured 2026-08-14, Firefox costs ~2x RAM, ~10x first
+      navigate, ~24x idle CPU and ~20x profile disk, and its profile-lock refusal
+      is a **native GUI modal blocking up to 3 minutes** on a headless server
+      (`isProfileLocked` only checks Chromium's `lockfile`, never Firefox's
+      `parent.lock`). So Chromium stays the default on engineering grounds alone —
+      but Firefox is *safer* on data integrity, since headless Chromium writes no
+      lock at all. If Firefox is offered, BrowserAI must do its own `parent.lock`
+      preflight or the modal is reachable.
 
 ## Later
 
