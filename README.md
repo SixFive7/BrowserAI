@@ -1,6 +1,3 @@
-<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
-<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
-
 # BrowserAI
 
 A self-contained, system-installed MCP server that fronts a **pinned** `@playwright/mcp` runtime and exposes browser automation to AI agents through a small, opinionated, centrally-updatable surface.
@@ -765,7 +762,7 @@ This is **not** the canonical FSL and must not be referred to by, or distributed
 
 Copyright 2026 Jori Huisman.
 
-Source files carry the two-line header used at the top of this document. Use the `LicenseRef-` form — never the bare `FSL-1.1-MIT` identifier, which this license forbids.
+**Source files carry no license header.** [`LICENSE`](LICENSE) is the notice, and the Redistribution clause is satisfied by shipping it — nothing in the license asks for a per-file stamp, and comment-less formats such as JSON could not carry one anyway. Vendored third-party files are the exception and keep their upstream headers, which Apache-2.0 §4 requires.
 
 ### Third-party components
 
