@@ -402,6 +402,43 @@ with a titled window, read in 2.0 µs, driven over real stdio JSON-RPC). But
 usable indicator. A future upstream switch to the shell would blind the sweep
 silently — own it with a test. `[FLOATS]`
 
+### 3.3 Process image path — the fully documented detection path
+
+Measured 2026-08-15 on this machine, `.work/procenum/measure.ps1`. `EnumProcesses`
+→ `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` →
+`QueryFullProcessImageNameW`, comparing each full image path against a target.
+**Every API on this path is documented and supported.** `[MACHINE]` for the
+numbers, `[STABLE]` for the APIs.
+
+| | |
+|---|---|
+| PIDs returned | 611 |
+| Opened successfully | 454 |
+| `OpenProcess` denied | **156** — protected and SYSTEM-owned processes |
+| Image path read | 454 / 454 |
+| **Full sweep, median** | **13.88 ms** (min 12.33, max 21.65, 25 runs) |
+| Per opened process | 30.6 µs |
+| `EnumProcesses` alone | 0.061 ms — negligible; the cost is the per-process open |
+
+**The 156 denials do not matter.** They are protected and SYSTEM processes; a
+BrowserAI-launched Chrome for Testing runs as the user, non-elevated, and the
+Windows sign-in restore path relaunches as the same user. Nothing we need to see
+is in that set.
+
+13.88 ms on a background thread, once per sweep, with the sweep mutex ensuring
+one process pays it rather than ninety-six. Roughly 5× the cost of the
+window-title walk (0.43 ms to enumerate, ~2.7 ms including title reads) and it
+covers strictly more: a `chrome-headless-shell` stray publishes no window title
+and no `lockfile`, but it still runs our binary.
+
+> **Rejected optimisation, recorded so it is not re-proposed.**
+> `NtQuerySystemInformation(SystemProcessInformation)` returns image *names* in a
+> single call and could pre-filter before any `OpenProcess`. At 13.88 ms there is
+> nothing to buy, and it would put an image-name comparison inside the detection
+> path — which is exactly the pattern that erodes into
+> [the rule against it](README.md#never-by-image-name) once someone later treats
+> the pre-filter as the filter.
+
 **Launch race: 225 ms** from `chrome.exe` start to the titled window existing.
 After a job-close kill, `IsWindow` goes false and the walk drops it immediately —
 no zombie HWNDs. `IsHungAppWindow` returns **False** for a fully suspended

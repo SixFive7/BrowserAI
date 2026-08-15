@@ -431,10 +431,21 @@ Worse, and this is the part to get right:
 >
 > And the signal is **forgeable**: a plain console app registered the class `Chrome_MessageWindow` (classes are per-process) and published an arbitrary path, indistinguishable from a real Chromium singleton.
 
-**Two ownership guards, both required before a process is a candidate:**
+##### Detection is documented; attribution may fail, and must fail safe
 
-1. The titled directory contains our `lock.json`, with our schema.
-2. The owning process's **full image path** equals the Chrome for Testing binary BrowserAI provisioned, via `QueryFullProcessImageNameW`. **This is not image-name matching and does not weaken [that rule](#never-by-image-name)** — matching one absolute path to a binary we installed is the opposite of matching `chrome.exe` wherever it appears. It also independently catches the personal-Chrome fallback hazard.
+The window read is **undocumented behaviour of a documented function**: `GetWindowTextW`'s contract says a window with no caption returns a null string, and `Chrome_MessageWindow` has no caption. It works on every Windows since NT and across 1,271 measured windows — but nothing says it must keep working, and a project whose founding complaint is *"it reported healthy while broken"* cannot rest a safety mechanism on that.
+
+So the sweep is split, and **the undocumented part is deliberately not load-bearing**:
+
+**Detection — fully documented, and it decides.** `EnumProcesses` → `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` → `QueryFullProcessImageNameW`, keeping any process whose **full image path** equals the Chrome for Testing binary BrowserAI provisioned. **Measured 13.88 ms median** for 611 PIDs / 454 opened ([KNOWLEDGE §3.3](KNOWLEDGE.md#33-process-image-path--the-fully-documented-detection-path)) — trivial on a background thread, and the sweep mutex means one process pays it, not ninety-six.
+
+This is path matching against a binary we installed, not image-name matching, and it does not weaken [that rule](#never-by-image-name): matching one absolute path is the opposite of matching `chrome.exe` wherever it appears. It also covers strictly more than the window walk — a `chrome-headless-shell` stray publishes no title *and* no `lockfile`, but it still runs our binary.
+
+**Attribution — the window title, with a fallback.** Needed only to tie a candidate to a directory, so the [R1](#race-conditions-and-what-closes-each) lock test can run and the report can name the session. `GetWindowTextW` first; on empty, retry `InternalGetWindowText`, which is documented on MS Learn, declared unguarded in the SDK, and does exactly what its documentation says — its caveat is availability, not semantics. Measured zero divergence between them across ~1,550 windows.
+
+**If attribution fails, refuse to kill and report loudly.** This is the property that makes the whole thing acceptable: the undocumented path can only ever cause us to *decline to act and say so*. It can never cause a wrong kill, and it can never cause silence.
+
+**A candidate becomes a stray only when both guards agree:** its image path is our binary, **and** its attributed directory contains our `lock.json` whose lock we can acquire ourselves.
 
 **Two enumeration-specific hazards, both measured:**
 
@@ -788,7 +799,8 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - **session-type enforcement, deny-by-default**, exercised against every tool in the surface
 - **the mode list is generated from one table** and appears identically in the server `instructions`, in `init`'s description, in `resume`'s playback and in the refusal text — a mode added in one place and missed in another fails the build
 - **`init` rejects an absent, empty, relative or malformed session directory** rather than defaulting or normalising it
-- **the cross-process window read still bypasses `WM_GETTEXT`** — spawn a child that creates a message-only window whose WndProc suppresses `WM_GETTEXT`, named with a known GUID, and assert the parent reads the GUID anyway. **No browser needed, milliseconds, every build.** This pins the undocumented behaviour the whole sweep rests on, and it fails the day Windows routes that read through the message queue — which would otherwise blind the sweep silently
+- **the cross-process window read still bypasses `WM_GETTEXT`** — spawn a child that creates a message-only window whose WndProc suppresses `WM_GETTEXT`, named with a known GUID, and assert the parent reads the GUID anyway. **No browser needed, milliseconds, every build.** This pins undocumented behaviour of a documented function; it goes red the day Windows routes that read through the message queue
+- **a candidate whose directory cannot be attributed is reported, never killed** — the property that keeps the undocumented read off the critical path. Simulate an attribution failure and assert the sweep emits a stray-found-cannot-attribute diagnostic and terminates nothing
 - **`GetWindowTextW` and `InternalGetWindowText` agree** on every window the sweep enumerates; a divergence means the fast path changed and the fix is a one-line switch
 - **`EnumWindows` returns zero `Chrome_MessageWindow`s**, so nobody later "simplifies" the class-qualified walk into an `EnumWindows` loop that silently finds nothing
 - **a window destroyed mid-walk produces `GetLastError() == 1400` and triggers a restart**, rather than truncating the enumeration
