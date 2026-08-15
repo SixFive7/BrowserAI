@@ -25,13 +25,30 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 # In-script guard. The settings.json `if` rule already scopes this to the marker,
 # but the authoritative check lives here: `if` semantics are fiddly on Windows and
 # a wrong pattern fails silently in whichever direction happens to be worse.
+$isSubAgent = $false
 try {
     $raw = [Console]::In.ReadToEnd()
     if ([string]::IsNullOrWhiteSpace($raw)) { exit 0 }
 
-    $path = ($raw | ConvertFrom-Json).tool_input.file_path
+    $payload = $raw | ConvertFrom-Json
+
+    $path = $payload.tool_input.file_path
     if ([string]::IsNullOrWhiteSpace($path)) { exit 0 }
     if ((Split-Path -Path $path -Leaf) -ne 'upstream-review.json') { exit 0 }
+
+    # Who is calling? Measured 2026-08-15 by capturing real payloads from both:
+    # a sub-agent's differs from the main session's by exactly two added keys,
+    # `agent_id` and `agent_type`. session_id, transcript_path and prompt_id are
+    # inherited verbatim from the spawning session and are useless here.
+    #
+    # This matters because `ask` does NOT gate a sub-agent. Measured the same day:
+    # under permission_mode `bypassPermissions`, an `ask` returned to a sub-agent
+    # is silently downgraded to allow, and the edit lands unprompted. The gate was
+    # inert against precisely the caller most likely to trip it. `deny` is honoured,
+    # and reaches the agent as a readable tool error it can report upward.
+    #
+    # StrictMode is on, so probe for the property rather than dereferencing it.
+    $isSubAgent = [bool]($payload.PSObject.Properties.Name -contains 'agent_id')
 }
 catch {
     exit 0

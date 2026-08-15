@@ -923,19 +923,53 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 
 **Marker** — resolved version equals reviewed version, for every upstream in [`upstream-review.json`](upstream-review.json).
 
-### The upstream-review marker
+### The upstream-review gate
 
-Our suite passing after a version bump means *our assumptions still hold*. It cannot mean *we noticed what upstream learned*. The golden snapshot catches surface changes; it is blind to behaviour changes, new config keys, changed defaults and fixed bugs.
+**Settled 2026-08-15, replacing an approval prompt with evidence.** The first design put a `PreToolUse` hook on `upstream-review.json` that asked a human to approve every edit. It was abandoned for two reasons, and the second is the one that matters.
 
-So adopting a new upstream version is gated. [`upstream-review.json`](upstream-review.json) records the version each dependency was last **reviewed** at; a test asserts that equals the version the build **resolved**. When the float moves, that test goes red and the release gate cannot pass until someone edits the marker — and editing it is what forces the look. The procedure lives in [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md); three layers point an agent at it before it can change the file:
+It did not work. Measured 2026-08-15: under `permission_mode: bypassPermissions` a hook's `permissionDecision: "ask"` returned to a **sub-agent** is silently downgraded to allow. The edit lands unprompted. The gate was inert against precisely the caller most likely to trip it, and nothing reported that.
 
-| Layer | Mechanism |
-|---|---|
-| The file | `_instructions` keys naming the procedure, in-band |
-| The repo | A rule in [`CLAUDE.md`](CLAUDE.md) |
-| The harness | A `PreToolUse` hook on `Edit|Write` that returns `permissionDecision: "ask"` with the procedure as its reason |
+And it asked the wrong question. *"Did a human approve this?"* proves nothing even when answered — a click is not a review — and it puts a person in a loop they have no reason to want to be in. **The question that matters is "did the checks run, and what did they find?"**, and that is very nearly mechanical.
 
-**This is a speed bump, not a proof.** Nothing verifies the diff was actually read. What it buys is that skipping the review becomes a deliberate act, recorded in git history, at the moment it matters — rather than the silent default. Requiring a `notes` entry means discharging it leaves an artifact, so an empty note is visible in review.
+#### What the gate actually checks
+
+Four snapshots, regenerated from the resolved payload on every build and diffed against committed copies:
+
+| Snapshot | Catches | Why it cannot be caught otherwise |
+|---|---|---|
+| `tools-list.json` | a tool added, removed, renamed, or its schema changed | — |
+| `cli-help.txt` | a flag that vanished | **the `--output-mode` class** — that flag was a no-op for its entire life and nothing noticed |
+| `config-schema.d.ts` | a renamed or removed config key | **the silent class.** `loadConfig` is a bare `JSON.parse` with no schema validation, so a renamed key is discarded without error |
+| `browsers.json` | a moved browser revision | changes what first-run provisioning downloads |
+
+**A diff fails the build with the diff itself in the failure message.** That is the whole point: not *"someone should look"*, but *"here is precisely what moved — adjudicate it."*
+
+Alongside them, the two things the suite already proves: **every test green**, and the `browser_get_config` round-trip showing every opinion BrowserAI generated survived into the child.
+
+#### Re-verification, automated where it can be
+
+[The re-verification index](kb/README.md#re-verification-index) lists the measured facts a version bump can silently invalidate. Each row carries an **`Automated by`** column naming the test that re-establishes it, or `—` where no test can.
+
+Several already exist as tests and simply need wiring to their row — the browser is unregistered for restart, `--no-sandbox` is absent from the resolved command line, zero process leakage after a hard kill, the `Chrome_MessageWindow` lookup finds a browser we launched, the cross-process window read still bypasses `WM_GETTEXT`. Others are inherently manual: whether an upstream behaviour change affects an abstraction of ours is a judgement, not an assertion.
+
+**The split is the design.** An automated row is answered by the suite and needs no human. A manual row **must** be answered in the marker entry, by name, with an outcome. A row that is neither automated nor answered fails the gate.
+
+#### What the marker records
+
+`reviewed` and `date` stay, but they stop meaning *"a human read this"* and start meaning *"these diffs were adjudicated"*. Each entry gains:
+
+- **`snapshots`** — for each of the four, `unchanged` or an adjudication of what changed.
+- **`reverification`** — for each manual row, its outcome. Automated rows are not listed; the suite owns them.
+- **`notes`** — unchanged in spirit and now checkable: what changed, what was adopted, **and what was declined and why.** A decline with a reason is worth as much as an adoption, because it stops the same question being re-litigated at the next bump.
+
+**A test asserts the entry is consistent with what actually moved.** If `config-schema.d.ts` changed and the entry's `snapshots` does not adjudicate it, the gate fails. If a manual re-verification row has no outcome, the gate fails. **You cannot record a review that ignores what the build observed** — which is the property the approval prompt never had.
+
+#### What the hook becomes
+
+Not a permission gate. It can inject the procedure as `additionalContext` when the marker is touched, so whoever is editing knows what is required — but it decides nothing, blocks nothing, and prompts nobody.
+
+> **The general lesson, recorded because it outlives this file.** A hook returning `ask` is **not** an enforcement mechanism: it is inert against sub-agents under bypass, and against a human it only proves a click. Enforcement belongs in the suite, where it is evidence rather than assent. If a rule can be a failing test, it must be one — and this is the case that proves the rule applies to our own tooling too.
+
 
 ### The release gate
 
@@ -945,7 +979,7 @@ The sequence, in order, no step skippable:
 
 1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
 2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
-3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review marker](#the-upstream-review-marker) fires: if the resolved version moved past the reviewed one, the suite is red and there is nothing to decide at step 5.
+3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review gate](#the-upstream-review-gate) fires: if the resolved version moved past the reviewed one, or a snapshot changed without an adjudication, or a manual re-verification row has no outcome, the suite is red and there is nothing to decide at step 5.
 4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](README.md#the-four-rules-that-make-floating-safe).
 5. **The maintainer decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
 6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
@@ -1009,7 +1043,7 @@ Section shorthands: [§A](#a-ship-and-own-the-runtime) · [§B](#b-be-the-mcp-se
 | Bundling and AOT | Two artifacts with the same caller-supplied name in one session — silent overwrite is data loss. Suffix and say so | — · [§F](#f-artifact-management) |
 | Bundling and AOT | `--output-max-size` evicting artifacts BrowserAI promised to keep. **It has no default at any merge stage** (verified 2026-08-15), so eviction is off unless someone turns it on — but the env var is a second door, so assert both | [kb: upstream config](kb/playwright/configuration.md) · [§F](#f-artifact-management) |
 | Bundling and AOT | Server `instructions` or a tool description exceeding 2 KB — Claude Code truncates both **silently**; the tail of the guidance simply does not exist, and nothing reports it | [kb: the client](kb/mcp/protocol.md#the-client-claude-code) · [§C](#c-the-init-tool-and-instance-handles) |
-| Bundling and AOT | The upstream-review marker can be discharged without reading anything — a speed bump, not a proof. Accepted deliberately: the value is that skipping becomes deliberate and recorded, not that it becomes impossible | — · [§testing](#testing-a-hard-requirement-and-the-release-gate) |
+| Bundling and AOT | The upstream-review entry can be written without doing the work — but not without *contradicting the build*, which now diffs four snapshots and fails if the entry ignores what moved. The residual gap is judgement, not vigilance: whether a change touches one of our abstractions cannot be asserted mechanically. Accepted deliberately: the value is that skipping becomes deliberate and recorded, not that it becomes impossible | — · [§testing](#testing-a-hard-requirement-and-the-release-gate) |
 | Child runtime and configuration | `browserName` defaults to system Chrome and `headless:false` on Windows — the bundled Chromium is never consulted. Verified against an empty browsers directory | [kb: upstream config](kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like) · [§A](#a-ship-and-own-the-runtime) |
 | Child runtime and configuration | **42** `PLAYWRIGHT_MCP_*` env vars override the generated config — silent override of every opinion, including a capability wipe. Counted from the resolved bundle 2026-08-15 | [kb: environment and merge order](kb/playwright/configuration.md#environment-merge-order-and-startup-output) · [§trade-offs](README.md#known-trade-offs) |
 | Child runtime and configuration | `loadConfig` is a bare `JSON.parse` with no schema validation — unknown or renamed keys are silently discarded | [kb: upstream config](kb/playwright/configuration.md#silent-config-failures) · [§why-3](README.md#3-two-failure-classes-exist-that-no-configuration-can-fix) |

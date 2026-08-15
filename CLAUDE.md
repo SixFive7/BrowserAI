@@ -15,7 +15,7 @@ BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@
 
 **Do not edit that file to make a test pass.** Read [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) and follow it: diff upstream's `tests/`, diff `config.d.ts`, check `browsers.json` and the CLI surface, then record what changed, what was adopted, **and what was declined and why**. A `notes` field left empty or unchanged is a review that did not happen.
 
-A `PreToolUse` hook will interrupt an edit to that file and repeat this. The hook is a reminder, not the authority — this rule is.
+**A hook does not gate this file, and cannot.** Measured 2026-08-15: under bypass-permissions a hook's `ask` returned to a sub-agent is silently downgraded to allow, so the prompt never fires for the caller most likely to need it — and against a human it only ever proved a click. [The gate is the suite](PLAN.md#the-upstream-review-gate): four snapshots diffed against the resolved payload, every test green, and an entry that must adjudicate whatever actually moved. Editing the file without that evidence produces a red build, not a prompt.
 
 ## Versioning: everything floats, the build freezes it
 
