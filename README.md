@@ -247,7 +247,9 @@ This also replaces four static configurations with one dynamic one, and eliminat
 
 #### The `init` contract
 
-**Takes:** the session type; an output root (optional — defaults outside any repository, see [§F](#f-artifact-management)); a **label** (optional, defaults to the handle); and the profile directory where that applies.
+**Takes:** the mode; the browser; a required `purpose`; and **a required session directory. There is no default and there is no fallback.** An empty, relative, malformed or unusable path is rejected outright — never normalised into something that happens to work.
+
+**Requiring the path is the design, not a validation detail.** A default is a decision made on the caller's behalf that the caller never notices making, and the whole failure class this project exists to eliminate is decisions nobody observed. Forcing every `init` and `resume` to name a location makes an agent state where this session's data lives — which is precisely the thought the founding stray-file problem shows nobody was having. It also removes the only path by which two agents could land in the same place without either choosing it.
 
 The label exists because `checkout-flow-bug\` is navigable and `2026-08-14T04-11-50-882Z\` is not. Three months of the current setup produced 346 session directories and 1.5 GB, and the reason nobody pruned them is that nobody could tell what any of them had been.
 
@@ -362,15 +364,62 @@ The cost is honest — **directories accumulate forever** — and it is why expl
 
 Three mechanisms, none of which stores state. **That is the property that made the registry a liability and these not:** the registry held handle mappings, config and liveness, so two BrowserAIs could disagree, a stale entry was a bug, and every write needed a machine-wide mutex.
 
-- **The default root.** Sessions created without an explicit directory land under one root. Enumerating it is a directory listing — self-healing by construction, since a deleted session leaves the inventory for free and a scan cannot go stale.
-- **Pointer files for out-of-root directories.** `%LOCALAPPDATA%\BrowserAI\known\<sha256-of-canonical-path>`, containing the path. One immutable fact per file — *a session directory once existed here*. Creating and deleting a file is atomic, so there is no read-modify-write to synchronise and no mutex. A pointer to a vanished directory is skipped, not repaired.
-- **The directory proves its own ownership.** Anything found by either route is verified by opening `lock.json` inside it. We never have to trust the inventory. A personal Chrome profile contains no `lock.json`, so it cannot be mistaken for ours however it was reached.
+Because [there is no default directory](#the-init-contract), there is no root to scan and **the pointer store is the only inventory.** That makes it load-bearing, so it is designed to fail safe rather than to be correct under every race.
 
-**The stray sweep runs on two triggers, each looking twice.** BrowserAI's own startup is the primary signal — it costs nothing, has no install footprint, and fires exactly when a stray matters most, because that is when something is about to contend for a lock. A logon scheduled task covers the case the first cannot: nobody starts a client for a week while a resurrected browser eats memory. Neither can know when Windows has finished restoring apps, and no documented event marks it, so **neither tries to win the race — both simply look more than once**: an immediate sweep plus a re-check at ~10 minutes, expressed as Task Scheduler's native repetition rather than an in-process sleep.
+- **One pointer per session directory**, keyed by the SHA-256 of the canonical path, holding just that path. One immutable fact — *a session directory once existed here*. No state, no mapping, no liveness: that is the entire difference from the central registry this replaces, which held all three and therefore needed a mutex on every write and had a bug for every stale entry.
+- **Written on every `init` *and* every `resume`, idempotently.** Re-asserting rather than writing-once is what makes a lost pointer self-heal: the cost of losing one is a single sweep cycle of invisibility, not a permanently orphaned directory. This is deliberate — it lets the store skip locking entirely (see [race R7](#race-conditions-and-what-closes-each)).
+- **Self-cleaning on sweep.** A pointer whose directory is gone, or whose directory has no readable `lock.json`, is removed. The store therefore shrinks as sessions are destroyed, without anyone maintaining it.
+- **The directory proves its own ownership.** Anything the store points at is verified by opening `lock.json` inside it, so the inventory never has to be trusted — only followed. A personal Chrome profile contains no `lock.json` and cannot be mistaken for ours however it was reached.
 
-Detection itself is [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) — the exact-title `Chrome_MessageWindow` lookup, canonicalised to backslashes, absolutised, trailing separator stripped. **The detector must not be extended to cover fallback profiles**, because with `channel: "chrome"` that path is the user's own browser.
+**Store it in `HKCU\Software\BrowserAI\Sessions` rather than as files.** Both work and the choice is close, but the registry wins on the axis that matters here: `RegSetValueEx` and `RegDeleteValue` are atomic single-value operations designed for concurrent access, whereas enumerating a directory while other processes create and delete entries in it is a race the file system does not promise anything about. Enumeration is also cheaper, and the store cannot be damaged by a disk-cleanup tool that decides an unknown folder is junk. Two things to hold against it: HKCU roams with a roaming profile, so entries can arrive naming paths that never existed on this machine — harmless, because self-cleaning removes them on the first sweep — and it is less pleasant to inspect by hand, which a `list` tool answers better than a folder would. Verify `Microsoft.Win32.Registry` is NativeAOT-clean before committing to it.
 
-> A fourth mechanism would remove the need for an inventory in the sweep entirely: enumerate every `Chrome_MessageWindow`, read each title, and treat any titled directory containing our `lock.json` as ours. It is self-identifying and would find directories the inventory has forgotten. **Unverified and contradicted:** one measurement found `GetWindowTextW` returned empty when enumerating other processes' windows, another found it worked reading a browser we launched ourselves. Settle it before relying on it.
+#### The stray sweep, and the concurrency it must survive
+
+**Design for ~100 concurrent BrowserAI processes, not for one.** Eight editor windows with a dozen agent sessions each is a normal working day, and every session spawns its own MCP server. Any sweep design that is merely *correct* for a single process is wrong here: 96 processes all sweeping at startup is a thundering herd, and 96 processes racing to kill the same stray is a correctness problem, not a performance one.
+
+**Two triggers, each looking twice.** BrowserAI's own startup is the primary signal — free, no install footprint, and it fires exactly when a stray matters most, because that is when something is about to contend for a lock. A logon scheduled task covers what the first cannot: nobody starts a client for a week while a resurrected browser eats memory. Neither can know when Windows has finished restoring apps and no documented event marks it, so **neither tries to win the race — both simply look more than once**: an immediate pass plus a re-check at ~10 minutes, expressed as Task Scheduler's native repetition rather than an in-process sleep.
+
+> ⚠️ **The scheduled task must run in the user's interactive session, not as a service.** `FindWindowExW(HWND_MESSAGE, …)` is scoped to a window station and desktop, so a task configured *"run whether user is logged on or not"* lands in session 0 and **sees no message windows at all** — it would sweep, find nothing, and report success forever. Configure it *"run only when user is logged on"*, as the user, non-elevated. This is a silent-success failure mode, so it needs a test that would fail if the task definition changed: assert the sweeper finds a browser it launched itself.
+
+**Concurrency: try-acquire-and-skip, never queue.**
+
+- The sweep runs on a **background thread, fire-and-forget, never awaited**, and nothing on the MCP request path waits for it or observes it. It touches the stdout wrapper never and stderr only.
+- One machine-wide mutex, `Global\BrowserAI-Sweep`. A process does `WaitOne(0)` — **zero timeout**. If it fails, a sweep is already running, so this one exits immediately rather than queueing. With 96 startups, one sweeps and 95 do nothing but pay a mutex acquire.
+- **A skipped sweep is not a missed sweep.** Whoever holds the mutex is scanning the same store this process would have scanned. Retrying would be pure duplication.
+- The sweep must never be a startup gate: if the mutex or the store is unavailable, log and continue. A BrowserAI that cannot sweep is degraded; a BrowserAI that will not start is broken.
+
+**Why not the named pipe.** A pipe would let a running sweeper tell a newcomer "already running" — but that is exactly what a zero-timeout mutex already says, at a fraction of the machinery. A pipe adds a server whose death orphans clients, a protocol to version, and a second failure mode where the pipe exists but the sweeper is gone. The only thing a pipe buys is handing back *results*, and a newcomer does not need results — it needs to not duplicate work. Mutex.
+
+**Three lock scopes exist and must not be conflated:**
+
+| Scope | Name | Held for |
+|---|---|---|
+| Per-directory, guarding create-or-take | `Global\BrowserAI-{sha256(path)[..32]}` | milliseconds |
+| Per-session, proving ownership | `lock.json`, `FileShare.Read` | the session's life |
+| Machine-wide, guarding the sweep | `Global\BrowserAI-Sweep` | one sweep pass |
+
+##### Race conditions, and what closes each
+
+Every row is a test, not a note. The first three are the ones that lose data or kill the wrong process.
+
+| # | Race | What closes it |
+|---|---|---|
+| **R1** | **The sweep kills a browser a live session just launched.** Process X sweeps; process Y is mid-`init` on the same directory. | **The sweep may only kill a browser whose directory lock it can itself acquire.** If `lock.json` cannot be opened for write, someone owns the directory — skip, unconditionally. Y-takes-lock-then-launches and Y-launching-then-holding are both covered, and X-holds-while-killing makes Y wait and then launch cleanly. The directory lock is held for the whole kill. |
+| **R2** | **PID reuse between detection and kill.** | Capture `(pid, creationFileTime)` at detection and **hold an `OpenProcess` handle from that moment**: Windows will not recycle a PID while a handle is open. Re-verify creation time immediately before `TerminateProcess` regardless. |
+| **R3** | **`AbandonedMutexException`.** A sweeper dies holding the mutex; every later acquire throws. | The mutex **is** acquired when that exception is thrown — catch it, treat it as acquired, and proceed. Unhandled, this disables sweeping permanently after the first crash, and nothing reports it. Same handling on the per-directory mutex. |
+| **R4** | The scheduled task and BrowserAI use different mutexes. | One name, one place in code, `Global\` prefixed. A `Local\` prefix would silently give per-session mutexes and let two sweeps run. |
+| **R5** | Session 0 blindness (above). | Task runs in the interactive session; test asserts it finds a self-launched browser. |
+| **R6** | The store is enumerated while an `init` adds an entry. | Benign: a missed entry is a live session, which the sweep would skip anyway, and it is present next pass. |
+| **R7** | **The sweep deletes a pointer for a directory an `init` is creating right now.** | Not prevented — **absorbed**. Pointers are re-asserted idempotently on every `init` and `resume`, so a wrongly-deleted pointer costs one cycle of invisibility and is restored on next use. Locking the store to close this would put a machine-wide lock on the hot path of every session start, which is a worse trade at 96 processes. Deletion additionally re-checks absence immediately before acting. |
+| **R8** | Two sweeps in different terminal-server sessions. | Correct and intended: message windows are per-session, so each session must sweep its own. The `Global\` mutex serialises them, which costs a little parallelism and prevents nothing valid. |
+| **R9** | A sweep runs longer than the 10-minute re-check. | Try-acquire-and-skip means the re-check simply does nothing. No pile-up is possible. |
+| **R10** | Killing a stray mid-write corrupts its profile. | Accepted. The profile has no owner by definition (R1), and Chromium is built to survive `taskkill`, which is what upstream itself does. |
+| **R11** | An exception in the sweep kills the process. | Catch-all at the thread boundary. A sweep failure is a log line, never a crash and never a protocol error. |
+| **R12** | The sweep writes to `stdout`. | Forbidden process-wide already; the sweep is inside that rule, not an exception to it. |
+
+**Detection** is [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) — the exact-title `Chrome_MessageWindow` lookup, canonicalised to backslashes, absolutised, trailing separator stripped. **The detector must not be extended to cover fallback profiles**, because with `channel: "chrome"` that path is the user's own browser.
+
+> A fourth discovery mechanism would remove the need for the inventory in the sweep entirely: enumerate every `Chrome_MessageWindow`, read each title, and treat any titled directory containing our `lock.json` as ours. Self-identifying, and it would find directories the store has forgotten. **Unverified and actively contradicted** by two measurements — one found `GetWindowTextW` empty when enumerating other processes' windows, another found it worked reading a browser we launched. Settle it before relying on it.
 
 **`destroy` deletes a whole session directory, and refuses anything without a valid `lock.json`.** That refusal is what makes it safe to hand a model a tool that deletes trees: it cannot be aimed at `Documents\`. It tears the browser down first, then deletes under the lock; if the lock is held elsewhere it reports the holder instead. Pair it with a `list` that shows each session's purpose, mode, last-used and **size on disk** — an agent cannot make a good retention decision without knowing it is sitting on 4 GB.
 
@@ -458,7 +507,7 @@ A sort is cleanup; a proxy can do better. BrowserAI sees every `tools/call` befo
 2. **Normalise `filename` on the way in.** Route it to the typed subfolder its generator prefix implies, so the agent never has to construct a path.
 3. **Return the resolved absolute path on the way out.** Non-negotiable if lever 2 is used. Silently relocating a file while telling the model it went somewhere else produces an agent that confidently reports the wrong location — a new silent failure introduced by the fix for an old one.
 
-**The default root must be outside any repository.** When `init` is given no path, artifacts go to `%LocalAppData%\BrowserAI\sessions\<label>\` — never the current working directory. The founding stray-file problem is files landing in repo roots; a default that cannot land there makes the common case safe without relying on the caller.
+**There is no default root, because there is no default.** `init` requires an explicit session directory and rejects an empty or invalid one — see [the `init` contract](#the-init-contract). An earlier draft defaulted to `%LocalAppData%\BrowserAI\sessions\<label>\` when given no path; that is now an error instead. The founding stray-file problem was files landing in repo roots *because nobody chose where they should go*, and a safe default answers the symptom while preserving the cause. Making the caller name the location is what actually removes it.
 
 Layout beneath the root, following the nine generator prefixes rather than inventing new ones:
 
@@ -716,6 +765,8 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - tool filter / rename / re-describe, **order-stable** (the spec SHOULDs deterministic ordering for prompt-cache hit rates)
 - **session-type enforcement, deny-by-default**, exercised against every tool in the surface
 - **the mode list is generated from one table** and appears identically in the server `instructions`, in `init`'s description, in `resume`'s playback and in the refusal text — a mode added in one place and missed in another fails the build
+- **`init` rejects an absent, empty, relative or malformed session directory** rather than defaulting or normalising it
+- **every race in [the sweep table](#race-conditions-and-what-closes-each) has a test.** Specifically: an `AbandonedMutexException` leaves sweeping functional (**R3**); the sweep refuses to kill when the directory lock is held (**R1**); a zero-timeout acquire under N concurrent starters runs exactly one sweep and blocks none of the others (**R9**, **R14**); a re-asserted pointer restores itself after a wrongful delete (**R7**); and the sweep never writes to `stdout` (**R12**)
 - **a mode refusal names the mode that would permit the call**, not merely that the call was refused
 - handle lifecycle: missing, unknown and expired produce **three distinct LLM-readable errors**, each naming `init` and recoverable in one turn
 - lock-name derivation: `GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → `Global\BrowserAI-{hash[..32]}`
