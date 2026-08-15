@@ -393,14 +393,20 @@ indistinguishable from a real Chromium singleton. `[STABLE]`
   returns `NULL` with error 0, so 1400 is an unambiguous discriminator — check it
   and restart, or the sweep under-reports **exactly when browsers are exiting**.
 
-**Blind spot: a titleless stray.** `launchPersistentContext(dir, {headless:true})`
-spawns `chrome-headless-shell.exe`, which publishes **two unnamed windows and no
-`lockfile`** — both primitives blind. `@playwright/mcp` 0.0.79 does not take that
-path (headed by default; `--headless --browser chromium` spawns full `chrome.exe`
-with a titled window, read in 2.0 µs, driven over real stdio JSON-RPC). But
-`chromium.executablePath()` reports `chrome.exe` in **both** cases, so it is not a
-usable indicator. A future upstream switch to the shell would blind the sweep
-silently — own it with a test. `[FLOATS]`
+**`chrome-headless-shell` publishes two unnamed windows and no `lockfile`** — both
+primitives blind. Measured via `launchPersistentContext(dir, {headless:true})`,
+which spawns it. `@playwright/mcp` 0.0.79 does not take that path: headed by
+default, and `--headless --browser chromium` spawns full `chrome.exe` with a
+titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
+
+> **This is recorded as a property of the shell, not as a risk to us.** BrowserAI
+> [does not provision it](README.md#settled-2026-08-15) — full Chromium in every
+> mode — and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` means it cannot appear on disk
+> later. So an upstream change to binary selection would produce a **failed
+> launch**, which is loud, rather than a silently untrackable browser. It matters
+> only if that decision is ever revisited. Note `chromium.executablePath()`
+> reports `chrome.exe` for **both** binaries, so it is not a usable indicator of
+> which one is running.
 
 ### 3.3 Process image path — the fully documented detection path
 
@@ -427,9 +433,14 @@ is in that set.
 
 13.88 ms on a background thread, once per sweep, with the sweep mutex ensuring
 one process pays it rather than ninety-six. Roughly 5× the cost of the
-window-title walk (0.43 ms to enumerate, ~2.7 ms including title reads) and it
-covers strictly more: a `chrome-headless-shell` stray publishes no window title
-and no `lockfile`, but it still runs our binary.
+window-title walk (0.43 ms to enumerate, ~2.7 ms including title reads).
+
+**What it covers that the title walk cannot: a browser that fell back to a
+different profile** (§4). Such a process retitles its message window to the
+fallback path, so title-keyed detection loses it — while image-path detection
+still sees it, because the binary is unchanged. It cannot safely be *killed*
+(it may belong to a live session whose directory was unusable), so it takes the
+report-don't-kill path; but knowing beats not knowing.
 
 > **Rejected optimisation, recorded so it is not re-proposed.**
 > `NtQuerySystemInformation(SystemProcessInformation)` returns image *names* in a
@@ -748,7 +759,7 @@ the first three would each silently invalidate a design decision:
 | 3 | `chromiumSandbox` config key still discarded | Upstream fixes it | Assert `--no-sandbox` absent from the child's browser command line |
 | 4 | `Chrome_MessageWindow` title format | Chromium changes `ProcessSingleton` | Exact-title lookup against a launched browser |
 | 4a | **Cross-process `GetWindowTextW` bypasses `WM_GETTEXT`** — undocumented behaviour of a documented function, and the sweep rests on it | A Windows change routes the read through the message queue | Child process with a WndProc that suppresses `WM_GETTEXT`; assert the parent still reads the kernel name. **No browser needed — runs in milliseconds on every build** |
-| 4b | Playwright's headless path still spawns full `chrome.exe`, not `chrome-headless-shell` | Upstream switches binaries — the sweep goes **silently** blind, and `executablePath()` reports `chrome.exe` either way | Launch through the real path, assert the walk yields a titled window owned by that PID |
+| 4b | Playwright's headless path still spawns full `chrome.exe`, not `chrome-headless-shell` | Upstream switches binaries. Not silent — the shell is never provisioned, so the launch **fails loudly** — but the failure would be baffling without this note | Launch through the real path, assert the walk yields a titled window owned by that PID |
 | 5 | Chromium/Firefox request no breakaway on browser paths | Either adds one | Source search for `CREATE_BREAKAWAY_FROM_JOB` |
 | 6 | `--browser-test` call-site inventory (11 files) | Chromium adds a web-facing site | Source search for `switches::kBrowserTest` |
 | 7 | `browserName`/`channel`/binary-selection defaults | `validateBrowserConfig` or `getExecutableName` changes | Config round-trip via `browser_get_config` |
