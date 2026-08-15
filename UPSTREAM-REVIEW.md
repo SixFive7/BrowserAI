@@ -17,7 +17,7 @@ The golden `tools/list` snapshot catches surface changes — a new tool, a renam
 - a fixed bug that changes response shape
 - a new capability worth enabling, or worth deliberately declining
 
-So the marker gates adoption. When the build resolves a version newer than the reviewed one, the marker test fails and [the release gate](README.md#the-release-gate) cannot pass.
+So the marker gates adoption. When the build resolves a version newer than the reviewed one, the marker test fails and [the release gate](PLAN.md#the-release-gate) cannot pass.
 
 **This is a speed bump, not a proof.** Nothing here verifies you read anything. What it buys is that skipping the review is a deliberate act with your name on it in git history, at the moment it matters — instead of the silent default.
 
@@ -33,7 +33,7 @@ Read these, in this order. The first two carry most of the value.
 | CLI surface: `--help` on old vs. new | Flags that vanished. This is the `--output-mode` class |
 | Release notes / changelog | Intent and rationale the diffs do not carry |
 | For `ModelContextProtocol`: `Directory.Packages.props` | Whether the SDK changed *its own* test framework. It is on `xunit.v3` today; we are on TUnit deliberately, and a move upstream is worth knowing about |
-| **[`KNOWLEDGE.md`](KNOWLEDGE.md) → [Re-verification index](KNOWLEDGE.md#re-verification-index)** | **Measured facts this project depends on that a bump can silently invalidate.** Work the table top-down; the first three each falsify a design decision if they move. This is the half of the review that catches "upstream did not change its surface, it changed its behaviour" |
+| **[`kb/`](kb/README.md) → [Re-verification index](kb/README.md#re-verification-index)** | **Measured facts this project depends on that a bump can silently invalidate.** Work the table top-down; the first three each falsify a design decision if they move. Each row links to the article that established it. This is the half of the review that catches "upstream did not change its surface, it changed its behaviour" |
 
 ## What to write down
 
@@ -45,9 +45,9 @@ Update the entry in [`upstream-review.json`](upstream-review.json):
 
 A decline with a reason is worth as much as an adoption: it stops the same question being re-litigated at the next bump. An empty note is a review that did not happen, and it is visible as such in the diff.
 
-If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the README's [hazard index](README.md#hazard-index) — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.
+If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the plan's [hazard index](PLAN.md#hazard-index), and the fact behind it in the [`kb/`](kb/README.md) article that owns the topic — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.
 
-**If a re-verification comes back different, update [`KNOWLEDGE.md`](KNOWLEDGE.md) by re-running the measurement — never by reasoning.** An entry whose number was adjusted to match an expectation reads identically to one that was measured, which makes it worse than no entry at all. If a check is owed and has not been run, mark it `[STALE]` and say so; a gap that announces itself is recoverable, a confident wrong number is not.
+**If a re-verification comes back different, update the [`kb/`](kb/README.md) article that carries the fact by re-running the measurement — never by reasoning.** An entry whose number was adjusted to match an expectation reads identically to one that was measured, which makes it worse than no entry at all. If a check is owed and has not been run, mark it `[STALE]` and say so; a gap that announces itself is recoverable, a confident wrong number is not.
 
 ## If the diff is large
 

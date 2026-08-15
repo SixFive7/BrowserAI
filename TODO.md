@@ -7,7 +7,7 @@ somewhere.
 
 **What does not:** open design questions and known hazards. Those live in the
 README, under [Open design decisions](README.md#open-design-decisions) and the
-[hazard index](README.md#hazard-index). An item moves here once the decision
+[hazard index](PLAN.md#hazard-index). An item moves here once the decision
 behind it is made.
 
 **Format:** `- [ ] **Title.** Why it matters, then what to actually do.` Carry the
@@ -58,21 +58,21 @@ All three are now proper README sections. Retained here only as a record of what
 was decided when; the README is the live copy and the two have diverged where
 later measurement overruled the original.
 
-- [x] **First-run browser provisioning** → [README §A](README.md#first-run-browser-provisioning).
+- [x] **First-run browser provisioning** → [README §A](PLAN.md#first-run-browser-provisioning).
       Changed since: `chrome-headless-shell` is no longer provisioned, and the
       manifest/health-check layer was dropped by decision — the recovery is manual
       and the error text carries it.
 - [x] **Instance lifetime** →
-      [The session directory is the identity](README.md#the-session-directory-is-the-identity),
-      [Lifetime](README.md#lifetime-one-timer-and-reclaim-is-forever),
-      [Finding sessions](README.md#finding-sessions-without-a-registry).
+      [The session directory is the identity](PLAN.md#the-session-directory-is-the-identity),
+      [Lifetime](PLAN.md#lifetime-one-timer-and-reclaim-is-forever),
+      [Finding sessions](PLAN.md#finding-sessions-without-a-registry).
       Changed substantially since: the central registry is **dropped**, the bearer
       token is **dropped**, labels are **dropped**, and every expiry timer except
       browser-idle is **dropped**. The directory is the identity, the handle and
       the lock.
 - [x] **Three browsers, three collision behaviours** →
-      [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) and
-      [§4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs). These
+      [kb: stray detection](kb/windows/detection.md) and
+      [kb: profile fallback](kb/chromium/profiles.md). These
       are measured facts, not design, so they belong in the knowledge base rather
       than the charter.
 
@@ -208,14 +208,14 @@ later measurement overruled the original.
       One timer only — browser-idle — and **the registry is dropped**: the
       directory is the identity, the handle and the lock, and `lock.json` inside it
       is the authority. Labels are gone with it. See
-      [The session directory is the identity](README.md#the-session-directory-is-the-identity)
-      and [Lifetime](README.md#lifetime-one-timer-and-reclaim-is-forever).
+      [The session directory is the identity](PLAN.md#the-session-directory-is-the-identity)
+      and [Lifetime](PLAN.md#lifetime-one-timer-and-reclaim-is-forever).
 
 ## Open after 2026-08-15
 
 - [x] **Post-reboot resurrection: mechanism excluded, prevention dropped.** ✅
       Measured 2026-08-15 and encoded in
-      [KNOWLEDGE §2](KNOWLEDGE.md#2-browser-resurrection-after-a-reboot).
+      [kb: resurrection](kb/chromium/resurrection.md).
       `RegisterApplicationRestart` **was never succeeding** — Playwright's command
       line overshoots the 1023-character limit by 531–807 in every shippable
       configuration, verified on live processes with a registering positive control.
@@ -225,15 +225,15 @@ later measurement overruled the original.
       settle it is recorded in the KB.
 
 - [x] **When does the stray sweep run?** ✅ Settled and encoded as
-      [The stray sweep](README.md#the-stray-sweep-and-the-concurrency-it-must-survive).
+      [The stray sweep](PLAN.md#the-stray-sweep-and-the-concurrency-it-must-survive).
       Two triggers — BrowserAI startup and a logon scheduled task — each looking
       twice, with twelve races enumerated and a test against each. Detection is
       enumeration rather than inventory lookup
-      ([KNOWLEDGE §3.2](KNOWLEDGE.md#32-enumeration-works--and-it-moves-the-safety-boundary)),
+      ([kb: enumeration](kb/windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)),
       so the sweep and the pointer store are now independent.
 
 - [x] **The four named modes become three plus a modifier.** ✅ Settled and encoded
-      2026-08-15 as [Three modes](README.md#three-modes-and-tracing-as-a-modifier),
+      2026-08-15 as [Three modes](PLAN.md#three-modes-and-tracing-as-a-modifier),
       with the eight-combination table, the reason rows 3–4 stay closed, and
       discoverability as a hard requirement across four model-facing channels
       generated from one table.
@@ -255,7 +255,7 @@ later measurement overruled the original.
 - [x] **Label reuse.** ✅ Moot. Labels are gone — the directory is the identity.
 
 - [x] **Never kill by image name.** ✅ Encoded 2026-08-15 as
-      [§D → Never by image name](README.md#never-by-image-name), with the
+      [§D → Never by image name](PLAN.md#never-by-image-name), with the
       two-mechanism invariant (job object for the living, path-keyed identification
       for survivors), the forbidden-API list at analyzer-error severity, and the
       measured warning that `--user-data-dir` alone is **not** an ownership signal —
@@ -273,7 +273,7 @@ later measurement overruled the original.
 - [x] **First-run download self-healing.** ✅ Decided: stay with Playwright's
       built-in capabilities, no manifest and no health-check layer. The consequence
       is stated plainly in
-      [§A](README.md#first-run-browser-provisioning) rather than softened —
+      [§A](PLAN.md#first-run-browser-provisioning) rather than softened —
       a tree corrupted *after* a successful install never re-downloads, because
       `INSTALLATION_COMPLETE` short-circuits without validating. Recovery is the
       `browserai_reinstall_browser` tool plus error text that names the path.

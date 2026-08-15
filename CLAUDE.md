@@ -3,11 +3,11 @@
 
 # BrowserAI — working instructions
 
-BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@playwright/mcp` child over stdio. [`README.md`](README.md) is the charter and the source of truth for design; this file is the standing rules for working in the repository.
+BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@playwright/mcp` child over stdio. [`README.md`](README.md) is the charter — architecture, scope and the reasoning behind every decision. [`PLAN.md`](PLAN.md) is what to build, and is consumed as the code gets written. This file is the standing rules for working in the repository.
 
-**Status: design phase, nothing is built.** Work settled in intent but not yet done lives in [`TODO.md`](TODO.md); open design questions and known hazards stay in the README.
+**Status: design phase, nothing is built.** Work settled in intent but not yet done lives in [`TODO.md`](TODO.md); open design questions stay in the README, and the [hazard index](PLAN.md#hazard-index) is in the plan.
 
-**Measured facts go in [`KNOWLEDGE.md`](KNOWLEDGE.md), not the README.** The README says what we decided; `KNOWLEDGE.md` says what we measured about Chromium, Firefox, Playwright, Node and Windows. Every entry carries a date, the versions it held under, and how to re-establish it. **Never update a result by reasoning — re-run the measurement, or mark the entry `[STALE]`.** An adjusted number is indistinguishable from a measured one, which makes it worse than a gap. New `[FLOATS]` entries need a row in the re-verification index, or nobody will ever re-check them.
+**Measured facts go in the knowledge base at [`kb/`](kb/README.md), not in the README and not in the plan.** The README says what we decided; the plan says what to build; `kb/` says what we measured about Chromium, Firefox, Playwright, Node and Windows. It is a directory tree with one article per topic and a topic-sorted index at [`kb/README.md`](kb/README.md) — put a new fact in the article it belongs to, never in a new top-level file. Every entry carries a date, the versions it held under, and how to re-establish it. **Never update a result by reasoning — re-run the measurement, or mark the entry `[STALE]`.** An adjusted number is indistinguishable from a measured one, which makes it worse than a gap. New `[FLOATS]` entries need a row in the [re-verification index](kb/README.md#re-verification-index), or nobody will ever re-check them.
 
 ## Before changing `upstream-review.json` — stop and read the procedure
 
@@ -19,7 +19,7 @@ A `PreToolUse` hook will interrupt an edit to that file and repeat this. The hoo
 
 ## Versioning: everything floats, the build freezes it
 
-Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in the README and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
+Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in the README, in [`PLAN.md`](PLAN.md#implementation-stack), in [`kb/`](kb/README.md) and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
 
 - **Never pin a dependency to work around a break.** Fix forward; make the new version work.
 - **Never assert a version or a "latest" claim from memory.** If it was not looked up this session, say plainly that it is unverified. A confident stale version is worse than an admitted gap. Route package questions to the `nuget` MCP server, .NET/C# questions to `microsoft-learn`, and anything else to `context7` — but prefer a vendor's own server over `context7`, which is metered.
@@ -43,6 +43,7 @@ Resolve them **the way the build resolves them**, which is not the way a registr
 - **Only stamp `lastChecked` after a lookup actually returned a version.** A date written from intent reads identically to a real one and silences the next check for a day. This is the same failure as editing `upstream-review.json` to make a test pass.
 - **Never block work on it.** Drift is information, not a gate. Report it, offer to run [the review procedure](UPSTREAM-REVIEW.md), and carry on with what was asked.
 - **Drift is not a bump.** Finding a newer version does not license editing `upstream-review.json` — that still requires the review.
+- **A confirmed move puts the [re-verification index](kb/README.md#re-verification-index) in play.** That table is where the `[FLOATS]` facts a bump can silently invalidate are listed, and it is the half of the review the golden snapshot cannot do.
 
 **Why a directive rather than a scheduled job.** The obvious answer is a CI poller, and it is not needed here: this project is built entirely through an agent, so a rule that fires at the start of a working session runs by construction — the check happens because the work happens. Dependabot cannot do the job in any case (verified 2026-08-14 against `dependabot-core`'s own test table: a NuGet `Version="*"` is rewritten to `*` and produces no PR, and npm `"latest"` is skipped by a dist-tag guard — it bumps declared floors, and this project declares none).
 
