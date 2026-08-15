@@ -16,7 +16,25 @@ and version it was true at.
 
 ## At v1 launch
 
-- [ ] **Review `.gitignore`.** It was written before any code existed, so the
+- [x] **Review `.gitignore`.** ✅ Done 2026-08-15, ahead of v1, because the
+      Velopack spike produced a real `vpk pack` to check the guesses against.
+      Fixed: bare `Setup.exe` never matched (the real name carries the app id and
+      channel) → `*-Setup.exe`; added the `releases.*.json` / `assets.*.json` feed
+      manifests, which were missing entirely; corrected the payload comment, which
+      still described a ~806 MB tree with browsers in it; and `Verify.XunitV3` →
+      `Verify.TUnit`, left over from before the framework decision. Kept
+      `/payload/`, `/staging/`, `/.staging/` deliberately — vpk emits none of
+      them, but the build will need somewhere to assemble a payload, so they are
+      reviewed rather than deleted on the theory that they are unused.
+
+      **Still owed at v1:** re-fetch the upstream `VisualStudio.gitignore` half
+      wholesale, and settle `.vscode/mcp.json` (upstream PR
+      [#4735](https://github.com/github/gitignore/pull/4735), open since
+      2025-09-23; if unmerged, add `!.vscode/mcp.json` below the marker). Original
+      note follows.
+
+- [ ] ~~**Review `.gitignore`.**~~ *(largely discharged above; the upstream-half
+      refresh and the `.vscode/mcp.json` decision remain.)* It was written before any code existed, so the
       project-specific half is predictive rather than observed. Four things to
       check:
 

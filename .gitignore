@@ -442,8 +442,14 @@ FodyWeavers.xsd
 ###############################################################################
 
 # --- Bundled payload ---------------------------------------------------------
-# The ~806 MB runtime tree (node.exe, both Chromium builds, ffmpeg, winldd) is
-# assembled at build time and never committed. See README section A.
+# The installer payload (node.exe ~88 MB + the @playwright/mcp JS tree ~18 MB +
+# BrowserAI itself) is assembled at build time and never committed. Browsers are
+# NOT in it -- they are provisioned on first run, so no Chromium tree is ever
+# staged here. See PLAN.md section A.
+#
+# Verified 2026-08-15: vpk emits none of these three. They are our own build
+# conventions, kept because the build will need somewhere to assemble a payload,
+# and reviewed here rather than deleted on the theory that they are unused.
 /payload/
 /staging/
 /.staging/
@@ -459,12 +465,22 @@ FodyWeavers.xsd
 
 # --- Velopack ----------------------------------------------------------------
 # *.nupkg (full and delta packages) and *.msi come from the upstream template.
+#
+# Verified 2026-08-15 against a real `vpk pack`, which emits into Releases/:
+#   {id}-{version}-full.nupkg   {id}-{version}-delta.nupkg
+#   {id}-{channel}-Setup.exe    {id}-{channel}-Portable.zip
+#   releases.{channel}.json     assets.{channel}.json     RELEASES
+# vpk does NOT prune: after five versions all five fulls and four deltas remain.
 /Releases/
 /releases/
 /RELEASES
-Setup.exe
+# Bare `Setup.exe` never matches -- the real name carries the app id and channel.
+*-Setup.exe
 Setup.exe.log
 *-Portable.zip
+# Feed manifests, emitted beside the packages.
+releases.*.json
+assets.*.json
 
 # --- Playwright / MCP run output ---------------------------------------------
 .playwright-mcp/
@@ -473,7 +489,7 @@ trace.zip
 
 # --- Test output -------------------------------------------------------------
 # *.received.* is already ignored above by the Approval Tests rule, which is
-# exactly what Verify.XunitV3 needs. *.verified.* is deliberately NOT ignored:
+# exactly what Verify.TUnit needs. *.verified.* is deliberately NOT ignored:
 # approved snapshots are committed.
 TestResults/
 *.trx
