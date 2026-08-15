@@ -45,5 +45,9 @@ BrowserAI must validate every path it hands the child before launch.**
 > profile, where `ProcessSingleton` forwards its command line to the
 > already-running personal Chrome and exits. Running it would have driven the
 > maintainer's browser. It follows directly from the fallback and singleton
-> behaviour both measured above, and it is a further argument for shipping
-> bundled Chrome for Testing.
+> behaviour both measured above, and it is a further argument for launching the
+> Chrome for Testing build BrowserAI **provisions** rather than
+> `channel: "chrome"`. **Provisioned, not bundled**: ["our own" means the build
+> BrowserAI manages, never one shipped inside the
+> installer](../../README.md#settled-2026-08-15) — the installer carries no
+> browser at all.

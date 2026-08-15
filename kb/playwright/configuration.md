@@ -34,6 +34,19 @@ anything we shipped. Verified empirically: with an *empty* browsers directory,
 the shell — absence of a channel does**, and `chrome-for-testing` yields the full
 binary even headless.
 
+> **This selector is authoritative, and one observation disagrees with it.**
+> [kb: detection](../windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)
+> records `--headless --browser chromium` spawning full `chrome.exe` — which the
+> selector predicts only if a chromium-alias channel was in force, and that run
+> did not record the resolved channel, so it cannot tell us which branch it took.
+> A selector read out of the shipped bundle covers **every** configuration; an
+> observation covers one. **The selector governs what BrowserAI generates** —
+> always `browserName` *and* an explicit chromium-alias channel, never neither.
+> Neither entry is retracted: re-run the observation capturing
+> `browser_get_config`'s resolved channel. Until then, "a headless launch gets the
+> full binary" is true **because we set the channel**, and must never be relied on
+> as an upstream default. `[UNVERIFIED]` as to which branch the 0.0.79 run took.
+
 **On Windows `headless` defaults to `false`.** `resolveCLIConfigForMCP` sets it
 only to `os.platform() === "linux" && !process.env.DISPLAY`.
 

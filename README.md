@@ -61,8 +61,10 @@ This is the core justification for BrowserAI. It is **not** token cost — see [
 ```
 @playwright/mcp 0.0.79
   └── playwright-core 1.63.0-alpha-2026-08-05   (exact pin, no ^ or ~)
-        └── browsers.json → chromium-headless-shell rev 1237 (152.0.7977.8)
+        └── browsers.json → chromium rev 1237 (152.0.7977.8)
 ```
+
+`browsers.json` pins several browsers; the one at the end of *our* chain is **`chromium-1237`**, the full build. `chromium_headless_shell-1237` is pinned in the same file and [is never provisioned](#settled-2026-08-15) — naming it here, as an earlier draft did, points the reader at a binary that never reaches a machine.
 
 So the package is pinned to a browser revision, but *which package* is not pinned at all. An upstream publish silently invalidates the local browser cache and changes the CLI surface. Both failure modes fired this month, on the same day. The exactness of that chain, and upstream's daily-alpha cadence, are in [kb: tool surface](kb/playwright/tools-and-artifacts.md#the-tool-surface-and-the-package-shape).
 
@@ -103,7 +105,7 @@ This is a hard boundary. It exists because the temptation to cross it is real an
 
 - Spawning and supervising a pinned `@playwright/mcp` child over stdio
 - Forwarding `tools/call` to that child and returning its response verbatim
-- Fetching `tools/list` **from the child at runtime** and rewriting it — filtering, renaming, re-describing, adding parameters
+- Fetching `tools/list` **from the child at runtime** and rewriting it — filtering, re-describing, adding parameters. **Not renaming:** upstream names pass through byte-for-byte ([Tool naming](#settled-2026-08-14))
 - Generating the child's `--config` JSON at launch time from BrowserAI's own session state
 - Everything *around* the protocol: locking, lifecycle, directories, artifacts, diagnostics, updates
 
@@ -306,7 +308,7 @@ Two things follow, and they are design obligations rather than caveats:
 | **Release trigger** | **Manual, by the maintainer, through the agent.** No release pipeline, no scheduled publish, no auto-merge on green. Green is necessary and not sufficient — a human decides when a green build becomes a release. See [The release gate](PLAN.md#the-release-gate). |
 | **Test framework** | **TUnit**, matching `SixFive7/Jeeves`. Source-generated, reflection-free, MTP-native, MIT. See [Implementation stack](PLAN.md#implementation-stack). |
 | **SDK test fixtures** | **Not vendored. We write our own harness.** The MCP SDK's `ClientServerTestBase` + `tests/Common/Utils/*` (1,082 lines, Apache-2.0, unpublished to NuGet) wire *one* pipe pair; a proxy needs two hops. Copying them would mean a permanent three-way merge against an upstream that edits `tests/` weekly, and would lock the framework to xUnit. See [We write our own harness](PLAN.md#we-write-our-own-harness). |
-| **Instance teardown** | **Explicit close tool + client-liveness watcher** (stdin EOF, plus an `OpenProcess` handle on the client PID — never ping-based; `ping` is removed at 2026-07-28). **Expiry is reclaim, not destruction:** a torn-down handle stays resumable against its recorded config and directory, because the durable thing is the profile, not the process. Measured 2026-08-14: resume costs **515 ms** and loses only `sessionStorage` ([kb: timings](kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)). Timer values remain open — see [Still open](#still-open). |
+| **Instance teardown** | **There is no close tool, and that is the decision.** Teardown is stdin EOF, the client-liveness watcher (an `OpenProcess` handle on the client PID — never ping-based; `ping` is removed at 2026-07-28) and the browser-idle timer. `browserai_destroy` **deletes** a session; nothing ends one while keeping it resumable, because nothing needs to. **Expiry is reclaim, not destruction:** a torn-down session stays resumable against its recorded directory, since the durable thing is the profile, not the process. Measured 2026-08-14: resume costs **515 ms** and loses only `sessionStorage` ([kb: timings](kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)). Timer values are settled, not open: [exactly one timer exists](PLAN.md#lifetime-one-timer-and-reclaim-is-forever), browser-idle at ~10 minutes. |
 | **`browser_run_code_unsafe`** | **Hidden in `interactive` sessions.** Demonstrated 2026-08-14: against the default 24-tool surface with zero `browser_cookie_*` exposed, `async (page) => page.context().cookies()` returned an `httpOnly` bearer token ([kb: tools that reach credentials](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials)). It is in `core`, so no capability setting disables it, and it was the only hole — `browser_evaluate` → `document.cookie` returns `""`, and `browser_network_request` strips `Cookie` and `Set-Cookie`. Hiding it in the one mode that exists to keep human credentials from the agent makes [§trade-offs](#the-init-design-weakens-a-security-boundary)' claim true for the first time; it stays available elsewhere as an escape hatch. |
 | **Artifact placement** | **Routed on the way in, not sorted on the way out.** The child's cwd is the instance output root, `filename` arguments are normalised into typed subfolders, and every result carries the resolved absolute path. The default root is outside any repository. Per-instance paths stay unconstrained; per-call filenames do not. See [§F](PLAN.md#f-artifact-management) and [the `init` contract](PLAN.md#the-init-contract). |
 | **Tool naming** | **Never renamed.** Names are upstream's byte-for-byte; the names BrowserAI authors carry the `browserai_` prefix — see [Settled 2026-08-15](#settled-2026-08-15). (This row originally read "the only name BrowserAI authors is `init`", which the design outgrew.) Descriptions are append-only. A `deny` hook keyed on `browser_take_screenshot` exists in ten repositories and a rename would disable it silently — but the deciding argument is maintenance: upstream renamed one of its own tools inside four months, and a rename map is a second surface to re-review on every bump. |
@@ -339,11 +341,9 @@ Two things follow, and they are design obligations rather than caveats:
 
 1. **Firefox's `parent.lock` preflight and its own stray detection.** Designed, not yet a charter requirement. Playwright never checks `parent.lock`, so a collision raises a native modal that blocks up to 3 minutes. Our lock is taken before launch, so ordering covers it — but coverage-by-ordering needs a test. Firefox also has no `Chrome_MessageWindow` equivalent, so its stray detection is a different path: `parent.lock` sharing violation → Restart Manager `RmGetList` ([kb: image-path detection](kb/windows/detection.md#process-image-path--the-fully-documented-detection-path), [kb: profile fallback](kb/chromium/profiles.md)).
 
-2. **Whether the vertical slice changes anything** — see below. *(The logon-task question that stood here is closed: verified 2026-08-15, a Velopack install hook runs as the user, non-elevated, and `schtasks /Create /XML` with `LogonType=InteractiveToken` succeeded, survived update and rollback, and was removed by the uninstall hook. [kb: Velopack hooks and vpk output](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output).)*
+2. **Nothing here is built, and the first vertical slice is what will say which of it survives.** Several decisions — the three lock scopes under real concurrency, `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, the session-index file layout — are settled on paper and unexercised. Expect at least one to move when code first drives them end to end. (The SDK and NativeAOT halves closed on 2026-08-15; see [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15).)
 
-3. **Nothing here is built.** Several decisions — the three lock scopes under real concurrency, `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, the session-index file layout — are settled on paper and unexercised. Expect at least one to move. (The SDK and NativeAOT halves of this closed on 2026-08-15; see [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15).)
-
-**Recently closed, listed so they are not reopened by habit:** what ends an instance (one browser-idle timer, stdin EOF as backstop, explicit `browserai_destroy`; reclaim is forever); which capabilities ship (unchanged — `vision`, `devtools`, `config` everywhere, `storage` on `persistent`); and how far to curate the surface (upstream names never renamed, descriptions append-only, `browser_annotate` classified to `interactive`).
+**Recently closed, listed so they are not reopened by habit:** what ends an instance (one browser-idle timer, stdin EOF as backstop, explicit `browserai_destroy`; reclaim is forever); which capabilities ship (unchanged — `vision`, `devtools`, `config` everywhere, `storage` on `persistent`); how far to curate the surface (upstream names never renamed, descriptions append-only, `browser_annotate` classified to `interactive`); and whether a Velopack install hook can register the logon sweep task — verified 2026-08-15, the hooks run as the user, non-elevated, and `schtasks /Create /XML` with `LogonType=InteractiveToken` succeeded, survived update and rollback, and was removed by the uninstall hook ([kb: Velopack hooks and vpk output](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)).
 
 ---
 
@@ -403,11 +403,17 @@ This is **not** the canonical FSL and must not be referred to by, or distributed
 
 Copyright 2026 Jori Huisman.
 
-**Source files carry no license header.** [`LICENSE`](LICENSE) is the notice, and the Redistribution clause is satisfied by shipping it — nothing in the license asks for a per-file stamp, and comment-less formats such as JSON could not carry one anyway. Vendored third-party files are the exception and keep their upstream headers, which Apache-2.0 §4 requires.
+**Source files carry the two-line SPDX header** — `SPDX-FileCopyrightText` plus `SPDX-License-Identifier`, always in the `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr` form, as [`CLAUDE.md`](CLAUDE.md) requires and as every article under [`kb/`](kb/README.md), `CLAUDE.md` and `UPSTREAM-REVIEW.md` already do.
+
+The licence does not demand it — [`LICENSE`](LICENSE) is the notice and shipping it satisfies the Redistribution clause — so this is a house rule, kept for a different reason: **a file that names its own licence cannot be copied out of the repository and quietly become unlicensed**, which is exactly what happened to `launch.ps1` thirteen times. Formats with no comment syntax carry it as data where they can ([`upstream-review.json`](upstream-review.json) has a `_license` key) and not at all where they cannot. Vendored third-party files keep their upstream headers instead, which Apache-2.0 §4 requires.
 
 ### Third-party components
 
 The license above covers **BrowserAI's own code and this document**. It does not cover the bundled payload, which keeps its own terms. Shipping that payload creates obligations that attach at first installer handoff, independent of BrowserAI's own license. Verified 2026-08-14 against the versions pinned in [§A](PLAN.md#a-ship-and-own-the-runtime); what is actually present in each shipped tree is recorded in [kb: payload licensing](kb/packaging/dependencies.md#third-party-payload-as-shipped):
+
+**Two columns of this table used to be one, and merging them was the error.** What BrowserAI *redistributes* is the installer payload, and only that creates obligations for us. What the user's machine *downloads on first run* comes from Playwright's CDN, direct to that machine, and **carries no redistribution duty for us at all** — we ship no copy of it, so there is nothing to accompany with a licence. That is not a side benefit of [first-run provisioning](PLAN.md#first-run-browser-provisioning); it is the reason for it.
+
+**What we redistribute — obligations are ours:**
 
 | Component | Terms | Obligation on redistribution |
 |---|---|---|
@@ -415,9 +421,16 @@ The license above covers **BrowserAI's own code and this document**. It does not
 | `ModelContextProtocol` 2.2.0 | Apache-2.0 | Mid-transition from MIT; unrelicensed contributions remain MIT. Vendored fixture files keep their upstream headers. |
 | Velopack 1.2.0 | MIT | Notice. |
 | Node.js v24 | MIT, plus aggregate terms for OpenSSL, ICU, V8, zlib, c-ares | **Ship Node's full `LICENSE`.** "A single `node.exe`, nothing else" drops it. Not optional. |
-| `chromium-headless-shell` 1237 | BSD-3-Clause + 40,178-line credits file | Ship `LICENSE.headless_shell` and the credits file unchanged. Binary is unbranded. |
-| `ffmpeg` 1011 | LGPL-2.1 | `COPYING.LGPLv2.1` already ships in the directory. Identify the version and offer corresponding source. Spawned as an unmodified separate executable by `playwright-core`, so §6's relink requirement does not bite and it does not reach BrowserAI's own code. |
-| `winldd` 1007 | **no license file shipped** | Source one from `microsoft/playwright` before redistributing. |
-| **full `chromium` 1237** | **Google Chrome for Testing — Google-branded, no OSS license file anywhere in the tree** | Not an open-source question. `chrome.exe` reports CompanyName "Google LLC" and "Copyright 2026 Google LLC. All rights reserved."; its `ABOUT` points at Google's Chrome Terms of Service. Redistributing it inside a third-party installer needs a decision taken against those terms. **Unresolved.** |
+
+**What the user's machine downloads — no obligation on us:**
+
+| Component | Terms | Position |
+|---|---|---|
+| **full `chromium` 1237** | Google Chrome for Testing — Google-branded, no OSS license file anywhere in the tree | `chrome.exe` reports CompanyName "Google LLC" and "Copyright 2026 Google LLC. All rights reserved."; its `ABOUT` points at Google's Chrome Terms of Service, and the only on-point public statement — a Google engineer, 2023 — reads those terms as forbidding redistribution. **We do not redistribute it**, which is precisely why the provisioning decision was taken; the row that used to read *"Unresolved"* described a blocker that decision already closed. What remains open is only the *bundled-build fallback*, and it stays closed until someone gets a different answer from Google. |
+| `chromium-headless-shell` 1237 | BSD-3-Clause + 40,178-line credits file | Not shipped **and not provisioned** — [full Chromium in every mode](#settled-2026-08-15). `LICENSE.headless_shell` and the credits file would have to accompany a bundled build; neither is our problem today. |
+| `ffmpeg` 1011 | LGPL-2.1 | Arrives beside Chromium from the CDN. `COPYING.LGPLv2.1` ships in that directory as Playwright lays it down. Spawned as an unmodified separate executable by `playwright-core`, so §6's relink requirement does not bite and it never reaches BrowserAI's own code. A bundled build would owe version identification and an offer of corresponding source. |
+| `winldd` 1007 | **no license file shipped** | Same: downloaded, never redistributed. A bundled build would have to source one from `microsoft/playwright` first — which is a reason not to bundle, not an outstanding task. |
+
+Under a bundled build all four rows above move into the first table and their obligations become live. **Nothing in the second table blocks a release today.**
 
 Playwright is a trademark of Microsoft Corporation. Chrome and Chromium are trademarks of Google LLC. BrowserAI is not affiliated with, endorsed by, or sponsored by either. Apache-2.0 §6 grants no trademark rights, and the inherited `browser_*` tool names surface upstream branding directly in BrowserAI's own API — ship a short disclaimer in the installed artifact.

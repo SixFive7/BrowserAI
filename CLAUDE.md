@@ -63,7 +63,7 @@ BrowserAI is a **proxy**. It spawns `@playwright/mcp` and forwards JSON-RPC.
 
 - **Never hand-write a tool schema in a `.cs` file.** Every schema originates from the child's `tools/list` at runtime. If a tool definition is being typed into C#, the boundary has been crossed.
 - **Never drive Playwright directly** — no `Microsoft.Playwright`, no reimplementation of the snapshot/ref system, response formatting or error shaping.
-- Rewriting `tools/list` (filter, rename, re-describe, inject `handle`) is in scope. Composing new tools out of several upstream calls is not, and would require reopening the charter.
+- Rewriting `tools/list` (filter, re-describe, inject the `session` parameter) is in scope. **Renaming is not** — upstream names pass through byte-for-byte, settled in [`README.md` → Tool naming](README.md#settled-2026-08-14), because a `deny` hook keyed on `browser_take_screenshot` exists in ten repositories and a rename map is a second surface to re-review on every bump. Composing new tools out of several upstream calls is also out of scope, and would require reopening the charter.
 
 ## Silent failure is the enemy
 

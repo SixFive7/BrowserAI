@@ -17,17 +17,40 @@ size, so every row is `[FLOATS]`.
 | `winldd` | rev 1007 | 0.25 MB |
 | full `chromium` | rev 1237 (152.0.7977.8) | 426.88 MB |
 
-**Total payload ~806 MB installed, ~239 MB compressed** — 7z LZMA2 `-mx=5`.
-NativeAOT single-file BrowserAI is estimated at ~10–15 MB and the trimmed
-self-contained fallback at ~70 MB — both `[UNVERIFIED]`, nothing having been
-built.
+**The six rows above total ~806 MB installed, ~239 MB compressed** — 7z LZMA2
+`-mx=5`. That is the figure for a **bundled** build, browsers inside the
+installer, and it excludes BrowserAI's own binary. **Nothing ships in that shape
+today.** Browsers are [provisioned on first run](#first-run-provisioning), so the
+installed payload is `node.exe` + the JS tree + BrowserAI ≈ **117 MB**, and
+**disk after first run is ~117 MB + 433 MiB ≈ 570 MB**. The ~806 MB total is kept
+because a bundled build is the fallback if the Chrome-for-Testing redistribution
+question is ever resolved favourably — but it is **not** the figure for disk
+after first run, as this file and the charter both once said: it counts
+`chrome-headless-shell` (268.49 MB), which is not provisioned at all.
 
-> ⚠️ **The update budget is written against a different figure: ~380 MB**,
-> described in the charter as "dominated by Chromium", with **~600–700 MB**
+**BrowserAI's own binary is 9.76 MiB** — 10,233,856 bytes, `PublishAot`, win-x64,
+self-contained, measured by
+[the 2026-08-15 spike](../mcp/sdk.md#measured-by-spike-2026-08-15). This retires
+the "~10–15 MB `[UNVERIFIED]`" estimate that stood here after the measurement
+that replaced it, which is the same defect as everything under
+[corrections](../history.md#corrections-applied-2026-08-15-late): an estimate
+outliving its own measurement. The trimmed self-contained fallback at ~70 MB is
+still `[UNVERIFIED]`, nothing having been built in that configuration.
+
+> ⚠️ **Where ~380 MB came from, and why it is retired.** The update budget was
+> written against a "~380 MB footprint dominated by Chromium", with ~600–700 MB
 > transient disk during a swap and a full re-extraction of ~380 MB per update.
-> **How that reconciles with ~806 MB installed — and with browsers provisioned on
-> first run rather than shipped — is nowhere recorded.** `[UNVERIFIED]`. Settle it
-> the next time either figure is re-measured; do not settle it by arithmetic.
+> That figure is `806 − 427`: the payload of an intermediate design that had
+> dropped full Chromium but still shipped `chrome-headless-shell`. **`current\`
+> contains no Chromium of any kind today**, so the number and its "dominated by
+> Chromium" description are both dead. Against a ~117 MB payload the swap holds
+> old + new `current\` simultaneously, so the transient budget is **~235 MB** and
+> a re-extraction is ~117 MB; browsers live outside `current\` and are untouched
+> by the swap (verified 2026-08-15,
+> [kb: Velopack](../packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
+> The **compressed** size of the current payload has never been measured — the
+> ~239 MB above is for the browser-dominated tree, and `node.exe` is now the bulk
+> of what is left — so every full-package download figure remains `[UNVERIFIED]`.
 
 **A single `node.exe` drives the full MCP protocol** — no npm, no `node_modules`
 belonging to Node, no `.cmd` shims. Verified by execution. Node **v26 is Current
@@ -39,26 +62,29 @@ throws. `[FLOATS]`
 
 ## First-run provisioning
 
-**Measured 2026-08-14: 20.3 s end to end on a 300 Mbps link** for chromium +
-`ffmpeg` + `winldd`, the chromium download recorded as **202.3 MB**. Stated for
-slower links: **4 m 19 s at 10 Mbps, 43 m at 1 Mbps**. `[FLOATS]`
+**Settled 2026-08-15 by exact `content-length` from the CDN: 203.8 MB down,
+433 MiB on disk.** `chrome-win64.zip` 202,283,919 B + `ffmpeg-win64.zip`
+1,411,741 B + `winldd-win64.zip` 128,684 B; on disk, chromium 428 MiB + ffmpeg 4
++ winldd 1. Arithmetic for slower links: **2 m 43 s at 10 Mbps, 27 m 11 s at
+1 Mbps**. Peak disk during provisioning is **~640 MiB**, while the archive and
+the extracted tree coexist. **This file is where that number lives** — the rest
+of the repository cites it rather than restating it. `[FLOATS]`
 
-> ⚠️ **The download size is stated four ways across the repository, and the
-> charter states it three of those ways.** 202.3 MB in the sentence above; **323
-> MB** where `init` is required to check free disk space; **~300 MB** in the
-> legacy-setup table; peak disk during provisioning given as **~0.9 GB**.
->
-> **`TODO.md` carries the same 2026-08-14 measurement in fuller form** and is the
-> only record that reconciles: *"chromium 202.3 MB + shell 119.7 MB + ffmpeg +
-> winldd = **323.5 MB down, ~700 MiB on disk**, 20.3 s end to end on a 300 Mbps
-> link"*, with the same 4 m 19 s / 43 m arithmetic. So the charter's 202.3 MB is
-> **one term of a sum**, and the slow-link figures belong to the total.
->
-> **What that means for today's payload is deliberately not decided here.** The
-> shell is [no longer provisioned](../../README.md#settled-2026-08-15), so whether the
-> current download is still 323.5 MB, or 202.3 MB plus the small components, is a
-> question one run answers and no amount of arithmetic may. Treat the size as
-> `[UNVERIFIED]` until then, and re-state it in one place when it is settled.
+**End to end it took 20.3 s on a 300 Mbps link**, measured 2026-08-14. That run
+also fetched `chrome-headless-shell`, so it is an upper bound on today's
+provisioning rather than a measurement of it. `[FLOATS]`
+
+> **What this supersedes, kept so the old numbers are recognisable rather than
+> mysterious.** The download was previously stated four ways across the
+> repository — 202.3 MB, 323.5 MB, ~300 MB, and ~0.9 GB peak disk — and this
+> file called the size `[UNVERIFIED]` on the grounds that only a run could settle
+> it and no arithmetic may. A run settled it. 202.3 MB was **one term** of the
+> 2026-08-14 sum, whose total was *"chromium 202.3 MB + shell 119.7 MB + ffmpeg +
+> winldd = 323.5 MB down, ~700 MiB on disk"*, and the superseded slow-link
+> figures — 4 m 19 s at 10 Mbps, 43 m at 1 Mbps — belonged to that larger total.
+> The [2026-08-15 decision](../../README.md#settled-2026-08-15) to run full Chromium
+> in every mode stopped provisioning the shell, which is what moved the number:
+> the old measurement was never wrong, it stopped applying.
 
 **In-session recovery is proven.** The same child navigates successfully once the
 install lands, with no restart. `[FLOATS]`

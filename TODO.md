@@ -76,7 +76,7 @@ All three are now proper README sections. Retained here only as a record of what
 was decided when; the README is the live copy and the two have diverged where
 later measurement overruled the original.
 
-- [x] **First-run browser provisioning** → [README §A](PLAN.md#first-run-browser-provisioning).
+- [x] **First-run browser provisioning** → [PLAN §A → first-run browser provisioning](PLAN.md#first-run-browser-provisioning).
       Changed since: `chrome-headless-shell` is no longer provisioned, and the
       manifest/health-check layer was dropped by decision — the recovery is manual
       and the error text carries it.
@@ -266,7 +266,10 @@ later measurement overruled the original.
       dependency check is a **permanent no-op for Chromium** (and for
       `chromium-headless-shell`, which extracts to `chrome-headless-shell-win64`).
       Firefox passes `["firefox"]`, the real directory, so it runs — 39 binaries,
-      +329 ms, cached 30 days. One line belongs in `UPSTREAM-REVIEW.md`: if upstream
+      +329 ms, cached 30 days. ✅ The promised line is now written: it is the
+      *"one specific thing to watch in the `playwright-core` diff"* paragraph in
+      [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), and the standing check is
+      [re-verification row 10](kb/README.md#re-verification-index) — if upstream
       fixes the directory name, Chromium suddenly starts validating 39 binaries on
       cold start, and a one-character upstream fix becomes a latency regression.
 

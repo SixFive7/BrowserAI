@@ -171,9 +171,18 @@ separate from .NET's**, and can fail *before* the managed app exists: before
 ## Rollback
 
 **Velopack prunes `packages\` down to the current full `.nupkg` and deltas are
-forward-only**, so every rollback is a fresh full download (~105 MB here) unless
-packages are archived by hand. `AllowVersionDowngrade` is the client half of
-rollback.
+forward-only**, so every rollback is a fresh full download unless packages are
+archived by hand. `AllowVersionDowngrade` is the client half of rollback.
+
+> **How big is a full BrowserAI package? `[UNVERIFIED]`, and it was stated as
+> ~105 MB with no provenance anywhere in the repository.** Nothing has ever
+> compressed the real payload. What is known: the payload is
+> [~117 MB installed](../playwright/provisioning-and-timings.md#component-sizes),
+> `node.exe` is 88.53 MB of it, and the only compression figure on record —
+> ~806 MB → ~239 MB, 7z LZMA2 `-mx=5` — is for the browser-dominated tree that no
+> longer ships. The spike's own full nupkg was **6,072,200 b**, but that was a
+> payload-free test app and predicts nothing here. Measure it at the first real
+> `vpk pack`; until then, no number.
 
 **Measured 2026-08-15.** Rollback needs `AllowVersionDowngrade = true` (default
 false yields "no updates", silently) and then forces a **full re-download** —

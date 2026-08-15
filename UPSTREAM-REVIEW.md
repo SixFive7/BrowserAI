@@ -29,11 +29,13 @@ Read these, in this order. The first two carry most of the value.
 |---|---|
 | `git diff <old>..<new> -- tests/` in the upstream repo | **What upstream now asserts.** Better signal than the changelog — tests are executable, changelogs are editorial. This is the whole point of the exercise |
 | `git diff <old>..<new> -- config.d.ts` (`@playwright/mcp`) | Renamed or removed config keys. **Highest-value diff of the set**, because this failure is silent by construction |
-| `browsers.json` | A moved browser revision — the payload build changes and the download is ~700 MB |
+| `browsers.json` | A moved browser revision. **Nothing in the payload changes** — browsers are [provisioned on first run](PLAN.md#first-run-browser-provisioning), not built into the installer — but every machine re-downloads **203.8 MB** and re-extracts 433 MiB, and the old revision sits on disk until something prunes it. (This row previously said "~700 MB", which was MiB-on-disk for *both* browsers back when the payload carried them.) |
 | CLI surface: `--help` on old vs. new | Flags that vanished. This is the `--output-mode` class |
 | Release notes / changelog | Intent and rationale the diffs do not carry |
 | For `ModelContextProtocol`: `Directory.Packages.props` | Whether the SDK changed *its own* test framework. It is on `xunit.v3` today; we are on TUnit deliberately, and a move upstream is worth knowing about |
 | **[`kb/`](kb/README.md) → [Re-verification index](kb/README.md#re-verification-index)** | **Measured facts this project depends on that a bump can silently invalidate.** Work the table top-down; the first three each falsify a design decision if they move. Each row links to the article that established it. This is the half of the review that catches "upstream did not change its surface, it changed its behaviour" |
+
+**One specific thing to watch in the `playwright-core` diff.** Upstream passes `["chrome-win"]` to the `winldd` dependency check while Chromium extracts to `chrome-win64`, so for Chromium the check is a **permanent no-op** today. If that one-character mismatch is ever fixed, Chromium starts validating **39 binaries on every cold start** — +329 ms, cached for 30 days — and a bug fix upstream arrives here as a latency regression with nothing announcing it. The check is [re-verification row 10](kb/README.md#re-verification-index); this paragraph is why that row exists.
 
 ## What to write down
 

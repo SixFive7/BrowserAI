@@ -114,7 +114,7 @@ available for a proxy to inject (JSON error format, relative-path base).
 browsers-registry root holding the absolute `userDataDir` and `workspaceDir`;
 `BrowserServer.stop()` removes them only when there is **no** `userDataDir`. **28
 were observed and removed on 2026-08-14** (`[MACHINE]` for the count). The
-registry root sits inside the Velopack payload under the current design — a tree
+registry root sits at `%LocalAppData%\BrowserAI\browsers\`, outside `current\` under the current design — a tree
 that should be read-only and is wiped on update.
 
 **Real screenshots are not byte-stable across runs**, so passthrough-fidelity

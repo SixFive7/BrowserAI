@@ -85,10 +85,14 @@ stale passages are retired. `[FLOATS]`
 as bundled for a day after the decision
 that they would not be.** Provisioning moved to first run on 2026-08-14; the table
 row survived it. Installer payload is ~117 MB (`node.exe` 88.53 + JS tree 18.11 +
-BrowserAI ~10–15); the ~806 MB figure describes disk *after* first run, and
-remains the right number for a bundled build if the Chrome-for-Testing
-redistribution question is ever resolved favourably. `[MACHINE]` for the
-component sizes, `[FLOATS]` for what is in the set.
+BrowserAI 9.76 MiB), and the ~806 MB figure remains the right number for a
+**bundled** build if the Chrome-for-Testing redistribution question is ever
+resolved favourably. **It is not the number for disk after first run**, which
+this entry and [§A](../PLAN.md#a-ship-and-own-the-runtime) both went on to claim:
+806 counts `chrome-headless-shell` (268.49 MB), which is not provisioned at all.
+Disk after first run is the ~117 MB payload plus 433 MiB of browsers,
+**≈ 570 MB**. `[MACHINE]` for the component sizes, `[FLOATS]` for what is in the
+set.
 
 > **The pattern worth noticing.** All three are the same defect: a measurement
 > that was correct when taken, invalidated by a *later decision* rather than by

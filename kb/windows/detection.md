@@ -165,6 +165,19 @@ which spawns it. `@playwright/mcp` 0.0.79 does not take that path: headed by
 default, and `--headless --browser chromium` spawns full `chrome.exe` with a
 titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 
+> ⚠️ **That last observation disagrees with the selector logic, and the selector
+> is authoritative.**
+> [`getExecutableName`](../playwright/configuration.md#defaults-that-are-not-what-they-look-like),
+> read from the shipped bundle, picks `headless ? "chromium-headless-shell" :
+> "chromium"` when **no channel** is set — so a headless launch with no channel
+> should have taken the shell. The run above did not record its resolved channel
+> and so cannot say which branch it went down, and a source read covering every
+> configuration outranks a single run. **The observation stands and is not
+> retracted**; re-run it capturing `browser_get_config`'s resolved channel. It
+> changes nothing about what BrowserAI builds: `browserName` and an explicit
+> chromium-alias channel are set in every mode, which lands on the full binary
+> down either branch. `[UNVERIFIED]` as to which branch the run took.
+
 > **This is recorded as a property of the shell, not as a risk to us.** BrowserAI
 > [does not provision it](../../README.md#settled-2026-08-15) — full Chromium in every
 > mode — and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` means it cannot appear on disk
@@ -265,8 +278,10 @@ for line. `[STABLE]`
 > is `%LOCALAPPDATA%\Google\Chrome\User Data` — **the user's own browser's
 > message window**. A detector extended to match it would identify a personal
 > Chrome as a stray. The answer is not a better matcher: **validate the directory
-> before launch so the fallback never happens**, and ship bundled Chrome for
-> Testing rather than `channel: "chrome"`.
+> before launch so the fallback never happens**, and launch the Chrome for Testing
+> build BrowserAI provisions rather than `channel: "chrome"`. **Provisioned, not
+> bundled** — ["our own" is the build BrowserAI manages, not one shipped inside
+> the installer](../../README.md#settled-2026-08-15).
 
 > ⚠️ `--user-data-dir` alone is **not** an ownership signal. Discord, VS Code,
 > Signal, Teams, WhatsApp, Steam, ChatGPT and four `msedgewebview2.exe` processes

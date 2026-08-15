@@ -20,9 +20,18 @@ unfiltered. Using the wrong one shrinks the exposed surface with no error.
 **The `ContentBlock` converter silently drops unknown properties** — the SDK has
 tests asserting exactly that, which is correct forward-compatibility for a client
 and data loss for a proxy — **and throws on unknown content *types***, failing
-the whole call at deserialization before any proxy code runs. `WithMessageFilters`
-operates on `JsonRpcMessage`, where `JsonRpcResponse.Result` is a raw
-`JsonNode?`.
+the whole call at deserialization before any proxy code runs. The escape is a
+message filter: it operates on `JsonRpcMessage`, never touches `ContentBlock`, and
+sees `JsonRpcResponse.Result` as a raw `JsonNode?`.
+
+> ⚠️ **Corrected 2026-08-15: the filter is not `WithMessageFilters`.** This
+> paragraph named it, and it is [a hosting-package DI extension, not
+> Core](#measured-by-spike-2026-08-15). A Core/AOT proxy uses
+> `McpServerOptions.Filters.Message.IncomingFilters` / `OutgoingFilters`
+> directly. The correction is stated here, at the point of first mention, because
+> a retraction thirty lines further down is one a reader can act on the wrong side
+> of — and this is the file [the plan cites as
+> authoritative](../../PLAN.md#nine-places-where-the-sdk-must-be-deviated-from).
 
 ## Measured by spike, 2026-08-15
 

@@ -21,7 +21,7 @@
       "date": "2026-08-13",
       "source": "https://github.com/microsoft/playwright",
       "why_it_matters": "Carries the actual tool implementations and the browsers.json that pins the Chromium revision. Arrives as @playwright/mcp's own exact dependency, not as a choice we make.",
-      "notes": "Baseline. browsers.json -> chromium-headless-shell rev 1237 (152.0.7977.8). Upstream publishes daily alphas."
+      "notes": "Baseline. browsers.json pins chromium rev 1237 (152.0.7977.8), which is the browser BrowserAI provisions -- full Chromium in every mode, settled 2026-08-15. The same browsers.json also pins chromium-headless-shell at rev 1237; we do not provision it, and the payload build passes --no-shell. Upstream publishes daily alphas. CORRECTION 2026-08-15: this note previously named chromium-headless-shell as the pinned revision, which was true of an earlier design and became wrong when the shell was dropped. Factual correction to the note only -- reviewed version and date are unchanged, because no new review has happened."
     },
     "ModelContextProtocol": {
       "reviewed": "2.2.0",
