@@ -30,7 +30,7 @@ The current PowerShell-based setup was copy-pasted into other repositories over 
 | Typed artifact folders + prefix classification | Everything flat in one `output/`; grew to 346 session dirs / 1.5 GB in ~3 months |
 | Screenshot-hook allowlist widened | Denies saving into any folder other than `output/` |
 
-The lesson worth carrying into BrowserAI: **every one of those defects was invisible.** The setup reported healthy while being broken. Observability is a feature requirement here, not a nicety.
+The lesson worth carrying into BrowserAI: **every one of those defects was invisible.** The setup reported healthy while being broken. Observability is a feature requirement here, not a nicety. The sweep above and the measurement behind each row — 11.71 s → 0.37 s on the stderr-pipe fix, five days of a hard startup failure logging as a clean shutdown, 346 session directories — are recorded in [KNOWLEDGE §15](KNOWLEDGE.md#15-the-legacy-setup-and-this-machine).
 
 ### Where things are written down
 
@@ -63,12 +63,12 @@ This is the core justification for BrowserAI. It is **not** token cost — see [
         └── browsers.json → chromium-headless-shell rev 1237 (152.0.7977.8)
 ```
 
-So the package is pinned to a browser revision, but *which package* is not pinned at all. An upstream publish silently invalidates the local browser cache and changes the CLI surface. Both failure modes fired this month, on the same day.
+So the package is pinned to a browser revision, but *which package* is not pinned at all. An upstream publish silently invalidates the local browser cache and changes the CLI surface. Both failure modes fired this month, on the same day. The exactness of that chain, and upstream's daily-alpha cadence, are in [KNOWLEDGE §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape).
 
 ### 3. Two failure classes exist that no configuration can fix
 
 - **CLI flags fail loudly.** An unknown flag crashes at startup with a clear message — recoverable once you can see stderr.
-- **JSON config keys fail silently.** `loadConfig` is a bare `JSON.parse` with no schema validation. A key that upstream renamed or removed is simply ignored. `--output-mode` turned out to have been a **no-op for its entire life** — a hardcoded literal in 0.0.78's bundle, never read from config.
+- **JSON config keys fail silently.** `loadConfig` is a bare `JSON.parse` with no schema validation. A key that upstream renamed or removed is simply ignored. `--output-mode` turned out to have been a **no-op for its entire life** — a hardcoded literal in 0.0.78's bundle, never read from config ([KNOWLEDGE §6](KNOWLEDGE.md#6-upstream-configuration-facts)).
 
 A setup that cannot distinguish "this setting is applied" from "this setting is silently discarded" cannot be trusted to be opinionated. BrowserAI must validate its own config against the runtime it ships.
 
@@ -76,7 +76,7 @@ A setup that cannot distinguish "this setting is applied" from "this setting is 
 
 Mutexes are named `Global\<RepoName>-PlaywrightInteractive`. That locks a *repository folder name*, which is arbitrary: two clones of the same repo collide, and two different repos wanting the same profile do not. The thing that actually requires exclusivity is **the browser profile directory**.
 
-> **And nothing else enforces it in the mode that matters.** Measured 2026-08-14: the **full** chromium build writes a `lockfile` into the profile and a second instance is refused (`Browser is already in use for <dir>`). **`chrome-headless-shell` writes no `lockfile` at all** — two headless instances opened the same profile directory, both launched, both worked, and no error was raised anywhere. Two browsers writing one profile's cookie and storage databases is silent corruption, and headless is the default mode. An earlier draft of this document said *"Chrome's own `SingletonLock` already gets this right for the persistent mode"*; that is true only of the headed build. **[§D](#d-locking-and-single-instance)'s directory-keyed lock is therefore the only protection that exists, not defence in depth.**
+> **And nothing else enforces it in the mode that matters.** Measured 2026-08-14: the **full** chromium build writes a `lockfile` into the profile and a second instance is refused (`Browser is already in use for <dir>`). **`chrome-headless-shell` writes no `lockfile` at all** — two headless instances opened the same profile directory, both launched, both worked, and no error was raised anywhere. Two browsers writing one profile's cookie and storage databases is silent corruption, and headless is the default mode. An earlier draft of this document said *"Chrome's own `SingletonLock` already gets this right for the persistent mode"*; that is true only of the headed build. **[§D](#d-locking-and-single-instance)'s directory-keyed lock is therefore the only protection that exists, not defence in depth.** Both launches are recorded in [KNOWLEDGE §3.3](KNOWLEDGE.md#33-process-image-path--the-fully-documented-detection-path).
 
 ### 5. Relative paths make silent data loss possible
 
@@ -122,13 +122,13 @@ const { tools } = require('playwright-core/lib/coreBundle');
 module.exports = { createConnection: tools.createConnection };
 ```
 
-The implementation lives in `playwright-core/lib/coreBundle.js` — 3.4 MB, esbuild-bundled, containing a 78-entry tool array. Note the numbers, because a golden test written against the wrong one fails on day one: **78 is the internal registry; 69 is the maximum ever exposed over MCP** (9 are `skillOnly` and always stripped), and **24 is the default** with no `capabilities` set. Its value is not browser control; Playwright for .NET does browser control perfectly well. Its value is the **ref-based accessibility snapshot system**, the response formatting, and the error handling — the layer that turns a browser into something a language model can operate. That layer is large, subtle, actively developed upstream, and would drift permanently the day it is forked.
+The implementation lives in `playwright-core/lib/coreBundle.js` — 3.4 MB, esbuild-bundled, containing a 78-entry tool array. Note the numbers, because a golden test written against the wrong one fails on day one: **78 is the internal registry; 69 is the maximum ever exposed over MCP** (9 are `skillOnly` and always stripped), and **24 is the default** with no `capabilities` set — all three in [KNOWLEDGE §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape), which also records that the per-capability breakdown was never counted. Its value is not browser control; Playwright for .NET does browser control perfectly well. Its value is the **ref-based accessibility snapshot system**, the response formatting, and the error handling — the layer that turns a browser into something a language model can operate. That layer is large, subtle, actively developed upstream, and would drift permanently the day it is forked.
 
 "We don't want to reimplement Playwright" is the easy half of this rule. The half that matters: **reimplementing the MCP tool layer is also reimplementation**, even though it never touches a browser API.
 
 ### The one sanctioned exception, if it is ever needed
 
-`playwright-core` explicitly whitelists `"./lib/coreBundle"` in its `exports` map, so `require('playwright-core/lib/coreBundle')` is a supported import, not a blocked deep path. It exposes `browserTools` (a flat array of plain, inert objects), `filteredTools`, `createConnection`, and `BrowserBackend`. `defineTool` is literally the identity function — there is no class, no registry, no side effect.
+`playwright-core` explicitly whitelists `"./lib/coreBundle"` in its `exports` map, so `require('playwright-core/lib/coreBundle')` is a supported import, not a blocked deep path. It exposes `browserTools` (a flat array of plain, inert objects), `filteredTools`, `createConnection`, and `BrowserBackend`. `defineTool` is literally the identity function — there is no class, no registry, no side effect ([KNOWLEDGE §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape)).
 
 This means in-process tool manipulation is *available* if the proxy approach ever proves insufficient. It is **not** the plan, it carries no type definitions and no semver guarantee, and taking it requires pinning `@playwright/mcp` and `playwright-core` together and re-verifying the tool array on every bump. Documented here so it is a considered decision rather than a discovery.
 
@@ -142,14 +142,13 @@ This means in-process tool manipulation is *available* if the proxy approach eve
 |---|---|---|
 | Node.js | Bundled — a **single `node.exe`**, nothing else. Verified driving the full MCP protocol with no npm, no `node_modules`, no `.cmd` shims. | v24.19.0 LTS, **88.53 MB** |
 | `@playwright/mcp` + `playwright-core` | Resolved to latest at **build** time, then vendored into the artifact as an exact tree — never `@latest` at **spawn** time. Zero native binaries; the tree is portable JS. See [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). | 0.0.79, **18.11 MB** |
-| `chromium-headless-shell` | Bundled at the revision the pin requires. | rev 1237, **268.49 MB** |
-| `ffmpeg` | Required for video capture; without it the `video` artifact type throws. | rev 1011, **3.35 MB** |
-| `winldd` | Not currently required — its validation path is a no-op on Windows due to a `chrome-win` / `chrome-win64` mismatch upstream. Ship it as insurance against that being fixed. | rev 1007, **0.25 MB** |
-| Full `chromium` | **Required** — the three headed modes run on it. | rev 1237, **426.88 MB** |
 | BrowserAI itself | NativeAOT, single file, no .NET runtime on the host. | ~10–15 MB |
 | System Chrome | **Not used.** See below. | — |
+| Browsers | **Not in the installer.** [Provisioned on first run](#first-run-browser-provisioning) — the redistribution position for Chrome for Testing is unresolved and the only on-point public statement is adverse. | 203.8 MB on first run |
 
-**Total payload: ~806 MB installed, ~239 MB compressed** (measured, 7z LZMA2 `-mx=5`).
+**Installer payload: ~117 MB installed** — `node.exe` 88.53 MB + the JS tree 18.11 MB + BrowserAI ~10–15 MB. **Browsers add 203.8 MB down / 433 MiB on disk on first run**, once per machine rather than once per update. Per-component provenance in [KNOWLEDGE §8.1](KNOWLEDGE.md#81-component-sizes).
+
+> ⚠️ **This table previously listed the browsers as bundled, totalling ~806 MB installed / ~239 MB compressed.** That was the design before 2026-08-14, when provisioning moved to first run; the row survived the decision and contradicted it for a day. The old figures are retained in [KNOWLEDGE §8.1](KNOWLEDGE.md#81-component-sizes) because they are still the right numbers for *disk after first run*, and because a bundled build is the fallback if the redistribution question is ever resolved favourably.
 
 > ### Decided 2026-08-13: batteries included, zero host dependencies
 >
@@ -162,19 +161,19 @@ Two consequences worth taking deliberately, because both are real costs of that 
 
 "Single file" means BrowserAI.exe carries no .NET runtime dependency. The *payload* — `node.exe`, the vendored packages, both browsers — remains a directory tree beside it, which is what Velopack's per-file delta needs to stay cheap.
 
-**NativeAOT is not free.** AOT forbids runtime reflection-based serialization, so `System.Text.Json` needs source-generated contexts (`JsonSerializerContext`). Velopack declares `IsAotCompatible=true` for net8.0+, and **so does `ModelContextProtocol`** — verified in-source on 2026-08-14, set on every target except `netstandard2.0`, at both `v1.4.1` and `v2.2.0`. That is a meaningful signal and **not a proof for our usage**: the `JsonElement` passthrough at the heart of the proxy is AOT-friendly, but a declaration is the author's claim about their code, not about how we drive it. Publish AOT and run the suite against it before committing. The fallback is self-contained trimmed (~70 MB), which against ~806 MB of payload is noise. **AOT buys cold-start latency and the dropped runtime dependency here, not size.**
+**NativeAOT is not free.** AOT forbids runtime reflection-based serialization, so `System.Text.Json` needs source-generated contexts (`JsonSerializerContext`). Velopack declares `IsAotCompatible=true` for net8.0+, and **so does `ModelContextProtocol`** — verified in-source on 2026-08-14, set on every target except `netstandard2.0`, at both `v1.4.1` and `v2.2.0` ([KNOWLEDGE §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around)). That is a meaningful signal and **not a proof for our usage**: the `JsonElement` passthrough at the heart of the proxy is AOT-friendly, but a declaration is the author's claim about their code, not about how we drive it. Publish AOT and run the suite against it before committing. The fallback is self-contained trimmed (~70 MB), which against the payload is noise. **AOT buys cold-start latency and the dropped runtime dependency here, not size.**
 
 Shipping the browser deletes an entire subsystem from the current design: the preflight, the install mutex, the staleness timeout, the detached installer, and the retry instructions written for an LLM to read. That machinery exists solely because the browser arrives on demand.
 
 > ### `browserName: "chromium"` must be set explicitly or none of this runs
 >
-> `@playwright/mcp` 0.0.79 defaults to **`channel: "chrome"`** — system Chrome — and `headless: false` on Windows. Verified empirically: with an **empty** browsers directory, `initialize`, `tools/list` *and* `browser_navigate` all succeeded, because the bundled tree was never consulted.
+> `@playwright/mcp` 0.0.79 defaults to **`channel: "chrome"`** — system Chrome — and `headless: false` on Windows. Verified empirically: with an **empty** browsers directory, `initialize`, `tools/list` *and* `browser_navigate` all succeeded, because the bundled tree was never consulted ([KB §6](KNOWLEDGE.md#6-upstream-configuration-facts)).
 >
 > Omit `browserName` and the entire shipping-Chromium premise is silently dead code. This is the same failure shape as every bug in the table above.
 
 > ### The sandbox is off, and the config key that should enable it does nothing
 >
-> Measured 2026-08-15: with `"launchOptions": { "chromiumSandbox": true }` set explicitly in a config file, the browser and **every** child still ran with `--no-sandbox`. Only the CLI flag `--sandbox` actually enabled it. `validateBrowserConfig` intends `chromiumSandbox = true` on non-Linux, so this is upstream behaviour contradicting upstream intent.
+> Measured 2026-08-15: with `"launchOptions": { "chromiumSandbox": true }` set explicitly in a config file, the browser and **every** child still ran with `--no-sandbox`. Only the CLI flag `--sandbox` actually enabled it. `validateBrowserConfig` intends `chromiumSandbox = true` on non-Linux, so this is upstream behaviour contradicting upstream intent ([KB §6](KNOWLEDGE.md#6-upstream-configuration-facts)).
 >
 > Two consequences. **BrowserAI must pass `--sandbox` on the command line, never the config key** — and must assert the absence of `--no-sandbox` from the child's resolved browser command line, because the key reads fine and has no effect. **And today's setup runs Chromium unsandboxed**, which is a security posture nobody chose. This is [§why-3](#3-two-failure-classes-exist-that-no-configuration-can-fix) with a live instance attached: a config key that parses, validates, and is discarded. Raise it upstream.
 
@@ -187,7 +186,7 @@ Shipping the browser deletes an entire subsystem from the current design: the pr
   ffmpeg-1011\ffmpeg-win64.exe
 ```
 
-Note the asymmetry: the outer directory uses **underscores**, the inner one **dashes**. No sentinel files (`INSTALLATION_COMPLETE`, `DEPENDENCIES_VALIDATED`) are needed to launch — the only launch-time check is file accessibility of the executable. Strip `.links/` from the shipped tree; it contains the build machine's absolute paths.
+Note the asymmetry: the outer directory uses **underscores**, the inner one **dashes**. No sentinel files (`INSTALLATION_COMPLETE`, `DEPENDENCIES_VALIDATED`) are needed to launch — the only launch-time check is file accessibility of the executable. Strip `.links/` from the shipped tree; it contains the build machine's absolute paths. The layout, the `INIT_CWD` hazard and the `DEPENDENCIES_VALIDATED` write are in [KNOWLEDGE §8.2](KNOWLEDGE.md#82-first-run-provisioning).
 
 Build the browser payload with the pinned package itself, so the revision comes from `browsers.json` rather than a hand-typed URL:
 
@@ -200,9 +199,11 @@ node.exe <staging>\node_modules\@playwright\mcp\cli.js install-browser chromium 
 
 **BrowserAI does not ship the browser inside the installer. It provisions it on first run**, as Playwright itself does. The redistribution position for Chrome for Testing is unresolved and the only on-point public statement is adverse — a Google engineer, 2023: *"Chrome for Testing is a flavor of Google Chrome, so google.com/chrome/terms applies"*, which forbids redistribution. This removes ~427 MB from the payload. Note the phrase "our own Chrome for Testing" elsewhere in this document means **the build BrowserAI manages**, never one we ship.
 
-**The version is pinned for free.** `playwright-core/browsers.json` carries the revision and `browserVersion`; the URL is built by substituting that version into a template that 307s to Google's bucket. That file is inside the artifact, never looked up online, and no "latest" lookup exists anywhere in the registry code. A release therefore knows forever exactly which browser it wants. Old builds resolve back to Chrome 115 (Jul 2023) — ~3 years of evidence, and **Google documents no retention policy**, so it is not a guarantee.
+**The version is pinned for free.** `playwright-core/browsers.json` carries the revision and `browserVersion`; the URL is built by substituting that version into a template that 307s to Google's bucket. That file is inside the artifact, never looked up online, and no "latest" lookup exists anywhere in the registry code. A release therefore knows forever exactly which browser it wants. Old builds resolve back to Chrome 115 (Jul 2023) — ~3 years of evidence, and **Google documents no retention policy**, so it is not a guarantee ([KB §8.2](KNOWLEDGE.md#82-first-run-provisioning)).
 
-**Measured 2026-08-14:** chromium 202.3 MB + ffmpeg + winldd, **20.3 s** end to end on a 300 Mbps link; 4 m 19 s at 10 Mbps, 43 m at 1 Mbps. `chrome-headless-shell` is **not** provisioned — [settled 2026-08-15](#settled-2026-08-15), full Chromium in every mode, which makes the download *smaller* than shipping both.
+**Measured 2026-08-15, exact `content-length` from the CDN:** `chrome-win64.zip` 202,283,919 B + `ffmpeg-win64.zip` 1,411,741 B + `winldd-win64.zip` 128,684 B = **203.8 MB down, 433 MiB on disk**. Arithmetic for slower links: 2 m 43 s at 10 Mbps, 27 m 11 s at 1 Mbps.
+
+> **This supersedes the 323.5 MB / ~700 MiB figures**, which were measured on 2026-08-14 and included `chrome-headless-shell` (119.7 MB down, 269 MiB on disk). [Settled 2026-08-15](#settled-2026-08-15), the shell is not provisioned — full Chromium in every mode — so dropping it took ~120 MB off the download and ~269 MiB off disk. The three-way discrepancy this section previously flagged is resolved: 202.3 MB was one term of the old sum, and the sum itself no longer applies.
 
 **`init` must not block, and must say what it is doing.** Return immediately with `browserProvisioning: "downloading"` and an error on browser-needing calls that states the fact rather than hiding it:
 
@@ -212,13 +213,13 @@ A long unexplained delay corrupts whatever timing the calling agent is managing;
 
 **Strip upstream's remediation string.** It says `Run npx @playwright/mcp install-browser chromium`, which BrowserAI does not ship and which would resolve a different package at a different revision. A model will act on it. Replace it with ours: *delete `<path>` and call `init` again to re-download.*
 
-**Environment.** Strip `PLAYWRIGHT_DOWNLOAD_HOST` and its three per-browser variants — they replace the mirror list with a single host, and since retries rotate through that list (`retryCount = 5`), setting one turns five attempts into five attempts at the same dead server. Pass through `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY`/`ALL_PROXY` and **`NODE_EXTRA_CA_CERTS`**, needed under TLS inspection. SOCKS is unsupported on the download path. Egress needs `cdn.playwright.dev`, `storage.googleapis.com` and `playwright.download.prss.microsoft.com`.
+**Environment.** Strip `PLAYWRIGHT_DOWNLOAD_HOST` and its three per-browser variants — they replace the mirror list with a single host, and since retries rotate through that list (`retryCount = 5`), setting one turns five attempts into five attempts at the same dead server. Pass through `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY`/`ALL_PROXY` and **`NODE_EXTRA_CA_CERTS`**, needed under TLS inspection. SOCKS is unsupported on the download path. Egress needs `cdn.playwright.dev`, `storage.googleapis.com` and `playwright.download.prss.microsoft.com` ([KNOWLEDGE §8.2](KNOWLEDGE.md#82-first-run-provisioning)).
 
 **Browsers live at `%LocalAppData%\BrowserAI\browsers\`**, resolved from `VelopackLocator.Current.RootAppDir` — **never** inside `current\`, or every update re-downloads. `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandated, so pruning old revisions becomes BrowserAI's job.
 
 **What upstream's integrity check does not cover.** Playwright validates only `content-length`, and upstream closed and locked the request for checksums ([#39559](https://github.com/microsoft/playwright/issues/39559)). `INSTALLATION_COMPLETE` is written last, so an *interrupted* install self-heals — but a tree corrupted **after** a successful install never re-downloads, because the marker short-circuits without validating anything. [Settled 2026-08-15](#settled-2026-08-15): we do not add our own health checks; the recovery is manual and the error text above is what makes it discoverable. **The consequence is stated plainly so it is a known limit rather than a surprise:** antivirus quarantining one DLL leaves a permanently broken install that only a human deleting the directory will fix.
 
-**Node SEA, `pkg` and `nexe` are all dead ends** — do not spend time on them. `playwright-core` violates SEA's "no filesystem module loading" constraint in at least five verified ways (`packageRoot` computed from `__dirname`, a runtime `require` of `browsers.json` at a computed path, two `childProcess.fork()` calls on sibling scripts, sibling bundle requires, and `.wasm`/`vite` assets loaded by path). SEA would also save nothing — the output *is* a copy of `node.exe` plus your blob. `vercel/pkg` was archived 2024-01-13. Bun and Deno both have open issues on precisely the Playwright browser-launch path.
+**Node SEA, `pkg` and `nexe` are all dead ends** — do not spend time on them. `playwright-core` violates SEA's "no filesystem module loading" constraint in **five verified ways**, enumerated in [KNOWLEDGE §8.2](KNOWLEDGE.md#82-first-run-provisioning), and SEA would save nothing regardless — the output *is* a copy of `node.exe` plus your blob. `vercel/pkg` was archived 2024-01-13; Bun and Deno both have open issues on precisely the Playwright browser-launch path.
 
 ### B. Be the MCP server
 
@@ -231,9 +232,9 @@ McpServerOptions.ProtocolVersion = null;          // upward: accept 2024-11-05 �
 McpClientOptions.ProtocolVersion = "2025-11-25";  // downward: pin to the child's ceiling
 ```
 
-**The second line is not optional.** Left at `null`, the client probes the child with `server/discover` first, bounded by `DiscoverProbeTimeout` — **5 seconds by default**. If the child silently drops the unknown method instead of returning an error, *every child spawn costs a flat 5 s* against a ~300 ms baseline. It would present as "browser automation got slow," with no error anywhere. Pinning the client version skips the probe entirely.
+**The second line is not optional.** Left at `null`, the client probes the child with `server/discover` first, bounded by `DiscoverProbeTimeout` — **5 seconds by default**. If the child silently drops the unknown method instead of returning an error, *every child spawn costs a flat 5 s* against a ~300 ms baseline. It would present as "browser automation got slow," with no error anywhere. Pinning the client version skips the probe entirely ([KNOWLEDGE §10.1](KNOWLEDGE.md#101-the-protocol-split)).
 
-Assert on the negotiated version at startup. The child never *rejects* a version — it caps or echoes silently (verified: offering `1999-01-01` returns `2025-11-25` with no error), so a mis-negotiation produces nothing to catch.
+Assert on the negotiated version at startup. The child never *rejects* a version — it caps or echoes silently (verified: offering `1999-01-01` returns `2025-11-25` with no error), so a mis-negotiation produces nothing to catch. The child's ceiling, the shape of the `2026-07-28` rewrite and the SDK's revision coverage are in [KNOWLEDGE §10.1](KNOWLEDGE.md#101-the-protocol-split).
 
 ### C. The `init` tool and instance handles
 
@@ -251,7 +252,7 @@ This also replaces four static configurations with one dynamic one, and eliminat
 
 **Requiring the path is the design, not a validation detail.** A default is a decision made on the caller's behalf that the caller never notices making, and the whole failure class this project exists to eliminate is decisions nobody observed. Forcing every `init` and `resume` to name a location makes an agent state where this session's data lives — which is precisely the thought the founding stray-file problem shows nobody was having. It also removes the only path by which two agents could land in the same place without either choosing it.
 
-The label exists because `checkout-flow-bug\` is navigable and `2026-08-14T04-11-50-882Z\` is not. Three months of the current setup produced 346 session directories and 1.5 GB, and the reason nobody pruned them is that nobody could tell what any of them had been.
+The label exists because `checkout-flow-bug\` is navigable and `2026-08-14T04-11-50-882Z\` is not. Three months of the current setup produced 346 session directories and 1.5 GB, and the reason nobody pruned them is that nobody could tell what any of them had been ([KB §15](KNOWLEDGE.md#15-the-legacy-setup-and-this-machine)).
 
 **Returns:** the handle, **and the resolved absolute paths.** [§settled](#settled-2026-08-13) already requires logging those at instance creation; returning them costs nothing extra and puts them where the agent can act on them — it can tell the user where the screenshot is instead of guessing, and the paths become auditable from the transcript rather than only from a log file nobody opens.
 
@@ -259,7 +260,7 @@ The label exists because `checkout-flow-bug\` is navigable and `2026-08-14T04-11
 
 **Reject traversal rather than normalising it.** A `filename` of `..\..\..\foo.png` must resolve, be recognised as an escape, and be refused with an LLM-readable error — never silently collapsed into a path that happens to land somewhere.
 
-**Check free disk space at `init`, and only with an O(1) query.** First-run browser provisioning peaks near 0.9 GB and a session then grows unbounded. A refusal at `init` that names the number is recoverable in one turn; a failure partway through a 323 MB download is the `spawn EFTYPE` shape — success-shaped, stderr empty, discovered at first navigation. **This must be a volume free-space query, never a directory walk**: `init` sits on the hot path of every session, and a check that scans the output tree would make the fix slower than the failure it prevents.
+**Check free disk space at `init`, and only with an O(1) query.** First-run browser provisioning needs **203.8 MB down and 433 MiB extracted**, so peak usage is ~640 MiB while both the archive and the tree exist; a session then grows unbounded. A refusal at `init` that names the number is recoverable in one turn; a failure partway through the download is the `spawn EFTYPE` shape — success-shaped, stderr empty, discovered at first navigation. **This must be a volume free-space query, never a directory walk**: `init` sits on the hot path of every session, and a check that scans the output tree would make the fix slower than the failure it prevents.
 
 #### Three modes, and tracing as a modifier
 
@@ -301,7 +302,7 @@ An MCP server can address the model in three places, and they are seen at differ
 | **`init`'s description** | When the model reaches for `init` | **2 KB, truncated silently** | Argument meanings, the real-Chrome-profile warning, and the retention policy — the spec requires retention to be stated *here*, in the creation tool's description |
 | **`init`'s result** | Immediately after the call | none | Resolved absolute paths, the layout, the session label |
 
-The server instructions exist to pre-empt the cold-start failure named above: **the first call after a restart will forget the handle.** Only an eagerly-loaded string can reach the model before it makes that mistake. Detail belongs in the result, where there is no budget and the paths are concrete — spending a third of a 2 KB allowance on a directory diagram every agent re-reads at the wrong moment is the wrong trade.
+The server instructions exist to pre-empt the cold-start failure named above: **the first call after a restart will forget the handle.** Only an eagerly-loaded string can reach the model before it makes that mistake. Detail belongs in the result, where there is no budget and the paths are concrete — spending a third of a 2 KB allowance on a directory diagram every agent re-reads at the wrong moment is the wrong trade. The client behaviour these budgets rest on — eager names, deferred schemas, silent truncation at 2 KB — is in [KNOWLEDGE §10.4](KNOWLEDGE.md#104-the-client-claude-code).
 
 `SixFive7/OutlookAI` is the in-house precedent for treating this as a contract rather than prose: its instructions string lives in `ServerMetadata.cs` and is pinned by tests.
 
@@ -309,7 +310,7 @@ The server instructions exist to pre-empt the cold-start failure named above: **
 
 It does not close the gap entirely: a connection holding both an interactive and a persistent handle can still route a call to the persistent one. But that grants nothing new — an agent holding a persistent handle was already entitled to those cookies. **The interactive guarantee holds**, and that is the one that matters.
 
-**Critical constraint — read before designing `init`:** the MCP spec (2026-07-28, *Tools § Capabilities*) states the tool set "**MAY** change over time … but **MUST NOT** vary per-connection or as a side effect of other requests on the connection." SEP-2567 removed protocol-level sessions outright. Separately, `notifications/tools/list_changed` is unreliable in practice — Claude Code registers no handler for it (issues [#13646](https://github.com/anthropics/claude-code/issues/13646), [#4118](https://github.com/anthropics/claude-code/issues/4118)).
+**Critical constraint — read before designing `init`:** the MCP spec (2026-07-28, *Tools § Capabilities*) states the tool set "**MAY** change over time … but **MUST NOT** vary per-connection or as a side effect of other requests on the connection." SEP-2567 removed protocol-level sessions outright. Separately, `notifications/tools/list_changed` is unreliable in practice — Claude Code registers no handler for it (issues [#13646](https://github.com/anthropics/claude-code/issues/13646), [#4118](https://github.com/anthropics/claude-code/issues/4118)). **That citation is stale** — it held at client 2.0.65 and is false at 2.1.231 ([KNOWLEDGE §10.4](KNOWLEDGE.md#104-the-client-claude-code)). The conclusion below is unchanged, because it rests on SEP-2567 rather than on the client.
 
 **Therefore `init` cannot shrink the tool list.** There is one static list; session-inappropriate calls must be **rejected at runtime by BrowserAI**, keyed on the handle's type. Storage tools remain *visible* in every session and are refused at call time. See [Trade-offs](#known-trade-offs) for what this costs.
 
@@ -318,7 +319,7 @@ It does not close the gap entirely: a connection holding both an interactive and
 - **Every tool schema gains a required `handle` parameter**, injected by BrowserAI into the raw `inputSchema` of all ~69 tools. Do this on the `JsonElement`; never materialise a typed schema to do it. Keep the injection order-stable — the spec SHOULDs deterministic tool ordering for prompt-cache hit rates.
 - **Missing, unknown and expired handles need three distinct, LLM-readable errors.** That text is read by a model deciding what to do next, not by a human tailing a console — the same principle as the current launcher's browser-preflight message, which exists precisely because "the server is stuck" was the wrong conclusion to invite.
 - **The first call after a cold start will forget the handle.** Design for it: the error must name `init`, state what it needs, and be recoverable in one turn.
-- **Instance lifetime is BrowserAI's to define.** At minimum: explicit teardown, an idle timeout, and **stdin EOF as the backstop** that reaps everything — EOF fires instantly when the parent holding the pipe is `TerminateProcess`d (measured), and the SDK already treats it as shutdown.
+- **Instance lifetime is BrowserAI's to define.** At minimum: explicit teardown, an idle timeout, and **stdin EOF as the backstop** that reaps everything — EOF fires instantly when the parent holding the pipe is `TerminateProcess`d ([measured](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup)), and the SDK already treats it as shutdown.
 - **N children per process.** One BrowserAI now supervises several `node` children, each with its own config, stderr stream and directory locks. **One job object per child, never one shared job** — a shared job fuses every instance's tree together, so tearing down one handle would kill them all, and assigning BrowserAI itself would make it a casualty too. See [the job object contract](#zero-process-leakage-the-job-object-contract). Stderr must be demultiplexed per handle or diagnostics become unreadable at exactly the moment they matter.
 - **`browser_get_config` becomes per-handle** — and is the natural per-instance drift check.
 
@@ -352,13 +353,13 @@ So the guarantee is recovered differently, and better placed: **BrowserAI knows 
 
 #### Lifetime: one timer, and reclaim is forever
 
-**Exactly one timer exists: browser-idle, ~10 minutes, reset by any tool call.** It closes the browser and keeps the node child — measured 329 → 110 MB, and 186 ms to relaunch. The relaunch is implicit: a caller that navigates after an idle close must never see "browser is closed", and that invisibility is a test, because it is the whole reason the timer is safe.
+**Exactly one timer exists: browser-idle, ~10 minutes, reset by any tool call.** It closes the browser and keeps the node child — measured 329 → 110 MB, and 186 ms to relaunch ([KNOWLEDGE §9](KNOWLEDGE.md#9-timings-spawn-resume-idle-close-proxy-overhead)). The relaunch is implicit: a caller that navigates after an idle close must never see "browser is closed", and that invisibility is a test, because it is the whole reason the timer is safe.
 
-**No handle-expiry timer, no session TTL, no reclaim window.** A torn-down session stays resumable indefinitely against its recorded directory, because the durable thing is the profile, not the process — measured, a resume after killing the node child preserves cookies, localStorage, IndexedDB, service workers and CacheStorage, losing only `sessionStorage`, in ~515 ms. Every expiry timer considered was a cliff that deleted work in exchange for nothing: an agent thinking for 61 minutes came back to a dead handle, and the recovery was a `resume` it could have done anyway.
+**No handle-expiry timer, no session TTL, no reclaim window.** A torn-down session stays resumable indefinitely against its recorded directory, because the durable thing is the profile, not the process — measured, a resume after killing the node child preserves cookies, localStorage, IndexedDB, service workers and CacheStorage, losing only `sessionStorage`, in ~515 ms ([KNOWLEDGE §9](KNOWLEDGE.md#9-timings-spawn-resume-idle-close-proxy-overhead)). Every expiry timer considered was a cliff that deleted work in exchange for nothing: an agent thinking for 61 minutes came back to a dead handle, and the recovery was a `resume` it could have done anyway.
 
 The cost is honest — **directories accumulate forever** — and it is why explicit `list` and `destroy` tools matter more here, not less. Deliberate deletion beats a timer that deletes.
 
-**Teardown** closes stdin, which trips the child's own `setupExitWatchdog` (`stdin` close, `SIGINT`, `SIGTERM` → `gracefullyCloseAll()`, hard exit after 15 s). No killing is involved in the normal path. Force is closing the job handle, and only that — see [the job object contract](#zero-process-leakage-the-job-object-contract).
+**Teardown** closes stdin, which trips the child's own `setupExitWatchdog` (`stdin` close, `SIGINT`, `SIGTERM` → `gracefullyCloseAll()`, hard exit after 15 s — [KB §6](KNOWLEDGE.md#6-upstream-configuration-facts)). No killing is involved in the normal path. Force is closing the job handle, and only that — see [the job object contract](#zero-process-leakage-the-job-object-contract).
 
 #### Finding sessions without a registry
 
@@ -379,7 +380,7 @@ Because [there is no default directory](#the-init-contract), there is no root to
 
 **Two triggers, each looking twice.** BrowserAI's own startup is the primary signal — free, no install footprint, and it fires exactly when a stray matters most, because that is when something is about to contend for a lock. A logon scheduled task covers what the first cannot: nobody starts a client for a week while a resurrected browser eats memory. Neither can know when Windows has finished restoring apps and no documented event marks it, so **neither tries to win the race — both simply look more than once**: an immediate pass plus a re-check at ~10 minutes, expressed as Task Scheduler's native repetition rather than an in-process sleep.
 
-> ⚠️ **The scheduled task must run in the user's interactive session, not as a service.** `FindWindowExW(HWND_MESSAGE, …)` is scoped to a window station and desktop, so a task configured *"run whether user is logged on or not"* lands in session 0 and **sees no message windows at all** — it would sweep, find nothing, and report success forever. Configure it *"run only when user is logged on"*, as the user, non-elevated. This is a silent-success failure mode, so it needs a test that would fail if the task definition changed: assert the sweeper finds a browser it launched itself.
+> ⚠️ **The scheduled task must run in the user's interactive session, not as a service.** `FindWindowExW(HWND_MESSAGE, …)` is scoped to a window station and desktop, so a task configured *"run whether user is logged on or not"* lands in session 0 and **sees no message windows at all** — it would sweep, find nothing, and report success forever ([KNOWLEDGE §11.2](KNOWLEDGE.md#112-windows-object-names-and-window-scoping)). Configure it *"run only when user is logged on"*, as the user, non-elevated. This is a silent-success failure mode, so it needs a test that would fail if the task definition changed: assert the sweeper finds a browser it launched itself.
 
 **Concurrency: try-acquire-and-skip, never queue.**
 
@@ -464,13 +465,13 @@ This is path matching against a binary we installed, not image-name matching, an
 
 Keyed on the **resolved absolute directory**, not on a repository name. Must handle: stale locks from crashed processes, alive-but-orphaned holders, and PID recycling. The existing launcher's mutex + sibling-lockfile + signature-check pattern solves all three and is worth porting rather than redesigning.
 
-**You cannot put a path in a mutex name.** Backslashes are illegal after the `Global\` prefix — `"Global\C:\Source\..."` throws `DirectoryNotFoundException`. Canonicalise and hash instead: `Path.GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant()` → SHA-256 → hex, then `$"Global\BrowserAI-{hash[..32]}"`. (The real length limit is ~32,000 characters, not the documented 260, but hashing is required regardless.) `Global\` also needs `SeCreateGlobalPrivilege`, which interactive users have and low-integrity/AppContainer processes do not.
+**You cannot put a path in a mutex name.** Backslashes are illegal after the `Global\` prefix — `"Global\C:\Source\..."` throws `DirectoryNotFoundException`. Canonicalise and hash instead: `Path.GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant()` → SHA-256 → hex, then `$"Global\BrowserAI-{hash[..32]}"`. (The real length limit is ~32,000 characters, not the documented 260, but hashing is required regardless.) `Global\` also needs `SeCreateGlobalPrivilege`, which interactive users have and low-integrity/AppContainer processes do not. All three are in [KNOWLEDGE §11.2](KNOWLEDGE.md#112-windows-object-names-and-window-scoping).
 
 Prefer a `FileStream` with `FileShare.None` for the sibling lockfile over the current signature-heuristic approach: the OS releases the handle on process death, so "stale" and "alive" become distinguishable without guessing. Keep the mutex as well — it gives the fast no-IO path.
 
 #### Never by image name
 
-**Killing a user's own `chrome.exe` or `firefox.exe` must be impossible by construction, not merely avoided.** This is a structural rule, not a review item, because a review already passed on code that would have violated it: our own Chromium probes counted and killed by image name — harmless for Chromium on that machine, and it would have killed ~40 personal `firefox.exe` processes if adapted naively.
+**Killing a user's own `chrome.exe` or `firefox.exe` must be impossible by construction, not merely avoided.** This is a structural rule, not a review item, because a review already passed on code that would have violated it: our own Chromium probes counted and killed by image name — harmless for Chromium on that machine, and it would have killed ~40 personal `firefox.exe` processes if adapted naively ([KNOWLEDGE §15](KNOWLEDGE.md#15-the-legacy-setup-and-this-machine)).
 
 The invariant: **BrowserAI can only terminate a process that belongs to a job object it created, or whose identity it verified against a path it owns.** Two mechanisms, no third:
 
@@ -483,21 +484,21 @@ Forbidden outright, and enforceable as an analyzer at error severity: `Process.G
 
 ### E. Lifecycle and observability
 
-Non-negotiable, because every bug this month was a visibility failure. The .NET MCP SDK already implements roughly half of this — `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type that makes bug #2 in the table above structurally impossible.
+Non-negotiable, because every bug this month was a visibility failure. The .NET MCP SDK already implements roughly half of this — `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type that makes bug #2 in the table above structurally impossible ([KNOWLEDGE §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around)).
 
-- **Capture the child's stderr from before it starts.** `RedirectStandardError` + `ErrorDataReceived` + `BeginErrorReadLine()`. The anonymous pipe exists before `CreateProcess` and the kernel buffers, so nothing written earlier is lost (measured: 5 lines survived a 3 s delay *and* child exit). The real risk is the opposite — a full pipe blocks the child.
-- **Record the child's real exit code and cache it as an `int` immediately.** .NET is *worse* than PowerShell here, not better: `Process.ExitCode` **throws** after `Dispose()`, and `Process.GetProcessById(pid).ExitCode` **always** throws. Microsoft's own SDK carries a `beforeDispose` callback commented "to read ExitCode before Dispose() invalidates it" — they hit this too.
+- **Capture the child's stderr from before it starts.** `RedirectStandardError` + `ErrorDataReceived` + `BeginErrorReadLine()`. The anonymous pipe exists before `CreateProcess` and the kernel buffers, so nothing written earlier is lost ([measured](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup): 5 lines survived a 3 s delay *and* child exit). The real risk is the opposite — a full pipe blocks the child.
+- **Record the child's real exit code and cache it as an `int` immediately.** .NET is *worse* than PowerShell here, not better: `Process.ExitCode` **throws** after `Dispose()`, and `Process.GetProcessById(pid).ExitCode` **always** throws. Microsoft's own SDK carries a `beforeDispose` callback commented "to read ExitCode before Dispose() invalidates it" — they hit this too ([KNOWLEDGE §11.1](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup)).
 - **Use `await WaitForExitAsync(ct)`**, never `WaitForExit(int)`. Only the former drains the async readers.
 - **Distinguish error-shaped stderr from benign output.** Port the two regexes verbatim; a healthy start prints `Session: <path>` every time.
 - **Kill the descendant tree with a Windows Job Object**, not `Process.Kill(entireProcessTree: true)`. The latter requires BrowserAI to be alive and running code — which is exactly the case that fails. The full contract, measured end to end, is [below](#zero-process-leakage-the-job-object-contract).
 - **Identify a process by `(pid, creationFileTime)`** — never by a bare PID, which identifies nothing once PIDs recycle, and never by image name (see [§D](#never-by-image-name)). Better still, hold an `OpenProcess` handle: Windows will not recycle a PID while a handle is open, and the handle is signalled on exit, so liveness becomes event-driven instead of a poll loop.
 - **There are no orphaned processes to collect after a crash.** The job object takes the whole tree with it, so a dead BrowserAI leaves no running children — an earlier draft of this document said the opposite. What *can* survive is a stale lockfile, and that is a file problem solved by `FileShare.None` plus the holder record, not a process problem.
 
-**stdout is the protocol channel and it is wrong by default.** Measured: `Console.Out` writes CP437, not UTF-8 (`é` → `0x82`); `Console.InputEncoding` also defaults to CP437; any `TextWriter` emits CRLF; and a hand-rolled `new StreamWriter(stream, Encoding.UTF8)` emits a BOM. Own the raw streams, never touch `Console.Out`, and let no code anywhere in the process call `Console.WriteLine` — including inside a `catch`. This should be a reviewed invariant owned by one wrapper type, not a convention.
+**stdout is the protocol channel and it is wrong by default.** Measured: `Console.Out` writes CP437, not UTF-8 (`é` → `0x82`); `Console.InputEncoding` also defaults to CP437; any `TextWriter` emits CRLF; and a hand-rolled `new StreamWriter(stream, Encoding.UTF8)` emits a BOM ([KNOWLEDGE §11.1](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup)). Own the raw streams, never touch `Console.Out`, and let no code anywhere in the process call `Console.WriteLine` — including inside a `catch`. This should be a reviewed invariant owned by one wrapper type, not a convention.
 
 #### Zero process leakage: the job object contract
 
-Verified end to end 2026-08-15 against real Chromium and Firefox trees: **16 runs, 106 spawned processes, 0 escapees, 0 survivors.** The measurement harness lives at `.work/jobtest/` and is the working prototype of the acceptance test below.
+Verified end to end 2026-08-15 against real Chromium and Firefox trees: **16 runs, 106 spawned processes, 0 escapees, 0 survivors.** The measurement harness lives at `.work/jobtest/` and is the working prototype of the acceptance test below. Full provenance: [KNOWLEDGE §1](KNOWLEDGE.md#1-windows-job-objects-and-process-containment).
 
 **The rule, and why the intuition runs backwards.** On Windows, job membership is inherited *automatically* by every descendant created with `CreateProcess`. A component that spawns children "the normal way" is precisely the case that works. Escaping requires an explicit opt-in **that our job must grant** — and when a process requests `CREATE_BREAKAWAY_FROM_JOB` from a job that does not permit it, `CreateProcess` **fails with `ERROR_ACCESS_DENIED` rather than escaping**. A job that grants no breakaway flags therefore converts every escape attempt into a launch failure. This is the inverse of Linux process-group semantics; do not reason about it by analogy, and do not assume a component that "just spawns normally" is a hole.
 
@@ -524,7 +525,7 @@ Neither browser fights us. Every Chromium caller of `CREATE_BREAKAWAY_FROM_JOB` 
 
 **Expected side effect, not a defect.** Firefox's background tasks (`BackgroundTasksRunner`) and its crash reporter request breakaway, so inside our job their `CreateProcess` fails with `ERROR_ACCESS_DENIED`. That is the correct trade — a failed helper launch beats an escaped `firefox.exe --backgroundtask`. If Firefox ever logs a failed background task, this is why, and it is not a bug to fix.
 
-**NativeAOT.** Use `[LibraryImport]`, not `DllImport` — the latter relies on runtime IL-stub generation. `LibraryImport` does not support `StringBuilder`, so pass the command line as a writable `char[]`/`Span<char>`: `CreateProcessW` mutates the buffer, so a `string` literal is not valid. Keep `JOBOBJECT_EXTENDED_LIMIT_INFORMATION` and `STARTUPINFOEX` blittable and consider `DisableRuntimeMarshalling`. Nothing here touches AOT's limitation list — no dynamic loading, no `Reflection.Emit`, no built-in COM.
+**NativeAOT.** Use `[LibraryImport]`, not `DllImport` — the latter relies on runtime IL-stub generation. `LibraryImport` does not support `StringBuilder`, so pass the command line as a writable `char[]`/`Span<char>`: `CreateProcessW` mutates the buffer, so a `string` literal is not valid ([KNOWLEDGE §11.3](KNOWLEDGE.md#113-interop-and-the-toolchain)). Keep `JOBOBJECT_EXTENDED_LIMIT_INFORMATION` and `STARTUPINFOEX` blittable and consider `DisableRuntimeMarshalling`. Nothing here touches AOT's limitation list — no dynamic loading, no `Reflection.Emit`, no built-in COM.
 
 **BrowserAI running inside someone else's job is safe**, measured in all three ancestor configurations: an outer job with `KILL_ON_JOB_CLOSE` only (a CI runner), one that also permits breakaway, and one with `SILENT_BREAKAWAY_OK` — which is the realistic case, since any MCP client that spawns BrowserAI through Node `child_process` puts us in libuv's job.
 
@@ -532,7 +533,7 @@ Neither browser fights us. Every Chromium caller of `CREATE_BREAKAWAY_FROM_JOB` 
 
 ### F. Artifact management
 
-Playwright writes every artifact flat into one directory with a generated name, mixing machine churn with hand-named work. Nine fixed generator prefixes make classification exact rather than heuristic: `console`, `download`, `network`, `page`, `request`, `response`, `result`, `storage-state`, `video`.
+Playwright writes every artifact flat into one directory with a generated name, mixing machine churn with hand-named work. Nine fixed generator prefixes make classification exact rather than heuristic: `console`, `download`, `network`, `page`, `request`, `response`, `result`, `storage-state`, `video` ([KNOWLEDGE §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour)).
 
 Port the prefix-based sort. **Classification must be by generator prefix, never by date** — that is precisely what keeps a hand-named file out of the machine-generated folders, and no date rule can make that distinction.
 
@@ -540,7 +541,7 @@ Port the prefix-based sort. **Classification must be by generator prefix, never 
 
 A sort is cleanup; a proxy can do better. BrowserAI sees every `tools/call` before the child does and every result before the caller does, so **files can be born in the right place instead of being swept there.** Three levers, in increasing order of effort:
 
-1. **Set the child's `WorkingDirectory` to the instance's output root.** Already required by [§Windows process spawning](#windows-process-spawning) for a different reason. It makes the stray-file failure *impossible* rather than *caught*: a bare `foo.png` resolves inside the instance tree by construction. Ten repositories currently run a `deny` hook because upstream resolves a relative `filename` against the child's cwd — this closes that without a hook.
+1. **Set the child's `WorkingDirectory` to the instance's output root.** Already required by [§Windows process spawning](#windows-process-spawning) for a different reason. It makes the stray-file failure *impossible* rather than *caught*: a bare `foo.png` resolves inside the instance tree by construction. Ten repositories currently run a `deny` hook because upstream resolves a relative `filename` against the child's cwd ([KNOWLEDGE §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour)) — this closes that without a hook.
 2. **Normalise `filename` on the way in.** Route it to the typed subfolder its generator prefix implies, so the agent never has to construct a path.
 3. **Return the resolved absolute path on the way out.** Non-negotiable if lever 2 is used. Silently relocating a file while telling the model it went somewhere else produces an agent that confidently reports the wrong location — a new silent failure introduced by the fix for an old one.
 
@@ -559,7 +560,7 @@ Layout beneath the root, following the nine generator prefixes rather than inven
 
 ### Three obligations that follow
 
-- **Names must be legible.** Upstream generates `page-2026-08-14T04-11-50-882Z.png`. Prefer the caller's own name where one was given, and a page-derived slug plus a counter where none was — `checkout-step-3.png` survives a month, a timestamp does not. This is what made 346 session directories unnavigable.
+- **Names must be legible.** Upstream generates `page-2026-08-14T04-11-50-882Z.png` ([KNOWLEDGE §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour)). Prefer the caller's own name where one was given, and a page-derived slug plus a counter where none was — `checkout-step-3.png` survives a month, a timestamp does not. This is what made 346 session directories unnavigable.
 - **Never overwrite silently.** Two screenshots named `login.png` in one session is data loss. Suffix, and say so in the result.
 - **Report cumulative session size in the result.** The current setup reached 1.5 GB in three months with nothing saying so. BrowserAI routes every file and therefore knows; not reporting it is a choice to stay blind.
 - **Return a repository-relative path alongside the absolute one.** When an agent writes a commit message, a PR body or a report, `docs/screenshots/login.png` is what it needs; an absolute path is machine-specific and useless there. BrowserAI resolves both anyway — emitting only one of them discards work already done.
@@ -580,13 +581,13 @@ Write `session.json` into each session folder as artifacts are routed: label, ha
 
 ### Retention is no longer ours alone to promise
 
-An earlier draft of this section said *"Nothing is ever auto-deleted."* That is **no longer true of the runtime**: `@playwright/mcp` now carries `--output-max-size <bytes>`, *"Threshold for evicting old output files, in bytes."* Unless BrowserAI sets it explicitly and asserts it through `browser_get_config`, the promise in this document is not the promise the child keeps — and a silently evicted artifact is precisely the failure class in the opening table. **Its default value is unverified; establish it before restating any retention guarantee.**
+An earlier draft of this section said *"Nothing is ever auto-deleted."* That is **no longer true of the runtime**: `@playwright/mcp` now carries `--output-max-size <bytes>`, *"Threshold for evicting old output files, in bytes."* Unless BrowserAI asserts it stays unset — and strips `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE`, which is the other door to it — the promise in this document is not the promise the child keeps, and a silently evicted artifact is precisely the failure class in the opening table. **Settled 2026-08-15: it has no default at any merge stage** (`defaultConfig` carries only `browser` and `timeouts`; `mergeConfig` filters through `pickDefined`, which drops `undefined`), so eviction is off unless someone turns it on. [KNOWLEDGE §6](KNOWLEDGE.md#6-upstream-configuration-facts).
 
 ### G. Updates
 
 The reason the project exists. Requirements: updates published on **our** schedule after we have validated a new Playwright version; one release updating runtime, browser, config, opinions and BrowserAI itself; rollback to a known-good release; and silent background update with a clear "restart to apply" signal, since MCP servers are long-lived child processes.
 
-**Mechanism: Velopack 1.2.0** (MIT, per-user install to `%LocalAppData%`, no elevation, no commercial tier).
+**Mechanism: Velopack 1.2.0** (MIT, per-user install to `%LocalAppData%`, no elevation, no commercial tier). Everything below that was read out of Velopack itself — the delta scheme, the feed-URL composition, the startup and stub behaviours, the Rust binaries' own Windows floor — is recorded with provenance in [KNOWLEDGE §13](KNOWLEDGE.md#13-velopack-and-the-update-path).
 
 It wins on delta granularity. Its scheme is per-file zstd `--patch-from`, and unchanged files collapse to **zero-byte markers** — so against a ~380 MB footprint dominated by Chromium, a BrowserAI-only release ships single-digit MB. It is also the only option with both a **stable executable path** (`current\`, a real directory, not a junction) *and* a stage-now/swap-later primitive that composes with a parent-owned process lifecycle.
 
@@ -618,7 +619,7 @@ State must live **outside** `current\`, which is wholly replaced on update — r
 
 #### Prior art: ExoFabric/UCC
 
-Landmines 1 and 5–9 above were not found in documentation. They were found in a working Velopack deployment: **`ExoFabric/UCC`** ships Velopack today — per-user `%LocalAppData%\UCC\current\`, no elevation, S3-compatible feed, silent background check — and is the only in-house evidence that exists. Two caveats before borrowing anything from it:
+Landmines 1 and 5–9 above were not found in documentation. They were found in a working Velopack deployment: **`ExoFabric/UCC`** ships Velopack today — per-user `%LocalAppData%\UCC\current\`, no elevation, S3-compatible feed, silent background check — and is the only in-house evidence that exists. Its state as observed is in [KNOWLEDGE §13.1](KNOWLEDGE.md#131-prior-art-exofabricucc). Two caveats before borrowing anything from it:
 
 - **It runs Velopack 0.0.1298, not 1.2.0.** That is the pre-1.0 line; behaviour and API surface have both moved. Re-verify every claim against 1.2.0 and stamp it with the `Verified <date> @ <version>` convention when you do.
 - **UCC is single-instance; BrowserAI is not.** A named mutex means exactly one UCC process ever runs under the install root, which makes `force_stop_package` harmless there. Landmine 4 — the one that matters most for four concurrent registrations — is therefore **untested by the only prior art available.**
@@ -670,9 +671,9 @@ This is the whole model, and it needs stating precisely because the charter's fo
 
 ### The four rules that make floating safe
 
-1. **The resolved set is recorded, not remembered.** For NuGet this is **two steps, not one**: `dotnet restore --force-evaluate` to resolve the float, then a locked-mode restore to verify. They are mutually exclusive in a single invocation — with a lock file present and no `--force-evaluate`, NuGet **does not re-resolve**, and the float is silently dead ([NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512); warned by default from the .NET 11 SDK). A one-step `--locked-mode` build is the `browserName: "chromium"` failure again. It also yields the cheapest possible drift detector: `git diff --exit-code -- "**/packages.lock.json"` after the resolve. Then the resolved `package-lock.json` for the vendored npm tree, and browser revisions read from the resolved package's own `browsers.json`, never a hand-typed URL. **An artifact that cannot state exactly what went into it is not releasable** — that is also what makes a rollback meaningful and a regression bisectable.
+1. **The resolved set is recorded, not remembered.** For NuGet this is **two steps, not one**: `dotnet restore --force-evaluate` to resolve the float, then a locked-mode restore to verify. They are mutually exclusive in a single invocation — with a lock file present and no `--force-evaluate`, NuGet **does not re-resolve**, and the float is silently dead ([NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512); warned by default from the .NET 11 SDK). A one-step `--locked-mode` build is the `browserName: "chromium"` failure again. It also yields the cheapest possible drift detector: `git diff --exit-code -- "**/packages.lock.json"` after the resolve ([KNOWLEDGE §11.3](KNOWLEDGE.md#113-interop-and-the-toolchain)). Then the resolved `package-lock.json` for the vendored npm tree, and browser revisions read from the resolved package's own `browsers.json`, never a hand-typed URL. **An artifact that cannot state exactly what went into it is not releasable** — that is also what makes a rollback meaningful and a regression bisectable.
 2. **The shipped artifact never floats.** The client resolves nothing at runtime: no `npx`, no `@latest`, no network at spawn. What was tested is what runs. This property is the non-negotiable one, and it is why [§A](#a-ship-and-own-the-runtime) vendors the tree at all.
-3. **GA is a hard floor.** No preview or RC builds a released artifact. Upstream Playwright publishes **daily alphas**, but `@playwright/mcp@latest` is the released dist-tag — the `playwright-core` alpha beneath it arrives as that package's own exact dependency, not as a choice we make.
+3. **GA is a hard floor.** No preview or RC builds a released artifact. Upstream Playwright publishes **daily alphas**, but `@playwright/mcp@latest` is the released dist-tag — the `playwright-core` alpha beneath it arrives as that package's own exact dependency, not as a choice we make ([KNOWLEDGE §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape)).
 4. **Green is the only gate, and it gates the *release*, not the *update*.** The response to a breaking upstream change is to make the newest version work. Holding the previous version is not a fix, and "pin it back for now" is the failure this policy exists to prevent.
 
 ### Never assert a version from memory
@@ -681,13 +682,13 @@ This is the whole model, and it needs stating precisely because the charter's fo
 
 > **In-house evidence, and it is three weeks old.** `SixFive7/OutlookAI` pins `ModelContextProtocol` **1.4.1**, with a csproj comment reading *"1.4.1 = latest stable on nuget.org as of 2026-07-23 (2.0.0 is still preview)."* That was true when written. Re-checked against nuget.org's flat-container index on **2026-08-14**: 2.0.0, 2.1.0 and 2.2.0 have all shipped stable, so the comment's central claim is now false and nothing in that build says so.
 >
-> The comment was **correctly stamped with its date**, which is the only reason the staleness is detectable at all — an unstamped "latest stable" claim would still read as current. Stamp the date; never trust one that lacks it.
+> The comment was **correctly stamped with its date**, which is the only reason the staleness is detectable at all — an unstamped "latest stable" claim would still read as current. Stamp the date; never trust one that lacks it. ([KNOWLEDGE §10.3](KNOWLEDGE.md#103-package-provenance-as-looked-up))
 
 ---
 
 ## Implementation stack
 
-Verified 2026-08-13. **The versions below are provenance stamps, not targets** — see [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). The build resolves the latest of each; these record what was current when the surrounding claims were checked, and carry the same convention as `playwright/README.md`: re-verify on every bump.
+Verified 2026-08-13. **The versions below are provenance stamps, not targets** — see [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). The build resolves the latest of each; these record what was current when the surrounding claims were checked, and carry the same convention as `playwright/README.md`: re-verify on every bump. Each lookup, with the date it was made, is in [KNOWLEDGE §10.3](KNOWLEDGE.md#103-package-provenance-as-looked-up).
 
 | Concern | Choice | Notes |
 |---|---|---|
@@ -695,7 +696,7 @@ Verified 2026-08-13. **The versions below are provenance stamps, not targets** �
 | Updates | **Velopack 1.2.0** + `vpk` 1.2.0 | MIT. See §G. |
 | Node runtime | **v24.19.0 LTS**, `node.exe` only | v26 is Current, not LTS, and its `node.exe` is 10 MB larger. |
 | Job objects | Hand-rolled `[LibraryImport]` | No credible NuGet wrapper exists — the candidates have <6K downloads and the newest was published in 2017. `dotnet/runtime` [#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in support and was closed as not planned. ~60 lines. `Microsoft.Windows.CsWin32` is the reasonable alternative once a seventh Win32 API is needed. |
-| Parent PID | `NtQueryInformationProcess` | ~0.77 µs/call vs ~3.3 ms for `Process.GetProcessById` and milliseconds for WMI. This is what `dotnet/runtime` itself uses. |
+| Parent PID | `NtQueryInformationProcess` | ~0.77 µs/call vs ~3.3 ms for `Process.GetProcessById` and milliseconds for WMI. This is what `dotnet/runtime` itself uses. See [KNOWLEDGE §11.3](KNOWLEDGE.md#113-interop-and-the-toolchain). |
 | Tests | **TUnit** (latest; 1.65.0 as of 2026-08-13) | MIT, source-generated, reflection-free, **MTP-native**. Matches `SixFive7/Jeeves`. 1.0 shipped 2025-11-05; ~623K downloads/mo and growing 2.24× YoY. Chosen over xUnit v3 because [we do not vendor the SDK's fixtures](#we-write-our-own-harness) — that was xUnit's only argument here. |
 | Snapshots | `Verify.TUnit` (latest; **31.28.0** as of 2026-07-31) | Exact parity with `Verify.XunitV3` — same monorepo, same release, and Verify's own repo carries *more* test projects for the TUnit integration than the xUnit v3 one. |
 | Assertions | TUnit built-ins | `await Assert.That(actual).IsEqualTo(expected)`. **Never add FluentAssertions** — it relicensed at exactly 8.0.0 to a bespoke non-SPDX licence with a commercial tier. Jeeves carries the identical prohibition for the identical reason. |
@@ -709,7 +710,7 @@ Verified 2026-08-13. **The versions below are provenance stamps, not targets** �
 
 **3. Proxy `tools/call` at the message-filter layer, not the typed layer.** The SDK's `ContentBlock` converter **silently drops unknown properties** (it has tests asserting this — correct forward-compatibility for a client, data loss for a proxy) and **throws on unknown content *types***, which fails the entire call at deserialization before any BrowserAI logic runs. `WithMessageFilters` operates on `JsonRpcMessage` where `JsonRpcResponse.Result` is a raw `JsonNode?`. Rewrite `tools/list` typed; let `tools/call` results pass through as raw JSON.
 
-Both of these are places where the SDK's design goal (a forward-compatible *client*) and BrowserAI's (a lossless *proxy*) genuinely differ. Decide them now rather than discovering them later — and note that both failure modes are silent, which is the class this project exists to eliminate.
+Both of these are places where the SDK's design goal (a forward-compatible *client*) and BrowserAI's (a lossless *proxy*) genuinely differ. Decide them now rather than discovering them later — and note that both failure modes are silent, which is the class this project exists to eliminate. All three behaviours are recorded in [KNOWLEDGE §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around).
 
 ---
 
@@ -734,7 +735,7 @@ tools/call   → JSON-RPC *success* response, body: {"isError": true, ...}
 
 **Every conventional health signal is green.** The single bit that says "broken" is `isError` inside a 200-equivalent body. Transport-level assertions, protocol-level assertions, exit codes, stderr scanning and `tools/list` **cannot detect this class at all**.
 
-So: any smoke test that stops at `tools/list` reproduces the exact five-day blindness described at the top of this document. The minimum viable assertion is a real navigation — measured at **0.43 s** with no network and no local server:
+So: any smoke test that stops at `tools/list` reproduces the exact five-day blindness described at the top of this document. The minimum viable assertion is a real navigation — measured at **0.43 s** with no network and no local server ([KNOWLEDGE §9](KNOWLEDGE.md#9-timings-spawn-resume-idle-close-proxy-overhead)):
 
 ```csharp
 var result = await client.CallToolAsync("browser_navigate",
@@ -771,7 +772,7 @@ Lifecycle tests must wrap themselves in their own job object (`KILL_ON_CLOSE`, `
 
 ### We write our own harness
 
-We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines (Apache-2.0, unpublished to NuGet), they wire a single client↔server pipe pair where a proxy needs two hops, and copying them means a permanent three-way merge against an upstream that edits `tests/` weekly. Writing ~100–200 lines ourselves buys a harness shaped for *this* product and frees the framework choice.
+We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines (Apache-2.0, unpublished to NuGet), they wire a single client↔server pipe pair where a proxy needs two hops, and copying them means a permanent three-way merge against an upstream that edits `tests/` weekly ([KNOWLEDGE §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around)). Writing ~100–200 lines ourselves buys a harness shaped for *this* product and frees the framework choice.
 
 Two lessons are inherited deliberately rather than by copying, because they cost upstream real time to find:
 
@@ -809,7 +810,7 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - **`EnumWindows` returns zero `Chrome_MessageWindow`s**, so nobody later "simplifies" the class-qualified walk into an `EnumWindows` loop that silently finds nothing
 - **a window destroyed mid-walk produces `GetLastError() == 1400` and triggers a restart**, rather than truncating the enumeration
 - **a title that is not a rooted local drive-letter path is rejected before any filesystem call** — a UNC title otherwise stalls the sweep for 21 seconds
-- **every race in [the sweep table](#race-conditions-and-what-closes-each) has a test.** Specifically: an `AbandonedMutexException` leaves sweeping functional (**R3**); the sweep refuses to kill when the directory lock is held (**R1**); a zero-timeout acquire under N concurrent starters runs exactly one sweep and blocks none of the others (**R9**, **R14**); a re-asserted pointer restores itself after a wrongful delete (**R7**); and the sweep never writes to `stdout` (**R12**)
+- **every race in [the sweep table](#race-conditions-and-what-closes-each) has a test.** Specifically: an `AbandonedMutexException` leaves sweeping functional (**R3**); the sweep refuses to kill when the directory lock is held (**R1**); a zero-timeout acquire under N concurrent starters runs exactly one sweep and blocks none of the others (**R9**); a re-asserted pointer restores itself after a wrongful delete (**R7**); and the sweep never writes to `stdout` (**R12**)
 - **a mode refusal names the mode that would permit the call**, not merely that the call was refused
 - handle lifecycle: missing, unknown and expired produce **three distinct LLM-readable errors**, each naming `init` and recoverable in one turn
 - lock-name derivation: `GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → `Global\BrowserAI-{hash[..32]}`
@@ -917,7 +918,7 @@ Recorded so they are inherited as decisions, not rediscovered as surprises.
 
 ### The `init` design weakens a security boundary
 
-Today, four separate processes give **process-level isolation**. The `interactive` mode exists so a human can type credentials the agent must never capture, and its server process is launched without the `storage` capability — the 17 cookie/localStorage/`storageState` tools do not exist in that process. There is no code path to reach them.
+Today, four separate processes give **process-level isolation**. The `interactive` mode exists so a human can type credentials the agent must never capture, and its server process is launched without the `storage` capability — the 17 cookie/localStorage/`storageState` tools do not exist in that process ([KNOWLEDGE §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape)). There is no code path to reach them.
 
 Under one server with `init`, that becomes a **runtime check in BrowserAI's own code**. The tools exist in the shared surface; correctness depends on the session-state lookup being right, including under concurrency.
 
@@ -929,15 +930,15 @@ The handle design ([§C](#c-the-init-tool-and-instance-handles)) narrows this co
 
 ### Storage tools capture bearer tokens
 
-`browser_storage_state` and the cookie tools return `httpOnly` cookies, which JavaScript cannot read. These are session bearer tokens. Any mode permitted to call them must be treated as credential-bearing.
+`browser_storage_state` and the cookie tools return `httpOnly` cookies, which JavaScript cannot read. These are session bearer tokens. Any mode permitted to call them must be treated as credential-bearing. `browser_storage_state` additionally never captures IndexedDB — see [KNOWLEDGE §7.1](KNOWLEDGE.md#71-tools-that-reach-credentials).
 
 ### `browser_get_config` does not redact
 
-Its handler is `JSON.stringify(context.config, null, 2)` with no filtering, so it would emit `config.secrets` in plaintext if that key were ever set. It is not set today. BrowserAI should either redact before forwarding or refuse to expose the tool.
+Its handler is `JSON.stringify(context.config, null, 2)` with no filtering, so it would emit `config.secrets` in plaintext if that key were ever set. It is not set today. BrowserAI should either redact before forwarding or refuse to expose the tool ([KNOWLEDGE §7.1](KNOWLEDGE.md#71-tools-that-reach-credentials)).
 
 ### The child's environment overrides the config file BrowserAI generates
 
-The merge order is **config file → environment → CLI**, and `@playwright/mcp` reads **40** `PLAYWRIGHT_MCP_*` variables covering essentially every option: `BROWSER`, `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`, `CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS`, and 30 more.
+The merge order is **config file → environment → CLI**, and `@playwright/mcp` reads **40** `PLAYWRIGHT_MCP_*` variables covering essentially every option: `BROWSER`, `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`, `CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS`, and 30 more — **42 in total**, [two of them read outside that mapping](KNOWLEDGE.md#environment-merge-order-and-startup-output).
 
 So a stray variable in the user's environment silently overrides BrowserAI's opinions — and **`PLAYWRIGHT_MCP_CAPS` triggers the same replace-not-merge wipe documented below for `--caps`**, meaning there is an environment route to a bug the "never pass `--caps`" rule does not close.
 
@@ -947,7 +948,7 @@ Do **not** set `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`: it writes a line to
 
 ### `capabilities` replaces, it does not merge
 
-`mergeConfig` spreads defined overrides, so passing `--caps` on the command line **silently wipes** the config file's capability list. The current launcher passes only `--config` and `--output-dir`, which is why this has not bitten. BrowserAI generates the child config and must not introduce a `--caps` argument alongside it — nor allow `PLAYWRIGHT_MCP_CAPS` to survive into the child environment.
+`mergeConfig` spreads defined overrides, so passing `--caps` on the command line **silently wipes** the config file's capability list. The current launcher passes only `--config` and `--output-dir`, which is why this has not bitten. BrowserAI generates the child config and must not introduce a `--caps` argument alongside it — nor allow `PLAYWRIGHT_MCP_CAPS` to survive into the child environment ([KNOWLEDGE §6](KNOWLEDGE.md#environment-merge-order-and-startup-output)).
 
 ### Windows process spawning
 
@@ -959,13 +960,13 @@ Node's `spawn` cannot execute `.cmd` shims without `shell: true` — a live Clau
 
 **This is also why the SDK's own `StdioClientTransport` cannot be used** — it prepends `cmd.exe /c` unconditionally on Windows. See [Implementation stack](#implementation-stack).
 
-Set `WorkingDirectory` explicitly on every spawn. Left unset, .NET passes `null` to `CreateProcess` and the child inherits BrowserAI's cwd — whatever Claude Code happened to have. That is reason 5 above, verbatim.
+Set `WorkingDirectory` explicitly on every spawn. Left unset, .NET passes `null` to `CreateProcess` and the child inherits BrowserAI's cwd — whatever Claude Code happened to have ([KNOWLEDGE §11.1](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup)). That is reason 5 above, verbatim.
 
 ### Being in the data path is a new failure domain
 
 The current launcher is a **supervisor, not a proxy** — it inherits stdio and never touches a JSON-RPC message. BrowserAI is in the data path by design. A crash in it takes down browser automation entirely, where today a crash in one mode leaves the other three working. Error propagation, cancellation, progress notifications, and binary/image passthrough all become BrowserAI's responsibility.
 
-Prior measurement of an equivalent Node prototype: images passed through byte-identical (509,620 base64 bytes), error shapes preserved, ~50 ms added latency on a 500 KB payload, ~300 ms one-off child spawn. The overhead is acceptable; the ownership is the real cost.
+Prior measurement of an equivalent Node prototype: images passed through byte-identical (509,620 base64 bytes), error shapes preserved, ~50 ms added latency on a 500 KB payload, ~300 ms one-off child spawn. The overhead is acceptable; the ownership is the real cost. It was a *Node* prototype, so it predicts BrowserAI's overhead rather than measuring it — [KNOWLEDGE §9](KNOWLEDGE.md#9-timings-spawn-resume-idle-close-proxy-overhead) says so explicitly.
 
 Two pieces of ownership the SDK does **not** hand you:
 
@@ -978,7 +979,7 @@ Recorded because the research raised it from two directions and the answer is no
 
 **C# is not required for the update story.** Velopack is language-agnostic — the same 1.2.0 release ships `lib-nodejs`, `lib-rust` and `lib-python`, and the Rust `Update.exe` doing the real work is identical for all of them. In Node, "bundle a Node runtime" would also stop being a payload shipped *alongside* the app and become the app's own runtime.
 
-**C# is chosen for §D and §E.** Node's `child_process` has **no job object support at all** — every Node process supervisor on Windows falls back to `taskkill /T /F` or a native addon, and none survive a hard kill of the supervisor. Named mutexes are the same story: `System.Threading.Mutex` is a first-class kernel object with automatic abandonment on crash, where Node needs `proper-lockfile` and its stale-detection heuristics. Those two primitives are exactly the locking and lifecycle requirements above, and they are the things that actually failed in the current setup.
+**C# is chosen for §D and §E.** Node's `child_process` has **no job object support at all** — every Node process supervisor on Windows falls back to `taskkill /T /F` or a native addon, and none survive a hard kill of the supervisor ([KNOWLEDGE §11.1](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup)). Named mutexes are the same story: `System.Threading.Mutex` is a first-class kernel object with automatic abandonment on crash, where Node needs `proper-lockfile` and its stale-detection heuristics. Those two primitives are exactly the locking and lifecycle requirements above, and they are the things that actually failed in the current setup.
 
 **The price is two failure modes .NET makes *worse*, both silent, both already named above**: `Process.ExitCode` throwing after `Dispose()` (§E), and stdio encoding defaulting to CP437 with CRLF and BOM hazards (§E). Neither is hard to handle; both must be **invariants owned by a single wrapper type**, not conventions maintained by discipline. If those two are handled properly, the choice pays for itself.
 
@@ -994,7 +995,7 @@ Recorded because the research raised it from two directions and the answer is no
 | **Profile and artifact locations** | **Arguments to `init`**, not global policy. The caller states where its data goes, per session — so "shared or per-directory" is the caller's choice, not BrowserAI's. This is what removes the relative-path hazard. |
 | **Path validation** | **Any path is accepted.** Correct use is the calling agent's responsibility. See below. |
 | **Child process model** | **One node child per handle.** Stays firmly on the proxy side of the scope boundary; costs ~300 ms and one process per instance. |
-| **Browser and packaging** | **Full Chromium, batteries included, NativeAOT single-file.** No host dependency on Node, .NET or Chrome. ~806 MB installed / ~239 MB compressed. See [§A](#a-ship-and-own-the-runtime). |
+| **Browser and packaging** | **Full Chromium, NativeAOT single-file.** No host dependency on Node, .NET or Chrome. Installer ~117 MB; browsers provisioned on first run (203.8 MB down, 433 MiB on disk), once per machine rather than once per update. See [§A](#a-ship-and-own-the-runtime). |
 
 **On accepting any path.** `init` does not constrain `userDataDir` or artifact paths to a sanctioned root. The consequence, recorded so it is inherited rather than rediscovered: an agent may point an instance at the user's **real Chrome profile** and read live browser state, or write artifacts anywhere the process can reach.
 
@@ -1005,7 +1006,7 @@ Two things follow, and they are design obligations rather than caveats:
 - **The `init` tool description is a security surface.** It is the only place the calling agent is told what a path argument means. Write it as guidance an agent will actually follow — name the sensible default location, and say plainly what pointing at an existing browser profile does.
 - **Log the resolved absolute paths at instance creation.** If BrowserAI does not enforce a boundary, it must at least make crossings visible after the fact. This is the same principle as §E: the failure that cannot be seen is the one that costs five days.
 
-**On one child per handle.** Research verified a single node process *can* serve several configurations — two servers with correctly divergent surfaces (42 vs 59 tools), no module-global browser state, browsers created lazily on first tool call. That path is rejected not on capability but on scope: it is reachable only through the programmatic `createConnection` API, which means writing a JS shim and moving toward the boundary [Scope](#scope-proxy-not-implementation) forbids. Spawning `cli.js` per handle keeps the proxy a proxy.
+**On one child per handle.** Research verified a single node process *can* serve several configurations — two servers with correctly divergent surfaces (42 vs 59 tools), no module-global browser state, browsers created lazily on first tool call ([KNOWLEDGE §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape)). That path is rejected not on capability but on scope: it is reachable only through the programmatic `createConnection` API, which means writing a JS shim and moving toward the boundary [Scope](#scope-proxy-not-implementation) forbids. Spawning `cli.js` per handle keeps the proxy a proxy.
 
 ### Settled 2026-08-14
 
@@ -1019,8 +1020,8 @@ Two things follow, and they are design obligations rather than caveats:
 | **Release trigger** | **Manual, by the maintainer, through the agent.** No release pipeline, no scheduled publish, no auto-merge on green. Green is necessary and not sufficient — a human decides when a green build becomes a release. See [The release gate](#the-release-gate). |
 | **Test framework** | **TUnit**, matching `SixFive7/Jeeves`. Source-generated, reflection-free, MTP-native, MIT. See [Implementation stack](#implementation-stack). |
 | **SDK test fixtures** | **Not vendored. We write our own harness.** The MCP SDK's `ClientServerTestBase` + `tests/Common/Utils/*` (1,082 lines, Apache-2.0, unpublished to NuGet) wire *one* pipe pair; a proxy needs two hops. Copying them would mean a permanent three-way merge against an upstream that edits `tests/` weekly, and would lock the framework to xUnit. See [We write our own harness](#we-write-our-own-harness). |
-| **Instance teardown** | **Explicit close tool + client-liveness watcher** (stdin EOF, plus an `OpenProcess` handle on the client PID — never ping-based; `ping` is removed at 2026-07-28). **Expiry is reclaim, not destruction:** a torn-down handle stays resumable against its recorded config and directory, because the durable thing is the profile, not the process. Measured 2026-08-14: resume costs **515 ms** and loses only `sessionStorage`. Timer values remain open — see [Still open](#still-open). |
-| **`browser_run_code_unsafe`** | **Hidden in `interactive` sessions.** Demonstrated 2026-08-14: against the default 24-tool surface with zero `browser_cookie_*` exposed, `async (page) => page.context().cookies()` returned an `httpOnly` bearer token. It is in `core`, so no capability setting disables it, and it was the only hole — `browser_evaluate` → `document.cookie` returns `""`, and `browser_network_request` strips `Cookie` and `Set-Cookie`. Hiding it in the one mode that exists to keep human credentials from the agent makes [§trade-offs](#the-init-design-weakens-a-security-boundary)' claim true for the first time; it stays available elsewhere as an escape hatch. |
+| **Instance teardown** | **Explicit close tool + client-liveness watcher** (stdin EOF, plus an `OpenProcess` handle on the client PID — never ping-based; `ping` is removed at 2026-07-28). **Expiry is reclaim, not destruction:** a torn-down handle stays resumable against its recorded config and directory, because the durable thing is the profile, not the process. Measured 2026-08-14: resume costs **515 ms** and loses only `sessionStorage` ([KB §9](KNOWLEDGE.md#9-timings-spawn-resume-idle-close-proxy-overhead)). Timer values remain open — see [Still open](#still-open). |
+| **`browser_run_code_unsafe`** | **Hidden in `interactive` sessions.** Demonstrated 2026-08-14: against the default 24-tool surface with zero `browser_cookie_*` exposed, `async (page) => page.context().cookies()` returned an `httpOnly` bearer token ([KB §7.1](KNOWLEDGE.md#71-tools-that-reach-credentials)). It is in `core`, so no capability setting disables it, and it was the only hole — `browser_evaluate` → `document.cookie` returns `""`, and `browser_network_request` strips `Cookie` and `Set-Cookie`. Hiding it in the one mode that exists to keep human credentials from the agent makes [§trade-offs](#the-init-design-weakens-a-security-boundary)' claim true for the first time; it stays available elsewhere as an escape hatch. |
 | **Artifact placement** | **Routed on the way in, not sorted on the way out.** The child's cwd is the instance output root, `filename` arguments are normalised into typed subfolders, and every result carries the resolved absolute path. The default root is outside any repository. Per-instance paths stay unconstrained; per-call filenames do not. See [§F](#f-artifact-management) and [the `init` contract](#the-init-contract). |
 | **Tool naming** | **Never renamed.** Names are upstream's byte-for-byte; the names BrowserAI authors carry the `browserai_` prefix — see [Settled 2026-08-15](#settled-2026-08-15). (This row originally read "the only name BrowserAI authors is `init`", which the design outgrew.) Descriptions are append-only. A `deny` hook keyed on `browser_take_screenshot` exists in ten repositories and a rename would disable it silently — but the deciding argument is maintenance: upstream renamed one of its own tools inside four months, and a rename map is a second surface to re-review on every bump. |
 | **Upstream review** | **Gated by a marker that fails closed.** A version bump cannot reach a release until someone has reviewed what upstream changed and recorded it. See [The upstream-review marker](#the-upstream-review-marker). |
@@ -1037,12 +1038,12 @@ Two things follow, and they are design obligations rather than caveats:
 | **Chromium sandbox** | **Passed as the `--sandbox` CLI flag, never the config key**, which is silently discarded. Asserted by a test on the child's resolved browser command line. |
 | **Firefox restart registration** | **Disabled on every launch** via `firefoxUserPrefs: { "toolkit.winRegisterApplicationRestart": false }`. The pref is observed at runtime and calls `UnregisterApplicationRestart`. The only place browser resurrection can be prevented outright rather than cleaned up after. |
 | **Windows `RestartApps`** | **Never touched.** The maintainer's machine has it enabled, which is the direct cause of the resurrection incident, but it is a personal, global, per-user setting. BrowserAI reads nothing and writes nothing there. |
-| **`browser_annotate`** | **`interactive` sessions only.** It opens a dashboard window and blocks until a human finishes drawing; `interactive` is the one mode with a human at the keyboard by design. In `headless` it must be hidden regardless — its window appears even there, breaking the only promise that mode makes. |
+| **`browser_annotate`** | **`interactive` sessions only.** It opens a dashboard window and blocks until a human finishes drawing; `interactive` is the one mode with a human at the keyboard by design. In `headless` it must be hidden regardless — its window appears even there, breaking the only promise that mode makes. See [KB §7.1](KNOWLEDGE.md#71-tools-that-reach-credentials). |
 | **`--isolated`** | **Never set, in any mode.** It puts the profile in a temp directory deleted on close. Three of the four legacy modes set it; BrowserAI gives every mode a real directory and deletes nothing automatically. |
 | **`--output-max-size`** | **Never set, and `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE` stripped from the child's environment.** It is a recursive oldest-first deleter pointed at directories agents choose. Retention is the calling agent's decision, supported by an explicit cleanup tool, not by an eviction threshold. |
 | **Console level** | **Exposed on `init`.** The upstream default of `info` silently drops `debug` messages; which trade-off is right is per-session, not global. |
 | **Authored tool names** | **`browserai_` prefix on every tool BrowserAI authors** — `browserai_init`, `browserai_resume`, `browserai_list`, `browserai_destroy`, `browserai_set_purpose`, `browserai_reinstall_browser`. Not `browser_*`: **MCP spec SEP-2567 names `destroy_*` and `list_*` as the documented companions to a creation tool**, so upstream shipping `browser_list` is the expected pattern rather than a hypothetical — and since upstream names are never renamed, a collision would be unresolvable. Bare names are worse still: MCP tool names share a flat namespace with every other server's, and a bare `destroy` is a name a model could reach for meaning something else entirely. |
-| **Browser reinstall** | **A tool that refuses rather than coordinates.** Takes a machine-wide mutex, then **refuses if any session anywhere has a live browser**, naming what is live; only when nothing is running does it delete and re-provision. Reuses the sweep's own detection to answer "is anything live". Downloading alongside and swapping does not work — Windows will not rename a directory holding open executables, and live browsers hold `chrome.exe`. A force flag is not offered, because force here means terminating browsers other sessions are using. If refusal proves too restrictive, the fallback is deferral: mark the install bad and let the next process that finds nothing running do the work. |
+| **Browser reinstall** | **A tool that refuses rather than coordinates.** Takes a machine-wide mutex, then **refuses if any session anywhere has a live browser**, naming what is live; only when nothing is running does it delete and re-provision. Reuses the sweep's own detection to answer "is anything live". Downloading alongside and swapping does not work — Windows will not rename a directory holding open executables, and live browsers hold `chrome.exe` ([KB §11.2](KNOWLEDGE.md#112-windows-object-names-and-window-scoping)). A force flag is not offered, because force here means terminating browsers other sessions are using. If refusal proves too restrictive, the fallback is deferral: mark the install bad and let the next process that finds nothing running do the work. |
 | **Restart-registration lever** | **None shipped. A test instead.** Measured 2026-08-15: Playwright's command line overshoots Windows' 1023-character `RegisterApplicationRestart` limit by **531–807 characters** in every shippable configuration, so registration already fails and `GetApplicationRestartSettings` on a live browser returns `ERROR_NOT_FOUND`. `--browser-test` does suppress it and is **not** web-detectable (0 differences across 486 fingerprint fields, 65 launches) — but it suppresses something that is not happening, and drags in unrelated behaviour changes. **A test asserting the browser is unregistered is better insurance**: it fails loudly the day the margin closes, instead of silently changing browser behaviour forever. Prefer a mechanism over a habit. See [KNOWLEDGE §2](KNOWLEDGE.md#2-browser-resurrection-after-a-reboot). |
 | **Validate every path before launch** | **Required, and it prevents a hang rather than untidiness.** An unusable `--user-data-dir` makes Chrome fall back to a default profile — invisibly to the MCP client, with 8 healthy processes and both `initialize` and `browser_navigate` returning OK — while its message window is titled with the **fallback** path, so our own stray detector goes blind to exactly the broken instances. In other configurations the same condition raises a native `#32770` dialog that **blocks startup entirely** until dismissed (measured: 1 process at 6 s; 10 processes after `WM_CLOSE`), which on a background server is an invisible hang that `--noerrdialogs` does not suppress. Third native-dialog trap after Firefox's profile-lock modal. |
 | **Our own Chrome for Testing, never `channel: "chrome"`** | With `channel: "chrome"` the fallback profile is `%LOCALAPPDATA%\Google\Chrome\User Data` — **the user's own browser**. A stray detector extended to cover fallbacks would identify a personal Chrome as ours, and Chrome's `ProcessSingleton` would forward the launch into the user's running browser. Using the CfT build BrowserAI provisions makes both structurally impossible. **"Our own" means the one BrowserAI manages, not one shipped inside the installer** — the redistribution position is unresolved and provisioning stays first-run download. |
@@ -1050,7 +1051,7 @@ Two things follow, and they are design obligations rather than caveats:
 
 ### Still open
 
-1. **Firefox's `parent.lock` preflight and its own stray detection.** Designed, not yet a charter requirement. Playwright never checks `parent.lock`, so a collision raises a native modal that blocks up to 3 minutes. Our lock is taken before launch, so ordering covers it — but coverage-by-ordering needs a test. Firefox also has no `Chrome_MessageWindow` equivalent, so its stray detection is a different path: `parent.lock` sharing violation → Restart Manager `RmGetList`.
+1. **Firefox's `parent.lock` preflight and its own stray detection.** Designed, not yet a charter requirement. Playwright never checks `parent.lock`, so a collision raises a native modal that blocks up to 3 minutes. Our lock is taken before launch, so ordering covers it — but coverage-by-ordering needs a test. Firefox also has no `Chrome_MessageWindow` equivalent, so its stray detection is a different path: `parent.lock` sharing violation → Restart Manager `RmGetList` ([KB §3.3](KNOWLEDGE.md#33-process-image-path--the-fully-documented-detection-path), [KB §4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs)).
 
 2. **Where the logon sweep task is registered, and what it costs at install.** Velopack hook, per-user, "run only when user is logged on" — see [the sweep](#the-stray-sweep-and-the-concurrency-it-must-survive). The mechanism is settled; the install-time plumbing is not.
 
@@ -1071,7 +1072,7 @@ Two things follow, and they are design obligations rather than caveats:
 
 Claude Code defers MCP tool schemas — they arrive as bare names and load on demand. **The entire achievable saving in that client is ~650 tokens**, around 0.3% of a 200k window. Dropping the `devtools` capability from four JSON files saves a comparable amount for no engineering effort at all.
 
-The number only becomes significant in clients without deferred loading, where a consolidated surface saves ~65%. Worth knowing it exists. Not worth building for, and **not a justification to cite in design arguments.**
+The number only becomes significant in clients without deferred loading, where a consolidated surface saves ~65%. Worth knowing it exists. Not worth building for, and **not a justification to cite in design arguments.** Method and provenance: [KNOWLEDGE §10.5](KNOWLEDGE.md#105-token-cost-of-the-tool-surface).
 
 ---
 
@@ -1088,14 +1089,14 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `ListToolsAsync(RequestOptions?, ct)` drops tools failing SEP-2243 `x-mcp-header` validation | Exposed surface shrinks, no error. Use the raw `ListToolsRequestParams` overload | §stack |
 | `ContentBlock` converter drops unknown properties | Data loss on passthrough; the SDK has tests asserting this behaviour | §stack |
 | `ContentBlock` converter **throws** on unknown content *types* | An additive upstream change fails the entire call at deserialization, before any BrowserAI code runs | §stack |
-| Typed client flattens JSON-RPC `error.data` to primitives | Nested error structures are lost. Affects protocol errors only — tool failures travel as `isError:true` data | — |
+| Typed client flattens JSON-RPC `error.data` to primitives | Nested error structures are lost. Affects protocol errors only — tool failures travel as `isError:true` data | [KB §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around) |
 | A tools-only proxy does not forward **resources or prompts** | `@playwright/mcp` advertises only `tools` today, so nothing is lost now — but a future release adding either would silently not appear | — |
-| `McpServerToolCreateOptions` has `OutputSchema` but **no `InputSchema`** | The obvious factory API always reflects the schema from the .NET signature — unusable for a proxy, and it is the one that will be reached for first | — |
+| `McpServerToolCreateOptions` has `OutputSchema` but **no `InputSchema`** | The obvious factory API always reflects the schema from the .NET signature — unusable for a proxy, and it is the one that will be reached for first | [KB §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around) |
 | Spec 2026-07-28 SHOULDs a **deterministic tool order** for client-side and prompt-cache hit rates | The rewrite step must be order-stable, not incidentally ordered | — |
 | `DiscoverProbeTimeout` is 5 s when the client version is unpinned | Flat 5 s per child spawn against a ~300 ms baseline; presents as "slow", never as an error | §B |
 | The child never *rejects* a protocol version — it caps or echoes silently | A mis-negotiation produces nothing to catch. Assert on the negotiated value | §B |
 | Progress and cancellation relay are **not** automatic across a proxy | A cancelled `browser_navigate` can leave an orphan running in the child | §data-path |
-| `_meta.json` / `_meta.cwd` / `_meta.raw` are read by the child before zod parsing | Undocumented but real, and stripped before the tool sees them — available for BrowserAI to inject (JSON error format, relative-path base) | — |
+| `_meta.json` / `_meta.cwd` / `_meta.raw` are read by the child before zod parsing | Undocumented but real, and stripped before the tool sees them — available for BrowserAI to inject (JSON error format, relative-path base) | [KB §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour) |
 
 ### Handle routing and instance lifetime
 
@@ -1120,11 +1121,11 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | TUnit is MTP-only and conflicts with `Microsoft.NET.Test.Sdk` | The package must be absent, not merely unused. Mixing VSTest-based and MTP-based projects in one solution is explicitly unsupported | §stack |
 | Coverlet does not work under MTP | Coverage needs `Microsoft.Testing.Extensions.CodeCoverage`. Diverges permanently from any VSTest-based sibling repo | §stack |
 | IDE test discovery is not zero-config under MTP | Visual Studio needs *Use testing platform server mode*; Rider needs Testing Platform support enabled. A developer seeing "no tests" is a config gap, not a broken suite | §stack |
-| **`chrome-headless-shell` writes no profile `lockfile`** | Two headless instances share one profile directory with **no error anywhere** — silent corruption of the cookie and storage databases, in the default mode. Measured 2026-08-14. §D's lock is the only protection | §D |
-| Killed children leak `browser@<guid>` descriptors | Each is a JSON file in the browsers-registry root holding the absolute `userDataDir` and `workspaceDir`; `BrowserServer.stop()` only removes them when there is **no** `userDataDir`. §A puts that root inside the Velopack payload — a tree that should be read-only and is wiped on update. 28 observed and removed on 2026-08-14 | §A |
-| `browser_storage_state` never captures IndexedDB | It calls `storageState()` with no options, so `{indexedDB:true}` is never passed. A "saved" session silently omits it — and the persistent profile carries it, so the tool is *weaker* than doing nothing | §C |
-| The `PLAYWRIGHT_MCP_*` count is **42**, not 40 | `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN` are read outside the config env mapping. The allowlist test must derive the count from the resolved bundle, never carry a literal | §trade-offs |
-| §C's `tools/list_changed` evidence is stale | *"Claude Code registers no handler"* was accurate at 2.0.65 (Dec 2025). At **2.1.231 it is false** — measured twice; the client re-listed in 1–2 ms and the model called a tool that appeared only in the second list. This does **not** unlock a per-connection tool list (SEP-2567 stands), but the cited issues need re-dating | §C |
+| **`chrome-headless-shell` writes no profile `lockfile`** | Two headless instances share one profile directory with **no error anywhere** — silent corruption of the cookie and storage databases, in the default mode. Measured 2026-08-14. §D's lock is the only protection | §D · [KB §3.3](KNOWLEDGE.md#33-process-image-path--the-fully-documented-detection-path) |
+| Killed children leak `browser@<guid>` descriptors | Each is a JSON file in the browsers-registry root holding the absolute `userDataDir` and `workspaceDir`; `BrowserServer.stop()` only removes them when there is **no** `userDataDir`. §A puts that root inside the Velopack payload — a tree that should be read-only and is wiped on update. 28 observed and removed on 2026-08-14 | §A · [KB §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour) |
+| `browser_storage_state` never captures IndexedDB | It calls `storageState()` with no options, so `{indexedDB:true}` is never passed. A "saved" session silently omits it — and the persistent profile carries it, so the tool is *weaker* than doing nothing | §C · [KB §7.1](KNOWLEDGE.md#71-tools-that-reach-credentials) |
+| The `PLAYWRIGHT_MCP_*` count is **42**, not 40 | `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN` are read outside the config env mapping. The allowlist test must derive the count from the resolved bundle, never carry a literal | §trade-offs · [KB §6](KNOWLEDGE.md#environment-merge-order-and-startup-output) |
+| §C's `tools/list_changed` evidence is stale | *"Claude Code registers no handler"* was accurate at 2.0.65 (Dec 2025). At **2.1.231 it is false** — measured twice; the client re-listed in 1–2 ms and the model called a tool that appeared only in the second list. This does **not** unlock a per-connection tool list (SEP-2567 stands), but the cited issues need re-dating | §C · [KB §10.4](KNOWLEDGE.md#104-the-client-claude-code) |
 | Rewriting a `filename` without rewriting the result path | The agent reports a location the file is not at. A new silent failure introduced by the fix for an old one — levers 2 and 3 ship together or neither ships | §F |
 | A `filename` containing `..` | Normalising traversal instead of refusing it turns a routing feature into an arbitrary-write primitive | §C |
 | Two artifacts with the same caller-supplied name in one session | Silent overwrite is data loss. Suffix and say so | §F |
@@ -1139,7 +1140,7 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `browserName` defaults to system Chrome, `headless:false` on Windows | The bundled Chromium is never consulted. Verified against an empty browsers directory | §A |
 | 40 `PLAYWRIGHT_MCP_*` env vars override the generated config | Silent override of every opinion, including a capability wipe | §trade-offs |
 | `loadConfig` is a bare `JSON.parse` with no schema validation | Unknown or renamed keys are silently discarded | §why-3 |
-| `core-install` is declared in `config.d.ts` but **no tool carries it** in 0.0.79 | A dead capability string; setting it does nothing | — |
+| `core-install` is declared in `config.d.ts` but **no tool carries it** in 0.0.79 | A dead capability string; setting it does nothing | [KB §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape) |
 | `chromiumSandbox:true` in a **config file** is discarded; only the `--sandbox` CLI flag works | The browser and every child run `--no-sandbox` while the config says otherwise. Pass the flag, and assert `--no-sandbox` is absent from the child's browser command line | §A |
 | `--output-max-size` evicts files it did not create | Recursively lists the whole output dir, sorts oldest-first and unlinks past the threshold, skipping only the current response's writes. Unset by default and it must stay unset — **also strip `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE`** | §A |
 | `--isolated` puts the profile in a temp dir **deleted on close** | Silent total data loss. Structurally impossible for us — `validateBrowserConfig` throws on `isolated` + `userDataDir` — but three of the four legacy modes set it | §A |
@@ -1149,7 +1150,7 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `.links/` records the **build machine's** absolute paths | Leaks build paths into the shipped tree; useless on the target. Strip it | §A |
 | Playwright's stale-browser GC deletes registry dirs not referenced by `.links` | Blast radius is "deletes BrowserAI's shipped Chromium". Pin `PLAYWRIGHT_SKIP_BROWSER_GC=1` | §trade-offs |
 | `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` writes to stderr when set | Trips the error-shaped-stderr detection in §E. Do not set it | §trade-offs |
-| The `playwright` package (4.85 MB) is a declared dependency that is **never loaded** | Prunable, but `npm ls` will call the tree broken. Deliberate choice, not an oversight | — |
+| The `playwright` package (4.85 MB) is a declared dependency that is **never loaded** | Prunable, but `npm ls` will call the tree broken. Deliberate choice, not an oversight | [KB §7](KNOWLEDGE.md#7-the-tool-surface-and-the-package-shape) |
 | Upstream publishes **daily alpha** builds | The `@latest` float is sharper than it appears; another argument for the pin | §why-2 |
 
 ### Process and OS (Windows)
@@ -1178,7 +1179,7 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `chrome-headless-shell` creates no `Chrome_MessageWindow` and no `lockfile` | The one binary that can leak but cannot be cheaply found. Reason enough to run full Chromium in every mode | §A |
 | `psi.Environment` is pre-populated and assignment **merges** | An allowlist requires `Clear()` first | §trade-offs |
 | `psi.WorkingDirectory` unset passes `null` to `CreateProcess` | Child inherits BrowserAI's cwd — reason 5, verbatim | §trade-offs |
-| `ArgumentList` and `Arguments` are **mutually exclusive** | Setting both is undefined behaviour. Use `ArgumentList` for its quoting rules | — |
+| `ArgumentList` and `Arguments` are **mutually exclusive** | Setting both is undefined behaviour. Use `ArgumentList` for its quoting rules | [KB §11.1](KNOWLEDGE.md#111-stdio-exit-codes-and-process-startup) |
 
 ### Packaging and updates
 
@@ -1200,21 +1201,21 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `current\` is wholly replaced on update | All state must resolve from `VelopackLocator.Current.RootAppDir` | §G |
 | `AppContext.BaseDirectory` resolves *inside* `current\` | Reads as "next to the binary". Logs and caches written there are wiped by every update, and any retention policy is silently reset | §G |
 | Update state persisted alongside the binary | Desyncs across exit-and-relaunch. Derive it from the installed version instead | §G |
-| The swap holds old + new `current\` simultaneously | Budget ~600–700 MB transient disk, plus full re-extraction of ~380 MB per update | — |
+| The swap holds old + new `current\` simultaneously | Budget ~600–700 MB transient disk, plus full re-extraction of ~380 MB per update | [KB §8.1](KNOWLEDGE.md#81-component-sizes) |
 | Velopack's Rust `Setup.exe`/`Update.exe` carry their **own** Windows floor, separate from .NET's | Can fail before the managed app exists. `--runtime win7` does not help if the installer binary cannot run | §G |
-| `vpk` rejects 4-part version numbers | Semver2 three-part only — a build-pipeline failure, not a runtime one | — |
+| `vpk` rejects 4-part version numbers | Semver2 three-part only — a build-pipeline failure, not a runtime one | [KB §13](KNOWLEDGE.md#13-velopack-and-the-update-path) |
 | Delta generation is assumed, not verified | UCC has shipped Velopack for multiple releases and **never produced a delta package**. Delta granularity is why §G chose Velopack | §G |
-| Every unsigned `Setup.exe` is a new file to SmartScreen | Lands precisely on colleague onboarding. Azure Artifact Signing ≈ $10/mo buys instant reputation | — |
+| Every unsigned `Setup.exe` is a new file to SmartScreen | Lands precisely on colleague onboarding. Azure Artifact Signing ≈ $10/mo buys instant reputation | [KB §13](KNOWLEDGE.md#13-velopack-and-the-update-path) |
 | MSIX cannot re-register while a package process is running | Disqualifying for a long-lived child. Two production AI tools hit this in 2026 | §G |
 
 ### Tooling and CI
 
 | Hazard | Consequence | See |
 |---|---|---|
-| `claude mcp list` / `get` **exit 0 even when the server is dead** | Unusable as a CI gate without grepping stdout for `✘`. Itself an instance of "reports healthy while broken" | — |
+| `claude mcp list` / `get` **exit 0 even when the server is dead** | Unusable as a CI gate without grepping stdout for `✘`. Itself an instance of "reports healthy while broken" | [KB §10.6](KNOWLEDGE.md#106-tooling-around-the-protocol) |
 | The official MCP conformance suite is **HTTP-only** (`--url`) | Not directly usable against a stdio server. Needs a test-only listener or a ~50-line bridge | §testing |
 | Inspector CLI cannot spawn `.cmd` shims on Windows | Same root cause as #58510. Address `cli.js` with an absolute path | §testing |
-| Real screenshots are not byte-stable across runs | Fidelity assertions need a canned blob from the fake child, not a live capture | §testing |
+| Real screenshots are not byte-stable across runs | Fidelity assertions need a canned blob from the fake child, not a live capture | §testing · [KB §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour) |
 | The SDK's test fixtures are **not published** to NuGet | Vendor ~300 lines from `tests/Common/Utils/` + `ClientServerTestBase.cs` (**Apache-2.0**, keep the upstream headers) and record the upstream versions — they will drift | §stack |
 
 ---
@@ -1242,9 +1243,9 @@ Feasibility research completed 2026-08-13 across five streams: MCP SDK capabilit
 
 **Architecture is settled.** One MCP registration with `init`-issued handles · profile and artifact locations as `init` arguments · any path accepted, correct use being the calling agent's responsibility · one node child per handle · full batteries-included bundling as a NativeAOT single-file binary with no host dependencies.
 
-The three [remaining open items](#still-open) — instance teardown policy, default capabilities, and how far to curate the tool surface — are implementation-shaping rather than architecture-shaping. They can be closed during the build.
+The [remaining open items](#still-open) — Firefox's `parent.lock` preflight and its separate stray-detection path, where the logon sweep task is registered at install, and the fact that nothing is built — are implementation-shaping rather than architecture-shaping, with the exception of the last. Instance teardown policy, default capabilities and tool-surface curation were the three open items this paragraph used to name; all three closed on 2026-08-15 and are listed under [Recently closed](#still-open).
 
-One verification task, not a decision: **confirm the MCP SDK is NativeAOT-compatible in our usage** before committing to single-file AOT. Partially discharged on 2026-08-14 — the SDK declares `IsAotCompatible=true` on every non-`netstandard2.0` target, and the `JsonElement` passthrough at the proxy's core is AOT-friendly — but a declaration is not a publish-and-run. The fallback, self-contained trimmed at ~70 MB, is noise against ~806 MB of payload.
+One verification task, not a decision: **confirm the MCP SDK is NativeAOT-compatible in our usage** before committing to single-file AOT. Partially discharged on 2026-08-14 — the SDK declares `IsAotCompatible=true` on every non-`netstandard2.0` target, and the `JsonElement` passthrough at the proxy's core is AOT-friendly — but a declaration is not a publish-and-run. The fallback, self-contained trimmed at ~70 MB, is noise against the browser download.
 
 **This document is a specification, not a plan of work.** It states what to build and what is known to go wrong. The build happens in this repository, from here. Work items — settled in intent, not yet done — live in [`TODO.md`](TODO.md); open design questions and hazards stay here.
 
@@ -1264,7 +1265,7 @@ Copyright 2026 Jori Huisman.
 
 ### Third-party components
 
-The license above covers **BrowserAI's own code and this document**. It does not cover the bundled payload, which keeps its own terms. Shipping that payload creates obligations that attach at first installer handoff, independent of BrowserAI's own license. Verified 2026-08-14 against the versions pinned in [§A](#a-ship-and-own-the-runtime):
+The license above covers **BrowserAI's own code and this document**. It does not cover the bundled payload, which keeps its own terms. Shipping that payload creates obligations that attach at first installer handoff, independent of BrowserAI's own license. Verified 2026-08-14 against the versions pinned in [§A](#a-ship-and-own-the-runtime); what is actually present in each shipped tree is recorded in [KNOWLEDGE §14](KNOWLEDGE.md#14-third-party-payload-as-shipped):
 
 | Component | Terms | Obligation on redistribution |
 |---|---|---|

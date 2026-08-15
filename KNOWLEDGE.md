@@ -472,6 +472,21 @@ found — which is why BrowserAI ships full Chromium in every mode. `[FLOATS]`
 - Playwright's `isProfileLocked` checks only Chromium's `lockfile`, never
   Firefox's `parent.lock`.
 
+**Measured 2026-08-14: the full build refuses a second instance; the shell never
+notices one.** Two full `chrome.exe` instances against one profile directory —
+the second is refused with **`Browser is already in use for <dir>`**. Two
+`chrome-headless-shell` instances against the same directory — **both launched,
+both worked, and no error was raised anywhere**, because it writes no `lockfile`
+and nothing arbitrates. Two browsers writing one profile's cookie and storage
+databases is silent corruption, and headless is the mode upstream defaults to. So
+Chromium's own single-instance protection exists **only in the headed build**,
+and a directory-keyed lock of our own is the only protection that covers both,
+not defence in depth. `[FLOATS]`
+
+**Firefox has no `Chrome_MessageWindow` equivalent**, so its stray detection is a
+different path entirely: `parent.lock` sharing violation → Restart Manager
+`RmGetList`. `[FLOATS]`
+
 **File → PID** is `RmStartSession` → `RmRegisterResources` → `RmGetList`, which
 returns `RM_UNIQUE_PROCESS { dwProcessId, ProcessStartTime }`. The start time is
 the PID-reuse guard, re-verified with `GetProcessTimes` before any kill. Mozilla's
@@ -653,7 +668,10 @@ contradicting upstream intent — and it means the default posture is unsandboxe
 
 **`loadConfig` is a bare `JSON.parse` with no schema validation**, so a renamed
 or removed key is silently ignored. `--output-mode` was a no-op for its entire
-life.
+life — a hardcoded literal in 0.0.78's bundle, never read from config — and was
+then removed outright in 0.0.79, where passing it produces `error: unknown
+option` and exit 1. The two failure classes are asymmetric and both are live: a
+**CLI flag fails loudly**, a **JSON config key fails silently**.
 
 ### Defaults that are not what they look like
 
@@ -721,6 +739,34 @@ so it **does** run — 39 binaries, +329 ms, cached in `DEPENDENCIES_VALIDATED` 
 cost. If upstream ever fixes the directory name, Chromium starts validating 39
 binaries on cold start — a latency regression from a one-character fix.
 
+### Environment, merge order and startup output
+
+**The merge order is config file → environment → CLI**, and `@playwright/mcp`
+reads **40** `PLAYWRIGHT_MCP_*` variables in its config env mapping — `BROWSER`,
+`HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`,
+`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 30 more. **The real total
+is 42**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN`
+are read *outside* that mapping. An allowlist test must derive the count from the
+resolved bundle and never carry a literal.
+
+**`capabilities` replaces, it does not merge.** `mergeConfig` spreads defined
+overrides, so passing `--caps` on the command line **silently wipes** the config
+file's capability list — and `PLAYWRIGHT_MCP_CAPS` triggers the identical wipe,
+which is an environment route to a bug that a "never pass `--caps`" rule does not
+close.
+
+**`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` writes a line to stderr when
+set** — enough on its own to trip an error-shaped-stderr classifier.
+
+**Playwright's stale-browser GC deletes any registry directory not referenced by
+a `.links` entry.** Against a browsers tree we installed, the blast radius is
+"deletes our own Chromium", so `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandatory and
+pruning old revisions becomes the caller's job.
+
+**A healthy start prints `Session: <path>` to stderr, every time.** Any
+classifier treating stderr output as an error signal fires on every clean launch;
+the legacy setup's did.
+
 ### Policy
 
 **Chrome for Testing reads policy from
@@ -747,6 +793,715 @@ graceful teardown path and needs no killing at all.
 
 ---
 
+## 7. The tool surface and the package shape
+
+Read from the shipped tree during the 2026-08-13 feasibility research unless a
+later date is given. `@playwright/mcp` 0.0.79.
+
+**`@playwright/mcp` is a 20-line shim.** The whole package is `cli.js`,
+`index.js` and type definitions. `index.js` in full:
+
+```js
+const { tools } = require('playwright-core/lib/coreBundle');
+module.exports = { createConnection: tools.createConnection };
+```
+
+The implementation is `playwright-core/lib/coreBundle.js` — **3.4 MB**,
+esbuild-bundled. `[FLOATS]`
+
+**Three tool counts, and a golden test written against the wrong one fails on
+day one.** **78** entries in the internal registry array; **69** the maximum ever
+exposed over MCP (9 are `skillOnly` and always stripped); **24** the default with
+no `capabilities` set. The founding-bug reproduction saw the 24 over a real
+`tools/list`. `[FLOATS]`
+
+**The `storage` capability is 17 tools** — the cookie / localStorage /
+`storageState` set. The legacy `interactive` server ran without it, so in that
+process they did not exist at all.
+
+> **A per-capability breakdown is not recorded anywhere in this repository.**
+> Only the base 24 and `storage`'s 17 were ever written down; `vision`,
+> `devtools` and `config` were not counted. `[UNVERIFIED]` — the numbers were
+> never observed, not merely lost. Count them from the resolved bundle at the
+> next review rather than from memory.
+
+**One node process can serve several configurations.** Verified: two connections
+built through the programmatic `createConnection` API produced correctly
+divergent surfaces — **42 vs 59 tools** — with no module-global browser state and
+browsers created lazily on first tool call. It is reachable only through that
+API, which is why the charter rejects it on scope rather than on capability.
+`[FLOATS]`
+
+**`playwright-core` whitelists `"./lib/coreBundle"` in its `exports` map**, so
+`require('playwright-core/lib/coreBundle')` is a supported import, not a blocked
+deep path. It exposes `browserTools` (a flat array of plain, inert objects),
+`filteredTools`, `createConnection` and `BrowserBackend`. `defineTool` is the
+identity function — no class, no registry, no side effect. No type definitions
+and no semver guarantee attach to it. `[FLOATS]`
+
+**The `playwright` package (4.85 MB) is a declared dependency that is never
+loaded.** Prunable, but `npm ls` then calls the tree broken. `[FLOATS]`
+
+**`core-install` is declared in `config.d.ts` but no tool carries it** in 0.0.79 —
+a dead capability string; setting it does nothing. `[FLOATS]`
+
+**Upstream publishes daily alpha builds of `playwright-core`.**
+`@playwright/mcp@latest` is the released dist-tag; the `playwright-core` alpha
+beneath it arrives as that package's own **exact** dependency (no `^`, no `~`),
+which is what makes the browser revision pinned while the package is not.
+`[FLOATS]`
+
+### 7.1 Tools that reach credentials
+
+**`browser_run_code_unsafe` returns an `httpOnly` cookie against the default
+surface.** Demonstrated 2026-08-14: with the default **24-tool** surface and zero
+`browser_cookie_*` tools exposed, `async (page) => page.context().cookies()`
+returned an `httpOnly` bearer token. The tool is in `core`, so **no capability
+setting removes it**. It was the *only* hole — `browser_evaluate` →
+`document.cookie` returns `""`, and `browser_network_request` strips `Cookie` and
+`Set-Cookie`. `[FLOATS]`
+
+**`browser_storage_state` and the cookie tools return `httpOnly` cookies** —
+session bearer tokens JavaScript cannot read. Any mode permitted to call them is
+credential-bearing. `[FLOATS]`
+
+**`browser_storage_state` never captures IndexedDB.** It calls `storageState()`
+with no options, so `{indexedDB: true}` is never passed. A persistent profile
+carries IndexedDB, so a "saved" session silently omits it and the tool is
+*weaker* than doing nothing. `[FLOATS]`
+
+**`browser_get_config` does not redact.** Its handler is
+`JSON.stringify(context.config, null, 2)` with no filtering, so it emits
+`config.secrets` in plaintext if that key is ever set. It is not set today.
+`[FLOATS]`
+
+**`browser_annotate` opens a dashboard window and blocks until a human finishes
+drawing** — and the window appears in headless too. `[FLOATS]`
+
+---
+
+## 8. Payload sizes and first-run provisioning
+
+### 8.1 Component sizes
+
+Measured during the 2026-08-13 research. Every row is a version-specific artifact
+size, so every row is `[FLOATS]`.
+
+| Component | Version / revision | Size |
+|---|---|---:|
+| `node.exe` | v24.19.0 LTS | 88.53 MB |
+| `@playwright/mcp` + `playwright-core` tree | 0.0.79 | 18.11 MB |
+| `chromium-headless-shell` | rev 1237 | 268.49 MB |
+| `ffmpeg` | rev 1011 | 3.35 MB |
+| `winldd` | rev 1007 | 0.25 MB |
+| full `chromium` | rev 1237 (152.0.7977.8) | 426.88 MB |
+
+**Total payload ~806 MB installed, ~239 MB compressed** — 7z LZMA2 `-mx=5`.
+NativeAOT single-file BrowserAI is estimated at ~10–15 MB and the trimmed
+self-contained fallback at ~70 MB — both `[UNVERIFIED]`, nothing having been
+built.
+
+> ⚠️ **The update budget is written against a different figure: ~380 MB**,
+> described in the charter as "dominated by Chromium", with **~600–700 MB**
+> transient disk during a swap and a full re-extraction of ~380 MB per update.
+> **How that reconciles with ~806 MB installed — and with browsers provisioned on
+> first run rather than shipped — is nowhere recorded.** `[UNVERIFIED]`. Settle it
+> the next time either figure is re-measured; do not settle it by arithmetic.
+
+**A single `node.exe` drives the full MCP protocol** — no npm, no `node_modules`
+belonging to Node, no `.cmd` shims. Verified by execution. Node **v26 is Current
+rather than LTS and its `node.exe` is 10 MB larger**. `[FLOATS]`
+
+**The vendored JS tree contains zero native binaries** and is portable as-is.
+**`ffmpeg` is required for video capture** — without it the `video` artifact type
+throws. `[FLOATS]`
+
+### 8.2 First-run provisioning
+
+**Measured 2026-08-14: 20.3 s end to end on a 300 Mbps link** for chromium +
+`ffmpeg` + `winldd`, the chromium download recorded as **202.3 MB**. Stated for
+slower links: **4 m 19 s at 10 Mbps, 43 m at 1 Mbps**. `[FLOATS]`
+
+> ⚠️ **The download size is stated four ways across the repository, and the
+> charter states it three of those ways.** 202.3 MB in the sentence above; **323
+> MB** where `init` is required to check free disk space; **~300 MB** in the
+> legacy-setup table; peak disk during provisioning given as **~0.9 GB**.
+>
+> **`TODO.md` carries the same 2026-08-14 measurement in fuller form** and is the
+> only record that reconciles: *"chromium 202.3 MB + shell 119.7 MB + ffmpeg +
+> winldd = **323.5 MB down, ~700 MiB on disk**, 20.3 s end to end on a 300 Mbps
+> link"*, with the same 4 m 19 s / 43 m arithmetic. So the charter's 202.3 MB is
+> **one term of a sum**, and the slow-link figures belong to the total.
+>
+> **What that means for today's payload is deliberately not decided here.** The
+> shell is [no longer provisioned](README.md#settled-2026-08-15), so whether the
+> current download is still 323.5 MB, or 202.3 MB plus the small components, is a
+> question one run answers and no amount of arithmetic may. Treat the size as
+> `[UNVERIFIED]` until then, and re-state it in one place when it is settled.
+
+**In-session recovery is proven.** The same child navigates successfully once the
+install lands, with no restart. `[FLOATS]`
+
+**The revision is pinned for free and is never looked up online.**
+`playwright-core/browsers.json` carries the revision and `browserVersion`; the URL
+is built by substituting that version into a template that **307s** to Google's
+bucket. That file is inside the artifact and **no "latest" lookup exists anywhere
+in the registry code**, so a release knows forever which browser it wants. Old
+builds still resolve back to **Chrome 115 (Jul 2023)** — about three years of
+evidence — but **Google documents no retention policy**, so it is evidence and
+not a guarantee. `[FLOATS]`
+
+**Egress hosts:** `cdn.playwright.dev`, `storage.googleapis.com`,
+`playwright.download.prss.microsoft.com`. `HTTPS_PROXY` / `HTTP_PROXY` /
+`NO_PROXY` / `ALL_PROXY` and **`NODE_EXTRA_CA_CERTS`** are honoured on the
+download path; **SOCKS is not supported** there. `[FLOATS]`
+
+**`PLAYWRIGHT_BROWSERS_PATH` must be absolute.** A relative value resolves
+against `INIT_CWD` — inherited from any npm ancestor — before `cwd`. `[FLOATS]`
+
+**Layout under the browsers root, verified by execution:** `[FLOATS]`
+
+```
+<browsers-root>\
+  chromium_headless_shell-1237\chrome-headless-shell-win64\chrome-headless-shell.exe
+  chromium-1237\chrome-win64\chrome.exe
+  ffmpeg-1011\ffmpeg-win64.exe
+```
+
+Note the asymmetry: the **outer** directory uses underscores, the **inner** one
+dashes, so a path built consistently is wrong. **No sentinel file is needed to
+launch** — not `INSTALLATION_COMPLETE`, not `DEPENDENCIES_VALIDATED`; the only
+launch-time check is file accessibility of the executable. `.links/` records the
+**build machine's** absolute paths and is useless on the target.
+
+**`DEPENDENCIES_VALIDATED` is written into the browsers root on first launch.**
+Under `Program Files` that write silently fails and the validation re-runs every
+launch. Prefer `%LOCALAPPDATA%` or a `%ProgramData%` path with write ACLs.
+`[FLOATS]`
+
+**Node SEA, `pkg` and `nexe` are dead ends.** `playwright-core` violates SEA's
+"no filesystem module loading" constraint in **five verified ways**: `packageRoot`
+computed from `__dirname`; a runtime `require` of `browsers.json` at a computed
+path; two `childProcess.fork()` calls on sibling scripts; sibling bundle
+requires; and `.wasm`/`vite` assets loaded by path. SEA would also save nothing —
+its output *is* a copy of `node.exe` plus the blob. `vercel/pkg` was archived
+**2024-01-13**. Bun and Deno both carry open issues on the Playwright
+browser-launch path. `[FLOATS]`
+
+---
+
+## 9. Timings: spawn, resume, idle close, proxy overhead
+
+`[MACHINE]` for every number, `[FLOATS]` for what they are numbers *about*.
+
+> ⚠️ **Only the resume figure carries a date in the charter.** Spawn, navigation,
+> idle close and proxy overhead are all recorded undated, so treat their dates as
+> `[UNVERIFIED]` and re-stamp each at the next run. The numbers themselves are
+> carried forward exactly as written — none has been adjusted.
+
+**Child spawn costs ~300 ms.** That is the baseline a flat 5 s discovery probe
+would be paid against ([§10](#10-protocol-sdk-and-client-behaviour)), and the
+per-instance price of one node child per handle.
+
+**A real navigation costs 0.43 s** — `browser_navigate` to
+`data:text/html,<h1>ok</h1>`, no network and no local server. `about:blank`
+succeeds too trivially and its snapshot is empty, which is why the smoke
+assertion uses a `data:` URL.
+
+**Browser-idle close recovers 329 MB → 110 MB, and relaunch costs 186 ms.**
+Closing the browser while keeping the node child is therefore cheap enough that a
+caller navigating afterwards need never see "browser is closed".
+
+**Resume costs 515 ms and loses only `sessionStorage`.** Measured 2026-08-14:
+after killing the node child, a resume against the recorded directory preserved
+cookies, localStorage, IndexedDB, service workers and CacheStorage. This is the
+measurement the no-expiry-timer decision rests on — the durable thing is the
+profile, not the process.
+
+**Proxying costs ~50 ms on a 500 KB payload.** From an equivalent Node prototype:
+images passed through byte-identical (**509,620** base64 bytes), error shapes
+preserved, ~50 ms added latency, ~300 ms one-off child spawn. It measured a
+**Node** prototype rather than the C# proxy, so it is `[UNVERIFIED]` as a
+prediction of BrowserAI's own overhead — a precedent, not a measurement of this
+product.
+
+**Suite costs, for cadence decisions:** real-child contract 2–5 s, smoke 10–30 s,
+update 1–3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
+
+---
+
+## 10. Protocol, SDK and client behaviour
+
+### 10.1 The protocol split
+
+**`@playwright/mcp` 0.0.79 caps at protocol `2025-11-25`.** The child never
+*rejects* a version — it caps or echoes silently: verified, offering
+`1999-01-01` returned `2025-11-25` with no error, so a mis-negotiation produces
+nothing to catch and the negotiated value must be asserted. `[FLOATS]`
+
+**The current spec is `2026-07-28`, a breaking rewrite.** It removes `initialize`
+and `notifications/initialized`, adds `server/discover`, replaces server→client
+requests with the MRTR retry pattern, and deprecates Roots, Sampling and Logging.
+**SEP-2567 removed protocol-level sessions outright**, and *Tools § Capabilities*
+states the tool set "MAY change over time … but MUST NOT vary per-connection or
+as a side effect of other requests on the connection." `ping` was removed at
+`2026-07-28`. SEP-2567 also names `destroy_*` and `list_*` as the documented
+companions to a creation tool. `[STABLE]` — a published revision does not move.
+
+**The .NET SDK implements every revision from `2024-11-05` through `2026-07-28`**
+and shipped `2026-07-28` support on the spec's release date. `[FLOATS]`
+
+**`DiscoverProbeTimeout` is 5 seconds by default.** With the client version left
+unpinned, the client probes the child with `server/discover` first; if the child
+drops the unknown method rather than answering, **every child spawn costs a flat
+5 s against a ~300 ms baseline**, presenting as "browser automation got slow"
+with no error anywhere. The SDK's own test base class pins it explicitly, citing
+[csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701)
+— CI slowness tripped the probe there. `[FLOATS]`
+
+### 10.2 SDK behaviours a proxy must work around
+
+All read from the shipped `ModelContextProtocol` package. `[FLOATS]`
+
+**`StdioClientTransport` prepends `cmd.exe /c` to every non-cmd command on
+Windows, unconditionally.** That inserts a shell layer and an extra process
+between BrowserAI and `node`, plus cmd.exe quoting semantics. `IClientTransport`
+is two members (`Name`, `ConnectAsync`); the replacement is ~120 lines.
+
+**`ListToolsAsync(RequestOptions?, ct)` silently drops any tool whose
+`x-mcp-header` annotations fail SEP-2243 validation.** The raw
+`ListToolsAsync(ListToolsRequestParams, ct)` overload returns the server's result
+unfiltered. Using the wrong one shrinks the exposed surface with no error.
+
+**The `ContentBlock` converter silently drops unknown properties** — the SDK has
+tests asserting exactly that, which is correct forward-compatibility for a client
+and data loss for a proxy — **and throws on unknown content *types***, failing
+the whole call at deserialization before any proxy code runs. `WithMessageFilters`
+operates on `JsonRpcMessage`, where `JsonRpcResponse.Result` is a raw
+`JsonNode?`.
+
+**The typed client flattens JSON-RPC `error.data` to primitives**, losing nested
+error structures. Protocol errors only — tool failures travel as `isError: true`
+data.
+
+**`McpServerToolCreateOptions` has `OutputSchema` but no `InputSchema`**, so the
+obvious factory API always reflects the schema from the .NET signature — unusable
+for a proxy, and the first one reached for.
+
+**Roughly half of §E's observability is already in the SDK:**
+`StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a
+`StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type.
+The SDK also carries a `beforeDispose` callback commented *"to read ExitCode
+before Dispose() invalidates it"* — upstream hit
+[§11](#11-runtime-toolchain-and-windows-primitives)'s `ExitCode` trap too.
+
+**`IsAotCompatible=true` is declared by both Velopack (net8.0+) and
+`ModelContextProtocol`** — verified in-source **2026-08-14**, set on every target
+except `netstandard2.0`, at both `v1.4.1` and `v2.2.0`. **A declaration is the
+author's claim about their code, not a proof for our usage.**
+
+**The SDK's test fixtures are 1,082 lines** (`ClientServerTestBase` +
+`tests/Common/Utils/*`), Apache-2.0, **unpublished to NuGet**, and they wire a
+single client↔server pipe pair where a proxy needs two hops. `NodeHelpers.cs` is
+a further 577 lines of `npm install` machinery for the conformance suite.
+**Disposal order in that harness is load-bearing:** cancel the token → complete
+*both* pipe writers → await the server task → dispose the provider; any other
+order hangs or throws.
+
+### 10.3 Package provenance, as looked up
+
+**`ModelContextProtocol` 2.2.0 was latest as of 2026-08-13**, Apache-2.0, 23.6M
+downloads, the **Tier 1** SDK under the MCP project — which Anthropic donated to
+the Linux Foundation's Agentic AI Foundation on **2025-12-09**. It began as
+`PederHP/mcpdotnet`, now archived. The main package's hosting dependency is
+abstractions-only and does **not** drag in ASP.NET; `ModelContextProtocol.Core`
+alone is a viable smaller surface (`McpServer.Create` + `StdioServerTransport`,
+and the `[McpServerTool]` attributes already live there). Verified 2026-08-14.
+`[FLOATS]`
+
+**A correctly stamped version comment went stale in three weeks.**
+`SixFive7/OutlookAI` pins `ModelContextProtocol` 1.4.1 with a csproj comment
+reading *"1.4.1 = latest stable on nuget.org as of 2026-07-23 (2.0.0 is still
+preview)."* Re-checked against nuget.org's flat-container index on **2026-08-14**:
+2.0.0, 2.1.0 and 2.2.0 have all shipped stable, so the comment's central claim is
+now false and nothing in that build says so. **The date stamp is the only reason
+the staleness is detectable at all.** `[FLOATS]`
+
+**Other versions looked up, with their stamps:** Velopack and `vpk` **1.2.0**
+(MIT); TUnit **1.65.0** as of 2026-08-13 (MIT, source-generated, reflection-free,
+MTP-native; 1.0 shipped 2025-11-05; ~623K downloads/mo, growing 2.24× YoY);
+`Verify.TUnit` **31.28.0** as of 2026-07-31, same monorepo and release as
+`Verify.XunitV3`, with *more* test projects covering the TUnit integration;
+`@modelcontextprotocol/inspector` **2.2.0**. **FluentAssertions relicensed at
+exactly 8.0.0** to a bespoke non-SPDX licence with a commercial tier. TUnit is
+**MTP-only and conflicts with `Microsoft.NET.Test.Sdk`**; Coverlet does not work
+under MTP (`Microsoft.Testing.Extensions.CodeCoverage` instead). `[FLOATS]`
+
+### 10.4 The client: Claude Code
+
+`[FLOATS]` on a client version this project does not control.
+
+**Tool names and server `instructions` load eagerly; schemas are deferred.** So
+`instructions` is the only channel that reaches the model before it calls
+anything.
+
+**Server `instructions` and every tool description are truncated silently at
+2 KB.** The tail simply does not exist and nothing reports it.
+
+**`notifications/tools/list_changed` handling changed, and the charter's citation
+is stale.** *"Claude Code registers no handler"* was accurate at **2.0.65**
+(Dec 2025) — issues
+[#13646](https://github.com/anthropics/claude-code/issues/13646) and
+[#4118](https://github.com/anthropics/claude-code/issues/4118). At **2.1.231 it
+is false**: measured twice, the client re-listed in **1–2 ms** and the model
+called a tool that appeared only in the second list. This does **not** unlock a
+per-connection tool list — SEP-2567 stands — but the cited issues need re-dating.
+
+### 10.5 Token cost of the tool surface
+
+Measured **2026-08-13** with `tiktoken` `cl100k_base` against live `tools/list`
+payloads from `@playwright/mcp` 0.0.79. `[FLOATS]`
+
+| | Eager clients | Claude Code, deferred loading |
+|---|---:|---:|
+| Four servers as registered today | ~23,000 tok | ~985 tok |
+| One perfectly-curated proxy | ~11,600 tok | ~330 tok |
+
+**The entire achievable saving under deferred loading is ~650 tokens**, about
+0.3% of a 200k window. Without deferred loading a consolidated surface saves
+~65%. Recorded because the charter's *Non-reasons* section rests on it: this is
+not why the project exists.
+
+### 10.6 Tooling around the protocol
+
+**`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** —
+unusable as a CI gate without grepping stdout for `✘`. **The official MCP
+conformance suite is HTTP-only** (`--url`), so it needs a test-only listener or a
+small bridge to reach a stdio server. **The Inspector CLI cannot spawn `.cmd`
+shims on Windows** — same root cause as
+[#58510](https://github.com/anthropics/claude-code/issues/58510) — so address
+`cli.js` by absolute path; its **exit code 5 means the tool reported `isError`**,
+which is the signal `claude mcp` does not give you. `[FLOATS]`
+
+---
+
+## 11. Runtime, toolchain and Windows primitives
+
+### 11.1 stdio, exit codes and process startup
+
+**`Console` stdio is wrong by default in both directions.** Measured:
+`Console.Out` writes **CP437**, not UTF-8 (`é` → `0x82`); `Console.InputEncoding`
+also defaults to CP437; **any** `TextWriter` emits CRLF; and a hand-rolled
+`new StreamWriter(stream, Encoding.UTF8)` emits a **BOM**. On a JSON-RPC channel
+each of the three corrupts the stream on first contact. `[STABLE]`
+
+> **The charter does not date this measurement.** The date is `[UNVERIFIED]`; the
+> observations are carried forward as written.
+
+**`Process.ExitCode` throws after `Dispose()`, and
+`Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
+PowerShell, which merely returns `$null`. Cache the value as an `int` the moment
+the child exits. `[STABLE]`
+
+**`WaitForExit(int)` does not drain the async readers** — only `WaitForExit()`
+and `WaitForExitAsync(ct)` do, so the timeout overload truncates stderr.
+`[STABLE]`
+
+**stderr survives the child.** The anonymous pipe exists before `CreateProcess`
+and the kernel buffers it: **5 lines survived a 3 s delay *and* child exit**. The
+real risk runs the other way — a full pipe blocks the child. `[STABLE]` for the
+mechanism; **the charter does not date the measurement**, so the date is
+`[UNVERIFIED]`.
+
+**stdin EOF fires instantly when the parent holding the pipe is
+`TerminateProcess`d**, which is what makes EOF a usable backstop for reaping
+instances. Measured; **undated in the charter**. `[STABLE]`
+
+**`ProcessStartInfo.Environment` is pre-populated with the inherited block and
+assignment *merges*** — an allowlist requires `Clear()` first. **`WorkingDirectory`
+left unset passes `null` to `CreateProcess`**, so the child inherits the parent's
+cwd, whatever the MCP client happened to have. **`ArgumentList` and `Arguments`
+are mutually exclusive**; setting both is undefined behaviour. `[STABLE]`
+
+**Node's `child_process` has no job object support at all**, and Node's `spawn`
+cannot execute `.cmd` shims without `shell: true` — a live Claude Code bug for
+plugin-shipped servers using bare `npx`
+([#58510](https://github.com/anthropics/claude-code/issues/58510)). Every Node
+process supervisor on Windows falls back to `taskkill /T /F` or a native addon,
+and none survives a hard kill of the supervisor. `[FLOATS]`
+
+### 11.2 Windows object names and window scoping
+
+**You cannot put a path in a mutex name.** Backslashes are illegal after the
+`Global\` prefix — `"Global\C:\Source\..."` throws `DirectoryNotFoundException`,
+so a path-keyed lock must canonicalise and hash. The real length limit is
+**~32,000 characters, not the documented 260**, but hashing is required
+regardless. `Global\` additionally needs `SeCreateGlobalPrivilege`, which
+interactive users have and low-integrity / AppContainer processes do not.
+`[STABLE]`
+
+**`FindWindowExW(HWND_MESSAGE, …)` is scoped to a window station and desktop.** A
+scheduled task configured *"run whether user is logged on or not"* lands in
+session 0 and **sees no message windows at all** — it would sweep, find nothing,
+and report success forever. Any sweeper must run in the user's interactive
+session. `[STABLE]`
+
+**Windows will not rename a directory holding open executables**, and a live
+browser holds `chrome.exe`. Download-alongside-and-swap is therefore not
+available for a browser reinstall. `[STABLE]`
+
+### 11.3 Interop and the toolchain
+
+**`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against
+~3.3 ms for `Process.GetProcessById` and milliseconds for WMI. `dotnet/runtime`
+itself uses it. `[MACHINE]` for the numbers, `[STABLE]` for the API.
+
+**`LibraryImport` does not support `StringBuilder`**, so a `CreateProcessW`
+command line must be passed as a writable `char[]`/`Span<char>` — the API mutates
+the buffer, and a `string` literal is not valid. `DllImport` is the wrong choice
+under NativeAOT because it relies on runtime IL-stub generation. `[STABLE]`
+
+**No credible NuGet job-object wrapper exists** — the candidates have <6K
+downloads and the newest was published in **2017**. `dotnet/runtime`
+[#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in
+support and was closed as not planned. The hand-rolled surface is ~60 lines.
+`[FLOATS]`
+
+**Floating NuGet is two restore steps, not one.** `dotnet restore
+--force-evaluate` resolves the float; a second, locked-mode restore verifies it.
+They are mutually exclusive in one invocation: **with a lock file present and no
+`--force-evaluate`, NuGet does not re-resolve and the float is silently dead**
+([NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512),
+warned by default from the .NET 11 SDK). `git diff --exit-code --
+"**/packages.lock.json"` after the resolve is then the cheapest available drift
+detector. `[FLOATS]`
+
+---
+
+## 12. Artifacts and output-directory behaviour
+
+All read from the shipped bundle or observed against a real child. `[FLOATS]`
+
+**Playwright writes every artifact flat into one directory with a generated
+name**, mixing machine churn with hand-named work. **Nine fixed generator
+prefixes** make classification exact rather than heuristic: `console`,
+`download`, `network`, `page`, `request`, `response`, `result`, `storage-state`,
+`video`.
+
+**The generated name format is `page-2026-08-14T04-11-50-882Z.png`** — a
+timestamp, which is precisely what made 346 accumulated session directories
+untriageable.
+
+**A relative `filename` resolves against the child's cwd.** That is the whole
+reason ten repositories currently run a `deny` hook on `browser_take_screenshot`,
+and it is closed by setting the child's `WorkingDirectory` instead of by a hook.
+
+**`_meta.json`, `_meta.cwd` and `_meta.raw` are read by the child before zod
+parsing** and stripped before the tool sees them. Undocumented but real, and
+available for a proxy to inject (JSON error format, relative-path base).
+
+**Killed children leak `browser@<guid>` descriptors.** Each is a JSON file in the
+browsers-registry root holding the absolute `userDataDir` and `workspaceDir`;
+`BrowserServer.stop()` removes them only when there is **no** `userDataDir`. **28
+were observed and removed on 2026-08-14** (`[MACHINE]` for the count). The
+registry root sits inside the Velopack payload under the current design — a tree
+that should be read-only and is wiped on update.
+
+**Real screenshots are not byte-stable across runs**, so passthrough-fidelity
+assertions need a canned blob from a fake child rather than a live capture.
+
+---
+
+## 13. Velopack and the update path
+
+Read from Velopack **1.2.0** and its Rust binaries unless noted. `[FLOATS]` —
+this is a floating dependency like any other.
+
+**Per-user install to `%LocalAppData%`, no elevation, MIT, no commercial tier.**
+The same 1.2.0 release ships `lib-nodejs`, `lib-rust` and `lib-python`, and the
+Rust `Update.exe` doing the real work is identical for all of them — so the
+update story does not by itself require C#. `--msi PerMachine` installs to
+`Program Files` and makes the updater self-elevate, which a background stdio
+server cannot answer.
+
+**The delta scheme is per-file zstd `--patch-from`, and unchanged files collapse
+to zero-byte markers.** `current\` is a real directory, not a junction, so the
+executable path is stable across updates.
+
+**`SimpleWebSource` composes the feed request as
+`{BaseUrl}/releases.{channel}.json`.** A base URL built as `{BaseUrl}/{channel}`
+therefore fetches `{BaseUrl}/{channel}/releases.{channel}.json` — a 404, surfaced
+as *"no update available"* and nothing else. The channel belongs in
+`UpdateOptions.ExplicitChannel`. A local-directory source composes paths
+differently and passes where production 404s.
+
+**`SetAutoApplyOnStartup` defaults to `true`.** On finding a staged package,
+`VelopackApp.Run()` applies it, `exit(0)`s and relaunches — **with no inherited
+stdio**, so an MCP client sees its server exit at handshake time.
+
+**The execution stub is compiled `#![windows_subsystem = "windows"]` and returns
+immediately** without waiting, so a stdio client registered against the stub sees
+the child die instantly with no pipes attached.
+
+**`force_stop_package` kills every process under the install root** without
+asking.
+
+**Constructing an `UpdateManager` merely to read the installed version issues a
+network request.** `VelopackLocator` reads local metadata only.
+
+**`NotInstalledException` is the normal outcome under `dotnet run` and every test
+host** — neither is a Velopack install, so every Velopack call throws.
+`Debugger.IsAttached` does not detect a test runner.
+
+**`ApplyUpdatesAndRestart(null)` restarts without a package by undocumented
+fall-through** — the internals skip the `--package` argument when there is no
+local full package. `UpdateExe.Start(waitPid)` is the supported restart.
+
+**`IVelopackLogger` takes two separate registrations** — the runtime
+`UpdateManager` and the `VelopackApp.Build()` startup hooks. Bridging only the
+first leaves the installer, first-run and post-restart hooks silent.
+
+**Velopack's Rust `Setup.exe`/`Update.exe` carry their own Windows floor,
+separate from .NET's**, and can fail *before* the managed app exists: before
+**0.0.530** they statically linked `IsWow64Process2` and crashed below Windows 10
+1709. `--runtime win7` does not help if the installer binary cannot run.
+
+**Velopack prunes `packages\` down to the current full `.nupkg` and deltas are
+forward-only**, so every rollback is a fresh full download (~105 MB here) unless
+packages are archived by hand. `AllowVersionDowngrade` is the client half of
+rollback.
+
+**`vpk` rejects 4-part version numbers** — semver2, three parts only.
+
+**MSIX is disqualified on evidence.** A package cannot re-register while any
+process in its family is running: claude-code
+[#63397](https://github.com/anthropics/claude-code/issues/63397) (`0x80073D02` /
+`ERROR_SHARING_VIOLATION`, the report naming "Claude Code runs as a child process
+of Claude Desktop") and openai/codex
+[#25770](https://github.com/openai/codex/issues/25770), both in 2026. Hydraulic
+Conveyor emits MSIX on Windows and inherits the same failure.
+
+**Every unsigned `Setup.exe` is a new file to SmartScreen.** Azure Artifact
+Signing at roughly **$10/mo** buys instant reputation. `[UNVERIFIED]` price — a
+list figure, not a quote obtained.
+
+### 13.1 Prior art: ExoFabric/UCC
+
+In-house evidence, not upstream behaviour. `[MACHINE]` — true of one repository
+at one point in time.
+
+**UCC runs Velopack 0.0.1298, not 1.2.0** — the pre-1.0 line, with both behaviour
+and API surface since moved. It ships per-user to `%LocalAppData%\UCC\current\`,
+no elevation, S3-compatible feed, silent background check, in production across
+multiple releases.
+
+**Five of the nine landmines above are ones UCC hit rather than avoided**, and
+none announced itself:
+
+- **Feed URL composition** bricked auto-update for **three shipped versions**;
+  manual reinstall was the only recovery.
+- **`SetAutoApplyOnStartup` is never called**, so the default is live in a
+  shipping app — survivable for a foreground tray app, fatal for a stdio child.
+- **Logs are written to `AppContext.BaseDirectory`** — inside `current\` — with a
+  10-day retention policy that every update resets.
+- **Delta packages have never been produced.** Every shipped artifact is a full
+  `.nupkg`; delta validation is still an open TODO. Delta granularity is the
+  stated reason Velopack was chosen at all, so it is unproven in-house.
+- **Rollback has no code and no documentation.** The client would accept one; the
+  version-validation script refuses to emit one.
+
+**What UCC does prove:** the per-user `current\`-swap layout works in production;
+a test seam of `virtual` network methods carries **48 hermetic update tests**; and
+its restart choreography — cooperative shutdown with per-component acks, a 10 s
+hard-kill backstop, log flush, *then* apply — is worth copying wholesale.
+
+**Coverage of the update wrapper itself is zero tests**, which is exactly where
+the feed-URL bug lived. **UCC is single-instance** via a named mutex, so
+`force_stop_package` is harmless there — meaning the landmine that matters most
+for concurrent registrations is **untested by the only prior art available**. No
+signing: no certificate, no `--signParams`, package signature verification
+unexplored.
+
+---
+
+## 14. Third-party payload, as shipped
+
+Verified **2026-08-14** against the versions in the payload table
+([§8.1](#81-component-sizes)), by reading the shipped trees and binaries.
+`[FLOATS]` — every row moves when its component does.
+
+| Component | Terms as shipped | What is in the tree |
+|---|---|---|
+| `@playwright/mcp`, `playwright-core` 0.0.79 | Apache-2.0 | The vendored `node_modules` tree carries the package `LICENSE`. **No `NOTICE` file is published upstream**, so §4(d) has nothing to propagate |
+| `ModelContextProtocol` 2.2.0 | Apache-2.0 | Mid-transition from MIT; unrelicensed contributions remain MIT |
+| Velopack 1.2.0 | MIT | Notice only |
+| Node.js v24 | MIT **plus aggregate terms** for OpenSSL, ICU, V8, zlib and c-ares | Shipping "a single `node.exe`, nothing else" drops Node's `LICENSE`, which is not optional |
+| `chromium-headless-shell` 1237 | BSD-3-Clause | `LICENSE.headless_shell` plus a **40,178-line** credits file. Binary is unbranded |
+| `ffmpeg` 1011 | LGPL-2.1 | `COPYING.LGPLv2.1` already ships in the directory. Spawned by `playwright-core` as an unmodified separate executable, so §6's relink requirement does not bite |
+| `winldd` 1007 | **no license file shipped at all** | Nothing in the tree to ship |
+| full `chromium` 1237 | **Google-branded, no OSS license file anywhere in the tree** | `chrome.exe` reports CompanyName **"Google LLC"** and **"Copyright 2026 Google LLC. All rights reserved."**; its `ABOUT` points at Google's Chrome Terms of Service |
+
+**The only on-point public statement on redistributing Chrome for Testing is
+adverse.** A Google engineer, 2023: *"Chrome for Testing is a flavor of Google
+Chrome, so google.com/chrome/terms applies"* — which forbids redistribution. This
+is a citation, not a measurement, and it is not legal advice; it is recorded
+because it is the single piece of evidence the provisioning decision rests on.
+
+---
+
+## 15. The legacy setup and this machine
+
+Everything here is `[MACHINE]`. It is motivation for the project, and none of it
+generalises. It is recorded because the charter's opening argument cites these
+numbers and they carry no other provenance.
+
+**13 copies of `playwright/launch.ps1` across 10 repositories.** Filesystem sweep
+of `C:\Source` to depth 7, **2026-08-13**: `ExoFabric/Infrastructure`,
+`Netwerkplek`, `FluxTone`, `HitsterCardGenerator`, `ImmichDater`, `Jeeves`,
+`PortainerCompose`, `StationeersPlus`, `SyncthingMonitor`, `Workspace657` — plus
+3 worktree/backup copies inside `StationeersPlus`. **All nine non-Workspace657
+copies are byte-identical to each other and all differ from Workspace657**, and
+the same holds for `.claude/hooks/playwright-config-hook.ps1`. If the true count
+is 15+, the remainder live outside `C:\Source` or deeper than 7 levels.
+
+**Thirteen checkouts means thirteen `persistent/profile/` directories**, so a
+login established in one repository does nothing for the other twelve.
+
+**A stderr-pipe inheritance bug cost 11.71 s per spawn; the fix took it to
+0.37 s.** `Start-Process` redirection does not prevent stderr-pipe inheritance, so
+a client reading stderr blocked for the entire browser download. Diagnosed and
+fixed 2026-08-12/13, along with everything else in the charter's opening table.
+
+**A hard startup failure logged identically to a clean shutdown for five days.**
+The process handle was not cached before `WaitForExit`, so `.ExitCode` read back
+`$null`. That is why a deleted CLI flag — `--output-mode`, removed in
+`@playwright/mcp` 0.0.79, producing `error: unknown option` and exit 1 with **all
+four servers dead** — went unnoticed.
+
+**A healthy start prints `Session: <path>` to stderr every time**, which is why
+warning on *any* stderr output was the wrong classifier. `[FLOATS]` — this one is
+upstream behaviour rather than machine state.
+
+**One flat `output/` grew to 346 session directories and 1.5 GB in ~3 months**,
+and nobody pruned it because nobody could tell what any of the directories had
+been.
+
+**Mutexes were named `Global\<RepoName>-PlaywrightInteractive`** — keyed on a
+repository folder name rather than on the profile directory that actually
+requires exclusivity. All four `config.json` files used paths relative to the
+working directory, including `userDataDir: "playwright/persistent/profile"`, with
+cwd guaranteed only by `Set-Location $RepoRoot`.
+
+**Our own Chromium probes counted and killed by image name.** Harmless for
+Chromium on this machine at that moment; adapted naively to Firefox it would have
+killed **~40 personal `firefox.exe` processes**. This is the measurement behind
+the structural never-by-image-name rule.
+
+**A `deny` hook keyed on `browser_take_screenshot` exists in ten repositories**,
+which is what a tool rename would silently disable.
+
+---
+
 ## Re-verification index
 
 Everything marked `[FLOATS]` is re-checked at upstream review. In priority order —
@@ -766,6 +1521,74 @@ the first three would each silently invalidate a design decision:
 | 8 | `outputMaxSize` has no default | `defaultConfig` gains one | Assert unset in the resolved config |
 | 9 | Firefox honours `toolkit.winRegisterApplicationRestart` | Mozilla removes the pref | Source check in `nsAppRunner.cpp` |
 | 10 | `winldd` no-op for Chromium | Upstream fixes `chrome-win` → `chrome-win64` | Cold-start latency; source check |
+| 11 | Tool counts — 78 internal, 69 exposed, 24 default ([§7](#7-the-tool-surface-and-the-package-shape)) | Upstream adds, removes or reclassifies a tool | Golden `tools/list` snapshot; count `skillOnly` in the resolved bundle |
+| 12 | `storage` is 17 tools — **and the other capabilities were never counted** | Any capability's membership changes | Count every capability's tools from the resolved bundle. Never from memory |
+| 13 | `browser_run_code_unsafe` reaches `httpOnly` cookies from the **default** surface ([§7.1](#71-tools-that-reach-credentials)) | Upstream sandboxes it or moves it out of `core` | Run the probe: default caps, `page.context().cookies()` |
+| 14 | `browser_storage_state` omits IndexedDB | Upstream passes `{indexedDB:true}` | Source check at the `storageState()` call site |
+| 15 | The child's protocol ceiling is `2025-11-25`, and it never rejects — it caps or echoes | Upstream adopts a newer revision | Assert the negotiated version at startup |
+| 16 | `DiscoverProbeTimeout` is 5 s, and the client pin is what skips the probe ([§10.1](#101-the-protocol-split)) | The SDK changes the default or the probe | Assert the pin in every test client; time a spawn against the ~300 ms baseline |
+| 17 | `PLAYWRIGHT_MCP_*` count is **42**, two of them outside the config mapping | Upstream adds a variable | Derive the count from the resolved bundle; the allowlist test must not carry a literal |
+| 18 | `--caps` and `PLAYWRIGHT_MCP_CAPS` replace rather than merge | `mergeConfig` changes | Config round-trip via `browser_get_config` |
+| 19 | Nine artifact generator prefixes ([§12](#12-artifacts-and-output-directory-behaviour)) | Upstream adds an artifact type | Enumerate prefixes in the resolved bundle; an unknown prefix must fail the sort test |
+| 20 | Killed children leak `browser@<guid>` descriptors | `BrowserServer.stop()` learns to clean up with a `userDataDir` set | Kill a child, list the browsers-registry root |
+| 21 | Payload sizes and the 20.3 s provisioning time ([§8](#8-payload-sizes-and-first-run-provisioning)) | Any browser or Node revision bump | Re-measure at each bump — **and settle the 202.3 / 323 MB / ~300 MB discrepancy while doing it** |
+| 22 | Full Chromium refuses a second instance; `chrome-headless-shell` does not notice one | Upstream changes the singleton, or the shell is ever shipped | Launch twice against one profile directory, on both binaries |
+| 23 | SDK behaviours — `cmd.exe /c` prefix, `ListToolsAsync` filtering, `ContentBlock` drop-and-throw ([§10.2](#102-sdk-behaviours-a-proxy-must-work-around)) | Any `ModelContextProtocol` bump | The fake-child passthrough tests are written against exactly these |
+| 24 | Velopack landmines — feed-URL composition, `SetAutoApplyOnStartup`, the stub, `force_stop_package` ([§13](#13-velopack-and-the-update-path)) | Any Velopack bump | The update lane: real feed URL, real N→N+1, real delta |
+| 25 | Claude Code truncates `instructions` and tool descriptions at 2 KB, defers schemas, and **now handles** `tools/list_changed` ([§10.4](#104-the-client-claude-code)) | Any client release | Measure both strings at build time; re-stamp the client version the claim was checked at |
+| 26 | Payload licensing as shipped — `winldd` has no license file, full Chromium has no OSS license ([§14](#14-third-party-payload-as-shipped)) | Upstream adds one, or the payload composition changes | Re-read the shipped trees at each revision bump |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.
+
+---
+
+## 16. Corrections applied 2026-08-15 (late)
+
+Recorded because a corrected number that leaves no trace is indistinguishable
+from one that was never wrong, and because two of these were introduced *by this
+session* rather than inherited.
+
+**First-run download is 203.8 MB, not 323.5 MB.** Measured 2026-08-15 by exact
+`content-length` from `cdn.playwright.dev`: `chrome-win64.zip` 202,283,919 B +
+`ffmpeg-win64.zip` 1,411,741 B + `winldd-win64.zip` 128,684 B. On disk, 433 MiB
+(chromium 428 + ffmpeg 4 + winldd 1). Slow-link arithmetic: **2 m 43 s at
+10 Mbps, 27 m 11 s at 1 Mbps.** `[FLOATS]`
+
+The superseded 323.5 MB / ~700 MiB figures were correct on 2026-08-14 and
+included `chrome-headless-shell` (119.7 MB down, 269 MiB on disk). The
+[2026-08-15 decision](README.md#settled-2026-08-15) to run full Chromium in every
+mode stopped provisioning the shell, which is what changed the number — the old
+measurement was never wrong, it just stopped applying. Peak disk during
+provisioning is now ~640 MiB while archive and extracted tree coexist, superseding
+the ~0.9 GB previously stated.
+
+**`--output-max-size` has no default; the charter said "unverified" in two places
+after it had been established.** Verified in `coreBundle.js` on 2026-08-15:
+`defaultConfig` carries only `browser` and `timeouts`, and `mergeConfig` filters
+through `pickDefined`, which drops `undefined`. See §6. The README's two stale
+passages are retired. `[FLOATS]`
+
+**The §A payload table listed browsers as bundled for a day after the decision
+that they would not be.** Provisioning moved to first run on 2026-08-14; the table
+row survived it. Installer payload is ~117 MB (`node.exe` 88.53 + JS tree 18.11 +
+BrowserAI ~10–15); the ~806 MB figure describes disk *after* first run, and
+remains the right number for a bundled build if the Chrome-for-Testing
+redistribution question is ever resolved favourably. `[MACHINE]` for the
+component sizes, `[FLOATS]` for what is in the set.
+
+> **The pattern worth noticing.** All three are the same defect: a measurement
+> that was correct when taken, invalidated by a *later decision* rather than by
+> upstream, and left in place because nothing links a decision to the numbers it
+> falsifies. The re-verification index catches upstream drift; it does not catch
+> this. **When a decision changes what is provisioned, configured or shipped, the
+> measurements describing the old shape must be re-stated or retired in the same
+> commit.**
+
+**Firefox costs relative to Chromium** — measured 2026-08-14, and previously
+recorded nowhere in the repository despite being cited in design discussion:
+**~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk.** Chromium
+stays the default on these grounds alone. `[UNVERIFIED]` as to method — the
+figures are carried forward from a measurement session whose harness was not
+preserved, so treat them as order-of-magnitude guidance and re-measure before any
+decision turns on them. `[FLOATS]`
