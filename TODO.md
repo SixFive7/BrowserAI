@@ -212,23 +212,31 @@ the next session starts from them, not from scratch.**
 
 ## Open after 2026-08-15
 
-- [ ] **Post-reboot resurrection: the sweep is not sufficient as designed.** The
-      mechanism is now fully understood — full Chromium calls
-      `RegisterApplicationRestart` unconditionally, Windows relaunches it at sign-in
-      with `--user-data-dir` intact, and the maintainer's machine has
-      `RestartApps = 1` with ARSO at its default, so it happens into a locked
-      session before anyone signs in. Detection is solved: an exact-title
-      `FindWindowExW(HWND_MESSAGE, NULL, "Chrome_MessageWindow", <our dir>)` lookup
-      costs ~60 µs and structurally cannot name a foreign profile.
+- [x] **Post-reboot resurrection: mechanism excluded, prevention dropped.** ✅
+      Measured 2026-08-15 and encoded in
+      [KNOWLEDGE §2](KNOWLEDGE.md#2-browser-resurrection-after-a-reboot).
+      `RegisterApplicationRestart` **was never succeeding** — Playwright's command
+      line overshoots the 1023-character limit by 531–807 in every shippable
+      configuration, verified on live processes with a registering positive control.
+      No lever ships; a test asserting the browser is unregistered replaces it. By
+      elimination the resurrection came from the Windows sign-in restore path, which
+      is `[UNVERIFIED]` without a reboot — the command-line fingerprint that would
+      settle it is recorded in the KB.
 
-      **What is not solved is when the sweep runs.** The maintainer's objection is
-      correct: BrowserAI may not run for weeks, and may never open a given directory
-      again, so a sweep-on-start leaves strays alive indefinitely — which is exactly
-      the incident. Options recorded for decision: sweep-on-start only; sweep-on-start
-      plus a logon scheduled task; or a resident watcher. A logon task needs a way to
-      know where sessions live — the default root covers most, and out-of-root
-      directories need a pointer list (a list of paths, holding no state, is not the
-      registry that was dropped).
+- [ ] **When does the stray sweep run?** Still open, and the maintainer's original
+      objection stands: BrowserAI may not run for weeks and may never re-open a given
+      directory, so sweep-on-start alone leaves strays alive indefinitely. Options:
+      sweep-on-start across every known directory; plus a logon scheduled task; or a
+      resident watcher. A logon task needs to know where sessions live — the default
+      root covers most by scanning, and out-of-root directories need a pointer list
+      (a list of paths holding no state is not the registry that was dropped).
+
+      **Now smaller than it was.** Headless sessions have no visible window and are
+      therefore not eligible for the sign-in snapshot at all, so the exposure is the
+      two headed modes. Detection itself is solved — see
+      [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) for the
+      exact canonicalisation, and the warning that the detector must **not** be
+      extended to cover fallback profiles.
 
 - [x] **The four named modes become three plus a modifier.** ✅ Settled and encoded
       2026-08-15 as [Three modes](README.md#three-modes-and-tracing-as-a-modifier),

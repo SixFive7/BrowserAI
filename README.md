@@ -32,6 +32,17 @@ The current PowerShell-based setup was copy-pasted into other repositories over 
 
 The lesson worth carrying into BrowserAI: **every one of those defects was invisible.** The setup reported healthy while being broken. Observability is a feature requirement here, not a nicety.
 
+### Where things are written down
+
+| File | Holds | Changes when |
+|---|---|---|
+| **`README.md`** (this file) | What we **decided**, and why | We change our minds |
+| **[`KNOWLEDGE.md`](KNOWLEDGE.md)** | What we **measured** — about Chromium, Firefox, Playwright, Node and Windows, with provenance and a re-verification hook | Upstream ships, and a re-measurement says something different |
+| **[`TODO.md`](TODO.md)** | Work settled in intent but not yet done | Something gets decided, or gets done |
+| **[`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md)** | The procedure for adopting a new upstream version | The procedure proves insufficient |
+
+The split between the first two is the one that matters. A decision stays true until we revisit it; a measurement stays true until upstream ships. Mixing them means the whole document reads as equally settled, and the parts with the shortest half-life are exactly the ones that quietly stop being true. When this file states a measured fact, it is a summary — `KNOWLEDGE.md` carries the number, the date, the versions it held under, and how to re-establish it.
+
 ---
 
 ## Why this project needs to exist
@@ -668,6 +679,9 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - **an empty browsers directory must FAIL this layer.** Without this the entire batteries-included premise can be silently dead code with the suite green
 - error-shaped stderr classified correctly against a real start
 - **the browser command line carries `--sandbox` and not `--no-sandbox`** — the config key is silently discarded, so only the resolved command line proves it
+- **the browser is not registered for restart.** Open the browser process with `PROCESS_VM_READ` and assert `GetApplicationRestartSettings` returns `0x80070490` (`ERROR_NOT_FOUND`). This is the insurance against a future Playwright arg-list trim silently re-enabling resurrection, and it is a direct test of the mechanism rather than a proxy for it
+- **the resolved user-data-dir is exactly what we passed** — catches both a `UserDataDir` policy hijack and a silent fallback to a default profile
+- **the `Chrome_MessageWindow` lookup finds the browser we launched**, keyed on the canonicalised path, and finds nothing for a directory with no browser
 - **zero process leakage after a hard kill.** Enumerate via `QueryInformationJobObject(JobObjectBasicProcessIdList)`, assert `IsProcessInJob` for every PID in the descendant tree, `TerminateProcess` the launcher from outside, then assert every PID is gone **and every profile directory deletes cleanly** — a directory that still holds a lock proves an escaped browser. Cross-check the job's PID list against a toolhelp walk seeded from an I/O completion port on the job, so a process whose parent already exited is not missed. Run it against both browsers: Firefox stacks two `SILENT_BREAKAWAY_OK` jobs between ours and its content processes and is the harder case. A working prototype is at `.work/jobtest/`
 
 **Update** — see the paragraph above: real feed URL, real delta, real N→N+1, plus rollback under `AllowVersionDowngrade`.
@@ -857,6 +871,9 @@ Two things follow, and they are design obligations rather than caveats:
 | **`--isolated`** | **Never set, in any mode.** It puts the profile in a temp directory deleted on close. Three of the four legacy modes set it; BrowserAI gives every mode a real directory and deletes nothing automatically. |
 | **`--output-max-size`** | **Never set, and `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE` stripped from the child's environment.** It is a recursive oldest-first deleter pointed at directories agents choose. Retention is the calling agent's decision, supported by an explicit cleanup tool, not by an eviction threshold. |
 | **Console level** | **Exposed on `init`.** The upstream default of `info` silently drops `debug` messages; which trade-off is right is per-session, not global. |
+| **Restart-registration lever** | **None shipped. A test instead.** Measured 2026-08-15: Playwright's command line overshoots Windows' 1023-character `RegisterApplicationRestart` limit by **531–807 characters** in every shippable configuration, so registration already fails and `GetApplicationRestartSettings` on a live browser returns `ERROR_NOT_FOUND`. `--browser-test` does suppress it and is **not** web-detectable (0 differences across 486 fingerprint fields, 65 launches) — but it suppresses something that is not happening, and drags in unrelated behaviour changes. **A test asserting the browser is unregistered is better insurance**: it fails loudly the day the margin closes, instead of silently changing browser behaviour forever. Prefer a mechanism over a habit. See [KNOWLEDGE §2](KNOWLEDGE.md#2-browser-resurrection-after-a-reboot). |
+| **Validate every path before launch** | **Required, and it prevents a hang rather than untidiness.** An unusable `--user-data-dir` makes Chrome fall back to a default profile — invisibly to the MCP client, with 8 healthy processes and both `initialize` and `browser_navigate` returning OK — while its message window is titled with the **fallback** path, so our own stray detector goes blind to exactly the broken instances. In other configurations the same condition raises a native `#32770` dialog that **blocks startup entirely** until dismissed (measured: 1 process at 6 s; 10 processes after `WM_CLOSE`), which on a background server is an invisible hang that `--noerrdialogs` does not suppress. Third native-dialog trap after Firefox's profile-lock modal. |
+| **Bundled Chrome for Testing, never `channel: "chrome"`** | With `channel: "chrome"` the fallback profile is `%LOCALAPPDATA%\Google\Chrome\User Data` — **the user's own browser**. A stray detector extended to cover fallbacks would identify a personal Chrome as ours, and Chrome's `ProcessSingleton` would forward the launch into the user's running browser. Shipping our own binary makes both structurally impossible. |
 | **Session modes** | **Three — `headless`, `interactive`, `persistent` — with `tracing` a boolean on any of them.** `tracing` was never a mode; it is `interactive` plus a flag. Promoting it removes a mode *and* adds capability. Headless-with-storage is deliberately not offered: it is the one combination granting full credential access with no visible signal, and that should be its own decision rather than a side effect. Mode is bound at `init`, recorded in `lock.json`, and read back by `resume`. Discoverability is a hard requirement across all four model-facing channels, generated from one table and pinned by tests. See [Three modes](#three-modes-and-tracing-as-a-modifier). |
 
 ### Still open
@@ -977,7 +994,12 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | `JobObjectBasicUIRestrictions` blocks job nesting | Can prevent Chromium's sandbox job from nesting inside ours | §E |
 | libuv assigns every non-detached child to its own `SILENT_BREAKAWAY_OK` job | A second kill path exists for free, but it is an accident of Playwright's `detached:false` on Windows. Never depend on it | §E |
 | Firefox background tasks and crash reporter request breakaway | Their `CreateProcess` fails `ERROR_ACCESS_DENIED` inside our job. Correct trade, not a bug — do not "fix" it | §E |
-| Full Chromium calls `RegisterApplicationRestart` unconditionally | Windows relaunches it after a reboot with `--user-data-dir` intact, plus `--restart --restore-last-session`. The only guard upstream is `--browser-test`. **No supported way to disable it** | §E |
+| Full Chromium calls `RegisterApplicationRestart` unconditionally | The only guard upstream is `--browser-test`. **Measured 2026-08-15: the call already fails** — Playwright's command line overshoots the 1023-char limit by 531–807. A future arg-list trim would silently re-enable it, which is what the unregistered-browser test exists to catch | [KB §2](KNOWLEDGE.md#2-browser-resurrection-after-a-reboot) |
+| An unusable `--user-data-dir` makes Chrome **fall back**, invisibly | 8 healthy processes, `initialize` and `browser_navigate` both OK, nothing surfaced to the client — and the message window is titled with the **fallback** path, so stray detection goes blind to the broken instances | [KB §4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs) |
+| Chrome's "Failed to create data directory" dialog **blocks startup** | Measured: 1 process and no renderers at 6 s; 10 processes after `WM_CLOSE`. On a background server this is an invisible hang. `--noerrdialogs` does **not** suppress it | [KB §4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs) |
+| A deny-all DACL on an existing profile dir exits with code 21 | `CHROME_RESULT_CODE_PROFILE_IN_USE`, ~2.5 s, no fallback — a **different** code path from the missing-directory case, because `RecursiveDirectoryCreate` succeeds on an existing directory | [KB §4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs) |
+| `Chrome_MessageWindow` class alone is ambiguous | The same process also owns one titled `DeviceMonitorMessageWindow` and several untitled; the GPU process owns one too. **The title match is load-bearing**, and must be backslashes, absolutised, no trailing separator | [KB §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) |
+| A `UserDataDir` **policy** overrides the command line | Read in `chrome_elf` before argv is parsed, so per-session profile isolation collapses silently. Absent on this machine; assert the resolved dir is what we passed | [KB §6](KNOWLEDGE.md#6-upstream-configuration-facts) |
 | Firefox registers too, but honours a pref | `toolkit.winRegisterApplicationRestart:false` calls `UnregisterApplicationRestart` at runtime. Pass it via `firefoxUserPrefs` on every launch | §E |
 | `chrome-headless-shell` creates no `Chrome_MessageWindow` and no `lockfile` | The one binary that can leak but cannot be cheaply found. Reason enough to run full Chromium in every mode | §A |
 | `psi.Environment` is pre-populated and assignment **merges** | An allowlist requires `Clear()` first | §trade-offs |

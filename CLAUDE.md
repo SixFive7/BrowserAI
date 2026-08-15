@@ -7,6 +7,8 @@ BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@
 
 **Status: design phase, nothing is built.** Work settled in intent but not yet done lives in [`TODO.md`](TODO.md); open design questions and known hazards stay in the README.
 
+**Measured facts go in [`KNOWLEDGE.md`](KNOWLEDGE.md), not the README.** The README says what we decided; `KNOWLEDGE.md` says what we measured about Chromium, Firefox, Playwright, Node and Windows. Every entry carries a date, the versions it held under, and how to re-establish it. **Never update a result by reasoning — re-run the measurement, or mark the entry `[STALE]`.** An adjusted number is indistinguishable from a measured one, which makes it worse than a gap. New `[FLOATS]` entries need a row in the re-verification index, or nobody will ever re-check them.
+
 ## Before changing `upstream-review.json` — stop and read the procedure
 
 [`upstream-review.json`](upstream-review.json) records the upstream versions a human has actually **reviewed**. A test asserts those equal the versions the build **resolved**, so a red marker test is not a stale file to fix — it is a review that has not happened yet.
