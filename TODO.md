@@ -288,7 +288,9 @@ later measurement overruled the original.
       `lock.json` and refuses it as an argument, because a profile is
       browser-specific. Firefox ships in v1.
 
-- [ ] **Firefox's `parent.lock` preflight.** The one piece of Firefox support that
+- [x] **Firefox's `parent.lock` preflight.** ✅ Encoded 2026-08-15 in PLAN.md as *Firefox: the preflight, and a second detection path* — the preflight is mandatory rather than defence in depth, and detection needs only a different attribution step, because image-path detection already covers Firefox for free. Original note follows.
+
+- [x] ~~**Firefox's `parent.lock` preflight.**~~ The one piece of Firefox support that
       is designed but not yet written into the charter as a requirement. Playwright's
       `isProfileLocked` checks only Chromium's `lockfile`, so without our own
       preflight a collision puts a **native modal on the desktop blocking up to

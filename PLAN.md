@@ -342,6 +342,20 @@ This is path matching against a binary we installed, not image-name matching, an
 
 **`destroy` deletes a whole session directory, and refuses anything without a valid `lock.json`.** That refusal is what makes it safe to hand a model a tool that deletes trees: it cannot be aimed at `Documents\`. It tears the browser down first, then deletes under the lock; if the lock is held elsewhere it reports the holder instead. Pair it with a `list` that shows each session's purpose, mode, last-used and **size on disk** — an agent cannot make a good retention decision without knowing it is sitting on 4 GB.
 
+#### Config generation, and validating it against the runtime we ship
+
+BrowserAI generates the child's config; it never accepts one. But **generating a key is not the same as the child honouring it** — `loadConfig` is a bare `JSON.parse` with no schema validation, so a renamed or removed key is discarded in silence, and `--output-mode` was a no-op for its entire life without anyone noticing.
+
+So every generated opinion is **asserted through `browser_get_config`** at startup, against the runtime actually in the payload. A key we set that does not come back is a red build, not a mystery in production.
+
+Three known cases where generation must not take the obvious route:
+
+- **`--sandbox` on the command line, never `chromiumSandbox` in the config file.** The config key parses, validates, and is discarded; only the flag works ([kb: configuration](kb/playwright/configuration.md)). Assert `--no-sandbox` is absent from the child's **resolved browser command line**, not from our config.
+- **`browserName` and channel always explicit.** Omit them and `validateBrowserConfig` fills in `chromium` + `channel: "chrome"` — the user's installed Google Chrome, not the build we provisioned.
+- **`--output-max-size` never set, and `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE` stripped.** The flag is not the only door.
+
+**The environment is an allowlist, built by `Clear()` first** — `psi.Environment` arrives pre-populated and assignment *merges*. **42** `PLAYWRIGHT_MCP_*` variables can override every opinion we generate, including a capability wipe, so the count is derived from the resolved bundle at test time and never carried as a literal.
+
 ### D. Locking and single-instance
 
 Keyed on the **resolved absolute directory**, not on a repository name. Must handle: stale locks from crashed processes, alive-but-orphaned holders, and PID recycling. The existing launcher's mutex + sibling-lockfile + signature-check pattern solves all three and is worth porting rather than redesigning.
@@ -362,6 +376,46 @@ The invariant: **BrowserAI can only terminate a process that belongs to a job ob
 Forbidden outright, and enforceable as an analyzer at error severity: `Process.GetProcessesByName`, `taskkill /IM`, and any WMI or toolhelp query filtered by executable name. Assert zero occurrences in the tree.
 
 > ⚠️ `--user-data-dir` alone is **not** an ownership signal. Measured on the maintainer's machine 2026-08-15: Discord, VS Code, Signal, Teams, WhatsApp, Steam, ChatGPT and four `msedgewebview2.exe` processes all pass it. Only an exact match against a directory BrowserAI created is safe.
+
+#### The session index on disk
+
+The index is the only inventory — [there is no root to scan](#f-artifact-management), because there is no default directory. That makes it load-bearing, so it is built to **fail safe rather than to be correct under every race**.
+
+```
+%LOCALAPPDATA%\BrowserAI\index\<sha256-of-canonical-path>
+```
+
+One file per session directory, named for the hash of its canonical path, containing that path and nothing else. **Files, not the Windows registry** — an earlier draft chose the registry for atomic single-value writes under ~100 concurrent processes, and that argument evaporated when [enumeration replaced inventory lookup in the sweep](#the-stray-sweep-and-the-concurrency-it-must-survive). The index is now read only by `browserai_list` and by cleanup, so contention is low, and files win on being inspectable, deletable and free of profile roaming.
+
+**Canonicalisation must match the lock's**, or the same directory gets two identities: `Path.GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant()` → SHA-256 → hex. One function, used by the mutex name, the lock and the index alike, and tested to agree with itself.
+
+Four properties, each deliberate:
+
+- **Written on every `init` *and* every `resume`, idempotently.** Re-asserting rather than writing-once is what makes a lost entry self-heal: losing one costs a single sweep cycle of invisibility, not a permanently orphaned directory. This is what lets the store skip locking entirely.
+- **Self-cleaning.** An entry whose directory is gone, or whose directory has no readable `lock.json`, is removed on the next sweep. The index shrinks as sessions are destroyed without anyone maintaining it.
+- **Never trusted, only followed.** Every entry is verified by opening the `lock.json` it points at. A personal Chrome profile contains none and cannot be mistaken for ours however it was reached.
+- **No lock, by design.** Create and delete are atomic per file, so there is no read-modify-write to synchronise. A wrongly-deleted entry is restored by the next `init` or `resume`. Locking it would put a machine-wide lock on the hot path of every session start to close a race whose cost is one cycle of invisibility.
+
+> **This is not the registry that was dropped**, and the distinction is structural rather than nominal. That registry held handle mappings, config and liveness — state two BrowserAIs could disagree about, where a stale entry was a bug and every write needed a mutex. This holds one immutable fact per file: *a session directory once existed here*. It cannot be wrong in a way that matters.
+#### Firefox: the preflight, and a second detection path
+
+Firefox needs both halves of the stray story rebuilt, because neither Chromium mechanism transfers.
+
+**The preflight is mandatory, not defence in depth.** Playwright's `isProfileLocked` checks only Chromium's `lockfile` and never Firefox's `parent.lock` ([kb: profiles](kb/chromium/profiles.md)), so a collision raises a **native modal on the user's desktop that blocks for up to three minutes** — an invisible hang in a background server. Before launching Firefox, open `<profile>\parent.lock` for write; on `ERROR_SHARING_VIOLATION`, refuse with [error 11](#h4-the-error-catalogue) rather than launching.
+
+Taking our own lock first already makes the collision unreachable — but that is **coverage by ordering**, and ordering is exactly the kind of guarantee that survives a refactor unnoticed. The preflight makes it explicit, and a test asserts it fires when the lock is held.
+
+**Detection needs a different mechanism.** Firefox publishes no `Chrome_MessageWindow` equivalent, and its `parent.lock` is **never deleted** — Mozilla keeps it deliberately, using the mtime to detect startup crashes — so unlike Chromium's, its existence proves nothing. Only a sharing violation does.
+
+| Step | Chromium | Firefox |
+|---|---|---|
+| Is a stray running at all? | image path under our binary | **identical** — we provision Firefox too |
+| Which profile is it on? | exact-title `Chrome_MessageWindow` lookup | **`parent.lock` sharing violation → `RmGetList`** |
+| PID → identity | `(pid, creationFileTime)` | identical |
+
+Only the middle row differs. [Detection by image path](#detection-is-documented-attribution-may-fail-and-must-fail-safe) already covers Firefox for free, because we provision its binary as well — so the Firefox-specific work is attribution alone. `RmStartSession` → `RmRegisterResources(parent.lock)` → `RmGetList` returns `RM_UNIQUE_PROCESS { dwProcessId, ProcessStartTime }`, and that start time is the PID-reuse guard. Mozilla's own `ProfileUnlockerWin::TryToTerminate` does exactly this and is worth copying line for line.
+
+**Restart registration is disabled for every Firefox launch** via `firefoxUserPrefs: { "toolkit.winRegisterApplicationRestart": false }`. The pref is observed at runtime and calls `UnregisterApplicationRestart` — the one place browser resurrection can be prevented outright rather than cleaned up after ([kb: resurrection](kb/chromium/resurrection.md)).
 
 ### E. Lifecycle and observability
 
@@ -438,6 +492,18 @@ Layout beneath the root, following the nine generator prefixes rather than inven
 ```
 
 **`downloads\` is the one exception to routing** — a browser-initiated download lands where the browser puts it, not where a `filename` argument says. It is classified after the fact like the old sort, and that difference should be visible in the code rather than discovered.
+
+#### Filename normalisation
+
+[§F](#f-artifact-management) routes on the way in. The mechanics:
+
+1. **Reject traversal; never normalise it.** `..\..\foo.png` must resolve, be recognised as an escape, and be refused with a readable error — never silently collapsed into a path that happens to land somewhere.
+2. **Reject absolute paths and drive-relative forms** (`C:foo.png`, `\\server\share`, `\foo.png`). The caller declared the workspace at `init`; a per-call filename names a file *within* it.
+3. **Route by generator prefix** into the typed subfolder, so a screenshot and a trace do not land beside each other. A hand-named file is never swept into a machine-named folder.
+4. **Suffix duplicates rather than overwriting.** An artifact silently replacing an earlier one is data loss wearing a success.
+5. **Return both forms** — the resolved absolute path and the path relative to the session directory. The agent needs the first to tell a human where something is, and the second to put in a commit message.
+
+> **The two path rules read as contradictory and are not.** `init`'s directory arguments are deliberately unconstrained — the caller is declaring where its data lives. A per-call `filename` names a file inside a workspace already declared, so normalising it into that workspace *honours* the choice already made rather than overriding it. Record the distinction, because anyone meeting the two rules cold will think one of them is wrong.
 
 ### Three obligations that follow
 
