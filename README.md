@@ -702,13 +702,33 @@ Verified 2026-08-13. **The versions below are provenance stamps, not targets** �
 | Assertions | TUnit built-ins | `await Assert.That(actual).IsEqualTo(expected)`. **Never add FluentAssertions** — it relicensed at exactly 8.0.0 to a bespoke non-SPDX licence with a commercial tier. Jeeves carries the identical prohibition for the identical reason. |
 | External smoke | `@modelcontextprotocol/inspector` **2.2.0** | Language-independent CI check. Exit code **5** means the tool reported `isError` — the signal `claude mcp` does not give you. |
 
-### Three places where the SDK must be deviated from
+### Nine places where the SDK must be deviated from
+
+> Was three. Six more were found by measurement on 2026-08-15, and **two of the original three were wrong in detail** — corrections are marked inline. A spike drove the real child through a published NativeAOT binary; everything below is observed rather than read.
 
 **1. Write your own `IClientTransport`.** The SDK's `StdioClientTransport` prepends `cmd.exe /c` to every non-cmd command on Windows, unconditionally. That directly contradicts §"Windows process spawning" below: it adds a shell layer, an extra process between BrowserAI and `node` (complicating tree ownership and exit-code attribution), and cmd.exe quoting semantics. The interface is two members (`Name`, `ConnectAsync`) and the replacement is ~120 lines. Port `StdioClientTransportOptions`' stderr and shutdown handling rather than reinventing it.
 
 **2. Use the raw `ListToolsAsync` overload.** The convenience overload `ListToolsAsync(RequestOptions?, ct)` **silently drops** any tool whose `x-mcp-header` annotations fail SEP-2243 validation. A proxy must call `ListToolsAsync(ListToolsRequestParams, ct)`, which returns the server's result unfiltered. Using the wrong one shrinks the exposed surface with no error anywhere — the same failure class as everything in the opening table.
 
-**3. Proxy `tools/call` at the message-filter layer, not the typed layer.** The SDK's `ContentBlock` converter **silently drops unknown properties** (it has tests asserting this — correct forward-compatibility for a client, data loss for a proxy) and **throws on unknown content *types***, which fails the entire call at deserialization before any BrowserAI logic runs. `WithMessageFilters` operates on `JsonRpcMessage` where `JsonRpcResponse.Result` is a raw `JsonNode?`. Rewrite `tools/list` typed; let `tools/call` results pass through as raw JSON.
+**3. Proxy `tools/call` through `McpServerOptions.Filters.Message.IncomingFilters`, short-circuiting rather than calling `next`.** The `ContentBlock` converter **silently drops unknown properties** and **throws on unknown content *types***, failing the whole call at deserialization before any BrowserAI code runs. The filter sees `JsonRpcResponse.Result` as a raw `JsonNode?` and never touches `ContentBlock`.
+
+> ⚠️ **Not `WithMessageFilters`.** That is a DI extension in the *hosting* package. A Core/AOT proxy uses `McpServerOptions.Filters.Message.IncomingFilters` / `OutgoingFilters` directly. Charter corrected 2026-08-15.
+
+**4. Rewrite `tools/list` on `JsonNode` too — not typed.** An earlier draft of this section said "rewrite `tools/list` typed"; that is wrong. A typed `ListToolsResult` round-trip **silently discards unknown top-level tool members**, because `Tool` carries no `[JsonExtensionData]`. Schema keywords survive (`inputSchema` is a `JsonElement`), tool-level extensions do not. Measured both ways in the same run.
+
+**5. Write our own *server*-side transport as well.** `StreamServerTransport` hard-codes `McpJsonUtilities.JsonContext` with no options seam, so every outgoing string is re-escaped by `JavaScriptEncoder.Default`. Decoded values are unchanged, but the bytes are not — every backtick, apostrophe, angle bracket and non-ASCII character becomes a `\uXXXX` escape. Measured on a real `browser_navigate` result, and on a unicode case that grew **154 → 218 bytes**. **Settled 2026-08-15: build the transport** and serialize with `UnsafeRelaxedJsonEscaping`. Two reasons, and the second is the stronger: passthrough becomes genuinely byte-exact, and the inflation this removes is **tokens in the model's context on every result**. The cost is small because it is the same `TransportBase` pattern deviation 1 already requires. ("Unsafe" refers to embedding JSON in HTML; we write to a pipe consumed by a JSON parser.)
+
+**6. Cancellation does not work at all — hand-roll it.** Measured 2026-08-15, and isolated away from the proxy entirely: a plain `McpClient` over a plain transport, cancelling both the raw and typed call paths, **never emits `notifications/cancelled` downstream**. The machinery exists in `McpSessionHandler.SendRequestAsync`, but its registration is disposed as `tcs.Task.WaitAsync(ct)` unwinds — CTS callbacks run LIFO, so `WaitAsync`'s callback wins and the notification callback is cancelled before it can run. **Remedy, proven in the same run:** assign `JsonRpcRequest.Id` yourself (it survives to the wire verbatim) and send `notifications/cancelled` by hand from your own `ct.Register`. Without this, a cancelled `browser_navigate` leaves the child working.
+
+**7. `McpClientOptions` has no `Filters`.** Every filter API is server-side, so observing and forwarding *child→caller* notifications needs an `ITransport` decorator (~30 lines). The caller→child direction is covered by `IncomingFilters`.
+
+**8. JSON-RPC errors are lossy above the transport.** `code` and `data` survive, but the message is prefixed — `"upstream exploded"` arrives as `"Request failed (remote): upstream exploded"`, and `data` is destructured into `Exception.Data`. Reconstruct from `McpProtocolException` and strip the prefix, or forward a message that is not upstream's.
+
+**9. Answer the `server/discover` probe.** A child that ignores it costs the full `DiscoverProbeTimeout` **per connect** — the spike burned 30 s per rig against a fake child until it returned `-32601`. Real `@playwright/mcp` 0.0.79 handles it, so this is a hazard for our own test doubles rather than for production.
+
+These are places where the SDK's design goal (a forward-compatible *client*) and BrowserAI's (a lossless *proxy*) genuinely differ. **Every one of the failure modes above is silent** — dropped tools, dropped members, a cancellation that never arrives — which is the class this project exists to eliminate. All of it is measured, not inferred: see [KNOWLEDGE §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around).
+
+> **NativeAOT is proven, not assumed.** `PublishAot=true`, win-x64, self-contained: **zero trim/AOT warnings, no `JsonSerializerContext` of our own required, 9.76 MiB binary.** The published binary drove a real `@playwright/mcp` child over stdio — 24 tools through the proxy, `handle` injected into every schema, `browser_navigate` returning a non-error result, child PID gone after dispose. One AOT trap, in *our* code rather than the SDK: `JsonArray.Add(x)` binds to the generic overload, which is `RequiresDynamicCode`; cast to `(JsonNode)` to clear it.
 
 Both of these are places where the SDK's design goal (a forward-compatible *client*) and BrowserAI's (a lossless *proxy*) genuinely differ. Decide them now rather than discovering them later — and note that both failure modes are silent, which is the class this project exists to eliminate. All three behaviours are recorded in [KNOWLEDGE §10.2](KNOWLEDGE.md#102-sdk-behaviours-a-proxy-must-work-around).
 
@@ -826,12 +846,12 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 
 **Fake child** — full proxy over in-process pipes:
 
-- `tools/call` results pass through **byte-identical**, including image and binary payloads
+- `tools/call` results pass through **byte-identical**, including image and binary payloads — asserted on the exact byte span of `result` via `Utf8JsonReader` token offsets, never by re-serialising and comparing. This is what the custom server transport buys; against the SDK's own it fails on any string containing a backtick, apostrophe, angle bracket or non-ASCII character
 - **unknown content *types* pass through** rather than throwing (the SDK's typed layer throws; a proxy must not)
 - **unknown *properties* survive** (the SDK's converter drops them, with tests asserting it does)
 - `isError: true` bodies preserved verbatim; nested JSON-RPC `error.data` not flattened
 - `handle` injected into every schema, order-stable
-- cancellation relay: an upstream `notifications/cancelled` produces a downstream one, not just a local abort
+- **cancellation relay, hand-rolled**: an upstream `notifications/cancelled` produces a downstream one. The SDK emits nothing at all here — measured 2026-08-15 — so this test covers *our* `ct.Register` path and the self-assigned `JsonRpcRequest.Id` it depends on, not SDK behaviour
 - progress relay: the child's token is remapped to the caller's
 - child death mid-call; stderr back-pressure with a full pipe; oversized payload
 
@@ -1095,7 +1115,11 @@ Every failure mode surfaced during research, in one checkable list. The overwhel
 | Spec 2026-07-28 SHOULDs a **deterministic tool order** for client-side and prompt-cache hit rates | The rewrite step must be order-stable, not incidentally ordered | — |
 | `DiscoverProbeTimeout` is 5 s when the client version is unpinned | Flat 5 s per child spawn against a ~300 ms baseline; presents as "slow", never as an error | §B |
 | The child never *rejects* a protocol version — it caps or echoes silently | A mis-negotiation produces nothing to catch. Assert on the negotiated value | §B |
-| Progress and cancellation relay are **not** automatic across a proxy | A cancelled `browser_navigate` can leave an orphan running in the child | §data-path |
+| **The SDK never sends `notifications/cancelled` downstream** | Not merely "not automatic" — it emits nothing, on the raw and typed paths alike, because CTS callbacks run LIFO and `WaitAsync`'s disposal wins. A cancelled `browser_navigate` leaves the child working | §stack |
+| `StreamServerTransport` re-escapes every outgoing string | Backticks, apostrophes, angle brackets and all non-ASCII become escape sequences, with no options seam. Inflates every result, and those tokens land in the model's context | §stack |
+| Typed `ListToolsResult` drops unknown **tool-level** members | `Tool` carries no `[JsonExtensionData]`. Schema keywords survive, tool extensions do not — so `tools/list` must be rewritten on `JsonNode` | §stack |
+| `RequestHandlers`' XML doc contradicts its behaviour | Documented as taking precedence over built-in handlers; actually throws `InvalidOperationException` when the method is already handled | §stack |
+| `cmd.exe` expands `%VAR%` in arguments, and a whitespace-bearing argument plus `&` kills the child outright | The second only bites when the command path has a space — i.e. the stock `C:\Program Files\nodejs\node.exe`. Both are closed by the custom transport | §stack |
 | `_meta.json` / `_meta.cwd` / `_meta.raw` are read by the child before zod parsing | Undocumented but real, and stripped before the tool sees them — available for BrowserAI to inject (JSON error format, relative-path base) | [KB §12](KNOWLEDGE.md#12-artifacts-and-output-directory-behaviour) |
 
 ### Handle routing and instance lifetime
