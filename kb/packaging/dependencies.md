@@ -69,3 +69,50 @@ adverse.** A Google engineer, 2023: *"Chrome for Testing is a flavor of Google
 Chrome, so google.com/chrome/terms applies"* — which forbids redistribution. This
 is a citation, not a measurement, and it is not legal advice; it is recorded
 because it is the single piece of evidence the provisioning decision rests on.
+
+### What vendoring a runtime actually costs — two in-house cases
+
+Measured **2026-08-16** by reading the repositories and their git history, on this
+machine. `[MACHINE]` throughout — true of two repositories, not of the world. The
+charter's provision-don't-bundle position currently argues from **licensing alone**;
+this is the empirical half, and it is also the evidence behind the statement that a
+bundled browser makes CVE response a release obligation.
+
+**Vendoring a runtime fails by silence, not by breakage.**
+`C:\Source\ExoFabric\Netwerkplek` vendored eDEX-UI — an Electron app, so a full
+Chromium — **twice**: `Netwerkplek/eDEXUI/x64` at 162 MB and
+`Netwerkplek/eDEXUI/x86` at 148 MB, with `icudtl.dat` **byte-identical across both**
+(10,218,000 bytes, md5 `8cda0911…`) and never deduplicated. That is in a repository
+whose `.git` is **931 MB** for **38 tracked `.vb` files**.
+
+The history is the finding: `git log -- Netwerkplek/eDEXUI` returns **exactly six
+commits**, 2019-01-27 through 2019-04-28 — **91 days** — and then nothing, ever.
+Meanwhile the application itself was maintained until **2024-07-07** (the last
+substantive commit; the only later one is a 2026 `.gitattributes` housekeeping
+change). **That is 1,897 days — five years two months — of an unpatched 2019-era
+Chromium in production**, across a period in which the surrounding VB was edited
+freely. Nothing failed. Nothing warned. The vendored tree simply stopped being
+something anyone thought about, which is the entire mechanism: **a bundled runtime
+does not decay visibly, so nothing ever prompts the update.** Re-establish with
+`git log --format="%ad" --date=short -- Netwerkplek/eDEXUI` and `du -sh` on the two
+architecture directories.
+
+**A vendored binary can outlive its distributor, leaving the recorded build ID as
+the only identification.** `C:\Source\ExoFabric\Mill` commits ffmpeg at ~63 MB per
+executable — `ffmpeg.exe` 65,870,336 b, `ffplay.exe` 65,759,232 b, `ffprobe.exe`
+65,784,832 b — for a **33-`.cs`** project totalling **204,715,911 tracked bytes**.
+Its vendored `Tools/FFMpeg/README.txt` records
+`Build: ffmpeg-20190704-43e0ddd-win64-static` from Zeranoe, committed **2019-11-12**.
+**The Zeranoe build service shut down in September 2020.** Recording the exact build
+was the right call and is why the binary is identifiable at all — but the build is
+frozen at 2019 with **no update path from the source it came from**, so replacing it
+means re-sourcing from a different distributor and re-establishing provenance from
+scratch. Re-establish by reading that `README.txt` and
+`git log -- Tools/FFMpeg`. *(The Zeranoe shutdown date is a citation carried
+forward, not something re-checked here.)*
+
+**Why both belong in this article rather than in the charter:** they are the
+measured cost of the alternative the charter rejected. `winldd` shipping with no
+license file is a licensing gap someone can close in an afternoon; a 2019 Chromium
+still running in 2024 is not a gap anyone can close, because nothing in the system
+was ever going to raise it.

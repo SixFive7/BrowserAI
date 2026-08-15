@@ -1,0 +1,106 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+
+# E. Lifecycle and observability
+
+Non-negotiable, because every bug this month was a visibility failure. The .NET MCP SDK already implements roughly half of this — `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type that makes bug #2 in [the README's opening table](../README.md#read-this-before-designing-anything) structurally impossible ([kb: SDK behaviours](../kb/mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)).
+
+- **Capture the child's stderr from before it starts.** `RedirectStandardError` + `ErrorDataReceived` + `BeginErrorReadLine()`. The anonymous pipe exists before `CreateProcess` and the kernel buffers, so nothing written earlier is lost ([measured](../kb/windows/processes.md#stdio-exit-codes-and-process-startup): 5 lines survived a 3 s delay *and* child exit). The real risk is the opposite — a full pipe blocks the child.
+- **Record the child's real exit code and cache it as an `int` immediately.** .NET is *worse* than PowerShell here, not better: `Process.ExitCode` **throws** after `Dispose()`, and `Process.GetProcessById(pid).ExitCode` **always** throws. Microsoft's own SDK carries a `beforeDispose` callback commented "to read ExitCode before Dispose() invalidates it" — they hit this too ([kb: stdio and exit codes](../kb/windows/processes.md#stdio-exit-codes-and-process-startup)).
+- **Use `await WaitForExitAsync(ct)`**, never `WaitForExit(int)`. Only the former drains the async readers.
+- **Distinguish error-shaped stderr from benign output.** Port the two regexes verbatim; a healthy start prints `Session: <path>` every time.
+- **Kill the descendant tree with a Windows Job Object**, not `Process.Kill(entireProcessTree: true)`. The latter requires BrowserAI to be alive and running code — which is exactly the case that fails. The full contract, measured end to end, is [below](#zero-process-leakage-the-job-object-contract).
+- **Identify a process by `(pid, creationFileTime)`** — never by a bare PID, which identifies nothing once PIDs recycle, and never by image name (see [§D](D-locking.md#never-by-image-name)). Better still, hold an `OpenProcess` handle: Windows will not recycle a PID while a handle is open, and the handle is signalled on exit, so liveness becomes event-driven instead of a poll loop.
+- **There are no orphaned processes to collect after a crash.** The job object takes the whole tree with it, so a dead BrowserAI leaves no running children — an earlier draft of this document said the opposite. What *can* survive is a stale lockfile, and that is a file problem solved by `FileShare.None` plus the holder record, not a process problem.
+
+**stdout is the protocol channel and it is wrong by default.** Measured: `Console.Out` writes CP437, not UTF-8 (`é` → `0x82`); `Console.InputEncoding` also defaults to CP437; any `TextWriter` emits CRLF; and a hand-rolled `new StreamWriter(stream, Encoding.UTF8)` emits a BOM ([kb: stdio and exit codes](../kb/windows/processes.md#stdio-exit-codes-and-process-startup)). Own the raw streams, never touch `Console.Out`, and let no code anywhere in the process call `Console.WriteLine` — including inside a `catch`. This should be a reviewed invariant owned by one wrapper type, not a convention.
+
+**Reading from the console is banned alongside writing to it.** `Console.ReadKey`, `Console.ReadLine` and `Console.In` are forbidden process-wide, at the same analyzer severity as the write side. The rule was previously written for output alone, which leaves the worse half open: a `Console.ReadKey()` in a `catch` — the *"press any key"* reflex, and it is a reflex — does two things at once on a background MCP server. It **hangs forever**, because there is no keyboard, with no output anywhere to say why. And it **steals bytes from the protocol channel**, because `stdin` is where the client's JSON-RPC arrives, so any byte it consumes is a request that never gets answered and a stream that never re-synchronises. The write side corrupts one message; the read side deadlocks the server and eats the evidence.
+
+## Logging: where it goes, and what forces it to stderr
+
+**Settled 2026-08-16.** Nothing in this section existed before that date, which is why the observability requirements above had no place to land: the plan required that failures be visible and never said where the record of one is written.
+
+**Two destinations, chosen by whether a session exists.**
+
+| Scope | Destination | Why there |
+|---|---|---|
+| Anything a session did | `<session-dir>\browserai.log`, at the session root beside `lock.json` | The session directory is the identity. A log that travels with the directory is a log an agent can read with the path it already has, and one that `browserai_destroy` removes with everything else |
+| Everything before or outside a session — startup, [the stray sweep](C-sessions.md#the-stray-sweep-and-the-concurrency-it-must-survive), first-run browser provisioning, applying an update | One rolling process log under the app data root, **outside `current\`** | There is no session to attach it to, and these are exactly the events whose record must survive the thing that produced them |
+
+The session root is [already reserved](C-sessions.md#the-session-directory-is-the-identity) — *"`lock.json` … the only file at the root"* — so this is a deliberate second file there rather than an oversight, and the rule becomes *the root holds what BrowserAI owns; everything else is a subfolder*.
+
+**The process log resolves from `VelopackLocator.Current.RootAppDir`, never `AppContext.BaseDirectory`.** `%LocalAppData%\BrowserAI\logs\`, beside `browsers\` and for the same reason: `current\` is wholly replaced on update, so a log written inside it is deleted by the event most likely to have produced the line you want. `AppContext.BaseDirectory` resolves *inside* `current\` while reading as "next to the binary", which is why this is stated as a prohibition rather than a preference — [UCC does exactly this](G-updates.md#prior-art-exofabricucc), with a 10-day retention policy that can therefore never once have applied. Applying an update is itself one of the events that logs here, so the destination has to outlive the update by construction.
+
+### Every line goes to stderr, by configuration
+
+**The routing is a setting, not a rule people follow.** `Microsoft.Extensions.Logging`'s console provider exposes `LogToStandardErrorThreshold`: every record at or above that level is written to stderr instead of stdout. Set it to the lowest level that exists and **no severity has a path to stdout at all** — not `Information`, not `Trace`, not a line added in three months by someone who never read this document.
+
+This is the difference between a mechanism and a habit, and it is worth being explicit about, because the plan already carries the habit version. *"Let no code anywhere in the process call `Console.WriteLine`"* is a convention: it holds exactly as long as every future change is reviewed by someone who knows it, and its failure mode is one corrupted JSON-RPC frame and a client that gives up. A threshold is checked by the logging framework on every record, forever, with nobody remembering anything. Both stay — the ban catches direct console writes that never reach the logger, the threshold catches everything that does — but only one of them is enforcement.
+
+### The sink itself has requirements
+
+- **Append, never truncate on start.** With ~100 concurrent BrowserAI processes, a start is the most common event there is, and a log that wipes itself on start is a log that has deleted the previous crash by the time anyone looks. The process log rolls by size and age; it does not restart.
+- **Flush before exiting, on every path including the crash path.** An asynchronous sink plus `Environment.Exit` drops precisely the line that explains the exit — the queued record is discarded with the queue. Every exit path flushes and waits, and the *last* thing written before an abnormal exit is flushed synchronously rather than queued. Whether the framework's own console provider drains its queue at process exit is **unverified here**: verify it before relying on it, or own the sink. An unverified flush is the same class of assumption as an unread exit code.
+- **No destination that can block or produce a window.** This widens the stdout rule rather than repeating it: banning `Console.WriteLine` says nothing about *where the logger writes*, and the sink is the part that can hang the server. No network sink, no message box, no `Debug.Assert` (which raises a dialog on a machine with no one at it), no UNC path — [a `\\host\share` that is not answering blocks a file call for 21 seconds](C-sessions.md#detection-enumerate-then-prove-ownership), measured, and a log write is not somewhere to discover that. Local disk and stderr only, and a write that fails is dropped rather than retried into a stall: **logging must never be able to become the outage.**
+- **Demultiplex by handle.** [N children means N stderr streams](C-sessions.md); every record carries its session so the interleaving is readable at the moment it matters.
+
+Debug level is [an argument on `init` and `resume`](C-sessions.md#the-session-directory-is-the-identity), per session, so raising it costs nothing on the other ninety-five.
+
+## Zero process leakage: the job object contract
+
+Verified end to end 2026-08-15 against real Chromium and Firefox trees: **16 runs, 106 spawned processes, 0 escapees, 0 survivors.** The measurement harness lives at `.work/jobtest/` and is the working prototype of the acceptance test below. Full provenance: [kb: job objects](../kb/windows/processes.md#job-objects-and-process-containment).
+
+**The rule, and why the intuition runs backwards.** On Windows, job membership is inherited *automatically* by every descendant created with `CreateProcess`. A component that spawns children "the normal way" is precisely the case that works. Escaping requires an explicit opt-in **that our job must grant** — and when a process requests `CREATE_BREAKAWAY_FROM_JOB` from a job that does not permit it, `CreateProcess` **fails with `ERROR_ACCESS_DENIED` rather than escaping**. A job that grants no breakaway flags therefore converts every escape attempt into a launch failure. This is the inverse of Linux process-group semantics; do not reason about it by analogy, and do not assume a component that "just spawns normally" is a hole.
+
+Nested jobs make the chain safer, not weaker. Per [Nested Jobs](https://learn.microsoft.com/windows/win32/procthread/nested-jobs), a breakaway "moves up the hierarchy until it reaches a job that does not permit breakaway" — so a nested job that permits *silent* breakaway still cannot launder a process out of ours. That matters because the production chain already contains one: **libuv creates a global job with `JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK`** and assigns every non-detached child to it, and Playwright spawns the browser with `detached: false` on Windows (`coreBundle.js`). Firefox's launcher process stacks a second such job. Containment held through both — the strongest available confirmation, because that is the exact configuration that would leak if our job were misconfigured.
+
+Neither browser fights us. Every Chromium caller of `CREATE_BREAKAWAY_FROM_JOB` is installer, updater or remote-desktop code; no renderer, GPU, utility, network-service or crashpad path requests it. Firefox's `NeedToBreakAwayFromJob()` returns false unless the job carries **both** `KILL_ON_JOB_CLOSE` and `BREAKAWAY_OK` — ours carries only the first, so Firefox checks and declines.
+
+**Must do:**
+
+1. Create the job with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` via `SetInformationJobObject(JobObjectExtendedLimitInformation)`, **and nothing else**.
+2. **Create the job handle non-inheritable** (`NULL` security attributes) and never duplicate it into the child. Measured fatal otherwise: with an inherited handle, BrowserAI's death no longer closes the *last* handle, `KILL_ON_JOB_CLOSE` never fires, and **every child survived**. Redirecting stdio forces `bInheritHandles=TRUE`, so this is one flag away at all times.
+   - **And create it unnamed** — `NULL` for `lpName`. A non-inheritable handle to a *named* job closes one door and leaves the other open, because a name is an `OpenJobObject` away from a handle anyone on the machine can hold. Settled 2026-08-16 and reasoned in [§D](D-locking.md#the-job-object-is-unnamed), where it sits beside the mutex-naming rules it is the counterpart to.
+3. **Assign at creation** with `PROC_THREAD_ATTRIBUTE_JOB_LIST` + `EXTENDED_STARTUPINFO_PRESENT` on `CreateProcessW`. Membership becomes part of process creation, so the race window does not exist rather than being closed after the fact. Windows 10+, which matches the floor. Preferred over `CREATE_SUSPENDED` → assign → `ResumeThread`, which also works but leaks a suspended process if BrowserAI dies mid-sequence.
+4. **One job per instance, created fresh at each spawn.** Never assign BrowserAI itself to a job: with N instances in one process that fuses every tree together and makes BrowserAI a casualty of any single teardown.
+5. **Check every return value and fail loudly** — `CreateJobObject`, `SetInformationJobObject`, `CreateProcessW`, and `AssignProcessToJobObject` if ever used as a fallback. libuv swallows `ERROR_ACCESS_DENIED` from this call; BrowserAI must not. A swallowed failure here is exactly the reported-healthy-while-broken class this project exists to eliminate.
+6. **Hold the job handle for the instance's whole life** and let process death close it. Never `CloseHandle` it early.
+
+**Must never do:**
+
+1. **Never `JOB_OBJECT_LIMIT_BREAKAWAY_OK` or `JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK`.** Either turns the guarantee into a suggestion, and `BREAKAWAY_OK` specifically flips Firefox's `NeedToBreakAwayFromJob()` to true — actively arming an escape that is otherwise disarmed.
+2. **Never `JobObjectBasicUIRestrictions`.** Jobs nest only if neither sets UI limits; setting them can stop Chromium's sandbox job from nesting inside ours.
+3. **Never `Process.Start` followed by `AssignProcessToJobObject`.** Measured: 2 escapees, because the child spawns grandchildren before the assign lands. `.NET` cannot express the correct pattern — `ProcessStartInfo` has no creation-flags surface and .NET exposes no job-object API — so a P/Invoke is mandatory, not a preference.
+4. **Never `Process.Kill(entireProcessTree: true)`.** It walks parent-child links, which are re-parentable and PID-reusable. The job is neither.
+5. **Never rely on libuv's job as the containment mechanism.** It is a happy accident of Playwright's `detached: false` on Windows and could change in any release — exactly the floating-dependency risk the test suite exists to catch. Useful as a second, independent kill path; never as the first.
+
+**Expected side effect, not a defect.** Firefox's background tasks (`BackgroundTasksRunner`) and its crash reporter request breakaway, so inside our job their `CreateProcess` fails with `ERROR_ACCESS_DENIED`. That is the correct trade — a failed helper launch beats an escaped `firefox.exe --backgroundtask`. If Firefox ever logs a failed background task, this is why, and it is not a bug to fix.
+
+**NativeAOT.** Use `[LibraryImport]`, not `DllImport` — the latter relies on runtime IL-stub generation. `LibraryImport` does not support `StringBuilder`, so pass the command line as a writable `char[]`/`Span<char>`: `CreateProcessW` mutates the buffer, so a `string` literal is not valid ([kb: interop](../kb/windows/processes.md#interop-and-the-toolchain)). Keep `JOBOBJECT_EXTENDED_LIMIT_INFORMATION` and `STARTUPINFOEX` blittable and consider `DisableRuntimeMarshalling`. Nothing here touches AOT's limitation list — no dynamic loading, no `Reflection.Emit`, no built-in COM.
+
+**BrowserAI running inside someone else's job is safe**, measured in all three ancestor configurations: an outer job with `KILL_ON_JOB_CLOSE` only (a CI runner), one that also permits breakaway, and one with `SILENT_BREAKAWAY_OK` — which is the realistic case, since any MCP client that spawns BrowserAI through Node `child_process` puts us in libuv's job.
+
+**The acceptance test.** Launch the child, enumerate via `QueryInformationJobObject(JobObjectBasicProcessIdList)`, assert `IsProcessInJob` is true for every PID in the descendant tree, hard-kill the launcher from outside, assert every PID is gone and every profile directory can be deleted — a directory that still holds a lock proves an escaped browser. Cross-check the job's PID list against a toolhelp descendant walk seeded from an I/O completion port on the job, so a process whose parent already exited is not missed. **Never match, count or terminate by image name at any step**; act only on PIDs recorded at spawn, validated against recorded creation time.
+
+## Deleting a tree that fights back
+
+**Settled 2026-08-16: BrowserAI hand-rolls its own recursive delete, and never uses `Directory.Delete(path, recursive: true)` or an `AllDirectories` enumeration to drive one.** This is a shared routine with three callers, and each of them meets the failure for a different reason:
+
+- **`browserai_reinstall_browser`** removes a browser tree that ~100 concurrent processes might still be reading, which is why it refuses to act while any session has a live browser — and refusing is not the same as being safe, because a leaked handle from a crashed run answers to nobody.
+- **`browserai_destroy`** deletes a session directory that has just held a running browser. Chromium leaves mapped files and handles behind for a moment after exit, and a delete that races that moment is the normal case rather than the unlucky one.
+- **The Velopack swap** replaces `current\` wholesale, and [`force_stop_package` kills by image path](G-updates.md) rather than waiting for anything to let go.
+
+**The framework enumeration is the wrong primitive, and the reason is that it fails whole rather than per-node.** `Directory.EnumerateFileSystemEntries(root, "*", SearchOption.AllDirectories)` aborts the **entire** enumeration on the first `UnauthorizedAccessException` — one unreadable subdirectory anywhere in the tree and every entry after it is never yielded, including the thousands that would have deleted cleanly. The caller sees an exception and no partial progress, which converts a locked file into a whole directory that never gets cleaned up. `Directory.Delete(path, recursive: true)` inherits the same behaviour, because that is how it walks.
+
+Note also that **`Directory.GetFiles(path)` is top-level only** unless `AllDirectories` is passed, so the safe-looking alternative is not a recursive delete at all — it silently leaves every subdirectory in place, and the failure is an empty-looking result rather than an error.
+
+**The routine:** a **post-order recursive walk** — descend into each subdirectory and delete its contents before deleting the directory itself, because a directory cannot be removed while it holds entries — with a **try/catch per node**. A node that cannot be deleted is recorded and skipped; the walk continues through its siblings and its parents' siblings. The result is a count of what went and a list of what did not, which is what the caller reports: `browserai_destroy` says which files survived, not merely that it failed. **Deleting nine thousand files and reporting the eleven that were locked is a better outcome than deleting nothing and reporting one exception**, and it is the one the framework primitive cannot produce.
+
+## A recovery path must do something different
+
+**A retry that repeats the failed call is not a recovery — it is the same call, later.** Whenever this plan says an operation is retried, the retry has to name what it will do *differently*: close and reopen a handle rather than re-read the same one, delete and re-provision rather than re-launch, refuse and report rather than loop. If nothing differs, the second attempt is a guess that the first failure was transient, and a guess is not a design.
+
+> This rule is written down because the plan carried an instance of exactly the thing it forbids. `lock.json` was to be *"rewritten in place; a reader that catches a torn write retries once"* — a bare repetition with no reason to expect a different outcome, and no answer for what happens when the second read tears too. It is [superseded by an atomic rename](D-locking.md#durable-lockjson-writes), which removes the torn read rather than retrying it. That is the shape: the fix for a retry with nothing behind it is usually to make the failure unreachable.
+
+The delete routine above is the same principle at a different scale. It does not retry the locked file; it takes a different action — record it, skip it, keep going, report it — and the caller is told precisely what remains.

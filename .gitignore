@@ -513,3 +513,87 @@ TestResults/
 .claude/*
 !.claude/settings.json
 !.claude/hooks/
+
+# --- Secrets: certificates, keys and signing material ------------------------
+# Matched by artifact class, never by filename. The evidence is from this
+# estate: a repository ignored `key.properties` -- the passwords file -- and
+# carried no `*.jks` rule at all, so the release-signing keystore those
+# passwords protected sat committed while the ignore rules read as complete
+# cover. A filename list is only ever as good as the names someone thought of;
+# an extension class does not depend on anyone having thought of them.
+#
+# `*.pfx` already appears in the upstream half above, and `*.snk` is there
+# commented out. Both are asserted again here on purpose: this half is the one
+# that gets read, and re-fetching the upstream half wholesale (TODO.md) must not
+# be able to quietly drop either. `.gitattributes` already calls most of these
+# binary -- that suppresses a diff, not a commit.
+#
+# Nothing in this project needs a committed certificate today. If a test fixture
+# ever does, negate it by exact path (`!tests/Fixtures/localhost.pfx`), so the
+# exception is visible in the diff rather than implied by a missing rule.
+
+# Key stores and certificate containers.
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.p7b
+*.pem
+*.der
+*.cer
+*.crt
+
+# Private keys and signing material, including the extensionless OpenSSH forms.
+*.key
+*.snk
+*.pk8
+*.p8
+*.ppk
+*.gpg
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*_rsa
+*_ed25519
+
+# --- BrowserAI session directories -------------------------------------------
+# BrowserAI requires an explicit session directory and accepts any path the
+# caller names (README, settled 2026-08-13), so a session driven against this
+# repository during development -- which will happen -- lands its tree wherever
+# it was pointed. There is no path to anchor to, only names. These are the real
+# names, taken from the plan's session-directory and artifact-management
+# sections rather than guessed:
+#
+#   <session-dir>\  lock.json  session.json  profile\  downloads\
+#                   output\{console,network,page,request,response,result,
+#                           storage-state,video,traces}\
+#
+# `storage-state` is the one that matters most: those files are live session
+# bearer tokens, including the httpOnly cookies JavaScript cannot read, so it is
+# matched as a loose name-class too and not only as a folder. The per-session
+# log sits beside `lock.json` and is already covered by the upstream half's
+# `*.log`.
+#
+# `lock.json` is a whole-name match: it does not touch `packages.lock.json`,
+# which must stay tracked because the floating-dependency check diffs it.
+#
+# The typed folders carry their `output/` parent so a future `src\...\Page\` or
+# `Result\` is not swallowed -- core.ignorecase applies, per this section's
+# header. `profile/` and `downloads/` sit at the session root and cannot be
+# scoped that way; if this repository ever grows source folders by those names,
+# negate them here.
+lock.json
+session.json
+storage-state*
+profile/
+downloads/
+**/output/console/
+**/output/network/
+**/output/page/
+**/output/request/
+**/output/response/
+**/output/result/
+**/output/storage-state/
+**/output/video/
+**/output/traces/

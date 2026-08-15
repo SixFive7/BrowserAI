@@ -85,6 +85,22 @@ differently and passes where production 404s.
 > `HttpRequestException … 404`. Not silent, not "unrecoverable in the field" —
 > catchable, so a health check can detect it.
 
+> **Qualified 2026-08-16: a 404 is not by itself a misconfiguration signal.** The
+> verdict above is right that the 404 is catchable, but it leaves the impression
+> that catching one is enough for a health check to conclude something is wrong.
+> It is not — **a legitimately empty channel returns the same 404.** Read from
+> `C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Troubleshooting.md`, which lists
+> *"Empty channel: no releases published to that channel yet"* first among the
+> causes and ships the discrimination as
+> `catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)`
+> → log at Debug, report "no update", re-arm the schedule. So the status code
+> separates *404* from *transport failure*, and nothing more; distinguishing a
+> misconfigured feed URL from an unpublished channel needs a second signal, such
+> as whether any channel resolves. Consequence for us: a health check that alarms
+> on 404 will cry wolf on every pre-release channel we have not yet published to.
+> Read from source, not run. `[MACHINE]` for the UCC code; the 404-on-empty
+> behaviour is Velopack's and `[FLOATS]` with it.
+
 ### 2. `SetAutoApplyOnStartup(false)` is mandatory
 
 **`SetAutoApplyOnStartup` defaults to `true`.** On finding a staged package,
@@ -168,6 +184,54 @@ separate from .NET's**, and can fail *before* the managed app exists: before
 > `IsWow64Process2` is now dynamically loaded with an error path. Shipped binaries
 > are MinOS 6.0, 32-bit PE32 GUI; no `vpk pack` option sets `os_min_version`.
 
+## The restart handover race, and why `Update.exe` is the answer
+
+Read 2026-08-16 from
+`C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Application Restart.md`, which
+documents both wrong answers as well as the right one. Not run here. `[STABLE]`
+for the race; `[FLOATS]` for the API surface.
+
+The pieces are already elsewhere in this article — `UpdateExe.Start(waitPid)` in
+[landmine 7](#7-applyupdatesandrestartnull-as-a-bare-restart), `force_stop_package`
+in [landmine 4](#4-force_stop_package-kills-everything-under-the-root), and UCC
+being single-instance via a named mutex in
+[Prior art](#prior-art-exofabricucc) — but they are never joined into the race
+itself, which is the part that bites:
+
+- **Spawn the new instance, then exit.** The new process checks the mutex while
+  the old one still holds it, concludes another instance is running, takes the
+  secondary path — for UCC, sending a `TOGGLE` over the pipe — and exits. *"Result:
+  App hides instead of restarting."*
+- **Release the mutex first, then spawn.** Now there is a window in which no
+  instance holds it, and any unrelated launch in that window — a Start-menu click
+  — becomes primary. *"Result: Wrong instance becomes primary."*
+
+There is no ordering of "release" and "spawn" that closes both, because the
+process doing the handover is one of the two parties to it. **`Update.exe`
+resolves it by being neither:** it is an external Rust binary that outlives the
+app, receives the PID via `waitPid`, waits for *actual process death* rather than
+a close request, and only then launches. The mutex is released by the OS at
+termination, which is strictly before the new process starts.
+
+Two consequences worth carrying:
+
+- **The signature is `Start(IVelopackLocator locator = null, uint waitPid = 0,
+  string[] startArgs = null)`** — first positional parameter is the locator,
+  confirming the ⚠️ charter code error already recorded in
+  [landmine 7](#7-applyupdatesandrestartnull-as-a-bare-restart) from an
+  independent source.
+- **The update path must not double-restart.** `ApplyUpdatesAndRestart` restarts
+  on its own (`WaitExitThenApplyUpdates(..., restart: true, ...)` then
+  `Environment.Exit(0)`), so calling `UpdateExe.Start` as well produces two
+  relaunches. UCC's fix is to route the update case through the same cooperative
+  shutdown but with `IsRestart: false`.
+
+**Where this stops applying to us:** the whole race is about a *single-instance*
+app coordinating with its own successor. BrowserAI is a stdio child spawned per
+client, so it has no mutex to hand over — but it does inherit the harder half,
+because the relaunched process
+[does not inherit the caller's stdio](#rollback) either way.
+
 ## Rollback
 
 **Velopack prunes `packages\` down to the current full `.nupkg` and deltas are
@@ -235,6 +299,18 @@ and the uninstall hook removed it.
 remained and the feed advertised all of them.
 
 **`vpk` rejects 4-part version numbers** — semver2, three parts only.
+
+**And the assembly version does not follow it: a 4-part assembly version renders
+as `1.0.0.0` wherever the app reads it back.** .NET assembly versions are 4-part
+by default, so packing succeeds with a 3-part semver while the running app — a
+window title, an about box, a log banner — shows a fourth component that exists
+nowhere in the feed. The two numbers are separate and only one of them is
+constrained by `vpk`. The fix is to format explicitly from the parts:
+`$"{v.Major}.{v.Minor}.{v.Build}"`. Read 2026-08-16 from
+`C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Troubleshooting.md`
+(*Version Shows 4 Parts*), where it is filed as a shipped symptom rather than a
+theory. Not run here. `[STABLE]` — this is .NET assembly-version behaviour, not
+Velopack's.
 
 **`.gitignore` verdict** (closes the deferred v1 item): `/Releases/` ✅ ·
 `*-Portable.zip` ✅ · `/RELEASES` ✅ default channel only · **`Setup.exe` never

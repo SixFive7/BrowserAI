@@ -7,7 +7,7 @@ somewhere.
 
 **What does not:** open design questions and known hazards. Those live in the
 README, under [Open design decisions](README.md#open-design-decisions) and the
-[hazard index](PLAN.md#hazard-index). An item moves here once the decision
+[hazard index](plan/hazards.md#hazard-index). An item moves here once the decision
 behind it is made.
 
 **Format:** `- [ ] **Title.** Why it matters, then what to actually do.` Carry the
@@ -15,6 +15,31 @@ README's provenance convention — a claim about an external source needs the da
 and version it was true at.
 
 ## At v1 launch
+
+- [ ] **Write `CHANGELOG.md`. The release refuses without it.** The file does not
+      exist. [The pre-release checklist](plan/pre-release.md) refuses a release
+      whose changelog section for the version being cut is empty, and refuses the
+      version `0.0.0` outright — neither check is enforceable until there is a file
+      with a defined shape to be empty *of*. Decide the format; decide whether a
+      section is headed by the tag or by the bare version, which differ by a `v`
+      now that [versions are derived from tags](README.md#settled-2026-08-16); and
+      write entries **as work lands**, not by reconstructing them at release time.
+      Reconstruction is exactly the failure the empty-section check exists to
+      catch, so a checklist satisfied by fifteen minutes of `git log` archaeology
+      has been satisfied in form only.
+
+- [ ] **Decide how a git tag becomes a version string.** Settled 2026-08-16: three
+      parts plus a pre-release suffix, auto-incremented, nothing hand-edited,
+      because `vpk` rejects four-part versions and the house `base.commitcount`
+      convention therefore cannot be carried. The **mechanism** is not settled —
+      either a build-time package that reads the repository's tags during restore,
+      or derivation in the build script from `git describe`. Whichever is chosen
+      must emit a `vpk`-acceptable string for an **untagged** commit as well as a
+      tagged one, and that is a test rather than an assumption: the untagged
+      build's not-a-release suffix is the whole mechanism behind *never self-update
+      from a build that is not a release*, so a mechanism that silently produces
+      `0.0.0` on a shallow clone or a tagless CI checkout defeats two checklist
+      items at once.
 
 - [x] **Review `.gitignore`.** ✅ Done 2026-08-15, ahead of v1, because the
       Velopack spike produced a real `vpk pack` to check the guesses against.
@@ -70,20 +95,54 @@ and version it was true at.
       `Artifacts/`, which the template's `artifacts/` rule would swallow on
       case-insensitive Windows.
 
+## Decided 2026-08-16 — encoded the same day
+
+Nine decisions from the lesson sweep landed in
+[README → Settled 2026-08-16](README.md#settled-2026-08-16): lock scope (`Global\`
+only, no `Local\` fallback), lock acquisition never waiting, git detection out of
+scope, move-versus-copy on a renamed session directory, logging placement, no
+automated checks, git-tag version numbers, the plan's delete-when-complete
+lifetime, and fix-forward blocking releases indefinitely. The charter is the live
+copy; only the work they create is listed here and under
+[At v1 launch](#at-v1-launch).
+
+- [ ] **Give `[STALE]` a row in `kb/README.md`'s conventions table.** Resolved
+      2026-08-16 in favour of **keeping** it, and
+      [`CLAUDE.md`](CLAUDE.md) now says so; the `kb/` half is owed. Today it is
+      defined in prose *below* the table and used by no article, which reads as a
+      dead marker — it is not. It is the sanctioned alternative to the one thing
+      the whole convention exists to forbid, updating a measurement by reasoning,
+      so deleting the definition would leave guessing as the only exit from an owed
+      re-check — and [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) already instructs a
+      reviewer to apply it, so deletion would strand a procedure step too. Give it
+      a row beside `[FLOATS]`, `[STABLE]`, `[MACHINE]` and
+      `[UNVERIFIED]`, meaning *a re-check is owed and has not happened*. That no
+      entry carries one is the healthy state, not evidence of disuse.
+
+- [x] **No scheduled anything — a decision, not an omission.** ✅ 2026-08-16: no
+      CI, no scheduled job, no git hook. The pre-release checklist is the only gate
+      that exists. This permanently closes the struck *"Add a scheduled
+      upstream-drift check"* under [Later](#later); the
+      [daily drift directive](CLAUDE.md#the-daily-drift-check) is unaffected,
+      because it is a rule an agent runs rather than a job something schedules. The
+      cost is recorded in the charter rather than softened — the gate works when it
+      is invoked, and nothing makes it fire — and the decision is marked for review
+      once the product is finished.
+
 ## Decided 2026-08-14 — encoded 2026-08-15
 
 All three are now proper README sections. Retained here only as a record of what
 was decided when; the README is the live copy and the two have diverged where
 later measurement overruled the original.
 
-- [x] **First-run browser provisioning** → [PLAN §A → first-run browser provisioning](PLAN.md#first-run-browser-provisioning).
+- [x] **First-run browser provisioning** → [PLAN §A → first-run browser provisioning](plan/A-runtime.md#first-run-browser-provisioning).
       Changed since: `chrome-headless-shell` is no longer provisioned, and the
       manifest/health-check layer was dropped by decision — the recovery is manual
       and the error text carries it.
 - [x] **Instance lifetime** →
-      [The session directory is the identity](PLAN.md#the-session-directory-is-the-identity),
-      [Lifetime](PLAN.md#lifetime-one-timer-and-reclaim-is-forever),
-      [Finding sessions](PLAN.md#finding-sessions-without-a-registry).
+      [The session directory is the identity](plan/C-sessions.md#the-session-directory-is-the-identity),
+      [Lifetime](plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever),
+      [Finding sessions](plan/C-sessions.md#finding-sessions-without-a-registry).
       Changed substantially since: the central registry is **dropped**, the bearer
       token is **dropped**, labels are **dropped**, and every expiry timer except
       browser-idle is **dropped**. The directory is the identity, the handle and
@@ -226,8 +285,8 @@ later measurement overruled the original.
       One timer only — browser-idle — and **the registry is dropped**: the
       directory is the identity, the handle and the lock, and `lock.json` inside it
       is the authority. Labels are gone with it. See
-      [The session directory is the identity](PLAN.md#the-session-directory-is-the-identity)
-      and [Lifetime](PLAN.md#lifetime-one-timer-and-reclaim-is-forever).
+      [The session directory is the identity](plan/C-sessions.md#the-session-directory-is-the-identity)
+      and [Lifetime](plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever).
 
 ## Open after 2026-08-15
 
@@ -243,7 +302,7 @@ later measurement overruled the original.
       settle it is recorded in the KB.
 
 - [x] **When does the stray sweep run?** ✅ Settled and encoded as
-      [The stray sweep](PLAN.md#the-stray-sweep-and-the-concurrency-it-must-survive).
+      [The stray sweep](plan/C-sessions.md#the-stray-sweep-and-the-concurrency-it-must-survive).
       Two triggers — BrowserAI startup and a logon scheduled task — each looking
       twice, with twelve races enumerated and a test against each. Detection is
       enumeration rather than inventory lookup
@@ -251,7 +310,7 @@ later measurement overruled the original.
       so the sweep and the pointer store are now independent.
 
 - [x] **The four named modes become three plus a modifier.** ✅ Settled and encoded
-      2026-08-15 as [Three modes](PLAN.md#three-modes-and-tracing-as-a-modifier),
+      2026-08-15 as [Three modes](plan/C-sessions.md#three-modes-and-tracing-as-a-modifier),
       with the eight-combination table, the reason rows 3–4 stay closed, and
       discoverability as a hard requirement across four model-facing channels
       generated from one table.
@@ -276,7 +335,7 @@ later measurement overruled the original.
 - [x] **Label reuse.** ✅ Moot. Labels are gone — the directory is the identity.
 
 - [x] **Never kill by image name.** ✅ Encoded 2026-08-15 as
-      [§D → Never by image name](PLAN.md#never-by-image-name), with the
+      [§D → Never by image name](plan/D-locking.md#never-by-image-name), with the
       two-mechanism invariant (job object for the living, path-keyed identification
       for survivors), the forbidden-API list at analyzer-error severity, and the
       measured warning that `--user-data-dir` alone is **not** an ownership signal —
@@ -294,7 +353,7 @@ later measurement overruled the original.
 - [x] **First-run download self-healing.** ✅ Decided: stay with Playwright's
       built-in capabilities, no manifest and no health-check layer. The consequence
       is stated plainly in
-      [§A](PLAN.md#first-run-browser-provisioning) rather than softened —
+      [§A](plan/A-runtime.md#first-run-browser-provisioning) rather than softened —
       a tree corrupted *after* a successful install never re-downloads, because
       `INSTALLATION_COMPLETE` short-circuits without validating. Recovery is the
       `browserai_reinstall_browser` tool plus error text that names the path.
@@ -309,7 +368,11 @@ later measurement overruled the original.
       `lock.json` and refuses it as an argument, because a profile is
       browser-specific. Firefox ships in v1.
 
-- [x] **Firefox's `parent.lock` preflight.** ✅ Encoded 2026-08-15 in PLAN.md as *Firefox: the preflight, and a second detection path* — the preflight is mandatory rather than defence in depth, and detection needs only a different attribution step, because image-path detection already covers Firefox for free. Original note follows.
+- [x] **Firefox's `parent.lock` preflight.** ✅ Encoded 2026-08-15 as
+      [§D → Firefox: the preflight, and a second detection path](plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)
+      — the preflight is mandatory rather than defence in depth, and detection
+      needs only a different attribution step, because image-path detection
+      already covers Firefox for free. Original note follows.
 
 - [x] ~~**Firefox's `parent.lock` preflight.**~~ The one piece of Firefox support that
       is designed but not yet written into the charter as a requirement. Playwright's
@@ -322,6 +385,15 @@ later measurement overruled the original.
       sharing-violation → Restart Manager `RmGetList` for the PID.
 
 ## Later
+
+- [ ] **Review the "no automated checks" decision once the product is finished.**
+      Taken 2026-08-16 with the cost stated plainly: the
+      [pre-release checklist](plan/pre-release.md) is the only gate, it works when
+      it is invoked, and nothing makes it fire. That trade is right while both the
+      suite and the release cadence are predicted rather than observed — many
+      commits without re-running everything, and no hosted CI — and it is
+      explicitly marked for review when they are neither. Re-open it against the
+      finished product and a real cadence, not against a guess about them.
 
 - [x] **Upstream-drift check.** ✅ Done 2026-08-15, but **not** as a scheduled job.
       A [`CLAUDE.md` directive](CLAUDE.md#the-daily-drift-check) runs it at most

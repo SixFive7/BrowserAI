@@ -17,9 +17,9 @@ The golden `tools/list` snapshot catches surface changes — a new tool, a renam
 - a fixed bug that changes response shape
 - a new capability worth enabling, or worth deliberately declining
 
-So the marker gates adoption. When the build resolves a version newer than the reviewed one, the marker test fails and [the release gate](PLAN.md#the-release-gate) cannot pass.
+So the marker gates adoption. When the build resolves a version newer than the reviewed one, the marker test fails and [the release gate](plan/testing.md#the-release-gate) cannot pass.
 
-**This is now a proof, not a speed bump.** An earlier design gated the marker behind a human approval prompt; it was abandoned on 2026-08-15 after measurement showed it inert against sub-agents and, against a human, evidence only that someone clicked. [The gate is mechanical](PLAN.md#the-upstream-review-gate): four snapshots — `tools/list`, `--help`, `config.d.ts`, `browsers.json` — are regenerated from the resolved payload and diffed, the suite runs in full, and the marker entry must adjudicate every snapshot that changed and answer every manual re-verification row by name. **A review that ignores what the build observed fails the build.** What is left to a person is judgement — whether a change touches an abstraction of ours — not vigilance.
+**This is now a proof, not a speed bump.** An earlier design gated the marker behind a human approval prompt; it was abandoned on 2026-08-15 after measurement showed it inert against sub-agents and, against a human, evidence only that someone clicked. [The gate is mechanical](plan/testing.md#the-upstream-review-gate): four snapshots — `tools/list`, `--help`, `config.d.ts`, `browsers.json` — are regenerated from the resolved payload and diffed, the suite runs in full, and the marker entry must adjudicate every snapshot that changed and answer every manual re-verification row by name. **A review that ignores what the build observed fails the build.** What is left to a person is judgement — whether a change touches an abstraction of ours — not vigilance.
 
 ## What a review consists of
 
@@ -29,13 +29,13 @@ Read these, in this order. The first two carry most of the value.
 |---|---|
 | `git diff <old>..<new> -- tests/` in the upstream repo | **What upstream now asserts.** Better signal than the changelog — tests are executable, changelogs are editorial. This is the whole point of the exercise |
 | `git diff <old>..<new> -- config.d.ts` (`@playwright/mcp`) | Renamed or removed config keys. **Highest-value diff of the set**, because this failure is silent by construction |
-| `browsers.json` | A moved browser revision. **Nothing in the payload changes** — browsers are [provisioned on first run](PLAN.md#first-run-browser-provisioning), not built into the installer — but every machine re-downloads **203.8 MB** and re-extracts 433 MiB, and the old revision sits on disk until something prunes it. (This row previously said "~700 MB", which was MiB-on-disk for *both* browsers back when the payload carried them.) |
+| `browsers.json` | A moved browser revision. **Nothing in the payload changes** — browsers are [provisioned on first run](plan/A-runtime.md#first-run-browser-provisioning), not built into the installer — but every machine re-downloads **203.8 MB** and re-extracts 433 MiB, and the old revision sits on disk until something prunes it. (This row previously said "~700 MB", which was MiB-on-disk for *both* browsers back when the payload carried them.) |
 | CLI surface: `--help` on old vs. new | Flags that vanished. This is the `--output-mode` class |
 | Release notes / changelog | Intent and rationale the diffs do not carry |
-| For `ModelContextProtocol`: `Directory.Packages.props` | Whether the SDK changed *its own* test framework. It is on `xunit.v3` today; we are on TUnit deliberately, and a move upstream is worth knowing about |
+| For `ModelContextProtocol`: `Directory.Packages.props` | Whether the SDK changed *its own* test framework. `Verified 2026-08-14 @ 2.2.0`: `xunit.v3`. We are on TUnit deliberately, and a move upstream is worth knowing about |
 | **[`kb/`](kb/README.md) → [Re-verification index](kb/README.md#re-verification-index)** | **Measured facts this project depends on that a bump can silently invalidate.** Work the table top-down; the first three each falsify a design decision if they move. Each row links to the article that established it. This is the half of the review that catches "upstream did not change its surface, it changed its behaviour" |
 
-**One specific thing to watch in the `playwright-core` diff.** Upstream passes `["chrome-win"]` to the `winldd` dependency check while Chromium extracts to `chrome-win64`, so for Chromium the check is a **permanent no-op** today. If that one-character mismatch is ever fixed, Chromium starts validating **39 binaries on every cold start** — +329 ms, cached for 30 days — and a bug fix upstream arrives here as a latency regression with nothing announcing it. The check is [re-verification row 10](kb/README.md#re-verification-index); this paragraph is why that row exists.
+**One specific thing to watch in the `playwright-core` diff.** Upstream passes `["chrome-win"]` to the `winldd` dependency check while Chromium extracts to `chrome-win64`, so for Chromium the check is a **permanent no-op**. `Verified 2026-08-15 @ playwright-core 1.63.0-alpha-2026-08-05`. If that one-character mismatch is ever fixed, Chromium starts validating **39 binaries on every cold start** — +329 ms, cached for 30 days — and a bug fix upstream arrives here as a latency regression with nothing announcing it. The check is [re-verification row 10](kb/README.md#re-verification-index); this paragraph is why that row exists.
 
 ## What to write down
 
@@ -47,7 +47,7 @@ Update the entry in [`upstream-review.json`](upstream-review.json):
 
 A decline with a reason is worth as much as an adoption: it stops the same question being re-litigated at the next bump. An empty note is a review that did not happen, and it is visible as such in the diff.
 
-If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the plan's [hazard index](PLAN.md#hazard-index), and the fact behind it in the [`kb/`](kb/README.md) article that owns the topic — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.
+If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the plan's [hazard index](plan/hazards.md#hazard-index), and the fact behind it in the [`kb/`](kb/README.md) article that owns the topic — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.
 
 **If a re-verification comes back different, update the [`kb/`](kb/README.md) article that carries the fact by re-running the measurement — never by reasoning.** An entry whose number was adjusted to match an expectation reads identically to one that was measured, which makes it worse than no entry at all. If a check is owed and has not been run, mark it `[STALE]` and say so; a gap that announces itself is recoverable, a confident wrong number is not.
 
@@ -57,4 +57,4 @@ A big upstream jump is not a reason to skip the review; it is the reason the rev
 
 ## If a change breaks us
 
-**Fix forward. Do not pin back.** The response to a breaking upstream change is to make the newest version work — that is [rule 4](README.md#the-four-rules-that-make-floating-safe) of the versioning policy, and "pin it back for now" is the failure the policy exists to prevent. A red suite blocks the *release*, never the *update*.
+**Fix forward. Do not pin back.** The response to a breaking upstream change is to make the newest version work — that is [rule 4](README.md#the-five-rules-that-make-floating-safe) of the versioning policy, and "pin it back for now" is the failure the policy exists to prevent. A red suite blocks the *release*, never the *update*.

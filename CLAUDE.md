@@ -3,11 +3,15 @@
 
 # BrowserAI — working instructions
 
-BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@playwright/mcp` child over stdio. [`README.md`](README.md) is the charter — architecture, scope and the reasoning behind every decision. [`PLAN.md`](PLAN.md) is what to build, and is consumed as the code gets written. This file is the standing rules for working in the repository.
+BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@playwright/mcp` child over stdio. [`README.md`](README.md) is the charter — architecture, scope and the reasoning behind every decision. [`PLAN.md`](PLAN.md) is what to build — a short index over the [`plan/`](plan/) folder, one file per section. This file is the standing rules for working in the repository.
 
-**Status: design phase, nothing is built.** Work settled in intent but not yet done lives in [`TODO.md`](TODO.md); open design questions stay in the README, and the [hazard index](PLAN.md#hazard-index) is in the plan.
+**Status: design phase, nothing is built.** Work settled in intent but not yet done lives in [`TODO.md`](TODO.md); open design questions stay in the README, and the [hazard index](plan/hazards.md#hazard-index) is in the plan.
+
+**The plan is consumed and then deleted.** A section is marked `built` in [`PLAN.md`](PLAN.md)'s table the day the code satisfying it lands, and records what implements it. When every section is built, the whole plan is audited once with extreme scrutiny for anything missed, and then deleted. That is why it is a folder: a finished section is removed on its own rather than waiting for one irreversible final act. **Never delete a section without marking what implements it first** — the `Implemented by` column is what makes the final audit a checklist instead of a cold re-read. The hazard index is the one file that is not consumed; its rows gain a status and the evidence that closed them.
 
 **Measured facts go in the knowledge base at [`kb/`](kb/README.md), not in the README and not in the plan.** The README says what we decided; the plan says what to build; `kb/` says what we measured about Chromium, Firefox, Playwright, Node and Windows. It is a directory tree with one article per topic and a topic-sorted index at [`kb/README.md`](kb/README.md) — put a new fact in the article it belongs to, never in a new top-level file. Every entry carries a date, the versions it held under, and how to re-establish it. **Never update a result by reasoning — re-run the measurement, or mark the entry `[STALE]`.** An adjusted number is indistinguishable from a measured one, which makes it worse than a gap. New `[FLOATS]` entries need a row in the [re-verification index](kb/README.md#re-verification-index), or nobody will ever re-check them.
+
+**`[STALE]` is a marker like the other four**, not an aside — it belongs in [`kb/README.md`](kb/README.md#conventions)'s conventions table beside `[FLOATS]`, `[STABLE]`, `[MACHINE]` and `[UNVERIFIED]`, and means *a re-check is owed and has not happened*. That no article carries one is the healthy state, not evidence the marker is dead: it is the sanctioned alternative to the one thing this whole convention exists to forbid, so removing it would leave guessing as the only way out of an owed re-check. [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) already instructs a reviewer to apply it, so deleting the definition would strand a procedure step as well. Resolved 2026-08-16; before that it was defined in prose under `kb/README.md`'s table, referenced by two procedures, and carried by no article — which reads as dead and is not.
 
 ## Before changing `upstream-review.json` — stop and read the procedure
 
@@ -15,15 +19,16 @@ BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@
 
 **Do not edit that file to make a test pass.** Read [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) and follow it: diff upstream's `tests/`, diff `config.d.ts`, check `browsers.json` and the CLI surface, then record what changed, what was adopted, **and what was declined and why**. A `notes` field left empty or unchanged is a review that did not happen.
 
-**A hook does not gate this file, and cannot.** Measured 2026-08-15: under bypass-permissions a hook's `ask` returned to a sub-agent is silently downgraded to allow, so the prompt never fires for the caller most likely to need it — and against a human it only ever proved a click. [The gate is the suite](PLAN.md#the-upstream-review-gate): four snapshots diffed against the resolved payload, every test green, and an entry that must adjudicate whatever actually moved. Editing the file without that evidence produces a red build, not a prompt.
+**A hook does not gate this file, and cannot.** Measured 2026-08-15: under bypass-permissions a hook's `ask` returned to a sub-agent is silently downgraded to allow, so the prompt never fires for the caller most likely to need it — and against a human it only ever proved a click. [The gate is the suite](plan/testing.md#the-upstream-review-gate): four snapshots diffed against the resolved payload, every test green, and an entry that must adjudicate whatever actually moved. Editing the file without that evidence produces a red build, not a prompt.
 
 ## Versioning: everything floats, the build freezes it
 
-Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in the README, in [`PLAN.md`](PLAN.md#implementation-stack), in [`kb/`](kb/README.md) and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
+Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in the README, in [`plan/`](plan/stack.md#implementation-stack), in [`kb/`](kb/README.md) and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
 
+- **Update first, then work.** Re-resolving everything to latest is the *first* step of touching this project, not a step before release: re-resolve, fix the fallout, then do what was asked. Deferring it is how a project stops following the lead and starts accumulating one upgrade nobody ever takes.
 - **Never pin a dependency to work around a break.** Fix forward; make the new version work.
 - **Never assert a version or a "latest" claim from memory.** If it was not looked up this session, say plainly that it is unverified. A confident stale version is worse than an admitted gap. Route package questions to the `nuget` MCP server, .NET/C# questions to `microsoft-learn`, and anything else to `context7` — but prefer a vendor's own server over `context7`, which is metered.
-- **Stamp what you verify.** The README's convention is `Verified <date> @ <version>`; a bare "Default: X" claim cannot tell you when it was last true.
+- **Stamp what you verify, and stamp what you correct.** Two conventions, both from the README: `Verified <date> @ <version>` for a claim confirmed still true, and **`Corrected <date> @ <version> (previously "X")`** for one that was not. A bare "Default: X" claim cannot tell you when it was last true; a correction with no `previously` clause cannot tell a reader who remembers the old value that it was reviewed and replaced rather than lost. **The `previously` clause is the load-bearing half** — it is what makes a change legible to someone who learned the file before it moved, and what stops the same correction being made twice.
 
 ### The daily drift check
 

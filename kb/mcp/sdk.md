@@ -31,7 +31,7 @@ sees `JsonRpcResponse.Result` as a raw `JsonNode?`.
 > directly. The correction is stated here, at the point of first mention, because
 > a retraction thirty lines further down is one a reader can act on the wrong side
 > of — and this is the file [the plan cites as
-> authoritative](../../PLAN.md#nine-places-where-the-sdk-must-be-deviated-from).
+> authoritative](../../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from).
 
 ## Measured by spike, 2026-08-15
 
@@ -145,7 +145,7 @@ data.
 obvious factory API always reflects the schema from the .NET signature — unusable
 for a proxy, and the first one reached for.
 
-**Roughly half of [§E](../../PLAN.md#e-lifecycle-and-observability)'s
+**Roughly half of [§E](../../plan/E-lifecycle.md#e-lifecycle-and-observability)'s
 observability is already in the SDK:**
 `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a
 `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type.
@@ -157,6 +157,87 @@ before Dispose() invalidates it"* — upstream hit
 `ModelContextProtocol`** — verified in-source **2026-08-14**, set on every target
 except `netstandard2.0`, at both `v1.4.1` and `v2.2.0`. **A declaration is the
 author's claim about their code, not a proof for our usage.**
+
+### Added 2026-08-16 — not part of the 2026-08-15 spike
+
+Three facts established the following day, on other projects. Dated separately so
+nothing here is mis-attributed to the spike above.
+
+**A NativeAOT publish can exit 0 while ILC reports that a code path will always
+throw.** Measured 2026-08-16 against `C:\Source\SixFive7\SpawnSpotter`:
+`dotnet publish -c Release -r win-x64` **exited 0** and produced a working
+**11,220,992-byte** exe (plus a **47,239,168-byte** pdb; ~60 s against ~10 s for a
+JIT build of the same project), while emitting
+
+> `ILC: Method '[Spectre.Console.Cli]OpenCli.OpenCliParser.Parse(Stream,CancellationToken)' will always throw because: Failed to load assembly 'NJsonSchema'`
+
+ILC substitutes a throwing body for a method whose dependency it cannot resolve
+and **carries on**. The message is neither a warning nor an error, so it is
+invisible to `TreatWarningsAsErrors`, to `NoWarn`, and to the exit code — the
+three things a build gate normally reads. Corroborated mechanically the same day:
+`NJsonSchema` appears nowhere in the 273-line
+`obj\Release\net10.0\win-x64\native\SpawnSpotter.ilc.rsp`, which is exactly why
+the load failed.
+
+> ⚠️ **This qualifies [the spike's own "zero trim/AOT warnings"
+> claim](#measured-by-spike-2026-08-15).** That result is not retracted — it was
+> measured, and it remains the right thing to require. But **zero warnings plus
+> exit 0 is not sufficient evidence that the published binary is sound**, and the
+> spike's phrasing invites reading it as if it were. [Re-verification row
+> 27](../README.md#re-verification-index) has been amended accordingly: the check
+> now includes grepping the publish output for `will always throw`.
+
+Two further traps visible in the same project. Its csproj carries
+`<NoWarn>$(NoWarn);IL2104;IL3050;IL3053;IL3000</NoWarn>` (`SpawnSpotter.csproj:27`,
+with a comment justifying it), so "clean" there is partly suppression rather than
+soundness — worth knowing before treating another project's zero-warning claim as
+comparable to ours. And the published artifacts on disk carry an mtime of
+**2026-08-14**, so the byte counts above are a re-reading of that publish rather
+than a fresh one; the sizes and the ILC message are what was verified today, not
+the wall-clock of the run. Re-establish by publishing and **grepping the build
+output for `will always throw`**, never by reading the exit code. `[FLOATS]` for
+ILC's behaviour; `[MACHINE]` for the sizes and timings.
+
+**Full ILC needs the MSVC native toolchain — `link.exe`, discovered via
+`vswhere` — and its absence presents as a library problem.** Recorded at
+`C:\Source\ExoFabric\UCC\aot.md:30`, written 2026-07-07: *"Full ILC `PublishAot`:
+blocked by the environment, not the code… requires the MSVC native toolchain
+(link.exe, discovered via vswhere), which this development machine does not have
+installed."* That project shipped self-contained-single-file instead. The mechanism
+is confirmed here rather than merely quoted: `SpawnSpotter`'s
+`obj\Release\net10.0\win-x64\native\link.rsp` is an MSVC linker response file whose
+`/LIBPATH` entries point under
+`C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231`.
+Worth recording because the failure is routinely misdiagnosed as an SDK or package
+incompatibility, which sends you rewriting code that was never the problem.
+
+> ⚠️ **The environment half of that quote is stale, checked 2026-08-16.** The MSVC
+> toolchain **is** installed on this machine: `vswhere -latest -property
+> installationPath` returns `C:\Program Files\Microsoft Visual Studio\18\Community`,
+> and `VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\link.exe` is present with an
+> mtime of **2026-07-24** — after UCC's note was written. That resolves what would
+> otherwise be a flat contradiction with [the 2026-08-15
+> spike](#measured-by-spike-2026-08-15) and the SpawnSpotter publish above, both of
+> which completed full ILC here. **Never carry an "the environment lacks X" claim
+> forward without re-checking it:** unlike an upstream fact, it can be falsified by
+> an install that nobody records and no version bump announces. `[STABLE]` for the
+> toolchain requirement; `[MACHINE]` and now **superseded** for UCC's environment
+> claim.
+
+**An enum serialised as an integer by a source-generated JSON context fails to
+parse on the way back in, and silently reverts the setting on every restart.**
+`System.Text.Json` writes enums as numbers by default; code reading the value back
+as a string then fails, falls back to the record default, and the user's choice
+appears to "revert" — with no error raised at any point. The fix is
+`UseStringEnumConverter = true` on the context's `[JsonSourceGenerationOptions]`.
+Shipped bug, read 2026-08-16 in
+`C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Troubleshooting.md`
+(*Enum Serialization as Integers — Fixed in 1.0.3*): `settings.json` held
+`"Channel": 0` rather than `"Channel": "Stable"`, and note how it was filed —
+under the symptom *"`Channel` resets to `Stable` after restart"*, i.e. reported as
+a settings bug for as long as it took to find the serializer. **Relevant here
+because a source-generated context is mandatory under AOT**, so this is the
+default path rather than an unusual one. `[STABLE]`
 
 **The SDK's test fixtures are 1,082 lines** (`ClientServerTestBase` +
 `tests/Common/Utils/*`), Apache-2.0, **unpublished to NuGet**, and they wire a

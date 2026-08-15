@@ -81,14 +81,14 @@ through `pickDefined`, which drops `undefined`. See
 [Upstream configuration facts](playwright/configuration.md). The README's two
 stale passages are retired. `[FLOATS]`
 
-**The [§A](../PLAN.md#a-ship-and-own-the-runtime) payload table listed browsers
+**The [§A](../plan/A-runtime.md#a-ship-and-own-the-runtime) payload table listed browsers
 as bundled for a day after the decision
 that they would not be.** Provisioning moved to first run on 2026-08-14; the table
 row survived it. Installer payload is ~117 MB (`node.exe` 88.53 + JS tree 18.11 +
 BrowserAI 9.76 MiB), and the ~806 MB figure remains the right number for a
 **bundled** build if the Chrome-for-Testing redistribution question is ever
 resolved favourably. **It is not the number for disk after first run**, which
-this entry and [§A](../PLAN.md#a-ship-and-own-the-runtime) both went on to claim:
+this entry and [§A](../plan/A-runtime.md#a-ship-and-own-the-runtime) both went on to claim:
 806 counts `chrome-headless-shell` (268.49 MB), which is not provisioned at all.
 Disk after first run is the ~117 MB payload plus 433 MiB of browsers,
 **≈ 570 MB**. `[MACHINE]` for the component sizes, `[FLOATS]` for what is in the

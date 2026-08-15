@@ -3,9 +3,10 @@
 #
 # PreToolUse reminder on upstream-review.json.
 #
-# Fires on Edit/Write, ignores every file but the marker, and injects the review
-# procedure as additionalContext. It decides nothing and blocks nothing -- see the
-# note above the output block for why it stopped being a gate, and PLAN.md
+# Fires on Edit/Write, ignores every file but the marker, and injects a pointer to
+# the review procedure as additionalContext -- a pointer, never the procedure itself;
+# see the note above $reason. It decides nothing and blocks nothing -- see the note
+# above the output block for why it stopped being a gate, and PLAN.md
 # "The upstream-review gate" for what replaced it.
 #
 # Fails OPEN by design: any parse error, missing field or unexpected shape exits 0
@@ -55,34 +56,28 @@ catch {
     exit 0
 }
 
+# The content is a GIST + POINTER, not a copy of the procedure. This block used to
+# restate UPSTREAM-REVIEW.md's five steps verbatim, which put a second copy of them
+# in a file nobody diffs -- and the last project to try that had its hook's summary
+# drift across four repositories while still reading as authoritative. So: enough to
+# make the reader stop, and the path to the authority. Nothing below is authoritative
+# wording, so nothing below can fall out of sync with UPSTREAM-REVIEW.md.
 $reason = @'
-This edits upstream-review.json, which gates adoption of a new upstream version.
+This edits upstream-review.json, the marker that gates adoption of a new upstream
+version.
 
-A red marker test is NOT a stale file to fix. It means a review has not happened yet.
-Editing this file to make a test pass defeats the only mechanism that catches upstream
-behaviour changes, renamed config keys and changed defaults. None of those are visible
-to the golden tools/list snapshot, and loadConfig is a bare JSON.parse with no schema
-validation, so a renamed key is discarded in silence.
+A red marker test is NOT a stale file to fix. It means the review has not happened yet,
+and editing this file to make the test pass defeats the only mechanism that catches what
+a green suite cannot: upstream changing its behaviour rather than its surface.
 
-Nothing here blocks this edit. The gate is the RELEASE, and it is mechanical: the
-build diffs four snapshots against the resolved payload, runs the full suite, and
-fails if this file does not adjudicate what moved. See PLAN.md, "The upstream-review
-gate". What follows is what an adjudication has to be based on:
+There is a written procedure for that review, and it is not optional: UPSTREAM-REVIEW.md
+in the repository root. Read it now and follow it there. It is the single source of truth
+for what a review consists of and for what the entry has to record, and it is deliberately
+not restated here, because a copy of it would drift.
 
-  1. git diff <old>..<new> -- tests/       in the upstream repo. What upstream now
-                                           asserts. Better signal than the changelog.
-  2. git diff <old>..<new> -- config.d.ts  Renamed or removed config keys. Highest
-                                           value, because this failure is silent.
-  3. browsers.json                         A moved browser revision changes the payload.
-  4. --help on old vs new                  Flags that vanished (the --output-mode class).
-  5. Release notes                         Intent the diffs do not carry.
-
-Then record in the entry: the version actually reviewed, today's date, and notes saying
-what changed, what was adopted, AND what was declined and why. A decline with a reason
-is worth as much as an adoption. An empty or unchanged note is a review that did not
-happen, and it is visible as such in the diff.
-
-If a change breaks us: fix forward. Never pin back.
+Nothing here blocks this edit. The gate is the RELEASE, and it is mechanical: the build
+diffs the snapshots against the resolved payload, runs the full suite, and fails if this
+file does not adjudicate what moved. See PLAN.md, "The upstream-review gate".
 '@
 
 # No permissionDecision. This hook decides nothing, blocks nothing, prompts nobody.

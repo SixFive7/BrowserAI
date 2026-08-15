@@ -21,8 +21,8 @@ reading upstream source — together with enough provenance to re-establish it.
 
 | Article | Holds |
 |---|---|
-| [`windows/processes.md`](windows/processes.md) | Job objects and containment; stdio, exit codes and process startup; interop and the toolchain |
-| [`windows/detection.md`](windows/detection.md) | Finding a browser that is already running — message windows, cross-process title reads, image-path enumeration, lock files, and Windows object-name scoping |
+| [`windows/processes.md`](windows/processes.md) | Job objects and containment; stdio, exit codes and process startup — **including third-party code that writes to stdout's *handle* from a type initializer**; durable writes; recursive-enumeration and interop traps |
+| [`windows/detection.md`](windows/detection.md) | Finding a browser that is already running — message windows, cross-process title reads, image-path enumeration, lock files, Windows object-name scoping, and **named-mutex / lock-file semantics from the C# prior art** |
 | [`chromium/resurrection.md`](chromium/resurrection.md) | `RegisterApplicationRestart`, the 1023-character limit, and what actually resurrected the maintainer's browsers |
 | [`chromium/profiles.md`](chromium/profiles.md) | What Chrome does with an unusable `--user-data-dir`: fallback, exit code 21, and the dialog that blocks startup |
 | [`chromium/fingerprinting.md`](chromium/fingerprinting.md) | Whether `--browser-test` is web-detectable, and the baseline exposure that makes the question near-moot |
@@ -30,9 +30,9 @@ reading upstream source — together with enough provenance to re-establish it.
 | [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | Tool counts, the package shape, tools that reach credentials, and how artifacts land on disk |
 | [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | Component sizes, first-run download, and every measured latency |
 | [`mcp/protocol.md`](mcp/protocol.md) | The protocol split, the client at the other end, and the tooling around both |
-| [`mcp/sdk.md`](mcp/sdk.md) | `ModelContextProtocol` as a proxy has to drive it, including the 2026-08-15 spike |
-| [`packaging/velopack.md`](packaging/velopack.md) | The update path, its nine landmines, and the install/update/rollback verification of each |
-| [`packaging/dependencies.md`](packaging/dependencies.md) | Package provenance with date stamps, token cost, and the licence terms of everything shipped |
+| [`mcp/sdk.md`](mcp/sdk.md) | `ModelContextProtocol` as a proxy has to drive it, including the 2026-08-15 spike and the 2026-08-16 NativeAOT/ILC additions |
+| [`packaging/velopack.md`](packaging/velopack.md) | The update path, its nine landmines, the install/update/rollback verification of each, and the restart/mutex handover race |
+| [`packaging/dependencies.md`](packaging/dependencies.md) | Package provenance with date stamps, token cost, the licence terms of everything shipped, and **what vendoring a runtime cost two in-house repositories** |
 | [`history.md`](history.md) | The legacy setup this project replaces, and corrections applied after the fact |
 
 ## Conventions
@@ -59,7 +59,7 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 
 > ⚠️ **The Node above is not the Node we ship.** Measurements here ran on
 > **26.7.0**, the Current line; the bundled runtime is **v24.19.0 LTS**
-> ([§A](../PLAN.md#a-ship-and-own-the-runtime)). That gap matters in one place
+> ([§A](../plan/A-runtime.md#a-ship-and-own-the-runtime)). That gap matters in one place
 > specifically: **libuv's permissive job object**
 > ([kb](windows/processes.md#job-objects-and-process-containment)) sits in the
 > chain between BrowserAI's job and the browser, and the containment guarantee is
@@ -72,13 +72,22 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: roughly 93
-`[FLOATS]` entries stand across the articles against the 38 rows below, because
-one row often stands for a cluster of related entries and because rows have
-simply been missed — two whole articles carried none until 2026-08-15. Read a
+table is how that happens. **It does not yet cover all of them**: **97**
+`[FLOATS]` markers stand across the articles against the **41** numbered rows
+below (43 lines, counting 4a and 4b),
+because one row often stands for a cluster of related entries and because rows
+have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
 
-**The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../PLAN.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
+> **The 97 is a marker count, not an entry count** — counted 2026-08-16 with
+> `grep -ro "\[FLOATS\]" --include=*.md .`, excluding this file's own four
+> occurrences. Some entries carry a split marker (`[FLOATS]` for the numbers,
+> `[STABLE]` for the mechanism) and are counted once each, so the true number of
+> distinct floating *facts* is somewhat lower. It is recorded this way because a
+> reproducible command beats a hand tally that silently drifts — which is what
+> the previous "roughly 93" had become.
+
+**The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
 decision:
 
@@ -112,18 +121,22 @@ decision:
 | 24 | Velopack landmines — feed-URL composition, `SetAutoApplyOnStartup`, the stub, `force_stop_package` ([kb](packaging/velopack.md#the-nine-landmines-claim-and-verdict)) | Any Velopack bump | The update lane: real feed URL, real N→N+1, real delta | — *manual* |
 | 25 | Claude Code truncates `instructions` and tool descriptions at 2 KB, defers schemas, and **now handles** `tools/list_changed` ([kb](mcp/protocol.md#the-client-claude-code)) | Any client release | Measure both strings at build time; re-stamp the client version the claim was checked at | — *manual* |
 | 26 | Payload licensing as shipped — `winldd` has no license file, full Chromium has no OSS license ([kb](packaging/dependencies.md#third-party-payload-as-shipped)) | Upstream adds one, or the payload composition changes | Re-read the shipped trees at each revision bump | — *manual* |
-| 27 | **NativeAOT publishes clean and the proxy runs** ([kb](mcp/sdk.md#measured-by-spike-2026-08-15)) | Any SDK bump | `PublishAot`, zero warnings, run the published binary against a real child | — *manual* |
+| 27 | **NativeAOT publishes clean and the proxy runs** ([kb](mcp/sdk.md#measured-by-spike-2026-08-15)) | Any SDK bump | `PublishAot`, zero warnings, run the published binary against a real child — **and grep the publish output for `will always throw`**. Amended 2026-08-16: ILC reports an always-throwing method as [neither a warning nor an error](mcp/sdk.md#added-2026-08-16--not-part-of-the-2026-08-15-spike), so exit 0 plus zero warnings does not cover it, and the check as originally written would have passed a binary with a dead code path in it | — *manual* |
 | 28 | The SDK still never relays `notifications/cancelled` ([kb](mcp/sdk.md#measured-by-spike-2026-08-15)) | The SDK fixes it — our hand-rolled path would then double-send | Cancel a call, assert exactly one downstream notification | — *manual* |
 | 29 | `Filters.Message.IncomingFilters` still exposes `Result` as raw `JsonNode?` ([kb](mcp/sdk.md#measured-by-spike-2026-08-15)) | Any SDK bump; this is the whole proxy hook | Short-circuit a `tools/call` and compare bytes | — *manual* |
 | 30 | `ListToolsAsync(RequestOptions?, ct)` still drops silently ([kb](mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)) | SDK fixes or changes it | Fake child with an invalid `x-mcp-header`; compare both overloads | — *manual* |
 | 31 | `StdioClientTransport` still wraps in `cmd.exe` ([kb](mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)) | SDK fixes it — the custom transport stays correct either way, but the rationale changes | Probe `process.ppid` from a node child | — *manual* |
 | 32 | An unusable `--user-data-dir` still falls back invisibly, a deny-all DACL still exits 21, and the "failed to create data directory" dialog still blocks startup ([kb](chromium/profiles.md)) | Chromium changes `RecursiveDirectoryCreate`, `ProcessSingleton` or its error dialogs | Launch against a file-occupied path and against a DACL'd directory; assert fallback, exit 21 and the dialog behave as recorded. **That article is the whole basis for [validate every path before launch](../README.md#settled-2026-08-15)** and had no row here until 2026-08-15 | — *manual* |
-| 33 | A healthy start still prints `Session: <path>` to stderr, every time ([kb](history.md#the-legacy-setup-and-this-machine)) | Upstream changes startup output — in either direction: a new benign line trips the classifier, a removed one turns it into dead code | Classify a real start's stderr. [§E](../PLAN.md#e-lifecycle-and-observability) ports the two regexes **verbatim**, so this is behaviour our code copies rather than merely observes | — *manual* |
+| 33 | A healthy start still prints `Session: <path>` to stderr, every time ([kb](history.md#the-legacy-setup-and-this-machine)) | Upstream changes startup output — in either direction: a new benign line trips the classifier, a removed one turns it into dead code | Classify a real start's stderr. [§E](../plan/E-lifecycle.md#e-lifecycle-and-observability) ports the two regexes **verbatim**, so this is behaviour our code copies rather than merely observes | — *manual* |
 | 34 | Firefox's cost ratios against Chromium — ~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk ([kb](history.md#the-legacy-setup-and-this-machine)) | Any Firefox revision bump | Re-measure. The original harness was not preserved, so these are order-of-magnitude guidance; re-establish them properly before any decision turns on them again | — *manual* |
 | 35 | Floating NuGet still needs **two** restores — `--force-evaluate` to resolve, locked-mode to verify ([kb](windows/processes.md#interop-and-the-toolchain)) | NuGet changes lock-file semantics, or the SDK's default. A one-step `--locked-mode` build looks green with the float silently dead | Resolve, then `git diff --exit-code -- "**/packages.lock.json"`. The whole floating-dependency policy rests on this being two commands | — *manual* |
-| 36 | `setupExitWatchdog` still hooks stdin close / `SIGINT` / `SIGTERM` → `gracefullyCloseAll()`, hard-exiting after **15 s** ([kb](playwright/configuration.md#shutdown)) | Upstream changes its shutdown path or that ceiling | Close stdin on a real child; assert graceful close, and that nothing survives the ceiling. Teardown is built on it — [no killing is involved in the normal path](../PLAN.md#lifetime-one-timer-and-reclaim-is-forever) | — *manual* |
+| 36 | `setupExitWatchdog` still hooks stdin close / `SIGINT` / `SIGTERM` → `gracefullyCloseAll()`, hard-exiting after **15 s** ([kb](playwright/configuration.md#shutdown)) | Upstream changes its shutdown path or that ceiling | Close stdin on a real child; assert graceful close, and that nothing survives the ceiling. Teardown is built on it — [no killing is involved in the normal path](../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever) | — *manual* |
 | 37 | `--console-level` still defaults to `info`, silently dropping `debug` ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | Upstream changes the default | Config round-trip via `browser_get_config`. The default is [exposed on `init`](../README.md#settled-2026-08-15), so an upstream change silently changes what a caller is choosing between | — *manual* |
-| 38 | Resume costs **515 ms** and loses only `sessionStorage`; browser-idle close recovers 329 → 110 MB and relaunch costs 186 ms ([kb](playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) | Any browser or Playwright bump that changes profile durability or launch cost | Kill the node child, resume against the directory, assert cookies, localStorage, IndexedDB, service workers and CacheStorage all survive. **[Reclaim is forever](../PLAN.md#lifetime-one-timer-and-reclaim-is-forever) rests on this**: if a resume stopped preserving the profile the no-expiry decision would be wrong, and nothing else in the design would say so | — *manual* |
+| 38 | Resume costs **515 ms** and loses only `sessionStorage`; browser-idle close recovers 329 → 110 MB and relaunch costs 186 ms ([kb](playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) | Any browser or Playwright bump that changes profile durability or launch cost | Kill the node child, resume against the directory, assert cookies, localStorage, IndexedDB, service workers and CacheStorage all survive. **[Reclaim is forever](../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever) rests on this**: if a resume stopped preserving the profile the no-expiry decision would be wrong, and nothing else in the design would say so | — *manual* |
+
+| 39 | A console logging sink's **type initializer** calls `SetConsoleMode` on `STD_OUTPUT_HANDLE` before any log line, and no-ops silently when stdout is a pipe ([kb](windows/processes.md#stdio-exit-codes-and-process-startup)) | We adopt `Serilog.Sinks.Console` or any sink shaped like it — or the referenced version moves. Upstream `main` has **already dropped** the `#if PINVOKE` guard that leaves 3.1.2 inert on `netstandard2.0`, so a version bump alone can arm it | Read `ConsoleSink.cs` and `Platform/WindowsConsole.cs` **at the version actually referenced**, not at whichever copy is on disk. **Conditional row:** nothing today depends on Serilog, so this is owed only once a console sink reaches the dependency list — but it must be answered *then*, because the write is invisible under MCP and shows up only in interactive diagnostics | — *manual* |
+| 40 | A legitimately **empty** channel 404s exactly like a misconfigured feed URL ([kb](packaging/velopack.md#1-the-channel-must-not-go-in-the-feed-url)) | Velopack returns an empty release list instead, or changes the status code | Request a channel with nothing published, assert the status, and confirm the health check does **not** alarm. Row 24's update lane only ever exercises a populated channel, so this is not covered there | — *manual* |
+| 41 | `UpdateExe.Start`'s first positional parameter is the **locator**, not `waitPid`; `ApplyUpdatesAndRestart` already restarts on its own ([kb](packaging/velopack.md#the-restart-handover-race-and-why-updateexe-is-the-answer)) | Any Velopack bump changes either signature | Compile a call against the shipped assembly, and assert exactly **one** relaunch on the update path. The double-restart failure is silent — two working launches look like one slow one | — *manual* |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

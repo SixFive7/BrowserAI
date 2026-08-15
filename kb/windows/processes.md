@@ -91,6 +91,23 @@ helper launch beats an escaped `firefox.exe --backgroundtask`. Not a bug to fix.
 tree flag, never by image name. Upstream is clean on that axis.
 (`coreBundle.js:9046`) `[FLOATS]`
 
+**A supervisor can respawn its child while you are killing it, and
+kill-by-enumeration cannot win that race.** Shipped mitigation, read 2026-08-16:
+`C:\Source\ExoFabric\Updater\NetLoader2\Application.xaml.vb:98` wraps its entire
+enumerate-and-kill sweep in `For i = 1 To 2`, commented *"Need two runs because
+any subprocess (like WyUpdate) might be started again if the main assembly is not
+already killed."* Two passes is not a fix, it is a wider window: enumeration reads
+a list the supervisor is still mutating, so correctness rests on the supervisor
+happening not to respawn during pass two. **This is the strongest available
+argument for a job object over enumeration, and it is a different argument from
+the one this section already makes** — the escapee counts above say enumeration
+*misses* processes, which sounds like something a better sweep could fix. This
+says enumeration **cannot be made complete at any repetition count**, because the
+process set is adversarial rather than merely large. `KILL_ON_JOB_CLOSE` has no
+such race: the kernel tears the whole job down at once, and anything respawned
+inside it is already contained. Re-establish by reading that file. `[STABLE]` for
+the race; `[MACHINE]` for the observation.
+
 ## stdio, exit codes and process startup
 
 **`Console` stdio is wrong by default in both directions.** Measured:
@@ -101,6 +118,164 @@ each of the three corrupts the stream on first contact. `[STABLE]`
 
 > **The charter does not date this measurement.** The date is `[UNVERIFIED]`; the
 > observations are carried forward as written.
+
+> **Corroborated 2026-08-16 — and the date above stays `[UNVERIFIED]`.** Two
+> 2018-era repositories on this machine independently hand-reconstruct CP437 over
+> a raw console handle to make output appear at all:
+> `C:\Source\ExoFabric\WinUpdater\WinUpdate\WinUpdate.vb:18,71-77` and
+> `C:\Source\ExoFabric\Certifier\Certifier\Main.vb:22` — both `Const
+> MY_CODE_PAGE As Integer = 437`, `CreateFile("CONOUT$")`, `New
+> IO.StreamWriter(FileStream, Encoding.GetEncoding(437))`, `Console.SetOut`, the
+> WinUpdate one commented *"VS console redirection fix"*. Two authors reaching
+> independently for the same workaround is evidence that **the default really is
+> CP437**; it is not evidence about *when* the entry above was measured, so that
+> gap is unchanged. **Note what they built:** it is exactly the hand-rolled
+> `StreamWriter` the entry above warns about, and it emitted no BOM only because
+> the encoding was CP437 rather than UTF-8 — swap the encoding and the identical
+> code corrupts a JSON-RPC stream on its first byte. Read from source, not run.
+> `[MACHINE]` for the repositories; the underlying default is `[STABLE]`.
+
+**A logging library's type initializer can write to the protocol channel.**
+`Serilog.Sinks.Console`'s `ConsoleSink` has a **static constructor** calling
+`WindowsConsole.EnableVirtualTerminalProcessing()`, which calls `SetConsoleMode`
+on `GetStdHandle(-11)` (`STD_OUTPUT_HANDLE`) — before any log line is written, and
+reachable by merely touching the type. When stdout is a pipe, `GetConsoleMode`
+fails, the guard `stdout != INVALID_HANDLE_VALUE && GetConsoleMode(...)` goes
+false, and it **silently no-ops** — so the behaviour is invisible under MCP and
+appears only in interactive diagnostics. Separately, `SelectOutputStream` returns
+`Console.Out` whenever `_standardErrorFromLevel` is null: the only safe
+configuration for a stdio protocol server is
+`standardErrorFromLevel: LogEventLevel.Verbose`, because nothing is `< Verbose`,
+so every level routes to `Console.Error`.
+
+> **This is the shape that no "never call `Console.WriteLine`" rule catches.**
+> The write is a *third party's type initializer*; it targets the **handle**, not
+> the `TextWriter`, so nothing about `Console.Out` ownership constrains it; and it
+> fails silently in exactly the configuration we ship, so an interactive smoke
+> test is the only place it would ever be seen working. The rule that does catch
+> it is broader than the charter's: nothing may touch stdout's handle either, and
+> **a dependency's static constructor counts as our code.**
+
+Read from source 2026-08-16, not run. Local checkout **3.1.2**
+(`C:\Source\SixFive7\serilog-sinks-console\src\Serilog.Sinks.Console\Sinks\SystemConsole\ConsoleSink.cs:35-38`,
+`…\Platform\WindowsConsole.cs`), cross-checked against upstream `main` the same
+day. **The two differ, and the newer one is worse:** 3.1.2 wraps the entire
+P/Invoke body in `#if PINVOKE`, defined only for `net45` and `netcoreapp1.1`
+(csproj lines 29-34), so a modern consumer resolving the `netstandard2.0` asset
+gets an empty method — the hazard is real but dormant there. **Upstream `main` has
+dropped the guard entirely**: the `GetStdHandle` / `GetConsoleMode` /
+`SetConsoleMode` calls are unconditional, and they are `DllImport`, not
+`LibraryImport`. Re-establish by reading those two files **at the version actually
+referenced**, never at whichever copy is on disk. `[FLOATS]` for Serilog's code;
+`[STABLE]` for the mechanism — a type initializer runs before first use, and
+`GetConsoleMode` on a pipe fails, on every Windows.
+
+**An async log sink plus `Environment.Exit` drops the final buffered messages**,
+so every `Logger.Fatal(...)` → `Exit(1)` path loses precisely the line describing
+the crash. `Environment.Exit` does not wait for a sink's own worker thread, and a
+buffered target has nothing else to flush it. Shipped pattern, read 2026-08-16 in
+`C:\Source\ExoFabric\Updater`: `Updater\Example NLog.config:9` declares
+`<targets async="true">`; all four loaders end their unhandled-exception handler
+with `Logger.Fatal(...)` then `Environment.Exit(1)`
+(`NetLoader2\Application.xaml.vb:12-14`, and the same three lines in `NetLoader1`,
+`NetLoader3` and `DomainLoader`); and **`LogManager.Shutdown` and
+`LogManager.Flush` appear nowhere in the repository** — grepped, zero hits.
+Re-establish with those two greps. `[STABLE]` for the mechanism; `[MACHINE]` for
+the observation.
+
+**`UseShellExecute` defaults to `True` on .NET Framework and `False` on .NET
+Core**, changed in .NET Core 2.1 and recorded as a
+[breaking change](https://learn.microsoft.com/dotnet/core/compatibility/fx-core#core-net-libraries).
+`True` routes the launch through the graphical shell, which **silently detaches
+the child and makes stream redirection impossible** — `RedirectStandardOutput` and
+friends require `UseShellExecute = false`, and `ProcessStartInfo.Environment`
+throws `InvalidOperationException` at `Start()` if it is true. The trap is porting
+supervision code from an older project, where the *absence* of an assignment meant
+the opposite thing. Verified against MS Learn 2026-08-16. `[STABLE]`
+
+**`Win32Exception.ErrorCode` is the HRESULT, not the Win32 code.** `ErrorCode` is
+inherited from `ExternalException` and documented as *"the HRESULT of the error"*;
+the Win32 number lives on `NativeErrorCode`. In practice `ErrorCode` reads
+`0x80004005` (`E_FAIL`, *"unspecified failure"*) for essentially every
+`Win32Exception`, so **an exception filter keyed on it matches everything**. The
+value that actually means "the user cancelled the UAC prompt" is
+`NativeErrorCode == 1223` (`ERROR_CANCELLED`). Shipped bug, read 2026-08-16:
+`C:\Source\ExoFabric\Updater\NetLoader2\Application.xaml.vb:234` filters
+`Catch ex As ComponentModel.Win32Exception When ex.ErrorCode = &H80004005` around
+an elevating `Process.Start`, inside a `For i = 1 To 10` retry — so *every*
+elevation failure was read as a refusal and re-prompted, up to ten UAC dialogs for
+a cause that was never the user. Verified against MS Learn 2026-08-16. `[STABLE]`
+
+**`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on
+the first `UnauthorizedAccessException` rather than skipping the node.** MS Learn,
+on the `AllDirectories` overloads: *"`UnauthorizedAccessException` errors may make
+the enumeration incomplete. You can catch these exceptions by first enumerating
+directories and then enumerating files."* The failure is silent in the worst way —
+a partially-walked tree is indistinguishable from a fully-walked smaller one. A
+robust recursive delete therefore needs a hand-rolled **post-order** walk with
+per-node exception discrimination: deepest child first, so a non-recursive
+`Directory.Delete` always sees an empty directory. Reference implementation, read
+2026-08-16:
+`C:\Source\ExoFabric\Zombieraser\Zombieraser\Program.cs:213-289` (`GetTreeRobust`)
+— recurse subdirectories, then yield files, then yield the directory itself, with
+`UnauthorizedAccessException` and `DirectoryNotFoundException` caught and logged
+**per node**, and an optional ACL-reset retry on the denied node. Directly relevant
+to `browserai_reinstall_browser`, session destroy, and the Velopack `current\`
+swap. Verified against MS Learn 2026-08-16. `[STABLE]`
+
+**`Console.ReadKey()` inside a `catch` in a non-interactive process hangs
+forever, with no output** — there is no console input to read, and nothing times
+out. It presents exactly as "the server is stuck". Shipped instance, read
+2026-08-16: `C:\Source\ExoFabric\Zombieraser\Zombieraser\Program.cs:247,277`, in a
+scheduled non-interactive job. Note the shape — both calls sit in the
+*unknown-exception* arm, below the specific `UnauthorizedAccessException` and
+`DirectoryNotFoundException` handlers, so they fire only on the cases nobody
+anticipated: the population least likely to have been exercised in testing and
+most likely to be hit in the field. `[STABLE]`
+
+**A plain file write is not durable when it returns.** The bytes are in the system
+cache; MS Learn,
+[Flushing System-Buffered I/O Data to Disk](https://learn.microsoft.com/windows/win32/fileio/flushing-system-buffered-i-o-data-to-disk):
+*"the system usually buffers the data and writes the data to the disk on a regular
+basis."* `Flush()` and `FlushAsync` do **not** close the gap — `FlushAsync`'s own
+remarks say it *"flushes the .NET stream buffers to the file, but does not flush
+intermediate file buffers in the operating system."* Surviving a power cut needs
+`FileStream.Flush(flushToDisk: true)`, which reaches `FlushFileBuffers`, or
+`FileOptions.WriteThrough` / `FILE_FLAG_WRITE_THROUGH` set at open time, and then
+an atomic `File.Move` into place so no reader ever observes a half-written file.
+Verified against MS Learn 2026-08-16. `[STABLE]`
+
+**A working reference implementation exists on this machine, in C#**, verified
+2026-08-16 by reading it:
+`C:\Source\SixFive7\StationeersPlus\TestRig\src\TestRig.Core\Infrastructure\SystemFileSystem.cs:248-296`
+(`WriteAllTextDurable`) does all three steps — a temp file **in the same
+directory**, opened `FileShare.None` with `FileOptions.WriteThrough`, then
+`stream.Flush(flushToDisk: true)`, then `File.Move(temp, full, overwrite: true)` —
+with the reasoning recorded inline at lines 229-247 and a `finally` that removes
+the temp on every exit path. Two details worth taking:
+
+- **`File.Move(overwrite: true)`, not `File.Replace`.** `Replace` **requires the
+  destination to already exist**, and the first write of a lock file or a crash
+  marker is exactly the case where it does not. `Move` maps to `MoveFileEx` with
+  `MOVEFILE_REPLACE_EXISTING`, which covers both. `[STABLE]`
+- **The temp file must be in the target's own directory** — a rename is only
+  atomic within one volume, and only cheap within one directory. The rename is
+  also retried (5 attempts, escalating sleep) against `IOException` /
+  `UnauthorizedAccessException`, because something holding the destination open is
+  a live condition rather than a bug.
+
+> **Provenance note, 2026-08-16 — first recorded as a missing file, and that was
+> wrong.** This entry arrived citing `TestRig\rig-lock.ps1:212-245`, which is
+> absent from `HEAD`, and it was written up here as a reference that did not
+> exist. **It did exist.** `rig-lock.ps1` was added 2026-08-09 in `a5968c5a` at
+> +833 lines and **deleted 2026-08-15** in `902082cb`, *"TestRig: the PowerShell
+> rig is retired"* — rewritten in C# at the path above, not fabricated and not
+> lost. A `HEAD`-only search cannot distinguish "never existed" from "retired
+> yesterday", and this entry asserted the first from evidence that only supported
+> the second. **Search the history, not just the tree, before recording an absence
+> as a finding.** *(A content grep for `Flush(true)` also missed the successor —
+> the call is written `Flush(flushToDisk: true)`. A named argument defeats a
+> literal grep, so a negative grep result is not an absence either.)*
 
 **`Process.ExitCode` throws after `Dispose()`, and
 `Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
@@ -144,6 +319,22 @@ itself uses it. `[MACHINE]` for the numbers, `[STABLE]` for the API.
 command line must be passed as a writable `char[]`/`Span<char>` — the API mutates
 the buffer, and a `string` literal is not valid. `DllImport` is the wrong choice
 under NativeAOT because it relies on runtime IL-stub generation. `[STABLE]`
+
+**A COM/interop enum value the running OS does not know throws on assignment** —
+at the property set, not at load and not at compile time. The managed enum is only
+an integer; the rejection happens inside the COM object receiving it, so the
+compiler, the interop layer and any static analysis all see a valid value. Shipped
+mitigation, read 2026-08-16:
+`C:\Source\ExoFabric\WinUpdater\WinUpdater\WinUpdater.vb:71-76` wraps
+`UpdateDownloader.Priority = DownloadPriority.dpExtraHigh` — a Windows Update
+Agent value newer than the OS floor that project targeted — in a try/catch that
+logs *"Switching from ""dpExtraHigh"" priority to ""dpHigh"" priority due to OS
+incompatibility"* and downgrades. **Directly applicable here:** the job-object
+information classes and the `NtQueryInformationProcess` information classes this
+project P/Invokes are the same shape, so every information class used must either
+be safe at our Windows floor or carry an explicit downgrade path — a value that is
+merely absent on an older build fails at the call site, where nothing else will
+catch it. Re-establish by reading that file. `[STABLE]`
 
 **No credible NuGet job-object wrapper exists** — the candidates have <6K
 downloads and the newest was published in **2017**. `dotnet/runtime`

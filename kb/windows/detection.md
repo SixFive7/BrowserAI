@@ -226,7 +226,7 @@ report-don't-kill path; but knowing beats not knowing.
 > single call and could pre-filter before any `OpenProcess`. At 13.88 ms there is
 > nothing to buy, and it would put an image-name comparison inside the detection
 > path — which is exactly the pattern that erodes into
-> [the rule against it](../../PLAN.md#never-by-image-name) once someone later treats
+> [the rule against it](../../plan/D-locking.md#never-by-image-name) once someone later treats
 > the pre-filter as the filter.
 
 **Launch race: 225 ms** from `chrome.exe` start to the titled window existing.
@@ -307,3 +307,110 @@ session. `[STABLE]`
 **Windows will not rename a directory holding open executables**, and a live
 browser holds `chrome.exe`. Download-alongside-and-swap is therefore not
 available for a browser reinstall. `[STABLE]`
+
+## Named mutexes and lock files — first-party prior art in C#
+
+Read from source 2026-08-16, **not run here**:
+`C:\Source\SixFive7\StationeersPlus\TestRig\src\TestRig.Core\` —
+`Infrastructure\CrossProcessLock.cs` (131 lines), `Session\LockState.cs`,
+`Session\SessionLockService.cs`, `Infrastructure\BootIdentity.cs`. This is the C#
+successor to a retired PowerShell rig, in the same language BrowserAI is written
+in, and it is the only cross-process locking code on this machine with a suite
+behind it. Re-establish by reading those four files.
+
+**`AbandonedMutexException` means the wait *succeeded*.** The thread now owns the
+mutex; what the exception reports is that the *previous* holder died without
+releasing, so whatever that holder was mid-way through writing may be torn.
+Catching it and returning a plain success therefore **discards the only warning
+the OS gives that the protected state is suspect** — the acquisition was never in
+doubt. `CrossProcessLock.cs:96-101` surfaces it as a distinct
+`MutexAcquisition.AcquiredAbandoned` outcome rather than folding it into
+`Acquired`, and the type's own remarks name swallowing it as one of two things the
+PowerShell version got wrong. The holder must still be disposed, or the next
+waiter inherits the abandonment. `[STABLE]`
+
+**A named mutex is owned by the thread that waited on it, and releasing it from
+another thread throws a message that names nothing relevant** —
+`ApplicationException` about "an unsynchronized block of code"
+(`CrossProcessLock.cs:134-145`, which pre-empts it with its own
+`InvalidOperationException` naming both thread ids). The operational consequence
+is one line and it is severe: **do not `await` across a named-mutex critical
+section**, because the continuation may resume on a different pool thread and the
+release then fails with a diagnostic that points nowhere near the cause. `[STABLE]`
+
+**A `Global\` → `Local\` fallback exists there, and it is deliberately not
+silent.** `Global\` creation is caught for `UnauthorizedAccessException`,
+`IOException`, `NotSupportedException` and `WaitHandleCannotBeOpenedException`,
+then retried under `Local\`, with the resolved `Name` and an `IsProcessLocal` flag
+exposed as properties so a caller can print them and a test can assert on them
+(`CrossProcessLock.cs:60-75`). The reason given matches
+[the entry above](#windows-object-names-and-window-scoping): `Global\` needs
+`SeCreateGlobalPrivilege`, which an interactive user normally has and a service or
+container user may not. **The recorded defect is instructive** — the PowerShell
+version fell back *silently and per process*, so two processes could resolve to
+two different kernel objects, not be serialised against each other at all, **and
+both report success**. `[STABLE]` for the mechanism; `[MACHINE]` for the defect.
+
+> **BrowserAI has decided the other way — `Global\` only, no fallback, no lock
+> means no session.** That is not a contradiction of the above but the opposite
+> reading of the same fact: a `Local\` mutex still *reports* success while
+> serialising nothing across sessions, and for a browser profile the failure it
+> permits is two live sessions on one `userDataDir`. The prior art keeps the
+> fallback because a degraded rig beats an unusable one; we refuse it because a
+> degraded lock is indistinguishable from a working one at exactly the moment it
+> matters. Both need `IsProcessLocal`-style visibility — the divergence is only in
+> what to do when it is true.
+
+**A caller-supplied backslash in a mutex name is guarded against, and the two
+descriptions of *why* do not agree.** `CrossProcessLock.cs:52-58` rejects any
+backslash in the base name with the comment that it *"separates the namespace from
+the name, so one in the caller's string would silently relocate the object"*. [The
+entry above](#windows-object-names-and-window-scoping) instead records a
+**measured** `DirectoryNotFoundException` for `"Global\C:\Source\..."`. **Unresolved
+and flagged rather than reconciled:** one says silent relocation, the other says a
+throw, and only the second was measured. Both agree the name must be hashed or
+canonicalised, which is what the design already does, so nothing turns on it
+today. `[UNVERIFIED]` as to which failure a given name produces — settle it by
+running both shapes if anything ever depends on the distinction.
+
+**An unreadable lock file must throw, not read as free.**
+`SessionLockService.ReadLock` returns null for exactly three conditions — the file
+does not exist, it vanished mid-read, or the parsed field set carries no `owner`
+key (covering an empty file, a comment-only file and pure garbage) — while an
+**unreadable** file propagates the exception out of `RigFiles.ReadTextOrNull`. The
+stated reason is the whole point: *"a read failure that reads as 'the rig is free'
+is exactly the answer that gets a live session stomped"*
+(`SessionLockService.cs:222-236`). The general shape is the one this project keeps
+meeting — **an error path that resolves to the permissive answer is worse than a
+crash**, because it is silent and it is wrong in the direction that destroys
+state. `[STABLE]`
+
+**That lock records no process identity at all — and the boot id is for something
+else.** `LockState.cs:5-12` is explicit that "held by a dead process" is
+deliberately *not* a state: a session there spans many launcher processes (the
+launcher exits between commands), so **a dead owner is indistinguishable from an
+idle one**, and an idle ceiling is the entire substitute. There is no
+`(pid, creationFileTime)` pair to make reboot-safe. The boot id exists
+(`BootIdentity.cs`) but guards a different file — `session.dirty`, the crash
+marker — where a *changed* boot id means a recorded pid means nothing and every
+world must be treated as protected. `[MACHINE]` for the design; the underlying
+constraint is `[STABLE]`.
+
+**Deriving a boot id without WMI.** `BootIdentity.cs` takes
+`DateTimeOffset.UtcNow` minus `Environment.TickCount64` rather than
+`Win32_OperatingSystem.LastBootUpTime`, for two reasons that both bind here:
+LastBootUpTime **costs hundreds of milliseconds on a cold WMI service**, and
+`System.Management` is **not AOT friendly**. `GetTickCount64` counts *biased
+interrupt time*, which includes time the machine spent asleep, so **a laptop that
+suspends overnight does not read as rebooted** — the property that makes the
+derivation usable at all. The subtraction is quantised to a 10 s bucket because
+two clocks of ~15.6 ms resolution disagree: measured on this machine 2026-08-14,
+40 samples in a tight loop spread the derived instant over **10.4 ms**, and two
+samples eight seconds apart differed by **0.12 ms**. The failure direction is
+chosen deliberately — a spurious *change* reads as "rebooted" and is
+conservative; a boot id that failed to change across a real reboot is the
+dangerous one, and no bucket size can produce it. It cannot survive a **step**
+correction to the system clock, which Windows normally slews rather than steps.
+`[STABLE]` for `GetTickCount64` including sleep and for the WMI cost being
+non-trivial; `[MACHINE]` and carried from that file for the 10.4 ms / 0.12 ms
+figures, which were measured there and not re-run here.
