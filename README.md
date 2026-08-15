@@ -1075,7 +1075,7 @@ Two things follow, and they are design obligations rather than caveats:
 
 2. **Where the logon sweep task is registered, and what it costs at install.** Velopack hook, per-user, "run only when user is logged on" — see [the sweep](#the-stray-sweep-and-the-concurrency-it-must-survive). The mechanism is settled; the install-time plumbing is not.
 
-3. **Whether the vertical slice changes anything.** Nothing here is built. Several decisions — the three lock scopes, `PROC_THREAD_ATTRIBUTE_JOB_LIST` under NativeAOT, `Microsoft.Win32.Registry`'s AOT-cleanliness — are settled on paper and unexercised. Expect at least one to move.
+3. **Whether the vertical slice changes anything.** Nothing here is built. Several decisions — the three lock scopes under real concurrency, `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, the session-index file layout — are settled on paper and unexercised. Expect at least one to move. (The SDK and NativeAOT halves of this closed on 2026-08-15; see [KNOWLEDGE §10.3](KNOWLEDGE.md#103-measured-by-spike-2026-08-15).)
 
 **Recently closed, listed so they are not reopened by habit:** what ends an instance (one browser-idle timer, stdin EOF as backstop, explicit `browserai_destroy`; reclaim is forever); which capabilities ship (unchanged — `vision`, `devtools`, `config` everywhere, `storage` on `persistent`); and how far to curate the surface (upstream names never renamed, descriptions append-only, `browser_annotate` classified to `interactive`).
 

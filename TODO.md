@@ -300,7 +300,17 @@ later measurement overruled the original.
 
 ## Later
 
-- [ ] **Add a scheduled upstream-drift check.** Every dependency floats to
+- [x] **Upstream-drift check.** ✅ Done 2026-08-15, but **not** as a scheduled job.
+      A [`CLAUDE.md` directive](CLAUDE.md#the-daily-drift-check) runs it at most
+      once per working day, recording the result in
+      [`drift-check.json`](drift-check.json). A poller is unnecessary here: this
+      project is built entirely through an agent, so a session-start rule fires by
+      construction — the check happens because the work happens. First run: zero
+      drift across all five upstreams. The note below is kept for the reasoning,
+      which still applies.
+
+- [ ] ~~**Add a scheduled upstream-drift check.**~~ *(superseded by the above; text
+      retained for the Dependabot/Renovate analysis.)* Every dependency floats to
       latest *at build time*, and the marker test in
       [`upstream-review.json`](upstream-review.json) fires when a build happens
       — but nothing makes a build happen. Releases are manual, so a quiet month
