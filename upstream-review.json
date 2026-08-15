@@ -6,7 +6,9 @@
   "_notes_are_not_optional": "Every bump records what changed, what was adopted, and what was explicitly declined and why. A decline with a reason is worth as much as an adoption: it stops the same question being re-litigated at the next bump. An empty note is a review that did not happen.",
 
   "_procedure": "UPSTREAM-REVIEW.md",
-  "_this_file_is_gated": "A PreToolUse hook (.claude/hooks/upstream-review-gate.ps1) interrupts every edit to this file and asks a human to approve it. That is deliberate and it applies even under bypass-permissions mode. Known limitation, found 2026-08-15: a sub-agent cannot answer an 'ask', so the gate does not stop a sub-agent's edit -- it kills the sub-agent, silently, with an empty transcript. If you are an agent and you need this file changed, do not attempt the edit: report what needs changing and let the main session do it.",
+  "_this_file_is_gated": "Not by a prompt. Editing this file is unrestricted; what is gated is the RELEASE. The build regenerates four snapshots from the resolved payload -- tools/list, --help, config.d.ts, browsers.json -- and diffs them, runs the full suite, and asserts that this file adjudicates whatever actually moved and answers every manual re-verification row by name. An entry that ignores what the build observed fails the build. See PLAN.md, 'The upstream-review gate'.",
+
+  "_correction_2026_08_15": "An earlier version of the note above said a PreToolUse hook asks a human to approve every edit, and that a sub-agent attempting one is killed silently. Both halves were wrong, and measurement disproved them: under permission_mode 'bypassPermissions' a hook's 'ask' returned to a sub-agent is silently downgraded to ALLOW -- the edit lands unprompted, and the gate was inert against exactly the caller most likely to need it. A sub-agent did die during that work, but not from the hook; the cause is unknown and its transcript was zero bytes. Recorded because a confident wrong explanation is worse than an admitted gap, which is the same rule this file applies to versions.",
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
 
   "upstreams": {
