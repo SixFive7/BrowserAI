@@ -197,7 +197,7 @@ It does not close the gap entirely: a connection holding both an interactive and
 
 **Obligations the handle design creates:**
 
-- **Every tool schema gains a required `handle` parameter**, injected by BrowserAI into the raw `inputSchema` of all ~69 tools. Do this on the `JsonElement`; never materialise a typed schema to do it. Keep the injection order-stable — the spec SHOULDs deterministic tool ordering for prompt-cache hit rates.
+- **Every tool schema gains a required `session` parameter** (the session directory — see [§H](#h-the-model-facing-surface) for why it is not called `handle`), injected by BrowserAI into the raw `inputSchema` of all ~69 tools. Do this on the `JsonNode`; never materialise a typed schema to do it, because the typed path silently discards unknown tool-level members. Keep the injection order-stable — the spec SHOULDs deterministic tool ordering for prompt-cache hit rates.
 - **Missing, unknown and expired handles need three distinct, LLM-readable errors.** That text is read by a model deciding what to do next, not by a human tailing a console — the same principle as the current launcher's browser-preflight message, which exists precisely because "the server is stuck" was the wrong conclusion to invite.
 - **The first call after a cold start will forget the handle.** Design for it: the error must name `init`, state what it needs, and be recoverable in one turn.
 - **Instance lifetime is BrowserAI's to define.** At minimum: explicit teardown, an idle timeout, and **stdin EOF as the backstop** that reaps everything — EOF fires instantly when the parent holding the pipe is `TerminateProcess`d ([measured](kb/windows/processes.md#stdio-exit-codes-and-process-startup)), and the SDK already treats it as shutdown.
@@ -534,6 +534,116 @@ The wider point: UCC's update path has been in production for multiple releases,
 
 ---
 
+### H. The model-facing surface
+
+Everything a model ever reads — tool names, argument descriptions, the server `instructions` string, and every refusal — is generated from **one table in code**. Not four hand-written copies that agree today. The failure this prevents is specific and has already happened once in this project's history: a fourth thing gets added, three copies are updated, and the fourth silently describes a system that no longer exists.
+
+> **Naming consequence, not a new decision.** The charter originally injected a parameter called `handle`, back when it was an opaque server-minted token. [That token is gone](#the-session-directory-is-the-identity) — the directory *is* the identity. Calling a filesystem path a "handle" tells a model to treat it as opaque, which is the opposite of the truth and the opposite of what makes it recoverable after a compaction. **The injected parameter is `session`**, described as the session directory. Renamed here rather than carried forward as a misnomer.
+
+#### H.1 The one table
+
+```
+mode        headed  storage  description-fragment
+headless    no      no       "no window. The default for automation."
+interactive yes     no       "a visible window; storage tools refused, so a human can
+                              type credentials the agent never sees."
+persistent  yes     yes      "a visible window, plus your saved logins."
+```
+
+`tracing` is a boolean orthogonal to all three. [Why three and not four, and why headless-with-storage stays closed](#three-modes-and-tracing-as-a-modifier).
+
+From this table, generated at build time:
+
+| Consumer | Uses |
+|---|---|
+| Server `instructions` | name + description-fragment, all three |
+| `browserai_init` description | name + fragment + what each refuses |
+| `browserai_resume` result | the recorded mode's name and fragment |
+| Refusal text | the mode that *would* permit the refused call |
+| Session-type enforcement | `(tool, mode) → allow/deny`, deny-by-default |
+| Tests | every tool classified; an unclassified tool fails the build |
+
+**Six consumers, one source.** A test asserts each consumer's rendering matches the table — a mode added in one place and missed in another is a red build, not a documentation bug discovered in production.
+
+#### H.2 The authored tools
+
+Six, all `browserai_` prefixed. [Why not `browser_`](README.md#settled-2026-08-15) — SEP-2567 names `destroy_*` and `list_*` as the documented companions to a creation tool, so upstream shipping `browser_list` is the expected pattern rather than a hypothetical, and upstream names are never renamed.
+
+| Tool | Arguments | Returns |
+|---|---|---|
+| `browserai_init` | `directory` **req**, `purpose` **req**, `mode` **req**, `browser` (default `chromium`), `tracing` (default `false`), `consoleLevel` (default `info`) | resolved absolute paths, mode, browser, provisioning state |
+| `browserai_resume` | `directory` **req**, `purpose` (appended, not replaced) | the same, **plus the recorded purpose and its history** |
+| `browserai_list` | `under` (optional path filter) | one row per session: directory, mode, browser, purpose, created, last-used, **size on disk** |
+| `browserai_destroy` | `directory` **req** | what was deleted, and its size |
+| `browserai_set_purpose` | `session` **req**, `purpose` **req** | the new purpose and the previous one |
+| `browserai_reinstall_browser` | none | what was removed and re-provisioned |
+
+**`mode` is required with no default.** A default mode is a security posture chosen by omission, and the whole point of `interactive` is that a human relies on it.
+
+**`browser` is accepted only by `init`.** `resume` reads it from `lock.json` and *refuses it as an argument* — a profile is browser-specific, so a caller asking to resume a Firefox directory as Chromium is stating something impossible, and answering "sure" would be the wrong kind of helpful.
+
+**`browserai_list` reports size on disk** because retention is [the calling agent's decision](README.md#settled-2026-08-15), and an agent cannot make that decision well without knowing it is sitting on four gigabytes.
+
+**`browserai_destroy` refuses any directory without a valid `lock.json`.** That single check is what makes it safe to hand a model a tool that deletes trees: it cannot be aimed at `Documents\`. It closes the browser first, then deletes under the lock; if the lock is held elsewhere it reports the holder instead of waiting.
+
+Every upstream tool additionally gains a required **`session`** parameter, injected into the raw `inputSchema` as a `JsonNode` — [never typed](kb/mcp/sdk.md), because the typed path silently discards unknown tool-level members.
+
+#### H.3 The server `instructions` string
+
+The only channel that reaches a model **before** it calls anything, so it carries the choice itself rather than a pointer to it. Hard cap 2 KB, [silently truncated by the client](kb/mcp/protocol.md) — the tail of anything longer does not exist, and nothing reports that.
+
+> BrowserAI drives a real browser. Call `browserai_init` first; it returns a session directory that every other tool requires as `session`.
+>
+> **Modes** — chosen at `init`, fixed for the session's life:
+> · `headless` — no window. The default choice for automation.
+> · `interactive` — a visible window; cookie and storage tools are refused, so a human can type credentials the agent never sees.
+> · `persistent` — a visible window, plus your saved logins. Storage tools allowed.
+> `tracing: true` adds a Playwright trace to any of them.
+>
+> **You must supply a directory.** There is no default. Say where this session's data lives. You must also supply a one-sentence `purpose` — another agent meeting this directory later will read it.
+>
+> `init` refuses a directory that already holds a session and directs you to `browserai_resume`. That is deliberate, not an obstacle: it turns an accidental collision into a stated intent.
+
+**~1,050 bytes of a 2,048-byte budget.** Measured at build time and failed over budget, as `SixFive7/OutlookAI` already does for its own instructions string. The remaining headroom is deliberate: it absorbs a fourth mode or a fifth authored tool without a rewrite.
+
+#### H.4 The error catalogue
+
+Every string here is read by a **model deciding what to do next**, not by a human tailing a console. Three rules, and they are testable:
+
+1. **Name the fix, not just the fault.** "Not permitted" tells a model nothing it can act on.
+2. **Recoverable in one turn.** The next call should be able to succeed.
+3. **Never blame the caller for a decision we made.** A refused `init` is our design working, and should read that way.
+
+| # | Condition | Text |
+|---|---|---|
+| 1 | `session` missing | *"This tool needs a `session`. Call `browserai_init` to create one, or `browserai_list` to see existing sessions."* |
+| 2 | `session` names no session | *"No BrowserAI session at `<path>` — there is no `lock.json` there. Call `browserai_init` to create one."* |
+| 3 | Directory empty, relative or malformed | *"`directory` must be an absolute local path. There is no default: name where this session's data should live."* |
+| 4 | `init` on an existing directory | *"A session already exists at `<path>`, mode `<mode>`, created `<date>`, purpose: `<purpose>`. Use `browserai_resume` to take it over — do that only if you expected it to be there. Another agent may be using it."* |
+| 5 | Mode refusal | *"`<tool>` needs a session in `persistent` mode; this one is `<mode>`. `interactive` refuses storage tools so a human can type credentials the agent never sees. Create a `persistent` session if the stored logins are yours to read."* |
+| 6 | Provisioning in progress | *"First use of this browser version on this machine. The download has started (203.8 MB). Wait about 10 seconds and retry."* |
+| 7 | Browser launch failed | *"The browser at `<path>` did not start. If this persists, delete that directory and call `browserai_init` again to re-provision, or call `browserai_reinstall_browser`."* |
+| 8 | Lock held | *"`<path>` is in use by PID `<pid>`, running since `<time>`, purpose: `<purpose>`. Wait, or choose another directory."* |
+| 9 | Lock held by a dead process | *"`<path>` was locked by PID `<pid>` since `<time>`, which is no longer running. Reclaiming it."* — **not an error**; proceed and say so |
+| 10 | `browser` passed to `resume` | *"`browser` cannot be set on resume — this session's profile is `<browser>`, and a profile is browser-specific. Omit the argument, or `browserai_init` a new directory."* |
+| 11 | Firefox profile locked | *"That Firefox profile is held by another process. Not launching, because Firefox would raise a desktop dialog and block for up to three minutes."* |
+| 12 | Insufficient disk | *"`<path>` has `<n>` MB free; first-run provisioning needs about 640 MB. Free space or choose another volume."* |
+| 13 | Stray found, unattributable | *"A browser is running from our binary that no session claims (PID `<pid>`). Not terminating it — reporting only."* — diagnostic channel, never `stdout` |
+
+Rows **4**, **5** and **9** carry the most weight. 4 is the collision the whole `init`/`resume` split exists to make visible. 5 is the one a model will meet most often and the one that teaches the mode system at the moment it is ready to learn. 9 is not an error at all: the [holder record](#the-session-directory-is-the-identity) exists so a stale lock reads as a fact rather than a refusal.
+
+⚠️ **`purpose` is replayed into another model's context** in rows 4 and 8, which makes it a channel between agents. Cap it, strip control characters, and frame it as recorded data — *"purpose recorded by a previous session:"* — so it cannot be read as an instruction.
+
+#### H.5 What the tests assert
+
+- Every consumer's rendering matches the one table; a mode present in one and absent from another fails the build.
+- The `instructions` string and every tool description are **measured in bytes** and fail over 2 KB.
+- Every error above is produced by an actual triggering condition, not asserted as a literal — a string that no code path emits is documentation, not behaviour.
+- Rows 1–3 each name a recovery tool, and the named tool exists.
+- Row 5 names the mode that would permit the call, derived from the table rather than written by hand.
+- `purpose` round-trips through `lock.json` with control characters stripped and length capped.
+- `browserai_destroy` refuses a directory with no `lock.json`, and one with a `lock.json` of the wrong schema version.
+
 ## Implementation stack
 
 Verified 2026-08-13. **The versions below are provenance stamps, not targets** — see [Versioning policy](README.md#versioning-policy-everything-floats-the-build-freezes-it). The build resolves the latest of each; these record what was current when the surrounding claims were checked, and carry the same convention as `playwright/README.md`: re-verify on every bump. Each lookup, with the date it was made, is in [kb: package provenance](kb/packaging/dependencies.md#package-provenance-as-looked-up).
@@ -696,7 +806,7 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - **unknown content *types* pass through** rather than throwing (the SDK's typed layer throws; a proxy must not)
 - **unknown *properties* survive** (the SDK's converter drops them, with tests asserting it does)
 - `isError: true` bodies preserved verbatim; nested JSON-RPC `error.data` not flattened
-- `handle` injected into every schema, order-stable
+- `session` injected into every schema, order-stable
 - **cancellation relay, hand-rolled**: an upstream `notifications/cancelled` produces a downstream one. The SDK emits nothing at all here — measured 2026-08-15 — so this test covers *our* `ct.Register` path and the self-assigned `JsonRpcRequest.Id` it depends on, not SDK behaviour
 - progress relay: the child's token is remapped to the caller's
 - child death mid-call; stderr back-pressure with a full pipe; oversized payload
@@ -786,7 +896,7 @@ Section shorthands: [§A](#a-ship-and-own-the-runtime) · [§B](#b-be-the-mcp-se
 | Protocol and SDK | `cmd.exe` expands `%VAR%` in arguments, and a whitespace-bearing argument plus `&` kills the child outright — the second only bites when the command path has a space, i.e. the stock `C:\Program Files\nodejs\node.exe`. Both are closed by the custom transport | [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15) · [§stack](#implementation-stack) |
 | Protocol and SDK | `_meta.json` / `_meta.cwd` / `_meta.raw` are read by the child before zod parsing and stripped before the tool sees them — undocumented but real, and available for BrowserAI to inject | [kb: artifacts](kb/playwright/tools-and-artifacts.md#artifacts-and-output-directory-behaviour) |
 | Handle routing and instance lifetime | The model will call a tool without a handle, especially first thing after a cold start — every call fails until it recovers, so the error must name `init`, state what it needs, and be fixable in one turn | — · [§C](#c-the-init-tool-and-instance-handles) |
-| Handle routing and instance lifetime | Injecting `handle` into ~69 schemas can perturb tool ordering — an unstable rewrite quietly costs prompt-cache hits on every session | [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15) · [§C](#c-the-init-tool-and-instance-handles) |
+| Handle routing and instance lifetime | Injecting `session` into ~69 schemas can perturb tool ordering — an unstable rewrite quietly costs prompt-cache hits on every session | [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15) · [§C](#c-the-init-tool-and-instance-handles) |
 | Handle routing and instance lifetime | Handle→type lookup is shared mutable state on every call's hot path — with N concurrent instances a lookup race is a session-type enforcement bypass. Must be tested under concurrency, not assumed | — · [§trade-offs](README.md#known-trade-offs) |
 | Handle routing and instance lifetime | N children means N stderr streams — undemultiplexed, diagnostics become unreadable at exactly the moment they matter | — · [§C](#c-the-init-tool-and-instance-handles) |
 | Handle routing and instance lifetime | A handle can outlive the child it points at — a lock held by a dead instance is the precise failure the current launcher needed a signature heuristic to survive | — · [§still-open](README.md#still-open) |
