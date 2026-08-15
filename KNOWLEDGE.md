@@ -243,8 +243,10 @@ Measured 2026-08-15.
 of class `Chrome_MessageWindow`, for its own single-instance logic
 (`chrome/browser/process_singleton_win.cc`). `FindWindowExW(HWND_MESSAGE, NULL,
 "Chrome_MessageWindow", <title>)` → HWND → `GetWindowThreadProcessId` → PID, in
-~60 µs. **The API is structurally incapable of returning a profile you did not
-name**, which is what makes it safe. `[FLOATS]`
+~60 µs. The exact-title probe cannot return a profile you did not name — but see
+[§3.2](#32-enumeration-works--and-it-moves-the-safety-boundary): the
+**enumerating** sweep can and does, which moves the safety boundary onto the
+ownership test. `[FLOATS]`
 
 **Canonicalisation rules, measured exactly:** `[FLOATS]`
 
@@ -266,10 +268,144 @@ plus several empty-titled ones, and the GPU process owns one too. 43 such window
 exist on the maintainer's machine (Discord, Signal, VS Code, 1Password, Teams,
 WhatsApp, Steam, ChatGPT, `msedgewebview2`, …), enumerated in 52 ms. `[MACHINE]`
 
-**`GetWindowTextW` works cross-process here** — no need for
-`InternalGetWindowText`. But enumerate-and-read-titles does **not** work as a
-discovery strategy: reading titles off arbitrary message windows returned empty
-in an earlier probe. Look up by exact title; do not enumerate. `[FLOATS]`
+### 3.1 Cross-process title reads — settled by two independent agents
+
+An earlier probe reported `GetWindowTextW` returning empty for all 43
+`Chrome_MessageWindow`s on this machine, and concluded enumerate-and-read does
+not work. **That conclusion was wrong and is retracted.** Re-measured 2026-08-15
+by two agents working independently, one of them briefed to refute the claim.
+Both reached the same result.
+
+**The rule: cross-process, `GetWindowTextW` never sends `WM_GETTEXT`. It reads
+the kernel-side window name set at `CreateWindowExW`.** A message is sent only
+when the window belongs to the calling process. `[STABLE]`
+
+Proven by discriminator windows whose procedures deliberately lie — measured
+independently by both agents, agreeing exactly:
+
+| Window | Same-process read | Cross-process read |
+|---|---|---|
+| Normal | its name | its name, 0.4 µs |
+| WndProc **returns hijacked text** for `WM_GETTEXT` | the hijacked text | **the real kernel name** |
+| WndProc **suppresses** `WM_GETTEXT` | `""` | **the real name**, 0.5 µs |
+| Kernel name absent, WndProc returns text | the WndProc's text | **`""`** |
+| Owning thread **never pumps** | **blocked > 6 s, abandoned** | **the real name, 0.2 µs** |
+
+Each row is only explicable if the cross-process path bypasses the message queue
+entirely. Explicit `SendMessageTimeout(WM_GETTEXT)` on the same windows returned
+the *hijacked* strings, locating the divergence in the API rather than the
+WndProc.
+
+**The 43 empties were genuinely nameless windows, not failed reads.** Confirmed
+three ways: `GetWindowTextLengthW` also returns 0, `InternalGetWindowText` also
+returns 0, and `MessageWindow::Create()` passes `nullptr` while only
+`CreateNamed()` sets a name — so every embedder owns several anonymous windows
+plus at most one titled singleton. Machine-wide: **55 `Chrome_MessageWindow`s
+across 28 owners, 11 titled, 44 nameless, 11/11 read, zero disagreements between
+all four APIs.** Picking one window per process gives an ~80% chance of landing
+on a nameless one, which is the likeliest shape of the original error. `[MACHINE]`
+
+**All the plausible failure modes were built and refuted:** `[FLOATS]`
+
+| Hypothesis | Result |
+|---|---|
+| Busy / non-pumping UI thread | **Refuted.** 0.9–3.8 µs against a thread blocked 15 s inside its WndProc |
+| Suspended process | **Refuted.** 2000/2000 reads at 0.28 µs against a suspended real Chromium |
+| UIPI / integrity level | **Refuted.** 1271 windows swept from Medium IL: every named one read, including from High-IL owners and from processes whose token *and* process handle could not be opened at all. UIPI filters messages; this is not a message |
+| WndProc doesn't answer `WM_GETTEXT` | **Refuted at source, then made irrelevant** — `ProcessLaunchNotification` returns `false` for anything but `WM_COPYDATA`, so `DefWindowProc` answers it. But the cross-process path never asks |
+
+**API comparison, cross-process:** `[FLOATS]`
+
+| API | Works | Cost | Defeatable |
+|---|---|---|---|
+| **`GetWindowTextW`** | **all 55/55** | **0.1–0.7 µs** | No |
+| `GetWindowTextLengthW` | yes, exact length | 0.1–0.8 µs | No — cheapest "is this named at all" filter, skipping 44 of 55 before any allocation |
+| `InternalGetWindowText` | identical string, always | 0.7–22 µs | No |
+| `SendMessageTimeoutW(WM_GETTEXT)` | **only if the owner cooperates and pumps** | 87–800 µs | **Yes, both ways** — returned `""` against a suppressing WndProc and failed outright after a full 3 s timeout against a non-pumping one. `SMTO_ABORTIFHUNG` did **not** abort early |
+| `GetWindowTextA` | yes | 0.5–0.8 µs | No, but mojibakes non-ANSI paths |
+
+`SendMessageTimeout` is the worst available option: it is the only one a stray in
+exactly the state we care about — hung, wedged, mid-crash — can defeat.
+
+**Do not take a dependency on `InternalGetWindowText.`** ~1550 window-level
+comparisons across every integrity level, a blocked UI thread and a suspended
+process produced **zero divergences** from `GetWindowTextW`. It binds fine under
+NativeAOT and is declared unguarded in the public SDK, so the usual worry is
+unfounded — but an undocumented dependency that buys nothing is a pure loss.
+Keep it as a test oracle instead. `[FLOATS]`
+
+> ⚠️ **We are depending on undocumented behaviour of a documented function, and
+> it must be pinned by a test.** `GetWindowTextW`'s contract says: *"If the target
+> window is owned by another process **and has a caption** … If the window does
+> not have a caption, the return value is a null string."* A `Chrome_MessageWindow`
+> is created with `dwStyle = 0` and **has no caption**. By the documentation this
+> should return empty. It does not. Stable since NT and not plausibly changeable,
+> but unverified on any build but Windows 11 26200 — and this is precisely the
+> silent-failure class the project exists to eliminate.
+
+### 3.2 Enumeration works — and it moves the safety boundary
+
+**`FindWindowExW(HWND_MESSAGE, prev, "Chrome_MessageWindow", NULL)` walks all 55
+windows in 0.43 ms**; the full sweep including a title read per window costs
+~2.7 ms. The class name is **mandatory** — a `NULL` class returns 0, as does
+`EnumChildWindows(HWND_MESSAGE, …)`, and `EnumWindows` finds 632 top-level windows
+with **zero overlap** with the message-only set. `[FLOATS]`
+
+Demonstrated live: one agent's sweep surfaced *the other agent's* browser, in a
+directory it had never been told about — the forgotten-directory case the sweep
+exists for, observed rather than argued.
+
+> ⚠️ **Correction to an earlier claim in this file.** "The API is structurally
+> incapable of returning a profile you did not name" is true of the **exact-title
+> probe** and **false of the enumerating sweep**. Enumeration hands back
+> strangers' paths — Docker Desktop, Discord, Signal, 1Password, Steam, Teams,
+> WhatsApp and ChatGPT all publish real user-data-dirs there. **The ownership test
+> is therefore the entire safety boundary**, not a refinement on top of a safe
+> primitive.
+
+**And the signal is forgeable.** A plain .NET console app called
+`RegisterClassExW("Chrome_MessageWindow")` — window classes are per-process, so it
+succeeded — and created a message-only window titled with an arbitrary path. An
+external sweep found it by both exact-title lookup and enumeration,
+indistinguishable from a real Chromium singleton. `[STABLE]`
+
+**Two guards, both required:** `[FLOATS]`
+
+1. The titled directory contains our `lock.json`, with our schema.
+2. The owning process's **full image path** equals the Chrome for Testing binary
+   BrowserAI provisioned — `QueryFullProcessImageNameW`, exact path comparison.
+   **This is not image-name matching and does not weaken that rule**: matching one
+   absolute path to a binary we installed is the opposite of matching `chrome.exe`
+   wherever it appears. It also independently catches the personal-Chrome fallback
+   hazard below.
+
+**Two hazards specific to enumeration:** `[FLOATS]`
+
+- **The title is an untrusted string on a filesystem path.** Measured
+  `File.Exists(<title>\lock.json)`: local existing 0.56 ms, unmapped `Z:\`
+  0.01 ms, `\\127.0.0.1\C$\nope` **22 ms**, `\\10.255.255.1\share` **21,037 ms**,
+  `\\no-such-host\share` **22,225 ms**. **One UNC title stalls the sweep for 21
+  seconds.** Reject anything that is not a rooted local drive-letter path
+  *before* touching the filesystem.
+- **The walk truncates silently.** If the `prev` handle is destroyed between
+  iterations, `FindWindowExW` returns `NULL` with `GetLastError() == 1400`
+  (`ERROR_INVALID_WINDOW_HANDLE`) and the walk stops early. Normal exhaustion
+  returns `NULL` with error 0, so 1400 is an unambiguous discriminator — check it
+  and restart, or the sweep under-reports **exactly when browsers are exiting**.
+
+**Blind spot: a titleless stray.** `launchPersistentContext(dir, {headless:true})`
+spawns `chrome-headless-shell.exe`, which publishes **two unnamed windows and no
+`lockfile`** — both primitives blind. `@playwright/mcp` 0.0.79 does not take that
+path (headed by default; `--headless --browser chromium` spawns full `chrome.exe`
+with a titled window, read in 2.0 µs, driven over real stdio JSON-RPC). But
+`chromium.executablePath()` reports `chrome.exe` in **both** cases, so it is not a
+usable indicator. A future upstream switch to the shell would blind the sweep
+silently — own it with a test. `[FLOATS]`
+
+**Launch race: 225 ms** from `chrome.exe` start to the titled window existing.
+After a job-close kill, `IsWindow` goes false and the walk drops it immediately —
+no zombie HWNDs. `IsHungAppWindow` returns **False** for a fully suspended
+process, so it is not a usable liveness proxy. `[FLOATS]`
 
 **`chrome-headless-shell` has no titled window.** It owns two
 `Chrome_MessageWindow` instances, both empty-titled; all probe forms miss. It also
@@ -574,6 +710,8 @@ the first three would each silently invalidate a design decision:
 | 2 | Job containment holds end to end | Playwright, Chromium or Firefox changes spawn flags | Run `.work/jobtest/` against both browsers |
 | 3 | `chromiumSandbox` config key still discarded | Upstream fixes it | Assert `--no-sandbox` absent from the child's browser command line |
 | 4 | `Chrome_MessageWindow` title format | Chromium changes `ProcessSingleton` | Exact-title lookup against a launched browser |
+| 4a | **Cross-process `GetWindowTextW` bypasses `WM_GETTEXT`** — undocumented behaviour of a documented function, and the sweep rests on it | A Windows change routes the read through the message queue | Child process with a WndProc that suppresses `WM_GETTEXT`; assert the parent still reads the kernel name. **No browser needed — runs in milliseconds on every build** |
+| 4b | Playwright's headless path still spawns full `chrome.exe`, not `chrome-headless-shell` | Upstream switches binaries — the sweep goes **silently** blind, and `executablePath()` reports `chrome.exe` either way | Launch through the real path, assert the walk yields a titled window owned by that PID |
 | 5 | Chromium/Firefox request no breakaway on browser paths | Either adds one | Source search for `CREATE_BREAKAWAY_FROM_JOB` |
 | 6 | `--browser-test` call-site inventory (11 files) | Chromium adds a web-facing site | Source search for `switches::kBrowserTest` |
 | 7 | `browserName`/`channel`/binary-selection defaults | `validateBrowserConfig` or `getExecutableName` changes | Config round-trip via `browser_get_config` |
