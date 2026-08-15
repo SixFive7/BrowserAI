@@ -585,6 +585,16 @@ An earlier draft of this section said *"Nothing is ever auto-deleted."* That is 
 
 ### G. Updates
 
+> **Re-verified against Velopack 1.2.0 on 2026-08-15 by a real install → update → rollback → uninstall cycle.** Of the nine landmines below, **four are still real, three no longer apply, one was wrong for 1.2.0, and one is partly fixed** — and three new ones were found, including a defect that hangs `Setup.exe` forever. The section text is the pre-verification record; **[KNOWLEDGE §17](KNOWLEDGE.md#17-velopack-120-verified-by-installupdaterollback) is now authoritative** where the two disagree. Corrections that change what we build:
+>
+> - ⚠️ **`Setup.exe` must never be re-run over an existing install.** A repair install renames the root aside and **deletes it** — a 203.8 MB re-download. Updates go through the update path only.
+> - ⚠️ **`Setup.exe -- <args>` panics and never exits**, installing nothing. Never pass start arguments to the installer.
+> - ⚠️ **`force_stop_package` kills by image path under the root, after every hook returns** — so a Velopack update terminates every running browser without our teardown, bypassing the job object. Chromium survives it and our locks release on process death, so this costs a session rather than a profile.
+> - **Target `net10.0-windows`**, not `net10.0`: the hook callbacks are `[SupportedOSPlatform("windows")]`.
+> - **`UpdateExe.Start(waitPid)` in this section does not compile** — the first positional parameter is the locator.
+> - The `-beta`-suffix rationale for setting the channel explicitly is **wrong** (a suffix has no effect on channel derivation). Set it anyway, for a better reason: a client installed from a beta `Setup.exe` inherits `beta` silently. Also `ExplicitChannel = ""` yields `releases..json` → 404, and `vpk` lowercases the channel while the client does not.
+> - **Browsers beside `current\` survive update and rollback** — the arrangement §A depends on, now confirmed rather than assumed.
+
 The reason the project exists. Requirements: updates published on **our** schedule after we have validated a new Playwright version; one release updating runtime, browser, config, opinions and BrowserAI itself; rollback to a known-good release; and silent background update with a clear "restart to apply" signal, since MCP servers are long-lived child processes.
 
 **Mechanism: Velopack 1.2.0** (MIT, per-user install to `%LocalAppData%`, no elevation, no commercial tier). Everything below that was read out of Velopack itself — the delta scheme, the feed-URL composition, the startup and stub behaviours, the Rust binaries' own Windows floor — is recorded with provenance in [KNOWLEDGE §13](KNOWLEDGE.md#13-velopack-and-the-update-path).
@@ -1073,9 +1083,9 @@ Two things follow, and they are design obligations rather than caveats:
 
 1. **Firefox's `parent.lock` preflight and its own stray detection.** Designed, not yet a charter requirement. Playwright never checks `parent.lock`, so a collision raises a native modal that blocks up to 3 minutes. Our lock is taken before launch, so ordering covers it — but coverage-by-ordering needs a test. Firefox also has no `Chrome_MessageWindow` equivalent, so its stray detection is a different path: `parent.lock` sharing violation → Restart Manager `RmGetList` ([KB §3.3](KNOWLEDGE.md#33-process-image-path--the-fully-documented-detection-path), [KB §4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs)).
 
-2. **Where the logon sweep task is registered, and what it costs at install.** Velopack hook, per-user, "run only when user is logged on" — see [the sweep](#the-stray-sweep-and-the-concurrency-it-must-survive). The mechanism is settled; the install-time plumbing is not.
+2. **Whether the vertical slice changes anything** — see below. *(The logon-task question that stood here is closed: verified 2026-08-15, a Velopack install hook runs as the user, non-elevated, and `schtasks /Create /XML` with `LogonType=InteractiveToken` succeeded, survived update and rollback, and was removed by the uninstall hook. [KNOWLEDGE §17.5](KNOWLEDGE.md#175-nativeaot-hooks-and-vpk-output).)*
 
-3. **Whether the vertical slice changes anything.** Nothing here is built. Several decisions — the three lock scopes under real concurrency, `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, the session-index file layout — are settled on paper and unexercised. Expect at least one to move. (The SDK and NativeAOT halves of this closed on 2026-08-15; see [KNOWLEDGE §10.3](KNOWLEDGE.md#103-measured-by-spike-2026-08-15).)
+3. **Nothing here is built.** Several decisions — the three lock scopes under real concurrency, `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, the session-index file layout — are settled on paper and unexercised. Expect at least one to move. (The SDK and NativeAOT halves of this closed on 2026-08-15; see [KNOWLEDGE §10.3](KNOWLEDGE.md#103-measured-by-spike-2026-08-15).)
 
 **Recently closed, listed so they are not reopened by habit:** what ends an instance (one browser-idle timer, stdin EOF as backstop, explicit `browserai_destroy`; reclaim is forever); which capabilities ship (unchanged — `vision`, `devtools`, `config` everywhere, `storage` on `persistent`); and how far to curate the surface (upstream names never renamed, descriptions append-only, `browser_annotate` classified to `interactive`).
 

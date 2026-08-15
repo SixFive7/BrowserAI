@@ -1702,3 +1702,132 @@ stays the default on these grounds alone. `[UNVERIFIED]` as to method — the
 figures are carried forward from a measurement session whose harness was not
 preserved, so treat them as order-of-magnitude guidance and re-measure before any
 decision turns on them. `[FLOATS]`
+
+---
+
+## 17. Velopack 1.2.0, verified by install/update/rollback
+
+Spike 2026-08-15. A NativeAOT app packed with `vpk`, installed per-user, updated
+1.0.0 → 1.0.1, rolled back, and uninstalled, against a local feed server.
+Everything here is observed. `[FLOATS]`
+
+### 17.1 The finding the provisioning design rests on
+
+**`RootAppDir` is the directory containing `Update.exe` — the parent of
+`current\`.** Across update *and* rollback, a sibling directory accumulated all 7
+hook stamps including the original install's, and a 5 MB payload file kept its
+sha256 unchanged. **Siblings of `current\` survive both.** The
+`AppContext.BaseDirectory` trap is real and was confirmed in the same run: files
+written inside `current\` lost their pre-swap contents both times.
+
+Three caveats that bear on the design, none of which the charter had:
+
+- ⚠️ **A repair or overwrite install destroys them.** `install.rs` renames a
+  non-empty root to `{root}.{random16}` and, on success, **deletes it**. Re-running
+  `Setup.exe` over an existing install therefore costs a **203.8 MB re-download**.
+  **Updates must go through the update path; `Setup.exe` must never be re-run over
+  an existing install.**
+- **Uninstall wipes the whole root** (`remove_dir_contents`) — browsers included,
+  which is correct but worth stating.
+- Transient update space is `<root>\packages\VelopackTemp\`: same volume, outside
+  `current\`.
+
+⚠️ **`force_stop_package` will kill our browsers.** It matches by image **path**
+under the root and runs on `apply`, `install`, `start`, `uninstall` **and after
+every hook returns** (`windows/util.rs:59`). Two unrelated processes were killed
+by an update launched from a third. Our browsers live under `RootAppDir`, so an
+update terminates every running browser without warning and without our teardown.
+Chromium survives hard kills and our locks release on process death, so the damage
+is a lost session rather than corruption — but it bypasses the job object entirely,
+and a hook must never leave a helper running under the root.
+
+### 17.2 The nine landmines, re-verified
+
+| # | Charter claim | Verdict |
+|---|---|---|
+| 1 | Channel in the feed URL → 404 | **Still real, consequence wrong.** 1.2.0 throws `HttpRequestException … 404`. Not silent, not "unrecoverable in the field" — catchable, so a health check can detect it |
+| 2 | `SetAutoApplyOnStartup(false)` mandatory | **Still real.** Default is `true`; the relaunch is detached |
+| 3 | Never register the stub | **Still real, reason wrong.** "No pipes attached" is false — stdio is inherited stub → `Update.exe` → app, and 3,220 bytes of app stdout arrived on the stub's pipe 12.9 s after the stub died. The killer is that the stub **exits in 59 ms** while the app runs on |
+| 4 | `force_stop_package` kills everything under root | **Still real, broader than stated** — see above |
+| 5 | `UpdateManager` ctor issues a network request | **Never applied to 1.2.0.** Ctor only assigns fields; 0 ms against an invalid host, zero requests logged. *New caveat:* `VelopackLocator` is not free — it probes writability, **creates `packages\` and `packages\VelopackTemp`**, and opens a log file |
+| 6 | `NotInstalledException` is the normal test-host outcome | **Wrong for 1.2.0.** `VelopackLocator.Current` and `new UpdateManager(url)` throw `InvalidOperationException: No VelopackLocator has been set`; `VelopackApp.Build().Run()` **succeeds**, warns, and leaves `IsInstalled == false`. The test seam is a **boolean**, not exception handling |
+| 7 | `ApplyUpdatesAndRestart(null)` is undocumented | **Now documented.** Advice still right for a different reason: `toApply ?? GetLatestLocalFullPackage()` means null is "apply whatever is staged", not "just restart". ⚠️ **Charter code error:** `UpdateExe.Start(waitPid)` does not compile — the first positional parameter is the locator |
+| 8 | `IVelopackLogger` needs two registrations | **Fixed.** One `VelopackApp.SetLogger()` reaches installer, hooks, `UpdateManager` and bridged Rust output |
+| 9 | Rust binaries' Windows floor | **General claim holds; the cited defect is fixed.** `IsWow64Process2` is now dynamically loaded with an error path. Shipped binaries are MinOS 6.0, 32-bit PE32 GUI; no `vpk pack` option sets `os_min_version` |
+
+### 17.3 Update mechanics
+
+Delta for an 8.76 MiB binary change: **3,210 bytes**. Update wall time ~2.5 s, and
+**`current\` is absent for 1.7 ms** — two `fs::rename` calls, effectively atomic.
+Running instances are killed without warning.
+
+**Rollback needs `AllowVersionDowngrade = true`** (default false yields "no
+updates", silently) and then forces a **full re-download** — 6,072,200 b, zero
+deltas — because `packages\` was pruned to the new full nupkg during the forward
+update. Rollback fires the same obsolete/updated/restarted hooks; from the app's
+view it is an ordinary update. `restartArgs` pass through, but **the relaunched
+app does not inherit the caller's stdio.**
+
+### 17.4 Channel — the charter's reason was wrong
+
+Default channel is `win` (the OS short name), stamped into `sq.version` and read
+back by the locator. **A `-beta` version suffix has zero effect on channel
+derivation** — packing `1.0.3-beta.1` with no `--channel` emitted
+`releases.win.json`. The charter attributed the hazard to Velopack; it was
+application code in a sibling project.
+
+The real reason to set it explicitly: **a client installed from a beta
+`Setup.exe` inherits `beta` in its manifest and stays there silently.** Two new
+hazards: `ExplicitChannel = ""` produces `releases..json` → 404 (the code
+null-coalesces, so empty is not unset), and **`vpk pack` lowercases the channel
+while the client does not** — `"Beta"` passes on NTFS and 404s on a
+case-sensitive store, which is exactly a sibling project's S3 setup.
+
+### 17.5 NativeAOT, hooks, and `vpk` output
+
+**NativeAOT + Velopack 1.2.0: zero trim/AOT/IL warnings.** `VelopackApp.Build().Run()`
+works; install, delta update and rollback all work. Exe 9,182,720 b (8.76 MiB),
+full nupkg 6,072,200 b, `Setup.exe` 10,533,768 b. The 34 MB pdb is excluded
+automatically. ⚠️ **Target `net10.0-windows`** — the hook callbacks are
+`[SupportedOSPlatform("windows")]`, so plain `net10.0` produces CA1416.
+
+**Hooks can register the logon sweep task — confirmed.** All hooks ran **as the
+user, non-elevated**, session 1. Fast-exit hooks with their timeouts:
+`--veloapp-install` (30 s), `--veloapp-updated` (15 s), `--veloapp-obsolete`
+(15 s), `--veloapp-uninstall` (60 s); `OnFirstRun` and `OnRestarted` do not exit.
+`schtasks /Create /XML` from the install hook succeeded with
+**`LogonType=InteractiveToken`** — "run only when user is logged on", which is
+exactly what the sweep needs and the opposite of the session-0 trap. The task
+**survived update and rollback** because it targets the stable `current\` path,
+and the uninstall hook removed it.
+
+**`vpk` emits**, into `Releases` by default: `{id}-{version}-full.nupkg`,
+`{id}-{version}-delta.nupkg`, `{id}-{channel}-Portable.zip`,
+`{id}-{channel}-Setup.exe`, `releases.{channel}.json`, `assets.{channel}.json`,
+`RELEASES`. **It does not prune** — after 5 versions all 5 fulls and 4 deltas
+remained and the feed advertised all of them.
+
+**`.gitignore` verdict** (closes the deferred v1 item): `/Releases/` ✅ ·
+`*-Portable.zip` ✅ · `/RELEASES` ✅ default channel only · **`Setup.exe` never
+matches** — the real name is `{id}-{channel}-Setup.exe` · **`/payload/`,
+`/staging/`, `/.staging/` are not vpk output at all**; they are BrowserAI's own
+build conventions and must be justified on that basis or dropped.
+
+### 17.6 New defect: `Setup.exe -- <args>` hangs forever
+
+`setup.rs` declares `EXE_ARGS` without `.value_parser(value_parser!(OsString))`
+but reads `get_many::<OsString>`, so passing start arguments panics with
+*"Mismatch between definition and access of EXE_ARGS … Could not downcast"*. **The
+process never exits**, installs nothing, and leaves one log line. `update.rs` has
+the value parser and is unaffected. Any scripted install passing start arguments
+hangs forever — the purest instance of this project's own failure class, found in
+the tool we were about to trust with it. **BrowserAI must never pass start
+arguments to `Setup.exe`.**
+
+Two smaller ones: **Desktop and Start Menu shortcuts are created by default**
+(`--shortcuts` defaults to `Desktop,StartMenuRoot`), and
+`%LOCALAPPDATA%\velopack\` is created unconditionally, **not removed by
+uninstall**, with non-installed runs writing to a machine-shared `velopack.log`.
+
+**Not verified:** MSI/PerMachine, signing, `--runtime win7`, `autoApply=true` with
+a staged package, behaviour on older Windows, stdin inheritance through the stub.
