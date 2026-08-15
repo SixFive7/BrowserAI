@@ -202,35 +202,14 @@ later measurement overruled the original.
 
 </details>
 
-## Open questions carried into the next session (2026-08-14)
+## Resolved 2026-08-14 → 2026-08-15
 
-The maintainer proposed a substantial simplification and asked several questions
-the session ran out of room to answer properly. **Recorded verbatim in intent so
-the next session starts from them, not from scratch.**
-
-- [ ] **The no-timer proposal, and whether the registry is needed at all.**
-      Maintainer's design: *no* handle/idle expiry timers. `init` refuses any
-      existing directory and redirects to `resume` — **including a cleanly closed
-      one**, on the grounds that there is no meaningful difference between a lost
-      session and a neatly closed one; both must be resumed, so both should behave
-      identically. That leaves exactly **one** timer: browser-idle at 10 min,
-      reset by any activity (a tool call, or a `resume` followed by one), closing
-      the browser but keeping the node child. The reason a session went idle —
-      timeout, explicit close, client disconnect — stops mattering entirely.
-
-      **First reaction: this is better than the two-stage design and should
-      probably be adopted.** It removes a whole state machine and the three
-      distinct error texts collapse toward one. Two follow-ups the next session
-      must resolve rather than assume:
-
-    - **Could the label simply *be* the directory?** Maintainer's suggestion, for
-      full transparency. Likely yes, and it would delete the label-reuse question
-      (see below) outright.
-    - **Is the registry then still needed?** Genuinely open, and the answer may be
-      no. If the lockfile lives *in* the profile directory and carries its holder,
-      and the directory is the identity, then a central registry may add nothing
-      but a synchronisation problem. **Do not carry the registry forward by
-      inertia** — make it justify itself or drop it.
+- [x] **The no-timer proposal, and the registry.** ✅ Adopted in full and encoded.
+      One timer only — browser-idle — and **the registry is dropped**: the
+      directory is the identity, the handle and the lock, and `lock.json` inside it
+      is the authority. Labels are gone with it. See
+      [The session directory is the identity](README.md#the-session-directory-is-the-identity)
+      and [Lifetime](README.md#lifetime-one-timer-and-reclaim-is-forever).
 
 ## Open after 2026-08-15
 
@@ -245,20 +224,13 @@ the next session starts from them, not from scratch.**
       is `[UNVERIFIED]` without a reboot — the command-line fingerprint that would
       settle it is recorded in the KB.
 
-- [ ] **When does the stray sweep run?** Still open, and the maintainer's original
-      objection stands: BrowserAI may not run for weeks and may never re-open a given
-      directory, so sweep-on-start alone leaves strays alive indefinitely. Options:
-      sweep-on-start across every known directory; plus a logon scheduled task; or a
-      resident watcher. A logon task needs to know where sessions live — the default
-      root covers most by scanning, and out-of-root directories need a pointer list
-      (a list of paths holding no state is not the registry that was dropped).
-
-      **Now smaller than it was.** Headless sessions have no visible window and are
-      therefore not eligible for the sign-in snapshot at all, so the exposure is the
-      two headed modes. Detection itself is solved — see
-      [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) for the
-      exact canonicalisation, and the warning that the detector must **not** be
-      extended to cover fallback profiles.
+- [x] **When does the stray sweep run?** ✅ Settled and encoded as
+      [The stray sweep](README.md#the-stray-sweep-and-the-concurrency-it-must-survive).
+      Two triggers — BrowserAI startup and a logon scheduled task — each looking
+      twice, with twelve races enumerated and a test against each. Detection is
+      enumeration rather than inventory lookup
+      ([KNOWLEDGE §3.2](KNOWLEDGE.md#32-enumeration-works--and-it-moves-the-safety-boundary)),
+      so the sweep and the pointer store are now independent.
 
 - [x] **The four named modes become three plus a modifier.** ✅ Settled and encoded
       2026-08-15 as [Three modes](README.md#three-modes-and-tracing-as-a-modifier),
@@ -298,41 +270,33 @@ the next session starts from them, not from scratch.**
       oldest-first past the threshold, sparing only the current response's writes.
       Never set; env var stripped; retention is the calling agent's decision.
 
-- [ ] **First-run download: the requirement is self-healing years later.**
-      Maintainer's framing, and it is the right one: a pinned version may need
-      downloading *years* after the release that pinned it. That raises questions
-      the current design only partly answers — what happens when Google prunes an
-      old Chrome-for-Testing build (not observed back to Jul 2023, but undocumented
-      and unguaranteed); whether a fallback mirror or a side-load path is needed;
-      and how a corrupt or partial tree self-heals without human help. Re-explain
-      the mechanism from first principles next session; the current TODO entry
-      assumes context the maintainer did not have.
+- [x] **First-run download self-healing.** ✅ Decided: stay with Playwright's
+      built-in capabilities, no manifest and no health-check layer. The consequence
+      is stated plainly in
+      [§A](README.md#first-run-browser-provisioning) rather than softened —
+      a tree corrupted *after* a successful install never re-downloads, because
+      `INSTALLATION_COMPLETE` short-circuits without validating. Recovery is the
+      `browserai_reinstall_browser` tool plus error text that names the path.
 
-- [ ] **`winldd`, explained.** A small Playwright helper (`PrintDeps.exe`) that
-      checks a browser's DLL dependencies are present before launch. It matters
-      because measurement showed the validation **actually runs for Firefox** (39
-      binaries, +329 ms) and is a **permanent no-op for Chromium** — Playwright
-      passes `["chrome-win"]` while the real directory is `chrome-win64`. It is
-      gated by a `DEPENDENCIES_VALIDATED` marker with a 30-day revalidation period,
-      so for Firefox it is a **recurring monthly cost**, not a one-off.
+- [x] **Record why an instance exists.** ✅ `purpose` is a **required** field on
+      `init`, appended on `resume`, updatable via `browserai_set_purpose`, stored in
+      `lock.json`, and played back on a refused `init`, on `resume` and in `list`.
+      Encoded, including the caution that it is a channel between agents and must be
+      capped, sanitised and framed as data rather than instruction.
 
-- [ ] **New: record why an instance exists.** Maintainer's proposal — a reason
-      field on `init` and `resume`, plus a tool to update it, stored in the
-      registry or in the directory. Played back on a refused `init`, on `resume`,
-      or via a dedicated "what was this" call, so an agent meeting an existing
-      directory can find out what was going on. Strong idea: it is the missing
-      human-readable half of the session index, and it directly serves the
-      forked-agent case the `resume` redirect exists for.
+- [x] **Per-`init` browser choice.** ✅ On `init` only; `resume` reads it from
+      `lock.json` and refuses it as an argument, because a profile is
+      browser-specific. Firefox ships in v1.
 
-- [ ] **New: per-`init` browser choice.** Let the caller pick Chromium or Firefox
-      per instance. Measured 2026-08-14, Firefox costs ~2x RAM, ~10x first
-      navigate, ~24x idle CPU and ~20x profile disk, and its profile-lock refusal
-      is a **native GUI modal blocking up to 3 minutes** on a headless server
-      (`isProfileLocked` only checks Chromium's `lockfile`, never Firefox's
-      `parent.lock`). So Chromium stays the default on engineering grounds alone —
-      but Firefox is *safer* on data integrity, since headless Chromium writes no
-      lock at all. If Firefox is offered, BrowserAI must do its own `parent.lock`
-      preflight or the modal is reachable.
+- [ ] **Firefox's `parent.lock` preflight.** The one piece of Firefox support that
+      is designed but not yet written into the charter as a requirement. Playwright's
+      `isProfileLocked` checks only Chromium's `lockfile`, so without our own
+      preflight a collision puts a **native modal on the desktop blocking up to
+      3 minutes** — an invisible hang in a background server. Our lock is taken
+      before launch, so the ordering already covers it, but coverage-by-ordering
+      needs a test that fails if the ordering changes. Firefox also needs its own
+      stray detection: no `Chrome_MessageWindow` equivalent, so it is `parent.lock`
+      sharing-violation → Restart Manager `RmGetList` for the PID.
 
 ## Later
 

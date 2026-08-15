@@ -1034,11 +1034,13 @@ Two things follow, and they are design obligations rather than caveats:
 
 ### Still open
 
-1. **What ends an instance?** Explicit teardown tool, idle timeout, stdin EOF, or all three — and what happens to a handle whose child died underneath it. Affects §D locking directly: a lock held by a dead instance is the exact failure the current launcher needed a signature heuristic to survive.
+1. **Firefox's `parent.lock` preflight and its own stray detection.** Designed, not yet a charter requirement. Playwright never checks `parent.lock`, so a collision raises a native modal that blocks up to 3 minutes. Our lock is taken before launch, so ordering covers it — but coverage-by-ordering needs a test. Firefox also has no `Chrome_MessageWindow` equivalent, so its stray detection is a different path: `parent.lock` sharing violation → Restart Manager `RmGetList`.
 
-2. **Which capabilities ship by default?** Current: `vision`, `devtools`, `config` on all modes; `storage` on persistent only. `testing`, `network`, and `pdf` are off. Measured cost per instance: base 24 tools, `vision` +6, `devtools` +11, `config` +1, `storage` +17.
+2. **Where the logon sweep task is registered, and what it costs at install.** Velopack hook, per-user, "run only when user is logged on" — see [the sweep](#the-stray-sweep-and-the-concurrency-it-must-survive). The mechanism is settled; the install-time plumbing is not.
 
-3. **How aggressively should the tool surface be curated?** BrowserAI can rename, re-describe and drop tools. Dropping reduces what the model can do; renaming diverges from upstream documentation.
+3. **Whether the vertical slice changes anything.** Nothing here is built. Several decisions — the three lock scopes, `PROC_THREAD_ATTRIBUTE_JOB_LIST` under NativeAOT, `Microsoft.Win32.Registry`'s AOT-cleanliness — are settled on paper and unexercised. Expect at least one to move.
+
+**Recently closed, listed so they are not reopened by habit:** what ends an instance (one browser-idle timer, stdin EOF as backstop, explicit `browserai_destroy`; reclaim is forever); which capabilities ship (unchanged — `vision`, `devtools`, `config` everywhere, `storage` on `persistent`); and how far to curate the surface (upstream names never renamed, descriptions append-only, `browser_annotate` classified to `interactive`).
 
 ---
 
