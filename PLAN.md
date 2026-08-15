@@ -44,7 +44,7 @@ Two consequences worth taking deliberately, because both are real costs of that 
 
 **NativeAOT is not free.** AOT forbids runtime reflection-based serialization, so `System.Text.Json` needs source-generated contexts (`JsonSerializerContext`). Velopack declares `IsAotCompatible=true` for net8.0+, and **so does `ModelContextProtocol`** — verified in-source on 2026-08-14, set on every target except `netstandard2.0`, at both `v1.4.1` and `v2.2.0` ([kb: SDK behaviours](kb/mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)). That is a meaningful signal and **not a proof for our usage**: the `JsonElement` passthrough at the heart of the proxy is AOT-friendly, but a declaration is the author's claim about their code, not about how we drive it. Publish AOT and run the suite against it before committing. The fallback is self-contained trimmed (~70 MB), which against the payload is noise. **AOT buys cold-start latency and the dropped runtime dependency here, not size.**
 
-Shipping the browser deletes an entire subsystem from the current design: the preflight, the install mutex, the staleness timeout, the detached installer, and the retry instructions written for an LLM to read. That machinery exists solely because the browser arrives on demand.
+> **Superseded 2026-08-14.** This paragraph argued that shipping the browser deletes a whole subsystem — the preflight, the install mutex, the staleness timeout, the detached installer, the LLM-readable retry instructions — because that machinery exists only when the browser arrives on demand. The argument was sound and we did not take it: [the redistribution position is unresolved](#first-run-browser-provisioning), so the browser *does* arrive on demand and the subsystem is specified thirty lines below. Kept because it correctly prices what first-run provisioning costs us, and that price should stay visible.
 
 > ### `browserName: "chromium"` must be set explicitly or none of this runs
 >
@@ -62,10 +62,12 @@ Shipping the browser deletes an entire subsystem from the current design: the pr
 
 ```
 <browsers-root>\
-  chromium_headless_shell-1237\chrome-headless-shell-win64\chrome-headless-shell.exe
   chromium-1237\chrome-win64\chrome.exe
   ffmpeg-1011\ffmpeg-win64.exe
+  winldd-1007\PrintDeps.exe
 ```
+
+> `chromium_headless_shell-1237\` appears in this layout only if something asks for it. **We do not provision it** — [full Chromium in every mode](../BrowserAI/README.md#settled-2026-08-15) — so `--no-shell` above is load-bearing, not tidiness.
 
 Note the asymmetry: the outer directory uses **underscores**, the inner one **dashes**. No sentinel files (`INSTALLATION_COMPLETE`, `DEPENDENCIES_VALIDATED`) are needed to launch — the only launch-time check is file accessibility of the executable. Strip `.links/` from the shipped tree; it contains the build machine's absolute paths. The layout, the `INIT_CWD` hazard and the `DEPENDENCIES_VALIDATED` write are in [kb: first-run provisioning](kb/playwright/provisioning-and-timings.md#first-run-provisioning).
 
@@ -73,7 +75,7 @@ Build the browser payload with the pinned package itself, so the revision comes 
 
 ```
 set PLAYWRIGHT_BROWSERS_PATH=<staging>
-node.exe <staging>\node_modules\@playwright\mcp\cli.js install-browser chromium --only-shell --no-progress
+node.exe <staging>\node_modules\@playwright\mcp\cli.js install-browser chromium --no-shell --no-progress
 ```
 
 #### First-run browser provisioning
@@ -164,7 +166,7 @@ Rows 3 and 4 are deliberately not offered. They would be genuinely useful — ro
 
 > **The mode is bound at `init` and carried by the handle**, exactly like the browser choice. `resume` reads it from `lock.json` and never accepts one, so a session cannot change what it is. Note the older argument in this section — that a named mode is harder to forge than a flag — is **weaker than it reads**: a flag bound at `init` and carried by the handle is equally unforgeable. The real reasons to keep names are the size of the classification matrix and the fact that a name carries intent to whoever reads it later.
 
-**Discoverability is a requirement, not a nicety.** A mode nobody knows about is a mode nobody picks correctly, and the failure is silent — an agent that does not know `persistent` exists just fails to log in and reports the site as broken. All three channels below carry part of it:
+**Discoverability is a requirement, not a nicety.** A mode nobody knows about is a mode nobody picks correctly, and the failure is silent — an agent that does not know `persistent` exists just fails to log in and reports the site as broken. All four channels below carry part of it** — three capped, one not:
 
 - **Server `instructions`** — one compact line naming the three modes and the one-sentence rule for choosing. This is the only channel that reaches the model *before* it calls anything, so it must contain the choice, not a pointer to it. Costs perhaps 150 of the 2 KB.
 - **`init`'s description** — the full table: what each mode grants, what it refuses, that `tracing` is a boolean orthogonal to all three, and that the choice is permanent for the directory's life.
@@ -187,9 +189,11 @@ The server instructions exist to pre-empt the cold-start failure named above: **
 
 `SixFive7/OutlookAI` is the in-house precedent for treating this as a contract rather than prose: its instructions string lives in `ServerMetadata.cs` and is pinned by tests.
 
-**Why a handle beats a `mode` enum.** A handle is *minted by the server*. The model cannot invent one for a session type it never created, so `browser_cookie_list` cannot be aimed at an interactive session by choosing the wrong string — an interactive handle simply does not permit storage tools. A `mode` parameter, by contrast, is a value the model composes fresh on every call and can compose wrongly. The handle converts a model-authored assertion into a server-issued capability reference, which is a materially stronger position.
+**Why the mode is bound at creation, not passed per call.** A `mode` argument on every tool is a value the model composes fresh each time and can compose wrongly; a mode fixed at `init` and recorded in `lock.json` is composed once, by the caller that chose the directory. That is the whole of the guarantee, and it is worth being precise about its size.
 
-It does not close the gap entirely: a connection holding both an interactive and a persistent handle can still route a call to the persistent one. But that grants nothing new — an agent holding a persistent handle was already entitled to those cookies. **The interactive guarantee holds**, and that is the one that matters.
+> ⚠️ **An earlier draft claimed more than this, and the claim is now false.** It argued that a *server-minted* handle could not be forged for a session type the agent never created, converting a model-authored assertion into a server-issued capability reference. [The mint is gone](#the-session-directory-is-the-identity) — the session is a directory path, which a model can compose freely. **Nothing prevents an agent naming a `persistent` directory it did not create.** What prevents it *reading* those cookies is that the directory it names has a `lock.json` recording `persistent`, and the mode check is against that file, not against the caller's word. So the enforcement holds and the *forgery* argument does not.
+>
+> The residual gap is unchanged and still worth stating: a connection holding both an `interactive` and a `persistent` session can route a call to the persistent one. That grants nothing new — an agent with a persistent session was already entitled to those cookies — and **the `interactive` guarantee, which is the one a human relies on, holds.**
 
 **Critical constraint — read before designing `init`:** the MCP spec (2026-07-28, *Tools § Capabilities*) states the tool set "**MAY** change over time … but **MUST NOT** vary per-connection or as a side effect of other requests on the connection." SEP-2567 removed protocol-level sessions outright. Separately, `notifications/tools/list_changed` is unreliable in practice — Claude Code registers no handler for it (issues [#13646](https://github.com/anthropics/claude-code/issues/13646), [#4118](https://github.com/anthropics/claude-code/issues/4118)). **That citation is stale** — it held at client 2.0.65 and is false at 2.1.231 ([kb: the client](kb/mcp/protocol.md#the-client-claude-code)). The conclusion below is unchanged, because it rests on SEP-2567 rather than on the client.
 
@@ -198,7 +202,7 @@ It does not close the gap entirely: a connection holding both an interactive and
 **Obligations the handle design creates:**
 
 - **Every tool schema gains a required `session` parameter** (the session directory — see [§H](#h-the-model-facing-surface) for why it is not called `handle`), injected by BrowserAI into the raw `inputSchema` of all ~69 tools. Do this on the `JsonNode`; never materialise a typed schema to do it, because the typed path silently discards unknown tool-level members. Keep the injection order-stable — the spec SHOULDs deterministic tool ordering for prompt-cache hit rates.
-- **Missing, unknown and expired handles need three distinct, LLM-readable errors.** That text is read by a model deciding what to do next, not by a human tailing a console — the same principle as the current launcher's browser-preflight message, which exists precisely because "the server is stuck" was the wrong conclusion to invite.
+- **Missing and unknown sessions need two distinct, LLM-readable errors** — [rows 1 and 2](#h4-the-error-catalogue). There is deliberately no *expired* case: [reclaim is forever](#lifetime-one-timer-and-reclaim-is-forever), so a session that exists is always resumable, and an error for an unreachable state would be a test nothing can satisfy. That text is read by a model deciding what to do next, not by a human tailing a console — the same principle as the current launcher's browser-preflight message, which exists precisely because "the server is stuck" was the wrong conclusion to invite.
 - **The first call after a cold start will forget the handle.** Design for it: the error must name `init`, state what it needs, and be recoverable in one turn.
 - **Instance lifetime is BrowserAI's to define.** At minimum: explicit teardown, an idle timeout, and **stdin EOF as the backstop** that reaps everything — EOF fires instantly when the parent holding the pipe is `TerminateProcess`d ([measured](kb/windows/processes.md#stdio-exit-codes-and-process-startup)), and the SDK already treats it as shutdown.
 - **N children per process.** One BrowserAI now supervises several `node` children, each with its own config, stderr stream and directory locks. **One job object per child, never one shared job** — a shared job fuses every instance's tree together, so tearing down one handle would kill them all, and assigning BrowserAI itself would make it a casualty too. See [the job object contract](#zero-process-leakage-the-job-object-contract). Stderr must be demultiplexed per handle or diagnostics become unreadable at exactly the moment they matter.
@@ -228,7 +232,7 @@ So the guarantee is recovered differently, and better placed: **BrowserAI knows 
 
 **`init` refuses a directory that already has one, including a cleanly closed one.** It fails with an error naming the existing session, its purpose and its mode, and directs the caller to `resume`. Being made to say "resume" is the point: it converts an accidental collision into a stated intent. There is deliberately **no difference between a lost session and a neatly closed one** — both must be resumed, so both behave identically, and the reason a session ended stops being a thing anyone has to model.
 
-**`init` takes** the mode, the browser, a **required** `purpose`, and optional directory and console-level. **`resume` takes only the directory**; mode and browser come from `lock.json` and are refused as arguments, because a profile is browser-specific and a session cannot change what it is. A missing or unparseable `lock.json` is an error, never a guess.
+**`init` takes** a **required** directory, a **required** `purpose`, a **required** mode, and optional browser, tracing and console-level. See [§H.2](#h2-the-authored-tools) for the full signature. **`resume` takes only the directory**; mode and browser come from `lock.json` and are refused as arguments, because a profile is browser-specific and a session cannot change what it is. A missing or unparseable `lock.json` is an error, never a guess.
 
 > `purpose` is free text written by one agent and replayed into another's context, which makes it a channel between agents. Cap its length, strip control characters, and frame it explicitly as recorded data — *"purpose recorded by a previous session:"* — so it cannot read as an instruction. Store the facts we get for free alongside it — created, last-used, mode, browser, last origins visited — because *"last used 3 days ago, last on portal.customer.example"* usually answers "what was this" better than prose written three days ago.
 
@@ -253,7 +257,7 @@ Because [there is no default directory](#the-init-contract), there is no root to
 - **Self-cleaning on sweep.** A pointer whose directory is gone, or whose directory has no readable `lock.json`, is removed. The store therefore shrinks as sessions are destroyed, without anyone maintaining it.
 - **The directory proves its own ownership.** Anything the store points at is verified by opening `lock.json` inside it, so the inventory never has to be trusted — only followed. A personal Chrome profile contains no `lock.json` and cannot be mistaken for ours however it was reached.
 
-**Store it in `HKCU\Software\BrowserAI\Sessions` rather than as files.** Both work and the choice is close, but the registry wins on the axis that matters here: `RegSetValueEx` and `RegDeleteValue` are atomic single-value operations designed for concurrent access, whereas enumerating a directory while other processes create and delete entries in it is a race the file system does not promise anything about. Enumeration is also cheaper, and the store cannot be damaged by a disk-cleanup tool that decides an unknown folder is junk. Two things to hold against it: HKCU roams with a roaming profile, so entries can arrive naming paths that never existed on this machine — harmless, because self-cleaning removes them on the first sweep — and it is less pleasant to inspect by hand, which a `list` tool answers better than a folder would. Verify `Microsoft.Win32.Registry` is NativeAOT-clean before committing to it.
+> **Superseded by [§D](#the-session-index-on-disk), which is authoritative.** This section originally recommended `HKCU\Software\BrowserAI\Sessions`, on the grounds that atomic single-value registry writes beat enumerating a directory that ~100 processes are mutating. **That argument evaporated** when enumeration replaced inventory lookup in the sweep: the index is now read only by `browserai_list` and by cleanup, so contention is low and files win on being inspectable, deletable and free of profile roaming. The four properties above still hold; only the storage mechanism changed. The exact layout is specified once, in §D — do not re-specify it here.
 
 #### The stray sweep, and the concurrency it must survive
 
@@ -368,7 +372,7 @@ Prefer a `FileStream` with `FileShare.None` for the sibling lockfile over the cu
 
 **Killing a user's own `chrome.exe` or `firefox.exe` must be impossible by construction, not merely avoided.** This is a structural rule, not a review item, because a review already passed on code that would have violated it: our own Chromium probes counted and killed by image name — harmless for Chromium on that machine, and it would have killed ~40 personal `firefox.exe` processes if adapted naively ([kb: the legacy setup](kb/history.md#the-legacy-setup-and-this-machine)).
 
-The invariant: **BrowserAI can only terminate a process that belongs to a job object it created, or whose identity it verified against a path it owns.** Two mechanisms, no third:
+The invariant: **BrowserAI can only terminate a process that belongs to a job object it created, or whose identity it verified against a path it owns.** Two mechanisms, no third — *for processes BrowserAI terminates*:
 
 - **The job object** covers everything spawned in this process's lifetime. Closing the handle terminates exactly its members — no name, no PID list, no filter, so there is nothing to get wrong. A user's browser cannot be a member; it was never assigned.
 - **Path-keyed identification** covers anything that outlived us. The match is on *our own* session directory, which by construction cannot name a personal profile in `%LOCALAPPDATA%\Google\Chrome\User Data`.
@@ -505,14 +509,16 @@ Layout beneath the root, following the nine generator prefixes rather than inven
 
 > **The two path rules read as contradictory and are not.** `init`'s directory arguments are deliberately unconstrained — the caller is declaring where its data lives. A per-call `filename` names a file inside a workspace already declared, so normalising it into that workspace *honours* the choice already made rather than overriding it. Record the distinction, because anyone meeting the two rules cold will think one of them is wrong.
 
-### Three obligations that follow
+### Four obligations that follow
 
 - **Names must be legible.** Upstream generates `page-2026-08-14T04-11-50-882Z.png` ([kb: artifacts](kb/playwright/tools-and-artifacts.md#artifacts-and-output-directory-behaviour)). Prefer the caller's own name where one was given, and a page-derived slug plus a counter where none was — `checkout-step-3.png` survives a month, a timestamp does not. This is what made 346 session directories unnavigable.
 - **Never overwrite silently.** Two screenshots named `login.png` in one session is data loss. Suffix, and say so in the result.
 - **Report cumulative session size in the result.** The current setup reached 1.5 GB in three months with nothing saying so. BrowserAI routes every file and therefore knows; not reporting it is a choice to stay blind.
 - **Return a repository-relative path alongside the absolute one.** When an agent writes a commit message, a PR body or a report, `docs/screenshots/login.png` is what it needs; an absolute path is machine-specific and useless there. BrowserAI resolves both anyway — emitting only one of them discards work already done.
 
-### The session index
+### The artifact index
+
+> Not to be confused with [the session index on disk](#the-session-index-on-disk), which is a different file solving a different problem: that one lists *which session directories exist*, machine-wide, one file per session. This one lists *what is inside one session*, and lives in that session's own folder.
 
 Routing means BrowserAI knows, at write time, every fact worth recording: which tool produced a file, when, at which URL, under which handle and session type. Not writing that down throws away information that cannot be reconstructed afterwards — which is exactly how 346 session directories became untriageable. **The label tells you what a session was; the index tells you what is in it.**
 
@@ -557,7 +563,7 @@ Landmines, in descending order of blast radius. All of them fail silently:
 1. **Never put the channel in the feed URL.** `SimpleWebSource` composes the request as `{BaseUrl}/releases.{channel}.json`. Build the base URL as `{BaseUrl}/{channel}` and Velopack fetches `{BaseUrl}/{channel}/releases.{channel}.json` — a 404, surfaced to the user as *"no update available"* and nothing else. Set the channel through `UpdateOptions.ExplicitChannel`, never in the URL path. This is the worst hazard in the section because **it is unrecoverable in the field**: a client that cannot reach the feed cannot be told to roll back either, so every install already shipped needs a manual reinstall. Rollback does not cover it — rollback assumes the feed works. It follows that the update test must resolve the **real feed URL**; a local-directory source composes paths differently and will pass where production 404s.
 2. **`SetAutoApplyOnStartup(false)` is mandatory.** The default is `true`: on finding a staged package, `VelopackApp.Run()` applies it, exits(0), and relaunches — with no inherited stdio. Claude Code sees its MCP server exit at handshake time.
 3. **Register `%LocalAppData%\BrowserAI\current\BrowserAI.exe` directly**, never the execution stub. The stub is compiled `#![windows_subsystem = "windows"]` and returns immediately without waiting, so a stdio client sees the child die instantly with no pipes attached.
-4. **`force_stop_package` kills every process under the install root** without asking. With four registrations that is three other live sessions destroyed mid-task. Gate the apply on "am I the last instance" using the same directory-keyed lock from §D, then spawn `Update.exe apply --silent --norestart --waitPid <ownPid>` and exit. The next session starts the new version from the identical path — in normal use there is no "restart to apply" prompt at all.
+4. **`force_stop_package` kills every process under the install root** without asking. With ~100 concurrent registrations — eight editors with a dozen agent sessions each is a normal day — that is every other live session destroyed mid-task. Gate the apply on "am I the last instance" using the same directory-keyed lock from §D, then spawn `Update.exe apply --silent --norestart --waitPid <ownPid>` and exit. The next session starts the new version from the identical path — in normal use there is no "restart to apply" prompt at all.
 5. **Reading the installed version must not touch the network.** `UpdateManager` is network-capable, so constructing one merely to read the current version issues a request. `VelopackLocator` reads local metadata only. For BrowserAI this sits on the stdio startup path, where a stray network call is a handshake delay at best and a hang behind a captive portal at worst.
 6. **`NotInstalledException` is the normal outcome under `dotnet run` and every test host.** Neither is a Velopack install, so every Velopack call throws. Do not guard on `Debugger.IsAttached` — a test runner attaches no debugger. Put an injectable seam around every Velopack call from day one; without it a server that self-restarts relaunches itself out of the test suite.
 7. **Do not call `ApplyUpdatesAndRestart(null)` to mean "just restart".** It works — the internals skip the `--package` argument when there is no local full package — but the behaviour is undocumented and rests on an implementation detail. `UpdateExe.Start(waitPid)` is the supported restart.
@@ -579,7 +585,7 @@ State must live **outside** `current\`, which is wholly replaced on update — r
 Landmines 1 and 5–9 above were not found in documentation. They were found in a working Velopack deployment: **`ExoFabric/UCC`** ships Velopack today — per-user `%LocalAppData%\UCC\current\`, no elevation, S3-compatible feed, silent background check — and is the only in-house evidence that exists. Its state as observed is in [kb: UCC prior art](kb/packaging/velopack.md#prior-art-exofabricucc). Two caveats before borrowing anything from it:
 
 - **It runs Velopack 0.0.1298, not 1.2.0.** That is the pre-1.0 line; behaviour and API surface have both moved. Re-verify every claim against 1.2.0 and stamp it with the `Verified <date> @ <version>` convention when you do.
-- **UCC is single-instance; BrowserAI is not.** A named mutex means exactly one UCC process ever runs under the install root, which makes `force_stop_package` harmless there. Landmine 4 — the one that matters most for four concurrent registrations — is therefore **untested by the only prior art available.**
+- **UCC is single-instance; BrowserAI is not.** A named mutex means exactly one UCC process ever runs under the install root, which makes `force_stop_package` harmless there. Landmine 4 — the one that matters most at the concurrency this actually runs at — is therefore **untested by the only prior art available.**
 
 What UCC proves, and what it does not:
 
@@ -652,7 +658,9 @@ Six, all `browserai_` prefixed. [Why not `browser_`](README.md#settled-2026-08-1
 
 The reason is not access control — anything a model can list, it could have found by other means. It is **noise**. Each row carries a `purpose`, free text a previous agent wrote, so an unscoped list would pull every project's session notes into whichever agent happened to ask. Scoping by subtree keeps a session's context inside the tree it belongs to.
 
-This completes an invariant worth naming: **every authored tool takes a directory, and none has an implicit scope.** `init` creates one, `resume` reclaims one, `destroy` removes one, `list` enumerates beneath one. A caller never has to know what BrowserAI would have assumed, because it assumes nothing.
+This completes an invariant worth naming: **every session-scoped tool names its session explicitly, and none has an implicit scope.** `init` creates a directory, `resume` reclaims one, `destroy` removes one, `list` enumerates beneath one, `set_purpose` names one as `session`. A caller never has to know what BrowserAI would have assumed, because it assumes nothing.
+
+The one exception is `browserai_reinstall_browser`, which takes nothing because it is **machine-scoped by design** — the browser install is shared by every session on the host, which is exactly why it refuses to act while any of them has a live browser.
 
 Filtering is a path-prefix match against the session index, so the directory need not exist — sessions may have been deleted beneath it. A malformed or relative path is refused exactly as everywhere else; a valid path with nothing under it returns an empty list, which is an answer rather than an error.
 
@@ -701,7 +709,7 @@ Every string here is read by a **model deciding what to do next**, not by a huma
 | 9 | Lock held by a dead process | *"`<path>` was locked by PID `<pid>` since `<time>`, which is no longer running. Reclaiming it."* — **not an error**; proceed and say so |
 | 10 | `browser` passed to `resume` | *"`browser` cannot be set on resume — this session's profile is `<browser>`, and a profile is browser-specific. Omit the argument, or `browserai_init` a new directory."* |
 | 11 | Firefox profile locked | *"That Firefox profile is held by another process. Not launching, because Firefox would raise a desktop dialog and block for up to three minutes."* |
-| 12 | Insufficient disk | *"`<path>` has `<n>` MB free; first-run provisioning needs about 640 MB. Free space or choose another volume."* |
+| 12 | Insufficient disk | *"`<path>` has `<n>` MB free; first-run provisioning needs about 700 MB. Free space or choose another volume."* |
 | 13 | Stray found, unattributable | *"A browser is running from our binary that no session claims (PID `<pid>`). Not terminating it — reporting only."* — diagnostic channel, never `stdout` |
 
 Rows **4**, **5** and **9** carry the most weight. 4 is the collision the whole `init`/`resume` split exists to make visible. 5 is the one a model will meet most often and the one that teaches the mode system at the moment it is ready to learn. 9 is not an error at all: the [holder record](#the-session-directory-is-the-identity) exists so a stale lock reads as a fact rather than a refusal.
@@ -862,7 +870,7 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 - **a title that is not a rooted local drive-letter path is rejected before any filesystem call** — a UNC title otherwise stalls the sweep for 21 seconds
 - **every race in [the sweep table](#race-conditions-and-what-closes-each) has a test.** Specifically: an `AbandonedMutexException` leaves sweeping functional (**R3**); the sweep refuses to kill when the directory lock is held (**R1**); a zero-timeout acquire under N concurrent starters runs exactly one sweep and blocks none of the others (**R9**); a re-asserted pointer restores itself after a wrongful delete (**R7**); and the sweep never writes to `stdout` (**R12**)
 - **a mode refusal names the mode that would permit the call**, not merely that the call was refused
-- handle lifecycle: missing, unknown and expired produce **three distinct LLM-readable errors**, each naming `init` and recoverable in one turn
+- session lifecycle: missing and unknown produce **two distinct LLM-readable errors**, each naming a recovery tool and recoverable in one turn. There is no *expired* state to test — reclaim is forever
 - lock-name derivation: `GetFullPath` → `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → `Global\BrowserAI-{hash[..32]}`
 - PID-recycle logic keyed on `(pid, creationFileTime)`, not a bare PID
 - config generator and validator

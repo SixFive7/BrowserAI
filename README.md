@@ -184,9 +184,9 @@ This is the whole model, and it needs stating precisely because the charter's fo
 |---|---|---|
 | Update path | Copy-paste to 13 checkouts | One release, one channel |
 | Playwright version | `@latest`, re-resolved at every spawn, on the user's machine, untested | Resolved to latest at build time, gated by the suite, frozen into the artifact |
-| Chromium | Downloaded on first use, ~300 MB, needs preflight + retry protocol | Shipped in the installer, both builds, before first use |
+| Chromium | Downloaded on first use by `npx`, on the user's machine, untested, with no integrity check | Downloaded on first use **by us**, at a revision the build resolved and the suite gated, once per machine rather than once per spawn |
 | Node | Must exist on the host | Bundled (`node.exe`, 88.5 MB) |
-| .NET / Chrome | n/a / required for headed modes | Neither — NativeAOT single-file, bundled Chromium |
+| .NET / Chrome | n/a / required for headed modes | Neither — NativeAOT single-file, and a Chromium we provision rather than the user's |
 | Browser patching | Chrome self-updates | **Ours to ship.** A Chromium CVE is now a release obligation |
 | Tree teardown | `Get-CimInstance` walk + `Stop-Process`; nothing survives a hard kill of the launcher | Job object — the kernel reaps the tree even if BrowserAI is `TerminateProcess`d |
 | Lock granularity | Repository folder name | Resolved profile directory |
@@ -385,7 +385,7 @@ Feasibility research completed 2026-08-13 across five streams: MCP SDK capabilit
 
 **Architecture is settled.** One MCP registration with `init`-issued handles · profile and artifact locations as `init` arguments · any path accepted, correct use being the calling agent's responsibility · one node child per handle · full batteries-included bundling as a NativeAOT single-file binary with no host dependencies.
 
-The [remaining open items](#still-open) — Firefox's `parent.lock` preflight and its separate stray-detection path, where the logon sweep task is registered at install, and the fact that nothing is built — are implementation-shaping rather than architecture-shaping, with the exception of the last. Instance teardown policy, default capabilities and tool-surface curation were the three open items this paragraph used to name; all three closed on 2026-08-15 and are listed under [Recently closed](#still-open).
+The [remaining open items](#still-open) — and the fact that nothing is built — are implementation-shaping rather than architecture-shaping, with the exception of the last. Instance teardown policy, default capabilities and tool-surface curation were the three open items this paragraph used to name; all three closed on 2026-08-15 and are listed under [Recently closed](#still-open).
 
 One verification task, not a decision: **confirm the MCP SDK is NativeAOT-compatible in our usage** before committing to single-file AOT. Partially discharged on 2026-08-14 — the SDK declares `IsAotCompatible=true` on every non-`netstandard2.0` target, and the `JsonElement` passthrough at the proxy's core is AOT-friendly — but a declaration is not a publish-and-run. The fallback, self-contained trimmed at ~70 MB, is noise against the browser download.
 
