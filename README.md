@@ -196,6 +196,28 @@ set PLAYWRIGHT_BROWSERS_PATH=<staging>
 node.exe <staging>\node_modules\@playwright\mcp\cli.js install-browser chromium --only-shell --no-progress
 ```
 
+#### First-run browser provisioning
+
+**BrowserAI does not ship the browser inside the installer. It provisions it on first run**, as Playwright itself does. The redistribution position for Chrome for Testing is unresolved and the only on-point public statement is adverse — a Google engineer, 2023: *"Chrome for Testing is a flavor of Google Chrome, so google.com/chrome/terms applies"*, which forbids redistribution. This removes ~427 MB from the payload. Note the phrase "our own Chrome for Testing" elsewhere in this document means **the build BrowserAI manages**, never one we ship.
+
+**The version is pinned for free.** `playwright-core/browsers.json` carries the revision and `browserVersion`; the URL is built by substituting that version into a template that 307s to Google's bucket. That file is inside the artifact, never looked up online, and no "latest" lookup exists anywhere in the registry code. A release therefore knows forever exactly which browser it wants. Old builds resolve back to Chrome 115 (Jul 2023) — ~3 years of evidence, and **Google documents no retention policy**, so it is not a guarantee.
+
+**Measured 2026-08-14:** chromium 202.3 MB + ffmpeg + winldd, **20.3 s** end to end on a 300 Mbps link; 4 m 19 s at 10 Mbps, 43 m at 1 Mbps. `chrome-headless-shell` is **not** provisioned — [settled 2026-08-15](#settled-2026-08-15), full Chromium in every mode, which makes the download *smaller* than shipping both.
+
+**`init` must not block, and must say what it is doing.** Return immediately with `browserProvisioning: "downloading"` and an error on browser-needing calls that states the fact rather than hiding it:
+
+> *First use of this browser version on this machine. The download has started. Wait ~10 seconds and retry.*
+
+A long unexplained delay corrupts whatever timing the calling agent is managing; a stated fact lets it decide what a wait means for its own work. In-session recovery is proven — the same child navigates successfully once the install lands, with no restart.
+
+**Strip upstream's remediation string.** It says `Run npx @playwright/mcp install-browser chromium`, which BrowserAI does not ship and which would resolve a different package at a different revision. A model will act on it. Replace it with ours: *delete `<path>` and call `init` again to re-download.*
+
+**Environment.** Strip `PLAYWRIGHT_DOWNLOAD_HOST` and its three per-browser variants — they replace the mirror list with a single host, and since retries rotate through that list (`retryCount = 5`), setting one turns five attempts into five attempts at the same dead server. Pass through `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY`/`ALL_PROXY` and **`NODE_EXTRA_CA_CERTS`**, needed under TLS inspection. SOCKS is unsupported on the download path. Egress needs `cdn.playwright.dev`, `storage.googleapis.com` and `playwright.download.prss.microsoft.com`.
+
+**Browsers live at `%LocalAppData%\BrowserAI\browsers\`**, resolved from `VelopackLocator.Current.RootAppDir` — **never** inside `current\`, or every update re-downloads. `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandated, so pruning old revisions becomes BrowserAI's job.
+
+**What upstream's integrity check does not cover.** Playwright validates only `content-length`, and upstream closed and locked the request for checksums ([#39559](https://github.com/microsoft/playwright/issues/39559)). `INSTALLATION_COMPLETE` is written last, so an *interrupted* install self-heals — but a tree corrupted **after** a successful install never re-downloads, because the marker short-circuits without validating anything. [Settled 2026-08-15](#settled-2026-08-15): we do not add our own health checks; the recovery is manual and the error text above is what makes it discoverable. **The consequence is stated plainly so it is a known limit rather than a surprise:** antivirus quarantining one DLL leaves a permanently broken install that only a human deleting the directory will fix.
+
 **Node SEA, `pkg` and `nexe` are all dead ends** — do not spend time on them. `playwright-core` violates SEA's "no filesystem module loading" constraint in at least five verified ways (`packageRoot` computed from `__dirname`, a runtime `require` of `browsers.json` at a computed path, two `childProcess.fork()` calls on sibling scripts, sibling bundle requires, and `.wasm`/`vite` assets loaded by path). SEA would also save nothing — the output *is* a copy of `node.exe` plus your blob. `vercel/pkg` was archived 2024-01-13. Bun and Deno both have open issues on precisely the Playwright browser-launch path.
 
 ### B. Be the MCP server
@@ -297,6 +319,60 @@ It does not close the gap entirely: a connection holding both an interactive and
 - **Instance lifetime is BrowserAI's to define.** At minimum: explicit teardown, an idle timeout, and **stdin EOF as the backstop** that reaps everything — EOF fires instantly when the parent holding the pipe is `TerminateProcess`d (measured), and the SDK already treats it as shutdown.
 - **N children per process.** One BrowserAI now supervises several `node` children, each with its own config, stderr stream and directory locks. **One job object per child, never one shared job** — a shared job fuses every instance's tree together, so tearing down one handle would kill them all, and assigning BrowserAI itself would make it a casualty too. See [the job object contract](#zero-process-leakage-the-job-object-contract). Stderr must be demultiplexed per handle or diagnostics become unreadable at exactly the moment they matter.
 - **`browser_get_config` becomes per-handle** — and is the natural per-instance drift check.
+
+#### The session directory is the identity
+
+**One directory is one session, and it is simultaneously the name, the handle and the lock.** Settled 2026-08-15, replacing an earlier design with a central registry, opaque handles and a separate label concept. All three collapsed into the directory.
+
+```
+<session-dir>/
+  lock.json      <- ours. The only file at the root
+  profile/       <- --user-data-dir
+  output/        <- --output-dir: screenshots, traces, video, network logs
+  downloads/     <- browser downloads
+```
+
+Everything except `lock.json` is a subfolder, so the one file that matters is unmissable, and [§F](#f-artifact-management)'s routing gets a home instead of scattering artifacts among Chromium's internals.
+
+**`lock.json` is both the lock and the record.** Held open `FileAccess.ReadWrite, FileShare.Read`: a second BrowserAI requesting write access fails — that is the lock — while any reader can still display who holds it and why. It is rewritten in place on the handle we already own; a reader that catches a torn write retries once. Contents: schema version, mode, browser, purpose and its history, created/last-used timestamps, BrowserAI version, and the holder record — PID, process creation time, client process name. The holder record persists after death on purpose, so a stale lock yields *"held by PID 1234 since 14:02, no longer running — reclaiming"* instead of a bare refusal. `(pid, creationFileTime)` together defeat PID reuse.
+
+**There is no bearer token, and that is deliberate.** An earlier draft minted a 128-bit handle so the `resume` redirect could not be bypassed by guessing a path. It bought less than it cost. Within one BrowserAI process the lock does not isolate callers at all — two subagents share one MCP connection, which is the exact fork case `resume` exists for — and a token would not have stopped the second agent either: it would have called `resume`, read the warning, and proceeded. **The token's entire value was guaranteeing the warning was displayed.** Against that: an opaque token is precisely the state that evaporates when a model is compacted, and an agent that loses its handle cannot drive its own session, whereas a directory path is always reconstructible.
+
+So the guarantee is recovered differently, and better placed: **BrowserAI knows whether this connection created the session.** A caller driving a session it did not `init` gets a notice prepended to its *first* response — *"you are driving a session this connection did not create; opened 2026-08-12, purpose: …; another agent may be using it."* That fires at first use rather than at reclaim time, which is where it matters.
+
+> ⚠️ This holds because BrowserAI is **stdio-only, local, single-user**: another process is blocked by the file lock, another user cannot reach the server. **If BrowserAI ever gains an HTTP transport the handle becomes network-reachable and the token question reopens.** Recorded so a future transport change does not cross that line silently.
+
+**`init` refuses a directory that already has one, including a cleanly closed one.** It fails with an error naming the existing session, its purpose and its mode, and directs the caller to `resume`. Being made to say "resume" is the point: it converts an accidental collision into a stated intent. There is deliberately **no difference between a lost session and a neatly closed one** — both must be resumed, so both behave identically, and the reason a session ended stops being a thing anyone has to model.
+
+**`init` takes** the mode, the browser, a **required** `purpose`, and optional directory and console-level. **`resume` takes only the directory**; mode and browser come from `lock.json` and are refused as arguments, because a profile is browser-specific and a session cannot change what it is. A missing or unparseable `lock.json` is an error, never a guess.
+
+> `purpose` is free text written by one agent and replayed into another's context, which makes it a channel between agents. Cap its length, strip control characters, and frame it explicitly as recorded data — *"purpose recorded by a previous session:"* — so it cannot read as an instruction. Store the facts we get for free alongside it — created, last-used, mode, browser, last origins visited — because *"last used 3 days ago, last on portal.customer.example"* usually answers "what was this" better than prose written three days ago.
+
+#### Lifetime: one timer, and reclaim is forever
+
+**Exactly one timer exists: browser-idle, ~10 minutes, reset by any tool call.** It closes the browser and keeps the node child — measured 329 → 110 MB, and 186 ms to relaunch. The relaunch is implicit: a caller that navigates after an idle close must never see "browser is closed", and that invisibility is a test, because it is the whole reason the timer is safe.
+
+**No handle-expiry timer, no session TTL, no reclaim window.** A torn-down session stays resumable indefinitely against its recorded directory, because the durable thing is the profile, not the process — measured, a resume after killing the node child preserves cookies, localStorage, IndexedDB, service workers and CacheStorage, losing only `sessionStorage`, in ~515 ms. Every expiry timer considered was a cliff that deleted work in exchange for nothing: an agent thinking for 61 minutes came back to a dead handle, and the recovery was a `resume` it could have done anyway.
+
+The cost is honest — **directories accumulate forever** — and it is why explicit `list` and `destroy` tools matter more here, not less. Deliberate deletion beats a timer that deletes.
+
+**Teardown** closes stdin, which trips the child's own `setupExitWatchdog` (`stdin` close, `SIGINT`, `SIGTERM` → `gracefullyCloseAll()`, hard exit after 15 s). No killing is involved in the normal path. Force is closing the job handle, and only that — see [the job object contract](#zero-process-leakage-the-job-object-contract).
+
+#### Finding sessions without a registry
+
+Three mechanisms, none of which stores state. **That is the property that made the registry a liability and these not:** the registry held handle mappings, config and liveness, so two BrowserAIs could disagree, a stale entry was a bug, and every write needed a machine-wide mutex.
+
+- **The default root.** Sessions created without an explicit directory land under one root. Enumerating it is a directory listing — self-healing by construction, since a deleted session leaves the inventory for free and a scan cannot go stale.
+- **Pointer files for out-of-root directories.** `%LOCALAPPDATA%\BrowserAI\known\<sha256-of-canonical-path>`, containing the path. One immutable fact per file — *a session directory once existed here*. Creating and deleting a file is atomic, so there is no read-modify-write to synchronise and no mutex. A pointer to a vanished directory is skipped, not repaired.
+- **The directory proves its own ownership.** Anything found by either route is verified by opening `lock.json` inside it. We never have to trust the inventory. A personal Chrome profile contains no `lock.json`, so it cannot be mistaken for ours however it was reached.
+
+**The stray sweep runs on two triggers, each looking twice.** BrowserAI's own startup is the primary signal — it costs nothing, has no install footprint, and fires exactly when a stray matters most, because that is when something is about to contend for a lock. A logon scheduled task covers the case the first cannot: nobody starts a client for a week while a resurrected browser eats memory. Neither can know when Windows has finished restoring apps, and no documented event marks it, so **neither tries to win the race — both simply look more than once**: an immediate sweep plus a re-check at ~10 minutes, expressed as Task Scheduler's native repetition rather than an in-process sleep.
+
+Detection itself is [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) — the exact-title `Chrome_MessageWindow` lookup, canonicalised to backslashes, absolutised, trailing separator stripped. **The detector must not be extended to cover fallback profiles**, because with `channel: "chrome"` that path is the user's own browser.
+
+> A fourth mechanism would remove the need for an inventory in the sweep entirely: enumerate every `Chrome_MessageWindow`, read each title, and treat any titled directory containing our `lock.json` as ours. It is self-identifying and would find directories the inventory has forgotten. **Unverified and contradicted:** one measurement found `GetWindowTextW` returned empty when enumerating other processes' windows, another found it worked reading a browser we launched ourselves. Settle it before relying on it.
+
+**`destroy` deletes a whole session directory, and refuses anything without a valid `lock.json`.** That refusal is what makes it safe to hand a model a tool that deletes trees: it cannot be aimed at `Documents\`. It tears the browser down first, then deletes under the lock; if the lock is held elsewhere it reports the holder instead. Pair it with a `list` that shows each session's purpose, mode, last-used and **size on disk** — an agent cannot make a good retention decision without knowing it is sitting on 4 GB.
 
 ### D. Locking and single-instance
 

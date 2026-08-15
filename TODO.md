@@ -52,12 +52,32 @@ and version it was true at.
       `Artifacts/`, which the template's `artifacts/` rule would swallow on
       case-insensitive Windows.
 
-## Decided 2026-08-14, not yet written into the README
+## Decided 2026-08-14 — encoded 2026-08-15
 
-Three designs were settled in a research session and are recorded here in full so
-they survive. **Each needs to become a proper README section** — they are
-specifications, not work items, and they are here only because the session that
-produced them ran out of room to write them properly.
+All three are now proper README sections. Retained here only as a record of what
+was decided when; the README is the live copy and the two have diverged where
+later measurement overruled the original.
+
+- [x] **First-run browser provisioning** → [README §A](README.md#first-run-browser-provisioning).
+      Changed since: `chrome-headless-shell` is no longer provisioned, and the
+      manifest/health-check layer was dropped by decision — the recovery is manual
+      and the error text carries it.
+- [x] **Instance lifetime** →
+      [The session directory is the identity](README.md#the-session-directory-is-the-identity),
+      [Lifetime](README.md#lifetime-one-timer-and-reclaim-is-forever),
+      [Finding sessions](README.md#finding-sessions-without-a-registry).
+      Changed substantially since: the central registry is **dropped**, the bearer
+      token is **dropped**, labels are **dropped**, and every expiry timer except
+      browser-idle is **dropped**. The directory is the identity, the handle and
+      the lock.
+- [x] **Three browsers, three collision behaviours** →
+      [KNOWLEDGE §3](KNOWLEDGE.md#3-detection-primitives-for-stray-browsers) and
+      [§4](KNOWLEDGE.md#4-profile-directories-fallback-and-native-dialogs). These
+      are measured facts, not design, so they belong in the knowledge base rather
+      than the charter.
+
+<details>
+<summary>Original 2026-08-14 text, kept for provenance</summary>
 
 - [ ] **Encode: first-run browser provisioning.** BrowserAI does **not** bundle the
       full Chrome for Testing browser — the redistribution position is unresolved
@@ -179,6 +199,8 @@ produced them ran out of room to write them properly.
       pre-flight is Chromium-shaped, checking `lockfile`. All three matter: the
       second is why BrowserAI's own lock is load-bearing, and the third would be an
       invisible hang in a background MCP server.
+
+</details>
 
 ## Open questions carried into the next session (2026-08-14)
 
