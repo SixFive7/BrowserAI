@@ -573,7 +573,7 @@ Six, all `browserai_` prefixed. [Why not `browser_`](README.md#settled-2026-08-1
 |---|---|---|
 | `browserai_init` | `directory` **req**, `purpose` **req**, `mode` **req**, `browser` (default `chromium`), `tracing` (default `false`), `consoleLevel` (default `info`) | resolved absolute paths, mode, browser, provisioning state |
 | `browserai_resume` | `directory` **req**, `purpose` (appended, not replaced) | the same, **plus the recorded purpose and its history** |
-| `browserai_list` | `under` (optional path filter) | one row per session: directory, mode, browser, purpose, created, last-used, **size on disk** |
+| `browserai_list` | `directory` **req** | every session **under** that directory: path, mode, browser, purpose, created, last-used, **size on disk** |
 | `browserai_destroy` | `directory` **req** | what was deleted, and its size |
 | `browserai_set_purpose` | `session` **req**, `purpose` **req** | the new purpose and the previous one |
 | `browserai_reinstall_browser` | none | what was removed and re-provisioned |
@@ -582,7 +582,15 @@ Six, all `browserai_` prefixed. [Why not `browser_`](README.md#settled-2026-08-1
 
 **`browser` is accepted only by `init`.** `resume` reads it from `lock.json` and *refuses it as an argument* — a profile is browser-specific, so a caller asking to resume a Firefox directory as Chromium is stating something impossible, and answering "sure" would be the wrong kind of helpful.
 
-**`browserai_list` reports size on disk** because retention is [the calling agent's decision](README.md#settled-2026-08-15), and an agent cannot make that decision well without knowing it is sitting on four gigabytes.
+**`browserai_list` requires a directory and lists everything beneath it.** There is no unscoped form: breadth is stated, never assumed. Pass a drive root to see everything, and the size of what comes back is then the caller's own doing.
+
+The reason is not access control — anything a model can list, it could have found by other means. It is **noise**. Each row carries a `purpose`, free text a previous agent wrote, so an unscoped list would pull every project's session notes into whichever agent happened to ask. Scoping by subtree keeps a session's context inside the tree it belongs to.
+
+This completes an invariant worth naming: **every authored tool takes a directory, and none has an implicit scope.** `init` creates one, `resume` reclaims one, `destroy` removes one, `list` enumerates beneath one. A caller never has to know what BrowserAI would have assumed, because it assumes nothing.
+
+Filtering is a path-prefix match against the session index, so the directory need not exist — sessions may have been deleted beneath it. A malformed or relative path is refused exactly as everywhere else; a valid path with nothing under it returns an empty list, which is an answer rather than an error.
+
+**Size on disk is reported** because retention is [the calling agent's decision](README.md#settled-2026-08-15), and an agent cannot make that decision well without knowing it is sitting on four gigabytes.
 
 **`browserai_destroy` refuses any directory without a valid `lock.json`.** That single check is what makes it safe to hand a model a tool that deletes trees: it cannot be aimed at `Documents\`. It closes the browser first, then deletes under the lock; if the lock is held elsewhere it reports the holder instead of waiting.
 
@@ -616,7 +624,7 @@ Every string here is read by a **model deciding what to do next**, not by a huma
 
 | # | Condition | Text |
 |---|---|---|
-| 1 | `session` missing | *"This tool needs a `session`. Call `browserai_init` to create one, or `browserai_list` to see existing sessions."* |
+| 1 | `session` missing | *"This tool needs a `session`. Call `browserai_init` to create one, or `browserai_list` with a directory to see sessions beneath it."* |
 | 2 | `session` names no session | *"No BrowserAI session at `<path>` — there is no `lock.json` there. Call `browserai_init` to create one."* |
 | 3 | Directory empty, relative or malformed | *"`directory` must be an absolute local path. There is no default: name where this session's data should live."* |
 | 4 | `init` on an existing directory | *"A session already exists at `<path>`, mode `<mode>`, created `<date>`, purpose: `<purpose>`. Use `browserai_resume` to take it over — do that only if you expected it to be there. Another agent may be using it."* |
