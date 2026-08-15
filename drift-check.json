@@ -1,0 +1,49 @@
+{
+  "_what_this_is": "The last time anyone checked whether upstream moved. Distinct from upstream-review.json, which records the versions a human has REVIEWED. This file records only that a LOOK happened, and what it saw.",
+
+  "_why_it_exists": "Every dependency floats to latest at build time, and the marker test in upstream-review.json fires when a build happens -- but nothing makes a build happen. Releases are manual, so a quiet month is a month in which upstream can move unobserved. The marker catches 'we are about to ship a version nobody reviewed'; this catches 'upstream moved while nobody was looking'.",
+
+  "_why_this_is_enough": "A scheduled CI poller was the obvious answer and is not needed here. This project is built entirely through an agent, so a directive in CLAUDE.md runs on every working session by construction -- the check happens because work happens. Dependabot cannot do this job anyway: verified 2026-08-14 against dependabot-core's own test table, a NuGet Version=\"*\" is rewritten to \"*\" and produces no PR, and npm \"latest\" is skipped by a dist-tag guard. Dependabot bumps declared floors, and this project declares none.",
+
+  "_how_to_resolve": "Resolve each upstream the way the BUILD resolves it, not the way a registry query defaults. In particular playwright-core is NOT npm 'latest' -- it arrives as @playwright/mcp's own exact dependency. On 2026-08-15 npm 'latest' for playwright-core was 1.62.1 while the version that actually ships is 1.63.0-alpha-2026-08-05, because upstream publishes daily alphas and pins one exactly. Checking 'latest' would have reported drift that does not exist, in the safe direction today and the unsafe direction tomorrow.",
+
+  "_honesty_rule": "Only stamp lastChecked after a lookup actually returned a version. A date written from intent rather than from a result is worse than no date, because it reads identically to a real one and silences the next check for a day.",
+
+  "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
+
+  "lastChecked": "2026-08-15",
+  "result": "no drift",
+
+  "resolved": {
+    "@playwright/mcp": {
+      "resolved": "0.0.79",
+      "reviewed": "0.0.79",
+      "drift": false,
+      "how": "npm registry dist-tag 'latest'"
+    },
+    "playwright-core": {
+      "resolved": "1.63.0-alpha-2026-08-05",
+      "reviewed": "1.63.0-alpha-2026-08-05",
+      "drift": false,
+      "how": "@playwright/mcp 0.0.79 dependencies.playwright-core, an exact pin. NOT npm 'latest', which was 1.62.1 on this date."
+    },
+    "ModelContextProtocol": {
+      "resolved": "2.2.0",
+      "reviewed": "2.2.0",
+      "drift": false,
+      "how": "nuget.org, stable only. Published 2026-08-13."
+    },
+    "Velopack": {
+      "resolved": "1.2.0",
+      "reviewed": "1.2.0",
+      "drift": false,
+      "how": "nuget.org, stable only. Published 2026-06-04."
+    },
+    "node": {
+      "resolved": "v24.19.0",
+      "reviewed": "v24.19.0",
+      "drift": false,
+      "how": "nodejs.org/dist/index.json, newest entry with an lts field (Krypton). Current line was v26.7.0 on this date and is deliberately not tracked."
+    }
+  }
+}

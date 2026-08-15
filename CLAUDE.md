@@ -25,6 +25,27 @@ Every dependency resolves to latest at build time and is frozen into the artifac
 - **Never assert a version or a "latest" claim from memory.** If it was not looked up this session, say plainly that it is unverified. A confident stale version is worse than an admitted gap. Route package questions to the `nuget` MCP server, .NET/C# questions to `microsoft-learn`, and anything else to `context7` — but prefer a vendor's own server over `context7`, which is metered.
 - **Stamp what you verify.** The README's convention is `Verified <date> @ <version>`; a bare "Default: X" claim cannot tell you when it was last true.
 
+### The daily drift check
+
+**Once per day of work, before anything substantive, check whether upstream moved.** Read [`drift-check.json`](drift-check.json). If `lastChecked` is today, skip it and say nothing. Otherwise resolve all five upstreams, compare against `upstream-review.json`, and write the result back.
+
+Resolve them **the way the build resolves them**, which is not the way a registry query defaults:
+
+| Upstream | How |
+|---|---|
+| `@playwright/mcp` | npm dist-tag `latest` |
+| `playwright-core` | **`@playwright/mcp`'s own exact dependency** — never npm `latest`. Upstream publishes daily alphas and pins one exactly; on 2026-08-15 `latest` was `1.62.1` while the shipping version was `1.63.0-alpha-2026-08-05` |
+| `ModelContextProtocol`, `Velopack` | nuget.org, stable only, via the `nuget` MCP server |
+| `node` | `nodejs.org/dist/index.json`, newest entry carrying an `lts` field. The Current line is deliberately not tracked |
+
+**Rules that make this worth having:**
+
+- **Only stamp `lastChecked` after a lookup actually returned a version.** A date written from intent reads identically to a real one and silences the next check for a day. This is the same failure as editing `upstream-review.json` to make a test pass.
+- **Never block work on it.** Drift is information, not a gate. Report it, offer to run [the review procedure](UPSTREAM-REVIEW.md), and carry on with what was asked.
+- **Drift is not a bump.** Finding a newer version does not license editing `upstream-review.json` — that still requires the review.
+
+**Why a directive rather than a scheduled job.** The obvious answer is a CI poller, and it is not needed here: this project is built entirely through an agent, so a rule that fires at the start of a working session runs by construction — the check happens because the work happens. Dependabot cannot do the job in any case (verified 2026-08-14 against `dependabot-core`'s own test table: a NuGet `Version="*"` is rewritten to `*` and produces no PR, and npm `"latest"` is skipped by a dist-tag guard — it bumps declared floors, and this project declares none).
+
 ## Testing is a hard requirement, not a phase
 
 The suite is the only thing standing between an upstream change and a shipped regression. Floating without a suite that catches breakage is strictly worse than pinning.
