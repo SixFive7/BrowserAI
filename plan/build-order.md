@@ -762,6 +762,19 @@ Route on the way in; do not sort on the way out.
 **Consumes:** [§A](A-runtime.md#first-run-browser-provisioning) ·
 [§H.2](H-model-surface.md#h2-the-authored-tools) (the sixth tool)
 
+> **Maintainer decision, 2026-08-16: provision for real.** Every step that needs
+> a browser downloads it into `%LocalAppData%\BrowserAI\browsers\` rather than
+> reusing the `%LOCALAPPDATA%\ms-playwright` copy that spike work left on this
+> machine. The alternative — point `PLAYWRIGHT_BROWSERS_PATH` at the existing
+> tree and only exercise a download once, here — was offered and declined.
+>
+> What that buys is the thing a seeded copy cannot: **the download path is
+> exercised by construction rather than at one step**, so a broken CDN URL, a
+> moved revision or a failed integrity check surfaces at the step that caused it.
+> Step 3 seeded from a local copy via its `-SeedBrowsersFrom` parameter; under
+> this decision that parameter stays available for a re-run but is not the
+> default, and step 15's done-test still requires an empty-root run regardless.
+
 - Browsers at `%LocalAppData%\BrowserAI\browsers\`, resolved through the
   app-paths seam and **never inside `current\`**, or every update re-downloads.
 - **`init` must not block.** Return immediately with
