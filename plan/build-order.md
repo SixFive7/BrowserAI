@@ -638,6 +638,69 @@ a review item.
 **Consumes:** [§B](B-mcp-server.md) · [stack](stack.md) · [§A](A-runtime.md)
 (the launch half) · [§E](E-lifecycle.md)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Runtime/{PayloadLayout,
+> BrowserConfiguration, ChildLaunch, InstanceDirectory}.cs` ·
+> `src/BrowserAI/Proxy/BrowserProxy.cs` · `src/BrowserAI/Program.cs` ·
+> `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths}.cs` (two paths added) ·
+> the publish-only payload copy in `src/BrowserAI/BrowserAI.csproj` ·
+> `tests/BrowserAI.Tests/Harness/{RawStdioClient, PublishedSlice, SliceRun,
+> ProcessCommandLine, BrowserAiPaths}.cs` ·
+> `tests/BrowserAI.Tests/{VerticalSliceTests, ProtocolSplitTests,
+> SandboxFlagTests, HeadlessBinaryTests, InstanceDirectoryTests}.cs`. Every
+> done-test below was run, including the `JsonArray.Add` plant-and-revert.
+> **74 tests green, `dotnet build` 0 warnings**, `dotnet test` and
+> `BrowserAI.Tests.exe` agree, and the AOT publish is clean at
+> **10,399,744 bytes**.
+>
+> **All five decisions under test held, and one of them held for a reason nobody
+> had written down.** The sandbox was re-measured three ways from the resolved
+> browser command line — nothing set → `--no-sandbox` present; the config key
+> alone → **still** present; `--sandbox` → absent from the browser and from all
+> six of its children. The mechanism was then read out of the bundle rather than
+> guessed: upstream declares both `--sandbox` and `--no-sandbox`, and
+> **commander gives `sandbox` a default of `false` rather than leaving it
+> undefined**, so the CLI stage — which merges last — always defines
+> `launchOptions.chromiumSandbox` and always overwrites the file.
+> `validateBrowserConfig`'s non-Linux `chromiumSandbox = true` branch is
+> unreachable on this path. That is why the key can never work, as opposed to
+> happening not to.
+>
+> **The protocol split is now demonstrable by a method rather than by a version
+> string.** Sending `server/discover` to each end of the running proxy:
+> BrowserAI answers **`-32602`** (per-request metadata missing) and the child
+> answers **`-32601` Method not found**. A version can be echoed; a method
+> cannot, so this is the sharpest available proof that the two halves really are
+> different revisions. The child negotiated `2025-11-25`, the product logs
+> `requested=… negotiated=…` and throws when they differ, and a caller offering
+> `2025-06-18` gets `2025-06-18` from the same process at the same moment.
+>
+> ⚠️ **A cleanup path in a `finally` was wrong here by construction, and this
+> step's own acceptance test is what proved it.** BrowserAI deleted its per-run
+> instance directory on the way out; the containment test terminates BrowserAI
+> from outside, so that path never runs in the case that matters, and nineteen
+> suite runs left nineteen directories behind. The sweep that replaces it uses
+> the **working-directory lock** as the liveness check — Windows refuses to
+> delete a directory that is some process's current directory — so there is no
+> pid to recycle and no name to match. This is not the stray sweep; that is
+> [step 16](#16-the-stray-sweep).
+>
+> **Two things this step deliberately did not do.** The forwarding is the SDK's
+> **typed** path, which drops unknown tool-level members and throws on an unknown
+> content *type*; byte-exact passthrough is [step 9](#9-lossless-passthrough) and
+> the boundary is stated in `BrowserProxy`'s own doc comment. And the generated
+> config sets **no `userDataDir`**, so upstream puts each run's profile in
+> `%LOCALAPPDATA%\ms-playwright-mcp\` — 27 profiles and 193 MB on this machine
+> as of today. That is `userDataDir`'s home in [§C](C-sessions.md) and it belongs
+> to [step 12](#12-the-session-tools-and-config-generation); it is recorded in
+> [TODO.md](../TODO.md) so it is a decision rather than an omission.
+>
+> **The payload is wired into `publish` but still not into `build`.** A
+> publish-only MSBuild target adds `payload/**` to `ResolvedFileToPublish` when
+> the tree exists, which is the layout the installed artifact needs anyway, and a
+> clean clone with no `payload/` still publishes. Writing that target hit
+> [the double-hyphen XML trap](../kb/windows/processes.md#interop-and-the-toolchain)
+> for the third time on this machine.
+
 Deliberately thin: no sessions, no locking, no artifact routing, no injected
 `session` parameter. `tools/list` and `tools/call` forwarded verbatim. Its job
 is to make the risky decisions real.

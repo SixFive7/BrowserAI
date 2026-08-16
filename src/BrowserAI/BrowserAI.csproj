@@ -80,4 +80,38 @@
     <InternalsVisibleTo Include="BrowserAI.TestProbe" />
   </ItemGroup>
 
+  <!--
+    THE PAYLOAD SHIPS BESIDE THE BINARY, AND ONLY ON PUBLISH.
+
+    PayloadLayout resolves node.exe and cli.js from <binary>\payload, which is
+    what the installed artifact looks like: the payload is a directory tree
+    inside current\, replaced wholesale by each update, which is what keeps
+    Velopack's per-file delta cheap.
+
+    Publish-only, for the same reason native compilation is: `dotnet build` must
+    stay fast and must not copy ~107 MB. Build-Payload.ps1 assembles the tree
+    and is not wired into either. On a clean clone there is no payload/, the
+    condition below is false, and the publish still succeeds, which build-order
+    step 1's done-test requires.
+
+    (No double hyphen anywhere in this comment: one makes MSBuild fail to load
+    the file, and `dotnet build` then reports NETSDK1207 from somewhere else
+    entirely. Measured twice on 2026-08-16, and hit again writing this target.)
+
+    ResolvedFileToPublish rather than Content: Content copies on build as well,
+    and there is no way to say "publish but not build" for it that survives the
+    single-file and AOT publish paths.
+  -->
+  <Target Name="AddPayloadToPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')">
+    <ItemGroup>
+      <PayloadFile Include="$(MSBuildThisFileDirectory)..\..\payload\**\*" />
+      <ResolvedFileToPublish Include="@(PayloadFile)">
+        <RelativePath>payload\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
 </Project>

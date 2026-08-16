@@ -35,4 +35,30 @@ internal interface IAppPaths
 
     /// <summary>Where the rolling process log is written.</summary>
     string LogDirectory { get; }
+
+    /// <summary>
+    /// Where provisioned browsers live. A sibling of <c>current\</c>, never a
+    /// child, or every update re-downloads 203.8 MB.
+    /// </summary>
+    /// <remarks>
+    /// <b>Always absolute.</b> It reaches the child as
+    /// <c>PLAYWRIGHT_BROWSERS_PATH</c>, and a relative value there resolves
+    /// against <c>INIT_CWD</c> — inherited from whatever npm ancestor last ran —
+    /// before it resolves against the child's own working directory. That
+    /// failure lands the browser somewhere nobody chose and reports nothing.
+    /// </remarks>
+    string BrowsersDirectory { get; }
+
+    /// <summary>
+    /// Where one run of BrowserAI keeps the files it generates for its child:
+    /// the config file, and the child's working directory.
+    /// </summary>
+    /// <remarks>
+    /// A sibling of <c>current\</c> for the same reason the log is, and per-run
+    /// rather than shared, because [the child's working directory is the output
+    /// root](../../plan/F-artifacts.md) and two runs must not write into one.
+    /// Sessions replace this at build-order step 10; until then a run is the
+    /// unit.
+    /// </remarks>
+    string InstanceRoot { get; }
 }

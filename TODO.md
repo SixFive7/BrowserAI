@@ -168,6 +168,25 @@ and version it was true at.
       `Artifacts/`, which the template's `artifacts/` rule would swallow on
       case-insensitive Windows.
 
+- [ ] **Set `userDataDir`, so a run's browser profile stops landing in a
+      directory BrowserAI does not own.** Build-order step 7 generates only the
+      keys that decide *which browser runs*, so no `userDataDir` is set and
+      upstream falls back to its own default: one
+      `%LOCALAPPDATA%\ms-playwright-mcp\mcp-chrome-for-testing-<hash>\` profile
+      per distinct configuration, never cleaned up. **Measured 2026-08-16 on this
+      machine: 27 profiles, 193 MB**, some of them spike leftovers and several
+      added by that step's own suite. It is not a defect in step 7 — the
+      directory is the *session's* at
+      [§C](plan/C-sessions.md#the-session-directory-is-the-identity) and the key
+      belongs to the full generator at
+      [step 12](plan/build-order.md#12-the-session-tools-and-config-generation) —
+      but between now and then every suite run adds to the pile, so it is
+      recorded rather than left to be discovered. **Note the constraint that
+      comes with it:** `validateBrowserConfig` throws on `isolated` together with
+      `userDataDir`, so the two can never both be set. Nothing existing needs
+      deleting before step 12; whether to sweep the 193 MB is the maintainer's
+      call, since it is outside the repository and partly predates this work.
+
 ## Decided 2026-08-16 — encoded the same day
 
 Nine decisions from the lesson sweep landed in

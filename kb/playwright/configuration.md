@@ -14,6 +14,29 @@ explicitly, the browser and every child still ran `--no-sandbox`. Only the CLI
 `chromiumSandbox = true` on non-Linux, so this is upstream behaviour
 contradicting upstream intent — and it means the default posture is unsandboxed.
 
+> `Verified 2026-08-16 @ @playwright/mcp 0.0.79 / playwright-core
+> 1.63.0-alpha-2026-08-05.` Re-measured three ways from the resolved browser
+> command line of a live Chromium rather than from the config: **nothing set →
+> `--no-sandbox` present** (6 processes carried it); **`chromiumSandbox: true` in
+> the config file, no flag → still present** (6 processes); **`--sandbox` on the
+> command line → absent from the browser and from every one of its children** (0
+> occurrences anywhere in the tree). Re-establish with `SandboxFlagTests`, which
+> runs the first-and-third case through the product and the second directly
+> against the child.
+>
+> **And the mechanism is now measured rather than inferred**, which is what
+> explains the contradiction. Upstream declares **both** `--sandbox` and
+> `--no-sandbox`, and commander gives `sandbox` a default of **`false`** rather
+> than leaving it undefined — read back twice from the shipped bundle by parsing
+> an empty argv through `tools.decorateMCPCommand`, `opts.sandbox === false`
+> while `opts.headless === undefined`. `configFromCLIOptions` then sets
+> `launchOptions.chromiumSandbox` whenever `cliOptions.sandbox !== undefined`,
+> and the CLI stage merges **last**, so it always overwrites the config file's
+> value and `validateBrowserConfig`'s non-Linux `chromiumSandbox = true` branch
+> is unreachable on the MCP path. That also predicts the fix precisely: any
+> future config key upstream reads *after* the CLI merge would work, and this one
+> never can. `[FLOATS]`
+
 **`loadConfig` is a bare `JSON.parse` with no schema validation**, so a renamed
 or removed key is silently ignored. `--output-mode` was a no-op for its entire
 life — a hardcoded literal in 0.0.78's bundle, never read from config — and was
@@ -34,6 +57,34 @@ anything we shipped. Verified empirically: with an *empty* browsers directory,
 the shell — absence of a channel does**, and `chrome-for-testing` yields the full
 binary even headless.
 
+> **The alias list is exactly one entry**, read from the resolved bundle
+> 2026-08-16: `chromiumAliases = ["chrome-for-testing"]`, referenced by
+> `isChromiumAlias` and by `resolveBrowsers`. It is also what upstream's own
+> `--browser chromium` resolves to — `resolveBrowserParam` returns
+> `{ browserName: "chromium", channel: "chrome-for-testing" }` — so the channel
+> BrowserAI generates is upstream's own spelling rather than a synonym.
+> Re-establish by grepping the bundle for `chromiumAliases`; a second alias would
+> not break anything, but the *first* one being renamed would break every launch.
+> `[FLOATS]`
+>
+> **Confirmed end to end 2026-08-16:** a launch with
+> `browserName: "chromium"`, `channel: "chrome-for-testing"` and
+> `headless: true` resolved
+> `…\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe`, with `--headless`
+> on its command line and no `chromium_headless_shell-1237` directory present at
+> all. Asserted every run by `HeadlessBinaryTests`.
+>
+> **And the failure when the tree is empty is loud, which is the whole premise.**
+> With the same generated config and an empty `PLAYWRIGHT_BROWSERS_PATH` root,
+> `initialize` and `tools/list` still succeed — as they did in the 2026-08-13
+> measurement — and `browser_navigate` returns `isError: true` with
+> *`Browser "chrome-for-testing" is not installed; expected executable at
+> <root>\chromium-1237\chrome-win64\chrome.exe. Run `npx @playwright/mcp
+> install-browser chrome-for-testing` to install`*. Note the remediation string
+> names a package BrowserAI does not ship; replacing it is
+> [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)'s
+> job. `[FLOATS]`
+
 > **This selector is authoritative, and one observation disagrees with it.**
 > [kb: detection](../windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)
 > records `--headless --browser chromium` spawning full `chrome.exe` — which the
@@ -49,6 +100,16 @@ binary even headless.
 
 **On Windows `headless` defaults to `false`.** `resolveCLIConfigForMCP` sets it
 only to `os.platform() === "linux" && !process.env.DISPLAY`.
+
+> **It is a default, not an override, and the distinction is load-bearing.**
+> Read from the resolved bundle 2026-08-16, the assignment is guarded:
+> `if (browser.launchOptions.headless === void 0) browser.launchOptions.headless
+> = …`. So a config file's `headless: true` **survives** on Windows — confirmed
+> by a launch whose browser command line carried `--headless`. Read the entry
+> above as *"no key means a window appears"*, never as *"upstream overwrites
+> your key"*. Unlike `chromiumSandbox`, commander leaves `opts.headless`
+> **undefined** when the flag is absent, which is why the CLI stage does not
+> stamp on this one. `[FLOATS]`
 
 **`isolated` is not auto-defaulted on the MCP path.** The auto-default block
 (`!options.profile && !options.persistent && !userDataDir && ...`) lives in

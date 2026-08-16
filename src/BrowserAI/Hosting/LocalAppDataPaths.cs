@@ -26,4 +26,10 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
 
     /// <inheritdoc />
     public string LogDirectory => Path.Combine(RootAppDir, "logs");
+
+    /// <inheritdoc />
+    public string BrowsersDirectory => Path.Combine(RootAppDir, "browsers");
+
+    /// <inheritdoc />
+    public string InstanceRoot => Path.Combine(RootAppDir, "instances");
 }

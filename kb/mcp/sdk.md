@@ -298,6 +298,12 @@ own `ILogger` and takes the `ILoggerFactory` twice. This one cannot fail
 silently, which is why it has no re-verification row: a change makes the build
 red or makes a field redundant. `[FLOATS]`
 
+**A `RequestContext<T>.Params` is nullable and the tool handlers are two
+delegates.** `McpServerOptions.Handlers` is an `McpServerHandlers` with
+`ListToolsHandler` and `CallToolHandler` among fifteen properties, and declaring
+`Capabilities.Tools` is what makes `initialize` advertise tools at all — with it
+unset, a server carrying handlers still tells the caller it has none. `[FLOATS]`
+
 **`StreamServerTransport` never sets `JsonRpcMessage.Context`.** The
 `RelatedTransport` field exists for the stateless HTTP path; a session-based
 stdio transport leaves it null, and a replacement should too. `[FLOATS]`
@@ -309,3 +315,38 @@ That is worth knowing because a transport that merely drops the frame leaves the
 caller hanging with nothing but a log line to explain it. BrowserAI's does drop
 it, deliberately and loudly, until [step 9](../../plan/build-order.md#9-lossless-passthrough)
 owns error shaping. `[FLOATS]`
+
+### Added 2026-08-16 — the published binary, at 2.2.0
+
+Established while building
+[build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child):
+a NativeAOT `BrowserAI.exe` carrying the SDK, our two transports and our
+`[LibraryImport]` job-object launcher, driving a real `@playwright/mcp` 0.0.79
+child and a real Chromium.
+
+**NativeAOT is clean with all of it in one binary, and the number is ours rather
+than a spike's.** `dotnet publish -c Release -r win-x64 --self-contained`:
+**zero trim/AOT warnings, no `will always throw` in the output, exit 0,
+10,399,744 bytes (9.92 MiB)**. That is with `ModelContextProtocol` 2.2.0, both
+custom transports, `JobObject`/`JobLauncher`, the rolling file sink and the
+`Utf8JsonWriter`-based config generator, and **still no `JsonSerializerContext`
+of our own on any path**. The published binary negotiated `2025-11-25` with the
+child, forwarded a 24-tool `tools/list`, and returned a non-error
+`browser_navigate` result. `[MACHINE]` for the byte count, `[FLOATS]` for the
+warning-free claim. Re-establish with the publish command and
+`VerticalSliceTests`.
+
+**The `JsonArray.Add(x)` trap reproduces, and it fails `dotnet build` as well as
+`dotnet publish`.** Planted in our own code on 2026-08-16 — `new JsonArray()`
+then `Add(someInt)`, which binds to `Add<T>(T)` — and the result is **two**
+errors at the same call site, `IL2026` (`RequiresUnreferencedCode`) and `IL3050`
+(`RequiresDynamicCode`), on `dotnet build` at the analyzer stage and again on
+`dotnet publish`. The spike recorded it as a publish-time trap; because
+`EnableAotAnalyzer` and `EnableTrimAnalyzer` are set unconditionally rather than
+under a publish-only condition, an everyday build catches it too. The cast to
+`(JsonNode)` clears both. Reverted. `[FLOATS]`
+
+> This matters more than a one-line trap sounds, because
+> [step 9](../../plan/build-order.md#9-lossless-passthrough) rewrites
+> `tools/list` on `JsonNode` — that is the file where this call shape is most
+> likely to be written, and where it was planted for exactly that reason.

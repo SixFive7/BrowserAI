@@ -3,24 +3,32 @@
 
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
+using BrowserAI.Protocol;
+using BrowserAI.Proxy;
+using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 
 namespace BrowserAI;
 
 /// <summary>
-/// Entry point.
+/// Entry point: start the child, serve the caller, and take the whole tree down
+/// on the way out.
 /// </summary>
 /// <remarks>
-/// At build-order step 2 this starts the logging stack, records that it
-/// started, and exits. The MCP server itself arrives at step 7. What is real
-/// here is the invariant everything after it depends on: stdout belongs to the
-/// protocol and nothing in this process can reach it.
+/// The order matters. Logging first, because a failure before it exists has
+/// nowhere to be reported. The child next, so a payload or browser problem is a
+/// startup failure with a message rather than a tool call that fails later for
+/// reasons the caller cannot see. stdout is acquired last, and by then it
+/// belongs to the protocol.
 /// </remarks>
 internal static class Program
 {
-    private static int Main()
+    private static async Task<int> Main()
     {
-        using var log = ProcessLog.Create(new LocalAppDataPaths(), LogLevel.Information);
+        var paths = new LocalAppDataPaths();
+
+        using var log = ProcessLog.Create(paths, LogLevel.Information);
         var logger = log.Factory.CreateLogger("BrowserAI.Startup");
 
         StartupLog.Started(
@@ -29,7 +37,58 @@ internal static class Program
             Environment.ProcessPath ?? "<unknown>",
             Environment.CurrentDirectory);
 
-        return 0;
+        // One run, one directory, and the leftovers of runs that were killed
+        // before they could tidy up. Sessions replace this at build-order step
+        // 10; until then the process is the unit.
+        var instance = InstanceDirectory.CreateFresh(paths);
+
+        try
+        {
+            var options = ChildLaunch.Create(
+                new PayloadLayout(),
+                paths.BrowsersDirectory,
+                instance);
+
+            var proxy = await BrowserProxy.ConnectAsync(options, log.Factory).ConfigureAwait(false);
+
+            // `await using var x = …` awaits its DisposeAsync on the captured
+            // context, which CA2007 refuses. Holding the ConfiguredAsyncDisposable
+            // in its own local is the shape that keeps both the object usable
+            // and the disposal context-free.
+            await using var proxyScope = proxy.ConfigureAwait(false);
+
+            // Last, and only once everything that could fail loudly has. From
+            // here stdout is the protocol channel and nothing else in the
+            // process can reach it.
+            using var channel = StdioChannel.OpenStandardStreams();
+
+            var transport = new DirectStdioServerTransport(channel, log.Factory);
+            await using var transportScope = transport.ConfigureAwait(false);
+
+            var server = McpServer.Create(transport, proxy.ServerOptions(), log.Factory);
+            await using var serverScope = server.ConfigureAwait(false);
+
+            StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
+
+            // Ends when the caller closes our stdin, which is the same graceful
+            // path BrowserAI uses on its own child.
+            await server.RunAsync().ConfigureAwait(false);
+
+            return 0;
+        }
+#pragma warning disable CA1031 // The process boundary reports every failure the same way: a log record and a non-zero exit code.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            StartupLog.Failed(logger, ex);
+            return 1;
+        }
+        finally
+        {
+            // The clean path. The killed path is the next run's sweep, because
+            // nothing here runs when the process is terminated from outside.
+            InstanceDirectory.Delete(instance);
+        }
     }
 }
 
@@ -41,4 +100,16 @@ internal static partial class StartupLog
         Level = LogLevel.Information,
         Message = "BrowserAI started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory}")]
     public static partial void Started(ILogger logger, int processId, string imagePath, string workingDirectory);
+
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Information,
+        Message = "BrowserAI is serving stdio. childProtocol={ChildProtocol}")]
+    public static partial void Serving(ILogger logger, string childProtocol);
+
+    [LoggerMessage(
+        EventId = 3,
+        Level = LogLevel.Critical,
+        Message = "BrowserAI could not start and is exiting.")]
+    public static partial void Failed(ILogger logger, Exception exception);
 }

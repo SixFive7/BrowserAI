@@ -155,6 +155,50 @@ such race: the kernel tears the whole job down at once, and anything respawned
 inside it is already contained. Re-establish by reading that file. `[STABLE]` for
 the race; `[MACHINE]` for the observation.
 
+**Containment holds from a published NativeAOT binary, against a real browser.**
+Measured 2026-08-16 at
+[build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child),
+which is the run that closes the caveat step 6 left open — `[LibraryImport]` and
+`PROC_THREAD_ATTRIBUTE_JOB_LIST` had until then only been exercised under the
+test host, never after ILC. The published `BrowserAI.exe` was started inside a
+job the suite owns, brought up `node.exe` v24.19.0 and Chromium 152.0.7977.8 (7
+Chromium processes: browser, two crashpad handlers, a GPU process, two utility
+processes and renderers), and was then **`TerminateProcess`d from outside**, so
+no `finally`, no shutdown hook and no handler of ours ran. **Every recorded pid
+was gone**, with pid identity re-checked against its creation time before the
+survivor check acted on it. `VerticalSliceTests.KillingThePublishedBinaryLeavesNoNodeAndNoBrowser`
+re-runs it. `[FLOATS]`
+
+> **A `conhost.exe` joins the job for each child.** `JobLauncher` passes
+> `CREATE_NO_WINDOW`, which still allocates a console, so the job's member list
+> carries a `conhost.exe` per launched process. It is contained like everything
+> else; it is noted because a member list read for the first time otherwise
+> reads as a leak. `[MACHINE]`
+
+**A cleanup path in a `finally` is one this design guarantees will sometimes not
+run.** Observed the same day, and it is the containment contract biting its own
+author: BrowserAI deleted its per-run instance directory in a `finally`, the
+acceptance test terminates BrowserAI from outside on every run, and nineteen
+suite runs left nineteen directories behind. The fix is a sweep at startup that
+uses the **working-directory lock as the liveness check** — Windows refuses to
+delete a directory that is some process's current directory, so the delete
+simply fails for a live run and succeeds for an abandoned one, with no pid to
+recycle and no name to match. `[STABLE]` for the lock; re-establish with
+`InstanceDirectoryTests`.
+
+**A process's command line can be read by pid without a PEB walk.**
+`NtQueryInformationProcess` with `ProcessCommandLineInformation` (class **60**,
+Windows 8.1+) returns a `UNICODE_STRING` and needs only
+`PROCESS_QUERY_LIMITED_INFORMATION` — no `ReadProcessMemory`, no 32/64-bit
+pointer arithmetic. The documented two-call shape applies: the sizing call
+returns `STATUS_INFO_LENGTH_MISMATCH` (`0xC0000004`) with the required length,
+and a fixed buffer guess truncates, because a Chromium browser command line runs
+to several kilobytes of switches. Paired with `QueryFullProcessImageNameW` this
+is the sanctioned alternative to matching a process by image name: the full path
+is compared against a path BrowserAI owns. Used by `ProcessCommandLine` in the
+suite; it is what makes *"`--no-sandbox` is absent"* an assertion about the
+browser rather than about our config file. `[STABLE]`
+
 ## stdio, exit codes and process startup
 
 **`Console` stdio is wrong by default in both directions.** Measured:

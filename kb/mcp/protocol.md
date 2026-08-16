@@ -17,9 +17,29 @@ nothing to catch and the negotiated value must be asserted. `[FLOATS]`
 > newer revision and echoes an older one, and does neither with an error. Both
 > probes are now part of the snapshot generator, so the ceiling is recorded in
 > [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
-> and a move is a diff. That covers *recording* it; **asserting the negotiated
-> version inside the product is still owed** and belongs to
-> [build-order step 7](../../plan/build-order.md).
+> and a move is a diff.
+>
+> **The product half landed 2026-08-16 at
+> [build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child).**
+> `BrowserProxy.ConnectAsync` pins `McpClientOptions.ProtocolVersion`, logs
+> `requested=… negotiated=…`, and throws if the two differ; `ProtocolSplitTests`
+> asserts the logged pair against the ceiling the snapshot recorded, so the pin
+> and the measurement can no longer drift apart silently.
+
+**The two halves of the split are distinguishable by a method, not only by a
+version string.** Measured 2026-08-16 by sending `server/discover` as the first
+frame to each end of the running proxy: **BrowserAI answers `-32602`** — *"The
+`server/discover` request requires per-request metadata declaring a supported
+protocol version"* — while **the child answers `-32601` Method not found**. The
+method exists on one side and not on the other, which a version string cannot
+show, because a version can be echoed. Re-establish by running
+`ProtocolSplitTests.TheServerReachesARevisionTheChildDoesNotImplement`, which
+asks both ends the same question in the same run. `[FLOATS]`
+
+> The same run also confirms the downward pin is independent of the caller:
+> offering `2025-06-18` to BrowserAI returns `2025-06-18` while the child
+> session in that same process is at `2025-11-25`. A server that merely
+> forwarded the child's answer would return `2025-11-25` there.
 
 **The current spec is `2026-07-28`, a breaking rewrite.** It removes `initialize`
 and `notifications/initialized`, adds `server/discover`, replaces server→client
