@@ -37,6 +37,8 @@ internal sealed class ReleaseScriptTests
 
     private static string ReleaseScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "New-Release.ps1");
 
+    private static string ManifestScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Write-ReleaseManifest.ps1");
+
     /// <summary>An empty channel accepts anything, because there is nothing to be older than.</summary>
     /// <remarks>
     /// The same 404 an unpublished channel returns is what a misconfigured feed
@@ -177,6 +179,165 @@ internal sealed class ReleaseScriptTests
         // NEVER EXITS, installing nothing and leaving one log line.
         await Assert.That(script).DoesNotContain("Setup.exe' --");
         await Assert.That(script).Contains("will always throw");
+    }
+
+    /// <summary>
+    /// The resolved-set manifest is emitted, holds the six files item 11 names,
+    /// and states the version each one carries.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Driven against a synthetic root rather than the repository's own.</b>
+    /// One of the six is <c>payload/payload.json</c>, which exists only after
+    /// <c>build/Build-Payload.ps1</c> has run — so pointing this at the real
+    /// root would make the test's own result depend on whether a payload
+    /// happened to be assembled, which is the conditional-pass shape the whole
+    /// [coverage gate](SuiteCoverageTests.cs) exists to remove. The script's
+    /// behaviour is identical either way: it copies six paths and reads them
+    /// back.
+    /// </para>
+    /// <para>
+    /// <b>Read back out of the copies.</b> The manifest states a version only
+    /// where it copied a file stating it, which is what makes the number
+    /// evidence rather than something somebody typed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheResolvedSetManifestIsEmittedWithAllSixFilesAndWhatEachStates()
+    {
+        using var scratch = ScratchDirectory.Create("release-manifest");
+        var root = await SyntheticRootAsync(scratch.Path);
+        var destination = Path.Combine(scratch.Path, "manifest");
+
+        var (exit, output) = await RunAsync(
+            ManifestScript, "-Root", root, "-Destination", destination, "-Version", "0.9.1", "-Tag", "v0.9.0-3-gabc1234");
+
+        await Assert.That(exit).IsEqualTo(0);
+        await Assert.That(output).Contains("Resolved-set manifest");
+
+        string[] expected =
+        [
+            "src-BrowserAI.packages.lock.json",
+            "tests-BrowserAI.Tests.packages.lock.json",
+            "tests-BrowserAI.TestProbe.packages.lock.json",
+            "payload.package-lock.json",
+            "payload.json",
+            "browsers.json",
+            "manifest.json",
+        ];
+
+        var missing = expected.Where(name => !File.Exists(Path.Combine(destination, name))).ToList();
+        await Assert.That(string.Join(", ", missing)).IsEmpty();
+
+        var manifest = await File.ReadAllTextAsync(Path.Combine(destination, "manifest.json"));
+
+        await Assert.That(manifest).Contains("\"version\": \"0.9.1\"");
+        await Assert.That(manifest).Contains("\"tag\": \"v0.9.0-3-gabc1234\"");
+
+        // Every axis the resolved set has to state, read back from the copies.
+        await Assert.That(manifest).Contains("\"Velopack\": \"9.9.9\"");
+        await Assert.That(manifest).Contains("\"TUnit\": \"8.8.8\"");
+        await Assert.That(manifest).Contains("\"@playwright/mcp\": \"0.0.777\"");
+        await Assert.That(manifest).Contains("\"version\": \"v24.0.0\"");
+        await Assert.That(manifest).Contains("\"revision\": \"4321\"");
+    }
+
+    /// <summary>
+    /// A missing file refuses the manifest rather than writing a partial one.
+    /// </summary>
+    /// <remarks>
+    /// <b>A manifest holding five of six files reads exactly like a complete
+    /// one</b> to whoever opens it a year later, which makes a partial worse
+    /// than none. The refusal names the file, because the usual cause is that
+    /// nobody assembled a payload.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AMissingFileRefusesTheManifestRatherThanWritingAPartialOne()
+    {
+        using var scratch = ScratchDirectory.Create("release-manifest-partial");
+        var root = await SyntheticRootAsync(scratch.Path);
+        File.Delete(Path.Combine(root, "payload", "payload.json"));
+
+        var destination = Path.Combine(scratch.Path, "manifest");
+
+        var (exit, output) = await RunAsync(
+            ManifestScript, "-Root", root, "-Destination", destination, "-Version", "0.9.1");
+
+        await Assert.That(exit).IsNotEqualTo(0);
+        await Assert.That(output).Contains("payload/payload.json");
+        await Assert.That(output).Contains("Build-Payload.ps1");
+        await Assert.That(Directory.Exists(destination)).IsFalse();
+    }
+
+    /// <summary>The release script emits the manifest rather than leaving it to a person.</summary>
+    /// <remarks>
+    /// The scan is what ties the two together: the test above proves the script
+    /// works, and this proves a release runs it. Item 11 was satisfied by hand
+    /// once, which is the state this closes.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheReleaseScriptEmitsTheResolvedSetManifest()
+    {
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        await Assert.That(script).Contains("Write-ReleaseManifest.ps1");
+        await Assert.That(script).Contains("-Package $full");
+    }
+
+    /// <summary>
+    /// A repository-shaped tree holding the six files, with versions no real
+    /// resolve could produce so that a copy cannot be mistaken for a default.
+    /// </summary>
+    private static async Task<string> SyntheticRootAsync(string directory)
+    {
+        var root = Path.Combine(directory, "root");
+
+        async Task writeAsync(string relative, string content)
+        {
+            var path = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            await File.WriteAllTextAsync(path, content);
+        }
+
+        const string ProductLock = """
+            {"version":1,"dependencies":{"net10.0-windows":{
+              "ModelContextProtocol":{"type":"Direct","resolved":"7.7.7"},
+              "Velopack":{"type":"Direct","resolved":"9.9.9"},
+              "MinVer":{"type":"Direct","resolved":"6.6.6"}}}}
+            """;
+
+        await writeAsync("src/BrowserAI/packages.lock.json", ProductLock);
+        await writeAsync("tests/BrowserAI.Tests/packages.lock.json", """
+            {"version":1,"dependencies":{"net10.0-windows":{"TUnit":{"type":"Direct","resolved":"8.8.8"}}}}
+            """);
+        await writeAsync("tests/BrowserAI.TestProbe/packages.lock.json", """
+            {"version":1,"dependencies":{"net10.0-windows":{}}}
+            """);
+        // ⚠️ THE EMPTY-STRING KEY IS THE POINT OF THIS FIXTURE, not noise. npm
+        // records the root project under "" and PowerShell's ConvertFrom-Json
+        // refuses an empty property name without -AsHashtable. A fixture without
+        // it passed this test while the script failed on the first real release,
+        // 2026-08-16 -- a synthetic input simpler than the real one, which is the
+        // shape of test that proves nothing.
+        await writeAsync("build/payload/package-lock.json", """
+            {"name":"payload","lockfileVersion":3,"packages":{
+              "":{"name":"payload","dependencies":{"@playwright/mcp":"latest"}},
+              "node_modules/@playwright/mcp":{"version":"0.0.777"},
+              "node_modules/playwright-core":{"version":"1.99.0-alpha-2026-01-01"}}}
+            """);
+        await writeAsync("payload/payload.json", """
+            {"node":{"version":"v24.0.0","lts":"Synthetic","sha256":"abc123"},
+             "npm":{"@playwright/mcp":"0.0.777"}}
+            """);
+        await writeAsync("upstream-snapshots/browsers.json", """
+            {"browsers":[{"name":"chromium","revision":"4321","browserVersion":"999.0.0.0"},
+                         {"name":"winldd","revision":"1007"}]}
+            """);
+
+        return root;
     }
 
     private static async Task<string> WriteFeedAsync(string directory, params string[] versions)

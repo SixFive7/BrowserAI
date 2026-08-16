@@ -143,11 +143,7 @@ internal sealed class StandardErrorClassifierTests
     [Test]
     public async Task AStartupDiagnosticFromARealChildReachesTheLogAtAWarning()
     {
-        if (!RepositoryPayload.IsPresent)
-        {
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequireRepositoryPayload();
 
         using var scratch = ScratchDirectory.Create("stderr-diagnostic");
         using var capture = new CapturingLoggerProvider();
@@ -193,11 +189,7 @@ internal sealed class StandardErrorClassifierTests
     [Test]
     public async Task ARealHealthyStartPrintsTheBenignSessionLineAndIsNotWarnedAbout()
     {
-        if (!RepositoryPayload.IsPresent)
-        {
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequireRepositoryPayload();
 
         using var scratch = ScratchDirectory.Create("stderr-benign");
         using var capture = new CapturingLoggerProvider();

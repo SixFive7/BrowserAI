@@ -84,24 +84,19 @@ internal sealed class BrowserContainmentTests
 
     private static async Task RunAsync(string browser, string expectedExecutable)
     {
-        if (!RepositoryPayload.IsPresent)
+        // ⚠️ The cost of the alternative, stated rather than hidden: on a machine
+        // where this family has never been provisioned, the arm proves nothing
+        // and the guarantee for it would rest on the recorded measurement in
+        // kb/windows/processes.md alone. So it reports as SKIPPED rather than as
+        // a pass, and a release run refuses -- an unprovisioned family is the
+        // batteries-included premise being dead code with the suite green.
+        if (browser is "firefox")
         {
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
+            SuiteEnvironment.RequireProvisionedFirefox();
         }
-
-        if (!File.Exists(expectedExecutable))
+        else
         {
-            // ⚠️ The cost of this branch, stated rather than hidden: on a machine
-            // where this family has never been provisioned, the arm proves
-            // nothing and the guarantee for it rests on the recorded measurement
-            // in kb/windows/processes.md. What is asserted instead is that the
-            // family is absent as a WHOLE — which distinguishes "nobody has
-            // provisioned it" from "it was provisioned and the executable is
-            // missing from it", and the second is a real defect that would
-            // otherwise read as a clean machine.
-            await Assert.That(Directory.Exists(Path.GetDirectoryName(Path.GetDirectoryName(expectedExecutable)!))).IsFalse();
-            return;
+            SuiteEnvironment.RequireProvisionedChromium();
         }
 
         using var scratch = ScratchDirectory.Create($"browser-containment-{browser}");

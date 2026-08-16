@@ -19,6 +19,150 @@ with it.
 
 ---
 
+## Follow-up to run 1 — 2026-08-16, on `c21fea7`
+
+**Not a checklist run.** Run 1's three blockers and its deferred items were
+worked through; four were defects and are cleared. **Two verdicts move, and the
+two remaining blockers are unchanged and are not the agent's to clear.**
+
+| # | Item | Run 1 | Now |
+|---|---|---|---|
+| 7 | Build clean | pass, with ⚠️ *"nothing asserts `UseSystemResourceKeys`"* | **pass, and asserted** |
+| 8 | Run everything | FAIL — 1 skipped, with ⚠️ *"33 tests can degrade silently"* | **still FAIL — 1 skipped**, but the degradation is now loud |
+| 9 | Version derived | BLOCKED — pre-release suffix | **unchanged** — the maintainer's tag |
+| 11 | Resolved set recorded | pass, hand-assembled | **pass, emitted by the release script** |
+| 13 | Third-party notices | FAIL — two of four absent | **pass — four of four, and tested** |
+
+Everything else is untouched. Item 8 still fails on the one `[Skip]`, which
+[stays until a feed exists](#what-blocks-a-release-today).
+
+### The degraded-run defect, measured before and after
+
+Run 1 warned that 33 guards across 13 files return early and *"produce an
+identical green summary"*. **Measured rather than restated**, by moving things
+aside and running the suite from
+`tests/BrowserAI.Tests/bin/Debug/net10.0-windows/BrowserAI.Tests.exe`:
+
+| Run | total | passed | failed | skipped | exit | duration |
+|---|---|---|---|---|---|---|
+| before, healthy | 329 | 328 | 0 | 1 | 0 | 35.7 s |
+| **before, whole publish directory moved aside** | 329 | 328 | 0 | **1** | **0** | 25.3 s |
+| before, `payload/` moved aside | 329 | 247 | **80** | 2 | 2 | 20.5 s |
+| after, healthy | 341 | 340 | 0 | 1 | 0 | 31.4 s |
+| after, healthy, `BROWSERAI_RELEASE_RUN=1` | 341 | 340 | 0 | 1 | 0 | 32.2 s |
+| **after, publish moved aside** | 341 | 314 | 0 | **27** | 0 | 26.4 s |
+| **after, publish moved aside, release run** | 341 | 313 | **27** | 1 | **2** | 26.2 s |
+| after, `payload/` moved aside | 341 | 249 | 80 | **12** | 2 | 21.4 s |
+
+**The second row is the defect, exactly.** Nothing was published, no browser was
+ever started, and the four numbers are character-identical to the healthy run's
+— only the duration differs, and run 1 already established that a slice test's
+duration proves nothing.
+
+> ⚠️ **It corrects run 1 on which absence was silent.** Item 8's warning named
+> `PublishedSlice` and `RepositoryPayload` together. **Only the publish was ever
+> silent.** With `payload/` gone the suite already failed **80 tests** — the
+> fake-child and tool-surface layers need `node.exe` and carry no guard at all —
+> so that half was loud before any of this work. The correction is recorded
+> rather than the old sentence edited, and both capabilities are gated now
+> regardless: a guard nobody accounts for is how this one was missed.
+
+**What the run now says, in its own output**, printed after the last test and
+written to `.work/suite-coverage.txt`:
+
+```
+  published slice     ABSENT   …\win-x64\publish\BrowserAI.exe
+      26 tests skipped: ACallNamingASessionThisProcessIsNotDrivingIsToldHowToOpenIt, …
+  repository payload  PRESENT  …\payload\payload.json
+  Chromium            PRESENT  …\browsers\chromium-1237\chrome-win64\chrome.exe
+  Firefox             PRESENT  …\browsers\firefox-1539\firefox\firefox.exe
+  packed release      PRESENT  …\Releases\BrowserAI-0.1.2-full.nupkg
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+==============================================================================
+  ⚠️  DEGRADED RUN: 26 test executions took a path that proves less than the
+      test's name claims. …
+```
+
+**Item 8 now has a command that answers its third bullet**, which run 1 could
+only answer by `ls`-ing two paths outside the run:
+`BROWSERAI_RELEASE_RUN=1` before the suite.
+
+> **Two mechanisms found by running rather than by reading.**
+> `Console.WriteLine` from an `[After(TestSession)]` hook reaches **nothing**
+> under TUnit 1.65.0 / MTP — the hook runs, the file it writes appears, and the
+> console copy is in no log — so the block goes through the real standard-output
+> handle instead. And `[CallerMemberName]` named a private helper, `RunAsync`,
+> as a skipped test on the first degraded run; it reads
+> `TestContext.Current.Metadata.TestName` now.
+
+### 13. Third-party notices — **now pass, four of four**
+
+Read from inside `Releases/BrowserAI-0.1.2-full.nupkg`, packed by
+`build/New-Release.ps1` on this tree:
+
+| Obligation | In the package |
+|---|---|
+| Node's full `LICENSE` | ✅ `lib/app/payload/node/LICENSE` |
+| `@playwright/mcp` Apache-2.0 | ✅ `lib/app/payload/mcp/node_modules/@playwright/mcp/LICENSE` |
+| `playwright-core` Apache-2.0 + §4 | ✅ `…/playwright-core/{LICENSE, NOTICE, ThirdPartyNotices.txt}` |
+| **Velopack's MIT notice** | ✅ `lib/app/THIRD-PARTY-NOTICES.txt`, the licence whole |
+| **The trademark disclaimer** | ✅ same file |
+
+The two that were absent have no upstream file to travel with — Velopack is
+compiled *into* `BrowserAI.exe`, so its licence never leaves the NuGet cache.
+The text is **copied, not transcribed**: fetched from commit `f2edcbca`, which
+is what `velopack.nuspec` records as the source of the resolved 1.2.0 package.
+
+`ThirdPartyNoticeTests` asserts the set against three subjects — the repository
+file, the publish output, and the package's entry list — and asserts the
+Velopack version stamped in the notices equals
+`src/BrowserAI/packages.lock.json`'s, so a bump is red until the licence has
+been re-fetched.
+
+### 11. The resolved set — **now emitted**
+
+```
+pwsh -File build/New-Release.ps1 -PackVersion 0.1.2 -SkipPublish -PackDir artifacts/publish-release
+   → exit 0
+   → Resolved-set manifest: Releases\archive\BrowserAI-0.1.2-manifest (6 files + manifest.json)
+```
+
+2,357-byte `manifest.json` beside the six copies, stating version `0.1.2`, tag
+`v0.1.0-4-gc21fea7`, the package's SHA-256
+`6d91df4c…`, and every resolved version read back **out of the copies**:
+ModelContextProtocol 2.2.0 · Velopack 1.2.0 · MinVer 7.0.0 · TUnit 1.65.0 ·
+`@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · node
+v24.19.0 · chromium 1237 · firefox 1539 · ffmpeg 1011 · winldd 1007.
+
+> ⚠️ **The first real run of it failed where its test passed.**
+> `package-lock.json` records the root project under the **empty-string key**
+> and `ConvertFrom-Json` refuses one without `-AsHashtable`. The suite's
+> synthetic lock had no root entry — an input simpler than the real one, which
+> is the shape of fixture that proves nothing. Both fixed; the fixture carries
+> a `""` key now.
+
+### 7. `UseSystemResourceKeys` — **now asserted**
+
+`BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`
+refuses any value other than `false` in any build file **and** requires the
+declaration to be present in `Directory.Build.props`. The second half is the
+load-bearing one: the default is already off, so a file that never mentions it
+would pass a "not true" check, and the deletion is what this was written to
+catch.
+
+### One failure that was not this work's, re-run rather than explained
+
+`FirstRunProvisioningTests.AnEmptyBrowsersRootDownloadsAndTheSameChildThenNavigates`
+failed once in a full run, on
+`Directory.EnumerateDirectories(browsers, "ffmpeg-*").Any()`. **Re-run alone
+twice: passed, 14.265 s and 14.273 s**, and it passed in every subsequent full
+run. The test waits for Chromium's `INSTALLATION_COMPLETE` marker and then
+asserts ffmpeg's directory exists, which is a second download it does not wait
+for — so it is a race in that test, recorded rather than diagnosed further, and
+**not attributed to anything until it reproduces.**
+
+---
+
 ## Run 1 — 2026-08-16, `81f2268` (build-order step 20)
 
 **Verdict: BLOCKED.** Ten items pass, one is not the agent's to answer, and

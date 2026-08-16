@@ -38,11 +38,7 @@ internal sealed class SandboxFlagTests
     [Test]
     public async Task NoProcessOfOurBrowserRunsWithTheSandboxDisabled()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
         var chromium = run.ChromiumProcesses(BrowserAiPaths.BrowsersDirectory);
@@ -92,11 +88,7 @@ internal sealed class SandboxFlagTests
     [Test]
     public async Task TheConfigKeyIsStillDiscardedByUpstream()
     {
-        if (!RepositoryPayload.IsPresent)
-        {
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequireRepositoryPayload();
 
         using var scratch = ScratchDirectory.Create("sandbox-config-key");
 

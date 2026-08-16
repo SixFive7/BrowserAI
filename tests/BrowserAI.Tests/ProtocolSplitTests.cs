@@ -43,11 +43,7 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task TheChildNegotiatesItsCeilingAndTheProductRecordsWhichVersionThatWas()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
 
@@ -71,11 +67,7 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task ACallerMayNegotiateARevisionOlderThanTheOneUsedWithTheChild()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         PublishedSlice.EnsureFresh();
 
@@ -101,11 +93,8 @@ internal sealed class ProtocolSplitTests
     [Test]
     public async Task TheServerReachesARevisionTheChildDoesNotImplement()
     {
-        if (!PublishedSlice.IsPresent || !RepositoryPayload.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole || RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
+        SuiteEnvironment.RequireRepositoryPayload();
 
         PublishedSlice.EnsureFresh();
 

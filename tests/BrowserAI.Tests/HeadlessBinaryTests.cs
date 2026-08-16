@@ -36,11 +36,7 @@ internal sealed class HeadlessBinaryTests
     [Test]
     public async Task TheResolvedBrowserIsOurChromiumAndNotTheHeadlessShell()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
         var browser = run.BrowserProcess(BrowserAiPaths.BrowsersDirectory);
@@ -73,11 +69,7 @@ internal sealed class HeadlessBinaryTests
     [Test]
     public async Task AnEmptyBrowsersDirectoryFailsRatherThanFallingBackToSystemChrome()
     {
-        if (!RepositoryPayload.IsPresent)
-        {
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequireRepositoryPayload();
 
         using var scratch = ScratchDirectory.Create("empty-browsers-root");
 

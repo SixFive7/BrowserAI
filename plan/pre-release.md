@@ -259,10 +259,16 @@ zero — **plus the two things an exit code does not establish**:
 > item's body demands *ILC output empty* and *`UseSystemResourceKeys` never
 > set*, and its evidence line asked for neither — so an item that is
 > specifically about a publish that exits 0 while ILC complains was to be
-> evidenced by that publish's exit code. **`UseSystemResourceKeys` has no test**,
-> which [Testing](testing.md#what-the-build-itself-must-fail-on) requires
-> (*"Assert the property is unset"*); until one exists this line is the only
-> thing that looks.
+> evidenced by that publish's exit code.
+>
+> ✅ **The `UseSystemResourceKeys` half now has the test
+> [Testing](testing.md#what-the-build-itself-must-fail-on) requires**, closed
+> the same day it was raised:
+> `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`
+> reads every build file, refuses any value other than `false`, **and requires
+> the declaration to be present in `Directory.Build.props`** — absent would pass
+> a "not true" check while saying nothing to the next reader. Quoting the
+> property here is now corroboration rather than the only thing that looks.
 
 ### 8. Run everything
 
@@ -281,23 +287,25 @@ Three things to record rather than assume, because each is easy to skim past:
   what turns an upstream addition into a red run instead of a security incident.
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
-  ⚠️ **The run's own output cannot tell you this, and it reads identically
-  either way.** **33 tests across 13 files** open with
-  `if (!PublishedSlice.IsPresent)` or `if (!RepositoryPayload.IsPresent)` and
-  return after asserting a weaker property — a conditional ignore that reports
-  as a pass. So the precondition is checked **outside** the run, before it, and
-  recorded:
+  **Run the suite with `BROWSERAI_RELEASE_RUN=1` set**, which is what makes this
+  answerable at all:
 
   ```
-  ls src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/BrowserAI.exe
-  ls src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/payload/payload.json
+  $env:BROWSERAI_RELEASE_RUN = '1'
+  tests/BrowserAI.Tests/bin/Debug/net10.0-windows/BrowserAI.Tests.exe
   ```
 
-  Both present means `PublishedSlice.IsPresent` is true and the real branch ran.
-  Corroborate it from a TRX, on the tests that **carry** the browser cost —
-  `AnEmptyBrowsersRootDownloadsAndTheSameChildThenNavigates` and the two
-  containment tests run in seconds and cannot reach those numbers without
-  starting one.
+  Under that variable every capability guard — the published slice, the
+  repository payload, a provisioned Chromium, a provisioned Firefox, a packed
+  `.nupkg` — is a **failure** rather than a skip, so a release cut from a
+  machine that never started a browser is a red run naming what was missing.
+  Without it the same guards report **skipped**, which the first bullet above
+  already refuses.
+
+  Every run, release or not, ends with a **coverage block** naming each
+  capability `PRESENT` / `ABSENT` / `PARTIAL`, every test that took a degraded
+  path, and whether this was a release run. It is printed to the run's output
+  and written to `.work/suite-coverage.txt`.
 
   ⚠️ **Do not read a slice test's own duration as the signal.** The rig shares
   one `SliceRun`, so its cost lands on whichever test triggered it first:
@@ -307,17 +315,29 @@ Three things to record rather than assume, because each is easy to skim past:
   second false green.
 
 **Evidence:** total, passed, failed and skipped counts from the run's own output,
-the exit code, and the published-slice precondition above.
+the exit code, and the coverage block, which states what was exercised.
 
-> **Added 2026-08-16 on the first run of this checklist.** This item's other two
-> bullets are answered by a red build; this one was not answerable at all.
-> `PublishedSlice.IsAbsentAsAWhole` is a deliberate design — a clean clone must
-> be able to run the suite — but it means *"the smoke layer ran against a real
-> browser"* and *"the publish directory does not exist"* produce the same green
-> summary, which is this project's founding failure class inside its own gate.
-> **The mechanical fix, not built here:** a release-only assertion that
-> `PublishedSlice.IsPresent`, so the degraded branch is a red build at release
-> time instead of a paragraph in a checklist.
+> **Corrected 2026-08-16, on the day the first run raised it (previously: a
+> paragraph instructing a person to `ls` two paths outside the run, plus
+> *"the mechanical fix, not built here"*).** It is built now.
+> `SuiteEnvironment` is the single gate the thirty-five guards route through;
+> `SuiteCoverageTests` prints the block and exercises the release branch on
+> every ordinary run, so the switch is not code that first runs on release day.
+>
+> ⚠️ **The measurement narrowed which absence was ever silent, and the original
+> wording named both.** Taken at `c21fea7`, before the fix:
+>
+> | What was moved aside | total | passed | failed | skipped | exit |
+> |---|---|---|---|---|---|
+> | nothing | 329 | 328 | 0 | 1 | 0 |
+> | the whole publish directory | 329 | 328 | 0 | 1 | **0** |
+> | `payload/` | 329 | 247 | **80** | 2 | 2 |
+>
+> **The published slice's absence produced a character-identical summary**;
+> `payload/` produced eighty failures, because the fake-child and tool-surface
+> layers need `node.exe` and were never guarded. So the founding failure class
+> was real and its subject was the publish alone. Both are gated now regardless
+> — a guard nobody accounts for is how this one was missed.
 
 > **This whole checklist rests on this item being *run* rather than assumed.**
 > [The release gate](testing.md#the-release-gate) says exactly that about its own
@@ -399,8 +419,10 @@ from the resolved `browsers.json`, and the Node version.
 that is what makes a rollback meaningful and a regression bisectable
 ([rule 1](../README.md#the-five-rules-that-make-floating-safe)).
 
-**Nothing emits this manifest**, so it is assembled by hand beside the archived
-`.nupkg`, and it holds exactly these, copied rather than transcribed:
+**`build/New-Release.ps1` emits it**, beside the archived `.nupkg`, at
+`<ArchiveDir>/BrowserAI-<version>-manifest/`. It holds exactly these, copied
+rather than transcribed, plus a `manifest.json` stating the version, the tag,
+the package's SHA-256 and the resolved version each copied file carries:
 
 | In the manifest | From |
 |---|---|
@@ -413,14 +435,21 @@ that is what makes a rollback meaningful and a regression bisectable
 
 **Evidence:** the manifest's path, and the resolved version each file states.
 
-> **Corrected 2026-08-16 on the first run of this checklist (previously:
-> "Evidence: the manifest, beside the artifact").** There is no manifest and
-> nothing produces one — the item named an artifact that has never existed, so
-> it could be neither satisfied nor failed. `build/New-Release.ps1` prints the
-> version, the sizes and the archived path to its console and writes none of it
-> down. **Emitting this from the release script is owed**
-> ([`TODO.md`](../TODO.md)); until then the table above is what "the manifest"
-> means, so that a hand-assembled one is at least the same set every time.
+> **Corrected twice on 2026-08-16, both on the day the run raised it
+> (previously: "Evidence: the manifest, beside the artifact", then "nothing
+> emits this manifest, so it is assembled by hand").** The first wording named
+> an artifact that had never existed and that nothing produced, so the item
+> could be neither satisfied nor failed; the second described the hand-assembly
+> that satisfied it once, at `.work/step20/manifest/`, which is a checklist item
+> nobody satisfies twice.
+>
+> ✅ **It is emitted.** `build/Write-ReleaseManifest.ps1` copies the six files
+> and writes `manifest.json`; `build/New-Release.ps1` calls it as its eighth
+> step and returns the path as `ResolvedSet`. It lives in its own script for the
+> same reason `Test-ReleaseVersion.ps1` does — **so the suite can drive it** —
+> and `ReleaseScriptTests` runs it both ways, including that **a missing file
+> refuses rather than writing a partial**, because a manifest holding five of
+> six reads exactly like a complete one a year later.
 
 ### 12. The rollback path is publishable
 
@@ -441,7 +470,7 @@ must be true at release time:
 ### 13. Third-party notices ship
 
 Redistribution obligations attach at **first installer handoff**, independent of
-BrowserAI's own licence, and no test covers them. Verified against
+BrowserAI's own licence. Verified against
 [README → Third-party components](../README.md#third-party-components):
 
 - **Node's full `LICENSE`** — it aggregates OpenSSL, ICU, V8, zlib and c-ares
@@ -453,11 +482,27 @@ BrowserAI's own licence, and no test covers them. Verified against
   grants no trademark rights, and the inherited `browser_*` names surface
   upstream branding directly in BrowserAI's own API.
 
+The last two have no upstream file of their own — Velopack is compiled *into*
+`BrowserAI.exe`, so its licence never leaves the NuGet cache — and both ship in
+`THIRD-PARTY-NOTICES.txt` beside the binary, published by the
+`AddNoticesToPublish` target.
+
 Nothing the user's machine downloads on first run creates an obligation for us —
 we ship no copy of it. That is not a side benefit of first-run provisioning; it
 is the reason for it.
 
 **Evidence:** the paths of each notice file inside the packaged artifact.
+
+> ✅ **`ThirdPartyNoticeTests` covers all of it, closed 2026-08-16 the same day
+> the first run found two of four absent (previously: "and no test covers
+> them").** The obligations are **data**, so a fifth is a red build rather than
+> a discovery at the next release, and three subjects are asserted because each
+> can be right while the next is wrong: the repository's own notices file, the
+> publish output `vpk` is handed, and the entry list of the packed `.nupkg`
+> under `lib/app/`. The Velopack version stamped in the notices is asserted
+> against `src/BrowserAI/packages.lock.json`, so a bump is red until the licence
+> text has been re-fetched from the new package's own commit. What is recorded
+> here is still the paths, read from the package.
 
 ---
 

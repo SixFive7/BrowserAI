@@ -49,11 +49,7 @@ internal sealed class FirstRunProvisioningTests
     [Test]
     public async Task AnEmptyBrowsersRootDownloadsAndTheSameChildThenNavigates()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         PublishedSlice.EnsureFresh();
 

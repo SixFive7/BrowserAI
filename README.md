@@ -465,3 +465,5 @@ The license above covers **BrowserAI's own code and this document**. It does not
 Under a bundled build all four rows above move into the first table and their obligations become live. **Nothing in the second table blocks a release today.**
 
 Playwright is a trademark of Microsoft Corporation. Chrome and Chromium are trademarks of Google LLC. BrowserAI is not affiliated with, endorsed by, or sponsored by either. Apache-2.0 §6 grants no trademark rights, and the inherited `browser_*` tool names surface upstream branding directly in BrowserAI's own API — ship a short disclaimer in the installed artifact.
+
+✅ **It ships, since 2026-08-16, in `THIRD-PARTY-NOTICES.txt` beside the binary**, together with Velopack's MIT licence — the two obligations with no upstream file of their own, and the two the [first pre-release run](RELEASE-EVIDENCE.md) found absent from an otherwise releasable package. `ThirdPartyNoticeTests` asserts all four against the repository file, the publish output and the packed `.nupkg`'s entry list, so a fifth obligation added to that table is a red build rather than a discovery at the next release.

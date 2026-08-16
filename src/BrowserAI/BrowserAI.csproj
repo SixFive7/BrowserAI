@@ -157,6 +157,36 @@
            Text="This build derived the version $(MinVerVersion) from git, and a version beginning 0.0.0 means MinVer found no '$(MinVerTagPrefix)*' tag to count from. A binary that does not know what it is cannot be rolled back to or bisected against, so the build is refused rather than stamped. Fetch the tags: 'git fetch --tags', or on a CI checkout set fetch-depth to 0 (a shallow clone carries no tags and fails exactly here)." />
   </Target>
 
+  <!--
+    THE NOTICES SHIP WITH THE BINARY, AND THIS IS THE ONLY THING THAT PUTS THEM
+    THERE.
+
+    Four redistribution obligations attach at first installer handoff
+    (plan/pre-release.md item 13). Three of them travel by themselves: node's
+    LICENSE and the two Playwright packages' notices are files inside the
+    payload tree, which the target below copies whole. The fourth does not.
+    Velopack is a NuGet dependency compiled INTO BrowserAI.exe, so its licence
+    stays in the package cache and nothing ever copies it into the artifact,
+    and MIT requires the notice to travel with the binary. The trademark
+    disclaimer has no upstream file at all.
+
+    Found 2026-08-16 by the first run of the pre-release checklist, reading the
+    packed .nupkg rather than the source tree: both were absent from a package
+    that was otherwise releasable, and no test looked.
+
+    Unconditional, unlike the payload: a publish with no payload/ assembled is
+    a real state that must still succeed, but a publish with no notices in it
+    is never one.
+  -->
+  <Target Name="AddNoticesToPublish" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(MSBuildThisFileDirectory)..\..\THIRD-PARTY-NOTICES.txt">
+        <RelativePath>THIRD-PARTY-NOTICES.txt</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
   <Target Name="AddPayloadToPublish"
           AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')">

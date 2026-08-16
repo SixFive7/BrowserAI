@@ -61,8 +61,31 @@ has been satisfied in form only.
   carries build metadata, on a non-monotonic release nobody stated, on anything
   in ILC's raw output, and on this build's own version string appearing in
   decorated form anywhere in the linked binary.
+- **Velopack's MIT licence and a trademark disclaimer now ship inside the
+  package**, in `THIRD-PARTY-NOTICES.txt` beside the binary. Both were absent
+  from an otherwise releasable package: Velopack is compiled *into*
+  `BrowserAI.exe`, so its licence never leaves the NuGet cache, and no upstream
+  file carries a trademark disclaimer at all. The licence is copied from the
+  commit the resolved package records as its source, never transcribed, and a
+  Velopack bump is a red build until it has been re-fetched.
+- **A release now records the resolved set beside its artifact**, emitted rather
+  than assembled by hand: the three `packages.lock.json`, the payload's
+  `package-lock.json`, `payload.json`, `browsers.json`, and a `manifest.json`
+  stating the version, the tag, the package's SHA-256 and the resolved version
+  read back out of each copy.
 
 ### Fixed
+
+- **A suite run that exercised nothing reported exactly what a real one
+  reports.** With the whole publish directory moved aside — no binary, no
+  browser ever started — the suite returned `329 total · 328 succeeded ·
+  1 skipped · exit 0`, character for character a healthy run's summary, because
+  thirty-five guards returned early after asserting something weaker and every
+  one reported as a pass. They now report as **skipped**, so the run's own
+  counts differ; every run ends with a block naming what it did and did not
+  exercise; and with `BROWSERAI_RELEASE_RUN=1` a missing capability is a
+  **failure** naming the command that produces it. This was the project's
+  founding failure class living inside its own release gate.
 
 - **37 MB of every release was a zip nobody reads.** The published artifact
   carried `payload\.cache\node-<ver>-win-x64.zip`, the download cache the payload
@@ -70,6 +93,11 @@ has been satisfied in form only.
   package from **85,348,009** to **49,043,498 bytes** — 42.5% of every download,
   for a file that is never opened at runtime and compresses to nothing because it
   is already compressed.
+
+- **`UseSystemResourceKeys` is asserted rather than merely set.** It strips the
+  framework's exception message strings, and this product's error text is read
+  by a model deciding what to do next. The property was correct and guarded by
+  nothing, which is the state a size optimisation walks into.
 
 - **Every session's `lock.json` would have recorded the wrong version.** The
   build stamp was read from the assembly version, which the versioning mechanism

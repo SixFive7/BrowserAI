@@ -166,7 +166,10 @@ internal sealed class FirefoxTests
         var configFile = Path.Combine(scratch.Path, "playwright-mcp.json");
         await Assert.That(File.Exists(configFile)).IsFalse();
 
-        if (RepositoryPayload.IsPresent)
+        // Recorded rather than skipped: the half above needs no payload and is
+        // worth running without one, but a run that took the shorter path must
+        // still say so in the coverage block -- and must fail a release run.
+        if (SuiteEnvironment.HasRepositoryPayload())
         {
             // The same refusal through the function every child launch actually
             // passes through, so the guard is proven where it lives rather than
@@ -191,7 +194,7 @@ internal sealed class FirefoxTests
 
         await Assert.That(FirefoxProfileLockedException.For(config)).IsNull();
 
-        if (RepositoryPayload.IsPresent)
+        if (SuiteEnvironment.HasRepositoryPayload())
         {
             var options = ChildLaunch.Create(
                 RepositoryPayload.Layout,
@@ -332,18 +335,12 @@ internal sealed class FirefoxTests
     [NotInParallel("stray-sweep")]
     public async Task AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart()
     {
-        if (!RepositoryPayload.IsPresent || !File.Exists(BrowserAiPaths.FirefoxExecutable))
-        {
-            // ⚠️ The cost of this branch, stated rather than hidden: with no
-            // payload or no provisioned Firefox this arm proves nothing, and the
-            // guarantee rests on the recorded measurement in
-            // kb/chromium/resurrection.md. What is asserted instead tells
-            // "nobody has provisioned it" apart from "it was provisioned and the
-            // executable is missing", which is a real defect that would
-            // otherwise read as a clean machine.
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole || !Directory.Exists(BrowserAiPaths.FirefoxDirectory)).IsTrue();
-            return;
-        }
+        // ⚠️ The cost of the alternative, stated rather than hidden: with no
+        // payload or no provisioned Firefox this arm proves nothing, and the
+        // guarantee would rest on the recorded measurement in
+        // kb/chromium/resurrection.md alone. So it reports as SKIPPED rather
+        // than as a pass, and a release run refuses outright.
+        SuiteEnvironment.RequireProvisionedFirefox();
 
         using var scratch = ScratchDirectory.Create("firefox-attribution");
 

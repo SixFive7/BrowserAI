@@ -23,11 +23,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task ToolsListReturnsTheChildsToolsWithUpstreamsOwnNames()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
 
@@ -79,11 +75,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task EveryUpstreamToolGainsTheSessionParameterAndNoneLosesItsOwn()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
         var offenders = new List<string>();
@@ -126,11 +118,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task NavigatingToADataUrlReturnsANonErrorResultThatNamesThePage()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
 
@@ -149,11 +137,7 @@ internal sealed class VerticalSliceTests
     [Test]
     public async Task KillingThePublishedBinaryLeavesNoNodeAndNoBrowser()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
 

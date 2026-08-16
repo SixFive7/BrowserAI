@@ -60,6 +60,13 @@
          full package and deltas are forward-only, so an unarchived release is
          one that can only be rolled back to by a fresh full download.
 
+      8. RECORD THE RESOLVED SET BESIDE THE ARCHIVE. An artifact that cannot
+         state exactly what went into it is not releasable: that is what makes
+         a rollback meaningful and a regression bisectable. The first run of
+         the checklist satisfied this item by copying six files BY HAND, and a
+         hand-assembled manifest is one nobody assembles twice.
+         (TODO.md, "Emit the resolved-set manifest from build/New-Release.ps1".)
+
     What it deliberately does NOT do: publish, push, tag, or decide that a
     release happens. plan/pre-release.md item 14 is a human.
 
@@ -369,6 +376,17 @@ $packDirSize = ($allFiles | Measure-Object -Property Length -Sum).Sum
 $shipped = ($allFiles | Where-Object { $_.Extension -ne '.pdb' } | Measure-Object -Property Length -Sum).Sum
 $deltaSize = if (Test-Path -LiteralPath $delta) { (Get-Item -LiteralPath $delta).Length } else { $null }
 
+# --- 8. Record the resolved set beside the archive -----------------------------
+# In its own script for the same reason Test-ReleaseVersion.ps1 is: so the suite
+# can drive it. It refuses on a missing file and that refusal must stop the
+# release -- an artifact that cannot state what went into it is not releasable,
+# and a manifest holding five of six files reads exactly like a complete one.
+$manifestDir = Join-Path $ArchiveDir "$packId-$PackVersion-manifest"
+$manifest = & (Join-Path $PSScriptRoot 'Write-ReleaseManifest.ps1') `
+    -Root $root -Destination $manifestDir -Version $PackVersion -Channel $Channel -Package $full
+
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
 [pscustomobject]@{
     Version          = $PackVersion
     Channel          = $Channel
@@ -382,4 +400,5 @@ $deltaSize = if (Test-Path -LiteralPath $delta) { (Get-Item -LiteralPath $delta)
     Archived         = (Join-Path $ArchiveDir (Split-Path -Leaf $full))
     Setup            = (Join-Path $OutputDir "$packId-$Channel-Setup.exe")
     Manifest         = (Join-Path $OutputDir "releases.$Channel.json")
+    ResolvedSet      = ($manifest | Select-Object -Last 1)
 }

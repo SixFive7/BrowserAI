@@ -1,0 +1,72 @@
+BrowserAI - third-party notices
+===============================
+
+BrowserAI redistributes the components below, and these obligations attach at
+first installer handoff, independently of the licence BrowserAI itself carries.
+This file ships inside the installed artifact, beside BrowserAI.exe.
+
+Where each notice lives inside the artifact
+-------------------------------------------
+
+  Node.js           payload\node\LICENSE
+  @playwright/mcp   payload\mcp\node_modules\@playwright\mcp\LICENSE
+  playwright-core   payload\mcp\node_modules\playwright-core\LICENSE
+                    payload\mcp\node_modules\playwright-core\NOTICE
+                    payload\mcp\node_modules\playwright-core\ThirdPartyNotices.txt
+  Velopack          this file, below
+
+Node's LICENSE ships whole because it aggregates the OpenSSL, ICU, V8, zlib and
+c-ares terms; "a single node.exe, nothing else" drops them, and it is not
+optional. The vendored node_modules tree ships intact, which is what satisfies
+Apache-2.0 section 4 for the two Playwright packages.
+
+No browser is redistributed. Chromium, Firefox, ffmpeg and winldd are downloaded
+to the user's machine on first run and no copy of any of them ships here. That
+is the reason for first-run provisioning rather than a side benefit of it.
+
+Trademarks
+----------
+
+Playwright is a trademark of Microsoft Corporation. Chrome and Chromium are
+trademarks of Google LLC. Firefox is a trademark of the Mozilla Foundation.
+Node.js is a trademark of the OpenJS Foundation. BrowserAI is not affiliated
+with, endorsed by, or sponsored by any of them.
+
+Apache-2.0 section 6 grants no trademark rights, and the inherited browser_*
+tool names surface upstream branding directly in BrowserAI's own API, which is
+why this disclaimer ships rather than being left to the repository.
+
+Velopack 1.2.0 - MIT
+--------------------
+
+Velopack is a NuGet dependency compiled into BrowserAI.exe. It has no file of
+its own anywhere in this artifact, and MIT requires its notice to travel with
+the binary, so the whole licence is reproduced here.
+
+Copied verbatim from the commit velopack.nuspec records as the source of the
+resolved package - repository commit f2edcbcafb81da5b3c884aaea330e225ad91d8b6:
+https://raw.githubusercontent.com/velopack/velopack/f2edcbcafb81da5b3c884aaea330e225ad91d8b6/LICENSE
+Retrieved 2026-08-16 against Velopack 1.2.0. The version above is asserted
+against src/BrowserAI/packages.lock.json by ThirdPartyNoticeTests, so a Velopack
+bump is a red build until this text has been re-fetched.
+
+Copyright © 2021 Caelan Sayler
+Copyright © 2024 Velopack Ltd.
+
+Permission is hereby granted,  free of charge,  to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to  use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.

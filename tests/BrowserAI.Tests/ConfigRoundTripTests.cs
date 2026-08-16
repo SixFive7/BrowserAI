@@ -35,11 +35,7 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task EveryGeneratedOpinionComesBackFromTheChild()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var resolved = ResolvedConfig(run);
@@ -110,11 +106,7 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task TheChildResolvesOurChannelAndOurProfileRatherThanADefault()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var resolved = ResolvedConfig(run);

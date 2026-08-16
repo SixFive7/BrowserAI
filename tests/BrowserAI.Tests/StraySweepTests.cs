@@ -773,11 +773,7 @@ internal sealed class StraySweepTests
     [Test]
     public async Task TheProvisionedExecutablesAreComposedFromTheResolvedRevisionRatherThanSpelled()
     {
-        if (!RepositoryPayload.IsPresent)
-        {
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequireRepositoryPayload();
 
         var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
         var executables = ProvisionedBrowsers.Executables(BrowserAiPaths.BrowsersDirectory, manifest);

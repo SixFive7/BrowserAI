@@ -321,14 +321,11 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks()
     {
-        if (!RepositoryPayload.IsPresent || !File.Exists(BrowserAiPaths.ExpectedChromiumExecutable))
-        {
-            // The same shape every browser test in this suite uses: a machine
-            // that has never been provisioned proves nothing here, and saying so
-            // is better than a green test that ran nothing.
-            await Assert.That(RepositoryPayload.IsAbsentAsAWhole || !File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)).IsTrue();
-            return;
-        }
+        // A machine that has never been provisioned proves nothing here, so this
+        // reports as SKIPPED rather than as a pass -- and as a failure under
+        // BROWSERAI_RELEASE_RUN, because a release run that never started a
+        // browser is the batteries-included premise being silently dead code.
+        SuiteEnvironment.RequireProvisionedChromium();
 
         // Long enough that bringing a cold Chromium up cannot outlast it, short
         // enough that the test costs seconds. The call scope is what makes that
@@ -417,11 +414,7 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task StdinEofTearsDownTheNodeChildTheBrowserAndTheJob()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         PublishedSlice.EnsureFresh();
 
@@ -516,11 +509,7 @@ internal sealed partial class BrowserIdleTimerTests
     [Test]
     public async Task KillingTheClientTearsTheSessionDownWithoutWaitingForEof()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         PublishedSlice.EnsureFresh();
 

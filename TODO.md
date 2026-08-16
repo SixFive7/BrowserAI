@@ -75,6 +75,28 @@ and version it was true at.
       of thing a developer files a bug about. `<Hidden>` in the task definition
       hides the *task* in the UI and not the window.
 
+- [ ] **Decide whether `ModelContextProtocol` and the `Microsoft.Extensions.*`
+      packages owe a notice in the artifact too.** Raised 2026-08-16 while
+      closing item 13's two missing notices, and **deliberately not decided
+      there**: the checklist names four obligations and shipping a fifth on my
+      own reading would be changing a settled judgement without anyone deciding
+      it. The question is real, though. `ModelContextProtocol` is **Apache-2.0**
+      and is compiled into `BrowserAI.exe` exactly as Velopack is; §4(a) says a
+      redistributor *"must give any other recipients of the Work or Derivative
+      Works a copy of this License"*, and no copy travels — the reasoning that
+      put Velopack's MIT text into `THIRD-PARTY-NOTICES.txt` applies to it
+      unchanged. Four `Microsoft.Extensions.*` assemblies are linked in under
+      MIT with the same notice clause.
+      [README → Third-party components](README.md#third-party-components) states
+      that row's obligation as *"mid-transition from MIT; unrelicensed
+      contributions remain MIT. Vendored fixture files keep their upstream
+      headers"*, which answers a different question — it is about relicensing,
+      not about whether a licence copy ships. **Settle it, then either add the
+      rows to `ThirdPartyNoticeTests.Obligations` and the text to the notices
+      file, or write down why linked-in NuGet packages are treated differently
+      from Velopack.** The mechanism is already data-driven, so the change is a
+      row and a paragraph.
+
 - [ ] **Widen the invisible-source check beyond `*.cs`, or decide not to.**
       Step 14 was bitten by the template's unanchored `artifacts/` rule matching
       `src/BrowserAI/Artifacts/` on case-insensitive Windows: five product
@@ -535,8 +557,30 @@ and version it was true at.
       several body sizes before changing anything — a fixed cost and a quadratic
       one look identical at one data point.
 
-- [ ] **Ship Velopack's MIT notice and a trademark disclaimer inside the
-      package, and make both a test.** Found 2026-08-16 by the first run of
+- [x] ~~**Ship Velopack's MIT notice and a trademark disclaimer inside the
+      package, and make both a test.**~~ ✅ **Done 2026-08-16**, the same day it
+      was raised. `THIRD-PARTY-NOTICES.txt` at the repository root carries both:
+      the trademark disclaimer in
+      [README → Third-party components](README.md#third-party-components)'s own
+      terms, and Velopack's whole MIT licence **copied rather than transcribed**
+      from the commit `velopack.nuspec` records as the source of the resolved
+      package (`f2edcbca`, fetched 2026-08-16 against Velopack 1.2.0). The
+      `AddNoticesToPublish` target in `src/BrowserAI/BrowserAI.csproj` publishes
+      it unconditionally — unlike the payload, whose absence is a real state.
+      <br><br>
+      **`ThirdPartyNoticeTests` asserts all four obligations against three
+      subjects**, because each can be right while the next is wrong: the
+      repository's own file, the publish output `vpk` is handed, and the entry
+      list of the packed `.nupkg` under `lib/app/`. The set is **data**, so a
+      fifth obligation is a red build rather than a discovery at the next
+      release. And the Velopack version stamped in the notices is asserted
+      against `src/BrowserAI/packages.lock.json`, so a bump is red until the
+      licence has been re-fetched — a licence text is a measurement and
+      everything here floats. Proven against a real `vpk pack`:
+      `Releases/BrowserAI-0.1.2-full.nupkg`, all six notice paths present.
+      The original text follows.
+      <br><br>
+      Found 2026-08-16 by the first run of
       [the pre-release checklist](plan/pre-release.md), reading item 13 against
       the packaged `.nupkg` rather than against the source tree. Two of the four
       obligations are **absent from the artifact**: Velopack is a NuGet
@@ -551,8 +595,32 @@ and version it was true at.
       `.nupkg`'s entry list: nothing else looks, which is exactly why it survived
       to a release gate.
 
-- [ ] **Emit the resolved-set manifest from `build/New-Release.ps1`.** Found
-      2026-08-16 by the same run: [item 11](plan/pre-release.md) requires the
+- [x] ~~**Emit the resolved-set manifest from `build/New-Release.ps1`.**~~
+      ✅ **Done 2026-08-16**, the same day. `build/Write-ReleaseManifest.ps1`
+      copies the six files and writes `manifest.json` beside them — the version,
+      the tag from `git describe --tags --long`, the package's SHA-256, and the
+      resolved version **read back out of each copy** rather than typed.
+      `New-Release.ps1` calls it as step 8 and returns the path as
+      `ResolvedSet`. In its own script for the same reason
+      `Test-ReleaseVersion.ps1` is: **so the suite can drive it**, which
+      `ReleaseScriptTests` does both ways, including that a missing file refuses
+      rather than writing a partial.
+      <br><br>
+      ⚠️ **The first real run failed where the test passed, and the fixture was
+      the reason.** `package-lock.json` records the root project under the
+      **empty-string key**, and PowerShell's `ConvertFrom-Json` refuses an empty
+      property name without `-AsHashtable`. The synthetic lock the suite drove
+      it with had no root entry — a fixture simpler than the real input, which
+      is the shape of test that proves nothing. Both are fixed: the script reads
+      that lock as a hashtable, and the fixture now carries the `""` key.
+      Emitted for real at
+      `Releases/archive/BrowserAI-0.1.2-manifest/` (6 files + `manifest.json`,
+      2,357 b), stating ModelContextProtocol 2.2.0 · Velopack 1.2.0 · MinVer
+      7.0.0 · TUnit 1.65.0 · `@playwright/mcp` 0.0.79 · `playwright-core`
+      1.63.0-alpha-2026-08-05 · node v24.19.0 · chromium 1237 · firefox 1539.
+      The original text follows.
+      <br><br>
+      Found 2026-08-16 by the same run: [item 11](plan/pre-release.md) requires the
       resolved set recorded beside the artifact, and **nothing produces one** —
       the item named a file that has never existed, so it could be neither
       satisfied nor failed. The script already knows the version, the sizes and
@@ -563,7 +631,17 @@ and version it was true at.
       once, at `.work/step20/manifest/`; **a hand-assembled manifest is one
       nobody assembles twice**, which is the whole reason this is an item.
 
-- [ ] **Assert `UseSystemResourceKeys` is unset.**
+- [x] ~~**Assert `UseSystemResourceKeys` is unset.**~~ ✅ **Done 2026-08-16**,
+      the same day.
+      `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`
+      reads every build file, refuses any value other than `false` wherever it
+      appears, **and requires the declaration to be present in
+      `Directory.Build.props`**. The second half is the load-bearing one: the
+      framework default is already off, so a file that never mentions the
+      property passes a "not true" check while telling the next reader nothing
+      — and it is the deletion, not a `true`, that this was written to catch.
+      The original text follows.
+      <br><br>
       [Testing](plan/testing.md#what-the-build-itself-must-fail-on) requires it
       in those words — *"Assert the property is unset, so it cannot arrive later
       as somebody's size optimisation"* — and `grep -rn "ResourceKeys" tests/`
@@ -576,7 +654,53 @@ and version it was true at.
       [error catalogue](plan/H-model-surface.md#h4-the-error-catalogue) silently
       emptied. `BuildConfigurationTests` is where it goes.
 
-- [ ] **Make a degraded smoke run a red build at release time.** **33 tests
+- [x] ~~**Make a degraded smoke run a red build at release time.**~~
+      ✅ **Done 2026-08-16**, the same day, and the measurement that opened it
+      also narrowed it. `tests/BrowserAI.Tests/Harness/SuiteEnvironment.cs` is
+      the single gate all **thirty-five** guards across thirteen files now route
+      through — thirty-three early returns plus two positive-form arms in
+      `FirefoxTests` that step 20's count missed. Three behaviours: an ordinary
+      run reports **skipped** rather than passed, so the run's own summary
+      carries a count a healthy run does not; a run with
+      `BROWSERAI_RELEASE_RUN=1` **fails**, naming the command that produces what
+      is missing; and a **partial** installation — a publish directory with no
+      binary in it — fails in either mode, which is the old per-site
+      `IsAbsentAsAWhole` assertion kept and centralised. Every run ends with a
+      coverage block naming each capability `PRESENT`/`ABSENT`/`PARTIAL` and
+      every test that degraded, on stdout and at `.work/suite-coverage.txt`.
+      <br><br>
+      **Measured before and after, by moving things aside rather than by
+      reasoning:**
+      <br><br>
+
+      | Run | total | passed | failed | skipped | exit |
+      |---|---|---|---|---|---|
+      | before, healthy | 329 | 328 | 0 | 1 | 0 |
+      | **before, publish moved aside** | 329 | 328 | 0 | **1** | **0** |
+      | after, healthy | 341 | 340 | 0 | 1 | 0 |
+      | **after, publish moved aside** | 341 | 314 | 0 | **27** | 0 |
+      | **after, publish aside + release run** | 341 | 313 | **27** | 1 | **2** |
+      | after, `payload/` moved aside | 341 | 249 | 80 | **12** | 2 |
+
+      ⚠️ **The subject of the defect was the published slice, not the payload,
+      and the original item named both.** With `payload/` moved aside the suite
+      already failed **80 tests** before any of this, because the fake-child and
+      tool-surface layers need `node.exe` and were never guarded. The publish's
+      absence was the silent one, and its summary was character-identical to a
+      healthy run's. Both are gated now regardless: a guard nobody accounts for
+      is how this one was missed.
+      <br><br>
+      ⚠️ **Two things the build found that reasoning would not have.**
+      `Console.WriteLine` from an `[After(TestSession)]` hook **reaches nothing**
+      under TUnit 1.65.0 / MTP — the hook runs and the text appears in no log —
+      so the block is written through the real standard-output handle, which
+      nothing has replaced. And `[CallerMemberName]` names the wrong thing when
+      a guard sits in a helper: the first degraded run reported a skipped test
+      called `RunAsync`, which is a private method of `StraySweepTests`. It
+      reads `TestContext.Current.Metadata.TestName` now and falls back to the
+      caller. The original text follows.
+      <br><br>
+      **33 tests
       across 13 files** open with `if (!PublishedSlice.IsPresent)` or
       `if (!RepositoryPayload.IsPresent)` and return after asserting a weaker
       property. That is deliberate and correct — a clean clone must be able to

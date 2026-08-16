@@ -234,11 +234,7 @@ internal sealed partial class BuildVersionTests
     [Test]
     public async Task ThePublishedBinaryReportsADerivedVersionOverTheWire()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SliceRun.SharedAsync();
         var reported = (string?)run.InitializeResult["serverInfo"]?["version"];

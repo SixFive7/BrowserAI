@@ -29,11 +29,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task AllSixAuthoredToolsAreAdvertisedAndAnswer()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 
@@ -74,11 +70,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task InitRefusesADirectoryThatIsAlreadyASessionAndNamesWhatItFound()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var text = run.Text("initAgain");
@@ -99,11 +91,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task AMovedSessionResumesWithARepairedRecordAndACopiedOneIsRefused()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 
@@ -138,11 +126,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task AnAbsentEmptyRelativeOrMalformedDirectoryIsRejectedByBothInitAndResume()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var offenders = new List<string>();
@@ -179,11 +163,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ResumeRefusesAModeArgumentAndADirectoryThatIsNotASession()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 
@@ -198,11 +178,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task DestroyRefusesDocumentsAndSurvivesAFileItCannotRemove()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
@@ -226,11 +202,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ListReportsWhatIsUnderAPathAndNothingElse()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var text = run.Text("list");
@@ -254,11 +226,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task SetPurposeReplacesThePurposeAndReturnsThePreviousOne()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
         var text = run.Text("setPurpose");
@@ -276,11 +244,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ACallNamingASessionThisProcessIsNotDrivingIsToldHowToOpenIt()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 
@@ -302,11 +266,7 @@ internal sealed class SessionToolTests
     [Test]
     public async Task ASessionWritesItsOwnLogBesideItsLockFile()
     {
-        if (!PublishedSlice.IsPresent)
-        {
-            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
-            return;
-        }
+        SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 

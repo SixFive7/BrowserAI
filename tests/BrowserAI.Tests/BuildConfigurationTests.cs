@@ -216,6 +216,60 @@ internal sealed partial class BuildConfigurationTests
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
 
+    /// <summary>
+    /// <c>UseSystemResourceKeys</c> is off, and it is off <b>explicitly</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>[Testing](../../plan/testing.md#what-the-build-itself-must-fail-on)
+    /// requires this in those words</b> — <i>"assert the property is unset, so
+    /// it cannot arrive later as somebody's size optimisation"</i> — and until
+    /// 2026-08-16 nothing did: <c>grep -rn "ResourceKeys" tests/</c> returned
+    /// nothing, found while assembling the evidence
+    /// [item 7](../../plan/pre-release.md) asks for. The property was correct
+    /// and unguarded, which is the state a size optimisation walks into.
+    /// </para>
+    /// <para>
+    /// <b>What it costs if it ever arrives.</b> It strips the framework's
+    /// exception message strings and leaves bare resource keys, so
+    /// <c>Arg_DirectoryNotFound</c> replaces a sentence naming the path. This
+    /// product's error text is read by a <i>model</i> deciding what to do next
+    /// ([the error catalogue](../../plan/H-model-surface.md#h4-the-error-catalogue)),
+    /// so the saving is kilobytes against a ~117 MB payload and the loss is the
+    /// catalogue, silently emptied.
+    /// </para>
+    /// <para>
+    /// <b>Both halves are asserted.</b> Absent is not good enough: the default
+    /// is already off, so a file that never mentions it passes a "not true"
+    /// check and says nothing to the next reader. The literal <c>false</c> is
+    /// what makes a later <c>true</c> a diff rather than an addition.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears()
+    {
+        var declarations = RepositoryLayout.BuildFiles
+            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+                .Where(element => element.Name.LocalName is "UseSystemResourceKeys")
+                .Select(element => (File: Relative(file), element.Value)))
+            .ToList();
+
+        // Anything other than `false` is the size optimisation arriving, from
+        // whichever file it arrives in.
+        var enabled = declarations
+            .Where(declaration => !string.Equals(declaration.Value, "false", StringComparison.OrdinalIgnoreCase))
+            .Select(declaration => $"{declaration.File}: <UseSystemResourceKeys>{declaration.Value}</UseSystemResourceKeys>")
+            .ToList();
+
+        await Assert.That(string.Join(Environment.NewLine, enabled)).IsEmpty();
+
+        // And it is stated rather than defaulted, in the one file that applies
+        // to every project. A deletion here reads as a tidy-up and is not one.
+        await Assert.That(declarations.Select(declaration => declaration.File))
+            .Contains("Directory.Build.props");
+    }
+
     private static XDocument CentralPackageManagement() =>
         XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "Directory.Packages.props"));
 
