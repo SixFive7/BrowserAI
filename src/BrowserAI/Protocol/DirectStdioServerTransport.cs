@@ -43,7 +43,7 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
     /// </param>
     /// <param name="loggerFactory">Where the transport logs.</param>
     public DirectStdioServerTransport(StdioChannel channel, ILoggerFactory? loggerFactory = null)
-        : base("BrowserAI (stdio)", loggerFactory)
+        : base("BrowserAI (stdio)", JsonLinesRole.CallerFacing, loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(channel);
 

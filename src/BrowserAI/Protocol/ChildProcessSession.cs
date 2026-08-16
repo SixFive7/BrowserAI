@@ -69,7 +69,7 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         string name,
         TimeSpan shutdownTimeout,
         ILoggerFactory? loggerFactory)
-        : base(name, loggerFactory)
+        : base(name, JsonLinesRole.ChildFacing, loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(process);

@@ -2,13 +2,35 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.IO.Pipelines;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 
 namespace BrowserAI.Protocol;
+
+/// <summary>
+/// Which side of the proxy a transport is, which is the only thing the two legs
+/// genuinely disagree about.
+/// </summary>
+internal enum JsonLinesRole
+{
+    /// <summary>
+    /// The caller's leg. It <b>answers</b> a frame it cannot parse, because the
+    /// peer on this side is waiting for a response.
+    /// </summary>
+    CallerFacing,
+
+    /// <summary>
+    /// The child's leg. It <b>retains</b> the raw bytes of responses the proxy
+    /// asked it to watch, because those bytes are what byte-identical
+    /// passthrough is made of and nothing above the transport can see them.
+    /// </summary>
+    ChildFacing,
+}
 
 /// <summary>
 /// The half of a newline-delimited JSON-RPC transport that is identical on both
@@ -37,16 +59,21 @@ internal abstract class JsonLinesTransport : TransportBase
     private readonly Utf8JsonWriter _writer;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly CancellationTokenSource _shutdown = new();
+    private readonly ConcurrentDictionary<RequestId, VerbatimPayload?> _watched = new();
+    private readonly JsonLinesRole _role;
 
     private Task _readLoop = Task.CompletedTask;
     private int _disposed;
 
     /// <summary>Initialises the shared half of a transport.</summary>
     /// <param name="name">The transport's name, used in diagnostics.</param>
+    /// <param name="role">Which side of the proxy this transport serves.</param>
     /// <param name="loggerFactory">Where the transport logs, or <see langword="null"/> to log nowhere.</param>
-    protected JsonLinesTransport(string name, ILoggerFactory? loggerFactory)
+    protected JsonLinesTransport(string name, JsonLinesRole role, ILoggerFactory? loggerFactory)
         : base(name, loggerFactory)
     {
+        _role = role;
+
         // TransportBase exposes a Logger, and it is `private protected`:
         // measured 2026-08-16 against 2.2.0, an assembly outside the SDK cannot
         // reach it, and neither can it reach LogTransportSendingMessageSensitive.
@@ -88,7 +115,18 @@ internal abstract class JsonLinesTransport : TransportBase
             // is the point.
             _outgoing.ResetWrittenCount();
             _writer.Reset();
-            JsonLines.Write(_writer, message);
+
+            // A message the proxy marked verbatim is written from the bytes the
+            // child produced, envelope and all, rather than serialised from a
+            // JsonNode. Anything else takes the ordinary contract path.
+            if (Verbatim.TryGet(message, out var payload) && IdOf(message) is { } answering)
+            {
+                JsonLines.WriteVerbatim(_writer, answering, payload, message is JsonRpcError);
+            }
+            else
+            {
+                JsonLines.Write(_writer, message);
+            }
 
             await WriteFrameAsync(_outgoing.WrittenMemory, cancellationToken).ConfigureAwait(false);
         }
@@ -153,6 +191,40 @@ internal abstract class JsonLinesTransport : TransportBase
     }
 
     /// <summary>
+    /// Asks this transport to keep the raw bytes of the response to one
+    /// request.
+    /// </summary>
+    /// <param name="id">The id the proxy put on the outgoing request.</param>
+    /// <remarks>
+    /// <b>Opt-in, so the registry cannot grow.</b> Only ids the proxy is
+    /// actually waiting on are retained, and
+    /// <see cref="TryTakePayload(RequestId, out VerbatimPayload)"/> removes each
+    /// one. A transport that kept every response would hold the last screenshot
+    /// alive for the life of the session.
+    /// </remarks>
+    public void Watch(RequestId id) => _watched[id] = null;
+
+    /// <summary>Takes back what <see cref="Watch"/> asked for, and stops watching.</summary>
+    /// <param name="id">The id the proxy put on the outgoing request.</param>
+    /// <param name="payload">The response's <c>result</c> or <c>error</c>, exactly as it arrived.</param>
+    /// <returns><see langword="true"/> when the bytes were captured.</returns>
+    public bool TryTakePayload(RequestId id, out VerbatimPayload payload)
+    {
+        if (_watched.TryRemove(id, out var captured) && captured is { } value)
+        {
+            payload = value;
+            return true;
+        }
+
+        payload = default;
+        return false;
+    }
+
+    /// <summary>Stops watching an id whose call ended without a response.</summary>
+    /// <param name="id">The id the proxy put on the outgoing request.</param>
+    public void Forget(RequestId id) => _watched.TryRemove(id, out _);
+
+    /// <summary>
     /// Writes one already-encoded frame, terminator included, and flushes it.
     /// </summary>
     /// <param name="utf8Payload">The frame body. Never contains a newline.</param>
@@ -188,6 +260,13 @@ internal abstract class JsonLinesTransport : TransportBase
     /// that does is answerable rather than mysterious, and the alternative is a
     /// session that dies on a stray byte nobody can see in a log.
     /// </remarks>
+    private static RequestId? IdOf(JsonRpcMessage message) => message switch
+    {
+        JsonRpcResponse response => response.Id,
+        JsonRpcError error => error.Id,
+        _ => null,
+    };
+
     private static ReadOnlySequence<byte> TrimTerminator(in ReadOnlySequence<byte> frame) =>
         frame.Length > 0 && frame.Slice(frame.Length - 1).FirstSpan[0] is (byte)'\r'
             ? frame.Slice(0, frame.Length - 1)
@@ -289,15 +368,10 @@ internal abstract class JsonLinesTransport : TransportBase
         {
             // The loop survives a malformed frame: one bad message from a peer
             // must not end a session that is otherwise healthy. It is reported
-            // at Error because a caller whose request was dropped will now wait
-            // for a reply that is never coming, and the log is the only place
-            // that says why.
-            //
-            // The SDK additionally recovers a top-level `id` and answers -32700
-            // so the caller fails instead of hanging. That is better, it is
-            // error shaping rather than transport, and it is owed at step 9
-            // where the error catalogue lands (TODO.md).
+            // at Error because the log is where the cause lives.
             TransportLog.FrameNotParsed(Log, Name, frame.Length, ex);
+
+            await AnswerUnparseableFrameAsync(frame).ConfigureAwait(false);
             return;
         }
 
@@ -307,7 +381,74 @@ internal abstract class JsonLinesTransport : TransportBase
             return;
         }
 
+        // Before the message is handed on, never after: the peer's session may
+        // complete the proxy's pending call the instant it sees the response,
+        // and a payload captured afterwards would arrive too late for the very
+        // request that asked for it.
+        Capture(message, frame);
+
         await WriteMessageAsync(message, _shutdown.Token).ConfigureAwait(false);
+    }
+
+    private void Capture(JsonRpcMessage message, in ReadOnlySequence<byte> frame)
+    {
+        if (_role is not JsonLinesRole.ChildFacing || IdOf(message) is not { } id || !_watched.ContainsKey(id))
+        {
+            return;
+        }
+
+        if (JsonLines.TryReadPayload(frame, out var payload))
+        {
+            _watched[id] = payload;
+        }
+    }
+
+    /// <summary>
+    /// Answers a frame that failed to parse, so the sender fails instead of
+    /// waiting for a response that is never coming.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Only on the caller's leg.</b> The peer on the child's leg sends
+    /// responses, and a response is not a thing one answers — a <c>-32700</c>
+    /// aimed at a child would be a frame it has no pending request for.
+    /// </para>
+    /// <para>
+    /// The wording is deliberately transport-level. <b>The model-facing error
+    /// catalogue is</b>
+    /// <see href="../../../plan/H-model-surface.md">§H.4</see><b>'s and arrives
+    /// at step 13</b>; this is the one string that cannot wait for it, because
+    /// the alternative is a caller that hangs.
+    /// </para>
+    /// </remarks>
+    private async ValueTask AnswerUnparseableFrameAsync(ReadOnlySequence<byte> frame)
+    {
+        if (_role is not JsonLinesRole.CallerFacing || !JsonLines.TryRecoverRequestId(frame, out var id))
+        {
+            return;
+        }
+
+        var answer = new JsonRpcError
+        {
+            Id = id,
+            Error = new JsonRpcErrorDetail
+            {
+                Code = (int)McpErrorCode.ParseError,
+                Message = "Parse error: BrowserAI could not read that frame as JSON-RPC. Nothing was forwarded to the browser; send the request again.",
+            },
+        };
+
+        try
+        {
+            await SendMessageAsync(answer, _shutdown.Token).ConfigureAwait(false);
+            TransportLog.ParseErrorAnswered(Log, Name, id.ToString());
+        }
+#pragma warning disable CA1031 // A peer that has already gone cannot be told its frame was bad, and that is not this loop's failure.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            TransportLog.ParseErrorNotAnswered(Log, Name, ex);
+        }
     }
 }
 
@@ -379,4 +520,16 @@ internal static partial class TransportLog
         Level = LogLevel.Debug,
         Message = "{Transport}: child stderr: {Line}")]
     public static partial void ChildStandardError(ILogger logger, string transport, string line);
+
+    [LoggerMessage(
+        EventId = 12,
+        Level = LogLevel.Warning,
+        Message = "{Transport}: answered -32700 for unparseable frame with recovered id {RequestId}.")]
+    public static partial void ParseErrorAnswered(ILogger logger, string transport, string requestId);
+
+    [LoggerMessage(
+        EventId = 13,
+        Level = LogLevel.Error,
+        Message = "{Transport}: could not answer an unparseable frame, so its sender is left waiting.")]
+    public static partial void ParseErrorNotAnswered(ILogger logger, string transport, Exception exception);
 }

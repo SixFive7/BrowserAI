@@ -57,7 +57,7 @@ internal sealed class PipeChildSession : JsonLinesTransport
     /// <param name="link">The hop to speak over.</param>
     /// <param name="loggerFactory">Where the session logs.</param>
     public PipeChildSession(PipeDuplex link, ILoggerFactory? loggerFactory)
-        : base("fake child (pipes)", loggerFactory)
+        : base("fake child (pipes)", JsonLinesRole.ChildFacing, loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(link);
 

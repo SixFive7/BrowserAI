@@ -448,3 +448,106 @@ disposed. `[FLOATS]`
 > configuration. It now records the state immediately after the bounded wait.
 > A liveness check that cannot fail is worth less than none, because it reads as
 > covered.
+
+### Added 2026-08-16 — lossless passthrough, at 2.2.0
+
+Established while building
+[build-order step 9](../../plan/build-order.md#9-lossless-passthrough): the two
+tool methods forwarded through an incoming message filter, answered from the
+child's own bytes, with no SDK contract type anywhere on the path. Measured
+against the in-process double unless stated otherwise; source citations are from
+the shipped source at `refs/tags/v2.2.0`.
+
+**The documented cancellation remedy does not work, and it fails for the same
+reason it blames for the SDK's own failure.**
+[The 2026-08-15 spike](#measured-by-spike-2026-08-15) prescribed *"assign
+`JsonRpcRequest.Id` yourself and send the notification from your own
+`ct.Register`"*. Built exactly that way, **the registration callback never
+runs.** A registration scoped to the call it protects is disposed as that call
+unwinds: `SendRequestAsync` waits on `tcs.Task.WaitAsync(ct)`, which registers
+its own callback *after* ours, **CTS callbacks run LIFO**, so `WaitAsync`'s runs
+first, the await throws, the `using` disposes ours, and ours is unregistered
+before LIFO ever reaches it. Observed directly on 2026-08-16, with the proxy's
+own logging: the token reported `CanBeCanceled` **true**, the call threw
+`OperationCanceledException` with `IsCancellationRequested` **true**, the double
+had already recorded the `tools/call` — and the callback logged nothing at all,
+on either of its two paths.
+
+**Announcing from the `catch (OperationCanceledException)` works and is better on
+every axis**: awaited rather than fire-and-forget, incapable of firing before the
+request it names has been sent, and reached by the one path that definitely
+executes. **The first half of the remedy is unchanged and load-bearing** — the id
+must be one we chose, or there is nothing to name in the notification.
+Re-establish with
+`LosslessPassthroughTests.CancellingACallIsObservedAtTheFakeChild`, which asserts
+the double sees `notifications/cancelled`, that its `requestId` equals the id
+BrowserAI actually sent, and that it sees **exactly one**. `[FLOATS]`
+
+**A short-circuiting message filter keeps the request cancellable, because the
+CTS is registered before the filter runs.** `ProcessMessageAsync` stores the
+per-request `CancellationTokenSource` in `_handlingRequests[id]` **before**
+calling `HandleMessageAsync`, and `HandleMessageAsync` is what invokes the
+incoming filter chain. So a filter that never calls `next` still receives a token
+the caller's `notifications/cancelled` can fire. This is not incidental — it is
+what makes the whole short-circuit design viable, and the opposite arrangement
+would have made cancellation unreachable for a proxy. `[FLOATS]`
+
+**Forwarding a *named* child-to-caller notification needs no `ITransport`
+decorator.** `McpSession.RegisterNotificationHandler(method, handler)` is
+`public abstract` and `McpClient` inherits it, so the progress relay is public
+API. The decorator the spike called for is needed for **wildcard** observation,
+which is what it actually measured. What genuinely has no public route is the
+live `ITransport` instance — `McpClient.CreateAsync` calls
+`IClientTransport.ConnectAsync` itself and keeps the result private — so a proxy
+that needs the child's raw bytes decorates **`IClientTransport`** instead.
+`[FLOATS]`
+
+**Inbound notifications are dispatched fire-and-forget, so a relay preserves
+content but not order.** `ProcessMessagesCoreAsync` starts each message's
+handling without awaiting it — *"Fire and forget the message handling to avoid
+blocking the transport"* — and two `notifications/progress` written by the double
+in order were observed reaching the caller as **2 then 1**. The `progressToken`
+and the params survive intact. **This cannot be fixed from a notification
+handler**: the reordering has already happened by the time the handler runs, so a
+fix would need the `ITransport` decorator the deviation originally described.
+Re-establish by running
+`LosslessPassthroughTests.AChildProgressNotificationReachesTheCallerUnderTheCallersToken`
+with logging at `Trace` and reading the order of the two `sending message` lines.
+`[FLOATS]`
+
+**A child's JSON-RPC error and its `data` both survive, and the prefix can be
+avoided rather than stripped.** Re-confirming [the step-8
+measurement](#added-2026-08-16--the-in-process-harness-at-220) from the other
+side: `McpProtocolException.Message` is
+`Request failed (remote): <the child's message>`, `ErrorCode` is the child's, and
+`Exception.Data` is non-empty. A proxy that answers from the child's own error
+frame never reads any of them, so **deviation 8's reconstruction was solving a
+problem that did not exist and its strip was solving one that need not arise**.
+Re-establish with
+`SdkErrorShapeTests.TheSdkStillPrefixesARemoteErrorMessageAndStillKeepsItsData`,
+which drives a plain `McpClient` at the double precisely because the product no
+longer travels that path. `[FLOATS]`
+
+**`JsonRpcMessage` cannot be derived from outside the SDK, and `Context` can be
+set from outside it.** The constructor is `private protected` with the comment
+*"Prevent external derivations"*, so there is no subclass on which to hang a
+proxy's own per-message state; `Context` is a public settable
+`JsonRpcMessageContext?` whose `Items` bag is documented as flowing through the
+filter pipeline. BrowserAI uses neither, keeping its verbatim payloads in a
+`ConditionalWeakTable` keyed on the message — no SDK state written, and a
+response that is never sent takes its payload with it rather than pinning a
+megabyte of screenshot. Like
+[the `TransportBase.Logger` entry](#added-2026-08-16--writing-the-two-transports-at-220),
+this one has **no re-verification row on purpose**: a change here makes the build
+red or makes a workaround redundant, and neither is silent. `[FLOATS]`
+
+**NativeAOT stays clean with the passthrough in it, including
+`Utf8JsonWriter.WriteRawValue` and `Utf8JsonReader` token-offset slicing.**
+`dotnet publish -c Release -r win-x64 --self-contained`: **zero trim/AOT
+warnings, no `will always throw`, exit 0, 10,461,696 bytes (9.98 MiB)** — 61,952
+bytes more than
+[the step-7 binary](#added-2026-08-16--the-published-binary-at-220), and still no
+`JsonSerializerContext` of our own. `[MACHINE]` for the byte count, `[FLOATS]`
+for the warning-free claim; both re-established by the publish command plus
+`VerticalSliceTests`, which is what
+[row 27](../README.md#re-verification-index) already asks for.

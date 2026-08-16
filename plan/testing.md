@@ -40,7 +40,7 @@ Five layers, run at different cadences:
 | Layer | Drives | Cost | When |
 |---|---|---|---|
 | **Unit** | stderr classifier, artifact prefix sort, tool filter and re-describe with **names passed through unchanged**, **session-type enforcement**, lock signature and PID-recycle logic, config validator | ms | every build |
-| **Fake child** | Full proxy over an in-process `Pipe` pair — no `Process`, no Node. Passthrough fidelity, error shapes, image bytes, cancellation, child death, stderr back-pressure | ms | every build |
+| **Fake child** | Full proxy over an in-process `Pipe` pair — no `Process`, no Node. Passthrough fidelity, error shapes, image bytes, cancellation, child death | ms | every build |
 | **Real-child contract** | Real `node` + the **resolved** `cli.js`, **no browser**. Golden `tools/list` snapshot, negotiated protocol version, argv contract, config-key validation | 2–5 s | **every build** |
 | **Smoke** | Real child **and real browser**. `browser_navigate`, `isError`, real stderr classification, process-tree lifecycle | 10–30 s | every build · **mandatory before release** |
 | **Update** | Real feed URL resolves and returns a manifest; `vpk pack` emits a delta; N→N+1 applies and the installed version moves | 1–3 min | **mandatory before release** |
@@ -48,6 +48,8 @@ Five layers, run at different cadences:
 **The real-child contract layer changes character under a floating build.** When the payload was hand-pinned it was a slow-moving regression check that could reasonably run nightly. Now it is *the* mechanism that detects an upstream Playwright change, and it runs on **every build** — 2–5 seconds is nothing against the alternative of finding out from a user. Its golden snapshots are the tripwire; a diff there is not a test failure to suppress but the notification this whole design exists to produce.
 
 `McpClient.CreateAsync` accepts the `IClientTransport` *interface*, so the fake child is an in-process `McpServer` joined by two `Pipe`s — no processes, no ports, fully parallel-safe.
+
+> ⚠️ **Corrected 2026-08-16 at [build-order step 9](build-order.md#9-lossless-passthrough) (previously the Fake-child row also claimed "stderr back-pressure").** A layer whose whole premise is that it starts no process has no stderr pipe to fill, so that item could only ever have been satisfied by a fake of the thing under test. It lives where the pipe does: `DirectStdioClientTransportTests.AChildThatFillsTheStderrPipeBeforeAnyWorkStillGetsItsWorkDone` writes ~20,000 lines — well past the 64 KiB a Windows anonymous pipe buffers — **before** the child writes its report, so a transport that does not drain does not fail the test, it hangs it. The other item on that row worth naming is **cancellation**, which the layer really can do and does: a call the double holds open without blocking its own read loop, so it can still hear the notification it is being asked to observe.
 
 **The most important test in the suite** is mechanical and follows from §"Known trade-offs": read the real child's `tools/list`, then assert **every** tool name carries an explicit session-type classification. An unclassified tool fails the build. That turns "a new upstream tool leaks into interactive mode" from a security incident into a red build.
 

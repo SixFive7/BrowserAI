@@ -161,6 +161,50 @@ internal sealed class DirectStdioClientTransportTests
     }
 
     [Test]
+    public async Task AChildThatFillsTheStderrPipeBeforeAnyWorkStillGetsItsWorkDone()
+    {
+        // Well past the 64 KiB a Windows anonymous pipe buffers: ~20,000 lines
+        // of roughly seventeen bytes each. A child writing this much before it
+        // reads a single byte of stdin **blocks in WriteFile** unless somebody
+        // is draining the other end, and it blocks before it has written its
+        // report — so a proxy that drains stderr only when it feels like it
+        // does not fail here, it hangs here, with the child alive, the pipes
+        // open and no error anywhere.
+        const int Lines = 20_000;
+
+        var drained = 0;
+
+        await using var child = await ProbeChild.StartAsync(
+            "client-stderr-flood",
+            standardErrorLineCount: Lines,
+            standardErrorLines: _ => Interlocked.Increment(ref drained));
+
+        // Reaching this line at all is most of the assertion: StartAsync waits
+        // for a report the child writes only after the last stderr line.
+        await child.SendAsync(new JsonRpcRequest
+        {
+            Id = new RequestId(11),
+            Method = "probe/echo",
+            Params = new JsonObject { ["text"] = "after the flood" },
+        });
+
+        var echoed = await child.ReceiveAsync();
+
+        await Assert.That(((JsonRpcRequest)echoed).Params!["text"]!.GetValue<string>()).IsEqualTo("after the flood");
+
+        // And nothing was dropped on the way: the reader is a pump, not a
+        // sampler.
+        var deadline = Stopwatch.StartNew();
+
+        while (Volatile.Read(ref drained) < Lines && deadline.Elapsed < TimeSpan.FromSeconds(30))
+        {
+            await Task.Delay(25);
+        }
+
+        await Assert.That(Volatile.Read(ref drained)).IsEqualTo(Lines);
+    }
+
+    [Test]
     public async Task AFrameReachesTheChildUnescapedAndComesBack()
     {
         await using var child = await ProbeChild.StartAsync("client-roundtrip");

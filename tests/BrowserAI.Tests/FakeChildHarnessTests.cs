@@ -136,14 +136,18 @@ internal sealed class FakeChildHarnessTests
         await Assert.That(response.Error).IsNotNull();
         await Assert.That(response.Error!["code"]!.GetValue<int>()).IsEqualTo(-32000);
 
-        // The prefix the SDK adds. Stripping it is step 9's; this is what says
-        // it is still there to strip.
+        // ⚠️ Updated at step 9. This line read
+        // "Request failed (remote): the fake child refused this navigation"
+        // until 2026-08-16, pinning the prefix the SDK adds. The SDK still adds
+        // it -- SdkErrorShapeTests is what keeps that checked -- but BrowserAI
+        // now answers from the child's own error frame and never reads the
+        // message off the exception, so the caller sees what the child sent.
         await Assert.That(response.Error["message"]!.GetValue<string>())
-            .IsEqualTo("Request failed (remote): the fake child refused this navigation");
+            .IsEqualTo("the fake child refused this navigation");
 
-        // `data` arrives verbatim and unflattened on this path -- which is more
-        // than step 9's plan assumed, and is the sort of thing that is cheaper
-        // to know before writing the code than after.
+        // `data` arrives verbatim and unflattened, as it did before step 9 --
+        // which is why the reconstruction that deviation 8 asked for was never
+        // built: it was solving a problem that did not exist.
         await Assert.That(response.Error["data"]!.ToJsonString()).IsEqualTo("""{"reason":"programmed"}""");
     }
 
@@ -172,19 +176,23 @@ internal sealed class FakeChildHarnessTests
         var response = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
 
         // A defined answer rather than a hang, which is the property a proxy
-        // loses by default. Measured 2026-08-16: the answer is a JSON-RPC
-        // SUCCESS carrying isError -- the founding failure shape, arriving from
-        // the SDK rather than from a browser.
-        await Assert.That(response.Error).IsNull();
-        await Assert.That(response.Result!["isError"]!.GetValue<bool>()).IsTrue();
+        // loses by default. The double really does die: this is what says the
+        // capability is the double's rather than the rig's.
         await Assert.That(rig.Child.HasStopped).IsTrue();
 
-        // And the cause is erased from the body: the caller is told only that
-        // "an error occurred". The IOException that says the child's stdout
-        // ended exists solely in the log, which is why the log is asserted on
-        // here rather than trusted.
-        await Assert.That(TextOf(response.Result!)).IsEqualTo("An error occurred invoking 'browser_navigate'.");
-        await Assert.That(rig.Logs.Logged("threw an unhandled exception")).IsTrue();
+        // ⚠️ Updated at step 9, and the change is the whole point of that step.
+        // Until 2026-08-16 these three lines asserted a JSON-RPC *success*
+        // carrying isError and the body "An error occurred invoking
+        // 'browser_navigate'." -- byte-identical to what an unknown content type
+        // produced, naming neither cause. That is the founding failure shape
+        // arriving from the SDK, and the shape it is answered in now is
+        // LosslessPassthroughTests'
+        // AChildThatDiesMidCallProducesANamedErrorRatherThanASuccess.
+        await Assert.That(response.Error).IsNotNull();
+        await Assert.That(response.Result).IsNull();
+
+        // The cause still reaches the log, and now it reaches the caller too.
+        await Assert.That(rig.Logs.Logged("The child did not answer")).IsTrue();
     }
 
     [Test]
@@ -203,23 +211,23 @@ internal sealed class FakeChildHarnessTests
             await Assert.That(response.Frame.AsSpan().IndexOf(Encoding.UTF8.GetBytes(Unknown)) >= 0).IsTrue();
         }
 
-        // Arm two: what the proxy does with it TODAY, measured 2026-08-16 and
-        // worse than "an error". The SDK's typed ContentBlock converter throws
-        // `Unknown content type: 'x-browserai-unknown'`, the SDK's server turns
-        // that into a JSON-RPC SUCCESS carrying isError, and the block is gone.
-        // Every conventional signal is green and the payload is missing, which
-        // is the failure class this project exists to eliminate arriving from
-        // our own dependency. Step 9 removes it by rewriting the path on
-        // JsonNode; until then this is what says so rather than passing
-        // quietly.
+        // Arm two: the same bytes through the proxy.
+        //
+        // ⚠️ Updated at step 9, deliberately handed over rather than deleted.
+        // Until 2026-08-16 this arm asserted the *lossy* behaviour so that
+        // fixing it would turn the test red: the SDK's typed ContentBlock
+        // converter threw `Unknown content type: 'x-browserai-unknown'`, the
+        // server turned that into a JSON-RPC SUCCESS carrying isError, and the
+        // block was gone -- every conventional signal green and the payload
+        // missing. The typed path is now unreachable, so the block survives.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = Unknown });
 
         var throughTheProxy = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
 
         await Assert.That(throughTheProxy.Error).IsNull();
-        await Assert.That(throughTheProxy.Result!["isError"]!.GetValue<bool>()).IsTrue();
-        await Assert.That(throughTheProxy.Frame.AsSpan().IndexOf("x-browserai-unknown"u8) >= 0).IsFalse();
+        await Assert.That(throughTheProxy.Result!["isError"]).IsNull();
+        await Assert.That(throughTheProxy.Frame.AsSpan().IndexOf("x-browserai-unknown"u8) >= 0).IsTrue();
     }
 
     [Test]
@@ -334,6 +342,8 @@ internal sealed class FakeChildHarnessTests
         string[] layer =
         [
             "tests/BrowserAI.Tests/FakeChildHarnessTests.cs",
+            "tests/BrowserAI.Tests/LosslessPassthroughTests.cs",
+            "tests/BrowserAI.Tests/Harness/JsonSpan.cs",
             "tests/BrowserAI.Tests/Harness/McpTestHarness.cs",
             "tests/BrowserAI.Tests/Harness/FakePlaywrightChild.cs",
             "tests/BrowserAI.Tests/Harness/PipeClientTransport.cs",

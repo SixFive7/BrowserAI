@@ -110,6 +110,14 @@ internal sealed class McpTestHarness : IAsyncDisposable
     public CapturingLoggerProvider Logs { get; }
 
     /// <summary>
+    /// The product object under test, for the assertions that are about the
+    /// options it hands the server rather than about a round trip.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">This rig has no proxy in it.</exception>
+    public BrowserProxy Proxy =>
+        _proxy ?? throw new InvalidOperationException("This rig speaks straight to the double; there is no proxy in it.");
+
+    /// <summary>
     /// The full topology: test client → BrowserAI → fake child, handshaken on
     /// both hops.
     /// </summary>

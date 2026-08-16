@@ -624,6 +624,44 @@ the documented MTP opt-in, TUnit is MTP-only, and there is no VSTest mode to
 fall back to. `[MACHINE]` for the single observation; nothing here is
 `[FLOATS]`, because no standing behaviour was established.
 
+**It recurred, it is now stable, and the retraction above still stands.**
+Measured 2026-08-16 during
+[build-order step 9](../../plan/build-order.md#9-lossless-passthrough), following
+the procedure the paragraph above prescribes. `dotnet test` reports *"Zero tests
+ran"*, `error: 1`, exit **5**, in 177–646 ms:
+
+| Run | Result |
+|---|---|
+| `dotnet test BrowserAI.slnx`, Git Bash, working tree | zero |
+| the same, repeated | zero |
+| the same, from PowerShell 7 | zero |
+| `dotnet test tests/BrowserAI.Tests/BrowserAI.Tests.csproj` | zero |
+| `dotnet test BrowserAI.slnx --list-tests` | *"Discovered 0 tests"* |
+| the working tree with every step-9 change stashed, i.e. `c9d30d4` | zero |
+| **a fresh `git worktree --detach` of `b8a6553`** | **zero** |
+| `BrowserAI.Tests.exe` | 106 passed, exit 0 |
+| `dotnet BrowserAI.Tests.dll --list-tests` | 88 found *(before the step-9 tests were written)* |
+
+**The last three rows are the whole finding.** The same commit that returned
+**30 passed** hours earlier now returns zero, from a clean worktree, while the
+same built assembly run directly finds and runs everything. So **nothing in this
+repository causes it**, and the earlier retraction was not wrong — both
+measurements were real and the machine moved between them. Versions are
+identical either side: SDK **10.0.302**, .NET **10.0.11**, and the committed lock
+file still resolves TUnit **1.65.0** and `Microsoft.Testing.Platform` **2.3.3**,
+so it is not a package float.
+
+The cause is not established. `--diagnostic` shows the host launched with
+`--server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>` and the
+log ending immediately after `Setting
+PlatformExitProcessOnUnhandledException` — the same fingerprint as the transient,
+which is consistent with a defect in the `dotnet test` ↔ MTP handshake rather
+than in discovery. **Do not write a cause into this entry without measuring
+one.** [`TODO.md`](../../TODO.md) carries the investigation, and build-order
+step 9's evidence came from `BrowserAI.Tests.exe`, which is stated on that step
+rather than left implicit. `[MACHINE]` — it is a fact about this machine on this
+date, and the identical tree behaved differently on the same day.
+
 **`Process.ExitCode` throwing after `Dispose()` is now reproduced rather than
 quoted**, by
 `DirectStdioClientTransportTests.ProcessExitCodeThrowsAfterDisposeWhichIsWhyTheSessionCachesIt`:

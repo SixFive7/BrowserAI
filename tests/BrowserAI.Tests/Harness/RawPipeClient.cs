@@ -115,7 +115,23 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// <param name="method">The JSON-RPC method.</param>
     /// <param name="parameters">Its parameters, or null for none.</param>
     /// <returns>The response, as bytes and as an envelope.</returns>
-    public async Task<RawResponse> SendAsync(string method, JsonNode? parameters = null)
+    public async Task<RawResponse> SendAsync(string method, JsonNode? parameters = null) =>
+        await AwaitAsync(await BeginAsync(method, parameters), method);
+
+    /// <summary>
+    /// Sends a request and returns its id <b>without</b> waiting for the
+    /// answer.
+    /// </summary>
+    /// <remarks>
+    /// The two-phase shape exists for cancellation: a test has to get a call
+    /// in flight, cancel it, and then assert on what the far end saw — and a
+    /// cancelled call is one nothing is ever going to answer, so a version that
+    /// waits first can only be written as a timeout.
+    /// </remarks>
+    /// <param name="method">The JSON-RPC method.</param>
+    /// <param name="parameters">Its parameters, or null for none.</param>
+    /// <returns>The id the request went out with.</returns>
+    public async Task<int> BeginAsync(string method, JsonNode? parameters = null)
     {
         var id = Interlocked.Increment(ref _nextId);
 
@@ -132,7 +148,15 @@ internal sealed class RawPipeClient : IAsyncDisposable
         }
 
         await _channel.WriteFrameAsync(request.ToJsonString(), _deadline.Token);
+        return id;
+    }
 
+    /// <summary>Waits for the answer to a request <see cref="BeginAsync"/> sent.</summary>
+    /// <param name="id">The id that call returned.</param>
+    /// <param name="method">The method, used only in failure messages.</param>
+    /// <returns>The response, as bytes and as an envelope.</returns>
+    public async Task<RawResponse> AwaitAsync(int id, string method = "<unnamed>")
+    {
         while (true)
         {
             var frame = await _channel.ReadFrameAsync(_deadline.Token)
@@ -165,6 +189,38 @@ internal sealed class RawPipeClient : IAsyncDisposable
             return new RawResponse(frame, envelope);
         }
     }
+
+    /// <summary>
+    /// Keeps reading frames until a condition holds, recording each one.
+    /// </summary>
+    /// <remarks>
+    /// A client only sees what it reads. Notifications that arrive after the
+    /// response to the request that provoked them sit in the pipe until
+    /// something drains it, so a test asserting on
+    /// <see cref="FramesReceived"/> without this is asserting on whatever the
+    /// last round trip happened to consume — which is a race, and it passes on
+    /// a quiet machine.
+    /// </remarks>
+    /// <param name="condition">Evaluated after every frame.</param>
+    /// <returns>A task that completes once the condition holds.</returns>
+    public async Task ReadUntilAsync(Func<bool> condition)
+    {
+        ArgumentNullException.ThrowIfNull(condition);
+
+        while (!condition())
+        {
+            _ = await _channel.ReadFrameAsync(_deadline.Token)
+                ?? throw new InvalidOperationException("The peer closed its end before the expected frames arrived.");
+        }
+    }
+
+    /// <summary>
+    /// Writes a literal frame, which is how a test sends something no encoder
+    /// would produce.
+    /// </summary>
+    /// <param name="frame">The exact bytes of the frame, terminator excluded.</param>
+    /// <returns>A task that completes once the frame is on the wire.</returns>
+    public Task SendRawAsync(string frame) => _channel.WriteFrameAsync(frame, _deadline.Token);
 
     /// <summary>Sends a notification, which has no reply.</summary>
     /// <param name="method">The JSON-RPC method.</param>

@@ -36,7 +36,32 @@ internal sealed record FakeToolBehaviour
     public string? RawErrorData { get; init; }
 
     /// <summary>How long to wait before answering.</summary>
+    /// <remarks>
+    /// This one blocks the child's read loop, which is what several ordering
+    /// assertions rely on. A call that has to stay open <i>while the child keeps
+    /// listening</i> — the shape a cancellation test needs — uses
+    /// <see cref="HoldUntil"/> instead.
+    /// </remarks>
     public TimeSpan Delay { get; init; }
+
+    /// <summary>
+    /// Holds the call open without blocking the read loop, so the child can
+    /// still hear what arrives while it is working.
+    /// </summary>
+    /// <remarks>
+    /// <b>Without this a cancellation test cannot exist.</b> A child parked
+    /// inside its own dispatch cannot read the
+    /// <c>notifications/cancelled</c> that the test is trying to prove reaches
+    /// it, so the assertion would be about the double rather than about the
+    /// proxy.
+    /// </remarks>
+    public Task? HoldUntil { get; init; }
+
+    /// <summary>
+    /// How many <c>notifications/progress</c> to send before answering, echoing
+    /// the caller's own <c>progressToken</c>.
+    /// </summary>
+    public int ProgressUpdates { get; init; }
 
     /// <summary>
     /// Closes stdout without answering, which is what a child that dies
@@ -97,6 +122,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     private readonly FrameChannel _channel;
     private readonly CancellationTokenSource _stopping = new();
     private readonly List<string> _methods = [];
+    private readonly ConcurrentBag<Task> _held = [];
 
     private Task _loop = Task.CompletedTask;
     private int _disposed;
@@ -182,6 +208,18 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
         await _stopping.CancelAsync();
         _channel.CloseOutput();
+
+        try
+        {
+            // Held calls first: each is a task this object started, and a task
+            // nobody waits for is a task whose exception nobody sees.
+            await Task.WhenAll(_held).WaitAsync(TestDefaults.Patience);
+        }
+#pragma warning disable CA1031 // A held call ending because the child stopped is the ordinary path.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
 
         try
         {
@@ -307,7 +345,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
                 return true;
 
             case "tools/call":
-                return await CallToolAsync(id, ToolNameOf(request));
+                return await CallToolAsync(id, request);
 
             default:
                 await _channel.WriteFrameAsync(Error(id, -32601, $"Method not found: {method}", rawData: null), _stopping.Token);
@@ -315,8 +353,13 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
         }
     }
 
-    private async Task<bool> CallToolAsync(string id, string? toolName)
+    private static string? ProgressTokenOf(JsonNode? request) =>
+        request?["params"]?["_meta"]?["progressToken"]?.ToJsonString();
+
+    private async Task<bool> CallToolAsync(string id, JsonNode? request)
     {
+        var toolName = ToolNameOf(request);
+
         if (toolName is null || !Tools.TryGetValue(toolName, out var behaviour))
         {
             await _channel.WriteFrameAsync(
@@ -326,11 +369,37 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             return true;
         }
 
+        if (behaviour.HoldUntil is { } held)
+        {
+            // Off the read loop deliberately: the child stays able to hear
+            // whatever arrives while the call is open.
+            _held.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    await held.WaitAsync(_stopping.Token);
+                    _ = await AnswerAsync(id, request, behaviour);
+                }
+#pragma warning disable CA1031 // A held call that is never released ends with the child, which is the ordinary path here.
+                catch (Exception)
+#pragma warning restore CA1031
+                {
+                }
+            }));
+
+            return true;
+        }
+
         if (behaviour.Delay > TimeSpan.Zero)
         {
             await Task.Delay(behaviour.Delay, _stopping.Token);
         }
 
+        return await AnswerAsync(id, request, behaviour);
+    }
+
+    private async Task<bool> AnswerAsync(string id, JsonNode? request, FakeToolBehaviour behaviour)
+    {
         if (behaviour.DieWithoutAnswering)
         {
             // Not an error frame and not a close-then-answer: stdout simply
@@ -338,6 +407,19 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             // the parent's side.
             _channel.CloseOutput();
             return false;
+        }
+
+        // Echoing the caller's own token rather than inventing one: a relay that
+        // rewrote it would still look right in a test that only counted
+        // notifications.
+        if (behaviour.ProgressUpdates > 0 && ProgressTokenOf(request) is { } token)
+        {
+            for (var step = 1; step <= behaviour.ProgressUpdates; step++)
+            {
+                await _channel.WriteFrameAsync(
+                    $$$"""{"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":{{{token}}},"progress":{{{step.ToString(CultureInfo.InvariantCulture)}}},"total":{{{behaviour.ProgressUpdates.ToString(CultureInfo.InvariantCulture)}}}}}""",
+                    _stopping.Token);
+            }
         }
 
         var frame = behaviour.ErrorCode is { } code

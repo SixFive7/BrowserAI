@@ -874,6 +874,99 @@ and a permanent three-way merge against an upstream that edits `tests/` weekly.
 **Consumes:** [stack](stack.md) (deviations 2, 3, 4, 6, 7, 8, 9) ·
 [testing](testing.md) (the fake-child layer)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Protocol/{VerbatimPayload, ChildLink,
+> JsonLines, JsonLinesTransport, DirectStdioServerTransport,
+> ChildProcessSession}.cs` · `src/BrowserAI/Proxy/BrowserProxy.cs` (rewritten
+> onto a message filter) · `tests/BrowserAI.Tests/{LosslessPassthroughTests,
+> FakeChildHarnessTests, DirectStdioClientTransportTests}.cs` ·
+> `tests/BrowserAI.Tests/Harness/{JsonSpan, RawPipeClient, FakePlaywrightChild,
+> McpTestHarness, PipeClientTransport}.cs`. Every done-test below was run.
+> **105 tests green, `dotnet build` 0 warnings**, and the AOT publish is clean.
+>
+> **The answer is spliced, not re-serialised, and that is the difference between
+> the two claims this step could have made.** The child's `result` or `error` is
+> sliced out of its frame by `Utf8JsonReader` token offset and written into the
+> caller's frame with `Utf8JsonWriter.WriteRawValue`. A `JsonNode` round trip
+> preserves key order and numeric form and would have passed most of the
+> done-test — and it decodes `é` and re-emits a raw `é`, so *"byte-identical"*
+> would have been true only of payloads nobody escaped.
+> `AnEscapeTheChildChoseStaysAnEscape` is the test that separates them, and every
+> byte assertion in the file compares spans taken by `Harness/JsonSpan.cs`, a
+> second implementation written for the tests, because a comparison of two spans
+> the product sliced agrees with an off-by-one in the product.
+>
+> ⚠️ **The prescribed cancellation remedy does not work, and it fails for the
+> exact reason this file gives for the SDK's own failing.** Deviation 6 says to
+> *"send `notifications/cancelled` from your own `ct.Register`"*. Built that way,
+> **the callback never runs.** A registration scoped to the call it protects is
+> disposed as that call unwinds; `SendRequestAsync` waits on
+> `tcs.Task.WaitAsync(ct)`, which registers *after* ours, and **CTS callbacks run
+> LIFO** — so `WaitAsync`'s runs first, the await throws, the `using` disposes
+> ours, and ours is unregistered before LIFO reaches it. Observed directly: the
+> token reported `CanBeCanceled`, the call threw with `IsCancellationRequested`
+> true, the child recorded the `tools/call`, and the callback logged nothing.
+> Announcing from the `catch (OperationCanceledException)` instead is awaited,
+> cannot fire before the request it names was sent, and is proven at the double
+> by `CancellingACallIsObservedAtTheFakeChild`. Corrected in
+> [stack](stack.md#nine-places-where-the-sdk-must-be-deviated-from) and
+> [kb](../kb/mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220).
+>
+> ⚠️ **Deviation 7's decorator is needed, and not for what it says.** Forwarding
+> a *named* child→caller notification is public API —
+> `McpSession.RegisterNotificationHandler`, which `McpClient` inherits — so the
+> progress relay needs no decorator at all. What has no public route is the live
+> `ITransport` instance, which byte-identity needs because the raw bytes exist
+> nowhere else; `ChildLink` is therefore an **`IClientTransport`** decorator
+> rather than the `ITransport` one described, and it **refuses** a transport it
+> cannot read frames from rather than silently answering re-serialised results.
+>
+> **Two bullets turned out to be already satisfied, and one turned out to be
+> unnecessary.** Deviation 2 is now moot rather than met: the product calls
+> neither `ListToolsAsync` overload, because `tools/list` is forwarded as a raw
+> `JsonRpcRequest` — asserted by a source scan, so the trap stays unreachable.
+> And deviation 8's *"reconstruct `data` from `Exception.Data`"* was solving a
+> problem that did not exist: `code` and `data` survive intact, as step 8
+> measured. The prefix is not stripped either — it is **never met**, because the
+> answer is written from the child's frame rather than from the exception's
+> message. `SdkErrorShapeTests` keeps the SDK's own behaviour under test, since
+> nothing else in the suite travels that path any more.
+>
+> **The typed tool handlers are gone rather than left as a fallback.**
+> `Handlers` carries neither, so a filter that ever stopped short-circuiting
+> produces `-32601` instead of a quietly lossy answer. That is deliberate
+> asymmetry: a loud wrong answer can be found.
+>
+> **Three step-8 tests pinned the old lossy behaviour and were updated rather
+> than deleted**, each carrying what it used to assert:
+> `TheFakeChildReturnsAnUnknownContentType` (the block survives now),
+> `TheFakeChildDiesMidCall` (a JSON-RPC error, not an `isError` success) and
+> `TheFakeChildInjectsAJsonRpcError` (no prefix).
+>
+> **Progress ordering is not preserved, and that is recorded rather than
+> fixed.** The SDK's message loop dispatches inbound notifications
+> fire-and-forget, so two `notifications/progress` written by the child in order
+> were observed reaching the caller as 2 then 1. The token and the params
+> survive; the sequence does not, and it cannot be fixed from a notification
+> handler because the reordering happens before the handler runs.
+> [TODO.md](../TODO.md) carries it so it is a decision rather than an omission.
+>
+> ⚠️ **`dotnet test` runs zero tests on this machine today, and this is not a
+> repeat of the step-5 claim — it is the opposite finding, measured five ways.**
+> `dotnet test` reports *"Zero tests ran"*, exit 5, from Git Bash and from
+> PowerShell, against the solution and against the project, at the working tree
+> **and at `c9d30d4`** — and, decisively, **at `b8a6553` in a fresh worktree**,
+> the very commit step 5's retraction cites as returning 30 passed. The same
+> assembly run as `BrowserAI.Tests.exe`, and as `dotnet BrowserAI.Tests.dll
+> --list-tests`, finds and runs all 105. MTP's own diagnostic shows `dotnet test`
+> launching the host with `--server dotnettestcli --dotnet-test-pipe …` and the
+> log ending immediately after startup configuration. **Nothing in this
+> repository changed to cause it** — same commit, different answer, so the cause
+> is outside the tree. TUnit 1.65.0 and `Microsoft.Testing.Platform` 2.3.3 are
+> unchanged in the committed lock file, so it is not a package float. **Both
+> measurements were real; the machine moved between them.** The retraction stands
+> as a correct account of what was true then. [TODO.md](../TODO.md) carries the
+> investigation, and the evidence for this step came from the test executable.
+
 Every failure this step closes is silent. That is why it is its own step rather
 than a detail of step 7.
 

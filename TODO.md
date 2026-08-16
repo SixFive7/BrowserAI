@@ -48,21 +48,64 @@ and version it was true at.
       retracted in place for the same reason: a reader who saw the original must
       be able to find the retraction.
 
-- [ ] **Answer a frame that fails to parse, instead of only logging it.** The
-      SDK's `StreamServerTransport` walks a malformed line with a
-      `MaxDepth = int.MaxValue` reader looking only for a top-level `id`, and if
-      it finds one replies `-32700` so the caller **fails** rather than waiting
-      for a response that is never coming. BrowserAI's
-      `JsonLinesTransport.DispatchAsync` drops the frame and logs at `Error`,
-      which is loud on the diagnostic channel and still leaves the caller
-      hanging. Deliberately deferred at
-      [step 5](plan/build-order.md#5-the-two-custom-transports): reconstructing a
-      request id in order to shape an error belongs with
-      [step 9](plan/build-order.md#9-lossless-passthrough), which owns error
-      shaping and the [error catalogue](plan/H-model-surface.md#h4-the-error-catalogue),
-      and doing it earlier would put the first JSON-RPC error text in the
-      codebase somewhere the catalogue does not reach. Do **not** copy the SDK's
-      implementation — it is Apache-2.0 and this repository is not.
+- [x] **Answer a frame that fails to parse, instead of only logging it.** ✅ Done
+      2026-08-16 at [step 9](plan/build-order.md#9-lossless-passthrough), as
+      planned. `JsonLines.TryRecoverRequestId` scans a frame that failed to parse
+      for a top-level `id`, left to right, stopping at the first thing it cannot
+      read — which succeeds on the common case, because every well-behaved
+      encoder writes the id near the front. `JsonLinesTransport` answers
+      `-32700` when one is recovered and drops-and-logs when none is, because
+      inventing an id would resolve a request the caller never made. **Only on
+      the caller's leg:** a response is not a thing one answers, so a `-32700`
+      aimed at a child would name a request it has no record of. Written from
+      the SDK's *behaviour*, not its code — it is Apache-2.0 and this repository
+      is not — and the one difference worth noting is that ours needs
+      `MaxDepth = int.MaxValue` for the same reason theirs does, which is a
+      property of the problem rather than of their solution. Proven by
+      `LosslessPassthroughTests.AFrameThatFailsToParseIsAnsweredRatherThanOnlyLogged`
+      and `…WithNoRecoverableIdIsDroppedLoudlyRatherThanAnswered`. The message
+      text is transport-level and deliberately not catalogue prose; §H.4 is
+      [step 13](plan/build-order.md)'s.
+
+- [ ] **Decide whether relayed notifications need their order preserved.** Found
+      2026-08-16 at [step 9](plan/build-order.md#9-lossless-passthrough) and
+      recorded rather than fixed. The child→caller progress relay preserves the
+      `progressToken` and the params byte for byte, and **does not preserve
+      order**: the SDK's message loop dispatches inbound notifications
+      fire-and-forget, and two `notifications/progress` written by the double in
+      order were observed reaching the caller as 2 then 1
+      ([kb](kb/mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220),
+      [row 63a](kb/README.md#re-verification-index)). **It cannot be fixed from a
+      notification handler** — the reordering has already happened by the time
+      the handler runs — so a fix means the `ITransport` decorator
+      [deviation 7](plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from)
+      originally described, which sees messages in wire order. Two things to
+      settle before writing it: whether `@playwright/mcp` emits progress at all
+      (not measured), and whether a caller that renders a jumping progress value
+      is a defect worth a component. Step 9's done-test does not ask for
+      ordering, and claiming it without asserting it would have been the
+      [step-8 lesson](plan/build-order.md#8-the-harness-and-the-fake-child)
+      repeated.
+
+- [ ] **Find out why `dotnet test` runs zero tests, or record that it stays
+      that way.** Measured 2026-08-16 at
+      [step 9](plan/build-order.md#9-lossless-passthrough), **five ways**, and it
+      is now stable where it was previously transient: `dotnet test` reports
+      *"Zero tests ran"*, exit 5, from both shells, against the solution and the
+      project, at the working tree, at `c9d30d4`, **and in a fresh worktree of
+      `b8a6553`** — the commit that returned 30 passed hours earlier. The same
+      assembly run as `BrowserAI.Tests.exe` runs all 106. Versions are identical
+      either side (SDK 10.0.302, .NET 10.0.11, TUnit 1.65.0, MTP 2.3.3 from the
+      committed lock), so **nothing in this repository and no package float
+      explains it**; the machine moved. MTP's own diagnostic shows the host
+      launched with `--server dotnettestcli --dotnet-test-pipe …` and the log
+      ending immediately after startup configuration, which points at the
+      `dotnet test` ↔ MTP handshake rather than at discovery
+      ([kb](kb/windows/processes.md#interop-and-the-toolchain)). **Do not "fix"
+      it by removing the MTP runner entry from `global.json`** — TUnit is
+      MTP-only and there is no VSTest path to fall back to. Until it is
+      understood, done-test evidence comes from the executable and the step that
+      relies on it says so.
 
 - [ ] **Capture ILC's raw output and fail the publish if it is non-empty.**
       Build-order step 1 asked for two things and only one of them is a property.
