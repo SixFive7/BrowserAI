@@ -11,7 +11,7 @@
 
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
 
-  "lastChecked": "2026-08-15",
+  "lastChecked": "2026-08-16",
   "result": "no drift",
 
   "resolved": {
@@ -43,7 +43,7 @@
       "resolved": "v24.19.0",
       "reviewed": "v24.19.0",
       "drift": false,
-      "how": "nodejs.org/dist/index.json, newest entry with an lts field (Krypton). Current line was v26.7.0 on this date and is deliberately not tracked."
+      "how": "nodejs.org/dist/index.json, newest entry with an lts field (Krypton, released 2026-08-03, npm 11.17.0). The Current line is deliberately not tracked."
     }
   }
 }
