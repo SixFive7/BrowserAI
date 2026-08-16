@@ -84,6 +84,7 @@
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Velopack" />
     <!-- Build-time only. PrivateAssets="all" keeps it out of the dependency
          graph entirely, so nothing ships and ILC never sees it. -->
     <PackageReference Include="MinVer" PrivateAssets="all" />
@@ -160,7 +161,20 @@
           AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')">
     <ItemGroup>
-      <PayloadFile Include="$(MSBuildThisFileDirectory)..\..\payload\**\*" />
+      <!--
+        ⚠️ .cache IS EXCLUDED, AND IT WAS SHIPPING. Found 2026-08-16 at
+        build-order step 19, on the first real `vpk pack`: Build-Payload.ps1
+        keeps the downloaded Node archive at payload\.cache\node-<ver>-win-x64.zip
+        so a re-run does not re-download it, and the unfiltered glob below put
+        all 37,304,352 bytes of it into the published artifact. That is 31% of
+        the payload, shipped to every machine, for a file nothing reads at
+        runtime, and it compresses badly because it is already compressed. It
+        was invisible because every other signal was green: the publish
+        succeeded, the tests passed, and the only symptom was a number nobody
+        had measured yet.
+      -->
+      <PayloadFile Include="$(MSBuildThisFileDirectory)..\..\payload\**\*"
+                   Exclude="$(MSBuildThisFileDirectory)..\..\payload\.cache\**\*" />
       <ResolvedFileToPublish Include="@(PayloadFile)">
         <RelativePath>payload\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

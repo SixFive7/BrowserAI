@@ -217,6 +217,17 @@ means something on a machine that has never had one. `[MACHINE]` for the tree;
 Measured 2026-08-16 on Windows 11 Pro 26200, from a **medium-integrity,
 UAC-filtered administrator** token.
 
+> ⛔ **The feature these measurements were taken for is DROPPED**, decided
+> 2026-08-16 at
+> [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back), on
+> the strength of the first measurement below. `LogonSweepTask.cs` and its tests
+> are deleted and BrowserAI's own startup sweep is the only trigger.
+> **The measurements are kept and the section is not**, because both are facts
+> about Windows rather than about our code, and the first is the evidence for the
+> decision: deleting it would leave the drop looking like a preference. What has
+> changed is that **nothing in the product consumes either of them**, so treat
+> this section as a record rather than as a specification.
+
 > ⚠️ **Registering a scheduled task non-elevated fails on this machine, and
 > [step 16](../../plan/build-order.md#16-the-stray-sweep) said it had been
 > verified to work.** It has not. `schtasks /Create /XML` and the
@@ -230,10 +241,9 @@ UAC-filtered administrator** token.
 >
 > **Whether elevation fixes it is `[UNVERIFIED]`** — a UAC prompt cannot be
 > answered from a non-interactive session, so it was not tried. What this settles
-> is only that the *non-elevated* claim was false. The consequence belongs to
-> [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
-> which is where the task is registered, and it is carried in
-> [`TODO.md`](../../TODO.md) so it is a decision rather than an omission.
+> is only that the *non-elevated* claim was false. **It stays unverified and
+> that is now final rather than owed**: step 19 dropped the task instead of
+> elevating for it, so nothing depends on the answer.
 
 **`LogonType` is valid only beside a `UserId`, never beside a `GroupId`.**
 Measured: with `<GroupId>S-1-5-32-545</GroupId>` and
@@ -242,8 +252,16 @@ with *"The task XML contains an unexpected node"* and names the `LogonType` line
 A group principal would still have run in the user's own interactive session —
 but only by implication, and *"run only when user is logged on"* is the setting
 whose absence makes a sweeper in session 0 report success forever, so it has to
-be stated rather than implied. The definition therefore names the installing
-user. `[STABLE]` for the schema; `[MACHINE]` for the error text.
+be stated rather than implied. ~~The definition therefore names the installing
+user.~~ `[STABLE]` for the schema; `[MACHINE]` for the error text.
+
+> **Corrected 2026-08-16 (previously "The definition therefore names the
+> installing user").** There is no definition any more — it was deleted with the
+> task. The schema fact above is unchanged and was measured before the drop; it
+> is retained because it is a property of Task Scheduler that the next person to
+> reach for a logon task on this machine will need, and it cost a *"the task XML
+> contains an unexpected node"* to learn. **It is no longer asserted by a test**,
+> so [row 81](../README.md#re-verification-index) is *manual*.
 
 ## Enumeration works — and it moves the safety boundary
 

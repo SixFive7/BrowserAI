@@ -238,6 +238,13 @@ because the relaunched process
 forward-only**, so every rollback is a fresh full download unless packages are
 archived by hand. `AllowVersionDowngrade` is the client half of rollback.
 
+> ✅ **Answered 2026-08-16 by the first real `vpk pack`: the full package is
+> 49,043,498 b (46.8 MiB).** See
+> [The update lane](#the-update-lane-measured-2026-08-16) for the whole set. The
+> question and the refusal to guess are kept below because the number that was
+> circulating was invented, and a reader who remembers *"~105 MB"* has to be able
+> to find out where it went.
+>
 > **How big is a full BrowserAI package? `[UNVERIFIED]`, and it was stated as
 > ~105 MB with no provenance anywhere in the repository.** Nothing has ever
 > compressed the real payload. What is known: the payload is
@@ -254,6 +261,152 @@ false yields "no updates", silently) and then forces a **full re-download** —
 during the forward update. Rollback fires the same obsolete/updated/restarted
 hooks; from the app's view it is an ordinary update. `restartArgs` pass through,
 but **the relaunched app does not inherit the caller's stdio.** `[FLOATS]`
+
+## The update lane, measured 2026-08-16
+
+Everything here was run while building
+[build-order step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
+against **Velopack 1.2.0** and **`vpk` 1.2.0**, on Windows 11 Pro 26200, SDK
+10.0.302. It is the first time this project has packed, installed, updated or
+rolled back its own payload rather than a test app. `[FLOATS]` — every number
+moves with Node, `@playwright/mcp` and the toolchain.
+
+**Re-establish the whole set** with
+`pwsh -File build/New-Release.ps1 -PackVersion <v> -OutputDir <feed>`, twice at
+two versions, then install the first `Setup.exe` with
+`--silent --installto <scratch>` and run
+`<scratch>\current\BrowserAI.exe` with `BROWSERAI_UPDATE_FEED` pointed at the
+feed directory. **Never install into `%LocalAppData%\BrowserAI`** — see the
+repair-install finding above.
+
+### Sizes
+
+| | Bytes | Note |
+|---|---|---|
+| Publish directory on disk | 206,427,574 | Includes the 75,993,088 b `.pdb`, which `vpk` excludes by default |
+| **What ships** (pdb excluded) | **130,434,486** | `BrowserAI.exe` 17,853,952 · `payload\node` 92,985,968 · `payload\mcp` 18,997,245 · `BrowserAI.xml` 596,517 |
+| **Full `.nupkg`** | **49,043,498** | 46.8 MiB. Compression ratio **0.376** |
+| **Delta `.nupkg`, N→N+1** | **97,216** | **0.198% of the full package — a 504× reduction** |
+| `Setup.exe` | 53,505,061 | |
+| `-Portable.zip` | 49,042,468 | |
+
+⚠️ **Take the ratio against what ships, not against the publish directory.** The
+`.pdb` is 76 MB of a 206 MB directory, so the naive ratio reads 0.350 for what is
+really 0.376. The first run of the release script reported the wrong one.
+
+⚠️ **`payload\.cache\` was shipping, and it was 37,304,352 b of the package.**
+`Build-Payload.ps1` keeps the downloaded Node archive there so a re-run does not
+re-download it, and the publish glob in `src/BrowserAI/BrowserAI.csproj` took the
+whole `payload\**\*` tree. **The full package was 85,348,009 b before the
+exclusion and 49,043,498 b after** — 42.5% of every release was an already-
+compressed zip nobody reads at runtime. Nothing else showed it: the publish
+succeeded, the suite passed, and the only symptom was a number that had never
+been measured.
+
+### The delta is real — the first one this estate has produced
+
+**`BrowserAI-0.9.1-delta.nupkg` is 97,216 b against a 49,043,493 b full
+package**, for a release in which only `BrowserAI.exe` changed. That is the
+claim §G bought Velopack for, and `ExoFabric/UCC` has never produced one in
+production. Confirmed on the receiving end as well: the client logged
+`deltas=1` and applied it.
+
+⚠️ **A delta-reconstructed full package is not byte-identical to the published
+one.** After applying the delta, `packages\BrowserAI-0.9.1-full.nupkg` was
+**49,043,340 b** against the feed's **49,043,493 b** — the client rebuilds and
+recompresses rather than downloading. It is verified by hash against the
+manifest's own recorded checksum for the reconstruction, not against the
+published file, so this is not a defect; it does mean **a size comparison
+between `packages\` and the feed proves nothing.**
+
+### Install → update → rollback, end to end
+
+| Step | Result |
+|---|---|
+| `Setup.exe --silent --installto <scratch>` | Exit 0. `<root>\{BrowserAI.exe, Update.exe, current\, packages\}` |
+| Stub vs. real binary | **392,704 b** at the root against **17,853,952 b** in `current\` — landmine 3 made visible: the stub is what a registration must never name |
+| `current\sq.version` | `<version>0.9.0`, `<channel>win`, `<mainExe>BrowserAI.exe`, `<shortcutLocations>None` |
+| Update 0.9.0 → 0.9.1 | Found, `deltas=1`, **downloaded and staged in 5.7 s** from a local directory feed, applied, version moved |
+| Rollback 0.9.1 → 0.9.0 | `rollback=True`, **`deltas=0`** — a full re-download, because `packages\` had been pruned. Staged in **0.2 s** (same volume). Version moved back |
+| **Browsers beside `current\`** | **Byte-identical across both**, by SHA-256 over every file. 52,428,869 b planted at `<root>\browsers\` |
+| **The process log** | Survived both, and the single file carries **`BrowserAI 0.9.0 started` and `BrowserAI 0.9.1 started`** — which is the §E claim demonstrated rather than asserted |
+| `packages\` after the update | **Pruned to the new full package only.** The 0.9.0 full was gone, which is why archiving every full `.nupkg` is mandatory rather than tidy |
+
+⚠️ **The browsers tree was planted, not provisioned.** 52,428,869 b of known
+bytes at `<root>\browsers\chromium-1237\`, hashed before and after. What that
+establishes is the property §A depends on — *a sibling of `current\` survives an
+update and a rollback* — and it does not establish anything about a real
+Chromium tree beyond it being files in a directory. A real one was deliberately
+not used: the real tree is 768 MB and lives under `%LocalAppData%\BrowserAI`,
+which is the one directory an installer must never be pointed at.
+
+### The apply gate, against two real instances
+
+**Two installed BrowserAIs started two seconds apart, both offered 0.9.1, and
+neither applied.** The version stayed at 0.9.0.
+
+- The first downloaded, staged, and logged *"Update 0.9.1 is staged and was NOT
+  applied, because another BrowserAI is running out of this install"* — which is
+  BrowserAI's own gate, the held `<root>\live\<pid>-<guid>.live` handle.
+- The second failed its check with Velopack's own
+  **`AcquireLockFailedException: Failed to acquire exclusive lock file`** — a
+  `packages\.velopack_lock` held by the first one's download. **That is a second,
+  independent guard nobody wrote here**, and it is worth knowing it exists: it
+  serialises concurrent *downloads* but says nothing about concurrent processes,
+  so it does not replace the gate.
+
+### Two things the toolchain does that nothing else records
+
+**`vpk` has no `--version` flag** — it answers *"Unrecognized command or
+argument"*. The version is in the first line of `vpk --help`: `Velopack CLI
+1.2.0, for distributing applications.` The release script reads it there, because
+the CLI and the library must be the same version and the CLI is a global tool
+that no lock file can see.
+
+**`Setup.exe` takes `--installto <DIR>`** (short `-t`), alongside `--silent`,
+`--verbose` and `--log <FILE>`. Read from `Setup.exe --help` at 1.2.0. It is what
+makes the update lane testable at all without pointing an installer at the real
+`%LocalAppData%\BrowserAI`.
+
+### The FrameLink version-string sweep is too broad to use as written
+
+`[STABLE]` — this is about how NuGet packages are built, not about Velopack.
+
+**TODO.md specified *"grep every version string in the linked binary and fail on
+a decorated one"*, from `SixFive7/FrameLink`'s `build.sh`. That check can never
+go green here.** The first AOT publish of this repository carried **six**
+decorated version strings and **not one of them was ours**:
+
+```
+1.2.0+f2edcbc                                            (Velopack)
+2.2.0+6fa3825973949a9c4f0cd8af344e15a8db09dc35           (ModelContextProtocol)
+10.0.10+f7d90799ce4ef09a0bb257852a57248d2a8fb8dd         (Microsoft.Extensions.*)
+10.0.10-servicing.26326.116+f7d90799ce4ef09a0bb257852a57248d2a8fb8dd
+10.0.11+e2f47b0110ed922f21a1522da67279133ce28f32
+10.8.3+ccb356f31db9d894807c4fd0c97c2f41553d1524          (Microsoft.Extensions.AI.Abstractions)
+```
+
+Every one is its publisher's own SourceLink decoration, linked in by ILC.
+FrameLink's sweep is only sound for a binary with no third-party dependency
+carrying one, which this is not and will not become. **The check that is both
+sound and still a sweep is narrower: a decorated string whose version *core* is
+the version being packed.** That is ours — the entry assembly's attribute, or a
+referenced project of ours sharing the derived version — and it is the only
+string that can reach the feed comparison, because the updater matches
+`BuildVersion.Current` against the served version. A third-party package's own
+decoration is inert. Implemented that way in `build/New-Release.ps1`.
+
+### The ILC-output check needs the severity word, not the code
+
+`[STABLE]` — a property of how csc is invoked.
+
+**A pattern of `\bIL[0-9]{4}\b` over the publish log fails every publish.** At
+`-v:normal` the log contains csc's full command line, which carries
+`/nowarn:1701,1702,NU5105,IL2121,...` — so the pattern matches a **suppression
+list**. Measured on the first run of `build/New-Release.ps1`. The pattern has to
+require the severity word: `(warning|error)\s+IL[0-9]{4}`, plus the literal
+`will always throw`, which is the case the whole check exists for and is not a
+diagnostic at all.
 
 ## Channel — the charter's reason was wrong
 
@@ -282,15 +435,37 @@ full nupkg 6,072,200 b, `Setup.exe` 10,533,768 b. The 34 MB pdb is excluded
 automatically. ⚠️ **Target `net10.0-windows`** — the hook callbacks are
 `[SupportedOSPlatform("windows")]`, so plain `net10.0` produces CA1416.
 
-**Hooks can register the logon sweep task — confirmed.** All hooks ran **as the
-user, non-elevated**, session 1. Fast-exit hooks with their timeouts:
-`--veloapp-install` (30 s), `--veloapp-updated` (15 s), `--veloapp-obsolete`
-(15 s), `--veloapp-uninstall` (60 s); `OnFirstRun` and `OnRestarted` do not exit.
-`schtasks /Create /XML` from the install hook succeeded with
-**`LogonType=InteractiveToken`** — "run only when user is logged on", which is
-exactly what the sweep needs and the opposite of the session-0 trap. The task
-**survived update and rollback** because it targets the stable `current\` path,
-and the uninstall hook removed it.
+> **Confirmed against the real product 2026-08-16**, not against a spike app:
+> zero trim/AOT warnings and **zero `will always throw`** with Velopack
+> referenced — read out of ILC's own console output rather than inferred from the
+> exit code, by `build/New-Release.ps1`. **What Velopack costs the binary:
+> 11,874,816 b → 17,853,952 b**, a **5,979,136 b / +50.4%** increase, measured on
+> the AOT publish either side of adding the package. Against a 130 MB shipped
+> payload that is noise; against a **97,216 b delta** it is not, because our own
+> binary is the only file a BrowserAI-only release ships. `[FLOATS]`
+
+**Hooks run as the user, non-elevated, in session 1.** Fast-exit hooks with their
+timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
+`--veloapp-obsolete` (15 s), `--veloapp-uninstall` (60 s); `OnFirstRun` and
+`OnRestarted` do not exit.
+
+> ⚠️ **Corrected 2026-08-16 (previously "Hooks can register the logon sweep task
+> — confirmed … `schtasks /Create /XML` from the install hook succeeded with
+> `LogonType=InteractiveToken` … The task survived update and rollback … and the
+> uninstall hook removed it").** **The observation was real and the subject was
+> wrong**, which is the more expensive of the two ways to be wrong. What the
+> spike established is what is left above: the hooks' identity, session and
+> timeouts. What it did **not** establish is that *BrowserAI* can register a
+> scheduled task, and
+> [step 16 measured that it cannot](../windows/detection.md#the-logon-sweep-task)
+> — `Access is denied` / `0x80070005` from the same machine, for a minimal
+> definition as much as for ours. One `schtasks` success in a spike directory
+> became a standing claim about the product, and it reached
+> [`README.md`](../../README.md) as *"verified"*. **The task is dropped**
+> ([step 19](../../plan/build-order.md#19-velopack-package-update-roll-back)), so
+> nothing now turns on it; the entry is corrected rather than deleted because a
+> reader who remembers *"confirmed"* has to be able to find out what happened to
+> it.
 
 **`vpk` emits**, into `Releases` by default: `{id}-{version}-full.nupkg`,
 `{id}-{version}-delta.nupkg`, `{id}-{channel}-Portable.zip`,

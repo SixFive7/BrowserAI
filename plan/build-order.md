@@ -1856,11 +1856,11 @@ Route on the way in; do not sort on the way out.
 
 > ✅ **Built 2026-08-16.** `src/BrowserAI/Interop/{MessageWindows,
 > BrowserProcesses}.cs` · `src/BrowserAI/Sessions/{StraySweep, SessionLock,
-> SessionIndex, SessionErrors}.cs` · `src/BrowserAI/Runtime/{ProvisionedBrowsers,
-> LogonSweepTask}.cs` · `src/BrowserAI/Program.cs` ·
+> SessionIndex, SessionErrors}.cs` · `src/BrowserAI/Runtime/ProvisionedBrowsers.cs` ·
+> `src/BrowserAI/Program.cs` ·
 > `tests/BrowserAI.TestProbe/{WindowProbe, SessionProbe, Program}.cs` ·
 > `tests/BrowserAI.Tests/{StraySweepTests, MessageWindowTests,
-> LogonSweepTaskTests, ErrorCatalogueTests}.cs` ·
+> ErrorCatalogueTests}.cs` ·
 > `tests/BrowserAI.Tests/Harness/{PlantedProbe, TopLevelWindows,
 > InstallationMarker, ScratchRoot}.cs`. Every done-test below was run.
 > **267 tests green, three consecutive full runs**, `dotnet build` 0 warnings,
@@ -1895,12 +1895,26 @@ Route on the way in; do not sort on the way out.
 > in a new `\BrowserAI\` folder alike, and a **minimal** definition fails
 > identically — so it is machine policy rather than anything about our XML.
 > Whether elevation fixes it is `[UNVERIFIED]`: a UAC prompt cannot be answered
-> from a non-interactive session. Corrected in the bullet below, recorded in
+> from a non-interactive session. Recorded in
 > [kb](../kb/windows/detection.md#the-logon-sweep-task) with
-> [row 80](../kb/README.md#re-verification-index), and carried in
-> [TODO.md](../TODO.md) as [step 19](#19-velopack-package-update-roll-back)'s
-> decision — it is where the task is registered and where the fallback has to be
-> chosen.
+> [row 80](../kb/README.md#re-verification-index).
+>
+> > ✅ **Resolved 2026-08-16 at [step 19](#19-velopack-package-update-roll-back):
+> > the logon task is DROPPED, and its code, its tests and its documents went
+> > with it.** Maintainer decision. Of the three options this step left open —
+> > register during an elevated install, fall back to `HKCU\…\Run`, or drop the
+> > second trigger — the third is taken, because **BrowserAI's own startup sweep
+> > already covers the case that matters**: a stray matters when something is
+> > about to contend for a lock, and that is exactly when a client starts.
+> > Deleted: `src/BrowserAI/Runtime/LogonSweepTask.cs` and
+> > `tests/BrowserAI.Tests/LogonSweepTaskTests.cs`. **`--sweep` is kept and has
+> > one caller left**, which is a measurement rather than the product:
+> > [row 78](../kb/README.md#re-verification-index) is the only route to the
+> > published-AOT column of the sweep-pass table, so the constant moved into
+> > `Program.SweepArgument` with that reason on it. R4, R5 and R9 in
+> > [§C's race table](C-sessions.md#race-conditions-and-what-closes-each) are
+> > corrected in place rather than deleted — each names a property that survives
+> > the trigger it was written against.
 >
 > ⚠️ **Two things §C said that building contradicted, both corrected in place.**
 > The published title is the **profile**, which is a subfolder of the session, so
@@ -1944,9 +1958,10 @@ Route on the way in; do not sort on the way out.
 >    milliseconds: pool starvation in a parallel suite, not creep. Ten seconds,
 >    with the whole argument recorded on the constant.
 >
-> **Two things this step deliberately does not build.** The logon task is
+> **Two things this step deliberately does not build.** The logon task was
 > **generated and asserted, never registered** — the suite would otherwise leave
-> machine state behind on every run from a checkout. And the sweep terminates
+> machine state behind on every run from a checkout. (It is now not built at all;
+> see the resolution above.) And the sweep terminates
 > only the process a window attributed; a browser tree's helpers are reported as
 > unattributable and left, because a tree publishes its profile from one process
 > only and nothing else can tie a renderer to a directory without a mechanism
@@ -2003,16 +2018,19 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 - `Global\BrowserAI-Sweep` with `WaitOne(0)` — try-acquire-and-skip, never queue.
   Background thread, fire-and-forget, never awaited, never a startup gate, never
   `stdout`. A catch-all at the thread boundary.
-- The **logon scheduled task** is built here and **registered at step 19** by the
-  Velopack install hook — there is no install to hook until §G lands.
+- ~~The **logon scheduled task** is built here and **registered at step 19** by
+  the Velopack install hook.~~
 
   > ⚠️ **Corrected 2026-08-16 (previously "the registration is verified to work
   > non-elevated").** It had not been verified, and it does not work: measured
   > from a medium-integrity, UAC-filtered administrator token, both
   > `schtasks /Create /XML` and the `Schedule.Service` COM API answer
   > `0x80070005` for our definition and for a minimal one alike
-  > ([kb](../kb/windows/detection.md#the-logon-sweep-task)). Whether elevation
-  > fixes it is unverified. Step 19 owns the consequence and the fallback.
+  > ([kb](../kb/windows/detection.md#the-logon-sweep-task)).
+  >
+  > > ✅ **Withdrawn 2026-08-16 at [step 19](#19-velopack-package-update-roll-back):
+  > > the task is dropped and nothing is built here.** The startup sweep is the
+  > > only trigger. Full reasoning in the resolution note above.
 - **Reclaim a leaked system resource before each test run**: a rig that inherits
   an abandoned `Global\BrowserAI-Sweep` from a previous run tests nothing.
 
@@ -2517,6 +2535,73 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
 
 **Consumes:** [§G](G-updates.md)
 
+> ✅ **Built 2026-08-16, minus one bullet that is deferred with a reason and named
+> below.** `src/BrowserAI/Updates/{InstallLocation, UpdateFeed,
+> UpdateConfiguration, IUpdateClient, VelopackUpdateClient, UpdateService,
+> LiveInstances, VelopackStartup}.cs` · `src/BrowserAI/Program.cs` ·
+> `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths}.cs` ·
+> `build/{New-Release.ps1, Test-ReleaseVersion.ps1}` ·
+> `tests/BrowserAI.Tests/{UpdateTests, ReleaseScriptTests}.cs`.
+> **333 tests green, 1 skipped (the deferred bullet), `dotnet build` 0 warnings,
+> the AOT publish clean with 0 ILC complaints.**
+>
+> ⛔ **NOT DONE, and it is the first bullet of the done-test:** *the real
+> production feed URL resolves over HTTP and returns a manifest.* **There is no
+> production feed.** The maintainer has agreed the update feed will be a public
+> GitHub repository; nothing is published, and what gets published is still open.
+> So `UpdateConfiguration.ProductionBaseUrl` is `null`, a build with no feed says
+> so once at Debug and never asks, and
+> `UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest` exists
+> and is **`[Skip]`ped with that reason**. **That skip blocks
+> [step 20](#20-the-first-release) by construction** — no release with a skipped
+> test — which is where the debt belongs. It was deliberately **not** faked with
+> a local HTTP server: such a server composes paths the same way as production by
+> construction rather than by evidence, so a green run would prove nothing about
+> the one pair that bricked UCC's auto-update for three shipped versions.
+>
+> **Everything else was run for real**, against two packed releases and an
+> install in a scratch root:
+> **delta 97,216 b** against a **49,043,498 b** full package (0.198% — the first
+> delta this estate has produced); **0.9.0 → 0.9.1 applied and the version
+> moved**; **rollback under `AllowVersionDowngrade` applied and it moved back**
+> (`rollback=True`, `deltas=0`, a full re-download, because `packages\` had been
+> pruned); the **planted browsers tree beside `current\` was SHA-256-identical
+> across both** and nothing re-downloaded; the **process log survived** and
+> carries `BrowserAI 0.9.0 started` and `BrowserAI 0.9.1 started` in one file;
+> and **two live instances were both offered 0.9.1 and neither applied.** Numbers,
+> method and how to re-run in
+> [kb: the update lane](../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16).
+>
+> ⚠️ **Three things this step found that no document predicted.**
+>
+> 1. **`payload\.cache\` was shipping — 37,304,352 b of it, 42.5% of every
+>    release.** `Build-Payload.ps1` caches the downloaded Node archive there and
+>    the publish glob took the whole tree. The full package was **85,348,009 b**
+>    before the exclusion and **49,043,498 b** after. Nothing showed it: the
+>    publish succeeded, the suite passed, and the only symptom was a number
+>    nobody had measured.
+> 2. **The FrameLink version-string sweep, as
+>    [TODO.md](../TODO.md) specified it, can never go green.** *"Fail on any
+>    decorated version string in the linked binary"* — the first publish carried
+>    **six**, and not one was ours: Velopack, ModelContextProtocol and four
+>    `Microsoft.Extensions.*`, each decorated by its own publisher's SourceLink.
+>    The sound version is narrower and still a sweep: fail on a decorated string
+>    whose version *core* is the version being packed.
+> 3. **An ILC-output check keyed on `IL[0-9]{4}` fails every publish**, because
+>    at `-v:normal` the log carries csc's `/nowarn:...,IL2121,...` — the pattern
+>    matches a suppression list. It needs the severity word.
+>
+> ⚠️ **Two things §G said that this step corrected**, both now in
+> [kb](../kb/packaging/velopack.md): landmine 6's exception is
+> `InvalidOperationException: No VelopackLocator has been set` rather than
+> `NotInstalledException`, and it is the one exception the product catches —
+> every process that is not BrowserAI's own entry point reaches it immediately.
+> And the app-paths swap is **the root, not the class**: `LocalAppDataPaths` was
+> not replaced, because the layout under the root is identical either way; what
+> moved is that an installed process takes its root from
+> `VelopackLocator.Current.RootAppDir`, which matters exactly when
+> `Setup.exe --installto` has been used and the computed default would be wrong.
+
 - Per-user to `%LocalAppData%`, never `--msi PerMachine` — a UAC prompt cannot be
   answered by a background MCP server.
 - `SetAutoApplyOnStartup(false)` — the default is `true`, and it makes BrowserAI
@@ -2539,25 +2624,30 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
 - **Never re-run `Setup.exe` over an existing install** — it renames the root
   aside and deletes it, taking the provisioned browsers with it. **Never pass
   `-- <args>` to it** — it panics and never exits.
-- The install hook registers the step-16 logon task; the uninstall hook removes
-  it.
+- ~~The install hook registers the step-16 logon task; the uninstall hook removes
+  it.~~ **Withdrawn 2026-08-16: the task is dropped**, so no hook registers
+  anything and the hooks exist only to log. See
+  [step 16](#16-the-stray-sweep)'s resolution note.
 - Three download timers — absolute, stall, and an outer deadline as a crash
   tripwire — with the download off the message loop, because a `tools/call` has
   to stay answerable while a package is in flight.
 
 **Done when:**
 
-- The real production feed URL resolves over HTTP and returns a manifest. A
-  local-directory source composes paths differently and will pass where
-  production 404s, so this assertion cannot be made hermetically.
+- ⛔ **DEFERRED — the one bullet that is not done.** The real production feed URL
+  resolves over HTTP and returns a manifest. A local-directory source composes
+  paths differently and will pass where production 404s, so this assertion cannot
+  be made hermetically. **There is no production feed yet**; the test exists and
+  is skipped with that reason, and the skip blocks
+  [step 20](#20-the-first-release).
 - `vpk pack` emits a **delta** package for N→N+1. Nothing in-house has ever
   produced one, so this is proof rather than confirmation.
 - N→N+1 applies and the installed version moves; a rollback under
   `AllowVersionDowngrade` applies and the version moves back.
 - **The browsers beside `current\` survive both**, and no re-download occurs.
 - The process log under the app-data root survives an update.
-- The logon task exists after install with `LogonType=InteractiveToken`, and is
-  gone after uninstall.
+- ~~The logon task exists after install with `LogonType=InteractiveToken`, and is
+  gone after uninstall.~~ **Withdrawn 2026-08-16: the task is dropped.**
 - With two BrowserAI processes live, the second does not apply.
 - `git status --porcelain` is empty.
 

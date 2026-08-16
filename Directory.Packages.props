@@ -69,6 +69,21 @@
          exit code. -->
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="*" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="*" />
+    <!-- The update path (plan/G-updates.md). MIT, per-user install to
+         %LocalAppData%, no elevation and no commercial tier, and the only
+         option with both a stable executable path and a stage-now/swap-later
+         primitive. It floats like everything else; the `vpk` CLI that produces
+         the packages is a global tool and MUST be the same version, which is
+         not something a lock file can enforce, so the release script checks it
+         and refuses on a mismatch.
+
+         NOTE FOR ANYONE EDITING THIS COMMENT: no double hyphen. One makes
+         MSBuild fail to load this file, and restore then reports NU1015 "do not
+         have a version specified" for EVERY package in the tree, naming central
+         package management rather than the file that did not load. Hit while
+         writing this comment on 2026-08-16, which is the fourth time this trap
+         has cost this repository time. -->
+    <PackageVersion Include="Velopack" Version="*" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers">

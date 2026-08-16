@@ -45,10 +45,20 @@ internal sealed class UpstreamReviewTests
     /// turned this test red on its own, with no other change; it resolved
     /// <b>2.2.0</b>, which is the version <c>upstream-review.json</c> records
     /// as reviewed, so no review was owed and the marker test was already
-    /// green. Velopack is still owed, at step 19.
+    /// green.
+    /// </para>
+    /// <para>
+    /// <b>It worked a second time.</b> <c>Velopack</c> left the list on
+    /// 2026-08-16 at [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
+    /// exactly where this note predicted, and again the only change was adding
+    /// the package: this test went red on its own. It resolved <b>1.2.0</b>,
+    /// which is what <c>upstream-review.json</c> records as reviewed, so no
+    /// review was owed. <b>The list is now empty, and an empty list is the
+    /// state this test is most useful in</b> — every reviewed upstream is in
+    /// the build, so any unresolved one is a defect rather than a plan.
     /// </para>
     /// </remarks>
-    private static readonly string[] NotReferencedByAnyProjectYet = ["Velopack"];
+    private static readonly string[] NotReferencedByAnyProjectYet = [];
 
     [Test]
     public async Task EveryReviewedVersionEqualsTheVersionTheBuildResolved()

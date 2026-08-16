@@ -8,8 +8,10 @@ using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using Velopack.Logging;
 
 namespace BrowserAI;
 
@@ -57,14 +59,65 @@ internal static class Program
     /// </remarks>
     public const string AppRootVariable = "BROWSERAI_ROOT";
 
+    /// <summary>
+    /// Runs one stray sweep synchronously and exits, instead of serving stdio.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Corrected 2026-08-16 (previously "the argument the logon task's action
+    /// passes").</b> [The logon task is dropped](../../plan/build-order.md#16-the-stray-sweep),
+    /// so this argument has exactly one caller left and it is a
+    /// <i>measurement</i> rather than a product path:
+    /// [re-verification row 78](../../kb/README.md#re-verification-index) says to
+    /// re-establish the sweep-pass census with <c>BrowserAI.exe --sweep</c> under
+    /// a scratch <c>BROWSERAI_ROOT</c> and read the process log. That row is the
+    /// only route to the <b>published AOT</b> column of
+    /// [the table](../../kb/windows/detection.md#re-measured-2026-08-16-building-the-sweep) —
+    /// the test probe is a framework-dependent Debug build and measures the
+    /// other column — so deleting this would strand a `[MACHINE]` figure with no
+    /// way back to it.
+    /// </para>
+    /// <para>
+    /// It is deliberately not a supported interface: nothing registers it, no
+    /// installer passes it, and it is undocumented in the model-facing surface.
+    /// </para>
+    /// </remarks>
+    public const string SweepArgument = "--sweep";
+
     private static async Task<int> Main(string[] args)
     {
+        // ⚠️ FIRST, BEFORE LOGGING AND BEFORE EVERYTHING ELSE. This call is also
+        // how the installer's own hooks are served -- `--veloapp-install` and
+        // friends, which are fast-exit callbacks with 15-60 s timeouts -- so
+        // anything placed above it runs inside every hook as well. It carries
+        // SetAutoApplyOnStartup(false), whose default would make this process
+        // exit(0) at handshake time and relaunch detached with dead pipes.
+        //
+        // Velopack's own records are buffered rather than dropped: the log
+        // cannot exist yet, because WHERE it goes depends on the install root
+        // this call is what establishes. They are replayed below.
+        var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
+        VelopackStartup.Run(args ?? [], (level, message, failure) => velopack.Add((level, message, failure)));
+
         var overridden = Environment.GetEnvironmentVariable(AppRootVariable);
-        var root = overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden) ? overridden : null;
+
+        // Three sources, in this order: the suite's override, the LOCATOR, and
+        // only then the computed default. The middle one is step 19's swap --
+        // an installed BrowserAI takes its root from
+        // VelopackLocator.Current.RootAppDir rather than from arithmetic on
+        // %LocalAppData%, because `Setup.exe --installto` makes those two
+        // disagree and the loser would be a log and 768 MB of browsers left
+        // beside a BrowserAI that is not running. Never AppContext.BaseDirectory,
+        // which resolves INSIDE current\ and is replaced by every update.
+        var root = overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden)
+            ? overridden
+            : InstallLocation.RootAppDir;
+
         var paths = new LocalAppDataPaths(root);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
         var logger = log.Factory.CreateLogger("BrowserAI.Startup");
+        var updateLogger = log.Factory.CreateLogger("BrowserAI.Updates");
 
         StartupLog.Started(
             logger,
@@ -73,15 +126,37 @@ internal static class Program
             Environment.ProcessPath ?? "<unknown>",
             Environment.CurrentDirectory);
 
-        if (root is not null)
+        foreach (var (level, message, failure) in velopack)
         {
-            StartupLog.AppRootOverridden(logger, AppRootVariable, root);
+            if (level >= VelopackLogLevel.Warning)
+            {
+                UpdateLog.VelopackProblem(updateLogger, message, failure);
+            }
+            else
+            {
+                UpdateLog.Velopack(updateLogger, message);
+            }
         }
 
-        // The logon task's mode: one pass, synchronously, and nothing else --
-        // no child, no stdio, no server. Matched against the same constant the
-        // task's own definition carries, so the two cannot drift apart.
-        if (args is not null && Array.Exists(args, argument => string.Equals(argument, LogonSweepTask.SweepArgument, StringComparison.Ordinal)))
+        if (InstallLocation.IsInstalled)
+        {
+            UpdateLog.Installed(
+                updateLogger,
+                InstallLocation.RootAppDir ?? "<unknown>",
+                InstallLocation.InstalledChannel ?? "<none>",
+                InstallLocation.InstalledVersion ?? "<unknown>",
+                BuildVersion.Current);
+        }
+
+        if (overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden))
+        {
+            StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
+        }
+
+        // The measurement mode: one pass, synchronously, and nothing else -- no
+        // child, no stdio, no server. See SweepArgument for its one remaining
+        // caller, which is a kb re-verification row rather than the product.
+        if (args is not null && Array.Exists(args, argument => string.Equals(argument, SweepArgument, StringComparison.Ordinal)))
         {
             return SweepOnce(paths, log.Factory, logger);
         }
@@ -91,6 +166,15 @@ internal static class Program
         // and it is deliberately never a startup gate: a BrowserAI that cannot
         // sweep is degraded, one that will not start is broken.
         StraySweep.StartInBackground(() => CreateSweep(paths, log.Factory), logger);
+
+        // ⚠️ TAKEN BY EVERY RUN, NOT ONLY BY ONE THAT CHECKS FOR UPDATES, and
+        // held for the whole process life. It is what another instance's census
+        // sees, so a run that did not join would be invisible to whichever
+        // instance is deciding whether an apply is safe -- and an apply
+        // terminates every process under the install root, including other
+        // agents' browsers. Failing to join is a warning and never a refusal to
+        // start; it costs this process the ability to update and nothing else.
+        using var live = LiveInstances.Join(paths, updateLogger);
 
         // One run, one directory. It holds this run's own child — the one that
         // answers `tools/list` before any session exists — together with its
@@ -179,6 +263,26 @@ internal static class Program
 
             StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
 
+            // Off the message loop and after the server is up, because a
+            // `tools/call` has to stay answerable while a package is in flight.
+            // It ends the conversation exactly the way the client watcher does
+            // -- there is one shutdown path, not two -- so the session locks are
+            // released and the job objects closed before Update.exe, which is
+            // waiting on this pid, swaps current\.
+            if (UpdateConfiguration.Resolve(updateLogger) is { } feed)
+            {
+                new UpdateService(
+                    new VelopackUpdateClient(feed),
+                    live,
+                    updateLogger,
+                    () =>
+                    {
+                        stopping.Cancel();
+                        _ = EndTheConversationAsync(transport, logger);
+                    })
+                    .StartInBackground(BuildVersion.Current, InstallLocation.IsInstalled, stopping.Token);
+            }
+
             try
             {
                 // Ends when the caller closes our stdin, which is the same
@@ -265,7 +369,7 @@ internal static class Program
             ProvisionedBrowsers.ExecutablesFor(ProvisionedBrowsers.Firefox, paths.BrowsersDirectory, manifest));
     }
 
-    /// <summary>Runs one sweep and exits, for the logon task.</summary>
+    /// <summary>Runs one sweep and exits, for <see cref="SweepArgument"/>.</summary>
     private static int SweepOnce(IAppPaths paths, ILoggerFactory factory, ILogger logger)
     {
         try

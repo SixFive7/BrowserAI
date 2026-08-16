@@ -786,6 +786,6 @@ internal static partial class SweepLog
     [LoggerMessage(
         EventId = 7,
         Level = LogLevel.Error,
-        Message = "The stray sweep failed. Nothing was terminated and nothing else is affected; the next startup or the logon task will try again.")]
+        Message = "The stray sweep failed. Nothing was terminated and nothing else is affected; the next BrowserAI startup will try again.")]
     public static partial void Failed(ILogger logger, Exception failure);
 }

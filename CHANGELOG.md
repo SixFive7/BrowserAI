@@ -39,9 +39,37 @@ has been satisfied in form only.
 - **The running build's version is the first line of every process log**, so
   *"which version was running when this happened"* is answerable for past runs
   as well as the current one. The process log survives an update, so a machine
-  that updated itself records both versions and the moment it changed.
+  that updated itself records both versions and the moment it changed. *Now
+  demonstrated rather than asserted: after a real update and a real rollback, one
+  log file carries `BrowserAI 0.9.0 started` and `BrowserAI 0.9.1 started`.*
+- **Silent background self-update, per-user, with a rollback that works.**
+  BrowserAI installs to `%LocalAppData%` with no elevation, checks its feed off
+  the message loop so a tool call stays answerable while a package is in flight,
+  and swaps itself between sessions — in normal use there is no *restart to
+  apply* prompt at all. A BrowserAI-only release is a **97,216-byte** delta
+  against a 46.8 MiB full package.
+- **An update is never applied while another BrowserAI is running.** Applying
+  terminates every process under the install root, which at the concurrency this
+  is designed for is every other agent's browser. The last instance to exit
+  applies what the others staged.
+- **Rollback is publishable as well as acceptable.** The client allows a version
+  downgrade and the release script permits *monotonic **or** an explicit rollback
+  republish* — both halves, because either alone is a rollback that can be
+  accepted but never emitted, or emitted and never accepted.
+- **`build/New-Release.ps1`**, which publishes, packs and refuses: on a `vpk`
+  that does not match the Velopack library, on a version that is `0.0.0` or
+  carries build metadata, on a non-monotonic release nobody stated, on anything
+  in ILC's raw output, and on this build's own version string appearing in
+  decorated form anywhere in the linked binary.
 
 ### Fixed
+
+- **37 MB of every release was a zip nobody reads.** The published artifact
+  carried `payload\.cache\node-<ver>-win-x64.zip`, the download cache the payload
+  build keeps so a re-run does not re-fetch Node. Excluding it took the full
+  package from **85,348,009** to **49,043,498 bytes** — 42.5% of every download,
+  for a file that is never opened at runtime and compresses to nothing because it
+  is already compressed.
 
 - **Every session's `lock.json` would have recorded the wrong version.** The
   build stamp was read from the assembly version, which the versioning mechanism
@@ -53,6 +81,12 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The stray-browser sweep now has one trigger instead of two.** The logon
+  scheduled task is dropped: it cannot be registered without elevation on a
+  UAC-filtered administrator token, and a per-user install has no elevation to
+  offer. BrowserAI's own startup sweep already covers the case that matters — a
+  stray browser matters when something is about to contend for its profile lock,
+  and that is exactly when a client starts.
 - **One place answers "what version is this binary".** Two implementations
   disagreed — one read the informational version, the other the assembly
   version — and the version now has a single source that reads the informational

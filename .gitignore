@@ -462,9 +462,14 @@ FodyWeavers.xsd
 #   payload/node/{node.exe,LICENSE}   payload/mcp/node_modules/...
 #   payload/.cache/node-<ver>-win-x64.zip   payload/payload.json
 #
-# so /payload/ is now a real path rather than a guess. /staging/ and /.staging/
-# are not emitted by anything and are kept only as spare conventions; delete
-# them at v1 if nothing has claimed them (TODO.md).
+# so /payload/ is now a real path rather than a guess.
+#
+# /staging/ and /.staging/ are GONE, deleted 2026-08-16 at build-order step 19.
+# They were kept "as spare conventions" on the theory that packaging would claim
+# one; packaging landed and claimed neither. The release script publishes to
+# /artifacts/ (the SDK's own folder, already ignored above) and packs into
+# /Releases/. An ignore rule for a path nothing emits is a rule that can only
+# ever hide something nobody expected.
 #
 # The tracked half lives at build/payload/ -- package.json and the resolved
 # package-lock.json -- and is deliberately OUTSIDE this rule: the lock is the
@@ -472,8 +477,6 @@ FodyWeavers.xsd
 #
 # Verified 2026-08-15: vpk emits none of these three.
 /payload/
-/staging/
-/.staging/
 
 # playwright-core writes .links/ into the BROWSERS root -- never into
 # node_modules, measured 2026-08-16 (kb: first-run provisioning). Browsers are

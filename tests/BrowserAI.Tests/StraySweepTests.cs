@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
@@ -227,15 +228,27 @@ internal sealed class StraySweepTests
         await Assert.That(next.Outcome).IsEqualTo(StraySweepOutcome.Ran);
     }
 
-    /// <summary>R4: the scheduled task and BrowserAI cannot name two mutexes.</summary>
+    /// <summary>
+    /// R4: two sweepers cannot name two mutexes.
+    /// </summary>
+    /// <remarks>
+    /// <b>Corrected 2026-08-16 (previously
+    /// <c>TheSweepMutexIsNamedOnceInTheProductAndTheTaskRunsThatSameProduct</c>,
+    /// which also asserted on the logon task's generated XML).</b>
+    /// [The logon task is dropped](../../plan/build-order.md#16-the-stray-sweep),
+    /// so the second sweeper is no longer a task — it is
+    /// <c>BrowserAI.exe --sweep</c>, the measurement entry point
+    /// [row 78](../../kb/README.md#re-verification-index) names. The half that
+    /// mattered is unchanged and is the half kept: the name is <c>Global\</c>
+    /// prefixed and is spelled in exactly one product file, because a second
+    /// spelling is how two sweepers come to serialise against nothing while both
+    /// report success.
+    /// </remarks>
     [Test]
-    public async Task TheSweepMutexIsNamedOnceInTheProductAndTheTaskRunsThatSameProduct()
+    public async Task TheSweepMutexIsNamedOnceInTheProductAndEveryEntryPointReachesThatName()
     {
         await Assert.That(LockScopes.Sweep).StartsWith(LockScopes.GlobalPrefix);
 
-        // The name exists in exactly one product file. A second spelling is how
-        // a task and a server come to sweep under two different objects, both
-        // reporting success while serialising against nothing.
         var naming = RepositoryLayout.ProductSourceFiles
             .Where(file => File.ReadAllText(file.FullName).Contains("BrowserAI-Sweep", StringComparison.Ordinal))
             .Select(file => file.Name)
@@ -244,12 +257,17 @@ internal sealed class StraySweepTests
 
         await Assert.That(string.Join(", ", naming)).IsEqualTo("LockScopes.cs");
 
-        // And the task does not carry a name of its own: it runs the same binary
-        // with one argument, so whatever that binary uses is what the task uses.
-        var xml = LogonSweepTask.Xml(@"C:\Program Files\BrowserAI\current\BrowserAI.exe", "BrowserAI", "S-1-5-21-0-0-0-1000");
+        // Neither entry point carries a name of its own: the background thread
+        // and the --sweep pass both build the same StraySweep, which takes the
+        // one name above. Asserted on the source rather than by running two
+        // processes, because what could drift is a second spelling and that is
+        // what the check above already forbids -- this half only proves the two
+        // entry points are the same code.
+        var program = await File.ReadAllTextAsync(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Program.cs"));
 
-        await Assert.That(xml).DoesNotContain("BrowserAI-Sweep");
-        await Assert.That(xml).Contains($"<Arguments>{LogonSweepTask.SweepArgument}</Arguments>");
+        await Assert.That(program).DoesNotContain("BrowserAI-Sweep");
+        await Assert.That(Regex.Count(program, @"CreateSweep\(paths, ", RegexOptions.None, TimeSpan.FromSeconds(5))).IsEqualTo(2);
     }
 
     /// <summary>

@@ -11,9 +11,21 @@ namespace BrowserAI.Hosting;
 /// The seam exists on day one rather than being bolted on at §G, and the reason
 /// is mechanical: <c>VelopackLocator.Current</c> throws under <c>dotnet run</c>
 /// and under every test host, so a build that calls it directly cannot be
-/// tested at all. Step 19 swaps <see cref="LocalAppDataPaths"/> for an
-/// implementation over <c>VelopackLocator.Current.RootAppDir</c> and nothing
-/// else moves.
+/// tested at all.
+/// </para>
+/// <para>
+/// <b>Corrected 2026-08-16 (previously "Step 19 swaps
+/// <see cref="LocalAppDataPaths"/> for an implementation over
+/// <c>VelopackLocator.Current.RootAppDir</c> and nothing else moves").</b> Step
+/// 19 swapped the **root**, not the class. The layout below is identical either
+/// way, so a second <c>IAppPaths</c> would have been the same five expressions
+/// twice; what actually had to move is where <c>rootAppDir</c> comes from, and
+/// that is <see cref="Updates.InstallLocation"/> — the locator when this process
+/// is an installed one, <c>%LocalAppData%\BrowserAI</c> when it is not. The
+/// distinction is not cosmetic: the two agree only while the install is at its
+/// default location, and <c>Setup.exe --installto</c> makes them disagree
+/// silently, which would put the log and 768 MB of browsers somewhere the
+/// running binary is not.
 /// </para>
 /// <para>
 /// <b>Never <c>AppContext.BaseDirectory</c>.</b> It reads as "next to the
@@ -105,4 +117,31 @@ internal interface IAppPaths
     /// </para>
     /// </remarks>
     string InstanceRoot { get; }
+
+    /// <summary>
+    /// Where every live BrowserAI under this install root announces itself: one
+    /// held file per running process, and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It exists for exactly one question — <i>am I the last instance?</i> —
+    /// and that question gates the update apply.</b> Velopack's
+    /// <c>force_stop_package</c> kills every process whose image is under the
+    /// install root, without asking and after every hook returns
+    /// ([kb](../../kb/packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
+    /// With ~100 concurrent registrations that is every other live session
+    /// destroyed mid-task, so an apply is only ever allowed to run when nothing
+    /// else is there to destroy.
+    /// </para>
+    /// <para>
+    /// <b>A sibling of <c>current\</c>, and deliberately not
+    /// <see cref="InstanceRoot"/>.</b> An instance directory's liveness signal is
+    /// the child holding it as a working directory, which means a run has no
+    /// signal at all until its child has started — precisely the window in which
+    /// an update check can run. This one is a file handle taken by BrowserAI
+    /// itself, before anything else, and released by the OS however the process
+    /// dies.
+    /// </para>
+    /// </remarks>
+    string LiveInstanceDirectory { get; }
 }

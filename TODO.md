@@ -16,8 +16,26 @@ and version it was true at.
 
 ## At v1 launch
 
-- [ ] **Decide how the logon sweep task actually gets registered — it cannot be
-      registered non-elevated on this machine.** Measured 2026-08-16 at
+- [x] ~~**Decide how the logon sweep task actually gets registered — it cannot be
+      registered non-elevated on this machine.**~~ ✅ **Decided 2026-08-16 at
+      [step 19](plan/build-order.md#19-velopack-package-update-roll-back): the
+      task is DROPPED**, and the code, the tests and five documents went with it.
+      Of the three options below, the third is taken — **BrowserAI's own startup
+      sweep already covers the case that matters**, because a stray matters when
+      something is about to contend for a lock and that is exactly when a client
+      starts. Deleted: `src/BrowserAI/Runtime/LogonSweepTask.cs`,
+      `tests/BrowserAI.Tests/LogonSweepTaskTests.cs`. Swept:
+      [§C](plan/C-sessions.md#the-stray-sweep-and-the-concurrency-it-must-survive)
+      (the trigger paragraph and rows R4, R5, R9),
+      [step 16](plan/build-order.md#16-the-stray-sweep),
+      [README](README.md), [kb: detection](kb/windows/detection.md#the-logon-sweep-task),
+      [kb: Velopack](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output) and
+      [rows 80–81](kb/README.md#re-verification-index). **`--sweep` is kept**: it
+      has one caller left, [row 78](kb/README.md#re-verification-index), which is
+      the only route to the published-AOT column of the sweep-pass table. The
+      original text follows.
+      <br><br>
+      Measured 2026-08-16 at
       [step 16](plan/build-order.md#16-the-stray-sweep) from a medium-integrity,
       UAC-filtered administrator token: `schtasks /Create /XML` **and** the
       `Schedule.Service` COM API both answer `Access is denied` / `0x80070005`,
@@ -40,17 +58,22 @@ and version it was true at.
       something is about to contend for a lock — so the honest question is what
       the task buys for the week in which nobody starts a client.
 
-- [ ] **Decide whether `BrowserAI.exe --sweep` flashes a console window.**
+- [x] ~~**Decide whether `BrowserAI.exe --sweep` flashes a console window.**~~
+      ✅ **Moot 2026-08-16, and withdrawn rather than answered.** The question
+      only ever existed because a **Task Scheduler action** would run the binary
+      under a logged-on user; with [the task dropped](#at-v1-launch) nothing
+      launches `--sweep` except a person measuring
+      [row 78](kb/README.md#re-verification-index) from a terminal that already
+      has a console. A flash in that case is what was asked for. **It is still
+      unmeasured, and that is now correct rather than owed**: there is no
+      unattended caller left for it to bother. The original text follows.
+      <br><br>
       BrowserAI is a console subsystem binary, and a Task Scheduler action
       running one under a logged-on user normally shows a window for the life of
       the process. The pass is ~26 ms, so it would be a flash rather than a
       window — but a flash every logon, and again ten minutes later, is the kind
       of thing a developer files a bug about. `<Hidden>` in the task definition
-      hides the *task* in the UI and not the window. **Unmeasured**: it cannot be
-      established until the task can actually be registered, which is the item
-      above. If it turns out to matter, the answers are a `WINDOWS` subsystem
-      stub or launching through `conhost`-less means — both
-      [step 19](plan/build-order.md#19-velopack-package-update-roll-back)'s.
+      hides the *task* in the UI and not the window.
 
 - [ ] **Widen the invisible-source check beyond `*.cs`, or decide not to.**
       Step 14 was bitten by the template's unanchored `artifacts/` rule matching
@@ -185,7 +208,24 @@ and version it was true at.
       understood, done-test evidence comes from the executable and the step that
       relies on it says so.
 
-- [ ] **Capture ILC's raw output and fail the publish if it is non-empty.**
+- [x] ~~**Capture ILC's raw output and fail the publish if it is non-empty.**~~
+      ✅ **Done 2026-08-16 at
+      [step 19](plan/build-order.md#19-velopack-package-update-roll-back)**, in
+      the release script this item was waiting for:
+      `build/New-Release.ps1` publishes with `-v:normal`, tees the whole log to
+      `.work/release-publish.log`, and refuses on `will always throw`, on
+      `(warning|error) IL[0-9]{4}`, or on an AOT/trim analysis warning. Measured
+      clean on the first real release: **379 lines read, 0 complaints.**
+
+      > ⚠️ **The obvious pattern fails every publish, and it took a run to find
+      > out.** Keying on `\bIL[0-9]{4}\b` matches csc's own command line, which
+      > at `-v:normal` carries `/nowarn:1701,1702,NU5105,IL2121,...` — so the
+      > check matched a **suppression list** and refused a clean build. The
+      > severity word is what makes a match a diagnostic
+      > ([kb](kb/packaging/velopack.md#the-ilc-output-check-needs-the-severity-word-not-the-code)).
+
+      Original text follows.
+      <br><br>
       Build-order step 1 asked for two things and only one of them is a property.
       The property half landed 2026-08-16: `SuppressTrimAnalysisWarnings=false`,
       `TrimmerSingleWarn=false` and `ILLinkTreatWarningsAsErrors=true` in
@@ -242,8 +282,31 @@ and version it was true at.
       `lock.json` of the 0.x line); and the SDK's `SourceRevisionId` decoration is
       off repository-wide.
 
-- [ ] **Check the *published* binary's version string, in the release script that
-      does not exist yet.** Decided 2026-08-16 at
+- [x] ~~**Check the *published* binary's version string, in the release script that
+      does not exist yet.**~~ ✅ **Done 2026-08-16 at
+      [step 19](plan/build-order.md#19-velopack-package-update-roll-back)** —
+      the release script exists now, and it sweeps the whole linked binary for
+      `<core>+<sha>` in both the UTF-16 and ASCII readings.
+
+      > ⚠️ **Corrected as it was written: FrameLink's rule as stated below —
+      > *fail the build on ANY decorated string* — can never go green in this
+      > repository.** The first publish carried **six**, and **not one of them
+      > was ours**: `1.2.0+f2edcbc` (Velopack), `2.2.0+6fa3825…`
+      > (ModelContextProtocol) and four `Microsoft.Extensions.*` at 10.0.10,
+      > 10.0.11 and 10.8.3 — each decorated by its own publisher's SourceLink and
+      > linked in by ILC. That rule is only sound for a binary with no
+      > third-party dependency carrying one, which this is not and will not
+      > become. **The sound version is narrower and is still a sweep:** fail on a
+      > decorated string whose version *core* is the version being packed. That
+      > is ours — the entry assembly, or a referenced project of ours sharing the
+      > derived version — and it is the only string that can reach the feed
+      > comparison, because the updater matches `BuildVersion.Current` against
+      > the served version. A third-party decoration is inert
+      > ([kb](kb/packaging/velopack.md#the-framelink-version-string-sweep-is-too-broad-to-use-as-written)).
+
+      Original text follows.
+      <br><br>
+      Decided 2026-08-16 at
       [step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog),
       and carried here rather than built, because there is nothing to hang it on:
       `build/` has a payload script and a snapshot script, and no release script.
