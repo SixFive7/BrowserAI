@@ -39,7 +39,20 @@ The discriminator is the *duration the object is held for*, and it is already th
 
 > **Supersedes the earlier scheme**, which said `lock.json` was *"rewritten in place on the handle we already own; a reader that catches a torn write retries once."* That is a recovery strategy for a torn read and not a durability guarantee at all: a plain `Write` returns once the bytes are in the file-system cache, so a power loss or a bugcheck between the write and the flush leaves a file that the writer believes it wrote. `lock.json` is the entire ownership guard — [the directory is the identity](C-sessions.md#the-session-directory-is-the-identity) and this file is what proves who owns it — so the one file whose loss cannot be reconstructed is the one being written with the weakest guarantee available. The retry-once behaviour is superseded rather than kept: with an atomic rename a reader sees either the old file or the new one, and never a torn one, so there is nothing to retry.
 
-This is unmeasured on this machine — `WriteThrough` costs a disk round trip per write, and `lock.json` is written on `init`, on `resume` and on a purpose change, never on the per-call hot path. If it ever appears in a profile, measure it before trading the guarantee away.
+> **Measured 2026-08-16, and the paragraph this replaces said it was unmeasured.** A durable write of `lock.json` costs **16.1 ms and 18.2 ms** on this machine, over two runs of a hundred sequential rewrites through the real path. It is written on `init`, on `resume` and on a purpose change, never on the per-call hot path, so there is nothing here to trade away and the question is settled rather than deferred. Numbers, method and how to re-run in [kb: durable writes](../kb/windows/processes.md#stdio-exit-codes-and-process-startup).
+
+### The rename and the held handle collide, and the mutex is what resolves it
+
+**Found by building it, 2026-08-16.** [§C](C-sessions.md#the-session-directory-is-the-identity) makes the *open handle* on `lock.json` the lock. This section makes the *atomic rename* the way the record is put in place. Those two requirements cannot both be satisfied by one handle, and neither section said so.
+
+**Measured: a rename cannot replace a file whose handle is open, under any share mode.** `FileShare.Read`, `Read | Delete` and `ReadWrite | Delete` all refuse `File.Move(temp, lock.json, overwrite: true)` with **`ERROR_ACCESS_DENIED`** — not the sharing violation one would expect — because `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING` needs DELETE on the destination. So the obvious repair, adding `FILE_SHARE_DELETE` to the lock handle, does not exist.
+
+The resolution is **close → rename → re-open, entirely inside the per-directory mutex.** That is what the mutex was always for — it guards create-or-take, and this is the create-or-take critical section — but it is now also the thing that makes the design *possible* rather than merely orderly: for the few hundred microseconds in which no handle guards the name, no other BrowserAI can be looking, because every one of them takes this mutex first.
+
+Two consequences worth carrying:
+
+- **A reader must open `FileShare.ReadWrite | FileShare.Delete`.** `ReadWrite` because the holder has the file open for *write* and a reader that does not share write is refused outright — which would turn *"somebody owns this"* into *"this file cannot be read"*, the wrong answer in the dangerous direction. `Delete` because a reader without it blocks every rewrite.
+- **The rename's retry budget is bounded by time, not by attempts.** Five attempts over 150 ms — the shape the [C# prior art](../kb/windows/detection.md#named-mutexes-and-lock-files--first-party-prior-art-in-c) uses — was measured exhausting under load with a concurrent reader. Two seconds, backing off 5 ms to a 100 ms cap. And **a failed rewrite must not also release the lock**: the handle is dropped before the replacement, so an exception on the way through left the session silently unowned until the recovery path was added.
 
 ## The job object is unnamed
 

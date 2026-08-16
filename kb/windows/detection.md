@@ -329,6 +329,51 @@ doubt. `CrossProcessLock.cs:96-101` surfaces it as a distinct
 PowerShell version got wrong. The holder must still be disposed, or the next
 waiter inherits the abandonment. `[STABLE]`
 
+**An abandoned mutex is only observable by a process that already held a
+handle.** Measured 2026-08-16 across real processes: a probe created
+`Global\BrowserAI-<hash>`, acquired it, and was `TerminateProcess`d from outside.
+A process that opened the name **afterwards** got a clean `Acquired` — the last
+handle closed with the dying holder, so the kernel object was destroyed and the
+next `CreateMutexW` made a new, unabandoned one. A process holding a handle
+**before** the kill got `AbandonedMutexException`, and releasing it succeeded,
+which is the proof it really was acquired. The abandonment is then **consumed**:
+the next acquire on the same object is ordinary. `[STABLE]`
+
+> **This is why a test for race R3 can pass while the handling is missing
+> entirely.** Written the intuitive way round — kill the holder, then open the
+> name — the acquisition is not abandoned and the test observes `Acquired`, so it
+> passes for a build that swallows `AbandonedMutexException` and for a build that
+> never meets one. The order is the test. Reproduce:
+> `SessionLockTests.AnAbandonedMutexIsAcquiredAndTheAcquisitionSaysSo`, whose
+> comment records the ordering as load-bearing. It also means R3 matters
+> *because* BrowserAI is designed for ~100 concurrent processes: with one process
+> on a machine there is nothing to abandon to.
+
+**The three lock scopes under real concurrency, measured across processes.**
+2026-08-16, N real processes started, parked on one manual-reset event, and
+released together; every one drives the product's own `SessionLock.TryAcquire`
+against one session directory. Two runs at each N. `[MACHINE]` for the timings,
+`[STABLE]` for the outcome.
+
+| N | acquired | refused | winner (ms) | fastest refusal (ms) | slowest refusal (ms) |
+|---:|---:|---:|---:|---:|---:|
+| 16 | **1** | 15 | 37.6 · 41.7 | 60.9 · 66.2 | 366.0 · 374.4 |
+| 64 | **1** | 63 | 47.6 · 41.7 | 69.5 · 62.5 | 1403.7 · 1405.7 |
+
+Every refusal named the holder's pid, its process start time, when the lock was
+taken and its recorded purpose — so no caller is ever told merely "busy". The
+slowest refusal is the queue behind the per-directory gate, which each loser
+enters in turn to discover the file is held: **1.40 s at N=64 against a
+five-second gate**, and no run came close to it. Reproduce by raising
+`Contenders` in `SessionLockTests`, rebuilding, and running
+`UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho` alone; the
+suite pays for N=16 on every run.
+
+The machine-wide sweep scope was measured the same way and separately: **8
+processes, zero timeout, 1 acquired and 7 refused**, each refusal asserted under
+one second — try-acquire-and-skip, with no queue behind it, which is the whole
+difference between that scope and the gate above. `[MACHINE]`
+
 **A named mutex is owned by the thread that waited on it, and releasing it from
 another thread throws a message that names nothing relevant** —
 `ApplicationException` about "an unsynchronized block of code"

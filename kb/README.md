@@ -81,9 +81,9 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **154**
-`[FLOATS]` markers stand across the articles against the **63** numbered rows
-below (70 lines, counting 2a, 2b, 4a, 4b, 4c, 16a and 63a),
+table is how that happens. **It does not yet cover all of them**: **156**
+`[FLOATS]` markers stand across the articles against the **65** numbered rows
+below (72 lines, counting 2a, 2b, 4a, 4b, 4c, 16a and 63a),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
@@ -227,6 +227,16 @@ missing row as a gap in this table, never as permission to skip the fact.
 > by an oversight. **Row 30 deliberately did not move**: the product is now
 > immune to it by construction, which is a source scan rather than a measurement
 > of the SDK.
+>
+> **Re-counted 2026-08-16 after build-order step 10: 156.** Only **two** new
+> `[FLOATS]` markers, which is the smallest addition any step has made and is
+> worth saying why: almost everything step 10 measured is a **Windows** fact —
+> what an abandoned mutex means, what a rename does to an open file, what a
+> `Global\` name costs — and those are `[STABLE]`, while the concurrency and
+> durability timings are `[MACHINE]`. The two that float are both
+> `System.Text.Json` and .NET behaviours the product now depends on in code:
+> rows 64 and 65. Two new rows, so the table is 65 numbered rows over 72 lines.
+> **No row moved from *manual* to a test this step**, and no row was owed by it.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -314,6 +324,8 @@ decision:
 | 62 | **A response's `result` reaches the caller as the exact bytes the child wrote** — escaping, numeric form, key order, unknown members and unknown content *types* all unchanged, because the payload is sliced by token offset and written with `WriteRawValue` rather than re-serialised ([kb](mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220)) | `System.Text.Json` changes `TokenStartIndex` / `BytesConsumed` semantics or `WriteRawValue`; or somebody re-introduces a `JsonNode` round trip on the answer path, which would pass every semantic check and quietly change the bytes | Compare the **span** of `result` in the double's sent frame against the span in the caller's received frame, sliced by a reader written for the tests rather than by the product's own. Include an escape the child chose (`é`), a base64 payload containing `+` and `/`, an unknown content type, an unknown property and a 2 MiB body | `LosslessPassthroughTests.AnEscapeTheChildChoseStaysAnEscape` · `LosslessPassthroughTests.AnImagePayloadArrivesByteIdentical` · `LosslessPassthroughTests.AnOversizedPayloadArrivesByteIdentical` |
 | 63 | **A named child-to-caller notification is relayed through the public `McpSession.RegisterNotificationHandler`, and the caller's own `progressToken` survives it** ([kb](mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220)) | The SDK removes or narrows `RegisterNotificationHandler`, or starts consuming `notifications/progress` before user handlers see it. Silent either way: the call still succeeds and the caller simply never hears progress | Call a tool with a `_meta.progressToken` of the caller's choosing, have the double echo it back on every progress notification, and assert the token that reaches the caller is the caller's rather than one the proxy minted | `LosslessPassthroughTests.AChildProgressNotificationReachesTheCallerUnderTheCallersToken` |
 | 63a | **The relay does not preserve notification *order*** — inbound messages are dispatched fire-and-forget, and two progress notifications written in order were observed arriving 2 then 1 ([kb](mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220)) | The SDK starts awaiting message handling in order, which would make this stop being true in the harmless direction. It cannot be fixed from a notification handler, because the reordering happens before the handler runs | Run row 63's test with logging at `Trace` and read the order of the two `sending message` lines. Split out of 63 on 2026-08-16 rather than folded into it: that test asserts the token and the count, and says nothing about sequence | — *manual*; deliberately unasserted, and carried in [`TODO.md`](../TODO.md) rather than claimed |
+| 64 | **`Utf8JsonWriter`'s default encoder escapes `+`**, so an ISO 8601 timestamp with a positive UTC offset is written with its sign escaped unless `UnsafeRelaxedJsonEscaping` is set ([kb](windows/processes.md#interop-and-the-toolchain)) | Any `System.Text.Json` bump changes the default encoder's safe list — in either direction. It is silent both ways: the file round-trips perfectly and only a human reading it notices | Assert on the **literal bytes** of a written timestamp, never on the parsed value. Every parse-side assertion passed while this was wrong, which is why the check has to be on the file | `LockRecordTests.TimestampsAreWrittenAsIso8601WithAnExplicitOffset` |
+| 65 | **A rename over an open file surfaces as `UnauthorizedAccessException`, which is not an `IOException`** — `File.Move(overwrite: true)` is refused `ERROR_ACCESS_DENIED` under every share mode, including `FILE_SHARE_DELETE` ([kb](windows/processes.md#interop-and-the-toolchain)) | .NET changes how `File.Move` maps the Win32 error, or stops routing through `MoveFileEx`. The durable `lock.json` write retries on both types **because of this measurement**; a version that caught only `IOException` would stop retrying the case that happens, and would fail exactly under load | Hold the destination open under all three share modes and assert the exception type and HRESULT on each. The Windows half of the fact is stable; the .NET mapping is what floats | `SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen` |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

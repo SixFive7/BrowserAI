@@ -368,6 +368,57 @@ the temp on every exit path. Two details worth taking:
 > the call is written `Flush(flushToDisk: true)`. A named argument defeats a
 > literal grep, so a negative grep result is not an absence either.)*
 
+**A durable write of this project's own `lock.json` costs 16.1 ms and 18.2 ms.**
+Measured 2026-08-16, two runs of **100 sequential rewrites** through the product's
+path — a temp file in the same directory opened `FileShare.None` with
+`FileOptions.WriteThrough`, `Flush(flushToDisk: true)`, then
+`File.Move(overwrite: true)` — at 1.61 s and 1.82 s wall including process start.
+[§D](../../plan/D-locking.md#durable-lockjson-writes) recorded this cost as
+unmeasured and said to measure it before ever trading the guarantee away; this is
+that measurement, and at ~17 ms against a file written on `init`, on `resume` and
+on a purpose change, there is nothing to trade. Reproduce with
+`BrowserAI.TestProbe.exe session-rewrite <dir> <ready-file> 100 <done-file>` and
+time it. `[MACHINE]`
+
+**A rename cannot replace a file whose handle is open — under *any* share mode —
+and it fails `ERROR_ACCESS_DENIED` rather than a sharing violation.** Measured
+2026-08-16 across `FileShare.Read`, `FileShare.Read | FileShare.Delete` and
+`FileShare.ReadWrite | FileShare.Delete`: all three refuse
+`File.Move(source, target, overwrite: true)` with HRESULT `0x80070005`, because
+`MoveFileEx` with `MOVEFILE_REPLACE_EXISTING` needs DELETE on the destination.
+`[STABLE]` for the refusal; `[FLOATS]` for the .NET exception type, which is
+**`UnauthorizedAccessException` and therefore *not* an `IOException`** — a retry
+written to catch `IOException` alone never retries the case that actually
+happens. Reproduce:
+`SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen`, which
+walks all three share modes on every run.
+
+> **This is what forces close → rename → re-open under a mutex**, and it is worth
+> stating because the obvious repair does not exist. [§C](../../plan/C-sessions.md#the-session-directory-is-the-identity)
+> makes an open handle on `lock.json` the lock, and [§D](../../plan/D-locking.md#durable-lockjson-writes)
+> requires the record to arrive by atomic rename. The natural guess is that
+> adding `FILE_SHARE_DELETE` to the lock handle reconciles them — it does not;
+> the rename is refused identically. So the handle has to be closed for the
+> rename, and the only thing that makes the resulting gap unobservable is that
+> every BrowserAI takes the per-directory mutex before create-or-take.
+
+**Five attempts over 150 ms is not a large enough retry budget for that rename.**
+Measured 2026-08-16: with a second process reading the destination in a tight
+loop and the rest of the suite running beside it, the 5-attempt / 10-20-40-80 ms
+budget taken from the C# prior art above **exhausted and threw**. Bounded by
+total elapsed time instead — 2 s, backing off 5 ms doubling to a 100 ms cap —
+and green across two full-suite runs. `[MACHINE]` for the numbers; the shape is
+general.
+
+> **It was invisible until it was made visible, which is the more useful half.**
+> The rewriting probe's streams were drained and discarded by the test rig, so an
+> exhausted budget presented as the *host* waiting out its own ninety-second
+> patience and failing on a wholly unrelated assertion. Twice. The probe now
+> catches, writes the failure into its report file, and exits non-zero, and the
+> host asserts on that field — after which the same run named the cause on the
+> first attempt. A child whose output goes nowhere is a child whose crash is
+> indistinguishable from slowness.
+
 **`Process.ExitCode` throws after `Dispose()`, and
 `Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
 PowerShell, which merely returns `$null`. Cache the value as an `int` the moment
@@ -410,6 +461,18 @@ itself uses it. `[MACHINE]` for the numbers, `[STABLE]` for the API.
 command line must be passed as a writable `char[]`/`Span<char>` — the API mutates
 the buffer, and a `string` literal is not valid. `DllImport` is the wrong choice
 under NativeAOT because it relies on runtime IL-stub generation. `[STABLE]`
+
+**`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
+with a positive UTC offset is written with its sign as a `+` escape.
+Measured 2026-08-16 while writing `lock.json`: the file round-trips perfectly,
+parses everywhere, and is unreadable by the person the file exists for.
+`JavaScriptEncoder.UnsafeRelaxedJsonEscaping` — the same encoder
+[the server transport already takes](../mcp/sdk.md) — removes it. **It was caught
+only by an assertion on the literal bytes**; every assertion on the parsed value
+passed, in both directions, which is exactly the shape of a defect that ships.
+`[FLOATS]` — the encoder's safe list belongs to `System.Text.Json`, which the SDK
+floats. Reproduce:
+`LockRecordTests.TimestampsAreWrittenAsIso8601WithAnExplicitOffset`.
 
 **A COM/interop enum value the running OS does not know throws on assignment** —
 at the property set, not at load and not at compile time. The managed enum is only

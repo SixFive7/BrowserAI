@@ -19,7 +19,24 @@ internal static class ProbeProcess
     internal readonly record struct Result(int ExitCode, string StandardOutput, string StandardError);
 
     /// <summary>Runs the probe to completion.</summary>
-    public static async Task<Result> RunAsync(params string[] arguments)
+    public static Task<Result> RunAsync(params string[] arguments) =>
+        RunInAsync(AppContext.BaseDirectory, arguments);
+
+    /// <summary>
+    /// Runs the probe to completion from a working directory of the caller's
+    /// choosing.
+    /// </summary>
+    /// <remarks>
+    /// The overload exists for one question the test host cannot answer about
+    /// itself: what a <b>relative</b> path canonicalises to. That depends on the
+    /// process's current directory, and mutating the host's would be a global
+    /// change aimed at a local question, in a runner that executes tests in
+    /// parallel.
+    /// </remarks>
+    /// <param name="workingDirectory">The probe's current directory.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <returns>What the run produced.</returns>
+    public static async Task<Result> RunInAsync(string workingDirectory, params string[] arguments)
     {
         var startInfo = new ProcessStartInfo(ExecutablePath)
         {
@@ -31,7 +48,7 @@ internal static class ProbeProcess
             // Explicit, never left unset. .NET passes null to CreateProcess for
             // an unset WorkingDirectory and the child silently inherits the
             // test host's -- the same rule the product's own spawns obey.
-            WorkingDirectory = AppContext.BaseDirectory,
+            WorkingDirectory = workingDirectory,
 
             // Console stdio defaults to CP437 in both directions, so a harness
             // that leaves this alone fails the product for the harness's defect.

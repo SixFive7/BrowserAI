@@ -54,11 +54,23 @@ internal interface IAppPaths
     /// the config file, and the child's working directory.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// A sibling of <c>current\</c> for the same reason the log is, and per-run
     /// rather than shared, because [the child's working directory is the output
     /// root](../../plan/F-artifacts.md) and two runs must not write into one.
-    /// Sessions replace this at build-order step 10; until then a run is the
-    /// unit.
+    /// </para>
+    /// <para>
+    /// <b>Corrected 2026-08-16 (previously "Sessions replace this at build-order
+    /// step 10").</b> They do not, and step 10 is where that was decided rather
+    /// than assumed. Step 10 builds the session directory, its lock and the
+    /// three lock scopes — but nothing in the product creates a session yet,
+    /// because <c>browserai_init</c> is step 12 and the config generator that
+    /// would write into a session directory is step 12 as well. Replacing this
+    /// now would leave the vertical slice with nowhere to put the config it
+    /// generates on every run. The replacement is step 12's, and it is one
+    /// change: the generated config and the child's working directory move into
+    /// the session directory, and this member goes with the per-run concept.
+    /// </para>
     /// </remarks>
     string InstanceRoot { get; }
 }

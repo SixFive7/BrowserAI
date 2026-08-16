@@ -1028,6 +1028,89 @@ than a detail of step 7.
 **Consumes:** [§C](C-sessions.md#the-session-directory-is-the-identity) ·
 [§D](D-locking.md)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Sessions/{SessionPath, SessionLayout,
+> LockScopes, MachineMutex, LockRecord, SessionLock}.cs` ·
+> `src/BrowserAI/Interop/ProcessLiveness.cs` ·
+> `src/BrowserAI/Hosting/IAppPaths.cs` (one correction) ·
+> `tests/BrowserAI.TestProbe/SessionProbe.cs` (six modes) ·
+> `tests/BrowserAI.Tests/{SessionPathTests, LockRecordTests, SessionLockTests}.cs`
+> · `tests/BrowserAI.Tests/Harness/{ProbeReport, ProbeProcess}.cs`. Every
+> done-test below was run. **135 tests green twice over, `dotnet build` 0
+> warnings**, and the AOT publish is clean.
+>
+> **The decision under test held, and it held under measurement rather than by
+> assertion.** Sixteen real processes, released together from one manual-reset
+> event, each driving the product's own `TryAcquire` against one directory:
+> **one acquired, fifteen were told who had it**, every refusal naming the
+> holder's pid, its start time, when the lock was taken and its recorded purpose.
+> Re-run at **64** processes, twice, with the same shape — 1 and 63, the slowest
+> refusal at **1.40 s** against a five-second gate. The sweep scope was measured
+> separately: 8 processes, zero timeout, 1 acquired and 7 refused immediately.
+> [The numbers are in kb](../kb/windows/detection.md#named-mutexes-and-lock-files--first-party-prior-art-in-c);
+> the suite pays for N=16 on every run and the constant is documented as the way
+> to reproduce the rest.
+>
+> ⚠️ **Two requirements of the plan collide, and no document said so.**
+> [§C](C-sessions.md#the-session-directory-is-the-identity) makes the open handle
+> on `lock.json` the lock; [§D](D-locking.md#durable-lockjson-writes) makes an
+> atomic rename the way the record is written. **Measured: a rename cannot
+> replace a file whose handle is open, under any share mode** —
+> `FileShare.Read`, `Read | Delete` and `ReadWrite | Delete` all fail
+> `ERROR_ACCESS_DENIED`, so the obvious repair of sharing delete does not exist.
+> The resolution is close → rename → re-open **inside the per-directory mutex**,
+> which turns that mutex from a tidiness measure into the thing that makes the
+> design possible. Corrected in [§D](D-locking.md#the-rename-and-the-held-handle-collide-and-the-mutex-is-what-resolves-it),
+> in [§C](C-sessions.md#the-session-directory-is-the-identity) and in
+> [kb](../kb/windows/processes.md#stdio-exit-codes-and-process-startup), and
+> `SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen` walks
+> all three share modes on every run.
+>
+> ⚠️ **The R3 test can be written so that it passes against a build with no
+> handling at all, and the first draft was.** A named mutex is destroyed with its
+> last handle, so a process that opens the name *after* the holder dies gets a
+> new, unabandoned object and observes a clean `Acquired`. The handle has to be
+> open **before** the kill. That ordering is now a comment in the test, an entry
+> in [kb](../kb/windows/detection.md#named-mutexes-and-lock-files--first-party-prior-art-in-c)
+> and a warning on [the hazard row](hazards.md), because nothing in the code
+> makes it obvious and the failure mode is a green test over a missing feature.
+>
+> ⚠️ **Two defects were found by making an invisible failure visible, and both
+> were mine.** The rewriting probe's streams are drained and discarded by the
+> rig, so when the rename's retry budget — five attempts over 150 ms, the shape
+> the C# prior art uses — exhausted under full-suite load, it presented as the
+> *host* waiting out its own ninety-second patience and failing on an unrelated
+> assertion. Twice. The probe now catches, writes the failure into its report and
+> exits non-zero; the same run then named the cause immediately. The budget is
+> bounded by elapsed time instead. And the second defect was underneath it:
+> **a failed rewrite also released the lock**, because the handle is dropped
+> before the replacement and nothing took the name back on the way out.
+>
+> **`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
+> with a positive UTC offset was being written with its sign escaped — valid
+> JSON, round-trips perfectly, unreadable by the person `lock.json` exists for.
+> Every parse-side assertion passed. It was caught by the one assertion on the
+> **literal bytes**, which is now [row 64](../kb/README.md#re-verification-index).
+>
+> **`InstanceDirectory` is not replaced here, and this step is where that was
+> decided rather than assumed.** [`IAppPaths`](../src/BrowserAI/Hosting/IAppPaths.cs)
+> said sessions replace it at step 10; they replace it at
+> [step 12](#12-the-session-tools-and-config-generation), because nothing in the
+> product creates a session until `browserai_init` exists and the config
+> generator that writes into a session directory is step 12's. Corrected in that
+> file, with the previous claim quoted.
+>
+> **Deliberately not built.** The session **index** is [step 11](#11-the-session-index)
+> — but its *key* is here, on the same canonicalisation function as the mutex
+> name and the lock file, because a second implementation is exactly how they
+> would drift apart. And [§E](E-lifecycle.md)'s per-session log file,
+> `<session-dir>\browserai.log`, which [step 2](#2-stdout-is-owned-and-nothing-else-can-reach-it)
+> deferred to here, is **not** created: a session does exactly one thing at this
+> step, so a file written by nothing would be [a mechanism that only looks like
+> one](#2-stdout-is-owned-and-nothing-else-can-reach-it). What is built is the
+> half that is real — every record written while a lock is held carries
+> `{session=<path>}`, through the scope support step 2 wired for it, asserted to
+> appear **exactly once** per line. Carried in [TODO.md](../TODO.md).
+
 **Decision under test:** the three lock scopes under real concurrency — named in
 [README → Still open](../README.md#still-open) as settled on paper and
 unexercised.
@@ -1044,13 +1127,29 @@ unexercised.
 - **Acquisition never waits.** Zero-timeout attempt; on contention, return
   immediately with an error naming the holder and when it was taken. **Whether
   to retry is the calling LLM's decision, not a timer inside BrowserAI.** The
-  one exception is the internal mutex held for milliseconds around index writes,
+  one exception is the internal **create-or-take** mutex, held for milliseconds,
   which keeps its short bounded wait.
+
+  > **Corrected 2026-08-16 (previously "the internal mutex held for milliseconds
+  > around index writes").** It is not around index writes:
+  > [the session index takes no lock at all](D-locking.md#the-session-index-on-disk),
+  > which is the whole reason it is a file per session. The earlier phrasing
+  > would have put a machine-wide lock on the hot path of every session start —
+  > precisely the trade the index was designed to avoid — and [§D](D-locking.md#acquisition-is-fast-and-never-waits)
+  > already carried the correction when this step was written.
 - `lock.json` held `FileAccess.ReadWrite, FileShare.Read` — a second BrowserAI
   requesting write fails, while any reader can still say who holds it and why.
   Required schema version. Holder record keyed on `(pid, creationFileTime)`.
-  Durable writes (temp + rename); a reader that catches a torn write retries
-  once.
+  Durable writes: a temp file in the same directory, `FileOptions.WriteThrough`,
+  `Flush(flushToDisk: true)`, then an atomic `File.Move(overwrite: true)`.
+
+  > **Corrected 2026-08-16 (previously "Durable writes (temp + rename); a reader
+  > that catches a torn write retries once").** The retry was
+  > [superseded by the rename](D-locking.md#durable-lockjson-writes) before this
+  > step ran — an atomic rename cannot produce a torn read, so there is nothing
+  > to retry — and a retry that repeats the failed call was never a recovery.
+  > The clause survived here because a done-test list is read as a checklist
+  > rather than as prose.
 - **Reject unknown keys** in our own files, and make the recovery differ from the
   failed call. ISO 8601, invariant, everywhere we write a date.
 

@@ -230,6 +230,40 @@ and version it was true at.
       deleting before step 12; whether to sweep the 193 MB is the maintainer's
       call, since it is outside the repository and partly predates this work.
 
+- [ ] **Create the per-session log file, `<session-dir>\browserai.log`.**
+      [§E](plan/E-lifecycle.md) puts it at the session root beside `lock.json`,
+      holding *anything a session did*, so `browserai_destroy` removes it with
+      everything else. [Build-order step 2](plan/build-order.md#2-stdout-is-owned-and-nothing-else-can-reach-it)
+      deferred it to [step 10](plan/build-order.md#10-the-session-directory-lockjson-and-the-three-lock-scopes),
+      and step 10 **deliberately did not build it**: at that step a session does
+      exactly one thing — it gets locked — so a file created by the lock layer
+      and written by nothing would be a mechanism that only looks like one, which
+      is the same call step 2 made about a no-op `Flush()`. What step 10 *did*
+      build is the half that is real today: `SessionLock` pushes a logging scope,
+      so every record written while a lock is held carries
+      `{session=<path>}` — asserted to appear **exactly once** per line,
+      because two providers share one external scope provider and a naive wiring
+      would push it twice. Do the file itself at
+      [step 12](plan/build-order.md#12-the-session-tools-and-config-generation),
+      when there is a session lifetime to log into it, and note that §E's routing
+      is *by whether a session exists* rather than by which factory a caller
+      happens to hold — so the seam is a router over the two destinations, not a
+      second `ILoggerFactory` for callers to choose between.
+
+- [ ] **Give `AnOversizedPayloadArrivesByteIdentical` a reason for taking two
+      minutes, or make it stop.** Noticed 2026-08-16 while running the suite for
+      [step 10](plan/build-order.md#10-the-session-directory-lockjson-and-the-three-lock-scopes),
+      and **it is not step 10's doing** — timed alone, on an otherwise idle
+      machine, it is 1 m 59 s, and it dominates the whole suite's 2 m 15 s. The
+      test is a 2 MiB body through the in-process rig, which
+      [step 8](plan/build-order.md#8-the-harness-and-the-fake-child) built
+      specifically so that this layer runs "in milliseconds, in parallel", so
+      either something in the pipe hop is quadratic or the payload is larger than
+      the point being made needs. **Not investigated**, deliberately: it is green
+      and it is out of step 10's scope. Whoever picks it up should time it at
+      several body sizes before changing anything — a fixed cost and a quadratic
+      one look identical at one data point.
+
 ## Decided 2026-08-16 — encoded the same day
 
 Nine decisions from the lesson sweep landed in
