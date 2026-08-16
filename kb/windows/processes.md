@@ -643,13 +643,46 @@ ran"*, `error: 1`, exit **5**, in 177–646 ms:
 | `dotnet BrowserAI.Tests.dll --list-tests` | 88 found *(before the step-9 tests were written)* |
 
 **The last three rows are the whole finding.** The same commit that returned
-**30 passed** hours earlier now returns zero, from a clean worktree, while the
-same built assembly run directly finds and runs everything. So **nothing in this
-repository causes it**, and the earlier retraction was not wrong — both
-measurements were real and the machine moved between them. Versions are
+**30 passed** hours earlier returns zero from a clean worktree, while the same
+built assembly run directly finds and runs everything. So **nothing in this
+repository causes it**, and the earlier retraction was not wrong. Versions are
 identical either side: SDK **10.0.302**, .NET **10.0.11**, and the committed lock
 file still resolves TUnit **1.65.0** and `Microsoft.Testing.Platform` **2.3.3**,
 so it is not a package float.
+
+> ⚠️ **Corrected 2026-08-16, minutes after the table above was written
+> (previously: "It recurred, it is now stable").** It is **not** stable, and the
+> variable is not time. Immediately after that entry landed, the same
+> `dotnet test BrowserAI.slnx` was run three times in a row from the **root
+> session's** shell against the same commit: **106 passed / exit 0**,
+> **`Discovered 106 tests`**, **106 passed / exit 0**.
+>
+> **The discriminator is which shell issues the command, not when.** Every
+> zero-test observation on record — the transient at step 5 and the seven-row
+> table above at step 9 — was made inside a **sub-agent's** shell, by two
+> different agents hours apart, including both times a clean worktree of
+> `b8a6553` was cited. Every successful run — 5, 13, 30, 51, 106, 106, 106 — was
+> made in the root session's shell. **Both sets of measurements are real**; what
+> was wrong each time was the generalisation from one shell to the toolchain.
+>
+> This is worth more than the failure it describes. Twice tonight a correct
+> observation became a false standing claim by being attributed to the wrong
+> subject — first to the toolchain, then to the machine, when it belongs to the
+> execution context. **When a result cannot be reproduced by someone else,
+> suspect the environment before the artifact**, and name the environment in the
+> entry.
+
+**What is not established**, and must not be written in without measuring: why
+the sub-agent shell differs. Candidates not yet tested include MSBuild node
+reuse across many back-to-back builds, a stale build server, and concurrent
+`dotnet` processes — the agents run long build sequences, the root session does
+not.
+
+**The practical consequence is small, and it should be stated so nobody
+over-reacts to it.** `BrowserAI.Tests.exe` runs the whole suite in every
+environment, exit code and all, so the release gate is unaffected: the suite
+genuinely runs, and a red test is genuinely red. What a sub-agent must not do is
+read a zero-test result as *"the suite has never run"*.
 
 The cause is not established. `--diagnostic` shows the host launched with
 `--server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>` and the
