@@ -2668,6 +2668,54 @@ Run the checklist in full. It has never been executed, so **the first run is
 also its test**: an item that cannot be evidenced is a defect in the checklist,
 and fixing it belongs to this step.
 
+> ⚠️ **Run 2026-08-16 at `81f2268`. The checklist is executed and the release is
+> BLOCKED, which is the gate working rather than failing.** The whole record —
+> every command and what it returned — is
+> [`RELEASE-EVIDENCE.md`](../RELEASE-EVIDENCE.md); it is not repeated here.
+>
+> **Ten items pass, one is a human's, and three block:**
+>
+> 1. **A skipped test.** `UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest`
+>    is the only `Skip` in the tree, and
+>    [item 8](pre-release.md) requires zero. It was **not** un-skipped, not
+>    pointed at a local server, and the item was not softened: a local-directory
+>    source composes paths the same way by construction, so a green run against
+>    one would prove nothing about the pair that bricked `ExoFabric/UCC`.
+>    Clearing it means publishing the feed and setting
+>    `UpdateConfiguration.ProductionBaseUrl`.
+> 2. **A pre-release version.** MinVer derives `0.1.1-alpha.0.3` — HEAD is three
+>    commits past `v0.1.0`, so the tag for this release does not exist. The
+>    `0.0.0` half was fired rather than trusted and refuses correctly.
+> 3. **Two missing third-party notices.** Read from inside the packaged
+>    `.nupkg`: Node's `LICENSE` and the whole `node_modules` tree are there;
+>    **Velopack's MIT notice and a trademark disclaimer are not.** No test covers
+>    them, which is why they survived to a release gate.
+>
+> **Six items could not be evidenced as written and were rewritten**, each with a
+> `Corrected 2026-08-16` note carrying its previous text — items 1, 6, 7, 8, 9
+> and 11. The two that matter beyond wording: **item 6 contradicted
+> [Testing](testing.md#what-the-marker-records)**, demanding ~90 adjudications of
+> *no change* at a zero-drift release; and **item 8's *"the smoke layer ran
+> against a real browser"* is invisible in the suite's output**, because 33 tests
+> across 13 files return early when the published slice is absent and the summary
+> is identical either way.
+>
+> **What was exercised for real, not assumed:** the two-step resolve and both
+> lock diffs; the four snapshots regenerated and diffed; three full suite runs
+> (329 tests, 328 passed, 1 skipped, exit 0, 33–38 s); four NativeAOT publishes
+> with ILC's raw output read clean; `vpk pack` at two versions into two feeds; a
+> **97,340-byte delta** against a 49,043,340-byte full package; a real
+> `Setup.exe --installto` into a scratch root; **N→N+1 applied with `deltas=1`**
+> and **rollback applied with `rollback=True deltas=0`**; and one process log
+> carrying all four starts across both versions.
+>
+> **Four defects went to [`TODO.md`](../TODO.md)** rather than being fixed here:
+> the two missing notices, the unemitted resolved-set manifest, the missing
+> `UseSystemResourceKeys` assertion, and the silently-degrading smoke run.
+>
+> **Nothing was released.** No push, no publish, no tag, no visibility change —
+> the maintainer decides, and this run stops at *blocked*.
+
 **Done when:**
 
 - Every item in [pre-release](pre-release.md) is checked, with the command run

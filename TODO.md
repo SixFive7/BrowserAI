@@ -505,8 +505,24 @@ and version it was true at.
       happens to hold — so the seam is a router over the two destinations, not a
       second `ILoggerFactory` for callers to choose between.
 
-- [ ] **Give `AnOversizedPayloadArrivesByteIdentical` a reason for taking two
-      minutes, or make it stop.** Noticed 2026-08-16 while running the suite for
+- [x] ~~**Give `AnOversizedPayloadArrivesByteIdentical` a reason for taking two
+      minutes, or make it stop.**~~ ✅ **Closed 2026-08-16 at
+      [step 20](plan/build-order.md#20-the-first-release) — by measurement, not
+      by work.** ⚠️ **Corrected (previously: "timed alone, on an otherwise idle
+      machine, it is 1 m 59 s, and it dominates the whole suite's 2 m 15 s").**
+      Re-measured from the TRX of a full run: **105 ms**, in a suite of **33 s**.
+      Three whole-suite runs at 32.978 / 38.314 / 33.741 s are independently
+      incompatible with any single test taking 119 s, so this is not one lucky
+      run. What changed in between is not established and is deliberately not
+      guessed at — the suite gained a `ParallelLimiter` capped at 4 the same day
+      ([`SuiteParallelism`](tests/BrowserAI.Tests/SuiteParallelism.cs)), and the
+      original 1 m 59 s was taken under the unconstrained parallelism that also
+      produced a 56.5 s run with 20 timing failures. **The advice in the original
+      item still stands for whoever meets a slow test next: time it at several
+      body sizes before changing anything, because a fixed cost and a quadratic
+      one look identical at one data point.** Original text follows.
+      <br><br>
+      Noticed 2026-08-16 while running the suite for
       [step 10](plan/build-order.md#10-the-session-directory-lockjson-and-the-three-lock-scopes),
       and **it is not step 10's doing** — timed alone, on an otherwise idle
       machine, it is 1 m 59 s, and it dominates the whole suite's 2 m 15 s. The
@@ -518,6 +534,62 @@ and version it was true at.
       and it is out of step 10's scope. Whoever picks it up should time it at
       several body sizes before changing anything — a fixed cost and a quadratic
       one look identical at one data point.
+
+- [ ] **Ship Velopack's MIT notice and a trademark disclaimer inside the
+      package, and make both a test.** Found 2026-08-16 by the first run of
+      [the pre-release checklist](plan/pre-release.md), reading item 13 against
+      the packaged `.nupkg` rather than against the source tree. Two of the four
+      obligations are **absent from the artifact**: Velopack is a NuGet
+      dependency, so its licence stays in the package cache and is never copied
+      to the publish output; and no file anywhere carries the trademark
+      disclaimer Apache-2.0 §6 makes necessary, since the inherited `browser_*`
+      names surface upstream branding directly in BrowserAI's own API. The other
+      two are present and correct — Node's full 160,552-byte `LICENSE` and the
+      intact `node_modules` tree with `@playwright/mcp`'s and `playwright-core`'s
+      Apache-2.0 notices. **These attach at first installer handoff**, so this
+      blocks a release rather than a v1. Make it a test over the produced
+      `.nupkg`'s entry list: nothing else looks, which is exactly why it survived
+      to a release gate.
+
+- [ ] **Emit the resolved-set manifest from `build/New-Release.ps1`.** Found
+      2026-08-16 by the same run: [item 11](plan/pre-release.md) requires the
+      resolved set recorded beside the artifact, and **nothing produces one** —
+      the item named a file that has never existed, so it could be neither
+      satisfied nor failed. The script already knows the version, the sizes and
+      the archived path and writes none of it down. Copy the six files the item
+      now names (three `packages.lock.json`, `build/payload/package-lock.json`,
+      `payload/payload.json`, `upstream-snapshots/browsers.json`) beside the
+      archived `.nupkg`, plus the derived version and its tag. Assembled by hand
+      once, at `.work/step20/manifest/`; **a hand-assembled manifest is one
+      nobody assembles twice**, which is the whole reason this is an item.
+
+- [ ] **Assert `UseSystemResourceKeys` is unset.**
+      [Testing](plan/testing.md#what-the-build-itself-must-fail-on) requires it
+      in those words — *"Assert the property is unset, so it cannot arrive later
+      as somebody's size optimisation"* — and `grep -rn "ResourceKeys" tests/`
+      returns nothing. Found 2026-08-16 at
+      [step 20](plan/build-order.md#20-the-first-release), while looking for the
+      evidence [item 7](plan/pre-release.md) asks for. The property is correctly
+      `false` at `Directory.Build.props:160`; what is missing is the thing that
+      keeps it that way. It strips the framework's exception message strings,
+      which is a few kilobytes against a ~117 MB payload and an
+      [error catalogue](plan/H-model-surface.md#h4-the-error-catalogue) silently
+      emptied. `BuildConfigurationTests` is where it goes.
+
+- [ ] **Make a degraded smoke run a red build at release time.** **33 tests
+      across 13 files** open with `if (!PublishedSlice.IsPresent)` or
+      `if (!RepositoryPayload.IsPresent)` and return after asserting a weaker
+      property. That is deliberate and correct — a clean clone must be able to
+      run the suite, and `IsAbsentAsAWhole` distinguishes *nobody published* from
+      *the publish is broken*. **But it means "the smoke layer ran against a real
+      browser" and "the publish directory does not exist" produce an identical
+      green summary**, which is this project's founding failure class inside its
+      own release gate. Found 2026-08-16 at
+      [step 20](plan/build-order.md#20-the-first-release), where the answer was a
+      paragraph of instructions in [item 8](plan/pre-release.md) telling a person
+      to check two paths by hand. A release-only assertion that
+      `PublishedSlice.IsPresent` — an environment variable the release run sets,
+      or a test that reads one — turns it back into a mechanism.
 
 ## Decided 2026-08-16 — encoded the same day
 

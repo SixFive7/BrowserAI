@@ -47,11 +47,17 @@ reads them from. Not in this file — this file is the list, not the log.
 > [build order step 18](build-order.md#18-versions-from-git-tags-and-the-changelog),
 > so **item 10 is checkable**; the snapshots, the marker test and the suite that
 > items 3–8 rest on landed at
-> [build order steps 4, 8 and 9](build-order.md). What is still absent is a
-> **release script**: every item below is run by hand, and items 9 and 10 are the
-> only two with a command to run at all. That is the honest reading of a
-> checklist against a repository whose packaging is
-> [step 19](build-order.md#19-velopack-package-update-roll-back).
+> [build order steps 4, 8 and 9](build-order.md).
+>
+> ✅ **The release script landed too, at
+> [step 19](build-order.md#19-velopack-package-update-roll-back).**
+> `build/New-Release.ps1` now carries items 7 and 12 and part of 9, so the
+> paragraph that used to stand here — *"what is still absent is a release
+> script: every item below is run by hand, and items 9 and 10 are the only two
+> with a command to run at all"* — is wrong in both halves and is replaced
+> rather than deleted, because it is what a reader who learned this file before
+> 2026-08-16 remembers. **Items 1, 2, 4, 7, 8, 9, 10 and 12 all have a command
+> today.** Items 3, 5, 6, 11, 13 and 14 are still read and judged by a person.
 
 ---
 
@@ -86,10 +92,27 @@ The rest of the resolve:
 - **Browser revisions** — read from the resolved `browsers.json`, never a
   hand-typed URL.
 
-**Evidence:** `git diff -- "**/packages.lock.json"` — the diff *is* the drift
-report, and it is the cheapest detector this policy has. Record it, empty or not;
-an empty diff is a result. Plus the resolved version of each of the five
-upstreams and the browser revision.
+**Evidence:** the two lock diffs, **taken with `--exit-code` so that "no output"
+is a recorded `0` rather than an absence** — a bare `git diff` prints nothing
+whether it found nothing or was never run, which is the failure shape this whole
+file is about:
+
+```
+git diff --exit-code --stat -- "**/packages.lock.json"      # the three NuGet locks
+git diff --exit-code --stat -- build/payload/package-lock.json   # the npm lock
+```
+
+The diff *is* the drift report, and it is the cheapest detector this policy has.
+Record both, empty or not; an empty diff is a result. Plus the resolved version
+of each of the five upstreams and the browser revision.
+
+> **Corrected 2026-08-16 on the first run of this checklist (previously:
+> `git diff -- "**/packages.lock.json"`, and nothing about the npm lock).** Two
+> defects. The command has no `--exit-code`, so its evidence is the absence of
+> output — indistinguishable from a command nobody ran. And it names only the
+> NuGet half, while the item's own body requires the npm tree to be reinstalled
+> from the `latest` dist-tag: the committed provenance stamp that reinstall
+> writes is `build/payload/package-lock.json`, and it had no line here at all.
 
 > **If this item is doing real work at release time, the working rhythm has
 > drifted, and that is itself a finding.** The maintainer's rule of 2026-08-16 is
@@ -181,15 +204,35 @@ snapshot can do.
 
 - **Automated rows are answered by the suite** and need nobody.
 - **Every manual row must be answered by name, with an outcome**, in the marker
-  entry.
-- **A row that is neither automated nor answered fails the gate.**
+  entry — **for each upstream that item 3 found had moved.** The obligation is
+  created by a bump, not by a release.
+- **A row that is neither automated nor answered fails the gate**, once a bump
+  has put it in play.
+- **Where nothing moved, this item is answered by item 3's zero-drift result and
+  by `ReVerificationIndexTests` being green**, and the marker carries no
+  `reverification` block at all.
 
 **Never update a measured fact by reasoning. Re-run the measurement, or mark the
 entry `[STALE]`.** An adjusted number is indistinguishable from a measured one,
 which makes it worse than a gap.
 
-**Evidence:** the marker entry's `reverification` block, one outcome per manual
-row.
+**Evidence:** where an upstream moved, the marker entry's `reverification`
+block, one outcome per manual row. Where none moved, item 3's resolved-versus-
+reviewed pairs plus `ReVerificationIndexTests`' result.
+
+> ⚠️ **Corrected 2026-08-16 on the first run of this checklist (previously:
+> "Every manual row must be answered by name, with an outcome, in the marker
+> entry", unconditionally).** As written this item could not be evidenced at a
+> zero-drift release without doing the one thing the project forbids. There are
+> **93 numbered rows** in the index and the great majority are manual, so a
+> literal reading demands an adjudication of *no change* for every one of them
+> against upstreams that did not move — which
+> [Testing](testing.md#what-the-marker-records) names exactly: *"a review that
+> did not happen, typed out to make a suite green, which is the same act as
+> editing the marker to make a test pass."* Testing already scopes the
+> `reverification` block to **the first real bump**; this item did not, and the
+> two documents contradicted each other. The measurement wins: scoping the
+> obligation to what moved is what both can mean at once.
 
 ---
 
@@ -203,7 +246,23 @@ build**, and a severity is never weakened to make code pass. ILC output empty.
 exists to be able to read.
 
 **Evidence:** the publish command, its exit code, and the warning count, which is
-zero.
+zero — **plus the two things an exit code does not establish**:
+
+- **ILC's own output, read and reported empty.** `build/New-Release.ps1` prints
+  `ILC output is clean (<n> lines read, 0 complaints)`; that line is the
+  evidence, and the publish's exit code is not, because the failure this exists
+  for exited 0 with an artifact on disk.
+- **`UseSystemResourceKeys` unset**, quoted from `Directory.Build.props`.
+
+> **Corrected 2026-08-16 on the first run of this checklist (previously: "the
+> publish command, its exit code, and the warning count, which is zero").** The
+> item's body demands *ILC output empty* and *`UseSystemResourceKeys` never
+> set*, and its evidence line asked for neither — so an item that is
+> specifically about a publish that exits 0 while ILC complains was to be
+> evidenced by that publish's exit code. **`UseSystemResourceKeys` has no test**,
+> which [Testing](testing.md#what-the-build-itself-must-fail-on) requires
+> (*"Assert the property is unset"*); until one exists this line is the only
+> thing that looks.
 
 ### 8. Run everything
 
@@ -222,9 +281,43 @@ Three things to record rather than assume, because each is easy to skim past:
   what turns an upstream addition into a red run instead of a security incident.
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
+  ⚠️ **The run's own output cannot tell you this, and it reads identically
+  either way.** **33 tests across 13 files** open with
+  `if (!PublishedSlice.IsPresent)` or `if (!RepositoryPayload.IsPresent)` and
+  return after asserting a weaker property — a conditional ignore that reports
+  as a pass. So the precondition is checked **outside** the run, before it, and
+  recorded:
+
+  ```
+  ls src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/BrowserAI.exe
+  ls src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/payload/payload.json
+  ```
+
+  Both present means `PublishedSlice.IsPresent` is true and the real branch ran.
+  Corroborate it from a TRX, on the tests that **carry** the browser cost —
+  `AnEmptyBrowsersRootDownloadsAndTheSameChildThenNavigates` and the two
+  containment tests run in seconds and cannot reach those numbers without
+  starting one.
+
+  ⚠️ **Do not read a slice test's own duration as the signal.** The rig shares
+  one `SliceRun`, so its cost lands on whichever test triggered it first:
+  measured 2026-08-16, `TheResolvedBrowserIsOurChromiumAndNotTheHeadlessShell`
+  took **2.6 ms** on a run that really did launch a browser. A short duration
+  there means nothing either way, and a rule of thumb that says otherwise is a
+  second false green.
 
 **Evidence:** total, passed, failed and skipped counts from the run's own output,
-and the exit code.
+the exit code, and the published-slice precondition above.
+
+> **Added 2026-08-16 on the first run of this checklist.** This item's other two
+> bullets are answered by a red build; this one was not answerable at all.
+> `PublishedSlice.IsAbsentAsAWhole` is a deliberate design — a clean clone must
+> be able to run the suite — but it means *"the smoke layer ran against a real
+> browser"* and *"the publish directory does not exist"* produce the same green
+> summary, which is this project's founding failure class inside its own gate.
+> **The mechanical fix, not built here:** a release-only assertion that
+> `PublishedSlice.IsPresent`, so the degraded branch is a red build at release
+> time instead of a paragraph in a checklist.
 
 > **This whole checklist rests on this item being *run* rather than assumed.**
 > [The release gate](testing.md#the-release-gate) says exactly that about its own
@@ -254,9 +347,21 @@ untagged build carries its own `-alpha.N.M` suffix, which is the whole of *never
 self-update from a build that is not a release* — so a version with a suffix
 means the tag for this release has not been created yet.
 
-**Evidence:** the version the build stamped, and the tag it came from.
-`dotnet msbuild src/BrowserAI/BrowserAI.csproj -t:MinVer -getProperty:MinVerVersion`
-answers both without building anything.
+**Evidence:** the version the build stamped, and the tag it came from — **two
+commands, because the first does not answer the second**:
+
+```
+dotnet msbuild src/BrowserAI/BrowserAI.csproj -t:MinVer -getProperty:MinVerVersion
+git describe --tags --long
+```
+
+> **Corrected 2026-08-16 on the first run of this checklist (previously: the
+> `msbuild` line alone "answers both without building anything").** It answers
+> one. `MinVerVersion` is a version string and carries no tag name, so the tag a
+> release was cut from could not be recorded from it. `git describe --tags
+> --long` prints `<tag>-<commits>-g<sha>`, which is the tag, the distance and
+> the commit in one line — and the distance is what makes the pre-release
+> suffix legible rather than mysterious.
 
 ### 10. The changelog's unreleased section is not empty
 
@@ -294,7 +399,28 @@ from the resolved `browsers.json`, and the Node version.
 that is what makes a rollback meaningful and a regression bisectable
 ([rule 1](../README.md#the-five-rules-that-make-floating-safe)).
 
-**Evidence:** the manifest, beside the artifact.
+**Nothing emits this manifest**, so it is assembled by hand beside the archived
+`.nupkg`, and it holds exactly these, copied rather than transcribed:
+
+| In the manifest | From |
+|---|---|
+| `packages.lock.json` ×3 | `src/BrowserAI/`, `tests/BrowserAI.Tests/`, `tests/BrowserAI.TestProbe/` |
+| `package-lock.json` | `build/payload/` — the committed provenance stamp the payload build writes |
+| `payload.json` | `payload/` — Node's version, LTS name, archive SHA-256 and both tree sizes |
+| `browsers.json` | `upstream-snapshots/` — the browser revisions, from the resolved payload |
+| The derived version and its tag | item 9 |
+| The full `.nupkg` and its size | item 12 |
+
+**Evidence:** the manifest's path, and the resolved version each file states.
+
+> **Corrected 2026-08-16 on the first run of this checklist (previously:
+> "Evidence: the manifest, beside the artifact").** There is no manifest and
+> nothing produces one — the item named an artifact that has never existed, so
+> it could be neither satisfied nor failed. `build/New-Release.ps1` prints the
+> version, the sizes and the archived path to its console and writes none of it
+> down. **Emitting this from the release script is owed**
+> ([`TODO.md`](../TODO.md)); until then the table above is what "the manifest"
+> means, so that a hand-assembled one is at least the same set every time.
 
 ### 12. The rollback path is publishable
 
