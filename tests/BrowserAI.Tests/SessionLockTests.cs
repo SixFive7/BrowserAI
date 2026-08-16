@@ -508,6 +508,12 @@ internal sealed class SessionLockTests
         var damaged = new List<string>();
         var reads = 0;
 
+        // Every distinct record the reader actually saw. This, not a read
+        // count, is what proves the reader was looking WHILE the rewriter was
+        // writing: two different purposes cannot both be observed unless the
+        // file changed under the reader.
+        var observed = new HashSet<string>(StringComparer.Ordinal);
+
         using (var scope = new JobObjectScope())
         {
             _ = scope.Launch(
@@ -524,12 +530,18 @@ internal sealed class SessionLockTests
 
             var clock = Stopwatch.StartNew();
 
-            // The rewriter waits for this before it starts. Without the
-            // handshake the host can be descheduled long enough for all hundred
-            // rewrites to finish before its first read, and the test then passes
-            // having observed nothing at all -- which is how it failed once,
-            // with `reads` at zero.
-            await File.WriteAllTextAsync($"{ready}.go", "go");
+            // The handshake is released from INSIDE the loop, after a read has
+            // demonstrably happened.
+            //
+            // It used to be written just before the loop, and that guarded the
+            // wrong side: `WriteAllTextAsync` yields, and under the parallel
+            // browser tests added at step 17a the continuation can be
+            // descheduled past the rewriter's entire ~1.7 s of work. The loop
+            // then found `done` already set and read nothing -- observed
+            // 2026-08-16, twice in a row, `reads` at zero. The comment above it
+            // named that exact failure and the fix did not prevent it, because
+            // saying "go" before you are looking is not a handshake.
+            var released = false;
 
             while (!File.Exists(done) && clock.Elapsed < Patience)
             {
@@ -541,6 +553,18 @@ internal sealed class SessionLockTests
                     if (record is null)
                     {
                         damaged.Add("the lock file was momentarily absent");
+                    }
+                    else
+                    {
+                        _ = observed.Add(record.Purpose);
+                    }
+
+                    if (!released)
+                    {
+#pragma warning disable CA1849 // Synchronous on purpose: awaiting here yields, and a yield at this exact point is the defect being fixed -- the reader must not leave the loop between reading and saying go.
+                        File.WriteAllText($"{ready}.go", "go");
+#pragma warning restore CA1849
+                        released = true;
                     }
                 }
 #pragma warning disable CA1031 // Anything at all that a concurrent reader sees is the finding; narrowing the catch would hide the interesting half.
@@ -566,9 +590,18 @@ internal sealed class SessionLockTests
         // approximate.
         await Assert.That(string.Join(Environment.NewLine, damaged.Distinct(StringComparer.Ordinal))).IsEmpty();
 
-        // The reader has to have been looking often enough for the claim to
-        // mean something.
-        await Assert.That(reads).IsGreaterThan(Rewrites / 4);
+        // The reader has to have been looking, and looking WHILE the rewriter
+        // wrote, or "never torn" is a claim about an empty observation.
+        //
+        // Asserted on distinct records rather than on a read count, and the
+        // difference is the point: a count is a proxy for overlap that a loaded
+        // machine can defeat without the property being false, which is how the
+        // previous `reads > 25` failed at `reads == 0`. Two different purposes
+        // cannot both be seen unless the file changed under the reader, so this
+        // asserts the overlap itself. The read count stays as a floor, because
+        // zero reads must still be a failure rather than a vacuous pass.
+        await Assert.That(reads).IsGreaterThan(0);
+        await Assert.That(observed.Count).IsGreaterThan(1);
     }
 
     [Test]
