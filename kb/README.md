@@ -116,7 +116,9 @@ missing row as a gap in this table, never as permission to skip the fact.
 
 > **The 124 is a marker count, not an entry count** — re-counted 2026-08-16 with
 > `grep -ro "\[FLOATS\]" --include=*.md . | grep -v '^\./\.work/'`, then
-> subtracting this file's own five occurrences. Some entries carry a split
+> subtracting this file's own occurrences — **six** as of 2026-08-16, and the
+> number moves whenever this note is edited, which is exactly why the test
+> computes it rather than reading it. Some entries carry a split
 > marker (`[FLOATS]` for the numbers, `[STABLE]` for the mechanism) and are
 > counted once each, so the true number of distinct floating *facts* is somewhat
 > lower. It is recorded this way because a reproducible command beats a hand
