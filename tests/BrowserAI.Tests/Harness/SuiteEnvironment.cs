@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
+using BrowserAI.Registration;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -27,6 +28,22 @@ internal enum SuiteCapability
 
     /// <summary>A packed <c>.nupkg</c> under <c>Releases/</c>.</summary>
     PackagedRelease,
+
+    /// <summary>
+    /// The MCP client's command line on this machine, which is the only thing
+    /// that can answer whether BrowserAI's registration works.
+    /// </summary>
+    /// <remarks>
+    /// <b>It is a capability rather than an assumption because the product's
+    /// registration reads upstream's English.</b> Every failure the client has
+    /// exits 1, benign or not, so <i>"already exists"</i> and <i>"No MCP server
+    /// named"</i> are the only discriminators there are — and a run that cannot
+    /// start the client cannot notice either of them moving. Absent, the
+    /// real-client arms skip; under <c>BROWSERAI_RELEASE_RUN=1</c> they fail,
+    /// which is correct: a release that cannot demonstrate its own registration
+    /// is one whose founding promise is untested.
+    /// </remarks>
+    ClientCommandLine,
 }
 
 /// <summary>
@@ -144,6 +161,30 @@ internal static class SuiteEnvironment
         Require(SuiteCapability.PackagedRelease, test);
         return PackagedRelease()!;
     }
+
+    /// <summary>The MCP client's own command line, or a skip.</summary>
+    /// <param name="test">The calling test, filled in by the compiler.</param>
+    /// <returns>The client executable's absolute path.</returns>
+    public static string RequireClientCommandLine([CallerMemberName] string test = "")
+    {
+        Require(SuiteCapability.ClientCommandLine, test);
+        return ClientExecutable()!;
+    }
+
+    /// <summary>
+    /// The MCP client's command line on this machine, found exactly the way the
+    /// product finds it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Through the product's own <see cref="ClientCommandLine.Locate"/>
+    /// rather than a second search.</b> A harness that looked somewhere else
+    /// could report the capability present on a machine where the product would
+    /// not find it, which is a false green about the one thing these tests
+    /// exist to establish.
+    /// </remarks>
+    /// <returns>The path, or <see langword="null"/>.</returns>
+    public static string? ClientExecutable() =>
+        new ClientCommandLine().Locate(McpClientRegistration.ClientExecutable);
 
     /// <summary>
     /// Whether the repository payload is available, recording its absence
@@ -331,6 +372,13 @@ internal static class SuiteEnvironment
             ? CapabilityState.Present
             : Directory.Exists(BrowserAiPaths.FirefoxDirectory) ? CapabilityState.Partial : CapabilityState.AbsentAsAWhole,
 
+        // No Partial state exists for this one: an executable is either on the
+        // search path or it is not, and there is no half-installed shape a
+        // directory could be in that would mean anything.
+        SuiteCapability.ClientCommandLine => ClientExecutable() is not null
+            ? CapabilityState.Present
+            : CapabilityState.AbsentAsAWhole,
+
         _ => PackagedRelease() is not null ? CapabilityState.Present : CapabilityState.AbsentAsAWhole,
     };
 
@@ -422,6 +470,7 @@ internal static class SuiteEnvironment
         SuiteCapability.RepositoryPayload => "repository payload",
         SuiteCapability.ProvisionedChromium => "Chromium",
         SuiteCapability.ProvisionedFirefox => "Firefox",
+        SuiteCapability.ClientCommandLine => "client CLI",
         _ => "packed release",
     };
 
@@ -431,6 +480,7 @@ internal static class SuiteEnvironment
         SuiteCapability.RepositoryPayload => Path.Combine(RepositoryPayload.Layout.Root, "payload.json"),
         SuiteCapability.ProvisionedChromium => BrowserAiPaths.ExpectedChromiumExecutable,
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
+        SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
         _ => PackagedRelease() ?? Path.Combine(RepositoryLayout.Root.FullName, "Releases", "BrowserAI-<version>-full.nupkg"),
     };
 
@@ -440,6 +490,7 @@ internal static class SuiteEnvironment
         SuiteCapability.RepositoryPayload => "Run: pwsh -File build/Build-Payload.ps1",
         SuiteCapability.ProvisionedChromium => "Provision it: BrowserAI downloads it on first use, or run the suite once with a payload present.",
         SuiteCapability.ProvisionedFirefox => "Provision it: BrowserAI downloads it on first use of a Firefox session.",
+        SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{McpClientRegistration.ClientExecutable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
         _ => $"Run: pwsh -File build/New-Release.ps1, or set {ReleasePackageVariable} to a packed .nupkg.",
     };
 }

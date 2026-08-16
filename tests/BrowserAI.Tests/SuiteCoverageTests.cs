@@ -123,6 +123,7 @@ internal sealed class SuiteCoverageTests
         await Assert.That(summary).Contains("Chromium");
         await Assert.That(summary).Contains("Firefox");
         await Assert.That(summary).Contains("packed release");
+        await Assert.That(summary).Contains("client CLI");
         await Assert.That(summary).Contains(SuiteEnvironment.ReleaseRunVariable);
 
         foreach (var capability in SuiteEnvironment.All)

@@ -2644,8 +2644,22 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
   `-- <args>` to it** — it panics and never exits.
 - ~~The install hook registers the step-16 logon task; the uninstall hook removes
   it.~~ **Withdrawn 2026-08-16: the task is dropped**, so no hook registers
-  anything and the hooks exist only to log. See
+  ~~anything and the hooks exist only to log~~ *a scheduled task*. See
   [step 16](#16-the-stray-sweep)'s resolution note.
+
+  > ⚠️ **Corrected 2026-08-16, later the same day (previously "so no hook
+  > registers anything and the hooks exist only to log").** The first half
+  > stands — no scheduled task, and it never comes back. The second half stopped
+  > being true when [§B's registration](B-mcp-server.md) landed here rather than
+  > in a step of its own: `--veloapp-install` and `--veloapp-updated` register
+  > BrowserAI with the MCP client and `--veloapp-uninstall` removes it. **The
+  > constraint that produced the original sentence is untouched and still
+  > binds** — `force_stop_package` kills everything under the install root after
+  > every hook returns, so a hook may not leave a *helper running* there.
+  > Registration is not that shape: one short-lived process, outside the install
+  > root, waited for and gone before the hook returns. **This step is where it
+  > had to land** — it cannot precede the installed layout, and it cannot follow
+  > the release.
 - Three download timers — absolute, stall, and an outer deadline as a crash
   tripwire — with the download off the message loop, because a `tools/call` has
   to stay answerable while a package is in flight.

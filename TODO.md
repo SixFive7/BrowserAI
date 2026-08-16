@@ -32,7 +32,62 @@ be undone by an edit that leaves every signal green. `UseSystemResourceKeys` was
 one of those and was closed; the ones below sit in the same paragraph lists as it
 did.
 
-- [ ] **BrowserAI registers itself as an MCP server. Nothing does this, and it is
+- [x] ~~**BrowserAI registers itself as an MCP server. Nothing does this, and it is
+      the charter's founding promise.**~~ ✅ **Built 2026-08-16**, and the
+      decision it was waiting on was taken **in the maintainer's absence** —
+      they were asked twice, they are away, and the product is unusable
+      meanwhile. **Scope: user. Mechanism: the client's own
+      `claude mcp add --scope user`.** User scope *is* §B's sentence — one
+      registration, available in every repository, no file in any of them — and
+      the three alternatives lost for reasons written on the code: writing the
+      client's config file directly means owning another product's format and
+      merge semantics; a registry key is read by only some clients; a documented
+      manual step abandons the promise that distinguishes this from the setup it
+      replaces. `src/BrowserAI/Registration/{McpClientRegistration,
+      RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar,
+      RegistrationRecord, HookRegistration}.cs`, served from the install, update
+      and uninstall hooks in `src/BrowserAI/Updates/VelopackStartup.cs`.
+      **`McpClientRegistration` is the one place that decides *how*** — the
+      requirement was that whoever revisits this finds a file, not a decision
+      smeared across an installer.
+      <br><br>
+      **Four properties, each with the measurement behind it.** *Never the
+      stub*: `RegistrationTarget` refuses any path whose parent directory is not
+      `current\`, and a real install measured **392,704 b** at the root against
+      **17,911,808 b** inside it. *Idempotent, because the client is not* —
+      measured @ 2.1.233, a duplicate `add` exits **1** — so an install
+      removes-then-adds and an update adds-if-absent, which is also what stops a
+      background update deleting arguments a user put on their own entry.
+      *Visible on every failure and never fatal*: no client, a refusal, a timeout
+      and a throw each write a log record **and** `<root>\mcp-registration.json`
+      beside `current\`, carrying the command to run by hand; nothing can throw
+      into the installer. *Survives an update*: measured rather than assumed —
+      0.9.0 → 0.9.1 and a rollback back to 0.9.0, the entry unchanged both times,
+      then `mcpServers` empty after the uninstall.
+      <br><br>
+      **Gated by `tests/BrowserAI.Tests/RegistrationTests.cs` — 14 tests, three
+      of which drive the real client** against a scratch `CLAUDE_CONFIG_DIR`,
+      behind the new `SuiteCapability.ClientCommandLine`, so a machine without a
+      client skips and a release run fails rather than reporting the same summary
+      either way. **The maintainer's own configuration was never written to and
+      that is asserted, not intended**: SHA-256 identical across the whole
+      session, and the live test proves the negative by looking for its own
+      GUID-bearing install path in the user's file.
+      <br><br>
+      **Two things measurement contradicted, both corrected in the same commit.**
+      `ProcessLog.Dispose()` claimed to close its file handle through the logger
+      factory and did not — `LoggerFactory` never disposes a provider *instance*,
+      measured at **0 disposals** — so a hook that opened a log and read it back
+      could not; it now disposes the writer explicitly, with
+      `ProcessLogTests.DisposingTheProcessLogReleasesTheFileHandle` red without
+      it. And **`Environment.GetFolderPath(UserProfile)` does not read
+      `%USERPROFILE%`**, which silently defeated an attempt to simulate a machine
+      with no client on it — recorded with the gap named rather than papered
+      over. Both are in [kb](kb/windows/processes.md#interop-and-the-toolchain)
+      with [rows 87–88](kb/README.md#re-verification-index). The original text
+      follows.
+      <br><br>
+      **BrowserAI registers itself as an MCP server. Nothing does this, and it is
       the charter's founding promise.**
       [§B](plan/B-mcp-server.md)'s first sentence is *"registered once at system
       or user scope, available in every repository, with no per-repo files"*, and

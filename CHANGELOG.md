@@ -23,6 +23,22 @@ has been satisfied in form only.
 
 ### Added
 
+- **BrowserAI registers itself with your MCP client when it installs, and
+  unregisters when it goes.** One registration at *user* scope — available in
+  every repository, with no `.mcp.json`, no hook registration and no file added
+  to any project. Installing is the whole of setup. It registers
+  `current\BrowserAI.exe` directly, so an update replaces the binary without the
+  registration ever needing to change; measured across an update and a rollback,
+  the entry does not move.
+- **A registration that could not happen says so, and never breaks the install.**
+  No MCP client on the machine, a client that refuses, one that hangs, one that
+  cannot be started — each leaves a line in the process log *and*
+  `mcp-registration.json` beside the installed `current\` folder, naming the
+  outcome and the one command to run by hand. Nothing about a failed
+  registration is silent, and nothing about it can fail an installation.
+- **Installing, updating, repairing and reinstalling all leave exactly one
+  registration.** An install re-points a stale one; an update repairs a missing
+  one and never overwrites arguments you added yourself.
 - **The version comes from the git tag and is typed nowhere.** A build on
   `v0.1.0` is `0.1.0`; five commits later, with no new tag, it is
   `0.1.1-alpha.0.5`. Nothing to edit, forget, or get out of step with the tag,
@@ -76,6 +92,13 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **Closing the process log did not close its file.** Disposing the logging stack
+  was written to close the rolling log handle through the logger factory, and the
+  factory never disposes a provider it was handed rather than asked to create —
+  so the handle survived, measured at zero disposals. It cost nothing while the
+  only caller was a process about to exit, and it surfaced the moment something
+  short-lived opened a log and read it back. The writer is now closed explicitly,
+  and a test fails if that call is removed.
 - **A second BrowserAI starting up deleted a running one's working files.** The
   per-run instance directory holds the generated config and the surface child's
   browser profile, and the startup sweep reclaimed abandoned ones with

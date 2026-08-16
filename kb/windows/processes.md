@@ -617,6 +617,37 @@ passed, in both directions, which is exactly the shape of a defect that ships.
 floats. Reproduce:
 `LockRecordTests.TimestampsAreWrittenAsIso8601WithAnExplicitOffset`.
 
+**`Environment.GetFolderPath(SpecialFolder.UserProfile)` does not read
+`%USERPROFILE%`.** It resolves from the process token, so overriding the
+environment variable in a child's block moves nothing. Measured 2026-08-16 while
+trying to simulate a machine with no MCP client on it: the child was started with
+`USERPROFILE` pointed at an empty scratch directory and `PATH` cut to `system32`,
+and it still found `C:\Users\jori\.local\bin\claude.exe`. **The attempt failed and
+the run is still evidence** — it proves the `PATH`-independent fallback in
+`ClientCommandLine` is load-bearing rather than decorative, because with `PATH`
+stripped that fallback is what completed the registration. `[STABLE]` — a Win32
+known-folder property. Consequence: **a clientless machine cannot be simulated
+from the environment**; the client-absent path is exercised through the
+`IRegistrationCommand` seam instead, and `Locate` returning `null` for a name that
+is genuinely not on this machine is asserted by
+`RegistrationTests.TheClientIsLocatedByFileNameAndNeverAsAShim`.
+
+**`LoggerFactory.Dispose()` never disposes a provider *instance* handed to
+`AddProvider`.** Measured 2026-08-16 on `Microsoft.Extensions.Logging` 10.0.x, by
+planting a provider that counts its own disposals:
+`LoggerFactory.Create(b => b.AddProvider(instance))` followed by
+`factory.Dispose()` reported **0 disposals** — a DI container does not dispose an
+instance it did not create. The consequence in this repository was a
+`ProcessLog.Dispose()` that closed nothing: its rolling file handle survived, and
+the log could not afterwards be opened with `FileShare.None`. It cost nothing in
+`Main`, which exits immediately after; it was found the first time something
+short-lived opened a process log and then read it back, which is a Velopack hook.
+`SessionLogging` was already immune because it disposes its file **explicitly
+after** the factory — a second call that reads as redundancy and is the actual
+mechanism. `[FLOATS]` on the logging packages. Reproduce:
+`ProcessLogTests.DisposingTheProcessLogReleasesTheFileHandle`, which fails at the
+exclusive open if the explicit `_writer.Dispose()` is removed.
+
 **A COM/interop enum value the running OS does not know throws on assignment** —
 at the property set, not at load and not at compile time. The managed enum is only
 an integer; the rejection happens inside the COM object receiving it, so the

@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Hosting;
+using BrowserAI.Logging;
 using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Tests;
 
@@ -11,6 +14,44 @@ namespace BrowserAI.Tests;
 /// </summary>
 internal sealed class ProcessLogTests
 {
+    /// <summary>
+    /// Disposing the stack actually closes the file.
+    /// </summary>
+    /// <remarks>
+    /// <b>It did not, and the claim that it did was in the code.</b> Measured
+    /// 2026-08-16: <c>LoggerFactory.Dispose()</c> never calls <c>Dispose</c> on a
+    /// provider <i>instance</i> handed to <c>AddProvider</c> — a container does
+    /// not dispose what it did not create — so the rolling handle outlived every
+    /// disposal and the log could not be opened exclusively afterwards. Harmless
+    /// in <c>Main</c>, which exits immediately; found by the first short-lived
+    /// caller that opened a log and then read it back, which is a Velopack hook.
+    /// Planting the old body back turns this red at the exclusive open.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task DisposingTheProcessLogReleasesTheFileHandle()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-handle");
+
+        string? file;
+
+        using (var log = ProcessLog.Create(new LocalAppDataPaths(scratch.Path), LogLevel.Information))
+        {
+            var logger = log.Factory.CreateLogger("BrowserAI.Test");
+
+            ProcessLogProbe.Wrote(logger, nameof(DisposingTheProcessLogReleasesTheFileHandle));
+            file = log.CurrentFile;
+        }
+
+        await Assert.That(file).IsNotNull();
+
+        // FileShare.None is the assertion: it succeeds only when nothing at all
+        // holds the file, which is exactly the property being claimed.
+        using var exclusive = new FileStream(file!, FileMode.Open, FileAccess.Read, FileShare.None);
+
+        await Assert.That(exclusive.Length).IsGreaterThan(0);
+    }
+
     [Test]
     public async Task TwoConsecutiveRunsBothAppearInTheProcessLog()
     {
@@ -93,4 +134,22 @@ internal sealed class ProcessLogTests
 
         await Assert.That(string.Join(", ", missing)).IsEmpty();
     }
+}
+
+/// <summary>
+/// One source-generated record, so the handle test writes through the real
+/// logging path rather than a stub.
+/// </summary>
+/// <remarks>
+/// Source-generated because <c>CA1848</c> is an error here and a
+/// <c>LogInformation</c> call would not compile — which is the correct rule, and
+/// means a test that logs needs its own message.
+/// </remarks>
+internal static partial class ProcessLogProbe
+{
+    /// <summary>Writes one record.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="test">The test that wrote it.</param>
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "{Test} wrote this record.")]
+    public static partial void Wrote(ILogger logger, string test);
 }

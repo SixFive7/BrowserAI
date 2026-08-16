@@ -107,6 +107,90 @@ is false**: measured twice, the client re-listed in **1–2 ms** and the model
 called a tool that appeared only in the second list. This does **not** unlock a
 per-connection tool list — SEP-2567 stands — but the cited issues need re-dating.
 
+## Registering BrowserAI with the client
+
+Measured 2026-08-16 @ **Claude Code 2.1.233** (`claude.exe`, native install at
+`%USERPROFILE%\.local\bin`), while building
+[§B](../../plan/B-mcp-server.md)'s registration. Every run below wrote into a
+**scratch `CLAUDE_CONFIG_DIR`**, never the maintainer's own configuration.
+`[FLOATS]` on a client version this project does not control.
+
+**`claude mcp add --scope user` writes `mcpServers.<name>` into
+`$CLAUDE_CONFIG_DIR\.claude.json`** — one entry, `{type, command, args, env}` —
+and prints the file it modified. Unset, that directory is `%USERPROFILE%`. The
+override is what makes a real registration testable without touching the file the
+maintainer uses daily.
+
+**No elevation.** Both `add` and `remove` succeeded from a **non-elevated,
+non-administrator** token (`WindowsPrincipal.IsInRole(Administrator)` = false) —
+they write the invoking user's own file. Worth stating because
+[the logon-task assumption was wrong the same way](../windows/detection.md#the-logon-sweep-task):
+`schtasks` and the Task Scheduler COM API both answer `Access is denied` from
+that same token, so *"a per-user operation needs no elevation"* is not something
+this machine grants for free.
+
+**Timings, three runs each:** `add` **613 / 645 / 636 ms**, `remove` **671 / 668 /
+646 ms**. Against the fast-exit hook budgets — `--veloapp-install` 30 s,
+`--veloapp-updated` 15 s, `--veloapp-uninstall` 60 s
+([kb](../packaging/velopack.md#nativeaot-hooks-and-vpk-output)) — that is 15×
+headroom on the tightest one. `[MACHINE]`
+
+⚠️ **`add` is not idempotent, and every failure it has exits 1.** A second `add`
+of the same name exits **1** printing *"MCP server browserai already exists in
+user config"*; a `remove` of a name that is not there exits **1** printing *"No
+MCP server named \"browserai\" in user scope"*. There is no exit code that
+distinguishes either from a real failure, so **the words are the only
+discriminator there is** — which is why `McpClientRegistration` matches on them
+and why `RegistrationTests.TheClientStillSaysWhatTheExitCodesCannot` asserts both
+against the real client on every run that has one. Getting it wrong is safe in
+one direction only: an unrecognised wording reports the pass as *failed*, which
+is loud, rather than reporting a registration that did not happen as done.
+
+**`claude mcp get` starts the server.** It health-checks, so it reported
+*"✘ Failed to connect"* for a path that does not exist — **and still exited 0**,
+which is the `list`/`get` behaviour already recorded below. It is therefore
+unusable as a presence check inside an install hook: it is slow, it has a side
+effect, and against a real registration it would spawn BrowserAI from inside
+BrowserAI's own installer.
+
+### The whole lane, against a real installer — 2026-08-16
+
+`Setup.exe --silent --installto <scratch>` at 0.9.0, updated to 0.9.1, rolled
+back to 0.9.0, uninstalled. `CLAUDE_CONFIG_DIR` was pointed at a scratch
+directory for every process in the chain, and the maintainer's own
+`~\.claude.json` was **SHA-256-identical before and after** the whole run
+(`3721c2ac…`). `[MACHINE]`
+
+| Step | What the registration did | Time in the hook |
+|---|---|---|
+| Install 0.9.0 | `Registered`, command = `<root>\current\BrowserAI.exe` | **1.41 s** of a 30 s budget |
+| Stub vs. registered binary | **392,704 b** at the root against **17,911,808 b** in `current\` — the registered path is the second | — |
+| Update 0.9.0 → 0.9.1 | `AlreadyRegistered`; the entry and its path **unchanged** | **0.67 s** of a 15 s budget |
+| Rollback 0.9.1 → 0.9.0 (`rollback=True deltas=0`) | `AlreadyRegistered`; unchanged again | 0.67 s |
+| Uninstall | `mcpServers` is `{}` | whole uninstall **1.78 s** of a 60 s budget |
+
+**Why an update changes nothing is the finding, not an omission.** The registered
+path is `<root>\current\BrowserAI.exe`; an update replaces that directory
+wholesale and the path is identical either side, so there is nothing to correct —
+and the client's configuration lives outside the install root entirely, where no
+update can reach it. The hook still runs, and what it buys is the *repair* case: a
+registration somebody removed comes back.
+
+**A hook must write its own log inside itself.** `VelopackApp.Run()` exits the
+process once it has served a hook, so anything buffered for later replay is
+discarded — `Program.Main`'s replay of Velopack's own records can never run on a
+hook path. Confirmed by reading `<root>\logs\browserai-*.log` after the install:
+all three registration records are on disk, written by the hook's own pid.
+
+⚠️ **A clientless machine could not be simulated and the gap is named.** The
+fallback directory resolves from the process token rather than from
+`%USERPROFILE%`, so it cannot be redirected
+([kb](../windows/processes.md#interop-and-the-toolchain)), and renaming the
+maintainer's own `claude.exe` aside was refused. What *was* measured on the real
+installed binary: the hook exits **0 in 1,367 ms** with `PATH` stripped to
+`system32`, registering through the fallback. The absent-client path is exercised
+through the `IRegistrationCommand` seam instead.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** —

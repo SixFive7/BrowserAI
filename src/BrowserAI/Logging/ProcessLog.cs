@@ -27,6 +27,11 @@ namespace BrowserAI.Logging;
 /// by construction. See <see cref="IAppPaths"/>.
 /// </para>
 /// <para>
+/// <b>Disposal closes the file, and it takes an explicit call to do it.</b> The
+/// obvious reading — the factory disposes its providers, the provider owns the
+/// sink — is false, and was measured false: see <see cref="Dispose"/>.
+/// </para>
+/// <para>
 /// <b>There is no flush-on-exit hook, and that is deliberate.</b>
 /// <see cref="RollingFileWriter"/> buffers nothing: each record is one
 /// unbuffered write against a synchronous handle, so a record that has been
@@ -153,6 +158,24 @@ internal sealed class ProcessLog : IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-16 (previously "The factory disposes its
+    /// providers, and the file provider owns the writer, so this closes the
+    /// handle too" — and it did not).</b> Measured twice on
+    /// <c>Microsoft.Extensions.Logging</c> 10.0.x, by planting a provider that
+    /// counts its own disposals: <b><c>LoggerFactory.Create(b =&gt;
+    /// b.AddProvider(instance))</c> followed by <c>factory.Dispose()</c> calls
+    /// that provider's <c>Dispose</c> <i>zero</i> times</b> — a container never
+    /// disposes an instance it did not create — so the rolling file handle
+    /// survived every disposal, and opening the log afterwards with
+    /// <c>FileShare.None</c> was refused. It cost nothing in <c>Main</c>, where
+    /// the process exits immediately afterwards, and it was found the first time
+    /// something short-lived opened one and then read it back: a Velopack hook.
+    /// <see cref="SessionLogging"/> was already immune, because it disposes its
+    /// file explicitly after the factory — that belt-and-braces second call was
+    /// the mechanism, not the redundancy it read as
+    /// ([kb](../../kb/windows/processes.md#interop-and-the-toolchain)).
+    /// </remarks>
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) is not 0)
@@ -162,9 +185,12 @@ internal sealed class ProcessLog : IDisposable
 
         AppDomain.CurrentDomain.UnhandledException -= _onUnhandled;
 
-        // The factory disposes its providers, and the file provider owns the
-        // writer, so this closes the handle too.
+        // The factory first, so nothing can still be routing records at a sink
+        // that is about to close -- then the writer, explicitly, because the
+        // factory does not reach it. See the remarks: this is measured rather
+        // than defensive.
         Factory.Dispose();
+        _writer.Dispose();
     }
 }
 

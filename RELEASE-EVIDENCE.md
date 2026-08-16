@@ -19,6 +19,101 @@ with it.
 
 ---
 
+## §B registration — 2026-08-16, on `d788e48`
+
+**Not a checklist run.** The [plan audit](PLAN.md#the-final-audit-ran-on-2026-08-16-and-the-plan-is-not-deleted)'s
+largest finding — *"§B's first sentence is built by nothing, owned by nobody and
+gated by nothing"* — is closed. **The decision it was waiting on was taken in the
+maintainer's absence:** they were asked twice, they are away, and what shipped
+meanwhile was an installed, self-updating, self-sweeping binary that no client
+was configured to talk to. **Scope: user. Mechanism: the client's own
+`claude mcp add --scope user`.**
+
+**No checklist verdict moves.** Items 8 and 9 still block a release — the same
+one `[Skip]`, and a derived version carrying a pre-release suffix — and neither
+is this work's to clear. What moves is the **content** of item 8's *"every layer
+ran"*: there is now a sixth capability, `ClientCommandLine`, and a run without an
+MCP client on the machine reports it `ABSENT` and skips three tests instead of
+passing them.
+
+### What was proven, and how
+
+Everything below ran against a **real `Setup.exe --silent --installto`** into a
+scratch root under `.work\` — never `%LocalAppData%\BrowserAI`, which holds 767 MB
+of browsers and which `Setup.exe` renames aside. Two releases were packed at 0.9.0
+and 0.9.1 into a scratch feed (delta **97,741 b** against a **49,086,523 b** full
+package).
+
+| Step | Result |
+|---|---|
+| `Setup.exe --silent --installto` at 0.9.0 | exit 0. `mcp-registration.json` at the install root: **`Registered`**, command `<root>\current\BrowserAI.exe` |
+| Stub vs. what was registered | **392,704 b** at the root against **17,911,808 b** in `current\` — landmine 3 made visible, and the registered path is the second |
+| The hook's own log | All three registration records on disk in `<root>\logs\`, written by the hook's pid. **1.41 s** end to end against a 30 s budget |
+| Update 0.9.0 → 0.9.1 | Applied. `current\BrowserAI.exe` reports **0.9.1**; the `--veloapp-updated` hook logged `AlreadyRegistered` in **0.67 s** of 15 s; the registered path **unchanged** |
+| Rollback 0.9.1 → 0.9.0 | `rollback=True deltas=0`, applied, `current\` reports **0.9.0**, registration **unchanged** again |
+| `Update.exe uninstall --silent` | exit 0 in **1.78 s** of 60 s. Install root gone; `mcpServers` in the client configuration is **`{}`** |
+| The hook with `PATH` stripped to `system32` | exit **0 in 1,367 ms**, registered anyway — through the `%USERPROFILE%\.local\bin` fallback, which is therefore load-bearing rather than decorative |
+
+**The maintainer's own MCP configuration was never written to, and it is asserted
+rather than intended.** `~\.claude.json` is SHA-256 `3721c2ac…` before the first
+measurement and after the last, and carries no `browserai` server. Every process
+in the chain — the CLI probes, the suite's real-client arms, `Setup.exe`, the
+update, the rollback and the uninstall — ran with `CLAUDE_CONFIG_DIR` pointed at a
+scratch directory. The live test also proves the negative from the other side: it
+looks for its own GUID-bearing install path in the user's file and requires it
+absent.
+
+### The suite
+
+**367 total, 366 passed, 1 skipped, 0 failed, exit 0, 35.4 s**, every capability
+`PRESENT` including the new one, coverage block reading *"This run exercised every
+layer. No test took a degraded path."* Build **0 warnings**; NativeAOT publish
+exit 0 with **no ILC output**. Fifteen tests added: 14 in `RegistrationTests`
+(11 over a double, 3 against the real client) and 1 in `ProcessLogTests`.
+
+⚠️ **The first full run after this change was red, and it was right to be.**
+25 failures, all one message: *"The published binary … is older than 9 source
+file(s), so this test would prove nothing about the code in the tree."* The
+staleness gate did its job; the publish was re-run and the suite is green. Worth
+recording because a suite that had silently used the old binary would have
+reported 352 green and proven nothing about any of this.
+
+### What contradicted a document, and what changed
+
+1. **`ProcessLog.Dispose()` did not close its file, and said it did.** The
+   comment read *"the factory disposes its providers, and the file provider owns
+   the writer, so this closes the handle too"*. Measured by planting a provider
+   that counts its own disposals: `LoggerFactory.Create(b => b.AddProvider(instance))`
+   plus `factory.Dispose()` gives **0 disposals** — a container does not dispose
+   an instance it did not create. The rolling handle survived every disposal.
+   Harmless in `Main`, which exits immediately after; found by the first
+   short-lived caller that opened a log and read it back, which is a hook.
+   `SessionLogging` was already immune because it disposes its file explicitly
+   *after* the factory — a second call that reads as redundancy and is the actual
+   mechanism. Fixed, comment corrected carrying its previous text, and
+   `ProcessLogTests.DisposingTheProcessLogReleasesTheFileHandle` fails at the
+   exclusive open without the fix.
+2. **`Environment.GetFolderPath(UserProfile)` does not read `%USERPROFILE%`.** It
+   resolves from the process token. This defeated an attempt to simulate a machine
+   with no MCP client: the child was given an empty `USERPROFILE` and a `PATH` of
+   `system32`, and still found `C:\Users\jori\.local\bin\claude.exe`. **The failed
+   attempt is kept as evidence** — it is what proves the `PATH`-independent
+   fallback works.
+
+> ⚠️ **One thing could not be measured end to end, and it is named rather than
+> implied: a machine with no MCP client at all.** The fallback cannot be
+> redirected (above), and renaming the maintainer's own `claude.exe` aside was
+> refused. The absent-client path is therefore proven through the
+> `IRegistrationCommand` seam — `ClientNotFound`, its Warning record, the manual
+> command in the report *and* in `mcp-registration.json` — plus the real
+> `Locate` returning `null` for a name that genuinely is not on this machine.
+
+Recorded in [kb: registering with the client](kb/mcp/protocol.md#registering-browserai-with-the-client)
+and [kb: interop and the toolchain](kb/windows/processes.md#interop-and-the-toolchain),
+with [re-verification rows 87 and 88](kb/README.md#re-verification-index).
+
+---
+
 ## Follow-up to the plan audit — 2026-08-16, on `9f6a97a`
 
 **Not a checklist run.** The [plan's final audit](PLAN.md#the-final-audit-ran-on-2026-08-16-and-the-plan-is-not-deleted)

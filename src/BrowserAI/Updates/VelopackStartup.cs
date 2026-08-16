@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Registration;
 using Microsoft.Extensions.Logging;
 using Velopack;
 using Velopack.Logging;
@@ -40,12 +41,40 @@ namespace BrowserAI.Updates;
 /// ([kb](../../kb/packaging/velopack.md#8-ivelopacklogger-needs-two-registrations)).
 /// </para>
 /// <para>
-/// <b>No hook does any work.</b> They exist to log. The logon scheduled task
-/// that <c>--veloapp-install</c> was going to register
+/// <b>Three hooks do one job, and it is the charter's founding promise.</b>
+/// <c>--veloapp-install</c> and <c>--veloapp-updated</c> register BrowserAI with
+/// the MCP client and <c>--veloapp-uninstall</c> removes it, through
+/// <see cref="Registration.HookRegistration"/> —
+/// [§B](../../plan/B-mcp-server.md)'s <i>"registered once at system or user
+/// scope, available in every repository, with no per-repo files"</i>. Before
+/// 2026-08-16 every hook here existed only to log, and what shipped was an
+/// installed, self-updating, self-sweeping binary that no client was configured
+/// to talk to.
+/// </para>
+/// <para>
+/// <b>Corrected 2026-08-16 (previously "No hook does any work. They exist to
+/// log").</b> That was true and is not any more. The reason it was true survives
+/// unchanged and still binds: the logon scheduled task
 /// [is dropped](../../plan/build-order.md#16-the-stray-sweep), and a hook that
-/// left a helper running under the install root would be killed by
+/// left a <i>helper running</i> under the install root would be killed by
 /// <c>force_stop_package</c> immediately afterwards anyway — it runs after every
-/// hook returns.
+/// hook returns. Registration is not that shape: it starts one short-lived
+/// process that lives outside the install root, waits for it, and returns.
+/// </para>
+/// <para>
+/// <b>What a hook may cost.</b> These are fast-exit callbacks with real
+/// timeouts — <c>--veloapp-install</c> 30 s, <c>--veloapp-updated</c> 15 s,
+/// <c>--veloapp-uninstall</c> 60 s
+/// ([kb](../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) — and
+/// anything slow or interactive in one is a broken install. The registration
+/// call is measured at 613–645 ms with a 10 s budget of its own, and it can
+/// neither prompt nor block: see <see cref="Registration.McpClientRegistration"/>.
+/// </para>
+/// <para>
+/// <b><c>OnBeforeUpdate</c> deliberately registers nothing.</b> It runs as the
+/// <i>outgoing</i> version, whose <c>current\</c> is about to be replaced; the
+/// incoming one's <c>--veloapp-updated</c> is the hook that owns the question,
+/// and having both act would be two passes racing over one entry.
 /// </para>
 /// </remarks>
 internal static class VelopackStartup
@@ -56,6 +85,12 @@ internal static class VelopackStartup
     /// </summary>
     /// <param name="args">The process arguments.</param>
     /// <param name="log">Where Velopack's own output goes.</param>
+    /// <remarks>
+    /// The lifecycle hooks below take no injected seam. They are served only
+    /// inside a real installed process — every test host reaches
+    /// <see cref="Registration.HookRegistration"/> directly, which is why that
+    /// type carries the overload that takes an image path and a command seam.
+    /// </remarks>
     public static void Run(string[] args, Action<VelopackLogLevel, string, Exception?> log)
     {
         ArgumentNullException.ThrowIfNull(log);
@@ -68,11 +103,56 @@ internal static class VelopackStartup
             .SetLogger(new DelegateVelopackLogger(log))
             .OnFirstRun(version => log(VelopackLogLevel.Information, $"First run of BrowserAI {version}.", null))
             .OnRestarted(version => log(VelopackLogLevel.Information, $"BrowserAI {version} restarted after an update.", null))
-            .OnAfterInstallFastCallback(version => log(VelopackLogLevel.Information, $"Installed BrowserAI {version}.", null))
-            .OnAfterUpdateFastCallback(version => log(VelopackLogLevel.Information, $"Updated to BrowserAI {version}.", null))
+
+            // ⚠️ THE THREE THAT DO WORK. Their records are written inside the
+            // callback rather than buffered, because VelopackApp.Run() exits the
+            // process once it has served a hook and anything buffered dies with
+            // it.
+            .OnAfterInstallFastCallback(version => Register(RegistrationIntent.Install, Describe(version), log))
+            .OnAfterUpdateFastCallback(version => Register(RegistrationIntent.Update, Describe(version), log))
+            .OnBeforeUninstallFastCallback(version => Register(RegistrationIntent.Uninstall, Describe(version), log))
+
             .OnBeforeUpdateFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being replaced.", null))
-            .OnBeforeUninstallFastCallback(version => log(VelopackLogLevel.Information, $"BrowserAI {version} is being uninstalled.", null))
             .Run();
+    }
+
+    /// <summary>
+    /// The version a hook was handed, as the string everything downstream
+    /// records.
+    /// </summary>
+    /// <param name="version">What Velopack passed the callback.</param>
+    /// <returns>The full semantic version, or a placeholder.</returns>
+    /// <remarks>
+    /// <c>ToFullString()</c> rather than <c>ToString()</c>, for the same reason
+    /// <see cref="InstallLocation.InstalledVersion"/> uses it: the pre-release
+    /// suffix is what makes <i>never self-update from a build that is not a
+    /// release</i> readable off a version string, and the shorter rendering drops
+    /// it.
+    /// </remarks>
+    private static string Describe(SemanticVersion? version) => version?.ToFullString() ?? "<unknown>";
+
+    /// <summary>
+    /// One hook's whole body: register or unregister, and mirror the answer into
+    /// Velopack's own log as well as BrowserAI's.
+    /// </summary>
+    /// <param name="intent">Which hook is running.</param>
+    /// <param name="version">The version Velopack passed the callback.</param>
+    /// <param name="log">Velopack's logger, which reaches the installer's log file.</param>
+    /// <remarks>
+    /// <b>The answer goes to two places on purpose.</b>
+    /// <see cref="Registration.HookRegistration"/> writes BrowserAI's process log
+    /// and the registration record; this line puts the same conclusion into the
+    /// installer's own log, which is the file somebody debugging a failed install
+    /// opens first and the only one that exists before BrowserAI has ever run.
+    /// </remarks>
+    private static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
+    {
+        var report = HookRegistration.Run(intent, version);
+
+        log(
+            report.IsWhatWasAskedFor ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
+            $"BrowserAI {version} — MCP registration ({intent}): {report.Status}. {report.Detail}",
+            null);
     }
 
     /// <summary>
