@@ -2178,6 +2178,58 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 
 ---
 
+### 17a. The browser-idle timer and teardown
+
+**Consumes:** [§C](C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
+
+> ⚠️ **This step was missing, and it was found by the build rather than by
+> review.** Added 2026-08-16, after steps 16 and 17 each independently reported
+> that §C's lifetime section is owned by no numbered step. Verified before
+> inserting: `grep -niE "idle|teardown|browser_close|ten minutes"` over this
+> file returned **nothing**. The plan is exhaustive by topic and this file is
+> the sequence; the requirement fell between the two, which is exactly the seam
+> [this file's own opening](#why-an-ordered-list-is-the-first-artifact) exists
+> to close.
+>
+> **It cannot move earlier or later.** It needs a real browser
+> ([step 15](#15-first-run-provisioning-and-browserai_reinstall_browser)) and
+> the session tools ([step 12](#12-the-session-tools-and-config-generation)), so
+> not before 17. And [18](#18-versions-from-git-tags-and-the-changelog) through
+> [20](#20-the-first-release) are versioning, packaging and release — **cutting
+> a release without this ships a product where every session holds a browser
+> open forever**, which is a defect the suite would never report because
+> nothing about it is red.
+
+**Exactly one timer exists: browser-idle, ~10 minutes, reset by any tool call.**
+It closes the browser and **keeps the node child** — measured 329 → 110 MB, and
+186 ms to relaunch. There is no handle-expiry timer, no session TTL and no
+reclaim window; [reclaim is forever](C-sessions.md#lifetime-one-timer-and-reclaim-is-forever).
+
+- **The relaunch is implicit, and that is the whole point.** A caller that
+  navigates after an idle close must **never** see *"browser is closed"*. That
+  invisibility is what makes the timer safe to have at all, so it is the test
+  rather than a note.
+- **Teardown is stdin EOF plus the client-liveness watcher**, never a close
+  tool. EOF fires instantly when the parent holding the pipe is
+  `TerminateProcess`d, and the SDK already treats it as shutdown.
+- The client-liveness watcher is an `OpenProcess` handle on the client PID —
+  **never ping-based**; `ping` was removed at protocol revision 2026-07-28.
+
+**Done when:**
+
+- A session idle past the timer has **no browser process** and **still has its
+  node child** — asserted on both, because either alone is the wrong outcome.
+- The next tool call after an idle close **succeeds**, and no `"browser is
+  closed"`-shaped text reaches the caller on any path.
+- Any tool call resets the timer; a session driven continuously never closes.
+- stdin EOF tears down everything — no node child, no browser, and the job
+  object is closed.
+- Killing the client process the watcher holds a handle on tears the session
+  down without waiting for EOF.
+- `git status --porcelain` is empty.
+
+---
+
 ## Phase 6 — shipping
 
 ### 18. Versions from git tags, and the changelog
