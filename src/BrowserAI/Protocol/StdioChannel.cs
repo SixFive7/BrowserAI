@@ -24,17 +24,18 @@ namespace BrowserAI.Protocol;
 /// process by <c>BannedSymbols.txt</c> at error severity — so there is no
 /// second path to the handle for a future change to get wrong.
 /// </para>
+/// <para>
+/// <b>Bytes are the primitive, and that is deliberate.</b>
+/// <see cref="DirectStdioServerTransport"/> hands this type UTF-8 it has
+/// already encoded, because the whole point of owning the server transport is
+/// that a result leaves byte-for-byte as the child produced it
+/// (<c>plan/stack.md</c>, deviation 5). A UTF-16 round trip in the middle of
+/// that path cannot corrupt a valid string, but it is the exact shape of the
+/// thing being removed, so there is one write path and it takes bytes.
+/// </para>
 /// </remarks>
 internal sealed class StdioChannel : IDisposable
 {
-    /// <summary>
-    /// UTF-8 with no byte-order mark, and throwing on invalid input rather than
-    /// substituting <c>U+FFFD</c>. A silently replaced character is a corrupted
-    /// payload that still parses, which is the harder failure to find.
-    /// </summary>
-    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
-
-    private readonly StreamWriter _writer;
     private readonly bool _ownsStreams;
 
     private StdioChannel(Stream input, Stream output, bool ownsStreams)
@@ -42,19 +43,26 @@ internal sealed class StdioChannel : IDisposable
         Input = input;
         Output = output;
         _ownsStreams = ownsStreams;
-        _writer = new StreamWriter(output, Utf8NoBom, leaveOpen: true)
-        {
-            // LF, never CRLF. StreamWriter.WriteLine would otherwise emit
-            // Environment.NewLine, which is CRLF on this platform.
-            NewLine = "\n",
-
-            // Flushing is explicit, so a frame is never half-written while a
-            // caller believes it was sent.
-            AutoFlush = false,
-        };
     }
 
-    /// <summary>The raw stdin stream. Decoding belongs to the reader.</summary>
+    /// <summary>
+    /// UTF-8 with no byte-order mark, and throwing on invalid input rather than
+    /// substituting <c>U+FFFD</c>. A silently replaced character is a corrupted
+    /// payload that still parses, which is the harder failure to find.
+    /// </summary>
+    /// <remarks>
+    /// Exposed so that a pipe to a child process is encoded by the same
+    /// instance rather than by a second declaration that agrees today. The one
+    /// place this rule is deliberately not applied is a child's <b>stderr</b>,
+    /// which carries diagnostics rather than protocol: see
+    /// <see cref="DirectStdioClientTransport"/>.
+    /// </remarks>
+    public static UTF8Encoding Utf8NoBom { get; } = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    /// <summary>
+    /// The raw stdin stream. There is no decoder in front of it: a frame is
+    /// handed to <c>Utf8JsonReader</c> as bytes.
+    /// </summary>
     public Stream Input { get; }
 
     /// <summary>The raw stdout stream, for a transport that frames its own bytes.</summary>
@@ -78,22 +86,31 @@ internal sealed class StdioChannel : IDisposable
     public static StdioChannel Over(Stream input, Stream output) => new(input, output, ownsStreams: false);
 
     /// <summary>
-    /// Writes one newline-delimited frame and flushes it, so that a caller that
-    /// returns has demonstrably put the bytes on the wire.
+    /// Writes one newline-delimited frame of already-encoded UTF-8 and flushes
+    /// it, so that a caller that returns has demonstrably put the bytes on the
+    /// wire.
     /// </summary>
-    public void WriteFrame(string payload)
+    /// <remarks>
+    /// Synchronous on purpose. <c>Console.OpenStandardOutput</c> hands back a
+    /// stream opened without <c>FileOptions.Asynchronous</c>, so an async write
+    /// against it only queues the same blocking call to the thread pool. The
+    /// caller serialises frames; this does not.
+    /// </remarks>
+    /// <param name="utf8Payload">The frame body, already UTF-8 and free of newlines.</param>
+    public void WriteFrame(ReadOnlySpan<byte> utf8Payload)
     {
-        _writer.Write(payload);
-        _writer.Write('\n');
-        _writer.Flush();
+        Output.Write(utf8Payload);
+        Output.WriteByte((byte)'\n');
+        Output.Flush();
     }
+
+    /// <summary>Writes one newline-delimited frame, encoding it first.</summary>
+    /// <param name="payload">The frame body.</param>
+    public void WriteFrame(string payload) => WriteFrame(Utf8NoBom.GetBytes(payload));
 
     /// <inheritdoc />
     public void Dispose()
     {
-        _writer.Flush();
-        _writer.Dispose();
-
         if (_ownsStreams)
         {
             Input.Dispose();

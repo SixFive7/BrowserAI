@@ -11,6 +11,14 @@
     <RootNamespace>BrowserAI.Tests</RootNamespace>
     <AssemblyName>BrowserAI.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
+    <!--
+      Required by [LibraryImport] in Harness\ParentProcess.cs, which reads a
+      child's real parent pid so that an interposed cmd.exe fails a test rather
+      than being invisible. Same reason the product project sets it, and the
+      same limit: every use is a P/Invoke declaration, never hand-written
+      unsafe code.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

@@ -32,12 +32,23 @@ internal sealed class UpstreamReviewTests
     /// yet, so there is no resolved version to compare against.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Named rather than skipped. A missing comparison that reports nothing is
-    /// the failure this project exists to eliminate, so the day
-    /// <c>ModelContextProtocol</c> arrives (step 7) or Velopack does (step 19),
-    /// this list stops matching and the suite says so.
+    /// the failure this project exists to eliminate, so the day an upstream
+    /// enters the build this list stops matching and the suite says so.
+    /// </para>
+    /// <para>
+    /// <b>It worked.</b> <c>ModelContextProtocol</c> left this list on
+    /// 2026-08-16 at build-order step 5, one step earlier than the note here
+    /// predicted, because the two custom transports need the SDK's
+    /// <c>TransportBase</c> and <c>IClientTransport</c>. Adding the package
+    /// turned this test red on its own, with no other change; it resolved
+    /// <b>2.2.0</b>, which is the version <c>upstream-review.json</c> records
+    /// as reviewed, so no review was owed and the marker test was already
+    /// green. Velopack is still owed, at step 19.
+    /// </para>
     /// </remarks>
-    private static readonly string[] NotReferencedByAnyProjectYet = ["ModelContextProtocol", "Velopack"];
+    private static readonly string[] NotReferencedByAnyProjectYet = ["Velopack"];
 
     [Test]
     public async Task EveryReviewedVersionEqualsTheVersionTheBuildResolved()

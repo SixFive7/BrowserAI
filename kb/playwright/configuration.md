@@ -80,6 +80,19 @@ model's context.
 `PLAYWRIGHT_DOWNLOAD_HOST` must be stripped: it collapses the mirror list to one
 host, so all five attempts hit the same dead server.
 
+**The four download-host variants, named.** Measured 2026-08-16 from the
+resolved payload rather than from memory —
+`grep -o "PLAYWRIGHT_[A-Z_]*DOWNLOAD_HOST"
+payload/mcp/node_modules/playwright-core/lib/coreBundle.js | sort -u` returns
+exactly `PLAYWRIGHT_DOWNLOAD_HOST`, `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`,
+`PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST`, and
+nothing else. Every document that says *"and its three per-browser variants"*
+means these; the strip list in `src/BrowserAI/Protocol/ChildEnvironment.cs`
+carries all four by name and refuses them even under a different casing, because
+a Windows environment block is case-insensitive. Held at `playwright-core`
+**1.63.0-alpha-2026-08-05**; re-run the grep at each bump, since a fifth browser
+would add a fifth. `[FLOATS]`
+
 **`INSTALLATION_COMPLETE` short-circuits without validating anything.** Written
 last, so an *interrupted* install self-heals. But a browser corrupted **after** a
 successful install never re-downloads — `spawn EFTYPE` forever — and upstream's

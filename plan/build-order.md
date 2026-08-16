@@ -408,6 +408,68 @@ other two arrive at steps 10 and 11.
 
 **Consumes:** [stack](stack.md) (deviations 1 and 5)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Protocol/{JsonLines, JsonLinesTransport,
+> DirectStdioClientTransport, ChildProcessSession, DirectStdioServerTransport,
+> ChildEnvironment}.cs` · `src/BrowserAI/Protocol/StdioChannel.cs` (bytes are now
+> the write primitive) · `tests/BrowserAI.TestProbe/Program.cs` (a
+> `transport-child` mode) · `tests/BrowserAI.Tests/{ChildEnvironmentTests,
+> DirectStdioClientTransportTests, DirectStdioServerTransportTests,
+> SdkStdioClientTransportTests, Harness/{ParentProcess, ProbeChild}}.cs`. Every
+> done-test below was run. **51 tests green, `dotnet build` 0 warnings**, and the
+> AOT publish stayed clean.
+>
+> **Both decisions under test held, and the second was cheaper than the plan
+> said.** The escaping `StreamServerTransport` performs comes from
+> `Utf8JsonWriter`'s own encoder rather than from the contract, so the SDK's
+> source-generated `JsonTypeInfo` is reused unchanged and only the encoder
+> differs — no `JsonSerializerContext` of ours, on any path. Re-measured on
+> 2.2.0: the same result frame is **127 bytes through ours and 190 through the
+> SDK's**, +49.6%.
+>
+> **Three things this step found that no document said.**
+> `TransportBase.Logger` and `LogTransportSendingMessageSensitive` are
+> `private protected`, so a transport written outside the SDK's assembly cannot
+> use either and carries its own `ILogger`. `McpJsonUtilities.JsonContext` is
+> `internal`; the public route to the message contract is the `GetTypeInfo<T>()`
+> extension on `DefaultOptions`. And `StreamServerTransport` does **not** set
+> `JsonRpcMessage.Context`, so neither does ours.
+>
+> ⚠️ **`dotnet test` runs zero tests on this toolchain, and it does so at HEAD
+> too.** Measured 2026-08-16 against a clean worktree of `b8a6553`, before any of
+> this step's changes: `dotnet test` exits **5** with *"Zero tests ran"* in
+> ~250 ms while `BrowserAI.Tests.exe` runs the suite green and `--list-tests`
+> enumerates every one. It is the `--server dotnettestcli` handshake, not
+> discovery. So **the evidence for every done-test in this file since step 1 came
+> from running the test executable**, which is a fact about how the suite is run
+> that nothing recorded until now.
+> [kb](../kb/windows/processes.md#interop-and-the-toolchain) has the
+> characterisation and [TODO.md](../TODO.md) carries the fix.
+>
+> ⚠️ **The parent-process assertion was wrong, and planting the failure is what
+> said so.** As first written it read
+> `ParentProcess.IdOf(child.Session.ProcessId)` — the pid the *transport*
+> recorded — and with `cmd.exe /c` planted in front of the probe it **passed**,
+> because the shell is then the process the transport spawned and BrowserAI
+> really is its parent. The assertion this step exists for has to start from the
+> pid the **child reports about itself**; it now does, and re-running the plant
+> fails on that line rather than on a weaker one further down. This is exactly
+> the case the done-test's *"rather than being invisible"* is aimed at, and it
+> was invisible in the test written to catch it.
+>
+> **The environment allowlist is now a list rather than a habit.**
+> `ChildEnvironment` names what may pass, what is forced, and — separately —
+> what is *refused*, so a later step adding `NODE_OPTIONS` to a child throws
+> rather than working. The four `PLAYWRIGHT_DOWNLOAD_HOST` variants were read
+> out of the resolved bundle rather than typed from memory.
+>
+> **Not built, deliberately.** The SDK's server transport also recovers a
+> top-level `id` from a frame that fails to parse and answers `-32700`, so the
+> caller fails instead of hanging. Ours logs at Error and carries on. That is
+> error shaping rather than transport and it lands at
+> [step 9](#9-lossless-passthrough) with the error catalogue;
+> [TODO.md](../TODO.md) carries it so the boundary is a decision rather than an
+> omission.
+
 **Decisions under test:** that the SDK's `StdioClientTransport` must be replaced
 rather than configured, and that owning the server transport buys genuinely
 byte-exact passthrough.

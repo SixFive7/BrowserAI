@@ -48,6 +48,19 @@
   </PropertyGroup>
 
   <ItemGroup Label="Product">
+    <!-- The MCP protocol implementation. Taken whole rather than as
+         ModelContextProtocol.Core: the hosting dependency it carries is
+         abstractions-only and does not drag in ASP.NET, and dropping to Core
+         buys a smaller surface at the cost of AddMcpServer() and assembly
+         scanning. Both halves of that trade are recorded in plan/stack.md.
+
+         BrowserAI writes its own client AND server transports over this
+         package's public TransportBase, because both of the SDK's own stdio
+         transports are wrong for a proxy: the client one prepends `cmd.exe /c`
+         and the server one hard-codes an encoder that escapes every backtick,
+         apostrophe, angle bracket and non-ASCII character. See
+         plan/stack.md deviations 1 and 5. -->
+    <PackageVersion Include="ModelContextProtocol" Version="*" />
     <!-- Logging. The console provider is taken for one setting only:
          LogToStandardErrorThreshold, which is what forces every record to
          stderr by configuration rather than by rule. The file sink is ours,

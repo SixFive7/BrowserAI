@@ -72,9 +72,9 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **124**
-`[FLOATS]` markers stand across the articles against the **52** numbered rows
-below (54 lines, counting 4a and 4b),
+table is how that happens. **It does not yet cover all of them**: **132**
+`[FLOATS]` markers stand across the articles against the **54** numbered rows
+below (56 lines, counting 4a and 4b),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
@@ -130,6 +130,15 @@ missing row as a gap in this table, never as permission to skip the fact.
 > four on the per-capability tool breakdown that step measured, and three
 > toolchain traps found wiring the gate (rows 51 and 52). Two new rows, so the
 > table is 52 numbered rows over 54 lines.
+>
+> **Re-counted 2026-08-16 after build-order step 5: 132.** Eight new markers —
+> six in [kb: SDK](mcp/sdk.md#added-2026-08-16--writing-the-two-transports-at-220)
+> from writing the two transports against 2.2.0, one naming the four
+> `PLAYWRIGHT_DOWNLOAD_HOST` variants from the resolved bundle, and one for
+> `dotnet test` running zero tests on this toolchain. Two new rows (53 and 54),
+> so the table is 54 numbered rows over 56 lines. **Row 31 moved from *manual*
+> to a test** — the first row this build has automated by writing the code the
+> row was waiting for, which is the shape the column exists to reward.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -178,7 +187,7 @@ decision:
 | 28 | The SDK still never relays `notifications/cancelled` ([kb](mcp/sdk.md#measured-by-spike-2026-08-15)) | The SDK fixes it — our hand-rolled path would then double-send | Cancel a call, assert exactly one downstream notification | — *manual* |
 | 29 | `Filters.Message.IncomingFilters` still exposes `Result` as raw `JsonNode?` ([kb](mcp/sdk.md#measured-by-spike-2026-08-15)) | Any SDK bump; this is the whole proxy hook | Short-circuit a `tools/call` and compare bytes | — *manual* |
 | 30 | `ListToolsAsync(RequestOptions?, ct)` still drops silently ([kb](mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)) | SDK fixes or changes it | Fake child with an invalid `x-mcp-header`; compare both overloads | — *manual* |
-| 31 | `StdioClientTransport` still wraps in `cmd.exe` ([kb](mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)) | SDK fixes it — the custom transport stays correct either way, but the rationale changes | Probe `process.ppid` from a node child | — *manual* |
+| 31 | `StdioClientTransport` still wraps in `cmd.exe` ([kb](mcp/sdk.md#added-2026-08-16--writing-the-two-transports-at-220)) | SDK fixes it — the custom transport stays correct either way, but the rationale changes | Start a child through the SDK's own transport and read its **real** parent, via `NtQueryInformationProcess` rather than `process.ppid`: the answer has to come from outside the child, or a child that cannot report is indistinguishable from one with no shell above it | `SdkStdioClientTransportTests.TheSdkTransportStillPutsCmdExeBetweenUsAndTheChild` |
 | 32 | An unusable `--user-data-dir` still falls back invisibly, a deny-all DACL still exits 21, and the "failed to create data directory" dialog still blocks startup ([kb](chromium/profiles.md)) | Chromium changes `RecursiveDirectoryCreate`, `ProcessSingleton` or its error dialogs | Launch against a file-occupied path and against a DACL'd directory; assert fallback, exit 21 and the dialog behave as recorded. **That article is the whole basis for [validate every path before launch](../README.md#settled-2026-08-15)** and had no row here until 2026-08-15 | — *manual* |
 | 33 | A healthy start still prints `Session: <path>` to stderr, every time ([kb](history.md#the-legacy-setup-and-this-machine)) | Upstream changes startup output — in either direction: a new benign line trips the classifier, a removed one turns it into dead code | Classify a real start's stderr. [§E](../plan/E-lifecycle.md#e-lifecycle-and-observability) ports the two regexes **verbatim**, so this is behaviour our code copies rather than merely observes | — *manual* |
 | 34 | Firefox's cost ratios against Chromium — ~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk ([kb](history.md#the-legacy-setup-and-this-machine)) | Any Firefox revision bump | Re-measure. The original harness was not preserved, so these are order-of-magnitude guidance; re-establish them properly before any decision turns on them again | — *manual* |
@@ -201,6 +210,8 @@ decision:
 
 | 51 | **The snapshot gate is byte-exact across line endings.** All four snapshots are **LF** today; the `-text` exemption in `.gitattributes` is what keeps a committed byte copy from being normalised out from under the comparison if upstream ever ships CRLF ([kb](windows/processes.md#interop-and-the-toolchain)) | Upstream changes its line endings **and** the exemption has been lost. Either alone is harmless; together the committed copy is LF, the regenerated one is CRLF, and every build is red on a difference that is not one | Count CR **bytes**, by piping `tr -cd '\r'` into `wc -c`, on the four snapshots and on the payload originals. Never `grep -c $'\r'`, which reported every line of an all-LF file as a match | `build/Update-UpstreamSnapshots.ps1` |
 | 52 | **Three traps in the gate's own plumbing**: `$(IntermediateOutputPath)` is empty in a `.targets` imported from the project body (the stamp escapes `obj\`); PowerShell 7 colours redirected output; `Get-Command git` returns two executables on this machine ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK bump for the first, any PowerShell bump for the second. **The SDK floats**, so the first moves without anyone choosing it | Re-measure the first by pointing a `Touch` at `$(IntermediateOutputPath)` from an imported `.targets`. Its *consequence* is caught on every step by `git status --porcelain`, which is how it was found | — *manual* |
+| 53 | **`StreamServerTransport` still re-escapes every result**, because the escaping comes from `Utf8JsonWriter`'s own encoder and it sets none — 127 bytes through our transport against 190 through the SDK's, for one message ([kb](mcp/sdk.md#added-2026-08-16--writing-the-two-transports-at-220)) | Upstream sets an `Encoder`, or gains an options seam. Deviation 5's transport stays correct either way, but [the reason recorded for owning it](../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from) would be stale, and a stale reason is how a component nobody needs survives a rewrite | Serialise one message through both transports and compare bytes, never decoded strings — the escaping is semantically lossless and invisible to anything that round-trips | `DirectStdioServerTransportTests.TheSdkServerTransportStillEscapesTheSameResult` |
+| 54 | **`dotnet test` runs zero tests on this toolchain while the test executable runs the whole suite** — exit 5 in ~250 ms, in the `--server dotnettestcli` handshake, reproduced on a clean worktree of the step-4 commit ([kb](windows/processes.md#interop-and-the-toolchain)) | The SDK, `Microsoft.Testing.Platform` or TUnit fixes it — all three float. Until then **every done-test's evidence comes from the executable**, and a reader who assumes `dotnet test` was the command would conclude the suite had never run | Run both, in order: `dotnet test`, then `BrowserAI.Tests.exe`. A fix shows as the two agreeing on the count | — *manual*; owed as a working `dotnet test`, tracked in [TODO.md](../TODO.md) |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

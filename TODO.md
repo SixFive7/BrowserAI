@@ -32,6 +32,44 @@ and version it was true at.
       first bump, when there is something true to write; the marker test fires
       on exactly that event, so nothing is relying on anyone remembering.
 
+- [ ] **Make `dotnet test` run the tests again.** Measured 2026-08-16 on SDK
+      **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
+      `Microsoft.Testing.Platform` **2.3.3**: `dotnet test` exits **5** with
+      *"Zero tests ran"* in about 250 ms, while `BrowserAI.Tests.exe` runs the
+      whole suite green and `--list-tests` enumerates every test. With
+      `--diagnostic` the host's log stops immediately after
+      `PlatformExitProcessOnUnhandledException`, before any adapter runs, and the
+      arguments it received end `--server dotnettestcli --dotnet-test-pipe …` —
+      so it is the handshake `dotnet test` alone uses, not discovery.
+      `-p:TestingPlatformDotnetTestSupport=true` changes nothing.
+      **It is not ours:** a clean worktree of `b8a6553`, the step-4 commit,
+      reproduces it exactly. Two consequences, and the second is the one that
+      matters. Every build-order done-test's evidence has come from the
+      executable rather than from `dotnet test`, which nothing said until
+      [kb](kb/windows/processes.md#interop-and-the-toolchain) said it; and
+      [the pre-release checklist](plan/pre-release.md) will name a command that
+      reports zero and exits non-zero. Everything floats here, so **re-check
+      before investigating** — the fix may already have shipped. If it has not,
+      find out which of the three moved and either work around it or pin the
+      finding somewhere a reader of the checklist will meet it.
+      [Row 54](kb/README.md#re-verification-index) carries it as *manual*.
+
+- [ ] **Answer a frame that fails to parse, instead of only logging it.** The
+      SDK's `StreamServerTransport` walks a malformed line with a
+      `MaxDepth = int.MaxValue` reader looking only for a top-level `id`, and if
+      it finds one replies `-32700` so the caller **fails** rather than waiting
+      for a response that is never coming. BrowserAI's
+      `JsonLinesTransport.DispatchAsync` drops the frame and logs at `Error`,
+      which is loud on the diagnostic channel and still leaves the caller
+      hanging. Deliberately deferred at
+      [step 5](plan/build-order.md#5-the-two-custom-transports): reconstructing a
+      request id in order to shape an error belongs with
+      [step 9](plan/build-order.md#9-lossless-passthrough), which owns error
+      shaping and the [error catalogue](plan/H-model-surface.md#h4-the-error-catalogue),
+      and doing it earlier would put the first JSON-RPC error text in the
+      codebase somewhere the catalogue does not reach. Do **not** copy the SDK's
+      implementation — it is Apache-2.0 and this repository is not.
+
 - [ ] **Capture ILC's raw output and fail the publish if it is non-empty.**
       Build-order step 1 asked for two things and only one of them is a property.
       The property half landed 2026-08-16: `SuppressTrimAnalysisWarnings=false`,

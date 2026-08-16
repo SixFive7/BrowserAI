@@ -457,6 +457,56 @@ line-ending change invisible instead.
 > and produced a confident wrong answer that survived into four documents
 > before a byte count contradicted it. `[FLOATS]`
 
+**`dotnet test` runs zero tests against this suite, and the test executable runs
+all of them.** Measured 2026-08-16 while building
+[build-order step 5](../../plan/build-order.md#5-the-two-custom-transports), on
+SDK **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
+`Microsoft.Testing.Platform` **2.3.3**:
+
+| Command | Result |
+|---|---|
+| `dotnet test` (solution or project) | exit **5**, *"Zero tests ran"*, ~250 ms |
+| `dotnet test -p:TestingPlatformDotnetTestSupport=true` | identical |
+| `BrowserAI.Tests.exe` | the whole suite, green |
+| `BrowserAI.Tests.exe --list-tests` | every test enumerated |
+
+It is not discovery. With `--diagnostic`, the host's log stops immediately after
+`Setting PlatformExitProcessOnUnhandledException`, before any adapter runs, and
+the command line it received ends `--server dotnettestcli --dotnet-test-pipe
+testingplatform.pipe.<guid>` — so the failure is in the SDK-to-platform server
+handshake that only `dotnet test` uses.
+
+**It is not caused by anything in this repository, and that had to be proven
+rather than assumed.** A clean `git worktree` of `b8a6553` — the step-4 commit,
+before any transport work — reproduces it exactly: `dotnet test` reports zero,
+`BrowserAI.Tests.exe` runs 30 green. So **the evidence recorded for every
+build-order done-test since step 1 came from the executable**, which nothing had
+written down. Re-establish with both commands, in that order; a fix will show as
+`dotnet test` agreeing with the executable's count. `[FLOATS]` for the toolchain
+versions, `[MACHINE]` for this machine's SDK install.
+
+> `global.json` already carries `{ "test": { "runner":
+> "Microsoft.Testing.Platform" } }`, which is the documented opt-in and is what
+> selects the broken path. Removing it is not the fix — TUnit is MTP-only and
+> there is no VSTest mode to fall back to.
+
+**`Process.ExitCode` throwing after `Dispose()` is now reproduced rather than
+quoted**, by
+`DirectStdioClientTransportTests.ProcessExitCodeThrowsAfterDisposeWhichIsWhyTheSessionCachesIt`:
+a probe run to completion, its exit code read (2), the `Process` disposed, and
+`InvalidOperationException` on the next read. If a future runtime made the
+cached value survive disposal, that test says so and the caching in
+`ChildProcessSession` becomes belt-and-braces instead of load-bearing.
+`[STABLE]`
+
+**`ProcessStartInfo.Environment` merging is now reproduced too**, by
+`DirectStdioClientTransportTests.TheChildsEnvironmentIsExactlyTheAllowlist`,
+which plants eleven refused variables *in the test host* before spawning and
+asserts none of them reach the child. Written the other way round — assert only
+that the forced variables are present — it would pass against a transport that
+never called `Clear()`, on any machine that happened not to have them set.
+`[STABLE]`
+
 ### Diagnostic severity: what actually enforces a rule, and what only looks like it
 
 All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and

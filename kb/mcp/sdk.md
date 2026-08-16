@@ -246,3 +246,66 @@ a further 577 lines of `npm install` machinery for the conformance suite.
 **Disposal order in that harness is load-bearing:** cancel the token → complete
 *both* pipe writers → await the server task → dispose the provider; any other
 order hangs or throws.
+
+### Added 2026-08-16 — writing the two transports, at 2.2.0
+
+Established while building
+[build-order step 5](../../plan/build-order.md#5-the-two-custom-transports),
+against `ModelContextProtocol` **2.2.0** as resolved by the build. Read from the
+shipped source at `refs/tags/v2.2.0` and, where stated, measured against running
+code.
+
+**The `cmd.exe /c` wrapping is still there, and the predicate is exact.**
+`StdioClientTransport.ConnectAsync` rewrites the command whenever
+`RuntimeInformation.IsOSPlatform(OSPlatform.Windows)` and
+`Path.GetFileName(command)` is not `cmd.exe`, to `cmd.exe` with
+`["/c", command, ..arguments]`. There is no option, no environment variable and
+no subclass hook. **Now checked rather than remembered:**
+`SdkStdioClientTransportTests.TheSdkTransportStillPutsCmdExeBetweenUsAndTheChild`
+starts a child through the SDK's transport and asserts, via
+`NtQueryInformationProcess`, that the child's parent image is `cmd`.
+[Re-verification row 31](../README.md#re-verification-index) is automated by it.
+`[FLOATS]`
+
+**The server transport's escaping is `Utf8JsonWriter`'s, not the contract's —
+which is why it is fixable without a `JsonSerializerContext` of our own.**
+`StreamServerTransport.SendMessageAsync` calls
+`JsonSerializer.SerializeToUtf8Bytes(message,
+McpJsonUtilities.JsonContext.Default.JsonRpcMessage)`, with no options seam
+anywhere on the path. Escaping, however, is performed by the writer from its own
+`JsonWriterOptions.Encoder`, so serialising the SDK's own `JsonTypeInfo` into a
+`Utf8JsonWriter` configured with `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`
+produces the same JSON with the escaping removed. **Measured on the same
+message** — a `JsonRpcResponse` whose result text is
+``Page URL: `x` it's <b>&amp;</b> café — ünïcødé`` — the frame is **127 bytes
+through ours and 190 through the SDK's, +49.6%**. Re-establish by running
+`DirectStdioServerTransportTests.TheSdkServerTransportStillEscapesTheSameResult`,
+which asserts the direction of that inequality on every build. `[FLOATS]`
+
+**`McpJsonUtilities.JsonContext` is `internal`.** The public route to the
+message contract from outside the SDK's assembly is the extension method
+`McpJsonUtilities.GetTypeInfo<T>(this JsonSerializerOptions)` applied to
+`McpJsonUtilities.DefaultOptions` — which is itself built from
+`JsonContext.Default.Options` with MEAI's resolver chained on, so the contract
+is the same one. `[FLOATS]`
+
+**`TransportBase.Logger` and `LogTransportSendingMessageSensitive` are
+`private protected`.** A transport written against the public `TransportBase`
+from another assembly can reach `Name`, `IsConnected`, `MessageReader`,
+`SessionId`, `SetConnected`, `SetDisconnected` and `WriteMessageAsync`, and
+**not** the logger or the sensitive-message logging helper — so it carries its
+own `ILogger` and takes the `ILoggerFactory` twice. This one cannot fail
+silently, which is why it has no re-verification row: a change makes the build
+red or makes a field redundant. `[FLOATS]`
+
+**`StreamServerTransport` never sets `JsonRpcMessage.Context`.** The
+`RelatedTransport` field exists for the stateless HTTP path; a session-based
+stdio transport leaves it null, and a replacement should too. `[FLOATS]`
+
+**The SDK answers a frame it cannot parse.** `StreamServerTransport` walks the
+top-level object with a `MaxDepth = int.MaxValue` reader looking only for `id`,
+and if it finds one replies `-32700` so the caller fails instead of waiting.
+That is worth knowing because a transport that merely drops the frame leaves the
+caller hanging with nothing but a log line to explain it. BrowserAI's does drop
+it, deliberately and loudly, until [step 9](../../plan/build-order.md#9-lossless-passthrough)
+owns error shaping. `[FLOATS]`
