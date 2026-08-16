@@ -44,6 +44,8 @@ The legacy setup had four modes — `headless`, `interactive`, `tracing`, `persi
 
 **Settled: three modes — `headless`, `interactive`, `persistent` — with `tracing` a boolean on any of them.** `tracing` was never a mode; row 6 is `interactive` with a flag, which is why it was the odd one out. Promoting it to a modifier *removes* a mode while *adding* capability: rows 2 and 8 arrive for free, the classification matrix shrinks from four rows to three, and rows 3–4 stay closed.
 
+> ⚠️ **`tracing` has no upstream trace key to reach, measured 2026-08-16 @ `@playwright/mcp` 0.0.79.** Neither the CLI surface nor `config.d.ts` carries a trace option at all, and `tracesDir` is computed internally as `<outputDir>/traces` rather than configured — so the switch this table calls `tracing` maps to upstream's surviving feature with the same purpose, **`saveSession`**, which records what the session did into the output directory. The switch, the argument name and the three modes are unchanged; what changed is what the boolean *does*, and it is now something upstream actually reads. Re-establish by grepping the resolved bundle for `saveTrace` (nothing) and reading `--save-session` in [the committed CLI snapshot](../upstream-snapshots/cli-help.txt). If a bump restores a trace option, this is the entry to revisit.
+
 Rows 3 and 4 are deliberately not offered. They would be genuinely useful — routine work in a logged-in profile has no need to put a window on screen — but they are the only combination that grants full credential access with no visible signal that anything is driving the session. A window is not a security control; it is the sole cue a human gets. Opening that should be a decision taken on its own merits, never a side effect of making the switches orthogonal.
 
 > **The mode is bound at `init` and carried by the handle**, exactly like the browser choice. `resume` reads it from `lock.json` and never accepts one, so a session cannot change what it is. Note the older argument in this section — that a named mode is harder to forge than a flag — is **weaker than it reads**: a flag bound at `init` and carried by the handle is equally unforgeable. The real reasons to keep names are the size of the classification matrix and the fact that a name carries intent to whoever reads it later.
@@ -96,13 +98,16 @@ The server instructions exist to pre-empt the cold-start failure named above: **
 
 ```
 <session-dir>/
-  lock.json      <- ours. The only file at the root
+  lock.json      <- ours. The lock and the record
+  browserai.log  <- ours. This session's own log
   profile/       <- --user-data-dir
   output/        <- --output-dir, holding the typed folders of [§F](F-artifacts.md)
   downloads/     <- browser downloads
 ```
 
-Everything except `lock.json` is a subfolder, so the one file that matters is unmissable, and [§F](F-artifacts.md)'s routing gets a home instead of scattering artifacts among Chromium's internals.
+Everything except those two is a subfolder, so the files that matter are unmissable, and [§F](F-artifacts.md)'s routing gets a home instead of scattering artifacts among Chromium's internals.
+
+> ⚠️ **Corrected 2026-08-16 (previously "`lock.json` — **the only file at the root**").** It is one of two. [§E](E-lifecycle.md#logging-where-it-goes-and-what-forces-it-to-stderr) puts the session's own log at `<session-dir>\browserai.log`, and [step 12](build-order.md#12-the-session-tools-and-config-generation) built it — the two sections said different things and nobody had noticed, because until a session had a lifetime nothing wrote to that file. The flat root's purpose survives: it exists so the file that matters cannot be missed, which two files at the root still deliver and a subfolder would not. **What the correction does forbid is a third**: the generated Playwright config is a per-run artifact and lives in the run's instance directory, keyed by the session's hash, never in the session directory.
 
 **`lock.json` is both the lock and the record.** Held open `FileAccess.ReadWrite, FileShare.Read`: a second BrowserAI requesting write access fails — that is the lock — while any reader can still display who holds it and why. Contents: schema version, mode, browser, purpose and its history, created/last-used timestamps, BrowserAI version, the resolved absolute path of the directory itself, and the holder record — PID, process creation time, client process name. The holder record persists after death on purpose, so a stale lock yields *"held by PID 1234 since 14:02, no longer running — reclaiming"* instead of a bare refusal. `(pid, creationFileTime)` together defeat PID reuse.
 
@@ -138,6 +143,8 @@ On `resume`, if the recorded path differs from the directory actually being open
 | Still exists | The directory was **copied** | Refuse, and require an explicit acknowledgement argument to proceed |
 
 **No extra identifier is needed, and one was proposed.** An earlier design added a random fingerprint field written at `init` so a copy could be told from an original. It is dropped: the recorded path already discriminates, because a move leaves nothing behind and a copy leaves the original standing. A fingerprint would be a second thing that can disagree with the first, for a question the first already answers.
+
+> ⚠️ **The discriminator's exact scope, measured 2026-08-16 while building [step 12](build-order.md#12-the-session-tools-and-config-generation).** The recorded path answers this question **only while it is accurate**. Copy a directory whose record has *not* yet been repaired — one that was moved and not yet resumed — and the copy inherits a record naming a path that no longer exists, which is the move signature exactly: BrowserAI repairs it silently and asks nothing. That is not a defect to close, because it is the same information a fingerprint would have had to arbitrate on and there is nothing to arbitrate with: two directories, both claiming a third path that is gone, are genuinely indistinguishable. It is recorded because the first version of the acceptance test copied before resuming and the copy was accepted, which reads as the feature not working. The test now copies **after** the move is repaired, which is also the case the refusal is for: a copy of a session that says where it is.
 
 **What the refusal is actually protecting, stated accurately.** A copy does **not** corrupt anything. Each copy carries its own `profile/` folder, each browser writes only to the folder it was launched against, and neither can reach the other's databases — [the profile-collision hazard](D-locking.md) does not apply, because there is no shared directory. The real problem is narrower and is about legibility: the copy inherits an ownership record naming a process that **may still be alive against a different directory**. That produces one of two wrong outcomes. Either the copy is refused because its inherited holder record points at a live PID, which is a refusal the caller cannot act on and cannot understand; or the copy is taken over and silently inherits another session's recorded purpose and history, so the sentence a previous agent wrote about *that* directory is replayed as though it described *this* one.
 

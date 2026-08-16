@@ -134,6 +134,56 @@ model's context.
 
 **`--console-level` defaults to `info`**, which silently drops `debug` messages.
 
+**An unset `userDataDir` puts every run's profile in a directory keyed by the
+client's working directory.** `createUserDataDir` is
+`path.join(defaultCacheDirectory(), "ms-playwright-mcp",
+"mcp-<channel-or-browserName>-<sha256(clientInfo.cwd).slice(0,7)>")` with an
+eager `mkdir(..., {recursive: true})`, and it is reached from exactly one call
+site — `config.browser.userDataDir ?? await createUserDataDir(...)`, inside the
+launch path. So **a distinct client cwd is a distinct profile directory, created
+the moment a browser launches, and never cleaned up.**
+
+> **Measured 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+> 1.63.0-alpha-2026-08-05.** On this machine the pile reached **159 directories
+> / 877 MB** before BrowserAI began setting the key — it had been 27 / 193 MB on
+> 2026-08-14 and 47 / 318 MB earlier the same day, because every suite run with a
+> fresh scratch directory adds one. **Setting `browser.userDataDir` avoids the
+> function entirely**, verified by deleting `%LOCALAPPDATA%\ms-playwright-mcp\`
+> and running the whole suite twice: absent both times. Re-establish the same
+> way — delete it, run the browser-touching tests, and look. Note the constraint
+> that comes with the key: `validateBrowserConfig` throws on `isolated` together
+> with `userDataDir`, so the two can never both be set. `[FLOATS]`
+>
+> ⚠️ **A hand-written config in a test is subject to the same default.** The
+> first check found one directory recreated, by the one test that writes its own
+> config to exercise `chromiumSandbox`. A config that launches a browser and does
+> not name a `userDataDir` writes there, whoever wrote it.
+
+**There is no trace option at 0.0.79 — not on the CLI and not in the config.**
+`tracesDir` is computed internally as `path.resolve(outputDir, "traces")` and is
+not configurable; the nearest surviving feature is **`saveSession`**
+(`--save-session`), *"whether to save the Playwright MCP session into the output
+directory"*.
+
+> **Measured 2026-08-16** by grepping the resolved bundle for `saveTrace` (no
+> hits) and reading the committed `cli-help.txt` and `config-schema.d.ts`
+> snapshots (no trace key in either). This matters because
+> [§C](../../plan/C-sessions.md#three-modes-and-tracing-as-a-modifier) makes
+> `tracing` a boolean modifier on every session mode, and it therefore maps to
+> `saveSession` rather than to a trace. Re-establish with the same grep at each
+> bump; a restored trace option is a reason to revisit the mapping. `[FLOATS]`
+
+**`browser_get_config` answers Markdown with JSON inside it, not JSON.** The tool
+body is `response.addTextResult(JSON.stringify(context.config, null, 2))`, but
+the response builder prefixes every text section with `### <title>` before it
+reaches the wire unless the response is `_raw`.
+
+> **Measured 2026-08-16** — the first version of `ConfigRoundTripTests` parsed
+> the whole text and failed with *"'#' is an invalid start of a value"*. Anything
+> reading this tool must slice the JSON out (first `{` to last `}`); a heading
+> cannot contain a brace. Re-establish by calling the tool and looking at the
+> first line. `[FLOATS]`
+
 ## Browser provisioning
 
 **Downloads retry 5 times, rotating mirrors** —

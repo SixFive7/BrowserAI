@@ -8,28 +8,46 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Logging;
 
 /// <summary>
-/// Routes <see cref="ILogger"/> records into <see cref="RollingFileWriter"/>.
+/// Routes <see cref="ILogger"/> records into an <see cref="ILogSink"/>.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Scope support is wired from the start because the process log is written by
 /// ~100 processes at once and, from step 10, by N sessions inside each: every
 /// record carries its session so the interleaving is readable at the moment it
-/// matters. Nothing pushes a scope yet, and the plumbing costs one interface.
+/// matters.
+/// </para>
+/// <para>
+/// <b>Ownership of the sink is a constructor argument rather than an
+/// assumption.</b> A session's logger factory carries two of these — one over
+/// its own <see cref="SessionLogFile"/>, which it owns, and one over the
+/// machine-wide <see cref="RollingFileWriter"/>, which
+/// <see cref="ProcessLog"/> owns and outlives it. Disposing that second one
+/// would take the process log down with the first session that ended.
+/// </para>
 /// </remarks>
-internal sealed class FileLoggerProvider(RollingFileWriter writer) : ILoggerProvider, ISupportExternalScope
+/// <param name="sink">Where records go.</param>
+/// <param name="ownsSink">Whether disposing this provider disposes the sink.</param>
+internal sealed class FileLoggerProvider(ILogSink sink, bool ownsSink = true) : ILoggerProvider, ISupportExternalScope
 {
     private IExternalScopeProvider? _scopes;
 
     /// <inheritdoc />
-    public ILogger CreateLogger(string categoryName) => new FileLogger(writer, categoryName, () => _scopes);
+    public ILogger CreateLogger(string categoryName) => new FileLogger(sink, categoryName, () => _scopes);
 
     /// <inheritdoc />
     public void SetScopeProvider(IExternalScopeProvider scopeProvider) => _scopes = scopeProvider;
 
     /// <inheritdoc />
-    public void Dispose() => writer.Dispose();
+    public void Dispose()
+    {
+        if (ownsSink && sink is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+    }
 
-    private sealed class FileLogger(RollingFileWriter writer, string category, Func<IExternalScopeProvider?> scopes) : ILogger
+    private sealed class FileLogger(ILogSink sink, string category, Func<IExternalScopeProvider?> scopes) : ILogger
     {
         private static readonly int ProcessId = Environment.ProcessId;
 
@@ -81,7 +99,7 @@ internal sealed class FileLoggerProvider(RollingFileWriter writer) : ILoggerProv
                 record.Append('\n').Append("    ").Append(exception.ToString().Replace("\n", "\n    ", StringComparison.Ordinal));
             }
 
-            writer.Write(record.ToString());
+            sink.Write(record.ToString());
         }
 
         /// <summary>Fixed-width level names, so the columns line up in a text editor.</summary>

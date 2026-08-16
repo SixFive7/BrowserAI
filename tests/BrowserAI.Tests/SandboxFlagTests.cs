@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -90,11 +91,20 @@ internal sealed class SandboxFlagTests
         // Hand-written on purpose. BrowserAI's generator does not emit this key
         // and must not start to; what is under test here is upstream's handling
         // of it, so the file has to come from the test.
+        //
+        // ⚠️ `userDataDir` is here for a reason that has nothing to do with the
+        // sandbox, and leaving it out was measured: with the key unset upstream
+        // writes the profile into %LOCALAPPDATA%\ms-playwright-mcp\, keyed by a
+        // hash of the client's cwd, and this test was the one thing still
+        // recreating that directory after the product stopped. A hand-written
+        // config in this suite carries the key for the same reason the product's
+        // does.
         var config = new JsonObject
         {
             ["browser"] = new JsonObject
             {
                 ["browserName"] = BrowserConfiguration.BrowserName,
+                ["userDataDir"] = Path.Combine(scratch.Path, SessionLayout.ProfileFolderName),
                 ["launchOptions"] = new JsonObject
                 {
                     ["channel"] = BrowserConfiguration.Channel,
@@ -145,7 +155,7 @@ internal sealed class SandboxFlagTests
         using var scratch = ScratchDirectory.Create("sandbox-generated-config");
 
         var path = Path.Combine(scratch.Path, "config.json");
-        BrowserConfiguration.WriteTo(path);
+        BrowserConfiguration.WriteTo(path, BrowserConfiguration.ForSurface(scratch.Path));
 
         using var generated = JsonDocument.Parse(File.ReadAllText(path));
 

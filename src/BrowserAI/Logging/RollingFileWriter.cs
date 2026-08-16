@@ -34,7 +34,7 @@ namespace BrowserAI.Logging;
 /// where anyone should discover that.
 /// </para>
 /// </remarks>
-internal sealed class RollingFileWriter : IDisposable
+internal sealed class RollingFileWriter : ILogSink, IDisposable
 {
     /// <summary>
     /// Roll to the next indexed file past this size. Small enough that a reader
@@ -72,7 +72,8 @@ internal sealed class RollingFileWriter : IDisposable
     /// <summary>The file currently being appended to, or null if none is open.</summary>
     public string? CurrentFile { get; private set; }
 
-    /// <summary>Appends one record. There is no buffer, so it is already durable.</summary>
+    /// <inheritdoc />
+    /// <remarks>There is no buffer, so a record that has been written is already durable.</remarks>
     public void Write(string record)
     {
         lock (_gate)

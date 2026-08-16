@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -363,8 +364,23 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(rig.Child.HasStopped).IsTrue();
     }
 
+    /// <summary>
+    /// <c>tools/list</c> is the one answer that is deliberately rewritten, and
+    /// everything about the child's own tools has to survive the rewrite.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This test asserted byte-identity until build-order step 12, and the
+    /// assertion had to go rather than be relaxed.</b> Rewriting <c>tools/list</c>
+    /// — the authored tools in front, a required <c>session</c> injected into
+    /// every upstream schema — is in scope by the charter, so the old assertion
+    /// was asserting the absence of a feature. What is kept is every property
+    /// byte-identity was there to protect: upstream's names, upstream's order,
+    /// and the two vendor extensions a typed round trip drops. Byte-identity
+    /// itself now lives on <c>tools/call</c>, where nothing is rewritten.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ToolsListPassesThroughInOrderAndByteIdentical()
+    public async Task ToolsListKeepsUpstreamsNamesOrderAndExtensionsThroughTheRewrite()
     {
         // Order is a requirement rather than an accident: the spec SHOULDs
         // deterministic ordering because callers cache prompts on it, and a
@@ -377,20 +393,33 @@ internal sealed class LosslessPassthroughTests
 
         var response = await rig.Client.SendAsync("tools/list");
 
-        await Assert.That(JsonSpan.MemberOf(response.Frame, "result"))
-            .IsEquivalentTo(JsonSpan.MemberOf(SentByChild(rig, "result"), "result"));
-
         var names = response.Result!["tools"]!.AsArray()
             .Select(tool => tool!["name"]!.GetValue<string>())
             .ToList();
 
-        await Assert.That(names).IsEquivalentTo(ToolOrder);
+        await Assert.That(names).IsEquivalentTo([.. SessionToolSurface.Names, .. ToolOrder]);
 
         // A typed ListToolsResult round trip drops these two, because Tool
         // carries no [JsonExtensionData]. inputSchema survives either way, being
-        // a JsonElement; the top-level extension does not.
+        // a JsonElement; the top-level extension does not. The rewrite is done on
+        // the JsonNode precisely so that both still arrive.
         await Assert.That(Text(JsonSpan.MemberOf(response.Frame, "result"))).Contains("x-tool-extension");
         await Assert.That(Text(JsonSpan.MemberOf(response.Frame, "result"))).Contains("x-vendor-hint");
+
+        var navigate = response.Result["tools"]![SessionToolSurface.Names.Count]!;
+
+        // `session` is appended, so `url` keeps its position, and it is required
+        // alongside whatever upstream already required.
+        await Assert.That(string.Join(",", navigate["inputSchema"]!["properties"]!.AsObject().Select(property => property.Key)))
+            .IsEqualTo("url,session");
+
+        await Assert.That(navigate["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["url","session"]""");
+
+        // A tool that declared no properties at all still gains it, rather than
+        // being skipped because there was nothing to append to.
+        var click = response.Result["tools"]![SessionToolSurface.Names.Count + 1]!;
+        await Assert.That(click["inputSchema"]!["properties"]!["session"]).IsNotNull();
+        await Assert.That(click["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["session"]""");
     }
 
     [Test]
@@ -456,7 +485,7 @@ internal sealed class LosslessPassthroughTests
         // The session survived it: one bad frame from a peer must not end a
         // conversation that is otherwise healthy.
         var tools = await rig.Client.RoundTripAsync("tools/list");
-        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(2);
+        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 2);
     }
 
     [Test]
@@ -470,7 +499,7 @@ internal sealed class LosslessPassthroughTests
 
         var tools = await rig.Client.RoundTripAsync("tools/list");
 
-        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(2);
+        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 2);
         await Assert.That(rig.Logs.Logged("could not be parsed and was dropped")).IsTrue();
         await Assert.That(rig.Logs.Logged("answered -32700")).IsFalse();
     }

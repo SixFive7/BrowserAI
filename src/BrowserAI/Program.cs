@@ -6,6 +6,7 @@ using BrowserAI.Logging;
 using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 
@@ -37,19 +38,34 @@ internal static class Program
             Environment.ProcessPath ?? "<unknown>",
             Environment.CurrentDirectory);
 
-        // One run, one directory, and the leftovers of runs that were killed
-        // before they could tidy up. Sessions replace this at build-order step
-        // 10; until then the process is the unit.
+        // One run, one directory. It holds this run's own child — the one that
+        // answers `tools/list` before any session exists — together with its
+        // profile and the config generated for every session this run opens.
+        // Sessions do not replace it: they are additional, and each has its own
+        // directory chosen by the caller.
         var instance = InstanceDirectory.CreateFresh(paths);
 
         try
         {
-            var options = ChildLaunch.Create(
-                new PayloadLayout(),
-                paths.BrowsersDirectory,
-                instance);
+            var payload = new PayloadLayout();
 
-            var proxy = await BrowserProxy.ConnectAsync(options, log.Factory).ConfigureAwait(false);
+            var options = ChildLaunch.Create(
+                payload,
+                paths.BrowsersDirectory,
+                instance,
+                Path.Combine(instance, "playwright-mcp.config.json"),
+                BrowserConfiguration.ForSurface(instance),
+                name: "playwright-mcp[surface]");
+
+            var environment = new SessionEnvironment
+            {
+                Paths = paths,
+                Payload = payload,
+                InstanceDirectory = instance,
+                OpenSessionLog = log.OpenSessionLog,
+            };
+
+            var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment).ConfigureAwait(false);
 
             // `await using var x = …` awaits its DisposeAsync on the captured
             // context, which CA2007 refuses. Holding the ConfiguredAsyncDisposable

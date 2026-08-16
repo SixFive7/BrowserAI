@@ -81,6 +81,19 @@ Those are the same two numbers the `createConnection` experiment below produced
 from two connections in one process, which is a second, independent route to
 them. `[FLOATS]`
 
+> **Re-established a third way 2026-08-16, and it is now the one that runs on
+> every build.** `UpstreamSurface.For(capabilities)` reproduces
+> `filteredTools`'s rule from the committed snapshot — the `core*` family or-ed
+> with the configured list, in the snapshot's own tool order — and
+> `UpstreamSnapshotTests.TheCapabilityFilterReproducesTheRecordedSurfaces`
+> asserts it against the snapshot's recorded `defaultSurface` (24, name for name
+> and in order) before asserting 42 and 59. The reproduction check is what stops
+> the helper being a second implementation nobody validates: without it, a
+> surface assertion built on it would be measuring the helper.
+> `VerticalSliceTests` then compares the **published binary's** real
+> `tools/list` against the computed 59 as one joined string, which is what makes
+> ordering part of the contract rather than an accident. `[FLOATS]`
+
 > ⚠️ **Corrected 2026-08-16 (previously: "A per-capability breakdown is not
 > recorded anywhere in this repository … `[UNVERIFIED]` — the numbers were never
 > observed, not merely lost. Count them from the resolved bundle at the next

@@ -140,7 +140,10 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
         try
         {
-            proxy = await BrowserProxy.ConnectAsync(new PipeClientTransport(childHop, loggerFactory), loggerFactory);
+            proxy = await BrowserProxy.ConnectAsync(
+                new PipeClientTransport(childHop, loggerFactory),
+                loggerFactory,
+                RigSessionEnvironment.Create());
 
             var callerHop = new PipeDuplex("caller hop (test client ↔ BrowserAI)");
 

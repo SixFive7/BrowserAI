@@ -1262,6 +1262,94 @@ wrongly-deleted entry is restored by the next use.
 
 ### 12. The session tools and config generation
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Sessions/{SessionMode, SessionToolSurface,
+> SessionEnvironment, LiveSession, SessionManager}.cs` ·
+> `src/BrowserAI/Sessions/SessionIndex.cs` (a `Forget`) ·
+> `src/BrowserAI/Proxy/{ChildConnection, BrowserProxy}.cs` ·
+> `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` ·
+> `src/BrowserAI/Logging/{ILogSink, SessionLogFile, FileLoggerProvider,
+> RollingFileWriter, ProcessLog}.cs` · `src/BrowserAI/Protocol/ChildEnvironment.cs`
+> (one name) · `src/BrowserAI/Program.cs` ·
+> `tests/BrowserAI.Tests/{SessionToolTests, ConfigRoundTripTests}.cs` ·
+> `tests/BrowserAI.Tests/Harness/{SessionRun, UpstreamSurface,
+> RigSessionEnvironment}.cs`, with `SliceRun` carrying the tool array.
+> Every done-test below was run, including the plant-and-revert.
+> **163 tests green in 7.2 s, `dotnet build` 0 warnings**, and the AOT publish is
+> clean at **10,981,888 bytes**.
+>
+> **The maintainer's signal, before and after.** The pile had grown from the
+> 47 directories / 318 MB recorded below to **159 / 877 MB** by the time
+> `userDataDir` landed. Deleted once; the whole suite then run **twice** with
+> `%LOCALAPPDATA%\ms-playwright-mcp\` absent both times. ⚠️ **The first attempt
+> found one directory recreated** — by `SandboxFlagTests`, which writes its own
+> config to exercise `chromiumSandbox` and had no `userDataDir` in it. That is
+> the check working: a hand-written config in the suite is subject to the same
+> upstream default as one in the product, and the test carries the key now.
+>
+> **Sessions do not replace the instance directory, and this step is where that
+> was settled rather than assumed.** [`IAppPaths`](../src/BrowserAI/Hosting/IAppPaths.cs)
+> said they would. Two things still need a per-run home: **the run's own child**,
+> because the MCP spec forbids the tool set varying per connection and
+> `tools/list` therefore has to be answerable before any session exists; and
+> **every session's generated config**, which is a per-run artifact and cannot
+> live at a session root that §C keeps to two files. The run's child is started
+> with the **union** capability set, so the one static list is the superset —
+> **5 authored + 59**, computed from the committed snapshot by
+> `UpstreamSurface` and compared against the published binary's real
+> `tools/list` as one joined string.
+>
+> ⚠️ **Three documents were contradicted by measurement, and each is corrected
+> in place.** [§C](C-sessions.md#the-session-directory-is-the-identity) said
+> `lock.json` was *"the only file at the root"* while
+> [§E](E-lifecycle.md#logging-where-it-goes-and-what-forces-it-to-stderr) put
+> `browserai.log` beside it — two sections disagreeing, invisibly, because until
+> a session had a lifetime nothing wrote to that file. It is now one of two, and
+> a third is forbidden. **`tracing` has no upstream trace key to reach**: at
+> 0.0.79 neither the CLI nor `config.d.ts` carries one and `tracesDir` is
+> computed internally, so the modifier maps to `saveSession`, the surviving
+> feature with the same purpose. And **the recorded-path discriminator works only
+> while the recorded path is accurate** — a copy taken from a directory that was
+> moved and not yet resumed is indistinguishable from a move, because both name a
+> third path that is gone. The acceptance test copies *after* the repair, which
+> is also the case the refusal exists for.
+>
+> ⚠️ **The session log has to be opened before the lock, not after.** Built the
+> other way round first, the file began mid-story: `SessionLock` was handed the
+> *process* logger, so the acquisition it exists to record was not in the
+> session's own log at all.
+> `SessionToolTests.ASessionWritesItsOwnLogBesideItsLockFile` is what said so,
+> and the same ordering is what puts the moved-directory line where somebody
+> looking into that directory will find it. **And `init`'s refusal had a second
+> path that hid the first**: an "already open in this process" special case
+> answered before the row-4 message, so the informative refusal depended on who
+> happened to hold the directory. There is now one refusal for all three cases,
+> which is what §C means by *"no difference between a lost session and a neatly
+> closed one"*.
+>
+> ⚠️ **An unrelated flake surfaced and was fixed rather than noted.** Running the
+> suite repeatedly to confirm the profile check, `SessionLockTests` failed once in
+> about a dozen runs: a probe report that had already been renamed into place was
+> refused on **open** — *"used by another process"* — on a file no BrowserAI had
+> ever held. An atomic rename guarantees which bytes a reader sees, not that the
+> open succeeds; something outside this repository holds a freshly-created file
+> for a moment, which is the same live condition [step 10 widened the move budget
+> for](#10-the-session-directory-lockjson-and-the-three-lock-scopes), seen from
+> the other side. `Harness/ProbeReport.cs` now retries the open inside its
+> patience budget and shares read, write and delete.
+> [kb](../kb/windows/processes.md#stdio-exit-codes-and-process-startup) carries it. A harness
+> that fails intermittently is a red build wearing a disguise, with the wrong
+> name on it.
+>
+> **Two things this step deliberately did not do.** A tool call that names **no**
+> session still goes to the run's own child, exactly as before — making `session`
+> mandatory is enforcement, and enforcement is
+> [step 13](#13-the-one-table-enforcement-and-the-model-facing-surface) with
+> §H.4's catalogue. And **the "you are driving a session this connection did not
+> create" notice is on `resume`'s own answer only**, never prepended to a
+> forwarded child result: doing that would re-serialise a payload
+> [step 9](#9-lossless-passthrough) exists to keep byte-identical, and `resume`
+> *is* the first response about a session a caller did not create.
+>
 > **Maintainer decision, 2026-08-16: the leaked profile directories wait for
 > this step.** Because `userDataDir` is not set until here, upstream puts every
 > run's profile in `%LOCALAPPDATA%\ms-playwright-mcp\` — measured **47

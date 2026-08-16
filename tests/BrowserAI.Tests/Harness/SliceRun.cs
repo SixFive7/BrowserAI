@@ -30,6 +30,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// </remarks>
 /// <param name="InitializeResult">The <c>initialize</c> result the raw client received.</param>
 /// <param name="ToolNames">The names <c>tools/list</c> returned, in order.</param>
+/// <param name="ToolList">The whole <c>tools</c> array, for the assertions about injected schema members.</param>
 /// <param name="NavigateEnvelope">The whole <c>tools/call</c> response envelope.</param>
 /// <param name="NavigateText">Every text content block of that result, joined.</param>
 /// <param name="Processes">Every member of the job at the moment the browser was up.</param>
@@ -39,6 +40,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 internal sealed record SliceRun(
     JsonObject InitializeResult,
     IReadOnlyList<string> ToolNames,
+    JsonArray ToolList,
     JsonObject NavigateEnvelope,
     string NavigateText,
     IReadOnlyList<ObservedProcess> Processes,
@@ -113,7 +115,8 @@ internal sealed record SliceRun(
         var initialize = await client.InitializeAsync(OfferedProtocolVersion).ConfigureAwait(false);
 
         var tools = await client.RoundTripAsync("tools/list", new JsonObject()).ConfigureAwait(false);
-        var names = tools["tools"]!.AsArray().Select(tool => (string)tool!["name"]!).ToList();
+        var toolList = tools["tools"]!.AsArray();
+        var names = toolList.Select(tool => (string)tool!["name"]!).ToList();
 
         var navigate = await client.EnvelopeAsync("tools/call", new JsonObject
         {
@@ -142,6 +145,7 @@ internal sealed record SliceRun(
         return new SliceRun(
             initialize,
             names,
+            toolList,
             navigate,
             text,
             processes,

@@ -80,7 +80,12 @@ internal sealed class HeadlessBinaryTests
         // test of the config BrowserAI writes rather than of a config invented
         // here: delete `browserName` or the channel from BrowserConfiguration
         // and this test goes green while the premise dies.
-        var options = ChildLaunch.Create(RepositoryPayload.Layout, browsers, work);
+        var options = ChildLaunch.Create(
+            RepositoryPayload.Layout,
+            browsers,
+            work,
+            Path.Combine(work, "playwright-mcp.config.json"),
+            BrowserConfiguration.ForSurface(work));
 
         await using var client = RawStdioClient.Start(
             options.Command,

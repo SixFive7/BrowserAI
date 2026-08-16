@@ -91,6 +91,67 @@ internal sealed class ProcessLog : IDisposable
         }
     }
 
+    /// <summary>
+    /// Builds one session's logging stack: its own file beside <c>lock.json</c>,
+    /// the machine-wide process log, and stderr.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Three destinations rather than a redirect.</b> A session's records
+    /// belong in the session directory, where whoever is debugging that session
+    /// will look — and equally in the process log, because the interesting
+    /// question is often "what were the other ninety-five doing". The scope
+    /// <see cref="Sessions.SessionLock"/> pushes is what keeps the second
+    /// readable.
+    /// </para>
+    /// <para>
+    /// <b><paramref name="minimumLevel"/> is per session, which is the whole
+    /// point of the <c>debug</c> argument.</b> Turning diagnostics on for the
+    /// session that is misbehaving does not drown the ninety-five that are not,
+    /// and it needs no restart, no environment variable and no second
+    /// registration.
+    /// </para>
+    /// </remarks>
+    /// <param name="sessionDirectory">The session directory the log file goes in.</param>
+    /// <param name="minimumLevel">The level for this session alone.</param>
+    /// <returns>The session's logging stack. Dispose it when the session ends.</returns>
+    public SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
+    {
+        ArgumentNullException.ThrowIfNull(sessionDirectory);
+
+        var file = new SessionLogFile(sessionDirectory);
+
+        try
+        {
+            // CA2000 is disabled for this one statement and nothing else.
+            // Ownership moves into the returned SessionLogging, whose Dispose
+            // calls Factory.Dispose -- the same transfer Create() above makes and
+            // the rule accepts there. The difference the rule reacts to is that
+            // this is an instance method rather than a static factory of the type
+            // being returned, which is not a difference in ownership.
+#pragma warning disable CA2000
+            var factory = LoggerFactory.Create(builder =>
+            {
+                _ = builder.SetMinimumLevel(minimumLevel);
+                _ = builder.AddProvider(new FileLoggerProvider(file));
+
+                // Not owned: the process log outlives every session in it, and
+                // disposing this provider would close the machine-wide handle
+                // the moment the first session ended.
+                _ = builder.AddProvider(new FileLoggerProvider(_writer, ownsSink: false));
+                _ = builder.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
+            });
+#pragma warning restore CA2000
+
+            return new SessionLogging(factory, file);
+        }
+        catch
+        {
+            file.Dispose();
+            throw;
+        }
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -104,6 +165,26 @@ internal sealed class ProcessLog : IDisposable
         // The factory disposes its providers, and the file provider owns the
         // writer, so this closes the handle too.
         Factory.Dispose();
+    }
+}
+
+/// <summary>One session's logging stack, and the file it owns.</summary>
+/// <param name="factory">Where every component of that session takes its logger from.</param>
+/// <param name="file">The session's own log file.</param>
+internal sealed class SessionLogging(ILoggerFactory factory, SessionLogFile file) : IDisposable
+{
+    /// <summary>The factory for this session.</summary>
+    public ILoggerFactory Factory { get; } = factory;
+
+    /// <summary>The file this session's records are appended to.</summary>
+    public string Path { get; } = file.Path;
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        // The factory first: it disposes the provider that owns the file.
+        Factory.Dispose();
+        file.Dispose();
     }
 }
 

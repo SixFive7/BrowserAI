@@ -35,6 +35,7 @@ internal sealed class ChildEnvironmentTests
         "PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST",
         "PLAYWRIGHT_DOWNLOAD_HOST",
         "PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST",
+        "PLAYWRIGHT_MCP_CAPS",
         "PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE",
         "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS",
         "PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST",
@@ -46,8 +47,8 @@ internal sealed class ChildEnvironmentTests
         // Spelled out rather than counted. Every one of these is a documented
         // silent failure -- a collapsed download mirror list, an evicted output
         // file, a browsers path resolved against an npm ancestor's directory,
-        // or a line on stderr that trips the error classifier merely by the
-        // variable being set.
+        // a wiped capability list, or a line on stderr that trips the error
+        // classifier merely by the variable being set.
         await Assert.That(ChildEnvironment.Refused.Order(StringComparer.Ordinal)).IsEquivalentTo(EveryRefusedName);
     }
 

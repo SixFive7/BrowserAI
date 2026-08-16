@@ -82,16 +82,26 @@ internal interface IAppPaths
     /// root](../../plan/F-artifacts.md) and two runs must not write into one.
     /// </para>
     /// <para>
+    /// <b>Corrected again 2026-08-16 (previously "The replacement is step 12's,
+    /// and it is one change: the generated config and the child's working
+    /// directory move into the session directory, and this member goes with the
+    /// per-run concept").</b> Sessions do <b>not</b> replace this, and step 12 is
+    /// where that was settled rather than assumed. Two things still need a
+    /// per-run home. The first is <b>the run's own child</b>: the MCP spec
+    /// forbids the tool set varying per connection, so <c>tools/list</c> has to
+    /// be answerable before any session exists, and the child that answers it
+    /// needs a working directory and a profile of its own. The second is
+    /// <b>every session's generated config</b>, which is a per-run artifact
+    /// rather than part of a session's durable state — and
+    /// [§C](../../plan/C-sessions.md#the-session-directory-is-the-identity) keeps
+    /// the session root to <c>lock.json</c> and the session log, so a third file
+    /// there is out.
+    /// </para>
+    /// <para>
     /// <b>Corrected 2026-08-16 (previously "Sessions replace this at build-order
-    /// step 10").</b> They do not, and step 10 is where that was decided rather
-    /// than assumed. Step 10 builds the session directory, its lock and the
-    /// three lock scopes — but nothing in the product creates a session yet,
-    /// because <c>browserai_init</c> is step 12 and the config generator that
-    /// would write into a session directory is step 12 as well. Replacing this
-    /// now would leave the vertical slice with nowhere to put the config it
-    /// generates on every run. The replacement is step 12's, and it is one
-    /// change: the generated config and the child's working directory move into
-    /// the session directory, and this member goes with the per-run concept.
+    /// step 10").</b> They do not, and step 10 is where that was first noticed.
+    /// Step 10 built the session directory, its lock and the three lock scopes —
+    /// but nothing in the product created a session yet.
     /// </para>
     /// </remarks>
     string InstanceRoot { get; }

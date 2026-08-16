@@ -1,0 +1,383 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Text;
+using System.Text.Json.Nodes;
+using BrowserAI.Sessions;
+
+namespace BrowserAI.Tests.Harness;
+
+/// <summary>
+/// One scripted conversation with the published binary, exercising all five
+/// authored session tools, captured once and asserted on by many tests.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>One capture rather than one process per assertion.</b> Every fact below
+/// then comes from the same run, which is both cheaper and stronger: the tool
+/// list, the refusals, the config round trip and the profile on disk are known to
+/// be true <i>of the same session</i> rather than of a dozen sessions that might
+/// have differed. It is the shape <see cref="SliceRun"/> already uses.
+/// </para>
+/// <para>
+/// <b>Two BrowserAI processes, and the second one is not optional.</b> A session
+/// directory cannot be moved while it is open — the child's working directory is
+/// the session directory and Windows refuses to rename a directory some process
+/// is sitting in — so the move-versus-copy case needs a session that was created,
+/// closed, and then met again by a different process. That is exactly the case
+/// the feature exists for.
+/// </para>
+/// </remarks>
+internal sealed record SessionRun
+{
+    private static readonly Lazy<Task<SessionRun>> Shared = new(CaptureAsync);
+
+    /// <summary>The scratch tree every session in this run lives under.</summary>
+    public required string Root { get; init; }
+
+    /// <summary>Answers from the first process, keyed by a short label.</summary>
+    public required IReadOnlyDictionary<string, JsonObject> Answers { get; init; }
+
+    /// <summary>Whether the browser really wrote into the session's own profile directory.</summary>
+    public required bool ProfileWasUsed { get; init; }
+
+    /// <summary>Everything the first session's own <c>browserai.log</c> held while it ran.</summary>
+    public required string SessionLog { get; init; }
+
+    /// <summary>Everything the moved session's own log held after it was resumed.</summary>
+    public required string MovedSessionLog { get; init; }
+
+    /// <summary>Whether the destroyed session's <c>lock.json</c> is gone.</summary>
+    public required bool DestroyedLockFileIsGone { get; init; }
+
+    /// <summary>Whether the file that was held open through the destroy survived.</summary>
+    public required bool HeldFileSurvivedTheDestroy { get; init; }
+
+    /// <summary>The one capture, run at most once per test process.</summary>
+    /// <returns>The captured run.</returns>
+    public static Task<SessionRun> SharedAsync() => Shared.Value;
+
+    /// <summary>The text of an authored tool's answer.</summary>
+    /// <param name="label">The label the answer was recorded under.</param>
+    /// <returns>The joined text content.</returns>
+    public string Text(string label) =>
+        string.Join(
+            "\n",
+            (Answers[label]["content"]?.AsArray() ?? [])
+                .Where(block => (string?)block!["type"] == "text")
+                .Select(block => (string?)block!["text"] ?? string.Empty));
+
+    /// <summary>Whether an authored tool's answer was a refusal.</summary>
+    /// <param name="label">The label the answer was recorded under.</param>
+    /// <returns>Its <c>isError</c>.</returns>
+    public bool IsError(string label) => (bool?)Answers[label]["isError"] is true;
+
+    private static async Task<SessionRun> CaptureAsync()
+    {
+        PublishedSlice.EnsureFresh();
+
+        var root = Path.Combine(ScratchRoot.Path, $"sessions-{Guid.NewGuid():N}");
+        _ = Directory.CreateDirectory(root);
+
+        var first = await FirstProcessAsync(root).ConfigureAwait(false);
+
+        return await SecondProcessAsync(root, first).ConfigureAwait(false);
+    }
+
+    private static async Task<FirstProcess> FirstProcessAsync(string root)
+    {
+        var answers = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+        var alpha = Path.Combine(root, "alpha");
+        var beta = Path.Combine(root, "beta");
+        var gamma = Path.Combine(root, "gamma");
+        var held = Path.Combine(beta, SessionLayout.OutputFolderName, "held.txt");
+
+        await using var client = RawStdioClient.Start(
+            PublishedSlice.Executable,
+            [],
+            root,
+            PublishedSlice.InheritedEnvironment());
+
+        {
+            _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion).ConfigureAwait(false);
+
+            answers["init"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = alpha,
+                ["purpose"] = "the first session's purpose",
+                ["mode"] = "headless",
+            }).ConfigureAwait(false);
+
+            answers["initAgain"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = alpha,
+                ["purpose"] = "a second attempt on the same directory",
+                ["mode"] = "persistent",
+            }).ConfigureAwait(false);
+
+            // No browser is launched by this one, which is what makes the round
+            // trip cheap: it returns the merged config the child resolved.
+            answers["getConfig"] = await CallAsync(client, "browser_get_config", new JsonObject
+            {
+                ["session"] = alpha,
+            }).ConfigureAwait(false);
+
+            answers["navigate"] = await CallAsync(client, "browser_navigate", new JsonObject
+            {
+                ["url"] = SliceRun.TargetUrl,
+                ["session"] = alpha,
+            }).ConfigureAwait(false);
+
+            // Read while the browser is up: this is the difference between "the
+            // key is in the config" and "the browser used it".
+            var profileUsed = Directory.Exists(Path.Combine(alpha, SessionLayout.ProfileFolderName))
+                && Directory.EnumerateFileSystemEntries(Path.Combine(alpha, SessionLayout.ProfileFolderName)).Any();
+
+            answers["setPurpose"] = await CallAsync(client, SessionToolSurface.SetPurpose, new JsonObject
+            {
+                ["session"] = alpha,
+                ["purpose"] = "a purpose set after the fact",
+            }).ConfigureAwait(false);
+
+            answers["list"] = await CallAsync(client, SessionToolSurface.List, new JsonObject
+            {
+                ["directory"] = root,
+            }).ConfigureAwait(false);
+
+            answers["listElsewhere"] = await CallAsync(client, SessionToolSurface.List, new JsonObject
+            {
+                ["directory"] = Path.Combine(root, "nothing-here"),
+            }).ConfigureAwait(false);
+
+            answers["unknownSession"] = await CallAsync(client, "browser_snapshot", new JsonObject
+            {
+                ["session"] = Path.Combine(root, "never-a-session"),
+            }).ConfigureAwait(false);
+
+            foreach (var (label, directory) in new (string Label, JsonNode? Directory)[]
+            {
+                ("relative", "relative\\path"),
+                ("empty", string.Empty),
+                ("volumeRoot", Path.GetPathRoot(root)!),
+                ("absent", null),
+            })
+            {
+                var arguments = new JsonObject { ["purpose"] = "should never be created", ["mode"] = "headless" };
+
+                if (directory is not null)
+                {
+                    arguments["directory"] = directory;
+                }
+
+                answers["init-" + label] = await CallAsync(client, SessionToolSurface.Init, arguments).ConfigureAwait(false);
+
+                var resumeArguments = new JsonObject();
+
+                if (directory is not null)
+                {
+                    resumeArguments["directory"] = directory.DeepClone();
+                }
+
+                answers["resume-" + label] = await CallAsync(client, SessionToolSurface.Resume, resumeArguments).ConfigureAwait(false);
+            }
+
+            answers["init-badMode"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = Path.Combine(root, "bad-mode"),
+                ["purpose"] = "should never be created",
+                ["mode"] = "headed",
+            }).ConfigureAwait(false);
+
+            var notASession = Path.Combine(root, "not-a-session");
+            _ = Directory.CreateDirectory(notASession);
+
+            answers["resumeNotASession"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
+            {
+                ["directory"] = notASession,
+            }).ConfigureAwait(false);
+
+            answers["resumeWithMode"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
+            {
+                ["directory"] = alpha,
+                ["mode"] = "persistent",
+            }).ConfigureAwait(false);
+
+            // Documents, which has no lock.json. Nothing is touched before the
+            // refusal, which is the whole reason the check is a read.
+            answers["destroyDocuments"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify),
+            }).ConfigureAwait(false);
+
+            answers["initBeta"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = beta,
+                ["purpose"] = "the session that gets destroyed",
+                ["mode"] = "headless",
+                ["tracing"] = true,
+                ["consoleLevel"] = "debug",
+                ["debug"] = true,
+            }).ConfigureAwait(false);
+
+            var sessionLog = ReadSharing(Path.Combine(alpha, "browserai.log"));
+
+            answers["initGamma"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = gamma,
+                ["purpose"] = "the session that gets moved",
+                ["mode"] = "headless",
+            }).ConfigureAwait(false);
+
+            bool lockGone;
+            bool heldSurvived;
+
+            // FileShare.None, so the destroy below meets a file it cannot remove
+            // and has to report it rather than fail.
+            using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                answers["destroyBeta"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
+                {
+                    ["directory"] = beta,
+                }).ConfigureAwait(false);
+
+                lockGone = !File.Exists(Path.Combine(beta, SessionLayout.LockFileName));
+                heldSurvived = File.Exists(held);
+            }
+
+            // Closed rather than killed: BrowserAI's own graceful path, and what
+            // releases the session directory so the move below can happen.
+            _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+            return new FirstProcess
+            {
+                Answers = answers,
+                ProfileWasUsed = profileUsed,
+                SessionLog = sessionLog,
+                DestroyedLockFileIsGone = lockGone,
+                HeldFileSurvivedTheDestroy = heldSurvived,
+            };
+        }
+    }
+
+    private static async Task<SessionRun> SecondProcessAsync(string root, FirstProcess first)
+    {
+        var answers = new Dictionary<string, JsonObject>(first.Answers, StringComparer.Ordinal);
+        var gamma = Path.Combine(root, "gamma");
+        var moved = Path.Combine(root, "gamma-moved");
+        var copy = Path.Combine(root, "gamma-copy");
+
+        // The first process has exited, so nothing holds the directory: this is
+        // the ordinary case of somebody renaming a folder between sessions.
+        Directory.Move(gamma, moved);
+
+        await using var client = RawStdioClient.Start(
+            PublishedSlice.Executable,
+            [],
+            root,
+            PublishedSlice.InheritedEnvironment());
+
+        _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion).ConfigureAwait(false);
+
+        answers["resumeMoved"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = moved,
+            ["purpose"] = "and resumed after the move",
+        }).ConfigureAwait(false);
+
+        // ⚠️ Copied AFTER the resume above, and the order is the test rather
+        // than an accident. The recorded path discriminates a copy from a move
+        // only while it is ACCURATE: copying `gamma-moved` before its record was
+        // repaired would produce a copy whose record names `gamma`, a path that
+        // no longer exists — which is the move signature exactly, and BrowserAI
+        // repairs it silently. Measured 2026-08-16; the first version of this
+        // capture copied first and the copy was accepted as a move.
+        CopyTree(moved, copy);
+
+        answers["resumeCopy"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = copy,
+        }).ConfigureAwait(false);
+
+        answers["resumeCopyAcknowledged"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = copy,
+            ["acknowledgeCopy"] = true,
+        }).ConfigureAwait(false);
+
+        var movedLog = ReadSharing(Path.Combine(moved, "browserai.log"));
+
+        _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+        return new SessionRun
+        {
+            Root = root,
+            Answers = answers,
+            ProfileWasUsed = first.ProfileWasUsed,
+            SessionLog = first.SessionLog,
+            MovedSessionLog = movedLog,
+            DestroyedLockFileIsGone = first.DestroyedLockFileIsGone,
+            HeldFileSurvivedTheDestroy = first.HeldFileSurvivedTheDestroy,
+        };
+    }
+
+    /// <summary>What the first BrowserAI process produced, before the move.</summary>
+    private sealed record FirstProcess
+    {
+        public required IReadOnlyDictionary<string, JsonObject> Answers { get; init; }
+
+        public required bool ProfileWasUsed { get; init; }
+
+        public required string SessionLog { get; init; }
+
+        public required bool DestroyedLockFileIsGone { get; init; }
+
+        public required bool HeldFileSurvivedTheDestroy { get; init; }
+    }
+
+    private static async Task<JsonObject> CallAsync(RawStdioClient client, string tool, JsonObject arguments)
+    {
+        var envelope = await client.EnvelopeAsync("tools/call", new JsonObject
+        {
+            ["name"] = tool,
+            ["arguments"] = arguments,
+        }).ConfigureAwait(false);
+
+        return envelope["result"]?.AsObject()
+            ?? throw new InvalidOperationException(
+                $"'{tool}' answered with a JSON-RPC error rather than a result, which no authored tool may do: {envelope.ToJsonString()}");
+    }
+
+    private static void CopyTree(string source, string destination)
+    {
+        _ = Directory.CreateDirectory(destination);
+
+        foreach (var file in Directory.EnumerateFiles(source))
+        {
+            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)));
+        }
+
+        foreach (var child in Directory.EnumerateDirectories(source))
+        {
+            CopyTree(child, Path.Combine(destination, Path.GetFileName(child)));
+        }
+    }
+
+    /// <summary>
+    /// Reads a file another process has open for append, which is what a session
+    /// log is while its session runs.
+    /// </summary>
+    private static string ReadSharing(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+
+            return reader.ReadToEnd();
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return $"<could not be read: {failure.Message}>";
+        }
+    }
+}

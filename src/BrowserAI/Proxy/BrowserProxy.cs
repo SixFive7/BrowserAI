@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Globalization;
-using System.Reflection;
 using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
+using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -14,65 +13,50 @@ using ModelContextProtocol.Server;
 namespace BrowserAI.Proxy;
 
 /// <summary>
-/// One <c>@playwright/mcp</c> child behind one MCP server, forwarding
-/// <c>tools/list</c> and <c>tools/call</c> without changing a byte of them.
+/// The caller-facing MCP server: BrowserAI's own five tools, every
+/// <c>@playwright/mcp</c> tool behind them, and the routing that decides which
+/// child a call goes to.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Deliberately thin.</b> No sessions, no locking, no artifact routing and no
-/// injected <c>session</c> parameter — the two tool methods are forwarded as they
-/// arrive.
-/// </para>
-/// <para>
 /// <b>Nothing on the forwarding path touches an SDK contract type, and that is
 /// the point of the design rather than a stylistic preference.</b> Every loss
-/// this step exists to close is silent, and each one is produced by a type that
-/// is doing its job: <c>ContentBlock</c>'s converter drops unknown properties
-/// and throws on an unknown content <i>type</i>, which is correct
-/// forward-compatibility for a client and data loss for a proxy;
-/// <c>Tool</c> carries no <c>[JsonExtensionData]</c>, so a typed
-/// <c>ListToolsResult</c> round trip discards tool-level extensions;
+/// this design exists to close is silent, and each one is produced by a type that
+/// is doing its job: <c>ContentBlock</c>'s converter drops unknown properties and
+/// throws on an unknown content <i>type</i>, which is correct
+/// forward-compatibility for a client and data loss for a proxy; <c>Tool</c>
+/// carries no <c>[JsonExtensionData]</c>, so a typed <c>ListToolsResult</c> round
+/// trip discards tool-level extensions;
 /// <c>ListToolsAsync(RequestOptions?, ct)</c> drops tools whose annotations fail
-/// SEP-2243 validation without raising anything. So the request goes out as a
-/// raw <see cref="JsonRpcRequest"/> and the answer comes back as the exact bytes
-/// the child wrote.
+/// SEP-2243 validation without raising anything. So requests go out as raw
+/// <see cref="JsonRpcRequest"/>s and a <c>tools/call</c> answer comes back as the
+/// exact bytes the child wrote.
+/// </para>
+/// <para>
+/// <b><c>tools/list</c> is the one answer that is deliberately not
+/// byte-identical</b>, because rewriting it is the job: the five authored tools
+/// go in front and a required <c>session</c> parameter is injected into every
+/// upstream <c>inputSchema</c>. The rewrite is done on the
+/// <see cref="JsonNode"/> the child sent, never on a typed schema, so a
+/// tool-level member no contract knows about still survives —
+/// <c>LosslessPassthroughTests</c> asserts exactly that. Renaming remains
+/// forbidden: upstream names pass through byte for byte.
 /// </para>
 /// <para>
 /// <b>There is deliberately no typed fallback.</b> <c>Handlers</c> carries
 /// neither a <c>ListToolsHandler</c> nor a <c>CallToolHandler</c>, so if the
-/// filter below ever failed to short-circuit, the caller would get
-/// <c>-32601</c> rather than a quietly lossy answer. That asymmetry is chosen:
-/// a loud wrong answer can be found, and a lossy right-looking one cannot.
+/// filter below ever failed to short-circuit, the caller would get <c>-32601</c>
+/// rather than a quietly lossy answer. A loud wrong answer can be found; a lossy
+/// right-looking one cannot.
 /// </para>
 /// </remarks>
 internal sealed class BrowserProxy : IAsyncDisposable
 {
     /// <summary>
-    /// The protocol revision BrowserAI speaks <b>to the child</b>, pinned to the
-    /// child's measured ceiling.
+    /// The protocol revision BrowserAI speaks to a child, re-exported here
+    /// because it is what the suite pins against.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Pinning is not a tidiness choice.</b> Left null, the SDK client
-    /// prefers <c>2026-07-28</c> and probes the child with
-    /// <c>server/discover</c> first, bounded by <c>DiscoverProbeTimeout</c> —
-    /// five seconds by default. A child that drops the unknown method instead of
-    /// answering costs that on <i>every</i> spawn, against a ~300 ms baseline,
-    /// and it presents as "browser automation got slow" with no error anywhere.
-    /// Pinning an initialize-capable revision skips the probe entirely.
-    /// </para>
-    /// <para>
-    /// It is a provenance stamp, not a target: <c>@playwright/mcp</c> 0.0.79
-    /// caps here, verified 2026-08-16 from both directions — offering
-    /// <c>2999-01-01</c> returned <c>2025-11-25</c> and offering
-    /// <c>2025-06-18</c> returned <c>2025-06-18</c>. The child never
-    /// <i>rejects</i> a version, so a mis-negotiation produces nothing to catch
-    /// and
-    /// <see cref="ConnectAsync(IClientTransport, ILoggerFactory, CancellationToken)"/>
-    /// asserts on the negotiated value instead.
-    /// </para>
-    /// </remarks>
-    public const string ChildProtocolVersion = "2025-11-25";
+    public const string ChildProtocolVersion = ChildConnection.ChildProtocolVersion;
 
     /// <summary>
     /// What <c>CreateRemoteProtocolExceptionFromError</c> puts in front of every
@@ -81,51 +65,37 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <remarks>
     /// Only reached on the path where the raw error frame was not captured. The
     /// ordinary path never meets the prefix at all, because it never reads the
-    /// message off the exception — see
-    /// <see cref="AnswerChildErrorAsync(McpServer, RequestId, RequestId, McpProtocolException, CancellationToken)"/>.
+    /// message off the exception.
     /// </remarks>
     private const string RemoteErrorPrefix = "Request failed (remote): ";
 
-    private readonly McpClient _client;
-    private readonly ChildLink _link;
+    private readonly ChildConnection _surface;
+    private readonly SessionManager _sessions;
     private readonly ILogger _logger;
-    private readonly IAsyncDisposable _progressRelay;
 
     private McpServer? _caller;
-    private long _childRequests;
     private int _disposed;
 
-    private BrowserProxy(McpClient client, ChildLink link, ILogger logger)
+    private BrowserProxy(ChildConnection surface, SessionManager sessions, ILogger logger)
     {
-        _client = client;
-        _link = link;
+        _surface = surface;
+        _sessions = sessions;
         _logger = logger;
-        NegotiatedChildProtocolVersion = client.NegotiatedProtocolVersion;
-
-        // The child→caller direction, and the only one the SDK gives no
-        // server-side seam for: McpClientOptions has no Filters. A *named*
-        // notification needs no decorator either way -- RegisterNotificationHandler
-        // is public on McpSession, which McpClient inherits.
-        _progressRelay = client.RegisterNotificationHandler(
-            NotificationMethods.ProgressNotification,
-            RelayToCallerAsync);
     }
 
-    /// <summary>
-    /// The revision actually negotiated with the child, as opposed to the one
-    /// that was asked for.
-    /// </summary>
-    public string? NegotiatedChildProtocolVersion { get; }
+    /// <summary>The revision negotiated with the run's own child.</summary>
+    public string? NegotiatedChildProtocolVersion => _surface.NegotiatedProtocolVersion;
 
-    /// <summary>Starts the child and completes the handshake with it.</summary>
+    /// <summary>Starts the run's own child and completes the handshake with it.</summary>
     /// <param name="options">What to start, from <see cref="Runtime.ChildLaunch"/>.</param>
     /// <param name="loggerFactory">Where the proxy, the transport and the session log.</param>
+    /// <param name="environment">Where sessions keep their index, payload and configs.</param>
     /// <param name="cancellationToken">Cancels the connect.</param>
     /// <returns>The connected proxy.</returns>
-    /// <exception cref="InvalidOperationException">The child negotiated a revision other than the pinned one.</exception>
     public static async Task<BrowserProxy> ConnectAsync(
         ChildProcessOptions options,
         ILoggerFactory loggerFactory,
+        SessionEnvironment environment,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -134,88 +104,99 @@ internal sealed class BrowserProxy : IAsyncDisposable
         return await ConnectAsync(
             new DirectStdioClientTransport(options, loggerFactory),
             loggerFactory,
+            environment,
             cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Completes the handshake over a transport the caller supplies, rather
-    /// than over one this class starts a process for.
+    /// Completes the handshake over a transport the caller supplies, rather than
+    /// over one this class starts a process for.
     /// </summary>
     /// <remarks>
-    /// <b>The seam exists for the in-process test layer and nothing else
-    /// uses it.</b> A proxy has two hops, so a harness that stands a fake child
-    /// on the far end has to reach the client leg without a process — otherwise
-    /// every passthrough assertion costs a `node` spawn and the layer that is
-    /// supposed to run in milliseconds runs in seconds. Everything that decides
-    /// behaviour — the pinned revision, the negotiation check, the raw
-    /// forwarding path — is below this line rather than above it, so the harness
-    /// exercises the same code the product runs.
+    /// <b>The seam exists for the in-process test layer and nothing else uses
+    /// it.</b> A proxy has two hops, so a harness that stands a fake child on the
+    /// far end has to reach the client leg without a process. Everything that
+    /// decides behaviour — the pinned revision, the negotiation check, the raw
+    /// forwarding path, the <c>tools/list</c> rewrite — is below this line rather
+    /// than above it, so the harness exercises the same code the product runs.
     /// </remarks>
-    /// <param name="transport">The client transport to connect over. This object does not own it; the client does.</param>
+    /// <param name="transport">The client transport to connect over. The SDK client owns it.</param>
     /// <param name="loggerFactory">Where the proxy and the session log.</param>
+    /// <param name="environment">Where sessions keep their index, payload and configs.</param>
     /// <param name="cancellationToken">Cancels the connect.</param>
     /// <returns>The connected proxy.</returns>
-    /// <exception cref="InvalidOperationException">The child negotiated a revision other than the pinned one.</exception>
     public static async Task<BrowserProxy> ConnectAsync(
         IClientTransport transport,
         ILoggerFactory loggerFactory,
+        SessionEnvironment environment,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(loggerFactory);
+        ArgumentNullException.ThrowIfNull(environment);
 
         var logger = loggerFactory.CreateLogger<BrowserProxy>();
-        var link = new ChildLink(transport);
 
-        var client = await McpClient.CreateAsync(
-            link,
-            new McpClientOptions
-            {
-                ClientInfo = new Implementation { Name = "BrowserAI", Version = Version },
-                ProtocolVersion = ChildProtocolVersion,
-            },
-            loggerFactory,
-            cancellationToken).ConfigureAwait(false);
+        // The manager is built before the connection because a session child's
+        // progress notifications are relayed through the proxy, and the proxy
+        // does not exist until the surface child has handshaken. The closure
+        // reads `proxy` late, which is what unties the knot.
+        BrowserProxy? proxy = null;
+        SessionManager? sessions = null;
+        ChildConnection? surface = null;
+
+        ValueTask relay(JsonRpcNotification notification, CancellationToken token) =>
+            proxy is null ? ValueTask.CompletedTask : proxy.RelayToCallerAsync(notification, token);
 
         try
         {
-            var negotiated = client.NegotiatedProtocolVersion;
+            // CA2000 is disabled for these two statements and nothing else. The
+            // pattern the rule asks for is exactly what is here -- locals
+            // declared before the try, nulled the instant ownership moves, and an
+            // unconditional disposal in the finally -- but both types are
+            // IAsyncDisposable rather than IDisposable, and the rule's dataflow
+            // does not follow an `await x.DisposeAsync()` in a finally.
+#pragma warning disable CA2000
+            sessions = new SessionManager(environment, loggerFactory, relay);
+            surface = await ChildConnection.ConnectAsync(transport, loggerFactory, "browserai-", relay, cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2000
 
-            ProxyLog.ChildProtocolNegotiated(logger, ChildProtocolVersion, negotiated ?? "<none>");
+            proxy = new BrowserProxy(surface, sessions, logger);
 
-            // The SDK refuses to negotiate BELOW a pinned version and throws, so
-            // this fires only on a disagreement it does not police -- and it is
-            // cheap enough to keep, because the failure it guards against is one
-            // that produces no error at all on the wire.
-            if (!string.Equals(negotiated, ChildProtocolVersion, StringComparison.Ordinal))
+            // Ownership of both has moved into the proxy, which the caller now
+            // owns and disposes.
+            sessions = null;
+            surface = null;
+
+            return proxy;
+        }
+        finally
+        {
+            if (surface is not null)
             {
-                throw new InvalidOperationException(
-                    $"The child negotiated protocol '{negotiated ?? "<none>"}' rather than the requested '{ChildProtocolVersion}'. The child caps or echoes silently and never rejects, so this is the only place a mis-negotiation is visible.");
+                await surface.DisposeAsync().ConfigureAwait(false);
             }
 
-            return new BrowserProxy(client, link, logger);
-        }
-        catch
-        {
-            await client.DisposeAsync().ConfigureAwait(false);
-            throw;
+            if (sessions is not null)
+            {
+                await sessions.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 
     /// <summary>The options the caller-facing MCP server is built from.</summary>
-    /// <returns>Server options whose tool methods are short-circuited to the child.</returns>
+    /// <returns>Server options whose tool methods are short-circuited by a message filter.</returns>
     public McpServerOptions ServerOptions()
     {
         var options = new McpServerOptions
         {
-            ServerInfo = new Implementation { Name = "BrowserAI", Version = Version },
+            ServerInfo = new Implementation { Name = "BrowserAI", Version = ChildConnection.Version },
 
-            // Upward: null means every revision the SDK implements, 2024-11-05
-            // through 2026-07-28. The caller is a client this project does not
-            // control and does not get to hold back; the child's ceiling is the
-            // child's business and stops at the pin above. That split is the
-            // whole point, and it is why these two properties disagree on
-            // purpose.
+            // Upward: null means every revision the SDK implements. The caller
+            // is a client this project does not control and does not get to hold
+            // back; the child's ceiling is the child's business and stops at the
+            // pin in ChildConnection. That split is the whole point, and it is
+            // why these two disagree on purpose.
             ProtocolVersion = null,
 
             Capabilities = new ServerCapabilities
@@ -246,26 +227,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        await _progressRelay.DisposeAsync().ConfigureAwait(false);
-
-        // Disposing the client closes the transport, which closes the child's
-        // stdin -- upstream's own graceful teardown path -- and then closes the
-        // job handle, which is what guarantees no browser is left behind.
-        await _client.DisposeAsync().ConfigureAwait(false);
+        // Sessions first: each owns a child whose job holds a browser, and each
+        // holds a directory lock that should be released while the process is
+        // still able to log why.
+        await _sessions.DisposeAsync().ConfigureAwait(false);
+        await _surface.DisposeAsync().ConfigureAwait(false);
     }
 
-    private static string Version { get; } =
-        typeof(BrowserProxy).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-        ?? "0.0.0";
-
-    /// <summary>
-    /// Rebuilds a typed error detail from the child's own error bytes.
-    /// </summary>
+    /// <summary>Rebuilds a typed error detail from the child's own error bytes.</summary>
     /// <remarks>
     /// This is the <i>fallback</i> shape only. The frame that actually reaches
-    /// the caller is written from <paramref name="payload"/> verbatim, so this
-    /// object exists so that a message which somehow escaped the verbatim path
-    /// would still be semantically right rather than empty.
+    /// the caller is written from the payload verbatim, so this object exists so
+    /// that a message which somehow escaped the verbatim path would still be
+    /// semantically right rather than empty.
     /// </remarks>
     private static JsonRpcErrorDetail DetailFrom(VerbatimPayload payload)
     {
@@ -279,6 +253,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
         };
     }
 
+    private static JsonObject TextResult(string text, bool isError) =>
+        new()
+        {
+            ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = text }),
+            ["isError"] = isError,
+        };
+
     private async Task OnIncomingAsync(McpMessageHandler next, MessageContext context, CancellationToken cancellationToken)
     {
         // Recorded for every message, not only the two that are forwarded: the
@@ -286,93 +267,145 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // progress on the very first call.
         Volatile.Write(ref _caller, context.Server);
 
-        if (context.JsonRpcMessage is JsonRpcRequest request &&
-            request.Method is RequestMethods.ToolsCall or RequestMethods.ToolsList)
+        if (context.JsonRpcMessage is JsonRpcRequest request)
         {
-            await ForwardAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
-            return;
+            switch (request.Method)
+            {
+                case RequestMethods.ToolsList:
+                    await AnswerToolsListAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
+                    return;
+
+                case RequestMethods.ToolsCall:
+                    await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
+                    return;
+
+                default:
+                    break;
+            }
         }
 
         await next(context, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Sends one caller request to the child and answers the caller with what
-    /// came back.
+    /// Answers <c>tools/list</c> from the run's own child, rewritten.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>The id is ours, and that is what makes cancellation possible.</b> The
-    /// SDK never emits <c>notifications/cancelled</c> downstream on either the
-    /// raw or the typed path — <c>McpSessionHandler</c> has the machinery, but
-    /// its registration is disposed as <c>tcs.Task.WaitAsync(ct)</c> unwinds and
-    /// CTS callbacks run LIFO, so the notification callback is cancelled before
-    /// it can run. An id we chose is an id we can name in a notification we send
-    /// ourselves.
-    /// </para>
-    /// <para>
-    /// The ids are strings in a namespace of ours, so they cannot collide with
-    /// the numeric ones the SDK's own session allocates for <c>initialize</c>
-    /// and <c>ping</c>.
-    /// </para>
+    /// <b>One static list, and it has to be the union.</b> The MCP spec forbids
+    /// the tool set varying per connection and SEP-2567 removed protocol-level
+    /// sessions outright, so <c>init</c> cannot shrink it. The run's own child is
+    /// started with every capability any mode can have, and a call its session's
+    /// mode does not permit is refused at call time instead.
     /// </remarks>
-    private async Task ForwardAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
+    private async Task AnswerToolsListAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
     {
-        // Before anything is registered or sent. A token that is already
-        // cancelled would otherwise fire the registration below synchronously
-        // and announce the cancellation of a request that was never sent.
-        cancellationToken.ThrowIfCancellationRequested();
+        var answer = await _surface.AskAsync(request.Method, request.Params, cancellationToken).ConfigureAwait(false);
 
-        var name = "browserai-" + Interlocked.Increment(ref _childRequests).ToString(CultureInfo.InvariantCulture);
-        var childId = new RequestId(name);
-
-        var childRequest = new JsonRpcRequest
+        if (answer.Response is not { } response)
         {
-            Id = childId,
-            Method = request.Method,
-            Params = request.Params,
-        };
-
-        _link.Session.Watch(childId);
-
-        ProxyLog.Forwarding(_logger, request.Method, name, cancellationToken.CanBeCanceled);
-
-        try
-        {
-            var response = await _client.SendRequestAsync(childRequest, cancellationToken).ConfigureAwait(false);
-
-            await AnswerChildResultAsync(caller, request.Id, childId, response, cancellationToken).ConfigureAwait(false);
+            await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
+            return;
         }
-        catch (OperationCanceledException)
-        {
-            await AnnounceCancellationAsync(name).ConfigureAwait(false);
 
-            // The caller asked. The SDK's own message loop deliberately sends no
-            // response for a user-initiated cancellation, and neither should we:
-            // a caller that cancelled is not waiting for an answer.
-            throw;
-        }
-        catch (McpProtocolException ex)
+        var result = response.Result as JsonObject ?? [];
+
+        await caller.SendMessageAsync(
+            new JsonRpcResponse { Id = request.Id, Result = SessionToolSurface.Rewrite(result) },
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task AnswerToolsCallAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
+    {
+        var parameters = request.Params as JsonObject;
+        var name = (parameters?["name"] as JsonValue)?.GetValue<string>();
+        var arguments = parameters?["arguments"] as JsonObject;
+
+        if (SessionToolSurface.IsAuthored(name))
         {
-            await AnswerChildErrorAsync(caller, request.Id, childId, ex, cancellationToken).ConfigureAwait(false);
+            var outcome = await _sessions.InvokeAsync(name!, arguments, cancellationToken).ConfigureAwait(false);
+
+            await caller.SendMessageAsync(
+                new JsonRpcResponse { Id = request.Id, Result = TextResult(outcome.Text, outcome.IsError) },
+                cancellationToken).ConfigureAwait(false);
+
+            return;
         }
-#pragma warning disable CA1031 // Anything else is the child failing to answer at all, and the caller must be told rather than left waiting.
-        catch (Exception ex)
-#pragma warning restore CA1031
+
+        var session = (arguments?[SessionToolSurface.SessionParameter] as JsonValue)?.GetValue<string>();
+        var target = _surface;
+        var forwarded = request.Params;
+
+        if (session is not null)
         {
-            await AnswerTransportFailureAsync(caller, request.Id, request.Method, ex, cancellationToken).ConfigureAwait(false);
+            if (_sessions.Find(session) is not { } live)
+            {
+                ProxyLog.UnknownSession(_logger, name ?? "<none>", session);
+
+                await caller.SendMessageAsync(
+                    new JsonRpcResponse
+                    {
+                        Id = request.Id,
+                        Result = TextResult(
+                            $"'{session}' is not a session this BrowserAI is driving, so '{name}' was not run and nothing was changed. "
+                            + $"Call {SessionToolSurface.Resume} with directory='{session}' to open it — a session is resumable forever, so one that exists can always be reopened — or {SessionToolSurface.Init} to create it, or {SessionToolSurface.List} to see what is under a path.",
+                            isError: true),
+                    },
+                    cancellationToken).ConfigureAwait(false);
+
+                return;
+            }
+
+            target = live.Child;
+
+            // The child has never heard of `session`; BrowserAI added it. Removed
+            // from a CLONE rather than from the caller's own node, because the
+            // request object is the SDK's and may still be read after this.
+            var clone = request.Params?.DeepClone() as JsonObject;
+
+            if (clone?["arguments"] is JsonObject cloned)
+            {
+                _ = cloned.Remove(SessionToolSurface.SessionParameter);
+            }
+
+            forwarded = clone;
         }
-        finally
+
+        var answer = await target.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
+
+        if (answer.Response is { } response)
         {
-            _link.Session.Forget(childId);
+            await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, cancellationToken).ConfigureAwait(false);
+            return;
         }
+
+        await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task AnswerFailureAsync(
+        McpServer caller,
+        JsonRpcRequest request,
+        ChildAnswer answer,
+        CancellationToken cancellationToken)
+    {
+        if (answer.ProtocolFailure is { } protocolFailure)
+        {
+            await AnswerChildErrorAsync(caller, request.Id, protocolFailure, answer.Payload, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        await AnswerTransportFailureAsync(
+            caller,
+            request.Id,
+            request.Method,
+            answer.TransportFailure ?? new InvalidOperationException("The child answered with neither a result nor an error."),
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task AnswerChildResultAsync(
         McpServer caller,
         RequestId callerId,
-        RequestId childId,
         JsonRpcResponse response,
+        VerbatimPayload? payload,
         CancellationToken cancellationToken)
     {
         // A fresh envelope rather than the child's own: JsonRpcMessage.Context
@@ -381,18 +414,18 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // be sent back to the child it came from.
         var answer = new JsonRpcResponse { Id = callerId, Result = response.Result };
 
-        if (_link.Session.TryTakePayload(childId, out var payload) && !payload.IsError)
+        if (payload is { } captured)
         {
-            Verbatim.Attach(answer, payload.Json);
+            Verbatim.Attach(answer, captured.Json);
         }
         else
         {
             // Reached only if the transport failed to capture the frame. The
             // answer is still semantically right -- Result is the child's own
-            // JsonNode -- but its escaping is now ours, so the one claim this
-            // step exists to make is no longer true of it. Said out loud rather
-            // than absorbed.
-            ProxyLog.VerbatimPayloadMissing(_logger, childId.ToString(), callerId.ToString());
+            // JsonNode -- but its escaping is now ours, so the one claim the
+            // passthrough exists to make is no longer true of it. Said out loud
+            // rather than absorbed.
+            ProxyLog.VerbatimPayloadMissing(_logger, callerId.ToString());
         }
 
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
@@ -400,41 +433,29 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
     /// <summary>Answers a caller with the child's own JSON-RPC error.</summary>
     /// <remarks>
-    /// <para>
     /// <b>The <c>"Request failed (remote): "</c> prefix is never met on this
     /// path, rather than met and stripped.</b> The SDK does add it — it is real,
     /// and <c>SdkErrorShapeTests</c> is what keeps that checked — but the bytes
     /// written here come from the child's frame, so the message that reaches the
     /// caller is the message the child sent.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Corrected 2026-08-16 (previously
-    /// <see href="../../../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from">deviation
-    /// 8</see>: "reconstruct from <c>McpProtocolException</c> and strip the
-    /// prefix").</b> Measured at build-order step 8 and again here: <c>code</c>
-    /// and <c>data</c> survive the SDK's round trip intact and unflattened, so
-    /// the reconstruction that deviation asks for was solving a problem that did
-    /// not exist. What did need solving was the message, and splicing the raw
-    /// frame answers it without a reconstruction at all.
-    /// </para>
     /// </remarks>
     private async Task AnswerChildErrorAsync(
         McpServer caller,
         RequestId callerId,
-        RequestId childId,
         McpProtocolException exception,
+        VerbatimPayload? payload,
         CancellationToken cancellationToken)
     {
         JsonRpcError answer;
 
-        if (_link.Session.TryTakePayload(childId, out var payload) && payload.IsError)
+        if (payload is { } captured)
         {
-            answer = new JsonRpcError { Id = callerId, Error = DetailFrom(payload) };
-            Verbatim.Attach(answer, payload.Json);
+            answer = new JsonRpcError { Id = callerId, Error = DetailFrom(captured) };
+            Verbatim.Attach(answer, captured.Json);
         }
         else
         {
-            ProxyLog.VerbatimPayloadMissing(_logger, childId.ToString(), callerId.ToString());
+            ProxyLog.VerbatimPayloadMissing(_logger, callerId.ToString());
 
             answer = new JsonRpcError
             {
@@ -457,24 +478,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// stdout ended, the transport went away.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>This is the failure shape build-order step 8 measured and this step
-    /// removes.</b> Through the SDK's typed <c>CallToolHandler</c>, an exception
-    /// of any cause becomes a JSON-RPC <i>success</i> carrying
-    /// <c>isError: true</c> and the text <c>"An error occurred invoking 'x'."</c>
-    /// — identical for a child that died and for an unknown content type, naming
-    /// neither. A success envelope with the only bad news inside the body is
-    /// exactly what this project exists to eliminate, and it was arriving from
-    /// our own dependency.
-    /// </para>
-    /// <para>
-    /// It is answered as a JSON-RPC <b>error</b> because it is a transport
-    /// failure rather than a tool outcome, and the cause is named. <b>The
-    /// model-facing wording of every error is</b>
-    /// <see href="../../../plan/H-model-surface.md">§H.4</see><b>'s catalogue and
-    /// arrives at step 13</b>; what is fixed here is the shape and the fact that
-    /// a cause reaches the caller at all.
-    /// </para>
+    /// Through the SDK's typed <c>CallToolHandler</c>, an exception of any cause
+    /// becomes a JSON-RPC <i>success</i> carrying <c>isError: true</c> and the
+    /// text <c>"An error occurred invoking 'x'."</c> — identical for a child that
+    /// died and for an unknown content type, naming neither. It is answered as a
+    /// JSON-RPC <b>error</b> here because it is a transport failure rather than a
+    /// tool outcome, and the cause is named.
     /// </remarks>
     private async Task AnswerTransportFailureAsync(
         McpServer caller,
@@ -498,70 +507,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Tells the child to stop, by the id BrowserAI put on the request it is
-    /// working on.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Measured 2026-08-16, and it contradicts
-    /// <see href="../../../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from">deviation
-    /// 6</see>'s prescribed remedy.</b> That remedy is <i>"assign
-    /// <c>JsonRpcRequest.Id</c> yourself and send <c>notifications/cancelled</c>
-    /// from your own <c>ct.Register</c>"</i>. The first half is necessary and is
-    /// done. <b>The second half does not work</b>, and it fails for the exact
-    /// reason the same document gives for the SDK's own relay failing.
-    /// </para>
-    /// <para>
-    /// A registration scoped to the call it is protecting is disposed as that
-    /// call unwinds. <c>SendRequestAsync</c> waits on
-    /// <c>tcs.Task.WaitAsync(ct)</c>, which registers its own callback
-    /// <i>after</i> ours; CTS callbacks run <b>LIFO</b>, so <c>WaitAsync</c>'s
-    /// runs first, the await throws, the <c>using</c> disposes our registration,
-    /// and ours is unregistered before LIFO ever reaches it. Observed directly:
-    /// the token reports <c>CanBeCanceled</c>, the call throws
-    /// <see cref="OperationCanceledException"/> with
-    /// <c>IsCancellationRequested</c> true, the child records the
-    /// <c>tools/call</c> — and the registration callback logs nothing, because
-    /// it never ran.
-    /// </para>
-    /// <para>
-    /// Announcing from the <c>catch</c> instead is strictly better on every
-    /// axis: it is awaited rather than fire-and-forget, it cannot run before the
-    /// request it names has been sent, and it is reached by the one path that
-    /// definitely executes.
-    /// </para>
-    /// </remarks>
-    /// <param name="childId">The request id, as the string it went out as.</param>
-    /// <returns>A task that completes once the notification is on the wire, or has failed to be.</returns>
-    private async Task AnnounceCancellationAsync(string childId)
-    {
-        try
-        {
-            // Not the caller's token: it is the thing that just fired, and a
-            // notification sent under it would be cancelled before it left.
-            await _client.SendMessageAsync(
-                new JsonRpcNotification
-                {
-                    Method = NotificationMethods.CancelledNotification,
-                    Params = new JsonObject
-                    {
-                        ["requestId"] = childId,
-                        ["reason"] = "The caller cancelled the request.",
-                    },
-                },
-                CancellationToken.None).ConfigureAwait(false);
-
-            ProxyLog.CancellationForwarded(_logger, childId);
-        }
-#pragma warning disable CA1031 // A child that has already gone cannot be told to stop, and that is not a failure of this call.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            ProxyLog.CancellationNotForwarded(_logger, childId, ex);
-        }
-    }
-
     private async ValueTask RelayToCallerAsync(JsonRpcNotification notification, CancellationToken cancellationToken)
     {
         if (Volatile.Read(ref _caller) is not { } caller)
@@ -570,8 +515,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
 
         // A fresh envelope, for the same reason results get one: the child's own
-        // message may carry a RelatedTransport that would send this straight
-        // back where it came from. The params -- progress token included -- pass
+        // message may carry a RelatedTransport that would send this straight back
+        // where it came from. The params -- progress token included -- pass
         // through untouched, which is what puts it under the caller's token.
         await caller.SendMessageAsync(
             new JsonRpcNotification { Method = notification.Method, Params = notification.Params },
@@ -582,29 +527,54 @@ internal sealed class BrowserProxy : IAsyncDisposable
 /// <summary>Source-generated log messages for the proxy.</summary>
 internal static partial class ProxyLog
 {
+    /// <summary>The child agreed a protocol revision.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="requested">What BrowserAI asked for.</param>
+    /// <param name="negotiated">What came back.</param>
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
         Message = "Child protocol negotiated. requested={Requested} negotiated={Negotiated}")]
     public static partial void ChildProtocolNegotiated(ILogger logger, string requested, string negotiated);
 
+    /// <summary>A result had to be re-serialised because its raw frame was not captured.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="callerRequestId">The caller request being answered.</param>
     [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Error,
-        Message = "The raw frame for child request {ChildRequestId} was not captured, so caller request {CallerRequestId} is being answered from a re-serialised result. Passthrough is no longer byte-identical.")]
-    public static partial void VerbatimPayloadMissing(ILogger logger, string childRequestId, string callerRequestId);
+        Message = "The raw frame for caller request {CallerRequestId} was not captured, so it is being answered from a re-serialised result. Passthrough is no longer byte-identical.")]
+    public static partial void VerbatimPayloadMissing(ILogger logger, string callerRequestId);
 
+    /// <summary>The child never answered.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="method">The method being forwarded.</param>
+    /// <param name="callerRequestId">The caller request being answered.</param>
+    /// <param name="exception">Why.</param>
     [LoggerMessage(
         EventId = 3,
         Level = LogLevel.Error,
         Message = "The child did not answer '{Method}' for caller request {CallerRequestId}.")]
     public static partial void ChildDidNotAnswer(ILogger logger, string method, string callerRequestId, Exception exception);
 
+    /// <summary>A cancellation was forwarded to a child.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="childRequestId">The id BrowserAI put on the outgoing request.</param>
     [LoggerMessage(
         EventId = 4,
         Level = LogLevel.Information,
         Message = "Forwarded notifications/cancelled for child request {ChildRequestId}.")]
     public static partial void CancellationForwarded(ILogger logger, string childRequestId);
+
+    /// <summary>A cancellation could not be forwarded.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="childRequestId">The id BrowserAI put on the outgoing request.</param>
+    /// <param name="exception">Why.</param>
+    [LoggerMessage(
+        EventId = 5,
+        Level = LogLevel.Warning,
+        Message = "Could not forward notifications/cancelled for child request {ChildRequestId}; the child may still be working.")]
+    public static partial void CancellationNotForwarded(ILogger logger, string childRequestId, Exception exception);
 
     /// <summary>
     /// <paramref name="cancellable"/> is not decoration: a filter handed an
@@ -621,9 +591,13 @@ internal static partial class ProxyLog
         Message = "Forwarding '{Method}' to the child as {ChildRequestId}. cancellable={Cancellable}")]
     public static partial void Forwarding(ILogger logger, string method, string childRequestId, bool cancellable);
 
+    /// <summary>A tool call named a session this process is not driving.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session it named.</param>
     [LoggerMessage(
-        EventId = 5,
-        Level = LogLevel.Warning,
-        Message = "Could not forward notifications/cancelled for child request {ChildRequestId}; the child may still be working.")]
-    public static partial void CancellationNotForwarded(ILogger logger, string childRequestId, Exception exception);
+        EventId = 7,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' named session '{Session}', which is not open in this process; the caller was told to resume it.")]
+    public static partial void UnknownSession(ILogger logger, string tool, string session);
 }

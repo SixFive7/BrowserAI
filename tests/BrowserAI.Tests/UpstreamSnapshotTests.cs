@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json;
+using BrowserAI.Runtime;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -185,6 +187,29 @@ internal sealed class UpstreamSnapshotTests
         }
 
         await Assert.That(resolvedFrom.GetProperty("node").GetString()).StartsWith("v");
+    }
+
+    /// <summary>
+    /// The suite's own capability filter reproduces the snapshot's recorded
+    /// default surface, and BrowserAI's two capability sets are the 42 and 59
+    /// [§C](../../plan/C-sessions.md) records.
+    /// </summary>
+    /// <remarks>
+    /// Without the first half, <c>UpstreamSurface</c> is a second implementation
+    /// of upstream's filter that nothing checks, and every surface assertion
+    /// built on it would be measuring the helper rather than the product. The
+    /// second half is what turns two numbers in a design document into something
+    /// a build can be wrong about.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheCapabilityFilterReproducesTheRecordedSurfaces()
+    {
+        await Assert.That(string.Join(", ", UpstreamSurface.For([])))
+            .IsEqualTo(string.Join(", ", UpstreamSurface.DefaultSurface()));
+
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.BaseCapabilities).Count).IsEqualTo(42);
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.UnionCapabilities).Count).IsEqualTo(59);
     }
 
     private static JsonDocument ReadToolsList() =>

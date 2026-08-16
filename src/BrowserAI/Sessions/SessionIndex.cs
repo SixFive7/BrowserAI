@@ -155,6 +155,26 @@ internal sealed class SessionIndex
     }
 
     /// <summary>
+    /// Removes one session's entry, because the directory it pointed at has just
+    /// been destroyed.
+    /// </summary>
+    /// <param name="session">The canonicalised session directory.</param>
+    /// <remarks>
+    /// A sweep would remove it anyway — a pointer to a directory that no longer
+    /// exists is removable by definition — so this only decides <i>when</i>. It
+    /// is worth doing promptly because <c>browserai_list</c> reads the index, and
+    /// a destroyed session lingering in an inventory is exactly the kind of
+    /// confident wrong answer this project exists to remove. Never fatal, for the
+    /// same reason <see cref="Record"/> is not: the entry is re-derivable and a
+    /// stale one is a report rather than a fault.
+    /// </remarks>
+    public void Forget(SessionPath session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        _ = TryDelete(Path.Combine(Root, session.IndexKey));
+    }
+
+    /// <summary>
     /// Reads every entry and follows it — the only way this store is ever read.
     /// </summary>
     /// <returns>Every entry, each with what following it found, ordered by key.</returns>

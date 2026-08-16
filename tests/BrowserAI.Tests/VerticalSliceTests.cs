@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Text.Json;
+using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -40,15 +41,74 @@ internal sealed class VerticalSliceTests
         // Byte for byte, and in upstream's order. Renaming is settled as
         // forbidden, so this asserts identity rather than exercising a map; the
         // day a rename map appears, this is what says so. The expected list is
-        // the committed snapshot's default surface, which the build regenerates
-        // from the resolved payload, so an upstream change is a snapshot diff
-        // first and this test second.
+        // computed from the committed snapshot, which the build regenerates from
+        // the resolved payload, so an upstream change is a snapshot diff first
+        // and this test second.
         //
         // Compared as one joined string rather than as a set, because order is
         // part of the contract: the spec asks for deterministic ordering for
         // prompt-cache hit rates, and a set comparison would pass a proxy that
         // shuffled the list.
-        await Assert.That(string.Join(", ", run.ToolNames)).IsEqualTo(string.Join(", ", DefaultSurface()));
+        //
+        // The five authored tools come first; upstream's follow, and it is the
+        // UNION surface — 59 rather than the default 24 — because the run's own
+        // child is started with every capability any mode can have. The spec
+        // forbids the tool set varying per connection, so one static list is the
+        // only shape available and it has to be the superset.
+        await Assert.That(string.Join(", ", run.ToolNames))
+            .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. UpstreamSurface.For(BrowserConfiguration.UnionCapabilities)]));
+
+        // Stated as a number as well, because 42/59 is what §C records and a
+        // list comparison that both sides got wrong the same way would not say
+        // so.
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 59);
+    }
+
+    [Test]
+    public async Task EveryUpstreamToolGainsTheSessionParameterAndNoneLosesItsOwn()
+    {
+        if (!PublishedSlice.IsPresent)
+        {
+            await Assert.That(PublishedSlice.IsAbsentAsAWhole).IsTrue();
+            return;
+        }
+
+        var run = await SliceRun.SharedAsync();
+        var offenders = new List<string>();
+
+        foreach (var tool in run.ToolList)
+        {
+            var name = (string)tool!["name"]!;
+
+            if (SessionToolSurface.Names.Contains(name, StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            var schema = tool["inputSchema"]!.AsObject();
+            var properties = schema["properties"]?.AsObject();
+            var required = schema["required"]?.AsArray().Select(entry => (string)entry!).ToList() ?? [];
+
+            if (properties?["session"] is null)
+            {
+                offenders.Add($"{name}: no session property");
+            }
+
+            if (!required.Contains("session", StringComparer.Ordinal))
+            {
+                offenders.Add($"{name}: session is not required");
+            }
+
+            // Appended, never inserted: upstream's own properties keep their
+            // order, and `session` is last. A rewrite that reordered would cost
+            // a prompt-cache miss per call with nothing failing.
+            if (properties is { Count: > 1 } && properties.Last().Key is not "session")
+            {
+                offenders.Add($"{name}: session is not the last property");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
 
     [Test]
@@ -103,19 +163,4 @@ internal sealed class VerticalSliceTests
         await Assert.That(survivors).IsEmpty();
     }
 
-    /// <summary>
-    /// The 24 tools the child exposes with no capabilities configured, read from
-    /// the committed snapshot rather than typed here.
-    /// </summary>
-    private static IReadOnlyList<string> DefaultSurface()
-    {
-        using var snapshot = JsonDocument.Parse(File.ReadAllText(
-            Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json")));
-
-        return
-        [
-            .. snapshot.RootElement.GetProperty("defaultSurface").EnumerateArray()
-                .Select(name => name.GetString()!),
-        ];
-    }
 }

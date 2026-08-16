@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
@@ -67,7 +68,10 @@ internal sealed class FakeChildHarnessTests
             var tools = await rig.Client.RoundTripAsync("tools/list");
             var call = await rig.Client.RoundTripAsync("tools/call", Call("browser_navigate"));
 
-            await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(2);
+            // The child's two, behind BrowserAI's five authored ones. Written as
+            // a sum rather than as 7, so a sixth authored tool moves this number
+            // by construction instead of by somebody remembering.
+            await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 2);
             await Assert.That(TextOf(call)).IsEqualTo("Page URL: data:text/html,<h1>ok</h1>");
 
             // Both hops really carried it: the double saw the call, and the
@@ -93,9 +97,11 @@ internal sealed class FakeChildHarnessTests
         var tools = await rig.Client.RoundTripAsync("tools/list");
 
         // Byte-for-byte upstream's name. Renaming is settled as forbidden, so
-        // this asserts identity rather than exercising a map.
-        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(1);
-        await Assert.That(tools["tools"]![0]!["name"]!.GetValue<string>()).IsEqualTo("browser_take_screenshot");
+        // this asserts identity rather than exercising a map. It sits after the
+        // five authored tools, which is the only thing the rewrite moves.
+        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 1);
+        await Assert.That(tools["tools"]![SessionToolSurface.Names.Count]!["name"]!.GetValue<string>())
+            .IsEqualTo("browser_take_screenshot");
     }
 
     [Test]

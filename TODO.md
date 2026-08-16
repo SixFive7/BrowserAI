@@ -211,8 +211,22 @@ and version it was true at.
       `Artifacts/`, which the template's `artifacts/` rule would swallow on
       case-insensitive Windows.
 
-- [ ] **Set `userDataDir`, so a run's browser profile stops landing in a
-      directory BrowserAI does not own.** Build-order step 7 generates only the
+- [x] ~~**Set `userDataDir`, so a run's browser profile stops landing in a
+      directory BrowserAI does not own.**~~ ✅ **Done at
+      [step 12](plan/build-order.md#12-the-session-tools-and-config-generation),
+      2026-08-16.** Every generated config now carries one: a session's is
+      `<session-dir>\profile\`, and the run's own child gets one under its
+      instance directory — so *nothing* the product starts can fall back.
+      **The pile had grown from the 27 profiles / 193 MB recorded below to 159 /
+      877 MB** by the time the key landed. Deleted once, then the whole suite run
+      twice: `%LOCALAPPDATA%\ms-playwright-mcp\` stayed absent both times. The
+      first attempt at that check found **one** directory recreated, by
+      `SandboxFlagTests.TheConfigKeyIsStillDiscardedByUpstream`, which writes its
+      own config to exercise upstream's handling of `chromiumSandbox`; it carries
+      a `userDataDir` now for the same reason the product's does. The original
+      text follows.
+      <br><br>
+      Build-order step 7 generates only the
       keys that decide *which browser runs*, so no `userDataDir` is set and
       upstream falls back to its own default: one
       `%LOCALAPPDATA%\ms-playwright-mcp\mcp-chrome-for-testing-<hash>\` profile
@@ -230,8 +244,19 @@ and version it was true at.
       deleting before step 12; whether to sweep the 193 MB is the maintainer's
       call, since it is outside the repository and partly predates this work.
 
-- [ ] **Call `SessionIndex.Record` from `init` and from `resume`. Nothing calls
-      it today.** [Build-order step 11](plan/build-order.md#11-the-session-index)
+- [x] ~~**Call `SessionIndex.Record` from `init` and from `resume`. Nothing calls
+      it today.**~~ ✅ **Done at
+      [step 12](plan/build-order.md#12-the-session-tools-and-config-generation),
+      2026-08-16.** `SessionManager.OpenAsync` is the one path both tools reach,
+      and it calls `Record` on every open, idempotently. `Forget` was added
+      alongside it and is called by `browserai_destroy`: a sweep would remove the
+      entry anyway, so this only decides *when* — and a destroyed session
+      lingering in the only inventory there is would be a confident wrong answer.
+      `SessionToolTests.ListReportsWhatIsUnderAPathAndNothingElse` is what proves
+      the wiring, because `browserai_list` reads the index and nothing else. The
+      original text follows.
+      <br><br>
+      [Build-order step 11](plan/build-order.md#11-the-session-index)
       built the index and deliberately wired it to nothing: `browserai_init`,
       `browserai_resume` and the sweep are
       [steps 12](plan/build-order.md#12-the-session-tools-and-config-generation)
@@ -249,7 +274,33 @@ and version it was true at.
       [§D](plan/D-locking.md#the-session-index-on-disk)'s first property and the
       whole reason a lost entry self-heals. Step 16 must call `Sweep`.
 
-- [ ] **Create the per-session log file, `<session-dir>\browserai.log`.**
+- [x] ~~**Create the per-session log file, `<session-dir>\browserai.log`.**~~
+      ✅ **Done at
+      [step 12](plan/build-order.md#12-the-session-tools-and-config-generation),
+      2026-08-16.** `src/BrowserAI/Logging/SessionLogFile.cs` writes it with the
+      same `FILE_APPEND_DATA` open the process log uses, and `ProcessLog.
+      OpenSessionLog` builds a per-session `ILoggerFactory` over **three**
+      destinations — that file, the machine-wide process log (non-owning, or the
+      first session to end would close the shared handle) and stderr. `debug` on
+      `init` or `resume` sets that factory's minimum level and nothing else's,
+      which is the whole point of the argument.
+      <br><br>
+      **The log is opened *before* the lock is taken, and that ordering is the
+      finding.** The first version acquired first and passed the process logger
+      to `SessionLock`, so the session's own file began mid-story with no
+      acquisition in it — caught by
+      `SessionToolTests.ASessionWritesItsOwnLogBesideItsLockFile`, which requires
+      `Session lock acquired` and the `{session=…}` scope to be in the file
+      itself. The same fix is what puts the moved-directory line where somebody
+      looking into that directory will find it.
+      <br><br>
+      **It also contradicts [§C](plan/C-sessions.md#the-session-directory-is-the-identity),
+      which says `lock.json` is "the only file at the root".** It is now one of
+      two; §C is corrected rather than the file moved, because §E names the path
+      and the reason for a flat root is that the file that matters is
+      unmissable — which two files still satisfy and a subfolder would not. The
+      original text follows.
+      <br><br>
       [§E](plan/E-lifecycle.md) puts it at the session root beside `lock.json`,
       holding *anything a session did*, so `browserai_destroy` removes it with
       everything else. [Build-order step 2](plan/build-order.md#2-stdout-is-owned-and-nothing-else-can-reach-it)

@@ -63,9 +63,18 @@ internal static class ChildLaunch
     /// resolves against <c>INIT_CWD</c> first.
     /// </param>
     /// <param name="workingDirectory">
-    /// The child's working directory, which also receives the generated config.
+    /// The child's working directory. For a session that is the session
+    /// directory itself; for the run's own child it is the instance directory.
     /// It must already exist.
     /// </param>
+    /// <param name="configFile">
+    /// Where to write the generated config. <b>Never inside a session
+    /// directory</b>: <c>lock.json</c> and the session log are the only files at
+    /// a session's root, and a third one would make the file that matters
+    /// missable.
+    /// </param>
+    /// <param name="config">The generated config, from <see cref="BrowserConfiguration"/>.</param>
+    /// <param name="name">The transport's name in diagnostics.</param>
     /// <param name="standardErrorLines">Where the child's stderr is delivered.</param>
     /// <returns>Everything <see cref="DirectStdioClientTransport"/> needs.</returns>
     /// <exception cref="ArgumentException"><paramref name="browsersDirectory"/> is not absolute.</exception>
@@ -74,11 +83,16 @@ internal static class ChildLaunch
         PayloadLayout payload,
         string browsersDirectory,
         string workingDirectory,
+        string configFile,
+        GeneratedConfig config,
+        string name = "playwright-mcp",
         Action<string>? standardErrorLines = null)
     {
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(browsersDirectory);
         ArgumentNullException.ThrowIfNull(workingDirectory);
+        ArgumentNullException.ThrowIfNull(configFile);
+        ArgumentNullException.ThrowIfNull(config);
 
         if (!Path.IsPathFullyQualified(browsersDirectory))
         {
@@ -88,9 +102,7 @@ internal static class ChildLaunch
         }
 
         payload.Verify();
-
-        var configPath = Path.Combine(workingDirectory, "playwright-mcp.config.json");
-        BrowserConfiguration.WriteTo(configPath);
+        BrowserConfiguration.WriteTo(configFile, config);
 
         return new ChildProcessOptions
         {
@@ -99,16 +111,21 @@ internal static class ChildLaunch
             [
                 payload.PlaywrightMcpCli,
                 "--config",
-                configPath,
+                configFile,
 
                 // On the command line, never in the file above.
                 SandboxFlag,
+
+                // --caps is deliberately absent and must stay absent: it
+                // REPLACES the config file's capability list rather than
+                // merging with it, so passing it here would silently wipe the
+                // capabilities the generator just wrote.
             ],
             WorkingDirectory = workingDirectory,
             Environment = ChildEnvironment.Build(
                 [new KeyValuePair<string, string>(BrowsersPathVariable, browsersDirectory)]),
             StandardErrorLines = standardErrorLines,
-            Name = "playwright-mcp",
+            Name = name,
         };
     }
 }

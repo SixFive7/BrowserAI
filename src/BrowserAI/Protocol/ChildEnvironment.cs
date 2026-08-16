@@ -117,6 +117,13 @@ internal static class ChildEnvironment
         "DEBUG",
         "DEBUG_FILE",
         "PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE",
+
+        // Named rather than merely absent. `capabilities` REPLACES rather than
+        // merges, so this variable silently wipes the capability list the config
+        // generator writes -- and it is an environment route to the bug that a
+        // "never pass --caps" rule does not close. A capability set to nothing is
+        // a tool surface that shrank with no error anywhere.
+        "PLAYWRIGHT_MCP_CAPS",
         "PLAYWRIGHT_DOWNLOAD_HOST",
         "PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST",
         "PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST",

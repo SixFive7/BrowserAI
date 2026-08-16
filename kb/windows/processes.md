@@ -402,6 +402,21 @@ walks all three share modes on every run.
 > rename, and the only thing that makes the resulting gap unobservable is that
 > every BrowserAI takes the per-directory mutex before create-or-take.
 
+**A file that has just been renamed into place can still be briefly unopenable.**
+Observed once on 2026-08-16, roughly one run in a dozen: a probe report written
+temp-then-renamed failed `File.ReadAllTextAsync` on the destination with *"the
+process cannot access the file … because it is being used by another process"*,
+on a file no BrowserAI process had ever opened. The atomicity of the rename is
+not in question — what it guarantees is that a reader sees the old bytes or the
+new ones, never that the open succeeds. Something outside this repository holds a
+freshly-created file for a moment; the retry budget below exists for the same
+condition seen from the writing side. **Anything polling for a file another
+process produced must retry the *open* as well as the existence check**, and open
+`FileShare.ReadWrite | FileShare.Delete` so it cannot itself refuse a writer or a
+rename in flight. Reproduce by running the full suite repeatedly and watching
+`SessionLockTests`; `Harness/ProbeReport.cs` is where the retry lives.
+`[MACHINE]`
+
 **Five attempts over 150 ms is not a large enough retry budget for that rename.**
 Measured 2026-08-16: with a second process reading the destination in a tight
 loop and the rest of the suite running beside it, the 5-attempt / 10-20-40-80 ms
