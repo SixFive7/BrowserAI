@@ -1854,6 +1854,104 @@ Route on the way in; do not sort on the way out.
 
 **Consumes:** [§C](C-sessions.md#the-stray-sweep-and-the-concurrency-it-must-survive)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Interop/{MessageWindows,
+> BrowserProcesses}.cs` · `src/BrowserAI/Sessions/{StraySweep, SessionLock,
+> SessionIndex, SessionErrors}.cs` · `src/BrowserAI/Runtime/{ProvisionedBrowsers,
+> LogonSweepTask}.cs` · `src/BrowserAI/Program.cs` ·
+> `tests/BrowserAI.TestProbe/{WindowProbe, SessionProbe, Program}.cs` ·
+> `tests/BrowserAI.Tests/{StraySweepTests, MessageWindowTests,
+> LogonSweepTaskTests, ErrorCatalogueTests}.cs` ·
+> `tests/BrowserAI.Tests/Harness/{PlantedProbe, TopLevelWindows,
+> InstallationMarker, ScratchRoot}.cs`. Every done-test below was run.
+> **267 tests green, three consecutive full runs**, `dotnet build` 0 warnings,
+> and the AOT publish is clean at **11,874,816 bytes** with no `will always
+> throw`.
+>
+> **All twelve races have a test and all twelve pass.** R8 is the one whose
+> subject cannot be produced from a single logon — *two sweeps in two different
+> terminal-server sessions* — so what it asserts is the mechanism that makes that
+> case correct: the name is `Global\`-prefixed and appears in exactly one product
+> file, and two processes contending for it really do serialise. The untestable
+> half is named on the test rather than implied.
+>
+> **The pass costs 24.9–28.6 ms from the published binary** over 666–668 pids of
+> which ~500 open, walking 64 `Chrome_MessageWindow`s of which 13 are titled;
+> `EnumProcesses` replaced the toolhelp snapshot `RunningFrom` used, so there is
+> one enumeration rather than two. Numbers, method and how to re-run in
+> [kb](../kb/windows/detection.md#re-measured-2026-08-16-building-the-sweep);
+> rows 4, 4a and 4c are answered and rows 76–81 are new.
+>
+> **The negative subject held.** With all five `chrome-headless-shell.exe`
+> processes of the retired `npx` tree alive, detection against the two binaries
+> BrowserAI provisioned returns **zero candidates** — measured through the
+> product's own path, not argued. The suite additionally plants a process at the
+> same *shape* of path, so the check keeps meaning something on a machine that
+> never had one.
+>
+> ⚠️ **The claim that the logon task registers non-elevated is false, and this
+> step made it.** Measured 2026-08-16 from a medium-integrity, UAC-filtered
+> administrator token: `schtasks /Create /XML` **and** the `Schedule.Service` COM
+> API both answer `Access is denied` / `0x80070005`, in the task-library root and
+> in a new `\BrowserAI\` folder alike, and a **minimal** definition fails
+> identically — so it is machine policy rather than anything about our XML.
+> Whether elevation fixes it is `[UNVERIFIED]`: a UAC prompt cannot be answered
+> from a non-interactive session. Corrected in the bullet below, recorded in
+> [kb](../kb/windows/detection.md#the-logon-sweep-task) with
+> [row 80](../kb/README.md#re-verification-index), and carried in
+> [TODO.md](../TODO.md) as [step 19](#19-velopack-package-update-roll-back)'s
+> decision — it is where the task is registered and where the fallback has to be
+> chosen.
+>
+> ⚠️ **Two things §C said that building contradicted, both corrected in place.**
+> The published title is the **profile**, which is a subfolder of the session, so
+> the `lock.json` that proves ownership is one level up — attribution climbs
+> exactly one level and only when the leaf is the profile folder. And the
+> ownership test is **not** `SessionLock.TryAcquire`: taking a directory that way
+> rewrites `lock.json` with the sweeper as holder, overwriting the crashed
+> session's own record with a janitor's. `SessionLock.TryHoldUnowned` takes the
+> per-directory gate, opens the file, releases the gate and holds the handle
+> across the kill, writing nothing.
+>
+> ⚠️ **`InternalGetWindowText` is the product's fallback, and
+> [kb](../kb/windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)
+> said to keep it as a test oracle instead.** Two documents against one: §C and
+> this step both specify the fallback, and the kb entry's reasoning was wrong on
+> its own terms — the API is *documented*, and it is documented to do exactly the
+> thing `GetWindowTextW` does here undocumented. It is both now: the fallback in
+> `MessageWindows.TitleOf`, which on this machine never runs, and the oracle the
+> suite compares against on every window it walks.
+>
+> **Three pre-existing flakes were found by running the suite twelve times and
+> all three are fixed; none of them was this step's doing.**
+>
+> 1. **A file race in [step 15](#15-first-run-provisioning-and-browserai_reinstall_browser)'s
+>    own tests.** `ReinstallBrowserTests` writes `INSTALLATION_COMPLETE` to set up
+>    a complete tree while the rig's default session legitimately starts an
+>    install that writes the same file; `File.WriteAllText` opens
+>    `FileShare.Read`, so one of them is refused. Reproduced **once in ten runs
+>    of that class alone**. `Harness/InstallationMarker.cs` shares the write;
+>    twelve consecutive runs of that class are clean.
+> 2. **A 250 ms timeout compared against a `Stopwatch`.**
+>    `TheClientPinIsWhatSkipsTheDiscoverProbe` required the observed stall to be
+>    ≥ the timeout and measured **249.5723 ms** — .NET's timer wheel and QPC are
+>    different clocks. Two milliseconds of slack, with the reason on the line.
+> 3. **A wall-clock rig budget whose stated justification did not hold.**
+>    `TestDefaults.RigBudget` was two seconds "so an unanswered `server/discover`
+>    turns a slow suite red" — but this suite pins the probe to **250 ms**, so the
+>    bound could never have detected the failure it named, and the mechanism is
+>    asserted directly by the test above. What it did do was fail three times in
+>    twelve runs at 2.57 s, 2.89 s and 4.20 s against a rig that answers in
+>    milliseconds: pool starvation in a parallel suite, not creep. Ten seconds,
+>    with the whole argument recorded on the constant.
+>
+> **Two things this step deliberately does not build.** The logon task is
+> **generated and asserted, never registered** — the suite would otherwise leave
+> machine state behind on every run from a checkout. And the sweep terminates
+> only the process a window attributed; a browser tree's helpers are reported as
+> unattributable and left, because a tree publishes its profile from one process
+> only and nothing else can tie a renderer to a directory without a mechanism
+> this design does not have.
+
 > **Maintainer decision, 2026-08-16: there is a real stray browser tree on this
 > machine, and it is being kept alive on purpose as a test subject for this
 > step.** Recorded here because a process is not a file and will not survive in
@@ -1906,8 +2004,15 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
   Background thread, fire-and-forget, never awaited, never a startup gate, never
   `stdout`. A catch-all at the thread boundary.
 - The **logon scheduled task** is built here and **registered at step 19** by the
-  Velopack install hook — the registration is verified to work non-elevated, but
-  there is no install to hook until §G lands.
+  Velopack install hook — there is no install to hook until §G lands.
+
+  > ⚠️ **Corrected 2026-08-16 (previously "the registration is verified to work
+  > non-elevated").** It had not been verified, and it does not work: measured
+  > from a medium-integrity, UAC-filtered administrator token, both
+  > `schtasks /Create /XML` and the `Schedule.Service` COM API answer
+  > `0x80070005` for our definition and for a minimal one alike
+  > ([kb](../kb/windows/detection.md#the-logon-sweep-task)). Whether elevation
+  > fixes it is unverified. Step 19 owns the consequence and the fallback.
 - **Reclaim a leaked system resource before each test run**: a rig that inherits
   an abandoned `Global\BrowserAI-Sweep` from a previous run tests nothing.
 

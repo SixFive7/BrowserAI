@@ -28,14 +28,40 @@ internal static class TestDefaults
     /// down.
     /// </summary>
     /// <remarks>
-    /// <b>Two seconds is chosen against a specific failure, not as a
-    /// benchmark.</b> An unanswered <c>server/discover</c> costs the client
-    /// <see cref="McpClientOptions.DiscoverProbeTimeout"/> — five seconds by
-    /// default — on every connect, and it produces no error anywhere: the rig
-    /// simply gets slow. A bound below that default is what turns it into a red
-    /// test instead of a suite that quietly takes half a minute.
+    /// <para>
+    /// <b>It bounds a whole rig rather than one exchange</b>, which is what
+    /// separates it from <see cref="Patience"/>: a rig that constructs, hands
+    /// shakes, round-trips and tears down should take single-digit
+    /// milliseconds, and one that takes seconds is doing something nobody asked
+    /// for.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-16 at build-order step 16 (previously two
+    /// seconds, "chosen against a specific failure, not as a benchmark": an
+    /// unanswered <c>server/discover</c> costing the client
+    /// <see cref="McpClientOptions.DiscoverProbeTimeout"/>, five seconds by
+    /// default).</b> That justification does not survive reading
+    /// <see cref="DiscoverProbeTimeout"/> beside it: this suite pins the probe
+    /// to <b>250 ms</b> for every in-process rig, so the failure the two-second
+    /// bound was chosen to catch would add a quarter of a second and the bound
+    /// could never have detected it. The mechanism is asserted directly instead,
+    /// from three sides, by
+    /// <c>FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe</c> —
+    /// which is what <a href="../../../kb/README.md#re-verification-index">row
+    /// 16</a> records.
+    /// </para>
+    /// <para>
+    /// <b>What the old value did do was fail three times in twelve full-suite
+    /// runs</b> — 2.57 s, 2.89 s and 4.20 s against a rig that normally answers
+    /// in milliseconds — because the suite runs in parallel and a pool thread
+    /// can simply be descheduled. Those are 250–400× the normal figure, so they
+    /// are starvation rather than creep, and a flaky test is a red build wearing
+    /// a disguise. Ten seconds is above every observed value and well below
+    /// <see cref="Patience"/>, so a rig that has genuinely stopped is still
+    /// caught here rather than thirty seconds later.
+    /// </para>
     /// </remarks>
-    public static TimeSpan RigBudget { get; } = TimeSpan.FromSeconds(2);
+    public static TimeSpan RigBudget { get; } = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// The <c>server/discover</c> probe timeout every test client pins.

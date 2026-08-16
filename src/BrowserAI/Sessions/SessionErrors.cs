@@ -260,6 +260,51 @@ internal static class SessionErrors
             + "It is most often a BrowserAI that died without releasing its session. Close it, or wait for it to exit, and call this tool again; Windows will not delete a directory whose executables are open, so there is nothing to force.";
     }
 
+    /// <summary>
+    /// Row 13's sibling — the stray sweep found a browser of ours it could not
+    /// attribute to any directory.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is what "attribution may fail and must fail safe" sounds like.</b>
+    /// Detection is documented and it decided: these processes are running a
+    /// binary BrowserAI provisioned. Attribution rests on reading a message-only
+    /// window's title, which is undocumented behaviour of a documented function
+    /// — so when it comes back empty the sweep declines to act <i>and says
+    /// so</i>. The undocumented half can never cause a wrong kill and can never
+    /// cause silence, and this sentence is the second half of that promise.
+    /// </para>
+    /// <para>
+    /// <b>The ordinary cause is not a stray at all, and saying so is what stops
+    /// this reading as an alarm.</b> A Chromium tree publishes its profile path
+    /// from exactly one process — the one that owns the singleton window — so
+    /// every renderer, GPU and utility process of a browser that is perfectly
+    /// well accounted for lands here too. What is worth a human's attention is a
+    /// pid here that persists across passes with no session open.
+    /// </para>
+    /// <para>
+    /// <b>It goes to the log rather than to a caller</b>, unlike every other row
+    /// in this file, and it is here anyway for the reason the type exists: it is
+    /// a sentence written for whoever has to act on it, and a row nobody can
+    /// reach is documentation. The census proves this one is reachable exactly
+    /// as it proves the others.
+    /// </para>
+    /// </remarks>
+    /// <param name="running">Every unattributable process, as pid and image path.</param>
+    /// <returns>The report.</returns>
+    public static string StrayCannotBeAttributed(IReadOnlyList<(int ProcessId, string ImagePath)> running)
+    {
+        ArgumentNullException.ThrowIfNull(running);
+
+        var named = string.Join(
+            "\n",
+            running.Take(20).Select(entry => $"  PID {entry.ProcessId.ToString(CultureInfo.InvariantCulture)} — {entry.ImagePath}"));
+
+        return $"The stray sweep found {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) running a browser BrowserAI provisioned that it could not attribute to any session directory. Nothing was terminated — an unattributable process is reported and never killed, because what it belongs to is unknown and it may be somebody's window.\n{named}\n"
+            + "Most of these are not strays: a browser tree publishes its profile path from one process only — the one that owns the singleton window — so the helper processes of a browser that is fully accounted for appear here as well. "
+            + $"What is worth looking at is a pid that is still listed on the next pass with no session open. Use {SessionToolSurface.List} to see which sessions exist, and close the one that owns it.";
+    }
+
     /// <summary>Row 7 — the directory was locked and the browser runtime did not start.</summary>
     /// <param name="path">The session directory.</param>
     /// <param name="why">What failed.</param>

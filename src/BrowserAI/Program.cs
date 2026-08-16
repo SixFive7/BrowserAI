@@ -56,7 +56,7 @@ internal static class Program
     /// </remarks>
     public const string AppRootVariable = "BROWSERAI_ROOT";
 
-    private static async Task<int> Main()
+    private static async Task<int> Main(string[] args)
     {
         var overridden = Environment.GetEnvironmentVariable(AppRootVariable);
         var root = overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden) ? overridden : null;
@@ -75,6 +75,20 @@ internal static class Program
         {
             StartupLog.AppRootOverridden(logger, AppRootVariable, root);
         }
+
+        // The logon task's mode: one pass, synchronously, and nothing else --
+        // no child, no stdio, no server. Matched against the same constant the
+        // task's own definition carries, so the two cannot drift apart.
+        if (args is not null && Array.Exists(args, argument => string.Equals(argument, LogonSweepTask.SweepArgument, StringComparison.Ordinal)))
+        {
+            return SweepOnce(paths, log.Factory, logger);
+        }
+
+        // Fire-and-forget, on its own background thread, before anything that
+        // can be slow. Nothing on the request path waits for it or observes it,
+        // and it is deliberately never a startup gate: a BrowserAI that cannot
+        // sweep is degraded, one that will not start is broken.
+        StraySweep.StartInBackground(() => CreateSweep(paths, log.Factory), logger);
 
         // One run, one directory. It holds this run's own child — the one that
         // answers `tools/list` before any session exists — together with its
@@ -147,6 +161,44 @@ internal static class Program
             // The clean path. The killed path is the next run's sweep, because
             // nothing here runs when the process is terminated from outside.
             InstanceDirectory.Delete(instance);
+        }
+    }
+
+    /// <summary>
+    /// Composes a sweep over the browsers this build provisions and the session
+    /// index it keeps.
+    /// </summary>
+    /// <remarks>
+    /// Called on the sweep's own thread, never on the startup path: it reads the
+    /// payload's <c>browsers.json</c>, and a payload that is absent or broken
+    /// must not be able to stop BrowserAI serving.
+    /// </remarks>
+    private static StraySweep CreateSweep(IAppPaths paths, ILoggerFactory factory)
+    {
+        var payload = new PayloadLayout();
+        var manifest = BrowsersManifest.Read(payload);
+        var logger = factory.CreateLogger("BrowserAI.Sweep");
+
+        return new StraySweep(
+            ProvisionedBrowsers.Executables(paths.BrowsersDirectory, manifest),
+            new SessionIndex(paths, logger),
+            logger);
+    }
+
+    /// <summary>Runs one sweep and exits, for the logon task.</summary>
+    private static int SweepOnce(IAppPaths paths, ILoggerFactory factory, ILogger logger)
+    {
+        try
+        {
+            _ = CreateSweep(paths, factory).Run();
+            return 0;
+        }
+#pragma warning disable CA1031 // Same boundary as the background thread's: a sweep failure is a log line and an exit code, never a crash dialog.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            SweepLog.Failed(logger, failure);
+            return 1;
         }
     }
 }

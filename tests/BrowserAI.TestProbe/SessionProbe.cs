@@ -215,6 +215,42 @@ internal static class SessionProbe
     }
 
     /// <summary>
+    /// Takes a named machine-wide mutex the caller names and holds it until
+    /// killed.
+    /// </summary>
+    /// <remarks>
+    /// <b>The wait is bounded rather than zero, unlike <see cref="Sweep"/>'s.</b>
+    /// This probe exists to <i>be</i> the holder — for the skip path and for the
+    /// abandoned-mutex path — so it must end up holding the object even if
+    /// another process on the machine is momentarily using the same name. A
+    /// zero-timeout acquire here would make the test flaky in the one direction
+    /// that reads as a product defect.
+    /// </remarks>
+    /// <param name="mutexName">The <c>Global\</c> name to take.</param>
+    /// <param name="readyPath">Written once it is held.</param>
+    /// <returns>One if it never acquired, two if the host failed to kill it.</returns>
+    public static int HoldNamed(string mutexName, string readyPath)
+    {
+        using var mutex = MachineMutex.Create(mutexName);
+        var acquisition = mutex.Acquire(TimeSpan.FromSeconds(30));
+
+        Write(readyPath, new JsonObject
+        {
+            ["pid"] = Environment.ProcessId,
+            ["mutexName"] = mutex.Name,
+            ["acquisition"] = acquisition.ToString(),
+        });
+
+        if (acquisition is MutexAcquisition.NotAcquired)
+        {
+            return 1;
+        }
+
+        Thread.Sleep(Patience);
+        return 2;
+    }
+
+    /// <summary>
     /// The sweep scope: try-acquire-and-skip at zero timeout, from N processes
     /// at once.
     /// </summary>
@@ -258,6 +294,49 @@ internal static class SessionProbe
                 mutex.Release();
             }
         }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Runs one real stray sweep in a process of its own, so what it writes to
+    /// <c>stdout</c> can be counted rather than assumed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Out of process because that is the only place the question is
+    /// answerable.</b> <c>stdout</c> is a process-wide handle, and a test host
+    /// that redirects <see cref="Console.Out"/> is measuring its own redirection
+    /// as much as the product. Here the host reads the pipe: whatever the sweep
+    /// wrote is what arrives, and the expected count is zero bytes. This probe
+    /// writes nothing to <c>stdout</c> itself, which is why the count means what
+    /// it says.
+    /// </remarks>
+    /// <param name="reportPath">Where to write the pass's own census.</param>
+    /// <param name="images">The image paths that count as ours, separated by <c>;</c>.</param>
+    /// <returns>Zero.</returns>
+    public static int StraySweepPass(string reportPath, string images)
+    {
+        var sweep = new StraySweep(
+            [.. images.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)],
+            index: null,
+            NullLogger.Instance);
+
+        var result = sweep.Run();
+
+        Write(reportPath, new JsonObject
+        {
+            ["pid"] = Environment.ProcessId,
+            ["outcome"] = result.Outcome.ToString(),
+            ["summary"] = result.Summary,
+            ["candidates"] = result.Candidates,
+            ["terminated"] = result.Terminated.Count,
+            ["windows"] = result.WindowsWalked,
+
+            // The strings, not just the count: a title this machine really
+            // publishes and the guard really refuses is the only evidence that
+            // the guard is doing anything at all.
+            ["rejectedTitles"] = new JsonArray([.. result.RejectedTitles.Select(title => (JsonNode)title)]),
+        });
 
         return 0;
     }

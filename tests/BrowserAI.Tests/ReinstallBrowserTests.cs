@@ -50,7 +50,7 @@ internal sealed class ReinstallBrowserTests
         var stale = Path.Combine(sessions.ChromiumDirectory, "stale-from-the-old-install.bin");
         _ = Directory.CreateDirectory(sessions.ChromiumDirectory);
         await File.WriteAllTextAsync(stale, new string('x', 4096));
-        await File.WriteAllTextAsync(Path.Combine(sessions.ChromiumDirectory, BrowsersManifest.InstallationCompleteMarker), string.Empty);
+        InstallationMarker.Write(sessions.ChromiumDirectory);
 
         // Counted from here: the rig opens a default session, and that init
         // legitimately starts an install against a root this test left empty.
@@ -129,8 +129,7 @@ internal sealed class ReinstallBrowserTests
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        _ = Directory.CreateDirectory(sessions.ChromiumDirectory);
-        await File.WriteAllTextAsync(Path.Combine(sessions.ChromiumDirectory, BrowsersManifest.InstallationCompleteMarker), string.Empty);
+        InstallationMarker.Write(sessions.ChromiumDirectory);
 
         var held = Path.Combine(sessions.ChromiumDirectory, "held-open.bin");
 

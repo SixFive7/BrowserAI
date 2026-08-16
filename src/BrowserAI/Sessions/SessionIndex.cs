@@ -247,6 +247,19 @@ internal sealed class SessionIndex
                 continue;
             }
 
+            // R7. Absence is re-checked immediately before acting, on this one
+            // entry, because between the enumeration above and this line an
+            // `init` may have created the very directory the entry names. The
+            // race is not prevented -- it is absorbed, since every entry is
+            // re-asserted on the next `init` or `resume` -- but a pointer whose
+            // directory is already back costs a cycle of invisibility for
+            // nothing, and re-following one entry costs one stat.
+            if (!ReFollow(entry).IsRemovable)
+            {
+                kept.Add(entry);
+                continue;
+            }
+
             if (TryDelete(entry.EntryFile))
             {
                 SessionIndexLog.Removed(_logger, entry.Key, entry.Pointer, entry.State, entry.Problem);
@@ -268,6 +281,28 @@ internal sealed class SessionIndex
             Kept = kept,
             LitterRemoved = SweepLitter(),
         };
+    }
+
+    /// <summary>
+    /// Follows one entry again — what <see cref="Sweep"/> does immediately
+    /// before it deletes one (race <b>R7</b>).
+    /// </summary>
+    /// <remarks>
+    /// <b>Exposed so the re-check is testable as itself.</b> The race it closes
+    /// is between an enumeration and a delete microseconds later, which cannot
+    /// be arranged deterministically from outside — so what the suite asserts is
+    /// this: an entry produced by an earlier enumeration, whose directory has
+    /// since come back, is no longer removable. That is the whole mechanism, and
+    /// a version of <see cref="Sweep"/> that dropped the call would leave this
+    /// method correct and nothing else would notice.
+    /// </remarks>
+    /// <param name="entry">An entry from an earlier <see cref="Follow"/>.</param>
+    /// <returns>What following it says now.</returns>
+    internal static SessionIndexEntry ReFollow(SessionIndexEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        return FollowOne(entry.EntryFile, entry.Key);
     }
 
     private static SessionIndexEntry FollowOne(string file, string key)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Hosting;
+using BrowserAI.Sessions;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -46,6 +47,7 @@ internal static class ScratchRoot
                     _ = Directory.CreateDirectory(path);
                     Reclaim(path);
                     ReclaimStrayIndexEntries(path);
+                    ReclaimTheSweepMutex();
                     _reclaimed = true;
                 }
             }
@@ -99,6 +101,47 @@ internal static class ScratchRoot
                 // An entry that cannot be read cannot be shown to be ours, and
                 // an index entry is never deleted on a guess.
             }
+        }
+    }
+
+    /// <summary>
+    /// Consumes an abandonment left on <c>Global\BrowserAI-Sweep</c> by a
+    /// previous run.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A rig that inherits an abandoned sweep mutex tests nothing.</b> This
+    /// suite deliberately kills processes holding that object — it is how race
+    /// R3 is provoked at all — so a run cut short between the kill and the
+    /// acquire leaves the abandonment pending. The next run's <i>first</i>
+    /// acquire then reports <c>AcquiredAbandoned</c> whatever it was testing,
+    /// and every arm that asserts an ordinary acquisition fails while naming the
+    /// wrong cause.
+    /// </para>
+    /// <para>
+    /// <b>An abandonment is consumed by acquiring and releasing once</b>, which
+    /// is exactly what this does. It cannot disturb a live sweeper: a zero
+    /// timeout means a process that really holds the object keeps it and this
+    /// returns immediately.
+    /// </para>
+    /// </remarks>
+    private static void ReclaimTheSweepMutex()
+    {
+        try
+        {
+            using var mutex = MachineMutex.Create(LockScopes.Sweep);
+
+            if (mutex.Acquire(LockScopes.NeverWaits) is not MutexAcquisition.NotAcquired)
+            {
+                mutex.Release();
+            }
+        }
+#pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            // No machine-wide objects at all is a condition the sweep itself
+            // survives; a rig that refused to start over it would be worse.
         }
     }
 

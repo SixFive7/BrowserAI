@@ -292,8 +292,17 @@ internal sealed class FakeChildHarnessTests
         // probe timeout and reports nothing. This is the 30-seconds-per-rig
         // failure of the 2026-08-15 spike, reproduced in 250 ms because
         // TestDefaults pins the timeout short.
+        //
+        // ⚠️ The comparison carries a millisecond of slack, and it is not a
+        // weakening. .NET's timer and `Stopwatch` read different clocks — the
+        // timer wheel against QPC — so a 250 ms timeout can be *observed*
+        // finishing at 249.57 ms. Measured on 2026-08-16: this assertion failed
+        // by 0.43 ms, once, on a suite that had passed six times running, which
+        // is a red build wearing a disguise. What is being asserted is that the
+        // connect paid the whole timeout rather than returning promptly, and a
+        // regression would come back in single-digit milliseconds.
         var (_, stalledFor) = await ConnectUnpinnedAsync(answersDiscover: false);
-        await Assert.That(stalledFor).IsGreaterThanOrEqualTo(TestDefaults.DiscoverProbeTimeout);
+        await Assert.That(stalledFor).IsGreaterThanOrEqualTo(TestDefaults.DiscoverProbeTimeout - TimeSpan.FromMilliseconds(2));
     }
 
     [Test]

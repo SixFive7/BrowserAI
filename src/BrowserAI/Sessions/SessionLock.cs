@@ -303,6 +303,132 @@ internal sealed class SessionLock : IDisposable
         _gate.Dispose();
     }
 
+    /// <summary>
+    /// Takes a session directory <b>without writing anything into it</b>, or
+    /// says why it could not be taken.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the sweep's ownership test, and it is deliberately not
+    /// <see cref="TryAcquire"/>.</b> [Race R1](../../plan/C-sessions.md#race-conditions-and-what-closes-each)
+    /// says the sweep may only kill a browser whose directory lock it can itself
+    /// acquire, and that the lock is held for the whole kill — but a sweep is
+    /// not opening a session, and <see cref="TryAcquire"/> would rewrite
+    /// <c>lock.json</c> with the sweeper as holder. That would overwrite a
+    /// crashed session's own record with a janitor's, which is the one piece of
+    /// evidence about what the stray was.
+    /// </para>
+    /// <para>
+    /// <b>The per-directory gate is taken and released around the open, and the
+    /// file handle outlives it.</b> The gate exists to make create-or-take
+    /// atomic, and it must not be held across a process kill; the handle is what
+    /// keeps the directory ours meanwhile, because a concurrent
+    /// <see cref="TryAcquire"/> opens the same file <c>FileAccess.ReadWrite</c>
+    /// and is refused by the kernel while we hold it.
+    /// </para>
+    /// <para>
+    /// <b>A directory with no <c>lock.json</c>, an unparseable one, or one held
+    /// by somebody else all answer the same way: not ours to act on.</b> Every
+    /// one of those is a refusal to kill, which is the only direction this
+    /// method is allowed to be wrong in.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The canonicalised session directory.</param>
+    /// <param name="hold">The hold, when one was taken.</param>
+    /// <returns>Why it could not be held, or <see langword="null"/> when it was.</returns>
+    public static string? TryHoldUnowned(SessionPath location, out SessionDirectoryHold? hold)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        hold = null;
+
+        // Declared before the try and disposed unconditionally in the finally,
+        // the same shape TryAcquire uses for the same reason.
+        MachineMutex? gate = null;
+
+        try
+        {
+            try
+            {
+                gate = MachineMutex.Create(location.MutexName);
+            }
+            catch (Exception failure) when (failure
+                is UnauthorizedAccessException
+                or WaitHandleCannotBeOpenedException
+                or IOException
+                or NotSupportedException)
+            {
+                return $"the machine-wide lock '{location.MutexName}' could not be created ({failure.Message})";
+            }
+
+            // R3 again, on the per-directory gate: an abandoned mutex WAS
+            // acquired. Proceeding is mandatory -- and here the abandonment
+            // carries no extra warning worth acting on, because nothing is
+            // written and a torn record would be caught by the parse below.
+            if (gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
+            {
+                return $"another BrowserAI is inside create-or-take on '{location.FullPath}'";
+            }
+
+            FileStream? held = null;
+
+            try
+            {
+                try
+                {
+                    held = OpenHeld(location.LockFile);
+                }
+                catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
+                {
+                    return $"'{location.FullPath}' holds no '{SessionLayout.LockFileName}', so it is not a BrowserAI session";
+                }
+                catch (IOException failure) when (IsSharingViolation(failure))
+                {
+                    return $"'{location.FullPath}' is held by a live session";
+                }
+                catch (UnauthorizedAccessException failure)
+                {
+                    return $"'{location.LockFile}' could not be opened ({failure.Message})";
+                }
+
+                LockRecord? record;
+
+                try
+                {
+                    record = Parse(held, location.LockFile);
+                }
+                catch (LockFileException failure)
+                {
+                    return $"'{location.LockFile}' cannot be read ({failure.Message})";
+                }
+
+                if (record is null)
+                {
+                    return $"'{location.LockFile}' is empty, so nothing proves this directory is a BrowserAI session";
+                }
+
+                // CA2000 for the same reason TakeOrReport carries it: ownership
+                // of the handle moves into the returned hold, which the caller
+                // disposes, and the rule's dataflow cannot see a transfer into
+                // an out parameter.
+#pragma warning disable CA2000
+                hold = new SessionDirectoryHold(location, held, record);
+#pragma warning restore CA2000
+                held = null;
+                return null;
+            }
+            finally
+            {
+                held?.Dispose();
+                gate.Release();
+            }
+        }
+        finally
+        {
+            gate?.Dispose();
+        }
+    }
+
     /// <summary>Reads a session's record without taking it.</summary>
     /// <param name="location">The canonicalised session directory.</param>
     /// <returns>The record, or <see langword="null"/> if there is no lock file.</returns>
@@ -641,6 +767,28 @@ internal sealed class SessionLock : IDisposable
         {
         }
     }
+}
+
+/// <summary>
+/// A session directory held open for the length of one operation, with nothing
+/// written into it.
+/// </summary>
+/// <remarks>
+/// The kernel is the whole mechanism: the handle is <c>FileAccess.ReadWrite,
+/// FileShare.Read</c>, so any other BrowserAI opening <c>lock.json</c> to take
+/// the directory is refused while this lives. Disposing releases it and leaves
+/// the record exactly as it was found.
+/// </remarks>
+internal sealed class SessionDirectoryHold(SessionPath location, FileStream held, LockRecord record) : IDisposable
+{
+    /// <summary>The directory this hold owns.</summary>
+    public SessionPath Location { get; } = location;
+
+    /// <summary>The record found there, unmodified.</summary>
+    public LockRecord Record { get; } = record;
+
+    /// <inheritdoc />
+    public void Dispose() => held.Dispose();
 }
 
 /// <summary>What a caller asked for when taking a directory.</summary>

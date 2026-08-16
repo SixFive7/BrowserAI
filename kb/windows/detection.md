@@ -93,12 +93,30 @@ on a nameless one, which is the likeliest shape of the original error. `[MACHINE
 `SendMessageTimeout` is the worst available option: it is the only one a stray in
 exactly the state we care about — hung, wedged, mid-crash — can defeat.
 
-**Do not take a dependency on `InternalGetWindowText.`** ~1550 window-level
-comparisons across every integrity level, a blocked UI thread and a suspended
-process produced **zero divergences** from `GetWindowTextW`. It binds fine under
-NativeAOT and is declared unguarded in the public SDK, so the usual worry is
-unfounded — but an undocumented dependency that buys nothing is a pure loss.
-Keep it as a test oracle instead. `[FLOATS]`
+**`InternalGetWindowText` diverges from `GetWindowTextW` nowhere.** ~1550
+window-level comparisons across every integrity level, a blocked UI thread and a
+suspended process produced **zero divergences**. It binds fine under NativeAOT
+and is declared unguarded in the public SDK, so the usual worry is unfounded.
+`[FLOATS]`
+
+> ⚠️ **Corrected 2026-08-16 @ build-order step 16 (previously "an undocumented
+> dependency that buys nothing is a pure loss. Keep it as a test oracle
+> instead").** The measurement is unchanged; the recommendation was wrong in two
+> ways. It is **not** undocumented — MS Learn documents it as copying a window's
+> text *without sending `WM_GETTEXT`*, which is precisely the behaviour
+> `GetWindowTextW` delivers here and its own contract denies. And it does not buy
+> nothing: it is the only documented spelling of the read the sweep depends on,
+> so the day `GetWindowTextW` starts honouring its contract for caption-less
+> windows is the day this is the API that still answers. It is therefore the
+> product's **fallback**, reached only when the documented call returned empty —
+> which on this machine is never — in `MessageWindows.TitleOf`. It remains the
+> suite's oracle as well:
+> `TheTwoTitleApisAgreeOnEveryMessageWindowOnThisMachine` in
+> `MessageWindowTests` compares the two on every window it walks, so a divergence
+> appearing is a red build rather than a silent behaviour change.
+> [§C](../../plan/C-sessions.md#detection-is-documented-attribution-may-fail-and-must-fail-safe)
+> and [step 16](../../plan/build-order.md#16-the-stray-sweep) both specified the
+> fallback; this entry was the odd one out.
 
 > ⚠️ **We are depending on undocumented behaviour of a documented function, and
 > it must be pinned by a test.** `GetWindowTextW`'s contract says: *"If the target
@@ -108,6 +126,124 @@ Keep it as a test oracle instead. `[FLOATS]`
 > should return empty. It does not. Stable since NT and not plausibly changeable,
 > but unverified on any build but Windows 11 26200 — and this is precisely the
 > silent-failure class the project exists to eliminate.
+
+## Re-measured 2026-08-16, building the sweep
+
+Every number here comes from the product's own code paths at build-order
+[step 16](../../plan/build-order.md#16-the-stray-sweep), on Windows 11 Pro 26200,
+and each is re-established by running the named test. `[MACHINE]` for the counts
+and timings; `[STABLE]` for the API behaviours.
+
+**The cross-process bypass reproduces exactly, against a window built to defeat
+it.** A probe process registers its own class, creates a message-only window
+named with a **GUID**, and answers `WM_GETTEXT` with an empty string from its own
+WndProc. Same-process, both `GetWindowTextW` and an explicit
+`SendMessageW(WM_GETTEXT)` come back **empty** — the probe reports both itself,
+so the suppression is evidence rather than an assumption. Cross-process,
+`GetWindowTextW` returns the GUID, and so does `InternalGetWindowText`. No
+browser, milliseconds, every build:
+`MessageWindowTests.ACrossProcessReadGetsTheRealNameFromAWindowThatSuppressesWmGetText`.
+`[STABLE]`
+
+**`EnumWindows` finds zero `Chrome_MessageWindow`s while the class-qualified walk
+finds dozens**, at the same instant in the same process — **673 top-level windows
+on this machine, 0 of that class, against 64 the walk finds.** This is the one
+that has to be a test: the obvious simplification does not throw, does not warn,
+and would make every sweep report a clean machine forever.
+`MessageWindowTests.EnumWindowsFindsNoMessageWindowsAtAllWhileTheWalkFindsThem`.
+`[STABLE]`
+
+**The exact-title canonicalisation table, re-measured rather than carried
+over** — same four rows as
+[the original](#detecting-stray-browsers), now asserted on every build against a
+window whose title the test chose:
+`MessageWindowTests.TheExactTitleProbeMatchesOnlyTheSpellingWindowsItselfMatches`.
+Backslashes hit, upper- and lower-cased drive letters hit, a trailing separator
+misses, forward slashes miss, and a `NULL` class finds nothing at all. `[FLOATS]`
+
+**A full sweep pass over this machine, end to end:** `[MACHINE]`
+
+| | Published AOT binary (`--sweep`) | Framework-dependent probe (Debug) |
+|---|---|---|
+| Elapsed, per pass | **24.9 / 26.2 / 26.5 / 26.7 / 28.4 / 28.6 ms** | 37.5 / 38.0 / 38.1 / 39.3 ms |
+| Pids from `EnumProcesses` | 666–668 | 662–665 |
+| Opened | 496–504 | 496–501 |
+| `Chrome_MessageWindow`s walked | 64 | 63–64 |
+| Of those, **titled** | 13 | 13 |
+| Walk restarts / truncations | 0 / 0 | 0 / 0 |
+
+That is the whole pass — process enumeration, the window walk, a title read per
+window, and the index self-clean — not just the process half. Re-establish with
+`BrowserAI.exe --sweep` under a scratch `BROWSERAI_ROOT` and read the process
+log, or with the probe's `stray-sweep` mode.
+
+**51 of the 64 message windows are nameless, and one of the 13 named ones is not
+a path.** It is `DeviceMonitorMessageWindow`, owned by a Chromium embedder, and
+the sweep's string guard refuses it before any filesystem call — **a live example
+of the untrusted-title hazard, on this machine, today**, rather than a
+hypothetical. Re-establish by reading `rejectedTitles` out of the probe's
+`stray-sweep` report. `[MACHINE]`
+
+**A real headless Chromium publishes its `userDataDir` and is attributed in
+about half a second.** `chrome.exe --headless=new --user-data-dir=<profile>
+about:blank` out of the provisioned tree, found by image path and tied to the
+profile by its message window: **543 ms and 547 ms**, two runs, from
+`CreateProcessW` returning to the title matching.
+`StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`.
+`[MACHINE]`
+
+> ⚠️ **`--no-startup-window` is the wrong way to keep it alive, and the failure
+> is a timing one.** With no window and nothing to do, a headless Chromium exits
+> on its own within a second or so; a test that then waits for its window waits
+> out the whole deadline against a browser that has already gone. Observed
+> 2026-08-16 — passed alone, failed under a fully parallel suite. `about:blank`
+> keeps it running, and the test now fails loudly on an exited browser rather
+> than timing out.
+
+**The legacy `%LOCALAPPDATA%\ms-playwright` tree is not matched, and that is the
+property the whole design exists for.** Five `chrome-headless-shell.exe`
+processes have been running on this machine since 2026-08-15 08:43:58 — a
+leftover of the `npx`-based setup this project replaces, same vendor, same
+Chromium revision 1237. Detection against the two binaries BrowserAI provisioned
+returns **zero candidates** with all five alive. Re-establish with the probe's
+`stray-sweep` mode pointed at the real browsers root, or by
+`StraySweepTests.DetectionMatchesOnlyTheBinariesBrowserAiProvisionedAndMissesTheLegacyTree`,
+which additionally plants a process at the same *shape* of path so the check
+means something on a machine that has never had one. `[MACHINE]` for the tree;
+`[FLOATS]` for the match rule.
+
+## The logon sweep task
+
+Measured 2026-08-16 on Windows 11 Pro 26200, from a **medium-integrity,
+UAC-filtered administrator** token.
+
+> ⚠️ **Registering a scheduled task non-elevated fails on this machine, and
+> [step 16](../../plan/build-order.md#16-the-stray-sweep) said it had been
+> verified to work.** It has not. `schtasks /Create /XML` and the
+> `Schedule.Service` COM API both answer **`Access is denied` / `0x80070005`**,
+> in the task-library root and in a new `\BrowserAI\` folder alike. A **minimal**
+> task definition — one logon trigger, one `cmd.exe` action — fails identically,
+> so it is the machine's policy rather than anything about our XML. The
+> filesystem is not the gate: `Authenticated Users` do have Write on
+> `C:\Windows\System32\Tasks` and a plain file lands there; the Task Scheduler
+> service refuses the registration itself. `[MACHINE]`
+>
+> **Whether elevation fixes it is `[UNVERIFIED]`** — a UAC prompt cannot be
+> answered from a non-interactive session, so it was not tried. What this settles
+> is only that the *non-elevated* claim was false. The consequence belongs to
+> [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
+> which is where the task is registered, and it is carried in
+> [`TODO.md`](../../TODO.md) so it is a decision rather than an omission.
+
+**`LogonType` is valid only beside a `UserId`, never beside a `GroupId`.**
+Measured: with `<GroupId>S-1-5-32-545</GroupId>` and
+`<LogonType>InteractiveToken</LogonType>`, `schtasks /Create` refuses the file
+with *"The task XML contains an unexpected node"* and names the `LogonType` line.
+A group principal would still have run in the user's own interactive session —
+but only by implication, and *"run only when user is logged on"* is the setting
+whose absence makes a sweeper in session 0 report success forever, so it has to
+be stated rather than implied. The definition therefore names the installing
+user. `[STABLE]` for the schema; `[MACHINE]` for the error text.
 
 ## Enumeration works — and it moves the safety boundary
 

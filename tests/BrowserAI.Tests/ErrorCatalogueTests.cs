@@ -522,8 +522,67 @@ internal sealed class ErrorCatalogueTests
     }
 
     [Test]
+    [NotInParallel("stray-sweep")]
+    public async Task TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims()
+    {
+        using var scratch = ScratchDirectory.Create("catalogue-stray");
+        using var scope = new JobObjectScope();
+        using var capturing = new CapturingLoggerProvider();
+
+        // A real process running an image the sweep is told is ours, publishing
+        // no window at all -- which is the condition, and the only one: detection
+        // succeeded and attribution has nothing to say.
+        var ready = Path.Combine(scratch.Path, "held.json");
+        var process = scope.Launch(
+            PlantedProbe.ExecutablePath,
+            scratch.Path,
+            "session-hold-named",
+            $@"Global\BrowserAI-Test-{Guid.NewGuid():N}",
+            ready);
+
+        _ = await ProbeReport.ReadAsync(ready, TimeSpan.FromSeconds(60));
+        await PlantedProbe.WaitUntilDetectableAsync([PlantedProbe.ExecutablePath], process.Id);
+
+        var logger = capturing.CreateLogger("BrowserAI.Sweep");
+        var result = await RunSweepAsync(logger);
+
+        await Assert.That(result.Unattributable.Select(entry => entry.ProcessId)).Contains(process.Id);
+
+        Match(
+            capturing.Records.Single(record => record.Message.Contains("could not attribute", StringComparison.Ordinal)).Message,
+            nameof(SessionErrors.StrayCannotBeAttributed),
+            SessionErrors.StrayCannotBeAttributed([.. result.Unattributable]));
+
+        // Reported, never killed.
+        await Assert.That(result.Terminated).IsEmpty();
+        await Assert.That(ProcessIdentity.IsAlive(process.Id, ProcessIdentity.CreationTimeOf(process.Id))).IsTrue();
+    }
+
+    /// <summary>
+    /// Runs a pass, asking again while some other process on the machine happens
+    /// to be sweeping — a skipped sweep is not a missed one.
+    /// </summary>
+    private static async Task<StraySweepResult> RunSweepAsync(Microsoft.Extensions.Logging.ILogger logger)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+
+        while (true)
+        {
+            var result = await Task.Run(() => new StraySweep([PlantedProbe.ExecutablePath], index: null, logger).Run());
+
+            if (result.Outcome is not StraySweepOutcome.Skipped || DateTime.UtcNow > deadline)
+            {
+                return result;
+            }
+
+            await Task.Delay(25);
+        }
+    }
+
+    [Test]
     [DependsOn(nameof(TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading))]
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
+    [DependsOn(nameof(TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims))]
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
@@ -556,7 +615,7 @@ internal sealed class ErrorCatalogueTests
 
         // And the count, so a row deleted rather than triggered does not make
         // this pass by shrinking the question.
-        await Assert.That(rows.Count).IsEqualTo(22);
+        await Assert.That(rows.Count).IsEqualTo(23);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

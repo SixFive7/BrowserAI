@@ -190,9 +190,9 @@ internal sealed class FakeInstaller : IInstallerRun
                 {
                     // Last, exactly as upstream writes it: the whole reason an
                     // interrupted install self-heals.
-                    await File.WriteAllTextAsync(
-                        Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker),
-                        string.Empty).ConfigureAwait(false);
+                    // Shared, because a test may be writing the same empty file
+                    // at the same instant -- see InstallationMarker's remarks.
+                    InstallationMarker.Write(directory);
                 }
 
                 installer.Output = said;

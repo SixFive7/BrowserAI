@@ -41,7 +41,10 @@ internal static class Program
             "session-race" when args.Length is 5 => SessionProbe.Race(args[1], args[2], args[3], args[4]),
             "session-hold" when args.Length is 4 => SessionProbe.Hold(args[1], args[2], args[3]),
             "session-hold-gate" when args.Length is 3 => SessionProbe.HoldGate(args[1], args[2]),
+            "session-hold-named" when args.Length is 3 => SessionProbe.HoldNamed(args[1], args[2]),
+            "window" when args.Length is 5 => WindowProbe.Publish(args[1], args[2], args[3], args[4]),
             "session-sweep" when args.Length is 5 => SessionProbe.Sweep(args[1], args[2], args[3], args[4]),
+            "stray-sweep" when args.Length is 3 => SessionProbe.StraySweepPass(args[1], args[2]),
             "session-rewrite" when args.Length is 5 =>
                 SessionProbe.Rewrite(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
             "session-index" when args.Length is 6 =>

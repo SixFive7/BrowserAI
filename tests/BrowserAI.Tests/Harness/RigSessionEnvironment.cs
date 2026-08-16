@@ -98,9 +98,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             // before this one assumed: the browser is there. Written the way
             // upstream writes it -- the directory, then the marker last -- so a
             // product check that looked at the wrong one would still fail here.
-            var chromium = Path.Combine(paths.BrowsersDirectory, ChromiumDirectoryName);
-            _ = Directory.CreateDirectory(chromium);
-            File.WriteAllText(Path.Combine(chromium, BrowsersManifest.InstallationCompleteMarker), string.Empty);
+            InstallationMarker.Write(Path.Combine(paths.BrowsersDirectory, ChromiumDirectoryName));
         }
 
         Environment = new SessionEnvironment

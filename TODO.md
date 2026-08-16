@@ -16,6 +16,42 @@ and version it was true at.
 
 ## At v1 launch
 
+- [ ] **Decide how the logon sweep task actually gets registered — it cannot be
+      registered non-elevated on this machine.** Measured 2026-08-16 at
+      [step 16](plan/build-order.md#16-the-stray-sweep) from a medium-integrity,
+      UAC-filtered administrator token: `schtasks /Create /XML` **and** the
+      `Schedule.Service` COM API both answer `Access is denied` / `0x80070005`,
+      in the task-library root and in a new `\BrowserAI\` folder alike, and a
+      **minimal** definition — one logon trigger, one `cmd.exe` action — fails
+      identically. It is machine policy rather than anything about our XML
+      ([kb](kb/windows/detection.md#the-logon-sweep-task),
+      [row 80](kb/README.md#re-verification-index)). Whether elevation fixes it
+      is **unverified**: a UAC prompt cannot be answered from a non-interactive
+      session.
+
+      Step 16 built `LogonSweepTask` and asserts its definition; nothing
+      registers it. [Step 19](plan/build-order.md#19-velopack-package-update-roll-back)
+      is where it would be, and it has to choose: register during an elevated
+      install and accept that a per-user install has no task; fall back to
+      `HKCU\…\Run`, which the user can always write but which gives one pass at
+      logon and no ten-minute re-check; or drop the second trigger and rely on
+      BrowserAI's own startup sweep, which is the primary one anyway. **The
+      startup sweep already covers the case that matters** — a stray matters when
+      something is about to contend for a lock — so the honest question is what
+      the task buys for the week in which nobody starts a client.
+
+- [ ] **Decide whether `BrowserAI.exe --sweep` flashes a console window.**
+      BrowserAI is a console subsystem binary, and a Task Scheduler action
+      running one under a logged-on user normally shows a window for the life of
+      the process. The pass is ~26 ms, so it would be a flash rather than a
+      window — but a flash every logon, and again ten minutes later, is the kind
+      of thing a developer files a bug about. `<Hidden>` in the task definition
+      hides the *task* in the UI and not the window. **Unmeasured**: it cannot be
+      established until the task can actually be registered, which is the item
+      above. If it turns out to matter, the answers are a `WINDOWS` subsystem
+      stub or launching through `conhost`-less means — both
+      [step 19](plan/build-order.md#19-velopack-package-update-roll-back)'s.
+
 - [ ] **Widen the invisible-source check beyond `*.cs`, or decide not to.**
       Step 14 was bitten by the template's unanchored `artifacts/` rule matching
       `src/BrowserAI/Artifacts/` on case-insensitive Windows: five product

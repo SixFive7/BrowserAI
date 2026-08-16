@@ -263,6 +263,14 @@ This is path matching against a binary we installed, not image-name matching, an
 
 **A candidate becomes a stray only when both guards agree:** its image path is our binary, **and** its attributed directory contains our `lock.json` whose lock we can acquire ourselves.
 
+> ⚠️ **Three things this section got wrong, all found by building it at [step 16](build-order.md#16-the-stray-sweep) and all corrected here.**
+>
+> **The attributed directory is the *profile*, and the `lock.json` is one level up.** A browser publishes its `userDataDir`, and BrowserAI passes `<session>\profile` — so the title names a subfolder of the session and the file that proves ownership is its parent. Attribution climbs exactly one level, and only when the leaf is the profile folder name. It cannot reach a personal Chrome profile that way either: that directory's parent holds no `lock.json`.
+>
+> **"Whose lock we can acquire ourselves" must not mean `TryAcquire`.** Taking a directory that way rewrites `lock.json` with the sweeper as holder — overwriting a crashed session's own record, its purpose and its history with a janitor's, which is the one piece of evidence about what the stray was. The sweep takes the per-directory gate, opens `lock.json` for write, releases the gate and holds the *handle* across the kill, writing nothing. The gate is not held across a `TerminateProcess`; the handle is what keeps the directory ours, because a concurrent `TryAcquire` opens the same file for write and is refused by the kernel.
+>
+> **Most unattributable candidates are not strays**, and the report has to say so or it reads as an alarm. A Chromium tree publishes its profile from **one** process — the one that owns the singleton window — so every renderer, GPU and utility process of a browser that is perfectly well accounted for lands in the same bucket. What is worth a human's attention is a pid that is still listed on the next pass with no session open, and that is what [the catalogue row](H-model-surface.md#h4-the-error-catalogue) says.
+
 **Two enumeration-specific hazards, both measured:**
 
 - **The title is an untrusted string that we are about to use as a filesystem path.** A `\\host\share` title makes `File.Exists` block for **21 seconds** (measured: 21,037 ms; a dead hostname 22,225 ms). **Reject anything that is not a rooted local drive-letter path before touching the filesystem** — this is the sweep's single largest availability risk and it is closed by a string check.
