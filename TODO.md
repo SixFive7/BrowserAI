@@ -114,15 +114,32 @@ and version it was true at.
 
 - [ ] **Find out why `dotnet test` runs zero tests, or record that it stays
       that way.** Measured 2026-08-16 at
-      [step 9](plan/build-order.md#9-lossless-passthrough), **five ways**, and it
-      is now stable where it was previously transient: `dotnet test` reports
-      *"Zero tests ran"*, exit 5, from both shells, against the solution and the
-      project, at the working tree, at `c9d30d4`, **and in a fresh worktree of
-      `b8a6553`** — the commit that returned 30 passed hours earlier. The same
-      assembly run as `BrowserAI.Tests.exe` runs all 106. Versions are identical
-      either side (SDK 10.0.302, .NET 10.0.11, TUnit 1.65.0, MTP 2.3.3 from the
-      committed lock), so **nothing in this repository and no package float
-      explains it**; the machine moved. MTP's own diagnostic shows the host
+      [step 9](plan/build-order.md#9-lossless-passthrough), **five ways**:
+      `dotnet test` reports *"Zero tests ran"*, exit 5, against the solution and
+      the project, at the working tree, at `c9d30d4`, **and in a fresh worktree
+      of `b8a6553`** — the commit that returned 30 passed hours earlier. The
+      same assembly run as `BrowserAI.Tests.exe` runs all 106. Versions are
+      identical either side (SDK 10.0.302, .NET 10.0.11, TUnit 1.65.0, MTP 2.3.3
+      from the committed lock), so **nothing in this repository and no package
+      float explains it**.
+
+      > ⚠️ **Corrected 2026-08-16 (previously: "it is now stable where it was
+      > previously transient … the machine moved", and "from both shells").**
+      > **The discriminator is which shell issues the command, not time and not
+      > the machine.** Minutes after that was written, the same command was run
+      > three times from the **root session's** shell against the same commit:
+      > 106 passed / exit 0, `Discovered 106 tests`, 106 passed / exit 0 — and
+      > again at 215 and 239 tests since. Every zero-test observation on record
+      > was made inside a **sub-agent's** shell, by two different agents hours
+      > apart, including both times a clean worktree of `b8a6553` was cited as
+      > proof. Both sets of measurements are real; the generalisation was not.
+      > This correction reached
+      > [the kb entry](kb/windows/processes.md#interop-and-the-toolchain) in
+      > `c299cab` and **missed this item**, which is its own small instance of
+      > the same lesson: a correction that does not sweep every place the claim
+      > was written is a correction that half happened.
+
+      MTP's own diagnostic shows the host
       launched with `--server dotnettestcli --dotnet-test-pipe …` and the log
       ending immediately after startup configuration, which points at the
       `dotnet test` ↔ MTP handshake rather than at discovery
