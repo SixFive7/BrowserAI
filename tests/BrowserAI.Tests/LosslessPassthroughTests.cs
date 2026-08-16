@@ -230,7 +230,7 @@ internal sealed class LosslessPassthroughTests
                 RawErrorData = """{"reason":"programmed","nested":{"depth":2}}""",
             });
 
-        var response = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
+        var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         await Assert.That(response.Error).IsNotNull();
 
@@ -266,7 +266,7 @@ internal sealed class LosslessPassthroughTests
                 HoldUntil = Task.Delay(Timeout.Infinite, release.Token),
             });
 
-        var id = await rig.Client.BeginAsync("tools/call", Call("browser_navigate"));
+        var id = await rig.Client.BeginAsync("tools/call", Call(rig, "browser_navigate"));
 
         await WaitUntilAsync(() => rig.Child.MethodsReceived.Contains("tools/call"));
 
@@ -313,7 +313,7 @@ internal sealed class LosslessPassthroughTests
                 ProgressUpdates = 2,
             });
 
-        var parameters = Call("browser_navigate");
+        var parameters = Call(rig, "browser_navigate");
         parameters["_meta"] = new JsonObject { ["progressToken"] = Token };
 
         _ = await rig.Client.RoundTripAsync("tools/call", parameters);
@@ -342,7 +342,7 @@ internal sealed class LosslessPassthroughTests
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour { DieWithoutAnswering = true });
 
-        var response = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
+        var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         // ⚠️ This is the assertion that changed at step 9, and the change is the
         // point. Measured at step 8: the same call produced a JSON-RPC SUCCESS
@@ -504,11 +504,25 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(rig.Logs.Logged("answered -32700")).IsFalse();
     }
 
-    private static JsonObject Call(string tool) => new()
+    /// <summary>
+    /// One <c>tools/call</c>, naming the rig's own session.
+    /// </summary>
+    /// <remarks>
+    /// <c>session</c> is mandatory since step 13: a call without one is refused
+    /// by BrowserAI and never reaches a child, so every assertion in this file
+    /// about what the child received would be an assertion about a refusal.
+    /// </remarks>
+    private static JsonObject Call(McpTestHarness rig, string tool)
     {
-        ["name"] = tool,
-        ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" },
-    };
+        var arguments = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" };
+
+        if (rig.Session is { } session)
+        {
+            arguments["session"] = session;
+        }
+
+        return new JsonObject { ["name"] = tool, ["arguments"] = arguments };
+    }
 
     private static string Text(byte[] span) => Encoding.UTF8.GetString(span);
 
@@ -530,7 +544,7 @@ internal sealed class LosslessPassthroughTests
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = rawResult });
 
-        var response = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
+        var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         if (response.Error is { } error)
         {

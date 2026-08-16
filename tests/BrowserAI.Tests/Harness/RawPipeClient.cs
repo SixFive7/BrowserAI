@@ -151,6 +151,72 @@ internal sealed class RawPipeClient : IAsyncDisposable
         return id;
     }
 
+    /// <summary>
+    /// Puts every request on the wire before reading any answer, and returns the
+    /// answers <b>in the order they arrived</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the only way to get more than one request outstanding at the
+    /// server from a single client.</b> <see cref="AwaitAsync"/> discards frames
+    /// whose id it is not waiting for, so two overlapping
+    /// <see cref="SendAsync"/> calls would each throw the other's answer away;
+    /// the demultiplexing has to happen in one place, which is here.
+    /// </para>
+    /// <para>
+    /// What it establishes is exactly one thing, stated plainly because a
+    /// concurrency test that over-claims is worse than none: every request in the
+    /// list was written before the first answer was read, so all of them were
+    /// outstanding at the server together. Whether the server then fans them out
+    /// is the server's business, and the <b>arrival order</b> this returns is
+    /// what lets a caller say so rather than assume it.
+    /// </para>
+    /// </remarks>
+    /// <param name="requests">The requests, in the order they go out.</param>
+    /// <returns>The answers, in arrival order, each with the id it answers.</returns>
+    public async Task<IReadOnlyList<(int Id, JsonObject Envelope)>> RoundTripManyAsync(
+        IReadOnlyList<(string Method, JsonNode? Parameters)> requests)
+    {
+        ArgumentNullException.ThrowIfNull(requests);
+
+        var outstanding = new HashSet<int>();
+
+        foreach (var (method, parameters) in requests)
+        {
+            _ = outstanding.Add(await BeginAsync(method, parameters));
+        }
+
+        var answers = new List<(int, JsonObject)>(requests.Count);
+
+        while (outstanding.Count is not 0)
+        {
+            var frame = await _channel.ReadFrameAsync(_deadline.Token)
+                ?? throw new InvalidOperationException(
+                    $"The peer closed its end with {outstanding.Count} of {requests.Count} answers still owed.");
+
+            if (frame.Length is 0)
+            {
+                continue;
+            }
+
+            var envelope = JsonNode.Parse(FrameChannel.TextOf(frame))?.AsObject();
+
+            if (envelope?["id"] is not { } received
+                || (int?)received is not { } id
+                || !outstanding.Remove(id))
+            {
+                // A notification, or an answer to something else. Skipped rather
+                // than treated as a failure: the relay puts progress frames on
+                // this pipe too.
+                continue;
+            }
+
+            answers.Add((id, envelope));
+        }
+
+        return answers;
+    }
+
     /// <summary>Waits for the answer to a request <see cref="BeginAsync"/> sent.</summary>
     /// <param name="id">The id that call returned.</param>
     /// <param name="method">The method, used only in failure messages.</param>

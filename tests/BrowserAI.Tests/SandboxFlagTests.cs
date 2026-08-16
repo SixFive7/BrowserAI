@@ -66,11 +66,23 @@ internal sealed class SandboxFlagTests
         // simply stopped adding --no-sandbox, so the positive half is asserted
         // too: our flag really is on the child's command line, read back from
         // the running node process rather than from the argument list we built.
-        var child = run.Processes.SingleOrDefault(process =>
-            process.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true)
-            ?? throw new InvalidOperationException("No node child in the job to read a command line from.");
+        // EVERY node child, and there are now two of them -- the run's own,
+        // which answers tools/list before any session exists, and the session's.
+        // Step 13 made `session` mandatory, so the browser above belongs to a
+        // session; the previous `SingleOrDefault` here threw the moment a second
+        // child appeared, which is the right failure and the wrong assertion.
+        var children = run.Processes
+            .Where(process => process.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true)
+            .ToList();
 
-        await Assert.That(child.CommandLine).Contains(ChildLaunch.SandboxFlag);
+        await Assert.That(children.Count).IsGreaterThanOrEqualTo(2);
+
+        var unflagged = children
+            .Where(process => process.CommandLine?.Contains(ChildLaunch.SandboxFlag, StringComparison.Ordinal) is not true)
+            .Select(process => $"{process.ProcessId} {process.CommandLine}")
+            .ToList();
+
+        await Assert.That(string.Join(", ", unflagged)).IsEmpty();
 
         // And it is there instead of in the config, not as well as: the key
         // reads fine, is discarded, and would make this look configured.

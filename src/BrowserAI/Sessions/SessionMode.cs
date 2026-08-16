@@ -32,14 +32,15 @@ internal enum SessionMode
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>One table, because four channels have to agree.</b>
-/// [§C](../../plan/C-sessions.md) requires the mode list to reach the model in
-/// the server <c>instructions</c>, in <c>init</c>'s description, in
-/// <c>resume</c>'s replayed record and in the refusal text — and a fourth mode
-/// added in one place and missed in the other three is a mode nobody picks
-/// correctly, failing silently. The instructions string is
-/// [step 13](../../plan/build-order.md#13-the-one-table-enforcement-and-the-model-facing-surface)'s;
-/// the other three read this table today.
+/// <b>One table, because six consumers have to agree.</b> The server
+/// <c>instructions</c>, <c>init</c>'s description, <c>resume</c>'s result, the
+/// refusal text, the <c>(tool, mode)</c> enforcement decision and the tests all
+/// render from here — and a fourth mode added in one place and missed in another
+/// is a mode nobody picks correctly, failing silently.
+/// <c>ModelSurfaceTests</c> asserts each consumer renders every row of this
+/// table, and <see cref="SessionToolPolicy"/> refuses everything for a mode it
+/// has no policy row for, so a mode added here alone leaves the build red rather
+/// than quietly permitting whatever the derivation happened to produce.
 /// </para>
 /// <para>
 /// <b>Rows 3 and 4 of §C's eight combinations are deliberately absent.</b>
@@ -79,12 +80,34 @@ internal static class SessionModes
     public static string Names { get; } = string.Join(", ", All.Select(mode => mode.Name));
 
     /// <summary>
-    /// The whole table as one paragraph per mode, for <c>init</c>'s description
-    /// and for the refusal a bad <c>mode</c> argument produces.
+    /// The whole table as one clause per mode — name, what it grants, and what it
+    /// refuses — for <c>init</c>'s description and for the refusal a bad
+    /// <c>mode</c> argument produces.
     /// </summary>
+    /// <remarks>
+    /// <b>The "refuses" half is read out of <see cref="SessionToolPolicy"/>
+    /// rather than written beside the grant.</b> A hand-written refusal clause is
+    /// the fourth copy this file exists to prevent: it would still read correctly
+    /// on the day a tool changed class, and nothing would say otherwise.
+    /// </remarks>
     public static string Table { get; } = string.Join(
         " ",
-        All.Select(mode => $"'{mode.Name}' — {mode.Grants}."));
+        All.Select(mode => $"'{mode.Name}' — {mode.Grants}; {SessionToolPolicy.Summary(mode.Mode)}."));
+
+    /// <summary>
+    /// The mode table as the server <c>instructions</c> renders it: one line per
+    /// mode, and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="Table"/> because the two channels have different
+    /// budgets — <c>instructions</c> is capped at 2 KB and is read by every model
+    /// on every connection, while a tool description is read once by a model that
+    /// has already decided to create a session. Both render every row of
+    /// <see cref="All"/>, which is what the test checks.
+    /// </remarks>
+    public static string Lines { get; } = string.Join(
+        "\n",
+        All.Select(mode => $"· {mode.Name} — {mode.Grants}; {SessionToolPolicy.Summary(mode.Mode)}."));
 
     private static FrozenDictionary<string, SessionModeDefinition> ByName { get; } =
         All.ToFrozenDictionary(mode => mode.Name, StringComparer.OrdinalIgnoreCase);

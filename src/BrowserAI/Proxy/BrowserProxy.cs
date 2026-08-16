@@ -192,6 +192,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
         {
             ServerInfo = new Implementation { Name = "BrowserAI", Version = ChildConnection.Version },
 
+            // The only channel that reaches a model before it calls anything,
+            // and the only one that can pre-empt the first mistake after a
+            // restart: a browser tool called with no session. Rendered from the
+            // one mode table, capped at 2 KB because the client truncates it
+            // there in silence.
+            ServerInstructions = Proxy.ServerInstructions.Text,
+
             // Upward: null means every revision the SDK implements. The caller
             // is a client this project does not control and does not get to hold
             // back; the child's ceiling is the child's business and stops at the
@@ -331,55 +338,103 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        var tool = name ?? "<none>";
         var session = (arguments?[SessionToolSurface.SessionParameter] as JsonValue)?.GetValue<string>();
-        var target = _surface;
-        var forwarded = request.Params;
 
-        if (session is not null)
+        // Mandatory, with no fall-through to the run's own child. Before this
+        // step a call naming no session was answered by the surface child, which
+        // is a session nobody chose the mode of -- so every enforcement decision
+        // below could be sidestepped by omitting an argument.
+        if (string.IsNullOrWhiteSpace(session))
         {
-            if (_sessions.Find(session) is not { } live)
-            {
-                ProxyLog.UnknownSession(_logger, name ?? "<none>", session);
-
-                await caller.SendMessageAsync(
-                    new JsonRpcResponse
-                    {
-                        Id = request.Id,
-                        Result = TextResult(
-                            $"'{session}' is not a session this BrowserAI is driving, so '{name}' was not run and nothing was changed. "
-                            + $"Call {SessionToolSurface.Resume} with directory='{session}' to open it — a session is resumable forever, so one that exists can always be reopened — or {SessionToolSurface.Init} to create it, or {SessionToolSurface.List} to see what is under a path.",
-                            isError: true),
-                    },
-                    cancellationToken).ConfigureAwait(false);
-
-                return;
-            }
-
-            target = live.Child;
-
-            // The child has never heard of `session`; BrowserAI added it. Removed
-            // from a CLONE rather than from the caller's own node, because the
-            // request object is the SDK's and may still be read after this.
-            var clone = request.Params?.DeepClone() as JsonObject;
-
-            if (clone?["arguments"] is JsonObject cloned)
-            {
-                _ = cloned.Remove(SessionToolSurface.SessionParameter);
-            }
-
-            forwarded = clone;
+            ProxyLog.SessionMissing(_logger, tool);
+            await RefuseAsync(caller, request.Id, SessionErrors.SessionMissing(tool), cancellationToken).ConfigureAwait(false);
+            return;
         }
 
-        var answer = await target.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
+        if (_sessions.Find(session) is not { } live)
+        {
+            ProxyLog.UnknownSession(_logger, tool, session);
+            await RefuseAsync(caller, request.Id, SessionManager.ExplainUnknownSession(tool, session), cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // THE enforcement point. The mode is read off the session the caller's
+        // own argument resolved to -- an immutable field of that record -- so
+        // there is no cell another thread could change between the lookup and
+        // the decision.
+        var decision = SessionToolPolicy.Decide(tool, live.Mode);
+
+        if (!decision.IsAllowed)
+        {
+            ProxyLog.ToolRefused(_logger, tool, live.Mode.Name, live.Location.FullPath);
+            await RefuseAsync(caller, request.Id, decision.Refusal!, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // The child has never heard of `session`; BrowserAI added it. Removed
+        // from a CLONE rather than from the caller's own node, because the
+        // request object is the SDK's and may still be read after this.
+        var forwarded = request.Params?.DeepClone() as JsonObject;
+
+        if (forwarded?["arguments"] is JsonObject cloned)
+        {
+            _ = cloned.Remove(SessionToolSurface.SessionParameter);
+        }
+
+        var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
 
         if (answer.Response is { } response)
         {
+            if (GuardAnswer(tool, response) is { } withheld)
+            {
+                ProxyLog.AnswerWithheld(_logger, tool, live.Location.FullPath);
+                await RefuseAsync(caller, request.Id, withheld, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, cancellationToken).ConfigureAwait(false);
             return;
         }
 
         await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Checks a child's answer before it is forwarded, for the one class of tool
+    /// whose <i>result</i> can disclose more than the call did.
+    /// </summary>
+    /// <remarks>
+    /// <b>On every ordinary call this returns <see langword="null"/> and the
+    /// child's own bytes go back untouched</b>, which is what keeps the
+    /// passthrough byte-identical. It exists because
+    /// <c>browser_get_config</c>'s handler is
+    /// <c>JSON.stringify(context.config, null, 2)</c> with no filtering, and
+    /// <c>secrets</c> is a real config key.
+    /// </remarks>
+    private static string? GuardAnswer(string tool, JsonRpcResponse response)
+    {
+        if (!SessionToolPolicy.Classification.TryGetValue(tool, out var toolClass)
+            || toolClass is not ToolClass.Configuration)
+        {
+            return null;
+        }
+
+        var text = string.Concat(
+            (response.Result?["content"] as JsonArray ?? [])
+                .Select(block => (block?["text"] as JsonValue)?.GetValue<string>() ?? string.Empty));
+
+        return SessionToolPolicy.Guard(text);
+    }
+
+    private static async Task RefuseAsync(
+        McpServer caller,
+        RequestId callerId,
+        string text,
+        CancellationToken cancellationToken) =>
+        await caller.SendMessageAsync(
+            new JsonRpcResponse { Id = callerId, Result = TextResult(text, isError: true) },
+            cancellationToken).ConfigureAwait(false);
 
     private async Task AnswerFailureAsync(
         McpServer caller,
@@ -600,4 +655,42 @@ internal static partial class ProxyLog
         Level = LogLevel.Information,
         Message = "'{Tool}' named session '{Session}', which is not open in this process; the caller was told to resume it.")]
     public static partial void UnknownSession(ILogger logger, string tool, string session);
+
+    /// <summary>A tool call arrived with no session at all.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    [LoggerMessage(
+        EventId = 8,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' named no session; it was refused rather than sent to this run's own child.")]
+    public static partial void SessionMissing(ILogger logger, string tool);
+
+    /// <summary>
+    /// A call was refused by the <c>(tool, mode)</c> decision.
+    /// </summary>
+    /// <remarks>
+    /// Logged at Information rather than Debug: this is the record that the
+    /// security boundary the charter traded away for one process is actually
+    /// being enforced, and an operator asking "did anything try to read cookies
+    /// out of an interactive session" has nowhere else to look.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="mode">The mode of the session named.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 9,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' was refused on the '{Mode}' session at {Session} by the session-type policy.")]
+    public static partial void ToolRefused(ILogger logger, string tool, string mode, string session);
+
+    /// <summary>A child's answer was withheld because forwarding it would disclose something.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 10,
+        Level = LogLevel.Warning,
+        Message = "'{Tool}' answered for the session at {Session}, and the answer was withheld rather than forwarded.")]
+    public static partial void AnswerWithheld(ILogger logger, string tool, string session);
 }

@@ -73,6 +73,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
     private readonly McpServer? _server;
     private readonly DirectStdioServerTransport? _serverTransport;
     private readonly Task _serverTask;
+    private readonly RigSessionEnvironment? _sessions;
 
     private int _disposed;
     private bool _serverTaskDoneBeforeDispose;
@@ -87,9 +88,11 @@ internal sealed class McpTestHarness : IAsyncDisposable
         _server = parts.Server;
         _serverTransport = parts.ServerTransport;
         _serverTask = parts.ServerTask;
+        _sessions = parts.Sessions;
 
         Logs = parts.Logs;
-        Child = parts.Child;
+        SurfaceChild = parts.Child;
+        Session = parts.Session;
         Client = parts.Client;
 
         if (parts.CallerHop is not null)
@@ -103,8 +106,30 @@ internal sealed class McpTestHarness : IAsyncDisposable
     /// <summary>The hand-written client on the caller's end.</summary>
     public RawPipeClient Client { get; }
 
-    /// <summary>The double standing in for <c>@playwright/mcp</c>.</summary>
-    public FakePlaywrightChild Child { get; }
+    /// <summary>
+    /// The double a <c>tools/call</c> reaches: the default session's child where
+    /// there is one, and otherwise the run's own.
+    /// </summary>
+    /// <remarks>
+    /// <b>These stopped being the same object at step 13.</b> Once <c>session</c>
+    /// became mandatory, a <c>tools/call</c> goes to the child of the session it
+    /// names and never to the run's own — so a test asserting on what the child
+    /// received has to look at the session's. <c>tools/list</c> still comes from
+    /// <see cref="SurfaceChild"/>, because the tool set may not vary per
+    /// connection and one static list has to be answerable before any session
+    /// exists.
+    /// </remarks>
+    public FakePlaywrightChild Child =>
+        _sessions?.SessionChildren is [var first, ..] ? first : SurfaceChild;
+
+    /// <summary>The double that answers <c>tools/list</c> for the whole run.</summary>
+    public FakePlaywrightChild SurfaceChild { get; }
+
+    /// <summary>
+    /// The default session this rig opened, or <see langword="null"/> if it could
+    /// not open one.
+    /// </summary>
+    public string? Session { get; }
 
     /// <summary>Everything the product logged during this test.</summary>
     public CapturingLoggerProvider Logs { get; }
@@ -121,9 +146,16 @@ internal sealed class McpTestHarness : IAsyncDisposable
     /// The full topology: test client → BrowserAI → fake child, handshaken on
     /// both hops.
     /// </summary>
-    /// <param name="configure">Programs the double before it is started.</param>
+    /// <param name="configure">Programs the surface double before it is started.</param>
+    /// <param name="sessions">
+    /// The environment sessions are opened in. Supplied by a test that means to
+    /// open one; the default can open none, which keeps every other test in this
+    /// layer touching nothing on disk.
+    /// </param>
     /// <returns>The rig, ready for a request.</returns>
-    public static async Task<McpTestHarness> ThroughTheProxyAsync(Action<FakePlaywrightChild>? configure = null)
+    public static async Task<McpTestHarness> ThroughTheProxyAsync(
+        Action<FakePlaywrightChild>? configure = null,
+        RigSessionEnvironment? sessions = null)
     {
         var logs = new CapturingLoggerProvider();
         var loggerFactory = NewLoggerFactory(logs);
@@ -137,13 +169,14 @@ internal sealed class McpTestHarness : IAsyncDisposable
         BrowserProxy? proxy = null;
         DirectStdioServerTransport? serverTransport = null;
         McpServer? server = null;
+        var sessionEnvironment = sessions ?? RigSessionEnvironment.Create(configure);
 
         try
         {
             proxy = await BrowserProxy.ConnectAsync(
                 new PipeClientTransport(childHop, loggerFactory),
                 loggerFactory,
-                RigSessionEnvironment.Create());
+                sessionEnvironment.Environment);
 
             var callerHop = new PipeDuplex("caller hop (test client ↔ BrowserAI)");
 
@@ -158,6 +191,15 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
             _ = await client.InitializeAsync(TestDefaults.CallerProtocolVersion);
 
+            // One session, opened up front, because `session` is mandatory and a
+            // layer that could not open one could no longer exercise a single
+            // tools/call. It costs a directory, a lock and a log under the
+            // suite's scratch root -- so this layer is no longer "nothing on
+            // disk", and saying so is cheaper than a reader discovering it.
+            var session = sessionEnvironment.CanOpenSessions
+                ? await OpenDefaultSessionAsync(client, sessionEnvironment)
+                : null;
+
             return new McpTestHarness(new Parts
             {
                 Stopping = stopping,
@@ -171,6 +213,8 @@ internal sealed class McpTestHarness : IAsyncDisposable
                 Server = server,
                 ServerTransport = serverTransport,
                 ServerTask = serverTask,
+                Sessions = sessionEnvironment,
+                Session = session,
             });
         }
         catch
@@ -191,6 +235,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
             }
 
             await child.DisposeAsync();
+            await sessionEnvironment.DisposeAsync();
             stopping.Dispose();
             loggerFactory.Dispose();
             throw;
@@ -310,6 +355,14 @@ internal sealed class McpTestHarness : IAsyncDisposable
             await _proxy.DisposeAsync();
         }
 
+        // After the proxy, because disposing it is what tears every session
+        // down -- lock, child, log -- and this closes the hops those children
+        // sat on.
+        if (_sessions is not null)
+        {
+            await _sessions.DisposeAsync();
+        }
+
         await _childHop.CompleteWritersAsync();
         await Child.DisposeAsync();
         await Client.DisposeAsync();
@@ -338,6 +391,11 @@ internal sealed class McpTestHarness : IAsyncDisposable
         var faults = new List<string>();
 
         faults.AddRange(_hops.Select(hop => hop.WhatIsStillLive()).OfType<string>());
+
+        if (_sessions is not null)
+        {
+            faults.AddRange(_sessions.WhatIsStillLive());
+        }
 
         if (!_serverTaskDoneBeforeDispose)
         {
@@ -384,5 +442,40 @@ internal sealed class McpTestHarness : IAsyncDisposable
         public McpServer? Server { get; init; }
 
         public DirectStdioServerTransport? ServerTransport { get; init; }
+
+        public RigSessionEnvironment? Sessions { get; init; }
+
+        public string? Session { get; init; }
+    }
+
+    /// <summary>Opens the one session every tools/call in this layer runs against.</summary>
+    private static async Task<string> OpenDefaultSessionAsync(RawPipeClient client, RigSessionEnvironment sessions)
+    {
+        var directory = Path.Combine(sessions.Root, "rig-session");
+
+        var answer = await client.RoundTripAsync("tools/call", new System.Text.Json.Nodes.JsonObject
+        {
+            ["name"] = "browserai_init",
+            ["arguments"] = new System.Text.Json.Nodes.JsonObject
+            {
+                ["directory"] = directory,
+
+                // `persistent` so the policy permits every tool this layer
+                // calls: the passthrough assertions are about bytes, and a mode
+                // refusal would replace the child's answer with ours.
+                ["mode"] = "persistent",
+                ["purpose"] = "the in-process rig's own session",
+            },
+        });
+
+        if ((bool?)answer["isError"] is true)
+        {
+            throw new InvalidOperationException(
+                "The rig could not open its default session, so no tools/call in this layer can reach a child: "
+                + string.Concat((answer["content"]?.AsArray() ?? [])
+                    .Select(block => (string?)block?["text"] ?? string.Empty)));
+        }
+
+        return directory;
     }
 }

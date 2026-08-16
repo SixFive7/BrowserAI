@@ -1412,6 +1412,121 @@ because it exists to re-provision something that does not yet exist.
 
 ### 13. The one table, enforcement, and the model-facing surface
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Sessions/{SessionToolPolicy,
+> SessionErrors}.cs` (new) · `src/BrowserAI/Proxy/ServerInstructions.cs` (new) ·
+> `src/BrowserAI/Sessions/{SessionMode, SessionToolSurface, SessionManager,
+> SessionEnvironment, SessionLock}.cs` · `src/BrowserAI/Proxy/BrowserProxy.cs` ·
+> `tests/BrowserAI.Tests/{ModelSurfaceTests, SessionPolicyTests,
+> ErrorCatalogueTests}.cs` (new) ·
+> `tests/BrowserAI.Tests/Harness/{RigSessionEnvironment, McpTestHarness,
+> RawPipeClient, UpstreamSurface, SliceRun, SessionRun}.cs` ·
+> `tests/BrowserAI.Tests/{FakeChildHarnessTests, LosslessPassthroughTests,
+> SessionToolTests, SandboxFlagTests}.cs`. Every done-test below was run,
+> including all three plant-and-reverts. **186 tests green in 7.3–10.3 s over
+> three runs, `dotnet build` 0 warnings**, and the AOT publish is clean at
+> **11,197,440 bytes**.
+>
+> ⚠️ **The measured instructions string is 1,628 bytes, not ~1,050.** §H.3's
+> number was written before the mode lines carried what each mode *refuses* as
+> well as what it grants, and that is almost the whole difference. It fits: 420
+> bytes of the 2,048 remain. **Planting a fourth mode measured its cost at 223
+> bytes**, so §H.3's claim that the headroom "absorbs a fourth mode without a
+> rewrite" is true exactly once and a fifth would need the lines shortened.
+> [Corrected in §H.3](H-model-surface.md#h3-the-server-instructions-string) and
+> recorded with [row 70](../kb/README.md#re-verification-index).
+>
+> **The headroom is deliberately not a gate, and the plant is what settled
+> that.** A first version asserted at least 200 bytes free; the fourth-mode plant
+> then failed on the budget line rather than on the six-consumer line it was
+> aimed at, which is the wrong test failing. The hard 2 KB cap is the
+> requirement and already catches running out; the headroom is a measurement.
+>
+> **Deny-by-default runs in two dimensions, and both are the reason a fourth
+> mode goes red.** A tool the build does not classify is refused everywhere, and
+> a **mode with no policy row refuses every browser tool** — neither is derived.
+> Deriving the mode's permissions from the table's `headed`/`storage` flags was
+> the obvious design and is wrong for this step: it renders a fourth mode
+> automatically, so a mode could reach production without anyone deciding what it
+> may reach. Written down, the plant fails with the two consumers named in the
+> message. A separate test then cross-checks each row against the table's flags,
+> so the two expressions of the same fact cannot drift apart in silence either.
+>
+> **What each mode actually permits, measured rather than added up: 41 / 41 /
+> 58** of the 59 advertised. §C predicted 41 on `interactive` from the
+> `browser_run_code_unsafe` subtraction alone and did not account for
+> `browser_annotate`, so `headless` is 41 too — and **the two 41s are different
+> sets**, which is the property worth stating: `headless` permits arbitrary code
+> and refuses the annotation tool, `interactive` does the opposite.
+> [Corrected in §C](C-sessions.md#the-session-directory-is-the-identity) and
+> [in kb](../kb/playwright/tools-and-artifacts.md#what-browserais-own-modes-permit-after-its-own-filtering).
+>
+> **`browser_annotate` is `interactive`-only for a reason the plan states as a
+> rule.** §H says *"interactive only"*; the principle underneath it is that the
+> tool blocks until a human draws, and `interactive` is the one mode whose
+> defining promise is that a human is present. `persistent` is headed and implies
+> nothing about anyone watching, so it refuses it too.
+>
+> ⚠️ **`browser_get_config` is neither redacted nor refused, and the third option
+> is better than both.** Redacting would cost byte-identity on every call to buy
+> nothing on almost all of them — BrowserAI never writes `config.secrets` — and a
+> guard that can never fire is [a mechanism that only looks like
+> one](#2-stdout-is-owned-and-nothing-else-can-reach-it). Refusing the tool would
+> remove the only per-instance drift check there is. So the **answer** is checked
+> and withheld if it carries a `secrets` key, which is a real condition
+> (`--secrets <path>` on the CLI, `secrets?: Record<string, string>` in
+> `config.d.ts`) and is triggered by a test. Every ordinary call still forwards
+> the child's own bytes untouched.
+>
+> ⚠️ **`session` became mandatory, and that changed three tests that were not
+> about it.** A call naming none used to reach the run's own child — a session
+> nobody chose the mode of, and therefore a way round every decision above. Fixed,
+> `SliceRun` had to open a session before navigating, the in-process rig had to
+> open one before any `tools/call` could reach a child at all, and
+> `SandboxFlagTests`'s `SingleOrDefault` over node children **threw the moment a
+> second child existed** — the right failure and the wrong assertion. It now
+> requires the flag on *every* node child, which is what the rule always meant.
+>
+> **The in-process rig can now open sessions, and that is a real cost stated
+> rather than absorbed.** `SessionEnvironment` gained a `ConnectChild` seam beside
+> the existing `OpenSessionLog`, so a session's child is a double on a pipe; the
+> layer is consequently no longer "nothing on disk" — it writes a `lock.json`, a
+> session log and an index entry under the suite's scratch root. It buys the one
+> test that could not otherwise exist: **300 tool calls plus 50 session
+> open/destroys, all outstanding at the server together, across three modes**, in
+> ~100 ms. Against real children that is three node processes per assertion.
+>
+> **The concurrency result, stated as what it proves.** Every request was written
+> before any answer was read, and answers came back out of request order — which
+> is asserted, because a serialising server would make the rest evidence about one
+> call at a time. Every answer matched the mode of the handle *that call* named,
+> and no refusal named a neighbour's mode. There is no read-decide-act window to
+> race: the mode is read off the `LiveSession` the caller's own argument resolved
+> to, and no cell anywhere holds "the current mode".
+>
+> **The error catalogue is 17 rows, and three of §H.4's are deliberately
+> absent.** Provisioning-in-progress, the unattributable stray and the Firefox
+> profile dialog belong to steps 15, 16 and 17 and are not emitted by this build,
+> so writing them would be documentation. Row 2 **split into two**: with the
+> directory as the identity there is a difference between "not a session" and "a
+> session this process is not driving", and telling the second caller to `init`
+> earns them row 4 on the next turn — which breaks the catalogue's own
+> "recoverable in one turn" rule. Two rows were added that §H.4 has no number
+> for: the unclassified-tool refusal and the withheld config answer.
+>
+> **Every row is triggered, and the census runs the other way too.** Each arm
+> provokes a real condition and compares what came back against the catalogue;
+> then a reflection pass requires *every* public method of `SessionErrors` to have
+> been matched by one of those provocations. Two rows needed a seam to be
+> reachable at all — a full volume and a child that will not start — and both
+> inject only the input, never the refusal.
+>
+> **`purpose` is framed as recorded data at every replay site**, capped at 300
+> characters for a replay against 2,000 in the record, with control characters
+> flattened to spaces rather than dropped: dropping a newline joins two lines into
+> one word and changes what the text says. It was already sanitised on the way
+> into `lock.json`; what step 13 added is that a refusal quoting one says out loud
+> that it is quoting another agent rather than addressing the reader.
+
 **Consumes:** [§H](H-model-surface.md) ·
 [§C](C-sessions.md#three-modes-and-tracing-as-a-modifier)
 

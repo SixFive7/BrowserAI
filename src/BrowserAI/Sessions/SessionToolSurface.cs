@@ -63,6 +63,18 @@ internal static class SessionToolSurface
     /// <summary>The prefix that marks a tool as one of ours.</summary>
     public const string Prefix = "browserai_";
 
+    /// <summary>
+    /// What the client silently truncates a tool description at, and therefore
+    /// what every description in the surface must fit inside.
+    /// </summary>
+    /// <remarks>
+    /// The same cap as the server <c>instructions</c>, and the same silence: the
+    /// tail of a longer description does not exist and nothing reports it.
+    /// Measured in <b>bytes</b>, because these strings carry <c>—</c> and <c>'</c>
+    /// and a character count would under-report the ones that use them.
+    /// </remarks>
+    public const int DescriptionMaximumBytes = 2048;
+
     /// <summary>The five authored tools, in the order they are offered.</summary>
     public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose];
 
@@ -104,6 +116,7 @@ internal static class SessionToolSurface
                 if (tool is JsonObject definition)
                 {
                     InjectSession(definition);
+                    AppendModeNote(definition);
                 }
 
                 rewritten.Add(tool);
@@ -122,6 +135,41 @@ internal static class SessionToolSurface
     private const string SessionDescription =
         "The session directory, exactly as browserai_init or browserai_resume returned it. "
         + "This is the session: BrowserAI has no default and will not guess one.";
+
+    private const string DescriptionMember = "description";
+    private const string NameMember = "name";
+
+    /// <summary>
+    /// Appends BrowserAI's own sentence to a tool whose mode this build
+    /// restricts, and leaves every other description exactly as upstream wrote
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Append, never rewrite.</b> Upstream's descriptions carry text a model
+    /// acts on — what a tool refuses, what it costs, which argument is
+    /// destructive — and a phrase lost in a rewrite fails silently: the tool
+    /// still works and the model is simply no longer warned. So ours goes on the
+    /// end, upstream's is untouched, and a declared list of upstream phrases is
+    /// asserted to survive.
+    /// </remarks>
+    private static void AppendModeNote(JsonObject tool)
+    {
+        if ((tool[NameMember] as JsonValue)?.GetValue<string>() is not { } name)
+        {
+            return;
+        }
+
+        if (SessionToolPolicy.Note(name) is not { } note)
+        {
+            return;
+        }
+
+        var upstream = (tool[DescriptionMember] as JsonValue)?.GetValue<string>();
+
+        tool[DescriptionMember] = upstream is null or ""
+            ? note
+            : $"{upstream}\n\n{note}";
+    }
 
     private static void InjectSession(JsonObject tool)
     {

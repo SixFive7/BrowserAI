@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Logging;
-using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
@@ -101,6 +100,49 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         return _live.TryGetValue(location.Key, out var session) ? session : null;
+    }
+
+    /// <summary>
+    /// Why a <c>session</c> argument resolved to nothing, in terms the caller can
+    /// act on in one turn.
+    /// </summary>
+    /// <remarks>
+    /// <b>Three distinguishable causes, three different recoveries.</b> A path
+    /// that is not absolute is [row 3](../../plan/H-model-surface.md#h4-the-error-catalogue);
+    /// a path with no <c>lock.json</c> is row 2 and wants <c>init</c>; a path that
+    /// <i>is</i> a session this process is not driving wants <c>resume</c>.
+    /// Collapsing the last two — as this did before step 13 — sends half the
+    /// callers to a tool that will refuse them on the next turn with row 4.
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The <c>session</c> argument, as it arrived.</param>
+    /// <returns>The refusal to answer with.</returns>
+    public static string ExplainUnknownSession(string tool, string session)
+    {
+        SessionPath location;
+
+        try
+        {
+            location = Resolve(session, SessionToolSurface.SessionParameter);
+        }
+        catch (SessionToolException failure)
+        {
+            return failure.Message;
+        }
+
+        try
+        {
+            return SessionLock.ReadRecord(location) is null
+                ? SessionErrors.SessionNamesNoSession(tool, location.FullPath)
+                : SessionErrors.SessionNotOpen(tool, location.FullPath);
+        }
+        catch (LockFileException failure)
+        {
+            // A lock.json that cannot be read is still a session, and saying so
+            // is more useful than reporting it as absent: the recovery is to fix
+            // or destroy the directory, never to init over it.
+            return $"'{location.FullPath}' holds a '{SessionLayout.LockFileName}' this build cannot read, so '{tool}' was not run and nothing was changed. {failure.Message}";
+        }
     }
 
     /// <summary>Runs one of the authored tools.</summary>
@@ -240,9 +282,7 @@ internal sealed class SessionManager : IAsyncDisposable
             if (Directory.Exists(record.Directory) && !acknowledgeCopy)
             {
                 return new ToolOutcome(
-                    $"'{location.FullPath}' looks like a COPY of the session at '{record.Directory}', which still exists. "
-                    + $"Its record says: mode {record.Mode}, purpose: {record.Purpose}. A copy inherits an ownership record naming a process that may still be alive against the original, so resuming it silently would replay another session's history as though it described this one. "
-                    + $"Nothing was changed. Pass acknowledgeCopy=true to take this copy over anyway, or resume '{record.Directory}' instead.",
+                    SessionErrors.DirectoryIsACopy(location.FullPath, record.Directory, record.Mode, record.Purpose),
                     IsError: true);
             }
 
@@ -294,7 +334,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"{session.FullPath}\n"
                 + $"  mode: {record.Mode}   browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
                 + $"  created: {Stamp(record.Created)}   last used: {Stamp(record.LastUsed)}\n"
-                + $"  purpose recorded by a previous session: {record.Purpose}");
+                + $"  {SessionErrors.Recorded(record.Purpose)}");
         }
 
         return found is 0
@@ -475,8 +515,8 @@ internal sealed class SessionManager : IAsyncDisposable
             // rather than IDisposable, and the rule's dataflow does not follow an
             // `await x.DisposeAsync()` in a finally.
 #pragma warning disable CA2000
-            child = await ChildConnection.ConnectAsync(
-                new DirectStdioClientTransport(options, logging.Factory),
+            child = await _environment.ConnectChild(
+                options,
                 logging.Factory,
                 $"browserai-{location.Hash[..8]}-",
                 _relay,
@@ -504,8 +544,7 @@ internal sealed class SessionManager : IAsyncDisposable
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, failure);
 
             return new ToolOutcome(
-                $"'{location.FullPath}' was locked but its browser runtime could not be started: {failure.GetType().Name}: {failure.Message} "
-                + $"The directory is left as it is and nothing is running. Fix the cause and call {SessionToolSurface.Resume} on the same directory.",
+                SessionErrors.BrowserRuntimeDidNotStart(location.FullPath, $"{failure.GetType().Name}: {failure.Message}"),
                 IsError: true);
         }
         finally
@@ -635,36 +674,27 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return record is null
             ? null
-            : $"'{location.FullPath}' is already a BrowserAI session and {SessionToolSurface.Init} will not take it over. "
-                + $"It is a '{record.Mode}' session on {record.Browser}, created {Stamp(record.Created)}, last used {Stamp(record.LastUsed)}, purpose: {record.Purpose} "
-                + $"Call {SessionToolSurface.Resume} with directory='{location.FullPath}' to drive it, {SessionToolSurface.Destroy} to delete it, or {SessionToolSurface.Init} on a directory that is not one. "
-                + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
+            : SessionErrors.SessionAlreadyExists(
+                location.FullPath,
+                record.Mode,
+                record.Browser,
+                record.Created,
+                record.LastUsed,
+                record.Purpose);
     }
 
-    private static string? FreeSpaceRefusal(SessionPath location)
+    private string? FreeSpaceRefusal(SessionPath location)
     {
-        long free;
+        // A volume whose free space cannot be queried in one call -- a network
+        // share, most often -- reports null and is skipped rather than replaced
+        // by a directory walk: the check exists to be cheap, and an expensive
+        // substitute would cost every session start for a case that fails loudly
+        // later anyway.
+        var free = _environment.FreeBytesOn(location.FullPath);
 
-        try
-        {
-            // O(1), and only ever O(1). A directory walk here would make the
-            // check slower than the failure it prevents, and init is on the hot
-            // path of every session.
-            free = new DriveInfo(Path.GetPathRoot(location.FullPath) ?? location.FullPath).AvailableFreeSpace;
-        }
-        catch (Exception failure) when (failure is ArgumentException or IOException or UnauthorizedAccessException)
-        {
-            // A volume whose free space cannot be queried in one call -- a
-            // network share, most often. Skipped rather than replaced by a walk:
-            // the check exists to be cheap, and an expensive substitute would
-            // cost every session start for a case that fails loudly later.
-            return null;
-        }
-
-        return free >= RequiredFreeBytes
+        return free is not (>= 0 and < RequiredFreeBytes)
             ? null
-            : $"'{location.FullPath}' is on a volume with {Megabytes(free)} free. A session needs about {Megabytes(RequiredFreeBytes)} while a browser is provisioned, "
-                + "and a download that runs out of space partway through fails at first navigation rather than here. Nothing was changed. Free some space, or name a directory on another volume.";
+            : SessionErrors.InsufficientDisk(location.FullPath, free.Value, RequiredFreeBytes);
     }
 
     private static bool SamePath(string recorded, SessionPath location)
@@ -794,8 +824,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // one the caller meant.
         if (!Path.IsPathFullyQualified(directory))
         {
-            throw new SessionToolException(
-                $"'{argument}' must be an absolute path, and '{directory}' is not. BrowserAI has no default session directory and does not resolve a relative one, because that would silently pick a location nobody chose. Pass a full path such as C:\\work\\checkout-flow-bug.");
+            throw new SessionToolException(SessionErrors.DirectoryNotAbsolute(argument, directory));
         }
 
         try
@@ -804,8 +833,7 @@ internal sealed class SessionManager : IAsyncDisposable
         }
         catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            throw new SessionToolException(
-                $"'{argument}' = '{directory}' is not a usable directory path: {failure.Message} Nothing was changed.");
+            throw new SessionToolException(SessionErrors.DirectoryUnusable(argument, directory, failure.Message));
         }
     }
 
@@ -852,8 +880,7 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         if (arguments?[name] is not null)
         {
-            throw new SessionToolException(
-                $"'{name}' is not an argument of {SessionToolSurface.Resume}, because {why}. Remove it. If this directory is not the session you meant, name another one.");
+            throw new SessionToolException(SessionErrors.ArgumentNotAcceptedOnResume(name, why));
         }
     }
 

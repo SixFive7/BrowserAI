@@ -72,6 +72,41 @@ internal static class UpstreamSurface
         ];
     }
 
+    /// <summary>
+    /// The snapshot's whole tool array as a <c>tools/list</c> result, for a
+    /// double that has to answer with the real surface rather than with two
+    /// invented tools.
+    /// </summary>
+    /// <remarks>
+    /// <b>Still not a hand-written schema.</b> The bytes are upstream's own, read
+    /// out of a file the build regenerates from the resolved payload and diffs on
+    /// every run — so a test that asserts on a description is asserting on what
+    /// upstream actually shipped, and an upstream reword reaches it as a diff
+    /// first.
+    /// </remarks>
+    /// <returns>The literal JSON a fake child can answer <c>tools/list</c> with.</returns>
+    public static string SnapshotToolsListResult()
+    {
+        using var snapshot = Snapshot();
+
+        return $$"""{"tools":{{snapshot.RootElement.GetProperty("tools").GetRawText()}}}""";
+    }
+
+    /// <summary>Upstream's own description for every tool it can expose.</summary>
+    /// <returns>Name to description, in the snapshot's order.</returns>
+    public static IReadOnlyList<(string Name, string Description)> SnapshotDescriptions()
+    {
+        using var snapshot = Snapshot();
+
+        return
+        [
+            .. snapshot.RootElement.GetProperty("tools").EnumerateArray()
+                .Select(tool => (
+                    tool.GetProperty("name").GetString()!,
+                    tool.TryGetProperty("description", out var description) ? description.GetString()! : string.Empty)),
+        ];
+    }
+
     private static JsonDocument Snapshot() =>
         JsonDocument.Parse(File.ReadAllText(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json")));

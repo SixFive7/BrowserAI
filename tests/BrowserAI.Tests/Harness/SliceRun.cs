@@ -118,10 +118,27 @@ internal sealed record SliceRun(
         var toolList = tools["tools"]!.AsArray();
         var names = toolList.Select(tool => (string)tool!["name"]!).ToList();
 
+        // ⚠️ A session, because step 13 made `session` mandatory. Before it, a
+        // call naming none went to the run's own child -- which is a session
+        // nobody chose the mode of, and therefore a way round every enforcement
+        // decision. The browser this slice contains is now this session's.
+        var session = Path.Combine(scratch.Path, "slice-session");
+
+        _ = await client.EnvelopeAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browserai_init",
+            ["arguments"] = new JsonObject
+            {
+                ["directory"] = session,
+                ["purpose"] = "the vertical slice's own session",
+                ["mode"] = "headless",
+            },
+        }).ConfigureAwait(false);
+
         var navigate = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = TargetUrl },
+            ["arguments"] = new JsonObject { ["url"] = TargetUrl, ["session"] = session },
         }).ConfigureAwait(false);
 
         var text = string.Join(

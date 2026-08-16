@@ -66,7 +66,7 @@ internal sealed class FakeChildHarnessTests
             child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult }))
         {
             var tools = await rig.Client.RoundTripAsync("tools/list");
-            var call = await rig.Client.RoundTripAsync("tools/call", Call("browser_navigate"));
+            var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_navigate"));
 
             // The child's two, behind BrowserAI's five authored ones. Written as
             // a sum rather than as 7, so a sixth authored tool moves this number
@@ -113,7 +113,7 @@ internal sealed class FakeChildHarnessTests
                 RawResult = """{"content":[{"type":"text","text":"- heading \"ok\" [level=1]"}]}""",
             });
 
-        var call = await rig.Client.RoundTripAsync("tools/call", Call("browser_snapshot"));
+        var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_snapshot"));
 
         await Assert.That(TextOf(call)).IsEqualTo("- heading \"ok\" [level=1]");
 
@@ -133,7 +133,7 @@ internal sealed class FakeChildHarnessTests
                 RawErrorData = """{"reason":"programmed"}""",
             });
 
-        var response = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
+        var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         // Measured 2026-08-16 against ModelContextProtocol 2.2.0, and recorded
         // here as exact equality rather than a containment check because each
@@ -166,7 +166,7 @@ internal sealed class FakeChildHarnessTests
             child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult, Delay = delay });
 
         var stopwatch = Stopwatch.StartNew();
-        var call = await rig.Client.RoundTripAsync("tools/call", Call("browser_navigate"));
+        var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_navigate"));
         stopwatch.Stop();
 
         await Assert.That(stopwatch.Elapsed).IsGreaterThanOrEqualTo(delay);
@@ -179,7 +179,7 @@ internal sealed class FakeChildHarnessTests
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour { DieWithoutAnswering = true });
 
-        var response = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
+        var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         // A defined answer rather than a hang, which is the property a proxy
         // loses by default. The double really does die: this is what says the
@@ -212,7 +212,7 @@ internal sealed class FakeChildHarnessTests
         await using (var direct = await McpTestHarness.DirectToTheChildAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = Unknown }))
         {
-            var response = await direct.Client.SendAsync("tools/call", Call("browser_navigate"));
+            var response = await direct.Client.SendAsync("tools/call", Call(direct, "browser_navigate"));
 
             await Assert.That(response.Frame.AsSpan().IndexOf(Encoding.UTF8.GetBytes(Unknown)) >= 0).IsTrue();
         }
@@ -229,7 +229,7 @@ internal sealed class FakeChildHarnessTests
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
             child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = Unknown });
 
-        var throughTheProxy = await rig.Client.SendAsync("tools/call", Call("browser_navigate"));
+        var throughTheProxy = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         await Assert.That(throughTheProxy.Error).IsNull();
         await Assert.That(throughTheProxy.Result!["isError"]).IsNull();
@@ -248,7 +248,7 @@ internal sealed class FakeChildHarnessTests
                 RawResult = $$"""{"content":[{"type":"text","text":{{JsonSerializer.Serialize(text)}}}]}""",
             });
 
-        var call = await rig.Client.RoundTripAsync("tools/call", Call("browser_snapshot"));
+        var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_snapshot"));
 
         // The size is what matters: a frame this large is the case a
         // byte-at-a-time reader over a pipe turns into a quadratic hang, and the
@@ -383,11 +383,25 @@ internal sealed class FakeChildHarnessTests
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
 
-    private static JsonObject Call(string tool) => new()
+    /// <summary>
+    /// One <c>tools/call</c>, naming the rig's own session.
+    /// </summary>
+    /// <remarks>
+    /// <c>session</c> is mandatory since step 13: a call without one is refused
+    /// by BrowserAI and never reaches a child, so every assertion in this file
+    /// about what the child received would be an assertion about a refusal.
+    /// </remarks>
+    private static JsonObject Call(McpTestHarness rig, string tool)
     {
-        ["name"] = tool,
-        ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" },
-    };
+        var arguments = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>" };
+
+        if (rig.Session is { } session)
+        {
+            arguments["session"] = session;
+        }
+
+        return new JsonObject { ["name"] = tool, ["arguments"] = arguments };
+    }
 
     private static string TextOf(JsonObject result) =>
         result["content"]![0]!["text"]!.GetValue<string>();

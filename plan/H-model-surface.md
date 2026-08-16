@@ -83,7 +83,9 @@ The only channel that reaches a model **before** it calls anything, so it carrie
 >
 > `init` refuses a directory that already holds a session and directs you to `browserai_resume`. That is deliberate, not an obstacle: it turns an accidental collision into a stated intent.
 
-**~1,050 bytes of a 2,048-byte budget.** Measured at build time and failed over budget, as `SixFive7/OutlookAI` already does for its own instructions string. The remaining headroom is deliberate: it absorbs a fourth mode or a fifth authored tool without a rewrite.
+⚠️ **Corrected 2026-08-16 (previously "~1,050 bytes of a 2,048-byte budget").** The string as built measures **1,613 characters and 1,628 bytes**, leaving 420. The prediction was written before the mode lines carried what each mode *refuses* as well as what it grants, and that is almost the whole difference — it is also the half a model needs to choose correctly, so the bytes are bought rather than spent. Measured at build time and failed over budget, as `SixFive7/OutlookAI` already does for its own instructions string; the measurement is `ModelSurfaceTests.TheInstructionsStringFitsTheClientsSilentTruncationBudget` and it counts **bytes**, because `·` and `—` are two and three apiece.
+
+**The headroom absorbs exactly one more mode, and that was measured too.** Planting a fourth mode cost **223 bytes**, leaving 197 — so the claim that the headroom "absorbs a fourth mode or a fifth authored tool without a rewrite" holds once and no further. It is deliberately **not** a gate: an assertion on the headroom made the fourth-mode plant fail on a budget line rather than on the six-consumer line it was aimed at, which is the wrong test failing. The 2 KB cap is the requirement and already catches running out.
 
 ## H.4 The error catalogue
 

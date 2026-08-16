@@ -81,9 +81,9 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **160**
-`[FLOATS]` markers stand across the articles against the **68** numbered rows
-below (75 lines, counting 2a, 2b, 4a, 4b, 4c, 16a and 63a),
+table is how that happens. **It does not yet cover all of them**: **164**
+`[FLOATS]` markers stand across the articles against the **71** numbered rows
+below (78 lines, counting 2a, 2b, 4a, 4b, 4c, 16a and 63a),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
@@ -263,6 +263,21 @@ missing row as a gap in this table, never as permission to skip the fact.
 > of what it wanted. Row **66** is deliberately split the same way in its own
 > cell: the key reaching the child is a test, the fallback not firing is a
 > deletion nobody can automate from inside the suite.
+>
+> **Re-counted 2026-08-16 after build-order step 13: 164.** Four new markers —
+> two in [kb: tools](playwright/tools-and-artifacts.md#what-browserais-own-modes-permit-after-its-own-filtering)
+> for BrowserAI's own per-mode surfaces (41 / 41 / 58 of 59) and for
+> `config.secrets` being a real key, one for the classification split behind
+> those counts, and one in [kb: protocol](mcp/protocol.md#the-client-claude-code)
+> for the measured size of the server `instructions` string. Three new rows
+> (69–71), so the table is **71 numbered rows over 78 lines**.
+>
+> **Every one of the three arrives automated**, which is unusual and worth
+> naming: the facts and the tests that hold them were written in the same step,
+> so none of them spent any time as a row nobody would re-check. Rows 69 and 71
+> are also the two that would go quiet rather than red if upstream renamed
+> something, which is why both cells say what the *snapshot* diff would show
+> first.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -355,6 +370,9 @@ decision:
 | 66 | **An unset `browser.userDataDir` puts every run's profile in `%LOCALAPPDATA%\ms-playwright-mcp\mcp-<channel>-<sha256(clientInfo.cwd)[..7]>`**, created eagerly at launch and never cleaned up — 159 directories / 877 MB had accumulated here before the key was set ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | Upstream moves the fallback, changes the key it reads, or renames `userDataDir` — which `loadConfig` would discard in silence, so the only signal is the directory reappearing | Delete `%LOCALAPPDATA%\ms-playwright-mcp\`, run the browser-touching tests, and require it to stay absent. The config round trip covers the key reaching the child; only the deletion covers the fallback not firing | `ConfigRoundTripTests` for the key; the deletion check is *manual* and belongs in the release gate |
 | 67 | **There is no trace option at 0.0.79** — not on the CLI, not in `config.d.ts`; `tracesDir` is computed as `<outputDir>/traces` and `saveSession` is the nearest surviving feature ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | Upstream restores a trace option, at which point [§C](../plan/C-sessions.md#three-modes-and-tracing-as-a-modifier)'s `tracing` modifier should stop meaning `saveSession` | Grep the resolved bundle for `saveTrace` and read the committed `cli-help.txt` and `config-schema.d.ts` snapshots | — *manual*; a restored option would show up as a snapshot diff first, which is the loud half |
 | 68 | **`browser_get_config` answers Markdown with the config JSON inside it**, because the response builder prefixes every text section with `### <title>` ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | The response builder changes its wrapping, or the tool stops emitting the whole resolved config | Call the tool and require a parseable config object inside the answer | `ConfigRoundTripTests` |
+| 69 | **BrowserAI's own per-mode surfaces are 41 / 41 / 58 of the 59 it advertises**, and the classification behind them is 69 names in five classes ([kb](playwright/tools-and-artifacts.md#what-browserais-own-modes-permit-after-its-own-filtering)) | Upstream adds a tool, removes one, or moves one between capabilities. **Deny-by-default makes the first case loud** — a name absent from the classification is refused everywhere — but the counts are what say the classification is still *right* rather than merely complete | Recompute the union from the committed snapshot and ask the product's own decision function about every name in it, then assert the three counts and the named holes individually. A count alone is satisfied by the wrong tool as easily as by the right one | `SessionPolicyTests.EachModePermitsExactlyTheSurfaceTheTestsDeclare` · `SessionPolicyTests.EveryToolTheChildCanExposeCarriesAnExplicitClassification` |
+| 70 | **The server `instructions` string is 1,628 bytes of a 2,048-byte budget**, and a fourth mode costs 223 of the remaining 420 ([kb](mcp/protocol.md#the-client-claude-code)) | Our own wording changes, or a mode or authored tool is added. The client truncates at 2 KB in silence, so the failure is a tail nobody has ever read | Measure `ServerInstructions.ByteCount` in **bytes** and fail over the cap. The string carries `·` and `—`, so a character count under-reports exactly the string that uses them | `ModelSurfaceTests.TheInstructionsStringFitsTheClientsSilentTruncationBudget` |
+| 71 | **`config.secrets` is a real key** — `--secrets <path>` on the CLI, `secrets?: Record<string, string>` in `config.d.ts` — and `browser_get_config` serialises it with no redaction ([kb](playwright/tools-and-artifacts.md#tools-that-reach-credentials)) | Upstream renames the key, at which point the guard on the answer is looking for a word that no longer appears and reports nothing. BrowserAI never sets it, so the guard is the only thing between a config that came from outside this process and a caller's context | Program a double to answer `browser_get_config` with a config carrying `secrets` and require the answer to be withheld rather than forwarded; the name of the key is what the guard matches, so a rename is a snapshot diff on `config-schema.d.ts` first | `ErrorCatalogueTests.AConfigAnswerCarryingSecretsIsWithheldRatherThanForwarded` |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

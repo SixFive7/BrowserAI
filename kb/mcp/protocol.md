@@ -85,6 +85,19 @@ anything.
 **Server `instructions` and every tool description are truncated silently at
 2 KB.** The tail simply does not exist and nothing reports it.
 
+> **What BrowserAI actually spends of that, measured 2026-08-16 at build-order
+> step 13: 1,613 characters and `1,628` bytes, leaving 420.**
+> [§H.3](../../plan/H-model-surface.md#h3-the-server-instructions-string) predicted
+> ~1,050, and the difference is almost entirely the mode lines carrying what each
+> mode *refuses* as well as what it grants — which is the half a model needs to
+> choose correctly and the half §H.3's draft did not have. **Planting a fourth
+> mode measured its cost at 223 bytes**, so the headroom absorbs exactly one more
+> mode and a fifth would need the lines shortened. Re-establish by running
+> `ModelSurfaceTests.TheInstructionsStringFitsTheClientsSilentTruncationBudget`,
+> which measures in **bytes**: the string carries `·` (2 bytes) and `—`
+> (3 bytes), so a character count under-reports precisely the string that uses
+> them. `[FLOATS]` on our own wording rather than on a client version.
+
 **`notifications/tools/list_changed` handling changed, and the charter's citation
 is stale.** *"Claude Code registers no handler"* was accurate at **2.0.65**
 (Dec 2025) — issues

@@ -155,6 +155,45 @@ carries IndexedDB, so a "saved" session silently omits it and the tool is
 **`browser_annotate` opens a dashboard window and blocks until a human finishes
 drawing** — and the window appears in headless too. `[FLOATS]`
 
+**`config.secrets` is a real key, so `browser_get_config` can disclose one.**
+`--secrets <path>` is on the CLI and `secrets?: Record<string, string>` is in
+`config.d.ts`, and the handler serialises the whole config with no filtering.
+BrowserAI never writes the key and never passes the flag, so the answer is
+forwarded byte-identical on every ordinary call and refused only if a `secrets`
+key comes back. `Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committed
+`cli-help.txt` and `config-schema.d.ts` snapshots. `[FLOATS]`
+
+### What BrowserAI's own modes permit, after its own filtering
+
+**Measured 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05.** Upstream's per-mode surfaces are 42 / 42 / 59 above;
+these are what survives BrowserAI's `(tool, mode)` decision, out of the **59-tool
+union** it advertises to every caller. Re-establish by running
+`SessionPolicyTests.EachModePermitsExactlyTheSurfaceTheTestsDeclare`, which
+computes the union from the committed snapshot and asks the product's own
+decision function about every name in it. `[FLOATS]`
+
+| Mode | Permitted | Refused, and why |
+|---|---:|---|
+| `headless` | **41** | the 17 `storage` tools; `browser_annotate`, whose window appears with nobody watching |
+| `interactive` | **41** | the 17 `storage` tools; `browser_run_code_unsafe`, which reaches the same cookies through the Playwright server process |
+| `persistent` | **58** | `browser_annotate` — nothing about a stored profile implies a human is present |
+
+**The two 41s are different sets**, which is the whole point: `headless` permits
+arbitrary code and refuses the annotation tool, `interactive` does the opposite.
+The classification behind them is 69 names in five classes — **49 ordinary, 17
+`storage`, and one each of `ArbitraryCode`, `HumanPresent` and `Configuration`** —
+and a name absent from it is refused in every mode. `[FLOATS]`
+
+> **Why the numbers are not simply upstream's minus ours.** A `headless` or
+> `interactive` session's child is started without the `storage` capability, so
+> those 17 tools do not exist in that process at all; they are still *advertised*,
+> because the MCP spec forbids the tool set varying per connection, and BrowserAI
+> refuses them itself so the caller gets a sentence naming the mode that would
+> permit the call rather than upstream's *"unknown tool"*.
+> `browser_run_code_unsafe` is the one that cannot be handled that way — it is in
+> `core`, which upstream ors in unconditionally.
+
 ## Artifacts and output-directory behaviour
 
 All read from the shipped bundle or observed against a real child. `[FLOATS]`

@@ -62,6 +62,18 @@ internal sealed class VerticalSliceTests
         // list comparison that both sides got wrong the same way would not say
         // so.
         await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 59);
+
+        // And every one of them carries an explicit classification, asserted
+        // against the REAL child's list rather than against the snapshot the
+        // build regenerates from it. Deny-by-default means an unclassified tool
+        // is refused at runtime, so this is the check that turns a tool upstream
+        // added into a red build instead of a silent refusal in production.
+        var unclassified = run.ToolNames
+            .Where(name => !SessionToolSurface.IsAuthored(name))
+            .Where(name => !SessionToolPolicy.Classification.ContainsKey(name))
+            .ToList();
+
+        await Assert.That(string.Join(", ", unclassified)).IsEmpty();
     }
 
     [Test]

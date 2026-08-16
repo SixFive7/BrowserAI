@@ -304,6 +304,15 @@ internal sealed record SessionRun
             ["acknowledgeCopy"] = true,
         }).ConfigureAwait(false);
 
+        // A real session directory that this process is not driving: alpha was
+        // created and closed by the first process, so its record is on disk and
+        // nothing here holds it. That is the other half of the split step 13
+        // made -- "not a session" and "not open here" want different recoveries.
+        answers["strandedSession"] = await CallAsync(client, "browser_snapshot", new JsonObject
+        {
+            ["session"] = Path.Combine(root, "alpha"),
+        }).ConfigureAwait(false);
+
         var movedLog = ReadSharing(Path.Combine(moved, "browserai.log"));
 
         _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);

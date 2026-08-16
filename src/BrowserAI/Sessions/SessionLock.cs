@@ -169,10 +169,7 @@ internal sealed class SessionLock : IDisposable
 
                 return new SessionLockResult(
                     SessionLockOutcome.Refused,
-                    $"BrowserAI could not create the machine-wide lock '{location.MutexName}' for '{location.FullPath}' ({failure.Message}), so no session was created and nothing was changed. " +
-                    "Creating a Global\\ object needs SeCreateGlobalPrivilege, which an interactive user has and a low-integrity or AppContainer process does not. " +
-                    "BrowserAI does not fall back to a weaker, logon-session-scoped lock, because that lock would report success while allowing a second BrowserAI in another logon session to open the same browser profile. " +
-                    "Run BrowserAI as an ordinary interactive user.");
+                    SessionErrors.NoMachineWideLock(location.FullPath, location.MutexName, failure.Message));
             }
 
             // A non-null alias, because `gate` itself is set to null on transfer
@@ -447,13 +444,14 @@ internal sealed class SessionLock : IDisposable
         var since = DateTimeOffset.FromFileTime(previous.Holder.ProcessCreatedFileTime);
         SessionLog.Reclaimed(logger, location.FullPath, previous.Holder.ProcessId, previousRunning);
 
-        var pid = previous.Holder.ProcessId.ToString(CultureInfo.InvariantCulture);
-
         return new SessionLockResult(
             SessionLockOutcome.Reclaimed,
-            previousRunning
-                ? $"'{location.FullPath}' was locked by PID {pid} since {Stamp(since)}, which is still running but has let the directory go. Reclaiming it. Its recorded purpose was: {previous.Purpose}"
-                : $"'{location.FullPath}' was locked by PID {pid} since {Stamp(since)}, which is no longer running. Reclaiming it. Its recorded purpose was: {previous.Purpose}",
+            SessionErrors.LockReclaimed(
+                location.FullPath,
+                previous.Holder.ProcessId,
+                since,
+                previousRunning,
+                previous.Purpose),
             taken,
             previous,
             previousRunning);
@@ -486,12 +484,16 @@ internal sealed class SessionLock : IDisposable
         }
 
         var started = DateTimeOffset.FromFileTime(holder.Holder.ProcessCreatedFileTime);
-        var client = holder.Holder.ClientProcessName is { } name ? $", started by {name}" : string.Empty;
 
         return new SessionLockResult(
             SessionLockOutcome.Held,
-            $"'{location.FullPath}' is in use by PID {holder.Holder.ProcessId.ToString(CultureInfo.InvariantCulture)}{client}, running since {Stamp(started)}, which took the lock at {Stamp(holder.LastUsed)}. Purpose: {holder.Purpose}. " +
-            "Nothing was changed. BrowserAI does not wait for a lock, because it cannot know what waiting costs you: wait and call again, or choose another directory.",
+            SessionErrors.LockHeld(
+                location.FullPath,
+                holder.Holder.ProcessId,
+                holder.Holder.ClientProcessName,
+                started,
+                holder.LastUsed,
+                holder.Purpose),
             holder: holder,
             holderRunning: true);
     }

@@ -3,8 +3,11 @@
 
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
+using BrowserAI.Protocol;
+using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Protocol;
 
 namespace BrowserAI.Sessions;
 
@@ -40,4 +43,61 @@ internal sealed record SessionEnvironment
 
     /// <summary>Opens one session's logging stack: its own file, plus the process log and stderr.</summary>
     public required Func<string, LogLevel, SessionLogging> OpenSessionLog { get; init; }
+
+    /// <summary>
+    /// Starts one session's <c>@playwright/mcp</c> child and completes the
+    /// handshake with it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A seam of exactly the same kind as <see cref="OpenSessionLog"/>, and it
+    /// exists for one test that could not otherwise be written.</b> The
+    /// <c>(tool, mode)</c> decision has to be driven across sessions of
+    /// <i>different</i> modes at once, and doing that against real children costs
+    /// three node processes and a browser per assertion — which is slow enough
+    /// that the concurrency would be tested once rather than at every level of
+    /// contention. Substituted, the same product code runs against in-process
+    /// doubles in milliseconds.
+    /// </para>
+    /// <para>
+    /// The default is the real thing, and the suite proves the real thing
+    /// separately against the published binary — so this cannot become the only
+    /// path anybody exercises.
+    /// </para>
+    /// </remarks>
+    public Func<ChildProcessOptions, ILoggerFactory, string, Func<JsonRpcNotification, CancellationToken, ValueTask>, CancellationToken, Task<ChildConnection>> ConnectChild { get; init; } =
+        static (options, loggerFactory, idPrefix, relay, cancellationToken) =>
+            ChildConnection.ConnectAsync(
+                new DirectStdioClientTransport(options, loggerFactory),
+                loggerFactory,
+                idPrefix,
+                relay,
+                cancellationToken);
+
+    /// <summary>
+    /// How much room the volume holding a path has, or <see langword="null"/> if
+    /// it cannot be asked in one call.
+    /// </summary>
+    /// <remarks>
+    /// <b>O(1), and only ever O(1).</b> A directory walk here would make the check
+    /// slower than the failure it prevents, and <c>init</c> is on the hot path of
+    /// every session. It is a seam so the suite can trigger
+    /// [row 12](../../plan/H-model-surface.md#h4-the-error-catalogue) through the
+    /// real refusal path rather than by asserting a literal — a full volume is not
+    /// something a test can arrange, and a row nobody can reach is documentation
+    /// rather than behaviour.
+    /// </remarks>
+    public Func<string, long?> FreeBytesOn { get; init; } = static path =>
+    {
+        try
+        {
+            return new DriveInfo(Path.GetPathRoot(path) ?? path).AvailableFreeSpace;
+        }
+        catch (Exception failure) when (failure is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            // A network share, most often. Reported as unknown rather than as
+            // zero, because zero would refuse every session on it.
+            return null;
+        }
+    };
 }
