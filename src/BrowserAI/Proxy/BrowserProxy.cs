@@ -419,6 +419,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
             ArtifactRouter.Apply(plan, forwarded);
         }
 
+        // The one timer, reset here and nowhere else. A call this session
+        // forwards is what "being driven" means for a browser-idle timer — a
+        // call refused by the mode policy or by provisioning never reaches a
+        // browser and never keeps one warm — and the scope holds the call
+        // outstanding across the await, so a navigation that outlives the whole
+        // period cannot have the browser closed underneath it.
+        using var driving = live.Idle.Call();
+
         var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
 
         if (answer.Response is { } response)

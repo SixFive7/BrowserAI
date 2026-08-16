@@ -587,8 +587,25 @@ later measurement overruled the original.
       handle-idle ~60 min → full teardown, release the lock, mark reclaimable;
       teardown budget 15 s graceful then job-object kill, matching the child's own
       `setupExitWatchdog`. A never-used handle has no browser at all (~123 MB).
+
+      > ✅ **Built and superseded at
+      > [step 17a](plan/build-order.md#17a-the-browser-idle-timer-and-teardown),
+      > 2026-08-16.** Only the browser-idle timer exists — the handle-idle one was
+      > dropped when [reclaim became forever](plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever),
+      > and this bullet is the last place it is still written down as planned.
+      > **Both numbers in it are wrong and are corrected in
+      > [kb](kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead):**
+      > re-measured twice, the fall is ~496 MB → ~118 MB and the relaunch costs
+      > ~0.41 s rather than 186 ms.
     - **The client watcher is stdin EOF + an `OpenProcess` handle on the client
       PID.** Never ping-based: `ping` is removed at 2026-07-28.
+
+      > ✅ **Built at [step 17a](plan/build-order.md#17a-the-browser-idle-timer-and-teardown), 2026-08-16**, as
+      > `src/BrowserAI/Interop/ClientLiveness.cs`. ⚠️ **One thing it does that
+      > this bullet does not say, and it is load-bearing:** cancelling the
+      > server's own token does **not** end `RunAsync` over real stdio, so the
+      > watcher closes BrowserAI's protocol channel instead — producing the same
+      > end-of-input the client's own exit would have.
     - **A server cannot ask the agent anything.** Measured: elicitation reaches the
       *human* via a TUI modal and auto-cancels in ~7 ms under `-p`; nothing at any
       spec revision injects text into a model's context unprompted. The only

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Hosting;
+using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Protocol;
 using BrowserAI.Proxy;
@@ -122,6 +123,11 @@ internal static class Program
                 OpenSessionLog = log.OpenSessionLog,
             };
 
+            // Declared before the watcher below so that it is disposed after it:
+            // a watch that fired into a disposed source would report a teardown
+            // failure while the process was already tearing down.
+            using var stopping = new CancellationTokenSource();
+
             var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment).ConfigureAwait(false);
 
             // `await using var x = …` awaits its DisposeAsync on the captured
@@ -141,11 +147,50 @@ internal static class Program
             var server = McpServer.Create(transport, proxy.ServerOptions(), log.Factory);
             await using var serverScope = server.ConfigureAwait(false);
 
+            // ⚠️ The second of the two teardown mechanisms, and neither is a
+            // close tool. stdin EOF is the backstop; this covers what EOF
+            // cannot — a client that started BrowserAI through a wrapper, so the
+            // pipe outlives the process that owns the conversation. It is an
+            // OpenProcess handle, never a ping: `ping` was removed at protocol
+            // revision 2026-07-28, and a handle is an event rather than a poll.
+            //
+            // ⚠️ It disposes the transport rather than only cancelling.
+            // Measured 2026-08-16 against ModelContextProtocol 2.2.0 over real
+            // stdio: cancelling `RunAsync`'s token does NOT end it, because the
+            // read is parked in a syscall on the console handle and a token
+            // cannot wake it — the transport's own DisposeAsync says as much
+            // about the child leg, and it is just as true here. Closing the
+            // channel is what produces the end-of-input this process would have
+            // seen if the client had closed its end, so there is one shutdown
+            // path rather than two. The cancellation is kept because a
+            // caller-supplied token must still be honoured where it can be.
+            //
+            // Declared after the transport so that it is disposed BEFORE it, and
+            // a client that cannot be watched is a warning rather than a refusal
+            // to start.
+            using var client = ClientLivenessWatcher.ForParentProcess(
+                () =>
+                {
+                    stopping.Cancel();
+                    _ = EndTheConversationAsync(transport, logger);
+                },
+                logger);
+
             StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
 
-            // Ends when the caller closes our stdin, which is the same graceful
-            // path BrowserAI uses on its own child.
-            await server.RunAsync().ConfigureAwait(false);
+            try
+            {
+                // Ends when the caller closes our stdin, which is the same
+                // graceful path BrowserAI uses on its own child -- or when the
+                // watcher above reports the client gone, which does not wait
+                // for EOF at all. Either way the disposals below take every
+                // session's child, browser and job with them.
+                await server.RunAsync(stopping.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // The watcher asked for this. It has already said why.
+            }
 
             return 0;
         }
@@ -161,6 +206,34 @@ internal static class Program
             // The clean path. The killed path is the next run's sweep, because
             // nothing here runs when the process is terminated from outside.
             InstanceDirectory.Delete(instance);
+        }
+    }
+
+    /// <summary>
+    /// Closes the caller-facing transport once the client has gone, and reports
+    /// rather than discards a failure to do so.
+    /// </summary>
+    /// <remarks>
+    /// <b>Fire-and-forget with the result observed, which is not the same as
+    /// fire-and-forget.</b> This runs on a thread-pool callback that must not
+    /// block, so nothing awaits it — but a discarded <c>Task</c> is a discarded
+    /// exception, and the one thing that must never happen here is the shutdown
+    /// path failing in silence while every other signal stays green.
+    /// </remarks>
+    /// <param name="transport">The caller-facing transport. Disposing it is what ends <c>RunAsync</c>.</param>
+    /// <param name="logger">Where a failure is reported.</param>
+    /// <returns>The disposal.</returns>
+    private static async Task EndTheConversationAsync(DirectStdioServerTransport transport, ILogger logger)
+    {
+        try
+        {
+            await transport.DisposeAsync().ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // The process is going down either way; what matters is that a failure to close cleanly is not silent.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            StartupLog.ChannelNotClosed(logger, failure);
         }
     }
 
@@ -247,4 +320,21 @@ internal static partial class StartupLog
         Level = LogLevel.Warning,
         Message = "{Variable} is set, so this BrowserAI's app root is {Root} rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.")]
     public static partial void AppRootOverridden(ILogger logger, string variable, string root);
+
+    /// <summary>
+    /// The client went and closing the protocol channel after it threw.
+    /// </summary>
+    /// <remarks>
+    /// The process still goes down — the disposals on the way out of
+    /// <c>Main</c> run regardless, and the job objects are the guarantee under
+    /// all of it. This line exists so that a shutdown which did not go the way
+    /// it was meant to is visible rather than inferred from a missing log.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="exception">Why.</param>
+    [LoggerMessage(
+        EventId = 5,
+        Level = LogLevel.Error,
+        Message = "The MCP client exited and BrowserAI's protocol channel could not be closed. Shutdown continues; the job objects still take every child and browser down.")]
+    public static partial void ChannelNotClosed(ILogger logger, Exception exception);
 }

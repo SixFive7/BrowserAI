@@ -134,6 +134,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     private readonly FrameChannel _channel;
     private readonly CancellationTokenSource _stopping = new();
     private readonly List<string> _methods = [];
+    private readonly List<string> _tools = [];
     private readonly ConcurrentBag<Task> _held = [];
 
     private Task _loop = Task.CompletedTask;
@@ -171,6 +172,27 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             lock (_methods)
             {
                 return [.. _methods];
+            }
+        }
+    }
+
+    /// <summary>
+    /// Every tool this child has been asked to call, in order, whether or not it
+    /// knew what to do with it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Recorded separately from <see cref="MethodsReceived"/> because the
+    /// browser-idle timer's whole observable behaviour is a <i>tool name</i>.</b>
+    /// Every idle close and every caller navigation is the same JSON-RPC method,
+    /// so a test counting methods cannot tell them apart.
+    /// </remarks>
+    public IReadOnlyList<string> ToolCallsReceived
+    {
+        get
+        {
+            lock (_tools)
+            {
+                return [.. _tools];
             }
         }
     }
@@ -371,6 +393,11 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     private async Task<bool> CallToolAsync(string id, JsonNode? request)
     {
         var toolName = ToolNameOf(request);
+
+        lock (_tools)
+        {
+            _tools.Add(toolName ?? "<none>");
+        }
 
         if (toolName is null || !Tools.TryGetValue(toolName, out var behaviour))
         {

@@ -282,9 +282,57 @@ per-instance price of one node child per handle.
 succeeds too trivially and its snapshot is empty, which is why the smoke
 assertion uses a `data:` URL.
 
-**Browser-idle close recovers 329 MB → 110 MB, and relaunch costs 186 ms.**
-Closing the browser while keeping the node child is therefore cheap enough that a
-caller navigating afterwards need never see "browser is closed".
+**Browser-idle close: the whole browser tree goes, the node child stays, and the
+next call brings the browser back in ~0.41 s.** `[MACHINE]` `[FLOATS]`
+
+> ⚠️ **Corrected 2026-08-16 @ `@playwright/mcp` 0.0.79 (previously "recovers
+> 329 MB → 110 MB, and relaunch costs 186 ms", undated).** Both halves were in
+> the right direction and neither number survived. Re-measured twice against a
+> real child with `chromium-1237` / Chrome for Testing 152.0.7977.8, headless,
+> on this machine:
+>
+> | | Run A | Run B |
+> |---|---|---|
+> | Browser processes after the first navigation | **8** | **7** |
+> | Their total working set | **378.3 MB** | **369.4 MB** |
+> | node's working set, throughout | 117.6 → 117.8 → 121.4 MB | 116.3 → 116.5 → 120.2 MB |
+> | Browser processes after `browser_close` | **0** | **0** |
+> | `browser_close` itself | 209 ms | 190 ms |
+> | The next `browser_navigate` | **416 ms** | **409 ms** |
+> | A `browser_snapshot` after it | 4.2 ms | 4.6 ms |
+>
+> So the shape of the old claim holds — an idle session falls back to roughly the
+> node child's own footprint — while the totals are ~496 MB → ~118 MB rather than
+> 329 → 110, and the relaunch is **2.2× the recorded figure**. The old numbers
+> carried no date and no version, which is why nobody could tell whether they had
+> moved or had always been wrong.
+
+**The relaunch is upstream's own behaviour, not something a caller or a proxy has
+to arrange.** Playwright creates the browser lazily on first use, so the call
+after a close simply works: no error, no `"browser is closed"` text on any path,
+and a snapshot immediately afterwards returns the new page. This is the
+measurement [the browser-idle timer](../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
+rests on — if the relaunch were not implicit, the timer would be a way of
+breaking a session rather than a way of reclaiming memory.
+
+⚠️ **`browser_close`'s own result text reads as though it closed a tab, and it
+does not.** It answers *"No open tabs. Navigate to a URL to create one."* with
+`await page.close()` as the code it ran — yet every process under the browsers
+root is gone afterwards, because closing the last page tears the persistent
+context down and the browser with it. A reader who trusted the wording would
+conclude the timer does nothing. Called again with no browser open it answers the
+same text, is **not** an error, and costs 156–514 ms — so a close that races
+anything costs a round trip rather than a failure.
+
+**How to re-establish all of the above:** drive a real child directly —
+`node <payload>/mcp/node_modules/@playwright/mcp/cli.js --config <cfg> --sandbox`
+with `PLAYWRIGHT_BROWSERS_PATH` set — through `initialize` → `browser_navigate`
+→ `browser_close` → `browser_navigate`, counting processes whose
+**`ExecutablePath` is under the browsers root** at each step and reading
+`WorkingSet64`. Never match a process by image name: the developer's own Firefox
+and Chrome are on this machine. The *behaviour* half is asserted on every build
+by `BrowserIdleTimerTests.AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks`;
+only the numbers need the manual run.
 
 **Resume costs 515 ms and loses only `sessionStorage`.** Measured 2026-08-14:
 after killing the node child, a resume against the recorded directory preserved

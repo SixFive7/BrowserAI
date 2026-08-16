@@ -2182,6 +2182,73 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 
 **Consumes:** [§C](C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Sessions/BrowserIdleTimer.cs` ·
+> `src/BrowserAI/Interop/ClientLiveness.cs`, wired through
+> `src/BrowserAI/Sessions/{LiveSession, SessionEnvironment, SessionManager}.cs`,
+> `src/BrowserAI/Proxy/{ChildConnection, BrowserProxy}.cs` and
+> `src/BrowserAI/Program.cs`. Proven by
+> `tests/BrowserAI.Tests/BrowserIdleTimerTests.cs` with
+> `Harness/{RigPaths, NativeHandle}.cs` and the `client-parent` mode in
+> `tests/BrowserAI.TestProbe/ClientProbe.cs`. **Every done-test below was run**,
+> including the two against a real browser and the one that kills a client
+> without ever closing BrowserAI's stdin.
+>
+> **The relaunch is upstream's, and nothing had to be built for it.** Measured
+> twice against `@playwright/mcp` 0.0.79: `browser_close` takes the whole browser
+> tree down — 8 then 7 processes to zero — leaves the node child running, and the
+> *next* tool call brings the browser back in 416 ms then 409 ms with no error
+> and no *"browser is closed"* text on any path. Playwright creates the browser
+> lazily on first use, so there is no relaunch code in this repository.
+>
+> ⚠️ **Two numbers this step was written against were wrong and are corrected
+> in place.** The idle close recovers **~496 MB → ~118 MB** rather than
+> 329 → 110, and the relaunch costs **~0.41 s** rather than 186 ms — both
+> re-measured twice, both previously undated
+> ([kb](../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
+> And ⚠️ **`browser_close`'s own result text says `await page.close()` and "No
+> open tabs", which reads as closing a tab and is not**: closing the last page
+> tears the persistent context down and every browser process with it. A reader
+> who trusted the wording would conclude the timer does nothing.
+>
+> ⚠️ **Cancelling the MCP server's own token does not stop it over real stdio**,
+> measured against ModelContextProtocol 2.2.0 — the read is parked in a syscall
+> and a token cannot wake it. So the client-liveness watcher closes BrowserAI's
+> **protocol channel**, producing the same end-of-input the client's own exit
+> would have, and there is one shutdown path rather than two. The first version
+> cancelled only: it logged that the client had gone and then kept serving, which
+> is this project's founding failure shape written by the code meant to remove
+> it, and the test caught it.
+>
+> **One guard is carried without a test, and it is labelled as such.** A
+> `System.Threading.Timer` callback the pool has already dispatched cannot be
+> recalled by `Change`, so a call answered inside that window would re-arm the
+> timer and leave the old callback in flight. The deadline is therefore kept
+> beside the timer and a stale callback re-arms for what is left rather than
+> closing. **The suite could not provoke the race** — a regression test written
+> for it passed with the guard removed, so it was deleted rather than kept:
+> a test that reads as covering something it cannot detect is worse than none.
+>
+> **Four test-quality defects, all fixed, and three of them blamed the product
+> for being right.** The client-liveness test passed in three seconds while
+> asserting nothing, because it never checked BrowserAI was *alive* before the
+> kill — found by reading a log rather than by a red build. The reset test
+> asserted "no close during this window", which on this machine is not a claim a
+> wall clock can make: a full-suite run recorded a **1.65 s** stall between two
+> in-process round trips against an 800 ms period, so it now measures the gap it
+> actually achieved and retries a starved attempt against a fresh session,
+> failing only when four attempts running were starved. The real-browser test
+> asserted the same shape from a **client-side** stopwatch and failed twice — at
+> 1.71 s and then 0.55 s against a 3 s period — because that clock starts when
+> the test is scheduled to observe an answer rather than when the product sent
+> it; the assertion is gone, and the reset property is asserted only where both
+> clocks are the product's. And its wait condition believed a single
+> image-path scan of ~600 processes, where one transient `OpenProcess` failure
+> reads as *"the browser is gone"*; it confirms the answer a second time now,
+> which is the same class of false answer an image-**name** match would give,
+> arriving through a legitimate route. **No budget was loosened anywhere.** [The suite's
+> non-determinism under load](#17-firefox) predates this step and was not
+> investigated here; it was seen twice, and both runs were re-run.
+
 > ⚠️ **This step was missing, and it was found by the build rather than by
 > review.** Added 2026-08-16, after steps 16 and 17 each independently reported
 > that §C's lifetime section is owned by no numbered step. Verified before
@@ -2201,9 +2268,10 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 > nothing about it is red.
 
 **Exactly one timer exists: browser-idle, ~10 minutes, reset by any tool call.**
-It closes the browser and **keeps the node child** — measured 329 → 110 MB, and
-186 ms to relaunch. There is no handle-expiry timer, no session TTL and no
-reclaim window; [reclaim is forever](C-sessions.md#lifetime-one-timer-and-reclaim-is-forever).
+It closes the browser and **keeps the node child** — re-measured 2026-08-16,
+~496 MB → ~118 MB and ~0.41 s to relaunch. There is no handle-expiry timer, no
+session TTL and no reclaim window;
+[reclaim is forever](C-sessions.md#lifetime-one-timer-and-reclaim-is-forever).
 
 - **The relaunch is implicit, and that is the whole point.** A caller that
   navigates after an idle close must **never** see *"browser is closed"*. That

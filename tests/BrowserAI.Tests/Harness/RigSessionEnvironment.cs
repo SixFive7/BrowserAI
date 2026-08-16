@@ -45,6 +45,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 {
     private readonly List<PipeDuplex> _hops = [];
     private readonly List<FakePlaywrightChild> _children = [];
+    private readonly List<ChildConnection> _realChildren = [];
     private readonly List<SessionLogging> _logs = [];
     private readonly List<ChildProcessOptions> _launches = [];
     private readonly Lock _gate = new();
@@ -57,7 +58,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         Action<FakePlaywrightChild>? configure,
         long? freeBytes,
         Func<string, string, IInstallerRun>? installer,
-        ProvisioningTimers? timers)
+        ProvisioningTimers? timers,
+        TimeSpan? browserIdlePeriod,
+        bool realSessionChildren)
     {
         Root = root;
 
@@ -70,7 +73,16 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         var instances = Path.Combine(root, "app-root", "instances");
         _ = Directory.CreateDirectory(instances);
 
-        var paths = new LocalAppDataPaths(Path.Combine(root, "app-root"));
+        // ⚠️ The one arm that points at the developer's REAL browsers root, and
+        // it is the arm whose subject is a real browser. Everything else about
+        // the app root -- the index, the logs, the instance directory -- stays
+        // in the scratch tree, because the index is machine-wide state and a rig
+        // that wrote into the real one would leave its throwaway directories in
+        // a developer's own `browserai_list`. Only the browsers root is shared,
+        // and nothing in this rig writes to it.
+        IAppPaths paths = realSessionChildren
+            ? new RigPaths(Path.Combine(root, "app-root"), BrowserAiPaths.BrowsersDirectory)
+            : new LocalAppDataPaths(Path.Combine(root, "app-root"));
 
         // ⚠️ The browsers root is inside the scratch tree and the installer is a
         // double, and BOTH halves are load-bearing. Left at the real root, every
@@ -92,12 +104,15 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                     $"A rig with no installer of its own tried to provision '{browser}' into '{browsersRoot}'. Its browsers root is pre-seeded as complete, so reaching this line means something asked for a download that no assertion in this test is about.")),
         };
 
-        if (installer is null)
+        if (installer is null && !realSessionChildren)
         {
             // The state a developer's machine is in, and the state every step
             // before this one assumed: the browser is there. Written the way
             // upstream writes it -- the directory, then the marker last -- so a
             // product check that looked at the wrong one would still fail here.
+            // Skipped for the real-browser arm, whose root is the developer's
+            // own and is already complete: writing into it would be this rig
+            // touching a tree it does not own.
             InstallationMarker.Write(Path.Combine(paths.BrowsersDirectory, ChromiumDirectoryName));
         }
 
@@ -109,6 +124,48 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
             FreeBytesOn = _ => freeBytes,
+        };
+
+        if (browserIdlePeriod is { } period)
+        {
+            Environment = Environment with { BrowserIdlePeriod = period };
+        }
+
+        if (realSessionChildren)
+        {
+            // ⚠️ The product's own default, spelled again here for one reason:
+            // the connection has to be RECORDED. A real session's node pid and
+            // the membership of its job object are the only per-session facts
+            // about browser processes this suite can ask for — an image-path
+            // scan of the machine cannot tell one session's Chromium from
+            // another's, and this suite runs browsers in parallel. Everything
+            // below the ConnectAsync call is the product's.
+            Environment = Environment with
+            {
+                ConnectChild = async (options, loggerFactory, idPrefix, relay, cancellationToken) =>
+                {
+                    var child = await ChildConnection.ConnectAsync(
+                        new DirectStdioClientTransport(options, loggerFactory),
+                        loggerFactory,
+                        idPrefix,
+                        relay,
+                        cancellationToken).ConfigureAwait(false);
+
+                    lock (_gate)
+                    {
+                        _realChildren.Add(child);
+                        _launches.Add(options);
+                    }
+
+                    return child;
+                },
+            };
+
+            return;
+        }
+
+        Environment = Environment with
+        {
             ConnectChild = async (options, loggerFactory, idPrefix, relay, cancellationToken) =>
             {
                 var hop = new PipeDuplex("session hop (BrowserAI ↔ fake session child)");
@@ -174,6 +231,26 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </remarks>
     public bool OpensDefaultSession { get; private init; } = true;
 
+    /// <summary>
+    /// Every <b>real</b> session child this rig stood up, in the order they were
+    /// opened.
+    /// </summary>
+    /// <remarks>
+    /// Empty unless the rig was created with real session children. Each one is
+    /// owned by the product's <c>SessionManager</c>, not by this rig: reading its
+    /// pid and its job membership is all a test may do with it.
+    /// </remarks>
+    public IReadOnlyList<ChildConnection> RealSessionChildren
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _realChildren];
+            }
+        }
+    }
+
     /// <summary>Every double this rig stood up, one per session.</summary>
     public IReadOnlyList<FakePlaywrightChild> SessionChildren
     {
@@ -224,13 +301,27 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// Whether the rig opens a session of its own. False for the one test whose
     /// subject is what happens when <b>no</b> session is open.
     /// </param>
+    /// <param name="browserIdlePeriod">
+    /// How long a session's browser may sit unused before it is closed. Left
+    /// unset, the product's shipped ten minutes applies and no test in this
+    /// suite ever reaches it; the tests whose subject <i>is</i> the timer pass
+    /// milliseconds.
+    /// </param>
+    /// <param name="realSessionChildren">
+    /// Whether each session gets a real <c>node.exe</c> out of the payload, in a
+    /// real job, against the developer's real browsers root — rather than an
+    /// in-process double. True for the one arm that has to observe an actual
+    /// browser going away.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
         long? freeBytes = long.MaxValue,
         Func<string, string, IInstallerRun>? installer = null,
         ProvisioningTimers? timers = null,
-        bool opensDefaultSession = true) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers)
+        bool opensDefaultSession = true,
+        TimeSpan? browserIdlePeriod = null,
+        bool realSessionChildren = false) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers, browserIdlePeriod, realSessionChildren)
         {
             OpensDefaultSession = opensDefaultSession,
             // A volume this environment reports as full refuses every init,
@@ -255,7 +346,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), reason);
 
     private RigSessionEnvironment(string root, string reason)
-        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null)
+        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null, browserIdlePeriod: null, realSessionChildren: false)
     {
         CanOpenSessions = false;
 

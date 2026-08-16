@@ -93,6 +93,28 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// <summary>The revision actually negotiated, as opposed to the one asked for.</summary>
     public string? NegotiatedProtocolVersion { get; }
 
+    /// <summary>
+    /// The child's own process id, or <see langword="null"/> when the child is
+    /// not a process at all — which is the in-process test layer and nothing
+    /// else.
+    /// </summary>
+    public int? ProcessId => (_link.Session as ChildProcessSession)?.ProcessId;
+
+    /// <summary>
+    /// Every process the kernel currently reports in this child's job: the node
+    /// child, the browser it launched and every helper under it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The kernel's own membership list rather than a tally anybody keeps</b>,
+    /// which is what lets the idle close report <c>11 → 1</c> as evidence instead
+    /// of asserting that a browser went. It is also the only question about
+    /// browser processes this product can ask <i>per session</i>: an image-path
+    /// scan of the machine cannot tell one session's Chromium from another's.
+    /// </remarks>
+    /// <returns>The pids, or empty when the child is not a process.</returns>
+    public IReadOnlyList<int> JobProcessIds() =>
+        (_link.Session as ChildProcessSession)?.Job.ProcessIds() ?? [];
+
     /// <summary>The BrowserAI build, as it introduces itself to a child.</summary>
     public static string Version { get; } =
         typeof(ChildConnection).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion

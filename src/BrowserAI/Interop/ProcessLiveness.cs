@@ -133,7 +133,18 @@ internal static partial class ProcessLiveness
         }
     }
 
-    private static int ParentProcessId()
+    /// <summary>
+    /// The pid of the process that started this one — the MCP client.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read once and used for two different things.</b>
+    /// <see cref="ClientProcessName"/> turns it into a display string for
+    /// <c>lock.json</c>; <see cref="ClientLivenessWatcher"/> opens a handle on it
+    /// so BrowserAI is told when the client goes. Neither matches a name, and
+    /// neither terminates anything.
+    /// </remarks>
+    /// <returns>The parent's pid, or <c>0</c> when it cannot be read.</returns>
+    public static int ParentProcessId()
     {
         var status = NtQueryInformationProcess(
             GetCurrentProcess(),

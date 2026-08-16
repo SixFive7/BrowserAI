@@ -59,6 +59,29 @@ internal sealed record SessionEnvironment
     public required Func<string, LogLevel, SessionLogging> OpenSessionLog { get; init; }
 
     /// <summary>
+    /// How long a session's browser may sit unused before
+    /// <see cref="BrowserIdleTimer"/> closes it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A seam for one reason: the shipped period is ten minutes, and no test
+    /// may wait that long.</b> Everything the timer decides — reset on every
+    /// forwarded call, never fire while a call is outstanding, close once and
+    /// stay disarmed — is the same code at 200 ms as at ten minutes, so the suite
+    /// drives it in milliseconds and the product never sees this set.
+    /// </para>
+    /// <para>
+    /// <b>The default is the shipped value, and it is asserted separately.</b> A
+    /// test-friendly period leaking into the product would be invisible: a
+    /// browser closing every twenty seconds is silently relaunched by the next
+    /// call, so nothing would ever go red. <c>BrowserIdleTimerTests</c> therefore
+    /// asserts both the constant and that nothing in <c>src/</c> assigns this
+    /// property.
+    /// </para>
+    /// </remarks>
+    public TimeSpan BrowserIdlePeriod { get; init; } = BrowserIdleTimer.DefaultIdlePeriod;
+
+    /// <summary>
     /// Starts one session's <c>@playwright/mcp</c> child and completes the
     /// handshake with it.
     /// </summary>
