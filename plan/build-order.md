@@ -517,6 +517,82 @@ byte-exact passthrough.
 **Consumes:** [§E](E-lifecycle.md#zero-process-leakage-the-job-object-contract) ·
 [§D](D-locking.md#never-by-image-name)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Interop/{JobObject, JobLauncher,
+> LaunchedProcess}.cs` · `src/BrowserAI/Protocol/{DirectStdioClientTransport,
+> ChildProcessSession}.cs` (rewired onto the launcher) · `build/BannedSymbols.txt`
+> with the analyzer moved into `Directory.Build.props` · `tests/BrowserAI.TestProbe/
+> JobProbe.cs` (`job-launcher`, `job-child`, `job-grandchild`) ·
+> `tests/BrowserAI.Tests/{JobObjectTests, JobContainmentTests,
+> NeverByImageNameTests}.cs` · `tests/BrowserAI.Tests/Harness/{JobObjectScope,
+> ProcessIdentity}.cs`. Every done-test below was run, including the
+> plant-and-revert. **62 tests green, `dotnet build` 0 warnings, the AOT publish
+> still clean**, and `dotnet test` and `BrowserAI.Tests.exe` agree.
+>
+> **Step 5's transport was rebuilt rather than extended, because §E leaves no
+> choice.** `Process.Start` cannot put a child in a job, and start-then-assign was
+> measured leaking grandchildren — so `CreateProcessW` with
+> `PROC_THREAD_ATTRIBUTE_JOB_LIST`, hand-made pipes and a hand-built environment
+> block replace it. **That also removed a live §E violation**: both
+> `Process.Kill(entireProcessTree: true)` call sites, which step 5 shipped with a
+> comment saying step 6 would make them belt-and-braces. §E forbids that call
+> outright — it walks re-parentable, pid-reusable links — so the kill path is now
+> closing the job handle, and the call is banned repository-wide. Every step-5
+> assertion survived the rewrite unchanged: same parent-pid check, same
+> byte-identical round trip, same allowlist, same five stderr lines, same exit
+> code after disposal.
+>
+> ⚠️ **A measurement contradicted the expectation, and the test was wrong rather
+> than the product.** §E's headline is that a denied breakaway *fails the launch*
+> with `ERROR_ACCESS_DENIED`, so the acceptance test asserted 5. It got **0**.
+> With a libuv-shaped job nested inside ours the breakaway **succeeds** — and the
+> new process lands **in our job**, because a breakaway walks up the hierarchy and
+> stops at the first job that does not permit it. Both outcomes are correct; the
+> configuration decides which. The test now measures both from the same process,
+> and asserts on **where the process ended up** rather than on the return value,
+> because a check written as *"0 means we leaked"* fails in exactly the
+> configuration production always runs in. Recorded, with the table, in
+> [kb](../kb/windows/processes.md#job-objects-and-process-containment), where the
+> original entry now carries the qualifier it was missing.
+>
+> **What the acceptance test actually ran against, stated rather than implied.**
+> Two arms, both on every run. The first uses a probe child that reproduces
+> libuv's permissive job around itself and then spawns grandchildren the ordinary
+> way — **10 processes, 0 escapees, 0 survivors** — and needs no payload, so it
+> runs on a clean clone. The second runs the bundled **`node.exe` v24.19.0** with
+> two `child_process.spawn` grandchildren — **4 processes, 0 escapees, 0
+> survivors** — and on a clean clone it asserts the payload is absent *as a whole*
+> and returns. **The cost of that branch is real and is not hidden:** on a clean
+> clone nothing about node is proven, and the guarantee for the bundled runtime
+> rests on the probe arm plus the recorded measurement. It half-closes
+> [the Node gap](../kb/README.md#re-verification-index) — containment through the
+> shipped runtime is now measured on v24.19.0; whether libuv still creates that
+> job under v24.19.0 was **not** established, because the test observes
+> containment rather than libuv's internals.
+>
+> **`PROC_THREAD_ATTRIBUTE_JOB_LIST` under `[LibraryImport]` holds, with one
+> caveat on the claim.** `dotnet publish -r win-x64 --self-contained` emits zero
+> trim/AOT warnings with all of this in it, and the launcher runs correctly — but
+> it ran under the test host, not from the published binary. A published binary
+> spawning a real child is [step 7](#7-vertical-slice-a-published-aot-binary-proxies-a-real-child)'s
+> done-test, and that is where the decision is closed rather than here.
+>
+> **Two toolchain traps, both measured twice.** A `--` inside an XML comment in
+> `Directory.Build.props` makes MSBuild fail to load it, and `dotnet build` then
+> reports `NETSDK1207: Ahead-of-time compilation is not supported for the target
+> framework` — only `dotnet msbuild -getProperty` names the real cause. And
+> `WaitForSingleObject` on a handle without `SYNCHRONIZE` returns `WAIT_FAILED`,
+> which a liveness check that treats anything-but-signalled as "running" reports
+> as a process that never dies; it presented as a containment defect for half an
+> hour and the product was fine. Both in
+> [kb](../kb/windows/processes.md#interop-and-the-toolchain).
+>
+> **Re-verification row 2 was split rather than ticked.** It named
+> `JobContainmentTests`, which did not exist, and covered process trees *and*
+> browsers. The process-tree half is now that test; the browser half is row **2a**
+> and stays *manual* until step 15, which is the first step with a browser to run
+> it against. Marking the whole row automated would have read as covered, which is
+> the failure the column exists to prevent.
+
 **Decisions under test:** `PROC_THREAD_ATTRIBUTE_JOB_LIST` under `[LibraryImport]`
 in a NativeAOT binary, and *never by image name* as a structural rule rather than
 a review item.

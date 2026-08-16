@@ -63,13 +63,12 @@
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The product's own bans. The analyzer itself, and the repository-wide
+         never-by-image-name file it reads alongside this one, are declared in
+         Directory.Build.props so that every project is covered. -->
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
 

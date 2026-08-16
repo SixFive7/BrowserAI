@@ -75,6 +75,37 @@
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup Label="Never by image name">
+    <!--
+      The banned-API analyzer is declared HERE rather than in one project,
+      because the rule it carries has no exception for test code: never match,
+      count or terminate a process by image name. A project added later must be
+      covered by construction rather than by somebody remembering, which is
+      what putting it in this file buys. NeverByImageNameTests asserts exactly
+      that: every project in the tree reads this file.
+
+      The product adds its own bans (Console, Debug) in
+      src/BrowserAI/BannedSymbols.txt. Both files carry that name deliberately;
+      the analyzer reads every additional file called BannedSymbols.txt and
+      merges them, which is measured rather than assumed
+      (kb/windows/processes.md).
+
+      NOTE FOR ANYONE EDITING THE COMMENT ABOVE: an XML comment cannot contain
+      a double hyphen. Measured twice, 2026-08-16: one in this file makes
+      MSBuild fail to load it, and `dotnet build` then reports
+      `NETSDK1207: Ahead-of-time compilation is not supported for the target
+      framework` from the product project, because a Directory.Build.props that
+      does not load takes TargetFramework with it. Only
+      `dotnet msbuild <project> -getProperty:TargetFramework` names the real
+      cause.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)build\BannedSymbols.txt" />
+  </ItemGroup>
+
   <PropertyGroup Label="Restore">
     <!-- Writes packages.lock.json beside each project. This is what makes the
          two-step resolve described in Directory.Packages.props possible, and

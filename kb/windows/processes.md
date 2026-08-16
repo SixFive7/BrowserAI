@@ -28,6 +28,53 @@ same reason for avoiding the flag (`src/win/process.c:1124`). **This is the fact
 the whole guarantee rests on** — a job granting no breakaway flags converts every
 escape attempt into a launch failure. `[STABLE]`
 
+> ⚠️ **That sentence is about the immediate job, and it is not the whole
+> answer.** With a permissive job nested *inside* ours the same call **succeeds**
+> — see the entry below, measured 2026-08-16. Read as universal it produces a
+> test that asserts error 5 in the production configuration and fails, which is
+> exactly what happened while writing `JobContainmentTests`.
+
+**A breakaway from a nested permissive job succeeds, and lands in our job
+anyway.** Measured twice, 2026-08-16, by `JobContainmentTests.
+ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`, which makes the same
+`CreateProcessW` call from one process in two states: `[STABLE]`
+
+| The process's jobs, innermost first | Result | Where the new process ends up |
+|---|---|---|
+| ours (`KILL_ON_JOB_CLOSE` only) | `ERROR_ACCESS_DENIED` (5), **no process created** | — |
+| a libuv-shaped job (`KILL_ON_JOB_CLOSE \| BREAKAWAY_OK \| SILENT_BREAKAWAY_OK`) nested inside ours | **success, error 0** | **in our job**, confirmed by `IsProcessInJob` and by the job's own pid list |
+
+Both outcomes are correct and neither is an escape. The breakaway is granted by
+the inner job, walks up the hierarchy, and stops at the first job that does not
+permit it — ours. **The observable that matters is where the process ended up,
+never the return value**: a check written as *"error 0 means we leaked"* reports
+a defect in the exact configuration production always runs in, because libuv's
+job is always in the chain.
+
+**The product implementation is measured, not only the prototype.** 2026-08-16,
+`JobContainmentTests`, both arms run twice with identical results — job created
+by `src/BrowserAI/Interop/JobObject.cs`, child started by
+`JobLauncher.Start`: `[FLOATS]`
+
+| Arm | Processes walked | Job pid-list | Escapees | Job members the walk missed | Survivors after the launcher is `TerminateProcess`d |
+|---|---|---|---|---|---|
+| Probe tree (child + 3 grandchildren + a breakaway, inside a libuv-shaped job) | **10** | 10 | **0** | **0** | **0** |
+| Bundled `node.exe` **v24.19.0** + 2 `child_process.spawn` grandchildren | **4** | 4 | **0** | **0** | **0** |
+
+Read back from the kernel in both arms: `LimitFlags` `0x2000`,
+`JobObjectBasicUIRestrictions` `0`, handle **not** inheritable. Re-establish by
+running the suite; the launcher writes its whole report to
+`<scratch>\report.json`.
+
+> **What the node arm does and does not close.** [The Node gap](../README.md)
+> notes that the 2026-08-15 containment measurements ran on **26.7.0** while the
+> shipped runtime is **v24.19.0**. Containment through the bundled runtime's own
+> `child_process.spawn` tree is now measured on v24.19.0 and holds. What was
+> **not** separately confirmed is that libuv still creates its permissive global
+> job under that version — the test observes containment, not libuv's internals.
+> The probe arm reproduces that job shape explicitly, so the nested-permissive
+> case is covered either way; the libuv source claim itself remains as it was.
+
 **Nested jobs cannot launder a process out.** MS Learn,
 [Nested Jobs](https://learn.microsoft.com/windows/win32/procthread/nested-jobs):
 a breakaway *"moves up the hierarchy until it reaches a job that does not permit
@@ -335,6 +382,43 @@ project P/Invokes are the same shape, so every information class used must eithe
 be safe at our Windows floor or carry an explicit downgrade path — a value that is
 merely absent on an older build fails at the call site, where nothing else will
 catch it. Re-establish by reading that file. `[STABLE]`
+
+**`WaitForSingleObject` needs `SYNCHRONIZE`, which
+`PROCESS_QUERY_LIMITED_INFORMATION` does not imply.** Measured 2026-08-16 while
+writing the containment harness: a handle opened with query rights alone makes
+the wait return `WAIT_FAILED`, and a liveness check written as *"anything other
+than `WAIT_OBJECT_0` means still running"* then reports every process it can open
+as alive **forever**. It presented as a containment defect in the product —
+30 seconds of polling, then "the launcher survived" — and the product was fine.
+The shape is the point: a failed call read as one of the two normal answers is
+worse than an exception, so `ProcessIdentity.IsAlive` refuses to interpret
+`WAIT_FAILED` at all. Note also that `OpenProcess` succeeding proves nothing,
+because a handle held by anyone keeps the pid and the object alive after the
+process is gone. Re-establish by removing `SYNCHRONIZE` from the access mask.
+`[STABLE]`
+
+**A double hyphen in an XML comment in `Directory.Build.props` presents as
+`NETSDK1207: Ahead-of-time compilation is not supported for the target
+framework`.** Measured twice, 2026-08-16, SDK **10.0.302**: XML forbids `--`
+inside a comment, MSBuild then cannot load the file, and the project builds
+*without* it — so `TargetFramework` is never set and the AOT check fails on a
+framework nobody chose. **The two entry points disagree, and only one is
+useful:** `dotnet build` reports NETSDK1207 from
+`Microsoft.NET.Sdk.FrameworkReferenceResolution.targets(120,5)`, while
+`dotnet msbuild <project> -getProperty:TargetFramework` reports the real cause,
+`MSB4024 … An XML comment cannot contain '--'`, with the line and column. Reach
+for `-getProperty` whenever a shared props file has just been edited and the
+error names something unrelated. `[FLOATS]` for the SDK version; `[STABLE]` for
+the XML rule.
+
+**`BannedApiAnalyzers` merges every additional file named `BannedSymbols.txt`.**
+Measured 2026-08-16 by planting one call per project: with
+`build/BannedSymbols.txt` supplied to all projects from `Directory.Build.props`
+and `src/BrowserAI/BannedSymbols.txt` supplied only to the product, the product
+project reports **both** files' bans on the same build. That is what lets the
+repository-wide rule and the product-only rules live in separate files instead of
+being duplicated. Re-establish by planting a banned call and reading the RS0030
+message, which quotes the entry's own text. `[FLOATS]`
 
 **No credible NuGet job-object wrapper exists** — the candidates have <6K
 downloads and the newest was published in **2017**. `dotnet/runtime`

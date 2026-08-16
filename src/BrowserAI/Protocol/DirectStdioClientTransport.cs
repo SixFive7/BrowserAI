@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
-using System.Text;
+using BrowserAI.Interop;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -25,7 +24,7 @@ namespace BrowserAI.Protocol;
 /// <item>
 /// A shell sits between BrowserAI and <c>node</c>, so the process BrowserAI can
 /// see is not the process it needs to own — which breaks tree ownership and
-/// exit-code attribution, both of which the job object at step 6 depends on.
+/// exit-code attribution, both of which the job object depends on.
 /// </item>
 /// <item>
 /// Argument fidelity is lost. Measured against a node probe: a literal
@@ -40,17 +39,17 @@ namespace BrowserAI.Protocol;
 /// <c>IClientTransport</c> is two members, so replacing it is cheaper than
 /// working around it.
 /// </para>
+/// <para>
+/// <b>It is also not <c>Process.Start</c> underneath.</b> The child has to be a
+/// member of a job object from the instant it exists, and .NET cannot express
+/// that: <c>ProcessStartInfo</c> has no creation-flags surface. Starting first
+/// and assigning afterwards was measured leaking grandchildren, so the launch
+/// goes through <see cref="JobLauncher"/> and this class supplies the policy —
+/// what to run, where, and with which environment.
+/// </para>
 /// </remarks>
 internal sealed class DirectStdioClientTransport : IClientTransport
 {
-    /// <summary>
-    /// Diagnostics, not protocol. A child that writes a byte this decoder
-    /// cannot make sense of must not take the session down with it, so unlike
-    /// <see cref="StdioChannel.Utf8NoBom"/> this one substitutes rather than
-    /// throws — an unreadable log line is a worse log line, and a dead session.
-    /// </summary>
-    private static readonly UTF8Encoding LenientUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
-
     private readonly ChildProcessOptions _options;
     private readonly ILoggerFactory? _loggerFactory;
 
@@ -75,34 +74,30 @@ internal sealed class DirectStdioClientTransport : IClientTransport
         cancellationToken.ThrowIfCancellationRequested();
 
         var logger = _loggerFactory?.CreateLogger<DirectStdioClientTransport>();
-        var startInfo = BuildStartInfo();
 
-        Process? process = null;
-        DataReceivedEventHandler? standardErrorHandler = null;
-        var started = false;
+        // One job per child, created fresh here. BrowserAI itself is never a
+        // member of it: with several sessions in one process that would fuse
+        // every tree together and make BrowserAI a casualty of any single
+        // teardown.
+        var job = JobObject.CreateKillOnClose();
+        LaunchedProcess? process = null;
 
         try
         {
-            process = new Process { StartInfo = startInfo };
-
-            // Subscribed BEFORE Start. A child that writes to stderr in its
-            // first milliseconds -- which upstream does, on every healthy
-            // launch -- would otherwise lose those lines to a handler attached
-            // afterwards, and the lines lost are exactly the ones that explain
-            // a failure to start.
-            standardErrorHandler = (_, e) => OnStandardErrorLine(logger, e.Data);
-            process.ErrorDataReceived += standardErrorHandler;
-
-            started = process.Start();
-
-            if (!started)
-            {
-                throw new IOException($"'{_options.Command}' did not start, and Windows reported no reason.");
-            }
-
-            // BeginErrorReadLine can only run after Start. Nothing is lost in
-            // between: the pipe buffers whatever the child wrote first.
-            process.BeginErrorReadLine();
+            process = JobLauncher.Start(
+                job,
+                _options.Command,
+                _options.Arguments,
+                // Explicit, never left unset. Passed null, CreateProcessW gives
+                // the child whatever directory the MCP client happened to be
+                // launched from -- which for `@playwright/mcp` decides where
+                // relative paths land. ChildProcessOptions makes it required so
+                // the mistake cannot be made by omission.
+                _options.WorkingDirectory,
+                // The complete block, replacing ours rather than merging into
+                // it. JobLauncher builds it from exactly these entries and
+                // nothing else, so an allowlist here is a policy that holds.
+                _options.Environment);
 
             if (logger is not null)
             {
@@ -110,119 +105,18 @@ internal sealed class DirectStdioClientTransport : IClientTransport
             }
 
             return Task.FromResult<ITransport>(
-                new ChildProcessSession(process, standardErrorHandler, Name, _options.ShutdownTimeout, _loggerFactory));
+                new ChildProcessSession(job, process, _options.StandardErrorLines, Name, _options.ShutdownTimeout, _loggerFactory));
         }
         catch (Exception ex)
         {
-            if (process is not null)
-            {
-                if (standardErrorHandler is not null)
-                {
-                    process.ErrorDataReceived -= standardErrorHandler;
-                }
-
-                KillOnFailedConnect(process, started);
-                process.Dispose();
-            }
+            // Closing the job is the kill path, and it is total: a child that
+            // got far enough to spawn grandchildren before the failure takes
+            // them with it. Nothing here enumerates or matches anything.
+            job.Dispose();
+            process?.Dispose();
 
             throw new IOException($"Could not start '{_options.Command}' in '{_options.WorkingDirectory}'.", ex);
         }
-    }
-
-    private static void KillOnFailedConnect(Process process, bool started)
-    {
-        if (!started)
-        {
-            return;
-        }
-
-        try
-        {
-            // The whole tree: node does not take its own children with it, and
-            // a half-connected child that survives this method is a leak with
-            // nothing left holding a reference to it. The job object at step 6
-            // is what makes this belt-and-braces rather than the only guard.
-            process.Kill(entireProcessTree: true);
-        }
-#pragma warning disable CA1031 // A connect that already failed is not made worse by a kill that also failed; the IOException below carries the real reason.
-        catch (Exception)
-#pragma warning restore CA1031
-        {
-        }
-    }
-
-    private void OnStandardErrorLine(ILogger? logger, string? line)
-    {
-        if (line is null)
-        {
-            return;
-        }
-
-        if (logger is not null)
-        {
-            TransportLog.ChildStandardError(logger, Name, line);
-        }
-
-        try
-        {
-            _options.StandardErrorLines?.Invoke(line);
-        }
-#pragma warning disable CA1031 // This runs on the thread that dispatches ErrorDataReceived; an exception escaping it takes down the process.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            if (logger is not null)
-            {
-                TransportLog.StandardErrorCallbackFailed(logger, Name, ex);
-            }
-        }
-    }
-
-    private ProcessStartInfo BuildStartInfo()
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = _options.Command,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-
-            // Explicit, never left unset. .NET passes null to CreateProcess for
-            // an unset WorkingDirectory, and the child then inherits whatever
-            // directory the MCP client happened to be launched from -- which
-            // for `@playwright/mcp` decides where relative paths land.
-            // ChildProcessOptions makes this required so the mistake cannot be
-            // made by omission.
-            WorkingDirectory = _options.WorkingDirectory,
-
-            // Applies to the stderr StreamReader only. stdin and stdout are
-            // driven as raw byte streams by ChildProcessSession, so no encoder
-            // exists on the protocol path at all -- which is a stronger
-            // guarantee than setting the right one.
-            StandardErrorEncoding = LenientUtf8,
-        };
-
-        foreach (var argument in _options.Arguments)
-        {
-            // ArgumentList, never Arguments: .NET quotes each element for
-            // CreateProcess itself. The two are mutually exclusive and setting
-            // both is undefined.
-            startInfo.ArgumentList.Add(argument);
-        }
-
-        // Clear FIRST. ProcessStartInfo.Environment arrives pre-populated with
-        // this process's own block and assignment merges into it, so an
-        // allowlist that skips this line is a policy that does nothing.
-        startInfo.Environment.Clear();
-
-        foreach (var (name, value) in _options.Environment)
-        {
-            startInfo.Environment[name] = value;
-        }
-
-        return startInfo;
     }
 }
 
@@ -246,7 +140,11 @@ internal sealed class ChildProcessOptions
     /// </summary>
     public required IReadOnlyDictionary<string, string> Environment { get; init; }
 
-    /// <summary>Arguments, passed verbatim and quoted by .NET for <c>CreateProcess</c>.</summary>
+    /// <summary>
+    /// Arguments, passed verbatim. <see cref="JobLauncher"/> does the quoting,
+    /// because the command line reaches <c>CreateProcessW</c> as one buffer
+    /// rather than as a list.
+    /// </summary>
     public IReadOnlyList<string> Arguments { get; init; } = [];
 
     /// <summary>How long a child gets to exit after its stdin closes before it is killed.</summary>

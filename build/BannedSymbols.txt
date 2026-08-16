@@ -1,0 +1,33 @@
+; SPDX-FileCopyrightText: 2026 Jori Huisman
+; SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+;
+; Format: <DocumentationCommentId>;<message shown at the call site>
+;
+; NEVER BY IMAGE NAME -- the repository-wide half of the banned list, applied to
+; every project by Directory.Build.props, product and test alike. The rule has
+; no exception for test code: a harness that counts chrome.exe is a harness that
+; will one day be adapted into a sweep that kills one.
+;
+; It is a STRUCTURAL rule rather than a review item because a review already
+; passed on code that violated it. The Chromium probes this project grew out of
+; counted and killed by image name -- harmless for Chromium on that machine, and
+; the same code adapted to Firefox would have killed ~40 of the maintainer's own
+; firefox.exe processes.
+;
+; The invariant: BrowserAI can only terminate a process that belongs to a job
+; object it created, or whose identity it verified against a path it owns. Two
+; mechanisms, no third.
+;
+; What an analyzer cannot see -- `taskkill /IM`, a WMI query filtered on Name, a
+; toolhelp walk that matches szExeFile -- is covered by NeverByImageNameTests,
+; which reads the tree as text. The two together are the mechanism; neither on
+; its own is.
+;
+; The product's own additional bans (Console, Debug) live beside it in
+; src/BrowserAI/BannedSymbols.txt. Both files are named BannedSymbols.txt
+; because that is the name the analyzer looks for, and it reads every one it is
+; given.
+
+M:System.Diagnostics.Process.GetProcessesByName(System.String);Never by image name. Act only on a job object BrowserAI created, or on a pid whose identity was verified against a path BrowserAI owns. This call cannot tell our browser from the user's, and the user has ~40 of them.
+M:System.Diagnostics.Process.GetProcessesByName(System.String,System.String);Never by image name, and never on another machine either. Same rule as the single-argument overload.
+M:System.Diagnostics.Process.Kill(System.Boolean);Never Process.Kill(entireProcessTree: true). It walks parent-child links, which are re-parentable and pid-reusable, and it loses the race against anything that respawns while it walks. Dispose the JobObject instead: KILL_ON_JOB_CLOSE tears the whole job down at once and contains anything spawned mid-teardown.

@@ -32,6 +32,11 @@ internal static class Program
             "crash" when args.Length is 2 => Crash(args[1]),
             "transport-child" when args.Length is 4 =>
                 TransportChild(args[1], int.Parse(args[2], CultureInfo.InvariantCulture), args[3]),
+            "job-launcher" when args.Length >= 4 =>
+                JobProbe.Launcher(args[1], args[2], args[3], args[4..]),
+            "job-child" when args.Length is 3 =>
+                JobProbe.Child(args[1], int.Parse(args[2], CultureInfo.InvariantCulture)),
+            "job-grandchild" when args.Length is 1 => JobProbe.Grandchild(),
             _ => Usage(),
         };
     }

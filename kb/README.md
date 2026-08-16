@@ -68,13 +68,22 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 > found identical". Re-run `.work/jobtest/` under the bundled `node.exe` before
 > the guarantee is claimed for a shipped build; nothing else here is known to
 > depend on the Node version.
+>
+> **Half closed, 2026-08-16.** `JobContainmentTests.
+> TheBundledNodeAndItsDescendantsAreContained` runs the bundled **v24.19.0** and
+> its `child_process.spawn` grandchildren inside BrowserAI's own job, and
+> containment holds — 4 processes, 0 escapees, 0 survivors, twice. What that
+> does **not** establish is the libuv claim itself: the test observes
+> containment, not whether libuv still creates its permissive global job under
+> this version. Row 2 covers the measured half; the source claim above is
+> unchanged and still owed a read.
 
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **132**
-`[FLOATS]` markers stand across the articles against the **53** numbered rows
-below (55 lines, counting 4a and 4b),
+table is how that happens. **It does not yet cover all of them**: **135**
+`[FLOATS]` markers stand across the articles against the **55** numbered rows
+below (58 lines, counting 2a, 4a and 4b),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
@@ -87,7 +96,10 @@ missing row as a gap in this table, never as permission to skip the fact.
 > that looked like. **The test reads the sentence above as its anchor**, so
 > rewording it fails the suite rather than quietly unhooking the check.
 
-> **There was a row 54, added and withdrawn on 2026-08-16.** It asserted that
+> **There was an earlier row 54, added and withdrawn on 2026-08-16.** The
+> number has since been reused by a different fact, so read this note as being
+> about the withdrawal rather than about whatever row 54 says today. It asserted
+> that
 > `dotnet test` runs zero tests on this toolchain. It does not: the same command
 > returns 51 passed / exit 0, and a fresh worktree of the very commit the row
 > cited as its proof returns 30 passed / exit 0. One transient observation had
@@ -154,6 +166,18 @@ missing row as a gap in this table, never as permission to skip the fact.
 > so the table is 54 numbered rows over 56 lines. **Row 31 moved from *manual*
 > to a test** — the first row this build has automated by writing the code the
 > row was waiting for, which is the shape the column exists to reward.
+>
+> **Re-counted 2026-08-16 after build-order step 6: 135.** Three new markers —
+> the containment numbers measured against the product's own job and launcher,
+> the double-hyphen XML trap, and `BannedApiAnalyzers` merging multiple banned
+> lists. Two new rows (54 and 55) and one **split**: row 2 was one row covering
+> both process trees and browsers, and only the first half is now automated, so
+> the browser half is row 2a and stays *manual* until [step
+> 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)
+> has a browser to run it against. Splitting rather than marking the whole row
+> automated is the same rule as naming a test that does not exist: a row that is
+> half covered reads as covered. **Row 2 moved from *manual* to a test.** The
+> table is 55 numbered rows over 58 lines.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -171,7 +195,8 @@ decision:
 | # | Fact | Breaks if | Check | Automated by |
 |---|---|---|---|---|
 | 1 | Playwright's restart command line overshoots 1023 by 531+ ([kb](chromium/resurrection.md)) | Playwright trims its arg list | `GetApplicationRestartSettings` on a live browser returns `ERROR_NOT_FOUND` | — *manual*; owed as `RestartRegistrationTests` at [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser) |
-| 2 | Job containment holds end to end ([kb](windows/processes.md#job-objects-and-process-containment)) | Playwright, Chromium or Firefox changes spawn flags | Run `.work/jobtest/` against both browsers | — *manual*; owed as `JobContainmentTests` at [step 6](../plan/build-order.md#6-the-job-object), against both browsers at [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser) |
+| 2 | Job containment holds end to end for **process trees**, measured against the product's own job and launcher — 10 processes in the probe arm, 4 under the bundled `node.exe`, 0 escapees and 0 survivors in both ([kb](windows/processes.md#job-objects-and-process-containment)) | Node, libuv or the SDK changes how a child is created; a flag is added to the job | Run the suite. Each arm asserts `IsProcessInJob` for every walked pid, cross-checks against the job's own pid list **in both directions**, then hard-kills the launcher and requires zero survivors | `JobContainmentTests` · `JobObjectTests` |
+| 2a | The same guarantee **against real browsers** — the 16 runs / 106 processes / 0 escapees half ([kb](windows/processes.md#job-objects-and-process-containment)) | Chromium or Firefox starts requesting breakaway on a browser path, or Playwright changes `detached` | Re-run the acceptance test with a Chromium and a Firefox tree, and require every profile directory to delete cleanly afterwards — a directory still holding a lock proves an escaped browser | — *manual*; owed at [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser), which is the first step that has a browser to run it against |
 | 3 | `chromiumSandbox` config key still discarded ([kb](playwright/configuration.md#silent-config-failures)) | Upstream fixes it | Assert `--no-sandbox` absent from the child's browser command line | — *manual*; owed as `SandboxFlagTests` at [step 7](../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child) |
 | 4 | `Chrome_MessageWindow` title format ([kb](windows/detection.md)) | Chromium changes `ProcessSingleton` | Exact-title lookup against a launched browser | — *manual*; owed as `MessageWindowTests` at [step 16](../plan/build-order.md#16-the-stray-sweep) |
 | 4a | **Cross-process `GetWindowTextW` bypasses `WM_GETTEXT`** — undocumented behaviour of a documented function, and the sweep rests on it ([kb](windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)) | A Windows change routes the read through the message queue | Child process with a WndProc that suppresses `WM_GETTEXT`; assert the parent still reads the kernel name. **No browser needed — runs in milliseconds on every build** | — *manual*; owed as `WindowTextBypassTests` at [step 16](../plan/build-order.md#16-the-stray-sweep) |
@@ -226,6 +251,8 @@ decision:
 | 51 | **The snapshot gate is byte-exact across line endings.** All four snapshots are **LF** today; the `-text` exemption in `.gitattributes` is what keeps a committed byte copy from being normalised out from under the comparison if upstream ever ships CRLF ([kb](windows/processes.md#interop-and-the-toolchain)) | Upstream changes its line endings **and** the exemption has been lost. Either alone is harmless; together the committed copy is LF, the regenerated one is CRLF, and every build is red on a difference that is not one | Count CR **bytes**, by piping `tr -cd '\r'` into `wc -c`, on the four snapshots and on the payload originals. Never `grep -c $'\r'`, which reported every line of an all-LF file as a match | `build/Update-UpstreamSnapshots.ps1` |
 | 52 | **Three traps in the gate's own plumbing**: `$(IntermediateOutputPath)` is empty in a `.targets` imported from the project body (the stamp escapes `obj\`); PowerShell 7 colours redirected output; `Get-Command git` returns two executables on this machine ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK bump for the first, any PowerShell bump for the second. **The SDK floats**, so the first moves without anyone choosing it | Re-measure the first by pointing a `Touch` at `$(IntermediateOutputPath)` from an imported `.targets`. Its *consequence* is caught on every step by `git status --porcelain`, which is how it was found | — *manual* |
 | 53 | **`StreamServerTransport` still re-escapes every result**, because the escaping comes from `Utf8JsonWriter`'s own encoder and it sets none — 127 bytes through our transport against 190 through the SDK's, for one message ([kb](mcp/sdk.md#added-2026-08-16--writing-the-two-transports-at-220)) | Upstream sets an `Encoder`, or gains an options seam. Deviation 5's transport stays correct either way, but [the reason recorded for owning it](../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from) would be stale, and a stale reason is how a component nobody needs survives a rewrite | Serialise one message through both transports and compare bytes, never decoded strings — the escaping is semantically lossless and invisible to anything that round-trips | `DirectStdioServerTransportTests.TheSdkServerTransportStillEscapesTheSameResult` |
+| 54 | **A double hyphen in an XML comment in a shared props file presents as `NETSDK1207: Ahead-of-time compilation is not supported for the target framework`**, and only `dotnet msbuild -getProperty` names the real cause ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK bump changes the diagnostic or the order of the checks. **The SDK floats** under `rollForward: latestMajor`, so this moves without anyone choosing it | Put `--` inside a comment in `Directory.Build.props`, then run `dotnet build` and `dotnet msbuild <project> -getProperty:TargetFramework` and compare what each says. Revert | — *manual* |
+| 55 | **`BannedApiAnalyzers` merges every additional file named `BannedSymbols.txt`**, which is what lets the repository-wide never-by-image-name list and the product-only Console list be separate files ([kb](windows/processes.md#interop-and-the-toolchain)) | Any analyzer bump changes the file discovery. It would fail **open**: one of the two lists would stop applying, with a green build and no diagnostic anywhere | Plant one banned call from each file in the product project and require both RS0030s on the same build. Revert | — *manual* |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

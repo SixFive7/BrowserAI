@@ -25,6 +25,11 @@
     <RootNamespace>BrowserAI.TestProbe</RootNamespace>
     <AssemblyName>BrowserAI.TestProbe</AssemblyName>
     <IsPackable>false</IsPackable>
+    <!-- Required by [LibraryImport] in JobProbe.cs, which reads the job's
+         membership and walks a process tree from inside the process that owns
+         the job. Same limit as the other two projects: every use is a P/Invoke
+         declaration, never hand-written unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,67 +1,99 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
+using System.Text;
+using BrowserAI.Interop;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Protocol;
 
 /// <summary>
 /// The live half of <see cref="DirectStdioClientTransport"/>: one child process,
-/// its two pipes, and its exit code.
+/// the job object that contains it, its three pipes, and its exit code.
 /// </summary>
 /// <remarks>
+/// <para>
 /// The SDK's equivalent is <c>internal</c>, so this is written against the
 /// public <c>TransportBase</c> rather than derived from it. What that costs is
 /// this file; what it buys is that the process BrowserAI holds is the process
 /// it started.
+/// </para>
+/// <para>
+/// <b>This object owns the job handle for the child's whole life</b>, and that
+/// is the containment guarantee rather than a detail of it: if BrowserAI dies —
+/// crash, <c>TerminateProcess</c>, a session limit, a power of ten of other
+/// reasons — the kernel closes the last handle and every process in the job goes
+/// with it. Nothing has to run for that to happen, which is the point. A cleanup
+/// path that must execute is a cleanup path that will one day not.
+/// </para>
 /// </remarks>
 internal sealed class ChildProcessSession : JsonLinesTransport
 {
     private static readonly ReadOnlyMemory<byte> Terminator = "\n"u8.ToArray();
 
-    private readonly Process _process;
-    private readonly DataReceivedEventHandler _standardErrorHandler;
+    /// <summary>
+    /// Diagnostics, not protocol. A child that writes a byte this decoder
+    /// cannot make sense of must not take the session down with it, so unlike
+    /// <see cref="StdioChannel.Utf8NoBom"/> this one substitutes rather than
+    /// throws — an unreadable log line is a worse log line, and a dead session.
+    /// </summary>
+    private static readonly UTF8Encoding LenientUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+
+    /// <summary>
+    /// How long the stderr reader is given to drain after the child exits. It
+    /// is bounded because a grandchild that inherited the write end can hold it
+    /// open, and a teardown must not wait on a process nobody is tracking.
+    /// </summary>
+    private static readonly TimeSpan StandardErrorDrainTimeout = TimeSpan.FromSeconds(2);
+
+    private readonly LaunchedProcess _process;
+    private readonly Action<string>? _standardErrorLines;
     private readonly TimeSpan _shutdownTimeout;
     private readonly ILogger? _logger;
     private readonly Stream _standardInput;
+    private readonly Task _standardErrorPump;
 
     private int _disposed;
 
-    /// <summary>Adopts an already-started process.</summary>
-    /// <param name="process">The started child.</param>
-    /// <param name="standardErrorHandler">The handler to detach on disposal.</param>
+    /// <summary>Adopts a child that has already been launched into a job.</summary>
+    /// <param name="job">The job the child was created in. This object owns it.</param>
+    /// <param name="process">The started child. This object owns it.</param>
+    /// <param name="standardErrorLines">Invoked for each line the child writes to stderr.</param>
     /// <param name="name">The transport's name in diagnostics.</param>
     /// <param name="shutdownTimeout">How long the child gets to exit on its own.</param>
     /// <param name="loggerFactory">Where the session logs.</param>
     public ChildProcessSession(
-        Process process,
-        DataReceivedEventHandler standardErrorHandler,
+        JobObject job,
+        LaunchedProcess process,
+        Action<string>? standardErrorLines,
         string name,
         TimeSpan shutdownTimeout,
         ILoggerFactory? loggerFactory)
         : base(name, loggerFactory)
     {
+        ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(process);
 
+        Job = job;
         _process = process;
-        _standardErrorHandler = standardErrorHandler;
+        _standardErrorLines = standardErrorLines;
         _shutdownTimeout = shutdownTimeout;
         _logger = loggerFactory?.CreateLogger<ChildProcessSession>();
 
-        // Read once and cached. Process.Id throws after Dispose() for the same
-        // reason ExitCode does, and a pid that can only be read while the
-        // object is alive is useless to everything that needs it after.
+        // Read once and cached, for the same reason the exit code is: a pid
+        // that can only be read while the process object is alive is useless to
+        // everything that needs it afterwards.
         ProcessId = process.Id;
+        _standardInput = process.StandardInput;
 
-        // The BaseStream, not the StreamWriter over it. Frames are already
-        // UTF-8 by the time they reach here, so putting an encoder in front of
-        // them could only introduce a BOM or a CRLF -- two of the three
-        // failures StdioChannel exists to prevent, reappearing on the child
-        // pipe where nobody was looking for them.
-        _standardInput = process.StandardInput.BaseStream;
+        // Nothing a child writes to stderr can be lost, and it is not a matter
+        // of timing: the pipe exists before the process does, so the earliest
+        // possible byte is already buffered by the time this reader starts.
+        // Five lines written by a child that then fails to launch are the only
+        // explanation there will ever be.
+        _standardErrorPump = Task.Run(PumpStandardErrorAsync, CancellationToken.None);
 
-        StartReading(process.StandardOutput.BaseStream);
+        StartReading(process.StandardOutput);
     }
 
     /// <summary>The child's process id, readable for the life of this object.</summary>
@@ -69,16 +101,23 @@ internal sealed class ChildProcessSession : JsonLinesTransport
 
     /// <summary>
     /// The child's exit code, once it has one, and readable after the
-    /// underlying <see cref="Process"/> has been disposed.
+    /// underlying handles have been closed.
     /// </summary>
     /// <remarks>
     /// <b>This is why it is cached as an <see cref="int"/> the instant it
-    /// exists.</b> <see cref="Process.ExitCode"/> throws after
-    /// <see cref="Process.Dispose"/>, so the ordinary shape — dispose in a
-    /// <c>finally</c>, report the exit code afterwards — reports nothing, and
-    /// the thing it fails to report is why the child died.
+    /// exists.</b> The framework's <c>Process.ExitCode</c> throws after
+    /// <c>Dispose()</c>, so the ordinary shape — dispose in a <c>finally</c>,
+    /// report the exit code afterwards — reports nothing, and the thing it fails
+    /// to report is why the child died.
     /// </remarks>
     public int? ExitCode { get; private set; }
+
+    /// <summary>
+    /// The job containing the child and every process it spawns, exposed so the
+    /// suite can assert on the flags that are actually set rather than on the
+    /// ones the code meant to set.
+    /// </summary>
+    internal JobObject Job { get; }
 
     /// <inheritdoc />
     public override async ValueTask DisposeAsync()
@@ -91,18 +130,22 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         try
         {
             // The base ends the read loop and calls ShutdownPeerAsync below,
-            // which is what stops the child. The Process object stays alive
-            // across that, because the read loop is still draining its stdout.
+            // which is what stops the child.
             await base.DisposeAsync().ConfigureAwait(false);
         }
         finally
         {
-            _process.ErrorDataReceived -= _standardErrorHandler;
-
             // Belt and braces: if shutdown threw before caching, this is the
             // last moment the handle is still valid.
             CacheExitCode();
+
+            await DrainStandardErrorAsync().ConfigureAwait(false);
+
             _process.Dispose();
+
+            // Last, and only after the exit code has been read. Closing this
+            // handle is what terminates anything still alive in the job.
+            Job.Dispose();
         }
     }
 
@@ -123,25 +166,9 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         // profile directories mid-write.
         CloseStandardInput();
 
-        try
+        if (!await _process.WaitForExitAsync(_shutdownTimeout).ConfigureAwait(false))
         {
-            using var deadline = new CancellationTokenSource(_shutdownTimeout);
-
-            // WaitForExitAsync, never WaitForExit(int). Only the async form and
-            // the parameterless one drain the async stderr reader, so the
-            // timed overload silently truncates the last thing the child said
-            // -- which, when a child is being killed, is the interesting part.
-            await _process.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            KillTree();
-        }
-#pragma warning disable CA1031 // The child is going away regardless; what matters is that the code below still runs.
-        catch (Exception)
-#pragma warning restore CA1031
-        {
-            KillTree();
+            await TerminateThroughTheJobAsync().ConfigureAwait(false);
         }
 
         CacheExitCode();
@@ -150,6 +177,27 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         {
             TransportLog.ChildExited(_logger, Name, ProcessId, exitCode);
         }
+    }
+
+    private async Task TerminateThroughTheJobAsync()
+    {
+        if (_logger is not null)
+        {
+            TransportLog.ChildKilled(_logger, Name, ProcessId, _shutdownTimeout);
+        }
+
+        // Closing the job handle, never a process-tree kill. A tree walk
+        // follows parent-child links, which are re-parentable and pid-reusable,
+        // and it loses a race against anything that respawns while it walks.
+        // The job has neither problem: the kernel terminates every member at
+        // once, and a process created inside it mid-teardown is already a
+        // member.
+        Job.Dispose();
+
+        // Bounded, and its result is deliberately ignored: the exit code read
+        // by the caller is the report, and there is nothing further this code
+        // could do about a process the kernel has been told to terminate.
+        _ = await _process.WaitForExitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
     }
 
     private void CloseStandardInput()
@@ -165,34 +213,6 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         }
     }
 
-    private void KillTree()
-    {
-        try
-        {
-            if (_process.HasExited)
-            {
-                return;
-            }
-
-            if (_logger is not null)
-            {
-                TransportLog.ChildKilled(_logger, Name, ProcessId, _shutdownTimeout);
-            }
-
-            // entireProcessTree, because node does not take its children with
-            // it. This is the fallback; the job object at step 6 is what makes
-            // containment hold when BrowserAI is the thing being killed and
-            // this line never runs at all.
-            _process.Kill(entireProcessTree: true);
-            _process.WaitForExit();
-        }
-#pragma warning disable CA1031 // Nothing above this can act on why a kill failed, and the exit code below still reports what happened.
-        catch (Exception)
-#pragma warning restore CA1031
-        {
-        }
-    }
-
     private void CacheExitCode()
     {
         if (ExitCode is not null)
@@ -202,15 +222,65 @@ internal sealed class ChildProcessSession : JsonLinesTransport
 
         try
         {
-            if (_process.HasExited)
-            {
-                ExitCode = _process.ExitCode;
-            }
+            ExitCode = _process.TryReadExitCode();
         }
 #pragma warning disable CA1031 // A process that cannot report an exit code leaves this null, which is the honest answer.
         catch (Exception)
 #pragma warning restore CA1031
         {
+        }
+    }
+
+    private async Task DrainStandardErrorAsync()
+    {
+        try
+        {
+            await _standardErrorPump.WaitAsync(StandardErrorDrainTimeout).ConfigureAwait(false);
+        }
+#pragma warning disable CA1031 // A stderr reader that will not finish must not turn a teardown into a hang.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
+    }
+
+    private async Task PumpStandardErrorAsync()
+    {
+        try
+        {
+            using var reader = new StreamReader(_process.StandardError, LenientUtf8);
+
+            while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
+            {
+                OnStandardErrorLine(line);
+            }
+        }
+#pragma warning disable CA1031 // The pipe closing under a read in flight is how this loop normally ends.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
+    }
+
+    private void OnStandardErrorLine(string line)
+    {
+        if (_logger is not null)
+        {
+            TransportLog.ChildStandardError(_logger, Name, line);
+        }
+
+        try
+        {
+            _standardErrorLines?.Invoke(line);
+        }
+#pragma warning disable CA1031 // This runs on the stderr reader; an exception escaping it would take down the process.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            if (_logger is not null)
+            {
+                TransportLog.StandardErrorCallbackFailed(_logger, Name, ex);
+            }
         }
     }
 }
