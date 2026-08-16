@@ -521,6 +521,26 @@ internal static partial class TransportLog
         Message = "{Transport}: child stderr: {Line}")]
     public static partial void ChildStandardError(ILogger logger, string transport, string line);
 
+    /// <summary>
+    /// The other half of <see cref="ChildStandardError"/>: a line
+    /// <see cref="StandardErrorClassifier"/> found error-shaped.
+    /// </summary>
+    /// <remarks>
+    /// <b>Warning rather than Debug is the entire point of the classifier</b>, and
+    /// it is the level the reference implementation's own verdict used. Debug is
+    /// where the benign <c>Session: &lt;path&gt;</c> line of every healthy start
+    /// belongs; a startup diagnostic logged there is a failure that reported
+    /// healthy, which is the class this project exists to eliminate.
+    /// </remarks>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="transport">The transport whose child wrote it.</param>
+    /// <param name="line">The line, exactly as the child wrote it.</param>
+    [LoggerMessage(
+        EventId = 14,
+        Level = LogLevel.Warning,
+        Message = "{Transport}: child stderr looks like a diagnostic: {Line}")]
+    public static partial void ChildStandardErrorDiagnostic(ILogger logger, string transport, string line);
+
     [LoggerMessage(
         EventId = 12,
         Level = LogLevel.Warning,

@@ -262,11 +262,31 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         }
     }
 
+    /// <summary>
+    /// One line off the child's stderr, classified before it is logged.
+    /// </summary>
+    /// <remarks>
+    /// <b>Both directions are the requirement, because each is half of the bug
+    /// this replaces.</b> A benign line logged loudly trains a reader to ignore
+    /// warnings — <c>@playwright/mcp</c> writes <c>Session: &lt;path&gt;</c> on
+    /// every healthy start with session logging on — and an error-shaped line
+    /// logged quietly is a startup failure nobody sees. The classification is
+    /// therefore the level: <see cref="StandardErrorClassifier"/> decides, and
+    /// nothing here re-decides it.
+    /// </remarks>
+    /// <param name="line">The line, exactly as the child wrote it.</param>
     private void OnStandardErrorLine(string line)
     {
         if (_logger is not null)
         {
-            TransportLog.ChildStandardError(_logger, Name, line);
+            if (StandardErrorClassifier.LooksLikeError(line))
+            {
+                TransportLog.ChildStandardErrorDiagnostic(_logger, Name, line);
+            }
+            else
+            {
+                TransportLog.ChildStandardError(_logger, Name, line);
+            }
         }
 
         try

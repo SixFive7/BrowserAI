@@ -34,7 +34,12 @@ four servers dead** — went unnoticed.
 
 **A healthy start prints `Session: <path>` to stderr every time**, which is why
 warning on *any* stderr output was the wrong classifier. `[FLOATS]` — this one is
-upstream behaviour rather than machine state.
+upstream behaviour rather than machine state. ⚠️ **Qualified 2026-08-16
+@ `@playwright/mcp` 0.0.79 (previously stated without a condition):** the line
+appears only when `saveSession` is on. It was unconditionally true *here* because
+all four of this launcher's `config.json` files set it; it is not unconditionally
+true of upstream. Re-measured and reasoned in
+[kb: startup output](playwright/configuration.md#environment-merge-order-and-startup-output).
 
 **One flat `output/` grew to 346 session directories and 1.5 GB in ~3 months**,
 and nobody pruned it because nobody could tell what any of the directories had

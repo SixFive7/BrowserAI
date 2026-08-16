@@ -2302,6 +2302,57 @@ session TTL and no reclaim window;
 
 **Consumes:** [§E](E-lifecycle.md) (the last unbuilt part)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Protocol/StandardErrorClassifier.cs` ·
+> `src/BrowserAI/Protocol/StandardErrorClassifier.reference.ps1` (the pinned copy
+> of the reference implementation) · `src/BrowserAI/Protocol/ChildProcessSession.cs`
+> (the existing pump now classifies before it logs) ·
+> `src/BrowserAI/Protocol/JsonLinesTransport.cs` (`TransportLog.ChildStandardErrorDiagnostic`,
+> event 14, at **Warning**, beside the existing event 11 at Debug) ·
+> `tests/BrowserAI.Tests/StandardErrorClassifierTests.cs`. Every done-test below
+> was run, including three plant-and-reverts. **297 tests green, `dotnet build`
+> 0 warnings**, and the AOT publish is clean at **11,967,488 bytes**.
+>
+> **No second reader, and the classification is the log level.** The verdict is
+> taken in `OnStandardErrorLine`, which is the pump step 5 already wired before
+> `Start()`; a benign line keeps the Debug event it always had and an error-shaped
+> one gets a Warning naming the line. **The reference's shape is deliberately not
+> copied**: it batches stderr into its log at exit and emits one `WARNING` verdict
+> there, because it reads its capture file whole. Per line is strictly better —
+> the warning names the line rather than the run — and the equivalence of the two
+> call shapes is asserted rather than argued, because the regexes were ported into
+> a different one.
+>
+> **A classified line is a log level and not a row of
+> [the error catalogue](H-model-surface.md#h4-the-error-catalogue).** Nothing here
+> reaches a caller: an error-shaped stderr line names no tool, no recovery and
+> usually no session — the child that writes `error: unknown option` dies before
+> any session exists — and `SessionErrors` exists for refusals a model can act on
+> in one turn. Recorded here because it was a decision this step had to take.
+>
+> ⚠️ **A measurement contradicted three documents and the measurement won.**
+> *"A healthy start prints `Session: <path>` every time"* is true only when
+> `saveSession` is on. Measured twice each way on 2026-08-16: with it on, a healthy
+> start's stderr is **exactly one line**, `Session:
+> <outputDir>\session-<epoch-ms>`; with it off it is **empty**. BrowserAI's own
+> default is off — the key comes from the `tracing` modifier — so most healthy
+> BrowserAI starts print nothing at all. The unconditional claim was true of the
+> setup it was written against, whose four `config.json` files all set it.
+> Corrected in [§E](E-lifecycle.md), [kb: startup output](../kb/playwright/configuration.md#environment-merge-order-and-startup-output),
+> [kb: history](../kb/history.md#the-legacy-setup-and-this-machine) and
+> [row 33](../kb/README.md#re-verification-index).
+>
+> **And the second regex now matches nothing upstream currently writes.** The
+> missing-browser diagnostic has left stderr at 0.0.79: against an empty browsers
+> root the process exits **0** with an empty stderr and the sentence
+> `Browser "chrome-for-testing" is not installed; expected executable at …`
+> arrives in a JSON-RPC **success** body carrying `isError: true` — the founding
+> failure shape, from upstream. `is not installed` is kept anyway, because verbatim
+> is the requirement and a phrase that fires on no current output costs nothing
+> while a deleted one is gone for whoever did not know it was there. The error arm
+> of the suite therefore uses the flag from row 1 of the charter's table instead:
+> `--output-mode` still produces `error: unknown option '--output-mode'` on stderr
+> and exit 1, measured twice.
+>
 > ⚠️ **The second step this file forgot, found the same way as
 > [17a](#17a-the-browser-idle-timer-and-teardown).** Added 2026-08-16, after
 > step 17a reported that §E's *"distinguish error-shaped stderr from benign

@@ -305,9 +305,39 @@ a `.links` entry.** Against a browsers tree we installed, the blast radius is
 "deletes our own Chromium", so `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandatory and
 pruning old revisions becomes the caller's job.
 
-**A healthy start prints `Session: <path>` to stderr, every time.** Any
-classifier treating stderr output as an error signal fires on every clean launch;
-the legacy setup's did.
+⚠️ **Corrected 2026-08-16 @ `@playwright/mcp` 0.0.79 (previously "A healthy start
+prints `Session: <path>` to stderr, every time").** It prints that line **only
+when `saveSession` is on**, and a healthy start with it off writes **nothing at
+all** to stderr. Measured twice each way on 2026-08-16 — `node.exe cli.js
+--config <abs> --sandbox`, `initialize` → `browser_navigate
+data:text/html,<h1>ok</h1>` against `chromium-1237`, whole stderr buffer read to
+EOF after a graceful stdin close. With `saveSession: true` stderr is **exactly one
+line**, `Session: <outputDir>\session-<epoch-ms>`. With `saveSession: false` it is
+empty. The mechanism is in `coreBundle.js`: `this._sessionLog =
+this._config.saveSession ? await SessionLog.create(this._config, clientInfo.cwd) :
+void 0`, and `SessionLog.create` is the only `console.error(`Session:
+${sessionFolder}`)` call site in the bundle.
+
+The old sentence was true of the setup it was written against — all four of that
+launcher's `config.json` files set `saveSession: true` — and it is **not** true of
+BrowserAI's default, which writes the key from the `tracing` modifier and leaves
+it off. Nothing about the classifier changes either way: silence is benign too.
+`[FLOATS]`, [row 33](../README.md#re-verification-index).
+
+**Which error shapes actually reach stderr at 0.0.79, measured twice each,
+2026-08-16.** The dead `--output-mode` flag still does: stderr carries `error:
+unknown option '--output-mode'` and the process exits **1**. The missing browser
+**does not**: against an empty browsers root, `initialize` succeeds, `tools/list`
+succeeds, `browser_navigate` returns a JSON-RPC **success** whose body is
+`isError: true` carrying `Browser "chrome-for-testing" is not installed; expected
+executable at …`, the process exits **0**, and stderr is **empty**. That is the
+founding failure shape arriving from upstream, and it means the second ported
+regex's `is not installed` phrase has no stderr occurrence to match in this
+version. It is kept regardless: the regexes are
+[ported verbatim](../../plan/E-lifecycle.md) precisely so that a transcription
+difference cannot be a silent behaviour change, and a phrase that fires on no
+current output costs nothing while a deleted one cannot be recovered by anybody
+who did not know it was there. `[FLOATS]`.
 
 ## Policy
 
