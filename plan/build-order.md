@@ -2298,6 +2298,53 @@ session TTL and no reclaim window;
 
 ---
 
+### 17b. The stderr classifier
+
+**Consumes:** [§E](E-lifecycle.md) (the last unbuilt part)
+
+> ⚠️ **The second step this file forgot, found the same way as
+> [17a](#17a-the-browser-idle-timer-and-teardown).** Added 2026-08-16, after
+> step 17a reported that §E's *"distinguish error-shaped stderr from benign
+> output — port the two regexes verbatim"* exists in no step and in no source
+> file. Verified before inserting: `grep -niE "stderr classif|error-shaped"`
+> over this file returns **one** hit, and it is a passing mention in step 5's
+> environment rules rather than an assignment.
+>
+> **This one is not a nicety.** *"Error-shaped stderr detection"* is row 5 of
+> [the charter's opening table](../README.md#read-this-before-designing-anything)
+> — a defect already diagnosed and fixed in the setup BrowserAI replaces, where
+> the launcher *"warned on any stderr"* and Playwright *"prints a benign
+> `Session: <path>` line on every healthy start."* Shipping without it does not
+> leave a gap; it **reintroduces a fixed bug**, in the product built to stop it.
+> [testing](testing.md) lists it first in the unit layer and again in the smoke
+> layer.
+
+- **Port the two regexes verbatim** from the reference implementation —
+  `SixFive7/Workspace657`, `playwright/launch.ps1` at `a9ac747` or later. That
+  repository is [the only correct copy of this setup in existence](../README.md#read-this-before-designing-anything);
+  the other twelve are stale by a known delta. Verbatim means verbatim: this is
+  behaviour we are copying deliberately, so a transcription difference is a
+  silent behaviour change.
+- **Wire it into the stderr pump that already exists** — step 5 captures the
+  child's stderr from before the process starts and step 7 forwards it. This
+  classifies what is already being read; it does not add a second reader.
+- **A benign line must not warn, and an error-shaped line must not be silent.**
+  Both directions are the test, because each failure mode is one half of the
+  original defect.
+
+**Done when:**
+
+- A real child's healthy start is classified **benign**, asserted against a
+  genuine `Session: <path>` line from a real launch rather than a fixture.
+- An error-shaped line is classified as an error and reaches the log at a level
+  a reader would notice.
+- The two regexes are byte-identical to the reference implementation's, asserted
+  against a copy committed beside them, so a future edit to either is a red
+  build rather than a divergence.
+- `git status --porcelain` is empty.
+
+---
+
 ## Phase 6 — shipping
 
 ### 18. Versions from git tags, and the changelog
