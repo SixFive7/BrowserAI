@@ -1,0 +1,18 @@
+{
+  "_what_this_is": "The SDK floor and the test-runner mode. Neither entry is a pin. The version below is a FLOOR with rollForward=latestMajor, which takes the newest installed SDK and fails loudly on a machine that is behind -- the opposite of a ceiling. See plan/stack.md, 'The build configuration this plan has never mentioned'.",
+
+  "_the_test_entry_is_not_a_version": "TUnit is MTP-only. The MTP mode of 'dotnet test' is opted into here and nowhere else (.NET 10 SDK and later; Microsoft Learn, looked up 2026-08-16). Without it 'dotnet test' runs the VSTest path and errors out against an MTP v2 test project.",
+
+  "_provenance": "Floor recorded 2026-08-16 against the SDK installed on this machine (10.0.302, dotnet --list-sdks). Raising it is a decision; a machine with a newer SDK needs no change here, because rollForward already takes it.",
+
+  "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
+
+  "sdk": {
+    "version": "10.0.302",
+    "rollForward": "latestMajor"
+  },
+
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+}

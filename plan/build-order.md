@@ -52,6 +52,15 @@ one command.
 **Consumes:** [stack](stack.md) (toolchain rows) · [testing](testing.md)
 (framework prohibitions)
 
+> ✅ **Built 2026-08-16.** `global.json` · `Directory.Packages.props` ·
+> `Directory.Build.props` · `.editorconfig` · `BrowserAI.slnx` ·
+> `src/BrowserAI/{BrowserAI.csproj, app.manifest, Program.cs}` ·
+> `tests/BrowserAI.Tests/{BrowserAI.Tests.csproj, RepositoryLayout.cs,
+> BuildConfigurationTests.cs}`. Every done-test below was run, including the
+> three that require planting a failure and reverting it. Three of this step's
+> requirements had prerequisites nobody had measured; see the correction under
+> `Directory.Build.props`.
+
 Configuration files only, plus two empty projects. Nothing here is a pin —
 **this is where the float is declared**, per the maintainer's versioning rule of
 2026-08-16: *always build against latest, never pin; updating everything is the
@@ -70,12 +79,31 @@ first step of touching this project, not a step before release.*
   carries a comment saying exactly that: **this is the float, not a pin.**
 - **`Directory.Build.props`** — shared build settings declared once.
   `LangVersion` `latestMajor`, never `preview`. `TreatWarningsAsErrors`, with
-  **CS0162 named explicitly** in `WarningsAsErrors` so a later `NoWarn` cannot
-  quietly demote unreachable code back to a warning. `EnforceCodeStyleInBuild`.
+  **CS0162 named explicitly** in `WarningsAsErrors`. `EnforceCodeStyleInBuild`.
   `RestorePackagesWithLockFile`, which is what makes
   [the two-step resolve](../README.md#the-five-rules-that-make-floating-safe)
   possible. `UseSystemResourceKeys` explicitly **false** — it strips exception
   messages, which is this project's enemy wearing a size optimisation.
+
+  > ⚠️ **Corrected 2026-08-16 (previously: CS0162 is named in
+  > `WarningsAsErrors` "so a later `NoWarn` cannot quietly demote unreachable
+  > code back to a warning").** That mechanism does not work. Measured on SDK
+  > 10.0.302 by planting a statement after a `return`: with `NoWarn` set to
+  > CS0162 the build reported **0 warnings and 0 errors**, and adding
+  > `dotnet_diagnostic.CS0162.severity = error` on top did not change that
+  > either, across a forced full rebuild.
+  > [`NoWarn` beats both](../kb/windows/processes.md#diagnostic-severity-what-actually-enforces-a-rule-and-what-only-looks-like-it).
+  > Naming CS0162 there is still worth doing — it survives
+  > `TreatWarningsAsErrors` being turned off — but the protection against bulk
+  > suppression had to come from outside the compiler's precedence order, and
+  > it is now a test: `BuildConfigurationTests.NoBuildFileSuppressesWarnings`
+  > fails on any `NoWarn` or `WarningsNotAsErrors` in a project or shared-props
+  > file. **Two further requirements below turned out to have hidden
+  > prerequisites, both also measured rather than read:**
+  > `Version="*"` under central package management needs
+  > `CentralPackageFloatingVersionsEnabled` or restore fails NU1011, and
+  > `.editorconfig` at error severity needs `GenerateDocumentationFile` before
+  > Roslyn will run IDE0005 on build.
 - **`.editorconfig`** at error severity. A severity is never weakened to make
   code pass.
 - **`app.manifest`** with `longPathAware=true`. Session directories are the

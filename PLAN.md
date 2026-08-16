@@ -44,13 +44,24 @@ everything cold and hoping.
 | F | [Artifact management](plan/F-artifacts.md) | Routing on the way in, typed folders, the artifact index | not built | — |
 | G | [Updates](plan/G-updates.md) | Velopack, the landmines, rollback, install layout | not built | — |
 | H | [The model-facing surface](plan/H-model-surface.md) | Tool descriptions, instructions, the error catalogue, discoverability | not built | — |
-| — | [Implementation stack](plan/stack.md) | Chosen components, and the places the SDK must be deviated from | not built | — |
-| — | [Testing](plan/testing.md) | The four layers, our own harness, the upstream-review gate, the release gate | not built | — |
+| — | [Implementation stack](plan/stack.md) | Chosen components, and the places the SDK must be deviated from | part built | *Toolchain rows and the build-configuration table:* `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `src/BrowserAI/app.manifest`, and publish-gated AOT in `src/BrowserAI/BrowserAI.csproj`. The nine SDK deviations and the version-from-git-tags rule are **not** built |
+| — | [Testing](plan/testing.md) | The four layers, our own harness, the upstream-review gate, the release gate | part built | *Framework prohibitions only:* TUnit as the sole test dependency in `Directory.Packages.props`, its analyzers pinned per-rule in `.editorconfig`, and `tests/BrowserAI.Tests/BuildConfigurationTests.cs`. None of the five layers, the harness, the gate or the release gate exist yet |
 | — | [Hazard index](plan/hazards.md) | Every known failure mode, in one checkable list | living | — |
 
 The hazard index is the one section that is **not** consumed. It outlives the
 build: rows gain a status and the evidence that closed them rather than being
 deleted.
+
+**`part built` is a third status, added 2026-08-16 with build-order step 1.** It
+was not in the original vocabulary, and the alternative was worse: several
+[build-order](plan/build-order.md) steps consume *part* of a section — step 1
+takes the toolchain rows out of [stack](plan/stack.md) and the framework
+prohibitions out of [testing](plan/testing.md), leaving the nine SDK deviations
+and all five test layers untouched. Marking either section `built` would be a
+false record, and the `Implemented by` column is what the final audit reads, so
+a section that says `built` while half of it is unwritten defeats the one thing
+that makes deleting the plan safe. A `part built` row states what has landed and
+what has not, and **only a section with no `not built` remainder may be deleted.**
 
 ---
 

@@ -16,6 +16,24 @@ and version it was true at.
 
 ## At v1 launch
 
+- [ ] **Capture ILC's raw output and fail the publish if it is non-empty.**
+      Build-order step 1 asked for two things and only one of them is a property.
+      The property half landed 2026-08-16: `SuppressTrimAnalysisWarnings=false`,
+      `TrimmerSingleWarn=false` and `ILLinkTreatWarningsAsErrors=true` in
+      `src/BrowserAI/BrowserAI.csproj`, so any `IL2xxx`/`IL3xxx` **warning**
+      fails the publish. **That does not cover the case the requirement was
+      written for.** ILC reports an always-throwing method as neither a warning
+      nor an error — [kb: SDK](kb/mcp/sdk.md#added-2026-08-16--not-part-of-the-2026-08-15-spike)
+      records a publish that exited 0, emitted zero warnings, produced an
+      artifact, and printed `Method '...' will always throw because: Failed to
+      load assembly '...'`. No MSBuild property catches that, because it is not a
+      diagnostic; only reading ILC's console output does. The check therefore
+      needs a publish wrapper, and there is no build script yet to hang it on —
+      so it lands with [step 19](plan/build-order.md), where packaging first
+      needs one. Until then
+      [re-verification row 27](kb/README.md#re-verification-index) carries it as
+      *manual*, which is accurate rather than reassuring.
+
 - [ ] **Write `CHANGELOG.md`. The release refuses without it.** The file does not
       exist. [The pre-release checklist](plan/pre-release.md) refuses a release
       whose changelog section for the version being cut is empty, and refuses the

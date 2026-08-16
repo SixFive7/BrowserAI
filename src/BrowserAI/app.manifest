@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-FileCopyrightText: 2026 Jori Huisman
+  SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+-->
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+
+  <assemblyIdentity version="1.0.0.0" name="BrowserAI.app" />
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <!--
+        Session directories are arguments to `browserai_init` and any path is
+        accepted, so their depth is unbounded by design. Without this, a profile
+        tree that crosses MAX_PATH fails somewhere inside Chromium with an error
+        nobody can attribute.
+      -->
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          asInvoker, never elevation. BrowserAI installs per-user to
+          %LocalAppData% precisely because a UAC prompt cannot be answered by a
+          background MCP server (plan/G-updates.md).
+        -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compat.v1">
+    <application>
+      <!-- Windows 10 and 11. Declaring it is what makes the OS report its real
+           version rather than 6.2, which matters to anything that branches on
+           it. -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+</assembly>

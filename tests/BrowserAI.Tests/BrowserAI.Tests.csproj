@@ -1,0 +1,26 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- MTP test applications are executables. The MTP mode of `dotnet test`
+         is opted into in global.json; under it, neither the
+         TestingPlatformDotnetTestSupport property nor the extra argument
+         separator is needed. -->
+    <OutputType>Exe</OutputType>
+    <RootNamespace>BrowserAI.Tests</RootNamespace>
+    <AssemblyName>BrowserAI.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Versions live in Directory.Packages.props and nowhere else. A Version
+         attribute here is a failing test in BuildConfigurationTests. -->
+    <PackageReference Include="TUnit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
+  </ItemGroup>
+
+</Project>

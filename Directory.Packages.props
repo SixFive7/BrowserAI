@@ -1,0 +1,59 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project>
+
+  <!--
+    THIS FILE IS THE FLOAT, NOT A PIN.
+
+    Every dependency resolves to the latest release at build time and the build
+    freezes what it resolved into the artifact. `Version="*"` is what performs
+    that resolution; it is a floating version, and it excludes prerelease by
+    construction, which is how README's rule 3 ("GA is a hard floor") is
+    enforced mechanically rather than by review.
+
+    The resolved set is RECORDED rather than remembered, in packages.lock.json
+    beside each project. That is a two-step operation, and the two steps are
+    mutually exclusive in a single invocation: first a restore that forces
+    re-evaluation, which re-resolves the float, then a locked-mode restore,
+    which verifies what it resolved. With a lock file present and no forced
+    re-evaluation, NuGet does not re-resolve and the float is silently dead
+    (NU1512). A one-step locked-mode build is the failure this project exists
+    to eliminate, wearing a safety helmet.
+
+    The two commands verbatim are in README.md, "The five rules that make
+    floating safe". They are named rather than quoted here only because an XML
+    comment cannot contain a double hyphen, which is what both flags begin with.
+
+    Central management plus transitive pinning means this is the ONLY file in
+    the repository where a package version may appear. A `Version=` attribute
+    on a PackageReference anywhere else is a failing test in
+    tests/BrowserAI.Tests/BuildConfigurationTests.cs, because a hard-coded
+    version in a project file wins for that project while the lock file
+    honestly records it: the artifact then contains a version nobody chose,
+    and nothing says it is old.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <!--
+      Without this, central package management REFUSES a floating version:
+      NU1011, "The following PackageVersion items cannot specify a floating
+      version". Measured 2026-08-16 on SDK 10.0.302, which is why it is here
+      and not in the plan: floating is off by default under CPM, so the two
+      properties above alone give a file that looks like the float and cannot
+      restore. It is the enabling half of `Version="*"`, not a third opinion.
+    -->
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="Testing">
+    <!-- TUnit: source-generated, reflection-free, MTP-native, MIT. It carries
+         its own analyzers, which run at error severity (see .editorconfig)
+         because an assertion that is not awaited passes silently.
+         NEVER add FluentAssertions (commercial tier from 8.0.0).
+         NEVER add Microsoft.NET.Test.Sdk (TUnit is MTP-only; they conflict). -->
+    <PackageVersion Include="TUnit" Version="*" />
+  </ItemGroup>
+
+</Project>

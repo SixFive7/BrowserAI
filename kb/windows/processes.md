@@ -350,3 +350,66 @@ They are mutually exclusive in one invocation: **with a lock file present and no
 warned by default from the .NET 11 SDK). `git diff --exit-code --
 "**/packages.lock.json"` after the resolve is then the cheapest available drift
 detector. `[FLOATS]`
+
+**Central package management refuses a floating version by default.** With
+`ManagePackageVersionsCentrally` set, a `PackageVersion` of `Version="*"` fails
+restore outright: *"NU1011: The following PackageVersion items cannot specify a
+floating version"*. The enabling property is
+`CentralPackageFloatingVersionsEnabled`, and without it the two properties the
+plan named produce a `Directory.Packages.props` that reads exactly like the
+float and cannot restore at all. Measured 2026-08-16 on SDK **10.0.302** while
+building the skeleton. Re-establish by deleting the property and restoring.
+`[FLOATS]`
+
+### Diagnostic severity: what actually enforces a rule, and what only looks like it
+
+All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and
+rebuilding with `--no-incremental` rather than by reading documentation. They
+matter here because [style is law in this project](../../CLAUDE.md#style) and a
+severity that is quietly inert is the same defect as a config key
+`loadConfig` discards.
+
+**`NoWarn` beats `WarningsAsErrors`, and it beats an `.editorconfig` severity
+too.** A method holding a statement after a `return` was compiled three ways.
+With `TreatWarningsAsErrors` plus `WarningsAsErrors` naming `CS0162`: **1
+error**. Adding `<NoWarn>CS0162</NoWarn>`: **0 warnings, 0 errors** — the
+unreachable code compiled. Adding `dotnet_diagnostic.CS0162.severity = error`
+on top of that NoWarn, and forcing a full rebuild: still **0 warnings, 0
+errors**. So naming a warning in `WarningsAsErrors` does **not** protect it from
+a later bulk suppression, which is what
+[plan/build-order.md asserted](../../plan/build-order.md) and what this
+measurement corrected. What naming it there does buy is survival if
+`TreatWarningsAsErrors` is ever turned off — a smaller claim, and a true one.
+The protection that works has to sit outside the compiler's precedence order
+entirely, and here it is a test:
+`BuildConfigurationTests.NoBuildFileSuppressesWarnings` fails on any `NoWarn` or
+`WarningsNotAsErrors` in a project or shared-props file. `[FLOATS]`
+
+**Bulk `.editorconfig` analyzer configuration is ignored once `AnalysisMode` is
+set as an MSBuild property.** `dotnet_analyzer_diagnostic.category-<X>.severity`
+had no effect at all: set to `none` for the TUnit assertion category, the rule
+kept firing at error. The **per-rule** form is honoured in the same build —
+`dotnet_diagnostic.TUnitAssertions0002.severity = none` did suppress it. This is
+documented behaviour rather than a bug, and it is worth a measured entry because
+the failing form fails *silently*: a category line reads as protection, is
+ignored, and nothing reports that. Anything in this repository's
+`.editorconfig` that must actually hold is therefore written per-rule.
+`[FLOATS]`
+
+**IDE0005 will not run on build without `GenerateDocumentationFile`.** With
+`EnforceCodeStyleInBuild` on and IDE0005 escalated, the build fails with a
+diagnostic named `EnableGenerateDocumentationFile` telling you to set the
+property ([dotnet/roslyn#41640](https://github.com/dotnet/roslyn/issues/41640)).
+It is an error rather than a quiet skip, which is the good outcome; the trap is
+that the fix also turns on CS1591, so every publicly visible member then needs
+an XML doc comment or the build is red under `TreatWarningsAsErrors`. `[FLOATS]`
+
+**NativeAOT embeds `ApplicationManifest` into the published binary.** Verified by
+reading the bytes of a `PublishAot` win-x64 publish: `longPathAware`,
+`asInvoker` and the Windows 10/11 `supportedOS` GUID are all present in
+`BrowserAI.exe`. This is not inherited from an apphost — the publish output is
+the native exe, a `.pdb` and the XML doc file, with no managed `.dll` beside it.
+It matters because the long-path guarantee is otherwise unfalsifiable: session
+directories are caller-chosen and unbounded, and a manifest that silently failed
+to embed would present as a path failure deep inside a browser profile tree.
+`[FLOATS]`

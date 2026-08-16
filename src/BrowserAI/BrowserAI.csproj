@@ -1,0 +1,54 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>BrowserAI</RootNamespace>
+    <AssemblyName>BrowserAI</AssemblyName>
+    <!-- longPathAware. Session directories are the caller's choice and nothing
+         constrains their depth, so a path crossing MAX_PATH must not become a
+         mystery failure somewhere inside a browser profile tree. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Native compilation">
+    <!--
+      AOT IS GATED TO PUBLISH, and this single property is what does it:
+      `dotnet build` never invokes ILC, `dotnet publish` does. Everyday builds
+      stay fast; only a release pays for native compilation and the MSVC link.
+
+      PREREQUISITE, recorded here because its absence presents as the wrong
+      diagnosis: ILC's final step is a native link, so a publish needs the MSVC
+      toolchain (link.exe, located through vswhere, installed by Visual
+      Studio's "Desktop development with C++" workload). Without it the publish
+      fails in a way that reads as an SDK or library incompatibility, and that
+      wrong diagnosis leads straight to the wrong fix. ExoFabric/UCC shipped
+      self-contained single-file instead of AOT for exactly this reason, and
+      only worked out why afterwards.
+
+      Set unconditionally rather than under a publish-only condition: the
+      trimming feature switches key off this property, so conditioning it would
+      make `dotnet build` and `dotnet publish` behave differently.
+    -->
+    <PublishAot>true</PublishAot>
+
+    <!-- Analyse on every build, not only at publish. PublishAot already turns
+         these on; they are named so the guarantee survives someone toggling
+         PublishAot, and so that what is enforced is readable here. -->
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+
+    <!--
+      ILC OUTPUT MUST BE EMPTY. A trim or AOT warning fails the publish; it is
+      a silent-failure warrant, not advice. TrimmerSingleWarn=false is what
+      makes the report name the member rather than emitting one line per
+      assembly.
+    -->
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

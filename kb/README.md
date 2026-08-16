@@ -72,20 +72,32 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **97**
-`[FLOATS]` markers stand across the articles against the **41** numbered rows
-below (43 lines, counting 4a and 4b),
+table is how that happens. **It does not yet cover all of them**: **108**
+`[FLOATS]` markers stand across the articles against the **44** numbered rows
+below (46 lines, counting 4a and 4b),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
 
-> **The 97 is a marker count, not an entry count** — counted 2026-08-16 with
-> `grep -ro "\[FLOATS\]" --include=*.md .`, excluding this file's own four
-> occurrences. Some entries carry a split marker (`[FLOATS]` for the numbers,
-> `[STABLE]` for the mechanism) and are counted once each, so the true number of
-> distinct floating *facts* is somewhat lower. It is recorded this way because a
-> reproducible command beats a hand tally that silently drifts — which is what
-> the previous "roughly 93" had become.
+> **The 108 is a marker count, not an entry count** — re-counted 2026-08-16 with
+> `grep -ro "\[FLOATS\]" --include=*.md . | grep -v '^\./\.work/'`, then
+> subtracting this file's own five occurrences. Some entries carry a split
+> marker (`[FLOATS]` for the numbers, `[STABLE]` for the mechanism) and are
+> counted once each, so the true number of distinct floating *facts* is somewhat
+> lower. It is recorded this way because a reproducible command beats a hand
+> tally that silently drifts.
+>
+> **Corrected 2026-08-16 (previously "97 … against the 41 numbered rows …
+> excluding this file's own four occurrences").** Both halves were wrong before
+> anything was added today. Re-running the command as it was written returns
+> **120**, because it has no exclusion and sweeps `.work/`, the gitignored
+> scratch directory, which carried 7 markers in spike code that is not part of
+> this knowledge base at all; and this file has carried **five** occurrences,
+> not four. Netting those out gives **103** on the tracked documents before
+> today's work, against a recorded 97. Five new markers landed with build-order
+> step 1 (rows 42–44), which is the 108. The command above is the corrected one
+> and excludes `.work/` explicitly — a count nobody can reproduce is the tally
+> this note exists to prevent.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -137,6 +149,9 @@ decision:
 | 39 | A console logging sink's **type initializer** calls `SetConsoleMode` on `STD_OUTPUT_HANDLE` before any log line, and no-ops silently when stdout is a pipe ([kb](windows/processes.md#stdio-exit-codes-and-process-startup)) | We adopt `Serilog.Sinks.Console` or any sink shaped like it — or the referenced version moves. Upstream `main` has **already dropped** the `#if PINVOKE` guard that leaves 3.1.2 inert on `netstandard2.0`, so a version bump alone can arm it | Read `ConsoleSink.cs` and `Platform/WindowsConsole.cs` **at the version actually referenced**, not at whichever copy is on disk. **Conditional row:** nothing today depends on Serilog, so this is owed only once a console sink reaches the dependency list — but it must be answered *then*, because the write is invisible under MCP and shows up only in interactive diagnostics | — *manual* |
 | 40 | A legitimately **empty** channel 404s exactly like a misconfigured feed URL ([kb](packaging/velopack.md#1-the-channel-must-not-go-in-the-feed-url)) | Velopack returns an empty release list instead, or changes the status code | Request a channel with nothing published, assert the status, and confirm the health check does **not** alarm. Row 24's update lane only ever exercises a populated channel, so this is not covered there | — *manual* |
 | 41 | `UpdateExe.Start`'s first positional parameter is the **locator**, not `waitPid`; `ApplyUpdatesAndRestart` already restarts on its own ([kb](packaging/velopack.md#the-restart-handover-race-and-why-updateexe-is-the-answer)) | Any Velopack bump changes either signature | Compile a call against the shipped assembly, and assert exactly **one** relaunch on the update path. The double-restart failure is silent — two working launches look like one slow one | — *manual* |
+| 42 | **Diagnostic-severity precedence**: `NoWarn` beats both `WarningsAsErrors` and an `.editorconfig` `dotnet_diagnostic` severity; bulk `dotnet_analyzer_diagnostic.category-*` entries are ignored once `AnalysisMode` is an MSBuild property; IDE0005 needs `GenerateDocumentationFile` ([kb](windows/processes.md#diagnostic-severity-what-actually-enforces-a-rule-and-what-only-looks-like-it)) | Any SDK or Roslyn bump. **The SDK floats** under `rollForward: latestMajor`, so this moves without anyone choosing it | Plant the failure and rebuild with `--no-incremental`, one variable at a time. `BuildConfigurationTests.NoBuildFileSuppressesWarnings` guards the *consequence* on every build; the precedence itself needs re-measuring | — *manual* |
+| 43 | Central package management refuses `Version="*"` without `CentralPackageFloatingVersionsEnabled` — NU1011 ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK or NuGet bump. If it ever became the default, the property is harmless; if the property were ever renamed, restore fails loudly | Delete the property and restore. Every ordinary restore already proves the positive half, so only the negative half is owed | — *manual* |
+| 44 | NativeAOT embeds `ApplicationManifest` into the published binary ([kb](windows/processes.md#diagnostic-severity-what-actually-enforces-a-rule-and-what-only-looks-like-it)) | Any SDK or ILC bump changes Win32 resource handling | Read the published exe's bytes for `longPathAware`, `asInvoker` and the supportedOS GUID. Cheap, and the guarantee is otherwise unfalsifiable until a caller picks a path over MAX_PATH | — *manual* |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.
