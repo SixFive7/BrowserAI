@@ -361,6 +361,28 @@ float and cannot restore at all. Measured 2026-08-16 on SDK **10.0.302** while
 building the skeleton. Re-establish by deleting the property and restoring.
 `[FLOATS]`
 
+**.NET's `FileMode.Append` loses records when several processes share a file;
+`FILE_APPEND_DATA` does not.** Measured 2026-08-16 while building the process
+log: **eight processes each writing 25 records lost 70 of the 200.** Every write
+returned success and the file grew, so nothing anywhere reported it — the lost
+records were simply absent. The cause is that .NET's append mode seeks to the
+end *at open* and then tracks the position itself, so two writers that opened at
+the same length overwrite each other. `FileShare.ReadWrite` permits the sharing
+and guarantees nothing about it.
+
+The fix is the platform's own guarantee rather than a lock: a handle opened via
+`CreateFileW` with **`FILE_APPEND_DATA` and without `FILE_WRITE_DATA`** has its
+writes placed at the end of the file by the filesystem, atomically, regardless
+of how many other handles are open. **Requesting `GENERIC_WRITE` silently
+forfeits it**, because `GENERIC_WRITE` expands to include `FILE_WRITE_DATA`. The
+same eight-by-twenty-five run then loses nothing, repeated three times.
+
+This matters beyond the log. **The design has ~100 concurrent BrowserAI
+processes sharing one process log**, and a lock would have worked while also
+making logging able to block — the one thing [§E](../../plan/E-lifecycle.md)
+says the sink may never do. `[FLOATS]` for the .NET half, which could change
+with any SDK; `[STABLE]` for the Win32 guarantee.
+
 ### Diagnostic severity: what actually enforces a rule, and what only looks like it
 
 All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and

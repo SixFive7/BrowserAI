@@ -47,6 +47,24 @@
     <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
   </PropertyGroup>
 
+  <ItemGroup Label="Product">
+    <!-- Logging. The console provider is taken for one setting only:
+         LogToStandardErrorThreshold, which is what forces every record to
+         stderr by configuration rather than by rule. The file sink is ours,
+         because the framework's queue behaviour at process exit is unverified
+         and an unverified flush is the same class of assumption as an unread
+         exit code. -->
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="*" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="*" />
+  </ItemGroup>
+
+  <ItemGroup Label="Analyzers">
+    <!-- Turns BannedSymbols.txt into build errors. This is what makes "nothing
+         anywhere in the process may reach the console" a mechanism instead of
+         a habit that fails inside a catch. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="*" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <!-- TUnit: source-generated, reflection-free, MTP-native, MIT. It carries
          its own analyzers, which run at error severity (see .editorconfig)

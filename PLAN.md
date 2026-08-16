@@ -40,7 +40,7 @@ everything cold and hoping.
 | B | [Be the MCP server](plan/B-mcp-server.md) | Transport, protocol version negotiation, registration | not built | — |
 | C | [Sessions](plan/C-sessions.md) | `browserai_init` and the session family, the session directory as identity, lifetime | not built | — |
 | D | [Locking and single-instance](plan/D-locking.md) | The three lock scopes, ownership, the stray sweep, never by image name | not built | — |
-| E | [Lifecycle and observability](plan/E-lifecycle.md) | Job objects, stderr, exit codes, stdio ownership, logging | not built | — |
+| E | [Lifecycle and observability](plan/E-lifecycle.md) | Job objects, stderr, exit codes, stdio ownership, logging | part built | *stdio ownership and logging:* `src/BrowserAI/Protocol/StdioChannel.cs`, `src/BrowserAI/Logging/`, `src/BrowserAI/Hosting/`, `src/BrowserAI/BannedSymbols.txt`. The job-object contract, stderr classification, exit-code caching and the delete-a-tree-that-fights-back routine are **not** built |
 | F | [Artifact management](plan/F-artifacts.md) | Routing on the way in, typed folders, the artifact index | not built | — |
 | G | [Updates](plan/G-updates.md) | Velopack, the landmines, rollback, install layout | not built | — |
 | H | [The model-facing surface](plan/H-model-surface.md) | Tool descriptions, instructions, the error catalogue, discoverability | not built | — |

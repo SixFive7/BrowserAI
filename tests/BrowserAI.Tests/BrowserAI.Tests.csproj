@@ -21,6 +21,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
+    <!-- Referenced so it is built and copied beside the test host, which is
+         how TestProbe finds it. Nothing here calls into its types. -->
+    <ProjectReference Include="..\BrowserAI.TestProbe\BrowserAI.TestProbe.csproj" />
   </ItemGroup>
 
 </Project>

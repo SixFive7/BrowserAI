@@ -1,0 +1,34 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A test asset, not a product component. It exists because some of this
+    product's guarantees are only true at process scope and cannot be asserted
+    from inside the test host: an unhandled exception that leaves its last log
+    line on disk kills whatever process runs it, and concurrent appends from
+    ~100 processes are not observable from one.
+
+    The alternative was a hidden switch or an environment-variable backdoor in
+    BrowserAI itself. That would put test-only surface in the product, and the
+    product's argument surface is model-facing. A separate executable keeps the
+    product clean and grows with the suite: step 16 already needs a child that
+    creates a message-only window suppressing WM_GETTEXT.
+
+    It drives the REAL product code, through the real app-paths seam, with a
+    scratch root. Only the root differs from production, which is what the seam
+    is for.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>BrowserAI.TestProbe</RootNamespace>
+    <AssemblyName>BrowserAI.TestProbe</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
+  </ItemGroup>
+
+</Project>

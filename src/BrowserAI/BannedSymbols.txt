@@ -1,0 +1,17 @@
+; SPDX-FileCopyrightText: 2026 Jori Huisman
+; SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+;
+; Format: <DocumentationCommentId>;<message shown at the call site>
+;
+; Read by Microsoft.CodeAnalysis.BannedApiAnalyzers, at error severity. This
+; file exists because the rules below cannot be enforced by review: the console
+; call this project fears most is the one inside a catch block, added under
+; pressure, by someone who has never read a design document.
+;
+; A call site that genuinely needs a banned API disables RS0030 on that line
+; with the reason beside it. There is exactly one such site today --
+; Protocol/StdioChannel.cs, which acquires the raw handles -- and its exception
+; is visible in a diff. A blanket exclusion is not available.
+
+T:System.Console;stdout is the JSON-RPC protocol channel. Use StdioChannel for the wire and ILogger for diagnostics. Console.Out writes CP437 and CRLF, which corrupts a frame on the first non-ASCII byte; Console.In steals bytes the client sent as JSON-RPC and hangs forever on a server with no keyboard.
+T:System.Diagnostics.Debug;Debug.Assert raises a modal dialog on a machine with nobody at it, which is an invisible hang on a background MCP server. Throw, or log and carry on.

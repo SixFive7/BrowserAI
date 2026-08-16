@@ -10,6 +10,14 @@
          constrains their depth, so a path crossing MAX_PATH must not become a
          mystery failure somewhere inside a browser profile tree. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!--
+      Required by [LibraryImport], which the plan mandates over [DllImport]
+      because DllImport relies on runtime IL-stub generation that NativeAOT does
+      not do. The source generator emits unsafe marshalling stubs and the build
+      fails with SYSLIB1062 without this. Not a licence to hand-write unsafe
+      code: every use is a P/Invoke declaration under Interop\.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="Native compilation">
@@ -50,5 +58,26 @@
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The suite asserts on internals by design: the point of the app-paths
+         seam and the stdio wrapper is that they are testable, and exporting
+         them publicly to achieve that would be a worse trade. -->
+    <InternalsVisibleTo Include="BrowserAI.Tests" />
+    <InternalsVisibleTo Include="BrowserAI.TestProbe" />
+  </ItemGroup>
 
 </Project>

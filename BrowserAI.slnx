@@ -3,6 +3,7 @@
     <Project Path="src/BrowserAI/BrowserAI.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/BrowserAI.TestProbe/BrowserAI.TestProbe.csproj" />
     <Project Path="tests/BrowserAI.Tests/BrowserAI.Tests.csproj" />
   </Folder>
 </Solution>

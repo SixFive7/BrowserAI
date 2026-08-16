@@ -143,6 +143,27 @@ first step of touching this project, not a step before release.*
 
 **Consumes:** [§E](E-lifecycle.md) (the stdio half)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Protocol/StdioChannel.cs` ·
+> `src/BrowserAI/Logging/{ProcessLog,FileLoggerProvider,RollingFileWriter}.cs` ·
+> `src/BrowserAI/Hosting/{IAppPaths,LocalAppDataPaths}.cs` ·
+> `src/BrowserAI/Interop/NativeFile.cs` · `src/BrowserAI/BannedSymbols.txt` ·
+> `tests/BrowserAI.TestProbe/` · `tests/BrowserAI.Tests/{StdioChannelTests,
+> ProcessLogTests,Harness/}`.
+>
+> **One requirement in §E turned out to be unimplementable as written.** *"One
+> rolling process log"* shared by ~100 processes loses records under .NET's
+> `FileMode.Append` — measured, eight processes lost 70 of 200 lines, silently.
+> The sink opens the file with `FILE_APPEND_DATA` instead;
+> [kb](../kb/windows/processes.md#interop-and-the-toolchain) has the numbers and
+> re-verification row 45 has the regression guard.
+>
+> **And one is deliberately not built as described.** §E asks the sink to
+> *"flush before exiting, on every path including the crash path."* Nothing is
+> buffered, so there is nothing to flush and no flush hook exists; a no-op
+> `Flush()` would be a mechanism that only looks like one. The property §E wants
+> is delivered instead by every record being one unbuffered write, and it is the
+> crash test that proves it.
+
 Before any code exists that might reach for `Console.WriteLine`. A rule
 retro-fitted to a tree is a rule already broken somewhere in it.
 
