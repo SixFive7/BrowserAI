@@ -247,6 +247,12 @@ a further 577 lines of `npm install` machinery for the conformance suite.
 *both* pipe writers → await the server task → dispose the provider; any other
 order hangs or throws.
 
+> ⚠️ **The last clause was tested on our own two-hop rig on 2026-08-16 and is
+> right about the consequence, wrong about the mechanism.** The two steps are
+> independent, not sequential; see
+> [the four-way table](#added-2026-08-16--the-in-process-harness-at-220). The
+> line-count and licence facts above are unaffected and were not re-read.
+
 ### Added 2026-08-16 — writing the two transports, at 2.2.0
 
 Established while building
@@ -350,3 +356,95 @@ under a publish-only condition, an everyday build catches it too. The cast to
 > [step 9](../../plan/build-order.md#9-lossless-passthrough) rewrites
 > `tools/list` on `JsonNode` — that is the file where this call shape is most
 > likely to be written, and where it was planted for exactly that reason.
+
+### Added 2026-08-16 — the in-process harness, at 2.2.0
+
+Established while building
+[build-order step 8](../../plan/build-order.md#8-the-harness-and-the-fake-child):
+a test client, BrowserAI and a scriptable double joined by two pipe hops, with no
+process and no Node anywhere. Everything here was observed through
+`FakeChildHarnessTests`, which runs on every build.
+
+**An exception escaping a `CallToolHandler` becomes a JSON-RPC *success*
+carrying `isError: true`, and the cause is erased from the body.** Measured from
+two unrelated causes, both producing the identical frame:
+
+```
+{"result":{"content":[{"type":"text","text":"An error occurred invoking 'browser_navigate'."}],"isError":true},"id":2,"jsonrpc":"2.0"}
+```
+
+The first cause was `JsonException: Unknown content type: 'x-browserai-unknown'`
+thrown by `ContentBlock.Converter.Read` while the client deserialised the child's
+result; the second was `IOException: The server shut down unexpectedly` from a
+child that closed its stdout mid-call. **Nothing in the answer distinguishes
+them, and nothing in it names a cause at all.** The real exception is written
+once, by the SDK's server, at `Error`, as `"browser_navigate" threw an unhandled
+exception` — so it exists only if an `ILoggerFactory` was supplied.
+
+> This is **the founding failure shape arriving from our own dependency**: a
+> success envelope, every transport-level signal green, and the single bit that
+> says *broken* buried in the body. It is the reason
+> [step 9](../../plan/build-order.md#9-lossless-passthrough) is a separate step
+> rather than a detail of step 7. It also **qualifies the 2026-08-15 spike's
+> note** that *"a child dying mid-call surfaces as `-32603`, an error rather than
+> a hang"* — that describes what the **client** throws; what the **caller of the
+> proxy** receives, once the exception has passed through a typed
+> `CallToolHandler`, is the frame above. Both are true at different layers, and
+> only the second is what a model sees. Not re-measured here: whether the SDK's
+> own stdio client transport still yields `-32603` for the same death, since ours
+> raised `IOException` instead.
+
+**A JSON-RPC error from the child, by contrast, keeps almost everything.** A
+child answering `-32000` with `data` of `{"reason":"programmed"}` reaches the
+caller as code **-32000**, `data` **`{"reason":"programmed"}` verbatim and
+unflattened**, and message `Request failed (remote): the fake child refused this
+navigation`. So the prefix is real and still needs stripping — but **`data`
+arrives reconstructed with the proxy doing nothing**, which is more than
+[step 9's plan](../../plan/build-order.md#9-lossless-passthrough) assumed when it
+asked for it to be rebuilt from `Exception.Data`. Re-establish with
+`FakeChildHarnessTests.TheFakeChildInjectsAJsonRpcError`, which asserts all three
+by exact equality. `[FLOATS]`
+
+**`McpClientOptions.DiscoverProbeTimeout` is 5 seconds at 2.2.0, and the pin is
+what skips the probe — measured from both sides rather than read.** With
+`ProtocolVersion` pinned to `2025-11-25`, a double that records every method it
+is asked for sees **no `server/discover` at all**. With `ProtocolVersion` left
+null, the same double sees the probe. And against a double that *drops* the
+method, the connect costs the whole timeout and reports nothing — the
+30-seconds-per-rig failure of the 2026-08-15 spike, reproduced in 250 ms because
+`TestDefaults` pins the timeout short rather than long. Upstream's own fixtures
+pin it *longer*, citing
+[csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701);
+that is the right direction against a real peer over CI latency and the wrong one
+against in-process doubles, where a probe that ever runs to its timeout is a
+defect to surface fast. `[FLOATS]`
+
+**The harness teardown order: what each step actually does.** The SDK's own
+fixture note says *"cancel the token → complete both pipe writers → await the
+server task → dispose the provider; any other order hangs or throws."* Removing
+one step at a time from `McpTestHarness.DisposeAsync` and running the whole
+suite, 2026-08-16:
+
+| Cancel the token | Complete both writers | Server task ended | Pipes closed | Suite |
+|---|---|---|---|---|
+| yes | yes | yes | yes | 88 / 88 |
+| **no** | yes | yes | yes | 88 / 88 |
+| yes | **no** | yes | **no** | 78 / 88 |
+| **no** | **no** | **no** | **no** | 78 / 88 |
+
+So the two steps are **not** a sequence in which the first enables the second.
+Each independently ends `McpServer.RunAsync` — cancellation because it is the
+token it was started with, completion because EOF is what it returns on — and
+**only completing both writers closes the hop.** The consequence the note
+describes is real; the mechanism it implies is not. Re-establish by commenting
+out step 1 or step 2 of `McpTestHarness.DisposeAsync` and running the suite: the
+rig's own liveness assertion turns ten tests red rather than hanging, because the
+wait on the server task is bounded and the check is read **before** anything is
+disposed. `[FLOATS]`
+
+> **The first version of that check was dead and the experiment is what found
+> it.** It read `_serverTask.IsCompleted` *after* disposing the server, and
+> disposing the server ends the task — so the arm could never fire, in any
+> configuration. It now records the state immediately after the bounded wait.
+> A liveness check that cannot fail is worth less than none, because it reads as
+> covered.

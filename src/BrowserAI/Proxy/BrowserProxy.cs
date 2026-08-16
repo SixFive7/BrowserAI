@@ -59,7 +59,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <c>2999-01-01</c> returned <c>2025-11-25</c> and offering
     /// <c>2025-06-18</c> returned <c>2025-06-18</c>. The child never
     /// <i>rejects</i> a version, so a mis-negotiation produces nothing to catch
-    /// and <see cref="ConnectAsync"/> asserts on the negotiated value instead.
+    /// and
+    /// <see cref="ConnectAsync(IClientTransport, ILoggerFactory, CancellationToken)"/>
+    /// asserts on the negotiated value instead.
     /// </para>
     /// </remarks>
     public const string ChildProtocolVersion = "2025-11-25";
@@ -95,8 +97,40 @@ internal sealed class BrowserProxy : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
+        return await ConnectAsync(
+            new DirectStdioClientTransport(options, loggerFactory),
+            loggerFactory,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Completes the handshake over a transport the caller supplies, rather
+    /// than over one this class starts a process for.
+    /// </summary>
+    /// <remarks>
+    /// <b>The seam exists for the in-process test layer and nothing else
+    /// uses it.</b> A proxy has two hops, so a harness that stands a fake child
+    /// on the far end has to reach the client leg without a process — otherwise
+    /// every passthrough assertion costs a `node` spawn and the layer that is
+    /// supposed to run in milliseconds runs in seconds. Everything that decides
+    /// behaviour — the pinned revision, the negotiation check, the raw
+    /// <c>tools/list</c> overload — is below this line rather than above it, so
+    /// the harness exercises the same code the product runs.
+    /// </remarks>
+    /// <param name="transport">The client transport to connect over. This object does not own it; the client does.</param>
+    /// <param name="loggerFactory">Where the proxy and the session log.</param>
+    /// <param name="cancellationToken">Cancels the connect.</param>
+    /// <returns>The connected proxy.</returns>
+    /// <exception cref="InvalidOperationException">The child negotiated a revision other than the pinned one.</exception>
+    public static async Task<BrowserProxy> ConnectAsync(
+        IClientTransport transport,
+        ILoggerFactory loggerFactory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+
         var logger = loggerFactory.CreateLogger<BrowserProxy>();
-        var transport = new DirectStdioClientTransport(options, loggerFactory);
 
         var client = await McpClient.CreateAsync(
             transport,

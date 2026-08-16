@@ -754,6 +754,97 @@ hand-written raw-protocol test client.
 
 **Consumes:** [testing](testing.md#we-write-our-own-harness)
 
+> ✅ **Built 2026-08-16.** `tests/BrowserAI.Tests/Harness/{McpTestHarness,
+> FakePlaywrightChild, PipeDuplex, PipeClientTransport, FrameChannel,
+> RawPipeClient, TestDefaults, CapturingLoggerProvider, TUnitLoggerProvider}.cs`
+> · `tests/BrowserAI.Tests/FakeChildHarnessTests.cs` · one seam in
+> `src/BrowserAI/Proxy/BrowserProxy.cs`. **88 tests green, `dotnet build` 0
+> warnings**, `dotnet test` and `BrowserAI.Tests.exe` agree, and the AOT publish
+> was re-run clean. The fourteen tests of this layer start no process, need no
+> Node, and touch nothing on disk.
+>
+> **Two of the components this step lists already existed and were not
+> rebuilt.** `JobObjectScope` landed at [step 6](#6-the-job-object) and
+> `RawStdioClient` at [step 7](#7-vertical-slice-a-published-aot-binary-proxies-a-real-child).
+> Neither is used by this layer, and for `JobObjectScope` that is a decision
+> rather than an oversight: a job object held by a rig that can never put a
+> process in one is [a mechanism that only looks like
+> one](#2-stdout-is-owned-and-nothing-else-can-reach-it). The *"no live job, no
+> live process"* half of the done-test is answered instead by
+> `NothingInThisLayerCanStartAProcessOrCreateAJob`, which reads the ten files of
+> the layer and fails on any reference to a launcher, a job or the payload —
+> naming them explicitly, so a rename fails the test rather than silently
+> dropping a file out of the scan. The *"no live pipe"* half is the rig's own
+> `DisposeAsync`, which throws on a hop it left open; `TheRigDetectsAPipeNobodyClosed`
+> is what stops that check being one that has never been seen to fail.
+>
+> **`RawPipeClient` is a second hand-written client, not a replacement for
+> `RawStdioClient`.** They share the property that makes either an oracle — no
+> product and no SDK protocol type between the assertion and the bytes — and
+> differ in the two things this layer needs: it speaks over a **stream pair**
+> rather than starting a process, and it keeps every response's **raw bytes**,
+> which [step 9](#9-lossless-passthrough) needs because a client that hands back
+> only a parsed object has already thrown the evidence away.
+>
+> **The seam in `BrowserProxy` is one overload.** `ConnectAsync` now also takes
+> an `IClientTransport`; the process-starting overload delegates to it, and
+> everything that decides behaviour — the pinned revision, the negotiation check,
+> the raw `ListToolsAsync` overload — is below the split, so the harness runs the
+> same code the product does. What it deliberately does **not** exercise is
+> `ChildProcessSession`: the launcher, the job, the stderr pump and the cached
+> exit code are steps 5, 6 and 7's, against real processes. The pipe leg subclasses
+> the shared `JsonLinesTransport`, so the framing and serialisation are the
+> product's and the process half is absent rather than faked.
+>
+> **The fake child answers `server/discover` with `-32601`, and the code is the
+> smaller half of that sentence.** What matters is that it answers at all:
+> unanswered, the probe costs the client its whole `DiscoverProbeTimeout` per
+> connect, which is the 30-seconds-per-rig failure of the 2026-08-15 spike.
+> `-32601` is then the fidelity choice — it is what
+> [the real child was measured answering](../kb/mcp/protocol.md#the-protocol-split),
+> where BrowserAI's own end answers `-32602`, so a double returning `-32602`
+> would be doubling the proxy rather than the child. The double also **caps or
+> echoes** the protocol version instead of rejecting, which is the other measured
+> property of the real one. `TheClientPinIsWhatSkipsTheDiscoverProbe` now proves
+> the mechanism from three sides in 250 ms and moved
+> [row 16](../kb/README.md#re-verification-index) from *manual* to a test, with
+> its wall-clock half split off as 16a.
+>
+> ⚠️ **Three things measured here contradict a document, and the measurements
+> win.**
+>
+> 1. **An exception escaping a `CallToolHandler` reaches the caller as a JSON-RPC
+>    *success* carrying `isError: true`, with a body that names no cause.**
+>    Identical frame for an unknown content type and for a child that died
+>    mid-call. That is [the founding failure
+>    shape](../README.md#read-this-before-designing-anything) arriving from our
+>    own dependency, and it qualifies the spike's *"a child dying mid-call
+>    surfaces as `-32603`, an error rather than a hang"* — true of what the
+>    *client* throws, not of what the *caller of the proxy* receives.
+>    [Corrected in kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220),
+>    with [row 59](../kb/README.md#re-verification-index).
+> 2. **A child's JSON-RPC error keeps its `code` and its `data` verbatim through
+>    the proxy; only the message gains the `Request failed (remote): ` prefix.**
+>    [Step 9](#9-lossless-passthrough) asks for `data` to be *reconstructed from
+>    `Exception.Data`*, and on this path it arrives already reconstructed. The
+>    strip is still owed; the rebuild may not be. Noted on that step and in
+>    [row 60](../kb/README.md#re-verification-index).
+> 3. **The teardown order's mechanism is not what the SDK's own note implies.**
+>    Removing one step at a time over the whole suite: cancelling the token and
+>    completing both writers *each* end `McpServer.RunAsync` independently, and
+>    **only** completing both writers closes the hop. They are not a sequence in
+>    which the first enables the second. Both are kept, the consequence is
+>    guarded on every build by the rig's liveness assertion, and
+>    [the four-way table is in kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220)
+>    with [row 61](../kb/README.md#re-verification-index).
+>
+> **The rig's own liveness check was dead when first written, and the experiment
+> above is what found it.** It read the server task's state *after* disposing the
+> server — and disposing the server ends the task, so that arm could never fire
+> in any configuration. It now records the state immediately after a bounded
+> wait. A check that cannot fail reads as covered, which is worse than not having
+> it.
+
 `McpTestHarness` (**two** pipe pairs, not one — a proxy needs two hops),
 `FakePlaywrightChild`, `TUnitLoggerProvider`, `CapturingLoggerProvider`,
 `TestDefaults`, and `JobObjectScope` from step 6. ~100–200 lines. The SDK's own
@@ -802,6 +893,22 @@ than a detail of step 7.
   `Filters`, so there is no server-side seam for the child→caller direction.
 - Strip the `"Request failed (remote): "` prefix the SDK adds to JSON-RPC error
   messages, and reconstruct `data` from `Exception.Data`.
+
+  > ⚠️ **Measured at [step 8](#8-the-harness-and-the-fake-child), 2026-08-16:
+  > the prefix is real and `data` already arrives.** A child answering `-32000`
+  > with `data` of `{"reason":"programmed"}` reaches the caller with the code
+  > intact and that `data` **verbatim and unflattened**, so the reconstruction
+  > this bullet asks for may be work that is already done for us. The strip is
+  > still owed. Asserted by exact equality in
+  > `FakeChildHarnessTests.TheFakeChildInjectsAJsonRpcError`, so the day either
+  > half moves, it says so.
+  >
+  > **And the harder half of this bullet is not errors at all.** An exception
+  > escaping the typed `CallToolHandler` — an unknown content type, a child that
+  > died mid-call — does **not** become a JSON-RPC error. It becomes a
+  > *success* carrying `isError: true` and the text *"An error occurred invoking
+  > 'x'."*, identical for both causes and naming neither
+  > ([kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220)).
 
 **Done when:**
 

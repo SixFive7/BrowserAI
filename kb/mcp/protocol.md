@@ -61,6 +61,19 @@ with no error anywhere. The SDK's own test base class pins it explicitly, citing
 [csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701)
 — CI slowness tripped the probe there. `[FLOATS]`
 
+> **Asserted rather than remembered since 2026-08-16.**
+> `FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe` reads the 5 s
+> default off `McpClientOptions` and then proves the mechanism from three sides
+> against an in-process double: pinned, **no** `server/discover` is sent;
+> unpinned, it is; unpinned against a double that drops the method, the connect
+> pays the whole timeout. Our `TestDefaults` pins the probe **short** (250 ms),
+> the opposite of upstream's fixtures, because every peer in that layer is a
+> double that answers instantly — so a probe running to its timeout is a defect
+> to surface fast rather than latency to tolerate. That is also why the row's
+> wall-clock half is now [row 16a](../README.md#re-verification-index) and stays
+> manual: a deliberately short pin cannot measure the ~300 ms production
+> baseline.
+
 ## The client: Claude Code
 
 `[FLOATS]` on a client version this project does not control.
