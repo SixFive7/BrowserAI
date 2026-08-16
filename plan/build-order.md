@@ -287,6 +287,76 @@ this tree.
 **Consumes:** [testing](testing.md#the-upstream-review-gate) ·
 [`UPSTREAM-REVIEW.md`](../UPSTREAM-REVIEW.md)
 
+> ✅ **Built 2026-08-16.** `upstream-snapshots/{tools-list.json, cli-help.txt,
+> config-schema.d.ts, browsers.json}` · `build/upstream-snapshots.mjs` ·
+> `build/Update-UpstreamSnapshots.ps1` · `build/UpstreamSnapshots.targets`
+> (imported by the test project) · `tests/BrowserAI.Tests/{UpstreamSnapshotTests,
+> UpstreamReviewTests, ReVerificationIndexTests, ResolvedVersions}.cs` · the
+> `upstream-snapshots/** -text` exemption in `.gitattributes`. Every done-test
+> below was run, including the two that require breaking something and reverting
+> it. 30 tests green.
+>
+> **The surface is counted, and the bracket below is gone.** 24 default, 69 the
+> maximum exposed, 78 in the internal registry, 9 `skillOnly` — all re-measured
+> rather than carried over. **BrowserAI's own modes are 42 and 59**, measured
+> over the wire: `config` + `vision` + `devtools` is 42 on `headless` and
+> `interactive`, plus `storage` is 59 on `persistent`. The mechanism behind it
+> was not recorded anywhere: `filteredTools` ors `capability.startsWith("core")`
+> with the configured list, so **the base 24 is unconditional and no
+> configuration can go below it**, and naming a `core*` capability does nothing.
+> The per-capability table and the nine `skillOnly` names are
+> [in the kb](../kb/playwright/tools-and-artifacts.md#the-per-capability-breakdown-counted);
+> [§C](C-sessions.md) now carries 42/59.
+>
+> **Eight rows of the re-verification index named tests that have never
+> existed** — rows 1, 2, 3, 4, 4a, 4b, 7 and 8 — and
+> [testing](testing.md#re-verification-automated-where-it-can-be) asserted they
+> already did. They were written from spike code that lived in `.work/`. All
+> eight are back to *manual*, each naming the step that owes it, and
+> `ReVerificationIndexTests` fails the build on any row naming a test the
+> assembly does not carry. Rows 11, 12 and 15 moved the other way: the snapshot
+> gate measures them from the resolved payload on every build. The index's own
+> marker count is now a test rather than a sentence, which caught its two
+> operands being wrong in opposite directions.
+>
+> **One requirement is deliberately deferred, and the reason is in
+> [testing](testing.md#what-the-marker-records).** The marker entry's
+> `snapshots` and `reverification` fields cannot be asserted at a baseline:
+> nothing has moved, so the only way to satisfy such a test today is to write an
+> adjudication of no change plus an outcome for ~40 manual rows, most of which
+> name code that does not exist before step 12. That is a review that did not
+> happen. Those fields land with the first real bump — the event that creates
+> the obligation is also the event the marker test fires on.
+>
+> **Three toolchain traps were found wiring it, all measured:**
+> `$(IntermediateOutputPath)` is empty in a `.targets` imported from the project
+> body, so the incrementality stamp escaped `obj\` into the working tree and was
+> caught only by `git status --porcelain`; PowerShell 7 colours redirected
+> output, which arrives in an MSBuild error as line noise around the diff; and
+> `Get-Command git` returns **two** executables on this machine. The snapshot
+> directory is also exempt from git's line-ending normalisation, because a byte
+> comparison whose two sides pass through different rules is not one — measured
+> with `git hash-object --path`, a CRLF file hashes raw under the exemption and
+> LF-converted anywhere else in this repository.
+>
+> ⚠️ **One measurement in this step was wrong and was caught by another.**
+> `grep -c $'\r'` reported every line of the four snapshots as containing a CR,
+> which is how "npm ships `config.d.ts` and `browsers.json` CRLF" reached four
+> documents. Counting CR **bytes** — `tr -cd '\r' < file | wc -c` — returns
+> **zero** for all of them: every snapshot is LF. The `-text` exemption is
+> therefore a guard against a future upstream change rather than a fix for a
+> present one, and it is documented as that. The claim was corrected in
+> `.gitattributes`, [kb](../kb/windows/processes.md#interop-and-the-toolchain),
+> [row 51](../kb/README.md#re-verification-index) and
+> [the hazard index](hazards.md) before this note was written.
+>
+> **Not wired into `dotnet build` alone:** the gate lives in the test project,
+> because [the gate is the suite](../CLAUDE.md#before-changing-upstream-reviewjson--stop-and-read-the-procedure),
+> and it is incremental on the payload's files **and** the committed snapshots,
+> so a bumped payload or a hand-edited snapshot both re-run it. With no
+> `payload/` — a clean clone — it says so at high importance and writes no
+> stamp, because step 1's done-test requires `dotnet build` to pass there.
+
 This is the tripwire. It comes before the proxy because a snapshot taken after
 the code is written records whatever the code happened to accept.
 
@@ -314,13 +384,14 @@ the code is written records whatever the code happened to accept.
   exists or `manual`.
 - `git status --porcelain` is empty.
 
-> **Expect this step to invalidate a number in the plan.**
-> [§C](C-sessions.md) states the exposed surface as *"somewhere between 24 and
-> 69, and not the same number in every mode"*, because
-> [the per-capability breakdown was never counted](../kb/playwright/tools-and-artifacts.md#the-tool-surface-and-the-package-shape).
-> The `tools-list.json` snapshot counts it. Replace the bracket with the
-> measured figures, and put the per-capability table in the kb article — that is
-> a finding, not a surprise.
+> ✅ **It did, as expected.** [§C](C-sessions.md) stated the exposed surface as
+> *"somewhere between 24 and 69, and not the same number in every mode"*,
+> because the per-capability breakdown had never been counted. The
+> `tools-list.json` snapshot counted it: **42 on `headless` and `interactive`,
+> 59 on `persistent`**, and the bracket is gone from §C. The table is
+> [in the kb](../kb/playwright/tools-and-artifacts.md#the-per-capability-breakdown-counted),
+> where it replaced an `[UNVERIFIED]` entry that said the numbers had never been
+> observed.
 
 ---
 

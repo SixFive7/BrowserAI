@@ -1,0 +1,99 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project>
+
+  <!--
+    Build-order step 4. Regenerates the four upstream snapshots from the
+    assembled payload and diffs them against the committed copies, ON THE
+    BUILD, with the diff itself in the failure message.
+
+    Imported by the test project rather than by Directory.Build.props, for two
+    reasons. The gate is the suite (CLAUDE.md), so the project that owns the
+    suite owns the gate; and a shared import would run it three times per
+    build, once per project, for one answer.
+
+    Incremental on purpose, and the input list is what makes that honest: the
+    payload's own files AND the committed snapshots. Bump the payload and it
+    re-runs; hand-edit a snapshot and it re-runs. Nothing else can make the
+    answer change.
+  -->
+
+  <PropertyGroup>
+    <BrowserAIRepositoryRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</BrowserAIRepositoryRoot>
+    <UpstreamPayloadRoot>$(BrowserAIRepositoryRoot)payload\</UpstreamPayloadRoot>
+    <UpstreamSnapshotRoot>$(BrowserAIRepositoryRoot)upstream-snapshots\</UpstreamSnapshotRoot>
+    <UpstreamSnapshotScript>$(MSBuildThisFileDirectory)Update-UpstreamSnapshots.ps1</UpstreamSnapshotScript>
+    <!-- BaseIntermediateOutputPath, not IntermediateOutputPath. The latter is
+         defined by Microsoft.Common.CurrentVersion.targets, which the SDK
+         imports AFTER the project body, so at this point it expands to nothing
+         and the stamp lands in the project directory as an untracked file.
+         Measured 2026-08-16: that is exactly what it did. -->
+    <UpstreamSnapshotStamp>$(BaseIntermediateOutputPath)upstream-snapshots.stamp</UpstreamSnapshotStamp>
+    <UpstreamPayloadPresent Condition="Exists('$(UpstreamPayloadRoot)node\node.exe')">true</UpstreamPayloadPresent>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UpstreamPayloadPresent)' == 'true'">
+    <UpstreamSnapshotInput Include="$(UpstreamSnapshotRoot)*" />
+    <UpstreamSnapshotInput Include="$(MSBuildThisFileDirectory)upstream-snapshots.mjs" />
+    <UpstreamSnapshotInput Include="$(UpstreamSnapshotScript)" />
+    <UpstreamSnapshotInput Include="$(UpstreamPayloadRoot)node\node.exe" />
+    <UpstreamSnapshotInput Include="$(UpstreamPayloadRoot)mcp\package-lock.json" />
+    <UpstreamSnapshotInput Include="$(UpstreamPayloadRoot)mcp\node_modules\@playwright\mcp\cli.js" />
+    <UpstreamSnapshotInput Include="$(UpstreamPayloadRoot)mcp\node_modules\@playwright\mcp\config.d.ts" />
+    <UpstreamSnapshotInput Include="$(UpstreamPayloadRoot)mcp\node_modules\playwright-core\browsers.json" />
+    <UpstreamSnapshotInput Include="$(UpstreamPayloadRoot)mcp\node_modules\playwright-core\lib\coreBundle.js" />
+  </ItemGroup>
+
+  <Target Name="VerifyUpstreamSnapshots"
+          Condition="'$(UpstreamPayloadPresent)' == 'true'"
+          BeforeTargets="Build"
+          Inputs="@(UpstreamSnapshotInput)"
+          Outputs="$(UpstreamSnapshotStamp)">
+
+    <!--
+      2>&1 folds the generator's progress into the captured output, so a
+      failure inside node.exe reaches the error text instead of vanishing.
+      The exit code is inspected rather than trusted to fail the task, because
+      the diff has to be turned into an <Error> to be readable.
+    -->
+    <Exec Command="pwsh -NoProfile -NonInteractive -File &quot;$(UpstreamSnapshotScript)&quot; 2>&amp;1"
+          WorkingDirectory="$(BrowserAIRepositoryRoot)"
+          ContinueOnError="true"
+          IgnoreExitCode="true"
+          EchoOff="true"
+          StandardOutputImportance="low"
+          ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" ItemName="UpstreamSnapshotOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="UpstreamSnapshotExitCode" />
+    </Exec>
+
+    <!-- 9009 is cmd.exe's "not recognized". Everything in this repository's
+         build scripting is PowerShell 7; saying so beats a build log that
+         reads as an upstream diff failure. -->
+    <Error Condition="'$(UpstreamSnapshotExitCode)' == '9009'"
+           Text="pwsh (PowerShell 7) was not found on PATH, so the upstream snapshot gate could not run. It is a prerequisite of this build, like link.exe is of the publish." />
+
+    <Error Condition="'$(UpstreamSnapshotExitCode)' != '0'"
+           Text="@(UpstreamSnapshotOutput, '%0A')" />
+
+    <Touch Files="$(UpstreamSnapshotStamp)" AlwaysCreate="true">
+      <Output TaskParameter="TouchedFiles" ItemName="FileWrites" />
+    </Touch>
+  </Target>
+
+  <!--
+    Absent payload: say so, loudly, and write no stamp. A clean clone has no
+    payload/ (it is gitignored and costs an npm install plus a download), so
+    failing here would mean `dotnet build` on a clean clone could never pass,
+    which is exactly what build-order step 1's done-test requires of it. The
+    next build after build/Build-Payload.ps1 runs the gate, because no stamp
+    was written.
+  -->
+  <Target Name="ReportMissingPayloadForUpstreamSnapshots"
+          Condition="'$(UpstreamPayloadPresent)' != 'true'"
+          BeforeTargets="Build">
+    <Message Importance="high"
+             Text="Upstream snapshots NOT verified: no payload at $(UpstreamPayloadRoot). Run build/Build-Payload.ps1 to arm the gate." />
+  </Target>
+
+</Project>

@@ -221,7 +221,9 @@ Alongside them, the two things the suite already proves: **every test green**, a
 
 [The re-verification index](../kb/README.md#re-verification-index) lists the measured facts a version bump can silently invalidate. Each row carries an **`Automated by`** column naming the test that re-establishes it, or `—` where no test can.
 
-Several already exist as tests and simply need wiring to their row — the browser is unregistered for restart, `--no-sandbox` is absent from the resolved command line, zero process leakage after a hard kill, the `Chrome_MessageWindow` lookup finds a browser we launched, the cross-process window read still bypasses `WM_GETTEXT`. Others are inherently manual: whether an upstream behaviour change affects an abstraction of ours is a judgement, not an assertion.
+Some rows can be automated and some cannot: whether an upstream behaviour change affects an abstraction of ours is a judgement, not an assertion.
+
+> ⚠️ **Corrected 2026-08-16 (previously: "Several already exist as tests and simply need wiring to their row — the browser is unregistered for restart, `--no-sandbox` is absent from the resolved command line, zero process leakage after a hard kill, the `Chrome_MessageWindow` lookup finds a browser we launched, the cross-process window read still bypasses `WM_GETTEXT`.")** None of those tests existed. Build-order step 4 wired the column and found **eight rows naming a test type that no build had ever produced** — rows 1, 2, 3, 4, 4a, 4b, 7 and 8 — which is the exact failure this section warns about one paragraph later. They were written from spike work that lived in `.work/`, never in the suite. All eight are back to *manual*, each naming the step that owes it, and `ReVerificationIndexTests` now fails the build on any row naming a test the assembly does not carry. Three rows moved the other way in the same step: 11, 12 and 15 are answered by the snapshot gate, which measures them from the resolved payload on every build.
 
 **The split is the design.** An automated row is answered by the suite and needs no human. A manual row **must** be answered in the marker entry, by name, with an outcome. A row that is neither automated nor answered fails the gate.
 
@@ -234,6 +236,10 @@ Several already exist as tests and simply need wiring to their row — the brows
 - **`notes`** — unchanged in spirit and now checkable: what changed, what was adopted, **and what was declined and why.** A decline with a reason is worth as much as an adoption, because it stops the same question being re-litigated at the next bump.
 
 **A test asserts the entry is consistent with what actually moved.** If `config-schema.d.ts` changed and the entry's `snapshots` does not adjudicate it, the gate fails. If a manual re-verification row has no outcome, the gate fails. **You cannot record a review that ignores what the build observed** — which is the property the approval prompt never had.
+
+> **Built 2026-08-16, and what is not.** Build-order step 4 built the four snapshots, the regenerate-and-diff on every build, the marker test (`UpstreamReviewTests`), the snapshot's own coherence checks (`UpstreamSnapshotTests`) and the `Automated by` gate (`ReVerificationIndexTests`).
+>
+> **The `snapshots` and `reverification` fields are deliberately not built yet, and the reason is not effort.** Today every entry in `upstream-review.json` is a baseline: nothing has moved, so there is nothing to adjudicate. A test demanding those fields now could only be satisfied by writing an adjudication of no change for four snapshots and an outcome for **every manual row** — around forty of them, most naming code that does not exist before step 12. That is a review that did not happen, typed out to make a suite green, which is the same act as [editing the marker to make a test pass](../CLAUDE.md#before-changing-upstream-reviewjson--stop-and-read-the-procedure). The fields land with the **first real bump**, when there is something true to write in them; until then the marker test is what fires, and it fires on exactly the event that creates the obligation.
 
 ### What the hook becomes
 

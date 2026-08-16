@@ -404,6 +404,59 @@ making logging able to block — the one thing [§E](../../plan/E-lifecycle.md)
 says the sink may never do. `[FLOATS]` for the .NET half, which could change
 with any SDK; `[STABLE]` for the Win32 guarantee.
 
+**`$(IntermediateOutputPath)` is empty in a `.targets` file imported from the
+project body.** Measured 2026-08-16 on SDK **10.0.302** while wiring the
+upstream-snapshot gate: a stamp written to `$(IntermediateOutputPath)x.stamp`
+landed in the **project directory**, not in `obj\`. The property is defined by
+`Microsoft.Common.CurrentVersion.targets`, which the SDK imports *after* the
+project body, so a `PropertyGroup` in an imported `.targets` evaluates it to
+nothing and the path degrades to a bare filename. `$(BaseIntermediateOutputPath)`
+comes from `Microsoft.Common.props` at the top and is set. The failure is
+quiet in the worst way: the build works, incrementality works, and the only
+symptom is an untracked file that `git status --porcelain` reports — which is
+why every build-order step ends by running exactly that. Re-establish by
+pointing a `Touch` task at `$(IntermediateOutputPath)` from an imported
+`.targets` and looking at where the file lands. `[FLOATS]`
+
+**Two PowerShell traps, both measured 2026-08-16 while making a build script's
+output into a build error message.** `Get-Command 'git' -CommandType
+Application` returns **two** entries on a Git-for-Windows machine —
+`cmd\git.exe` and `mingw64\bin\git.exe` are both on `PATH` — so `$git.Source`
+is one string naming two executables and invoking it fails with *"The term
+'C:\…\mingw64\bin\git.exe C:\…\cmd\git.exe' is not recognized"*. `Select-Object
+-First 1` is required rather than tidy. And **PowerShell 7 emits ANSI colour
+escapes even when its output is redirected into a pipe**, which arrives in an
+MSBuild `<Error>` as line noise around the diff it is supposed to be carrying;
+`$PSStyle.OutputRendering = 'PlainText'` is the switch. `[MACHINE]` for the
+duplicate git, `[FLOATS]` for the rendering default.
+
+**A committed byte copy and its regenerated twin are not governed by the same
+line-ending rules, and `git add` is where they diverge.** Measured 2026-08-16
+with `git hash-object --path`: a two-line CRLF file hashes to its **raw** bytes
+under a path matched by `upstream-snapshots/** -text`, and to the **LF-converted**
+form under any other path in this repository, where `* text=auto eol=lf` and
+`*.json text` apply. `git add` on the second prints *"CRLF will be replaced by
+LF the next time Git touches it"* and stores the converted blob. So a
+regenerate-and-diff gate over committed copies of upstream files needs its
+directory exempted, or the comparison is between a normalised side and an
+unnormalised one — **permanently red on a difference that is not a difference**,
+whose tempting fix (normalise the generator's output too) makes an upstream
+line-ending change invisible instead.
+
+> **All four snapshots are LF today** — `config.d.ts` and
+> `playwright-core/browsers.json` as npm installs them, `cli.js --help`'s
+> output, and our generated JSON — so the exemption currently changes nothing
+> and is a guard against an upstream that changes its mind. **The conversion it
+> guards against is not hypothetical in this repository:** every
+> `dotnet restore` prints *"in the working copy of
+> `src/BrowserAI/packages.lock.json`, CRLF will be replaced by LF"*, because
+> NuGet writes those files CRLF and `*.json text` normalises them on the way in.
+> Nothing byte-compares a lock file, so there it is harmless. Re-establish by
+> counting CR **bytes**: `tr -cd '\r' < file | wc -c`. **Not** with `grep -c
+> $'\r'`, which in Git Bash reported every line of an all-LF file as a match
+> and produced a confident wrong answer that survived into four documents
+> before a byte count contradicted it. `[FLOATS]`
+
 ### Diagnostic severity: what actually enforces a rule, and what only looks like it
 
 All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and

@@ -10,6 +10,17 @@
 `1999-01-01` returned `2025-11-25` with no error, so a mis-negotiation produces
 nothing to catch and the negotiated value must be asserted. `[FLOATS]`
 
+> `Verified 2026-08-16 @ @playwright/mcp 0.0.79 / playwright-core
+> 1.63.0-alpha-2026-08-05.` Re-measured from the other side as well as the
+> original one: offering the deliberately-future `2999-01-01` returned
+> `2025-11-25`, and offering `2025-06-18` returned `2025-06-18` — so it caps a
+> newer revision and echoes an older one, and does neither with an error. Both
+> probes are now part of the snapshot generator, so the ceiling is recorded in
+> [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
+> and a move is a diff. That covers *recording* it; **asserting the negotiated
+> version inside the product is still owed** and belongs to
+> [build-order step 7](../../plan/build-order.md).
+
 **The current spec is `2026-07-28`, a breaking rewrite.** It removes `initialize`
 and `notifications/initialized`, adds `server/discover`, replaces server→client
 requests with the MRTR retry pattern, and deprecates Roots, Sampling and Logging.

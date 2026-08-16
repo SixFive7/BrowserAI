@@ -16,6 +16,22 @@ and version it was true at.
 
 ## At v1 launch
 
+- [ ] **Make the marker entry adjudicate what moved — at the first real bump,
+      not before.** [The gate](plan/testing.md#what-the-marker-records) requires
+      each `upstream-review.json` entry to gain `snapshots` (per snapshot,
+      `unchanged` or an adjudication) and `reverification` (an outcome for every
+      *manual* row, by name), with a test asserting the entry is consistent with
+      what the build observed. Build-order step 4 built everything else in that
+      section and deliberately not this. **At a baseline there is nothing to
+      adjudicate**: satisfying such a test today means typing an adjudication of
+      no change for four snapshots and an outcome for roughly forty manual rows,
+      most of which name code that does not exist before
+      [step 12](plan/build-order.md#12-the-session-tools-and-config-generation) —
+      a review that did not happen, written to make a suite green, which is the
+      one act [the procedure](UPSTREAM-REVIEW.md) exists to forbid. Do it on the
+      first bump, when there is something true to write; the marker test fires
+      on exactly that event, so nothing is relying on anyone remembering.
+
 - [ ] **Capture ILC's raw output and fail the publish if it is non-empty.**
       Build-order step 1 asked for two things and only one of them is a property.
       The property half landed 2026-08-16: `SuppressTrimAnalysisWarnings=false`,

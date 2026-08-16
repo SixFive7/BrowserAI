@@ -23,17 +23,71 @@ esbuild-bundled. `[FLOATS]`
 day one.** **78** entries in the internal registry array; **69** the maximum ever
 exposed over MCP (9 are `skillOnly` and always stripped); **24** the default with
 no `capabilities` set. The founding-bug reproduction saw the 24 over a real
-`tools/list`. `[FLOATS]`
+`tools/list`. `Verified 2026-08-16 @ @playwright/mcp 0.0.79 / playwright-core
+1.63.0-alpha-2026-08-05`: all three re-measured, the 78 and the 9 by reading
+`browserTools` in-process and the 24 and 69 over a real `tools/list`. They now
+regenerate into
+[`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
+on every build, so a move is a diff rather than a memory. `[FLOATS]`
 
 **The `storage` capability is 17 tools** — the cookie / localStorage /
 `storageState` set. The legacy `interactive` server ran without it, so in that
 process they did not exist at all.
 
-> **A per-capability breakdown is not recorded anywhere in this repository.**
-> Only the base 24 and `storage`'s 17 were ever written down; `vision`,
-> `devtools` and `config` were not counted. `[UNVERIFIED]` — the numbers were
-> never observed, not merely lost. Count them from the resolved bundle at the
-> next review rather than from memory.
+### The per-capability breakdown, counted
+
+**Measured 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05.** Re-establish it by regenerating the snapshot:
+`pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept`, which reads
+`browserTools` from the resolved bundle and cross-checks every number against a
+real `tools/list`. `[FLOATS]`
+
+| Capability | Tools it carries | Of those, `skillOnly` | Surface with it alone |
+|---|---|---|---|
+| `core` | 21 | 2 | unconditional |
+| `core-input` | 7 | 5 | unconditional |
+| `core-navigation` | 4 | 2 | unconditional |
+| `core-tabs` | 1 | 0 | unconditional |
+| `core-install` | **0** | — | unconditional, and carries nothing |
+| `config` | 1 | 0 | 25 |
+| `network` | 4 | 0 | 28 |
+| `pdf` | 1 | 0 | 25 |
+| `storage` | 17 | 0 | 41 |
+| `testing` | 5 | 0 | 29 |
+| `vision` | 6 | 0 | 30 |
+| `devtools` | 11 | 0 | 35 |
+| **all twelve** | **78** | **9** | **69** |
+
+**The `core` family is unconditional, and that is why every column above starts
+at 24.** `filteredTools(config)` is
+`browserTools.filter(t => t.capability.startsWith("core") || config.capabilities?.includes(t.capability)).filter(t => !t.skillOnly)`,
+so the five `core*` capabilities are on whatever `capabilities` says — setting
+`capabilities: ["config"]` yields **25** tools, not 1. Naming a `core*`
+capability explicitly therefore does nothing, and **no configuration can reduce
+the surface below the base 24**. `[FLOATS]`
+
+**The nine `skillOnly` tools, by name:** `browser_console_clear`,
+`browser_network_clear` (`core`); `browser_press_sequentially`,
+`browser_keydown`, `browser_keyup`, `browser_check`, `browser_uncheck`
+(`core-input`); `browser_navigate_forward`, `browser_reload`
+(`core-navigation`). They are in the registry, they are never in a `tools/list`,
+and the property is `tool.skillOnly` on the registry entry rather than anything
+on the schema. `[FLOATS]`
+
+**What BrowserAI's own modes expose, measured over the wire rather than added
+up:** `config` + `vision` + `devtools` gives **42**, and `persistent` adding
+`storage` gives **59** ([§C](../../plan/C-sessions.md#three-modes-and-tracing-as-a-modifier)).
+Those are the same two numbers the `createConnection` experiment below produced
+from two connections in one process, which is a second, independent route to
+them. `[FLOATS]`
+
+> ⚠️ **Corrected 2026-08-16 (previously: "A per-capability breakdown is not
+> recorded anywhere in this repository … `[UNVERIFIED]` — the numbers were never
+> observed, not merely lost. Count them from the resolved bundle at the next
+> review rather than from memory.")** They have now been counted from the
+> resolved bundle, which is what build-order step 4 was told to expect. The
+> `[UNVERIFIED]` marker is gone because the numbers were observed, not because
+> anybody reasoned about them.
 
 **One node process can serve several configurations.** Verified: two connections
 built through the programmatic `createConnection` API produced correctly

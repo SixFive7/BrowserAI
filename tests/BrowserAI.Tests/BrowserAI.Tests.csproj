@@ -19,6 +19,13 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
+  <!-- The upstream-review gate: four snapshots regenerated from the resolved
+       payload and diffed on every build, with the diff in the failure message.
+       Imported here rather than in Directory.Build.props because the gate is
+       the suite, and because a shared import would run it once per project for
+       one answer. -->
+  <Import Project="..\..\build\UpstreamSnapshots.targets" />
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
     <!-- Referenced so it is built and copied beside the test host, which is

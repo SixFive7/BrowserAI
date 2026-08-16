@@ -20,6 +20,27 @@
 *.ps1     text
 *.md      text
 
+# Upstream snapshots — foreign bytes, never normalized, never hand-edited.
+#
+# These four files are regenerated from the resolved payload on every build and
+# diffed against what is committed (plan/testing.md, "The upstream-review
+# gate"). A byte comparison only means something if both sides are governed by
+# the same rules, and without this line they are not: the committed copy passes
+# through git's normalization and the regenerated one does not.
+#
+# Measured 2026-08-16: all four are LF today — config.d.ts and browsers.json as
+# npm installs them, cli.js's --help output, and our own generated JSON — so
+# this line changes nothing right now. It is here for the day one of them
+# arrives CRLF, which is upstream's to decide: `*.json text` two blocks above
+# would rewrite it to LF on the way in, the regenerated copy would stay CRLF,
+# and the build would be permanently red on a difference that is not one. The
+# tempting fix then is to normalize the generator's output, which would make an
+# upstream line-ending change invisible instead.
+#
+# `-text` rather than `binary`: no conversion in either direction, and git still
+# renders a readable diff, which is the whole point of the gate.
+upstream-snapshots/** -text
+
 # Binary — never normalize, never diff.
 *.exe    binary
 *.dll    binary

@@ -72,14 +72,22 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **117**
-`[FLOATS]` markers stand across the articles against the **50** numbered rows
-below (52 lines, counting 4a and 4b),
+table is how that happens. **It does not yet cover all of them**: **124**
+`[FLOATS]` markers stand across the articles against the **52** numbered rows
+below (54 lines, counting 4a and 4b),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
 
-> **The 117 is a marker count, not an entry count** — re-counted 2026-08-16 with
+> **These three numbers are now checked on every build**, by
+> `ReVerificationIndexTests` — it re-runs the count below, counts the rows, and
+> fails if the sentence above disagrees with either. That is build-order step
+> 4's answer to a note that had already drifted twice: a tally maintained by
+> hand is a tally that is wrong, and the two paragraphs after this one are what
+> that looked like. **The test reads the sentence above as its anchor**, so
+> rewording it fails the suite rather than quietly unhooking the check.
+
+> **The 124 is a marker count, not an entry count** — re-counted 2026-08-16 with
 > `grep -ro "\[FLOATS\]" --include=*.md . | grep -v '^\./\.work/'`, then
 > subtracting this file's own five occurrences. Some entries carry a split
 > marker (`[FLOATS]` for the numbers, `[STABLE]` for the mechanism) and are
@@ -99,16 +107,29 @@ missing row as a gap in this table, never as permission to skip the fact.
 > and excludes `.work/` explicitly — a count nobody can reproduce is the tally
 > this note exists to prevent.
 >
-> **Re-counted again 2026-08-16 after build-order step 3: 123 raw, minus this
-> file's six, is 117.** Eight new markers, all covered by rows 46–50 below —
+> **Re-counted again 2026-08-16 after build-order step 3: 117 across the
+> articles.** Eight new markers, all covered by rows 46–50 below —
 > `.links/`'s real location, Node's `LICENSE` not being published beside
 > `node.exe`, the payload tree's shape, two npm/PowerShell toolchain traps, and
-> the two provisioning findings in row 50. **Note the self-reference count moved
-> from five to six**, because this note now contains the literal marker itself;
-> subtract what the command actually reports for this file, never the number
-> written down last time. The command needed no other change: `payload/` is a
-> build output and holds no marker, so excluding it or not gives the same 123
-> today. Run it both ways if that ever stops being true.
+> the two provisioning findings in row 50. Subtract what the command actually
+> reports for this file, never the number written down last time. The command
+> needed no other change: `payload/` is a build output and holds no marker, so
+> excluding it or not gives the same total. Run it both ways if that ever stops
+> being true.
+>
+> ⚠️ **Corrected 2026-08-16 (previously "123 raw, minus this file's six, is
+> 117", and "the self-reference count moved from five to six").** Both inputs
+> were wrong and cancelled: measured against the step-3 commit itself,
+> `git grep -o "\[FLOATS\]" 9410876 -- '*.md'` returns **122**, and this file
+> held **five** occurrences, not six — the note claiming six did not add one.
+> 122 − 5 is the 117 that was recorded, so the answer survived two wrong
+> operands, which is precisely why the count is now a test instead of a
+> sentence.
+>
+> **Re-counted 2026-08-16 after build-order step 4: 124.** Seven new markers —
+> four on the per-capability tool breakdown that step measured, and three
+> toolchain traps found wiring the gate (rows 51 and 52). Two new rows, so the
+> table is 52 numbered rows over 54 lines.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -125,23 +146,23 @@ decision:
 
 | # | Fact | Breaks if | Check | Automated by |
 |---|---|---|---|---|
-| 1 | Playwright's restart command line overshoots 1023 by 531+ ([kb](chromium/resurrection.md)) | Playwright trims its arg list | `GetApplicationRestartSettings` on a live browser returns `ERROR_NOT_FOUND` | `RestartRegistrationTests` |
-| 2 | Job containment holds end to end ([kb](windows/processes.md#job-objects-and-process-containment)) | Playwright, Chromium or Firefox changes spawn flags | Run `.work/jobtest/` against both browsers | `JobContainmentTests` |
-| 3 | `chromiumSandbox` config key still discarded ([kb](playwright/configuration.md#silent-config-failures)) | Upstream fixes it | Assert `--no-sandbox` absent from the child's browser command line | `SandboxFlagTests` |
-| 4 | `Chrome_MessageWindow` title format ([kb](windows/detection.md)) | Chromium changes `ProcessSingleton` | Exact-title lookup against a launched browser | `MessageWindowTests` |
-| 4a | **Cross-process `GetWindowTextW` bypasses `WM_GETTEXT`** — undocumented behaviour of a documented function, and the sweep rests on it ([kb](windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)) | A Windows change routes the read through the message queue | Child process with a WndProc that suppresses `WM_GETTEXT`; assert the parent still reads the kernel name. **No browser needed — runs in milliseconds on every build** | `WindowTextBypassTests` |
-| 4b | A headless launch resolves to full `chrome.exe`, not `chrome-headless-shell` — **because we set a chromium-alias channel**; with no channel `getExecutableName` picks the shell ([selector](playwright/configuration.md#defaults-that-are-not-what-they-look-like), and the [unreconciled 0.0.79 observation](windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)) | Upstream changes binary selection, or our channel stops reaching the child. Not silent — the shell is never provisioned, so the launch **fails loudly** — but the failure would be baffling without this note | Launch through the real path, assert the walk yields a titled window owned by that PID, **and assert the resolved channel via `browser_get_config`** — which is also what closes the open disagreement between the two entries | `HeadlessBinaryTests` |
+| 1 | Playwright's restart command line overshoots 1023 by 531+ ([kb](chromium/resurrection.md)) | Playwright trims its arg list | `GetApplicationRestartSettings` on a live browser returns `ERROR_NOT_FOUND` | — *manual*; owed as `RestartRegistrationTests` at [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser) |
+| 2 | Job containment holds end to end ([kb](windows/processes.md#job-objects-and-process-containment)) | Playwright, Chromium or Firefox changes spawn flags | Run `.work/jobtest/` against both browsers | — *manual*; owed as `JobContainmentTests` at [step 6](../plan/build-order.md#6-the-job-object), against both browsers at [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser) |
+| 3 | `chromiumSandbox` config key still discarded ([kb](playwright/configuration.md#silent-config-failures)) | Upstream fixes it | Assert `--no-sandbox` absent from the child's browser command line | — *manual*; owed as `SandboxFlagTests` at [step 7](../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child) |
+| 4 | `Chrome_MessageWindow` title format ([kb](windows/detection.md)) | Chromium changes `ProcessSingleton` | Exact-title lookup against a launched browser | — *manual*; owed as `MessageWindowTests` at [step 16](../plan/build-order.md#16-the-stray-sweep) |
+| 4a | **Cross-process `GetWindowTextW` bypasses `WM_GETTEXT`** — undocumented behaviour of a documented function, and the sweep rests on it ([kb](windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)) | A Windows change routes the read through the message queue | Child process with a WndProc that suppresses `WM_GETTEXT`; assert the parent still reads the kernel name. **No browser needed — runs in milliseconds on every build** | — *manual*; owed as `WindowTextBypassTests` at [step 16](../plan/build-order.md#16-the-stray-sweep) |
+| 4b | A headless launch resolves to full `chrome.exe`, not `chrome-headless-shell` — **because we set a chromium-alias channel**; with no channel `getExecutableName` picks the shell ([selector](playwright/configuration.md#defaults-that-are-not-what-they-look-like), and the [unreconciled 0.0.79 observation](windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)) | Upstream changes binary selection, or our channel stops reaching the child. Not silent — the shell is never provisioned, so the launch **fails loudly** — but the failure would be baffling without this note | Launch through the real path, assert the walk yields a titled window owned by that PID, **and assert the resolved channel via `browser_get_config`** — which is also what closes the open disagreement between the two entries | — *manual*; owed as `HeadlessBinaryTests`, the channel half at [step 12](../plan/build-order.md#12-the-session-tools-and-config-generation) and the walk at [step 16](../plan/build-order.md#16-the-stray-sweep) |
 | 5 | Chromium/Firefox request no breakaway on browser paths ([kb](windows/processes.md#job-objects-and-process-containment)) | Either adds one | Source search for `CREATE_BREAKAWAY_FROM_JOB` | — *manual* |
 | 6 | `--browser-test` call-site inventory (11 files) ([kb](chromium/fingerprinting.md)) | Chromium adds a web-facing site | Source search for `switches::kBrowserTest` | — *manual* |
-| 7 | `browserName`/`channel`/binary-selection defaults ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | `validateBrowserConfig` or `getExecutableName` changes | Config round-trip via `browser_get_config` | `ConfigRoundTripTests` |
-| 8 | `outputMaxSize` has no default ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | `defaultConfig` gains one | Assert unset in the resolved config | `OutputMaxSizeTests` |
+| 7 | `browserName`/`channel`/binary-selection defaults ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | `validateBrowserConfig` or `getExecutableName` changes | Config round-trip via `browser_get_config` | — *manual*; owed as `ConfigRoundTripTests` at [step 12](../plan/build-order.md#12-the-session-tools-and-config-generation) |
+| 8 | `outputMaxSize` has no default ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | `defaultConfig` gains one | Assert unset in the resolved config | — *manual*; owed as `OutputMaxSizeTests` at [step 12](../plan/build-order.md#12-the-session-tools-and-config-generation) |
 | 9 | Firefox honours `toolkit.winRegisterApplicationRestart` ([kb](chromium/resurrection.md#the-mechanism-and-what-is-still-unproven)) | Mozilla removes the pref | Source check in `nsAppRunner.cpp` | — *manual* |
 | 10 | `winldd` no-op for Chromium ([kb](playwright/configuration.md#browser-provisioning)) | Upstream fixes `chrome-win` → `chrome-win64` | Cold-start latency; source check | — *manual* |
-| 11 | Tool counts — 78 internal, 69 exposed, 24 default ([kb](playwright/tools-and-artifacts.md#the-tool-surface-and-the-package-shape)) | Upstream adds, removes or reclassifies a tool | Golden `tools/list` snapshot; count `skillOnly` in the resolved bundle | — *manual* |
-| 12 | `storage` is 17 tools — **and the other capabilities were never counted** ([kb](playwright/tools-and-artifacts.md#the-tool-surface-and-the-package-shape)) | Any capability's membership changes | Count every capability's tools from the resolved bundle. Never from memory | — *manual* |
+| 11 | Tool counts — 78 internal, 69 exposed, 24 default, and **which nine are `skillOnly`** ([kb](playwright/tools-and-artifacts.md#the-tool-surface-and-the-package-shape)) | Upstream adds, removes or reclassifies a tool | Golden `tools/list` snapshot; count `skillOnly` in the resolved bundle | `build/Update-UpstreamSnapshots.ps1` · `UpstreamSnapshotTests` |
+| 12 | `storage` is 17 tools, and **the per-capability breakdown**: 42 tools in `headless`/`interactive`, 59 in `persistent` ([kb](playwright/tools-and-artifacts.md#the-per-capability-breakdown-counted)) | Any capability's membership changes | Count every capability's tools from the resolved bundle. Never from memory | `build/Update-UpstreamSnapshots.ps1` · `UpstreamSnapshotTests` |
 | 13 | `browser_run_code_unsafe` reaches `httpOnly` cookies from the **default** surface ([kb](playwright/tools-and-artifacts.md#tools-that-reach-credentials)) | Upstream sandboxes it or moves it out of `core` | Run the probe: default caps, `page.context().cookies()` | — *manual* |
 | 14 | `browser_storage_state` omits IndexedDB ([kb](playwright/tools-and-artifacts.md#tools-that-reach-credentials)) | Upstream passes `{indexedDB:true}` | Source check at the `storageState()` call site | — *manual* |
-| 15 | The child's protocol ceiling is `2025-11-25`, and it never rejects — it caps or echoes ([kb](mcp/protocol.md#the-protocol-split)) | Upstream adopts a newer revision | Assert the negotiated version at startup | — *manual* |
+| 15 | The child's protocol ceiling is `2025-11-25`, and it never rejects — it caps or echoes ([kb](mcp/protocol.md#the-protocol-split)) | Upstream adopts a newer revision | Assert the negotiated version at startup | `build/Update-UpstreamSnapshots.ps1` **records** it (both probes, every build); **asserting it inside the product is owed** at [step 7](../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child) |
 | 16 | `DiscoverProbeTimeout` is 5 s, and the client pin is what skips the probe ([kb](mcp/protocol.md#the-protocol-split)) | The SDK changes the default or the probe | Assert the pin in every test client; time a spawn against the ~300 ms baseline | — *manual* |
 | 17 | `PLAYWRIGHT_MCP_*` count is **42**, two of them outside the config mapping ([kb](playwright/configuration.md#environment-merge-order-and-startup-output)) | Upstream adds a variable | Derive the count from the resolved bundle; the allowlist test must not carry a literal | — *manual* |
 | 18 | `--caps` and `PLAYWRIGHT_MCP_CAPS` replace rather than merge ([kb](playwright/configuration.md#environment-merge-order-and-startup-output)) | `mergeConfig` changes | Config round-trip via `browser_get_config` | — *manual* |
@@ -165,7 +186,6 @@ decision:
 | 36 | `setupExitWatchdog` still hooks stdin close / `SIGINT` / `SIGTERM` → `gracefullyCloseAll()`, hard-exiting after **15 s** ([kb](playwright/configuration.md#shutdown)) | Upstream changes its shutdown path or that ceiling | Close stdin on a real child; assert graceful close, and that nothing survives the ceiling. Teardown is built on it — [no killing is involved in the normal path](../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever) | — *manual* |
 | 37 | `--console-level` still defaults to `info`, silently dropping `debug` ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | Upstream changes the default | Config round-trip via `browser_get_config`. The default is [exposed on `init`](../README.md#settled-2026-08-15), so an upstream change silently changes what a caller is choosing between | — *manual* |
 | 38 | Resume costs **515 ms** and loses only `sessionStorage`; browser-idle close recovers 329 → 110 MB and relaunch costs 186 ms ([kb](playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) | Any browser or Playwright bump that changes profile durability or launch cost | Kill the node child, resume against the directory, assert cookies, localStorage, IndexedDB, service workers and CacheStorage all survive. **[Reclaim is forever](../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever) rests on this**: if a resume stopped preserving the profile the no-expiry decision would be wrong, and nothing else in the design would say so | — *manual* |
-
 | 39 | A console logging sink's **type initializer** calls `SetConsoleMode` on `STD_OUTPUT_HANDLE` before any log line, and no-ops silently when stdout is a pipe ([kb](windows/processes.md#stdio-exit-codes-and-process-startup)) | We adopt `Serilog.Sinks.Console` or any sink shaped like it — or the referenced version moves. Upstream `main` has **already dropped** the `#if PINVOKE` guard that leaves 3.1.2 inert on `netstandard2.0`, so a version bump alone can arm it | Read `ConsoleSink.cs` and `Platform/WindowsConsole.cs` **at the version actually referenced**, not at whichever copy is on disk. **Conditional row:** nothing today depends on Serilog, so this is owed only once a console sink reaches the dependency list — but it must be answered *then*, because the write is invisible under MCP and shows up only in interactive diagnostics | — *manual* |
 | 40 | A legitimately **empty** channel 404s exactly like a misconfigured feed URL ([kb](packaging/velopack.md#1-the-channel-must-not-go-in-the-feed-url)) | Velopack returns an empty release list instead, or changes the status code | Request a channel with nothing published, assert the status, and confirm the health check does **not** alarm. Row 24's update lane only ever exercises a populated channel, so this is not covered there | — *manual* |
 | 41 | `UpdateExe.Start`'s first positional parameter is the **locator**, not `waitPid`; `ApplyUpdatesAndRestart` already restarts on its own ([kb](packaging/velopack.md#the-restart-handover-race-and-why-updateexe-is-the-answer)) | Any Velopack bump changes either signature | Compile a call against the shipped assembly, and assert exactly **one** relaunch on the update path. The double-restart failure is silent — two working launches look like one slow one | — *manual* |
@@ -178,6 +198,9 @@ decision:
 | 48 | **The payload tree's shape** — `@playwright/mcp` pins `playwright-core` **exactly**, and no non-optional package declares an install script ([kb](playwright/provisioning-and-timings.md#component-sizes)) | Upstream loosens the pin to a range, or adds a `postinstall`. Either is silent: the tree still installs, and the payload starts floating on a second axis or starts executing upstream code on the build machine | Compare the declared dependency against the resolved version, and scan the lock for `hasInstallScript` outside `optional` entries. The install runs **without** `--ignore-scripts` on purpose, so a new script is caught rather than suppressed | `build/Build-Payload.ps1` · `PayloadTests` |
 | 49 | **npm keys a lock's root package on the empty string, and `npm ci` does not rewrite the lock** ([kb](windows/processes.md#interop-and-the-toolchain)) | npm changes `lockfileVersion`, or PowerShell changes `ConvertFrom-Json`. The first fails loudly; the second is why `-AsHashtable` is not stylistic | Parse the resolved lock, and compare it byte for byte either side of `npm ci`. **Not covered:** whether `npm install` re-resolves a dist tag with a lock already present — the build deletes the lock first, so that state never arises | `build/Build-Payload.ps1` |
 | 50 | **`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` gates the npm-postinstall and server auto-install paths only, not `registry.install()`** — and installing `ffmpeg` on Windows pulls `winldd` with it ([kb](playwright/provisioning-and-timings.md#first-run-provisioning)) | Upstream extends the flag to the explicit installer, which would stop [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)'s provisioning dead while the variable stays [mandated in the child environment](../README.md#the-five-rules-that-make-floating-safe) for the reason it was always mandated | `install-browser ffmpeg --no-progress` against an empty browsers root with the flag set; assert it still downloads. The payload build's own `chrome.exe` assertion catches the regression too, one step later and just as loudly | `build/Build-Payload.ps1` |
+
+| 51 | **The snapshot gate is byte-exact across line endings.** All four snapshots are **LF** today; the `-text` exemption in `.gitattributes` is what keeps a committed byte copy from being normalised out from under the comparison if upstream ever ships CRLF ([kb](windows/processes.md#interop-and-the-toolchain)) | Upstream changes its line endings **and** the exemption has been lost. Either alone is harmless; together the committed copy is LF, the regenerated one is CRLF, and every build is red on a difference that is not one | Count CR **bytes**, by piping `tr -cd '\r'` into `wc -c`, on the four snapshots and on the payload originals. Never `grep -c $'\r'`, which reported every line of an all-LF file as a match | `build/Update-UpstreamSnapshots.ps1` |
+| 52 | **Three traps in the gate's own plumbing**: `$(IntermediateOutputPath)` is empty in a `.targets` imported from the project body (the stamp escapes `obj\`); PowerShell 7 colours redirected output; `Get-Command git` returns two executables on this machine ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK bump for the first, any PowerShell bump for the second. **The SDK floats**, so the first moves without anyone choosing it | Re-measure the first by pointing a `Touch` at `$(IntermediateOutputPath)` from an imported `.targets`. Its *consequence* is caught on every step by `git status --porcelain`, which is how it was found | — *manual* |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.
