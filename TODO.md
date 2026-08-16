@@ -32,27 +32,21 @@ and version it was true at.
       first bump, when there is something true to write; the marker test fires
       on exactly that event, so nothing is relying on anyone remembering.
 
-- [ ] **Make `dotnet test` run the tests again.** Measured 2026-08-16 on SDK
-      **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
-      `Microsoft.Testing.Platform` **2.3.3**: `dotnet test` exits **5** with
-      *"Zero tests ran"* in about 250 ms, while `BrowserAI.Tests.exe` runs the
-      whole suite green and `--list-tests` enumerates every test. With
-      `--diagnostic` the host's log stops immediately after
-      `PlatformExitProcessOnUnhandledException`, before any adapter runs, and the
-      arguments it received end `--server dotnettestcli --dotnet-test-pipe …` —
-      so it is the handshake `dotnet test` alone uses, not discovery.
-      `-p:TestingPlatformDotnetTestSupport=true` changes nothing.
-      **It is not ours:** a clean worktree of `b8a6553`, the step-4 commit,
-      reproduces it exactly. Two consequences, and the second is the one that
-      matters. Every build-order done-test's evidence has come from the
-      executable rather than from `dotnet test`, which nothing said until
-      [kb](kb/windows/processes.md#interop-and-the-toolchain) said it; and
-      [the pre-release checklist](plan/pre-release.md) will name a command that
-      reports zero and exits non-zero. Everything floats here, so **re-check
-      before investigating** — the fix may already have shipped. If it has not,
-      find out which of the three moved and either work around it or pin the
-      finding somewhere a reader of the checklist will meet it.
-      [Row 54](kb/README.md#re-verification-index) carries it as *manual*.
+- [x] ~~**Make `dotnet test` run the tests again.**~~ ✅ **Withdrawn 2026-08-16,
+      the same day it was raised — there was never anything to fix.** The
+      finding behind it was a single transient observation written up as a
+      standing property of the toolchain. It does not reproduce:
+      `dotnet test BrowserAI.slnx` returns **51 passed, exit 0** at `e5f4684`,
+      and a fresh `git worktree --detach` of **`b8a6553`** — the exact commit the
+      entry named as its proof that *"it is not ours"* — returns **30 passed,
+      exit 0**. The claimed consequence was false too: steps 1 and 2 were
+      evidenced with `dotnet test` reporting 5 and then 13 passing tests, so it
+      is not the case that every done-test's evidence came from the executable.
+      Retained struck through rather than deleted, because
+      [kb row 54](kb/README.md#re-verification-index) and
+      [the kb entry](kb/windows/processes.md#interop-and-the-toolchain) are
+      retracted in place for the same reason: a reader who saw the original must
+      be able to find the retraction.
 
 - [ ] **Answer a frame that fails to parse, instead of only logging it.** The
       SDK's `StreamServerTransport` walks a malformed line with a

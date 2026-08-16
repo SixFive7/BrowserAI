@@ -457,38 +457,44 @@ line-ending change invisible instead.
 > and produced a confident wrong answer that survived into four documents
 > before a byte count contradicted it. `[FLOATS]`
 
-**`dotnet test` runs zero tests against this suite, and the test executable runs
-all of them.** Measured 2026-08-16 while building
-[build-order step 5](../../plan/build-order.md#5-the-two-custom-transports), on
+**`dotnet test` transiently reported zero tests once, and does not reproduce.**
+Observed 2026-08-16 during
+[build-order step 5](../../plan/build-order.md#5-the-two-custom-transports) on
 SDK **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
-`Microsoft.Testing.Platform` **2.3.3**:
+`Microsoft.Testing.Platform` **2.3.3**: exit **5**, *"Zero tests ran"*, in about
+250 ms, with `--diagnostic` showing the host's log stopping right after
+`Setting PlatformExitProcessOnUnhandledException` and a command line ending
+`--server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>` — the
+handshake `dotnet test` alone uses.
 
-| Command | Result |
-|---|---|
-| `dotnet test` (solution or project) | exit **5**, *"Zero tests ran"*, ~250 ms |
-| `dotnet test -p:TestingPlatformDotnetTestSupport=true` | identical |
-| `BrowserAI.Tests.exe` | the whole suite, green |
-| `BrowserAI.Tests.exe --list-tests` | every test enumerated |
+> ⚠️ **Corrected 2026-08-16 (previously: "`dotnet test` runs zero tests against
+> this suite … It is not caused by anything in this repository, and that had to
+> be proven rather than assumed. A clean `git worktree` of `b8a6553` … reproduces
+> it exactly").** It does not reproduce. Re-run the same day against the same
+> machine and the same SDK: `dotnet test BrowserAI.slnx` at `e5f4684` returned
+> **51 passed, exit 0**, and a fresh `git worktree --detach` of **`b8a6553`** —
+> the exact commit the entry named as its proof — returned **30 passed, exit 0**.
+> The original entry's load-bearing sentence was therefore false, and so was its
+> consequence that *"the evidence recorded for every build-order done-test since
+> step 1 came from the executable"*: steps 1 and 2 were evidenced with
+> `dotnet test` reporting 5 and then 13 passing tests.
+>
+> **What went wrong is worth more than the entry was.** A single failing
+> observation was written up as a standing property of the toolchain, complete
+> with a reproduction that had not been re-run at the moment it was cited. That
+> is the same shape as the `grep -c $'\r'` error two entries above, and it is the
+> failure this whole directory exists to prevent — the difference between *"I saw
+> this once"* and *"this is how it behaves"* is a second run, and it costs
+> seconds.
 
-It is not discovery. With `--diagnostic`, the host's log stops immediately after
-`Setting PlatformExitProcessOnUnhandledException`, before any adapter runs, and
-the command line it received ends `--server dotnettestcli --dotnet-test-pipe
-testingplatform.pipe.<guid>` — so the failure is in the SDK-to-platform server
-handshake that only `dotnet test` uses.
-
-**It is not caused by anything in this repository, and that had to be proven
-rather than assumed.** A clean `git worktree` of `b8a6553` — the step-4 commit,
-before any transport work — reproduces it exactly: `dotnet test` reports zero,
-`BrowserAI.Tests.exe` runs 30 green. So **the evidence recorded for every
-build-order done-test since step 1 came from the executable**, which nothing had
-written down. Re-establish with both commands, in that order; a fix will show as
-`dotnet test` agreeing with the executable's count. `[FLOATS]` for the toolchain
-versions, `[MACHINE]` for this machine's SDK install.
-
-> `global.json` already carries `{ "test": { "runner":
-> "Microsoft.Testing.Platform" } }`, which is the documented opt-in and is what
-> selects the broken path. Removing it is not the fix — TUnit is MTP-only and
-> there is no VSTest mode to fall back to.
+**What to do if it recurs:** run `dotnet test`, then `BrowserAI.Tests.exe`, then
+`dotnet test` again. Two disagreeing runs of the same command are a transient;
+a stable disagreement between the two commands is the real thing and earns a new
+entry with the versions it held under. Do not remove `{ "test": { "runner":
+"Microsoft.Testing.Platform" } }` from `global.json` reaching for a fix — it is
+the documented MTP opt-in, TUnit is MTP-only, and there is no VSTest mode to
+fall back to. `[MACHINE]` for the single observation; nothing here is
+`[FLOATS]`, because no standing behaviour was established.
 
 **`Process.ExitCode` throwing after `Dispose()` is now reproduced rather than
 quoted**, by

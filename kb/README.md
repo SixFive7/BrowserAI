@@ -73,8 +73,8 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
 table is how that happens. **It does not yet cover all of them**: **132**
-`[FLOATS]` markers stand across the articles against the **54** numbered rows
-below (56 lines, counting 4a and 4b),
+`[FLOATS]` markers stand across the articles against the **53** numbered rows
+below (55 lines, counting 4a and 4b),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
@@ -86,6 +86,21 @@ missing row as a gap in this table, never as permission to skip the fact.
 > hand is a tally that is wrong, and the two paragraphs after this one are what
 > that looked like. **The test reads the sentence above as its anchor**, so
 > rewording it fails the suite rather than quietly unhooking the check.
+
+> **There was a row 54, added and withdrawn on 2026-08-16.** It asserted that
+> `dotnet test` runs zero tests on this toolchain. It does not: the same command
+> returns 51 passed / exit 0, and a fresh worktree of the very commit the row
+> cited as its proof returns 30 passed / exit 0. One transient observation had
+> been written up as a standing property, so the row is **deleted rather than
+> marked**, because this index lists facts that must be re-checked and there is
+> no fact left to re-check. The retraction itself is kept, in
+> [the article](windows/processes.md#interop-and-the-toolchain), in
+> [`TODO.md`](../TODO.md) and on
+> [build-order step 5](../plan/build-order.md), so a reader who met the original
+> meets the correction. **The row was caught by this table's own test** —
+> `EveryRowIsEitherManualOrNamesSomethingThatExists` refused `— *withdrawn*` in
+> the `Automated by` column, which is the mechanism working on the person
+> maintaining it rather than only on upstream.
 
 > **The 124 is a marker count, not an entry count** — re-counted 2026-08-16 with
 > `grep -ro "\[FLOATS\]" --include=*.md . | grep -v '^\./\.work/'`, then
@@ -211,7 +226,6 @@ decision:
 | 51 | **The snapshot gate is byte-exact across line endings.** All four snapshots are **LF** today; the `-text` exemption in `.gitattributes` is what keeps a committed byte copy from being normalised out from under the comparison if upstream ever ships CRLF ([kb](windows/processes.md#interop-and-the-toolchain)) | Upstream changes its line endings **and** the exemption has been lost. Either alone is harmless; together the committed copy is LF, the regenerated one is CRLF, and every build is red on a difference that is not one | Count CR **bytes**, by piping `tr -cd '\r'` into `wc -c`, on the four snapshots and on the payload originals. Never `grep -c $'\r'`, which reported every line of an all-LF file as a match | `build/Update-UpstreamSnapshots.ps1` |
 | 52 | **Three traps in the gate's own plumbing**: `$(IntermediateOutputPath)` is empty in a `.targets` imported from the project body (the stamp escapes `obj\`); PowerShell 7 colours redirected output; `Get-Command git` returns two executables on this machine ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK bump for the first, any PowerShell bump for the second. **The SDK floats**, so the first moves without anyone choosing it | Re-measure the first by pointing a `Touch` at `$(IntermediateOutputPath)` from an imported `.targets`. Its *consequence* is caught on every step by `git status --porcelain`, which is how it was found | — *manual* |
 | 53 | **`StreamServerTransport` still re-escapes every result**, because the escaping comes from `Utf8JsonWriter`'s own encoder and it sets none — 127 bytes through our transport against 190 through the SDK's, for one message ([kb](mcp/sdk.md#added-2026-08-16--writing-the-two-transports-at-220)) | Upstream sets an `Encoder`, or gains an options seam. Deviation 5's transport stays correct either way, but [the reason recorded for owning it](../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from) would be stale, and a stale reason is how a component nobody needs survives a rewrite | Serialise one message through both transports and compare bytes, never decoded strings — the escaping is semantically lossless and invisible to anything that round-trips | `DirectStdioServerTransportTests.TheSdkServerTransportStillEscapesTheSameResult` |
-| 54 | **`dotnet test` runs zero tests on this toolchain while the test executable runs the whole suite** — exit 5 in ~250 ms, in the `--server dotnettestcli` handshake, reproduced on a clean worktree of the step-4 commit ([kb](windows/processes.md#interop-and-the-toolchain)) | The SDK, `Microsoft.Testing.Platform` or TUnit fixes it — all three float. Until then **every done-test's evidence comes from the executable**, and a reader who assumes `dotnet test` was the command would conclude the suite had never run | Run both, in order: `dotnet test`, then `BrowserAI.Tests.exe`. A fix shows as the two agreeing on the count | — *manual*; owed as a working `dotnet test`, tracked in [TODO.md](../TODO.md) |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

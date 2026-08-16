@@ -434,16 +434,23 @@ other two arrive at steps 10 and 11.
 > extension on `DefaultOptions`. And `StreamServerTransport` does **not** set
 > `JsonRpcMessage.Context`, so neither does ours.
 >
-> ⚠️ **`dotnet test` runs zero tests on this toolchain, and it does so at HEAD
-> too.** Measured 2026-08-16 against a clean worktree of `b8a6553`, before any of
-> this step's changes: `dotnet test` exits **5** with *"Zero tests ran"* in
-> ~250 ms while `BrowserAI.Tests.exe` runs the suite green and `--list-tests`
-> enumerates every one. It is the `--server dotnettestcli` handshake, not
-> discovery. So **the evidence for every done-test in this file since step 1 came
-> from running the test executable**, which is a fact about how the suite is run
-> that nothing recorded until now.
-> [kb](../kb/windows/processes.md#interop-and-the-toolchain) has the
-> characterisation and [TODO.md](../TODO.md) carries the fix.
+> ⚠️ **A claim this step made about `dotnet test` was wrong, and is retracted
+> here rather than deleted.** It read *"`dotnet test` runs zero tests on this
+> toolchain, and it does so at HEAD too … so the evidence for every done-test in
+> this file since step 1 came from running the test executable."* **It does not
+> reproduce.** Re-run the same day, same machine, same SDK: `dotnet test
+> BrowserAI.slnx` returns **51 passed, exit 0** at `e5f4684`, and a fresh
+> `git worktree --detach` of **`b8a6553`** — the very commit cited as the proof —
+> returns **30 passed, exit 0**. Steps 1 and 2 were in fact evidenced with
+> `dotnet test`, reporting 5 and then 13 passing tests.
+>
+> One failing observation was written up as a standing property of the
+> toolchain, with a reproduction that had not been re-run at the moment it was
+> cited. **The whole difference between "I saw this once" and "this is how it
+> behaves" is a second run**, and it costs seconds. Corrected in
+> [kb](../kb/windows/processes.md#interop-and-the-toolchain), row 54 and
+> [TODO.md](../TODO.md), all in place so a reader of the original meets the
+> retraction.
 >
 > ⚠️ **The parent-process assertion was wrong, and planting the failure is what
 > said so.** As first written it read
