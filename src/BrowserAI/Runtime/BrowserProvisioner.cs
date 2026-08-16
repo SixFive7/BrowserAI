@@ -479,6 +479,26 @@ internal sealed class BrowserProvisioner : IDisposable
         return new ReinstallOutcome(browser, directory, removedBytes, failures, status);
     }
 
+    /// <summary>
+    /// Deletes every browser revision the shipped manifest no longer names.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The public entry point exists so the pass can be driven on its own</b>,
+    /// by the suite and by anything that later wants to reclaim disk without
+    /// downloading anything. The product's own call site is a successful provision,
+    /// which is the only moment the answer changes.
+    /// </para>
+    /// <para>
+    /// The caller must hold <b>no</b> provisioning mutex; the pass takes every
+    /// family's for itself. Inside the install path the private overload is used
+    /// instead, because that thread already owns one and a named mutex is owned by
+    /// the thread that waited on it.
+    /// </para>
+    /// </remarks>
+    /// <returns>What was removed, what was kept, and why.</returns>
+    public PruneReport PruneSupersededRevisions() => RevisionPrune.Run(BrowsersDirectory, Manifest(), _logger);
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -533,6 +553,33 @@ internal sealed class BrowserProvisioner : IDisposable
 
     private BrowsersManifest Manifest() => _manifest ??= BrowsersManifest.Read(_payload);
 
+    /// <summary>
+    /// Removes browser revisions the resolved manifest no longer names.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Pruning is ours because we turned upstream's off.</b>
+    /// <c>PLAYWRIGHT_SKIP_BROWSER_GC=1</c> is mandated in the child environment,
+    /// so nothing else will ever remove a superseded revision — and a browser
+    /// tree is ~430 MiB, stranded per bump, per machine, forever.
+    /// </para>
+    /// <para>
+    /// <b><paramref name="browser"/> is passed as the family already held.</b>
+    /// This runs inside the per-family mutex, so the pruner must not try to
+    /// re-acquire it; a zero-timeout acquire would refuse and a waiting one
+    /// would deadlock against this very call.
+    /// </para>
+    /// <para>
+    /// Reconstructed 2026-08-17 after the agent building it was cut off
+    /// mid-edit by an API limit, having reverted this call site and not yet
+    /// restored it. The build was red on exactly one symbol, which is the
+    /// cheapest possible way for that to present.
+    /// </para>
+    /// </remarks>
+    /// <param name="browser">The family whose mutex the caller already holds.</param>
+    private void Prune(string browser) =>
+        _ = RevisionPrune.Run(BrowsersDirectory, Manifest(), _logger, familyAlreadyHeld: browser);
+
     private Attempt Start(string browser, BrowserRevision revision)
     {
         var started = DateTimeOffset.Now;
@@ -584,9 +631,20 @@ internal sealed class BrowserProvisioner : IDisposable
                 // Re-checked under the mutex: another process may have finished
                 // between the hot-path check and this line, and re-downloading
                 // 203.8 MB on top of a complete tree is the cost of not looking.
-                return IsComplete(directory)
+                var result = IsComplete(directory)
                     ? new ProvisioningResult(true, $"{revision.Description} was already installed at '{directory}'.")
                     : RunInstaller(browser, revision, directory, deadline);
+
+                if (result.Succeeded)
+                {
+                    // §A: PLAYWRIGHT_SKIP_BROWSER_GC=1 is mandated, so pruning old
+                    // revisions is BrowserAI's job. Here rather than at startup
+                    // because this is the one moment the answer can have changed —
+                    // a revision becomes superseded when a new one lands.
+                    Prune(browser);
+                }
+
+                return result;
             }
             finally
             {

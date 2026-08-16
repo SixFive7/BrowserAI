@@ -50,6 +50,21 @@ internal sealed class BrowsersManifest
 
     private BrowsersManifest(Dictionary<string, BrowserRevision> browsers) => _browsers = browsers;
 
+    /// <summary>
+    /// Every entry the resolved manifest names, which is the set that decides
+    /// what is <b>current</b> and therefore what is superseded.
+    /// </summary>
+    /// <remarks>
+    /// <b>All of them, not just the two families BrowserAI installs.</b> A
+    /// chromium install also lays down <c>ffmpeg</c> and <c>winldd</c>, so a
+    /// revision bump strands those too, and
+    /// <see cref="RevisionPrune"/> has to recognise a directory as one of
+    /// upstream's before it will consider deleting it. The two BrowserAI asks for
+    /// by name are <see cref="ProvisionedBrowsers.Families"/>; this is what a
+    /// browsers root may legitimately contain.
+    /// </remarks>
+    public IReadOnlyList<BrowserRevision> Entries => [.. _browsers.Values];
+
     /// <summary>Reads the manifest out of an assembled payload.</summary>
     /// <param name="payload">Where <c>playwright-core</c> lives.</param>
     /// <returns>The manifest.</returns>
@@ -113,8 +128,34 @@ internal sealed class BrowsersManifest
 /// <param name="BrowserVersion">The marketing version, when the manifest carries one.</param>
 internal sealed record BrowserRevision(string Name, string Revision, string? BrowserVersion)
 {
+    /// <summary>
+    /// Everything a directory of this browser's is named before the revision,
+    /// including the separator: <c>chromium-</c>, <c>chromium_headless_shell-</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is upstream's own rule for deciding that a directory belongs to a
+    /// browser</b>, and it is why the underscore matters:
+    /// <c>browserDirectoryPrefix.replace(/-/g, "_") + "-" + revision</c>, read
+    /// 2026-08-17 out of the resolved <c>playwright-core</c> bundle, with the
+    /// comment beside it saying why — <c>webkit</c> is a prefix of
+    /// <c>webkit-technology-preview</c>, so a folder name that kept its dashes
+    /// would make an older registry delete the wrong tree. Matching on this rather
+    /// than on the bare name is what stops <see cref="RevisionPrune"/> inheriting
+    /// that bug.
+    /// </remarks>
+    public string DirectoryPrefix => Name.Replace('-', '_') + "-";
+
     /// <summary>The directory this revision installs into, relative to the browsers root.</summary>
-    public string DirectoryName => $"{Name}-{Revision}";
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-17 (previously <c>$"{Name}-{Revision}"</c>).</b>
+    /// That is right for every family this build provisions and wrong for
+    /// <c>chromium-headless-shell</c>, which lands in
+    /// <c>chromium_headless_shell-1237</c>. It never mattered while the only
+    /// callers asked about <c>chromium</c> and <c>firefox</c>; it matters the
+    /// moment something walks the whole root, because a name computed one way and
+    /// a directory spelled another is a tree nothing recognises.
+    /// </remarks>
+    public string DirectoryName => DirectoryPrefix + Revision;
 
     /// <summary>How this browser reads in a sentence written for a model.</summary>
     public string Description =>
