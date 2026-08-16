@@ -76,6 +76,24 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **Two licences that had to travel with the binary were not travelling.**
+  `ModelContextProtocol` and `ModelContextProtocol.Core` are Apache-2.0 and
+  seventeen `Microsoft.Extensions.*` assemblies are MIT; all nineteen are
+  compiled into `BrowserAI.exe` exactly as Velopack is, and a NuGet package's
+  licence stays in the machine's package cache — it is never copied to a publish
+  output, so *linked in* and *its notice ships* are independent facts and the
+  second was false for both. Apache-2.0 §4(a) requires a copy of the licence to
+  reach every recipient, which is stricter than MIT's notice clause rather than
+  looser. All of it now ships in `THIRD-PARTY-NOTICES.txt` beside the binary.
+  Upstream's MCP `LICENSE` turned out to grant **three** licences rather than
+  one — Apache-2.0, MIT for contributions whose authors never consented to
+  relicensing, and CC-BY-4.0 for documentation — so it is reproduced whole, and
+  its Apache half **ends at *END OF TERMS AND CONDITIONS* and omits the appendix
+  its own §4 points at**, which is upstream's file as published and is left
+  unaltered. **The `Microsoft.Extensions.*` list is derived from
+  `packages.lock.json` rather than typed**, so a package entering the closure on
+  a later bump is a red build here rather than a licence nobody noticed had
+  arrived.
 - **A suite run that exercised nothing reported exactly what a real one
   reports.** With the whole publish directory moved aside — no binary, no
   browser ever started — the suite returned `329 total · 328 succeeded ·

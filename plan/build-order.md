@@ -2086,6 +2086,24 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 > folklore**, because "271 green" and "271 green every time" are different
 > claims and only the first is true.
 >
+> ✅ **Closed 2026-08-16, and the cause was named wrong here (previously "a
+> plausible cause is unverified: … exactly what a virus scanner would walk").**
+> It was not the scanner and not the machine: TUnit derives parallelism from the
+> processor count, which is **32** here, so a suite in which twenty files start
+> real processes was launching browsers dozens-wide and then asserting that
+> things happened promptly. Measured on a freshly rebooted machine —
+> unconstrained, six runs at 18.6–21.6 s **plus one of 56.5 s carrying 20
+> failures**, every one a timing budget on an unrelated test; with an
+> assembly-wide `ParallelLimiter` of 4, **twenty-four consecutive clean runs**,
+> against a 1-in-7 failure rate a 2.5% chance of luck. The cost is roughly
+> **+14 s** on a ~19 s baseline, measured both ways because the flag and the
+> attribute disagree and the larger number is the true one.
+> [`SuiteParallelism`](../tests/BrowserAI.Tests/SuiteParallelism.cs) carries all
+> of it. **Four separate build steps had seen this shape and blamed Defender**,
+> which was never verified and turns out not to be needed as an explanation —
+> which is the actual lesson: a correct observation became a standing claim by
+> being attributed to the wrong subject, four times.
+>
 > ⚠️ **§D says Mozilla's `ProfileUnlockerWin::TryToTerminate` is "worth copying
 > line for line". It was not copied.** That file is **MPL-2.0** and this
 > repository is `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr`, so its text cannot come

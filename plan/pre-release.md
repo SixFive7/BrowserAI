@@ -478,14 +478,44 @@ BrowserAI's own licence. Verified against
 - The vendored `node_modules` tree **intact**, which ships `@playwright/mcp`'s
   and `playwright-core`'s Apache-2.0 `LICENSE` and satisfies §4.
 - Velopack's MIT notice.
+- **`ModelContextProtocol`'s and `ModelContextProtocol.Core`'s Apache-2.0
+  licence, whole.** §4(a) requires a redistributor to give every recipient a
+  copy of the licence, and upstream's own file grants three — Apache-2.0, MIT
+  for contributions never relicensed, and CC-BY-4.0 for documentation — so
+  reproducing the Apache half alone would drop terms that cover part of the
+  code.
+- **The MIT notice for every `Microsoft.Extensions.*` assembly linked in** —
+  seventeen of them at 2026-08-16, two referenced directly and the rest arriving
+  transitively, under two different `.NET Foundation` copyright lines because
+  they come from two repositories.
 - **A short trademark disclaimer in the installed artifact.** Apache-2.0 §6
   grants no trademark rights, and the inherited `browser_*` names surface
   upstream branding directly in BrowserAI's own API.
 
-The last two have no upstream file of their own — Velopack is compiled *into*
-`BrowserAI.exe`, so its licence never leaves the NuGet cache — and both ship in
+The last four have no upstream file of their own — a NuGet package compiled
+*into* `BrowserAI.exe` leaves its licence in the machine's package cache, which
+is never copied to a publish output — and all four ship in
 `THIRD-PARTY-NOTICES.txt` beside the binary, published by the
 `AddNoticesToPublish` target.
+
+> ✅ **Corrected 2026-08-16 at the plan's final audit: this item names six
+> obligations, not four (previously the list held only Node, the vendored tree,
+> *"Velopack's MIT notice"* and the trademark disclaimer, and the paragraph
+> beneath it read *"The last two have no upstream file of their own — Velopack
+> is compiled into `BrowserAI.exe`, so its licence never leaves the NuGet
+> cache — and both ship in `THIRD-PARTY-NOTICES.txt`"*).** The reasoning that
+> put Velopack's text in the artifact applies unchanged to the MCP SDK and to
+> the `Microsoft.Extensions.*` family: same mechanism, same absence, and
+> Apache-2.0 §4(a) is stricter than MIT's notice clause rather than looser. It
+> was [raised at step 20 and deliberately left undecided](../TODO.md), because
+> shipping a fifth obligation on one reading would have changed a settled table
+> without anyone deciding it; the product is publicly distributed now, so the
+> table was changed deliberately instead. The count in this item is the only
+> place it is written down as prose — the enforcing list is
+> `ThirdPartyNoticeTests.Obligations`, and the `Microsoft.Extensions.*` half is
+> derived from `src/BrowserAI/packages.lock.json` rather than typed, so a
+> package that enters the closure on a later bump is a red build here rather
+> than a licence nobody noticed had arrived.
 
 Nothing the user's machine downloads on first run creates an obligation for us —
 we ship no copy of it. That is not a side benefit of first-run provisioning; it

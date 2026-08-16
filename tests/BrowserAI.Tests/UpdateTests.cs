@@ -336,9 +336,14 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <b>This is the assertion the three-timer design exists for.</b> A stall
     /// timer that is not reset by the thing it watches is an absolute timeout
-    /// wearing a second name — and against a 112.4 MB package on a slow link
-    /// that is the difference between an update that lands and one that never
-    /// can. The double reports progress at intervals longer than a test can wait
+    /// wearing a second name — and against a large package on a slow link that
+    /// is the difference between an update that lands and one that never can.
+    /// The double's <c>FullPackageSize</c> is 112.4 MB, which is what the
+    /// 30-minute budget carries at ~500 kbit/s rather than a measured package
+    /// size (the real one is <b>49,050,382 bytes</b>): the double is
+    /// deliberately larger than life, because a stall timer has to hold for the
+    /// worst package this design admits and not for today's.
+    /// The double reports progress at intervals longer than a test can wait
     /// for the real 60 s budget, so what is asserted is the reset itself: a
     /// download that reports progress repeatedly completes, and the pass gets to
     /// the apply.

@@ -14,6 +14,169 @@ behind it is made.
 README's provenance convention — a claim about an external source needs the date
 and version it was true at.
 
+## What the plan's final audit found unbuilt — 2026-08-16
+
+Every item below is a requirement a [plan](PLAN.md) section makes that nothing in
+the tree satisfies, found by [the final audit](PLAN.md#the-final-audit-ran-on-2026-08-16-and-the-plan-is-not-deleted).
+They are here rather than in the plan because that is this file's job, and
+because **the plan sections they came from are not deleted**: a section with an
+unbuilt remainder stays on disk, so each item below is still readable at its
+source.
+
+**Two failure shapes, and the second is new.** The first is the one that already
+cost this project two whole steps ([17a](plan/build-order.md#17a-the-browser-idle-timer-and-teardown),
+[17b](plan/build-order.md#17b-the-stderr-classifier)): *a section mandates it and
+no build-order step owns it.* The second appeared only under this audit — *a
+rule a section states, correct in the tree today, guarded by nothing*, so it can
+be undone by an edit that leaves every signal green. `UseSystemResourceKeys` was
+one of those and was closed; the ones below sit in the same paragraph lists as it
+did.
+
+- [ ] **BrowserAI registers itself as an MCP server. Nothing does this, and it is
+      the charter's founding promise.**
+      [§B](plan/B-mcp-server.md)'s first sentence is *"registered once at system
+      or user scope, available in every repository, with no per-repo files"*, and
+      [`PLAN.md`](PLAN.md)'s §B row hands the remainder to *"a §G/installer
+      concern"*. **[§G](plan/G-updates.md) never received it** — it never
+      mentions registering an MCP server with a client, and its landmine 3
+      (*"register `current\BrowserAI.exe`, never the execution stub"*) is about
+      which path Velopack stamps as `--mainExe`, a different thing. Verified
+      across the repository: nothing in `src/`, `build/` or `tests/` writes a
+      client configuration, calls `claude mcp add`, or touches a registry key;
+      `vpk pack` runs with `--shortcuts None`; every Velopack hook exists only to
+      log, and `VelopackStartup` says so in as many words. **What ships today is
+      an installed, self-updating, self-sweeping binary that no client is
+      configured to talk to** — and [README §1](README.md) opens by rejecting
+      exactly that world, where onboarding *"requires a repo, a `.mcp.json`, hook
+      registrations"*. It cannot move earlier than the installed layout
+      ([step 19](plan/build-order.md#19-velopack-package-update-roll-back)) and
+      cannot move later than the release, which is why it fell between them.
+      **Decide the scope first** (user or machine), then which clients are
+      written, then whether the installer or the binary performs it — and gate it
+      with a test, because nothing about its absence is red.
+
+- [ ] **Nothing prunes a superseded browser revision.**
+      [§A](plan/A-runtime.md#first-run-browser-provisioning): *"`PLAYWRIGHT_SKIP_BROWSER_GC=1`
+      is mandated, so pruning old revisions becomes BrowserAI's job."* No code
+      prunes anything. `browserai_reinstall_browser` deletes the **whole** tree
+      and re-downloads, which is a different operation. The obligation is
+      asserted in three surviving places and satisfied in none —
+      `src/BrowserAI/Protocol/ChildEnvironment.cs`,
+      [pre-release item 4](plan/pre-release.md) (*"the old revision sits on disk
+      until something prunes it"*) and
+      [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md). **Every `browsers.json` bump
+      strands ~430 MiB per machine, forever**, and the hazard index has a
+      **closed** row for turning the GC off and no row at all for the obligation
+      that turning it off creates. Prune on a successful provision, keeping the
+      revision the shipped manifest names.
+
+- [ ] **`init`'s description carries neither the real-Chrome-profile warning nor
+      the retention policy.** [§C](plan/C-sessions.md#where-guidance-lives-three-channels-two-of-them-capped)
+      requires both *in the creation tool's description specifically* — *"the
+      spec requires retention to be stated here"* — and
+      [README](README.md) makes the same demand independently: *"the `init` tool
+      description is a security surface … say plainly what pointing at an
+      existing browser profile does."* `SessionToolSurface`'s `init` description
+      carries argument meanings and the mode table and neither of these.
+      Retention is stated on `resume` and on `list`, which is everywhere except
+      where it was required. **No test asserts description *content***, only the
+      byte cap and the mode rendering, so nothing goes red. Add the two
+      sentences, and assert them.
+
+- [ ] **Two of the four rules under [*"what the build itself must fail on"*](plan/testing.md#what-the-build-itself-must-fail-on)
+      are asserted by nothing.** Both are correct in the tree today and would
+      survive their own deletion green: **`TreatWarningsAsErrors` and the
+      `CS0162` promotion** (`BuildConfigurationTests.NoBuildFileSuppressesWarnings`
+      forbids `NoWarn` and `WarningsNotAsErrors` and does not look for the
+      absence of either property), and **"AOT and trim warning suppression is
+      scoped per-assembly, never repo-wide"** (a
+      `<SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>` added
+      to `Directory.Build.props` is invisible to every scan the suite makes).
+      This is the same shape as `UseSystemResourceKeys`, which sat in the same
+      list and **was** closed — so the pattern is established and two of four
+      were simply missed.
+
+- [ ] **Two tests still degrade to a weaker assertion and report `passed`,
+      outside `SuiteEnvironment`'s gate.** `JobContainmentTests.TheBundledNodeAndItsDescendantsAreContained`
+      and `StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`
+      each fall back to a trivial assertion when the payload or a provisioned
+      Chromium is absent, so neither appears in the coverage block and neither
+      turns red under `BROWSERAI_RELEASE_RUN=1`. The second is **R5's only
+      real-browser arm** — the only proof that a real Chromium publishes what
+      attribution reads. `RequireRepositoryPayload` and
+      `RequireProvisionedChromium` already exist for exactly this; the gate was
+      built and these two were missed, which means
+      [pre-release item 8](plan/pre-release.md)'s *"every layer ran"* still has
+      two holes.
+
+- [ ] **`InstanceDirectory` uses the one primitive [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back)
+      says never to use.** `src/BrowserAI/Runtime/InstanceDirectory.cs` calls
+      `Directory.Delete(path, recursive: true)` inside a swallow-all `catch`, on
+      a path that runs at **every clean exit** and **every startup sweep**, while
+      `src/BrowserAI/Runtime/TreeDelete.cs` — written for this, post-order, per
+      node, reporting what survived — sits with two callers and not this one. It
+      fails whole rather than per node and reports nothing, so an instance
+      directory 99% deletable is not deleted at all and nobody learns which file
+      held it. **And `TreeDelete`'s own doc comment promises a third caller
+      *"at §G"*** that shipped and did not arrive, because the Velopack swap is
+      `force_stop_package`, upstream's own binary. Fix the call site; correct the
+      comment; the hazard row for the `AllDirectories` abort is currently marked
+      closed while a live instance of it is in the tree.
+
+- [ ] **Two guards that are claimed to exist and do not.**
+      `build/BannedSymbols.txt` states that *"a toolhelp walk that matches
+      `szExeFile` … is covered by `NeverByImageNameTests`"*; it is not —
+      [§D](plan/D-locking.md) forbids *"any WMI **or toolhelp** query filtered by
+      executable name"* and asks for zero occurrences asserted, and the test's
+      needle list has `taskkill`, `GetProcessesByName`, `Win32_Process` and
+      `Get-Process` and nothing for toolhelp. Separately,
+      `ArtifactRouter.TryWrite` returns a bool whose own doc says *"it must not
+      be silent either, so the answer carries what could not be written"*, and
+      **both call sites discard it** — a failed `session.json` or roll-up write
+      is currently silent, in a project whose first rule is that silent failure
+      is the enemy.
+
+- [ ] **Load-bearing single lines in [§G](plan/G-updates.md) that no test
+      touches.** `SetAutoApplyOnStartup(false)` — which the code itself calls
+      *"the single most important line in this file"* — `AllowVersionDowngrade`
+      (§G: *"both halves have to agree"*, and only the pipeline half is driven),
+      `UpdateOptions.ExplicitChannel` (the three feed-URL shapes are tested, the
+      assignment that consumes them is not), *"never `AppContext.BaseDirectory`"*
+      (no source scan, although `MachineMutex` and never-by-image-name are both
+      guarded exactly that way), and the `.nupkg` archive step. A deletion or a
+      reorder in `Main` above the first of these is caught by nothing.
+
+- [ ] **All 27 `Packaging and updates` rows in the [hazard index](plan/hazards.md)
+      still read `open` with `—` for evidence**, after
+      [step 19](plan/build-order.md#19-velopack-package-update-roll-back) ran the
+      whole lane for real and closed most of them. Six more rows across §B, §C
+      and §E are in the same state — 100, 101, 156, 176, 184, 185, 186, 188 — and
+      **row 184 is worse than stale**, since it is marked closed for
+      `browserai_destroy` while `InstanceDirectory` is a live instance of it.
+      The hazard index is the one file that outlives the plan; a row that never
+      gained its evidence is the failure the file exists to prevent.
+
+- [ ] **The hazard index cannot outlive the plan until its links are repointed.**
+      [`plan/hazards.md`](plan/hazards.md) carries **135 links into the twelve
+      files that are consumed**, on 106 lines, across 104 of its 139 rows —
+      including its own *Section shorthands* legend, one line that links all nine
+      lettered sections and gives every `§X` token below it its meaning. Whenever
+      the plan does go, that is a rewrite pass over the surviving file, and **no
+      step owns it.**
+
+- [ ] **Decide whether [`plan/pre-release.md`](plan/pre-release.md) is consumed
+      or survives — raised at [step 20](plan/build-order.md#20-the-first-release),
+      recommended at the audit, still the maintainer's.** It is the only release
+      gate that exists, four of its fourteen items are executable nowhere else,
+      three build scripts name it by filename and one **writes `"pre-release.md
+      item 11"` into every `manifest.json` shipped beside a `.nupkg`**. It also
+      carries **18 outbound links into files that would be deleted**, ten into
+      [testing](plan/testing.md), and its own rule is *"this file points; it does
+      not restate"* — so surviving means absorbing
+      [testing's release gate](plan/testing.md#the-release-gate) first, then
+      moving to `PRE-RELEASE.md` at the root beside
+      [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), which is the precedent.
+
 ## At v1 launch
 
 - [x] ~~**Decide how the logon sweep task actually gets registered — it cannot be
@@ -75,8 +238,35 @@ and version it was true at.
       of thing a developer files a bug about. `<Hidden>` in the task definition
       hides the *task* in the UI and not the window.
 
-- [ ] **Decide whether `ModelContextProtocol` and the `Microsoft.Extensions.*`
-      packages owe a notice in the artifact too.** Raised 2026-08-16 while
+- [x] ~~**Decide whether `ModelContextProtocol` and the `Microsoft.Extensions.*`
+      packages owe a notice in the artifact too.**~~ ✅ **Decided 2026-08-16 at
+      the plan's final audit: they do, and they ship.** The reasoning that put
+      Velopack's MIT text in `THIRD-PARTY-NOTICES.txt` applies to both without a
+      word changed — same mechanism, same absence — and Apache-2.0 §4(a) is the
+      stricter of the two clauses rather than the looser. The product is
+      publicly distributed now, which is what turned a defensible deferral into
+      one that had to be closed. [`plan/pre-release.md`](plan/pre-release.md)
+      item 13 now names **six** obligations with a `Corrected` note carrying its
+      previous text, `README.md` and
+      [`kb/packaging/dependencies.md`](kb/packaging/dependencies.md) carry the
+      same correction, and `ThirdPartyNoticeTests` grew three assertions.
+      **Two things measurement contradicted while closing it, both recorded
+      where they belong:** upstream's MCP `LICENSE` is **12,227 bytes and grants
+      three licences**, not one — Apache-2.0, MIT for contributions whose
+      authors never consented to relicensing, and CC-BY-4.0 for documentation —
+      so reproducing the Apache half alone would have dropped terms that cover
+      part of the code; and that Apache half **ends at `END OF TERMS AND
+      CONDITIONS` and omits the appendix its own §4 points at**, which is
+      upstream's file as published and is reproduced unaltered rather than
+      completed from the canonical text. The count below was also wrong:
+      **seventeen** `Microsoft.Extensions.*` packages are in the closure, not
+      four, under **two** different `.NET Foundation` copyright lines because
+      they come from two repositories — so the list is derived from
+      `src/BrowserAI/packages.lock.json` by the test rather than typed, and a
+      package entering the closure on a later bump is a red build. The original
+      text follows.
+      <br><br>
+      Raised 2026-08-16 while
       closing item 13's two missing notices, and **deliberately not decided
       there**: the checklist names four obligations and shipping a fifth on my
       own reading would be changing a settled judgement without anyone deciding

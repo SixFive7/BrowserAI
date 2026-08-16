@@ -64,11 +64,22 @@ internal sealed class UpdateService
     /// The whole download, end to end.
     /// </summary>
     /// <remarks>
-    /// Sized against a link rather than a payload: 30 minutes carries the
-    /// measured **112.4 MB** full package at ~500 kbit/s, which is slower than
-    /// any link this product is usable on — a first-run browser provisioning of
-    /// 203.8 MB has to succeed on the same connection before BrowserAI works at
-    /// all. It is a bound on a pathology, not a service level.
+    /// Sized against a link rather than a payload: 30 minutes carries
+    /// <b>112.4 MB</b> at ~500 kbit/s, which is slower than any link this
+    /// product is usable on — a first-run browser provisioning of 203.8 MB has
+    /// to succeed on the same connection before BrowserAI works at all. It is a
+    /// bound on a pathology, not a service level.
+    /// <para>
+    /// <b>Corrected 2026-08-16 at the plan's final audit (previously "the
+    /// measured **112.4 MB** full package").</b> 112.4 MB is what the budget
+    /// <i>carries</i>, derived from 30 minutes × 500 kbit/s; it is a link
+    /// budget and was never a measurement of anything. The full package is
+    /// <b>49,050,382 bytes</b>, measured 2026-08-16 — less than half of it, so
+    /// the headroom is larger than the sentence claimed, which is why nothing
+    /// downstream broke. A derived number wearing the word <i>measured</i> is
+    /// indistinguishable from a real one, which is the exact failure this
+    /// repository forbids.
+    /// </para>
     /// </remarks>
     public static TimeSpan AbsoluteBudget => TimeSpan.FromMinutes(30);
 
