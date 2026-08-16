@@ -52,11 +52,42 @@ still `[UNVERIFIED]`, nothing having been built in that configuration.
 > ~239 MB above is for the browser-dominated tree, and `node.exe` is now the bulk
 > of what is left — so every full-package download figure remains `[UNVERIFIED]`.
 
+**Verified 2026-08-16 @ Node v24.19.0 / `@playwright/mcp` 0.0.79, by assembling
+the payload** ([build-order step 3](../../plan/build-order.md#3-the-payload-build)).
+Both rows hold to the byte, and the unit in this table is **MiB** rather than MB:
+`node.exe` is **92,825,416 B = 88.53 MiB**, and `node_modules` is
+**18,993,773 B = 18.11 MiB** — of which `playwright-core` is 13.18 MiB,
+`playwright` 4.85 MiB (the [never-loaded wrapper](tools-and-artifacts.md#the-tool-surface-and-the-package-shape))
+and `@playwright/mcp` itself only **0.08 MiB**. Re-establish with
+`pwsh -File build/Build-Payload.ps1`, which writes the byte counts into
+`payload/payload.json`. `[FLOATS]`
+
+**Node's `LICENSE` is not published beside `node.exe`.** Measured 2026-08-16:
+`https://nodejs.org/dist/v24.19.0/win-x64/` lists exactly `node.exe`,
+`node.lib`, `node_pdb.7z` and `node_pdb.zip`, and the version root
+`https://nodejs.org/dist/v24.19.0/` carries only archives, installers, `docs/`
+and the three `SHASUMS256.txt*` files. **There is no standalone `LICENSE` at
+either path.** The only route to it is inside an archive:
+`node-v24.19.0-win-x64.zip` holds `node-v24.19.0-win-x64/LICENSE` at
+**160,552 B** beside the executable. That archive is **37,304,352 B =
+35.58 MiB**, so taking the licence route also downloads **~53 MB less** than
+fetching the bare `node.exe`. This matters because
+[§A](../../plan/A-runtime.md#a-ship-and-own-the-runtime) requires Node's full
+`LICENSE` to ship — it aggregates the OpenSSL, ICU, V8, zlib and c-ares terms —
+and the obvious build, one `GET` of `win-x64/node.exe`, ships no licence at all
+and reports nothing. Re-establish by listing both URLs. `[FLOATS]`
+
 **A single `node.exe` drives the full MCP protocol** — no npm, no `node_modules`
 belonging to Node, no `.cmd` shims. Verified by execution. Node **v26 is Current
 rather than LTS and its `node.exe` is 10 MB larger**. `[FLOATS]`
 
 **The vendored JS tree contains zero native binaries** and is portable as-is.
+**It also declares no install script**: verified 2026-08-16 across the resolved
+`package-lock.json`, the only `hasInstallScript` entry is `fsevents`, which is
+`optional` and `darwin`-only and is therefore never installed on Windows. A
+vendoring build that runs `npm install` without `--ignore-scripts` — which is
+what `build/Build-Payload.ps1` does deliberately, so an upstream change is not
+suppressed — currently executes nothing. `[FLOATS]`
 **`ffmpeg` is required for video capture** — without it the `video` artifact type
 throws. `[FLOATS]`
 
@@ -85,6 +116,26 @@ provisioning rather than a measurement of it. `[FLOATS]`
 > The [2026-08-15 decision](../../README.md#settled-2026-08-15) to run full Chromium
 > in every mode stopped provisioning the shell, which is what moved the number:
 > the old measurement was never wrong, it stopped applying.
+
+**`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` does not stop the explicit installer.**
+Measured 2026-08-16 @ `playwright-core` 1.63.0-alpha-2026-08-05: with the
+variable set and `PLAYWRIGHT_BROWSERS_PATH` pointed at an **empty** directory,
+`cli.js install-browser ffmpeg --no-progress` downloaded and extracted anyway.
+The flag is read in exactly two places in `lib/coreBundle.js` —
+`installBrowsersForNpmInstall`, the npm postinstall path, and
+`ensureConfiguredBrowserInstalled`, the server's start-up auto-install — and
+`registry.install()`, which the `install-browser` command calls, does not
+consult it. **Both halves matter to us:** the variable is
+[mandated in the child's environment](../../README.md#the-five-rules-that-make-floating-safe)
+to stop the child provisioning behind our back, and it does still close that
+door; but a build or a provisioning subsystem that relied on it as a global
+kill-switch would be relying on something that was never true. Re-establish by
+running the command above against a fresh directory. `[FLOATS]`
+
+**Installing `ffmpeg` on Windows pulls `winldd` with it**, unasked — the same
+run produced both `ffmpeg-1011` and `winldd-1007`, which is why a browsers root
+seeded by hand needs all three directories rather than just Chromium's.
+`[FLOATS]`
 
 **In-session recovery is proven.** The same child navigates successfully once the
 install lands, with no restart. `[FLOATS]`
@@ -118,8 +169,22 @@ against `INIT_CWD` — inherited from any npm ancestor — before `cwd`. `[FLOAT
 Note the asymmetry: the **outer** directory uses underscores, the **inner** one
 dashes, so a path built consistently is wrong. **No sentinel file is needed to
 launch** — not `INSTALLATION_COMPLETE`, not `DEPENDENCIES_VALIDATED`; the only
-launch-time check is file accessibility of the executable. `.links/` records the
-**build machine's** absolute paths and is useless on the target.
+launch-time check is file accessibility of the executable.
+
+**`.links/` lives in the browsers root and nowhere else.** Read 2026-08-16 in
+`playwright-core/lib/coreBundle.js` at `playwright-core`
+1.63.0-alpha-2026-08-05: every reference is `path.join(registryDirectory,
+'.links')` — in `install()`, `uninstall()` and `listInstalledBrowsers()` — so it
+is **never** written into `node_modules`, and a payload build has nothing to
+strip. Each file is named for the SHA-1 of an installing `playwright-core`
+package directory and contains that directory's absolute path, one per line;
+verified by running the installer from a fresh tree and reading the file it
+produced. It therefore records the machine that **installed** the browser, which
+under [first-run provisioning](#first-run-provisioning) is the user's machine
+rather than a build machine. **Do not delete it:** the stale-browser GC treats a
+registry directory with no `.links` entry as prunable, which is what
+`PLAYWRIGHT_SKIP_BROWSER_GC=1` exists to stop. Re-establish with
+`grep -n '\.links' node_modules/playwright-core/lib/coreBundle.js`. `[FLOATS]`
 
 **`DEPENDENCIES_VALIDATED` is written into the browsers root on first launch.**
 Under `Program Files` that write silently fails and the validation re-runs every

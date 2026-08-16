@@ -1,0 +1,24 @@
+{
+  "name": "browserai-payload",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The vendored @playwright/mcp payload. Never published; this file exists only so the payload build has something to resolve.",
+  "//": [
+    "THIS IS THE FLOAT, NOT A PIN. `latest` is the npm dist-tag, re-resolved from",
+    "an empty node_modules on every payload build. package-lock.json beside this",
+    "file records what it resolved to and is a provenance stamp, never a target:",
+    "build/Build-Payload.ps1 deletes the lock before installing, so nothing here",
+    "can hold a version back.",
+    "",
+    "playwright-core is deliberately NOT declared here. It arrives as",
+    "@playwright/mcp's own exact dependency, and upstream publishes daily alphas:",
+    "on 2026-08-15 npm `latest` for playwright-core was 1.62.1 while the version",
+    "that actually ships was 1.63.0-alpha-2026-08-05. Declaring it would create a",
+    "second, independently floating source for a version upstream pins exactly.",
+    "",
+    "See CLAUDE.md, 'Versioning: everything floats, the build freezes it'."
+  ],
+  "dependencies": {
+    "@playwright/mcp": "latest"
+  }
+}

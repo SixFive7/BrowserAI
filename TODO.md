@@ -103,7 +103,14 @@ and version it was true at.
       `/staging/`, `/.staging/`, `/Releases/`, `/RELEASES`, `Setup.exe` and
       `*-Portable.zip` were inferred from the README's install layout, not
       observed from a build. Check what the build and `vpk` actually emit, keep
-      what matches, delete the rest.
+      what matches, delete the rest. **Payload half done 2026-08-16** with
+      build-order step 3: `/payload/` is real and its layout is now written into
+      `.gitignore`; `.links/` matches nothing because playwright-core writes it
+      into the browsers root, and is kept only as a backstop; the
+      `!/mcp/node_modules/` negation was pointed at a path that does not exist
+      and now names `/payload/mcp/node_modules/`. **Still owed:** `/staging/`
+      and `/.staging/`, which nothing emits, and the Velopack half, which needs
+      [step 19](plan/build-order.md).
 
     - **Settle the two deferred decisions**, both written into the file as
       comments. First, whether the pinned `@playwright/mcp` tree is committed

@@ -361,6 +361,27 @@ float and cannot restore at all. Measured 2026-08-16 on SDK **10.0.302** while
 building the skeleton. Re-establish by deleting the property and restoring.
 `[FLOATS]`
 
+**npm keys a lock file's root package on the empty string, and PowerShell's
+`ConvertFrom-Json` refuses that outright.** Measured 2026-08-16 on npm **11.19.0**
+and PowerShell **7**, while building the payload: `package-lock.json`
+`lockfileVersion` 3 opens `"packages": { "": { … } }`, and parsing it raises *"The
+provided JSON includes a property whose name is an empty string, this is only
+supported using the -AsHashTable switch."* It is a hard parse failure rather than
+a dropped key, so it surfaces immediately — but only if something parses the lock
+at all, and the natural first version of a payload build does not. Re-establish
+by piping any npm lock through `ConvertFrom-Json` with and without
+`-AsHashtable`. `[FLOATS]`
+
+**`npm ci` does not rewrite the lock**, verified in the same run by comparing the
+file byte for byte either side of the call — which is what makes it usable as the
+npm half of the two-restore pattern above: `npm install` from a **deleted** lock
+and an empty `node_modules` resolves the `latest` dist-tag, `npm ci` then proves
+the resulting lock reproduces that tree on its own. Deleting the lock first is
+what guarantees the re-resolution. **Whether `npm install` re-resolves a dist-tag
+dependency with a lock already present was not measured** — the payload build
+never gets into that state, so the question is open rather than answered.
+`[FLOATS]`
+
 **.NET's `FileMode.Append` loses records when several processes share a file;
 `FILE_APPEND_DATA` does not.** Measured 2026-08-16 while building the process
 log: **eight processes each writing 25 records lost 70 of the 200.** Every write

@@ -72,14 +72,14 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **109**
-`[FLOATS]` markers stand across the articles against the **45** numbered rows
-below (47 lines, counting 4a and 4b),
+table is how that happens. **It does not yet cover all of them**: **117**
+`[FLOATS]` markers stand across the articles against the **50** numbered rows
+below (52 lines, counting 4a and 4b),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
 
-> **The 109 is a marker count, not an entry count** — re-counted 2026-08-16 with
+> **The 117 is a marker count, not an entry count** — re-counted 2026-08-16 with
 > `grep -ro "\[FLOATS\]" --include=*.md . | grep -v '^\./\.work/'`, then
 > subtracting this file's own five occurrences. Some entries carry a split
 > marker (`[FLOATS]` for the numbers, `[STABLE]` for the mechanism) and are
@@ -98,10 +98,30 @@ missing row as a gap in this table, never as permission to skip the fact.
 > step 1 (rows 42–44), which is the 108. The command above is the corrected one
 > and excludes `.work/` explicitly — a count nobody can reproduce is the tally
 > this note exists to prevent.
+>
+> **Re-counted again 2026-08-16 after build-order step 3: 123 raw, minus this
+> file's six, is 117.** Eight new markers, all covered by rows 46–50 below —
+> `.links/`'s real location, Node's `LICENSE` not being published beside
+> `node.exe`, the payload tree's shape, two npm/PowerShell toolchain traps, and
+> the two provisioning findings in row 50. **Note the self-reference count moved
+> from five to six**, because this note now contains the literal marker itself;
+> subtract what the command actually reports for this file, never the number
+> written down last time. The command needed no other change: `payload/` is a
+> build output and holds no marker, so excluding it or not gives the same 123
+> today. Run it both ways if that ever stops being true.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
 decision:
+
+> **A build script is a third answer, and it is named as one.** Rows 46–49 cite
+> `build/Build-Payload.ps1` rather than a test. That is deliberate and it is not
+> the suite: the script throws while assembling the payload, so `dotnet test`
+> passing says nothing about those rows. It is nonetheless a stronger gate than
+> *manual* for exactly these facts, because **there is no route to a bumped
+> upstream that skips it** — the new version only exists in the tree because the
+> script put it there. Read a script row as *automated, by the build rather than
+> by the suite*, and never as covered by a test run.
 
 | # | Fact | Breaks if | Check | Automated by |
 |---|---|---|---|---|
@@ -127,7 +147,7 @@ decision:
 | 18 | `--caps` and `PLAYWRIGHT_MCP_CAPS` replace rather than merge ([kb](playwright/configuration.md#environment-merge-order-and-startup-output)) | `mergeConfig` changes | Config round-trip via `browser_get_config` | — *manual* |
 | 19 | Nine artifact generator prefixes ([kb](playwright/tools-and-artifacts.md#artifacts-and-output-directory-behaviour)) | Upstream adds an artifact type | Enumerate prefixes in the resolved bundle; an unknown prefix must fail the sort test | — *manual* |
 | 20 | Killed children leak `browser@<guid>` descriptors ([kb](playwright/tools-and-artifacts.md#artifacts-and-output-directory-behaviour)) | `BrowserServer.stop()` learns to clean up with a `userDataDir` set | Kill a child, list the browsers-registry root | — *manual* |
-| 21 | Payload sizes, the 203.8 MB first-run download and the 20.3 s provisioning time ([kb](playwright/provisioning-and-timings.md)) | Any browser or Node revision bump | Re-measure at each bump. The 202.3 / 323 MB / ~300 MB discrepancy is **settled** — 203.8 MB by exact CDN `content-length`, 2026-08-15 — so what is owed now is the 20.3 s figure, which was timed on a run that also fetched the shell, and the **compressed** payload size, which has never been measured at all | — *manual* |
+| 21 | Payload sizes, the 203.8 MB first-run download and the 20.3 s provisioning time ([kb](playwright/provisioning-and-timings.md)) | Any browser or Node revision bump | Re-measure at each bump. The 202.3 / 323 MB / ~300 MB discrepancy is **settled** — 203.8 MB by exact CDN `content-length`, 2026-08-15 — so what is owed now is the 20.3 s figure, which was timed on a run that also fetched the shell, and the **compressed** payload size, which has never been measured at all. **Partly automated 2026-08-16:** `build/Build-Payload.ps1` writes the `node.exe` and `node_modules` byte counts into `payload/payload.json` on every payload build, and both confirmed the recorded MiB figures exactly, so the two *payload* rows now re-measure themselves. The browser download and the timings do not, and remain the manual half | `build/Build-Payload.ps1` (payload rows only) |
 | 22 | Full Chromium refuses a second instance; `chrome-headless-shell` does not notice one ([kb](windows/detection.md#process-image-path--the-fully-documented-detection-path)) | Upstream changes the singleton, or the shell is ever shipped | Launch twice against one profile directory, on both binaries | — *manual* |
 | 23 | SDK behaviours — `cmd.exe /c` prefix, `ListToolsAsync` filtering, `ContentBlock` drop-and-throw ([kb](mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around)) | Any `ModelContextProtocol` bump | The fake-child passthrough tests are written against exactly these | — *manual* |
 | 24 | Velopack landmines — feed-URL composition, `SetAutoApplyOnStartup`, the stub, `force_stop_package` ([kb](packaging/velopack.md#the-nine-landmines-claim-and-verdict)) | Any Velopack bump | The update lane: real feed URL, real N→N+1, real delta | — *manual* |
@@ -153,6 +173,11 @@ decision:
 | 43 | Central package management refuses `Version="*"` without `CentralPackageFloatingVersionsEnabled` — NU1011 ([kb](windows/processes.md#interop-and-the-toolchain)) | Any SDK or NuGet bump. If it ever became the default, the property is harmless; if the property were ever renamed, restore fails loudly | Delete the property and restore. Every ordinary restore already proves the positive half, so only the negative half is owed | — *manual* |
 | 44 | NativeAOT embeds `ApplicationManifest` into the published binary ([kb](windows/processes.md#diagnostic-severity-what-actually-enforces-a-rule-and-what-only-looks-like-it)) | Any SDK or ILC bump changes Win32 resource handling | Read the published exe's bytes for `longPathAware`, `asInvoker` and the supportedOS GUID. Cheap, and the guarantee is otherwise unfalsifiable until a caller picks a path over MAX_PATH | — *manual* |
 | 45 | `FileMode.Append` loses records across processes; `FILE_APPEND_DATA` without `FILE_WRITE_DATA` does not ([kb](windows/processes.md#interop-and-the-toolchain)) | .NET changes its append implementation — in which case the Win32 path we took stays correct and the note's first half stops being a live hazard | `ProcessLogTests.ConcurrentProcessesDoNotLoseEachOthersRecords`: eight processes, 25 records each, assert all 200 present. It is a real regression guard rather than a re-measurement, because it fails the same way the original defect presented — silently missing lines | `ProcessLogTests` |
+| 46 | **Node's `LICENSE` is not published beside `node.exe`** — `dist/<version>/win-x64/` carries only `node.exe`, `node.lib` and two `node_pdb` archives, so the licence comes out of `node-<version>-win-x64.zip` ([kb](playwright/provisioning-and-timings.md#component-sizes)) | Node publishes a standalone `LICENSE`, or renames or restructures the archive. **The renaming half is the dangerous one**: the extraction is keyed on `node-<version>-win-x64/LICENSE`, and a build that quietly shipped no licence would look identical to one that did | Extract `node.exe` **and** `LICENSE` from the SHA-256-verified archive and fail if either entry is absent. Never fetch the bare `node.exe` — that route is one `GET` shorter, 53 MB heavier, and ships no licence | `build/Build-Payload.ps1` |
+| 47 | **`.links/` is written into the browsers root and never into `node_modules`** — `path.join(registryDirectory, '.links')`, three call sites in `playwright-core/lib/coreBundle.js` ([kb](playwright/provisioning-and-timings.md#first-run-provisioning)) | Upstream moves it into the package tree, at which point the strip that [§A](../plan/A-runtime.md) once demanded becomes real again and build paths would ship | Assert the assembled payload contains no `.links` directory. Also the reason the stale-browser GC must stay off: a registry directory with no `.links` entry is prunable | `build/Build-Payload.ps1` |
+| 48 | **The payload tree's shape** — `@playwright/mcp` pins `playwright-core` **exactly**, and no non-optional package declares an install script ([kb](playwright/provisioning-and-timings.md#component-sizes)) | Upstream loosens the pin to a range, or adds a `postinstall`. Either is silent: the tree still installs, and the payload starts floating on a second axis or starts executing upstream code on the build machine | Compare the declared dependency against the resolved version, and scan the lock for `hasInstallScript` outside `optional` entries. The install runs **without** `--ignore-scripts` on purpose, so a new script is caught rather than suppressed | `build/Build-Payload.ps1` · `PayloadTests` |
+| 49 | **npm keys a lock's root package on the empty string, and `npm ci` does not rewrite the lock** ([kb](windows/processes.md#interop-and-the-toolchain)) | npm changes `lockfileVersion`, or PowerShell changes `ConvertFrom-Json`. The first fails loudly; the second is why `-AsHashtable` is not stylistic | Parse the resolved lock, and compare it byte for byte either side of `npm ci`. **Not covered:** whether `npm install` re-resolves a dist tag with a lock already present — the build deletes the lock first, so that state never arises | `build/Build-Payload.ps1` |
+| 50 | **`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` gates the npm-postinstall and server auto-install paths only, not `registry.install()`** — and installing `ffmpeg` on Windows pulls `winldd` with it ([kb](playwright/provisioning-and-timings.md#first-run-provisioning)) | Upstream extends the flag to the explicit installer, which would stop [step 15](../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)'s provisioning dead while the variable stays [mandated in the child environment](../README.md#the-five-rules-that-make-floating-safe) for the reason it was always mandated | `install-browser ffmpeg --no-progress` against an empty browsers root with the flag set; assert it still downloads. The payload build's own `chrome.exe` assertion catches the regression too, one step later and just as loudly | `build/Build-Payload.ps1` |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

@@ -205,6 +205,48 @@ retro-fitted to a tree is a rule already broken somewhere in it.
 
 **Consumes:** [§A](A-runtime.md) (vendoring and payload)
 
+> ✅ **Built 2026-08-16.** `build/Build-Payload.ps1` ·
+> `build/payload/{package.json, package-lock.json}` ·
+> `tests/BrowserAI.Tests/PayloadTests.cs` · the payload half of `.gitignore`.
+> Resolved: `@playwright/mcp` **0.0.79** (npm `latest`), `playwright-core`
+> **1.63.0-alpha-2026-08-05** (that package's own exact dependency),
+> `node` **v24.19.0** *Krypton* (newest `nodejs.org/dist/index.json` entry with
+> an `lts` field), Chromium **rev 1237 / 152.0.7977.8** from the resolved
+> `browsers.json`. Every done-test below was run.
+>
+> **`.links/` is not where this step said it was.** Measured 2026-08-16 in
+> `playwright-core/lib/coreBundle.js`: it is `path.join(registryDirectory,
+> '.links')` in **three** call sites and nowhere else, so it is written into the
+> **browsers root** and never into `node_modules`. The done-test bullet below
+> passes vacuously — an assembled payload has never contained one — and the
+> strip belongs to a tree this design does not ship at all, because browsers are
+> [provisioned on first run](A-runtime.md#first-run-browser-provisioning). The
+> claim was correct for the **bundled** build it was written against and stopped
+> applying on 2026-08-14 without being moved, which is the same defect as the
+> superseded payload table in [§A](A-runtime.md). The script still asserts the
+> payload holds none, because the requirement is about what ships and a future
+> upstream could move it. Corrected in [§A](A-runtime.md),
+> [the hazard index](hazards.md#hazard-index) and
+> [kb](../kb/playwright/provisioning-and-timings.md#first-run-provisioning).
+>
+> **Node's `LICENSE` cannot be fetched beside `node.exe`.** Measured 2026-08-16:
+> `nodejs.org/dist/v24.19.0/win-x64/` publishes `node.exe`, `node.lib`,
+> `node_pdb.7z` and `node_pdb.zip` — **no `LICENSE`** — and neither does the
+> version root. The only route to it is inside an archive, so the build takes
+> `node-v24.19.0-win-x64.zip`, verifies it against `SHASUMS256.txt`, and extracts
+> the two entries it needs. That is also **35.58 MiB downloaded instead of
+> 88.53 MiB**. This step required shipping the file and said nothing about where
+> it comes from; a build that took the obvious route would have shipped no
+> licence at all.
+>
+> **Two things this step deliberately does not do.** The payload is **not** wired
+> into `dotnet build` — assembling it costs an `npm install` and a download, and
+> the snapshots that must regenerate on every build are step 4's. And the browser
+> was **seeded by local copy** from an existing `%LOCALAPPDATA%\ms-playwright`
+> holding the identical revisions rather than re-downloaded; the installer still
+> ran and still decided. `-SeedBrowsersFrom` is empty by default, so the honest
+> default is a download.
+
 Everything after this step needs a real child to test against, and the
 [four golden snapshots](testing.md#the-upstream-review-gate) are generated from
 this tree.
@@ -213,7 +255,8 @@ this tree.
   a staging tree. `playwright-core` follows as that package's own exact
   dependency — never npm `latest`.
 - Record the resolved `package-lock.json`. Strip `.links/`: it holds the build
-  machine's absolute paths.
+  machine's absolute paths. **(See the correction above: it is written into the
+  browsers root, not the staged tree.)**
 - Fetch `node.exe` for the newest entry in `nodejs.org/dist/index.json` carrying
   an `lts` field. **Ship Node's full `LICENSE`** — it aggregates OpenSSL, ICU,
   V8, zlib and c-ares terms, and "a single `node.exe`, nothing else" drops it.

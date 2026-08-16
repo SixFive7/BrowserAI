@@ -447,21 +447,39 @@ FodyWeavers.xsd
 # NOT in it -- they are provisioned on first run, so no Chromium tree is ever
 # staged here. See PLAN.md section A.
 #
-# Verified 2026-08-15: vpk emits none of these three. They are our own build
-# conventions, kept because the build will need somewhere to assemble a payload,
-# and reviewed here rather than deleted on the theory that they are unused.
+# Observed 2026-08-16, build-order step 3: build/Build-Payload.ps1 assembles
+# exactly one of these three, /payload/, laid out as
+#
+#   payload/node/{node.exe,LICENSE}   payload/mcp/node_modules/...
+#   payload/.cache/node-<ver>-win-x64.zip   payload/payload.json
+#
+# so /payload/ is now a real path rather than a guess. /staging/ and /.staging/
+# are not emitted by anything and are kept only as spare conventions; delete
+# them at v1 if nothing has claimed them (TODO.md).
+#
+# The tracked half lives at build/payload/ -- package.json and the resolved
+# package-lock.json -- and is deliberately OUTSIDE this rule: the lock is the
+# provenance stamp and must be committed.
+#
+# Verified 2026-08-15: vpk emits none of these three.
 /payload/
 /staging/
 /.staging/
 
-# playwright-core writes .links/ containing the build machine's absolute paths.
-# README section A: strip it from the shipped tree.
+# playwright-core writes .links/ into the BROWSERS root -- never into
+# node_modules, measured 2026-08-16 (kb: first-run provisioning). Browsers are
+# provisioned on first run and live outside the repository entirely, so this
+# rule has nothing to match today. Kept as a cheap backstop against an upstream
+# that moves it into the package tree, which is the only way it could ever
+# reach a commit.
 .links/
 
 # node_modules/ is already ignored by the upstream template (~line 316), which
-# assumes the pinned @playwright/mcp tree is npm-installed into staging at
-# build time. If it is ever committed instead, for reproducibility, negate it:
-#   !/mcp/node_modules/
+# is what keeps the assembled tree out of history. If it is ever committed
+# instead, for reproducibility, negate it -- note the real path:
+#   !/payload/mcp/node_modules/
+# and remember that Git does not descend into an excluded directory, so
+# /payload/ itself has to be negated back on first.
 
 # --- Velopack ----------------------------------------------------------------
 # *.nupkg (full and delta packages) and *.msi come from the upstream template.

@@ -5,7 +5,7 @@
 
 | Component | Requirement | Measured size |
 |---|---|---|
-| Node.js | Bundled — a **single `node.exe`**, nothing else. Verified driving the full MCP protocol with no npm, no `node_modules`, no `.cmd` shims. | v24.19.0 LTS, **88.53 MB** |
+| Node.js | Bundled — `node.exe` **and Node's full `LICENSE`**, nothing else. Verified driving the full MCP protocol with no npm, no `node_modules`, no `.cmd` shims. | v24.19.0 LTS, **88.53 MB** |
 | `@playwright/mcp` + `playwright-core` | Resolved to latest at **build** time, then vendored into the artifact as an exact tree — never `@latest` at **spawn** time. Zero native binaries; the tree is portable JS. See [Versioning policy](../README.md#versioning-policy-everything-floats-the-build-freezes-it). | 0.0.79, **18.11 MB** |
 | BrowserAI itself | NativeAOT, single file, no .NET runtime on the host. | **9.76 MiB**, measured by the [AOT spike](stack.md#nine-places-where-the-sdk-must-be-deviated-from) |
 | System Chrome | **Not used.** See below. | — |
@@ -59,14 +59,18 @@ The convenience this forbids is real and should be answered directly rather than
 
 > `chromium_headless_shell-1237\` appears in this layout only if something asks for it. **We do not provision it** — [full Chromium in every mode](../README.md#settled-2026-08-15) — so `--no-shell` above is load-bearing, not tidiness.
 
-Note the asymmetry: the outer directory uses **underscores**, the inner one **dashes**. No sentinel files (`INSTALLATION_COMPLETE`, `DEPENDENCIES_VALIDATED`) are needed to launch — the only launch-time check is file accessibility of the executable. Strip `.links/` from the shipped tree; it contains the build machine's absolute paths. The layout, the `INIT_CWD` hazard and the `DEPENDENCIES_VALIDATED` write are in [kb: first-run provisioning](../kb/playwright/provisioning-and-timings.md#first-run-provisioning).
+Note the asymmetry: the outer directory uses **underscores**, the inner one **dashes**. No sentinel files (`INSTALLATION_COMPLETE`, `DEPENDENCIES_VALIDATED`) are needed to launch — the only launch-time check is file accessibility of the executable. The layout, the `INIT_CWD` hazard and the `DEPENDENCIES_VALIDATED` write are in [kb: first-run provisioning](../kb/playwright/provisioning-and-timings.md#first-run-provisioning).
+
+> ⚠️ **Corrected 2026-08-16 @ `playwright-core` 1.63.0-alpha-2026-08-05 (previously "Strip `.links/` from the shipped tree; it contains the build machine's absolute paths").** `.links/` is written into the **browsers root**, never into `node_modules` — `path.join(registryDirectory, '.links')` in `playwright-core/lib/coreBundle.js`, three call sites, no others. Two consequences, both of which retire the instruction rather than relocate it. Browsers are [provisioned on first run](#first-run-browser-provisioning), so no tree containing a `.links/` is ever shipped and there is nothing to strip; and on a provisioned machine the path it records is that machine's own, not a build machine's, so nothing leaks even in principle. **Do not delete it either** — Playwright's stale-browser GC treats a registry directory with no `.links` entry as prunable, which is why `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandatory. The claim was true of the **bundled** design, where the build machine ran the installer; it survived the 2026-08-14 move to first-run provisioning unmoved, exactly as the payload table above did. Verified while building [build-order step 3](build-order.md#3-the-payload-build), whose own done-test asserts the assembled payload contains none — vacuously, which is now stated there.
 
 Build the browser payload with the pinned package itself, so the revision comes from `browsers.json` rather than a hand-typed URL:
 
 ```
-set PLAYWRIGHT_BROWSERS_PATH=<staging>
+set PLAYWRIGHT_BROWSERS_PATH=<browsers-root>
 node.exe <staging>\node_modules\@playwright\mcp\cli.js install-browser chromium --no-shell --no-progress
 ```
+
+> ⚠️ **Corrected 2026-08-16 (previously `set PLAYWRIGHT_BROWSERS_PATH=<staging>`).** The two are different directories and conflating them puts a 433 MiB browser tree **inside the payload**, which is the arrangement this whole section exists to avoid: browsers live outside `current\` so an update does not re-download them, and they are not in the installer at all. `<staging>` is the npm tree; `<browsers-root>` is `%LocalAppData%\BrowserAI\browsers\`. Both absolute.
 
 ## First-run browser provisioning
 

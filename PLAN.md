@@ -36,7 +36,7 @@ everything cold and hoping.
 |---|---|---|---|---|
 | — | [Build order](plan/build-order.md) | The ordered list of what to build, in sequence, each step with a done-test | — | — |
 | — | [Pre-release checklist](plan/pre-release.md) | What must pass before a release may be cut. The only gate that exists | — | — |
-| A | [Ship and own the runtime](plan/A-runtime.md) | Node, the vendored packages, first-run browser provisioning, packaging | not built | — |
+| A | [Ship and own the runtime](plan/A-runtime.md) | Node, the vendored packages, first-run browser provisioning, packaging | part built | *Vendoring and payload only:* `build/Build-Payload.ps1`, `build/payload/{package.json, package-lock.json}`, `tests/BrowserAI.Tests/PayloadTests.cs`. That covers the component table, the `node.exe` + `LICENSE` bundle, the vendored JS tree and the browsers-root layout. **Not** built: first-run provisioning (the non-blocking `init`, the timers, the remediation-string replacement, the environment rules), the launch half — `browserName`, the chromium-alias channel, `--sandbox` on the command line — and NativeAOT packaging. The browser the payload build provisions is the **test rig's**, not the product's |
 | B | [Be the MCP server](plan/B-mcp-server.md) | Transport, protocol version negotiation, registration | not built | — |
 | C | [Sessions](plan/C-sessions.md) | `browserai_init` and the session family, the session directory as identity, lifetime | not built | — |
 | D | [Locking and single-instance](plan/D-locking.md) | The three lock scopes, ownership, the stray sweep, never by image name | not built | — |

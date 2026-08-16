@@ -58,7 +58,7 @@ Verified **2026-08-14** against the versions in the payload table
 | `@playwright/mcp`, `playwright-core` 0.0.79 | Apache-2.0 | The vendored `node_modules` tree carries the package `LICENSE`. **No `NOTICE` file is published upstream**, so §4(d) has nothing to propagate |
 | `ModelContextProtocol` 2.2.0 | Apache-2.0 | Mid-transition from MIT; unrelicensed contributions remain MIT |
 | Velopack 1.2.0 | MIT | Notice only |
-| Node.js v24 | MIT **plus aggregate terms** for OpenSSL, ICU, V8, zlib and c-ares | Shipping "a single `node.exe`, nothing else" drops Node's `LICENSE`, which is not optional |
+| Node.js v24 | MIT **plus aggregate terms** for OpenSSL, ICU, V8, zlib and c-ares | Shipping "a single `node.exe`, nothing else" drops Node's `LICENSE`, which is not optional. **The file is not downloadable beside `node.exe`** — measured 2026-08-16, `dist/v24.19.0/win-x64/` publishes only `node.exe`, `node.lib` and the two `node_pdb` archives, so the licence has to come out of `node-v24.19.0-win-x64.zip` ([kb](../playwright/provisioning-and-timings.md#component-sizes)). `build/Build-Payload.ps1` extracts both entries from the verified archive and fails if either is missing |
 | `chromium-headless-shell` 1237 | BSD-3-Clause | `LICENSE.headless_shell` plus a **40,178-line** credits file. Binary is unbranded |
 | `ffmpeg` 1011 | LGPL-2.1 | `COPYING.LGPLv2.1` already ships in the directory. Spawned by `playwright-core` as an unmodified separate executable, so §6's relink requirement does not bite |
 | `winldd` 1007 | **no license file shipped at all** | Nothing in the tree to ship |
