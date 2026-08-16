@@ -222,11 +222,20 @@ run.** Observed the same day, and it is the containment contract biting its own
 author: BrowserAI deleted its per-run instance directory in a `finally`, the
 acceptance test terminates BrowserAI from outside on every run, and nineteen
 suite runs left nineteen directories behind. The fix is a sweep at startup that
-uses the **working-directory lock as the liveness check** — Windows refuses to
-delete a directory that is some process's current directory, so the delete
-simply fails for a live run and succeeds for an abandoned one, with no pid to
+uses the **working-directory lock as the liveness check**, with no pid to
 recycle and no name to match. `[STABLE]` for the lock; re-establish with
 `InstanceDirectoryTests`.
+
+> ⚠️ **Corrected 2026-08-16 (previously "— Windows refuses to delete a directory
+> that is some process's current directory, so the delete simply fails for a live
+> run and succeeds for an abandoned one").** Measured twice: Windows refuses to
+> remove the **directory node** and does **not** refuse to delete the files
+> inside it, so `Directory.Delete(path, recursive: true)` emptied a live run's
+> directory completely and failed only afterwards — the sweep was not skipping
+> live runs, it was gutting them. The lock is a real liveness signal; the
+> operation that tests it has to be `Directory.Move`, which is refused **with the
+> contents untouched**. See the entry on it under
+> [Interop and the toolchain](#interop-and-the-toolchain).
 
 **A process's command line can be read by pid without a PEB walk.**
 `NtQueryInformationProcess` with `ProcessCommandLineInformation` (class **60**,
@@ -353,8 +362,50 @@ per-node exception discrimination: deepest child first, so a non-recursive
 — recurse subdirectories, then yield files, then yield the directory itself, with
 `UnauthorizedAccessException` and `DirectoryNotFoundException` caught and logged
 **per node**, and an optional ACL-reset retry on the denied node. Directly relevant
-to `browserai_reinstall_browser`, session destroy, and the Velopack `current\`
-swap. Verified against MS Learn 2026-08-16. `[STABLE]`
+to `browserai_reinstall_browser`, session destroy, and the per-run instance
+directory. Verified against MS Learn 2026-08-16. `[STABLE]`
+
+**`Directory.Delete(path, recursive: true)` does make partial progress — it
+deletes what it can and throws ONE exception naming ONE node.** Measured twice
+2026-08-16 on **.NET 10.0.11**, Windows 11 Pro 26200, from PowerShell against
+`[System.IO.Directory]::Delete($p, $true)`. Two trees, identical layout. With one
+file held `FileShare.None`: threw `IOException` naming that file, and survivors
+were exactly that file and the two directories above it — the top-level JSON file
+and a sibling subdirectory that sorts *after* the held one were both gone. With a
+subdirectory the caller may not read (`icacls /deny (OI)(CI)(RX,DE,DC)`): threw
+`UnauthorizedAccessException` naming that directory, and again everything else
+went. **A hand-rolled post-order walk left the same nodes behind in both cases** —
+so the on-disk outcome is not what separates the two primitives. What separates
+them is the report: the framework named one node where the per-node walk named
+**four** and **two**. The enumeration entry above is unaffected —
+`EnumerateFileSystemEntries(…, AllDirectories)` did throw
+`UnauthorizedAccessException` and yielded nothing, re-measured in the same pass.
+To re-establish: build a tree of a top-level file, a subdirectory holding two
+files, and a second subdirectory sorting after it; make one node undeletable
+(`[System.IO.File]::Open(..., 'None')` for the held-file arm, `icacls /deny` for
+the unreadable arm); call `[System.IO.Directory]::Delete($root, $true)`, catch,
+and list what survived. **The second subdirectory is the load-bearing part of the
+fixture** — it is what shows the walk continued past the failure, and a tree with
+only the locked node cannot tell partial progress from none.
+`[FLOATS]` (a BCL implementation detail, and the SDK rolls forward)
+
+**Windows refuses to remove a directory that is a live process's current
+directory — and does not refuse to delete the files inside it.** Measured twice
+2026-08-16, same runtime, against a childless holder started with
+`-WorkingDirectory`. `Directory.Delete(path, recursive: true)` **emptied the
+directory completely** and only then threw `IOException` on the node itself; what
+survived was an empty directory. `Directory.Move(path, aside)` was refused with
+`IOException` **and the contents untouched**, and succeeded the moment the holder
+exited. So a working-directory lock is a liveness signal for a *rename* and not
+for a *delete*, and BrowserAI's instance sweep claims by renaming
+([§E](../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)). ⚠️ **The first
+arm of this measurement was run against a `cmd /c ping` holder and is not
+evidence**: killing `cmd.exe` leaves `ping.exe` alive holding the same cwd, so the
+"holder is dead" half never tested what it claimed. Re-established with a
+`pwsh -Command Start-Sleep` holder, which has no children. To re-establish:
+`Start-Process pwsh -ArgumentList '-NoProfile','-Command','Start-Sleep -Seconds 45'
+-WorkingDirectory $tree -PassThru`, then try the delete and the move, then
+`Stop-Process` and try the move again. `[STABLE]`
 
 **`Console.ReadKey()` inside a `catch` in a non-interactive process hangs
 forever, with no output** — there is no console input to read, and nothing times

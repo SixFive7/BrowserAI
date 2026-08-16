@@ -19,6 +19,97 @@ with it.
 
 ---
 
+## Follow-up to the plan audit — 2026-08-16, on `9f6a97a`
+
+**Not a checklist run.** The [plan's final audit](PLAN.md#the-final-audit-ran-on-2026-08-16-and-the-plan-is-not-deleted)
+found defects and deliberately did not fix them, because fixing is
+implementation. **Five were wrong in shipped code rather than missing from it,
+and all five are now fixed.** §B registration is untouched: it needs a
+maintainer decision and is still the largest gap in the audit's table.
+
+**Every fix is evidenced the same way — the guard was removed and the failure it
+produces is quoted.** A test that passes with its guard removed is not a guard,
+and this is the standard the rest of this file was written to.
+
+| Defect | Fixed in | Red without it |
+|---|---|---|
+| §E's *never* violated: `Directory.Delete(recursive: true)` in a swallow-all catch | `src/BrowserAI/Runtime/InstanceDirectory.cs` | `InstanceDirectoryTests.ADirectoryWithAFileSomethingHoldsIsEmptiedAroundItAndTheSurvivorIsNamed` — *"Expected to not be empty"* at `Assert.That(reported).IsNotEmpty()` |
+| The sweep gutted a **live** run's directory (found by measuring the above) | the same file: the claim is a rename | `InstanceDirectoryTests.ARunThatIsStillGoingKeepsItsInstanceDirectoryAndEverythingInIt` — *"Expected to be true"* at `Assert.That(File.Exists(config)).IsTrue()` |
+| `build/BannedSymbols.txt` claimed toolhelp coverage it did not have | `tests/BrowserAI.Tests/NeverByImageNameTests.cs`, plus a `Corrected` note in the banned list | the needle `szExeFile` is now in the scan; the claim is true rather than softened |
+| `ArtifactRouter.TryWrite`'s answer discarded at **both** call sites | `src/BrowserAI/Artifacts/ArtifactRouter.cs`, `src/BrowserAI/Sessions/SessionManager.cs` | `ArtifactRoutingTests.AnIndexThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied` and `.ARollUpThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied` — both *"Expected to contain \"COULD NOT BE WRITTEN\""* |
+| Two tests degraded and reported `passed` outside the gate | `tests/BrowserAI.Tests/{JobContainmentTests,StraySweepTests}.cs` | see the two-capability table below |
+| Five build rules survived their own deletion green | `tests/BrowserAI.Tests/BuildConfigurationTests.cs`, `RepositoryLayout.cs` | 5 of 12 failed with all five properties removed, each naming its own |
+
+### Item 8's two remaining holes are closed
+
+The gate was built at the previous follow-up and **two tests were missed**, one
+of them race R5's only real-browser arm. Both are now inside it. Measured by
+renaming the capability aside and running the test **alone**, in both modes:
+
+| Capability removed | Test | Ordinary run | `BROWSERAI_RELEASE_RUN=1` |
+|---|---|---|---|
+| `payload/` | `JobContainmentTests.TheBundledNodeAndItsDescendantsAreContained` | **skipped**, exit 0, *"repository payload is not available to this run … Run: pwsh -File build/Build-Payload.ps1"* | **failed**, exit 2, same sentence plus *"This is a release run … so it is a failure rather than a skip"* |
+| `%LOCALAPPDATA%\BrowserAI\browsers\chromium-1237` | `StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession` | **skipped**, exit 0, naming `chrome-win64\chrome.exe` | **failed**, exit 2 |
+
+Both capabilities were renamed back and their presence re-verified in the same
+script, so this measurement left nothing behind. **The distinction the degraded
+branches drew is kept**: `SuiteEnvironment.StateOf` now answers
+`CapabilityState.Partial` for a revision directory with no executable in it,
+which fails in *both* modes — *"nobody provisioned it"* stays distinguishable
+from *"it was provisioned and the binary is missing"*.
+
+### What contradicted a document, and what changed
+
+**Three claims lost to one measurement, run twice on .NET 10.0.11 / Windows 11
+Pro 26200.**
+
+1. **`Directory.Delete(path, recursive: true)` makes partial progress.** §E and
+   `TreeDelete`'s doc comment both said the caller sees *"an exception and no
+   partial progress"*. Against a tree with one file held `FileShare.None`, and
+   again against one holding an unreadable subdirectory, it deleted everything
+   else and threw **one** exception naming **one** node — the same nodes
+   survived that the hand-rolled walk leaves. The real difference is the
+   **report**: one node named where the per-node walk named four and two. Both
+   documents corrected carrying their previous text; the enumeration half of the
+   claim re-measured and confirmed.
+2. **A working-directory lock is not a delete guard.** `InstanceDirectory` said
+   *"`Delete` simply fails for a run that is still going"*. It does not: the
+   directory is **emptied** and the failure lands on the empty node afterwards.
+   A running BrowserAI's generated config, surface-child profile, output and
+   downloads folders were being deleted on every start of a second instance,
+   against any instance older than five minutes, in silence.
+3. **`Directory.Move` is the check that works** — refused while held, with the
+   contents untouched; successful the moment the holder exits; and atomic, so
+   two BrowserAIs sweeping one root cannot both win a tree.
+
+Recorded in [kb](kb/windows/processes.md#interop-and-the-toolchain) with
+[re-verification row 86](kb/README.md#re-verification-index), one hazard row
+rewritten and one added.
+
+> ⚠️ **One arm of that measurement was discarded rather than reported.** The
+> first *"the holder is dead"* test used a `cmd /c ping` holder — killing
+> `cmd.exe` leaves `ping.exe` alive holding the same cwd, so the rename was
+> refused for a reason that had nothing to do with what was being tested. It was
+> re-run with a childless `pwsh -Command Start-Sleep` holder. The discarded arm
+> is named in the kb entry, because a measurement that was wrong once is the
+> thing a reader most needs to know was noticed.
+
+### The suite
+
+**352 total, 351 passed, 1 skipped, 0 failed, exit 0, 34.4 s**, every capability
+`PRESENT`, coverage block reading *"This run exercised every layer. No test took
+a degraded path."* Build **0 warnings, 0 errors**. NativeAOT publish exit 0 with
+**no ILC output at all**. The one skip is still
+`UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest`, which was
+deliberately not un-skipped and [still blocks a release](#what-blocks-a-release-today).
+
+Nine tests were added: 2 in `InstanceDirectoryTests`, 2 in
+`ArtifactRoutingTests`, 5 in `BuildConfigurationTests`. **Item 8's verdict does
+not move** — one `[Skip]` is one `[Skip]` — but the sentence *"every layer ran"*
+is now true of the whole suite rather than of all but two tests.
+
+---
+
 ## Follow-up to run 1 — 2026-08-16, on `c21fea7`
 
 **Not a checklist run.** Run 1's three blockers and its deferred items were

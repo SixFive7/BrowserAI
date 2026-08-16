@@ -31,15 +31,51 @@ internal static class RepositoryLayout
     ];
 
     /// <summary>
-    /// Every file that can influence how the compiler treats a diagnostic:
-    /// the project files plus the two shared property files at the root.
+    /// The build files that reach <b>every</b> project by construction, whether
+    /// or not that project asks for them.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the subset the "never repo-wide" rules are about</b>
+    /// ([testing](../../plan/testing.md#what-the-build-itself-must-fail-on)). A
+    /// property set here applies to the assembly nobody has written yet, which
+    /// is precisely why AOT and trim suppression must not be set here — and why
+    /// <c>TreatWarningsAsErrors</c> must.
+    /// </para>
+    /// <para>
+    /// <b><c>Directory.Build.targets</c> is named although it does not exist.</b>
+    /// A scan that enumerates only the files present cannot fail when a new
+    /// repo-wide file arrives carrying the thing it forbids, which is the shape
+    /// of hole the plan's final audit found twice.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<FileInfo> RepositoryWideBuildFiles { get; } =
+    [
+        .. new[] { "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props" }
+            .Select(name => new FileInfo(Path.Combine(Root.FullName, name)))
+            .Where(file => file.Exists),
+    ];
+
+    /// <summary>
+    /// Every file that can influence how the compiler treats a diagnostic: the
+    /// project files, the shared property files at the root, and the importable
+    /// MSBuild fragments under <c>build/</c>.
+    /// </summary>
+    /// <remarks>
+    /// The <c>build/</c> half was added 2026-08-16. <c>UpstreamSnapshots.targets</c>
+    /// is imported by the test project and sets properties; a <c>NoWarn</c>
+    /// placed there was invisible to every scan the suite made, which is the
+    /// same hole one directory across.
+    /// </remarks>
     public static IReadOnlyList<FileInfo> BuildFiles { get; } =
     [
         .. ProjectFiles,
-        .. new[] { "Directory.Build.props", "Directory.Packages.props" }
-            .Select(name => new FileInfo(Path.Combine(Root.FullName, name)))
-            .Where(file => file.Exists),
+        .. RepositoryWideBuildFiles,
+        .. new[] { "*.props", "*.targets" }
+            .SelectMany(pattern => new DirectoryInfo(Path.Combine(Root.FullName, "build")) is { Exists: true } build
+                ? build.EnumerateFiles(pattern, SearchOption.AllDirectories)
+                : [])
+            .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
 
     /// <summary>Every C# file the product ships.</summary>

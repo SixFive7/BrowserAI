@@ -297,6 +297,14 @@ internal sealed class ArtifactRouter
 
         written.AddRange(moved);
 
+        // ⚠️ The answer, not a discard. Until 2026-08-16 this call site read
+        // `WriteIndex();` and the one below it `_ = TryWrite(...)`, so an index
+        // that could not be written was silent -- while the note underneath
+        // still ended with `index: <path>`, naming a file that was stale or
+        // absent. That is this project's founding failure shape produced by the
+        // fix for it.
+        var indexed = true;
+
         if (written.Count is not 0)
         {
             lock (_gate)
@@ -304,10 +312,10 @@ internal sealed class ArtifactRouter
                 _artifacts.AddRange(written);
             }
 
-            WriteIndex();
+            indexed = WriteIndex();
         }
 
-        return Note(plan, written);
+        return Note(plan, written, indexed);
     }
 
     /// <summary>
@@ -340,7 +348,8 @@ internal sealed class ArtifactRouter
     /// </remarks>
     /// <param name="root">The directory the sessions sit under.</param>
     /// <param name="sessions">Every session beneath it, already filtered.</param>
-    public static void WriteRollUp(string root, IReadOnlyList<RollUpEntry> sessions)
+    /// <returns>Whether it was written. A caller that names the file must say so when it was not.</returns>
+    public static bool WriteRollUp(string root, IReadOnlyList<RollUpEntry> sessions)
     {
         ArgumentNullException.ThrowIfNull(root);
         ArgumentNullException.ThrowIfNull(sessions);
@@ -377,7 +386,7 @@ internal sealed class ArtifactRouter
             writer.WriteEndObject();
         }
 
-        TryWrite(Path.Combine(root, RollUpFileName), buffer.ToArray());
+        return TryWrite(Path.Combine(root, RollUpFileName), buffer.ToArray());
     }
 
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
@@ -599,7 +608,7 @@ internal sealed class ArtifactRouter
         return new ArtifactRecord(tool, DateTimeOffset.Now, url, bytes, absolute, relative, renamedFrom, sortedAfterTheFact);
     }
 
-    private string Note(ArtifactPlan? plan, IReadOnlyList<ArtifactRecord> written)
+    private string Note(ArtifactPlan? plan, IReadOnlyList<ArtifactRecord> written, bool indexed)
     {
         var note = new StringBuilder();
 
@@ -636,7 +645,16 @@ internal sealed class ArtifactRouter
                 .Append(" routed artifact(s) in ").Append(_location.FullPath).Append('\n');
         }
 
-        _ = note.Append("  index: ").Append(Path.Combine(_location.FullPath, IndexFileName)).Append('\n');
+        _ = note.Append("  index: ").Append(Path.Combine(_location.FullPath, IndexFileName));
+
+        // The one thing a caller must not be told is that a file it is being
+        // handed the path of was written when it was not. The artifact itself is
+        // on disk either way -- that is why this is a line in the note and not
+        // an error -- but a reader following the index path would otherwise meet
+        // a stale file or none, with nothing having said so.
+        _ = note.Append(indexed
+            ? "\n"
+            : " -- ⚠️ COULD NOT BE WRITTEN on this call (the volume is read-only, or something holds it open), so it does NOT list the artifact(s) above. Everything named above is on disk at the path given; only the index is behind.\n");
 
         return note.ToString();
     }
@@ -647,7 +665,8 @@ internal sealed class ArtifactRouter
     /// copy of the session's identity is a second thing to disagree with the
     /// first; this file is the artifact record and nothing else.
     /// </remarks>
-    private void WriteIndex()
+    /// <returns>Whether it was written.</returns>
+    private bool WriteIndex()
     {
         using var buffer = new MemoryStream();
 
@@ -709,7 +728,7 @@ internal sealed class ArtifactRouter
             writer.WriteEndObject();
         }
 
-        _ = TryWrite(Path.Combine(_location.FullPath, IndexFileName), buffer.ToArray());
+        return TryWrite(Path.Combine(_location.FullPath, IndexFileName), buffer.ToArray());
     }
 }
 

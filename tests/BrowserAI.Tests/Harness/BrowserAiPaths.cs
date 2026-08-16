@@ -61,6 +61,30 @@ internal static class BrowserAiPaths
     public static string FirefoxRevision { get; } = RevisionOf("firefox");
 
     /// <summary>
+    /// The revision directory a provisioned Chromium lives in.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Named so that "nobody has provisioned it" is distinguishable from "it
+    /// was provisioned and the executable is missing".</b> The second is a real
+    /// defect and reads as a clean machine without it —
+    /// <see cref="SuiteEnvironment.StateOf"/> answers
+    /// <see cref="CapabilityState.Partial"/> for that shape, which fails in
+    /// every run rather than skipping. The distinction used to be drawn inside
+    /// the one test that needed it, which is why it was lost when that test's
+    /// degraded branch reported <i>passed</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Above <see cref="ExpectedChromiumExecutable"/> on purpose</b>, for
+    /// the reason stated on <see cref="ChromiumRevision"/>: an initialiser that
+    /// reads a later one gets <see langword="null"/>, silently.
+    /// </para>
+    /// </remarks>
+    public static string ChromiumDirectory { get; } = Path.Combine(
+        Paths.BrowsersDirectory,
+        $"chromium-{ChromiumRevision}");
+
+    /// <summary>
     /// The exact Chromium executable the resolved payload's <c>browsers.json</c>
     /// asks for.
     /// </summary>
@@ -72,8 +96,7 @@ internal static class BrowserAiPaths
     /// underscore before the revision and the inner one uses a dash.
     /// </remarks>
     public static string ExpectedChromiumExecutable { get; } = Path.Combine(
-        Paths.BrowsersDirectory,
-        $"chromium-{ChromiumRevision}",
+        ChromiumDirectory,
         "chrome-win64",
         "chrome.exe");
 

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -25,6 +26,36 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed partial class BuildConfigurationTests
 {
+    /// <summary>
+    /// The AOT, trim and single-file knobs that may only ever be set on the
+    /// assembly they are about.
+    /// </summary>
+    private static readonly string[] PerAssemblyOnly =
+    [
+        "PublishAot",
+        "EnableAotAnalyzer",
+        "EnableTrimAnalyzer",
+        "EnableSingleFileAnalyzer",
+        "SuppressTrimAnalysisWarnings",
+        "SuppressAotAnalysisWarnings",
+        "TrimmerSingleWarn",
+        "ILLinkTreatWarningsAsErrors",
+        "IsTrimmable",
+        "PublishTrimmed",
+    ];
+
+    /// <summary>The one value the shipped assembly's trim suppression may hold.</summary>
+    private static readonly string[] TrimSuppressionOff = ["false"];
+
+    /// <summary>The manifest the product project must attach.</summary>
+    private static readonly string[] TheManifest = ["app.manifest"];
+
+    /// <summary>The one long-path setting the manifest may carry.</summary>
+    private static readonly string[] LongPathAware = ["true"];
+
+    /// <summary>The one privilege level BrowserAI may ever request.</summary>
+    private static readonly string[] AsInvoker = ["asInvoker"];
+
     /// <summary>
     /// Every <c>.cs</c> file under <c>src/</c> and <c>tests/</c> is visible to
     /// git.
@@ -269,6 +300,214 @@ internal sealed partial class BuildConfigurationTests
         await Assert.That(declarations.Select(declaration => declaration.File))
             .Contains("Directory.Build.props");
     }
+
+    /// <summary>
+    /// Warnings are errors, said in the one file every project reads.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>[Testing](../../plan/testing.md#what-the-build-itself-must-fail-on)
+    /// opens with this and nothing asserted it.</b>
+    /// <see cref="NoBuildFileSuppressesWarnings"/> forbids <c>NoWarn</c> and
+    /// <c>WarningsNotAsErrors</c> — the two ways to demote a warning — and never
+    /// looked for the property that promotes them in the first place, so
+    /// deleting the line left the suite green and turned every analyzer in this
+    /// repository into advice. Found by the plan's final audit, in the same
+    /// paragraph list that produced <see cref="UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears"/>.
+    /// </para>
+    /// <para>
+    /// <b>Both halves, for the same reason that one has both.</b> The property
+    /// must be <c>true</c> wherever it appears, and it must <i>appear</i> in the
+    /// file that reaches every project — a per-project declaration would leave
+    /// the next project uncovered and pass a "nothing sets it to false" check.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WarningsAreErrorsForEveryProject()
+    {
+        var declarations = Declarations("TreatWarningsAsErrors");
+
+        var demoted = declarations
+            .Where(declaration => !string.Equals(declaration.Value, "true", StringComparison.OrdinalIgnoreCase))
+            .Select(declaration => $"{declaration.File}: <TreatWarningsAsErrors>{declaration.Value}</TreatWarningsAsErrors>");
+
+        await Assert.That(string.Join(Environment.NewLine, demoted)).IsEmpty();
+        await Assert.That(declarations.Select(declaration => declaration.File)).Contains("Directory.Build.props");
+    }
+
+    /// <summary>
+    /// <c>CS0162</c> is promoted by name, so it survives
+    /// <c>TreatWarningsAsErrors</c> being turned off.
+    /// </summary>
+    /// <remarks>
+    /// <b>Unreachable code is not a tidiness complaint.</b> It means the compiler
+    /// proved a branch cannot execute, and in this codebase that branch is
+    /// usually a guard, a <c>catch</c> or a cleanup path — the recovery path that
+    /// was never going to run is this project's founding failure class. The
+    /// promotion is what keeps it an error if the blanket property above ever
+    /// goes; <see cref="NoBuildFileSuppressesWarnings"/> is what keeps a
+    /// <c>NoWarn</c> from defeating both, measured on SDK 10.0.302. Three
+    /// mechanisms, and until 2026-08-16 only the third was asserted.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task UnreachableCodeIsPromotedToAnErrorByName()
+    {
+        var promotions = Declarations("WarningsAsErrors");
+
+        await Assert.That(promotions.Select(declaration => declaration.File)).Contains("Directory.Build.props");
+
+        await Assert.That(promotions
+            .Where(declaration => string.Equals(declaration.File, "Directory.Build.props", StringComparison.Ordinal))
+            .Any(declaration => declaration.Value.Contains("CS0162", StringComparison.Ordinal)))
+            .IsTrue();
+    }
+
+    /// <summary>
+    /// AOT and trim analysis is configured on the assembly that ships, never on
+    /// every assembly at once.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>[Testing](../../plan/testing.md#what-the-build-itself-must-fail-on) in
+    /// those words:</b> <i>"AOT and trim warning suppression is scoped
+    /// per-assembly, never repo-wide. A repo-wide suppression is permanent and
+    /// invisible: it silences the warning for every assembly added afterwards,
+    /// including the one that will actually be broken by it."</i> A
+    /// <c>&lt;SuppressTrimAnalysisWarnings&gt;true&lt;/&gt;</c> in
+    /// <c>Directory.Build.props</c> was invisible to every scan the suite made.
+    /// </para>
+    /// <para>
+    /// <b>The positive half is the one that catches a deletion.</b> Forbidding
+    /// the property repo-wide says nothing if the product project stops
+    /// declaring it at all — the ILC gate would then rest on <c>PublishAot</c>'s
+    /// defaults, silently. So the shipped assembly must still say
+    /// <c>false</c> in its own file, which is where a reviewer can see it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AotAndTrimAnalysisIsScopedPerAssemblyAndNeverRepoWide()
+    {
+        var repoWide = RepositoryLayout.RepositoryWideBuildFiles
+            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+                .Where(element => PerAssemblyOnly.Contains(element.Name.LocalName, StringComparer.Ordinal))
+                .Select(element => $"{Relative(file)}: <{element.Name.LocalName}>{element.Value}</{element.Name.LocalName}> reaches every project, including the ones that do not exist yet"));
+
+        await Assert.That(string.Join(Environment.NewLine, repoWide)).IsEmpty();
+
+        // And the assembly that actually ships still says it, in its own file.
+        var product = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"))
+            .Descendants()
+            .Where(element => element.Name.LocalName is "SuppressTrimAnalysisWarnings")
+            .Select(element => element.Value)
+            .ToList();
+
+        await Assert.That(product).IsEquivalentTo(TrimSuppressionOff);
+    }
+
+    /// <summary>
+    /// <c>global.json</c> declares a floor that rolls forward, and the runner
+    /// mode TUnit cannot work without.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Neither entry is a pin, and the file is outside every other scan.</b>
+    /// [§stack](../../plan/stack.md#the-build-configuration-this-plan-has-never-mentioned)
+    /// requires *"an SDK floor that rolls forward"* — a floor forbids being
+    /// stale, where a ceiling would forbid being current — and *"the MTP runner
+    /// setting TUnit requires"*, without which <c>dotnet test</c> takes the
+    /// VSTest path and errors out against an MTP v2 project.
+    /// </para>
+    /// <para>
+    /// <b><c>rollForward</c> is the half that fails quietly.</b> Delete it and
+    /// the build still works on this machine, because the floor happens to be
+    /// installed; it fails on the next machine, and it fails as a version
+    /// mismatch nobody attributes to a deleted line.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSdkFloorRollsForwardAndTheRunnerIsTheOneTUnitNeeds()
+    {
+        using var global = JsonDocument.Parse(
+            await File.ReadAllBytesAsync(Path.Combine(RepositoryLayout.Root.FullName, "global.json")));
+
+        // Read through TryGetProperty rather than GetProperty: a DELETED entry
+        // is the failure under test, and a KeyNotFoundException out of the JSON
+        // reader names the dictionary rather than the setting. A guard whose
+        // failure message does not say what to put back is half a guard.
+        await Assert.That(Entry(global, "sdk", "rollForward")).IsEqualTo("latestMajor");
+        await Assert.That(Entry(global, "sdk", "version")).IsNotEqualTo("<absent>");
+        await Assert.That(Entry(global, "test", "runner")).IsEqualTo("Microsoft.Testing.Platform");
+    }
+
+    /// <summary>
+    /// The application manifest is long-path aware and asks for no elevation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Both settings fail silently, in opposite directions.</b>
+    /// [§stack](../../plan/stack.md#the-build-configuration-this-plan-has-never-mentioned)
+    /// requires <c>longPathAware</c> because session directories are the
+    /// caller's choice and unbounded: without it a profile tree crossing
+    /// <c>MAX_PATH</c> fails somewhere inside Chromium with an error nobody can
+    /// attribute. [§G](../../plan/G-updates.md) requires <c>asInvoker</c>
+    /// because BrowserAI installs per-user precisely so that nothing ever waits
+    /// on a UAC prompt a background MCP server cannot answer — an elevation
+    /// request here would hang the client at startup.
+    /// </para>
+    /// <para>
+    /// <b>And the manifest has to be attached.</b> A file nothing references is
+    /// a file with no effect, which is indistinguishable from a correct one by
+    /// reading it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheApplicationManifestIsLongPathAwareAndNeverAsksForElevation()
+    {
+        var project = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"));
+
+        var attached = project.Descendants()
+            .Where(element => element.Name.LocalName is "ApplicationManifest")
+            .Select(element => element.Value)
+            .ToList();
+
+        await Assert.That(attached).IsEquivalentTo(TheManifest);
+
+        var manifest = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));
+
+        await Assert.That(manifest.Descendants()
+            .Where(element => element.Name.LocalName is "longPathAware")
+            .Select(element => element.Value))
+            .IsEquivalentTo(LongPathAware);
+
+        await Assert.That(manifest.Descendants()
+            .Where(element => element.Name.LocalName is "requestedExecutionLevel")
+            .Select(element => element.Attribute("level")?.Value ?? "<no level attribute>"))
+            .IsEquivalentTo(AsInvoker);
+    }
+
+    /// <summary>One <c>global.json</c> entry, or a legible stand-in for an absent one.</summary>
+    /// <param name="document">The parsed file.</param>
+    /// <param name="section">The top-level object.</param>
+    /// <param name="name">The entry inside it.</param>
+    /// <returns>The value, or <c>&lt;absent&gt;</c>.</returns>
+    private static string Entry(JsonDocument document, string section, string name) =>
+        document.RootElement.TryGetProperty(section, out var parent) && parent.TryGetProperty(name, out var value)
+            ? value.GetString() ?? "<null>"
+            : "<absent>";
+
+    /// <summary>Every declaration of a property across every build file.</summary>
+    private static List<(string File, string Value)> Declarations(string property) =>
+    [
+        .. RepositoryLayout.BuildFiles
+            .SelectMany(file => XDocument.Load(file.FullName).Descendants()
+                .Where(element => string.Equals(element.Name.LocalName, property, StringComparison.Ordinal))
+                .Select(element => (File: Relative(file), element.Value))),
+    ];
 
     private static XDocument CentralPackageManagement() =>
         XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "Directory.Packages.props"));

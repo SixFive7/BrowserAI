@@ -46,6 +46,25 @@ internal sealed class NeverByImageNameTests
         ("GetProcessesBy" + "Name", "enumerates by image name; the analyzer catches the C# call, this catches it in a script"),
         ("Win32_" + "Process", "a WMI query filtered on Name is the same rule wearing a different API"),
         ("Get-" + "Process", "PowerShell's name-filtered process enumerator"),
+
+        // ⚠️ Added 2026-08-16 by the plan's final audit, which found it CLAIMED
+        // and absent. `build/BannedSymbols.txt` said in as many words that "a
+        // toolhelp walk that matches szExeFile ... is covered by
+        // NeverByImageNameTests"; it was not, and a false claim of coverage is
+        // worse than no coverage because it stops anyone looking.
+        // [§D](../../plan/D-locking.md) forbids "any WMI OR TOOLHELP query
+        // filtered by executable name" and asks for zero occurrences asserted.
+        //
+        // The needle is the FIELD rather than the walk. `CreateToolhelp32Snapshot`
+        // and `Process32NextW` are how a process's pid and parent are read
+        // without touching a name at all, and `JobProbe` does exactly that --
+        // its PROCESSENTRY32 declares the last member as `ImageNameWeDoNotRead`
+        // precisely so that the name cannot be compared even by accident.
+        // Banning the walk would have made this repository's one legitimate,
+        // deliberately name-blind toolhelp use into the exclusion this file
+        // refuses to create; banning the field bans the only way a walk can
+        // learn a name.
+        ("szExe" + "File", "the PROCESSENTRY32 member that carries an image name -- reading it is the only way a toolhelp walk can match on one"),
     ];
 
     [Test]

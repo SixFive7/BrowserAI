@@ -491,6 +491,84 @@ internal sealed class ArtifactRoutingTests
         await Assert.That(TextOf(second)).Contains("alpha");
     }
 
+    /// <summary>
+    /// An index that could not be written is said out loud, in the same answer
+    /// that names its path.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b><c>ArtifactRouter.TryWrite</c>'s own doc comment is the requirement</b>
+    /// — <i>"a read-only volume or a virus scanner holding the file open must not
+    /// turn a screenshot that was taken into a screenshot that failed — but it
+    /// must not be silent either, so the answer carries what could not be
+    /// written"</i>. Until 2026-08-16 both call sites discarded the answer, so
+    /// the note still ended with <c>index: &lt;path&gt;</c> for a file that was
+    /// stale or absent. Found by the plan's final audit.
+    /// </para>
+    /// <para>
+    /// <b>A directory standing in for the file, rather than a second process
+    /// holding it.</b> <c>File.WriteAllBytes</c> onto a directory is refused by
+    /// Windows every time, with no timing in it, which makes this the arm that
+    /// cannot flake — and what is under test is the <i>answer</i>, not which
+    /// error produced it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnIndexThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_take_screenshot"] = new FakeToolBehaviour { WritesArtifactBytes = 8 });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var index = Path.Combine(rig.Session!, ArtifactRouter.IndexFileName);
+        _ = Directory.CreateDirectory(index);
+
+        var routed = TextOf(await ScreenshotAsync(rig, "login.png"));
+
+        // The screenshot itself still happened, and is still reported at its
+        // real path -- an index that cannot be written must never turn a file
+        // that was taken into one that failed.
+        var artifact = Path.Combine(rig.Session!, SessionLayout.OutputFolderName, "page", "login.png");
+
+        await Assert.That(File.Exists(artifact)).IsTrue();
+        await Assert.That(routed).Contains("BrowserAI routed");
+        await Assert.That(routed).Contains(artifact);
+
+        // And the line that names the index says it is behind, rather than
+        // pointing at a directory and leaving the reader to find out.
+        await Assert.That(routed).Contains(index);
+        await Assert.That(routed).Contains("COULD NOT BE WRITTEN");
+    }
+
+    /// <summary>
+    /// A roll-up that could not be written is said out loud too, in the answer
+    /// that names it.
+    /// </summary>
+    /// <remarks>
+    /// The second of the two discarded call sites. <c>init</c>'s answer ends
+    /// <c>(rolled up in &lt;path&gt;)</c>, which was printed whether or not the
+    /// write happened.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARollUpThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var root = Path.Combine(sessions.Root, "project-blocked");
+        _ = Directory.CreateDirectory(Path.Combine(root, ArtifactRouter.RollUpFileName));
+
+        var opened = TextOf(await InitAsync(rig, Path.Combine(root, "alpha")));
+
+        // The session opened. Only the aggregate beside it is behind.
+        await Assert.That(opened).Contains("Session ready.");
+        await Assert.That(opened).Contains(Path.Combine(root, ArtifactRouter.RollUpFileName));
+        await Assert.That(opened).Contains("COULD NOT BE WRITTEN");
+    }
+
     [Test]
     public async Task AStorageStateWrittenByOneToolIsFoundByTheToolThatReadsIt()
     {

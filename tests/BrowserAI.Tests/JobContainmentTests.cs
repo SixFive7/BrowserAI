@@ -106,24 +106,17 @@ internal sealed class JobContainmentTests
     [Test]
     public async Task TheBundledNodeAndItsDescendantsAreContained()
     {
-        var node = Path.Combine(RepositoryLayout.Root.FullName, "payload", "node", "node.exe");
+        // ⚠️ The gate, not a degraded branch. Until 2026-08-16 a missing payload
+        // took a fallback that asserted the tree was absent as a whole and
+        // reported this test as PASSED -- so a run that never started the
+        // bundled node produced the same four numbers as one that did, which is
+        // the exact defect `SuiteEnvironment` exists to make impossible. It is
+        // now a loud skip, and a failure under BROWSERAI_RELEASE_RUN=1; the
+        // "built but incomplete" case the fallback used to catch is
+        // `CapabilityState.Partial`, which fails in either mode.
+        SuiteEnvironment.RequireRepositoryPayload();
 
-        if (!File.Exists(node))
-        {
-            // A clean clone has no payload/ -- it is a build output -- and
-            // build-order step 1 requires the suite to pass there. What is
-            // asserted instead is that the payload is absent as a WHOLE, which
-            // distinguishes "nobody has run Build-Payload.ps1" from "the
-            // payload was built and node.exe is missing from it". The second
-            // is a real defect and would otherwise read as a clean clone.
-            //
-            // The cost is stated rather than hidden: on a clean clone this test
-            // proves nothing about node, and the containment guarantee for the
-            // bundled runtime rests on the probe arm above plus the measurement
-            // recorded in kb/windows/processes.md.
-            await Assert.That(Directory.Exists(Path.Combine(RepositoryLayout.Root.FullName, "payload"))).IsFalse();
-            return;
-        }
+        var node = RepositoryPayload.Layout.NodeExecutable;
 
         _ = await RunAsync("job-node-tree", node, ["-e", NodeTreeScript, "{ready}"], expectedMinimumProcesses: 3);
     }

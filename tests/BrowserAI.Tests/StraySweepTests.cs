@@ -291,19 +291,18 @@ internal sealed class StraySweepTests
     [Test]
     public async Task TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession()
     {
-        var chromium = BrowserAiPaths.ExpectedChromiumExecutable;
+        // ⚠️ The gate, not a degraded branch. This is R5's ONLY real-browser
+        // arm — the only proof that a real Chromium publishes what attribution
+        // reads — and until 2026-08-16 a machine with no provisioned browser ran
+        // a one-line directory check here and reported this test as PASSED. A
+        // test that reports the same result whether or not it did the thing its
+        // name claims is the founding failure class of this project, inside the
+        // suite that exists to catch it. The "provisioned but the executable is
+        // missing" case the old branch drew is now
+        // `CapabilityState.Partial`, which fails in every run.
+        SuiteEnvironment.RequireProvisionedChromium();
 
-        if (!File.Exists(chromium))
-        {
-            // ⚠️ The cost of this branch, stated rather than hidden: on a machine
-            // where Chromium has never been provisioned this arm proves nothing.
-            // What is asserted instead is that the family is absent as a WHOLE,
-            // which tells "nobody has provisioned it" apart from "it was
-            // provisioned and the executable is missing", and the second is a
-            // real defect that would otherwise read as a clean machine.
-            await Assert.That(Directory.Exists(Path.GetDirectoryName(Path.GetDirectoryName(chromium)!))).IsFalse();
-            return;
-        }
+        var chromium = BrowserAiPaths.ExpectedChromiumExecutable;
 
         using var scratch = ScratchDirectory.Create("sweep-real-browser");
         using var scope = new JobObjectScope();

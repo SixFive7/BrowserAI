@@ -498,11 +498,20 @@ internal sealed class SessionManager : IAsyncDisposable
         TreeDelete.Remove(location.FullPath, failures);
 
         _index.Forget(location);
-        RefreshRollUp(location);
+        var rollUp = RefreshRollUp(location);
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
 
         var summary =
             $"Destroyed the '{record.Mode}' session at '{location.FullPath}' ({Megabytes(size)}). Its purpose was: {record.Purpose}";
+
+        if (!rollUp.RolledUp && Path.GetDirectoryName(location.FullPath) is { Length: > 0 } parent)
+        {
+            // The destroyed session is still listed in the file until this
+            // succeeds, and a roll-up naming a directory that is gone is worse
+            // than one that is merely behind.
+            summary +=
+                $"\n\n⚠️ The roll-up at '{Path.Combine(parent, ArtifactRouter.RollUpFileName)}' could not be rewritten, so it still lists this session. Nothing else depends on it: browserai_list reads BrowserAI's own index.";
+        }
 
         return failures.Count is 0
             ? new ToolOutcome(summary, IsError: false)
@@ -859,8 +868,13 @@ internal sealed class SessionManager : IAsyncDisposable
         }
     }
 
-    private string Describe(LiveSession session, IReadOnlyList<string> notes, IReadOnlyList<RollUpEntry> beneath)
+    private string Describe(
+        LiveSession session,
+        IReadOnlyList<string> notes,
+        (List<RollUpEntry> Beneath, bool RolledUp) rollUp)
     {
+        var beneath = rollUp.Beneath;
+
         var record = session.Lock.Record;
         var text = new StringBuilder();
 
@@ -927,7 +941,11 @@ internal sealed class SessionManager : IAsyncDisposable
                 _ = text.Append(" — ").Append(string.Join(", ", siblings.Take(10).Select(entry => Path.GetFileName(entry.Directory))));
             }
 
-            _ = text.Append(" (rolled up in ").Append(Path.Combine(root, ArtifactRouter.RollUpFileName)).Append(")\n");
+            _ = text.Append(rollUp.RolledUp ? " (rolled up in " : " (⚠️ the roll-up at ")
+                .Append(Path.Combine(root, ArtifactRouter.RollUpFileName))
+                .Append(rollUp.RolledUp
+                    ? ")\n"
+                    : " COULD NOT BE WRITTEN on this call, so it is stale or absent; the count above came from BrowserAI's own index and is current)\n");
         }
 
         return text.ToString();
@@ -1086,7 +1104,16 @@ internal sealed class SessionManager : IAsyncDisposable
     /// sessions it covers, so an agent working in one tree meets that tree's
     /// sessions and nobody else's.
     /// </remarks>
-    private List<RollUpEntry> RefreshRollUp(SessionPath location)
+    /// <param name="location">The session whose root is rolled up.</param>
+    /// <returns>
+    /// Every session under that root, and whether the roll-up file was actually
+    /// rewritten. <b>The second half is not optional</b>: the answer this feeds
+    /// names the file by path, and naming a file that was not written is the
+    /// silent failure this product exists to remove. It read
+    /// <c>ArtifactRouter.WriteRollUp(root, beneath);</c> — discarding the answer
+    /// its own doc comment says the caller must carry — until 2026-08-16.
+    /// </returns>
+    private (List<RollUpEntry> Beneath, bool RolledUp) RefreshRollUp(SessionPath location)
     {
         var root = Path.GetDirectoryName(location.FullPath);
 
@@ -1094,13 +1121,12 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             // Unreachable through SessionPath, which refuses a volume root -- but
             // this method is not the place to prove that.
-            return [];
+            return ([], true);
         }
 
         var beneath = Beneath(root);
-        ArtifactRouter.WriteRollUp(root, beneath);
 
-        return beneath;
+        return (beneath, ArtifactRouter.WriteRollUp(root, beneath));
     }
 
     /// <summary>Every session under a root, newest use first.</summary>

@@ -319,13 +319,17 @@ internal static class SuiteEnvironment
             ? CapabilityState.Present
             : RepositoryPayload.IsAbsentAsAWhole ? CapabilityState.AbsentAsAWhole : CapabilityState.Partial,
 
+        // A revision directory with no executable in it is a half-finished
+        // download or a half-deleted tree, never a clean machine — the same
+        // distinction the publish and the payload already draw, added 2026-08-16
+        // when the two ungated tests moved in here and brought it with them.
         SuiteCapability.ProvisionedChromium => File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)
             ? CapabilityState.Present
-            : CapabilityState.AbsentAsAWhole,
+            : Directory.Exists(BrowserAiPaths.ChromiumDirectory) ? CapabilityState.Partial : CapabilityState.AbsentAsAWhole,
 
         SuiteCapability.ProvisionedFirefox => File.Exists(BrowserAiPaths.FirefoxExecutable)
             ? CapabilityState.Present
-            : CapabilityState.AbsentAsAWhole,
+            : Directory.Exists(BrowserAiPaths.FirefoxDirectory) ? CapabilityState.Partial : CapabilityState.AbsentAsAWhole,
 
         _ => PackagedRelease() is not null ? CapabilityState.Present : CapabilityState.AbsentAsAWhole,
     };

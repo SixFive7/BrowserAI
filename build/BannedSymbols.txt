@@ -23,6 +23,14 @@
 ; which reads the tree as text. The two together are the mechanism; neither on
 ; its own is.
 ;
+; Corrected 2026-08-16: the sentence above was true of three of those four and
+; NOT of the toolhelp one, for as long as it existed. The test's needle list
+; carried taskkill, GetProcessesByName, Win32_Process and Get-Process and
+; nothing for toolhelp, so this file asserted a coverage nobody had written --
+; which is worse than an admitted gap, because it stops the next reader looking.
+; Found by the plan's final audit; the needle is szExeFile, the one member a
+; toolhelp walk can learn a name from.
+;
 ; The product's own additional bans (Console, Debug) live beside it in
 ; src/BrowserAI/BannedSymbols.txt. Both files are named BannedSymbols.txt
 ; because that is the name the analyzer looks for, and it reads every one it is

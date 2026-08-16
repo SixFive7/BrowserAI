@@ -76,6 +76,32 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **A second BrowserAI starting up deleted a running one's working files.** The
+  per-run instance directory holds the generated config and the surface child's
+  browser profile, and the startup sweep reclaimed abandoned ones with
+  `Directory.Delete(path, recursive: true)` on the belief that Windows refuses to
+  delete a directory a live process is sitting in. Windows refuses to remove the
+  *directory* and does not refuse to delete the *files inside it*, so the sweep
+  emptied a live run's directory completely, failed on the empty node that was
+  left, and swallowed the exception — every start, against any instance more than
+  five minutes old, with nothing written anywhere. The liveness check is now a
+  rename, which is refused with the contents untouched and is also an atomic
+  claim between two BrowserAIs sweeping the same root.
+- **An instance directory that would not go now says which file held it.** The
+  same delete went through the framework primitive, which reports one node out of
+  however many survived, inside a catch that discarded even that. It now uses the
+  product's one recursive delete — post-order, per node — and logs every survivor
+  by name at Warning. The next run's sweep still tries again; what changed is
+  that a leftover is attributable.
+- **A `session.json` or a session roll-up that could not be written was
+  silent — while the same answer named its path.** Both writes are best-effort by
+  design, because a virus scanner holding a file open must not turn a screenshot
+  that was taken into a screenshot that failed. Both discarded the answer that
+  said whether it happened, so a caller was handed the path of a file that might
+  be stale or absent. The answer now says so, in the line that names the file,
+  for the artifact index and for the per-root roll-up in `init`, `resume` and
+  `destroy` alike.
+
 - **Two licences that had to travel with the binary were not travelling.**
   `ModelContextProtocol` and `ModelContextProtocol.Core` are Apache-2.0 and
   seventeen `Microsoft.Extensions.*` assemblies are MIT; all nineteen are

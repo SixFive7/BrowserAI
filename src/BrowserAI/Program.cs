@@ -181,7 +181,7 @@ internal static class Program
         // profile and the config generated for every session this run opens.
         // Sessions do not replace it: they are additional, and each has its own
         // directory chosen by the caller.
-        var instance = InstanceDirectory.CreateFresh(paths);
+        var instance = InstanceDirectory.CreateFresh(paths, logger);
 
         try
         {
@@ -310,7 +310,7 @@ internal static class Program
         {
             // The clean path. The killed path is the next run's sweep, because
             // nothing here runs when the process is terminated from outside.
-            InstanceDirectory.Delete(instance);
+            InstanceDirectory.Delete(instance, logger);
         }
     }
 

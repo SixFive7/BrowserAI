@@ -83,7 +83,30 @@ did.
       byte cap and the mode rendering, so nothing goes red. Add the two
       sentences, and assert them.
 
-- [ ] **Two of the four rules under [*"what the build itself must fail on"*](plan/testing.md#what-the-build-itself-must-fail-on)
+- [x] ~~**Two of the four rules under [*"what the build itself must fail on"*](plan/testing.md#what-the-build-itself-must-fail-on)
+      are asserted by nothing.**~~ ✅ **Closed 2026-08-16, and two more with
+      them.** `BuildConfigurationTests` gains
+      `WarningsAreErrorsForEveryProject`, `UnreachableCodeIsPromotedToAnErrorByName`,
+      `AotAndTrimAnalysisIsScopedPerAssemblyAndNeverRepoWide`,
+      `TheSdkFloorRollsForwardAndTheRunnerIsTheOneTUnitNeeds` and
+      `TheApplicationManifestIsLongPathAwareAndNeverAsksForElevation` — the last
+      two because `global.json` and `src/BrowserAI/app.manifest` were outside
+      every scan the suite made, and [§stack](plan/stack.md#the-build-configuration-this-plan-has-never-mentioned)
+      requires four settings between them.
+      <br><br>
+      **Proven by removing all five properties at once**: 12 tests, 5 failed, 7
+      passed, each naming its own property — *"Expected to contain
+      Directory.Build.props"*, *"Expected to be true"* (CS0162), *"Expected to be
+      empty"* (a repo-wide `SuppressTrimAnalysisWarnings`), *"Expected to be
+      equal to \"latestMajor\" but received \"&lt;absent&gt;\""* and *"Expected to be
+      equivalent to [true]"* (longPathAware) — then reverted, 12 of 12 green.
+      `RepositoryLayout` gained `RepositoryWideBuildFiles`, which names
+      `Directory.Build.targets` **although it does not exist**, and `BuildFiles`
+      now also reads the importable fragments under `build/`: a scan that
+      enumerates only what is present cannot fail when the forbidden thing
+      arrives in a new file. The original text follows.
+      <br><br>
+      **Two of the four rules under [*"what the build itself must fail on"*](plan/testing.md#what-the-build-itself-must-fail-on)
       are asserted by nothing.** Both are correct in the tree today and would
       survive their own deletion green: **`TreatWarningsAsErrors` and the
       `CS0162` promotion** (`BuildConfigurationTests.NoBuildFileSuppressesWarnings`
@@ -96,7 +119,27 @@ did.
       list and **was** closed — so the pattern is established and two of four
       were simply missed.
 
-- [ ] **Two tests still degrade to a weaker assertion and report `passed`,
+- [x] ~~**Two tests still degrade to a weaker assertion and report `passed`,
+      outside `SuiteEnvironment`'s gate.**~~ ✅ **Both inside the gate
+      2026-08-16.** `JobContainmentTests.TheBundledNodeAndItsDescendantsAreContained`
+      calls `RequireRepositoryPayload`;
+      `StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`
+      calls `RequireProvisionedChromium`. **Proven by removing each capability
+      and running the test alone** — `payload/` renamed aside: *skipped*
+      (exit 0, `skipped: 1`) and, with `BROWSERAI_RELEASE_RUN=1`, *failed*
+      (exit 2); `chromium-1237` renamed aside: the same two outcomes, each
+      naming the missing path and the command that produces it. Both
+      capabilities were restored and verified afterwards.
+      <br><br>
+      **The distinction the degraded branches drew was kept rather than
+      dropped**: `SuiteEnvironment.StateOf` now answers
+      `CapabilityState.Partial` for a browser revision directory that exists
+      without its executable, which fails in **both** modes — so *"nobody
+      provisioned it"* is still told apart from *"it was provisioned and the
+      binary is missing"*, which is the half that reads as a clean machine. The
+      original text follows.
+      <br><br>
+      **Two tests still degrade to a weaker assertion and report `passed`,
       outside `SuiteEnvironment`'s gate.** `JobContainmentTests.TheBundledNodeAndItsDescendantsAreContained`
       and `StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`
       each fall back to a trivial assertion when the payload or a provisioned
@@ -109,7 +152,45 @@ did.
       [pre-release item 8](plan/pre-release.md)'s *"every layer ran"* still has
       two holes.
 
-- [ ] **`InstanceDirectory` uses the one primitive [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back)
+- [x] ~~**`InstanceDirectory` uses the one primitive [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back)
+      says never to use.**~~ ✅ **Fixed 2026-08-16**, and the measurement taken to
+      prove it found something worse underneath.
+      `src/BrowserAI/Runtime/InstanceDirectory.cs` now goes through `TreeDelete`
+      and **logs every node that survived** at Warning;
+      `InstanceDirectoryTests.ADirectoryWithAFileSomethingHoldsIsEmptiedAroundItAndTheSurvivorIsNamed`
+      holds a file `FileShare.None` in the profile and requires the survivor
+      named in the log. Planting the shipped body back turns it red:
+      *"Expected to not be empty"* at `Assert.That(reported).IsNotEmpty()`.
+      <br><br>
+      **What the measurement contradicted, and it is not a footnote.** The class
+      claimed *"Windows refuses to delete a directory that is some process's
+      current directory, so `Delete` simply fails for a run that is still
+      going"*. Measured twice on .NET 10.0.11 against a live holder:
+      `Directory.Delete(path, recursive: true)` **empties the directory
+      completely** and only then fails on the node — so the startup sweep was
+      deleting a running BrowserAI's generated config, surface-child profile,
+      output and downloads folders, on every start, against any instance older
+      than five minutes, in silence. `Directory.Move` refuses the same directory
+      **with its contents untouched** and succeeds once the holder exits, so the
+      sweep now claims by renaming aside and walks only what it won.
+      `InstanceDirectoryTests.ARunThatIsStillGoingKeepsItsInstanceDirectoryAndEverythingInIt`
+      is red without it: *"Expected to be true"* at
+      `Assert.That(File.Exists(config)).IsTrue()`.
+      <br><br>
+      **A second document lost an argument to the same measurement.**
+      [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back) and
+      `TreeDelete`'s doc comment both said the framework primitive gives *"an
+      exception and no partial progress"*. It does make partial progress, and
+      leaves the same nodes behind that the hand-rolled walk does — the
+      difference is that it names **one** node where the walk named four and
+      two. Both corrected carrying their previous text; the fact is in
+      [kb](kb/windows/processes.md#interop-and-the-toolchain) with
+      [row 86](kb/README.md#re-verification-index). `TreeDelete`'s *"third
+      caller … at §G"* is corrected to `InstanceDirectory`, and the
+      [hazard row](plan/hazards.md) is closed for all three callers with a
+      second row added for the live-run gutting. The original text follows.
+      <br><br>
+      **`InstanceDirectory` uses the one primitive [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back)
       says never to use.** `src/BrowserAI/Runtime/InstanceDirectory.cs` calls
       `Directory.Delete(path, recursive: true)` inside a swallow-all `catch`, on
       a path that runs at **every clean exit** and **every startup sweep**, while
@@ -123,7 +204,29 @@ did.
       comment; the hazard row for the `AllDirectories` abort is currently marked
       closed while a live instance of it is in the tree.
 
-- [ ] **Two guards that are claimed to exist and do not.**
+- [x] ~~**Two guards that are claimed to exist and do not.**~~ ✅ **Both closed
+      2026-08-16.** **The toolhelp half is banned rather than the claim
+      weakened**, because [§D](plan/D-locking.md) asks for zero occurrences
+      asserted: `NeverByImageNameTests`' needle list gains `szExeFile`, the one
+      PROCESSENTRY32 member a toolhelp walk can learn a name from. The **walk**
+      is deliberately not banned — `JobProbe` enumerates pids through toolhelp
+      and declares that member as `ImageNameWeDoNotRead` precisely so it cannot
+      be compared — and banning it would have created the one exclusion
+      `build/BannedSymbols.txt` refuses to have. That file now carries a
+      `Corrected 2026-08-16` note saying the coverage it claimed was absent for
+      as long as the sentence existed.
+      <br><br>
+      **`ArtifactRouter.TryWrite`'s answer now reaches the answer**, at both call
+      sites: a `session.json` that could not be written appends *"COULD NOT BE
+      WRITTEN"* to the note that names its path, and a roll-up that could not be
+      written does the same in `init`/`resume`'s description and in `destroy`'s
+      summary. Proven by planting the two discards back —
+      `ArtifactRoutingTests.AnIndexThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied`
+      and `.ARollUpThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied`,
+      both *"Expected to contain \"COULD NOT BE WRITTEN\""*. The original text
+      follows.
+      <br><br>
+      **Two guards that are claimed to exist and do not.**
       `build/BannedSymbols.txt` states that *"a toolhelp walk that matches
       `szExeFile` … is covered by `NeverByImageNameTests`"*; it is not —
       [§D](plan/D-locking.md) forbids *"any WMI **or toolhelp** query filtered by
@@ -160,7 +263,13 @@ did.
       [`plan/hazards.md`](plan/hazards.md) carries **135 links into the twelve
       files that are consumed**, on 106 lines, across 104 of its 139 rows —
       including its own *Section shorthands* legend, one line that links all nine
-      lettered sections and gives every `§X` token below it its meaning. Whenever
+      lettered sections and gives every `§X` token below it its meaning.
+      ⚠️ **2026-08-16: the file has moved since these were counted** — one row
+      rewritten and one added, both for the tree-delete pair. Re-counted by a
+      different method (table lines carrying six or more cells): **136 links on
+      107 lines across 105 of 135 rows**. That method does not reproduce the
+      audit's 139, so the two counts are not comparable and the audit's figures
+      are left exactly as measured rather than adjusted. Whenever
       the plan does go, that is a rewrite pass over the surviving file, and **no
       step owns it.**
 
