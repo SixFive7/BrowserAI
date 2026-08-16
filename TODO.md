@@ -16,6 +16,31 @@ and version it was true at.
 
 ## At v1 launch
 
+- [ ] **Widen the invisible-source check beyond `*.cs`, or decide not to.**
+      Step 14 was bitten by the template's unanchored `artifacts/` rule matching
+      `src/BrowserAI/Artifacts/` on case-insensitive Windows: five product
+      source files ignored, while `dotnet build`, the suite and
+      `git status --porcelain` all read green.
+      `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` now closes it —
+      **for `.cs` files under `src/` and `tests/`.**
+
+      **Nineteen unanchored directory rules remain** in the upstream half,
+      swept 2026-08-16: `[Dd]ebug/`, `[Rr]elease/`, `[Rr]eleases/`, `[Oo]ut/`,
+      `[Ll]og/`, `[Ll]ogs/`, `[Oo]bj/`, `bld/`, `[Ww][Ii][Nn]32/`, the three
+      `[Aa][Rr][Mm]` forms, `Generated Files/`, `[Tt]est[Rr]esult*/`,
+      `[Dd]ebugPS/`, `[Rr]eleasePS/`, `BenchmarkDotNet.Artifacts/`, `ipch/`,
+      `_ReSharper*/`. A source folder named `Logs\`, `Out\` or `Release\`
+      would be swallowed exactly as `Artifacts\` was — and a folder holding
+      only data would not be caught, because the check keys on `.cs`.
+
+      The honest options are to widen the check to *any* file under `src/` or
+      `tests/` that git ignores and that is not under `obj\` or `bin\` — the
+      query returns nothing today, so it would land green — or to decide the
+      `.cs` scope is enough because a source folder that contains no source is
+      not a source folder. **Decide it rather than leaving it implied**, and do
+      it while the reasoning is still on the page: this rule has now cost the
+      project once, and it was predicted below before it did.
+
 - [ ] **Make the marker entry adjudicate what moved — at the first real bump,
       not before.** [The gate](plan/testing.md#what-the-marker-records) requires
       each `upstream-review.json` entry to gain `snapshots` (per snapshot,
