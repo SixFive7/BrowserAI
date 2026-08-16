@@ -31,16 +31,22 @@ namespace BrowserAI.Runtime;
 /// </remarks>
 internal static class ProvisionedBrowsers
 {
+    /// <summary>The Chromium family, as upstream names it.</summary>
+    public const string Chromium = "chromium";
+
+    /// <summary>The Firefox family, as upstream names it.</summary>
+    public const string Firefox = "firefox";
+
     /// <summary>The two families BrowserAI provisions, as upstream names them.</summary>
-    public static IReadOnlyList<string> Families { get; } = ["chromium", "firefox"];
+    public static IReadOnlyList<string> Families { get; } = [Chromium, Firefox];
 
     /// <summary>Where a family's executable sits inside its revision directory.</summary>
     /// <param name="family">The family, as upstream names it.</param>
     /// <returns>The relative path, or <see langword="null"/> for a family this build does not provision.</returns>
     public static string? ExecutableWithin(string family) => family switch
     {
-        "chromium" => Path.Combine("chrome-win64", "chrome.exe"),
-        "firefox" => Path.Combine("firefox", "firefox.exe"),
+        Chromium => Path.Combine("chrome-win64", "chrome.exe"),
+        Firefox => Path.Combine("firefox", "firefox.exe"),
         _ => null,
     };
 
@@ -66,12 +72,36 @@ internal static class ProvisionedBrowsers
 
         foreach (var family in Families)
         {
-            if (ExecutableWithin(family) is { } within)
-            {
-                executables.Add(Path.Combine(browsersDirectory, manifest.For(family).DirectoryName, within));
-            }
+            executables.AddRange(ExecutablesFor(family, browsersDirectory, manifest));
         }
 
         return executables;
+    }
+
+    /// <summary>
+    /// One family's executables, absolute, whether or not they are installed
+    /// yet.
+    /// </summary>
+    /// <remarks>
+    /// <b>The sweep needs the families apart as well as together.</b> Detection
+    /// is one question over all of them — is a process running a binary we
+    /// provisioned — but attribution is not: Chromium answers <i>which
+    /// profile</i> through a message window's title and Firefox only through its
+    /// profile lock, so the sweep has to know which candidate belongs to which
+    /// mechanism.
+    /// </remarks>
+    /// <param name="family">The family, as upstream names it.</param>
+    /// <param name="browsersDirectory">The provisioned browsers root, absolute.</param>
+    /// <param name="manifest">The resolved payload's manifest.</param>
+    /// <returns>The absolute executable paths, empty for a family this build does not provision.</returns>
+    public static IReadOnlyList<string> ExecutablesFor(string family, string browsersDirectory, BrowsersManifest manifest)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(family);
+        ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
+        ArgumentNullException.ThrowIfNull(manifest);
+
+        return ExecutableWithin(family) is { } within
+            ? [Path.Combine(browsersDirectory, manifest.For(family).DirectoryName, within)]
+            : [];
     }
 }

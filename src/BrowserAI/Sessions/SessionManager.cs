@@ -53,8 +53,29 @@ internal sealed class SessionManager : IAsyncDisposable
     public const long RequiredFreeBytes = 640L * 1024 * 1024;
 
     /// <summary>The only browser family this build can create a session for.</summary>
-    /// <remarks>Firefox is [step 17](../../plan/build-order.md#17-firefox).</remarks>
-    public const string SupportedBrowser = "chromium";
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-16 at [step 17](../../plan/build-order.md#17-firefox)
+    /// (previously "Firefox is step 17").</b> Step 17 built §D's Firefox half —
+    /// the <c>parent.lock</c> preflight, Restart Manager attribution and the
+    /// restart-registration preference on every Firefox launch — and that is all
+    /// §D asks for. <b>Offering Firefox as a choice on <c>init</c> is not §D's
+    /// and is still owed</b>: it needs a per-family download size for
+    /// [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue) (this build
+    /// quotes Chromium's 203.8 MB) and a decision about what
+    /// <c>browserai_reinstall_browser</c> reinstalls when there are two trees,
+    /// neither of which the plan has taken. Carried in
+    /// [TODO.md](../../TODO.md).
+    /// </para>
+    /// <para>
+    /// <b>The rest of the product is family-parameterised regardless.</b>
+    /// Provisioning, the config generator, the launch preflight and the stray
+    /// sweep all take the family from the session's own <c>lock.json</c>, so a
+    /// record that names Firefox is honoured on <c>resume</c> rather than
+    /// silently run as Chromium against a Firefox profile.
+    /// </para>
+    /// </remarks>
+    public const string SupportedBrowser = ProvisionedBrowsers.Chromium;
 
     private readonly ConcurrentDictionary<string, LiveSession> _live = new(StringComparer.Ordinal);
     private readonly SessionEnvironment _environment;
@@ -728,7 +749,10 @@ internal sealed class SessionManager : IAsyncDisposable
 
             acquired = held;
 
-            var config = BrowserConfiguration.ForSession(location, mode, tracing, consoleLevel);
+            // The family comes from the session's own record rather than from a
+            // constant: `resume` reads it out of lock.json, and a profile
+            // belongs to the browser that made it.
+            var config = BrowserConfiguration.ForSession(location, mode, request.Browser, tracing, consoleLevel);
             var configFile = Path.Combine(
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
@@ -786,6 +810,17 @@ internal sealed class SessionManager : IAsyncDisposable
             // walking twice is the shape that made this the slowest call in the
             // suite.
             return new ToolOutcome(Describe(session, notes, RefreshRollUp(location)), IsError: false);
+        }
+        catch (FirefoxProfileLockedException collision)
+        {
+            // Row 11 rather than row 7, because it is not a runtime that failed
+            // to start: nothing was started, deliberately, and the sentence
+            // already names the recovery. Reachable through `resume`, which
+            // reads the family out of lock.json -- `init` cannot record Firefox
+            // in this build (see SupportedBrowser).
+            SessionToolLog.CouldNotOpen(_logger, location.FullPath, collision);
+
+            return new ToolOutcome(collision.Message, IsError: true);
         }
         catch (Exception failure) when (failure is not OperationCanceledException)
         {

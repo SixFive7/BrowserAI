@@ -405,8 +405,79 @@ different path entirely: `parent.lock` sharing violation → Restart Manager
 **File → PID** is `RmStartSession` → `RmRegisterResources` → `RmGetList`, which
 returns `RM_UNIQUE_PROCESS { dwProcessId, ProcessStartTime }`. The start time is
 the PID-reuse guard, re-verified with `GetProcessTimes` before any kill. Mozilla's
-`ProfileUnlockerWin::TryToTerminate` does exactly this and is worth copying line
-for line. `[STABLE]`
+`ProfileUnlockerWin::TryToTerminate` does exactly this. `[STABLE]`
+
+> ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously "…and is worth
+> copying line for line").** **It is not copyable at all.** Mozilla's source is
+> **MPL-2.0** and this repository is `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr`, so
+> taking its text would relicense a file of ours under terms the charter does not
+> carry. The *sequence* is the documented API contract and belongs to nobody;
+> `src/BrowserAI/Interop/RestartManager.cs` was written from that contract and
+> from the observed behaviour, which is the same route
+> [step 9](../../plan/build-order.md#9-lossless-passthrough) took when it built
+> parse-error recovery from the MCP SDK's behaviour rather than from its
+> Apache-2.0 code. The measurement is unchanged; only the instruction was wrong.
+> [§D](../../plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)
+> carried the same sentence and is corrected too.
+
+## The Restart Manager, as the product uses it — 2026-08-16
+
+Measured at build-order [step 17](../../plan/build-order.md#17-firefox) on
+Windows 11 Pro 26200, against `firefox-1539` (Firefox 153.0) launched through
+`@playwright/mcp` 0.0.79. `[FLOATS]`
+
+**It answers exactly what a sharing violation cannot: who.** A session profile
+driven by a live Firefox reports **one** holder — the browser's parent process —
+whose `ProcessStartTime` equals the creation time `GetProcessTimes` reports for
+the same pid, so the pair matches the identity the rest of this product uses with
+no conversion. A second session's profile, whose `parent.lock` exists and is held
+by nobody, reports **zero**. Re-establish with
+`FirefoxTests.AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart`,
+which records its numbers to `.work/firefox-attribution.json`.
+
+**`parent.lock` outlives its holder, confirmed rather than carried over.** After
+the holding process was terminated, the file was still on disk 15 seconds later
+and the Restart Manager reported no holders for it — which is the state an
+existence check would misread as "a browser is running", and the reason the
+preflight reads the live handle instead. Asserted in both directions by the same
+test, so a Windows or Mozilla change that started deleting the file is a red
+build rather than a silently stricter product.
+
+**It costs 638 ms a query, and that is a design constraint rather than a
+detail.** Measured on this machine 2026-08-16 across two real Firefox profiles,
+recorded to `.work/firefox-attribution-negative.json` by
+`FirefoxTests.AnUnheldLockAttributesNobodyAndAForeignFirefoxIsAttributedToNoSession`.
+The query walks every handle on the machine, so the cost scales with what else
+is running — 42 of the developer's own `firefox.exe` were, and a whole sweep
+pass is otherwise ~27 ms. Two consequences, both built:
+
+- **The sweep asks `File.Exists(parent.lock)` first** — 0.56 ms — and only pays
+  the Restart Manager where a Firefox has ever run. Absence proves no Firefox
+  ever opened the profile; presence proves nothing, which is why the expensive
+  question still has to follow it.
+- **Nothing polls it.** Waiting for a lock to be released is a liveness check on
+  the pid, which costs microseconds; a 100 ms poll of this would be ten seconds
+  of machine-wide handle enumeration per wait.
+
+The preflight pays one query per refusal, and only on a refusal: **1,367 ms end
+to end against the three-minute modal it replaces.** `[MACHINE]`
+
+**The layout of `RM_PROCESS_INFO` is a trap worth naming.** `RM_UNIQUE_PROCESS`
+is `{ DWORD; FILETIME }` — 12 bytes, 4-aligned. Declaring the `FILETIME` as a
+64-bit integer aligns the struct to 8 and inserts four bytes of padding after the
+pid, so every field after it is read from the wrong offset and the pid itself
+still looks right. Two `uint`s, recombined by hand. `[STABLE]`
+
+**The developer's own Firefox is the negative control, and it is a live one.**
+On this machine, 2026-08-16: **2** foreign profiles under
+`%APPDATA%\Mozilla\Firefox\Profiles`, **1** of them held, by a process running
+`C:\Program Files\Mozilla Firefox\firefox.exe` — dozens of processes, ~85 hours
+old, with a visible window. The Restart Manager names it perfectly, and it is
+attributed to **none** of our sessions and is **not** a candidate, because the
+detection guard is a full-path match against the binary BrowserAI provisioned.
+That is the sharper half of this test: the process passes the mechanism the
+attribution path is built on and is rejected by the guard, rather than failing
+the first filter and never reaching the second. `[MACHINE]`
 
 > ⚠️ **The detector is blind to fallback-profile instances, and covering them is
 > a trap.** A Chrome that cannot open our profile falls back, and its message

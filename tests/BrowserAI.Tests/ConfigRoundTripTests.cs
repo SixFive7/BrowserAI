@@ -78,24 +78,33 @@ internal sealed class ConfigRoundTripTests
     [Test]
     public async Task TheGeneratorStillWritesEveryKeyASessionDependsOn()
     {
-        var config = BrowserConfiguration.ForSession(
-            SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "generator-shape")),
-            SessionModes.Recorded("persistent"),
-            tracing: true,
-            "debug");
+        // Both families, because they require different keys and each list is
+        // only checked against a config generated for that family. Chromium
+        // needs the channel; Firefox has none and needs the
+        // restart-registration preference, which is the only thing standing
+        // between a Windows update and a resurrected browser.
+        foreach (var browser in ProvisionedBrowsers.Families)
+        {
+            var config = BrowserConfiguration.ForSession(
+                SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "generator-shape")),
+                SessionModes.Recorded("persistent"),
+                browser,
+                tracing: true,
+                "debug");
 
-        var written = config.Opinions
-            .Select(opinion => opinion.Path)
-            .ToHashSet(StringComparer.Ordinal);
+            var written = config.Opinions
+                .Select(opinion => opinion.Path)
+                .ToHashSet(StringComparer.Ordinal);
 
-        // This is the half that turns "delete one key from the generator" red.
-        // The list is written down rather than derived, because a derived list
-        // shrinks in step with the deletion.
-        var dropped = BrowserConfiguration.RequiredSessionOpinions
-            .Where(path => !written.Contains(path))
-            .ToList();
+            // This is the half that turns "delete one key from the generator"
+            // red. The list is written down rather than derived, because a
+            // derived list shrinks in step with the deletion.
+            var dropped = BrowserConfiguration.RequiredSessionOpinions(browser)
+                .Where(path => !written.Contains(path))
+                .ToList();
 
-        await Assert.That(string.Join(", ", dropped)).IsEmpty();
+            await Assert.That(string.Join(", ", dropped)).IsEmpty();
+        }
     }
 
     [Test]
@@ -170,6 +179,7 @@ internal sealed class ConfigRoundTripTests
         BrowserConfiguration.ForSession(
             SessionPath.Resolve(Path.Combine(run.Root, "alpha")),
             SessionModes.Recorded("headless"),
+            SessionManager.SupportedBrowser,
             tracing: false,
             BrowserConfiguration.DefaultConsoleLevel);
 

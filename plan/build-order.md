@@ -2040,6 +2040,117 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 
 **Consumes:** [§D](D-locking.md#firefox-the-preflight-and-a-second-detection-path)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Interop/RestartManager.cs` ·
+> `src/BrowserAI/Runtime/FirefoxProfile.cs` ·
+> `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch,
+> ProvisionedBrowsers}.cs` · `src/BrowserAI/Sessions/{SessionErrors,
+> SessionManager, StraySweep}.cs` · `src/BrowserAI/Program.cs` ·
+> `tests/BrowserAI.TestProbe/{Program, SessionProbe}.cs` (a `hold-file` mode) ·
+> `tests/BrowserAI.Tests/FirefoxTests.cs` ·
+> `tests/BrowserAI.Tests/{ErrorCatalogueTests, ConfigRoundTripTests,
+> BrowserContainmentTests, ReinstallBrowserTests}.cs` ·
+> `tests/BrowserAI.Tests/Harness/{FakeInstaller, JobObjectScope,
+> TopLevelWindows}.cs`. Every done-test below was run. **271 tests green**,
+> `dotnet build` 0 warnings, and the AOT publish clean at **11,917,824 bytes**.
+>
+> ⚠️ **The suite is green but not yet deterministic on this machine, and the
+> subject is not this step.** Across 44 full runs it failed 6 times, always the
+> same way: a run whose whole duration doubled, with several unrelated tests
+> blowing timing budgets at once — including one that renders strings in memory
+> and touches nothing. The A/B was run rather than argued: with this step's
+> Firefox tests **removed from the assembly**, five runs still produced two
+> failures of the same family (`StraySweepTests`' real Chromium exiting before
+> it published a window, and a second copy of the install-count race below). So
+> the flakiness is the suite's and the machine's, it predates this step, and
+> this step made it more visible by adding load. A plausible cause is
+> unverified: the browser profile trees these tests create and delete are
+> exactly what a virus scanner would walk. **Named here rather than left as
+> folklore**, because "271 green" and "271 green every time" are different
+> claims and only the first is true.
+>
+> ⚠️ **§D says Mozilla's `ProfileUnlockerWin::TryToTerminate` is "worth copying
+> line for line". It was not copied.** That file is **MPL-2.0** and this
+> repository is `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr`, so its text cannot come
+> in here at all. What is reproduced is the **sequence** — start a session,
+> register the one file, ask for the list, end the session — which is the
+> documented API contract and belongs to nobody, exactly as
+> [step 9](#9-lossless-passthrough) implemented parse-error recovery from the
+> MCP SDK's observed behaviour rather than from its Apache-2.0 source. Corrected
+> in [§D](D-locking.md#firefox-the-preflight-and-a-second-detection-path) and
+> [kb](../kb/windows/detection.md#process-image-path--the-fully-documented-detection-path).
+>
+> ⚠️ **The charter's restart-registration reasoning generalised from one browser
+> family to both, and the other one does not obey it.**
+> [README → Settled 2026-08-15](../README.md#settled-2026-08-15) recorded *"None
+> shipped. A test instead"*, argued from Playwright's command line overshooting
+> the 1023-character limit. Measured on both sides on 2026-08-16 against the
+> Firefox BrowserAI provisions: an **upstream-default** launch leaves **1 of 7**
+> processes registered, and one from **BrowserAI's own generated config** leaves
+> **0 of 7**. So the pref is the lever, not insurance, and the README row now
+> says Chromium and Firefox separately. Both directions are asserted, so a
+> change in either is a red build.
+>
+> **The preference does not arrive where it looks like it does.**
+> `firefoxUserPrefs` reaches `user.js` only through the **BiDi** launcher's
+> `prepareUserDataDir`; `@playwright/mcp` takes the **classic (juggler)** path,
+> whose `prepareUserDataDir` is the base class's empty one, and the preferences
+> go over the wire as `Browser.enable { userPrefs }`. A driven profile contains
+> **no `user.js` at all** — the first version of this step's test asserted on
+> that file and was red against a product that was working. It asserts the
+> child's own resolved config instead, which is where a renamed key would show.
+> The honest consequence is recorded rather than glossed: this is an
+> *unregistration* shortly after startup rather than a prevention, and the width
+> of that window is `[UNVERIFIED]`.
+>
+> **The negative subject is the developer's own browser, running while the suite
+> ran.** 42 `firefox.exe` out of `C:\Program Files\Mozilla Firefox\`, ~85 hours
+> old, one with a visible window. The Restart Manager names its profile holder
+> perfectly — so it passes the mechanism attribution is built on — and it is
+> still attributed to **none** of our sessions and is **not** a candidate,
+> because detection is a full-path match against the binary BrowserAI
+> provisioned. That is a sharper negative than step 16's stray Chromium, which
+> could only ever fail the path filter.
+>
+> **Attribution is wired into the sweep rather than left as a library.** Firefox
+> publishes no message window, so every Firefox candidate arrives unattributed;
+> the sweep now walks the session index, asks each session's
+> `profile\parent.lock` who holds it, and keeps the answers that are **already**
+> candidates with matching start times. Proven end to end in three phases
+> against one real browser: unknown session → reported and untouched; known
+> session with its lock held → attributed and **spared** (R1); lock released →
+> attributed and terminated.
+>
+> **Two things this step deliberately did not do.** `browserai_init` still
+> refuses `browser: "firefox"` — that is §C's per-`init` browser choice, not
+> §D's, and it needs a per-family download size for
+> [row 6](H-model-surface.md#h4-the-error-catalogue) plus a decision about what
+> `browserai_reinstall_browser` reinstalls when there are two trees. The rest of
+> the product is family-parameterised anyway, so a `lock.json` that records
+> Firefox is now honoured on `resume` instead of being silently run as Chromium
+> against a Firefox profile. Carried in [TODO.md](../TODO.md).
+>
+> ⚠️ **The Restart Manager costs 638 ms a query on this machine, and finding
+> that out is what made the suite deterministic again.** It walks every handle
+> on the machine — 42 of the developer's own `firefox.exe` were open — against
+> ~27 ms for a whole sweep pass. Three tests in unrelated files started failing
+> their ten-second budgets while this step's tests held the kernel busy, which
+> read as flakiness and was a cost nobody had measured. The sweep now asks
+> `File.Exists(parent.lock)` first (0.56 ms) and pays the Restart Manager only
+> where a Firefox has ever run — sound in the one direction that matters, since
+> Firefox never deletes the file — and nothing polls the query. Recorded in
+> [kb](../kb/windows/detection.md#the-restart-manager-as-the-product-uses-it--2026-08-16).
+>
+> **Two pre-existing harness races surfaced under the extra load and were fixed
+> rather than tolerated.** `ReinstallBrowserTests` took its install-count
+> baseline before the rig's own `init` had finished provisioning — and `Ensure`
+> returns *before* the installer runs, which is the whole non-blocking design —
+> so under load the delta was 2; it waits for that install now. And
+> `FakeInstaller` had an `await` between creating a partial browser tree and
+> writing a file into it, so a congested pool could let the extraction cap
+> delete the tree and the continuation **re-create** it — failing the test that
+> asserts the tree was removed, against a product that removed it. Both were
+> one-in-ten flakes, and a flaky test is a red build wearing a disguise.
+
 - **The `parent.lock` preflight is mandatory, not defence in depth.** Open
   `<profile>\parent.lock` for write before launching; on
   `ERROR_SHARING_VIOLATION`, refuse with

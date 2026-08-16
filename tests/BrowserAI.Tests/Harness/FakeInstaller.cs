@@ -143,6 +143,30 @@ internal sealed class FakeInstaller : IInstallerRun
         _stopped.Dispose();
     }
 
+    /// <summary>
+    /// Creates a half-finished browser tree, with a file in it so that a test
+    /// asserting a partial tree was removed is asserting about files rather than
+    /// about an empty folder.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>One synchronous step, in a method of its own, and both halves of
+    /// that are the point.</b> Written inline as <c>await WriteAllTextAsync</c>
+    /// there is a suspension point in the middle of "the tree appears" — and the
+    /// provisioner's watcher is polling for exactly that directory. Under a
+    /// congested thread pool the extraction cap then fires, deletes the tree,
+    /// and the continuation <b>re-creates</b> it, so the test fails against a
+    /// product that did remove it. Observed once in ten full-suite runs on
+    /// 2026-08-16. It lives here rather than inline because the blocking-call
+    /// analyzer is right about async methods in general and wrong about this
+    /// one; a suppression would have turned that off for the whole body.
+    /// </remarks>
+    /// <param name="directory">The browser directory to plant.</param>
+    private static void PlantPartialTree(string directory)
+    {
+        _ = Directory.CreateDirectory(directory);
+        File.WriteAllText(Path.Combine(directory, "chrome.exe"), "not really a browser");
+    }
+
     private static FakeInstaller Scripted(
         string? directory,
         TimeSpan after,
@@ -173,12 +197,7 @@ internal sealed class FakeInstaller : IInstallerRun
 
                 if (createDirectory && directory is not null)
                 {
-                    _ = Directory.CreateDirectory(directory);
-
-                    // Something in it, so a test that asserts a partial tree was
-                    // removed is asserting about files rather than about an empty
-                    // folder.
-                    await File.WriteAllTextAsync(Path.Combine(directory, "chrome.exe"), "not really a browser").ConfigureAwait(false);
+                    PlantPartialTree(directory);
                 }
 
                 if (thenHang)

@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using BrowserAI.Interop;
+using BrowserAI.Runtime;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Sessions;
@@ -53,6 +55,7 @@ namespace BrowserAI.Sessions;
 internal sealed class StraySweep
 {
     private readonly IReadOnlyList<string> _images;
+    private readonly HashSet<string> _profileLockImages;
     private readonly SessionIndex? _index;
     private readonly ILogger _logger;
 
@@ -63,12 +66,24 @@ internal sealed class StraySweep
     /// </param>
     /// <param name="index">The session index to self-clean, or <see langword="null"/> to skip that half.</param>
     /// <param name="logger">Where the pass is recorded. Never <c>stdout</c>.</param>
-    public StraySweep(IReadOnlyList<string> browserImages, SessionIndex? index, ILogger logger)
+    /// <param name="profileLockImages">
+    /// The subset of <paramref name="browserImages"/> whose profile is
+    /// identified through <c>parent.lock</c> rather than through a message
+    /// window — Firefox, from
+    /// <see cref="Runtime.ProvisionedBrowsers.ExecutablesFor"/>. Empty means the
+    /// second path is not attempted, which costs attribution and never safety.
+    /// </param>
+    public StraySweep(
+        IReadOnlyList<string> browserImages,
+        SessionIndex? index,
+        ILogger logger,
+        IReadOnlyCollection<string>? profileLockImages = null)
     {
         ArgumentNullException.ThrowIfNull(browserImages);
         ArgumentNullException.ThrowIfNull(logger);
 
         _images = browserImages;
+        _profileLockImages = new HashSet<string>(profileLockImages ?? [], StringComparer.OrdinalIgnoreCase);
         _index = index;
         _logger = logger;
     }
@@ -279,6 +294,11 @@ internal sealed class StraySweep
             Judge(candidate, title, terminated, spared);
         }
 
+        // The second detection path. Firefox publishes no message window at all,
+        // so every Firefox candidate arrives here unattributed and would
+        // otherwise be reported and left forever.
+        var byProfileLock = AttributeByProfileLock(unattributable, terminated, spared);
+
         if (unattributable.Count is not 0)
         {
             // Reported loudly and never acted on. A browser tree publishes its
@@ -305,9 +325,156 @@ internal sealed class StraySweep
             RejectedTitles = rejected,
             Terminated = terminated,
             Spared = spared,
+            AttributedByProfileLock = byProfileLock,
             Unattributable = [.. unattributable.Select(candidate => (candidate.ProcessId, candidate.ImagePath))],
             Index = _index?.Sweep(),
         };
+    }
+
+    /// <summary>
+    /// Attributes the candidates no window claimed by asking each known session
+    /// directory's Firefox profile lock who holds it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The direction is inverted, and it has to be.</b> Chromium's attribution
+    /// runs process → profile, because the process publishes the path. Nothing a
+    /// Firefox process exposes names its profile, so this runs profile → process:
+    /// for each session BrowserAI knows about, ask the Restart Manager which
+    /// processes hold <c>&lt;session&gt;\profile\parent.lock</c>, and keep the
+    /// answers that are already candidates.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Intersected with the candidate set, never trusted on its own — and
+    /// this is the entire safety boundary of the second path.</b> The Restart
+    /// Manager answers about whatever file it is handed, so pointing it at a
+    /// user's own Firefox profile would name the user's own browser. A holder
+    /// becomes actionable only when it is already one of
+    /// <see cref="BrowserProcesses.ScanFor"/>'s candidates — a full-image-path
+    /// match against a binary BrowserAI provisioned — <b>and</b> its start time
+    /// matches the one recorded when it was found.
+    /// Both guards are the same ones the Chromium path uses; the third — the
+    /// session's own <c>lock.json</c> being takeable — is applied by
+    /// <see cref="ActOn"/> after this.
+    /// </para>
+    /// <para>
+    /// <b>The index is the source of directories, and a null one costs
+    /// attribution rather than safety.</b> Without it there is nothing to ask
+    /// about, so every Firefox candidate stays unattributable and is reported —
+    /// which is the direction this whole subsystem is allowed to be wrong in.
+    /// </para>
+    /// <para>
+    /// <b>It costs nothing on a machine with no Firefox candidate</b>, because
+    /// the candidate filter runs before the index walk. One Restart Manager
+    /// session per known session directory is only ever paid when there is
+    /// something to attribute.
+    /// </para>
+    /// </remarks>
+    /// <param name="unattributable">
+    /// The candidates no window claimed. Any that this attributes are
+    /// <b>removed</b> from it.
+    /// </param>
+    /// <param name="terminated">Where a termination is recorded.</param>
+    /// <param name="spared">Where a refusal to act is recorded.</param>
+    /// <returns>How many candidates this path attributed.</returns>
+    private int AttributeByProfileLock(
+        List<StrayCandidate> unattributable,
+        List<StrayTermination> terminated,
+        List<StraySpared> spared)
+    {
+        if (_index is null || _profileLockImages.Count is 0)
+        {
+            return 0;
+        }
+
+        var pending = unattributable
+            .Where(candidate => _profileLockImages.Contains(candidate.ImagePath))
+            .ToList();
+
+        if (pending.Count is 0)
+        {
+            return 0;
+        }
+
+        var attributed = 0;
+
+        foreach (var entry in _index.Follow())
+        {
+            if (pending.Count is 0)
+            {
+                break;
+            }
+
+            if (entry.Session is not { } location || entry.Record is null)
+            {
+                continue;
+            }
+
+            var profile = Path.Combine(location.FullPath, SessionLayout.ProfileFolderName);
+
+            // ⚠️ The cheap question first, and it is not an optimisation to be
+            // tidied away. Measured 2026-08-16 on this machine: one Restart
+            // Manager query costs **638 ms**, because it walks every handle on
+            // the machine -- against 0.56 ms for a local File.Exists. The sweep
+            // runs at every BrowserAI startup and ~100 of those are a normal
+            // working day, so asking it per session directory unconditionally
+            // would put minutes of machine-wide handle enumeration into a pass
+            // that is otherwise ~27 ms.
+            //
+            // The guard is sound in the one direction that matters. Firefox
+            // NEVER deletes parent.lock, so its absence proves no Firefox has
+            // ever run in this profile and there is nothing to attribute; its
+            // presence proves nothing at all, which is why the expensive
+            // question still has to be asked when it is there.
+            if (!File.Exists(FirefoxProfile.LockFileIn(profile)))
+            {
+                continue;
+            }
+
+            IReadOnlyList<FileHolder> holders;
+
+            try
+            {
+                holders = FirefoxProfile.HoldersOf(profile);
+            }
+            catch (Exception failure) when (failure is Win32Exception or ArgumentException or IOException)
+            {
+                // Attribution failed, which is not the same as "nothing holds
+                // it". Reported and skipped: the candidate stays unattributable
+                // and nothing is terminated on the strength of a question that
+                // did not get an answer.
+                SweepLog.ProfileLockUnreadable(_logger, profile, failure);
+                continue;
+            }
+
+            if (holders.Count is 0)
+            {
+                continue;
+            }
+
+            foreach (var candidate in pending.ToList())
+            {
+                // The pid-reuse guard, and it is the reason RM_UNIQUE_PROCESS
+                // carries a start time at all: a pid that matches and a start
+                // time that does not is a different process wearing a recycled
+                // number.
+                if (!holders.Any(holder =>
+                        holder.ProcessId == candidate.ProcessId
+                        && holder.StartedFileTime == candidate.CreatedFileTime))
+                {
+                    continue;
+                }
+
+                attributed++;
+                _ = pending.Remove(candidate);
+                _ = unattributable.Remove(candidate);
+
+                SweepLog.AttributedByProfileLock(_logger, candidate.ProcessId, location.FullPath);
+                ActOn(candidate, location, profile, terminated, spared);
+            }
+        }
+
+        return attributed;
     }
 
     private void Judge(StrayCandidate candidate, string title, List<StrayTermination> terminated, List<StraySpared> spared)
@@ -330,6 +497,31 @@ internal sealed class StraySweep
             return;
         }
 
+        ActOn(candidate, location, title, terminated, spared);
+    }
+
+    /// <summary>
+    /// The last guard and the kill, shared by both attribution paths.
+    /// </summary>
+    /// <remarks>
+    /// <b>Shared deliberately rather than duplicated per browser family.</b> The
+    /// two paths differ only in how they answer <i>which profile</i>; what makes
+    /// a candidate safe to terminate is the same for both, and a second copy of
+    /// this is a second place for R1's "hold the lock across the whole kill" to
+    /// be got wrong.
+    /// </remarks>
+    /// <param name="candidate">The process, holding the handle that pins its pid.</param>
+    /// <param name="location">The session directory it was attributed to.</param>
+    /// <param name="published">What attribution had to work with, for the record.</param>
+    /// <param name="terminated">Where a termination is recorded.</param>
+    /// <param name="spared">Where a refusal to act is recorded.</param>
+    private void ActOn(
+        StrayCandidate candidate,
+        SessionPath location,
+        string published,
+        List<StrayTermination> terminated,
+        List<StraySpared> spared)
+    {
         SessionDirectoryHold? hold = null;
 
         try
@@ -340,7 +532,7 @@ internal sealed class StraySweep
             // record with a janitor's.
             if (SessionLock.TryHoldUnowned(location, out hold) is { } refusal)
             {
-                spared.Add(new StraySpared(candidate.ProcessId, title, refusal));
+                spared.Add(new StraySpared(candidate.ProcessId, published, refusal));
                 return;
             }
 
@@ -351,7 +543,7 @@ internal sealed class StraySweep
             }
             else
             {
-                spared.Add(new StraySpared(candidate.ProcessId, title, why ?? "it could not be terminated"));
+                spared.Add(new StraySpared(candidate.ProcessId, published, why ?? "it could not be terminated"));
             }
         }
         finally
@@ -477,6 +669,18 @@ internal sealed record StraySweepResult
     /// <summary>Candidates left running, each with the reason.</summary>
     public IReadOnlyList<StraySpared> Spared { get; init; } = [];
 
+    /// <summary>
+    /// How many candidates were attributed through a Firefox profile lock rather
+    /// than through a message window.
+    /// </summary>
+    /// <remarks>
+    /// Reported separately because the two paths fail differently: a zero here
+    /// on a machine with Firefox candidates means the Restart Manager route
+    /// found nothing, which is a different problem from a title that could not
+    /// be read.
+    /// </remarks>
+    public int AttributedByProfileLock { get; init; }
+
     /// <summary>Candidates no window attributed. Reported, never touched.</summary>
     public IReadOnlyList<(int ProcessId, string ImagePath)> Unattributable { get; init; } = [];
 
@@ -487,7 +691,7 @@ internal sealed record StraySweepResult
     public string Summary =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"outcome={Outcome} elapsed={Elapsed.TotalMilliseconds:F1}ms processes={ProcessesEnumerated}/{ProcessesOpened} candidates={Candidates} windows={WindowsWalked} titled={TitledWindows} restarts={WalkRestarts} truncated={WalkTruncated} terminated={Terminated.Count} spared={Spared.Count} unattributable={Unattributable.Count} rejectedTitles={RejectedTitles.Count} indexRemoved={Index?.Removed.Count ?? 0} abandonedGate={GateWasAbandoned}");
+            $"outcome={Outcome} elapsed={Elapsed.TotalMilliseconds:F1}ms processes={ProcessesEnumerated}/{ProcessesOpened} candidates={Candidates} windows={WindowsWalked} titled={TitledWindows} restarts={WalkRestarts} truncated={WalkTruncated} terminated={Terminated.Count} spared={Spared.Count} byProfileLock={AttributedByProfileLock} unattributable={Unattributable.Count} rejectedTitles={RejectedTitles.Count} indexRemoved={Index?.Removed.Count ?? 0} abandonedGate={GateWasAbandoned}");
 }
 
 /// <summary>Source-generated log messages for the stray sweep.</summary>
@@ -546,6 +750,37 @@ internal static partial class SweepLog
     /// <param name="report">The catalogue row.</param>
     [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "{Report}")]
     public static partial void CouldNotAttribute(ILogger logger, string report);
+
+    /// <summary>
+    /// A candidate no window claimed was attributed through a session's Firefox
+    /// profile lock.
+    /// </summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="processId">The candidate.</param>
+    /// <param name="directory">The session directory whose profile it holds.</param>
+    [LoggerMessage(
+        EventId = 8,
+        Level = LogLevel.Information,
+        Message = "Attributed pid={ProcessId} to session={Directory} through its Firefox profile lock; no message window names a Firefox.")]
+    public static partial void AttributedByProfileLock(ILogger logger, int processId, string directory);
+
+    /// <summary>
+    /// A session's profile lock could not be asked about, so nothing was
+    /// attributed to it.
+    /// </summary>
+    /// <remarks>
+    /// Warning rather than Debug, and the sentence says which way the failure
+    /// resolves: a question that got no answer leaves a candidate reported and
+    /// alive, never terminated.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="profile">The profile directory.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 9,
+        Level = LogLevel.Warning,
+        Message = "Could not ask which process holds the profile lock under {Profile}; nothing was attributed to that session and nothing was terminated.")]
+    public static partial void ProfileLockUnreadable(ILogger logger, string profile, Exception failure);
 
     /// <summary>The pass threw, and the thread boundary caught it.</summary>
     [LoggerMessage(

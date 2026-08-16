@@ -477,6 +477,46 @@ internal static class SessionProbe
         return 0;
     }
 
+    /// <summary>
+    /// Holds a file open exactly the way Firefox holds <c>parent.lock</c>, and
+    /// stays alive.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Read <i>and</i> write, and no sharing at all</b> — which is what
+    /// Firefox's profile lock asks for, and the reason a preflight's open is
+    /// refused whatever share mode the preflight itself permits. A stub that
+    /// merely opened for write with <c>FileShare.None</c> would produce the same
+    /// sharing violation by a different route and would stop being evidence the
+    /// moment Firefox changed.
+    /// </para>
+    /// <para>
+    /// <b>A separate process, because that is the whole point.</b> A lock held on
+    /// another thread of the test host would not be refused to the host at all,
+    /// and the Restart Manager would name the host — so the attribution assertion
+    /// would be about the wrong process.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The file to hold. Created if it does not exist.</param>
+    /// <param name="readyPath">Written once the handle is open.</param>
+    /// <returns>Two if the host failed to kill it.</returns>
+    public static int HoldFile(string path, string readyPath)
+    {
+        using var held = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+        Write(readyPath, new JsonObject
+        {
+            ["pid"] = Environment.ProcessId,
+            ["path"] = path,
+            ["startedFileTime"] = Process.GetCurrentProcess().StartTime.ToFileTime(),
+        });
+
+        // Killed from outside. Reaching the end of this wait means the host
+        // failed to do so, and the exit code says which.
+        Thread.Sleep(Patience);
+        return 2;
+    }
+
     private static void WaitForFile(string path)
     {
         var clock = Stopwatch.StartNew();

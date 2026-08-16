@@ -703,7 +703,18 @@ later measurement overruled the original.
       `lock.json` and refuses it as an argument, because a profile is
       browser-specific. Firefox ships in v1.
 
-- [ ] **Firefox registers itself for Windows restart, and [step 17](plan/build-order.md#17-firefox) has to turn that off.**
+- [x] **Firefox registers itself for Windows restart, and [step 17](plan/build-order.md#17-firefox) turned it off.** ✅
+      **Built and measured on both sides 2026-08-16.** The config generator writes
+      `firefoxUserPrefs: { "toolkit.winRegisterApplicationRestart": false }` into every
+      Firefox config, and a live launch from it leaves **0 of 7** processes registered
+      where an upstream-default launch leaves **1 of 7**. The delivery route is not the
+      obvious one: `firefoxUserPrefs` reaches `user.js` only on the **BiDi** launcher's
+      path, and `@playwright/mcp` takes the classic one, which sends them over juggler
+      as `Browser.enable { userPrefs }` — a driven profile has no `user.js` at all. So
+      this is an *unregistration* shortly after startup rather than a prevention, and
+      the width of that window is `[UNVERIFIED]`. Original note follows.
+
+- [x] ~~**Firefox registers itself for Windows restart, and [step 17](plan/build-order.md#17-firefox) has to turn that off.**~~
       Measured 2026-08-16 on a Firefox BrowserAI provisioned: exactly one process
       in the tree answers `GetApplicationRestartSettings` with `S_OK`, while every
       Chromium process answers `ERROR_NOT_FOUND`. That is
@@ -716,6 +727,23 @@ later measurement overruled the original.
       nothing to attribute it to. Both directions are asserted by
       `BrowserContainmentTests`, so a change in either is a red build rather than
       a surprise.
+
+- [ ] **`browserai_init` still refuses `browser: "firefox"`, and two decisions stand between it and not doing so.**
+      Recorded 2026-08-16 at [step 17](plan/build-order.md#17-firefox), which built
+      §D's Firefox half — the preflight, `RmGetList` attribution and the
+      restart-registration preference — and deliberately did not open the choice,
+      because that is [§C](plan/C-sessions.md)'s *per-`init` browser choice* rather
+      than §D's. What is owed:
+      **(a)** [row 6](plan/H-model-surface.md#h4-the-error-catalogue) quotes a
+      download size, and the only one this build knows is Chromium's 203.8 MB —
+      naming it for a Firefox install would be a measured-looking number that was
+      never measured; and
+      **(b)** `browserai_reinstall_browser` takes no arguments *because there is
+      nothing to name*, which stops being true with two trees on disk.
+      Everything else is already family-parameterised: provisioning, the config
+      generator, the launch preflight and the sweep all read the family from the
+      session's own `lock.json`, so a record naming Firefox is honoured on `resume`
+      instead of being silently run as Chromium against a Firefox profile.
 
 - [x] **Firefox's `parent.lock` preflight.** ✅ Encoded 2026-08-15 as
       [§D → Firefox: the preflight, and a second detection path](plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)

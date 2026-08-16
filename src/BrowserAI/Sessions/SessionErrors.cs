@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Sessions;
 
@@ -360,6 +361,69 @@ internal static class SessionErrors
             : "which is no longer running";
 
         return $"'{path}' was locked by PID {processId.ToString(CultureInfo.InvariantCulture)} since {Stamp(since)}, {fate}. Reclaiming it. {Recorded(purpose)}";
+    }
+
+    /// <summary>
+    /// Row 11 — the Firefox profile is open elsewhere, so nothing was launched.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is a refusal that replaces a three-minute silence, and the text
+    /// says so.</b> Firefox answers a profile collision with a native modal on
+    /// the Windows desktop; Playwright's own profile check reads Chromium's lock
+    /// file and never Firefox's, so without this the call would sit against a
+    /// three-minute launch timeout with nothing on stderr and a dialog nobody is
+    /// there to dismiss. Naming that is what stops the refusal reading as
+    /// BrowserAI being unhelpful.
+    /// </para>
+    /// <para>
+    /// <b>Two states, one row, because the recovery is the same.</b> A lock that
+    /// is held and a lock that could not be examined both mean <i>this profile
+    /// is not safe to launch into</i>; the sentence differs in what it can say
+    /// about the cause, and in neither case is the caller at fault.
+    /// </para>
+    /// </remarks>
+    /// <param name="profileDirectory">The profile that is not available.</param>
+    /// <param name="state">What the preflight found.</param>
+    /// <returns>The refusal.</returns>
+    public static string FirefoxProfileLocked(string profileDirectory, FirefoxProfileState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        var cause = state.State is FirefoxProfileLockState.Held
+            ? $"The Firefox profile at '{profileDirectory}' is held open by another process, so no browser was started and nothing was changed. {Who(state)}"
+            : $"The Firefox profile at '{profileDirectory}' could not be checked for a lock ({state.Why}), so no browser was started and nothing was changed. An unreadable lock is not an unlocked one, and BrowserAI will not launch on the difference.";
+
+        return cause
+            + $" BrowserAI checks '{FirefoxProfile.LockFileName}' itself before launching, because nothing downstream does: Playwright's profile check reads Chromium's lock file only, and Firefox answers a collision by putting a dialog on the Windows desktop and blocking the launch for up to three minutes — on a machine with nobody at the keyboard that is a hang with no message anywhere. "
+            + $"Wait for that browser to close and call the same tool again on the same session, or call {SessionToolSurface.Init} on a different directory to run a second one beside it. Note that a '{FirefoxProfile.LockFileName}' left behind by a crashed Firefox is not a lock — Firefox never deletes the file, and this check reads the live handle rather than the file's existence, so a stale one costs nothing.";
+    }
+
+    /// <summary>Row 11's holder clause, when Windows would name one.</summary>
+    /// <remarks>
+    /// <b>The pid is quoted with its start time because a pid alone identifies
+    /// nothing</b>, and the description is quoted as <i>what Windows calls
+    /// it</i>: nothing in BrowserAI matches on it, and a reader who took it for
+    /// a matching rule would be learning the opposite of this project's
+    /// structural rule about image names.
+    /// </remarks>
+    /// <param name="state">What the preflight found.</param>
+    /// <returns>One sentence naming the holders, or saying why it cannot.</returns>
+    private static string Who(FirefoxProfileState state)
+    {
+        if (state.Holders.Count is 0)
+        {
+            return state.Why is { } why
+                ? $"Windows would not say which process holds it ({why}); the lock itself is '{state.LockFile}'."
+                : $"Windows named no holder, which means it let the file go between the refusal and the question; the lock itself is '{state.LockFile}'.";
+        }
+
+        var named = string.Join(
+            ", ",
+            state.Holders.Take(5).Select(holder =>
+                $"PID {holder.ProcessId.ToString(CultureInfo.InvariantCulture)}, running since {Stamp(DateTimeOffset.FromFileTime(holder.StartedFileTime))} (Windows describes it as '{holder.Description}')"));
+
+        return $"Windows names the holder: {named}.";
     }
 
     /// <summary>Row 10 — an argument <c>resume</c> does not accept.</summary>

@@ -5,6 +5,18 @@
 
 Measured 2026-08-15. Harness: `.work/restart-measure/RestartProbe.exe`.
 
+> ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously: the whole of this
+> article's verdict was stated of "Playwright-launched" browsers, and the margin
+> table was the answer to "can a browser we launch be resurrected").** **It holds
+> for Chromium and not for Firefox**, and the difference is not one of degree:
+> Chromium's registration fails because the command line is too long, and Firefox
+> never goes near that limit — its call site is gated on a preference instead. So
+> the length argument covers one family and is silent about the other, and
+> [the measurement below](#the-firefox-half-measured-on-both-sides--2026-08-16)
+> is what fills the gap. The consequence is that BrowserAI does ship a
+> restart-registration lever after all, for Firefox only; see
+> [README → Settled 2026-08-15](../../README.md#settled-2026-08-15).
+
 ## The verdict
 
 **Playwright-launched Chrome does not register for restart, and never has.**
@@ -64,6 +76,45 @@ so `-profile <dir>` survives. Gated on the pref
 `toolkit.winRegisterApplicationRestart`, default `true`, **observed at runtime** —
 setting it false calls `UnregisterApplicationRestart()`. This is the only place
 resurrection can be prevented outright rather than cleaned up after. `[FLOATS]`
+
+## The Firefox half, measured on both sides — 2026-08-16
+
+**A Playwright-launched Firefox registers, and the preference turns it off.**
+Both arms measured the same day on the same machine, against the Firefox
+BrowserAI provisions (`firefox-1539`, Firefox 153.0), by asking
+`GetApplicationRestartSettings` of the **live processes** after a real
+`browser_navigate` completed. `[FLOATS]`
+
+| Launch | Processes from our browsers root | Registered |
+|---|---:|---:|
+| Upstream defaults, no preference set | 7 | **1** (`S_OK`) |
+| BrowserAI's generated config | 7 | **0** (all `ERROR_NOT_FOUND`) |
+
+Re-establish with `BrowserContainmentTests.AFirefoxTreeIsContainedAndItsProfileDeletesCleanly`
+— the control, which launches from a hand-written config with no preference —
+and `FirefoxTests.AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart`,
+which launches from the product's generator. **Both are assertions**, so a
+change in either direction is a red build.
+
+**The preference does not arrive the way it looks like it does, and this is the
+trap.** `firefoxUserPrefs` is written into the profile's `user.js` only on the
+**BiDi** launcher's path — `BidiFirefox.prepareUserDataDir` → `createProfile` →
+`writePreferences`, read in `coreBundle.js` 2026-08-16. `@playwright/mcp` takes
+the **classic (juggler)** path, whose `prepareUserDataDir` is the base class's
+empty one; there the preferences are delivered over the wire in
+`FFBrowser.connect` as `Browser.enable { userPrefs }`. Measured: a driven
+profile contains **no `user.js` at all**, and `browser_get_config` echoes
+`browser.launchOptions.firefoxUserPrefs` intact. A test asserting the file would
+be green-when-broken on the day the delivery moved, and was red-when-working on
+the day it was written. `[FLOATS]`
+
+> **The consequence, stated rather than glossed: this is an unregistration, not
+> a prevention.** The preference reaches Firefox after its own startup has run,
+> so a Firefox launched through Playwright is registered for a moment and then
+> unregisters itself. **The width of that window is `[UNVERIFIED]`** — it was not
+> measured, and measuring it means sampling `GetApplicationRestartSettings` from
+> the instant the process appears. What is measured is the steady state, which
+> is what a reboot or an update hours later would find.
 
 **`--browser-test` does suppress registration.** Measured with two launches
 differing only by the switch: 206 chars → registered; 221 chars → not. At 221 it

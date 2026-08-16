@@ -45,6 +45,20 @@ internal sealed class ReinstallBrowserTests
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
+        // ⚠️ Before anything else, and the ORDER of these three lines is the
+        // whole fix. The rig opens a default session, and that init legitimately
+        // starts an install against a root this test left empty -- but `Ensure`
+        // RETURNS BEFORE the installer runs, which is the whole non-blocking
+        // design, so the count below has to be taken after that install has
+        // finished. Waiting is not enough on its own: `WaitAsync` begins with an
+        // `Ensure`, which short-circuits on a complete tree, so waiting AFTER
+        // planting the marker below returns immediately without joining the
+        // install still in flight -- and it then lands between the baseline and
+        // the assertion, making the delta 2. Observed twice on 2026-08-16 under
+        // a loaded machine, the second time against a version of this comment
+        // that had the wait in the wrong place.
+        _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
+
         // A complete tree with a file in it that must not survive, so "the
         // directory exists afterwards" cannot pass for "it was replaced".
         var stale = Path.Combine(sessions.ChromiumDirectory, "stale-from-the-old-install.bin");
@@ -52,8 +66,6 @@ internal sealed class ReinstallBrowserTests
         await File.WriteAllTextAsync(stale, new string('x', 4096));
         InstallationMarker.Write(sessions.ChromiumDirectory);
 
-        // Counted from here: the rig opens a default session, and that init
-        // legitimately starts an install against a root this test left empty.
         var before = Volatile.Read(ref installs);
         var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, []);
         var text = TextOf(answer);
@@ -128,6 +140,15 @@ internal sealed class ReinstallBrowserTests
             timers: new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20) });
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // ⚠️ Before the marker is written, for the reason spelled out in
+        // `ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning`: the rig's
+        // own `init` starts an install and `Ensure` returns before the installer
+        // runs, so the count below has to be taken after it has finished — and
+        // `WaitAsync` short-circuits on a complete tree, so waiting after
+        // planting the marker would join nothing and the in-flight install would
+        // land inside the window this test measures. Observed 2026-08-16.
+        _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
 
         InstallationMarker.Write(sessions.ChromiumDirectory);
 

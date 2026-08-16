@@ -52,6 +52,19 @@ internal static partial class TopLevelWindows
         }
     }
 
+    /// <summary>Which process owns a window.</summary>
+    /// <remarks>
+    /// Here so that "no dialog appeared" can be asserted about <b>a browser's</b>
+    /// windows rather than about the desktop's. A live machine opens and closes
+    /// top-level windows constantly, so a bare before-and-after count is a flaky
+    /// assertion dressed as a strict one; the owning process is what makes it
+    /// specific.
+    /// </remarks>
+    /// <param name="window">The window handle.</param>
+    /// <returns>The owning pid, or zero if it could not be read.</returns>
+    public static int ProcessIdOf(nint window) =>
+        GetWindowThreadProcessId(window, out var processId) is 0 ? 0 : (int)processId;
+
     /// <summary>A window's class name.</summary>
     /// <param name="window">The window handle.</param>
     /// <returns>The class name, or an empty string if it could not be read.</returns>
@@ -82,4 +95,8 @@ internal static partial class TopLevelWindows
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("user32.dll", SetLastError = true)]
     private static unsafe partial int GetClassNameW(nint window, char* className, int maxCount);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("user32.dll", SetLastError = true)]
+    private static partial uint GetWindowThreadProcessId(nint window, out uint processId);
 }

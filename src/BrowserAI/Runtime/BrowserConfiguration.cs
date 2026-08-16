@@ -46,14 +46,22 @@ namespace BrowserAI.Runtime;
 /// </remarks>
 internal static class BrowserConfiguration
 {
-    /// <summary>The browser family. Never left to the default, which is Chrome.</summary>
-    public const string BrowserName = "chromium";
+    /// <summary>The default browser family. Never left to upstream's default, which is Chrome.</summary>
+    public const string BrowserName = ProvisionedBrowsers.Chromium;
 
     /// <summary>
     /// The chromium-alias channel, spelled as upstream's <c>chromiumAliases</c>
     /// spells it. Never <c>chrome</c>, which is the user's Google Chrome, and
     /// never absent, which selects the headless shell.
     /// </summary>
+    /// <remarks>
+    /// <b>Chromium only, and writing it for another family would be worse than
+    /// useless.</b> <c>channel</c> is a Chromium concept — <c>chromiumAliases</c>
+    /// has no Firefox member — and upstream's own <c>validateBrowserConfig</c>
+    /// drops the key for a non-chromium <c>browserName</c>, so a channel written
+    /// beside <c>firefox</c> would be an opinion that never arrives and a round
+    /// trip that can never pass.
+    /// </remarks>
     public const string Channel = "chrome-for-testing";
 
     /// <summary>The console level upstream defaults to, which silently drops <c>debug</c>.</summary>
@@ -94,17 +102,39 @@ internal static class BrowserConfiguration
     /// it was asked for.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Named rather than derived, and that is the point: derived from the
     /// generator, this list would shrink in step with a deleted key and the round
     /// trip would stay green while the opinion vanished. Written down, deleting a
     /// key turns the suite red — planted and reverted 2026-08-16, and the failure
     /// names the key.
+    /// </para>
+    /// <para>
+    /// <b>Per family, because the two families require different keys and a
+    /// union would assert a key that cannot exist.</b> Chromium requires the
+    /// channel; Firefox has none and requires the restart-registration
+    /// preference instead, which is the only thing standing between a Windows
+    /// update and a resurrected browser no session claims.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The Firefox row's dotted path is ambiguous on purpose, and a reader
+    /// following it key by key will not find it.</b> The preference's <i>name</i>
+    /// contains dots, so <c>browser.launchOptions.firefoxUserPrefs.toolkit.
+    /// winRegisterApplicationRestart</c> is four keys and a two-part leaf rather
+    /// than six keys. That is what the flattener produces and what a
+    /// set-membership check compares against; anything that <i>walks</i> a
+    /// generated config by splitting on dots has to special-case it.
+    /// </para>
     /// </remarks>
-    public static IReadOnlyList<string> RequiredSessionOpinions { get; } =
+    /// <param name="browser">The family, as upstream names it.</param>
+    /// <returns>The keys that family's config must carry.</returns>
+    public static IReadOnlyList<string> RequiredSessionOpinions(string browser) =>
     [
         "browser.browserName",
         "browser.userDataDir",
-        "browser.launchOptions.channel",
+        .. IsFirefox(browser)
+            ? new[] { $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RestartRegistrationPreference}" }
+            : ["browser.launchOptions.channel"],
         "browser.launchOptions.headless",
         "browser.launchOptions.downloadsPath",
         "capabilities",
@@ -116,6 +146,13 @@ internal static class BrowserConfiguration
     /// <summary>The config one session's child is started with.</summary>
     /// <param name="session">The session directory, which is where every path below lives.</param>
     /// <param name="mode">The mode bound at <c>init</c>.</param>
+    /// <param name="browser">
+    /// The family this session was created for, read from its own
+    /// <c>lock.json</c> rather than assumed. A profile belongs to the browser
+    /// that made it, so generating a Chromium config for a session recorded as
+    /// Firefox would point one browser at the other's profile — which upstream
+    /// would launch, and which nothing would report.
+    /// </param>
     /// <param name="tracing">Whether upstream records this session to the output directory.</param>
     /// <param name="consoleLevel">Which console messages the child returns.</param>
     /// <returns>The bytes to write, and every opinion they carry.</returns>
@@ -133,14 +170,17 @@ internal static class BrowserConfiguration
     public static GeneratedConfig ForSession(
         SessionPath session,
         SessionModeDefinition mode,
+        string browser,
         bool tracing,
         string consoleLevel)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(mode);
+        ArgumentException.ThrowIfNullOrWhiteSpace(browser);
 
         return Generate(new BrowserConfigurationRequest
         {
+            Browser = browser,
             Headless = !mode.Headed,
             UserDataDirectory = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName),
             OutputDirectory = Path.Combine(session.FullPath, SessionLayout.OutputFolderName),
@@ -233,11 +273,29 @@ internal static class BrowserConfiguration
             writer.WriteStartObject();
 
             writer.WriteStartObject("browser");
-            writer.WriteString("browserName", BrowserName);
+            writer.WriteString("browserName", request.Browser);
             writer.WriteString("userDataDir", request.UserDataDirectory);
 
             writer.WriteStartObject("launchOptions");
-            writer.WriteString("channel", Channel);
+
+            if (IsFirefox(request.Browser))
+            {
+                // ⚠️ The one lever that prevents browser resurrection rather
+                // than cleaning up after it, and it is written on EVERY Firefox
+                // launch. Upstream writes these into the profile's `user.js`
+                // before the browser starts, so the preference is in force at
+                // the moment `nsAppRunner` decides whether to register -- which
+                // is why a pref delivered this way works where a runtime one
+                // would be too late.
+                writer.WriteStartObject("firefoxUserPrefs");
+                writer.WriteBoolean(FirefoxProfile.RestartRegistrationPreference, false);
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteString("channel", Channel);
+            }
+
             writer.WriteBoolean("headless", request.Headless);
             writer.WriteString("downloadsPath", request.DownloadsDirectory);
             writer.WriteEndObject();
@@ -270,6 +328,8 @@ internal static class BrowserConfiguration
 
         return new GeneratedConfig
         {
+            Browser = request.Browser,
+            ProfileDirectory = request.UserDataDirectory,
             Json = json,
             Opinions = Flatten(json),
             Directories =
@@ -280,6 +340,12 @@ internal static class BrowserConfiguration
             ],
         };
     }
+
+    /// <summary>Whether a family name is Firefox's.</summary>
+    /// <param name="browser">The family, as upstream names it.</param>
+    /// <returns>Whether this is the Firefox family.</returns>
+    public static bool IsFirefox(string browser) =>
+        string.Equals(browser, ProvisionedBrowsers.Firefox, StringComparison.OrdinalIgnoreCase);
 
     private static void Absolute(string path, string name)
     {
@@ -331,6 +397,17 @@ internal static class BrowserConfiguration
 /// <summary>What one child's config is for.</summary>
 internal sealed record BrowserConfigurationRequest
 {
+    /// <summary>
+    /// The browser family, as upstream names it.
+    /// </summary>
+    /// <remarks>
+    /// Defaulted rather than required: every caller in this build asks for
+    /// Chromium, and a required property would make the Firefox branch look like
+    /// a decision each call site takes rather than a property of the session's
+    /// own record.
+    /// </remarks>
+    public string Browser { get; init; } = BrowserConfiguration.BrowserName;
+
     /// <summary>Whether the browser runs without a window.</summary>
     /// <remarks>
     /// Written explicitly rather than omitted. Upstream fills an absent
@@ -362,6 +439,23 @@ internal sealed record BrowserConfigurationRequest
 /// <summary>A generated config: the bytes, and every opinion in them.</summary>
 internal sealed record GeneratedConfig
 {
+    /// <summary>The browser family this config selects.</summary>
+    /// <remarks>
+    /// Carried on the config rather than re-derived by parsing the bytes back,
+    /// so the one function every child launch passes through can ask which
+    /// family it is about to start without a JSON read.
+    /// </remarks>
+    public required string Browser { get; init; }
+
+    /// <summary>The profile directory this config points the browser at.</summary>
+    /// <remarks>
+    /// The same string as the first entry of <see cref="Directories"/>, named
+    /// rather than indexed: the preflight has to open a file inside it, and a
+    /// guard that depends on the order of a list is one reordering away from
+    /// examining the downloads folder instead.
+    /// </remarks>
+    public required string ProfileDirectory { get; init; }
+
     /// <summary>The file's bytes, UTF-8, no BOM.</summary>
     public required byte[] Json { get; init; }
 

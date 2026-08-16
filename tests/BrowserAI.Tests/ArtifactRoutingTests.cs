@@ -144,6 +144,7 @@ internal sealed class ArtifactRoutingTests
         var config = BrowserAI.Runtime.BrowserConfiguration.ForSession(
             SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "eviction-check")),
             SessionModes.Recorded("headless"),
+            SessionManager.SupportedBrowser,
             tracing: false,
             BrowserAI.Runtime.BrowserConfiguration.DefaultConsoleLevel);
 

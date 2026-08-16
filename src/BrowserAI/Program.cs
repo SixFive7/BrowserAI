@@ -182,7 +182,13 @@ internal static class Program
         return new StraySweep(
             ProvisionedBrowsers.Executables(paths.BrowsersDirectory, manifest),
             new SessionIndex(paths, logger),
-            logger);
+            logger,
+
+            // Firefox publishes no message window, so its candidates can only be
+            // attributed through a session's own profile lock. Named as a subset
+            // of the images above rather than as a second detection rule: what
+            // counts as ours is still one full-image-path match.
+            ProvisionedBrowsers.ExecutablesFor(ProvisionedBrowsers.Firefox, paths.BrowsersDirectory, manifest));
     }
 
     /// <summary>Runs one sweep and exits, for the logon task.</summary>

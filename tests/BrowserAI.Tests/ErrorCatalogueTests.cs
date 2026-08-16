@@ -559,6 +559,77 @@ internal sealed class ErrorCatalogueTests
     }
 
     /// <summary>
+    /// Row 11, both of its states, provoked by a real Firefox profile lock.
+    /// </summary>
+    /// <remarks>
+    /// <b>No browser is started and none is needed.</b> What Firefox does to
+    /// <c>parent.lock</c> is hold it read-write with no sharing, and a process
+    /// doing exactly that produces the identical condition — while a real
+    /// Firefox meeting the collision would put a modal on the desktop of the
+    /// machine running the suite, which is the thing this row exists to prevent.
+    /// </remarks>
+    [Test]
+    public async Task TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen()
+    {
+        using var scratch = ScratchDirectory.Create("catalogue-firefox-lock");
+        using var scope = new JobObjectScope();
+
+        var session = SessionPath.Resolve(Path.Combine(scratch.Path, "firefox"));
+        SessionLayout.Create(session);
+
+        var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
+        _ = Directory.CreateDirectory(profile);
+
+        var config = BrowserConfiguration.ForSession(
+            session,
+            SessionModes.Recorded("headless"),
+            ProvisionedBrowsers.Firefox,
+            tracing: false,
+            BrowserConfiguration.DefaultConsoleLevel);
+
+        var ready = Path.Combine(scratch.Path, "holder.json");
+        var holder = scope.Launch(
+            PlantedProbe.ExecutablePath,
+            scratch.Path,
+            "hold-file",
+            FirefoxProfile.LockFileIn(profile),
+            ready);
+
+        var holderCreated = ProcessIdentity.CreationTimeOf(holder.Id);
+        _ = await ProbeReport.ReadAsync(ready, TimeSpan.FromSeconds(60));
+
+        var held = FirefoxProfileLockedException.For(config);
+
+        await Assert.That(held).IsNotNull();
+        Match(
+            held!.Message,
+            nameof(SessionErrors.FirefoxProfileLocked),
+            SessionErrors.FirefoxProfileLocked(profile, FirefoxProfile.Inspect(profile)));
+
+        // The other state the row covers: a lock that cannot be examined at all.
+        // Not the same as free, and refused for the same reason -- three minutes
+        // of silence is the cost of being wrong here.
+        ProcessIdentity.Terminate(holder.Id, holderCreated);
+
+        var unreadable = SessionPath.Resolve(Path.Combine(scratch.Path, "unreadable"));
+        SessionLayout.Create(unreadable);
+
+        var blocked = Path.Combine(unreadable.FullPath, SessionLayout.ProfileFolderName);
+        _ = Directory.CreateDirectory(FirefoxProfile.LockFileIn(blocked));
+
+        var opaque = FirefoxProfileLockedException.For(BrowserConfiguration.ForSession(
+            unreadable,
+            SessionModes.Recorded("headless"),
+            ProvisionedBrowsers.Firefox,
+            tracing: false,
+            BrowserConfiguration.DefaultConsoleLevel));
+
+        await Assert.That(opaque).IsNotNull();
+        await Assert.That(opaque!.Message).Contains("could not be checked for a lock");
+        await Assert.That(opaque.Message).Contains("An unreadable lock is not an unlocked one");
+    }
+
+    /// <summary>
     /// Runs a pass, asking again while some other process on the machine happens
     /// to be sweeping — a skipped sweep is not a missed one.
     /// </summary>
@@ -592,6 +663,7 @@ internal sealed class ErrorCatalogueTests
     [DependsOn(nameof(TheBrowserRuntimeFailureRowIsEmittedByAChildThatCannotStart))]
     [DependsOn(nameof(TheFilenameRowsAreEmittedByRealCallsThatNameAFileOutsideTheSession))]
     [DependsOn(nameof(APurposeIsCappedStrippedAndFramedAsRecordedData))]
+    [DependsOn(nameof(TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen))]
     public async Task EveryRowInTheCatalogueWasTriggeredBySomethingAbove()
     {
         // The census, and the reason the catalogue is a type rather than a set of
@@ -614,8 +686,10 @@ internal sealed class ErrorCatalogueTests
         await Assert.That(string.Join(Environment.NewLine, untriggered)).IsEmpty();
 
         // And the count, so a row deleted rather than triggered does not make
-        // this pass by shrinking the question.
-        await Assert.That(rows.Count).IsEqualTo(23);
+        // this pass by shrinking the question. 24 since build-order step 17,
+        // which added §H.4's row 11 — the Firefox profile dialog, the last row
+        // of the catalogue that had been written down and never built.
+        await Assert.That(rows.Count).IsEqualTo(24);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

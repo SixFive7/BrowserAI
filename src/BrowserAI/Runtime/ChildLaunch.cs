@@ -102,6 +102,20 @@ internal static class ChildLaunch
         }
 
         payload.Verify();
+
+        // ⚠️ Before the config is written and long before anything is spawned.
+        // A Firefox that meets a held profile does not fail -- it puts a modal
+        // dialog on the Windows desktop and blocks against Playwright's
+        // three-minute launch timeout, with nothing on stderr and nothing in the
+        // protocol. Refusing here is the difference between an answer and an
+        // invisible hang, and it is HERE rather than in the session layer because
+        // this function is the one route to a child: a later step that adds a
+        // second caller inherits the guard instead of having to remember it.
+        if (FirefoxProfileLockedException.For(config) is { } collision)
+        {
+            throw collision;
+        }
+
         BrowserConfiguration.WriteTo(configFile, config);
 
         return new ChildProcessOptions

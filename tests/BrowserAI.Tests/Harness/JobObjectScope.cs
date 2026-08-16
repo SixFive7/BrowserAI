@@ -51,6 +51,18 @@ internal sealed class JobObjectScope : IDisposable
         return process;
     }
 
+    /// <summary>
+    /// Every process the kernel currently reports in this scope's job.
+    /// </summary>
+    /// <remarks>
+    /// The kernel's own membership list rather than a tally the harness keeps,
+    /// which is what makes "nothing was started" an assertion about the machine
+    /// instead of about the test's bookkeeping — and it is unaffected by
+    /// whatever else on the machine is starting at the same moment.
+    /// </remarks>
+    /// <returns>The pids.</returns>
+    public IReadOnlyList<int> ProcessIds() => _job.ProcessIds();
+
     /// <inheritdoc />
     public void Dispose()
     {

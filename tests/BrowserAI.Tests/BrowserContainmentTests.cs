@@ -69,7 +69,16 @@ internal sealed class BrowserContainmentTests
     public async Task AChromiumTreeIsContainedAndItsProfileDeletesCleanly() =>
         await RunAsync("chromium", BrowserAiPaths.ExpectedChromiumExecutable);
 
+    /// <remarks>
+    /// <b>Serialised with the other tests that start a real Firefox</b> — under the sweep group, which is the one constraint key a test may carry — added
+    /// at [step 17](../../plan/build-order.md#17-firefox): that step's preflight
+    /// test asserts that <i>no</i> Firefox process appeared while it ran, and a
+    /// second test launching one in parallel makes that reading of the machine
+    /// wrong for the harness's reasons rather than the product's.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
+    [NotInParallel("stray-sweep")]
     public async Task AFirefoxTreeIsContainedAndItsProfileDeletesCleanly() =>
         await RunAsync("firefox", BrowserAiPaths.FirefoxExecutable);
 
