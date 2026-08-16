@@ -185,7 +185,37 @@ internal sealed class LosslessPassthroughTests
             $$"""{"content":[{"type":"text","text":{{JsonSerializer.Serialize(text)}}}]}""");
 
         await Assert.That(caller.Length).IsGreaterThanOrEqualTo(Size);
-        await Assert.That(caller).IsEquivalentTo(child);
+
+        // Compared as spans rather than with IsEquivalentTo, which walks a
+        // collection element by element: at 2 MiB that assertion alone took
+        // 139 s and dominated the whole suite (measured 2026-08-16). The
+        // offset is the assertion's subject so a mismatch still names where,
+        // which is the only thing the slow version bought.
+        await Assert.That(FirstDifference(child, caller)).IsEqualTo(-1);
+    }
+
+    /// <summary>
+    /// The index of the first differing byte, or <c>-1</c> when the two are
+    /// identical. Length mismatches report at the end of the shorter span.
+    /// </summary>
+    private static int FirstDifference(ReadOnlySpan<byte> expected, ReadOnlySpan<byte> actual)
+    {
+        if (expected.SequenceEqual(actual))
+        {
+            return -1;
+        }
+
+        var shared = Math.Min(expected.Length, actual.Length);
+
+        for (var i = 0; i < shared; i++)
+        {
+            if (expected[i] != actual[i])
+            {
+                return i;
+            }
+        }
+
+        return shared;
     }
 
     [Test]
