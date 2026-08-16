@@ -61,10 +61,18 @@ internal sealed class SandboxFlagTests
 
         await Assert.That(string.Join(", ", offenders)).IsEmpty();
 
-        // And the flag really was on the command line rather than absent from
-        // both sides, which would also produce an empty list above if upstream
-        // ever stopped adding --no-sandbox by default.
-        await Assert.That(ChildLaunch.SandboxFlag).IsEqualTo("--sandbox");
+        // The assertion above is a negative and would also pass if upstream
+        // simply stopped adding --no-sandbox, so the positive half is asserted
+        // too: our flag really is on the child's command line, read back from
+        // the running node process rather than from the argument list we built.
+        var child = run.Processes.SingleOrDefault(process =>
+            process.ImagePath?.EndsWith(@"payload\node\node.exe", StringComparison.OrdinalIgnoreCase) is true)
+            ?? throw new InvalidOperationException("No node child in the job to read a command line from.");
+
+        await Assert.That(child.CommandLine).Contains(ChildLaunch.SandboxFlag);
+
+        // And it is there instead of in the config, not as well as: the key
+        // reads fine, is discarded, and would make this look configured.
         await Assert.That(BrowserAiConfigOmitsTheSandboxKey()).IsTrue();
     }
 
