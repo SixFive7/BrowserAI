@@ -68,6 +68,18 @@ internal sealed record FakeToolBehaviour
     /// mid-call looks like from the outside.
     /// </summary>
     public bool DieWithoutAnswering { get; init; }
+
+    /// <summary>
+    /// Writes this many bytes to the absolute path the call's <c>filename</c>
+    /// argument names, the way upstream writes an artifact.
+    /// </summary>
+    /// <remarks>
+    /// <b>The file has to actually appear for the routing assertions to be worth
+    /// anything.</b> "The result carries the absolute path" is satisfied by a
+    /// proxy that invented one; "the file is at the absolute path the result
+    /// carries" is not, and it is the claim §F needs.
+    /// </remarks>
+    public int? WritesArtifactBytes { get; init; }
 }
 
 /// <summary>
@@ -420,6 +432,14 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
                     $$$"""{"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":{{{token}}},"progress":{{{step.ToString(CultureInfo.InvariantCulture)}}},"total":{{{behaviour.ProgressUpdates.ToString(CultureInfo.InvariantCulture)}}}}}""",
                     _stopping.Token);
             }
+        }
+
+        if (behaviour.WritesArtifactBytes is { } size
+            && request?["params"]?["arguments"]?["filename"]?.GetValue<string>() is { } artifact)
+        {
+            // The path arrives absolute because BrowserAI made it so. Written
+            // before the answer, which is the order upstream writes in.
+            await File.WriteAllBytesAsync(artifact, new byte[size], _stopping.Token);
         }
 
         var frame = behaviour.ErrorCode is { } code

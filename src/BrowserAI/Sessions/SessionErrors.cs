@@ -293,6 +293,63 @@ internal static class SessionErrors
         + $"Pass acknowledgeCopy=true to take this copy over and rewrite the record, or call {SessionToolSurface.Resume} on '{recordedPath}' instead.";
 
     /// <summary>
+    /// Row 16 — a <c>filename</c> that names somewhere outside the session
+    /// entirely.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The two path rules read as contradictory and are not.</b> <c>init</c>'s
+    /// directory arguments are deliberately unconstrained, because the caller is
+    /// declaring where its data lives. A per-call <c>filename</c> names a file
+    /// <i>inside</i> a workspace already declared, so normalising it into that
+    /// workspace honours the choice already made rather than overriding it.
+    /// </para>
+    /// <para>
+    /// <b>Refused, never normalised.</b> Each of these shapes has an obvious
+    /// collapse — strip the drive, strip the leading separator — and every one of
+    /// them produces a file that lands somewhere the caller did not name while
+    /// the answer says it went where they asked.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="value">The filename, as it arrived.</param>
+    /// <param name="shape">What kind of path it is, in a clause.</param>
+    /// <returns>The refusal.</returns>
+    public static string FilenameNotWithinSession(string tool, string value, string shape) =>
+        $"'{tool}' was not run: its 'filename' was '{value}', and {shape}. Nothing was written. "
+        + "A 'filename' names a file inside the session directory you already chose at init — BrowserAI files it by kind under that directory and tells you the full path in the answer. "
+        + "Pass a plain relative name such as 'login.png', or a name with folders in it such as 'checkout/step-3.png'.";
+
+    /// <summary>Row 17 — a <c>filename</c> that climbs out with <c>..</c>.</summary>
+    /// <remarks>
+    /// A separate row from <see cref="FilenameNotWithinSession"/> because the
+    /// recovery differs: an absolute path is a caller naming a different place on
+    /// purpose, and a traversal is usually a caller building a path out of pieces.
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="value">The filename, as it arrived.</param>
+    /// <returns>The refusal.</returns>
+    public static string FilenameEscapesTheSession(string tool, string value) =>
+        $"'{tool}' was not run: its 'filename' was '{value}', which climbs out of the session directory with '..'. Nothing was written. "
+        + "BrowserAI refuses that rather than collapsing it, because a collapsed path lands somewhere real and the answer would say it went where you asked. "
+        + "Name a file beneath the session directory instead; to put artifacts side by side in one place, use a subfolder such as 'run-2/login.png'.";
+
+    /// <summary>Row 18 — a <c>filename</c> Windows cannot store as written.</summary>
+    /// <remarks>
+    /// The reserved device names and the trailing-space rule are the two that
+    /// matter most: Windows does not refuse either, it silently redirects or
+    /// renames, so a screenshot to <c>NUL.png</c> reports success and writes
+    /// nothing at all.
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="value">The filename, as it arrived.</param>
+    /// <param name="why">What is wrong with it.</param>
+    /// <returns>The refusal.</returns>
+    public static string FilenameNotUsable(string tool, string value, string why) =>
+        $"'{tool}' was not run: its 'filename' was '{value}', and {why} Nothing was written. "
+        + "Choose a name Windows can store as written — letters, digits, dots, dashes and underscores are always safe — and BrowserAI will file it by kind under the session directory.";
+
+    /// <summary>
     /// Frames a recorded <c>purpose</c> as data rather than as an instruction,
     /// capped and stripped.
     /// </summary>

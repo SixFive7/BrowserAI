@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Artifacts;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
@@ -261,7 +262,9 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (_live.TryGetValue(location.Key, out var already))
         {
-            return new ToolOutcome(Describe(already, ["This session is already open in this BrowserAI; nothing was changed."]), IsError: false);
+            return new ToolOutcome(
+                Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
+                IsError: false);
         }
 
         var record = SessionLock.ReadRecord(location)
@@ -328,7 +331,7 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             found++;
-            var size = SizeOnDisk(session.FullPath);
+            var size = SessionLayout.SizeOnDisk(session.FullPath);
 
             lines.Add(
                 $"{session.FullPath}\n"
@@ -380,11 +383,12 @@ internal sealed class SessionManager : IAsyncDisposable
         // ownership is proven.
         held.Dispose();
 
-        var size = SizeOnDisk(location.FullPath);
+        var size = SessionLayout.SizeOnDisk(location.FullPath);
         var failures = new List<string>();
         Remove(location.FullPath, failures);
 
         _index.Forget(location);
+        RefreshRollUp(location);
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
 
         var summary =
@@ -500,10 +504,21 @@ internal sealed class SessionManager : IAsyncDisposable
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
 
+            var artifacts = new ArtifactRouter(location);
+
             var options = ChildLaunch.Create(
                 _environment.Payload,
                 _environment.Paths.BrowsersDirectory,
-                location.FullPath,
+
+                // The OUTPUT root rather than the session root, which is
+                // [§F](../../plan/F-artifacts.md)'s first lever: upstream
+                // resolves a relative `filename` against the child's cwd, so a
+                // bare `foo.png` that nothing rewrote still lands inside the
+                // instance tree by construction rather than in whatever
+                // directory the client happened to be started from. It is also
+                // what upstream's own `checkFile` measures against, so the two
+                // allowed roots coincide instead of overlapping.
+                artifacts.OutputRoot,
                 configFile,
                 config,
                 name: $"playwright-mcp[{location.Hash[..8]}]");
@@ -522,7 +537,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, mode, child, logging, config, configFile, createdHere);
+            session = new LiveSession(location, held, mode, child, logging, config, configFile, createdHere, artifacts);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))
@@ -537,7 +552,11 @@ internal sealed class SessionManager : IAsyncDisposable
             _index.Record(location);
             SessionToolLog.Opened(sessionLogger, location.FullPath, mode.Name, createdHere);
 
-            return new ToolOutcome(Describe(session, notes), IsError: false);
+            // One index walk, used twice: the roll-up beside the sessions and
+            // the line in this answer that names them are the same question, and
+            // walking twice is the shape that made this the slowest call in the
+            // suite.
+            return new ToolOutcome(Describe(session, notes, RefreshRollUp(location)), IsError: false);
         }
         catch (Exception failure) when (failure is not OperationCanceledException)
         {
@@ -576,7 +595,7 @@ internal sealed class SessionManager : IAsyncDisposable
         }
     }
 
-    private string Describe(LiveSession session, IReadOnlyList<string> notes)
+    private string Describe(LiveSession session, IReadOnlyList<string> notes, IReadOnlyList<RollUpEntry> beneath)
     {
         var record = session.Lock.Record;
         var text = new StringBuilder();
@@ -614,6 +633,8 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName)).Append('\n')
             .Append("  downloads: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.DownloadsFolderName)).Append('\n')
             .Append("  log: ").Append(session.Logging.Path).Append('\n')
+            .Append("  artifact index: ").Append(Path.Combine(session.Location.FullPath, ArtifactRouter.IndexFileName))
+            .Append(" — pass a plain 'filename' such as login.png on any tool that takes one; BrowserAI files it by kind under output\\ and tells you the full path.\n")
             .Append("  purpose: ").Append(record.Purpose).Append('\n')
             .Append("  created: ").Append(Stamp(record.Created)).Append("   last used: ").Append(Stamp(record.LastUsed)).Append('\n')
             .Append("  child protocol: ").Append(session.Child.NegotiatedProtocolVersion ?? "<none>").Append('\n')
@@ -624,6 +645,25 @@ internal sealed class SessionManager : IAsyncDisposable
             _ = text.Append("  purpose recorded by previous sessions, oldest first: ")
                 .Append(string.Join(" / ", record.PurposeHistory.Take(record.PurposeHistory.Count - 1)))
                 .Append('\n');
+        }
+
+        // Scoped to the root this session sits under, never machine-wide: an
+        // aggregate over everything would pull unrelated projects' sessions into
+        // whatever context happens to be open, and the paths were the caller's
+        // own choice rather than a boundary.
+        if (Path.GetDirectoryName(session.Location.FullPath) is { Length: > 0 } root)
+        {
+            var siblings = beneath.Where(entry => !string.Equals(entry.Directory, session.Location.FullPath, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            _ = text.Append("  other sessions under ").Append(root).Append(": ")
+                .Append(siblings.Count.ToString(CultureInfo.InvariantCulture));
+
+            if (siblings.Count is not 0)
+            {
+                _ = text.Append(" — ").Append(string.Join(", ", siblings.Take(10).Select(entry => Path.GetFileName(entry.Directory))));
+            }
+
+            _ = text.Append(" (rolled up in ").Append(Path.Combine(root, ArtifactRouter.RollUpFileName)).Append(")\n");
         }
 
         return text.ToString();
@@ -751,18 +791,60 @@ internal sealed class SessionManager : IAsyncDisposable
     private static bool IsUnder(SessionPath candidate, string prefix) =>
         (candidate.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal);
 
-    private static long SizeOnDisk(string directory)
+    /// <summary>
+    /// Rewrites the roll-up covering the root one session sits under.
+    /// </summary>
+    /// <remarks>
+    /// <b>Scoped by root and never by machine.</b> The machine-wide index is
+    /// <see cref="SessionIndex"/>'s and stays available through
+    /// <c>browserai_list</c>; this is the aggregate that sits <i>beside</i> the
+    /// sessions it covers, so an agent working in one tree meets that tree's
+    /// sessions and nobody else's.
+    /// </remarks>
+    private List<RollUpEntry> RefreshRollUp(SessionPath location)
     {
-        try
+        var root = Path.GetDirectoryName(location.FullPath);
+
+        if (root is null or { Length: 0 })
         {
-            return new DirectoryInfo(directory)
-                .EnumerateFiles("*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })
-                .Sum(file => file.Length);
+            // Unreachable through SessionPath, which refuses a volume root -- but
+            // this method is not the place to prove that.
+            return [];
         }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+
+        var beneath = Beneath(root);
+        ArtifactRouter.WriteRollUp(root, beneath);
+
+        return beneath;
+    }
+
+    /// <summary>Every session under a root, newest use first.</summary>
+    private List<RollUpEntry> Beneath(string root)
+    {
+        var prefix = root.ToUpperInvariant();
+        prefix = prefix.EndsWith(Path.DirectorySeparatorChar) ? prefix : prefix + Path.DirectorySeparatorChar;
+
+        var entries = new List<RollUpEntry>();
+
+        foreach (var entry in _index.Follow())
         {
-            return 0;
+            if (entry.Session is not { } session || entry.Record is not { } record || !IsUnder(session, prefix))
+            {
+                continue;
+            }
+
+            entries.Add(new RollUpEntry(
+                session.FullPath,
+                record.Mode,
+                record.Purpose,
+                record.Created,
+                record.LastUsed,
+                SessionLayout.SizeOnDisk(session.FullPath)));
         }
+
+        entries.Sort((left, right) => right.LastUsed.CompareTo(left.LastUsed));
+
+        return entries;
     }
 
     private static void Remove(string directory, List<string> failures)

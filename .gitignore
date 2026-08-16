@@ -85,8 +85,17 @@ BenchmarkDotNet.Artifacts/
 # .NET Core
 project.lock.json
 project.fragment.lock.json
-artifacts/
-.artifacts/
+# ROOT-ANCHORED, and the anchor is load-bearing rather than tidy. These name the
+# SDK's `ArtifactsPath` output folder, which is at the repository root. Left
+# unanchored, `artifacts/` matches a directory of that name at ANY depth -- and
+# on case-insensitive Windows it matched `src/BrowserAI/Artifacts/`, so five
+# product source files were invisible to git while every other signal read
+# healthy. Caught 2026-08-16, at build-order step 14, by `git check-ignore`
+# rather than by anything the build does; it is now
+# `BuildConfigurationTests.NoSourceFileIsInvisibleToGit`, because a comment is
+# not a mechanism.
+/artifacts/
+/.artifacts/
 
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt

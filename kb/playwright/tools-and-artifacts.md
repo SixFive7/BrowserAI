@@ -199,18 +199,115 @@ and a name absent from it is refused in every mode. `[FLOATS]`
 All read from the shipped bundle or observed against a real child. `[FLOATS]`
 
 **Playwright writes every artifact flat into one directory with a generated
-name**, mixing machine churn with hand-named work. **Nine fixed generator
-prefixes** make classification exact rather than heuristic: `console`,
-`download`, `network`, `page`, `request`, `response`, `result`, `storage-state`,
-`video`.
+name**, mixing machine churn with hand-named work. Fixed generator prefixes make
+classification exact rather than heuristic.
+
+> ⚠️ **Corrected 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+> 1.63.0-alpha-2026-08-05 (previously: "**Nine fixed generator prefixes**:
+> `console`, `download`, `network`, `page`, `request`, `response`, `result`,
+> `storage-state`, `video`").** There are **eleven**, plus one empty prefix. The
+> nine above were counted by hand on 2026-08-13; deriving the set from the
+> resolved bundle for the first time found two more, and both were invisible to a
+> scan looking for `prefix: "<literal>"`:
+>
+> | Missed prefix | Written by | Why the hand count missed it |
+> |---|---|---|
+> | `element` | `browser_take_screenshot` with a `target` | the expression is `prefix: target ? "element" : "page"` — a ternary, not a literal |
+> | `annotations` | `browser_annotate` | the expression is a template literal, `` prefix: `annotations${multi ? "-" + idx : ""}` `` |
+>
+> A third site, `prefix: this._filePrefix`, is an indirection: it resolves to
+> `"console"` through `new LogFile(context, wallTime, "console", "Console")`.
+>
+> **The full set is now `""`, `annotations`, `console`, `download`, `element`,
+> `network`, `page`, `request`, `response`, `result`, `storage-state`,
+> `video`** — regenerated into
+> [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
+> under `artifactPrefixes` on every build, so a twelfth is a diff rather than a
+> memory. Re-establish with
+> `pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept`. `[FLOATS]`
+
+**The empty prefix is the traces template, and `traces\` is upstream's folder
+rather than ours.** The call is
+`context.outputFile({ prefix: "", suggestedFilename: "traces", ext: "" }, { origin: "code" })`,
+which resolves to `<outputDir>/traces`. So it is correct that `traces` is *not* a
+generator prefix — the template supplies its own name — and wrong to describe the
+folder as one we chose: upstream computes that path and BrowserAI cannot
+configure it. `Verified 2026-08-16 @ playwright-core 1.63.0-alpha-2026-08-05`
+against `coreBundle.js`. `[FLOATS]`
 
 **The generated name format is `page-2026-08-14T04-11-50-882Z.png`** — a
 timestamp, which is precisely what made 346 accumulated session directories
-untriageable.
+untriageable. The template is
+``template.suggestedFilename || `${prefix}-${date.toISOString().replace(/[:.]/g,"-")}${ext ? "." + ext : ""}` ``,
+so **a supplied `suggestedFilename` replaces the whole generated name, prefix
+included.** `[FLOATS]`
 
-**A relative `filename` resolves against the child's cwd.** That is the whole
-reason ten repositories currently run a `deny` hook on `browser_take_screenshot`,
-and it is closed by setting the child's `WorkingDirectory` instead of by a hook.
+**A caller-supplied `filename` and a generated name resolve against *different*
+roots**, which is the fact routing turns on. Measured 2026-08-16 by reading
+`coreBundle.js`:
+
+| Path | Function | Resolves against |
+|---|---|---|
+| `filename` given (`suggestedFilename`) | `workspaceFile(name, cwd)` | `path.resolve(options.cwd, name)` — **the child's cwd** |
+| no `filename` | `outputFile(name)` | `path.resolve(config.outputDir, name)` — **the configured output directory** |
+
+That is the whole reason ten repositories currently run a `deny` hook on
+`browser_take_screenshot`, and it is closed by setting the child's
+`WorkingDirectory` instead of by a hook. Setting the working directory **to the
+output directory** makes the two roots coincide, which matters for the check
+below. `[FLOATS]`
+
+**Upstream refuses a path outside its own roots, and the message names them.**
+`checkFile` returns early for `origin: "code"`, `allowUnrestrictedFileAccess` or
+`skillMode`, and otherwise throws
+`File access denied: <path> is outside allowed roots. Allowed roots: <outputDir>, <cwd>`.
+So a caller-supplied `filename` is already confined by upstream — but only to
+those two roots, and only with a message a model has to parse. `[FLOATS]`
+
+**A download lands in the output directory, not in `downloadsPath`.**
+`_downloadStarted` calls
+`outputFile({ suggestedFilename: sanitize(download.suggestedFilename()), prefix: "download", ext: "bin" }, { origin: "code" })`
+and then `download.saveAs(...)`, so the saved copy is
+`<outputDir>\<site-suggested-name>` and carries the `download-` prefix **only
+when the site suggests no name at all**. `launchOptions.downloadsPath` is where
+Playwright keeps the raw artifact, not where the visible file ends up. `[FLOATS]`
+
+**`browser_take_screenshot`'s image format comes from `type` before the file
+name.** `fileType = params.type ?? <from filename extension> ?? "png"`, so
+supplying a `.png` name to a call that asked for `jpeg` yields jpeg bytes in a
+file called `.png`. Any proxy that supplies a name must read `type` first.
+`[FLOATS]`
+
+**`browser_start_video` throws on any extension but `.webm`** —
+`if (!outputFile.endsWith(".webm")) throw new Error("File must have .webm extension")`
+in `FfmpegVideoRecorder`'s constructor. `[FLOATS]`
+
+**Eleven tools carry a `filename` argument and two of them are reads.**
+`browser_run_code_unsafe` ("Load code from the specified file") and
+`browser_set_storage_state` ("Path to the storage state file to restore from")
+both route through `resolveClientFilename` → `workspaceFile`, so they read
+relative to the child's cwd and are subject to the same `checkFile`. The other
+nine write. Counted 2026-08-16 from the committed `tools-list.json` snapshot;
+`ArtifactRoutingTests.EveryToolCarryingAFilenameHasBeenJudged` re-counts it on
+every build. `[FLOATS]`
+
+**Sorting the output root costs ~118 µs per call on this machine.** Measured
+2026-08-16, 5,000 iterations twice: a non-recursive
+`Directory.EnumerateFiles` over an empty directory holding twelve subdirectories
+returned in **115.3 µs** and **120.1 µs** per call (NTFS, Defender on).
+That is the per-`tools/call` price of classifying the artifacts that cannot be
+routed inbound — a download, whose name the site chose, and an annotation, whose
+name upstream chose. `[MACHINE]`
+
+**Pre-creating the typed folders costs 4× what creating three does.** Measured
+2026-08-16, 120 sessions per pass, twice: a session directory plus the three
+`profile` / `output` / `downloads` folders takes **2.50–2.63 ms**; the same plus
+all eleven typed artifact folders takes **10.39–10.46 ms**. Reclaiming the whole
+tree afterwards costs proportionally more again. At roughly 120 sessions per
+suite run that is about a second each way, which is why BrowserAI creates a typed
+folder on first use rather than up front — and why a folder that exists in a
+session directory means an artifact of that kind was actually produced.
+`[MACHINE]`
 
 **`_meta.json`, `_meta.cwd` and `_meta.raw` are read by the child before zod
 parsing** and stripped before the tool sees them. Undocumented but real, and

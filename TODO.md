@@ -206,10 +206,22 @@ and version it was true at.
     - **Settle the two deferred decisions**, both written into the file as
       comments. First, whether the pinned `@playwright/mcp` tree is committed
       for reproducibility rather than installed into staging at build time — the
-      `!/mcp/node_modules/` negation is written out ready to uncomment. Second,
-      whether §F's artifact work ever produces a source folder named
-      `Artifacts/`, which the template's `artifacts/` rule would swallow on
-      case-insensitive Windows.
+      `!/mcp/node_modules/` negation is written out ready to uncomment.
+
+      **The second is settled, and it happened rather than being decided.**
+      Build-order step 14 created `src/BrowserAI/Artifacts/`, the template's
+      unanchored `artifacts/` rule matched it on case-insensitive Windows, and
+      **five product source files were ignored while the build, the suite and
+      `git status --porcelain` all read green** — which is
+      [the founding failure class](plan/build-order.md#every-done-test-ends-with-a-clean-working-tree)
+      applied to a repository, and precisely the shape this note predicted. Both
+      rules are now root-anchored (`/artifacts/`, `/.artifacts/`), where the SDK
+      actually puts that folder, and the prediction is now a test:
+      `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` lists every `.cs`
+      under `src/` and `tests/` against `git ls-files`, so an ignore rule that
+      swallows source is red rather than silent. Planted and reverted
+      2026-08-16: with the unanchored rule back, it fails naming all five
+      files.
 
 - [x] ~~**Set `userDataDir`, so a run's browser profile stops landing in a
       directory BrowserAI does not own.**~~ ✅ **Done at

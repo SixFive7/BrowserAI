@@ -3,6 +3,7 @@
 
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
+using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private readonly List<PipeDuplex> _hops = [];
     private readonly List<FakePlaywrightChild> _children = [];
     private readonly List<SessionLogging> _logs = [];
+    private readonly List<ChildProcessOptions> _launches = [];
     private readonly Lock _gate = new();
 
     private int _disposed;
@@ -68,7 +70,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
             FreeBytesOn = _ => freeBytes,
-            ConnectChild = async (_, loggerFactory, idPrefix, relay, cancellationToken) =>
+            ConnectChild = async (options, loggerFactory, idPrefix, relay, cancellationToken) =>
             {
                 var hop = new PipeDuplex("session hop (BrowserAI ↔ fake session child)");
                 var child = new FakePlaywrightChild(hop);
@@ -79,6 +81,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                 {
                     _hops.Add(hop);
                     _children.Add(child);
+                    _launches.Add(options);
                 }
 
                 return await ChildConnection.ConnectAsync(
@@ -115,6 +118,26 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             lock (_gate)
             {
                 return [.. _children];
+            }
+        }
+    }
+
+    /// <summary>
+    /// What each session's child <i>would</i> have been started with.
+    /// </summary>
+    /// <remarks>
+    /// The options are the product's, built by <c>SessionManager</c> and handed
+    /// to this seam, so an assertion about the working directory or the
+    /// environment is an assertion about the product even though no process ever
+    /// starts.
+    /// </remarks>
+    public IReadOnlyList<ChildProcessOptions> Launches
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _launches];
             }
         }
     }

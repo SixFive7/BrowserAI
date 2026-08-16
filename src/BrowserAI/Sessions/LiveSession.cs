@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Artifacts;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
@@ -35,6 +36,7 @@ namespace BrowserAI.Sessions;
 /// <param name="config">The config the child was started with.</param>
 /// <param name="configFile">Where that config was written.</param>
 /// <param name="createdHere">Whether this connection is the one that created the session.</param>
+/// <param name="artifacts">Where this session's files go, and what it knows about them.</param>
 internal sealed class LiveSession(
     SessionPath location,
     SessionLock sessionLock,
@@ -43,7 +45,8 @@ internal sealed class LiveSession(
     SessionLogging logging,
     GeneratedConfig config,
     string configFile,
-    bool createdHere) : IAsyncDisposable
+    bool createdHere,
+    ArtifactRouter artifacts) : IAsyncDisposable
 {
     private int _disposed;
 
@@ -78,6 +81,12 @@ internal sealed class LiveSession(
     /// is told so, at first use, rather than at reclaim time.
     /// </remarks>
     public bool CreatedHere { get; } = createdHere;
+
+    /// <summary>
+    /// Where this session's artifacts go, and the record of the ones that got
+    /// there.
+    /// </summary>
+    public ArtifactRouter Artifacts { get; } = artifacts;
 
     /// <summary>Whether the notice about driving somebody else's session has been given.</summary>
     public bool NoticeGiven { get; set; }

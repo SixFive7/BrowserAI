@@ -94,7 +94,11 @@ internal static class RepositoryLayout
             }));
     }
 
-    private static IReadOnlyList<FileInfo> SourceFilesUnder(string[] directories, string[] patterns) =>
+    /// <summary>Every hand-written file of the given kinds beneath the given directories.</summary>
+    /// <param name="directories">Repository-relative directory names.</param>
+    /// <param name="patterns">File patterns, such as <c>*.cs</c>.</param>
+    /// <returns>The files, build output excluded, in path order.</returns>
+    public static IReadOnlyList<FileInfo> SourceFilesUnder(string[] directories, string[] patterns) =>
     [
         .. directories
             .Select(name => new DirectoryInfo(Path.Combine(Root.FullName, name)))

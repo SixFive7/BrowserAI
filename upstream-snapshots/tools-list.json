@@ -165,6 +165,105 @@
     "browser_check",
     "browser_uncheck"
   ],
+  "artifactPrefixes": {
+    "_what_this_is": "The artifact generator prefixes, read out of the resolved bundle source. A generated artifact is named `<prefix>-<timestamp>.<ext>`, and BrowserAI routes by prefix (plan/F-artifacts.md). The empty prefix is the traces template, which supplies its own suggestedFilename. A prefix appearing here with no folder in ArtifactRouting, or a folder with no prefix here, fails the build.",
+    "prefixes": [
+      "",
+      "annotations",
+      "console",
+      "download",
+      "element",
+      "network",
+      "page",
+      "request",
+      "response",
+      "result",
+      "storage-state",
+      "video"
+    ],
+    "templates": [
+      {
+        "expression": "\"\"",
+        "prefixes": [
+          ""
+        ]
+      },
+      {
+        "expression": "\"console\"",
+        "prefixes": [
+          "console"
+        ]
+      },
+      {
+        "expression": "\"download\"",
+        "prefixes": [
+          "download"
+        ]
+      },
+      {
+        "expression": "\"network\"",
+        "prefixes": [
+          "network"
+        ]
+      },
+      {
+        "expression": "\"page\"",
+        "prefixes": [
+          "page"
+        ]
+      },
+      {
+        "expression": "\"request\"",
+        "prefixes": [
+          "request"
+        ]
+      },
+      {
+        "expression": "\"response\"",
+        "prefixes": [
+          "response"
+        ]
+      },
+      {
+        "expression": "\"result\"",
+        "prefixes": [
+          "result"
+        ]
+      },
+      {
+        "expression": "\"storage-state\"",
+        "prefixes": [
+          "storage-state"
+        ]
+      },
+      {
+        "expression": "\"video\"",
+        "prefixes": [
+          "video"
+        ]
+      },
+      {
+        "expression": "`annotations${multi ? \"-\" + idx : \"\"}`",
+        "prefixes": [
+          "annotations"
+        ]
+      },
+      {
+        "expression": "target ? \"element\" : \"page\"",
+        "prefixes": [
+          "element",
+          "page"
+        ]
+      },
+      {
+        "expression": "this._filePrefix",
+        "prefixes": [
+          "console"
+        ],
+        "resolvedVia": "LogFile(argument 2)"
+      }
+    ]
+  },
   "defaultSurface": [
     "browser_close",
     "browser_resize",

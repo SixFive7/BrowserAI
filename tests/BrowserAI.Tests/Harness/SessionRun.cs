@@ -259,6 +259,46 @@ internal sealed record SessionRun
         }
     }
 
+    /// <summary>
+    /// Renames a directory once the exited process's children have let go of
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// Bounded and loud: if the pin never clears, the failure names the cause
+    /// and how long it waited, rather than reporting a bare access-denied that
+    /// reads like a permissions problem. It never retries anything but the pin —
+    /// a genuinely wrong path throws <see cref="DirectoryNotFoundException"/>
+    /// and is not caught here.
+    /// </remarks>
+    /// <param name="from">The directory to rename.</param>
+    /// <param name="to">Its new name.</param>
+    /// <returns>The wait.</returns>
+    private static async Task MoveWhenReleasedAsync(string from, string to)
+    {
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                Directory.Move(from, to);
+                return;
+            }
+            catch (Exception failure) when (failure is UnauthorizedAccessException or IOException)
+            {
+                if (waited.Elapsed > TestDefaults.Patience)
+                {
+                    throw new InvalidOperationException(
+                        $"'{from}' was still pinned {waited.Elapsed.TotalSeconds:F1} s after BrowserAI exited, so it could not be renamed. "
+                        + "A directory that is a live process's working directory cannot be renamed, nor can any of its ancestors — so something the job object should have taken down is still running.",
+                        failure);
+                }
+
+                await Task.Delay(25).ConfigureAwait(false);
+            }
+        }
+    }
+
     private static async Task<SessionRun> SecondProcessAsync(string root, FirstProcess first)
     {
         var answers = new Dictionary<string, JsonObject>(first.Answers, StringComparer.Ordinal);
@@ -266,9 +306,19 @@ internal sealed record SessionRun
         var moved = Path.Combine(root, "gamma-moved");
         var copy = Path.Combine(root, "gamma-copy");
 
-        // The first process has exited, so nothing holds the directory: this is
-        // the ordinary case of somebody renaming a folder between sessions.
-        Directory.Move(gamma, moved);
+        // The ordinary case of somebody renaming a folder between sessions.
+        //
+        // ⚠️ Retried, and the reason is a Windows fact rather than a defect in
+        // the product. BrowserAI has exited and its job object has therefore
+        // terminated the node child — but a terminated process is *signalled*
+        // before the kernel has torn its handles down, and a directory that is
+        // any live process's current directory cannot be renamed, nor can any
+        // of its ancestors. `CloseAndWaitForExitAsync` returning is proof that
+        // BrowserAI is gone, not proof that its children's working directories
+        // have been released. Observed once as `UnauthorizedAccessException` on
+        // this line, 2026-08-16, taking twelve published-binary tests with it,
+        // because they all share this one capture.
+        await MoveWhenReleasedAsync(gamma, moved).ConfigureAwait(false);
 
         await using var client = RawStdioClient.Start(
             PublishedSlice.Executable,

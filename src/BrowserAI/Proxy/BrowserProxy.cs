@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json.Nodes;
+using BrowserAI.Artifacts;
 using BrowserAI.Protocol;
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
@@ -372,6 +373,26 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // §F's first half, and it happens before the child hears about the call:
+        // a `filename` is rewritten into the folder its generator prefix
+        // implies, so the file is born in the right place rather than swept
+        // there. A refusal here is a refusal -- never a path normalised into
+        // something that happens to land somewhere.
+        live.Artifacts.Observe(arguments);
+
+        ArtifactPlan? plan;
+
+        try
+        {
+            plan = live.Artifacts.Plan(tool, arguments);
+        }
+        catch (SessionToolException refusal)
+        {
+            ProxyLog.FilenameRefused(_logger, tool, live.Location.FullPath);
+            await RefuseAsync(caller, request.Id, refusal.Message, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // The child has never heard of `session`; BrowserAI added it. Removed
         // from a CLONE rather than from the caller's own node, because the
         // request object is the SDK's and may still be read after this.
@@ -382,21 +403,33 @@ internal sealed class BrowserProxy : IAsyncDisposable
             _ = cloned.Remove(SessionToolSurface.SessionParameter);
         }
 
+        if (plan is not null)
+        {
+            ArtifactRouter.Apply(plan, forwarded);
+        }
+
         var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
 
         if (answer.Response is { } response)
         {
             if (GuardAnswer(tool, response) is { } withheld)
             {
+                live.Artifacts.Release(plan);
                 ProxyLog.AnswerWithheld(_logger, tool, live.Location.FullPath);
                 await RefuseAsync(caller, request.Id, withheld, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
-            await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, cancellationToken).ConfigureAwait(false);
+            // §F's second half, which ships with the first or not at all:
+            // relocating a file while telling the model otherwise is a new
+            // silent failure introduced by the fix for an old one.
+            var note = live.Artifacts.Complete(plan);
+
+            await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, note, cancellationToken).ConfigureAwait(false);
             return;
         }
 
+        live.Artifacts.Release(plan);
         await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
     }
 
@@ -456,11 +489,29 @@ internal sealed class BrowserProxy : IAsyncDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Answers a caller with the child's result, and what BrowserAI did to the file it names.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Byte-identity is a property of forwarding, and this is where that is
+    /// made precise.</b> With no note — every call that names no file, which is
+    /// nearly all of them — the child's own bytes are written unchanged, which is
+    /// step 9's guarantee untouched. With a note, the child's <c>content</c>
+    /// array gains one element by a splice into those same bytes: nothing the
+    /// child wrote is re-serialised, re-escaped or reordered, and exactly one
+    /// array element is appended.
+    /// </para>
+    /// <para>
+    /// The <see cref="JsonNode"/> arm is the fallback for a result carrying no
+    /// top-level <c>content</c> array. It is logged rather than absorbed, because
+    /// the escaping is then ours.
+    /// </para>
+    /// </remarks>
     private async Task AnswerChildResultAsync(
         McpServer caller,
         RequestId callerId,
         JsonRpcResponse response,
         VerbatimPayload? payload,
+        string? note,
         CancellationToken cancellationToken)
     {
         // A fresh envelope rather than the child's own: JsonRpcMessage.Context
@@ -469,21 +520,63 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // be sent back to the child it came from.
         var answer = new JsonRpcResponse { Id = callerId, Result = response.Result };
 
-        if (payload is { } captured)
+        if (note is null)
         {
-            Verbatim.Attach(answer, captured.Json);
+            if (payload is { } untouched)
+            {
+                Verbatim.Attach(answer, untouched.Json);
+            }
+            else
+            {
+                // Reached only if the transport failed to capture the frame. The
+                // answer is still semantically right -- Result is the child's own
+                // JsonNode -- but its escaping is now ours, so the one claim the
+                // passthrough exists to make is no longer true of it. Said out
+                // loud rather than absorbed.
+                ProxyLog.VerbatimPayloadMissing(_logger, callerId.ToString());
+            }
+
+            await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var spliced = payload is { } captured ? ResultNote.Append(captured.Json, note) : null;
+
+        if (spliced is not null)
+        {
+            Verbatim.Attach(answer, spliced);
         }
         else
         {
-            // Reached only if the transport failed to capture the frame. The
-            // answer is still semantically right -- Result is the child's own
-            // JsonNode -- but its escaping is now ours, so the one claim the
-            // passthrough exists to make is no longer true of it. Said out loud
-            // rather than absorbed.
-            ProxyLog.VerbatimPayloadMissing(_logger, callerId.ToString());
+            ProxyLog.NoteNotSpliced(_logger, callerId.ToString());
         }
 
+        // Kept in step with the bytes on both arms. On the spliced arm nothing
+        // reads it, but a message whose object and whose bytes disagree is a
+        // trap for whatever reads it next.
+        answer.Result = WithNote(response.Result, note);
+
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The child's result with one text block appended, as a node.</summary>
+    private static JsonObject WithNote(JsonNode? result, string note)
+    {
+        var copy = result?.DeepClone() as JsonObject ?? [];
+
+        if (copy["content"] is JsonArray content)
+        {
+            // The (JsonNode) cast is the one AOT trap the 2026-08-15 spike found
+            // in our own code rather than the SDK's: the generic overload is
+            // RequiresDynamicCode and turns the publish red.
+            content.Add((JsonNode)ResultNote.Node(note));
+        }
+        else
+        {
+            copy["content"] = new JsonArray(ResultNote.Node(note));
+        }
+
+        return copy;
     }
 
     /// <summary>Answers a caller with the child's own JSON-RPC error.</summary>
@@ -693,4 +786,31 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' answered for the session at {Session}, and the answer was withheld rather than forwarded.")]
     public static partial void AnswerWithheld(ILogger logger, string tool, string session);
+
+    /// <summary>A call named a file outside the session it named.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 11,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' named a 'filename' outside the session at {Session}; it was refused rather than normalised.")]
+    public static partial void FilenameRefused(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A routed artifact's note could not be spliced into the child's own bytes.
+    /// </summary>
+    /// <remarks>
+    /// Error rather than Warning: the note still reaches the caller, so nothing
+    /// is lost, but the answer was rebuilt from a node and its escaping is
+    /// therefore ours. That is the one claim the passthrough exists to make, and
+    /// losing it silently is what this line prevents.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="callerRequestId">The caller request being answered.</param>
+    [LoggerMessage(
+        EventId = 12,
+        Level = LogLevel.Error,
+        Message = "The result for caller request {CallerRequestId} carries no top-level 'content' array, so the artifact note was appended by rebuilding it. That answer is no longer byte-identical.")]
+    public static partial void NoteNotSpliced(ILogger logger, string callerRequestId);
 }

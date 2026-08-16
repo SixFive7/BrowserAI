@@ -32,6 +32,38 @@ namespace BrowserAI.Tests;
 /// and numeric form, which is precisely the set of differences a proxy must not
 /// introduce.
 /// </para>
+/// <para>
+/// ⚠️ <b>What byte-identity means was made precise at build-order step 14, and
+/// the change is an addition rather than a relaxation.</b> Until then the claim
+/// was <i>"a <c>tools/call</c> result reaches the caller as the exact bytes the
+/// child wrote"</i>, and it was true because BrowserAI forwarded every
+/// <c>tools/call</c> request unchanged. [§F](../../plan/F-artifacts.md) requires
+/// a rewritten <c>filename</c> to be reported back, and is explicit that
+/// reporting and rewriting ship together — <i>"relocating a file while telling
+/// the model otherwise is a new silent failure introduced by the fix for an old
+/// one"</i>. The claim is therefore now:
+/// </para>
+/// <list type="bullet">
+/// <item>
+/// <b>A call BrowserAI forwarded unchanged comes back unchanged</b>, byte for
+/// byte. That is every call naming no file, which is nearly all of them, and
+/// every test above still asserts exactly that.
+/// </item>
+/// <item>
+/// <b>A call whose request BrowserAI rewrote comes back with every byte the
+/// child wrote, in order, plus one appended <c>content</c> element.</b> The
+/// element is spliced into the child's own bytes by token offset, so nothing is
+/// re-serialised, re-escaped or reordered.
+/// <see cref="AnArtifactCallKeepsEveryByteTheChildWroteAndGainsExactlyOneBlock"/>
+/// is what makes that a measurement rather than a description.
+/// </item>
+/// </list>
+/// <para>
+/// Nothing in between exists: BrowserAI never edits a byte the child wrote, on
+/// either path. The two arms are decided by whether the request was rewritten,
+/// not by the tool's name, which is why <c>browser_navigate</c> below is a fair
+/// witness for the unchanged half.
+/// </para>
 /// </remarks>
 internal sealed class LosslessPassthroughTests
 {
@@ -193,6 +225,135 @@ internal sealed class LosslessPassthroughTests
         // offset is the assertion's subject so a mismatch still names where,
         // which is the only thing the slow version bought.
         await Assert.That(FirstDifference(child, caller)).IsEqualTo(-1);
+    }
+
+    [Test]
+    public async Task AnArtifactCallKeepsEveryByteTheChildWroteAndGainsExactlyOneBlock()
+    {
+        // An escape the child chose, in the payload that also gets edited. A
+        // JsonNode round trip would decode `café` and re-emit a raw `é`,
+        // which is the precise difference between splicing and rebuilding --
+        // and the one that would otherwise vanish on exactly the calls §F
+        // touches.
+        const string Escaped =
+            @"{""content"":[{""type"":""text"",""text"":""- [Screenshot](café.png) — done""}],""x-browserai-unknown-member"":true}";
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
+            {
+                RawResult = Escaped,
+                WritesArtifactBytes = 32,
+            });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var response = await rig.Client.SendAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_take_screenshot",
+            ["arguments"] = new JsonObject
+            {
+                [SessionToolSurface.SessionParameter] = rig.Session!,
+                ["filename"] = "login.png",
+            },
+        });
+
+        var child = JsonSpan.MemberOf(SentByChild(rig, "result"), "result");
+        var caller = JsonSpan.MemberOf(response.Frame, "result");
+
+        // One contiguous insertion and nothing else: every byte the child wrote
+        // survives, in order, and the difference is a single added array
+        // element.
+        var inserted = OneInsertion(child, caller);
+
+        await Assert.That(inserted).IsNotNull();
+        await Assert.That(Text(inserted!)).StartsWith(@",{""type"":""text"",""text"":""");
+        await Assert.That(Text(inserted!)).EndsWith("}");
+
+        // The escape the child chose, untouched -- and the member no contract
+        // knows about, still there.
+        await Assert.That(Text(caller)).Contains(@"café.png");
+        await Assert.That(Text(caller)).Contains(@"—");
+        await Assert.That(Text(caller)).Contains("x-browserai-unknown-member");
+
+        // And the added element is the thing §F requires: the resolved absolute
+        // path of the file that was actually written.
+        var expected = Path.Combine(rig.Session!, SessionLayout.OutputFolderName, "page", "login.png");
+
+        await Assert.That(Text(inserted!)).Contains(expected.Replace(@"\", @"\\", StringComparison.Ordinal));
+        await Assert.That(File.Exists(expected)).IsTrue();
+    }
+
+    [Test]
+    public async Task AResultWithNoContentArrayStillCarriesTheNoteAndSaysItWasRebuilt()
+    {
+        // The fallback arm, and it exists rather than being a branch nobody has
+        // seen taken. Dropping the note instead would relocate a file and tell
+        // the model otherwise, which is the failure §F's third lever exists to
+        // prevent.
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
+            {
+                RawResult = """{"structuredContent":{"saved":true}}""",
+                WritesArtifactBytes = 8,
+            });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var answer = await rig.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_take_screenshot",
+            ["arguments"] = new JsonObject
+            {
+                [SessionToolSurface.SessionParameter] = rig.Session!,
+                ["filename"] = "login.png",
+            },
+        });
+
+        var text = string.Concat((answer["content"]?.AsArray() ?? [])
+            .Select(block => (string?)block?["text"] ?? string.Empty));
+
+        await Assert.That(text).Contains(Path.Combine(rig.Session!, SessionLayout.OutputFolderName, "page", "login.png"));
+
+        // Said out loud rather than absorbed: the answer is no longer the
+        // child's own bytes, and the log is where that is admitted.
+        await Assert.That(rig.Logs.Logged("no longer byte-identical")).IsTrue();
+    }
+
+    /// <summary>
+    /// The bytes <paramref name="actual"/> gained, when it is
+    /// <paramref name="expected"/> with exactly one contiguous insertion.
+    /// </summary>
+    /// <remarks>
+    /// Returns <see langword="null"/> when anything else happened — a byte
+    /// changed, something was removed, or two separate regions were added. A
+    /// test that only compared lengths would pass while the middle had been
+    /// rewritten.
+    /// </remarks>
+    private static byte[]? OneInsertion(byte[] expected, byte[] actual)
+    {
+        if (actual.Length <= expected.Length)
+        {
+            return null;
+        }
+
+        var prefix = 0;
+
+        while (prefix < expected.Length && expected[prefix] == actual[prefix])
+        {
+            prefix++;
+        }
+
+        var suffix = 0;
+
+        while (suffix < expected.Length - prefix
+            && expected[^(suffix + 1)] == actual[^(suffix + 1)])
+        {
+            suffix++;
+        }
+
+        return prefix + suffix == expected.Length
+            ? actual[prefix..(actual.Length - suffix)]
+            : null;
     }
 
     /// <summary>

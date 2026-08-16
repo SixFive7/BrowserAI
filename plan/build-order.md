@@ -1576,6 +1576,103 @@ Six consumers, one source: server `instructions`, `init`'s description,
 
 **Consumes:** [§F](F-artifacts.md)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Artifacts/{ArtifactRouting,
+> ArtifactTools, ArtifactFilename, ArtifactRouter, ResultNote}.cs` ·
+> `src/BrowserAI/Sessions/{SessionLayout, SessionManager, LiveSession,
+> SessionErrors}.cs` · `src/BrowserAI/Proxy/BrowserProxy.cs` · the
+> `artifactPrefixes` section of `build/upstream-snapshots.mjs` and the snapshot
+> it regenerates · `tests/BrowserAI.Tests/{ArtifactRoutingTests,
+> LosslessPassthroughTests, ErrorCatalogueTests}.cs` ·
+> `tests/BrowserAI.Tests/Harness/{FakePlaywrightChild, RigSessionEnvironment}.cs`.
+> Every done-test below was run. **213 tests green in 8.9 s, `dotnet build` 0
+> warnings**, and the AOT publish is clean.
+>
+> ⚠️ **There are eleven generator prefixes, not nine, and the gate this step
+> built is what said so.** §F and [kb](../kb/playwright/tools-and-artifacts.md)
+> both carried nine, counted by hand on 2026-08-13. Derived from the resolved
+> bundle for the first time: **`element`** (an element screenshot —
+> `prefix: target ? "element" : "page"`, a ternary) and **`annotations`** (from
+> `browser_annotate` — a template literal), plus the **empty** prefix that
+> produces `traces`. A twelfth site, `prefix: this._filePrefix`, resolves through
+> `new LogFile(…, "console", …)` and the generator follows it rather than
+> guessing. Both documents corrected the same day; the set now regenerates into
+> `tools-list.json` on every build, so a twelfth is a diff rather than a memory.
+> **The coverage gate found its first drift on the day it was written.**
+>
+> ⚠️ **`traces\` is upstream's folder, not ours.** §F said *"the folder is ours
+> by choice"*; measured, `context.outputFile({prefix:"", suggestedFilename:
+> "traces", ext:""})` resolves to `<outputDir>/traces` and nothing configures it.
+> The half §F got right — that it is **not** a generator prefix — still stands.
+>
+> **The byte-identity collision was resolved by splicing rather than by
+> narrowing either side.** [Step 9](#9-lossless-passthrough) made a `tools/call`
+> answer the exact bytes the child wrote; §F requires a rewritten `filename` to
+> be reported back. The note is inserted into the child's own `content` array by
+> token offset, so **every byte the child wrote survives, in order, and exactly
+> one array element is added.** The guarantee is now two halves — *forwarded
+> unchanged comes back unchanged; rewritten comes back with one appended
+> element* — and `LosslessPassthroughTests.
+> AnArtifactCallKeepsEveryByteTheChildWroteAndGainsExactlyOneBlock` proves the
+> second by finding the single contiguous insertion rather than by comparing
+> lengths. Nothing was weakened: the seven byte-identity tests are unchanged,
+> because a call naming no file is still forwarded unchanged.
+>
+> **A `filename` is supplied only where upstream would have generated one, and
+> that is a correction to §F's *"names must be legible"* obligation.** Five of
+> the nine writing tools document `filename` as *"if not provided, the result is
+> returned as text"* — supplying one there takes the answer out of the response
+> and puts it in a file nobody asked for. The four that document a
+> `page-{timestamp}` default always write, and get `shop-example-com-checkout-1.png`
+> instead. The screenshot's extension is read from `type` first, because
+> upstream's `params.type ?? fromExtension(filename) ?? "png"` would otherwise
+> put jpeg bytes in a `.png`.
+>
+> **Two more measurements that no document carried.** A caller-supplied
+> `filename` resolves through `workspaceFile` against the child's **cwd**, while
+> a generated name resolves through `outputFile` against **`outputDir`** — two
+> different roots, which is why lever 1 points the cwd at the output root and
+> makes them coincide. And a **download lands in the output directory**, named by
+> the site, rather than in `launchOptions.downloadsPath`, which holds only
+> Playwright's raw artifact; the `download-` prefix appears only when the site
+> suggests no name at all. Both in
+> [kb](../kb/playwright/tools-and-artifacts.md#artifacts-and-output-directory-behaviour).
+>
+> **The typed folders are created on first use, and that was measured rather
+> than assumed.** Creating all fourteen at `init` costs **10.4 ms** per session
+> against **2.5 ms** for the three roots (twice, 120 sessions per pass) — about
+> a second each way per suite run, and ten empty directories in every session a
+> caller ever makes. `session.json` still names every folder with its resolved
+> path, so a folder on disk now means an artifact of that kind was produced.
+>
+> ⚠️ **`.gitignore`'s unanchored `artifacts/` rule swallowed
+> `src/BrowserAI/Artifacts/`**, so five product source files were ignored while
+> `dotnet build`, the suite and `git status --porcelain` all read green — which
+> is [the founding failure class](#every-done-test-ends-with-a-clean-working-tree)
+> applied to a repository, and the exact case [TODO.md](../TODO.md) predicted
+> when it asked whether §F would ever produce a folder of that name. Both rules
+> are root-anchored now, where the SDK actually puts that folder, and the
+> prediction is a test:
+> `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` lists every `.cs` under
+> `src/` and `tests/` against `git ls-files`. Planted and reverted — with the
+> unanchored rule back it fails naming all five files. **A clean working tree
+> cannot see an ignored file**, so the done-test that ends every step in this
+> file needed this to mean what it says.
+>
+> **One flake was found and fixed in the rig rather than in the product.**
+> `SessionRun` renames a session directory after BrowserAI has exited, and once
+> in about six runs that failed with `UnauthorizedAccessException`, taking
+> twelve published-binary tests with it because they share one capture. A
+> terminated process is **signalled before the kernel tears its handles down**,
+> and a directory that is any live process's working directory cannot be
+> renamed — nor can any of its ancestors. The move is now retried under a
+> bounded wait whose failure message names that cause.
+>
+> **The roll-up sits at the session's own root and is not propagated upward.**
+> Refreshing every ancestor would scatter `browserai-sessions.json` up a caller's
+> tree to the drive root, which is the opposite of scoping it. Written on open
+> and on destroy; the same walk feeds `init`'s *"other sessions under this root"*
+> line, because doing it twice made that the slowest call in the suite.
+
 Route on the way in; do not sort on the way out.
 
 - The child's `WorkingDirectory` **is** the instance output root, which makes the

@@ -269,6 +269,169 @@ for (const capability of [...new Set(registry.map((tool) => tool.capability))].s
 }
 const skillOnly = registry.filter((tool) => tool.skillOnly).map((tool) => tool.name);
 
+// ---------------------------------------------------------------------------
+// The artifact generator prefixes
+// ---------------------------------------------------------------------------
+
+// Read out of the bundle's SOURCE rather than off the registry, because there
+// is nowhere else: every prefix lives inside a handler closure, and
+// `require(coreBundle)` hands back inert tool objects that never ran one.
+//
+// Build-order step 14 / plan/F-artifacts.md: a tenth prefix must fail the
+// build exactly as an unclassified tool does. That gate needs the prefix set
+// derived from the resolved child, never typed into a .cs file -- so it is
+// recorded here, diffed on every build, and asserted against the folders the
+// layout declares by ArtifactRoutingTests.
+
+/** The end of the expression that starts at `start`: the comma or bracket that closes it. */
+function endOfExpression(text, start) {
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"' || c === "'" || c === '`') {
+      i = endOfString(text, i);
+      continue;
+    }
+    if (c === '(' || c === '[' || c === '{') { depth++; continue; }
+    if (c === ')' || c === ']' || c === '}') { if (depth === 0) return i; depth--; continue; }
+    if (c === ',' && depth === 0) return i;
+  }
+  throw new Error(`Unterminated expression at ${start}.`);
+}
+
+function endOfString(text, start) {
+  const quote = text[start];
+  for (let i = start + 1; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue; }
+    if (text[i] === quote) return i;
+  }
+  throw new Error(`Unterminated string literal at ${start}.`);
+}
+
+/**
+ * Every string a prefix expression can evaluate to. A template literal
+ * contributes the part before its first hole, which is the stem a generated
+ * name actually starts with.
+ */
+function literalsIn(expression) {
+  return [...expression.matchAll(/"([^"]*)"|'([^']*)'|`([^`]*)`/g)]
+    .map((match) => match[1] ?? match[2] ?? match[3])
+    .map((value) => value.split('${')[0]);
+}
+
+/**
+ * Resolves `prefix: this._member` by following the member to the constructor
+ * parameter it is assigned from, and that parameter to the literals every
+ * `new Class(...)` passes at its position. Throws rather than guessing: an
+ * unresolvable prefix is precisely the thing this section exists to surface.
+ */
+function resolveMember(source, member) {
+  const assignment = source.indexOf(`this.${member} = `);
+  if (assignment < 0) {
+    throw new Error(`No assignment to this.${member} anywhere in the bundle.`);
+  }
+  const parameter = /^this\.[A-Za-z0-9_$]+ = ([A-Za-z0-9_$]+);/.exec(source.slice(assignment))?.[1];
+  if (!parameter) {
+    throw new Error(`this.${member} is not assigned from a plain identifier.`);
+  }
+
+  const head = source.lastIndexOf('constructor(', assignment);
+  if (head < 0) {
+    throw new Error(`No constructor above the assignment to this.${member}.`);
+  }
+  const parameters = source
+    .slice(head + 'constructor('.length, source.indexOf(')', head))
+    .split(',')
+    .map((name) => name.trim());
+  const position = parameters.indexOf(parameter);
+  if (position < 0) {
+    throw new Error(`'${parameter}' is not a parameter of the constructor that assigns this.${member}.`);
+  }
+
+  const declaration = /([A-Za-z0-9_$]+) = class[\s\S]{0,40}?\{/
+    .exec(source.slice(Math.max(0, source.lastIndexOf(' = class', head) - 40), head + 1));
+  const className = declaration?.[1];
+  if (!className) {
+    throw new Error(`No class declaration above the constructor that assigns this.${member}.`);
+  }
+
+  const literals = new Set();
+  for (let site = source.indexOf(`new ${className}(`); site >= 0; site = source.indexOf(`new ${className}(`, site + 1)) {
+    let at = site + `new ${className}(`.length;
+    for (let argument = 0; argument <= position; argument++) {
+      const end = endOfExpression(source, at);
+      if (argument === position) {
+        const found = literalsIn(source.slice(at, end));
+        if (found.length === 0) {
+          throw new Error(`new ${className}() argument ${position} is not a literal: ${source.slice(at, end)}`);
+        }
+        for (const value of found) {
+          literals.add(value);
+        }
+      }
+      at = end + 1;
+    }
+  }
+  if (literals.size === 0) {
+    throw new Error(`No 'new ${className}(' call site to read a prefix from.`);
+  }
+
+  return { literals: [...literals], via: `${className}(argument ${position})` };
+}
+
+function artifactPrefixes(source) {
+  const templates = [];
+  const prefixes = new Set();
+
+  for (let at = source.indexOf('prefix:'); at >= 0; at = source.indexOf('prefix:', at + 1)) {
+    const end = endOfExpression(source, at + 'prefix:'.length);
+    const expression = source.slice(at + 'prefix:'.length, end).trim();
+
+    // An artifact template is the object literal `outputFile` and
+    // `resolveClientFile` take, and every one of them carries `ext` beside
+    // `prefix`. Anything else named `prefix:` is a different key.
+    if (!/\bext:/.test(source.slice(end, end + 200))) {
+      continue;
+    }
+
+    let literals = literalsIn(expression);
+    let via;
+    if (literals.length === 0) {
+      const member = /^this\.([A-Za-z0-9_$]+)$/.exec(expression)?.[1];
+      if (!member) {
+        throw new Error(
+          `An artifact prefix expression is neither a literal nor this.<member>: ${expression}\n` +
+          'The prefix set can no longer be derived from the bundle, which is a red build rather than a smaller set.');
+      }
+      ({ literals, via } = resolveMember(source, member));
+    }
+
+    templates.push({ expression, prefixes: literals, ...(via ? { resolvedVia: via } : {}) });
+    for (const value of literals) {
+      prefixes.add(value);
+    }
+  }
+
+  if (prefixes.size === 0) {
+    throw new Error('No artifact prefixes were found at all, which means the scan stopped matching rather than upstream removing them.');
+  }
+
+  return {
+    _what_this_is:
+      'The artifact generator prefixes, read out of the resolved bundle source. A generated ' +
+      'artifact is named `<prefix>-<timestamp>.<ext>`, and BrowserAI routes by prefix ' +
+      '(plan/F-artifacts.md). The empty prefix is the traces template, which supplies its own ' +
+      'suggestedFilename. A prefix appearing here with no folder in ArtifactRouting, or a ' +
+      'folder with no prefix here, fails the build.',
+    prefixes: [...prefixes].sort(),
+    templates: templates
+      .map((template) => JSON.stringify(template))
+      .filter((template, index, all) => all.indexOf(template) === index)
+      .sort()
+      .map((template) => JSON.parse(template)),
+  };
+}
+
 const probedWith = '2999-01-01';
 const ceilingProbe = await session('default', {}, probedWith);
 const everything = await session('all-capabilities', { capabilities: declaredCapabilities }, probedWith);
@@ -337,6 +500,7 @@ const snapshot = {
   unconditionalCapabilities: Object.keys(toolsByCapability).filter((capability) => capability.startsWith('core')),
   toolsByCapability,
   skillOnly,
+  artifactPrefixes: artifactPrefixes(readFileSync(coreBundle, 'utf8')),
   defaultSurface: byDefault,
   tools: everything.tools,
 };
