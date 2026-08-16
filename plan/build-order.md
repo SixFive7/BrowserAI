@@ -1006,6 +1006,16 @@ wrongly-deleted entry is restored by the next use.
 
 ### 12. The session tools and config generation
 
+> **Maintainer decision, 2026-08-16: the leaked profile directories wait for
+> this step.** Because `userDataDir` is not set until here, upstream puts every
+> run's profile in `%LOCALAPPDATA%\ms-playwright-mcp\` — measured **47
+> directories / 318 MB** at 04:30Z, growing by roughly one per browser-touching
+> test run. Deleting them before this step just means deleting them again, so
+> the pile is left alone deliberately. **Once `userDataDir` reaches the child
+> and a test proves it, delete that directory once and confirm a later run does
+> not recreate it** — a run that still writes there is this step not having
+> worked, and it is the only signal that says so.
+
 **Consumes:** [§C](C-sessions.md#the-init-contract) ·
 [§H.2](H-model-surface.md#h2-the-authored-tools)
 
@@ -1209,6 +1219,35 @@ Route on the way in; do not sort on the way out.
 ### 16. The stray sweep
 
 **Consumes:** [§C](C-sessions.md#the-stray-sweep-and-the-concurrency-it-must-survive)
+
+> **Maintainer decision, 2026-08-16: there is a real stray browser tree on this
+> machine, and it is being kept alive on purpose as a test subject for this
+> step.** Recorded here because a process is not a file and will not survive in
+> a commit.
+>
+> Five `chrome-headless-shell.exe` processes, root **PID 75632** created
+> **2026-08-15 08:43:58** with three children from that same second and a fourth
+> spawned 2026-08-16 06:30:08. Image path:
+> `%LOCALAPPDATA%\ms-playwright\chromium_headless_shell-1237\chrome-headless-shell-win64\chrome-headless-shell.exe`.
+> It is a leftover of the `npx`-based setup this project replaces — **not** of
+> anything built here, which provisions to `%LOCALAPPDATA%\BrowserAI\browsers`
+> and [ships full Chromium in every mode](../README.md#settled-2026-08-15).
+>
+> **It is a NEGATIVE test subject, and that is the more valuable half.** Its
+> image path is not the binary BrowserAI provisioned, so
+> [detection](D-locking.md#never-by-image-name) must **not** match it and the
+> sweep must leave it running. That is the property which stops BrowserAI
+> closing a developer's browser, and this step's done-test already asks for the
+> Firefox version of it — *"a foreign Firefox is attributed to none of our
+> sessions."* This supplies the Chromium version, against a real 20-hour-old
+> process rather than a synthetic one.
+>
+> The positive case still needs a browser under BrowserAI's own root, which
+> [step 15](#15-first-run-provisioning-and-browserai_reinstall_browser)
+> provides. **Kill the tree by recorded PID once this step has used it** — never
+> by image name, which is forbidden here even for an operator cleaning up.
+> Validate `(pid, creationFileTime)` before terminating: PIDs recycle, and the
+> creation time above is what makes the identification safe.
 
 Designed for ~100 concurrent BrowserAI processes, not for one.
 
