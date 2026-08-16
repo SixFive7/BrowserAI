@@ -30,6 +30,20 @@ internal sealed record SessionEnvironment
     public required PayloadLayout Payload { get; init; }
 
     /// <summary>
+    /// First-run browser provisioning: what <c>init</c> starts and never waits
+    /// for, and what <c>browserai_reinstall_browser</c> drives.
+    /// </summary>
+    /// <remarks>
+    /// <b>Required rather than defaulted, and that is on purpose.</b> A
+    /// provisioner conjured at the call site would point at whatever browsers
+    /// root happened to be in scope — and the one thing that must never happen in
+    /// a test is a 203.8 MB download nobody asked for. Handing it in makes the
+    /// browsers root and the installer an explicit decision of whoever builds the
+    /// environment.
+    /// </remarks>
+    public required BrowserProvisioner Provisioner { get; init; }
+
+    /// <summary>
     /// This run's own directory, which is where a session's <b>generated
     /// config</b> is written.
     /// </summary>

@@ -191,6 +191,27 @@ reaches the wire unless the response is `_raw`.
 `PLAYWRIGHT_DOWNLOAD_HOST` must be stripped: it collapses the mirror list to one
 host, so all five attempts hit the same dead server.
 
+> ⚠️ **Qualified 2026-08-16: Chrome for Testing already has only one mirror**, so
+> for the browser itself the rotation is a no-op and the five retries all hit
+> `cdn.playwright.dev`. The full finding, with the URL shapes, is in
+> [kb: first-run provisioning](provisioning-and-timings.md#first-run-provisioning).
+> The strip is still right — it is what keeps the rotation working for `ffmpeg`,
+> `winldd` and `firefox` — but "five attempts at five hosts" was never true of
+> the 202 MB half of the download.
+
+**The per-socket stall timeout is upstream's `NET_DEFAULT_TIMEOUT = 3e4`**, read
+2026-08-16 out of the resolved bundle, applied as
+`+(getFromENV("PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT") || "0") || NET_DEFAULT_TIMEOUT`
+and passed down to `request.setTimeout`. **BrowserAI sets nothing**, so the
+figure stays upstream's rather than being duplicated into a constant of ours that
+would drift the day theirs moved; the variable is absent from the installer's
+environment by construction, because
+`src/BrowserAI/Protocol/ChildEnvironment.cs` is an allowlist. The three caps
+BrowserAI *does* own — 45 minutes absolute, 10 minutes on extraction, 60 as a
+crash tripwire — are all far above it, so a stalled socket is upstream's retry
+loop's business and not ours. Re-establish by grepping `NET_DEFAULT_TIMEOUT` in
+`coreBundle.js`. `[FLOATS]`
+
 **The four download-host variants, named.** Measured 2026-08-16 from the
 resolved payload rather than from memory —
 `grep -o "PLAYWRIGHT_[A-Z_]*DOWNLOAD_HOST"
@@ -209,6 +230,42 @@ last, so an *interrupted* install self-heals. But a browser corrupted **after** 
 successful install never re-downloads — `spawn EFTYPE` forever — and upstream's
 remediation string points at `npx @playwright/mcp install-browser chromium`, a
 package we do not ship resolving a different revision.
+
+**The remediation string's exact shape, because BrowserAI replaces it.** Read
+2026-08-16 in `playwright-core/lib/coreBundle.js`, `throwIfExecutableMissing`:
+
+```
+`${label} is not installed${location}. Run \`${command}\` to install`
+```
+
+with `label` = `Browser "${target}"` or `FFmpeg`, `location` =
+`; expected executable at ${path}` when the error carries one, and `command`
+chosen by a ternary on `config.skillMode` between
+`npx @playwright/mcp install-browser ${target}` and
+`playwright-cli install-browser ${target}`. ⚠️ **`target` is the resolved
+*channel*, not the browser family** —
+`config.browser.launchOptions?.channel ?? config.browser.browserName` — so a
+BrowserAI caller is told to install **`chrome-for-testing`**, which is not a
+`browserName` at all. `src/BrowserAI/Runtime/ProvisioningRemediation.cs` matches
+the whole `Run \`…install-browser…\` to install` clause, so **both** branches of
+that ternary are covered by one pattern; a reword upstream would make the strip
+stop firing silently, which is why this shape has
+[a row of its own](../README.md#re-verification-index). `[FLOATS]`
+
+**⚠️ `browser_get_config` needs the browser executable to exist.** Measured
+2026-08-16 @ `@playwright/mcp` 0.0.79, twice, by driving `cli.js` directly with
+`PLAYWRIGHT_BROWSERS_PATH` at an **empty** directory: the call answers
+`isError: true` with `Browser "chrome-for-testing" is not installed; expected
+executable at …`, from `throwIfExecutableMissing`. It does **not** launch
+anything — which is why the round trip is cheap on a provisioned machine — but
+the binary has to be there. **This contradicts
+[§A](../../plan/A-runtime.md#first-run-browser-provisioning)'s claim that the
+tool keeps working during first-run provisioning**, and the plan was corrected
+rather than the measurement: BrowserAI refuses every upstream tool while a
+download is running, including this one, because upstream's error would advise
+provisioning a browser that is already being provisioned. Re-establish with
+`cli.js --config <cfg>` against a fresh browsers root and one
+`browser_get_config` call. `[FLOATS]`
 
 **Integrity is ours to provide.** Playwright validates only `content-length`;
 upstream closed and locked the request for checksums

@@ -196,7 +196,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
             // tools/call. It costs a directory, a lock and a log under the
             // suite's scratch root -- so this layer is no longer "nothing on
             // disk", and saying so is cheaper than a reader discovering it.
-            var session = sessionEnvironment.CanOpenSessions
+            var session = sessionEnvironment.CanOpenSessions && sessionEnvironment.OpensDefaultSession
                 ? await OpenDefaultSessionAsync(client, sessionEnvironment)
                 : null;
 

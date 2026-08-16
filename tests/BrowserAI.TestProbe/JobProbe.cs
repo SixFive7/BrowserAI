@@ -96,9 +96,25 @@ internal static partial class JobProbe
         // GPU, crashpad -- appear after the child reports ready.
         Thread.Sleep(1500);
 
+        // ⚠️ Two snapshots of the job's own membership, taken either side of the
+        // walk, because a live browser is not a static tree: Chromium starts and
+        // retires helpers continuously, so a single list taken AFTER the walk
+        // reports every process born during it as one the walk missed. Measured
+        // 2026-08-16 against a real Chromium -- one phantom "missed" member,
+        // reproducibly, against a node tree that had never produced any.
+        //
+        // The per-row check uses the union, so a process born during the walk is
+        // still recognised as a member. The "did the walk miss anything"
+        // direction uses the INTERSECTION -- members present both before and
+        // after -- which is the only set whose absence from the walk means the
+        // seeding actually failed.
+        var jobBefore = job.ProcessIds();
         var walk = Walk(process.Id);
-        var jobProcessIds = job.ProcessIds();
-        var jobProcessIdSet = jobProcessIds.ToHashSet();
+        var jobAfter = job.ProcessIds();
+
+        var jobProcessIds = jobAfter;
+        var jobProcessIdSet = jobBefore.Concat(jobAfter).ToHashSet();
+        var stableJobMembers = jobBefore.Where(jobAfter.Contains).ToList();
 
         var rows = new JsonArray();
         var escapees = 0;
@@ -150,7 +166,7 @@ internal static partial class JobProbe
             ["handleIsInheritable"] = job.HandleIsInheritable,
             ["jobProcessIds"] = new JsonArray([.. jobProcessIds.Select(id => JsonValue.Create(id))]),
             ["jobMembersTheWalkMissed"] = new JsonArray(
-                [.. jobProcessIds.Where(id => !walked.Contains(id)).Select(id => JsonValue.Create(id))]),
+                [.. stableJobMembers.Where(id => !walked.Contains(id)).Select(id => JsonValue.Create(id))]),
             ["escapees"] = escapees,
             ["walk"] = rows,
             ["childReport"] = ReadChildReport(readyFile),

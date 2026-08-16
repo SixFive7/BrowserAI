@@ -286,7 +286,7 @@ Recorded because the research raised it from two directions and the answer is no
 | **Profile and artifact locations** | **Arguments to `init`**, not global policy. The caller states where its data goes, per session — so "shared or per-directory" is the caller's choice, not BrowserAI's. This is what removes the relative-path hazard. |
 | **Path validation** | **Any path is accepted.** Correct use is the calling agent's responsibility. See below. |
 | **Child process model** | **One node child per handle.** Stays firmly on the proxy side of the scope boundary; costs ~300 ms and one process per instance. |
-| **Browser and packaging** | **Full Chromium, NativeAOT single-file.** No host dependency on Node, .NET or Chrome. Installer ~117 MB; browsers provisioned on first run (203.8 MB down, 433 MiB on disk), once per machine rather than once per update. See [§A](plan/A-runtime.md#a-ship-and-own-the-runtime). |
+| **Browser and packaging** | **Full Chromium, NativeAOT single-file.** No host dependency on Node, .NET or Chrome. Installer ~117 MB; browsers provisioned on first run (203.8 MB down, 430.48 MiB on disk, ~12.6 s), once per machine rather than once per update. See [§A](plan/A-runtime.md#a-ship-and-own-the-runtime). |
 
 **On accepting any path.** `init` does not constrain `userDataDir` or artifact paths to a sanctioned root. The consequence, recorded so it is inherited rather than rediscovered: an agent may point an instance at the user's **real Chrome profile** and read live browser state, or write artifacts anywhere the process can reach.
 

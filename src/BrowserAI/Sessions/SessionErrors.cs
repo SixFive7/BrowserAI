@@ -24,11 +24,15 @@ namespace BrowserAI.Sessions;
 /// condition and compares what came back against this file, then asserts that
 /// <i>every</i> public method was matched by one of those provocations. A row
 /// nobody can reach is documentation rather than behaviour, and this is the check
-/// that says so. Three rows of §H.4's catalogue are therefore deliberately
-/// <b>absent</b> rather than written and unreachable: provisioning-in-progress
-/// belongs to [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser),
-/// the unattributable stray to [step 16](../../plan/build-order.md#16-the-stray-sweep),
-/// and the Firefox profile dialog to [step 17](../../plan/build-order.md#17-firefox).
+/// that says so. One row of §H.4's catalogue is therefore deliberately
+/// <b>absent</b> rather than written and unreachable: the Firefox profile dialog
+/// belongs to [step 17](../../plan/build-order.md#17-firefox).
+/// Provisioning-in-progress and the unattributable stray arrived at
+/// [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser),
+/// which is the first build that can emit either — the first because nothing
+/// downloaded a browser before it, and the second because
+/// <c>browserai_reinstall_browser</c> is the first thing that has to ask whether
+/// one is running.
 /// </para>
 /// <para>
 /// ⚠️ <b><c>purpose</c> is a channel between agents.</b> It is free text one
@@ -185,6 +189,76 @@ internal static class SessionErrors
     public static string ConfigurationWouldDiscloseSecrets(string tool = "browser_get_config") =>
         $"'{tool}' was answered by the browser child, and BrowserAI did not pass the answer on: it carries a 'secrets' key, which upstream serialises in plaintext with no redaction. Nothing was changed. "
         + "BrowserAI never writes that key, so a config that has one came from outside this process; find what set it before reading the config back.";
+
+    /// <summary>Row 6 — the browser this session needs is still downloading.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The number is quoted because the wait is the caller's decision.</b> An
+    /// agent told "wait a moment" cannot tell a ten-second pause from a
+    /// twenty-seven-minute one, and the difference between those is the link
+    /// rather than anything BrowserAI knows. Naming the size and the destination
+    /// lets it decide whether to wait, do something else first, or tell a human.
+    /// </para>
+    /// <para>
+    /// <b>It is an error and not a block, which is the whole design.</b>
+    /// <c>init</c> returned immediately, this call is refused immediately, and
+    /// the same session's same child answers the same call once the install
+    /// lands — no restart, no new session, nothing to re-create. A blocking
+    /// <c>init</c> would have corrupted whatever timing the caller was managing
+    /// and told it nothing.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="browser">What is being downloaded, with its revision.</param>
+    /// <param name="directory">Where it is going.</param>
+    /// <param name="megabytes">How large the download is, as measured from the CDN.</param>
+    /// <returns>The refusal.</returns>
+    public static string ProvisioningInProgress(string tool, string browser, string directory, string megabytes) =>
+        $"'{tool}' needs a browser, and this is the first use of {browser} on this machine. The download has started ({megabytes}) into '{directory}' and BrowserAI did not wait for it — nothing was changed and no browser was launched. "
+        + "Wait about ten seconds and call the same tool again on the same session: the session and its child are already running, so nothing has to be re-created and there is nothing to restart. "
+        + $"Every browser tool is refused until it lands, including 'browser_get_config' — it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.SetPurpose} all work meanwhile. "
+        + "A slow link makes this minutes rather than seconds; the size above is what it depends on.";
+
+    /// <summary>
+    /// Row 13 — something is running out of BrowserAI's own browser tree that no
+    /// session accounts for.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Reporting only, and there is no code path that could terminate it.</b>
+    /// The process was found by matching the <i>full image path</i> against the
+    /// browsers root — never by image name, which would name the user's own
+    /// Chrome as readily as ours — and what it belongs to is unknown by
+    /// definition: a BrowserAI that died without releasing its session, a
+    /// debugger, a copy somebody launched by hand. Killing an unattributable
+    /// process is how a tool that was asked to replace a directory ends up
+    /// closing a human's browser window.
+    /// </para>
+    /// <para>
+    /// It is nonetheless a refusal rather than a note, because the operation it
+    /// blocks is a <b>delete</b>: Windows will not remove a directory holding
+    /// open executables, so proceeding would fail halfway and leave a tree that
+    /// is neither the old browser nor the new one.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="directory">The tree it was asked to replace.</param>
+    /// <param name="running">Every unattributable process, as pid and image path.</param>
+    /// <returns>The refusal.</returns>
+    public static string UnattributableBrowserRunning(
+        string tool,
+        string directory,
+        IReadOnlyList<(int ProcessId, string ImagePath)> running)
+    {
+        ArgumentNullException.ThrowIfNull(running);
+
+        var named = string.Join(
+            "\n",
+            running.Take(20).Select(entry => $"  PID {entry.ProcessId.ToString(CultureInfo.InvariantCulture)} — {entry.ImagePath}"));
+
+        return $"'{tool}' was not run: a browser is running from BrowserAI's own tree at '{directory}' that no session on this machine claims. Nothing was changed and nothing was terminated — this is reported, never killed, because what it belongs to is unknown and it may be somebody's window.\n{named}\n"
+            + "It is most often a BrowserAI that died without releasing its session. Close it, or wait for it to exit, and call this tool again; Windows will not delete a directory whose executables are open, so there is nothing to force.";
+    }
 
     /// <summary>Row 7 — the directory was locked and the browser runtime did not start.</summary>
     /// <param name="path">The session directory.</param>

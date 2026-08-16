@@ -3,6 +3,7 @@
 
 using System.Reflection;
 using System.Text.Json.Nodes;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
@@ -447,6 +448,82 @@ internal sealed class ErrorCatalogueTests
     }
 
     [Test]
+    public async Task TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            installer: (_, root) => FakeInstaller.Succeeding(
+                Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
+                TimeSpan.FromSeconds(30)));
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+        var directory = Path.Combine(sessions.Root, "still-downloading");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "created before the browser exists",
+            ["mode"] = "headless",
+        });
+
+        // Row 6. The condition is real — this rig's browsers root is empty and
+        // its installer takes thirty seconds — and the call is answered
+        // immediately rather than held.
+        var refused = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = directory,
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        Match(
+            TextOf(refused),
+            nameof(SessionErrors.ProvisioningInProgress),
+            SessionErrors.ProvisioningInProgress(
+                "browser_navigate",
+                SessionManager.SupportedBrowser,
+                Path.Combine(sessions.Environment.Paths.BrowsersDirectory, RigSessionEnvironment.ChromiumDirectoryName),
+                BrowserProvisioner.FirstRunDownloadSize));
+    }
+
+    [Test]
+    public async Task TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot()
+    {
+        // No session at all, and that is the whole condition: a browser running
+        // out of our tree that SOMETHING claims produces the other refusal, which
+        // names the session. Row 13 is the case where nothing does.
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = sessions.ChromiumDirectory;
+
+        // A process whose IMAGE PATH is inside the browsers root, which is the
+        // only property the product matches on -- never the image name, which
+        // would name the user's own Chrome as readily as ours. The suite's job
+        // holds it, so a failed assertion below cannot leave it running, and the
+        // helper does not return until the product's own enumeration can see it.
+        using var scope = new JobObjectScope();
+        var (_, planted) = await PlantedProcess.StartInAsync(scope, Path.Combine(directory, "chrome-win64"), directory);
+
+        // Row 13. No session on this machine has a browser open -- this rig has
+        // opened none -- so the process is real, running out of our tree, and
+        // attributable to nothing.
+        var refused = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, []);
+        var text = TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(text).Contains("no session on this machine claims");
+        await Assert.That(text).Contains(planted);
+
+        Record(nameof(SessionErrors.UnattributableBrowserRunning));
+
+        // Reported, never killed: the tree is still there and so is the process.
+        await Assert.That(File.Exists(planted)).IsTrue();
+    }
+
+    [Test]
+    [DependsOn(nameof(TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading))]
+    [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
@@ -479,7 +556,7 @@ internal sealed class ErrorCatalogueTests
 
         // And the count, so a row deleted rather than triggered does not make
         // this pass by shrinking the question.
-        await Assert.That(rows.Count).IsEqualTo(20);
+        await Assert.That(rows.Count).IsEqualTo(22);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

@@ -633,6 +633,12 @@ later measurement overruled the original.
       a tree corrupted *after* a successful install never re-downloads, because
       `INSTALLATION_COMPLETE` short-circuits without validating. Recovery is the
       `browserai_reinstall_browser` tool plus error text that names the path.
+      **Built 2026-08-16** ([step 15](plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)),
+      and one half of it turned out to be the *other* direction: an install that
+      was **interrupted** does self-heal, because the marker is written last —
+      what does not is one corrupted afterwards. So BrowserAI checks the marker
+      before it calls a browser present, which upstream never does at launch, and
+      the error text now says which of the two recoveries applies to which case.
 
 - [x] **Record why an instance exists.** ✅ `purpose` is a **required** field on
       `init`, appended on `resume`, updatable via `browserai_set_purpose`, stored in
@@ -643,6 +649,20 @@ later measurement overruled the original.
 - [x] **Per-`init` browser choice.** ✅ On `init` only; `resume` reads it from
       `lock.json` and refuses it as an argument, because a profile is
       browser-specific. Firefox ships in v1.
+
+- [ ] **Firefox registers itself for Windows restart, and [step 17](plan/build-order.md#17-firefox) has to turn that off.**
+      Measured 2026-08-16 on a Firefox BrowserAI provisioned: exactly one process
+      in the tree answers `GetApplicationRestartSettings` with `S_OK`, while every
+      Chromium process answers `ERROR_NOT_FOUND`. That is
+      `toolkit.winRegisterApplicationRestart` (default `true`) doing what
+      [kb: resurrection](kb/chromium/resurrection.md#the-mechanism-and-what-is-still-unproven)
+      says it does. **Containment is unaffected** — `KILL_ON_JOB_CLOSE` happens
+      now and Windows' restart happens after a reboot or an update — but a Firefox
+      session shipped without setting that pref to `false` in the profile means a
+      machine update resurrects a browser no session claims, with no lock and
+      nothing to attribute it to. Both directions are asserted by
+      `BrowserContainmentTests`, so a change in either is a red build rather than
+      a surprise.
 
 - [x] **Firefox's `parent.lock` preflight.** ✅ Encoded 2026-08-15 as
       [§D → Firefox: the preflight, and a second detection path](plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)

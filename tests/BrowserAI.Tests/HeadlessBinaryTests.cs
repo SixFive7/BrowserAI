@@ -3,6 +3,7 @@
 
 using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -52,6 +53,16 @@ internal sealed class HeadlessBinaryTests
         // Headless, so the selector really was exercised on the branch that
         // would otherwise have asked for the shell.
         await Assert.That(browser.CommandLine).Contains("--headless");
+
+        // ⚠️ The profile, read off the BROWSER'S OWN command line rather than out
+        // of the config the child reports. The two can disagree in exactly the
+        // case that matters: a `UserDataDir` policy set on the machine overrides
+        // the switch, and Chromium then runs against a profile nobody chose while
+        // every config round trip still reports ours. An [unusable path falls back
+        // invisibly](../../kb/chromium/profiles.md) for the same reason, so this
+        // is the only assertion that distinguishes "we asked" from "it obeyed".
+        await Assert.That(browser.CommandLine)
+            .Contains(Path.Combine(run.SessionDirectory, SessionLayout.ProfileFolderName));
 
         // And the shell is not merely unused: it was never provisioned, which is
         // what makes "the channel is mandatory" a hard failure rather than a

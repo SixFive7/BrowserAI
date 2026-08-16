@@ -37,6 +37,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// <param name="BrowserAiProcessId">The published binary's own pid.</param>
 /// <param name="Survivors">Processes still alive after the published binary was terminated from outside.</param>
 /// <param name="StandardError">Everything BrowserAI wrote to stderr.</param>
+/// <param name="SessionDirectory">The session this run's browser belongs to.</param>
 internal sealed record SliceRun(
     JsonObject InitializeResult,
     IReadOnlyList<string> ToolNames,
@@ -46,7 +47,8 @@ internal sealed record SliceRun(
     IReadOnlyList<ObservedProcess> Processes,
     int BrowserAiProcessId,
     IReadOnlyList<ObservedProcess> Survivors,
-    string StandardError)
+    string StandardError,
+    string SessionDirectory)
 {
     private static readonly Lazy<Task<SliceRun>> Shared = new(CaptureAsync);
 
@@ -168,7 +170,8 @@ internal sealed record SliceRun(
             processes,
             browserAi,
             survivors,
-            client.StandardErrorSoFar());
+            client.StandardErrorSoFar(),
+            session);
     }
 
     private static List<ObservedProcess> Observe(IEnumerable<int> processIds)

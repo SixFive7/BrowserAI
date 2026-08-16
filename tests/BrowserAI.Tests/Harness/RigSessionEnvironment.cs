@@ -5,6 +5,7 @@ using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Protocol;
 using BrowserAI.Proxy;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 
@@ -47,10 +48,16 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private readonly List<SessionLogging> _logs = [];
     private readonly List<ChildProcessOptions> _launches = [];
     private readonly Lock _gate = new();
+    private readonly ILoggerFactory _provisioningLog;
 
     private int _disposed;
 
-    private RigSessionEnvironment(string root, Action<FakePlaywrightChild>? configure, long? freeBytes)
+    private RigSessionEnvironment(
+        string root,
+        Action<FakePlaywrightChild>? configure,
+        long? freeBytes,
+        Func<string, string, IInstallerRun>? installer,
+        ProvisioningTimers? timers)
     {
         Root = root;
 
@@ -63,10 +70,44 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         var instances = Path.Combine(root, "app-root", "instances");
         _ = Directory.CreateDirectory(instances);
 
+        var paths = new LocalAppDataPaths(Path.Combine(root, "app-root"));
+
+        // ⚠️ The browsers root is inside the scratch tree and the installer is a
+        // double, and BOTH halves are load-bearing. Left at the real root, every
+        // rig test would take a dependency on a developer's machine having a
+        // browser; left with the real installer, the first rig test to meet an
+        // empty scratch root would start a 203.8 MB download that nobody asked
+        // for and that no assertion is about.
+        _provisioningLog = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+
+        Provisioner = new BrowserProvisioner(RepositoryPayload.Layout, paths.BrowsersDirectory, _provisioningLog, timers)
+        {
+            // A test that does not name an installer gets one that refuses to
+            // run at all, and a tree that is already complete below. That pairing
+            // is the assertion: a rig which is not ABOUT provisioning must not be
+            // able to start one by accident, and this is what turns that from a
+            // hope into a failure with a name on it.
+            StartInstaller = installer ?? ((browser, browsersRoot) =>
+                throw new InvalidOperationException(
+                    $"A rig with no installer of its own tried to provision '{browser}' into '{browsersRoot}'. Its browsers root is pre-seeded as complete, so reaching this line means something asked for a download that no assertion in this test is about.")),
+        };
+
+        if (installer is null)
+        {
+            // The state a developer's machine is in, and the state every step
+            // before this one assumed: the browser is there. Written the way
+            // upstream writes it -- the directory, then the marker last -- so a
+            // product check that looked at the wrong one would still fail here.
+            var chromium = Path.Combine(paths.BrowsersDirectory, ChromiumDirectoryName);
+            _ = Directory.CreateDirectory(chromium);
+            File.WriteAllText(Path.Combine(chromium, BrowsersManifest.InstallationCompleteMarker), string.Empty);
+        }
+
         Environment = new SessionEnvironment
         {
-            Paths = new LocalAppDataPaths(Path.Combine(root, "app-root")),
+            Paths = paths,
             Payload = RepositoryPayload.Layout,
+            Provisioner = Provisioner,
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
             FreeBytesOn = _ => freeBytes,
@@ -100,6 +141,18 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// <summary>The scratch tree every session this rig opens lives under.</summary>
     public string Root { get; }
 
+    /// <summary>The provisioner this rig's sessions ask about their browser.</summary>
+    public BrowserProvisioner Provisioner { get; }
+
+    /// <summary>
+    /// The directory a chromium install lands in, spelled from the committed
+    /// snapshot rather than as a literal, so a revision bump moves it.
+    /// </summary>
+    public static string ChromiumDirectoryName { get; } = $"chromium-{BrowserAiPaths.ChromiumRevision}";
+
+    /// <summary>Where this rig's chromium tree is, or would be.</summary>
+    public string ChromiumDirectory => Path.Combine(Environment.Paths.BrowsersDirectory, ChromiumDirectoryName);
+
     /// <summary>
     /// Whether a session can be opened in this environment at all.
     /// </summary>
@@ -109,6 +162,19 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// deliberate failure into every test's setup failure.
     /// </remarks>
     public bool CanOpenSessions { get; private init; } = true;
+
+    /// <summary>
+    /// Whether the rig opens its own session up front.
+    /// </summary>
+    /// <remarks>
+    /// <b>Separate from <see cref="CanOpenSessions"/>, because they are different
+    /// facts.</b> That one says a session <i>cannot</i> be opened here; this one
+    /// says one should not be. The test that needs it is
+    /// [row 13](../../plan/H-model-surface.md#h4-the-error-catalogue) — a browser
+    /// running out of our tree that <b>no session claims</b> — which is
+    /// unreachable while any session is open, including the rig's own.
+    /// </remarks>
+    public bool OpensDefaultSession { get; private init; } = true;
 
     /// <summary>Every double this rig stood up, one per session.</summary>
     public IReadOnlyList<FakePlaywrightChild> SessionChildren
@@ -149,11 +215,26 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// asked", which is how a network share behaves and is never a refusal.
     /// </param>
     /// <returns>The environment, which the rig owns and disposes.</returns>
+    /// <param name="installer">
+    /// How the provisioner starts an install. The default lays a complete tree
+    /// down instantly, so every test that is not <i>about</i> provisioning behaves
+    /// as though the browser were already there — which is the state a developer's
+    /// machine is in and the state every earlier step's tests assumed.
+    /// </param>
+    /// <param name="timers">The caps, shrunk when a test is about one of them.</param>
+    /// <param name="opensDefaultSession">
+    /// Whether the rig opens a session of its own. False for the one test whose
+    /// subject is what happens when <b>no</b> session is open.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
-        long? freeBytes = long.MaxValue) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes)
+        long? freeBytes = long.MaxValue,
+        Func<string, string, IInstallerRun>? installer = null,
+        ProvisioningTimers? timers = null,
+        bool opensDefaultSession = true) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers)
         {
+            OpensDefaultSession = opensDefaultSession,
             // A volume this environment reports as full refuses every init,
             // including the rig's own -- so the rig does not open a default
             // session there and turn one test's deliberate refusal into a
@@ -176,7 +257,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), reason);
 
     private RigSessionEnvironment(string root, string reason)
-        : this(root, configure: null, freeBytes: long.MaxValue)
+        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null)
     {
         CanOpenSessions = false;
 
@@ -208,6 +289,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         {
             log.Dispose();
         }
+
+        // Last: disposing it signals any watcher still polling, which is what
+        // stops a deliberately-hanging installer double outliving its test.
+        Provisioner.Dispose();
+        _provisioningLog.Dispose();
     }
 
     /// <summary>Anything this rig's session hops left live, which must be nothing.</summary>

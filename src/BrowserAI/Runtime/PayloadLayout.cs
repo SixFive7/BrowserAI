@@ -47,6 +47,19 @@ internal sealed class PayloadLayout(string? root = null)
         Path.Combine(Root, "mcp", "node_modules", "@playwright", "mcp", "cli.js");
 
     /// <summary>
+    /// <c>playwright-core</c>'s own <c>browsers.json</c>, which is where the
+    /// revision BrowserAI provisions comes from.
+    /// </summary>
+    /// <remarks>
+    /// Inside the artifact and never looked up online: upstream's registry code
+    /// contains no "latest" lookup at all, so a release knows forever which
+    /// browser it wants and a bump moves the number without anybody editing
+    /// anything.
+    /// </remarks>
+    public string BrowsersManifest =>
+        Path.Combine(Root, "mcp", "node_modules", "playwright-core", "browsers.json");
+
+    /// <summary>
     /// Checks that both files exist, so an incomplete payload names itself.
     /// </summary>
     /// <exception cref="FileNotFoundException">Either file is missing.</exception>

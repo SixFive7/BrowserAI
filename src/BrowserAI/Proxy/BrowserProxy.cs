@@ -4,6 +4,7 @@
 using System.Text.Json.Nodes;
 using BrowserAI.Artifacts;
 using BrowserAI.Protocol;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
@@ -373,6 +374,16 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // First-run provisioning, and it happens before the child hears about
+        // the call for the same reason the mode decision does: a browser tool
+        // forwarded now would block inside the child's own launch for the whole
+        // download and answer with upstream's `npx` advice at the end of it.
+        if (_sessions.ProvisioningRefusal(tool, live) is { } notYet)
+        {
+            await RefuseAsync(caller, request.Id, notYet, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // §F's first half, and it happens before the child hears about the call:
         // a `filename` is rewritten into the folder its generator prefix
         // implies, so the file is born in the right place rather than swept
@@ -420,6 +431,25 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 return;
             }
 
+            // The one answer BrowserAI rewrites rather than forwards, and the
+            // trade is deliberate: upstream's "not installed" message ends with
+            // an npx command this product does not ship, which resolves a
+            // different package at a different revision into a directory
+            // BrowserAI never launches from -- and a model will run it. Byte
+            // identity is given up for exactly this payload, only when the
+            // marker is present, and the fact is logged rather than absorbed.
+            if (Remediate(response) is { } corrected)
+            {
+                live.Artifacts.Release(plan);
+                ProxyLog.RemediationRewritten(_logger, tool, live.Location.FullPath);
+
+                await caller.SendMessageAsync(
+                    new JsonRpcResponse { Id = request.Id, Result = corrected },
+                    cancellationToken).ConfigureAwait(false);
+
+                return;
+            }
+
             // §F's second half, which ships with the first or not at all:
             // relocating a file while telling the model otherwise is a new
             // silent failure introduced by the fix for an old one.
@@ -458,6 +488,44 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 .Select(block => (block?["text"] as JsonValue)?.GetValue<string>() ?? string.Empty));
 
         return SessionToolPolicy.Guard(text);
+    }
+
+    /// <summary>
+    /// Replaces upstream's install advice in a child's answer, or answers
+    /// <see langword="null"/> when there is none.
+    /// </summary>
+    /// <remarks>
+    /// <b>Every ordinary answer returns <see langword="null"/> here and goes back
+    /// as the child's own bytes.</b> The scan is one <c>Contains</c> per text
+    /// block against a marker that appears in exactly one upstream sentence, and
+    /// it is worth that cost because the sentence is an <i>instruction</i>: a
+    /// model that reads it will run <c>npx</c>, and on the paths where it appears
+    /// at all the answer is already a failure with no bytes worth preserving.
+    /// </remarks>
+    private JsonObject? Remediate(JsonRpcResponse response)
+    {
+        if (response.Result is not JsonObject result || result["content"] is not JsonArray)
+        {
+            return null;
+        }
+
+        var copy = (JsonObject)result.DeepClone();
+        var rewritten = false;
+
+        foreach (var block in (JsonArray)copy["content"]!)
+        {
+            if (block is not JsonObject text
+                || (text["text"] as JsonValue)?.GetValue<string>() is not { } original
+                || ProvisioningRemediation.Rewrite(original, _sessions.BrowsersDirectory) is not { } replacement)
+            {
+                continue;
+            }
+
+            text["text"] = replacement;
+            rewritten = true;
+        }
+
+        return rewritten ? copy : null;
     }
 
     private static async Task RefuseAsync(
@@ -786,6 +854,24 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' answered for the session at {Session}, and the answer was withheld rather than forwarded.")]
     public static partial void AnswerWithheld(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// Upstream's install advice was replaced, and byte-identity was given up to
+    /// do it.
+    /// </summary>
+    /// <remarks>
+    /// Warning rather than Information: this is the one place the passthrough's
+    /// central claim is deliberately not true of an answer, and a trade nobody
+    /// can see in the log is one nobody can audit.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 13,
+        Level = LogLevel.Warning,
+        Message = "'{Tool}' on the session at {Session} answered with upstream's 'npx @playwright/mcp install-browser' advice, which does not apply to a BrowserAI install. It was replaced, so that answer is not byte-identical.")]
+    public static partial void RemediationRewritten(ILogger logger, string tool, string session);
 
     /// <summary>A call named a file outside the session it named.</summary>
     /// <param name="logger">Where to write.</param>

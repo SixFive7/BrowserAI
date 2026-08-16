@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Artifacts;
+using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
@@ -41,8 +43,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// How much room a volume must have before a session is created there.
     /// </summary>
     /// <remarks>
-    /// First-run browser provisioning needs 203.8 MB down and 433 MiB extracted,
-    /// so peak usage is ~640 MiB while both the archive and the tree exist. A
+    /// First-run browser provisioning needs 203.8 MB down and 430.48 MiB
+    /// extracted — both re-measured 2026-08-16 — so peak usage is ~640 MiB while
+    /// both the archive and the tree exist. A
     /// refusal here that names the number is recoverable in one turn; a failure
     /// partway through the download is the <c>spawn EFTYPE</c> shape — success
     /// shaped, stderr empty, discovered at first navigation.
@@ -78,6 +81,12 @@ internal sealed class SessionManager : IAsyncDisposable
         _index = new SessionIndex(environment.Paths, _logger);
         _relay = relay;
     }
+
+    /// <summary>
+    /// The browsers root, so a refusal can name the directory a human would
+    /// actually delete.
+    /// </summary>
+    public string BrowsersDirectory => _environment.Paths.BrowsersDirectory;
 
     /// <summary>The session driving a directory in this process, if there is one.</summary>
     /// <param name="directory">The <c>session</c> argument, as it arrived.</param>
@@ -146,6 +155,79 @@ internal sealed class SessionManager : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Why a browser-needing call cannot run yet, or <see langword="null"/> when
+    /// it can.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every upstream tool, with no exception — and the exception is what the
+    /// measurement removed.</b> This was written to let
+    /// <see cref="ToolClass.Configuration"/> through, because
+    /// [§A](../../plan/A-runtime.md#first-run-browser-provisioning) says
+    /// <c>browser_get_config</c> keeps working while the download runs. Measured
+    /// 2026-08-16 @ <c>@playwright/mcp</c> 0.0.79, twice, against the child
+    /// directly with an empty browsers root: it does <b>not</b>. The tool
+    /// resolves the browser before it answers and fails
+    /// <c>throwIfExecutableMissing</c> — it does not <i>launch</i> anything,
+    /// which is why it is cheap on a provisioned machine, but the executable has
+    /// to exist.
+    /// </para>
+    /// <para>
+    /// So letting it through bought a worse answer rather than a working one: a
+    /// caller would get upstream's "not installed" error, whose advice is to
+    /// provision — which is already happening — instead of
+    /// [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue), which says
+    /// how large the download is and that the same call will work shortly. What
+    /// keeps a downloading session inspectable is BrowserAI's <b>own</b> tools:
+    /// <c>browserai_list</c>, <c>browserai_resume</c> and
+    /// <c>browserai_set_purpose</c> answer throughout, because none of them needs
+    /// a browser.
+    /// </para>
+    /// <para>
+    /// <b>It refuses rather than waiting, and that is the whole non-blocking
+    /// design seen from the other end.</b> The session is open, its child is
+    /// running, and the very same call succeeds on the next turn once the
+    /// download lands — so the recovery is "call this again", which is the one
+    /// recovery a model needs no help to perform.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool being called.</param>
+    /// <param name="session">The session it named.</param>
+    /// <returns>The refusal, or <see langword="null"/>.</returns>
+    public string? ProvisioningRefusal(string tool, LiveSession session)
+    {
+        ArgumentNullException.ThrowIfNull(tool);
+        ArgumentNullException.ThrowIfNull(session);
+
+        var browser = session.Lock.Record.Browser;
+
+        ProvisioningStatus status;
+
+        try
+        {
+            status = _environment.Provisioner.Ensure(browser);
+        }
+#pragma warning disable CA1031 // A probe that throws must not refuse the call: the browser may well be there, and the launch failure below names its own cause.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            SessionToolLog.ProvisioningUnreadable(_logger, browser, failure);
+            return null;
+        }
+
+        if (status.State is ProvisioningState.Installed)
+        {
+            return null;
+        }
+
+        SessionToolLog.CallRefusedWhileProvisioning(_logger, tool, browser, status.State);
+
+        return status.State is ProvisioningState.Downloading
+            ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.FirstRunDownloadSize)
+            : SessionErrors.BrowserRuntimeDidNotStart(session.Location.FullPath, status.Detail);
+    }
+
     /// <summary>Runs one of the authored tools.</summary>
     /// <param name="tool">The tool name, <c>browserai_</c> prefixed.</param>
     /// <param name="arguments">Its arguments, as they arrived.</param>
@@ -162,6 +244,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolSurface.List => List(arguments),
                 SessionToolSurface.Destroy => await DestroyAsync(arguments).ConfigureAwait(false),
                 SessionToolSurface.SetPurpose => SetPurpose(arguments),
+                SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(cancellationToken).ConfigureAwait(false),
                 _ => new ToolOutcome($"'{tool}' is not a BrowserAI session tool. The session tools are: {string.Join(", ", SessionToolSurface.Names)}.", IsError: true),
             };
         }
@@ -385,7 +468,13 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var size = SessionLayout.SizeOnDisk(location.FullPath);
         var failures = new List<string>();
-        Remove(location.FullPath, failures);
+
+        // §E's one shared routine, which browserai_reinstall_browser also uses:
+        // a post-order walk with a try/catch per node, so one file a browser or
+        // a virus scanner still holds open costs that file rather than the whole
+        // call. A destroy that silently left half a tree would be the founding
+        // failure shape.
+        TreeDelete.Remove(location.FullPath, failures);
 
         _index.Forget(location);
         RefreshRollUp(location);
@@ -437,6 +526,146 @@ internal sealed class SessionManager : IAsyncDisposable
         return new ToolOutcome(
             $"Purpose of '{location.FullPath}' is now: {purpose}\nIt was: {recorded.Purpose}\nThe session was not running, so it was updated in place and left closed.",
             IsError: false);
+    }
+
+    /// <summary>
+    /// The sixth authored tool: delete the shared browser tree and download it
+    /// again, or refuse and say what is using it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It refuses rather than coordinates, and that is the design rather than
+    /// a limitation.</b> The browser install is shared by every session on the
+    /// machine, so "make this safe" would mean terminating browsers other agents
+    /// are driving. There is deliberately no force argument: force here has
+    /// exactly one meaning and it is the wrong one.
+    /// </para>
+    /// <para>
+    /// <b>Download-beside-and-swap does not work on Windows</b>, which is what
+    /// makes the refusal load-bearing rather than merely polite: a directory
+    /// holding open executables cannot be renamed, so there is no arrangement in
+    /// which the old tree keeps serving while a new one is fetched. The window
+    /// with no browser installed is unavoidable and is stated.
+    /// </para>
+    /// <para>
+    /// <b>No extra lock is taken around the check-then-delete, and the reason is
+    /// that the delete is itself the guard.</b> A session that opened a browser
+    /// between the check and the delete makes the delete fail on an open
+    /// executable, and the outcome reports exactly which files survived — so the
+    /// race produces a refusal with evidence rather than a corrupted tree. Taking
+    /// the provisioning mutex here instead would deadlock against the installer,
+    /// which takes it on its own thread.
+    /// </para>
+    /// </remarks>
+    private async Task<ToolOutcome> ReinstallBrowserAsync(CancellationToken cancellationToken)
+    {
+        var browser = SupportedBrowser;
+        var directory = _environment.Provisioner.DirectoryFor(browser);
+
+        // Every process running an executable out of the tree about to be
+        // deleted, found by full image path and never by image name.
+        IReadOnlyList<RunningImage> running;
+
+        try
+        {
+            running = BrowserProcesses.RunningFrom(directory);
+        }
+        catch (Win32Exception failure)
+        {
+            return new ToolOutcome(
+                $"{SessionToolSurface.ReinstallBrowser} was not run: BrowserAI could not enumerate processes to check whether a browser is still using '{directory}' ({failure.Message}). Nothing was changed. "
+                + "It refuses rather than guessing, because deleting a browser tree that something is running from leaves a directory that is neither the old install nor the new one.",
+                IsError: true);
+        }
+
+        if (running.Count is not 0)
+        {
+            var claimants = LiveSessions();
+
+            if (claimants.Count is not 0)
+            {
+                return new ToolOutcome(
+                    $"{SessionToolSurface.ReinstallBrowser} was not run: {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) are running from '{directory}', and these sessions are open on this machine:\n"
+                    + string.Join("\n", claimants.Take(20))
+                    + "\nNothing was changed and nothing was terminated. There is deliberately no force option — forcing here means killing browsers other agents are driving. Close those sessions, or wait, and call this tool again.",
+                    IsError: true);
+            }
+
+            // Live browsers, and no session anywhere accounts for them. §H.4
+            // row 13: reported, never terminated.
+            return new ToolOutcome(
+                SessionErrors.UnattributableBrowserRunning(
+                    SessionToolSurface.ReinstallBrowser,
+                    directory,
+                    [.. running.Select(entry => (entry.ProcessId, entry.ImagePath))]),
+                IsError: true);
+        }
+
+        var outcome = await _environment.Provisioner.ReinstallAsync(browser, cancellationToken).ConfigureAwait(false);
+
+        var removed = outcome.RemovedBytes < 0
+            ? "an amount that could not be measured"
+            : Megabytes(outcome.RemovedBytes);
+
+        if (outcome.Failures.Count is not 0)
+        {
+            return new ToolOutcome(
+                $"'{outcome.Directory}' was only partly removed, so nothing was downloaded on top of it and the browser install is now incomplete. {outcome.Failures.Count.ToString(CultureInfo.InvariantCulture)} item(s) survived:\n"
+                + string.Join("\n", outcome.Failures.Take(20))
+                + $"\nSomething still has those files open. Once it has exited, call {SessionToolSurface.ReinstallBrowser} again — it will delete what is left and download a complete tree.",
+                IsError: true);
+        }
+
+        return outcome.Status.State is ProvisioningState.Installed
+            ? new ToolOutcome(
+                $"Re-provisioned {browser}. '{outcome.Directory}' was deleted ({removed}) and downloaded again. {outcome.Status.Detail}",
+                IsError: false)
+            : new ToolOutcome(
+                $"'{outcome.Directory}' was deleted ({removed}) and the download that should have replaced it did not complete, so there is no browser installed now. {outcome.Status.Detail} "
+                + $"Call {SessionToolSurface.ReinstallBrowser} again once the cause is fixed; {SessionToolSurface.Init} also starts a download and returns immediately.",
+                IsError: true);
+    }
+
+    /// <summary>
+    /// Every session open on this machine, as lines a refusal can name.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two sources, because neither alone is "anywhere".</b> The sessions this
+    /// process is driving are known directly; sessions driven by <i>another</i>
+    /// BrowserAI are found through the index, whose entries are followed to a
+    /// <c>lock.json</c> whose holder is checked with
+    /// <see cref="ProcessLiveness.IsAlive"/> — pid and creation time together,
+    /// never a pid alone, because Windows reuses pids and a reclaim keyed on one
+    /// eventually reads a stranger as the holder.
+    /// </remarks>
+    private List<string> LiveSessions()
+    {
+        var lines = new List<string>();
+
+        foreach (var session in _live.Values)
+        {
+            lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (mode '{session.Mode.Name}')");
+        }
+
+        foreach (var entry in _index.Follow())
+        {
+            if (entry.Session is not { } session || entry.Record is not { } record)
+            {
+                continue;
+            }
+
+            if (_live.ContainsKey(session.Key))
+            {
+                continue;
+            }
+
+            if (ProcessLiveness.IsAlive(record.Holder.ProcessId, record.Holder.ProcessCreatedFileTime))
+            {
+                lines.Add($"  {session.FullPath} — held by PID {record.Holder.ProcessId.ToString(CultureInfo.InvariantCulture)} since {Stamp(record.LastUsed)}");
+            }
+        }
+
+        return lines;
     }
 
     private static LockRecord Repurpose(LockRecord record, string purpose)
@@ -638,7 +867,7 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("  purpose: ").Append(record.Purpose).Append('\n')
             .Append("  created: ").Append(Stamp(record.Created)).Append("   last used: ").Append(Stamp(record.LastUsed)).Append('\n')
             .Append("  child protocol: ").Append(session.Child.NegotiatedProtocolVersion ?? "<none>").Append('\n')
-            .Append("  browsers: ").Append(Provisioning()).Append('\n');
+            .Append("  browserProvisioning: ").Append(Provisioning(record.Browser)).Append('\n');
 
         if (record.PurposeHistory.Count > 1)
         {
@@ -670,31 +899,52 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// What the browsers root holds, reported rather than acted on.
+    /// Starts provisioning if it has not happened, and answers <b>without
+    /// waiting for it</b>.
     /// </summary>
     /// <remarks>
-    /// Provisioning itself — the non-blocking install, the timers, the error text
-    /// and the reinstall tool — is
-    /// [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser).
-    /// This is one directory probe so that <c>init</c>'s result says whether a
-    /// navigation is going to work, which is the fact a caller can act on.
+    /// <para>
+    /// <b>This is the line <c>init</c> must not block on.</b> A caller held for
+    /// three minutes inside one tool call has had whatever timing it was managing
+    /// corrupted, with nothing to read and no basis for deciding whether to keep
+    /// waiting. So the download starts here and the answer says so; browser calls
+    /// are refused with [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue)
+    /// meanwhile, <c>browser_get_config</c> keeps working, and the same child
+    /// navigates once the install lands.
+    /// </para>
+    /// <para>
+    /// The word in the result is the state itself — <c>installed</c>,
+    /// <c>downloading</c>, <c>failed</c> — because a caller that has to parse
+    /// English to find out whether a navigation will work is one upstream wording
+    /// change away from getting it wrong.
+    /// </para>
     /// </remarks>
-    private string Provisioning()
+    /// <param name="browser">The family this session was created for.</param>
+    /// <returns>The state, lower-cased, and one sentence of detail.</returns>
+    private string Provisioning(string browser)
     {
-        var root = _environment.Paths.BrowsersDirectory;
-
         try
         {
-            var installed = Directory.Exists(root)
-                && Directory.EnumerateDirectories(root, "chromium-*").Any();
+            var status = _environment.Provisioner.Ensure(browser);
 
-            return installed
-                ? $"{root} (a Chromium build is present)"
-                : $"{root} (EMPTY — no Chromium build is installed there, so the first navigation will fail until one is)";
+            // Spelled out rather than derived from the enum's name: the word is
+            // part of the surface a caller reads, and ToLowerInvariant on an
+            // enum name would make renaming a C# member a silent change to what
+            // the model is told.
+            var word = status.State switch
+            {
+                ProvisioningState.Installed => "installed",
+                ProvisioningState.Downloading => "downloading",
+                _ => "failed",
+            };
+
+            return $"{word} — {status.Detail}";
         }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+#pragma warning disable CA1031 // A provisioning probe that throws must not fail an init: the session is usable, and the answer says what could not be read.
+        catch (Exception failure)
+#pragma warning restore CA1031
         {
-            return $"{root} (could not be read: {failure.Message})";
+            return $"unknown — the browsers root '{_environment.Paths.BrowsersDirectory}' could not be examined: {failure.Message}";
         }
     }
 
@@ -845,51 +1095,6 @@ internal sealed class SessionManager : IAsyncDisposable
         entries.Sort((left, right) => right.LastUsed.CompareTo(left.LastUsed));
 
         return entries;
-    }
-
-    private static void Remove(string directory, List<string> failures)
-    {
-        // Deleted item by item rather than with Directory.Delete(recursive), so
-        // one file a browser or a virus scanner still holds open costs that file
-        // rather than the whole call. What could not go is reported; a destroy
-        // that silently left half a tree would be the founding failure shape.
-        foreach (var file in SafeEnumerate(() => Directory.EnumerateFiles(directory)))
-        {
-            try
-            {
-                File.Delete(file);
-            }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-            {
-                failures.Add($"  {file}: {failure.Message}");
-            }
-        }
-
-        foreach (var child in SafeEnumerate(() => Directory.EnumerateDirectories(directory)))
-        {
-            Remove(child, failures);
-        }
-
-        try
-        {
-            Directory.Delete(directory);
-        }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-        {
-            failures.Add($"  {directory}\\: {failure.Message}");
-        }
-    }
-
-    private static IReadOnlyList<string> SafeEnumerate(Func<IEnumerable<string>> enumerate)
-    {
-        try
-        {
-            return [.. enumerate()];
-        }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-        {
-            return [];
-        }
     }
 
     private static string Megabytes(long bytes) =>
@@ -1070,4 +1275,31 @@ internal static partial class SessionToolLog
     /// <param name="failure">Why.</param>
     [LoggerMessage(EventId = 44, Level = LogLevel.Error, Message = "Session at {Directory} was locked but its browser runtime could not be started; the lock has been released.")]
     public static partial void CouldNotOpen(ILogger logger, string directory, Exception failure);
+
+    /// <summary>A browser-needing call was refused because the browser is not there yet.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="browser">The family.</param>
+    /// <param name="state">Where provisioning stands.</param>
+    [LoggerMessage(
+        EventId = 45,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' was refused because {Browser} provisioning is '{State}'. The session stays open and the same call succeeds once it lands.")]
+    public static partial void CallRefusedWhileProvisioning(ILogger logger, string tool, string browser, ProvisioningState state);
+
+    /// <summary>The provisioning state could not be read at all.</summary>
+    /// <remarks>
+    /// Logged rather than turned into a refusal: the browser may well be
+    /// installed, and a probe that cannot answer must not stand between a caller
+    /// and a working session. If it is genuinely missing, the launch says so with
+    /// its own cause.
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="browser">The family.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 46,
+        Level = LogLevel.Warning,
+        Message = "Whether {Browser} is provisioned could not be determined; the call was allowed through rather than refused on a guess.")]
+    public static partial void ProvisioningUnreadable(ILogger logger, string browser, Exception failure);
 }

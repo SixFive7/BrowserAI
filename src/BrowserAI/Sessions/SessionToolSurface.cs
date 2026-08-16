@@ -51,6 +51,19 @@ internal static class SessionToolSurface
     /// <summary>Replaces a session's recorded purpose.</summary>
     public const string SetPurpose = "browserai_set_purpose";
 
+    /// <summary>
+    /// Deletes the shared browser tree and downloads it again. The one authored
+    /// tool that is machine-scoped rather than session-scoped.
+    /// </summary>
+    /// <remarks>
+    /// It takes no arguments <b>because there is nothing to name</b>: the browser
+    /// install is shared by every session on the host, which is exactly why it
+    /// refuses to act while any of them has a browser open. Every other authored
+    /// tool names its session explicitly and none has an implicit scope; this one
+    /// has no session at all, which is a different thing from a default.
+    /// </remarks>
+    public const string ReinstallBrowser = "browserai_reinstall_browser";
+
     /// <summary>The parameter every upstream tool gains.</summary>
     /// <remarks>
     /// Named <c>session</c> rather than <c>handle</c> because it is not one: it
@@ -75,8 +88,8 @@ internal static class SessionToolSurface
     /// </remarks>
     public const int DescriptionMaximumBytes = 2048;
 
-    /// <summary>The five authored tools, in the order they are offered.</summary>
-    public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose];
+    /// <summary>The six authored tools, in the order they are offered.</summary>
+    public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose, ReinstallBrowser];
 
     /// <summary>Whether a tool name belongs to BrowserAI rather than to the child.</summary>
     /// <param name="name">The tool name from a <c>tools/call</c>.</param>
@@ -279,6 +292,16 @@ internal static class SessionToolSurface
                 ["purpose"] = Property("string", "The new one-sentence purpose."),
             },
             [SessionParameter, "purpose"]);
+
+        yield return Tool(
+            ReinstallBrowser,
+            "Delete BrowserAI's shared browser install and download it again.",
+            "Removes the browser tree BrowserAI provisioned and downloads the exact revision this build pins, into BrowserAI's own directory. It takes no arguments because there is nothing to name: the install is shared by every session on this machine. "
+            + "It REFUSES while any session anywhere has a browser open, and names what is running instead — there is deliberately no force option, because forcing here means terminating browsers other agents are driving, and Windows will not delete a directory whose executables are open in any case. "
+            + "Use it for a browser that is installed and broken: an install that completed once is never re-downloaded on its own, because the marker written at the end short-circuits every later check without validating anything, so a single quarantined or corrupted file stays broken forever. "
+            + "For a browser that was simply never downloaded, call browserai_init instead — it starts the download and returns immediately. This one waits for the download to finish, so it takes as long as the download does.",
+            [],
+            []);
     }
 
     private static JsonObject Tool(string name, string title, string description, JsonObject properties, string[] required)

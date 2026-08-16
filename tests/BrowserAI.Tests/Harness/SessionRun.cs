@@ -3,12 +3,13 @@
 
 using System.Text;
 using System.Text.Json.Nodes;
+using BrowserAI.Interop;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// One scripted conversation with the published binary, exercising all five
+/// One scripted conversation with the published binary, exercising all six
 /// authored session tools, captured once and asserted on by many tests.
 /// </summary>
 /// <remarks>
@@ -132,6 +133,32 @@ internal sealed record SessionRun
             // key is in the config" and "the browser used it".
             var profileUsed = Directory.Exists(Path.Combine(alpha, SessionLayout.ProfileFolderName))
                 && Directory.EnumerateFileSystemEntries(Path.Combine(alpha, SessionLayout.ProfileFolderName)).Any();
+
+            // ⚠️ The sixth authored tool, called at the one moment it is
+            // guaranteed to REFUSE: the navigation above left a real Chromium
+            // running out of the real browsers root, and this process is driving
+            // the session that owns it.
+            //
+            // The guard is not decoration. If no browser were live the tool would
+            // do exactly what it says — delete 430 MiB and download it again —
+            // in the middle of a suite whose other tests are driving browsers out
+            // of that directory. Checked with the product's own image-path
+            // enumeration rather than assumed, so a capture that somehow lost its
+            // browser records the fact instead of destroying the machine's
+            // install.
+            var browsersLive = BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory).Count;
+
+            answers["reinstallWhileLive"] = browsersLive is 0
+                ? new JsonObject
+                {
+                    ["content"] = new JsonArray(new JsonObject
+                    {
+                        ["type"] = "text",
+                        ["text"] = "SKIPPED: no browser was running out of the browsers root, so browserai_reinstall_browser was not called. It would have deleted and re-downloaded the machine's install.",
+                    }),
+                    ["isError"] = true,
+                }
+                : await CallAsync(client, SessionToolSurface.ReinstallBrowser, []).ConfigureAwait(false);
 
             answers["setPurpose"] = await CallAsync(client, SessionToolSurface.SetPurpose, new JsonObject
             {

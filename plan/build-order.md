@@ -1714,6 +1714,79 @@ Route on the way in; do not sort on the way out.
 **Consumes:** [§A](A-runtime.md#first-run-browser-provisioning) ·
 [§H.2](H-model-surface.md#h2-the-authored-tools) (the sixth tool)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Runtime/{BrowserProvisioner,
+> BrowsersManifest, ProvisioningRemediation, TreeDelete}.cs` ·
+> `src/BrowserAI/Interop/BrowserProcesses.cs` ·
+> `src/BrowserAI/Sessions/{SessionManager, SessionToolSurface, SessionErrors,
+> SessionEnvironment}.cs` · `src/BrowserAI/Proxy/BrowserProxy.cs` ·
+> `src/BrowserAI/Program.cs` · `tests/BrowserAI.Tests/{ProvisioningTests,
+> ProvisioningRemediationTests, ReinstallBrowserTests, FirstRunProvisioningTests,
+> BrowserContainmentTests}.cs` · `tests/BrowserAI.Tests/Harness/{FakeInstaller,
+> PlantedProcess, RestartRegistration}.cs`. Every done-test below was run.
+> **239 tests green twice, `dotnet build` 0 warnings**, and the AOT publish is
+> clean at **11,782,656 bytes**.
+>
+> **Provisioning was done for real, as the decision below requires.** The real
+> browsers root was emptied and re-downloaded rather than kept from step 3's
+> local seed, and Firefox was provisioned the same way for the containment
+> re-run. **Every number in the plan was re-measured, and two of them moved:**
+> 203.8 MB down is byte-identical (202,283,919 + 1,411,741 + 128,684, same
+> revisions), **433 MiB on disk is 430.48** — the old figure was three rounded
+> components added up — and the 20.3 s timing was of a run that also fetched the
+> headless shell, replaced by **12.6 s and 12.0 s** on a ~300 Mbps link. Firefox
+> 153.0 adds 125.7 MB down / 336.55 MiB in 6.2 s.
+> [kb](../kb/playwright/provisioning-and-timings.md#first-run-provisioning) has
+> the breakdowns; rows 2a, 21 and 66 are answered and rows 72–75 are new.
+>
+> ⚠️ **§A said `browser_get_config` keeps working while the download runs, and
+> it does not.** Measured twice against the child directly with an empty browsers
+> root: the tool resolves the browser executable before answering and fails
+> `throwIfExecutableMissing`. It never *launches* anything, which is why the round
+> trip is cheap on a provisioned machine — but the binary has to be there. So
+> **every** upstream tool is refused until the install lands, and letting this one
+> through would have been worse than refusing it: the caller would receive
+> upstream's advice to provision a browser that is already being provisioned.
+> What keeps a downloading session inspectable is BrowserAI's own tools, which
+> answer throughout. Corrected in [§A](A-runtime.md#first-run-browser-provisioning),
+> [§H.4](H-model-surface.md#h4-the-error-catalogue) and
+> [kb](../kb/playwright/configuration.md#browser-provisioning).
+>
+> ⚠️ **Firefox registers itself for restart and Chromium does not** — asked of the
+> live processes rather than argued from a command line's length. Every Chromium
+> process answers `0x80070490`; **exactly one Firefox process answers `S_OK`**,
+> which is `toolkit.winRegisterApplicationRestart` doing what
+> [kb](../kb/chromium/resurrection.md) says it does. Containment is unaffected,
+> but [step 17](#17-firefox) cannot ship Firefox sessions without turning that
+> pref off in the profile, or a machine update will resurrect a browser no session
+> claims. Both directions are asserted, so a change either way is red.
+>
+> **Two further corrections the step forced.** *The mirror rotation does not cover
+> Chromium*: `cftUrl`'s mirror list is one host with no `/dbazure/` prefix, so the
+> five retries all hit `cdn.playwright.dev` and the rotation protects only
+> `ffmpeg`, `winldd` and `firefox` — observed directly when this machine's
+> resolver failed on that name. And *a live browser is not a static tree*: the
+> containment probe's "job members the walk missed" check compared the walk
+> against a membership list read afterwards, and a real Chromium reports a phantom
+> every time because it starts and retires helpers continuously. It now uses the
+> intersection of two lists taken either side of the walk.
+>
+> **One thing this step added to the product that is not in §A: `BROWSERAI_ROOT`.**
+> An empty browsers root cannot be produced any other way — `IAppPaths`
+> deliberately does not resolve relative to the binary, and `%LOCALAPPDATA%` is
+> not steerable by an environment variable on Windows (measured) — so the
+> alternative was deleting the developer's own 430 MiB mid-suite and breaking
+> every other browser test beside it. It is read once in `Program.cs`, ignored
+> when relative, and logged at Warning, because a BrowserAI whose sessions and
+> browsers are somewhere nobody expects looks exactly like one that lost them.
+>
+> **Not built, deliberately:** the stray sweep ([step 16](#16-the-stray-sweep))
+> and Firefox's profile preflight ([step 17](#17-firefox)).
+> `BrowserProcesses.RunningFrom` answers one narrow question about one directory
+> — no attribution, no window enumeration, no sweep mutex — because
+> `browserai_reinstall_browser` has to ask whether a browser is running out of the
+> tree it is about to delete. It is what the sweep will be built on; it is not the
+> sweep.
+
 > **Maintainer decision, 2026-08-16: provision for real.** Every step that needs
 > a browser downloads it into `%LocalAppData%\BrowserAI\browsers\` rather than
 > reusing the `%LOCALAPPDATA%\ms-playwright` copy that spike work left on this
@@ -1767,10 +1840,15 @@ Route on the way in; do not sort on the way out.
   an escaped browser.
 - `git status --porcelain` is empty.
 
-> **Expect this step to put a `[FLOATS]` fact in play.** The 203.8 MB down /
-> 433 MiB on disk figures were measured 2026-08-15 against the revision in that
-> day's `browsers.json`. If the revision moved, **re-measure — never adjust the
-> number by reasoning.**
+> **It did, and the revision had not moved.** The 203.8 MB download is
+> byte-identical at chromium rev 1237; the **433 MiB on-disk figure was wrong
+> independently of any bump** — three rounded components added together, against
+> a measured 430.48 MiB — and the 20.3 s timing was of a superset of what is
+> downloaded today. Both are corrected in
+> [kb](../kb/playwright/provisioning-and-timings.md#first-run-provisioning) with
+> the per-directory breakdown, and the sum that depends on them was checked in one
+> unit rather than two, which is what caught the first attempt at the correction
+> writing a *new* wrong number.
 
 ### 16. The stray sweep
 

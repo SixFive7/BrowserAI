@@ -25,9 +25,42 @@ namespace BrowserAI;
 /// </remarks>
 internal static class Program
 {
+    /// <summary>
+    /// The one environment variable BrowserAI reads about <b>itself</b>, and it
+    /// moves the whole app root.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It exists for one thing the suite otherwise cannot do: an empty
+    /// browsers root.</b> First-run provisioning can only be proven against a
+    /// root where nothing has ever been installed, and the alternative — deleting
+    /// the developer's own <c>%LocalAppData%\BrowserAI\browsers</c> mid-suite —
+    /// would destroy 430 MiB and break every other browser test running beside
+    /// it. <see cref="Hosting.IAppPaths"/> deliberately does not resolve relative
+    /// to the binary, so moving the executable does not move the root either.
+    /// </para>
+    /// <para>
+    /// <b>It is read here rather than inside
+    /// <see cref="LocalAppDataPaths"/></b>, so it stays a decision the host makes
+    /// once. Step 19 swaps that class for one over
+    /// <c>VelopackLocator.Current.RootAppDir</c> and has to decide what this
+    /// means then, visibly, rather than losing it in a replaced file.
+    /// </para>
+    /// <para>
+    /// <b>Never silent.</b> A BrowserAI running against a root nobody expects
+    /// would look exactly like one that lost its sessions, so an override is
+    /// logged at Warning on the way past. A relative value is ignored rather than
+    /// resolved, for the same reason a relative <c>PLAYWRIGHT_BROWSERS_PATH</c>
+    /// is refused: it would land somewhere nobody chose and report nothing.
+    /// </para>
+    /// </remarks>
+    public const string AppRootVariable = "BROWSERAI_ROOT";
+
     private static async Task<int> Main()
     {
-        var paths = new LocalAppDataPaths();
+        var overridden = Environment.GetEnvironmentVariable(AppRootVariable);
+        var root = overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden) ? overridden : null;
+        var paths = new LocalAppDataPaths(root);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
         var logger = log.Factory.CreateLogger("BrowserAI.Startup");
@@ -37,6 +70,11 @@ internal static class Program
             Environment.ProcessId,
             Environment.ProcessPath ?? "<unknown>",
             Environment.CurrentDirectory);
+
+        if (root is not null)
+        {
+            StartupLog.AppRootOverridden(logger, AppRootVariable, root);
+        }
 
         // One run, one directory. It holds this run's own child — the one that
         // answers `tools/list` before any session exists — together with its
@@ -57,10 +95,15 @@ internal static class Program
                 BrowserConfiguration.ForSurface(instance),
                 name: "playwright-mcp[surface]");
 
+            // Created before the proxy, and it starts nothing: the first init
+            // decides whether a download is needed and never waits for one.
+            using var provisioner = new BrowserProvisioner(payload, paths.BrowsersDirectory, log.Factory);
+
             var environment = new SessionEnvironment
             {
                 Paths = paths,
                 Payload = payload,
+                Provisioner = provisioner,
                 InstanceDirectory = instance,
                 OpenSessionLog = log.OpenSessionLog,
             };
@@ -128,4 +171,22 @@ internal static partial class StartupLog
         Level = LogLevel.Critical,
         Message = "BrowserAI could not start and is exiting.")]
     public static partial void Failed(ILogger logger, Exception exception);
+
+    /// <summary>
+    /// The app root came from the environment rather than from
+    /// <c>%LocalAppData%</c>.
+    /// </summary>
+    /// <remarks>
+    /// Warning rather than Information, and it is the first line after startup:
+    /// a BrowserAI whose sessions, log and 430 MiB of browsers are somewhere
+    /// nobody expected looks exactly like one that lost them.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="variable">Which variable moved it.</param>
+    /// <param name="root">Where it now is.</param>
+    [LoggerMessage(
+        EventId = 4,
+        Level = LogLevel.Warning,
+        Message = "{Variable} is set, so this BrowserAI's app root is {Root} rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.")]
+    public static partial void AppRootOverridden(ILogger logger, string variable, string root);
 }

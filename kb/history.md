@@ -62,7 +62,9 @@ session* rather than inherited.
 
 **First-run download is 203.8 MB, not 323.5 MB.** Measured 2026-08-15 by exact
 `content-length` from `cdn.playwright.dev`: `chrome-win64.zip` 202,283,919 B +
-`ffmpeg-win64.zip` 1,411,741 B + `winldd-win64.zip` 128,684 B. On disk, 433 MiB
+`ffmpeg-win64.zip` 1,411,741 B + `winldd-win64.zip` 128,684 B. On disk, 430.48 MiB
+(re-measured 2026-08-16; the 433 recorded here was three rounded components added
+up)
 (chromium 428 + ffmpeg 4 + winldd 1). Slow-link arithmetic: **2 m 43 s at
 10 Mbps, 27 m 11 s at 1 Mbps.** `[FLOATS]`
 
@@ -90,8 +92,10 @@ BrowserAI 9.76 MiB), and the ~806 MB figure remains the right number for a
 resolved favourably. **It is not the number for disk after first run**, which
 this entry and [§A](../plan/A-runtime.md#a-ship-and-own-the-runtime) both went on to claim:
 806 counts `chrome-headless-shell` (268.49 MB), which is not provisioned at all.
-Disk after first run is the ~117 MB payload plus 433 MiB of browsers,
-**≈ 570 MB**. `[MACHINE]` for the component sizes, `[FLOATS]` for what is in the
+Disk after first run is the 116.40 MiB payload plus 430.48 MiB of browsers,
+**546.88 MiB ≈ 573 MB** (both halves re-measured 2026-08-16; the browsers figure
+was 433 MiB, and the ≈ 570 MB it produced was
+[right by way of two cancelling unit conflations](playwright/provisioning-and-timings.md#first-run-provisioning)). `[MACHINE]` for the component sizes, `[FLOATS]` for what is in the
 set.
 
 > **The pattern worth noticing.** All three are the same defect: a measurement

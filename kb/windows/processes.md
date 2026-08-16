@@ -14,6 +14,48 @@ Measured 2026-08-15. Harness: `.work/jobtest/`.
 **The headline: containment holds.** 16 runs, **106 spawned processes, 0
 escapees, 0 survivors**, across real Chromium and Firefox trees. `[FLOATS]`
 
+**Re-established 2026-08-16 against the product's own job, launcher and delete
+routine**, by `BrowserContainmentTests` — two runs of each family, on browsers
+BrowserAI provisioned into its own root:
+
+| Browser | Processes in the job | Escapees | Survivors after an external kill | Registered for restart | Profile deleted cleanly |
+|---|--:|--:|--:|--:|---|
+| Chromium 152.0.7977.8 (rev 1237) | 11, then 10 | 0 | 0 | **0** | yes |
+| Firefox 153.0 (rev 1539) | 10, then 10 | 0 | 0 | **1** | yes |
+
+The tree under test is launcher → `node` → `cli.js` → browser → helpers, which is
+one level deeper than production, and the launcher is `TerminateProcess`d from
+outside so that nothing but the kernel closing its last job handle can be what
+cleaned up. **The profile delete is the half a survivor count cannot make**: a
+process gone from the job's list but still holding a mapped file leaves a
+directory Windows refuses to remove, so a profile that deletes cleanly is the
+observable difference between *reported dead* and *nothing is left*. `[FLOATS]`
+
+> ⚠️ **A live browser is not a static tree, and the cross-check had to be
+> re-stated for it.** The probe's *"job members the walk missed"* check compared
+> the toolhelp walk against a membership list read **after** it, and against a
+> real Chromium that reports a phantom every time: helpers are started and
+> retired continuously, so a process born during the walk is in the later list
+> and not in the walk. Node trees never produced one, which is why step 6 never
+> saw it. The check now uses the **intersection** of two lists taken either side
+> of the walk — the members that were present throughout — and the per-row
+> membership check uses the union. Measured 2026-08-16; one phantom,
+> reproducibly, before the change.
+
+**Firefox registers itself for restart and Chromium does not**, asked of the live
+processes with `GetApplicationRestartSettings` rather than argued from a command
+line's length. Every Chromium process in the tree answers `0x80070490`
+(`HRESULT_FROM_WIN32(ERROR_NOT_FOUND)`); **exactly one** Firefox process answers
+`S_OK`. That is `toolkit.winRegisterApplicationRestart` doing what
+[kb: resurrection](../chromium/resurrection.md#the-mechanism-and-what-is-still-unproven)
+says it does, on a build BrowserAI provisioned. Containment is unaffected —
+`KILL_ON_JOB_CLOSE` happens now and Windows' restart happens after a reboot or an
+update — but **[step 17](../../plan/build-order.md#17-firefox) cannot ship Firefox
+sessions without turning that pref off in the profile**, or a machine update will
+resurrect a browser no session claims. Asserted on both sides by
+`BrowserContainmentTests`, so the day Mozilla changes it the suite says so.
+`[FLOATS]`
+
 **Job membership is inherited automatically.** MS Learn,
 [Job Objects](https://learn.microsoft.com/windows/win32/procthread/job-objects#managing-processes-in-jobs):
 *"After a process is associated with a job, by default any child processes it

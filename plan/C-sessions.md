@@ -25,7 +25,7 @@ This also replaces four static configurations with one dynamic one, and eliminat
 
 **Reject traversal rather than normalising it.** A `filename` of `..\..\..\foo.png` must resolve, be recognised as an escape, and be refused with an LLM-readable error — never silently collapsed into a path that happens to land somewhere.
 
-**Check free disk space at `init`, and only with an O(1) query.** First-run browser provisioning needs **203.8 MB down and 433 MiB extracted**, so peak usage is ~640 MiB while both the archive and the tree exist; a session then grows unbounded. A refusal at `init` that names the number is recoverable in one turn; a failure partway through the download is the `spawn EFTYPE` shape — success-shaped, stderr empty, discovered at first navigation. **This must be a volume free-space query, never a directory walk**: `init` sits on the hot path of every session, and a check that scans the output tree would make the fix slower than the failure it prevents.
+**Check free disk space at `init`, and only with an O(1) query.** First-run browser provisioning needs **203.8 MB down and 430.48 MiB extracted** (re-measured 2026-08-16), so peak usage is ~640 MiB while both the archive and the tree exist; a session then grows unbounded. A refusal at `init` that names the number is recoverable in one turn; a failure partway through the download is the `spawn EFTYPE` shape — success-shaped, stderr empty, discovered at first navigation. **This must be a volume free-space query, never a directory walk**: `init` sits on the hot path of every session, and a check that scans the output tree would make the fix slower than the failure it prevents.
 
 ## Three modes, and tracing as a modifier
 

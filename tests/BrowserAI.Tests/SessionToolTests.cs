@@ -7,7 +7,7 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The five authored session tools, round-tripped through the raw-protocol
+/// The six authored session tools, round-tripped through the raw-protocol
 /// client against the published binary.
 /// </summary>
 /// <remarks>
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests;
 internal sealed class SessionToolTests
 {
     [Test]
-    public async Task AllFiveAuthoredToolsAreAdvertisedAndAnswer()
+    public async Task AllSixAuthoredToolsAreAdvertisedAndAnswer()
     {
         if (!PublishedSlice.IsPresent)
         {
@@ -44,6 +44,19 @@ internal sealed class SessionToolTests
         await Assert.That(run.IsError("list")).IsFalse();
         await Assert.That(run.IsError("destroyBeta")).IsFalse();
         await Assert.That(run.IsError("setPurpose")).IsFalse();
+
+        // The sixth, whose ANSWER is a refusal — which is the tool working
+        // rather than failing. It was called while a real Chromium was running
+        // out of the browsers root and while this process was driving the
+        // session that owns it, so refusing and naming what is live is the whole
+        // contract.
+        await Assert.That(run.IsError("reinstallWhileLive")).IsTrue();
+
+        var refusal = run.Text("reinstallWhileLive");
+
+        await Assert.That(refusal).DoesNotContain("SKIPPED");
+        await Assert.That(refusal).Contains(Path.Combine(run.Root, "alpha"));
+        await Assert.That(refusal).Contains("no force option");
 
         // init's result carries the resolved absolute paths, the mode and the
         // browser, which is what lets an agent say where a screenshot went

@@ -21,8 +21,9 @@ size, so every row is `[FLOATS]`.
 `-mx=5`. That is the figure for a **bundled** build, browsers inside the
 installer, and it excludes BrowserAI's own binary. **Nothing ships in that shape
 today.** Browsers are [provisioned on first run](#first-run-provisioning), so the
-installed payload is `node.exe` + the JS tree + BrowserAI ≈ **117 MB**, and
-**disk after first run is ~117 MB + 433 MiB ≈ 570 MB**. The ~806 MB total is kept
+installed payload is `node.exe` + the JS tree + BrowserAI = **116.40 MiB**
+(88.53 + 18.11 + 9.76), and **disk after first run is 116.40 + 430.48 =
+546.88 MiB ≈ 573 MB**. The ~806 MB total is kept
 because a bundled build is the fallback if the Chrome-for-Testing redistribution
 question is ever resolved favourably — but it is **not** the figure for disk
 after first run, as this file and the charter both once said: it counts
@@ -93,17 +94,80 @@ throws. `[FLOATS]`
 
 ## First-run provisioning
 
-**Settled 2026-08-15 by exact `content-length` from the CDN: 203.8 MB down,
-433 MiB on disk.** `chrome-win64.zip` 202,283,919 B + `ffmpeg-win64.zip`
-1,411,741 B + `winldd-win64.zip` 128,684 B; on disk, chromium 428 MiB + ffmpeg 4
-+ winldd 1. Arithmetic for slower links: **2 m 43 s at 10 Mbps, 27 m 11 s at
-1 Mbps**. Peak disk during provisioning is **~640 MiB**, while the archive and
-the extracted tree coexist. **This file is where that number lives** — the rest
-of the repository cites it rather than restating it. `[FLOATS]`
+**Settled 2026-08-15 and re-measured 2026-08-16 by exact `content-length` from
+the CDN: 203.8 MB down.** `chrome-win64.zip` 202,283,919 B + `ffmpeg-win64.zip`
+1,411,741 B + `winldd-win64.zip` 128,684 B = **203,824,344 B**, all three
+byte-identical to the 2026-08-15 figures at the same revisions (chromium
+**1237** / 152.0.7977.8, ffmpeg **1011**, winldd **1007** — the revision did not
+move). Arithmetic for slower links: **2 m 43 s at 10 Mbps, 27 m 11 s at 1 Mbps**.
+Peak disk during provisioning is **~640 MiB**, while the archive and the
+extracted tree coexist. **This file is where that number lives** — the rest of
+the repository cites it rather than restating it. Re-establish with a `HEAD` on
+the three URLs below. `[FLOATS]`
 
-**End to end it took 20.3 s on a 300 Mbps link**, measured 2026-08-14. That run
-also fetched `chrome-headless-shell`, so it is an upper bound on today's
-provisioning rather than a measurement of it. `[FLOATS]`
+> ⚠️ **Corrected 2026-08-16 @ chromium rev 1237 (previously "433 MiB on disk …
+> chromium 428 MiB + ffmpeg 4 + winldd 1").** **On disk it is 430.48 MiB**, and
+> the old figure was three rounded components added up. Measured twice by
+> provisioning into an empty root and summing the files: **451,389,780 B across
+> 318 files** — `chromium-1237` 447,613,809 B (426.88 MiB), `ffmpeg-1011`
+> 3,517,342 B (3.35 MiB), `winldd-1007` 258,560 B (0.25 MiB) and `.links` 69 B.
+> Note that 426.88 is exactly what [the component table](#component-sizes) already
+> recorded for full Chromium, so the two halves of this file disagreed by
+> 2.5 MiB.
+>
+> **The downstream "≈ 570 MB after first run" survives, and the reason is worth
+> stating because it nearly produced a second wrong number.** That figure adds a
+> payload quoted in **MB** to browsers quoted in **MiB**, and the payload's
+> components are themselves MiB — so the honest sum is 116.40 + 430.48 =
+> **546.88 MiB, which is 573 MB**. The recorded ≈ 570 was right by way of two
+> conflations that cancelled. It is now stated in one unit above, and the first
+> attempt at this correction wrote "≈ 548 MB" by mixing them the other way.
+
+**End to end it takes 12.6 s and 12.0 s on a ~300 Mbps link**, measured twice on
+2026-08-16 into an empty browsers root, exit 0 both times. Phase boundaries from
+the installer's own output, timestamped per line: Chromium's download and
+extraction together take **0.3 s → 11.7 s**, `ffmpeg` a further **0.5 s** and
+`winldd` **0.4 s**. Re-establish by timing
+`node.exe cli.js install-browser chromium --no-shell --no-progress` against a
+fresh directory. `[FLOATS]` `[MACHINE]`
+
+> ⚠️ **Corrected 2026-08-16 (previously "20.3 s on a 300 Mbps link, measured
+> 2026-08-14 … an upper bound rather than a measurement").** It was an upper
+> bound because that run also fetched `chrome-headless-shell`, which is
+> [no longer provisioned](../../README.md#settled-2026-08-15). The two runs above
+> are of what BrowserAI actually downloads, so the figure is now a measurement of
+> the thing rather than of a superset of it.
+
+**Firefox 153.0 (rev 1539) is 125,706,704 B down and 352,898,062 B — 336.55 MiB
+— on disk**, provisioned in **6.2 s** on the same link, measured 2026-08-16 by
+`install-browser firefox --no-shell --no-progress`. BrowserAI creates no Firefox
+sessions ([step 17](../../plan/build-order.md#17-firefox)); the tree exists
+because [§E](../../plan/E-lifecycle.md#zero-process-leakage-the-job-object-contract)'s
+containment contract is stated against **both** families and the acceptance test
+needs a real one. `[FLOATS]`
+
+**⚠️ Chrome for Testing has exactly one mirror, so the retry rotation does not
+help it.** Read 2026-08-16 out of `playwright-core/lib/coreBundle.js`: `cftUrl`
+returns `{ path: "builds/cft/${browserVersion}/win64/chrome-win64.zip", mirrors:
+["https://cdn.playwright.dev"] }` — one host, and **no**
+`/dbazure/download/playwright` prefix, which every other component does carry.
+`ffmpeg`, `winldd` and `firefox` resolve to the two-host list
+(`cdn.playwright.dev` and `playwright.download.prss.microsoft.com`) under that
+prefix. Since retries index `downloadURLs[(attempt - 1) % downloadURLs.length]`,
+**Chromium's five attempts all hit the same host**, and the mirror rotation that
+justifies stripping `PLAYWRIGHT_DOWNLOAD_HOST` protects only the three small
+components. Observed directly: with this machine's resolver failing on
+`cdn.playwright.dev`, all five Chromium attempts failed against that one name.
+Re-establish by grepping `cftUrl` in the resolved bundle. `[FLOATS]`
+
+**This machine's DNS resolver fails intermittently on both Playwright CDN
+names.** `cdn.playwright.dev` and `playwright.download.prss.microsoft.com`
+resolve reliably through `1.1.1.1` and `8.8.8.8` and intermittently through the
+configured server (`10.20.30.254`) — and a **tight retry loop makes it worse**,
+because the failures are negatively cached: twenty queries with no delay left
+both names unresolvable for the following minute, six queries three seconds apart
+resolved on the first attempt. It presents as `EAI_AGAIN` then `ENOTFOUND` in the
+installer's output and looks exactly like an outage. `[MACHINE]`
 
 > **What this supersedes, kept so the old numbers are recognisable rather than
 > mysterious.** The download was previously stated four ways across the

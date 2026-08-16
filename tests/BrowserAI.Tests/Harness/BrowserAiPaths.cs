@@ -24,6 +24,43 @@ internal static class BrowserAiPaths
     public static string BrowsersDirectory => Paths.BrowsersDirectory;
 
     /// <summary>
+    /// The variable that moves a published binary's whole app root, named from
+    /// the product rather than typed here.
+    /// </summary>
+    /// <remarks>
+    /// The only way to give a real BrowserAI an <b>empty</b> browsers root
+    /// without deleting the developer's own — which would destroy 430 MiB and
+    /// break every other browser test running beside it.
+    /// </remarks>
+    public static string AppRootOverride => Program.AppRootVariable;
+
+    /// <summary>
+    /// The chromium revision the committed snapshot names, so nothing in the
+    /// suite spells a directory with a literal.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Declared before everything that uses it, and that ordering is
+    /// load-bearing.</b> Static field initialisers run in declaration order, so
+    /// with this below <see cref="ExpectedChromiumExecutable"/> the path composed
+    /// there is <c>chromium-</c> with no revision at all — which reads as a
+    /// browser that resolved to the wrong place. Caught by the suite on
+    /// 2026-08-16, not by review.
+    /// </remarks>
+    public static string ChromiumRevision { get; } = RevisionOf("chromium");
+
+    /// <summary>The firefox revision the committed snapshot names.</summary>
+    /// <remarks>
+    /// Firefox is not a browser BrowserAI creates sessions for — that is
+    /// [step 17](../../plan/build-order.md#17-firefox) — but
+    /// [§E](../../plan/E-lifecycle.md#zero-process-leakage-the-job-object-contract)'s
+    /// containment contract is stated against <b>both</b> families, and the
+    /// second one is the harder case: Firefox stacks a second permissive job of
+    /// its own, and its background tasks are the only code in either browser that
+    /// asks to break away.
+    /// </remarks>
+    public static string FirefoxRevision { get; } = RevisionOf("firefox");
+
+    /// <summary>
     /// The exact Chromium executable the resolved payload's <c>browsers.json</c>
     /// asks for.
     /// </summary>
@@ -36,7 +73,7 @@ internal static class BrowserAiPaths
     /// </remarks>
     public static string ExpectedChromiumExecutable { get; } = Path.Combine(
         Paths.BrowsersDirectory,
-        $"chromium-{ChromiumRevision()}",
+        $"chromium-{ChromiumRevision}",
         "chrome-win64",
         "chrome.exe");
 
@@ -46,21 +83,35 @@ internal static class BrowserAiPaths
     /// </summary>
     public static string HeadlessShellDirectory { get; } = Path.Combine(
         Paths.BrowsersDirectory,
-        $"chromium_headless_shell-{ChromiumRevision()}");
+        $"chromium_headless_shell-{ChromiumRevision}");
 
-    private static string ChromiumRevision()
+    /// <summary>Where a provisioned Firefox lands, and the executable inside it.</summary>
+    public static string FirefoxDirectory { get; } = Path.Combine(
+        Paths.BrowsersDirectory,
+        $"firefox-{FirefoxRevision}");
+
+    /// <summary>The Firefox executable inside that directory.</summary>
+    /// <remarks>
+    /// Note the layout differs from Chromium's: the inner directory is plain
+    /// <c>firefox</c> rather than a platform-suffixed one, which is also why
+    /// upstream's <c>winldd</c> dependency validation actually runs for Firefox
+    /// and is a permanent no-op for Chromium.
+    /// </remarks>
+    public static string FirefoxExecutable { get; } = Path.Combine(FirefoxDirectory, "firefox", "firefox.exe");
+
+    private static string RevisionOf(string browser)
     {
         using var snapshot = JsonDocument.Parse(File.ReadAllText(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "browsers.json")));
 
-        foreach (var browser in snapshot.RootElement.GetProperty("browsers").EnumerateArray())
+        foreach (var entry in snapshot.RootElement.GetProperty("browsers").EnumerateArray())
         {
-            if (browser.GetProperty("name").GetString() is "chromium")
+            if (entry.GetProperty("name").GetString() == browser)
             {
-                return browser.GetProperty("revision").GetString()!;
+                return entry.GetProperty("revision").GetString()!;
             }
         }
 
-        throw new InvalidOperationException("The committed browsers.json snapshot carries no 'chromium' entry.");
+        throw new InvalidOperationException($"The committed browsers.json snapshot carries no '{browser}' entry.");
     }
 }
