@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using Microsoft.Extensions.Logging;
 
@@ -644,7 +645,7 @@ internal sealed class SessionLock : IDisposable
             PurposeHistory = history,
             Created = previous?.Created ?? now,
             LastUsed = now,
-            BrowserAiVersion = BuildVersion,
+            BrowserAiVersion = BuildVersion.Current,
             Holder = new LockHolder
             {
                 ProcessId = Environment.ProcessId,
@@ -653,10 +654,6 @@ internal sealed class SessionLock : IDisposable
             },
         };
     }
-
-    /// <summary>The build stamp written into every record.</summary>
-    private static string BuildVersion { get; } =
-        typeof(SessionLock).Assembly.GetName().Version?.ToString() ?? "unknown";
 
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
 

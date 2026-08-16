@@ -203,30 +203,62 @@ and version it was true at.
       [re-verification row 27](kb/README.md#re-verification-index) carries it as
       *manual*, which is accurate rather than reassuring.
 
-- [ ] **Write `CHANGELOG.md`. The release refuses without it.** The file does not
-      exist. [The pre-release checklist](plan/pre-release.md) refuses a release
-      whose changelog section for the version being cut is empty, and refuses the
-      version `0.0.0` outright — neither check is enforceable until there is a file
-      with a defined shape to be empty *of*. Decide the format; decide whether a
-      section is headed by the tag or by the bare version, which differ by a `v`
-      now that [versions are derived from tags](README.md#settled-2026-08-16); and
-      write entries **as work lands**, not by reconstructing them at release time.
-      Reconstruction is exactly the failure the empty-section check exists to
-      catch, so a checklist satisfied by fifteen minutes of `git log` archaeology
-      has been satisfied in form only.
+- [x] **Write `CHANGELOG.md`. The release refuses without it.** ✅ Done
+      2026-08-16 at [step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog).
+      Format is [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with
+      `### Added` / `### Fixed` / `### Changed` subheads, which is the house form
+      (SpawnSpotter, FluxTone, HitsterCardGenerator, DownloadDeleter); a section
+      is headed by the **bare bracketed version** — `## [0.1.0] - 2026-08-16` —
+      because the tag carries the `v` and the heading is composed from a version
+      string that has none. The mechanism is OutlookAI's, the only mechanised
+      changelog in the estate, ported to `build/Get-ReleaseNotes.ps1`: extract
+      the `## [Unreleased]` section by regex, **refuse on empty with a real
+      error**, then stamp the version being cut below the heading. **Empty means
+      no list items**, not no characters — a section holding only its subheads is
+      exactly what a changelog nobody wrote looks like. Entries were written from
+      the work as it landed rather than reconstructed: `[Unreleased]` describes
+      step 18 and `[0.1.0]` describes what the tag contains. Six tests in
+      `tests/BrowserAI.Tests/ChangelogTests.cs` drive the script both ways,
+      including that a refused version leaves the file byte-identical and that a
+      stamped release leaves an empty section behind, so the next one must be
+      written too.
 
-- [ ] **Decide how a git tag becomes a version string.** Settled 2026-08-16: three
-      parts plus a pre-release suffix, auto-incremented, nothing hand-edited,
-      because `vpk` rejects four-part versions and the house `base.commitcount`
-      convention therefore cannot be carried. The **mechanism** is not settled —
-      either a build-time package that reads the repository's tags during restore,
-      or derivation in the build script from `git describe`. Whichever is chosen
-      must emit a `vpk`-acceptable string for an **untagged** commit as well as a
-      tagged one, and that is a test rather than an assumption: the untagged
-      build's not-a-release suffix is the whole mechanism behind *never self-update
-      from a build that is not a release*, so a mechanism that silently produces
-      `0.0.0` on a shallow clone or a tagless CI checkout defeats two checklist
-      items at once.
+- [x] **Decide how a git tag becomes a version string.** ✅ Done 2026-08-16 at
+      [step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog).
+      The mechanism is **MinVer**, taken from `SixFive7/SpawnSpotter` — the only
+      repository in the estate that derives its version from tags, and the closest
+      structural match. It resolved to **7.0.0** through the float, on the product
+      project only, with `MinVerTagPrefix` of `v`. Measured on the artifact rather
+      than read from documentation: at the annotated tag **`v0.1.0` the build
+      stamps `0.1.0`**, and **five commits later with no new tag it stamps
+      `0.1.1-alpha.0.5`** — the shape `vpk` accepts, and the untagged suffix that
+      makes *never self-update from a build that is not a release* readable off
+      the version string. With no reachable tag MinVer produced
+      `0.0.0-alpha.0.71` and the build **refused it**, naming `fetch-depth: 0` as
+      the remedy, which is [kb](kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)
+      and `BuildVersionTests`. Two traps came with it and are closed:
+      `AssemblyVersion` is `{Major}.0.0.0` by design, so nothing reads it (the
+      product's own `SessionLock` did, and would have stamped `0.0.0.0` into every
+      `lock.json` of the 0.x line); and the SDK's `SourceRevisionId` decoration is
+      off repository-wide.
+
+- [ ] **Check the *published* binary's version string, in the release script that
+      does not exist yet.** Decided 2026-08-16 at
+      [step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog),
+      and carried here rather than built, because there is nothing to hang it on:
+      `build/` has a payload script and a snapshot script, and no release script.
+      `SixFive7/FrameLink` greps **every** version string in the linked binary and
+      fails the build on a decorated one (`build.sh`, exit 7), which is a stronger
+      check than this repository's, because a referenced project carrying a
+      decorated string is linked into the same AOT binary and nothing else would
+      say so. BrowserAI's guard is one layer weaker on purpose: the property is
+      set repository-wide, `BuildVersionTests` asserts the **shipped attribute**
+      carries no build metadata, and `ThePublishedBinaryReportsADerivedVersionOverTheWire`
+      asks the published binary itself over the wire. What is missing is the
+      sweep over strings the entry assembly did not contribute. It belongs beside
+      the `will always throw` grep of the ILC output, which is owed to the same
+      absent script and is already carried above — one publish wrapper answers
+      both.
 
 - [x] **Review `.gitignore`.** ✅ Done 2026-08-15, ahead of v1, because the
       Velopack spike produced a real `vpk pack` to check the guesses against.

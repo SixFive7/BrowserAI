@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
-using System.Reflection;
 using System.Text.Json.Nodes;
+using BrowserAI.Hosting;
 using BrowserAI.Protocol;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
@@ -115,11 +115,6 @@ internal sealed class ChildConnection : IAsyncDisposable
     public IReadOnlyList<int> JobProcessIds() =>
         (_link.Session as ChildProcessSession)?.Job.ProcessIds() ?? [];
 
-    /// <summary>The BrowserAI build, as it introduces itself to a child.</summary>
-    public static string Version { get; } =
-        typeof(ChildConnection).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-        ?? "0.0.0";
-
     /// <summary>Connects to a child over a transport and completes the handshake.</summary>
     /// <param name="transport">The transport. The SDK client owns it once this returns.</param>
     /// <param name="loggerFactory">Where this connection and its transport log.</param>
@@ -145,7 +140,7 @@ internal sealed class ChildConnection : IAsyncDisposable
             link,
             new McpClientOptions
             {
-                ClientInfo = new Implementation { Name = "BrowserAI", Version = Version },
+                ClientInfo = new Implementation { Name = "BrowserAI", Version = BuildVersion.Current },
                 ProtocolVersion = ChildProtocolVersion,
             },
             loggerFactory,

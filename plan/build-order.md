@@ -2401,7 +2401,93 @@ session TTL and no reclaim window;
 ### 18. Versions from git tags, and the changelog
 
 **Consumes:** the maintainer's decision record, 2026-08-16 — *Version numbering*
-and item 40
+and item 40 · [stack](stack.md#versions-come-from-git-tags)
+
+> ✅ **Built 2026-08-16.** `Directory.Packages.props` (MinVer, floating) ·
+> `Directory.Build.props` (the SDK decoration, off repository-wide) ·
+> `src/BrowserAI/BrowserAI.csproj` (`MinVerTagPrefix`, the package reference and
+> `RefuseAVersionDerivedFromNoTag`) · `src/BrowserAI/Hosting/BuildVersion.cs` ·
+> `src/BrowserAI/{Program.cs, Proxy/ChildConnection.cs, Proxy/BrowserProxy.cs,
+> Sessions/SessionLock.cs}` (all four now read the one version) ·
+> `CHANGELOG.md` · `build/Get-ReleaseNotes.ps1` ·
+> `tests/BrowserAI.Tests/{BuildVersionTests, ChangelogTests,
+> BuildConfigurationTests}.cs`. Every done-test below was run. **312 tests
+> green, 0 skipped, `dotnet build` 0 warnings**, and the AOT publish is clean at
+> **11,977,728 bytes**.
+>
+> **The mechanism is [MinVer](https://github.com/adamralph/minver), resolved to
+> 7.0.0 through the float**, on the product project only — versioning the test
+> project buys nothing, since no artifact is cut from it. The tag is the
+> annotated **`v0.1.0`**, created here at `98cb78b` and deliberately **not
+> pushed**. Measured on the artifact rather than read from documentation: on the
+> tag the build stamps **`0.1.0`**; five commits later, on a throwaway branch of
+> five empty commits, it stamps **`0.1.1-alpha.0.5`** — which is this step's own
+> prediction, to the character. The published NativeAOT binary carries
+> `ProductVersion 0.1.0` in its Win32 resource and reports it over the wire on
+> `initialize`, which is also the arm that says the attribute survives ILC.
+>
+> **All three of the traps this step was warned about were real, and one of them
+> was already live in the product.** `SessionLock` stamped every `lock.json`
+> from `Assembly.GetName().Version`, which MinVer fixes at `{Major}.0.0.0` — so
+> the whole 0.x line would have recorded `0.0.0.0` in the one field a support
+> question starts from, and the whole 1.x line `1.0.0.0`. There were also *two*
+> implementations of "what version is this", disagreeing: the other read the
+> informational version and defaulted to `0.0.0`. Both are now one type that
+> reads the informational version, and a source scan fails the build on any read
+> of the assembly version anywhere under `src/`.
+>
+> **The `0.0.0` refusal was provoked for real rather than simulated**, because
+> the tag did not exist yet: the first build of this step produced
+> `0.0.0-alpha.0.71` and was refused, with the message naming `fetch-depth: 0`.
+> That ordering is worth inheriting — a build-time refusal is free to test
+> *before* you create the thing that satisfies it, and never afterwards.
+>
+> ⚠️ **The `SourceRevisionId` trap is real and could not have fired here, and
+> both halves of that matter.** The SDK's target is gated on
+> `SourceControlInformationFeatureSupported` **as well as**
+> `IncludeSourceRevisionInInformationalVersion`, and the first is set by
+> SourceLink rather than by the SDK — so in this repository, which has none, the
+> decoration cannot fire at all. Forcing the feature on and measuring twice:
+> with the property `false` the version stays `0.1.0`, and with it `true` the
+> 40-character sha is appended. **The property is what stops it, and it is set
+> now precisely because nothing can provoke it** — adding SourceLink later would
+> otherwise arm the fleet-wide restart loop silently.
+> [kb](../kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)
+> has the arms, and the detail that cost the most time: the decoration hangs off
+> `GetAssemblyAttributes`, so asking `-getProperty` after `MinVer` or
+> `GetAssemblyVersion` returns an undecorated string in **every** arm and reads
+> as proof of something it did not test.
+>
+> **What guards it, and what does not.** `SixFive7/FrameLink` greps every
+> version string in the linked binary and fails the build; BrowserAI asserts the
+> **shipped attribute** carries no build metadata, asserts the property is still
+> set, and asks the published binary itself over the wire. The sweep over
+> strings the entry assembly did not contribute is **not** built: it belongs in
+> a release script, `build/` has none, and [step 19](#19-velopack-package-update-roll-back)
+> is where one first has to exist. Carried in [TODO.md](../TODO.md) beside the
+> `will always throw` grep that is owed to the same absent script — one publish
+> wrapper answers both.
+>
+> ⚠️ **Two documents were contradicted and are corrected in the same commit.**
+> [kb](../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output) prescribed
+> `$"{v.Major}.{v.Minor}.{v.Build}"` as the fix for a 4-part assembly version;
+> under MinVer that renders `0.0.0`, because it reads the very number the
+> mechanism collapses. And `BuildConfigurationTests.NoProjectFileContainsAVersionLiteral`
+> refused this step's own refusal target: it scans project files for a version
+> literal and found `0.0.0` inside an `<Error>` condition and message. **The
+> test was over-broad rather than the target wrong** — a task that *reports* a
+> version cannot pin one — so the three MSBuild diagnostic tasks are stripped
+> before the scan, with the reason and the date on the line.
+>
+> **The changelog is Keep a Changelog with OutlookAI's machinery.** Sections are
+> headed by the bare bracketed version (`## [0.1.0] - 2026-08-16`), which is the
+> majority house form; the extraction, the empty-section refusal and the stamp
+> are OutlookAI's, ported. **Empty means no list items**, because a section
+> holding only its `### Added` subheads is exactly what a changelog nobody wrote
+> looks like and it would satisfy a non-empty-text check. `[0.1.0]` describes
+> what the tag contains and `[Unreleased]` describes this step; no artifact has
+> been published from the tag, and the file says so rather than implying a
+> release that did not happen.
 
 - **Versions are derived from git tags**, three parts plus a pre-release suffix.
   Tag `1.2.0` and that build is `1.2.0`; an untagged build five commits later is

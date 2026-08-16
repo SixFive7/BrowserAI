@@ -127,12 +127,29 @@ internal sealed partial class BuildConfigurationTests
         // Comments are stripped first: the prose in these files explains the
         // policy, and explaining it must not be indistinguishable from breaking
         // it. Everything that survives is build input.
+        //
+        // The three MSBuild diagnostic tasks are stripped for the same reason,
+        // one level less obvious: a task that REPORTS a version is not a task
+        // that sets one, and both its Text and its Condition are about a value
+        // rather than being one. Narrowed 2026-08-16 at build-order step 18,
+        // which added a target refusing a version derived from no git tag --
+        // `$(MinVerVersion.StartsWith('0.0.0'))`, with `0.0.0` in the message so
+        // a reader knows what was refused. This test read both as pins.
+        //
+        // It costs nothing that matters: a pin is a VALUE, and every shape one
+        // can take is an attribute or an element value somewhere else in the
+        // file. Nothing inside an <Error> can declare a package version, and
+        // NoProjectFileDeclaresAPackageVersion above covers the attribute form
+        // independently.
         var offenders = new List<string>();
 
         foreach (var file in RepositoryLayout.ProjectFiles)
         {
             var document = XDocument.Load(file.FullName);
             document.DescendantNodes().OfType<XComment>().Remove();
+            document.Descendants()
+                .Where(element => element.Name.LocalName is "Error" or "Warning" or "Message")
+                .Remove();
 
             offenders.AddRange(VersionLiteral()
                 .Matches(document.ToString())

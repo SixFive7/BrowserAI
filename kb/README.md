@@ -81,9 +81,9 @@ system Google Chrome 151.0.7922.138 · Firefox `firefox-1539` · Windows 11 Pro
 ## Re-verification index
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **187**
-`[FLOATS]` markers stand across the articles against the **81** numbered rows
-below (89 lines, counting 2a, 2b, 4a, 4b, 4c, 16a, 38a and 63a),
+table is how that happens. **It does not yet cover all of them**: **190**
+`[FLOATS]` markers stand across the articles against the **84** numbered rows
+below (92 lines, counting 2a, 2b, 4a, 4b, 4c, 16a, 38a and 63a),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed — two whole articles carried none until 2026-08-15. Read a
 missing row as a gap in this table, never as permission to skip the fact.
@@ -303,6 +303,22 @@ missing row as a gap in this table, never as permission to skip the fact.
 > suite that provisioned on every run would download 204 MB a run. The empty-root
 > arm downloads without timing; this row times without asserting; neither
 > pretends to be the other.
+>
+> **Re-counted 2026-08-16 after build-order step 18: 190.** Three new markers,
+> all in [kb: Velopack](packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)
+> from deriving the version out of git — what MinVer 7.0.0 emits at three
+> heights, its `{Major}.0.0.0` assembly version, and the two properties the SDK
+> gates its `SourceRevisionId` decoration on. Three new rows (82–84), so the
+> table is **84 numbered rows over 92 lines**. **No row moved from *manual* to a
+> test**, and two of the three arrive half-automated in their own cells: the
+> suite cannot run a build of itself, so a version's *shape* is asserted on every
+> run while the three heights that produce it stay a re-measurement.
+>
+> **The note above this one is step 15's, and that is not a gap in the count.**
+> Steps 16 to 17b added markers and rows without writing a note, so this one's
+> arithmetic is against the anchor sentence rather than against the last note —
+> which is exactly the arrangement the test enforces, and the reason the anchor
+> is the thing it reads.
 
 **The `Automated by` column is what makes this a gate rather than a checklist.** A row naming a test is answered by the suite and needs nobody. A row marked *manual* **must be answered by name in the [`upstream-review.json`](../upstream-review.json) entry**, with an outcome — whether an upstream change touches one of our abstractions is judgement, and judgement cannot be asserted mechanically. **A row that is neither automated nor answered fails [the gate](../plan/testing.md#the-upstream-review-gate).** Automating a manual row is always an improvement; naming a test here that does not exist is worse than leaving it manual, because it reads as covered. In
 priority order — the first three would each silently invalidate a design
@@ -410,6 +426,9 @@ decision:
 | 79 | **Detection matches the two provisioned binaries and nothing else on the machine** — five `chrome-headless-shell.exe` processes from the retired `npx` setup, same vendor and same Chromium revision, running since 2026-08-15, produce **zero** candidates ([kb](windows/detection.md#re-measured-2026-08-16-building-the-sweep)) | The match loosens from a full image path to anything else — a prefix on the wrong root, an image *name*, a `--user-data-dir` heuristic. **This is the property that stops BrowserAI closing a developer's browser** | Scan the whole machine and require every candidate's image path to be one of exactly two strings; plant a process at the same *shape* of path as the legacy tree and require it to be missed, so the check means something on a machine that never had one; and require the real legacy tree, matched by directory prefix, to be disjoint from the candidates | `StraySweepTests.DetectionMatchesOnlyTheBinariesBrowserAiProvisionedAndMissesTheLegacyTree` |
 | 80 | **Registering a logon scheduled task non-elevated is denied on this machine** — `schtasks /Create /XML` and the `Schedule.Service` COM API both answer `0x80070005`, for our definition and for a minimal one alike ([kb](windows/detection.md#the-logon-sweep-task)) | Nothing upstream: this is machine policy, and it is recorded because [step 16](../plan/build-order.md#16-the-stray-sweep) claimed the opposite. **Whether elevation fixes it is unverified** — a UAC prompt cannot be answered from a non-interactive session | Register the definition under a throwaway name and delete it. Owed at [step 19](../plan/build-order.md#19-velopack-package-update-roll-back), which is where the task is registered and where the fallback has to be decided; carried in [`TODO.md`](../TODO.md) | — *manual* |
 | 81 | **Task Scheduler permits `LogonType` only beside a `UserId`** — with a `GroupId`, `schtasks` refuses the file as *"an unexpected node"* ([kb](windows/detection.md#the-logon-sweep-task)) | The schema changes. It fails **loudly**, which is the good direction — but the setting it forces is the one whose absence makes a sweeper in session 0 report success forever, so it is asserted rather than reviewed | Assert `UserId` present, `GroupId` absent and `LogonType` exactly `InteractiveToken` on the generated definition, and that nothing in it says `HighestAvailable` | `LogonSweepTaskTests.TheTaskRunsInTheUsersOwnSessionAndNotAsAService` |
+| 82 | **What MinVer 7.0.0 derives at three heights** — `0.1.0` on the tag, `0.1.1-alpha.0.5` five commits later, `0.0.0-alpha.0.71` with no reachable tag ([kb](packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)) | MinVer changes its default pre-release identifiers or its height rule; or the SDK changes what `Version` feeds. **The tagless row is the one that matters**: it is what a shallow clone produces, and the build refuses it — a MinVer that stopped emitting `0.0.0` there would silently disarm the refusal and ship a build that does not know what it is | Re-measure all three. The tagged row needs only `dotnet msbuild -t:MinVer -getProperty:MinVerVersion`; the untagged row needs five `--allow-empty` commits on a throwaway branch; the tagless row needs `-p:MinVerTagPrefix=zzz`, which is the only arm that stays cheap once a tag exists | — *manual*; the **consequence** is on every build, because `BuildVersionTests.TheVersionIsDerivedAndCarriesNoBuildMetadata` fails on a shape that is not three parts plus an optional suffix, and `RefuseAVersionDerivedFromNoTag` fails the build itself on `0.0.0` |
+| 83 | **MinVer sets `AssemblyVersion` to `{Major}.0.0.0` by design**, so the number a caller reaches for first is `0.0.0.0` for the whole 0.x line ([kb](packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)) | MinVer starts deriving all four parts, which would make the fact stop being true in the harmless direction — the rule *nothing reads the assembly version* stays correct either way. **It was live in this product**: `SessionLock` stamped every `lock.json` from `GetName().Version` until [step 18](../plan/build-order.md#18-versions-from-git-tags-and-the-changelog) | Read `Assembly.GetName().Version` off the built artifact and compare it against the informational version, then scan `src/` for any read of the former. The scan is the half that matters: the measurement says the trap exists, the scan says nothing has walked into it | `BuildVersionTests.TheAssemblyVersionIsMajorOnlyWhichIsWhyNothingReadsIt` · `BuildVersionTests.NothingInTheProductReadsTheAssemblyVersion` · `BuildVersionTests.EverySessionRecordsTheVersionTheBuildWasDerivedAs` |
+| 84 | **The SDK's `SourceRevisionId` decoration is gated on `SourceControlInformationFeatureSupported` as well as `IncludeSourceRevisionInInformationalVersion`**, and only `GetAssemblyAttributes` runs it ([kb](packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)) | Any SDK bump changes either gate or the target's place in the graph. **It fails armed rather than open**: adding SourceLink is enough to switch the feature on, and the repository would then depend entirely on the property that is set here — which is why the property is set now, while nothing can provoke it | Force the feature on, supply a `SourceRevisionId`, and read `InformationalVersion` after **`GetAssemblyAttributes`** with the property false and then true. Asking after `MinVer` or `GetAssemblyVersion` returns an undecorated string in every arm and reads as proof of something it did not test | — *manual*; the consequence is on every build, by `BuildVersionTests.TheVersionIsDerivedAndCarriesNoBuildMetadata` for the shipped attribute and `BuildVersionTests.TheSdkIsForbiddenFromDecoratingTheVersion` for the property |
 
 Add a row whenever a new `[FLOATS]` entry lands. An entry with no row is an entry
 nobody will re-check.

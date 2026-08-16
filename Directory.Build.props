@@ -116,6 +116,35 @@
 
   <PropertyGroup Label="Never">
     <!--
+      THE SHIPPED VERSION STRING IS A WIRE VALUE, AND THE SDK MUST NOT DECORATE
+      IT.
+
+      By default the SDK appends `.$(SourceRevisionId)` to InformationalVersion
+      even when the build sets that property explicitly. SixFive7/FrameLink
+      records what that cost: a release published as 0.0.0+a273b31 reported
+      itself as 0.0.0+a273b31 followed by the 40-character sha, the updater
+      MATCHES the served version against the reported one rather than comparing
+      them, so the two could never be equal, and every frame downloaded the
+      binary it was already running, swapped it, restarted, and did it again an
+      hour later. Fleet wide, forever, presenting only as "the frames restart
+      every hour".
+
+      BrowserAI's update path matches too (plan/G-updates.md), so the same
+      trade applies here, and the property is turned off REPOSITORY WIDE rather
+      than in the product project: a global property passed with `-p:` reaches
+      every referenced project, and a project still carrying a decorated string
+      is linked into the same AOT binary.
+
+      Nothing populates SourceRevisionId in this repository today, so the
+      decoration cannot currently fire. That is exactly why this is set now:
+      the day something does (SourceLink, a CI step, a build script), it would
+      arm silently. The guard is BuildVersionTests, which asserts the shipped
+      attribute carries no build metadata at all, so this property being
+      dropped is a red suite rather than an hourly restart.
+    -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <!--
       UseSystemResourceKeys strips the framework's exception message strings
       and leaves bare resource keys behind. It is a real NativeAOT size win and
       completely wrong here: this product's error text is read by a MODEL

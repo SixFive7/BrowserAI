@@ -3,6 +3,7 @@
 
 using System.Text.Json.Nodes;
 using BrowserAI.Artifacts;
+using BrowserAI.Hosting;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
@@ -192,7 +193,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     {
         var options = new McpServerOptions
         {
-            ServerInfo = new Implementation { Name = "BrowserAI", Version = ChildConnection.Version },
+            ServerInfo = new Implementation { Name = "BrowserAI", Version = BuildVersion.Current },
 
             // The only channel that reaches a model before it calls anything,
             // and the only one that can pre-empt the first mistake after a

@@ -20,6 +20,27 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Label="Version">
+    <!--
+      THE VERSION IS DERIVED FROM THE NEAREST GIT TAG AND IS TYPED NOWHERE.
+
+      MinVer reads `git describe` at build time (plan/stack.md, "Versions come
+      from git tags"):
+
+        on the tag v0.1.0                  = 0.1.0
+        five commits later, no new tag     = 0.1.1 with an alpha.0.5 suffix
+        no tag reachable at all            = 0.0.0 with an alpha.0.N suffix
+
+      The prefix is `v`, which is this estate's house prefix and the one
+      SixFive7/SpawnSpotter uses. It is a tag prefix rather than a version, so
+      it is not a pin and carries no digits.
+
+      On the PRODUCT PROJECT ONLY. Versioning the test project buys nothing: no
+      artifact is cut from it and no caller ever sees its version.
+    -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+
   <PropertyGroup Label="Native compilation">
     <!--
       AOT IS GATED TO PUBLISH, and this single property is what does it:
@@ -63,6 +84,9 @@
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <!-- Build-time only. PrivateAssets="all" keeps it out of the dependency
+         graph entirely, so nothing ships and ILC never sees it. -->
+    <PackageReference Include="MinVer" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -102,6 +126,36 @@
     and there is no way to say "publish but not build" for it that survives the
     single-file and AOT publish paths.
   -->
+  <!--
+    A BUILD THAT DOES NOT KNOW WHAT IT IS MUST NOT PRODUCE A BINARY.
+
+    `0.0.0` is what MinVer emits when no tag is reachable: an unfetched tag, a
+    shallow clone, a tarball with no `.git` at all. Nothing about that build is
+    wrong until it ships, and then it is unrollbackable, unbisectable, and
+    indistinguishable in a feed from every other build that also found no tag.
+    plan/pre-release.md item 9 refuses it; this is that refusal, moved from a
+    checklist a human reads to the build that produces the artifact.
+
+    It fails the BUILD rather than the publish deliberately. A check that only
+    fired at publish would leave every test in this suite running against a
+    binary whose version nobody had established.
+
+    The remedy is in the message because the cause is never local: the fix for
+    a CI checkout is `fetch-depth: 0`, and the fix for a hand-made clone is a
+    tag fetch. Neither is guessable from the number 0.0.0.
+
+    (No double hyphen anywhere in this comment. One makes MSBuild fail to load
+    the file, and the error names a different project entirely. Measured three
+    times before today and hit a fourth time writing this target, on the very
+    flag the message below names.)
+  -->
+  <Target Name="RefuseAVersionDerivedFromNoTag" AfterTargets="MinVer">
+    <Error Condition="'$(MinVerVersion)' == ''"
+           Text="MinVer produced no version at all, so this build cannot say what it is. Check that the MinVer package restored and that this project is inside a git working tree." />
+    <Error Condition="$(MinVerVersion.StartsWith('0.0.0'))"
+           Text="This build derived the version $(MinVerVersion) from git, and a version beginning 0.0.0 means MinVer found no '$(MinVerTagPrefix)*' tag to count from. A binary that does not know what it is cannot be rolled back to or bisected against, so the build is refused rather than stamped. Fetch the tags: 'git fetch --tags', or on a CI checkout set fetch-depth to 0 (a shallow clone carries no tags and fails exactly here)." />
+  </Target>
+
   <Target Name="AddPayloadToPublish"
           AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')">

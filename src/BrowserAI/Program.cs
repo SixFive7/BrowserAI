@@ -68,6 +68,7 @@ internal static class Program
 
         StartupLog.Started(
             logger,
+            BuildVersion.Current,
             Environment.ProcessId,
             Environment.ProcessPath ?? "<unknown>",
             Environment.CurrentDirectory);
@@ -285,11 +286,27 @@ internal static class Program
 /// <summary>Source-generated log messages for process startup.</summary>
 internal static partial class StartupLog
 {
+    /// <summary>
+    /// The first line of every run, and the only place the running build's
+    /// version is recorded.
+    /// </summary>
+    /// <remarks>
+    /// <b>The version is here because the process log survives an update</b>
+    /// ([§E](../../plan/E-lifecycle.md)) — it lives outside <c>current\</c>, so
+    /// the log of a machine that updated itself carries both versions and the
+    /// moment it changed. Without it, *"which build was running when this
+    /// happened"* is unanswerable for every past run.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="version">The version derived from the git tag at build time.</param>
+    /// <param name="processId">This process.</param>
+    /// <param name="imagePath">The binary it is running.</param>
+    /// <param name="workingDirectory">Where it was started.</param>
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "BrowserAI started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory}")]
-    public static partial void Started(ILogger logger, int processId, string imagePath, string workingDirectory);
+        Message = "BrowserAI {Version} started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory}")]
+    public static partial void Started(ILogger logger, string version, int processId, string imagePath, string workingDirectory);
 
     [LoggerMessage(
         EventId = 2,

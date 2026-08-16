@@ -305,18 +305,108 @@ as `1.0.0.0` wherever the app reads it back.** .NET assembly versions are 4-part
 by default, so packing succeeds with a 3-part semver while the running app — a
 window title, an about box, a log banner — shows a fourth component that exists
 nowhere in the feed. The two numbers are separate and only one of them is
-constrained by `vpk`. The fix is to format explicitly from the parts:
-`$"{v.Major}.{v.Minor}.{v.Build}"`. Read 2026-08-16 from
+constrained by `vpk`. Read 2026-08-16 from
 `C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Troubleshooting.md`
 (*Version Shows 4 Parts*), where it is filed as a shipped symptom rather than a
 theory. Not run here. `[STABLE]` — this is .NET assembly-version behaviour, not
 Velopack's.
+
+> ⚠️ **Corrected 2026-08-16 (previously: "the fix is to format explicitly from
+> the parts: `$"{v.Major}.{v.Minor}.{v.Build}"`").** That fix is wrong here, and
+> it fails in the opposite direction to the symptom it treats. It reads
+> `Assembly.GetName().Version`, and under the mechanism this project actually
+> uses — see below — that number is **`{Major}.0.0.0`**, so formatting three
+> parts out of it renders `0.0.0` for every build of the 0.x line and `1.0.0`
+> for every build of the 1.x line. Measured on this repository's own artifact at
+> tag `v0.1.0`: `AssemblyVersion` is `0.0.0.0` while the version is `0.1.0`. The
+> correct source is `AssemblyInformationalVersionAttribute`, and the rule is
+> that **nothing reads the assembly version at all**.
 
 **`.gitignore` verdict** (closes the deferred v1 item): `/Releases/` ✅ ·
 `*-Portable.zip` ✅ · `/RELEASES` ✅ default channel only · **`Setup.exe` never
 matches** — the real name is `{id}-{channel}-Setup.exe` · **`/payload/`,
 `/staging/`, `/.staging/` are not vpk output at all**; they are BrowserAI's own
 build conventions and must be justified on that basis or dropped.
+
+## Versions from git tags — MinVer 7.0.0 — 2026-08-16
+
+Measured while building [step 18](../../plan/build-order.md), on SDK **10.0.302**
+with **MinVer 7.0.0** resolved through the float (`Version="*"`, product project
+only, `MinVerTagPrefix` of `v`). Everything below is read off the build or off
+the artifact, never off MinVer's documentation. `[FLOATS]` — MinVer, the SDK and
+git all move under it.
+
+**What MinVer produced, at three heights.** Re-establish any row with
+`dotnet msbuild src/BrowserAI/BrowserAI.csproj -t:MinVer -getProperty:MinVerVersion,Version,AssemblyVersion,FileVersion,InformationalVersion`.
+
+| Where HEAD is | `MinVerVersion` | `AssemblyVersion` | `FileVersion` | `InformationalVersion` |
+|---|---|---|---|---|
+| On the annotated tag `v0.1.0` | `0.1.0` | **`0.0.0.0`** | `0.1.0.0` | `0.1.0` |
+| 5 commits past it, no new tag | `0.1.1-alpha.0.5` | **`0.0.0.0`** | `0.1.1.0` | `0.1.1-alpha.0.5` |
+| No reachable tag at all | `0.0.0-alpha.0.71` | — | — | — |
+
+The five-commit row was produced by five `--allow-empty` commits on a throwaway
+branch, built, read off the produced `BrowserAI.dll`, and the branch deleted; the
+tagless row is what this repository produced **before** `v0.1.0` existed, which
+is the only moment that state is free to observe. The height 71 is the commit
+count since the root commit, one less than `git rev-list --count HEAD`.
+
+**`AssemblyVersion` is `{Major}.0.0.0` by design, and that is the trap.**
+`[FLOATS]` — MinVer's choice, and it is the one MinVer would change. It is
+not a defect and MinVer will not be talked out of it — a 4-part assembly version
+is a binding identity in .NET and MinVer keeps it stable across a major. The
+consequence is that the number a caller reaches for first is **`0.0.0.0` for the
+entire 0.x line**. The published binary's Win32 resource carries the useful
+pair instead: `ProductVersion` is the informational version and `FileVersion` is
+`{Major}.{Minor}.{Patch}.0` — read on the AOT-published `BrowserAI.exe` as
+`0.1.0` and `0.1.0.0`.
+
+**The SDK's `SourceRevisionId` decoration is gated on two properties, not one.**
+`[FLOATS]` — the SDK floats under `rollForward: latestMajor`, so this moves
+without anyone choosing it.
+`AddSourceRevisionToInformationalVersion` in
+`Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.GenerateAssemblyInfo.targets`
+requires **`SourceControlInformationFeatureSupported == 'true'` and
+`IncludeSourceRevisionInInformationalVersion == 'true'`**, and the second
+defaults to `true` in that same file. The first is set by a source-control
+provider — SourceLink and nothing in the SDK — so in a repository with no
+SourceLink the decoration **cannot fire at all**, which means the property alone
+proves nothing and a repository can look protected while being merely
+un-provoked. Measured twice, each arm:
+
+| Arm | `InformationalVersion` |
+|---|---|
+| Repository as committed, nothing supplied | `0.1.0` |
+| Feature on, `SourceRevisionId` supplied, property `false` | `0.1.0` |
+| Feature on, `SourceRevisionId` supplied, property `true` | `0.1.0+a273b31c0ffee1234567890abcdef1234567890a` |
+
+So the property in `Directory.Build.props` **is** the thing that stops it, once
+anything arms the feature. Two details cost time and are worth inheriting:
+`-getProperty` reports the value only after the targets actually named ran, and
+this decoration hangs off **`GetAssemblyAttributes`** rather than
+`GetAssemblyVersion` or `MinVer` — asking after either of the latter two returns
+an undecorated string and reads as proof of something it did not test. And a
+`-p:InformationalVersion=…` global property does **not** survive: MinVer's own
+target overwrites it, so the *`.`-separated* form the SDK produces when the
+string already carries a `+` (`0.1.0+a273b31` becoming
+`0.1.0+a273b31.<40-char sha>`) could not be reproduced here and is **read from
+the target's own text** at lines 67–71 rather than measured. That form is the
+one `SixFive7/FrameLink` shipped: a fleet where every frame downloaded the
+binary it was already running, swapped it, restarted, and repeated hourly,
+because its updater **matches** the served version against the reported one.
+
+**A version derived from no tag fails the build.** `RefuseAVersionDerivedFromNoTag`
+in `src/BrowserAI/BrowserAI.csproj` runs `AfterTargets="MinVer"` and refuses
+anything beginning `0.0.0`, naming `fetch-depth: 0` and a tag fetch as the
+remedies. Provoked for real on 2026-08-16 before the first tag existed:
+
+```
+error : This build derived the version 0.0.0-alpha.0.71 from git, and a version
+beginning 0.0.0 means MinVer found no 'v*' tag to count from. ...
+```
+
+To re-provoke it without deleting a tag, build with a prefix that matches
+nothing: `dotnet build src/BrowserAI/BrowserAI.csproj -p:MinVerTagPrefix=zzz`.
 
 ## New defect: `Setup.exe -- <args>` hangs forever
 

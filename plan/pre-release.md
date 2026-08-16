@@ -42,13 +42,16 @@ requires. The adjudications in items 3–6 go in the
 [`upstream-review.json`](../upstream-review.json) entry, which is where the suite
 reads them from. Not in this file — this file is the list, not the log.
 
-> **Prerequisites that do not exist yet.** Verified 2026-08-16: there is no
-> `CHANGELOG.md` in this repository, so **item 10 cannot be checked until
-> [build order step 18](build-order.md) creates it**. The snapshots, the marker
-> test and the suite that items 3–8 rest on arrive at
-> [build order steps 4, 8 and 9](build-order.md). Until then, an item naming a
-> test names something that has not been built, and saying so is the honest
-> reading of a checklist against a repository with no product code in it.
+> **Prerequisites that did not exist when this was written.** ✅ **Closed
+> 2026-08-16.** `CHANGELOG.md` and its refusal landed at
+> [build order step 18](build-order.md#18-versions-from-git-tags-and-the-changelog),
+> so **item 10 is checkable**; the snapshots, the marker test and the suite that
+> items 3–8 rest on landed at
+> [build order steps 4, 8 and 9](build-order.md). What is still absent is a
+> **release script**: every item below is run by hand, and items 9 and 10 are the
+> only two with a command to run at all. That is the honest reading of a
+> checklist against a repository whose packaging is
+> [step 19](build-order.md#19-velopack-package-update-roll-back).
 
 ---
 
@@ -239,7 +242,21 @@ shape the packager accepts. Nothing hand-edited. `0.0.0` means the derivation
 found no tag: a build that does not know what it is, and therefore a build that
 cannot be rolled back to or bisected against. **Refuse it.**
 
+**The refusal is the build's, not this checklist's**, since
+[step 18](build-order.md#18-versions-from-git-tags-and-the-changelog): MinVer
+derives the version and `RefuseAVersionDerivedFromNoTag` in
+`src/BrowserAI/BrowserAI.csproj` fails the build on anything beginning `0.0.0`,
+naming `fetch-depth: 0` as the remedy. A release cut from a green build has
+already passed this item; what is recorded here is which version that was.
+
+**Also check the release is not being cut from a pre-release build.** An
+untagged build carries its own `-alpha.N.M` suffix, which is the whole of *never
+self-update from a build that is not a release* — so a version with a suffix
+means the tag for this release has not been created yet.
+
 **Evidence:** the version the build stamped, and the tag it came from.
+`dotnet msbuild src/BrowserAI/BrowserAI.csproj -t:MinVer -getProperty:MinVerVersion`
+answers both without building anything.
 
 ### 10. The changelog's unreleased section is not empty
 
@@ -247,9 +264,23 @@ cannot be rolled back to or bisected against. **Refuse it.**
 say is a release nobody can describe afterwards — and the first thing a rollback
 needs is a statement of what changed.
 
-**Prerequisite:** verified 2026-08-16, `CHANGELOG.md` does not exist in this
-repository. [Build order step 18](build-order.md) creates it; until then this
-item cannot be checked, and saying so is the check.
+**This item has a command**, since
+[step 18](build-order.md#18-versions-from-git-tags-and-the-changelog):
+
+```
+pwsh -File build/Get-ReleaseNotes.ps1 -StampVersion <the version item 9 recorded>
+```
+
+It extracts the `## [Unreleased]` section, **exits non-zero if it holds no list
+items**, and only then stamps the version below the heading. Empty means no
+entries rather than no characters, because a section holding nothing but its
+`### Added` subheads is what a changelog nobody wrote looks like. Run it without
+`-StampVersion` first: that is the same refusal with nothing written.
+
+**What the command cannot check is the half that matters** — that the entries
+were written as the work landed rather than reconstructed here. A changelog
+assembled from `git log` at this moment satisfies the script and has satisfied
+this item in form only.
 
 **Evidence:** the unreleased section's contents, moved under the version being
 cut.
