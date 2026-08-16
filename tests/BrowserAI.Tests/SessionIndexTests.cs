@@ -1,0 +1,585 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using BrowserAI.Hosting;
+using BrowserAI.Sessions;
+using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace BrowserAI.Tests;
+
+/// <summary>
+/// The session-index file layout — the third of the three decisions
+/// [README → Still open](../../README.md#still-open) named as settled on paper
+/// and unexercised.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>The index is deliberately weaker than it looks, and each property here is
+/// a property of that weakness.</b> It is never trusted, only followed; it takes
+/// no lock; and it repairs itself. So the assertions are about what it does
+/// <i>not</i> do — it does not authorise, it does not serialise, and above all
+/// it does not touch anything outside its own directory.
+/// </para>
+/// <para>
+/// <b>Every index root here is a scratch root.</b> The real one is machine-wide
+/// state, and a test that wrote into it would put throwaway directories into a
+/// developer's own <c>browserai_list</c>. <see cref="ScratchRoot"/> additionally
+/// reclaims any entry in the real index that points into the scratch tree, so a
+/// leak from a run that predates this rule is cleaned rather than inherited.
+/// </para>
+/// </remarks>
+internal sealed class SessionIndexTests
+{
+    private static readonly string ProbePath = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+
+    /// <summary>
+    /// How long a probe gets to start a runtime and report. Generous on purpose:
+    /// a slow machine starting eight processes is the ordinary reason this is
+    /// slow, and a tight deadline reports as an index failure.
+    /// </summary>
+    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(90);
+
+    /// <summary>How many processes re-assert one entry at the same instant.</summary>
+    /// <remarks>
+    /// The done-test asks for two. Eight is what the suite pays for, because the
+    /// window a rename leaves open is small and two processes can miss each
+    /// other entirely — which would pass while proving nothing.
+    /// </remarks>
+    private const int Writers = 8;
+
+    /// <summary>How many times each writer re-asserts the same entry.</summary>
+    private const int WritesEach = 250;
+
+    [Test]
+    public async Task InitThenResumeLeavesExactlyOneEntryAndAHandDeletionIsRepairedByTheNextResume()
+    {
+        using var scratch = ScratchDirectory.Create("index-idempotent");
+        var (index, path) = NewIndex(scratch, "session");
+
+        // init: the directory is taken for the first time.
+        var first = SessionLock.TryAcquire(path, Request("the first"), NullLogger.Instance);
+        await Assert.That(first.Outcome).IsEqualTo(SessionLockOutcome.Acquired);
+        index.Record(path);
+        first.Acquired!.Dispose();
+
+        // resume: the same directory, taken again. The entry is re-asserted
+        // rather than written once, which is the whole reason a lost one heals.
+        var second = SessionLock.TryAcquire(path, Request("the second"), NullLogger.Instance);
+        await Assert.That(second.Outcome).IsEqualTo(SessionLockOutcome.Reclaimed);
+        index.Record(path);
+        second.Acquired!.Dispose();
+
+        var entries = Directory.GetFiles(index.Root);
+        await Assert.That(entries.Length).IsEqualTo(1);
+        await Assert.That(Path.GetFileName(entries[0])).IsEqualTo(path.IndexKey);
+
+        // The path and nothing else, asserted on the bytes. A wrapper object, a
+        // trailing newline or a BOM would all round-trip and all be more than
+        // this file is allowed to be.
+        await Assert.That(Convert.ToHexString(await File.ReadAllBytesAsync(entries[0])))
+            .IsEqualTo(Convert.ToHexString(Encoding.UTF8.GetBytes(path.FullPath)));
+
+        var followed = index.Follow();
+        await Assert.That(followed.Count).IsEqualTo(1);
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Session);
+        await Assert.That(followed[0].Record!.Purpose).IsEqualTo("the second");
+
+        // Deleted by hand, which is a thing a person may do and a thing a wrong
+        // sweep may do. Either way the next use puts it back.
+        File.Delete(entries[0]);
+        await Assert.That(index.Follow().Count).IsEqualTo(0);
+
+        var third = SessionLock.TryAcquire(path, Request("the third"), NullLogger.Instance);
+        index.Record(path);
+        third.Acquired!.Dispose();
+
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
+        await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
+    }
+
+    [Test]
+    public async Task AnEntryPointingAtADeletedDirectoryIsRemovedOnTheNextSweep()
+    {
+        using var scratch = ScratchDirectory.Create("index-deleted");
+        var (index, path) = NewIndex(scratch, "session");
+
+        var lease = SessionLock.TryAcquire(path, Request("about to be deleted"), NullLogger.Instance);
+        index.Record(path);
+        lease.Acquired!.Dispose();
+
+        await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
+
+        Directory.Delete(path.FullPath, recursive: true);
+
+        var sweep = index.Sweep();
+
+        await Assert.That(sweep.Followed).IsEqualTo(1);
+        await Assert.That(sweep.Removed.Count).IsEqualTo(1);
+        await Assert.That(sweep.Removed[0].State).IsEqualTo(SessionIndexEntryState.DirectoryMissing);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
+
+        // Idempotent: a second sweep over an index that is already clean does
+        // nothing and says so.
+        var again = index.Sweep();
+        await Assert.That(again.Followed).IsEqualTo(0);
+        await Assert.That(again.Removed.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task AnEntryPointingAtADirectoryWithNoLockFileIsRemovedOnTheNextSweep()
+    {
+        using var scratch = ScratchDirectory.Create("index-nolock");
+        var (index, path) = NewIndex(scratch, "session");
+
+        var lease = SessionLock.TryAcquire(path, Request("about to be destroyed"), NullLogger.Instance);
+        index.Record(path);
+        lease.Acquired!.Dispose();
+
+        // The directory survives its lock file, which is what a destroy leaves
+        // behind if the caller keeps the folder.
+        File.Delete(path.LockFile);
+
+        var followed = index.Follow();
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
+        await Assert.That(followed[0].Problem).Contains(SessionLayout.LockFileName);
+
+        var sweep = index.Sweep();
+
+        await Assert.That(sweep.Removed.Count).IsEqualTo(1);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
+
+        // The sweep removed a pointer and nothing else.
+        await Assert.That(Directory.Exists(path.FullPath)).IsTrue();
+    }
+
+    [Test]
+    public async Task AnEntryPointingAtAPersonalChromeProfileIsFollowedAndProducesNoAction()
+    {
+        using var scratch = ScratchDirectory.Create("index-chrome");
+        var index = NewIndex(scratch);
+
+        // A profile shaped like the real thing, including the file whose name is
+        // one character from ours: Chromium's own `lockfile`. Keying on anything
+        // fuzzier than an exact `lock.json` would claim this directory.
+        var profile = Path.Combine(scratch.Path, "User Data");
+        _ = Directory.CreateDirectory(Path.Combine(profile, "Default"));
+        await File.WriteAllTextAsync(Path.Combine(profile, "Local State"), """{"os_crypt":{"encrypted_key":"x"}}""");
+        await File.WriteAllTextAsync(Path.Combine(profile, "lockfile"), "hostname-1234");
+        await File.WriteAllTextAsync(Path.Combine(profile, "Default", "Preferences"), """{"profile":{"name":"Person 1"}}""");
+        await File.WriteAllTextAsync(Path.Combine(profile, "Default", "Cookies"), "SQLite format 3\0");
+        await File.WriteAllTextAsync(Path.Combine(profile, "Default", "History"), "SQLite format 3\0");
+
+        var before = Manifest(profile);
+        var path = SessionPath.Resolve(profile);
+        index.Record(path);
+
+        // Followed, and found not to be ours. That is the entire interaction.
+        var followed = index.Follow();
+        await Assert.That(followed.Count).IsEqualTo(1);
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
+        await Assert.That(followed[0].Record).IsNull();
+
+        var sweep = index.Sweep();
+        await Assert.That(sweep.Removed.Count).IsEqualTo(1);
+
+        // NO ACTION. Not a lock taken, not a file written, not a file removed,
+        // not a directory deleted -- the manifest is every file under the tree
+        // with its length and its content hash, so an addition fails this as
+        // loudly as a deletion would.
+        await Assert.That(Manifest(profile)).IsEqualTo(before);
+        await Assert.That(File.Exists(Path.Combine(profile, SessionLayout.LockFileName))).IsFalse();
+        await Assert.That(Directory.Exists(profile)).IsTrue();
+    }
+
+    [Test]
+    public async Task TwoProcessesWritingOneEntryConcurrentlyLeaveOneValidFile()
+    {
+        using var scratch = ScratchDirectory.Create("index-race");
+        var root = Path.Combine(scratch.Path, "appdata");
+        var index = new SessionIndex(new LocalAppDataPaths(root), NullLogger.Instance);
+
+        var directory = Path.Combine(scratch.Path, "session");
+        var path = SessionPath.Resolve(directory);
+        SessionLayout.Create(path);
+
+        var lease = SessionLock.TryAcquire(path, Request("raced for"), NullLogger.Instance);
+        lease.Acquired!.Dispose();
+
+        var startName = $@"Local\BrowserAI-Test-Start-{Guid.NewGuid():N}";
+        using var start = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, startName, out var createdNew);
+        await Assert.That(createdNew).IsTrue();
+
+        var reports = Enumerable.Range(0, Writers)
+            .Select(i => Path.Combine(scratch.Path, $"writer-{i.ToString(CultureInfo.InvariantCulture)}.json"))
+            .ToList();
+
+        using (var scope = new JobObjectScope())
+        {
+            foreach (var report in reports)
+            {
+                _ = scope.Launch(
+                    ProbePath,
+                    AppContext.BaseDirectory,
+                    "session-index",
+                    directory,
+                    root,
+                    startName,
+                    report,
+                    WritesEach.ToString(CultureInfo.InvariantCulture));
+            }
+
+            await WaitForAllAsync(reports.Select(report => $"{report}.ready"));
+
+            // Everybody is parked on the event. This is the instant they all
+            // start renaming over one another's file.
+            _ = start.Set();
+
+            var outcomes = await ProbeReport.ReadAllAsync(reports, Patience);
+
+            foreach (var outcome in outcomes)
+            {
+                await Assert.That((int?)outcome["writes"]).IsEqualTo(WritesEach);
+                await Assert.That((string?)outcome["indexRoot"]).IsEqualTo(index.Root);
+            }
+        }
+
+        // One valid file, and only one. No lock was taken anywhere on this path.
+        var entries = Directory.GetFiles(index.Root);
+        await Assert.That(entries.Length).IsEqualTo(1);
+        await Assert.That(Path.GetFileName(entries[0])).IsEqualTo(path.IndexKey);
+        await Assert.That(Convert.ToHexString(await File.ReadAllBytesAsync(entries[0])))
+            .IsEqualTo(Convert.ToHexString(Encoding.UTF8.GetBytes(path.FullPath)));
+
+        // Valid means followable, not merely present.
+        var followed = index.Follow();
+        await Assert.That(followed.Count).IsEqualTo(1);
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Session);
+
+        // And no rename temp survived 2,000 renames over one name.
+        await Assert.That(entries.Count(file => Path.GetFileName(file).Contains(".new-", StringComparison.Ordinal))).IsEqualTo(0);
+
+        // Recording never throws, so a failure can only be found in the log.
+        // Reading it is what stops "one valid file" being satisfied by every
+        // writer having quietly given up.
+        var log = ProbeProcess.ReadProcessLog(root);
+        await Assert.That(log).DoesNotContain("Could not write the session index entry");
+    }
+
+    [Test]
+    public async Task AnEntryWhoseLockFileCannotBeParsedIsKeptBecauseNothingElseCanRestoreIt()
+    {
+        using var scratch = ScratchDirectory.Create("index-corrupt");
+        var (index, path) = NewIndex(scratch, "session");
+
+        var lease = SessionLock.TryAcquire(path, Request("about to be corrupted"), NullLogger.Instance);
+        index.Record(path);
+        lease.Acquired!.Dispose();
+
+        var original = await File.ReadAllTextAsync(path.LockFile);
+        await File.WriteAllTextAsync(path.LockFile, original.Replace(@"""purpose""", @"""purpse""", StringComparison.Ordinal));
+
+        // THIS IS THE MEASUREMENT THE KEEP RESTS ON. A session whose lock.json
+        // cannot be parsed is refused by TryAcquire, so there is no init and no
+        // resume that would ever re-assert its index entry. Removing the entry
+        // would make a directory that still exists permanently invisible to the
+        // only inventory there is.
+        var refused = SessionLock.TryAcquire(path, Request("trying to resume it"), NullLogger.Instance);
+        refused.Acquired?.Dispose();
+        await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
+
+        var followed = index.Follow();
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.LockUnreadable);
+        await Assert.That(followed[0].Record).IsNull();
+        await Assert.That(followed[0].Problem).Contains("purpse");
+
+        var sweep = index.Sweep();
+
+        await Assert.That(sweep.Removed.Count).IsEqualTo(0);
+        await Assert.That(sweep.Kept.Count).IsEqualTo(1);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
+
+        // And once the file is repaired, the entry is an ordinary session again
+        // without anyone re-recording it.
+        await File.WriteAllTextAsync(path.LockFile, original);
+        await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
+    }
+
+    [Test]
+    public async Task AnEntryOnAVolumeThatIsNotMountedIsKeptRatherThanSwept()
+    {
+        using var scratch = ScratchDirectory.Create("index-volume");
+        var index = NewIndex(scratch);
+
+        var absent = FirstUnmountedDriveLetter();
+        var path = SessionPath.Resolve($@"{absent}:\browserai\sessions\research");
+        index.Record(path);
+
+        var followed = index.Follow();
+
+        // Not "gone". Unknown. A session directory on a drive that is not
+        // plugged in, or a share that is not reachable, has not been destroyed —
+        // and dropping it from the only inventory there is would lose it for
+        // good, because nothing on an absent volume can re-assert its entry.
+        await Assert.That(followed.Count).IsEqualTo(1);
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.VolumeMissing);
+        await Assert.That(followed[0].Problem).Contains($@"{absent}:\");
+
+        var sweep = index.Sweep();
+
+        await Assert.That(sweep.Removed.Count).IsEqualTo(0);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task AnEntryThatCannotBeFollowedAtAllIsRemoved()
+    {
+        using var scratch = ScratchDirectory.Create("index-unusable");
+        var index = NewIndex(scratch);
+        _ = Directory.CreateDirectory(index.Root);
+
+        var real = SessionPath.Resolve(Path.Combine(scratch.Path, "elsewhere"));
+
+        // Four ways an entry can fail to be a pointer, planted by hand because
+        // this build cannot write any of them.
+        var planted = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [Key("empty")] = string.Empty,
+            [Key("relative")] = @"sessions\research",
+            [Key("garbage")] = "this is not a path at all\u0000?",
+
+            // A real, absolute, followable path -- under the wrong name. Left in
+            // place it would be a second inventory line for a directory that
+            // already has a correctly-named one, and no sweep would ever
+            // converge.
+            [Key("mismatched")] = real.FullPath,
+        };
+
+        foreach (var (name, content) in planted)
+        {
+            await File.WriteAllTextAsync(Path.Combine(index.Root, name), content);
+        }
+
+        var followed = index.Follow();
+        await Assert.That(followed.Count).IsEqualTo(planted.Count);
+
+        foreach (var entry in followed)
+        {
+            await Assert.That(entry.State).IsEqualTo(SessionIndexEntryState.Unusable);
+            await Assert.That(entry.Problem).Contains("cannot be followed");
+        }
+
+        var sweep = index.Sweep();
+
+        await Assert.That(sweep.Removed.Count).IsEqualTo(planted.Count);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ASweepClearsThisStoresOwnAbandonedRenameTempsAndNothingElse()
+    {
+        using var scratch = ScratchDirectory.Create("index-litter");
+        var (index, path) = NewIndex(scratch, "session");
+
+        var lease = SessionLock.TryAcquire(path, Request("littered"), NullLogger.Instance);
+        index.Record(path);
+        lease.Acquired!.Dispose();
+
+        var abandoned = Path.Combine(index.Root, $"{path.IndexKey}.new-{Guid.NewGuid():N}");
+        var live = Path.Combine(index.Root, $"{path.IndexKey}.new-{Guid.NewGuid():N}");
+        var foreign = Path.Combine(index.Root, "readme.txt");
+
+        foreach (var file in new[] { abandoned, live, foreign })
+        {
+            await File.WriteAllTextAsync(file, path.FullPath);
+        }
+
+        // Only a temp far too old to belong to a running writer is cleared. The
+        // age bound is what stops a sweep deleting the file another process is
+        // two microseconds from renaming into place.
+        File.SetLastWriteTimeUtc(abandoned, DateTime.UtcNow.AddHours(-2));
+
+        var sweep = index.Sweep();
+
+        await Assert.That(sweep.LitterRemoved).IsEqualTo(1);
+        await Assert.That(File.Exists(abandoned)).IsFalse();
+        await Assert.That(File.Exists(live)).IsTrue();
+
+        // A file this product did not write is never deleted by anything here,
+        // however old it is and whatever it holds.
+        File.SetLastWriteTimeUtc(foreign, DateTime.UtcNow.AddYears(-1));
+        _ = index.Sweep();
+        await Assert.That(File.Exists(foreign)).IsTrue();
+
+        // And the entry itself survived all of it.
+        await Assert.That(index.Follow().Single(entry => entry.Key == path.IndexKey).State)
+            .IsEqualTo(SessionIndexEntryState.Session);
+    }
+
+    [Test]
+    public async Task AFailureToRecordIsLoggedRatherThanThrownAndTheSessionIsUnaffected()
+    {
+        using var scratch = ScratchDirectory.Create("index-unwritable");
+        using var provider = new CapturingLoggerProvider();
+        using var factory = LoggerFactory.Create(builder => builder.AddProvider(provider).SetMinimumLevel(LogLevel.Trace));
+
+        var root = Path.Combine(scratch.Path, "appdata");
+        _ = Directory.CreateDirectory(root);
+
+        // An index root that is a file. Directory.CreateDirectory on it fails,
+        // which is the cheapest deterministic way to make the store unwritable.
+        await File.WriteAllTextAsync(Path.Combine(root, "index"), "not a directory");
+
+        var index = new SessionIndex(new LocalAppDataPaths(root), factory.CreateLogger("BrowserAI.Tests"));
+        var path = SessionPath.Resolve(Path.Combine(scratch.Path, "session"));
+        SessionLayout.Create(path);
+
+        // Does not throw. An inventory line that could not be written must never
+        // be what fails a session, because the next use re-asserts it.
+        index.Record(path);
+
+        await Assert.That(provider.Logged("Could not write the session index entry")).IsTrue();
+        await Assert.That(provider.Records.Any(record => record.Level is LogLevel.Warning)).IsTrue();
+
+        // Silence is the enemy; a lost line is not. The session itself is fine.
+        var lease = SessionLock.TryAcquire(path, Request("uninventoried"), NullLogger.Instance);
+
+        try
+        {
+            await Assert.That(lease.Taken).IsTrue();
+        }
+        finally
+        {
+            lease.Acquired?.Dispose();
+        }
+
+        // And Follow over an unusable root answers empty rather than throwing.
+        await Assert.That(index.Follow().Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task TheIndexTakesNoLockAndDeletesNoDirectory()
+    {
+        // Both halves are design decisions that a later edit could reverse with
+        // no test failing anywhere else, so they are asserted on the source.
+        // The lock half is the plan's own reason the store is cheap; the
+        // directory half is what makes an entry a pointer rather than a warrant.
+        var file = RepositoryLayout.ProductSourceFiles
+            .Single(candidate => candidate.Name is "SessionIndex.cs");
+
+        var code = await RepositoryLayout.ReadCodeAsync(file);
+
+        string[] forbidden =
+        [
+            "MachineMutex",
+            "new Mutex(",
+            "Semaphore",
+            "lock (",
+            "Monitor.",
+            "Interlocked",
+            "Directory.Delete",
+            "Directory.Move",
+        ];
+
+        await Assert.That(string.Join(", ", forbidden.Where(needle => code.Contains(needle, StringComparison.Ordinal))))
+            .IsEmpty();
+    }
+
+    [Test]
+    public async Task TheIndexRootComesFromTheSeamAndSitsBesideTheOtherRoots()
+    {
+        var paths = new LocalAppDataPaths(@"C:\somewhere\BrowserAI");
+
+        await Assert.That(paths.IndexDirectory).IsEqualTo(@"C:\somewhere\BrowserAI\index");
+
+        // A sibling of current\, never a child: an update replaces that folder.
+        await Assert.That(new SessionIndex(paths, NullLogger.Instance).Root).IsEqualTo(paths.IndexDirectory);
+
+        // And the production answer is the one the plan names, computed rather
+        // than typed at a call site.
+        var real = new LocalAppDataPaths().IndexDirectory;
+        await Assert.That(real).IsEqualTo(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+            "BrowserAI",
+            "index"));
+    }
+
+    private static SessionLockRequest Request(string purpose) =>
+        new() { Mode = "headless", Browser = "chromium", Purpose = purpose };
+
+    private static SessionIndex NewIndex(ScratchDirectory scratch) =>
+        new(new LocalAppDataPaths(Path.Combine(scratch.Path, "appdata")), NullLogger.Instance);
+
+    private static (SessionIndex Index, SessionPath Path) NewIndex(ScratchDirectory scratch, string name)
+    {
+        var path = SessionPath.Resolve(Path.Combine(scratch.Path, name));
+        SessionLayout.Create(path);
+
+        return (NewIndex(scratch), path);
+    }
+
+    /// <summary>A key that is well-formed and is not any real directory's.</summary>
+    private static string Key(string label) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(label)));
+
+    /// <summary>
+    /// Every file under a tree, with its length and the hash of its bytes.
+    /// </summary>
+    /// <remarks>
+    /// Compared as one string so that an added file fails as loudly as a
+    /// modified or a deleted one. "No action" is a claim about the whole tree,
+    /// and checking three named files would pass a routine that wrote a fourth.
+    /// </remarks>
+    private static string Manifest(string root) =>
+        string.Join(
+            '\n',
+            Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+                .Order(StringComparer.OrdinalIgnoreCase)
+                .Select(file => string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"{Path.GetRelativePath(root, file)} {new FileInfo(file).Length} {Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file)))}")));
+
+    /// <summary>The first drive letter this machine has no volume mounted on.</summary>
+    private static char FirstUnmountedDriveLetter()
+    {
+        var mounted = DriveInfo.GetDrives()
+            .Select(drive => char.ToUpperInvariant(drive.Name[0]))
+            .ToHashSet();
+
+        foreach (var letter in "ZYXWVUTSRQPONMLKJIHGFE")
+        {
+            if (!mounted.Contains(letter) && !Directory.Exists($@"{letter}:\"))
+            {
+                return letter;
+            }
+        }
+
+        // Not a skip. A machine with twenty-two volumes mounted cannot answer
+        // this question, and saying so beats reporting a pass that means
+        // nothing.
+        throw new InvalidOperationException("Every drive letter from E: to Z: is in use, so an unmounted volume cannot be named.");
+    }
+
+    private static async Task WaitForAllAsync(IEnumerable<string> paths)
+    {
+        var wanted = paths.ToList();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        while (clock.Elapsed < Patience && wanted.Exists(path => !File.Exists(path)))
+        {
+            await Task.Delay(10);
+        }
+
+        var missing = wanted.Where(path => !File.Exists(path)).ToList();
+
+        if (missing.Count is not 0)
+        {
+            throw new TimeoutException($"{missing.Count} of {wanted.Count} writers never reported ready within {Patience}.");
+        }
+    }
+}

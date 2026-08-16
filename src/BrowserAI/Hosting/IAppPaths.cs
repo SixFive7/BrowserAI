@@ -50,6 +50,28 @@ internal interface IAppPaths
     string BrowsersDirectory { get; }
 
     /// <summary>
+    /// The session index: one file per session directory, named for the hash of
+    /// its canonical path and holding that path and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A sibling of <c>current\</c> for the same reason the log is — an update
+    /// replaces that folder, and the index is
+    /// [the only inventory of session directories there is](../Sessions/SessionIndex.cs).
+    /// Losing it would not lose a session, because every entry is re-asserted on
+    /// the next <c>init</c> or <c>resume</c>, but it would make every session a
+    /// caller had forgotten the path of invisible until they used it again.
+    /// </para>
+    /// <para>
+    /// <b>On the seam rather than composed at the call site</b>, so that the
+    /// suite can point the index at a scratch root. It is machine-wide state: a
+    /// test that wrote into the real one would put its own scratch directories
+    /// into a developer's <c>browserai_list</c>.
+    /// </para>
+    /// </remarks>
+    string IndexDirectory { get; }
+
+    /// <summary>
     /// Where one run of BrowserAI keeps the files it generates for its child:
     /// the config file, and the child's working directory.
     /// </summary>

@@ -230,6 +230,25 @@ and version it was true at.
       deleting before step 12; whether to sweep the 193 MB is the maintainer's
       call, since it is outside the repository and partly predates this work.
 
+- [ ] **Call `SessionIndex.Record` from `init` and from `resume`. Nothing calls
+      it today.** [Build-order step 11](plan/build-order.md#11-the-session-index)
+      built the index and deliberately wired it to nothing: `browserai_init`,
+      `browserai_resume` and the sweep are
+      [steps 12](plan/build-order.md#12-the-session-tools-and-config-generation)
+      and [16](plan/build-order.md#16-the-stray-sweep), and a store called from a
+      layer that does not exist would have to be called from somewhere that does
+      — which means either `SessionLock`, coupling the lock layer to the
+      app-paths seam for a fact it has no use for, or a call site invented for
+      the test. So the store is **proven and unwired**, and the suite exercises
+      it directly with the real `SessionLock` driving the `Acquired`/`Reclaimed`
+      pair that stands in for init and resume. **The cost is one sentence and it
+      is real: today no product code path writes an index entry, so a session
+      created by the product would not be listed by `browserai_list` if that tool
+      existed.** Step 12 must call `Record` on both paths — every `init` *and*
+      every `resume`, idempotently, which is
+      [§D](plan/D-locking.md#the-session-index-on-disk)'s first property and the
+      whole reason a lost entry self-heals. Step 16 must call `Sweep`.
+
 - [ ] **Create the per-session log file, `<session-dir>\browserai.log`.**
       [§E](plan/E-lifecycle.md) puts it at the session root beside `lock.json`,
       holding *anything a session did*, so `browserai_destroy` removes it with

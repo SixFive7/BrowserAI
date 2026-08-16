@@ -44,6 +44,8 @@ internal static class Program
             "session-sweep" when args.Length is 5 => SessionProbe.Sweep(args[1], args[2], args[3], args[4]),
             "session-rewrite" when args.Length is 5 =>
                 SessionProbe.Rewrite(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
+            "session-index" when args.Length is 6 =>
+                SessionProbe.Index(args[1], args[2], args[3], args[4], int.Parse(args[5], CultureInfo.InvariantCulture)),
             _ => Usage(),
         };
     }

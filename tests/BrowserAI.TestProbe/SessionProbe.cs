@@ -5,7 +5,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
+using BrowserAI.Hosting;
+using BrowserAI.Logging;
 using BrowserAI.Sessions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.TestProbe;
@@ -333,6 +336,66 @@ internal static class SessionProbe
         {
             result.Acquired?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// One writer in the index race: waits on a shared start gate, then
+    /// re-asserts the same index entry as fast as it can.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The index takes no lock, so "one valid file" is a claim about what two
+    /// processes renaming over one name do to each other</b> — and that is not
+    /// something a single-threaded stub can be asked. Every writer targets the
+    /// same key, so every write after the first is a rename over a file another
+    /// process may be renaming over at the same instant.
+    /// </para>
+    /// <para>
+    /// The failure to record is deliberately routed through the real
+    /// <see cref="ProcessLog"/> rather than counted here: recording never
+    /// throws, so a counter in this file would have to duplicate the product's
+    /// own judgement of what failed. The host reads the log instead, which also
+    /// proves the warning is written where somebody would find it.
+    /// </para>
+    /// </remarks>
+    /// <param name="directory">The session directory every writer records.</param>
+    /// <param name="root">The app-data root whose <c>index\</c> and <c>logs\</c> are used.</param>
+    /// <param name="startEventName">A named event the host sets to release them all at once.</param>
+    /// <param name="reportPath">Where to write this writer's outcome.</param>
+    /// <param name="writes">How many times to re-assert the entry.</param>
+    /// <returns>Zero.</returns>
+    public static int Index(string directory, string root, string startEventName, string reportPath, int writes)
+    {
+        var path = SessionPath.Resolve(directory);
+        var paths = new LocalAppDataPaths(root);
+
+        using var log = ProcessLog.Create(paths, LogLevel.Trace);
+        var index = new SessionIndex(paths, log.Factory.CreateLogger("BrowserAI.TestProbe"));
+
+        using (var start = EventWaitHandle.OpenExisting(startEventName))
+        {
+            File.WriteAllText($"{reportPath}.ready", Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+            _ = start.WaitOne(Patience);
+        }
+
+        var clock = Stopwatch.StartNew();
+
+        for (var i = 0; i < writes; i++)
+        {
+            index.Record(path);
+        }
+
+        var elapsed = clock.Elapsed;
+
+        Write(reportPath, new JsonObject
+        {
+            ["pid"] = Environment.ProcessId,
+            ["writes"] = writes,
+            ["indexRoot"] = index.Root,
+            ["elapsedMilliseconds"] = elapsed.TotalMilliseconds,
+        });
+
+        return 0;
     }
 
     private static void WaitForFile(string path)

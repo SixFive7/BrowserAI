@@ -419,6 +419,41 @@ general.
 > first attempt. A child whose output goes nowhere is a child whose crash is
 > indistinguishable from slowness.
 
+**Concurrent renames over one destination all succeed, and leave one valid
+file.** Measured 2026-08-16, twice: **8 processes × 250 re-assertions = 2,000
+`File.Move(temp, entry, overwrite: true)` calls at the same destination**,
+released simultaneously from a shared start gate, each writing its own
+GUID-named temp in the target directory first. Both runs ended with **one file,
+content byte-exact, zero rename failures logged, and all eight processes exit
+0**. That is the measurement behind [the session index taking no lock at
+all](../../plan/D-locking.md#the-session-index-on-disk): `MoveFileEx` with
+`MOVEFILE_REPLACE_EXISTING` replaces the directory entry in one step, so
+concurrent writers serialise in the filesystem and a concurrent reader sees the
+old file or the new one and never a torn one. `[STABLE]` for the mechanism,
+`[MACHINE]` for the counts. Reproduce with
+`SessionIndexTests.TwoProcessesWritingOneEntryConcurrentlyLeaveOneValidFile`,
+which runs the same 8 × 250 on every build; raise `Writers` and `WritesEach` to
+push it further.
+
+> **Note what the writers do *not* do**, because it is what makes this cheap: no
+> mutex, no read-before-write, no compare. Every writer writes unconditionally,
+> and the content is a pure function of the file's own name, so the winner of any
+> race wrote exactly what every loser was about to. A "skip if already correct"
+> fast path was deliberately left out — after the first write nobody would
+> contend, and the concurrency test would then prove nothing while still passing.
+
+**A non-durable temp-and-rename write costs 1.7 ms alone and 9.2 ms under 8-way
+contention** — against ~17 ms for the durable `lock.json` write above. Measured
+2026-08-16, two runs each: **1.72 and 1.84 ms** per write with one writer,
+**9.15 and 9.26 ms** with eight writers on one name. Each write is a temp file
+created and written, `File.Move(overwrite: true)`, and the temp deleted in a
+`finally` — no `WriteThrough`, no `Flush(flushToDisk: true)`. So durability is
+roughly a **10× multiplier on an uncontended small write**, and contention on a
+single name is roughly **5×** on top of the base cost. That ratio is why
+[the session index is written without either](../../plan/D-locking.md#the-session-index-on-disk)
+while `lock.json` keeps both: an index entry regenerates itself from the
+directory it names, and a lock record cannot. `[MACHINE]`
+
 **`Process.ExitCode` throws after `Dispose()`, and
 `Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
 PowerShell, which merely returns `$null`. Cache the value as an `int` the moment

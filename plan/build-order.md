@@ -1175,6 +1175,70 @@ unexercised.
 
 **Consumes:** [§D](D-locking.md#the-session-index-on-disk)
 
+> ✅ **Built 2026-08-16.** `src/BrowserAI/Sessions/SessionIndex.cs` ·
+> `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths}.cs` (`IndexDirectory`
+> added to the seam) · `tests/BrowserAI.TestProbe/{SessionProbe, Program}.cs` (a
+> `session-index` mode) · `tests/BrowserAI.Tests/SessionIndexTests.cs` ·
+> `tests/BrowserAI.Tests/Harness/ScratchRoot.cs` (the real index root is now
+> reclaimed too). Every done-test below was run. **147 tests green in 6.8 s,
+> `dotnet build` 0 warnings**, and the AOT publish is clean at **10,461,696
+> bytes**.
+>
+> **The layout survived; the *predicate* did not, and it moved in the
+> conservative direction.** The file, its name, its contents and the absence of a
+> lock are all exactly as written. What was wrong was one word in
+> [§D](D-locking.md#the-session-index-on-disk)'s self-cleaning rule — *"no
+> **readable** `lock.json`"* — which removes the entries that can never come
+> back. A directory whose `lock.json` is present but unparseable **is** a
+> session, and `SessionLock.TryAcquire` refuses it, so nothing would ever
+> re-assert its entry; sweeping it makes a directory that still exists
+> permanently invisible to the only inventory there is. The self-healing
+> argument is what licenses removal at all, and it does not hold for that case.
+> An **unmounted volume** is kept for the same reason: `Directory.Exists` cannot
+> tell *destroyed* from *not plugged in*. Corrected in §D, with the refusal
+> asserted in the same test that asserts the entry survives.
+>
+> **The done-test's four bullets, and what each one actually measured.**
+> `init` → `resume` → hand-delete → `resume` leaves exactly one entry whose
+> **bytes** are the canonical path — asserted on bytes, because a wrapper
+> object, a trailing newline or a BOM would all round-trip and all be more than
+> this file is allowed to be. A deleted directory and a directory stripped of its
+> `lock.json` are both swept. A hand-built **personal Chrome profile** — `Local
+> State`, `Default\Preferences`, `Default\Cookies`, and Chromium's own
+> `lockfile`, which is one character from ours — is followed, found not to be a
+> session, and its **entry** removed while a recursive
+> name-plus-length-plus-SHA-256 manifest of the tree is unchanged either side; an
+> added file fails that as loudly as a deleted one. And **2,000 concurrent
+> renames over one name from 8 processes leave one valid file**, twice, with zero
+> failures in the process log and every writer exit 0.
+>
+> **Three things this step added that §D did not ask for, each because building
+> it made the omission obvious.** The write is **not durable** and recording
+> **never throws** — measured at 1.7 ms alone and 9.2 ms under 8-way contention
+> against ~17 ms for the durable `lock.json` write, so durability here would be
+> the cost without the reason, and a session that failed to open because its
+> *inventory line* could not be written would make a self-healing store
+> load-bearing in the one direction it was designed not to be. An entry is
+> verified against **its own name** and refused if it is not absolute, because a
+> relative pointer resolves against the reader's working directory and a
+> mis-named one is a duplicate no sweep converges on. And the sweep clears this
+> store's own `<key>.new-<guid>` rename litter, bounded by both the name pattern
+> and an age so it can never touch a file this product did not write.
+>
+> **`TheIndexTakesNoLockAndDeletesNoDirectory` is the mechanism, not the
+> comment.** *No lock* and *never deletes a directory* are decisions a later edit
+> could reverse with nothing else in the suite failing, so both are asserted
+> against the source of `SessionIndex.cs`.
+>
+> **Nothing calls `Record` yet, deliberately.** `init`, `resume` and the sweep are
+> [steps 12](#12-the-session-tools-and-config-generation) and
+> [16](#16-the-stray-sweep); the index is exercised directly instead, with the
+> real `SessionLock` driving the `Acquired`/`Reclaimed` pair that stands in for
+> init and resume. **The one cost of that:** no product code path writes an index
+> entry today, so the store is proven and unwired, and step 12 must call it.
+> Recorded in [`TODO.md`](../TODO.md) so it is a boundary rather than an
+> omission.
+
 **Decision under test:** the session-index file layout — the third of the three
 unexercised items.
 
