@@ -6,7 +6,7 @@
     Writes the resolved-set manifest beside a release's archived package.
 
 .DESCRIPTION
-    plan/pre-release.md item 11: an artifact that cannot state exactly what went
+    PRE-RELEASE.md item 11: an artifact that cannot state exactly what went
     into it is not releasable, because that is what makes a rollback meaningful
     and a regression bisectable.
 
@@ -72,7 +72,7 @@ $PSStyle.OutputRendering = 'PlainText'
 
 if (-not $Root) { $Root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')) }
 
-# The exact six of pre-release.md item 11, with the flattened names the first
+# The exact six of PRE-RELEASE.md item 11, with the flattened names the first
 # hand-assembled manifest used, so the two are comparable.
 $wanted = [ordered]@{
     'src-BrowserAI.packages.lock.json'            = 'src/BrowserAI/packages.lock.json'
@@ -153,7 +153,7 @@ if ($Package -and (Test-Path -LiteralPath $Package)) {
 }
 
 $manifest = [ordered]@{
-    '_what_this_is' = 'The resolved set this release was cut from. pre-release.md item 11. Copied, never transcribed: every version below was read back out of the file beside it.'
+    '_what_this_is' = 'The resolved set this release was cut from. PRE-RELEASE.md item 11. Copied, never transcribed: every version below was read back out of the file beside it.'
     writtenUtc      = (Get-Date).ToUniversalTime().ToString('o')
     version         = $Version
     tag             = $Tag

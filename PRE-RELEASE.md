@@ -10,19 +10,45 @@ release.
 Every item is **executed and evidenced**, and **any failing item blocks the
 release**. A failure is a work item, never a waiver — the response to a breaking
 upstream change is to make the newest version work
-([rule 4](../README.md#the-five-rules-that-make-floating-safe)), and where there
+([rule 4](README.md#the-five-rules-that-make-floating-safe)), and where there
 is no forward fix, **blocking the release indefinitely is the intended answer.**
 
 **Green is necessary and not sufficient.** This checklist decides whether a
 release is *permitted*, never whether one *happens*. A human decides when a green
-build becomes a release — [README → Release trigger](../README.md#settled-2026-08-14)
-and [the release gate](testing.md#the-release-gate). Nothing here overrides that,
+build becomes a release — [README → Release trigger](README.md#settled-2026-08-14)
+and [the release gate](#the-release-gate). Nothing here overrides that,
 and item 14 is where it lands.
 
-**This file points; it does not restate.** [The release gate](testing.md#the-release-gate)
-owns the six-step sequence and [Testing](testing.md) owns the enumerated suite.
-Where a rule is already specified, the item below names the evidence to record
-and links to the rule. A second copy of a fact in this repository is a defect.
+**This file points; it does not restate — and as of 2026-08-17 it also
+*owns*.** [The release gate](#the-release-gate) below is the six-step sequence,
+**moved here from [Testing](plan/testing.md) rather than copied**: that section is
+consumed and deleted with the rest of the plan, and this checklist cannot be the
+only gate that exists while the sequence it enforces lives in a file that is
+going away. Testing keeps the heading and points here. Everything else still
+points: the enumerated suite is Testing's, and where a rule is already specified,
+the item below names the evidence to record and links to the rule. **A second
+copy of a fact in this repository is a defect**, which is exactly why the gate
+moved instead of being restated.
+
+### The release gate
+
+**Moved here 2026-08-17 from `plan/testing.md`, whole**, because this file is the only gate that exists and the plan that held the sequence is consumed. Nothing was reworded in the move except the links, which now resolve from the repository root.
+
+**Releases are triggered manually, by the maintainer, through the agent. There is no release pipeline, no scheduled publish, and no auto-merge on green.** That simplification is affordable *only* because the gate itself is mechanical: when to release is a human decision, whether a release is permitted is not.
+
+The sequence, in order, no step skippable:
+
+1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
+2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
+3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review gate](plan/testing.md#the-upstream-review-gate) fires: if the resolved version moved past the reviewed one, or a snapshot changed without an adjudication, or a manual re-verification row has no outcome, the suite is red and there is nothing to decide at step 5.
+4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](README.md#the-five-rules-that-make-floating-safe).
+5. **The maintainer decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
+6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
+
+**Why manual is right here, and the condition under which it stops being right.** With one maintainer and a single track, a release pipeline is ceremony around a decision one person makes anyway — and updates are already the most hazard-dense area of this product without adding pipeline-authored releases to them. The honest cost: **the gate is only as good as the person invoking it.** It rests entirely on step 3 being *run* rather than assumed. The day a second person can cut a release, that assumption breaks and the gate has to move into automation.
+
+**What manual does not mean.** It does not mean the suite runs when someone remembers. Steps 1–4 are the ordinary build and run on every build, whether or not a release is in view. Manual governs step 5 alone.
+
 
 ### Evidence, and what does not count
 
@@ -30,27 +56,27 @@ Record, for each item: **what was run, and what it returned.** A version number,
 a count, a diff, an exit code, a file size.
 
 What does not count: a restatement of the rule, *"as expected"*, or a date
-written from intent. [`drift-check.json`](../drift-check.json) already carries
+written from intent. [`drift-check.json`](drift-check.json) already carries
 this rule for one field — *a date written from intent reads identically to a real
 one and silences the next check for a day* — and it applies to every line of this
 file. An item whose evidence is *"I believe this is fine"* is not evidence; it is
 worse than a gap, because a gap announces itself.
 
 **Where the evidence goes:** beside the release, with the resolved-set manifest
-that [rule 1](../README.md#the-five-rules-that-make-floating-safe) already
+that [rule 1](README.md#the-five-rules-that-make-floating-safe) already
 requires. The adjudications in items 3–6 go in the
-[`upstream-review.json`](../upstream-review.json) entry, which is where the suite
+[`upstream-review.json`](upstream-review.json) entry, which is where the suite
 reads them from. Not in this file — this file is the list, not the log.
 
 > **Prerequisites that did not exist when this was written.** ✅ **Closed
 > 2026-08-16.** `CHANGELOG.md` and its refusal landed at
-> [build order step 18](build-order.md#18-versions-from-git-tags-and-the-changelog),
+> [build order step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog),
 > so **item 10 is checkable**; the snapshots, the marker test and the suite that
 > items 3–8 rest on landed at
-> [build order steps 4, 8 and 9](build-order.md).
+> [build order steps 4, 8 and 9](plan/build-order.md).
 >
 > ✅ **The release script landed too, at
-> [step 19](build-order.md#19-velopack-package-update-roll-back).**
+> [step 19](plan/build-order.md#19-velopack-package-update-roll-back).**
 > `build/New-Release.ps1` now carries items 7 and 12 and part of 9, so the
 > paragraph that used to stand here — *"what is still absent is a release
 > script: every item below is run by hand, and items 9 and 10 are the only two
@@ -127,7 +153,7 @@ a `PackageReference`, or a version literal in any `.csproj`, is a pin — and a
 pin is invisible once it exists, because a stale number reads exactly like a
 current one.
 
-**Evidence:** the check from [build order step 1](build-order.md), run, with its
+**Evidence:** the check from [build order step 1](plan/build-order.md), run, with its
 output.
 
 ---
@@ -137,14 +163,14 @@ output.
 ### 3. Upstream drift adjudicated
 
 Resolve the five upstreams **the way the build resolves them** — the table in
-[`CLAUDE.md` → the daily drift check](../CLAUDE.md#the-daily-drift-check). A
+[`CLAUDE.md` → the daily drift check](CLAUDE.md#the-daily-drift-check). A
 registry query's defaults are not that: on 2026-08-15, npm `latest` for
 `playwright-core` was `1.62.1` while the shipping version was
 `1.63.0-alpha-2026-08-05`.
 
 **Drift blocks the release.** If any resolved version is newer than the reviewed
-one in [`upstream-review.json`](../upstream-review.json), run
-[`UPSTREAM-REVIEW.md`](../UPSTREAM-REVIEW.md) before going further. Finding a
+one in [`upstream-review.json`](upstream-review.json), run
+[`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) before going further. Finding a
 newer version does **not** license editing the marker; the review does.
 
 The marker test enforces this and is red until the entry adjudicates what moved.
@@ -152,14 +178,14 @@ The marker test enforces this and is red until the entry adjudicates what moved.
 to an intermediate version, review, land it green, then bump again.
 
 **Evidence:** the resolved-versus-reviewed pair for each of the five upstreams,
-and the marker test's result. [`drift-check.json`](../drift-check.json) stamped
+and the marker test's result. [`drift-check.json`](drift-check.json) stamped
 with `lastChecked` **only after a lookup actually returned a version.**
 
 ### 4. The four snapshots adjudicated
 
 `tools-list.json`, `cli-help.txt`, `config-schema.d.ts`, `browsers.json` —
 regenerated from the resolved payload and diffed. The mechanism is
-[the upstream-review gate](testing.md#the-upstream-review-gate); read it there.
+[the upstream-review gate](plan/testing.md#the-upstream-review-gate); read it there.
 
 **Evidence:** for each of the four, `unchanged`, or the marker entry's
 adjudication of exactly what moved. A snapshot that changed without an
@@ -179,7 +205,7 @@ already been pruned.
 
 **New, and it closes a gap nothing else covers.** BrowserAI's tool descriptions
 are **append-only** on top of upstream's
-([README → Tool naming](../README.md#settled-2026-08-14)). Upstream can reword
+([README → Tool naming](README.md#settled-2026-08-14)). Upstream can reword
 the text underneath ours, leaving our sentence **contradicting or duplicating**
 it — and nothing notices, because both halves remain individually valid and the
 composed result is only ever read by a model.
@@ -194,7 +220,7 @@ the same fact.** What this item adds is the adjudication rule:
 
 The other direction — *ours breaks theirs*, our rewrite dropping warning text a
 model relies on — is a test, not a checklist item
-([build order step 13](build-order.md)). A build gate needs no evidence here
+([build order step 13](plan/build-order.md)). A build gate needs no evidence here
 beyond the suite being green.
 
 **Evidence:** for every tool whose description moved, the composed description as
@@ -203,7 +229,7 @@ correctly beside the new wording.
 
 ### 6. The re-verification index answered
 
-[`kb/` → re-verification index](../kb/README.md#re-verification-index) lists the
+[`kb/` → re-verification index](kb/README.md#re-verification-index) lists the
 measured facts a version bump can silently invalidate — the half of the review no
 snapshot can do.
 
@@ -232,7 +258,7 @@ reviewed pairs plus `ReVerificationIndexTests`' result.
 > **93 numbered rows** in the index and the great majority are manual, so a
 > literal reading demands an adjudication of *no change* for every one of them
 > against upstreams that did not move — which
-> [Testing](testing.md#what-the-marker-records) names exactly: *"a review that
+> [Testing](plan/testing.md#what-the-marker-records) names exactly: *"a review that
 > did not happen, typed out to make a suite green, which is the same act as
 > editing the marker to make a test pass."* Testing already scopes the
 > `reverification` block to **the first real bump**; this item did not, and the
@@ -267,7 +293,7 @@ zero — **plus the two things an exit code does not establish**:
 > evidenced by that publish's exit code.
 >
 > ✅ **The `UseSystemResourceKeys` half now has the test
-> [Testing](testing.md#what-the-build-itself-must-fail-on) requires**, closed
+> [Testing](plan/testing.md#what-the-build-itself-must-fail-on) requires**, closed
 > the same day it was raised:
 > `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`
 > reads every build file, refuses any value other than `false`, **and requires
@@ -279,7 +305,7 @@ zero — **plus the two things an exit code does not establish**:
 
 All five layers, including the two marked *mandatory before release*. **Not a
 subset, not "the fast ones", not "the ones related to this change".** The layers,
-their cadences and the enumerated tests are in [Testing](testing.md) — this item
+their cadences and the enumerated tests are in [Testing](plan/testing.md) — this item
 does not restate them.
 
 Three things to record rather than assume, because each is easy to skim past:
@@ -345,7 +371,7 @@ the exit code, and the coverage block, which states what was exercised.
 > — a guard nobody accounts for is how this one was missed.
 
 > **This whole checklist rests on this item being *run* rather than assumed.**
-> [The release gate](testing.md#the-release-gate) says exactly that about its own
+> [The release gate](#the-release-gate) says exactly that about its own
 > step 3, and it is the honest cost of the 2026-08-16 decision to have no
 > automation.
 
@@ -361,7 +387,7 @@ found no tag: a build that does not know what it is, and therefore a build that
 cannot be rolled back to or bisected against. **Refuse it.**
 
 **The refusal is the build's, not this checklist's**, since
-[step 18](build-order.md#18-versions-from-git-tags-and-the-changelog): MinVer
+[step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog): MinVer
 derives the version and `RefuseAVersionDerivedFromNoTag` in
 `src/BrowserAI/BrowserAI.csproj` fails the build on anything beginning `0.0.0`,
 naming `fetch-depth: 0` as the remedy. A release cut from a green build has
@@ -395,7 +421,7 @@ say is a release nobody can describe afterwards — and the first thing a rollba
 needs is a statement of what changed.
 
 **This item has a command**, since
-[step 18](build-order.md#18-versions-from-git-tags-and-the-changelog):
+[step 18](plan/build-order.md#18-versions-from-git-tags-and-the-changelog):
 
 ```
 pwsh -File build/Get-ReleaseNotes.ps1 -StampVersion <the version item 9 recorded>
@@ -422,7 +448,7 @@ from the resolved `browsers.json`, and the Node version.
 
 **An artifact that cannot state exactly what went into it is not releasable** —
 that is what makes a rollback meaningful and a regression bisectable
-([rule 1](../README.md#the-five-rules-that-make-floating-safe)).
+([rule 1](README.md#the-five-rules-that-make-floating-safe)).
 
 **`build/New-Release.ps1` emits it**, beside the archived `.nupkg`, at
 `<ArchiveDir>/BrowserAI-<version>-manifest/`. It holds exactly these, copied
@@ -458,8 +484,8 @@ the package's SHA-256 and the resolved version each copied file carries:
 
 ### 12. The rollback path is publishable
 
-The mechanics are tested by the update layer ([Testing](testing.md)) and
-specified in [§G](G-updates.md). Two halves live **outside** a test run, and both
+The mechanics are tested by the update layer ([Testing](plan/testing.md)) and
+specified in [§G](plan/G-updates.md). Two halves live **outside** a test run, and both
 must be true at release time:
 
 - **The full `.nupkg` for this release is archived.** Velopack prunes `packages\`
@@ -476,7 +502,7 @@ must be true at release time:
 
 Redistribution obligations attach at **first installer handoff**, independent of
 BrowserAI's own licence. Verified against
-[README → Third-party components](../README.md#third-party-components):
+[README → Third-party components](README.md#third-party-components):
 
 - **Node's full `LICENSE`** — it aggregates OpenSSL, ICU, V8, zlib and c-ares
   terms. *"A single `node.exe`, nothing else"* drops it. **Not optional.**
@@ -512,7 +538,7 @@ is never copied to a publish output — and all four ship in
 > put Velopack's text in the artifact applies unchanged to the MCP SDK and to
 > the `Microsoft.Extensions.*` family: same mechanism, same absence, and
 > Apache-2.0 §4(a) is stricter than MIT's notice clause rather than looser. It
-> was [raised at step 20 and deliberately left undecided](../TODO.md), because
+> was [raised at step 20 and deliberately left undecided](TODO.md), because
 > shipping a fifth obligation on one reading would have changed a settled table
 > without anyone deciding it; the product is publicly distributed now, so the
 > table was changed deliberately instead. The count in this item is the only
@@ -566,14 +592,14 @@ The cost, stated plainly so it is inherited as a decision:
 - **The gate is only as good as the person invoking it.** It rests entirely on
   the run happening rather than being assumed.
 - The one gap it leaves — *upstream moved while nobody was looking* — is covered
-  by the [daily drift check](../CLAUDE.md#the-daily-drift-check), which is a
+  by the [daily drift check](CLAUDE.md#the-daily-drift-check), which is a
   directive rather than a job, and which fires by construction because this
   project is built entirely through an agent: the check happens because the work
   happens.
 
 **Review this after the product is finished.** The condition that ends the
 arrangement is already named in
-[the release gate](testing.md#the-release-gate): the day a second person can cut
+[the release gate](#the-release-gate): the day a second person can cut
 a release, the assumption breaks and the gate has to move into automation.
 
 ### Being green is necessary and not sufficient

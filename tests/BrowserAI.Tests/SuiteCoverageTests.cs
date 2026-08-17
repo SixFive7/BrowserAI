@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// aside the suite reported <c>total: 329 · failed: 0 · succeeded: 328 ·
 /// skipped: 1 · exit 0</c>, character for character what a run that launched a
 /// real Chromium reported. The only difference was the duration, and
-/// [pre-release item 8](../../plan/pre-release.md) already records that a slice
+/// [pre-release item 8](../../PRE-RELEASE.md) already records that a slice
 /// test's duration proves nothing. So the run says it in words.
 /// </remarks>
 internal static class SuiteCoverage

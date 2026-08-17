@@ -25,7 +25,7 @@
         come to disagree.
 
       * It does not create the tag, publish anything, or decide that a release
-        happens. plan/pre-release.md item 14 is a human.
+        happens. PRE-RELEASE.md item 14 is a human.
 
       * It does not touch a released section. Stamping inserts a new heading
         below `## [Unreleased]` and moves nothing, so the unreleased entries

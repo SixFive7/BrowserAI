@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Every one of these survived to a release gate because nothing looked.</b>
-/// [Item 13](../../plan/pre-release.md) names four obligations that attach at
+/// [Item 13](../../PRE-RELEASE.md) names four obligations that attach at
 /// first installer handoff, independently of BrowserAI's own licence, and the
 /// first run of that checklist — 2026-08-16, reading the packed
 /// <c>.nupkg</c> rather than the source tree — found <b>two of the four absent

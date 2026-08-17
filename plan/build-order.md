@@ -1546,7 +1546,7 @@ Six consumers, one source: server `instructions`, `init`'s description,
 - **Descriptions are append-only, and the check runs both ways.** Ours breaking
   theirs is a test here: assert the phrases a model relies on survive our
   rewrite. Theirs breaking ours is [a pre-release
-  adjudication](pre-release.md) — the `tools-list.json` snapshot from step 4
+  adjudication](../PRE-RELEASE.md) — the `tools-list.json` snapshot from step 4
   already carries descriptions, so a rewording is already a diff; what is owed is
   the judgement, not a second snapshot.
 
@@ -2536,7 +2536,7 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
 - **Reject `0.0.0`.** It means the derivation found no tag — a build that does
   not know what it is.
 - **Create `CHANGELOG.md`.** Verified 2026-08-16: there is none in the
-  repository. [Pre-release](pre-release.md) refuses to release on an empty
+  repository. [Pre-release](../PRE-RELEASE.md) refuses to release on an empty
   unreleased section, and a checklist cannot enforce a file that does not exist.
 
 **Done when:**
@@ -2693,7 +2693,7 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
 
 ### 20. The first release
 
-**Consumes:** [pre-release](pre-release.md) ·
+**Consumes:** [pre-release](../PRE-RELEASE.md) ·
 [testing → the release gate](testing.md#the-release-gate)
 
 Run the checklist in full. It has never been executed, so **the first run is
@@ -2709,7 +2709,7 @@ and fixing it belongs to this step.
 >
 > 1. **A skipped test.** `UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest`
 >    is the only `Skip` in the tree, and
->    [item 8](pre-release.md) requires zero. It was **not** un-skipped, not
+>    [item 8](../PRE-RELEASE.md) requires zero. It was **not** un-skipped, not
 >    pointed at a local server, and the item was not softened: a local-directory
 >    source composes paths the same way by construction, so a green run against
 >    one would prove nothing about the pair that bricked `ExoFabric/UCC`.
@@ -2750,7 +2750,7 @@ and fixing it belongs to this step.
 
 **Done when:**
 
-- Every item in [pre-release](pre-release.md) is checked, with the command run
+- Every item in [pre-release](../PRE-RELEASE.md) is checked, with the command run
   and what it returned recorded beside the release. No item's evidence is *"I
   believe this is fine."*
 - Any item that could not be evidenced has been rewritten so it can be.

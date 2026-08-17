@@ -68,7 +68,7 @@
          (TODO.md, "Emit the resolved-set manifest from build/New-Release.ps1".)
 
     What it deliberately does NOT do: publish, push, tag, or decide that a
-    release happens. plan/pre-release.md item 14 is a human.
+    release happens. PRE-RELEASE.md item 14 is a human.
 
 .PARAMETER Channel
     The Velopack channel. Lower-case: `vpk pack` lower-cases what it writes

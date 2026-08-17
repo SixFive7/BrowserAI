@@ -79,7 +79,7 @@ internal enum SuiteCapability
 /// <b>An ordinary run skips, loudly.</b> <see cref="Skip.Test(string)"/> makes
 /// the test report as <i>skipped</i> rather than as <i>passed</i>, so the run's
 /// own summary carries a skipped count that a healthy run does not — and
-/// [pre-release item 8](../../../plan/pre-release.md) already requires that count
+/// [pre-release item 8](../../../PRE-RELEASE.md) already requires that count
 /// to be zero. A clean clone can still run the suite, which is the property the
 /// early returns existed to preserve.
 /// </description>

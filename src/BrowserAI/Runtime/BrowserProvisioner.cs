@@ -910,10 +910,18 @@ internal sealed class NodeInstallerRun : IInstallerRun
 
                 // The same allowlist every other child gets, plus the absolute
                 // browsers root. Note what it does NOT carry: no
-                // PLAYWRIGHT_DOWNLOAD_HOST variant, so the five retries really do
-                // rotate through upstream's mirror list, and no
-                // PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT, so the per-socket stall
-                // timeout stays upstream's 30 s.
+                // PLAYWRIGHT_DOWNLOAD_HOST variant, so the five retries rotate
+                // through whatever mirror list upstream has for that download,
+                // and no PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT, so the
+                // per-socket stall timeout stays upstream's 30 s.
+                //
+                // Corrected 2026-08-17 (previously "the five retries really do
+                // rotate through upstream's mirror list"). Chrome for Testing
+                // resolves through `cftUrl`, whose list is ONE host, so the
+                // rotation protects ffmpeg, winldd and Firefox and not the
+                // 202 MB half. The strip is still right; the sentence claimed
+                // more than the measurement. §A carried this correction from
+                // 2026-08-16 and it was never swept into the shipped comments.
                 ChildEnvironment.Build([new KeyValuePair<string, string>(ChildLaunch.BrowsersPathVariable, browsersDirectory)]));
         }
         catch

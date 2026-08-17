@@ -60,7 +60,7 @@ Five layers, run at different cadences:
 Two things close it, and neither is a scheduled job:
 
 - **[The daily drift check](../CLAUDE.md#the-daily-drift-check)** — a directive that fires at the start of a working session rather than on a clock. It runs by construction, because the check happens when the work happens.
-- **[The pre-release checklist](pre-release.md)** — which re-resolves everything and requires green before a release may be cut, so a quiet period cannot reach a user unexamined.
+- **[The pre-release checklist](../PRE-RELEASE.md)** — which re-resolves everything and requires green before a release may be cut, so a quiet period cannot reach a user unexamined.
 
 What is genuinely lost is *predictability*: the first build after a quiet period discovers the divergence rather than being told about it in advance. That cost is accepted, recorded here rather than softened, and **is part of what the post-v1 review of the no-automated-checks decision has to weigh**.
 
@@ -196,7 +196,7 @@ Extensive is a requirement, so it is written down rather than implied. **Every i
 
 **AOT and trim warning suppression is scoped per-assembly, never repo-wide.** A repo-wide suppression is permanent and invisible: it silences the warning for every assembly added afterwards, including the one that will actually be broken by it. Suppress on the assembly that needs it, with the reason beside the suppression, and the day a second assembly needs the same suppression is a day someone has to decide that on purpose.
 
-**Never `UseSystemResourceKeys`.** It strips the framework's exception message strings, leaving bare resource keys in their place — a real size win for a NativeAOT binary and completely wrong for this product. **This product's error text is read by a model deciding what to do next**, which is the founding premise of [§H.4](H-model-surface.md#h4-the-error-catalogue); an exception surfacing as `Arg_DirectoryNotFound` instead of a sentence naming the path is an error catalogue that has been silently emptied. The saving is measured in kilobytes against a ~117 MB payload, so there is no version of this trade that is close. Assert the property is unset, so it cannot arrive later as somebody's size optimisation. ✅ **Asserted 2026-08-16 by `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`**, which had been required here and written nowhere for as long as this sentence existed — found by [pre-release item 7](pre-release.md) looking for the evidence it asks for. It refuses any value other than `false` in any build file **and requires the declaration to be present in `Directory.Build.props`**: the default is already off, so a file that never mentions it would pass a "not true" check while telling the next reader nothing.
+**Never `UseSystemResourceKeys`.** It strips the framework's exception message strings, leaving bare resource keys in their place — a real size win for a NativeAOT binary and completely wrong for this product. **This product's error text is read by a model deciding what to do next**, which is the founding premise of [§H.4](H-model-surface.md#h4-the-error-catalogue); an exception surfacing as `Arg_DirectoryNotFound` instead of a sentence naming the path is an error catalogue that has been silently emptied. The saving is measured in kilobytes against a ~117 MB payload, so there is no version of this trade that is close. Assert the property is unset, so it cannot arrive later as somebody's size optimisation. ✅ **Asserted 2026-08-16 by `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`**, which had been required here and written nowhere for as long as this sentence existed — found by [pre-release item 7](../PRE-RELEASE.md) looking for the evidence it asks for. It refuses any value other than `false` in any build file **and requires the declaration to be present in `Directory.Build.props`**: the default is already off, so a file that never mentions it would pass a "not true" check while telling the next reader nothing.
 
 ## The upstream-review gate
 
@@ -254,17 +254,6 @@ Not a permission gate. It can inject the procedure as `additionalContext` when t
 
 ## The release gate
 
-**Releases are triggered manually, by the maintainer, through the agent. There is no release pipeline, no scheduled publish, and no auto-merge on green.** That simplification is affordable *only* because the gate itself is mechanical: when to release is a human decision, whether a release is permitted is not.
+**Moved 2026-08-17 to [`PRE-RELEASE.md`](../PRE-RELEASE.md#the-release-gate), whole, and this heading is kept so every link into it still resolves.**
 
-The sequence, in order, no step skippable:
-
-1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
-2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
-3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review gate](#the-upstream-review-gate) fires: if the resolved version moved past the reviewed one, or a snapshot changed without an adjudication, or a manual re-verification row has no outcome, the suite is red and there is nothing to decide at step 5.
-4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](../README.md#the-five-rules-that-make-floating-safe).
-5. **The maintainer decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
-6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
-
-**Why manual is right here, and the condition under which it stops being right.** With one maintainer and a single track, a release pipeline is ceremony around a decision one person makes anyway — and [§G](G-updates.md) is already the most hazard-dense section in this document without adding pipeline-authored releases to it. The honest cost: **the gate is only as good as the person invoking it.** It rests entirely on step 3 being *run* rather than assumed. The day a second person can cut a release, that assumption breaks and the gate has to move into automation.
-
-**What manual does not mean.** It does not mean the suite runs when someone remembers. Steps 1–4 are the ordinary build and run on every build, whether or not a release is in view. Manual governs step 5 alone.
+The six-step sequence — resolve, build, run everything, green-or-stop, the maintainer decides, cut it — now lives beside the checklist that enforces it. **This section pointed at that checklist and the checklist pointed back**, which was tolerable while both were in `plan/`; it stops being tolerable the moment this file is consumed and deleted, because the checklist is the only release gate this project has and it would have been left naming a sequence that no longer existed. Nothing was reworded in the move.
