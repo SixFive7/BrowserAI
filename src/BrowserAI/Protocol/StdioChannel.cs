@@ -31,7 +31,7 @@ namespace BrowserAI.Protocol;
 /// that a result leaves byte-for-byte as the child produced it — the SDK's own
 /// server transport re-escapes every backtick, apostrophe, angle bracket and
 /// non-ASCII character, measured at +49.6% on a real result frame
-/// ([kb](../../../kb/mcp/sdk.md#added-2026-08-16--writing-the-two-transports-at-220)).
+/// ([kb](../../../kb/mcp/sdk.md#writing-replacement-transports-against-the-public-surface)).
 /// A UTF-16 round trip in the middle of
 /// that path cannot corrupt a valid string, but it is the exact shape of the
 /// thing being removed, so there is one write path and it takes bytes.

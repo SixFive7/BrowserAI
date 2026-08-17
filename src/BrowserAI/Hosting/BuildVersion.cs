@@ -12,7 +12,7 @@ namespace BrowserAI.Hosting;
 /// <para>
 /// The string is derived from the nearest git tag at build time and is typed
 /// nowhere, so there is nothing in a project file to edit, forget, or get out of
-/// step with the tag ([kb](../../../kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)).
+/// step with the tag ([kb](../../../kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver)).
 /// On the tag <c>v0.1.0</c> it is <c>0.1.0</c>; five commits later, with no new
 /// tag, it is <c>0.1.1-alpha.0.5</c>. Both were measured on 2026-08-16 against
 /// MinVer 7.0.0.

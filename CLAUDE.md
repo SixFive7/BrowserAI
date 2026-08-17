@@ -19,11 +19,11 @@ BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@
 
 **Do not edit that file to make a test pass.** Read [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) and follow it: diff upstream's `tests/`, diff `config.d.ts`, check `browsers.json` and the CLI surface, then record what changed, what was adopted, **and what was declined and why**. A `notes` field left empty or unchanged is a review that did not happen.
 
-**A hook does not gate this file, and cannot.** Measured 2026-08-15: under bypass-permissions a hook's `ask` returned to a sub-agent is silently downgraded to allow, so the prompt never fires for the caller most likely to need it — and against a human it only ever proved a click. [The gate is the suite](plan/testing.md#the-upstream-review-gate): four snapshots diffed against the resolved payload, every test green, and an entry that must adjudicate whatever actually moved. Editing the file without that evidence produces a red build, not a prompt.
+**A hook does not gate this file, and cannot.** Measured 2026-08-15: under bypass-permissions a hook's `ask` returned to a sub-agent is silently downgraded to allow, so the prompt never fires for the caller most likely to need it — and against a human it only ever proved a click. [The gate is the suite](TESTING.md#the-upstream-review-gate): four snapshots diffed against the resolved payload, every test green, and an entry that must adjudicate whatever actually moved. Editing the file without that evidence produces a red build, not a prompt.
 
 ## Versioning: everything floats, the build freezes it
 
-Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in the README, in [`plan/`](plan/stack.md#implementation-stack), in [`kb/`](kb/README.md) and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
+Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in the README, in [`plan/`](STACK.md#implementation-stack), in [`kb/`](kb/README.md) and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
 
 - **Update first, then work.** Re-resolving everything to latest is the *first* step of touching this project, not a step before release: re-resolve, fix the fallout, then do what was asked. Deferring it is how a project stops following the lead and starts accumulating one upgrade nobody ever takes.
 - **Never pin a dependency to work around a break.** Fix forward; make the new version work.

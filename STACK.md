@@ -3,7 +3,7 @@
 
 # Implementation stack
 
-> **Salvaged 2026-08-17 from `plan/stack.md`, which is consumed and deleted like
+> **Salvaged 2026-08-17 from `STACK.md`, which is consumed and deleted like
 > every other section of the plan.** What moved here is the part that does not
 > stop being true once the code exists: which component was chosen and why, the
 > toolchain prerequisite whose absence presents as the wrong diagnosis, where the
@@ -191,7 +191,7 @@ toolchain (link.exe, discovered via vswhere), which this development machine doe
 not have installed."* It shipped **self-contained single-file instead**, which is a
 different artifact with a different startup cost, decided by a workload that was
 not installed. The provenance, and the check that the toolchain *is* present on this
-machine, are in [kb: SDK](kb/mcp/sdk.md#measured-by-spike-2026-08-15).
+machine, are in [kb: SDK](kb/mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation).
 
 BrowserAI's own AOT spike succeeded, so the toolchain was present on the machine
 that ran it. That is a fact about that machine, not about the next one, which is
@@ -204,7 +204,7 @@ makes that build `1.2.0`; five commits later, with no new tag, the build is
 automatically `1.2.1-alpha.0.5`. Three parts plus a pre-release suffix — the shape
 `vpk` accepts — and nothing in a project file to edit, forget, or get out of step
 with the tag. The mechanism, measured against MinVer 7.0.0, is in
-[kb: versions from git tags](kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16).
+[kb: versions from git tags](kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver).
 
 **The house four-part `base.commitcount` convention cannot be carried here**, and
 this is a constraint rather than a preference:

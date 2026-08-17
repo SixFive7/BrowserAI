@@ -17,9 +17,9 @@ The golden `tools/list` snapshot catches surface changes — a new tool, a renam
 - a fixed bug that changes response shape
 - a new capability worth enabling, or worth deliberately declining
 
-So the marker gates adoption. When the build resolves a version newer than the reviewed one, the marker test fails and [the release gate](plan/testing.md#the-release-gate) cannot pass.
+So the marker gates adoption. When the build resolves a version newer than the reviewed one, the marker test fails and [the release gate](TESTING.md#the-release-gate) cannot pass.
 
-**This is now a proof, not a speed bump.** An earlier design gated the marker behind a human approval prompt; it was abandoned on 2026-08-15 after measurement showed it inert against sub-agents and, against a human, evidence only that someone clicked. [The gate is mechanical](plan/testing.md#the-upstream-review-gate): four snapshots — `tools/list`, `--help`, `config.d.ts`, `browsers.json` — are regenerated from the resolved payload and diffed, the suite runs in full, and the marker entry must adjudicate every snapshot that changed and answer every manual re-verification row by name. **A review that ignores what the build observed fails the build.** What is left to a person is judgement — whether a change touches an abstraction of ours — not vigilance.
+**This is now a proof, not a speed bump.** An earlier design gated the marker behind a human approval prompt; it was abandoned on 2026-08-15 after measurement showed it inert against sub-agents and, against a human, evidence only that someone clicked. [The gate is mechanical](TESTING.md#the-upstream-review-gate): four snapshots — `tools/list`, `--help`, `config.d.ts`, `browsers.json` — are regenerated from the resolved payload and diffed, the suite runs in full, and the marker entry must adjudicate every snapshot that changed and answer every manual re-verification row by name. **A review that ignores what the build observed fails the build.** What is left to a person is judgement — whether a change touches an abstraction of ours — not vigilance.
 
 ## What a review consists of
 

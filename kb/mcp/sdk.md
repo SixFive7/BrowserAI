@@ -29,14 +29,14 @@ sees `JsonRpcResponse.Result` as a raw `JsonNode?`.
 
 > ⚠️ **Corrected 2026-08-15: the filter is not `WithMessageFilters`.** This
 > paragraph named it, and it is [a hosting-package DI extension, not
-> Core](#measured-by-spike-2026-08-15). A Core/AOT proxy uses
+> Core](#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation). A Core/AOT proxy uses
 > `McpServerOptions.Filters.Message.IncomingFilters` / `OutgoingFilters`
 > directly. The correction is stated here, at the point of first mention, because
 > a retraction thirty lines further down is one a reader can act on the wrong side
 > of — and this is the file [the plan cites as
-> authoritative](../../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from).
+> authoritative](../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from).
 
-## Measured by spike, 2026-08-15
+## Driving the whole SDK: AOT, passthrough, filters and cancellation
 
 A throwaway proxy was built on `ModelContextProtocol` 2.2.0 and driven against
 both a scriptable fake child and the real `@playwright/mcp` 0.0.79, on CoreCLR
@@ -161,10 +161,11 @@ before Dispose() invalidates it"* — upstream hit
 except `netstandard2.0`, at both `v1.4.1` and `v2.2.0`. **A declaration is the
 author's claim about their code, not a proof for our usage.**
 
-### Added 2026-08-16 — not part of the 2026-08-15 spike
+## ILC, the native toolchain and source-generated JSON
 
-Three facts established the following day, on other projects. Dated separately so
-nothing here is mis-attributed to the spike above.
+Established 2026-08-16 on other projects, and dated separately so nothing here is
+mis-attributed to the run above. All three are about what a **clean** publish does
+and does not prove.
 
 **A NativeAOT publish can exit 0 while ILC reports that a code path will always
 throw.** Measured 2026-08-16 against an unrelated NativeAOT console project of
@@ -185,7 +186,7 @@ load failed. **That response file is emitted by any `PublishAot` build**, so thi
 half is reproducible against any project.
 
 > ⚠️ **This qualifies [the spike's own "zero trim/AOT warnings"
-> claim](#measured-by-spike-2026-08-15).** That result is not retracted — it was
+> claim](#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation).** That result is not retracted — it was
 > measured, and it remains the right thing to require. But **zero warnings plus
 > exit 0 is not sufficient evidence that the published binary is sound**, and the
 > spike's phrasing invites reading it as if it were. [Re-verification row
@@ -223,7 +224,7 @@ incompatibility, which sends you rewriting code that was never the problem.
 > and `VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\link.exe` is present with an
 > mtime of **2026-07-24** — after that note was written. That resolves what would
 > otherwise be a flat contradiction with [the 2026-08-15
-> spike](#measured-by-spike-2026-08-15) and the probe project's publish above,
+> spike](#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation) and the probe project's publish above,
 > both of which completed full ILC here. **Never carry an "the environment lacks X" claim
 > forward without re-checking it:** unlike an upstream fact, it can be falsified by
 > an install that nobody records and no version bump announces. `[STABLE]` for the
@@ -256,14 +257,15 @@ order hangs or throws.
 > ⚠️ **The last clause was tested on our own two-hop rig on 2026-08-16 and is
 > right about the consequence, wrong about the mechanism.** The two steps are
 > independent, not sequential; see
-> [the four-way table](#added-2026-08-16--the-in-process-harness-at-220). The
+> [the four-way table](#error-shape-and-teardown-seen-from-an-in-process-harness). The
 > line-count and licence facts above are unaffected and were not re-read.
 
-### Added 2026-08-16 — writing the two transports, at 2.2.0
+## Writing replacement transports against the public surface
 
-Established while building
-[build-order step 5](../../plan/build-order.md#5-the-two-custom-transports),
-against `ModelContextProtocol` **2.2.0** as resolved by the build. Read from the
+What the SDK's public surface does and does not offer somebody replacing its two
+transports: which members are reachable from another assembly, what the stock
+client does to a command line, and where the server's escaping is decided.
+Established 2026-08-16 against `ModelContextProtocol` **2.2.0**, read from the
 shipped source at `refs/tags/v2.2.0` and, where stated, measured against running
 code.
 
@@ -330,13 +332,13 @@ caller hanging with nothing but a log line to explain it. BrowserAI's does drop
 it, deliberately and loudly, until [step 9](../../plan/build-order.md#9-lossless-passthrough)
 owns error shaping. `[FLOATS]`
 
-### Added 2026-08-16 — the published binary, at 2.2.0
+## The published NativeAOT binary, with all of it in one exe
 
-Established while building
-[build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child):
-a NativeAOT `BrowserAI.exe` carrying the SDK, our two transports and our
-`[LibraryImport]` job-object launcher, driving a real `@playwright/mcp` 0.0.79
-child and a real Chromium.
+The result of putting all of it in one NativeAOT binary — the SDK, two custom
+transports and a `[LibraryImport]` job-object launcher — and driving a real
+`@playwright/mcp` 0.0.79 child and a real Chromium with it. Measured 2026-08-16.
+The interesting number is that nothing of ours was needed to make AOT work, and
+the interesting trap is one that fails an ordinary build as well as a publish.
 
 **NativeAOT is clean with all of it in one binary, and the number is ours rather
 than a spike's.** `dotnet publish -c Release -r win-x64 --self-contained`:
@@ -365,13 +367,13 @@ under a publish-only condition, an everyday build catches it too. The cast to
 > `tools/list` on `JsonNode` — that is the file where this call shape is most
 > likely to be written, and where it was planted for exactly that reason.
 
-### Added 2026-08-16 — the in-process harness, at 2.2.0
+## Error shape and teardown, seen from an in-process harness
 
-Established while building
-[build-order step 8](../../plan/build-order.md#8-the-harness-and-the-fake-child):
-a test client, BrowserAI and a scriptable double joined by two pipe hops, with no
-process and no Node anywhere. Everything here was observed through
-`FakeChildHarnessTests`, which runs on every build.
+What a caller receives when something goes wrong two hops away, and what actually
+tears the hops down. Measured 2026-08-16 with a test client, the proxy and a
+scriptable double joined by two pipe pairs, with no process and no Node anywhere.
+Everything here is observed through `FakeChildHarnessTests`, which runs on every
+build — so this whole section has a route.
 
 **An exception escaping a `CallToolHandler` becomes a JSON-RPC *success*
 carrying `isError: true`, and the cause is erased from the body.** Measured from
@@ -457,18 +459,17 @@ disposed. `[FLOATS]`
 > A liveness check that cannot fail is worth less than none, because it reads as
 > covered.
 
-### Added 2026-08-16 — lossless passthrough, at 2.2.0
+## Lossless passthrough: cancellation, notifications and error frames
 
-Established while building
-[build-order step 9](../../plan/build-order.md#9-lossless-passthrough): the two
-tool methods forwarded through an incoming message filter, answered from the
+What survives, what is reordered and what has to be rebuilt when the two tool
+methods are forwarded through an incoming message filter and answered from the
 child's own bytes, with no SDK contract type anywhere on the path. Measured
-against the in-process double unless stated otherwise; source citations are from
-the shipped source at `refs/tags/v2.2.0`.
+2026-08-16 against the in-process double unless stated otherwise; source citations
+are from the shipped source at `refs/tags/v2.2.0`.
 
 **The documented cancellation remedy does not work, and it fails for the same
 reason it blames for the SDK's own failure.**
-[The 2026-08-15 spike](#measured-by-spike-2026-08-15) prescribed *"assign
+[The 2026-08-15 spike](#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation) prescribed *"assign
 `JsonRpcRequest.Id` yourself and send the notification from your own
 `ct.Register`"*. Built exactly that way, **the registration callback never
 runs.** A registration scoped to the call it protects is disposed as that call
@@ -525,7 +526,7 @@ with logging at `Trace` and reading the order of the two `sending message` lines
 
 **A child's JSON-RPC error and its `data` both survive, and the prefix can be
 avoided rather than stripped.** Re-confirming [the step-8
-measurement](#added-2026-08-16--the-in-process-harness-at-220) from the other
+measurement](#error-shape-and-teardown-seen-from-an-in-process-harness) from the other
 side: `McpProtocolException.Message` is
 `Request failed (remote): <the child's message>`, `ErrorCode` is the child's, and
 `Exception.Data` is non-empty. A proxy that answers from the child's own error
@@ -545,7 +546,7 @@ filter pipeline. BrowserAI uses neither, keeping its verbatim payloads in a
 `ConditionalWeakTable` keyed on the message — no SDK state written, and a
 response that is never sent takes its payload with it rather than pinning a
 megabyte of screenshot. Like
-[the `TransportBase.Logger` entry](#added-2026-08-16--writing-the-two-transports-at-220),
+[the `TransportBase.Logger` entry](#writing-replacement-transports-against-the-public-surface),
 this one has **no re-verification row on purpose**: a change here makes the build
 red or makes a workaround redundant, and neither is silent — which is
 [the stated exemption](../re-verification.md#a-floats-entry-with-no-row-the-one-rule),
@@ -556,7 +557,7 @@ claimed in place. `[FLOATS]`
 `dotnet publish -c Release -r win-x64 --self-contained`: **zero trim/AOT
 warnings, no `will always throw`, exit 0, 10,461,696 bytes (9.98 MiB)** — 61,952
 bytes more than
-[the step-7 binary](#added-2026-08-16--the-published-binary-at-220), and still no
+[the step-7 binary](#the-published-nativeaot-binary-with-all-of-it-in-one-exe), and still no
 `JsonSerializerContext` of our own. `[MACHINE]` for the byte count, `[FLOATS]`
 for the warning-free claim; both re-established by the publish command plus
 `VerticalSliceTests`, which is what

@@ -543,7 +543,7 @@ dotnet build -v:normal          → exit 0 · Build succeeded · 0 Warning(s) ·
 
 `UseSystemResourceKeys` is explicitly `false` at `Directory.Build.props:160`.
 
-> ⚠️ **Nothing asserts that.** [Testing](plan/testing.md#what-the-build-itself-must-fail-on)
+> ⚠️ **Nothing asserts that.** [Testing](TESTING.md#what-the-build-itself-must-fail-on)
 > requires *"Assert the property is unset, so it cannot arrive later as
 > somebody's size optimisation"*, and `grep -rn "ResourceKeys" tests/` returns
 > **nothing**. Recorded here and in [`TODO.md`](TODO.md) rather than left as a
@@ -824,7 +824,7 @@ checklist. Six were, and each carries a `Corrected 2026-08-16` note in
 | Item | Could not be evidenced because | Rewritten to |
 |---|---|---|
 | **1** | `git diff -- "**/packages.lock.json"` has no `--exit-code`, so its evidence is the *absence* of output — indistinguishable from a command nobody ran. And it named only the NuGet half while the item's body requires the npm tree reinstalled | Both diffs, both with `--exit-code`, `build/payload/package-lock.json` named explicitly |
-| **6** | *"Every manual row must be answered by name"* against **93 rows** at a zero-drift release demands ~90 adjudications of *no change* — the act [Testing](plan/testing.md#what-the-marker-records) names as *"a review that did not happen, typed out to make a suite green"*. The two documents contradicted each other | Scoped to the upstreams item 3 found had moved; where none moved, answered by item 3 plus `ReVerificationIndexTests` |
+| **6** | *"Every manual row must be answered by name"* against **93 rows** at a zero-drift release demands ~90 adjudications of *no change* — the act [Testing](TESTING.md#what-the-marker-records) names as *"a review that did not happen, typed out to make a suite green"*. The two documents contradicted each other | Scoped to the upstreams item 3 found had moved; where none moved, answered by item 3 plus `ReVerificationIndexTests` |
 | **7** | Evidence asked for the publish's exit code, for an item whose whole subject is a publish that **exits 0** while ILC complains. Neither ILC's output nor `UseSystemResourceKeys` appeared | Adds the `ILC output is clean (…)` line and the `UseSystemResourceKeys` quote |
 | **8** | *"The smoke layer ran against a real browser"* is invisible in the run's output: **33 tests in 13 files** return early when the published slice or the payload is absent, and the summary is identical either way | Adds the two-path precondition check, run before the suite, plus the duration corroboration |
 | **9** | The `msbuild -t:MinVer` line was said to answer *"the version and the tag it came from"*. It answers one — `MinVerVersion` carries no tag name | Adds `git describe --tags --long` |
@@ -836,14 +836,14 @@ to run at all"*, which step 19 made false. **Eight items have a command today.**
 
 ## What contradicted a document
 
-- **`PRE-RELEASE.md` vs `plan/testing.md` on item 6** — resolved above, in
+- **`PRE-RELEASE.md` vs `TESTING.md` on item 6** — resolved above, in
   favour of Testing, which is the document that owns the marker's shape.
 - **`TODO.md` on `AnOversizedPayloadArrivesByteIdentical`** — recorded as *"1 m
   59 s, and it dominates the whole suite's 2 m 15 s"*. Measured this run:
   **105 ms**, in a suite of **33 s**. Three whole-suite runs at 33.0 / 38.3 /
   33.7 s are independently incompatible with any single test taking 119 s. The
   item is corrected rather than deleted.
-- **`plan/testing.md` requires a `UseSystemResourceKeys` assertion that does not
+- **`TESTING.md` requires a `UseSystemResourceKeys` assertion that does not
   exist.** The property is correctly `false`; nothing tests it. Recorded in
   `TODO.md`.
 

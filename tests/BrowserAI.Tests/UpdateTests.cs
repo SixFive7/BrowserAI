@@ -22,7 +22,7 @@ namespace BrowserAI.Tests;
 /// package applies, that a rollback applies, and that the browsers beside
 /// <c>current\</c> survive both — was run by hand against a real install and is
 /// recorded in
-/// [kb](../../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16),
+/// [kb](../../kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed),
 /// because it needs an installer this suite must never run.
 /// </para>
 /// </remarks>
@@ -139,7 +139,7 @@ internal sealed class UpdateTests
     /// asserting a 200 and a parseable <c>Assets</c> array. Everything else in
     /// the update lane — the pack, the delta, the apply, the rollback and the
     /// survival of the browsers — was run for real and is recorded in
-    /// [kb](../../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16).
+    /// [kb](../../kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed).
     /// </para>
     /// <para>
     /// ⚠️ <b>This skip blocks a release, and that is intended.</b>

@@ -3,7 +3,7 @@
 
 # Testing: a hard requirement, and the release gate
 
-> **Salvaged 2026-08-17 from `plan/testing.md`, which is consumed and deleted
+> **Salvaged 2026-08-17 from `TESTING.md`, which is consumed and deleted
 > like every other section of the plan.** What moved here is the part that does
 > not stop being true once the code exists: the argument for the suite, what the
 > build itself must fail on, why the upstream-review gate is the suite rather
@@ -163,7 +163,7 @@ real time on two assertions the hermetic tests structurally cannot make:
 local-directory source composes paths differently and will pass where production
 404s), and **publish N→N+1, apply it, and assert both that a delta package was
 generated and that the installed version moved**. Delta granularity is the reason
-Velopack was chosen at all ([kb](kb/packaging/velopack.md#the-update-lane-measured-2026-08-16)),
+Velopack was chosen at all ([kb](kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed)),
 and nothing in-house had ever proved `vpk` produces one before 2026-08-16.
 
 ## We write our own harness
@@ -195,7 +195,7 @@ upstream real time to find:
   > **only** completing both writers closes the hop. They are two independent ways
   > to end the server task, not a sequence in which the first enables the second.
   > Both are kept, for reasons that are now stated rather than inherited.
-  > [The four-way table is in kb](kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220).
+  > [The four-way table is in kb](kb/mcp/sdk.md#error-shape-and-teardown-seen-from-an-in-process-harness).
 
 What we build, and what each replaces:
 

@@ -821,7 +821,7 @@ hand-written raw-protocol test client.
 >    own dependency, and it qualifies the spike's *"a child dying mid-call
 >    surfaces as `-32603`, an error rather than a hang"* — true of what the
 >    *client* throws, not of what the *caller of the proxy* receives.
->    [Corrected in kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220),
+>    [Corrected in kb](../kb/mcp/sdk.md#error-shape-and-teardown-seen-from-an-in-process-harness),
 >    with [row 59](../kb/re-verification.md).
 > 2. **A child's JSON-RPC error keeps its `code` and its `data` verbatim through
 >    the proxy; only the message gains the `Request failed (remote): ` prefix.**
@@ -835,7 +835,7 @@ hand-written raw-protocol test client.
 >    **only** completing both writers closes the hop. They are not a sequence in
 >    which the first enables the second. Both are kept, the consequence is
 >    guarded on every build by the rig's liveness assertion, and
->    [the four-way table is in kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220)
+>    [the four-way table is in kb](../kb/mcp/sdk.md#error-shape-and-teardown-seen-from-an-in-process-harness)
 >    with [row 61](../kb/re-verification.md).
 >
 > **The rig's own liveness check was dead when first written, and the experiment
@@ -909,7 +909,7 @@ and a permanent three-way merge against an upstream that edits `tests/` weekly.
 > cannot fire before the request it names was sent, and is proven at the double
 > by `CancellingACallIsObservedAtTheFakeChild`. Corrected in
 > [stack](stack.md#nine-places-where-the-sdk-must-be-deviated-from) and
-> [kb](../kb/mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220).
+> [kb](../kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames).
 >
 > ⚠️ **Deviation 7's decorator is needed, and not for what it says.** Forwarding
 > a *named* child→caller notification is public API —
@@ -1001,7 +1001,7 @@ than a detail of step 7.
   > died mid-call — does **not** become a JSON-RPC error. It becomes a
   > *success* carrying `isError: true` and the text *"An error occurred invoking
   > 'x'."*, identical for both causes and naming neither
-  > ([kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220)).
+  > ([kb](../kb/mcp/sdk.md#error-shape-and-teardown-seen-from-an-in-process-harness)).
 
 **Done when:**
 
@@ -1878,7 +1878,7 @@ Route on the way in; do not sort on the way out.
 > which ~500 open, walking 64 `Chrome_MessageWindow`s of which 13 are titled;
 > `EnumProcesses` replaced the toolhelp snapshot `RunningFrom` used, so there is
 > one enumeration rather than two. Numbers, method and how to re-run in
-> [kb](../kb/windows/detection.md#re-measured-2026-08-16-building-the-sweep);
+> [kb](../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths);
 > rows 4, 4a and 4c are answered and rows 76–81 are new.
 >
 > **The negative subject held.** With all five `chrome-headless-shell.exe`
@@ -2174,7 +2174,7 @@ Designed for ~100 concurrent BrowserAI processes, not for one.
 > `File.Exists(parent.lock)` first (0.56 ms) and pays the Restart Manager only
 > where a Firefox has ever run — sound in the one direction that matters, since
 > Firefox never deletes the file — and nothing polls the query. Recorded in
-> [kb](../kb/windows/detection.md#the-restart-manager-as-the-product-uses-it--2026-08-16).
+> [kb](../kb/windows/detection.md#the-restart-manager-as-the-product-uses-it).
 >
 > **Two pre-existing harness races surfaced under the extra load and were fixed
 > rather than tolerated.** `ReinstallBrowserTests` took its install-count
@@ -2488,7 +2488,7 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
 > 40-character sha is appended. **The property is what stops it, and it is set
 > now precisely because nothing can provoke it** — adding SourceLink later would
 > otherwise arm the fleet-wide restart loop silently.
-> [kb](../kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)
+> [kb](../kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver)
 > has the arms, and the detail that cost the most time: the decoration hangs off
 > `GetAssemblyAttributes`, so asking `-getProperty` after `MinVer` or
 > `GetAssemblyVersion` returns an undecorated string in **every** arm and reads
@@ -2588,7 +2588,7 @@ and item 40 · [stack](stack.md#versions-come-from-git-tags)
 > carries `BrowserAI 0.9.0 started` and `BrowserAI 0.9.1 started` in one file;
 > and **two live instances were both offered 0.9.1 and neither applied.** Numbers,
 > method and how to re-run in
-> [kb: the update lane](../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16).
+> [kb: the update lane](../kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed).
 >
 > ⚠️ **Three things this step found that no document predicted.**
 >

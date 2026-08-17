@@ -74,7 +74,7 @@ internal static class Program
     /// re-establish the sweep-pass census with <c>BrowserAI.exe --sweep</c> under
     /// a scratch <c>BROWSERAI_ROOT</c> and read the process log. That row is the
     /// only route to the <b>published AOT</b> column of
-    /// [the table](../../kb/windows/detection.md#re-measured-2026-08-16-building-the-sweep) —
+    /// [the table](../../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths) —
     /// the test probe is a framework-dependent Debug build and measures the
     /// other column — so deleting this would strand a `[MACHINE]` figure with no
     /// way back to it.

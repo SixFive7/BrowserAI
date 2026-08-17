@@ -21,7 +21,7 @@ and item 14 is where it lands.
 
 **This file points; it does not restate — and as of 2026-08-17 it also
 *owns*.** [The release gate](#the-release-gate) below is the six-step sequence,
-**moved here from [Testing](plan/testing.md) rather than copied**: that section is
+**moved here from [Testing](TESTING.md) rather than copied**: that section is
 consumed and deleted with the rest of the plan, and this checklist cannot be the
 only gate that exists while the sequence it enforces lives in a file that is
 going away. Testing keeps the heading and points here. Everything else still
@@ -32,7 +32,7 @@ moved instead of being restated.
 
 ### The release gate
 
-**Moved here 2026-08-17 from `plan/testing.md`, whole**, because this file is the only gate that exists and the plan that held the sequence is consumed. Nothing was reworded in the move except the links, which now resolve from the repository root.
+**Moved here 2026-08-17 from `TESTING.md`, whole**, because this file is the only gate that exists and the plan that held the sequence is consumed. Nothing was reworded in the move except the links, which now resolve from the repository root.
 
 **Releases are triggered manually, by the maintainer, through the agent. There is no release pipeline, no scheduled publish, and no auto-merge on green.** That simplification is affordable *only* because the gate itself is mechanical: when to release is a human decision, whether a release is permitted is not.
 
@@ -40,7 +40,7 @@ The sequence, in order, no step skippable:
 
 1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
 2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
-3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review gate](plan/testing.md#the-upstream-review-gate) fires: if the resolved version moved past the reviewed one, or a snapshot changed without an adjudication, or a manual re-verification row has no outcome, the suite is red and there is nothing to decide at step 5.
+3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review gate](TESTING.md#the-upstream-review-gate) fires: if the resolved version moved past the reviewed one, or a snapshot changed without an adjudication, or a manual re-verification row has no outcome, the suite is red and there is nothing to decide at step 5.
 4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](README.md#the-five-rules-that-make-floating-safe).
 5. **The maintainer decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
 6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
@@ -185,7 +185,7 @@ with `lastChecked` **only after a lookup actually returned a version.**
 
 `tools-list.json`, `cli-help.txt`, `config-schema.d.ts`, `browsers.json` —
 regenerated from the resolved payload and diffed. The mechanism is
-[the upstream-review gate](plan/testing.md#the-upstream-review-gate); read it there.
+[the upstream-review gate](TESTING.md#the-upstream-review-gate); read it there.
 
 **Evidence:** for each of the four, `unchanged`, or the marker entry's
 adjudication of exactly what moved. A snapshot that changed without an
@@ -258,7 +258,7 @@ reviewed pairs plus `ReVerificationIndexTests`' result.
 > **93 numbered rows** in the index and the great majority are manual, so a
 > literal reading demands an adjudication of *no change* for every one of them
 > against upstreams that did not move — which
-> [Testing](plan/testing.md#what-the-marker-records) names exactly: *"a review that
+> [Testing](TESTING.md#what-the-marker-records) names exactly: *"a review that
 > did not happen, typed out to make a suite green, which is the same act as
 > editing the marker to make a test pass."* Testing already scopes the
 > `reverification` block to **the first real bump**; this item did not, and the
@@ -293,7 +293,7 @@ zero — **plus the two things an exit code does not establish**:
 > evidenced by that publish's exit code.
 >
 > ✅ **The `UseSystemResourceKeys` half now has the test
-> [Testing](plan/testing.md#what-the-build-itself-must-fail-on) requires**, closed
+> [Testing](TESTING.md#what-the-build-itself-must-fail-on) requires**, closed
 > the same day it was raised:
 > `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`
 > reads every build file, refuses any value other than `false`, **and requires
@@ -305,7 +305,7 @@ zero — **plus the two things an exit code does not establish**:
 
 All five layers, including the two marked *mandatory before release*. **Not a
 subset, not "the fast ones", not "the ones related to this change".** The layers,
-their cadences and the enumerated tests are in [Testing](plan/testing.md) — this item
+their cadences and the enumerated tests are in [Testing](TESTING.md) — this item
 does not restate them.
 
 Three things to record rather than assume, because each is easy to skim past:
@@ -484,7 +484,7 @@ the package's SHA-256 and the resolved version each copied file carries:
 
 ### 12. The rollback path is publishable
 
-The mechanics are tested by the update layer ([Testing](plan/testing.md)) and
+The mechanics are tested by the update layer ([Testing](TESTING.md)) and
 specified in [§G](plan/G-updates.md). Two halves live **outside** a test run, and both
 must be true at release time:
 

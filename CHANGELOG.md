@@ -9,7 +9,7 @@ Everything notable that has happened to BrowserAI. The format is
 [the shape `vpk` accepts](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output).
 
 **A version here is a git tag, and nothing else.** The build derives its version
-from the nearest `v*` tag ([`plan/stack.md`](plan/stack.md)); no number is typed
+from the nearest `v*` tag ([`STACK.md`](STACK.md)); no number is typed
 in a project file, in this file, or anywhere else. A section heading carries the
 bare version and the tag carries the `v`.
 

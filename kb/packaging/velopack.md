@@ -243,7 +243,7 @@ archived by hand. `AllowVersionDowngrade` is the client half of rollback.
 
 > ✅ **Answered 2026-08-16 by the first real `vpk pack`: the full package is
 > 49,043,498 b (46.8 MiB).** See
-> [The update lane](#the-update-lane-measured-2026-08-16) for the whole set. The
+> [The update lane](#the-update-lane-end-to-end-against-a-real-feed) for the whole set. The
 > question and the refusal to guess are kept below because the number that was
 > circulating was invented, and a reader who remembers *"~105 MB"* has to be able
 > to find out where it went.
@@ -265,7 +265,7 @@ during the forward update. Rollback fires the same obsolete/updated/restarted
 hooks; from the app's view it is an ordinary update. `restartArgs` pass through,
 but **the relaunched app does not inherit the caller's stdio.** `[FLOATS]`
 
-## The update lane, measured 2026-08-16
+## The update lane, end to end against a real feed
 
 Everything here was run while building
 [build-order step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
@@ -306,7 +306,7 @@ compressed zip nobody reads at runtime. Nothing else showed it: the publish
 succeeded, the suite passed, and the only symptom was a number that had never
 been measured.
 
-### The delta is real — the first one this estate has produced
+### The delta is real, and what it costs to produce one
 
 **`BrowserAI-0.9.1-delta.nupkg` is 97,216 b against a 49,043,493 b full
 package**, for a release in which only `BrowserAI.exe` changed. That is the
@@ -371,13 +371,13 @@ that no lock file can see.
 makes the update lane testable at all without pointing an installer at the real
 `%LocalAppData%\BrowserAI`.
 
-### The FrameLink version-string sweep is too broad to use as written
+### A version-string sweep over a publish directory is too broad to use
 
 `[STABLE]` — this is about how NuGet packages are built, not about Velopack.
 
-**TODO.md specified *"grep every version string in the linked binary and fail on
-a decorated one"*, from `SixFive7/FrameLink`'s `build.sh`. That check can never
-go green here.** The first AOT publish of this repository carried **six**
+**The check as first specified — *"grep every version string in the linked binary
+and fail on a decorated one"*, carried over from another project's `build.sh` —
+can never go green here.** The first AOT publish of this repository carried **six**
 decorated version strings and **not one of them was ours**:
 
 ```
@@ -389,9 +389,11 @@ decorated version strings and **not one of them was ours**:
 10.8.3+ccb356f31db9d894807c4fd0c97c2f41553d1524          (Microsoft.Extensions.AI.Abstractions)
 ```
 
-Every one is its publisher's own SourceLink decoration, linked in by ILC.
-FrameLink's sweep is only sound for a binary with no third-party dependency
-carrying one, which this is not and will not become. **The check that is both
+Every one is its publisher's own SourceLink decoration, linked in by ILC. That
+sweep is only sound for a binary with **no** third-party dependency carrying one,
+which this is not and will not become — and the trap generalises: a check written
+against a single-assembly build silently becomes a check against the whole
+dependency closure the moment the build is statically linked. **The check that is both
 sound and still a sweep is narrower: a decorated string whose version *core* is
 the version being packed.** That is ours — the entry assembly's attribute, or a
 referenced project of ours sharing the derived version — and it is the only
@@ -505,7 +507,7 @@ matches** — the real name is `{id}-{channel}-Setup.exe` · **`/payload/`,
 `/staging/`, `/.staging/` are not vpk output at all**; they are BrowserAI's own
 build conventions and must be justified on that basis or dropped.
 
-## Versions from git tags — MinVer 7.0.0 — 2026-08-16
+## Deriving the version from git tags, with MinVer
 
 Measured while building [step 18](../../plan/build-order.md), on SDK **10.0.302**
 with **MinVer 7.0.0** resolved through the float (`Version="*"`, product project
@@ -567,10 +569,12 @@ an undecorated string and reads as proof of something it did not test. And a
 target overwrites it, so the *`.`-separated* form the SDK produces when the
 string already carries a `+` (`0.1.0+a273b31` becoming
 `0.1.0+a273b31.<40-char sha>`) could not be reproduced here and is **read from
-the target's own text** at lines 67–71 rather than measured. That form is the
-one `SixFive7/FrameLink` shipped: a fleet where every frame downloaded the
-binary it was already running, swapped it, restarted, and repeated hourly,
-because its updater **matches** the served version against the reported one.
+the target's own text** rather than measured. That form is the one that shipped
+in an earlier in-house updater, with a consequence worth keeping: a fleet where
+every device downloaded the binary it was **already running**, swapped it,
+restarted, and repeated hourly — because the updater compared the served version
+against the reported one, and the reported one had gained a suffix the feed's
+never carried.
 
 **A version derived from no tag fails the build.** `RefuseAVersionDerivedFromNoTag`
 in `src/BrowserAI/BrowserAI.csproj` runs `AfterTargets="MinVer"` and refuses
@@ -585,7 +589,7 @@ beginning 0.0.0 means MinVer found no 'v*' tag to count from. ...
 To re-provoke it without deleting a tag, build with a prefix that matches
 nothing: `dotnet build src/BrowserAI/BrowserAI.csproj -p:MinVerTagPrefix=zzz`.
 
-## New defect: `Setup.exe -- <args>` hangs forever
+## `Setup.exe -- <args>` hangs forever
 
 Found 2026-08-15. `[FLOATS]`
 

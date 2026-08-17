@@ -225,7 +225,7 @@ did.
       byte cap and the mode rendering, so nothing goes red. Add the two
       sentences, and assert them.
 
-- [x] ~~**Two of the four rules under [*"what the build itself must fail on"*](plan/testing.md#what-the-build-itself-must-fail-on)
+- [x] ~~**Two of the four rules under [*"what the build itself must fail on"*](TESTING.md#what-the-build-itself-must-fail-on)
       are asserted by nothing.**~~ ✅ **Closed 2026-08-16, and two more with
       them.** `BuildConfigurationTests` gains
       `WarningsAreErrorsForEveryProject`, `UnreachableCodeIsPromotedToAnErrorByName`,
@@ -233,7 +233,7 @@ did.
       `TheSdkFloorRollsForwardAndTheRunnerIsTheOneTUnitNeeds` and
       `TheApplicationManifestIsLongPathAwareAndNeverAsksForElevation` — the last
       two because `global.json` and `src/BrowserAI/app.manifest` were outside
-      every scan the suite made, and [§stack](plan/stack.md#the-build-configuration-this-plan-has-never-mentioned)
+      every scan the suite made, and [§stack](STACK.md#the-build-configuration-this-plan-has-never-mentioned)
       requires four settings between them.
       <br><br>
       **Proven by removing all five properties at once**: 12 tests, 5 failed, 7
@@ -248,7 +248,7 @@ did.
       enumerates only what is present cannot fail when the forbidden thing
       arrives in a new file. The original text follows.
       <br><br>
-      **Two of the four rules under [*"what the build itself must fail on"*](plan/testing.md#what-the-build-itself-must-fail-on)
+      **Two of the four rules under [*"what the build itself must fail on"*](TESTING.md#what-the-build-itself-must-fail-on)
       are asserted by nothing.** Both are correct in the tree today and would
       survive their own deletion green: **`TreatWarningsAsErrors` and the
       `CS0162` promotion** (`BuildConfigurationTests.NoBuildFileSuppressesWarnings`
@@ -511,7 +511,7 @@ did.
       moved out of `plan/`.** It is `PRE-RELEASE.md` at the repository root
       beside [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), which is the precedent
       the audit named. **The release gate moved into it whole rather than being
-      copied** — [`plan/testing.md`](plan/testing.md#the-release-gate) keeps the
+      copied** — [`TESTING.md`](TESTING.md#the-release-gate) keeps the
       heading and points here, so every link that existed still resolves, and
       the file's own rule (*"this file points; it does not restate"*) is honoured
       by *owning* the sequence instead of duplicating it. Repointed in the same
@@ -529,9 +529,9 @@ did.
       three build scripts name it by filename and one **writes `"pre-release.md
       item 11"` into every `manifest.json` shipped beside a `.nupkg`**. It also
       carries **18 outbound links into files that would be deleted**, ten into
-      [testing](plan/testing.md), and its own rule is *"this file points; it does
+      [testing](TESTING.md), and its own rule is *"this file points; it does
       not restate"* — so surviving means absorbing
-      [testing's release gate](plan/testing.md#the-release-gate) first, then
+      [testing's release gate](TESTING.md#the-release-gate) first, then
       moving to `PRE-RELEASE.md` at the root beside
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), which is the precedent.
 
@@ -607,7 +607,7 @@ reasoning, come here for the queue.**
         **command line**, so nothing breaks — but the [re-verification
         index](kb/re-verification.md) should gain a row, because
         this is exactly the class of upstream change [the golden
-        snapshot cannot see](plan/testing.md#the-upstream-review-gate): the
+        snapshot cannot see](TESTING.md#the-upstream-review-gate): the
         tool surface does not move, the config schema does not move, and the
         behaviour behind one key inverts.
       - **Declined, or closed as intended.** Then the non-Linux `= true` arm of
@@ -750,7 +750,7 @@ reasoning, come here for the queue.**
       CsWin32.**~~ ✅ **Decided 2026-08-17. The threshold is STRUCK, the
       hand-written `[LibraryImport]` declarations stay, and CsWin32 is adopted
       for one job only — a *test-only layout oracle*.**
-      [`plan/stack.md`](plan/stack.md) set the threshold **before any code
+      [`STACK.md`](STACK.md) set the threshold **before any code
       existed** — *"once a seventh Win32 API is needed, adopt
       `Microsoft.Windows.CsWin32`"* — and it was long past: **41
       `[LibraryImport]` declarations across 9 files** in
@@ -911,7 +911,7 @@ reasoning, come here for the queue.**
       work, and every piece of it is doable without asking anyone.
 
 - [ ] **The reclaim pass's second bullet is unbuilt, and it is the only one
-      left.** [testing](plan/testing.md) asks that *"anything the previous run
+      left.** [testing](TESTING.md) asks that *"anything the previous run
       recorded is terminated by `(pid, creationFileTime)` from its own spawn
       record"*. **No spawn record is persisted across runs** — verified
       2026-08-17, nothing in `src/` or `tests/` writes one — so a run killed
@@ -1056,7 +1056,7 @@ reasoning, come here for the queue.**
       project once, and it was predicted below before it did.
 
 - [ ] **Make the marker entry adjudicate what moved — at the first real bump,
-      not before.** [The gate](plan/testing.md#what-the-marker-records) requires
+      not before.** [The gate](TESTING.md#what-the-marker-records) requires
       each `upstream-review.json` entry to gain `snapshots` (per snapshot,
       `unchanged` or an adjudication) and `reverification` (an outcome for every
       *manual* row, by name), with a test asserting the entry is consistent with
@@ -1113,11 +1113,11 @@ reasoning, come here for the queue.**
       order**: the SDK's message loop dispatches inbound notifications
       fire-and-forget, and two `notifications/progress` written by the double in
       order were observed reaching the caller as 2 then 1
-      ([kb](kb/mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220),
+      ([kb](kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames),
       [row 63a](kb/re-verification.md)). **It cannot be fixed from a
       notification handler** — the reordering has already happened by the time
       the handler runs — so a fix means the `ITransport` decorator
-      [deviation 7](plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from)
+      [deviation 7](STACK.md#nine-places-where-the-sdk-must-be-deviated-from)
       originally described, which sees messages in wire order. Two things to
       settle before writing it: whether `@playwright/mcp` emits progress at all
       (not measured), and whether a caller that renders a jumping progress value
@@ -1198,7 +1198,7 @@ reasoning, come here for the queue.**
       `src/BrowserAI/BrowserAI.csproj`, so any `IL2xxx`/`IL3xxx` **warning**
       fails the publish. **That does not cover the case the requirement was
       written for.** ILC reports an always-throwing method as neither a warning
-      nor an error — [kb: SDK](kb/mcp/sdk.md#added-2026-08-16--not-part-of-the-2026-08-15-spike)
+      nor an error — [kb: SDK](kb/mcp/sdk.md#ilc-the-native-toolchain-and-source-generated-json)
       records a publish that exited 0, emitted zero warnings, produced an
       artifact, and printed `Method '...' will always throw because: Failed to
       load assembly '...'`. No MSBuild property catches that, because it is not a
@@ -1241,7 +1241,7 @@ reasoning, come here for the queue.**
       makes *never self-update from a build that is not a release* readable off
       the version string. With no reachable tag MinVer produced
       `0.0.0-alpha.0.71` and the build **refused it**, naming `fetch-depth: 0` as
-      the remedy, which is [kb](kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)
+      the remedy, which is [kb](kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver)
       and `BuildVersionTests`. Two traps came with it and are closed:
       `AssemblyVersion` is `{Major}.0.0.0` by design, so nothing reads it (the
       product's own `SessionLock` did, and would have stamped `0.0.0.0` into every
@@ -1268,7 +1268,7 @@ reasoning, come here for the queue.**
       > derived version — and it is the only string that can reach the feed
       > comparison, because the updater matches `BuildVersion.Current` against
       > the served version. A third-party decoration is inert
-      > ([kb](kb/packaging/velopack.md#the-framelink-version-string-sweep-is-too-broad-to-use-as-written)).
+      > ([kb](kb/packaging/velopack.md#a-version-string-sweep-over-a-publish-directory-is-too-broad-to-use)).
 
       Original text follows.
       <br><br>
@@ -1586,7 +1586,7 @@ reasoning, come here for the queue.**
       — and it is the deletion, not a `true`, that this was written to catch.
       The original text follows.
       <br><br>
-      [Testing](plan/testing.md#what-the-build-itself-must-fail-on) requires it
+      [Testing](TESTING.md#what-the-build-itself-must-fail-on) requires it
       in those words — *"Assert the property is unset, so it cannot arrive later
       as somebody's size optimisation"* — and `grep -rn "ResourceKeys" tests/`
       returns nothing. Found 2026-08-16 at

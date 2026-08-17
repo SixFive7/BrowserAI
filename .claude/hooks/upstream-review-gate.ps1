@@ -6,7 +6,7 @@
 # Fires on Edit/Write, ignores every file but the marker, and injects a pointer to
 # the review procedure as additionalContext -- a pointer, never the procedure itself;
 # see the note above $reason. It decides nothing and blocks nothing -- see the note
-# above the output block for why it stopped being a gate, and plan/testing.md
+# above the output block for why it stopped being a gate, and TESTING.md
 # "The upstream-review gate" for what replaced it.
 #
 # Fails OPEN by design: any parse error, missing field or unexpected shape exits 0
@@ -77,7 +77,7 @@ not restated here, because a copy of it would drift.
 
 Nothing here blocks this edit. The gate is the RELEASE, and it is mechanical: the build
 diffs the snapshots against the resolved payload, runs the full suite, and fails if this
-file does not adjudicate what moved. See plan/testing.md, "The upstream-review gate".
+file does not adjudicate what moved. See TESTING.md, "The upstream-review gate".
 '@
 
 # No permissionDecision. This hook decides nothing, blocks nothing, prompts nobody.
@@ -88,7 +88,7 @@ file does not adjudicate what moved. See plan/testing.md, "The upstream-review g
 # most likely to trip it -- and against a human it only ever proved a click, not a
 # review. Enforcement moved to the suite, where it is evidence rather than assent:
 # four snapshots diffed against the resolved payload, and a marker entry that must
-# adjudicate whatever actually moved. See plan/testing.md, "The upstream-review gate".
+# adjudicate whatever actually moved. See TESTING.md, "The upstream-review gate".
 #
 # What is left here is worth keeping: whoever touches this file gets the procedure
 # in front of them at the moment it is relevant. That is a reminder, and it is now

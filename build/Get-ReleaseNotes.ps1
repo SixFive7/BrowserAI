@@ -20,7 +20,7 @@
     Three things this deliberately does not do:
 
       * It does not write the version. The version is derived from the git tag
-        by the build (plan/stack.md), so this script is TOLD what is being cut
+        by the build (STACK.md), so this script is TOLD what is being cut
         and never works it out. Two mechanisms deriving one version is how they
         come to disagree.
 

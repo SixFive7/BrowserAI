@@ -66,7 +66,7 @@ directory somebody can weigh, and it is carried by
 numbers.
 
 > ⚠️ **Corrected 2026-08-17 (previously "**BrowserAI's own binary is 9.76 MiB** —
-> 10,233,856 bytes … measured by [the 2026-08-15 spike](../mcp/sdk.md#measured-by-spike-2026-08-15)").**
+> 10,233,856 bytes … measured by [the 2026-08-15 spike](../mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation)").**
 > The spike's measurement stays true of the spike and is still recorded there;
 > what was wrong was carrying it forward as the product's size. It had already
 > been contradicted in this repository without this line being swept — the

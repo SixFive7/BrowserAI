@@ -133,7 +133,7 @@ and is declared unguarded in the public SDK, so the usual worry is unfounded.
 > but unverified on any build but Windows 11 26200 — and this is precisely the
 > silent-failure class the project exists to eliminate.
 
-## Re-measured 2026-08-16, building the sweep
+## The sweep, measured through the product's own code paths
 
 Every number here comes from the product's own code paths at build-order
 [step 16](../../plan/build-order.md#16-the-stray-sweep), on Windows 11 Pro 26200,
@@ -460,7 +460,7 @@ the PID-reuse guard, re-verified with `GetProcessTimes` before any kill. Mozilla
 > [§D](../../plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)
 > carried the same sentence and is corrected too.
 
-## The Restart Manager, as the product uses it — 2026-08-16
+## The Restart Manager, as the product uses it
 
 Measured at build-order [step 17](../../plan/build-order.md#17-firefox) on
 Windows 11 Pro 26200, against `firefox-1539` (Firefox 153.0) launched through
