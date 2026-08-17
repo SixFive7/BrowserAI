@@ -37,11 +37,13 @@ namespace BrowserAI.Tests;
 /// the change is an addition rather than a relaxation.</b> Until then the claim
 /// was <i>"a <c>tools/call</c> result reaches the caller as the exact bytes the
 /// child wrote"</i>, and it was true because BrowserAI forwarded every
-/// <c>tools/call</c> request unchanged. [§F](../../plan/F-artifacts.md) requires
-/// a rewritten <c>filename</c> to be reported back, and is explicit that
-/// reporting and rewriting ship together — <i>"relocating a file while telling
-/// the model otherwise is a new silent failure introduced by the fix for an old
-/// one"</i>. The claim is therefore now:
+/// <c>tools/call</c> request unchanged. Artifact routing requires a rewritten
+/// <c>filename</c> to be reported back, and reporting and rewriting ship
+/// together for a stated reason — <i>relocating a file while telling the model
+/// otherwise is a new silent failure introduced by the fix for an old one</i>.
+/// Both requirements are right and neither may be narrowed, so the resolution is
+/// mechanical rather than a compromise: see <see cref="Artifacts.ResultNote"/>
+/// for the splice that reconciles them. The claim is therefore now:
 /// </para>
 /// <list type="bullet">
 /// <item>

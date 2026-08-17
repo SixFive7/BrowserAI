@@ -23,8 +23,9 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What a scan can and cannot do is stated rather than implied.</b> It cannot
-/// prove the pack behaves; the install → update → rollback cycle at
-/// [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back) did
+/// prove the pack behaves; the
+/// [install → update → rollback cycle](../../kb/packaging/velopack.md#install--update--rollback-end-to-end)
+/// did
 /// that, by hand, against a real installer this suite must never run — an
 /// installer renames a non-empty root aside and deletes it, which on a
 /// developer's machine is 768 MB of provisioned browsers. What it does do is

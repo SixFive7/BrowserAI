@@ -20,10 +20,10 @@ namespace BrowserAI.Tests;
 /// driven through <see cref="IUpdateClient"/> and the install-shaped facts are
 /// asserted on the source instead. What the seams cannot cover — that a real
 /// package applies, that a rollback applies, and that the browsers beside
-/// <c>current\</c> survive both — was run by hand against a real install at
-/// [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back) and
-/// is recorded in [kb](../../kb/packaging/velopack.md), because it needs an
-/// installer this suite must never run.
+/// <c>current\</c> survive both — was run by hand against a real install and is
+/// recorded in
+/// [kb](../../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16),
+/// because it needs an installer this suite must never run.
 /// </para>
 /// </remarks>
 internal sealed class UpdateTests
@@ -123,7 +123,7 @@ internal sealed class UpdateTests
     /// </para>
     /// <para>
     /// <b>A local HTTP server would satisfy this test and prove nothing</b>, which
-    /// is why one is not used. [Testing](../../plan/testing.md) is explicit that
+    /// is why one is not used. [TESTING.md](../../TESTING.md) is explicit that
     /// this assertion cannot be made hermetically: a directory source composes
     /// paths differently and will pass where production 404s, and a served
     /// stand-in composes them the same way as the real one *by construction*
@@ -138,9 +138,8 @@ internal sealed class UpdateTests
     /// skip with a real request for <c>{ProductionBaseUrl}/releases.win.json</c>
     /// asserting a 200 and a parseable <c>Assets</c> array. Everything else in
     /// the update lane — the pack, the delta, the apply, the rollback and the
-    /// survival of the browsers — was run for real at
-    /// [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back)
-    /// and is recorded in [kb](../../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16).
+    /// survival of the browsers — was run for real and is recorded in
+    /// [kb](../../kb/packaging/velopack.md#the-update-lane-measured-2026-08-16).
     /// </para>
     /// <para>
     /// ⚠️ <b>This skip blocks a release, and that is intended.</b>

@@ -10,18 +10,36 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// [§E](../../plan/E-lifecycle.md#zero-process-leakage-the-job-object-contract)'s
-/// acceptance test against <b>real browsers</b>: Chromium and Firefox, every
-/// descendant in the job, nothing alive after the launcher is killed from
-/// outside, and every profile directory deleting cleanly afterwards.
+/// The job-object containment contract's acceptance test against <b>real
+/// browsers</b>: Chromium and Firefox, every descendant in the job, nothing alive
+/// after the launcher is killed from outside, and every profile directory
+/// deleting cleanly afterwards.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Step 6 could only reach <c>node</c>, and this is the half it deferred.</b>
-/// The contract is stated as <i>16 runs, 106 processes, 0 escapees, 0
-/// survivors</i> against real Chromium and Firefox trees; step 6 proved the
-/// flags, the ownership and containment through the bundled runtime, and left the
-/// browsers to the first step that has one. This is that step.
+/// <b>This is the half a job-object test without a browser cannot reach.</b> The
+/// contract is stated as <i>16 runs, 106 processes, 0 escapees, 0 survivors</i>
+/// against real Chromium and Firefox trees
+/// ([kb](../../kb/windows/processes.md#job-objects-and-process-containment));
+/// <see cref="JobContainmentTests"/> proves the flags, the ownership and
+/// containment through the bundled runtime, and this proves it through the thing
+/// the guarantee is actually about.
+/// </para>
+/// <para>
+/// <b>The intuition runs backwards, which is why this is measured rather than
+/// argued.</b> On Windows, job membership is inherited automatically by every
+/// descendant created with <c>CreateProcess</c>, so a component that spawns
+/// children "the normal way" is precisely the case that works; escaping requires
+/// an explicit opt-in <b>that our job must grant</b>, and a process requesting
+/// <c>CREATE_BREAKAWAY_FROM_JOB</c> from a job that does not permit it fails with
+/// <c>ERROR_ACCESS_DENIED</c> rather than escaping. That is the inverse of Linux
+/// process-group semantics. It matters here because the production chain already
+/// contains a permissive job: libuv creates a global one with
+/// <c>JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK</c> and Playwright spawns the browser
+/// with <c>detached: false</c> on Windows, and Firefox's launcher stacks a second.
+/// Containment holding through both is the strongest available confirmation,
+/// because that is the exact configuration that would leak if our job were
+/// misconfigured.
 /// </para>
 /// <para>
 /// <b>Firefox is the harder arm and it is not decoration.</b> It stacks a second
@@ -29,9 +47,8 @@ namespace BrowserAI.Tests;
 /// crash reporter are the only code in either browser family that asks to break
 /// away — so it is the exact configuration that would leak if our job were
 /// misconfigured. BrowserAI does not create Firefox <i>sessions</i> yet
-/// ([step 17](../../plan/build-order.md#17-firefox)); what is under test here is
-/// containment, which is <see cref="Interop.JobObject"/>'s and applies to
-/// anything the launcher starts.
+/// ([TODO.md](../../TODO.md)); what is under test here is containment, which is
+/// <see cref="Interop.JobObject"/>'s and applies to anything the launcher starts.
 /// </para>
 /// <para>
 /// <b>The profile delete is the assertion a survivor count cannot make.</b> A
@@ -70,8 +87,8 @@ internal sealed class BrowserContainmentTests
         await RunAsync("chromium", BrowserAiPaths.ExpectedChromiumExecutable);
 
     /// <remarks>
-    /// <b>Serialised with the other tests that start a real Firefox</b> — under the sweep group, which is the one constraint key a test may carry — added
-    /// at [step 17](../../plan/build-order.md#17-firefox): that step's preflight
+    /// <b>Serialised with the other tests that start a real Firefox</b> — under the sweep group, which is the one constraint key a test may carry — because
+    /// <see cref="FirefoxTests"/>' preflight
     /// test asserts that <i>no</i> Firefox process appeared while it ran, and a
     /// second test launching one in parallel makes that reading of the machine
     /// wrong for the harness's reasons rather than the product's.
@@ -220,10 +237,11 @@ internal sealed class BrowserContainmentTests
             // [kb](../../kb/chromium/resurrection.md) says it does, on a build
             // BrowserAI provisioned. Containment is unaffected, because
             // KILL_ON_JOB_CLOSE happens now and Windows' restart happens after a
-            // reboot or an update — but it means
-            // [step 17](../../plan/build-order.md#17-firefox) cannot ship Firefox
-            // sessions without turning that pref off in the profile, or a machine
-            // update will resurrect a browser no session claims.
+            // reboot or an update — but it means Firefox sessions cannot be
+            // offered without turning that pref off in the profile, or a machine
+            // update will resurrect a browser no session claims. That is what
+            // `FirefoxProfile` writes and `FirefoxTests` asserts; this arm
+            // launches Firefox WITHOUT it, which is why it still answers S_OK.
             //
             // Asserted rather than merely noted, so the day Mozilla changes it
             // this test says so instead of going quietly green.
@@ -374,8 +392,8 @@ internal sealed class BrowserContainmentTests
     /// contains the browser BrowserAI would actually launch, with the
     /// chromium-alias channel that makes the headless shell unreachable.
     /// <b>Firefox does not, because there is nothing to reuse:</b> BrowserAI
-    /// creates no Firefox sessions until
-    /// [step 17](../../plan/build-order.md#17-firefox), so this arm spells the
+    /// creates no Firefox sessions at all yet ([TODO.md](../../TODO.md)), so this
+    /// arm spells the
     /// minimum that selects it and nothing else — the family, the profile and
     /// headless. In particular no channel, because <c>chromiumAliases</c> is a
     /// Chromium concept with no Firefox equivalent.

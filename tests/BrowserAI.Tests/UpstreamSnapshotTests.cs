@@ -192,7 +192,8 @@ internal sealed class UpstreamSnapshotTests
     /// <summary>
     /// The suite's own capability filter reproduces the snapshot's recorded
     /// default surface, and BrowserAI's two capability sets are the 42 and 59
-    /// [§C](../../plan/C-sessions.md) records.
+    /// [kb](../../kb/playwright/tools-and-artifacts.md#the-per-capability-breakdown-counted)
+    /// records — upstream's numbers, before this product's own filtering.
     /// </summary>
     /// <remarks>
     /// Without the first half, <c>UpstreamSurface</c> is a second implementation

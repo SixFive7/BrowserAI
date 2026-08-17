@@ -52,8 +52,11 @@ internal sealed class NeverByImageNameTests
         // toolhelp walk that matches szExeFile ... is covered by
         // NeverByImageNameTests"; it was not, and a false claim of coverage is
         // worse than no coverage because it stops anyone looking.
-        // [§D](../../plan/D-locking.md) forbids "any WMI OR TOOLHELP query
-        // filtered by executable name" and asks for zero occurrences asserted.
+        // The rule this file enforces forbids "any WMI OR TOOLHELP query
+        // filtered by executable name", at zero occurrences asserted -- the
+        // invariant being that BrowserAI can only terminate a process belonging
+        // to a job object it created, or one whose identity it verified against
+        // a path it owns. Two mechanisms, no third.
         //
         // The needle is the FIELD rather than the walk. `CreateToolhelp32Snapshot`
         // and `Process32NextW` are how a process's pid and parent are read

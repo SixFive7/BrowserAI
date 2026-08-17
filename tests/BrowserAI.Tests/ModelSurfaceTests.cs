@@ -122,11 +122,11 @@ internal sealed class ModelSurfaceTests
     /// <remarks>
     /// <para>
     /// <b>Two requirements, from two documents, and neither was met until
-    /// 2026-08-17.</b>
-    /// [§C](../../plan/C-sessions.md#where-guidance-lives-three-channels-two-of-them-capped)
-    /// puts *"the real-Chrome-profile warning, and the retention policy"* in the
-    /// creation tool's description and says the spec requires retention to be
-    /// stated <i>there</i>; the
+    /// 2026-08-17.</b> The guidance design puts *"the real-Chrome-profile
+    /// warning, and the retention policy"* in the creation tool's description —
+    /// the spec requires retention to be stated <i>there</i>, and <c>init</c>'s
+    /// description is the channel a model sees at the moment it reaches for the
+    /// tool; the
     /// [README](../../README.md) demands the same thing independently, because
     /// <c>init</c> accepts any path — *"the `init` tool description is a security
     /// surface … say plainly what pointing at an existing browser profile

@@ -15,12 +15,70 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The stray sweep, and one test per row of
-/// [§C's race table](../../plan/C-sessions.md#race-conditions-and-what-closes-each).
+/// The stray sweep, and one test per row of the race table below.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Every row of that table is a test, and the table is the specification.</b>
+/// <b>The table is the specification, and it lives here because every row of it
+/// is a test in this file.</b> It was written for a design in which
+/// <b>~100 concurrent BrowserAI processes</b> is a normal working day — eight
+/// editor windows with a dozen agent sessions each — so a sweep that is merely
+/// <i>correct</i> for one process is wrong: 96 processes sweeping at startup is a
+/// thundering herd, and 96 racing to kill the same stray is a correctness problem
+/// rather than a performance one. The first three rows are the ones that lose data
+/// or kill the wrong process.
+/// </para>
+/// <list type="table">
+///   <item>
+///     <term>R1 — the sweep kills a browser a live session just launched</term>
+///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>lock.json</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill — and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
+///   </item>
+///   <item>
+///     <term>R2 — PID reuse between detection and kill</term>
+///     <description>Capture <c>(pid, creationFileTime)</c> at detection and hold an <c>OpenProcess</c> handle from that moment: Windows will not recycle a PID while a handle is open. Re-verify the creation time immediately before <c>TerminateProcess</c> regardless</description>
+///   </item>
+///   <item>
+///     <term>R3 — <c>AbandonedMutexException</c></term>
+///     <description>A sweeper that dies holding the mutex makes every later acquire throw. The mutex <b>is</b> acquired when that exception is thrown: catch it, treat it as acquired, proceed. Unhandled, one crash disables sweeping permanently and nothing reports it</description>
+///   </item>
+///   <item>
+///     <term>R4 — two sweepers use different mutexes</term>
+///     <description>One name, one place in code, <c>Global\</c> prefixed. A <c>Local\</c> prefix would silently give per-logon mutexes and let two sweeps run</description>
+///   </item>
+///   <item>
+///     <term>R5 — session-0 blindness</term>
+///     <description><c>FindWindowExW(HWND_MESSAGE, …)</c> is scoped to a window station and desktop, so a sweeper outside the interactive session sees no message windows at all — it would sweep, find nothing, and report success forever. BrowserAI is a stdio child of an interactive client, so it is in the right session by construction, and this test is what stops that being an assumption</description>
+///   </item>
+///   <item>
+///     <term>R6 — the store is enumerated while an <c>init</c> adds an entry</term>
+///     <description>Benign: a missed entry is a live session, which the sweep would skip anyway, and it is present next pass</description>
+///   </item>
+///   <item>
+///     <term>R7 — the sweep deletes a pointer for a directory an <c>init</c> is creating</term>
+///     <description>Not prevented, <b>absorbed</b>. Pointers are re-asserted idempotently on every <c>init</c> and <c>resume</c>, so a wrongly-deleted one costs a cycle of invisibility. Locking the store to close this would put a machine-wide lock on the hot path of every session start, which is a worse trade at 96 processes. Deletion additionally re-checks absence immediately before acting</description>
+///   </item>
+///   <item>
+///     <term>R8 — two sweeps in different terminal-server sessions</term>
+///     <description>Correct and intended: message windows are per-session, so each session must sweep its own. The <c>Global\</c> mutex serialises them, which costs a little parallelism and prevents nothing valid</description>
+///   </item>
+///   <item>
+///     <term>R9 — a sweep runs longer than the next one that starts</term>
+///     <description>Try-acquire-and-skip at zero timeout means the later one simply does nothing. No pile-up is possible, and a skipped sweep is not a missed sweep: whoever holds the mutex is scanning the same store</description>
+///   </item>
+///   <item>
+///     <term>R10 — killing a stray mid-write corrupts its profile</term>
+///     <description>Accepted. The profile has no owner by definition (R1), and Chromium is built to survive <c>taskkill</c>, which is what upstream itself does</description>
+///   </item>
+///   <item>
+///     <term>R11 — an exception in the sweep kills the process</term>
+///     <description>Catch-all at the thread boundary. A sweep failure is a log line, never a crash and never a protocol error: a BrowserAI that cannot sweep is degraded, one that will not start is broken</description>
+///   </item>
+///   <item>
+///     <term>R12 — the sweep writes to <c>stdout</c></term>
+///     <description>Forbidden process-wide already; the sweep is inside that rule, not an exception to it</description>
+///   </item>
+/// </list>
+/// <para>
 /// Each test below names its row. R8's second half — two sweeps in two different
 /// <i>logon sessions</i> — is the one property that cannot be produced from a
 /// single logon; what is asserted there is the mechanism that makes it correct
@@ -235,7 +293,7 @@ internal sealed class StraySweepTests
     /// <b>Corrected 2026-08-16 (previously
     /// <c>TheSweepMutexIsNamedOnceInTheProductAndTheTaskRunsThatSameProduct</c>,
     /// which also asserted on the logon task's generated XML).</b>
-    /// [The logon task is dropped](../../plan/build-order.md#16-the-stray-sweep),
+    /// [The logon task is dropped](../../kb/windows/detection.md#the-logon-sweep-task),
     /// so the second sweeper is no longer a task — it is
     /// <c>BrowserAI.exe --sweep</c>, the measurement entry point
     /// [row 78](../../kb/README.md#re-verification-index) names. The half that

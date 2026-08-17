@@ -8,9 +8,10 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// [§B](../../plan/B-mcp-server.md)'s first sentence, which nothing implemented
-/// until 2026-08-16: <i>"registered once at system or user scope, available in
-/// every repository, with no per-repo files"</i>.
+/// The charter's founding sentence, which nothing implemented until 2026-08-16:
+/// <i>"registered once at system or user scope, available in every repository,
+/// with no per-repo files"</i>
+/// ([README](../../README.md#settled-2026-08-16)).
 /// </summary>
 /// <remarks>
 /// <para>

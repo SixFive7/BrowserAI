@@ -20,9 +20,10 @@ namespace BrowserAI.Tests;
 /// reads as covered.</b>
 /// </para>
 /// <para>
-/// It is a real failure and not a hypothetical one. Build-order step 4 found
-/// eight rows naming test types that no build had ever produced, and
-/// <c>plan/testing.md</c> asserting those tests already existed.
+/// It is a real failure and not a hypothetical one. Wiring the <c>Automated by</c>
+/// column found eight rows naming test types that no build had ever produced —
+/// written from spike work that lived in <c>.work/</c>, never in the suite — and
+/// a planning document asserting those tests already existed.
 /// </para>
 /// </remarks>
 internal sealed partial class ReVerificationIndexTests

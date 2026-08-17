@@ -49,8 +49,8 @@ internal sealed class UpstreamReviewTests
     /// </para>
     /// <para>
     /// <b>It worked a second time.</b> <c>Velopack</c> left the list on
-    /// 2026-08-16 at [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
-    /// exactly where this note predicted, and again the only change was adding
+    /// 2026-08-16, when the update path was built —
+    /// exactly where this note predicted — and again the only change was adding
     /// the package: this test went red on its own. It resolved <b>1.2.0</b>,
     /// which is what <c>upstream-review.json</c> records as reviewed, so no
     /// review was owed. <b>The list is now empty, and an empty list is the

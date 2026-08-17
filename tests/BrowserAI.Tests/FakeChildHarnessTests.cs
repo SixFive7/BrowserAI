@@ -21,7 +21,8 @@ namespace BrowserAI.Tests;
 /// <b>Every capability the double exists for has a test here, and that is the
 /// point of the file.</b> A capability with no test is one the next step
 /// discovers is missing — at the moment it is needed, in the middle of writing
-/// something else. The capabilities are the ones <c>plan/testing.md</c> lists
+/// something else. The capabilities are the ones
+/// [TESTING.md](../../TESTING.md#we-write-our-own-harness) lists
 /// for <c>FakePlaywrightChild</c>: a canned <c>tools/list</c>, a programmable
 /// result, an injected error, a delay, mid-call death, an unknown content type
 /// and an oversized payload.

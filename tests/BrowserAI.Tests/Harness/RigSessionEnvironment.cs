@@ -225,8 +225,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// <b>Separate from <see cref="CanOpenSessions"/>, because they are different
     /// facts.</b> That one says a session <i>cannot</i> be opened here; this one
     /// says one should not be. The test that needs it is
-    /// [row 13](../../../plan/H-model-surface.md#h4-the-error-catalogue) — a browser
-    /// running out of our tree that <b>no session claims</b> — which is
+    /// <see cref="BrowserAI.Sessions.SessionErrors.StrayCannotBeAttributed"/> — a
+    /// browser running out of our tree that <b>no session claims</b> — which is
     /// unreachable while any session is open, including the rig's own.
     /// </remarks>
     public bool OpensDefaultSession { get; private init; } = true;

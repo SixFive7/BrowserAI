@@ -60,7 +60,7 @@ internal static class RepositoryLayout
     /// <remarks>
     /// <para>
     /// <b>This is the subset the "never repo-wide" rules are about</b>
-    /// ([testing](../../plan/testing.md#what-the-build-itself-must-fail-on)). A
+    /// ([TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on)). A
     /// property set here applies to the assembly nobody has written yet, which
     /// is precisely why AOT and trim suppression must not be set here — and why
     /// <c>TreatWarningsAsErrors</c> must.

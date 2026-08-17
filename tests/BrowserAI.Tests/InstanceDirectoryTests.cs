@@ -76,8 +76,8 @@ internal sealed class InstanceDirectoryTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>[§E](../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back) names
-    /// this caller in all but name.</b> An instance directory has just held a
+    /// <b><see cref="Runtime.TreeDelete"/> exists for exactly this caller.</b> An
+    /// instance directory has just held a
     /// running browser, and Chromium leaves mapped files behind for a moment
     /// after exit — the race is the normal case rather than the unlucky one.
     /// </para>

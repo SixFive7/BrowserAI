@@ -14,15 +14,17 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// [§D](../../plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)'s
-/// Firefox half: the <c>parent.lock</c> preflight, Restart Manager attribution,
-/// and restart registration turned off on every launch.
+/// The Firefox half of the locking design: the <c>parent.lock</c> preflight,
+/// Restart Manager attribution, and restart registration turned off on every
+/// launch.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>The preflight prevents a hang rather than a wrong answer, so the test
-/// asserts on the clock.</b> Playwright never checks Firefox's profile lock, so
-/// a collision is answered by Firefox itself — with a native modal on the
+/// asserts on the clock.</b> Playwright's <c>isProfileLocked</c> checks only
+/// Chromium's <c>lockfile</c> and never Firefox's <c>parent.lock</c>
+/// ([kb](../../kb/chromium/profiles.md#the-dialog-hazard--worse-than-a-dialog-appears)),
+/// so a collision is answered by Firefox itself — with a native modal on the
 /// Windows desktop, against a three-minute launch timeout, on a machine with
 /// nobody at the keyboard. A refusal that took three minutes would satisfy every
 /// other assertion here and would have prevented nothing.

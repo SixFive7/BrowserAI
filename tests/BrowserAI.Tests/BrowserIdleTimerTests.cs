@@ -12,9 +12,8 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// [§C](../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)'s
-/// whole lifetime section: one timer, no expiry, and two teardown mechanisms
-/// neither of which is a close tool.
+/// The whole of a session's lifetime: one timer, no expiry, and two teardown
+/// mechanisms neither of which is a close tool.
 /// </summary>
 /// <remarks>
 /// <para>

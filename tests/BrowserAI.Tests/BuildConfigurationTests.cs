@@ -62,9 +62,8 @@ internal sealed partial class BuildConfigurationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>This is the founding failure class applied to a repository.</b>
-    /// [Build order](../../plan/build-order.md#every-done-test-ends-with-a-clean-working-tree)
-    /// opens with a repository in this estate holding a working app, a test
+    /// <b>This is the founding failure class applied to a repository.</b> A
+    /// repository in this estate held a working app, a test
     /// project and a good CI workflow that were <b>never committed</b>: 29
     /// tracked files, zero <c>.cs</c>, every surface signal healthy. The check
     /// it prescribed — <c>git status --porcelain</c> is empty — cannot catch
@@ -252,7 +251,7 @@ internal sealed partial class BuildConfigurationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>[Testing](../../plan/testing.md#what-the-build-itself-must-fail-on)
+    /// <b>[TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on)
     /// requires this in those words</b> — <i>"assert the property is unset, so
     /// it cannot arrive later as somebody's size optimisation"</i> — and until
     /// 2026-08-16 nothing did: <c>grep -rn "ResourceKeys" tests/</c> returned
@@ -265,7 +264,7 @@ internal sealed partial class BuildConfigurationTests
     /// exception message strings and leaves bare resource keys, so
     /// <c>Arg_DirectoryNotFound</c> replaces a sentence naming the path. This
     /// product's error text is read by a <i>model</i> deciding what to do next
-    /// ([the error catalogue](../../plan/H-model-surface.md#h4-the-error-catalogue)),
+    /// (<see cref="Sessions.SessionErrors"/>),
     /// so the saving is kilobytes against a ~117 MB payload and the loss is the
     /// catalogue, silently emptied.
     /// </para>
@@ -306,7 +305,7 @@ internal sealed partial class BuildConfigurationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>[Testing](../../plan/testing.md#what-the-build-itself-must-fail-on)
+    /// <b>[TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on)
     /// opens with this and nothing asserted it.</b>
     /// <see cref="NoBuildFileSuppressesWarnings"/> forbids <c>NoWarn</c> and
     /// <c>WarningsNotAsErrors</c> — the two ways to demote a warning — and never
@@ -370,7 +369,7 @@ internal sealed partial class BuildConfigurationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>[Testing](../../plan/testing.md#what-the-build-itself-must-fail-on) in
+    /// <b>[TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on) in
     /// those words:</b> <i>"AOT and trim warning suppression is scoped
     /// per-assembly, never repo-wide. A repo-wide suppression is permanent and
     /// invisible: it silences the warning for every assembly added afterwards,
@@ -414,7 +413,7 @@ internal sealed partial class BuildConfigurationTests
     /// <remarks>
     /// <para>
     /// <b>Neither entry is a pin, and the file is outside every other scan.</b>
-    /// [§stack](../../plan/stack.md#the-build-configuration-this-plan-has-never-mentioned)
+    /// [STACK.md](../../STACK.md#the-build-configuration)
     /// requires *"an SDK floor that rolls forward"* — a floor forbids being
     /// stale, where a ceiling would forbid being current — and *"the MTP runner
     /// setting TUnit requires"*, without which <c>dotnet test</c> takes the
@@ -449,11 +448,11 @@ internal sealed partial class BuildConfigurationTests
     /// <remarks>
     /// <para>
     /// <b>Both settings fail silently, in opposite directions.</b>
-    /// [§stack](../../plan/stack.md#the-build-configuration-this-plan-has-never-mentioned)
+    /// [STACK.md](../../STACK.md#the-build-configuration)
     /// requires <c>longPathAware</c> because session directories are the
     /// caller's choice and unbounded: without it a profile tree crossing
     /// <c>MAX_PATH</c> fails somewhere inside Chromium with an error nobody can
-    /// attribute. [§G](../../plan/G-updates.md) requires <c>asInvoker</c>
+    /// attribute. The update path requires <c>asInvoker</c>
     /// because BrowserAI installs per-user precisely so that nothing ever waits
     /// on a UAC prompt a background MCP server cannot answer — an elevation
     /// request here would hang the client at startup.

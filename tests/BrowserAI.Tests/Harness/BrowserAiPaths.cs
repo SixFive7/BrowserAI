@@ -50,10 +50,10 @@ internal static class BrowserAiPaths
 
     /// <summary>The firefox revision the committed snapshot names.</summary>
     /// <remarks>
-    /// Firefox is not a browser BrowserAI creates sessions for — that is
-    /// [step 17](../../../plan/build-order.md#17-firefox) — but
-    /// [§E](../../../plan/E-lifecycle.md#zero-process-leakage-the-job-object-contract)'s
-    /// containment contract is stated against <b>both</b> families, and the
+    /// Firefox is not a browser BrowserAI creates sessions for — that is still
+    /// owed, and carried in [TODO.md](../../../TODO.md) — but the
+    /// [job-object containment contract](../../../kb/windows/processes.md#job-objects-and-process-containment)
+    /// is stated against <b>both</b> families, and the
     /// second one is the harder case: Firefox stacks a second permissive job of
     /// its own, and its background tasks are the only code in either browser that
     /// asks to break away.

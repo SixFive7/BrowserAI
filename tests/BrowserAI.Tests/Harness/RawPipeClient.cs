@@ -32,10 +32,11 @@ internal readonly record struct RawResponse(byte[] Frame, JsonObject Envelope)
 /// They differ in the two things this layer needs and that one cannot give:
 /// this one speaks over a <b>stream pair</b> rather than starting a process, so
 /// no test here needs Node or a published binary; and it keeps every response's
-/// <b>raw bytes</b>, because
-/// <see href="../../../plan/build-order.md">step 9</see> asserts byte-identity
-/// on the exact span of <c>result</c> and a client that hands back only a
-/// parsed object has already thrown the evidence away.
+/// <b>raw bytes</b>, because <see cref="LosslessPassthroughTests"/> asserts
+/// byte-identity on the exact span of <c>result</c> — found by
+/// <c>Utf8JsonReader</c> token offset, never by re-serialising and comparing —
+/// and a client that hands back only a parsed object has already thrown the
+/// evidence away.
 /// </para>
 /// <para>
 /// It correlates by <c>id</c> and skips anything else on the stream. That is
