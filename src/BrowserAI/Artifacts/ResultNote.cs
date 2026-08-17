@@ -15,7 +15,7 @@ namespace BrowserAI.Artifacts;
 /// <para>
 /// <b>This is where the byte-identity guarantee is made precise rather than
 /// weakened.</b> Step 9 established that a <c>tools/call</c> answer reaches the
-/// caller as the exact bytes the child wrote, and [§F](../../plan/F-artifacts.md)
+/// caller as the exact bytes the child wrote, and [§F](../../../plan/F-artifacts.md)
 /// requires every routed artifact's answer to carry the path it was routed to —
 /// which is, on its face, editing the result. The two are reconciled by
 /// splicing: the child's <c>content</c> array is found by token offset and one

@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>HRESULT_FROM_WIN32(ERROR_NOT_FOUND)</c>: the process has no registration at
 /// all. Anything else means Windows has been told to bring this browser back, and
 /// [the maintainer's own browsers were resurrected by exactly that
-/// mechanism](../../kb/chromium/resurrection.md).
+/// mechanism](../../../kb/chromium/resurrection.md).
 /// </para>
 /// </remarks>
 internal static partial class RestartRegistration

@@ -29,10 +29,10 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>Constructing this is cheap and issues no request.</b>
-/// [§G landmine 5](../../plan/G-updates.md) said an <c>UpdateManager</c> touches
+/// [§G landmine 5](../../../plan/G-updates.md) said an <c>UpdateManager</c> touches
 /// the network on construction; that never applied to 1.2.0 — the constructor
 /// only assigns fields
-/// ([kb](../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)).
+/// ([kb](../../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)).
 /// The installed version is still read from
 /// <see cref="InstallLocation"/> rather than from here, because that is the type
 /// that owns the locator.

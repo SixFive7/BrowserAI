@@ -38,7 +38,7 @@ namespace BrowserAI.Interop;
 /// a design note. What is reproduced is the <i>sequence</i>, which is the
 /// documented API contract and belongs to nobody: start a session, register the
 /// one file, ask for the list, end the session. The same route
-/// [step 9](../../plan/build-order.md#9-lossless-passthrough) took when it
+/// [step 9](../../../plan/build-order.md#9-lossless-passthrough) took when it
 /// implemented parse-error recovery from the MCP SDK's observed behaviour rather
 /// than from its Apache-2.0 source.
 /// </para>
@@ -219,7 +219,7 @@ internal static partial class RestartManager
     /// <b>Diagnostic text and nothing else.</b> It is shown to a person so a
     /// refusal names something recognisable; nothing in this repository compares
     /// it, filters on it or acts on it, which is the whole of the distinction
-    /// [§D](../../plan/D-locking.md#never-by-image-name) draws between observing
+    /// [§D](../../../plan/D-locking.md#never-by-image-name) draws between observing
     /// a name and choosing a process by one.
     /// </remarks>
     private static unsafe string NameOf(RmProcessInfo entry)

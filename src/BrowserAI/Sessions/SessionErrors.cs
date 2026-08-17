@@ -27,9 +27,9 @@ namespace BrowserAI.Sessions;
 /// nobody can reach is documentation rather than behaviour, and this is the check
 /// that says so. One row of §H.4's catalogue is therefore deliberately
 /// <b>absent</b> rather than written and unreachable: the Firefox profile dialog
-/// belongs to [step 17](../../plan/build-order.md#17-firefox).
+/// belongs to [step 17](../../../plan/build-order.md#17-firefox).
 /// Provisioning-in-progress and the unattributable stray arrived at
-/// [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser),
+/// [step 15](../../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser),
 /// which is the first build that can emit either — the first because nothing
 /// downloaded a browser before it, and the second because
 /// <c>browserai_reinstall_browser</c> is the first thing that has to ask whether

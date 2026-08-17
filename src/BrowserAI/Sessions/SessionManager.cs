@@ -33,7 +33,7 @@ namespace BrowserAI.Sessions;
 /// A retry that repeats the failed call is not a recovery, and offering one to a
 /// model is how a caller ends up in a loop that never terminates and never
 /// explains itself. §H.4's catalogue wording is
-/// [step 13](../../plan/build-order.md#13-the-one-table-enforcement-and-the-model-facing-surface)'s;
+/// [step 13](../../../plan/build-order.md#13-the-one-table-enforcement-and-the-model-facing-surface)'s;
 /// what is fixed here is that a cause and a route out reach the caller at all.
 /// </para>
 /// </remarks>
@@ -55,17 +55,17 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <summary>The only browser family this build can create a session for.</summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-16 at [step 17](../../plan/build-order.md#17-firefox)
+    /// ⚠️ <b>Corrected 2026-08-16 at [step 17](../../../plan/build-order.md#17-firefox)
     /// (previously "Firefox is step 17").</b> Step 17 built §D's Firefox half —
     /// the <c>parent.lock</c> preflight, Restart Manager attribution and the
     /// restart-registration preference on every Firefox launch — and that is all
     /// §D asks for. <b>Offering Firefox as a choice on <c>init</c> is not §D's
     /// and is still owed</b>: it needs a per-family download size for
-    /// [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue) (this build
+    /// [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue) (this build
     /// quotes Chromium's 203.8 MB) and a decision about what
     /// <c>browserai_reinstall_browser</c> reinstalls when there are two trees,
     /// neither of which the plan has taken. Carried in
-    /// [TODO.md](../../TODO.md).
+    /// [TODO.md](../../../TODO.md).
     /// </para>
     /// <para>
     /// <b>The rest of the product is family-parameterised regardless.</b>
@@ -139,7 +139,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <b>Three distinguishable causes, three different recoveries.</b> A path
-    /// that is not absolute is [row 3](../../plan/H-model-surface.md#h4-the-error-catalogue);
+    /// that is not absolute is [row 3](../../../plan/H-model-surface.md#h4-the-error-catalogue);
     /// a path with no <c>lock.json</c> is row 2 and wants <c>init</c>; a path that
     /// <i>is</i> a session this process is not driving wants <c>resume</c>.
     /// Collapsing the last two — as this did before step 13 — sends half the
@@ -185,7 +185,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Every upstream tool, with no exception — and the exception is what the
     /// measurement removed.</b> This was written to let
     /// <see cref="ToolClass.Configuration"/> through, because
-    /// [§A](../../plan/A-runtime.md#first-run-browser-provisioning) says
+    /// [§A](../../../plan/A-runtime.md#first-run-browser-provisioning) says
     /// <c>browser_get_config</c> keeps working while the download runs. Measured
     /// 2026-08-16 @ <c>@playwright/mcp</c> 0.0.79, twice, against the child
     /// directly with an empty browsers root: it does <b>not</b>. The tool
@@ -198,7 +198,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// So letting it through bought a worse answer rather than a working one: a
     /// caller would get upstream's "not installed" error, whose advice is to
     /// provision — which is already happening — instead of
-    /// [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue), which says
+    /// [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue), which says
     /// how large the download is and that the same call will work shortly. What
     /// keeps a downloading session inspectable is BrowserAI's <b>own</b> tools:
     /// <c>browserai_list</c>, <c>browserai_resume</c> and
@@ -773,7 +773,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _environment.Paths.BrowsersDirectory,
 
                 // The OUTPUT root rather than the session root, which is
-                // [§F](../../plan/F-artifacts.md)'s first lever: upstream
+                // [§F](../../../plan/F-artifacts.md)'s first lever: upstream
                 // resolves a relative `filename` against the child's cwd, so a
                 // bare `foo.png` that nothing rewrote still lands inside the
                 // instance tree by construction rather than in whatever
@@ -961,7 +961,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// three minutes inside one tool call has had whatever timing it was managing
     /// corrupted, with nothing to read and no basis for deciding whether to keep
     /// waiting. So the download starts here and the answer says so; browser calls
-    /// are refused with [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue)
+    /// are refused with [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue)
     /// meanwhile, <c>browser_get_config</c> keeps working, and the same child
     /// navigates once the install lands.
     /// </para>

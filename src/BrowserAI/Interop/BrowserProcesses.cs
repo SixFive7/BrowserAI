@@ -29,7 +29,7 @@ namespace BrowserAI.Interop;
 /// the per-process open, and the ~150 processes this token cannot open are
 /// protected and SYSTEM-owned ones — nothing BrowserAI launched can be in that
 /// set, because it runs as the user and non-elevated
-/// ([kb](../../kb/windows/detection.md#process-image-path--the-fully-documented-detection-path)).
+/// ([kb](../../../kb/windows/detection.md#process-image-path--the-fully-documented-detection-path)).
 /// </para>
 /// <para>
 /// <b>Terminating is <see cref="StrayCandidate"/>'s, and only after a second

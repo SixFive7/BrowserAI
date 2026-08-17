@@ -10,10 +10,10 @@ namespace BrowserAI.Registration;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The requirement is [§B](../../plan/B-mcp-server.md)'s first sentence</b> —
+/// <b>The requirement is [§B](../../../plan/B-mcp-server.md)'s first sentence</b> —
 /// <i>"registered once at system or user scope, available in every repository,
 /// with no per-repo files"</i> — and it is the charter's founding promise:
-/// [README §1](../../README.md) opens by rejecting a world where onboarding
+/// [README §1](../../../README.md) opens by rejecting a world where onboarding
 /// <i>"requires a repo, a `.mcp.json`, hook registrations"</i>. Until this
 /// existed, what shipped was an installed, self-updating, self-sweeping binary
 /// that no client was configured to talk to.
@@ -42,7 +42,7 @@ namespace BrowserAI.Registration;
 /// <item><description>
 /// <b>A documented manual step.</b> Abandons the promise that distinguishes this
 /// product from the setup it replaces — the whole complaint in
-/// [README §7](../../README.md) is that onboarding is a list of manual steps.
+/// [README §7](../../../README.md) is that onboarding is a list of manual steps.
 /// </description></item>
 /// </list>
 /// <para>
@@ -53,14 +53,14 @@ namespace BrowserAI.Registration;
 /// (<see cref="RegistrationTarget"/>), and must finish well inside a fast-exit
 /// hook's timeout — <c>--veloapp-install</c> gets 30 s, <c>--veloapp-updated</c>
 /// 15 s, <c>--veloapp-uninstall</c> 60 s
-/// ([kb](../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)).
+/// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)).
 /// </para>
 /// <para>
 /// <b>Measured 2026-08-16 @ Claude Code 2.1.233</b>, three runs each, from a
 /// non-elevated token: <c>mcp add --scope user</c> takes <b>613–645 ms</b> and
 /// <c>mcp remove</c> <b>646–671 ms</b>, and neither needs elevation because both
 /// write the invoking user's own configuration
-/// ([kb](../../kb/mcp/protocol.md#registering-browserai-with-the-client)).
+/// ([kb](../../../kb/mcp/protocol.md#registering-browserai-with-the-client)).
 /// </para>
 /// </remarks>
 internal static class McpClientRegistration
@@ -72,7 +72,7 @@ internal static class McpClientRegistration
     /// <remarks>
     /// Lower-case and unqualified, matching the product name. It is <b>not</b> a
     /// tool name — upstream tool names pass through byte-for-byte
-    /// ([README → Tool naming](../../README.md#settled-2026-08-14)) — it is the
+    /// ([README → Tool naming](../../../README.md#settled-2026-08-14)) — it is the
     /// server key in the client's own configuration.
     /// </remarks>
     public const string ServerName = "browserai";
@@ -84,7 +84,7 @@ internal static class McpClientRegistration
     /// <remarks>
     /// ⚠️ <b>An <c>.exe</c> and never a <c>.cmd</c> shim.</b> A shim cannot be
     /// started without <c>cmd.exe</c>, and routing through a shell is what
-    /// [stack.md deviation 1](../../plan/stack.md) exists to forbid: measured
+    /// [stack.md deviation 1](../../../plan/stack.md) exists to forbid: measured
     /// against a node probe, a literal <c>%USERNAME%</c> reached the child
     /// expanded and an argument containing whitespace and <c>&amp;</c> made the
     /// child fail to start outright. A registered path is exactly the kind of
@@ -105,7 +105,7 @@ internal static class McpClientRegistration
     public const string ClientCommandName = "claude";
 
     /// <summary>
-    /// The scope: <c>user</c>, which is [§B](../../plan/B-mcp-server.md)'s
+    /// The scope: <c>user</c>, which is [§B](../../../plan/B-mcp-server.md)'s
     /// sentence and not a preference.
     /// </summary>
     /// <remarks>

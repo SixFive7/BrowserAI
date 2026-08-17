@@ -32,7 +32,7 @@ namespace BrowserAI.Interop;
 /// suspended or deliberately hostile owner cannot defeat it. Measured across
 /// ~1,550 windows, every integrity level, a thread blocked 15 s inside its own
 /// WndProc and a fully suspended Chromium
-/// ([kb](../../kb/windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)).
+/// ([kb](../../../kb/windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)).
 /// </para>
 /// <para>
 /// <b><see cref="InternalWindowText"/> is the fallback, and it is the documented

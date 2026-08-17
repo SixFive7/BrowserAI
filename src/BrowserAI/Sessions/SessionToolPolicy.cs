@@ -85,7 +85,7 @@ internal enum ToolClass
 /// separate processes the <c>interactive</c> server ran without the
 /// <c>storage</c> capability, so the storage tools <i>did not exist</i> in that
 /// process. Under one server they exist and correctness depends on a lookup —
-/// [the charter is explicit](../../README.md#the-init-design-weakens-a-security-boundary)
+/// [the charter is explicit](../../../README.md#the-init-design-weakens-a-security-boundary)
 /// that this is a demotion from <i>"the capability does not exist"</i> to
 /// <i>"our code declines to use it"</i>, and that it is only acceptable if the
 /// decision is centralised in exactly one place, deny-by-default, unit-tested
@@ -133,7 +133,7 @@ internal static class SessionToolPolicy
     /// </para>
     /// <para>
     /// <b>The list is exactly the 69 names
-    /// [the golden snapshot](../../upstream-snapshots/tools-list.json) records as
+    /// [the golden snapshot](../../../upstream-snapshots/tools-list.json) records as
     /// the maximum ever exposed</b>, which is regenerated from the resolved
     /// payload and diffed on every build. A tool upstream adds therefore arrives
     /// as a snapshot diff first; once that diff is accepted the tool is missing

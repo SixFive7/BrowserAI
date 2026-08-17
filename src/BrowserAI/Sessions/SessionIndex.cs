@@ -223,7 +223,7 @@ internal sealed class SessionIndex
     /// </para>
     /// <para>
     /// <b>Two states are deliberately <i>kept</i> that a first reading of
-    /// [§D](../../plan/D-locking.md#the-session-index-on-disk) would remove.</b> A
+    /// [§D](../../../plan/D-locking.md#the-session-index-on-disk) would remove.</b> A
     /// directory whose <c>lock.json</c> is present but unparseable is a session
     /// — a broken one — and it cannot restore its own entry, because
     /// <see cref="SessionLock.TryAcquire"/> refuses an unreadable record. And a

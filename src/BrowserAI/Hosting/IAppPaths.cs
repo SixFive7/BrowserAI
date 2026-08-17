@@ -91,7 +91,7 @@ internal interface IAppPaths
     /// <para>
     /// A sibling of <c>current\</c> for the same reason the log is, and per-run
     /// rather than shared, because [the child's working directory is the output
-    /// root](../../plan/F-artifacts.md) and two runs must not write into one.
+    /// root](../../../plan/F-artifacts.md) and two runs must not write into one.
     /// </para>
     /// <para>
     /// <b>Corrected again 2026-08-16 (previously "The replacement is step 12's,
@@ -105,7 +105,7 @@ internal interface IAppPaths
     /// needs a working directory and a profile of its own. The second is
     /// <b>every session's generated config</b>, which is a per-run artifact
     /// rather than part of a session's durable state — and
-    /// [§C](../../plan/C-sessions.md#the-session-directory-is-the-identity) keeps
+    /// [§C](../../../plan/C-sessions.md#the-session-directory-is-the-identity) keeps
     /// the session root to <c>lock.json</c> and the session log, so a third file
     /// there is out.
     /// </para>
@@ -128,7 +128,7 @@ internal interface IAppPaths
     /// and that question gates the update apply.</b> Velopack's
     /// <c>force_stop_package</c> kills every process whose image is under the
     /// install root, without asking and after every hook returns
-    /// ([kb](../../kb/packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
+    /// ([kb](../../../kb/packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
     /// With ~100 concurrent registrations that is every other live session
     /// destroyed mid-task, so an apply is only ever allowed to run when nothing
     /// else is there to destroy.

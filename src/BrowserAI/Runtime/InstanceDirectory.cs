@@ -46,7 +46,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// This is not the stray sweep. That one is about browsers and windows, it is
-/// specified in [§C](../../plan/C-sessions.md) and it arrived at build-order
+/// specified in [§C](../../../plan/C-sessions.md) and it arrived at build-order
 /// step 16; this stops BrowserAI's own bookkeeping growing without limit.
 /// </para>
 /// </remarks>
@@ -98,7 +98,7 @@ internal static class InstanceDirectory
     /// </summary>
     /// <remarks>
     /// <b><see cref="TreeDelete"/>, never <c>Directory.Delete(recursive: true)</c></b>
-    /// ([§E](../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)). This
+    /// ([§E](../../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)). This
     /// runs on the clean exit path, on a directory that has just held a running
     /// browser, and Chromium leaves mapped files behind for a moment after exit —
     /// the race is the normal case rather than the unlucky one. The framework

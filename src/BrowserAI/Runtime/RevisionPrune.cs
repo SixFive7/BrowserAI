@@ -28,7 +28,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// <remarks>
 /// <para>
 /// <b>This exists because of one environment variable.</b>
-/// [§A](../../plan/A-runtime.md#first-run-browser-provisioning) mandates
+/// [§A](../../../plan/A-runtime.md#first-run-browser-provisioning) mandates
 /// <c>PLAYWRIGHT_SKIP_BROWSER_GC=1</c>, because upstream's stale-browser sweep
 /// deletes any registry directory not referenced from <c>.links</c> and the blast
 /// radius of that is <i>our own Chromium</i>. Turning it off is right and it hands

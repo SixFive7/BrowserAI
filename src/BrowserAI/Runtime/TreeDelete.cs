@@ -22,7 +22,7 @@ namespace BrowserAI.Runtime;
 /// true)</c> inherits that behaviour because that is how it walks. The caller
 /// then sees an exception and no partial progress, which converts one locked
 /// file into a whole tree nobody ever cleans up").</b> Measured twice on .NET
-/// 10.0.11 ([kb](../../kb/windows/processes.md#interop-and-the-toolchain)): the
+/// 10.0.11 ([kb](../../../kb/windows/processes.md#interop-and-the-toolchain)): the
 /// recursive delete <b>does</b> make partial progress. Against a tree with one
 /// file held <c>FileShare.None</c>, and again against one holding a subdirectory
 /// the caller may not read, it removed everything else and threw <b>one</b>
@@ -40,7 +40,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>Three callers, three different reasons to meet the failure</b>
-/// ([§E](../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)).
+/// ([§E](../../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)).
 /// <c>browserai_destroy</c> deletes a directory that has just held a running
 /// browser, and Chromium leaves mapped files behind for a moment after exit —
 /// the race is the normal case rather than the unlucky one.
@@ -53,11 +53,11 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-16 (previously "The Velopack swap is the third, and
-/// arrives at [§G](../../plan/G-updates.md)").</b> It shipped and it never
+/// arrives at [§G](../../../plan/G-updates.md)").</b> It shipped and it never
 /// arrived, because the swap is <c>force_stop_package</c> — upstream's own
 /// binary, which does not call into this. The third caller was
 /// <see cref="InstanceDirectory"/> all along, and it was using the framework
-/// primitive: found by [the plan's final audit](../../TODO.md), which is exactly
+/// primitive: found by [the plan's final audit](../../../TODO.md), which is exactly
 /// the outcome the paragraph below predicts.
 /// </para>
 /// <para>

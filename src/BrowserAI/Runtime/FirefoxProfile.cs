@@ -70,7 +70,7 @@ internal static class FirefoxProfile
     /// <c>ERROR_NOT_FOUND</c> with nothing set. Firefox's registration does not
     /// go through that call site at all: measured 2026-08-16 against a Firefox
     /// BrowserAI provisioned, exactly one process in the tree answered
-    /// <c>S_OK</c>. See [kb](../../kb/chromium/resurrection.md).
+    /// <c>S_OK</c>. See [kb](../../../kb/chromium/resurrection.md).
     /// </para>
     /// </remarks>
     public const string RestartRegistrationPreference = "toolkit.winRegisterApplicationRestart";

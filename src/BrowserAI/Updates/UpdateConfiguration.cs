@@ -17,13 +17,13 @@ namespace BrowserAI.Updates;
 /// been published and what gets published is still open**. Writing a URL here
 /// before one exists would produce a build that checks a 404 on every start and
 /// reports *"no update available"*, which is
-/// [precisely the failure §G is most afraid of](../../plan/G-updates.md) wearing
+/// [precisely the failure §G is most afraid of](../../../plan/G-updates.md) wearing
 /// the costume of a working feature. A build with no feed configured says so
 /// once, at Debug, and never asks.
 /// </para>
 /// <para>
 /// <b>This is the one bullet of
-/// [step 19's done-test](../../plan/build-order.md#19-velopack-package-update-roll-back)
+/// [step 19's done-test](../../../plan/build-order.md#19-velopack-package-update-roll-back)
 /// that is deferred</b> — *the real production feed URL resolves over HTTP and
 /// returns a manifest* — and it is deferred rather than faked. A local HTTP
 /// server would compose paths the same way and pass, while proving nothing about

@@ -12,10 +12,10 @@ namespace BrowserAI.Updates;
 /// <remarks>
 /// <para>
 /// <b>The seam is a boolean, not an exception handler, and that is measured
-/// rather than designed.</b> [§G landmine 6](../../plan/G-updates.md) said
+/// rather than designed.</b> [§G landmine 6](../../../plan/G-updates.md) said
 /// <c>NotInstalledException</c> is the normal outcome under <c>dotnet run</c>
 /// and every test host. **That is wrong for 1.2.0**
-/// ([kb](../../kb/packaging/velopack.md#6-notinstalledexception-under-dotnet-run-and-every-test-host)):
+/// ([kb](../../../kb/packaging/velopack.md#6-notinstalledexception-under-dotnet-run-and-every-test-host)):
 /// <c>VelopackLocator.Current</c> throws
 /// <c>InvalidOperationException: No VelopackLocator has been set</c> until
 /// <c>VelopackApp.Build().Run()</c> has run, and after it has run in an
@@ -27,7 +27,7 @@ namespace BrowserAI.Updates;
 /// ⚠️ <b><see cref="VelopackLocator.Current"/> is not free.</b> It probes
 /// writability, <b>creates <c>packages\</c> and <c>packages\VelopackTemp</c></b>
 /// and opens a log file
-/// ([kb](../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)),
+/// ([kb](../../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)),
 /// so it is read once here and cached. It does <b>not</b> touch the network —
 /// that landmine never applied to 1.2.0 — but a startup path that created
 /// directories on every call would still be wrong.
@@ -66,7 +66,7 @@ internal static class InstallLocation
     /// uses: a client installed from a beta <c>Setup.exe</c> inherits <c>beta</c>
     /// in its manifest and stays there silently, which is the real reason
     /// <c>ExplicitChannel</c> is set rather than inferred
-    /// ([kb](../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)).
+    /// ([kb](../../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)).
     /// </remarks>
     public static string? InstalledChannel => Resolved.Value.Channel;
 

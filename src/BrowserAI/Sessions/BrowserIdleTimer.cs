@@ -13,7 +13,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>There is exactly one timer, and this is it.</b> No handle-expiry timer, no
 /// session TTL and no reclaim window —
-/// [reclaim is forever](../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever),
+/// [reclaim is forever](../../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever),
 /// because the durable thing is the profile rather than the process. Every
 /// expiry timer that was considered was a cliff that deleted work in exchange
 /// for nothing.
@@ -28,7 +28,7 @@ namespace BrowserAI.Sessions;
 /// <i>"browser is closed"</i> anywhere. Nothing in BrowserAI relaunches
 /// anything: Playwright creates the browser lazily on first use, so the recovery
 /// is upstream's own behaviour rather than a thing this product had to build
-/// ([kb: timings](../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
+/// ([kb: timings](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
 /// </para>
 /// <para>
 /// <b>It starts disarmed.</b> A session that has been opened and never driven has
@@ -50,7 +50,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 {
     /// <summary>
     /// The shipped period. <b>Ten minutes</b>, as
-    /// [§C](../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
+    /// [§C](../../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
     /// specifies.
     /// </summary>
     /// <remarks>

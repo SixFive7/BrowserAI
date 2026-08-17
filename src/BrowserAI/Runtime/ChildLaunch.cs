@@ -12,7 +12,7 @@ namespace BrowserAI.Runtime;
 /// </summary>
 /// <remarks>
 /// This is the whole of the launch half of
-/// [§A](../../plan/A-runtime.md) that build-order step 7 owns. Provisioning,
+/// [§A](../../../plan/A-runtime.md) that build-order step 7 owns. Provisioning,
 /// modes, sessions and artifact routing are later steps; what is settled here is
 /// which browser runs and whether it is sandboxed.
 /// </remarks>

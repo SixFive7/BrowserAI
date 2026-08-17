@@ -34,18 +34,18 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>One <see cref="VelopackApp.SetLogger"/> call is enough at 1.2.0.</b>
-/// [§G landmine 8](../../plan/G-updates.md) required two registrations, one for
+/// [§G landmine 8](../../../plan/G-updates.md) required two registrations, one for
 /// the runtime <c>UpdateManager</c> and one for the startup hooks; that was
 /// fixed upstream and a single registration now reaches the installer, the
 /// hooks, <c>UpdateManager</c> and the bridged Rust output
-/// ([kb](../../kb/packaging/velopack.md#8-ivelopacklogger-needs-two-registrations)).
+/// ([kb](../../../kb/packaging/velopack.md#8-ivelopacklogger-needs-two-registrations)).
 /// </para>
 /// <para>
 /// <b>Three hooks do one job, and it is the charter's founding promise.</b>
 /// <c>--veloapp-install</c> and <c>--veloapp-updated</c> register BrowserAI with
 /// the MCP client and <c>--veloapp-uninstall</c> removes it, through
 /// <see cref="Registration.HookRegistration"/> —
-/// [§B](../../plan/B-mcp-server.md)'s <i>"registered once at system or user
+/// [§B](../../../plan/B-mcp-server.md)'s <i>"registered once at system or user
 /// scope, available in every repository, with no per-repo files"</i>. Before
 /// 2026-08-16 every hook here existed only to log, and what shipped was an
 /// installed, self-updating, self-sweeping binary that no client was configured
@@ -55,7 +55,7 @@ namespace BrowserAI.Updates;
 /// <b>Corrected 2026-08-16 (previously "No hook does any work. They exist to
 /// log").</b> That was true and is not any more. The reason it was true survives
 /// unchanged and still binds: the logon scheduled task
-/// [is dropped](../../plan/build-order.md#16-the-stray-sweep), and a hook that
+/// [is dropped](../../../plan/build-order.md#16-the-stray-sweep), and a hook that
 /// left a <i>helper running</i> under the install root would be killed by
 /// <c>force_stop_package</c> immediately afterwards anyway — it runs after every
 /// hook returns. Registration is not that shape: it starts one short-lived
@@ -65,7 +65,7 @@ namespace BrowserAI.Updates;
 /// <b>What a hook may cost.</b> These are fast-exit callbacks with real
 /// timeouts — <c>--veloapp-install</c> 30 s, <c>--veloapp-updated</c> 15 s,
 /// <c>--veloapp-uninstall</c> 60 s
-/// ([kb](../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) — and
+/// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) — and
 /// anything slow or interactive in one is a broken install. The registration
 /// call is measured at 613–645 ms with a 10 s budget of its own, and it can
 /// neither prompt nor block: see <see cref="Registration.McpClientRegistration"/>.

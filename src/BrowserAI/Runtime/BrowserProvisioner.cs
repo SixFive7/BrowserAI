@@ -24,7 +24,7 @@ internal enum ProvisioningState
 
     /// <summary>
     /// A download is running, here or in another BrowserAI process. Browser calls
-    /// are refused with [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue)
+    /// are refused with [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue)
     /// rather than blocked.
     /// </summary>
     Downloading,
@@ -120,7 +120,7 @@ internal sealed record ProvisioningTimers
 /// timing it was managing corrupted, with nothing to read and no way to decide
 /// whether waiting is worth it. So <see cref="Ensure"/> returns immediately with
 /// <see cref="ProvisioningState.Downloading"/>, browser-needing calls are
-/// refused with [row 6](../../plan/H-model-surface.md#h4-the-error-catalogue),
+/// refused with [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue),
 /// and <c>browser_get_config</c> keeps working because it needs no browser. The
 /// same child then navigates once the install lands — no restart, because
 /// nothing about the child depended on the browser existing when it started.
@@ -239,7 +239,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// It is a string rather than a number because the only thing done with it is
     /// putting it in a sentence, and a byte count formatted at the call site is a
     /// second place for it to drift.
-    /// [kb](../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
+    /// [kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
     /// carries the figure and how to re-establish it.
     /// </remarks>
     public const string FirstRunDownloadSize = "203.8 MB";

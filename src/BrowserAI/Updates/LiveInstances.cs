@@ -19,7 +19,7 @@ namespace BrowserAI.Updates;
 /// image path is under the install root — on <c>apply</c>, <c>install</c>,
 /// <c>start</c>, <c>uninstall</c> <b>and after every hook returns</b>, matching
 /// by path, without asking
-/// ([kb](../../kb/packaging/velopack.md#4-force_stop_package-kills-everything-under-the-root)).
+/// ([kb](../../../kb/packaging/velopack.md#4-force_stop_package-kills-everything-under-the-root)).
 /// At the concurrency BrowserAI is designed for — eight editors with a dozen
 /// agent sessions each — one process deciding to update destroys every other
 /// live session mid-task, and it is precisely the landmine the only prior art
@@ -27,7 +27,7 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>The handle is the mechanism, exactly as it is for a session directory</b>
-/// ([§D](../../plan/D-locking.md)). Each run creates one file and holds it
+/// ([§D](../../../plan/D-locking.md)). Each run creates one file and holds it
 /// <c>FileAccess.ReadWrite, FileShare.Read</c>: another process asking for write
 /// access is refused by the kernel, and a process that was killed, crashed or
 /// was terminated by a job object releases it anyway. A pid file would need a

@@ -12,7 +12,7 @@ namespace BrowserAI.Updates;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>The channel must never appear in the feed URL. This is the worst hazard
-/// in [§G](../../plan/G-updates.md)</b>, because it is close to unrecoverable in
+/// in [§G](../../../plan/G-updates.md)</b>, because it is close to unrecoverable in
 /// the field: a client that cannot reach the feed cannot be told to roll back
 /// either, so every install already shipped needs a manual reinstall.
 /// <c>SimpleWebSource</c> composes the request as
@@ -23,7 +23,7 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>Three refusals, each from a measured failure</b>
-/// ([kb](../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)):
+/// ([kb](../../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)):
 /// a base URL whose last segment is the channel is the UCC bug and is refused;
 /// an empty channel is refused because <c>ExplicitChannel = ""</c> is
 /// <b>not</b> the same as unset — the code null-coalesces, so it yields

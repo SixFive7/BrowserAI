@@ -23,9 +23,9 @@ namespace BrowserAI.Registration;
 /// <c>#![windows_subsystem = "windows"]</c> — beside
 /// <c>&lt;root&gt;\current\BrowserAI.exe</c>, the <b>17,853,952-byte</b> binary
 /// that actually serves stdio
-/// ([kb](../../kb/packaging/velopack.md#install--update--rollback-end-to-end)).
+/// ([kb](../../../kb/packaging/velopack.md#install--update--rollback-end-to-end)).
 /// The stub <b>exits in 59 ms</b> while the app it launched runs on
-/// ([kb](../../kb/packaging/velopack.md#3-never-register-the-execution-stub)), so
+/// ([kb](../../../kb/packaging/velopack.md#3-never-register-the-execution-stub)), so
 /// a client registered against it sees its MCP server die instantly. That is §G
 /// landmine 3, and it is the reason this type refuses a path whose parent
 /// directory is not <c>current</c> rather than merely preferring one that is.

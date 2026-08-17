@@ -32,8 +32,8 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Two requirements collide here, and the collision is real.</b>
-/// [§C](../../plan/C-sessions.md) makes the open handle the lock;
-/// [§D](../../plan/D-locking.md) requires the record to be put in place by an
+/// [§C](../../../plan/C-sessions.md) makes the open handle the lock;
+/// [§D](../../../plan/D-locking.md) requires the record to be put in place by an
 /// atomic rename. <b>Measured 2026-08-16: a rename cannot replace a file whose
 /// handle is open, under any share mode.</b> Not <c>FileShare.Read</c>, not
 /// <c>Read | Delete</c>, not <c>ReadWrite | Delete</c> — all three fail
@@ -311,7 +311,7 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>This is the sweep's ownership test, and it is deliberately not
-    /// <see cref="TryAcquire"/>.</b> [Race R1](../../plan/C-sessions.md#race-conditions-and-what-closes-each)
+    /// <see cref="TryAcquire"/>.</b> [Race R1](../../../plan/C-sessions.md#race-conditions-and-what-closes-each)
     /// says the sweep may only kill a browser whose directory lock it can itself
     /// acquire, and that the lock is held for the whole kill — but a sweep is
     /// not opening a session, and <see cref="TryAcquire"/> would rewrite

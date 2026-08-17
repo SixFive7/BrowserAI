@@ -34,7 +34,7 @@ namespace BrowserAI.Logging;
 /// </remarks>
 internal sealed class SessionLogFile : ILogSink, IDisposable
 {
-    /// <summary>The file name, fixed by [§E](../../plan/E-lifecycle.md).</summary>
+    /// <summary>The file name, fixed by [§E](../../../plan/E-lifecycle.md).</summary>
     public const string FileName = "browserai.log";
 
     private readonly Lock _gate = new();

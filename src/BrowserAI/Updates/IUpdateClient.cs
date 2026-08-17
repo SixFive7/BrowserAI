@@ -13,7 +13,7 @@ namespace BrowserAI.Updates;
 /// install, so a build that called <c>UpdateManager</c> directly could only ever
 /// be exercised by installing itself — and a server that self-restarts would
 /// relaunch itself out of the suite
-/// ([§G landmine 6](../../plan/G-updates.md)).
+/// ([§G landmine 6](../../../plan/G-updates.md)).
 /// </para>
 /// <para>
 /// <b>It is deliberately four members.</b> Every one of them is a place Velopack
@@ -49,7 +49,7 @@ internal interface IUpdateClient
     /// <remarks>
     /// <b>It does not restart and it does not exit.</b> <c>--norestart</c> is
     /// deliberate: a relaunched BrowserAI does not inherit the caller's stdio
-    /// ([kb](../../kb/packaging/velopack.md#rollback)), so a restarted process
+    /// ([kb](../../../kb/packaging/velopack.md#rollback)), so a restarted process
     /// would be a server with no client. The next session starts the new version
     /// from the identical path, which is why there is no *restart to apply*
     /// prompt in normal use. Exiting is the caller's job, so that the ordinary

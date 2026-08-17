@@ -17,6 +17,29 @@ internal static class RepositoryLayout
 {
     private const string RootMarker = "Directory.Packages.props";
 
+    /// <summary>
+    /// Directory names that never hold this repository's own hand-written files.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Pruned during the walk rather than filtered after it: <c>payload\</c>
+    /// carries an unpacked <c>node_modules</c>, so enumerating first and
+    /// discarding second means reading tens of thousands of paths to keep none
+    /// of them.
+    /// </para>
+    /// <para>
+    /// <b>Declared above every member that reads it, and that is load-bearing
+    /// rather than tidy.</b> Static field initializers run in textual order, so
+    /// this list sitting below <see cref="LinkBearingFiles"/> made it empty at
+    /// the moment that walk ran — the prune silently did nothing and the scan
+    /// swept in the whole gitignored <c>.work\</c> tree. Observed 2026-08-17
+    /// while this was being written; it fails open, which is why it is written
+    /// down here rather than left to whoever moves it next.
+    /// </para>
+    /// </remarks>
+    private static readonly string[] NotOurs =
+        [".git", ".vs", ".work", "payload", "artifacts", "Releases", "TestResults", "bin", "obj", "node_modules"];
+
     /// <summary>The repository root directory.</summary>
     public static DirectoryInfo Root { get; } = FindRoot();
 
@@ -95,6 +118,34 @@ internal static class RepositoryLayout
         SourceFilesUnder(["src", "tests", "build"], ["*.cs", "*.ps1", "*.psm1", "*.mjs", "*.js"]);
 
     /// <summary>
+    /// Every hand-written file in the repository that can carry a Markdown link:
+    /// the prose, the scripts, and the code whose XML doc comments are prose.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Enumerated over the whole tree rather than over a list of directory
+    /// names, and that is the point.</b> A documentation restructure moves files
+    /// between directories; a scan anchored on <c>src</c>, <c>tests</c> and
+    /// <c>build</c> would stop seeing a file the day it moved — silently, and in
+    /// exactly the change it exists to guard. What is pruned is what is not this
+    /// repository's own hand-written text: version control, agent scratch, the
+    /// bundled payload, and build output under every name it takes here.
+    /// </para>
+    /// <para>
+    /// Verified 2026-08-17: this yields the same 215 files as
+    /// <c>git ls-files *.cs *.ps1 *.psm1 *.mjs *.js *.md</c>, with no difference
+    /// in either direction. It is not <c>git ls-files</c> itself because the
+    /// suite must run on an export with no git in it.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<FileInfo> LinkBearingFiles { get; } =
+    [
+        .. Walk(Root)
+            .Where(file => file.Extension is ".cs" or ".ps1" or ".psm1" or ".mjs" or ".js" or ".md")
+            .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
+    ];
+
+    /// <summary>
     /// A file's text with whole-line comments removed, so that a scan for a
     /// forbidden construct reads code rather than prose about it.
     /// </summary>
@@ -148,6 +199,30 @@ internal static class RepositoryLayout
                 .Any(segment => segment is "bin" or "obj" or "node_modules"))
             .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
+
+    /// <summary>Every file beneath a directory, skipping the trees in <see cref="NotOurs"/>.</summary>
+    /// <param name="directory">The directory to walk.</param>
+    /// <returns>The files, in whatever order the file system yields them.</returns>
+    private static IEnumerable<FileInfo> Walk(DirectoryInfo directory)
+    {
+        foreach (var file in directory.EnumerateFiles())
+        {
+            yield return file;
+        }
+
+        foreach (var child in directory.EnumerateDirectories())
+        {
+            if (NotOurs.Contains(child.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            foreach (var file in Walk(child))
+            {
+                yield return file;
+            }
+        }
+    }
 
     private static DirectoryInfo FindRoot()
     {
