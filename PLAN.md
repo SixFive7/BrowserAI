@@ -96,7 +96,9 @@ satisfying a design.
 > now, and not done** — §D's failed-rewrite recovery test, the reclaim pass as a
 > test, step 3's four done-tests trapped in a PowerShell script, and **59 hazard
 > rows still carrying `—` for evidence**. Any one of those is enough on the
-> ending's own terms.
+> ending's own terms. *(One of those four — the reclaim pass — closed later the
+> same day, so **three** remain; closing it found the pass was also using the
+> one delete primitive §E forbids.)*
 >
 > **And the second reason is larger, was never counted before, and is the one
 > that decides it.** [`plan/hazards.md`](plan/hazards.md) was made
@@ -281,7 +283,8 @@ a dodge — both were written before the thing that answered them existed:
   inspector was superseded by [*"Automated checks: None"*](README.md): it was a
   CI check, and there is no CI.
 
-**Four are (a) and are NOT done. Named, not buried:**
+**Four were (a) and not done when this list was written; one closed the same
+day, so three remain. Named, not buried:**
 
 1. **§D's failed-rewrite recovery has no test.** §D: *"a failed rewrite must not
    also release the lock — the handle is dropped before the replacement, so an
@@ -289,9 +292,25 @@ a dodge — both were written before the thing that answered them existed:
    recovery path was added."* It **shipped broken once**, which is exactly the
    kind of path that needs a regression test, and forcing the failure needs a
    seam that does not exist yet.
-2. **The reclaim pass is not itself a test.** [testing](plan/testing.md) says
-   *"the pass is itself a test … so a defect in reclaim shows up as a suite that
-   cannot start clean"*. The pass runs; nothing asserts it did.
+2. ~~**The reclaim pass is not itself a test.**~~ ✅ **Closed 2026-08-17**, and
+   closing it found the pass was short in a second way nobody had recorded.
+   `ProcessLogTests.TheReclaimPassIsItselfATestAndReportsWhatItCouldNotTake`
+   asserts the pass ran, that it took everything, and that it is idempotent —
+   the property that lets it run before everything else without being ordered
+   against anything. **And the pass was using `Directory.Delete(recursive: true)`**,
+   the one primitive §E says never to use, in a suite whose own reclaim spec
+   names `TreeDelete` by description — *"the routine that survives a locked
+   file, because the common leftover is a session directory a browser has not
+   finished letting go of"*. It is on `TreeDelete` now, and the survivors are
+   the assertion: the framework primitive names **one** node where the per-node
+   walk names all of them, and here the survivors *are* the previous run's leak.
+   **What is still missing is the second of four bullets** — *"anything the
+   previous run recorded is terminated by `(pid, creationFileTime)` from its own
+   spawn record"*. No spawn record is persisted across runs (verified: nothing
+   in `src/` or `tests/` writes one), so a run killed mid-test leaves a process
+   the next run cannot identify, only a directory it cannot delete. That is the
+   remaining third, and it is a smaller gap than it reads: the directory it
+   holds is now **named** rather than silently skipped.
 3. **Build-order step 3's four done-tests live in a PowerShell script the suite
    never runs.** `ChangelogTests` already proves the shape — drive it through
    `pwsh` from the suite — so this is known work rather than an open question.

@@ -105,6 +105,36 @@ internal sealed class ProcessLogTests
     }
 
     [Test]
+    public async Task TheReclaimPassIsItselfATestAndReportsWhatItCouldNotTake()
+    {
+        // [testing]: "The pass is itself a test. It runs the same reclaim the
+        // product performs, so a defect in reclaim shows up as a suite that
+        // cannot start clean -- which is a louder signal than a sweep that
+        // quietly finds nothing." The pass ran and nothing asserted that it had
+        // until 2026-08-17, which is the exact shape the sentence warns about:
+        // a sweep whose silence is indistinguishable from its success.
+        var root = ScratchRoot.Path;
+
+        await Assert.That(ScratchRoot.HasReclaimed).IsTrue();
+        await Assert.That(Directory.Exists(root)).IsTrue();
+
+        // Nothing survived it. A non-empty list is a previous run's leak and
+        // names every node -- which is what switching the pass onto TreeDelete
+        // bought, because the framework primitive names one node where the
+        // per-node walk names all of them.
+        await Assert.That(string.Join(Environment.NewLine, ScratchRoot.LastPassSurvivors)).IsEmpty();
+
+        // Idempotent, which is the property that lets it run before anything
+        // else without being ordered against anything. Asking again neither
+        // re-runs it nor deletes what this run has since created.
+        using var mine = ScratchDirectory.Create("reclaim-is-idempotent");
+        await File.WriteAllTextAsync(Path.Combine(mine.Path, "written-after-the-pass.txt"), "still here");
+
+        await Assert.That(ScratchRoot.Path).IsEqualTo(root);
+        await Assert.That(File.Exists(Path.Combine(mine.Path, "written-after-the-pass.txt"))).IsTrue();
+    }
+
+    [Test]
     public async Task ALogDirectoryOnAShareIsRefusedOutrightRatherThanWrittenTo()
     {
         // §E: "No destination that can block or produce a window ... no UNC

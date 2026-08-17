@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Hosting;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 
 namespace BrowserAI.Tests.Harness;
@@ -30,6 +31,32 @@ internal static class ScratchRoot
 {
     private static readonly Lock Gate = new();
     private static bool _reclaimed;
+
+    /// <summary>
+    /// Everything the reclaim pass could not remove, in the order it met them.
+    /// </summary>
+    /// <remarks>
+    /// <b>Exposed so the pass can be a test rather than only a side effect.</b>
+    /// The suite's own specification says <i>"the pass is itself a test — it
+    /// runs the same reclaim the product performs, so a defect in reclaim shows
+    /// up as a suite that cannot start clean, which is a louder signal than a
+    /// sweep that quietly finds nothing"</i>, and until 2026-08-17 the pass ran
+    /// and nothing asserted that it had. A list that stays empty is the healthy
+    /// state; a list that fills is the previous run's leak, named.
+    /// </remarks>
+    public static List<string> LastPassSurvivors { get; } = [];
+
+    /// <summary>Whether the reclaim pass has run in this process.</summary>
+    public static bool HasReclaimed
+    {
+        get
+        {
+            lock (Gate)
+            {
+                return _reclaimed;
+            }
+        }
+    }
 
     /// <summary>
     /// <c>&lt;repo&gt;\.work\test-scratch</c>, created and swept on first use.
@@ -151,13 +178,27 @@ internal static class ScratchRoot
         {
             try
             {
-                Directory.Delete(directory, recursive: true);
+                // TreeDelete rather than Directory.Delete(recursive: true),
+                // which is what this did until 2026-08-17 and is the one
+                // primitive §E says never to use. The suite's own reclaim spec
+                // names it: "the scratch root is deleted with the routine that
+                // survives a locked file, because the common leftover is a
+                // session directory a browser has not finished letting go of".
+                //
+                // The difference is the report, not the outcome: the framework
+                // primitive names ONE surviving node where the per-node walk
+                // names all of them, and here the survivors are the whole
+                // signal -- they are the previous run's leak, and a reclaim
+                // that says "one thing was locked" when eleven were is a
+                // reclaim nobody can act on. Measured 2026-08-16; kb row 86.
+                TreeDelete.Remove(directory, LastPassSurvivors);
             }
 #pragma warning disable CA1031 // See the type's remarks: reclaim is never fatal.
             catch (Exception)
 #pragma warning restore CA1031
             {
                 // Held by something still alive. Left alone deliberately.
+                LastPassSurvivors.Add(directory);
             }
         }
     }
