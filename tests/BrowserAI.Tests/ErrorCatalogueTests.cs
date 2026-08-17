@@ -516,7 +516,19 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(text).Contains("no session on this machine claims");
-        await Assert.That(text).Contains(planted);
+
+        // ⚠️ COMPARED CASE-INSENSITIVELY, AND THAT IS THE CORRECT COMPARISON
+        // RATHER THAN A LOOSENING. Windows paths are case-insensitive, and
+        // these two strings reach this line by different routes: `planted` is
+        // composed in this process from a root that inherits whatever
+        // drive-letter case the test host was launched with, while the path
+        // inside the refusal was read back from the OS, which always reports
+        // the drive letter upper-case. Compared ordinally the same file fails
+        // to match itself whenever the suite is started from a shell that
+        // spells the drive `c:` -- so the test was green from one shell and red
+        // from another, which makes it a property of the caller rather than of
+        // the product. Fixed 2026-08-17, ahead of CI picking a shell.
+        await Assert.That(text).Contains(planted, StringComparison.OrdinalIgnoreCase);
 
         Record(nameof(SessionErrors.UnattributableBrowserRunning));
 

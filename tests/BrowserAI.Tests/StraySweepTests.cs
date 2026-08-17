@@ -699,7 +699,15 @@ internal sealed class StraySweepTests
         var reported = capturing.Records.Single(record => record.Level is LogLevel.Warning && record.Message.Contains("could not attribute", StringComparison.Ordinal));
 
         await Assert.That(reported.Message).Contains("Nothing was terminated");
-        await Assert.That(reported.Message).Contains(PlantedProbe.ExecutablePath);
+
+        // ⚠️ CASE-INSENSITIVE, for the reason recorded in full at
+        // ErrorCatalogueTests' own planted-path assertion: the expected string
+        // is composed here from a root carrying whatever drive-letter case the
+        // test host was launched with, and the logged one was read back from
+        // the OS, which always reports it upper-case. An ordinal compare makes
+        // this assertion a property of the invoking shell rather than of the
+        // sweep. Fixed 2026-08-17, ahead of CI picking a shell.
+        await Assert.That(reported.Message).Contains(PlantedProbe.ExecutablePath, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
