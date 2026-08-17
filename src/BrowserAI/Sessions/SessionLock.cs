@@ -319,8 +319,9 @@ internal sealed class SessionLock : IDisposable
     /// <see cref="TryAcquire"/>.</b> The rule it implements is race R1 —
     /// <i>the sweep may only kill a browser whose directory lock it can itself
     /// acquire, and it holds that lock for the whole kill</i> — which is what
-    /// stops process X killing a browser process Y is mid-<c>init</c> on the same
-    /// directory. If <c>lock.json</c> cannot be opened for write, someone owns the
+    /// stops one process sweeping away a browser that a second process, mid-
+    /// <c>init</c> on the same directory, has just launched.
+    /// If <c>lock.json</c> cannot be opened for write, someone owns the
     /// directory, and the sweep skips it unconditionally.
     /// <c>StraySweepTests</c> carries one test per race, this one included.
     /// </para>
