@@ -456,6 +456,78 @@ making logging able to block — the one thing [the observability design](../../
 says the sink may never do. `[FLOATS]` for the .NET half, which could change
 with any SDK; `[STABLE]` for the Win32 guarantee.
 
+## Saturation: the 100-process design point
+
+**100 concurrent BrowserAI processes with 24 live Chromium trees is 802
+processes, and this machine carries it.** Measured 2026-08-17 by
+`SaturationTests`, which starts 100 published binaries at once, gives each its
+own session with a real `node.exe`, and has 24 of them launch, close and
+relaunch a real headless Chromium. Every peer answered; every session was
+claimed by exactly one process and its `lock.json` named that process's pid;
+every job object was pairwise disjoint; nothing survived teardown; the shared
+process log held no torn record. **82 s** wall, alone on the machine. The 802
+figure is the survivor census from the fault-injection run in which teardown was
+deliberately skipped, so it is a count of what was actually live rather than an
+estimate. `[MACHINE]`
+
+**At that size the machine has no headroom left, and it shows up as other
+processes' hang detectors, not as anything BrowserAI does.** Measured the same
+day, same test, run *inside* the full 419-test suite instead of alone: seven
+unrelated tests failed, every one of them on a 30-second in-process bound —
+*"No frame arrived on this pipe within 30 s"* between two objects in the same
+process, and a rig teardown reporting its server task still running after 30 s.
+Nothing failed in the product. **The lesson is about what a hang detector can
+mean**: at a ~25× CPU overcommit a thirty-second silence between two in-process
+objects is no longer evidence of a deadlock, so a suite that saturates the
+machine cannot also use short wall-clock silences as deadlock detection.
+Dropping the browser subset from 24 to **8** — 100 BrowserAI processes, 100 node
+children, ~64 Chromium — is green in-suite and costs **105 s** for the whole
+suite, of which 96 s is this one test. `[MACHINE]`
+
+**A pid alone is not an identity at this scale, and the margin is not
+theoretical.** The first version of the disjointness assertion compared job
+membership by pid and reported **twelve** processes apparently shared between
+two jobs on its very first run — every one a pid Windows had recycled between
+two peers reading their membership. Twenty-four Chromium trees closing at once
+frees on the order of two hundred pids within a second. Keyed on
+`(pid, creationFileTime)` the same run is clean. Measured 2026-08-17. `[STABLE]`
+for the mechanism; the count is `[MACHINE]`.
+
+**`Directory.Move` is refused with `ERROR_ACCESS_DENIED` on a directory whose
+files were written milliseconds earlier, and the holder is a scanner rather than
+a process anyone can name.** Windows refuses to rename a directory while any
+handle is open below it, and a real-time anti-malware filter opens every file
+just after it is written. Measured 2026-08-17 in two independent places under a
+fully parallel suite: the first-run cache's publish-by-rename failed in **five of
+twenty-one** runs with *"Access to the path '…\.staging-&lt;guid&gt;' is
+denied"*, and `InstanceDirectoryTests`' planted abandoned directory failed to be
+reclaimed in **one of ten**. Neither reproduced once at four-way parallelism.
+**The two correct answers are different, and which one applies depends on what
+the rename means.** Where the rename is a *commit* — nothing else can be holding
+the tree, so a refusal is transient — a bounded retry is right, and it is the
+same shape `InstallationMarker` already uses against the same class of
+transient. Where the rename is a *liveness test*, as in
+`InstanceDirectory.Claim`, a retry is wrong: a genuinely live directory always
+refuses, so the retry's budget would be paid once per live instance on every
+startup — minutes, at the design point. To re-establish: write a file into a
+directory and rename the directory in the same millisecond, on a machine under
+heavy I/O with real-time scanning on. `[MACHINE]`
+
+**A suite of 419 tests run all-at-once is bounded by CPU oversubscription, not
+by thread-pool injection.** Measured 2026-08-17. Raising the parallel limit from
+4 to unbounded took the suite from **33.7 s** to **~20 s**, and produced
+multi-second latencies on *in-process* round trips: 1.51 s and 2.27 s against an
+800 ms budget, for work that normally answers in milliseconds. The obvious
+suspect was the thread pool's hill-climbing injection — the pool starts at
+`Environment.ProcessorCount` and adds roughly one thread per 500 ms — but
+`ThreadPool.SetMinThreads(1024, 1024)` **did not help**: the same measurement
+came back **worse**, at 2.27 s where it had been 1.51 s. The cause is plain
+arithmetic: 416 runnable threads over 32 cores is a 13× overcommit, and one
+round trip through the in-process rig is four thread handoffs. **A wall-clock
+assertion over an async pipeline cannot survive this and should not be written**;
+the fix was a `TimeProvider` seam on the one timer in the product, so the test
+advances the clock itself. `[MACHINE]`
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

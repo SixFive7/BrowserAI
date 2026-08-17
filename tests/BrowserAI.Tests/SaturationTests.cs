@@ -1,0 +1,720 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Globalization;
+using System.Text.Json.Nodes;
+using BrowserAI.Hosting;
+using BrowserAI.Interop;
+using BrowserAI.Sessions;
+using BrowserAI.Tests.Harness;
+
+namespace BrowserAI.Tests;
+
+/// <summary>
+/// The design point, run for real: the charter's <b>~100 concurrent BrowserAI
+/// processes sharing one process log</b>, with real browsers launching and
+/// closing underneath them.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Every other test in this suite is about one thing being right. This one
+/// is about the machine not being the thing that breaks.</b> The number 100
+/// comes from the charter — eight editor windows with a dozen agent sessions
+/// each — and until 2026-08-17 nothing exercised anything like it: the widest
+/// concurrency the suite reached was <c>ProcessLogTests</c>' eight probe
+/// processes writing twenty-five lines apiece, which is not a browser, not a
+/// session and not a job.
+/// </para>
+/// <para>
+/// <b>It is nondeterministic in its timing and deterministic in every
+/// assertion, which is the only shape worth having.</b> Nothing below reads a
+/// stopwatch, compares an elapsed time or asserts a rate. What it asserts is
+/// identity, disjointness and completeness — properties that are either true or
+/// false whatever the machine is doing, and every one of which is <i>false</i>
+/// if containment or session isolation breaks. The one place time appears is a
+/// bounded wait for a real process tree to die, which is a hang detector rather
+/// than a budget.
+/// </para>
+/// <para>
+/// <b>The five claims, and what each would look like if it broke:</b>
+/// </para>
+/// <list type="number">
+/// <item><description>
+/// <b>Every process answered.</b> Not "most of them" — a run in which one
+/// BrowserAI in a hundred silently failed to open a session is exactly the
+/// degradation this repository exists to make impossible to miss, so the count
+/// is asserted against the count that was dispatched and every failure carries
+/// its own process's stderr.
+/// </description></item>
+/// <item><description>
+/// <b>Every session belongs to exactly one process.</b> Each <c>init</c> answer
+/// names its own directory and no other's, and each session's <c>lock.json</c>
+/// names the pid that opened it. A shared static, a path collision or a
+/// cross-wired session shows up here as one directory claimed twice.
+/// </description></item>
+/// <item><description>
+/// <b>The jobs are pairwise disjoint.</b> No pid is in two BrowserAIs' job
+/// objects. This is what containment <i>means</i> at scale: one client's
+/// teardown must not be able to take another client's browser with it.
+/// </description></item>
+/// <item><description>
+/// <b>Nothing survives teardown.</b> Every pid recorded while the browsers were
+/// up is dead once the jobs close — and the pids are recorded with their
+/// creation times, so a recycled pid cannot make a leak look like a clean exit.
+/// </description></item>
+/// <item><description>
+/// <b>The shared process log is still readable.</b> Every line in it is a whole
+/// record or an indented continuation, and every one of this test's processes
+/// appears in it by pid. A hundred processes appending to one file is the
+/// charter's own claim about <c>FILE_APPEND_DATA</c>, and this is the only test
+/// that puts a hundred processes behind it.
+/// </description></item>
+/// </list>
+/// <para>
+/// <b>The process log it writes to is the real one</b>, under
+/// <c>%LocalAppData%\BrowserAI\logs</c>, because that is the file whose
+/// concurrency is the claim. Sessions, profiles and working directories all go
+/// to scratch; nothing here writes to a developer's sessions and nothing deletes
+/// anything outside <c>.work\</c>.
+/// </para>
+/// <para>
+/// ⚠️ <b>Not <c>[NotInParallel]</c>, deliberately.</b> It is the heaviest test
+/// in the suite and the temptation to give it the machine to itself is exactly
+/// the reasoning this file exists to refute — a load test that only passes when
+/// nothing else is running has not tested the thing it is named for.
+/// </para>
+/// </remarks>
+internal sealed partial class SaturationTests
+{
+    /// <summary>
+    /// How many published BrowserAI processes run at once.
+    /// </summary>
+    /// <remarks>
+    /// <b>The charter's number, not a number that was convenient.</b> Every one
+    /// of them opens a real session with a real <c>node.exe</c> behind it, so
+    /// this is a hundred BrowserAIs and a hundred children contending for one
+    /// process log, one session index, one instance root and one sweep mutex.
+    /// Measured 2026-08-17 on a 32-core / 128 GB machine
+    /// ([kb](../../kb/windows/processes.md#saturation-the-100-process-design-point)).
+    /// </remarks>
+    private const int Processes = 100;
+
+    /// <summary>
+    /// How many of those also launch, close and relaunch a real Chromium.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A subset, and the number is a measured ceiling rather than a
+    /// preference.</b> The hundred is a claim about BrowserAI processes; the
+    /// browser subset is what makes the containment and disjointness claims mean
+    /// anything, and each one is a tree of about eight processes and several
+    /// hundred megabytes.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The product holds at 24. The rest of the suite does not.</b>
+    /// Measured 2026-08-17, both ways:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>
+    /// <b>Alone, at 24:</b> green in <b>82 s</b>. Every one of the hundred peers
+    /// answered, every session was claimed once, every job was disjoint, nothing
+    /// leaked. <b>802 processes</b> were live at the census — the figure the
+    /// fault-injection run reported when teardown was skipped.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Inside the full suite, at 24:</b> <b>seven other tests failed</b>, none
+    /// of them about BrowserAI. Their shape is the point: <i>"No frame arrived on
+    /// this pipe within 30 s"</i> between two <i>in-process</i> objects, and a rig
+    /// teardown reporting its server task still running after 30 s. At 800
+    /// processes over 32 cores the test host gets no CPU, so a thirty-second
+    /// in-process silence stops meaning "deadlock". Those bounds are hang
+    /// detectors; raising them to accommodate this test would blind them, which
+    /// is the move this repository forbids.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Inside the full suite, at 8:</b> green, and green repeatedly. The suite
+    /// costs <b>105 s</b> where it cost 20 s without this test, and 96 s of that
+    /// is this test.
+    /// </description></item>
+    /// </list>
+    /// <para>
+    /// <b>So the ceiling is on what the machine can carry while 418 other tests
+    /// run, not on anything BrowserAI does.</b> Raise this to 24 to reproduce the
+    /// standalone measurement; the suite will go red, and it will go red for the
+    /// reason above rather than for a defect.
+    /// </para>
+    /// </remarks>
+    private const int WithBrowsers = 8;
+
+    /// <summary>How long a real browser tree gets to die once its job has closed.</summary>
+    private static readonly TimeSpan TeardownPatience = TimeSpan.FromSeconds(120);
+
+    /// <summary>
+    /// One process's whole conversation. Generous, because this is a hundred
+    /// process starts and two dozen browser launches against one machine.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not a budget and never asserted on.</b> It is the point at which a
+    /// wedged conversation is reported as wedged instead of hanging the run, and
+    /// the failure it produces carries that process's own stderr.
+    /// </remarks>
+    private static readonly TimeSpan Conversation = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// A hundred BrowserAI processes, two dozen browsers, one process log, and
+    /// nothing crossed or leaked.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDesignPointHoldsWithEveryProcessBrowserAndSessionAtOnce()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+        SuiteEnvironment.RequireProvisionedChromium();
+        PublishedSlice.EnsureFresh();
+
+        using var scratch = ScratchDirectory.Create("saturation");
+
+        var logsBefore = LogFilesNow();
+        var started = DateTimeOffset.UtcNow;
+
+        var peers = Enumerable.Range(0, Processes).Select(index => new Peer(index, scratch.Path)).ToList();
+
+        try
+        {
+            // Everything at once. Task.WhenAll rather than a throttle, because a
+            // throttle would be this test deciding the machine cannot take what
+            // it is named for.
+            var reports = await Task.WhenAll(peers.Select(peer => peer.RunAsync()));
+
+            // ---- 1. Every process answered ---------------------------------
+
+            var broken = reports.Where(report => report.Failure is not null)
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}: {report.Failure}")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine + Environment.NewLine, broken)).IsEmpty();
+            await Assert.That(reports.Length).IsEqualTo(Processes);
+
+            // ---- 2. Every session belongs to exactly one process ------------
+
+            // The answer a peer got names its own directory. Asserted as a set
+            // rather than per peer, so a cross-wiring shows up as a duplicate
+            // rather than as one confusing message.
+            var claimed = reports.GroupBy(report => report.Session, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() is not 1)
+                .Select(group => $"{group.Key} was claimed by peers {string.Join(", ", group.Select(report => report.Index))}")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, claimed)).IsEmpty();
+
+            var mixedUp = reports
+                .Where(report => reports.Any(other => other.Index != report.Index
+                    && report.InitText.Contains(other.Session, StringComparison.OrdinalIgnoreCase)))
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}'s init answer names another peer's session")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, mixedUp)).IsEmpty();
+
+            // And on disk: the lock in each session directory names the process
+            // that opened it, which is the product's own record rather than the
+            // harness's bookkeeping.
+            var misheld = reports
+                .Where(report => report.LockHolder != report.ProcessId)
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)}: {report.Session} records holder pid {report.LockHolder.ToString(CultureInfo.InvariantCulture)}, but the process that opened it is {report.ProcessId.ToString(CultureInfo.InvariantCulture)}")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, misheld)).IsEmpty();
+
+            // ---- 3. The jobs are pairwise disjoint --------------------------
+
+            // ⚠️ Keyed on (pid, creation time) and never on the pid alone, and
+            // this test is where that rule earns its keep rather than where it is
+            // recited. The first version compared pids: it reported TWELVE
+            // processes shared between jobs on its very first run, every one of
+            // them a pid Windows had recycled between two peers reading their
+            // job membership. Twenty-four browser trees closing at once frees
+            // roughly two hundred pids in a second, so at this scale reuse is
+            // not the unlucky case — it is the normal one, and a pid on its own
+            // is not an identity.
+            var owners = new Dictionary<(int ProcessId, long Created), int>();
+            var shared = new List<string>();
+
+            foreach (var report in reports)
+            {
+                foreach (var member in report.JobMembers)
+                {
+                    var identity = (member.ProcessId, member.CreatedFileTime);
+
+                    if (owners.TryGetValue(identity, out var first))
+                    {
+                        shared.Add($"pid {member.ProcessId.ToString(CultureInfo.InvariantCulture)} created at {member.CreatedFileTime.ToString(CultureInfo.InvariantCulture)} ({member.ImagePath}) is in the jobs of peers {first.ToString(CultureInfo.InvariantCulture)} and {report.Index.ToString(CultureInfo.InvariantCulture)}");
+                        continue;
+                    }
+
+                    owners[identity] = report.Index;
+                }
+            }
+
+            await Assert.That(string.Join(Environment.NewLine, shared)).IsEmpty();
+
+            // A job that held only its own BrowserAI would satisfy disjointness
+            // vacuously: every peer opened a session, so every peer has a node
+            // child in its job as well.
+            var thin = reports.Where(report => report.JobMembers.Count < 2)
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} had {report.JobMembers.Count.ToString(CultureInfo.InvariantCulture)} process(es) in its job")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, thin)).IsEmpty();
+
+            // The browser half, which is what makes disjointness a containment
+            // claim rather than an arithmetic one: a real browser tree really was
+            // up inside each of the peers that launched one.
+            var withoutABrowser = reports.Where(report => report.LaunchesABrowser && report.BrowsersInJob is 0)
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} navigated and had no process running out of the browsers root in its job")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, withoutABrowser)).IsEmpty();
+
+            // ---- 4. Nothing survives teardown ------------------------------
+
+            var recorded = reports.SelectMany(report => report.JobMembers).ToList();
+
+            foreach (var peer in peers)
+            {
+                await peer.DisposeAsync();
+            }
+
+            var survivors = await WaitForNoneAliveAsync(recorded, TeardownPatience);
+
+            await Assert.That(string.Join(
+                Environment.NewLine,
+                survivors.Select(member => $"pid {member.ProcessId.ToString(CultureInfo.InvariantCulture)} ({member.ImagePath}) was still alive after every job closed")))
+                .IsEmpty();
+
+            // ---- 5. The shared process log is still readable ----------------
+
+            var (lines, pids) = ReadProcessLogSince(logsBefore, started);
+
+            var torn = lines
+                .SelectMany(line => RecordHeader().Matches(line).Where(match => match.Index is not 0).Select(match => (line, match)))
+                .Take(10)
+                .Select(found => $"a record header starts at offset {found.match.Index.ToString(CultureInfo.InvariantCulture)} of a line, so two processes' bytes are interleaved: {(found.line.Length <= 300 ? found.line : found.line[..300] + "…")}")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, torn)).IsEmpty();
+
+            // Not vacuous: the check above only means something if this log
+            // actually holds records, and a run that read the wrong file or an
+            // empty one would satisfy it perfectly.
+            await Assert.That(lines.Count(line => RecordHeader().IsMatch(line) && RecordHeader().Match(line).Index is 0))
+                .IsGreaterThanOrEqualTo(Processes);
+
+            // Every peer really did write into it. Without this the check above
+            // passes against a log none of them reached.
+            var missing = reports
+                .Where(report => !pids.Contains(report.ProcessId))
+                .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} (pid {report.ProcessId.ToString(CultureInfo.InvariantCulture)}) wrote no record into the shared process log")
+                .ToList();
+
+            await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+
+            // ---- 6. No session leaked into the machine's index --------------
+
+            // Every peer destroyed its own session, so nothing under this test's
+            // scratch root may still be pointed at from %LocalAppData%. An entry
+            // that outlives its directory is a `browserai_list` that grows for
+            // ever, which is invisible until somebody reads it.
+            await Assert.That(string.Join(Environment.NewLine, IndexEntriesPointingInto(scratch.Path))).IsEmpty();
+        }
+        finally
+        {
+            foreach (var peer in peers)
+            {
+                await peer.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The start of one record, as <c>FileLoggerProvider</c> writes it:
+    /// <c>&lt;ISO-8601&gt;  &lt;LVL&gt;  pid=&lt;n&gt;</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>What is asserted is that this never appears anywhere but at the start
+    /// of a line</b>, which is precisely what a torn append looks like: process
+    /// A's bytes spliced into the middle of process B's record. Every record is
+    /// one <c>WriteFile</c> against a <c>FILE_APPEND_DATA</c> handle, and this is
+    /// the property that claim rests on.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-17 (previously: every line must either be a record
+    /// header or start with four spaces).</b> That fired on the first real run
+    /// against a perfectly intact log — <c>SessionErrors.UnattributableBrowserRunning</c>
+    /// lists candidate pids one per line, indented by two — because a log
+    /// <i>message</i> may contain newlines and the shape of its continuations is
+    /// not this test's business. A rule about where a header may appear is; a
+    /// rule about what every other line must look like is a second, weaker copy
+    /// of the message catalogue.
+    /// </para>
+    /// </remarks>
+    /// <returns>The compiled expression.</returns>
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s\spid=\d+")]
+    private static partial System.Text.RegularExpressions.Regex RecordHeader();
+
+    private static List<string> IndexEntriesPointingInto(string root)
+    {
+        var index = new LocalAppDataPaths().IndexDirectory;
+
+        if (!Directory.Exists(index))
+        {
+            return [];
+        }
+
+        var leaked = new List<string>();
+
+        foreach (var entry in Directory.EnumerateFiles(index))
+        {
+            try
+            {
+                if (File.ReadAllText(entry).Trim().StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                {
+                    leaked.Add($"{entry} still points into {root}");
+                }
+            }
+            catch (IOException)
+            {
+                // Being written by something else this instant. An entry that
+                // cannot be read cannot be shown to be ours, and this check never
+                // accuses on a guess.
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return leaked;
+    }
+
+    private static IReadOnlyList<string> LogFilesNow()
+    {
+        var directory = new LocalAppDataPaths().LogDirectory;
+
+        return Directory.Exists(directory) ? [.. Directory.EnumerateFiles(directory, "browserai-*.log")] : [];
+    }
+
+    /// <summary>
+    /// The process log's lines, and the pids that wrote them.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read with <c>FileShare.ReadWrite | Delete</c> and never locked</b>: a
+    /// hundred BrowserAIs and whatever else the suite is running are appending
+    /// to this file while it is read, and a reader that took an exclusive share
+    /// would be the thing that broke the property under test.
+    /// </remarks>
+    private static (IReadOnlyList<string> Lines, HashSet<int> Pids) ReadProcessLogSince(
+        IReadOnlyList<string> before,
+        DateTimeOffset started)
+    {
+        var lines = new List<string>();
+        var pids = new HashSet<int>();
+
+        foreach (var file in LogFilesNow())
+        {
+            // Files that existed before this test started are read too when they
+            // were still being appended to — the run's records may be at the end
+            // of one of them — and skipped only when they were closed earlier.
+            if (before.Contains(file, StringComparer.OrdinalIgnoreCase)
+                && File.GetLastWriteTimeUtc(file) < started.UtcDateTime)
+            {
+                continue;
+            }
+
+            using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
+            {
+                lines.Add(line);
+
+                const string Marker = "  pid=";
+                var at = line.IndexOf(Marker, StringComparison.Ordinal);
+
+                if (at < 0)
+                {
+                    continue;
+                }
+
+                var from = at + Marker.Length;
+                var to = from;
+
+                while (to < line.Length && char.IsAsciiDigit(line[to]))
+                {
+                    to++;
+                }
+
+                if (to > from && int.TryParse(line.AsSpan(from, to - from), CultureInfo.InvariantCulture, out var pid))
+                {
+                    _ = pids.Add(pid);
+                }
+            }
+        }
+
+        return (lines, pids);
+    }
+
+    private static async Task<List<JobMember>> WaitForNoneAliveAsync(
+        List<JobMember> recorded,
+        TimeSpan patience)
+    {
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+
+        while (true)
+        {
+            var alive = recorded
+                .Where(member => ProcessIdentity.IsAlive(member.ProcessId, member.CreatedFileTime))
+                .ToList();
+
+            if (alive.Count is 0 || waited.Elapsed > patience)
+            {
+                return alive;
+            }
+
+            await Task.Delay(250);
+        }
+    }
+
+    /// <summary>One process in the job of one peer, with the identity that makes a pid mean something.</summary>
+    /// <param name="ProcessId">The pid.</param>
+    /// <param name="CreatedFileTime">Its creation time. Without this a recycled pid reads as a survivor.</param>
+    /// <param name="ImagePath">Its image, for the failure message.</param>
+    private sealed record JobMember(int ProcessId, long CreatedFileTime, string? ImagePath);
+
+    /// <summary>What one peer did, or why it could not.</summary>
+    private sealed record PeerReport
+    {
+        public required int Index { get; init; }
+
+        public required int ProcessId { get; init; }
+
+        public required string Session { get; init; }
+
+        public required bool LaunchesABrowser { get; init; }
+
+        public string InitText { get; init; } = string.Empty;
+
+        public int LockHolder { get; init; }
+
+        public List<JobMember> JobMembers { get; init; } = [];
+
+        public int BrowsersInJob { get; init; }
+
+        public string? Failure { get; init; }
+    }
+
+    /// <summary>
+    /// One BrowserAI process, its session, and — for some of them — its browser.
+    /// </summary>
+    private sealed class Peer(int index, string root) : IAsyncDisposable
+    {
+        private readonly string _home = Path.Combine(root, $"peer-{index.ToString("D3", CultureInfo.InvariantCulture)}");
+
+#pragma warning disable CA2213 // Disposed by DisposeAsync below; the analyser only recognises the synchronous shape, and RawStdioClient has no synchronous Dispose because closing its job has to be awaited beside its stderr pump.
+        private RawStdioClient? _client;
+#pragma warning restore CA2213
+
+        /// <summary>The session directory this peer owns and nobody else may name.</summary>
+        public string Session => Path.Combine(_home, "session");
+
+        /// <summary>Whether this peer drives a real browser.</summary>
+        /// <remarks>
+        /// The first <see cref="WithBrowsers"/> of them, so the set is fixed
+        /// rather than sampled: a test whose coverage varies run to run is one
+        /// whose green means something different every time.
+        /// </remarks>
+        public bool LaunchesABrowser => index < WithBrowsers;
+
+        public async Task<PeerReport> RunAsync()
+        {
+            _ = Directory.CreateDirectory(_home);
+
+            var client = RawStdioClient.Start(
+                PublishedSlice.Executable,
+                [],
+                _home,
+                PublishedSlice.InheritedEnvironment(),
+                Conversation);
+
+            _client = client;
+
+            var report = new PeerReport
+            {
+                Index = index,
+                ProcessId = client.ProcessId,
+                Session = Session,
+                LaunchesABrowser = LaunchesABrowser,
+            };
+
+            try
+            {
+                _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+                var init = await client.RoundTripAsync("tools/call", new JsonObject
+                {
+                    ["name"] = SessionToolSurface.Init,
+                    ["arguments"] = new JsonObject
+                    {
+                        ["directory"] = Session,
+                        ["purpose"] = $"saturation peer {index.ToString(CultureInfo.InvariantCulture)}",
+                        ["mode"] = "headless",
+                    },
+                });
+
+                report = report with { InitText = TextOf(init) };
+
+                if ((bool?)init["isError"] is true)
+                {
+                    return report with { Failure = $"browserai_init was refused: {report.InitText}" };
+                }
+
+                var browsers = 0;
+
+                if (LaunchesABrowser)
+                {
+                    // Launch.
+                    var navigated = await client.RoundTripAsync("tools/call", new JsonObject
+                    {
+                        ["name"] = "browser_navigate",
+                        ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = Session },
+                    });
+
+                    if ((bool?)navigated["isError"] is true)
+                    {
+                        return report with { Failure = $"browser_navigate was refused: {TextOf(navigated)}" };
+                    }
+
+                    browsers = BrowsersIn(client);
+
+                    // Close, then launch again. The relaunch is upstream's own
+                    // lazy creation and it is the half that says the close was a
+                    // close rather than a teardown: a session whose browser
+                    // cannot come back has been broken by the close.
+                    _ = await client.RoundTripAsync("tools/call", new JsonObject
+                    {
+                        ["name"] = LiveSession.BrowserCloseTool,
+                        ["arguments"] = new JsonObject { ["session"] = Session },
+                    });
+
+                    var again = await client.RoundTripAsync("tools/call", new JsonObject
+                    {
+                        ["name"] = "browser_navigate",
+                        ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = Session },
+                    });
+
+                    if ((bool?)again["isError"] is true)
+                    {
+                        return report with { Failure = $"the browser did not come back after browser_close: {TextOf(again)}" };
+                    }
+
+                    browsers = Math.Max(browsers, BrowsersIn(client));
+                }
+
+                // Read while everything is up. Everything after this is teardown.
+                var members = Observe(client.JobProcessIds());
+
+                report = report with
+                {
+                    JobMembers = members,
+                    BrowsersInJob = browsers,
+                    LockHolder = HolderOf(Session),
+                };
+
+                // The session goes before the process does, so the index entry
+                // is removed by the product rather than by the scratch sweep.
+                _ = await client.RoundTripAsync("tools/call", new JsonObject
+                {
+                    ["name"] = SessionToolSurface.Destroy,
+                    ["arguments"] = new JsonObject { ["directory"] = Session },
+                });
+
+                return report;
+            }
+#pragma warning disable CA1031 // One peer's failure is REPORTED, never thrown: a hundred peers means a hundred failures worth reading, and the first exception to escape would hide the other ninety-nine.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                return report with
+                {
+                    Failure = $"{failure.GetType().Name}: {failure.Message}{Environment.NewLine}--- its stderr ---{Environment.NewLine}{client.StandardErrorSoFar()}",
+                };
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_client is { } client)
+            {
+                _client = null;
+                await client.DisposeAsync();
+            }
+        }
+
+        private static int BrowsersIn(RawStdioClient client)
+        {
+            var members = client.JobProcessIds().ToHashSet();
+
+            return BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
+                .Count(process => members.Contains(process.ProcessId));
+        }
+
+        private static List<JobMember> Observe(IEnumerable<int> processIds)
+        {
+            var observed = new List<JobMember>();
+
+            foreach (var processId in processIds)
+            {
+                long created;
+
+                try
+                {
+                    created = ProcessIdentity.CreationTimeOf(processId);
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    // Exited between the job reporting it and this call. Its pid
+                    // is meaningless now, and recording it would make the
+                    // survivor check act on a number that may be reused.
+                    continue;
+                }
+
+                observed.Add(new JobMember(processId, created, ProcessCommandLine.ImagePathOf(processId)));
+            }
+
+            return observed;
+        }
+
+        /// <summary>The pid the session's own lock record names, or zero.</summary>
+        private static int HolderOf(string session)
+        {
+            try
+            {
+                var record = SessionLock.ReadRecord(SessionPath.Resolve(session));
+
+                return record?.Holder.ProcessId ?? 0;
+            }
+#pragma warning disable CA1031 // A lock that cannot be read answers zero, which fails the assertion with the pid it should have named.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+                return 0;
+            }
+        }
+
+        private static string TextOf(JsonObject answer) =>
+            string.Join(
+                "\n",
+                (answer["content"]?.AsArray() ?? [])
+                    .Where(block => (string?)block!["type"] == "text")
+                    .Select(block => (string?)block!["text"] ?? string.Empty));
+    }
+}

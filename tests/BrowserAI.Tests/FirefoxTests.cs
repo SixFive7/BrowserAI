@@ -79,8 +79,39 @@ internal sealed class FirefoxTests
     /// </remarks>
     private static readonly TimeSpan PreflightBudget = TimeSpan.FromSeconds(15);
 
-    /// <summary>How long a real Firefox gets to come up and navigate.</summary>
-    private static readonly TimeSpan LaunchPatience = TimeSpan.FromMinutes(3);
+    /// <summary>
+    /// How long the whole conversation with a real Firefox may take: start the
+    /// process, hand shake, launch the browser, navigate.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Strictly larger than <see cref="ModalTimeout"/>, and that is a
+    /// correctness property rather than slack.</b> <see cref="RawStdioClient"/>
+    /// applies this budget from <c>Start()</c>, not per call — it says so in its
+    /// own remarks — so a value equal to Playwright's launch timeout can never
+    /// let Playwright's launch timeout fire: the client's clock starts earlier
+    /// and always wins. The test then reports <i>"the budget expired"</i> in
+    /// place of the diagnosis the product and upstream were about to give.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-08-17 under a fully parallel suite:</b> exactly that.
+    /// <c>AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart</c>
+    /// failed at <b>3m01s</b> with <i>"'tools/call' (id 2) did not complete
+    /// before this client's whole-conversation budget of 180 s expired"</i>, the
+    /// peer still running and its stderr empty — which names nothing. Five runs
+    /// of every Firefox test together on an idle machine were clean at 7–9 s,
+    /// so the launch was not conflicting with the other real Firefox in the
+    /// suite; it was being cut off.
+    /// </para>
+    /// <para>
+    /// <b>This is not a budget being loosened to make a failure go away.</b>
+    /// Nothing asserts on it, and widening it cannot turn a broken launch green:
+    /// a Firefox that will not come up now fails with Playwright's own message
+    /// after <see cref="ModalTimeout"/>, which is the error worth having. What
+    /// the old value bought was the strictly worse of the two reports.
+    /// </para>
+    /// </remarks>
+    private static readonly TimeSpan LaunchPatience = ModalTimeout + TimeSpan.FromMinutes(2);
 
     /// <summary>
     /// The preflight refuses a held profile, immediately, with no Firefox

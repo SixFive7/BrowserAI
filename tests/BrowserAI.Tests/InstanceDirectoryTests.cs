@@ -39,6 +39,26 @@ internal sealed class InstanceDirectoryTests
         await File.WriteAllTextAsync(Path.Combine(abandoned, "playwright-mcp.config.json"), "{}");
         Directory.SetLastWriteTimeUtc(abandoned, DateTime.UtcNow.AddHours(-1));
 
+        // ⚠️ PRECONDITION, not a retry on the assertion. What this test plants
+        // has to be a directory NOTHING HOLDS, because that is the state a run
+        // killed an hour ago leaves — and the line above cannot produce it: a
+        // file written microseconds earlier is still open to a real-time
+        // scanner, and Windows refuses to rename a directory while any handle is
+        // open below it. The timestamp can be backdated; the scanner cannot.
+        //
+        // Measured 2026-08-17 under a fully parallel suite: this test failed
+        // once in ten runs at "Expected to be false but found True", because
+        // InstanceDirectory.Claim's rename was refused and the sweep concluded —
+        // correctly, by its own contract — that something still held the
+        // directory. Establishing the precondition is what makes the assertion
+        // below a statement about the sweep rather than about Defender.
+        //
+        // The product deliberately does NOT retry there, and that is the right
+        // call: a live instance directory always refuses the rename, so a retry
+        // would cost its budget once per live run on every startup — at the
+        // ~100-process design point, minutes.
+        await WaitUntilNothingHoldsAsync(abandoned);
+
         var created = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
 
         await Assert.That(Directory.Exists(created)).IsTrue();
@@ -51,6 +71,46 @@ internal sealed class InstanceDirectoryTests
         // Under the root the app-paths seam names, so the swap to Velopack's
         // locator at step 19 moves it without anything else changing.
         await Assert.That(created).StartsWith(paths.InstanceRoot);
+    }
+
+    /// <summary>
+    /// Waits until a directory can actually be renamed, which is the only way to
+    /// ask Windows "does anything hold this?"
+    /// </summary>
+    /// <remarks>
+    /// <b>It renames it and renames it back</b>, because there is no query for
+    /// this: a scanner's handle is not visible through any file API, and the
+    /// operation the sweep performs is the only test of the condition the sweep
+    /// depends on. A directory that never becomes renameable fails here, naming
+    /// the precondition, rather than failing an assertion about the sweep.
+    /// </remarks>
+    /// <param name="directory">The planted directory.</param>
+    /// <returns>A task that completes once nothing holds it.</returns>
+    private static async Task WaitUntilNothingHoldsAsync(string directory)
+    {
+        var probe = directory + ".probe";
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                Directory.Move(directory, probe);
+                Directory.Move(probe, directory);
+                return;
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                if (waited.Elapsed > ReadyPatience)
+                {
+                    throw new InvalidOperationException(
+                        $"'{directory}' could not be renamed within {ReadyPatience.TotalSeconds:F0} s, so this test cannot plant the state it is about: an abandoned directory nothing holds. Last refusal: {failure.Message}",
+                        failure);
+                }
+
+                await Task.Delay(25);
+            }
+        }
     }
 
     [Test]
