@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+//
+// THE LAYOUT ORACLE'S INPUT, AND IT IS DELIBERATELY SHORT.
+//
+// Microsoft.Windows.CsWin32 generates a declaration for every name in this
+// file, from Windows' own metadata. Nothing here is used by the product --
+// BrowserAI hand-writes its interop and the decision not to adopt CsWin32 is
+// recorded in TODO.md. These seven structs exist so InteropLayoutTests can
+// compare the hand-written definitions against Microsoft's, which is the only
+// thing in this repository that checks them against the vendor rather than
+// against the last person who read the header.
+//
+// ONLY STRUCTS. No functions: a generated P/Invoke would be a second way to
+// call Windows sitting in the test assembly, and the point of the oracle is to
+// check the declarations we ship, not to provide an alternative to them.
+//
+// Adding a name here is cheap; adding one and not asserting on it is how this
+// file becomes a dependency nobody can justify. Every name below is asserted.
+
+STARTUPINFOW
+STARTUPINFOEXW
+PROCESS_INFORMATION
+SECURITY_ATTRIBUTES
+IO_COUNTERS
+JOBOBJECT_BASIC_LIMIT_INFORMATION
+JOBOBJECT_EXTENDED_LIMIT_INFORMATION

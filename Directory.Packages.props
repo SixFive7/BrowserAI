@@ -115,6 +115,33 @@
          NEVER add FluentAssertions (commercial tier from 8.0.0).
          NEVER add Microsoft.NET.Test.Sdk (TUnit is MTP-only; they conflict). -->
     <PackageVersion Include="TUnit" Version="*" />
+
+    <!--
+      THE LAYOUT ORACLE, AND IT IS TEST ONLY.
+
+      Microsoft.Windows.CsWin32 generates Win32 declarations from Windows' own
+      metadata. BrowserAI does NOT use it for its interop and the decision not
+      to is recorded in TODO.md; it is referenced here for one job only, in
+      tests/BrowserAI.Tests/InteropLayoutTests.cs: to obtain Microsoft's
+      definition of the seven structs this product hand-writes, so their sizes
+      and field offsets are checked against the vendor rather than against the
+      last person who read the header.
+
+      PrivateAssets="all" on the reference, exactly as MinVer does, so nothing
+      reaches the product, nothing reaches ILC, and nothing acquires a
+      redistribution obligation. NoticesTests asserts the second half.
+
+      A LICENCE NOTE THAT MATTERS IF THIS EVER MOVES INTO THE PRODUCT: the
+      generator is MIT, but the metadata packages it reads are not.
+      Microsoft.Windows.SDK.Win32Metadata and WDK.Win32Metadata ship under
+      Windows SDK licence terms and SDK.Win32Docs under aka.ms/WinSDKLicenseURL
+      (checked on nuget.org 2026-08-17: all three carry no SPDX licence
+      expression at all). Generated code, doc comments included, compiles into
+      whatever references it. Test-only use sidesteps that question rather than
+      answering it, and the question is NOT answered anywhere in this
+      repository.
+    -->
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="*" />
   </ItemGroup>
 
 </Project>

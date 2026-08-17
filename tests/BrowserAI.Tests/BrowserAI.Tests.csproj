@@ -25,6 +25,12 @@
     <!-- Versions live in Directory.Packages.props and nowhere else. A Version
          attribute here is a failing test in BuildConfigurationTests. -->
     <PackageReference Include="TUnit" />
+    <!-- The layout oracle for InteropLayoutTests. Build-time only:
+         PrivateAssets="all" keeps it out of the dependency graph exactly as
+         MinVer is kept out of the product's, so nothing ships and the product
+         is not compiled against it. Its full reasoning, and the licence
+         question that test-only use sidesteps, are in Directory.Packages.props. -->
+    <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- The upstream-review gate: four snapshots regenerated from the resolved
