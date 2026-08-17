@@ -397,9 +397,27 @@ internal sealed class McpTestHarness : IAsyncDisposable
             faults.AddRange(_sessions.WhatIsStillLive());
         }
 
-        if (!_serverTaskDoneBeforeDispose)
+        // ⚠️ BOTH conditions, and the second one is what makes this a leak check
+        // rather than a stopwatch.
+        //
+        // Corrected 2026-08-17 (previously: `_serverTaskDoneBeforeDispose`
+        // alone). That flag is `IsCompleted` read after a bounded 30 s wait, so
+        // on a loaded machine it says "the continuation has not been scheduled
+        // yet", and the rig then reported a LEAK. Measured under a saturated
+        // suite: eleven rigs in one run, none of them leaking anything -- every
+        // one of those tasks completed moments later.
+        //
+        // The property the flag exists for is real and is kept: cancelling the
+        // token and completing the writers end the server task ON THEIR OWN,
+        // without anything being disposed. What is no longer asserted is that
+        // they do it within thirty seconds, which is not a property of the
+        // product. A task that is genuinely stuck is still caught, because it is
+        // still incomplete after the whole disposal chain has run -- and that is
+        // the only state in which "still live after teardown" is true.
+        if (!_serverTaskDoneBeforeDispose && !_serverTask.IsCompleted)
         {
-            faults.Add("the MCP server task was still running when dispose began");
+            faults.Add(
+                "the MCP server task was still running when dispose began AND is still running after it: cancelling the token and completing the caller hop's writers did not end it, and neither did disposing everything below it");
         }
 
         if (!Child.HasStopped)

@@ -78,10 +78,29 @@ namespace BrowserAI.Tests;
 /// anything outside <c>.work\</c>.
 /// </para>
 /// <para>
-/// ⚠️ <b>Not <c>[NotInParallel]</c>, deliberately.</b> It is the heaviest test
-/// in the suite and the temptation to give it the machine to itself is exactly
-/// the reasoning this file exists to refute — a load test that only passes when
-/// nothing else is running has not tested the thing it is named for.
+/// ⚠️ <b><c>[NotInParallel]</c> with no key, which in TUnit means it runs beside
+/// nothing at all — and this is the one kind of exclusivity that is a
+/// requirement rather than an excuse.</b> The distinction is not "it is flaky
+/// otherwise": <b>the assertions are meaningless without the resource</b>. This
+/// test's subject is what BrowserAI does when the machine is pinned, so the
+/// machine has to be pinned <i>by it</i>. Sharing 32 cores with 418 other tests
+/// does not make the test stronger; it makes it measure a different, unstated
+/// load and then fail on somebody else's thirty-second bound.
+/// </para>
+/// <para>
+/// <b>Measured 2026-08-17, and this is why the earlier note here was wrong.</b>
+/// Run in parallel with the rest of the suite it was the top failure of the
+/// streak — five red runs in six, at <b>0, 0, 6, 1, 1, 39, 36</b> failures —
+/// and <i>not one</i> of those failures was containment or isolation. They were
+/// timeouts: <c>initialization timed out</c>, <c>no frame arrived within 30 s</c>
+/// between two objects in the same process, and rig teardowns reporting their
+/// server task still running. A test that cannot fail for its own reasons is
+/// not testing anything.
+/// </para>
+/// <para>
+/// <b>The 100 is not negotiable downwards to make this pass.</b> The charter
+/// makes that claim publicly, so it gets measured or amended — never quietly
+/// weakened.
 /// </para>
 /// </remarks>
 internal sealed partial class SaturationTests
@@ -166,6 +185,10 @@ internal sealed partial class SaturationTests
     /// </summary>
     /// <returns>The assertion task.</returns>
     [Test]
+    // No key: in TUnit that means beside nothing at all. The assertion is about
+    // a pinned machine, so this test has to be the thing pinning it -- see the
+    // type's remarks for the measurement that settled it.
+    [NotInParallel]
     public async Task TheDesignPointHoldsWithEveryProcessBrowserAndSessionAtOnce()
     {
         SuiteEnvironment.RequirePublishedSlice();
@@ -332,6 +355,107 @@ internal sealed partial class SaturationTests
             {
                 await peer.DisposeAsync();
             }
+
+            ReclaimOurOwnBookkeeping([.. peers.Select(peer => peer.ProcessId).Where(id => id is not 0)]);
+        }
+    }
+
+    /// <summary>
+    /// Removes the per-run bookkeeping this test's own hundred processes left in
+    /// the <b>shared</b> app root.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the test cleaning up after itself, and without it the test
+    /// degrades every run that follows it — including its own.</b> Each BrowserAI
+    /// creates an instance directory (<c>&lt;pid&gt;-&lt;guid&gt;</c>) and a
+    /// live-instance marker (<c>&lt;pid&gt;-&lt;guid&gt;.live</c>) at startup,
+    /// and this test starts a hundred of them against the real
+    /// <c>%LocalAppData%\BrowserAI</c>. Both are reclaimed by the product on its
+    /// own schedule — the instance sweep at the next startup, the live marker at
+    /// the next update census — and neither schedule keeps up with a hundred per
+    /// run.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-08-17, running the suite back to back.</b> Runs 1 and 2
+    /// were green; by run 6 the real app root held <b>306</b> instance
+    /// directories and <b>2,629</b> live markers, and the run took <b>2m43s</b>
+    /// with 39 failures — every one of them a thirty-second in-process timeout,
+    /// none of them a logic error. A hundred concurrent startups each sweeping a
+    /// directory of three hundred candidates is thirty thousand rename attempts
+    /// per run, and it grows with every run.
+    /// </para>
+    /// <para>
+    /// <b>Keyed on this test's own pids and nothing else.</b> Both names begin
+    /// with the pid that created them, so nothing another BrowserAI on the
+    /// machine owns can match — and a pid this run did not start is never acted
+    /// on. Best-effort throughout: a directory that will not go is the product's
+    /// sweep to reclaim, exactly as it would be for a run that was killed.
+    /// </para>
+    /// <para>
+    /// <b>What this does NOT do is assert.</b> A killed BrowserAI legitimately
+    /// leaves both behind — that is what the containment contract guarantees —
+    /// so leaving them is not a defect and reclaiming them is not a fix. It is
+    /// this test declining to make the machine worse.
+    /// </para>
+    /// </remarks>
+    /// <param name="ours">The pids this run started.</param>
+    private static void ReclaimOurOwnBookkeeping(HashSet<int> ours)
+    {
+        var paths = new LocalAppDataPaths();
+
+        foreach (var directory in Enumerate(paths.InstanceRoot, directories: true))
+        {
+            if (ours.Contains(PidPrefixOf(Path.GetFileName(directory))))
+            {
+                _ = ScratchDirectory.RemoveTree(directory);
+            }
+        }
+
+        foreach (var file in Enumerate(paths.LiveInstanceDirectory, directories: false))
+        {
+            if (ours.Contains(PidPrefixOf(Path.GetFileName(file))))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (IOException)
+                {
+                    // Still held, which means still running. Left alone.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+        }
+    }
+
+    /// <summary>The pid a bookkeeping name begins with, or zero.</summary>
+    /// <param name="name">The file or directory name.</param>
+    /// <returns>The pid, or zero when the name is not one of ours in shape.</returns>
+    private static int PidPrefixOf(string name)
+    {
+        var at = name.IndexOf('-', StringComparison.Ordinal);
+
+        return at > 0 && int.TryParse(name.AsSpan(0, at), CultureInfo.InvariantCulture, out var pid) ? pid : 0;
+    }
+
+    private static IReadOnlyList<string> Enumerate(string directory, bool directories)
+    {
+        try
+        {
+            return directories
+                ? [.. Directory.EnumerateDirectories(directory)]
+                : [.. Directory.EnumerateFiles(directory)];
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return [];
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return [];
         }
     }
 
@@ -421,14 +545,19 @@ internal sealed partial class SaturationTests
 
         foreach (var file in LogFilesNow())
         {
-            // Files that existed before this test started are read too when they
-            // were still being appended to — the run's records may be at the end
-            // of one of them — and skipped only when they were closed earlier.
-            if (before.Contains(file, StringComparer.OrdinalIgnoreCase)
-                && File.GetLastWriteTimeUtc(file) < started.UtcDateTime)
-            {
-                continue;
-            }
+            // ⚠️ EVERY file, with no last-write-time filter, and the filter that
+            // was here is why. It skipped a file that existed before the test
+            // and whose mtime read older than the start — but NTFS does not keep
+            // a file's last-write time current while handles are open on it, and
+            // this file has a hundred BrowserAIs appending to it. So the one
+            // file holding all the records was the one being skipped. Measured
+            // 2026-08-17: the header count came back as 12 against a hundred
+            // peers, three runs in a row, on a log that was perfectly intact.
+            //
+            // Reading everything costs a few megabytes and is correct by
+            // construction. What establishes that THIS run's records were seen
+            // is the pid check, not the file selection.
+            _ = before;
 
             using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             using var reader = new StreamReader(stream);
@@ -526,6 +655,16 @@ internal sealed partial class SaturationTests
         /// <summary>The session directory this peer owns and nobody else may name.</summary>
         public string Session => Path.Combine(_home, "session");
 
+        /// <summary>
+        /// This peer's BrowserAI pid, or zero if it never started.
+        /// </summary>
+        /// <remarks>
+        /// Kept on the peer rather than only on its report, because the report
+        /// is not available when a run throws — and the bookkeeping this test
+        /// has to reclaim is keyed on exactly this number.
+        /// </remarks>
+        public int ProcessId { get; private set; }
+
         /// <summary>Whether this peer drives a real browser.</summary>
         /// <remarks>
         /// The first <see cref="WithBrowsers"/> of them, so the set is fixed
@@ -546,6 +685,7 @@ internal sealed partial class SaturationTests
                 Conversation);
 
             _client = client;
+            ProcessId = client.ProcessId;
 
             var report = new PeerReport
             {
