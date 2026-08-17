@@ -648,7 +648,7 @@ reasoning, come here for the queue.**
       CsWin32.** [`plan/stack.md`](plan/stack.md) set a threshold **before any
       code existed** — *"once a seventh Win32 API is needed, adopt
       `Microsoft.Windows.CsWin32`"* — and it is long past. Counted 2026-08-17:
-      **45 `[LibraryImport]` declarations across 9 files** in
+      **41 `[LibraryImport]` declarations across 9 files** in
       `src/BrowserAI/Interop/`. **The threshold is therefore in breach and has
       been for most of the build**, which is the state this repository keeps
       finding and dislikes most: a rule that is stated, correct-sounding, and
@@ -694,7 +694,7 @@ reasoning, come here for the queue.**
         That distinction lives in the **access mask**, not the signature, so a
         wrapper that hides the mask hides the fix.
 
-      **What a rewrite actually risks.** These 45 declarations back the most
+      **What a rewrite actually risks.** These 41 declarations back the most
       heavily measured guarantees in the repository — job containment at **0
       escapees** across two browser families, the atomic-append fix above, and a
       cross-process `GetWindowTextW` read that bypasses `WM_GETTEXT` and is
@@ -718,7 +718,7 @@ reasoning, come here for the queue.**
       cut — **`v1.0.0`**, which took the suite to **392 tests, 0 failed, 0
       skipped**. **Remaining:** the sandbox report above, and deciding on
       `Microsoft.Windows.CsWin32` now that the stack's own *"once a seventh
-      Win32 API is needed"* threshold stands at **45 `[LibraryImport]`
+      Win32 API is needed"* threshold stands at **41 `[LibraryImport]`
       declarations across 9 files** — the standing recommendation is to strike
       the threshold as a heuristic that was never a commitment, because the
       interop is written, measured, and is the backbone of the containment
