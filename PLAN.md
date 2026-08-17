@@ -356,6 +356,23 @@ listing them:
 | 4 | testing | **The marker entry's `snapshots` and `reverification` adjudication** | [What the marker records](plan/testing.md#what-the-marker-records): at a baseline nothing has moved, so the fields could only be satisfied by typing an adjudication of no change for four snapshots and an outcome for ~40 manual rows — **a review that did not happen, written to make a suite green**, which is the one act the procedure exists to forbid. It lands at the first real bump, and the marker test fires on exactly that event |
 | 5 | build-order | **Step 19's five update-lane bullets have no automated coverage** | [kb row 85](kb/README.md#re-verification-index), which states it as a rule rather than a gap: *"**Manual and must be**: the suite may not run a publish, and it may certainly not run an installer — `Setup.exe` renames a non-empty root aside and deletes it, which against `%LocalAppData%\BrowserAI` is 768 MB of provisioned browsers."* The **decisions** in that lane are asserted on every build by `ReleaseScriptTests` and `UpdateTests`; the *numbers* are re-measured by running the script |
 
+**And one that was listed as outstanding and turns out to be (c) on inspection**
+— *"no restart-to-apply signal exists for the **not alone** path, which is the
+normal path at this product's stated concurrency"*. §G opens by requiring *"a
+clear 'restart to apply' signal, since MCP servers are long-lived child
+processes"*, and **§G itself then removes the need for one**, in landmine 4:
+gating the apply on solitude means *"the next session starts the new version
+from the identical path — **in normal use there is no 'restart to apply' prompt
+at all**"*. That is as true when another instance is live as when none is: the
+package stays staged and the **last instance to exit applies it**, so nobody has
+to be asked to restart anything. What exists instead is the record a human
+diagnosing it needs — `UpdateLog.StagedButNotAlone`, whose message says the
+update was **NOT** applied, why (applying would terminate every process under
+the install root, including other agents' browsers), and who applies it. The
+outcome is asserted by `UpdateTests`. **The requirement is discharged by the
+design that replaced it, and the row was reading the opening sentence without
+the landmine that supersedes it.**
+
 And one that is (c) in a different sense — **§H.5 direction 2**, the three-way
 adjudication of an upstream reword, is deliberately **a pre-release gate rather
 than a test**, because the question it asks (*does our sentence still belong
