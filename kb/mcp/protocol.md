@@ -22,8 +22,8 @@ nothing to catch and the negotiated value must be asserted. `[FLOATS]`
 > [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
 > and a move is a diff.
 >
-> **The product half landed 2026-08-16 at
-> [build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child).**
+> **The product half landed 2026-08-16, with the first published-AOT vertical
+> slice.**
 > `BrowserProxy.ConnectAsync` pins `McpClientOptions.ProtocolVersion`, logs
 > `requested=… negotiated=…`, and throws if the two differ; `ProtocolSplitTests`
 > asserts the logged pair against the ceiling the snapshot recorded, so the pin
@@ -90,7 +90,7 @@ anything.
 
 > **What BrowserAI actually spends of that, measured 2026-08-16 at build-order
 > step 13: 1,613 characters and `1,628` bytes, leaving 420.**
-> [§H.3](../../plan/H-model-surface.md#h3-the-server-instructions-string) predicted
+> The design predicted
 > ~1,050, and the difference is almost entirely the mode lines carrying what each
 > mode *refuses* as well as what it grants — which is the half a model needs to
 > choose correctly and the half §H.3's draft did not have. **Planting a fourth
@@ -114,7 +114,7 @@ per-connection tool list — SEP-2567 stands — but the cited issues need re-da
 
 Measured 2026-08-16 @ **Claude Code 2.1.233** (`claude.exe`, native install at
 `%USERPROFILE%\.local\bin`), while building
-[§B](../../plan/B-mcp-server.md)'s registration. Every run below wrote into a
+[BrowserAI's own client registration](../../ARCHITECTURE.md#the-mcp-server). Every run below wrote into a
 **scratch `CLAUDE_CONFIG_DIR`**, never the operator's real configuration.
 `[FLOATS]` on a client version this project does not control.
 

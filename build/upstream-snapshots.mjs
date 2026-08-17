@@ -277,7 +277,7 @@ const skillOnly = registry.filter((tool) => tool.skillOnly).map((tool) => tool.n
 // is nowhere else: every prefix lives inside a handler closure, and
 // `require(coreBundle)` hands back inert tool objects that never ran one.
 //
-// Build-order step 14 / plan/F-artifacts.md: a tenth prefix must fail the
+// Artifact routing: a tenth prefix must fail the
 // build exactly as an unclassified tool does. That gate needs the prefix set
 // derived from the resolved child, never typed into a .cs file -- so it is
 // recorded here, diffed on every build, and asserted against the folders the
@@ -420,7 +420,7 @@ function artifactPrefixes(source) {
     _what_this_is:
       'The artifact generator prefixes, read out of the resolved bundle source. A generated ' +
       'artifact is named `<prefix>-<timestamp>.<ext>`, and BrowserAI routes by prefix ' +
-      '(plan/F-artifacts.md). The empty prefix is the traces template, which supplies its own ' +
+      '(see ARCHITECTURE.md, section Artifacts). The empty prefix is the traces template, which supplies its own ' +
       'suggestedFilename. A prefix appearing here with no folder in ArtifactRouting, or a ' +
       'folder with no prefix here, fails the build.',
     prefixes: [...prefixes].sort(),

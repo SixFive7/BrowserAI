@@ -85,7 +85,7 @@ binary even headless.
 > <root>\chromium-1237\chrome-win64\chrome.exe. Run `npx @playwright/mcp
 > install-browser chrome-for-testing` to install`*. Note the remediation string
 > names a package BrowserAI does not ship; replacing it is
-> [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)'s
+> first-run provisioning's
 > job. `[FLOATS]`
 
 > ✅ **`--browser chromium` supplies a channel, so it takes the alias branch.**
@@ -179,7 +179,7 @@ directory"*.
 > **Measured 2026-08-16** by grepping the resolved bundle for `saveTrace` (no
 > hits) and reading the committed `cli-help.txt` and `config-schema.d.ts`
 > snapshots (no trace key in either). This matters because
-> [§C](../../plan/C-sessions.md#three-modes-and-tracing-as-a-modifier) makes
+> [the session modes](../../ARCHITECTURE.md#sessions) make
 > `tracing` a boolean modifier on every session mode, and it therefore maps to
 > `saveSession` rather than to a trace. Re-establish with the same grep at each
 > bump; a restored trace option is a reason to revisit the mapping. `[FLOATS]`
@@ -270,7 +270,7 @@ stop firing silently, which is why this shape has
 executable at …`, from `throwIfExecutableMissing`. It does **not** launch
 anything — which is why the round trip is cheap on a provisioned machine — but
 the binary has to be there. **This contradicts
-[§A](../../plan/A-runtime.md#first-run-browser-provisioning)'s claim that the
+[The provisioning design](../../ARCHITECTURE.md#the-runtime-it-ships)'s claim that the
 tool keeps working during first-run provisioning**, and the plan was corrected
 rather than the measurement: BrowserAI refuses every upstream tool while a
 download is running, including this one, because upstream's error would advise
@@ -345,7 +345,7 @@ executable at …`, the process exits **0**, and stderr is **empty**. That is th
 founding failure shape arriving from upstream, and it means the second ported
 regex's `is not installed` phrase has no stderr occurrence to match in this
 version. It is kept regardless: the regexes are
-[ported verbatim](../../plan/E-lifecycle.md) precisely so that a transcription
+[ported verbatim](../../ARCHITECTURE.md#process-containment-and-observability) precisely so that a transcription
 difference cannot be a silent behaviour change, and a phrase that fires on no
 current output costs nothing while a deleted one cannot be recovered by anybody
 who did not know it was there. `[FLOATS]`.

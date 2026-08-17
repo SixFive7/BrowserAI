@@ -17,11 +17,11 @@
        `build/payload/package-lock.json` and committed as the provenance stamp.
 
     2. THE TEST RIG'S BROWSER, which does not ship. BrowserAI provisions
-       browsers on first run (plan/A-runtime.md, "First-run browser
-       provisioning"); this is upstream's own installer, run once, so that every
+       browsers on first run (ARCHITECTURE.md, "The runtime it ships");
+       this is upstream's own installer, run once, so that every
        step after this one has a real browser to test against. BrowserAI's own
        provisioning subsystem -- the non-blocking `init`, the timers, the error
-       text, the reinstall tool -- is build-order step 15 and is not this.
+       text, the reinstall tool -- is a different thing and is not this.
 
     Nothing here reads a version from a file. `latest` is resolved by npm and
     the Node LTS by nodejs.org/dist/index.json, per CLAUDE.md, "Versioning:
@@ -227,7 +227,7 @@ $nodeVersion = $release.version
 Write-Host "node: $nodeVersion ($($release.lts), released $($release.date))"
 
 # The zip rather than dist/<version>/win-x64/node.exe: measured 2026-08-16, the
-# bare node.exe has no LICENSE beside it, and plan/A-runtime.md requires Node's
+# bare node.exe has no LICENSE beside it, and the redistribution rules require Node's
 # full LICENSE to ship because it aggregates the OpenSSL, ICU, V8, zlib and
 # c-ares terms. The archive is also ~57 MB smaller than the raw binary.
 $archiveName = "node-$nodeVersion-win-x64.zip"

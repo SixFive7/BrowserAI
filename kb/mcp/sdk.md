@@ -148,8 +148,8 @@ data.
 obvious factory API always reflects the schema from the .NET signature — unusable
 for a proxy, and the first one reached for.
 
-**Roughly half of [§E](../../plan/E-lifecycle.md#e-lifecycle-and-observability)'s
-observability is already in the SDK:**
+**Roughly half of the [observability this product requires](../../ARCHITECTURE.md#process-containment-and-observability)
+is already in the SDK:**
 `StandardErrorLines` wired before `Start()`, a rolling stderr tail, and a
 `StdioClientCompletionDetails { ProcessId, ExitCode, StandardErrorTail }` type.
 The SDK also carries a `beforeDispose` callback commented *"to read ExitCode
@@ -329,7 +329,7 @@ top-level object with a `MaxDepth = int.MaxValue` reader looking only for `id`,
 and if it finds one replies `-32700` so the caller fails instead of waiting.
 That is worth knowing because a transport that merely drops the frame leaves the
 caller hanging with nothing but a log line to explain it. BrowserAI's does drop
-it, deliberately and loudly, until [step 9](../../plan/build-order.md#9-lossless-passthrough)
+it, deliberately and loudly, until the lossless-passthrough layer
 owns error shaping. `[FLOATS]`
 
 ## The published NativeAOT binary, with all of it in one exe
@@ -363,7 +363,7 @@ under a publish-only condition, an everyday build catches it too. The cast to
 `(JsonNode)` clears both. Reverted. `[FLOATS]`
 
 > This matters more than a one-line trap sounds, because
-> [step 9](../../plan/build-order.md#9-lossless-passthrough) rewrites
+> the passthrough layer rewrites
 > `tools/list` on `JsonNode` — that is the file where this call shape is most
 > likely to be written, and where it was planted for exactly that reason.
 
@@ -394,8 +394,8 @@ exception` — so it exists only if an `ILoggerFactory` was supplied.
 > This is **the founding failure shape arriving from our own dependency**: a
 > success envelope, every transport-level signal green, and the single bit that
 > says *broken* buried in the body. It is the reason
-> [step 9](../../plan/build-order.md#9-lossless-passthrough) is a separate step
-> rather than a detail of step 7. It also **qualifies the 2026-08-15 spike's
+> lossless passthrough was built as a piece of work
+> in its own right rather than as a detail of the vertical slice. It also **qualifies the 2026-08-15 spike's
 > note** that *"a child dying mid-call surfaces as `-32603`, an error rather than
 > a hang"* — that describes what the **client** throws; what the **caller of the
 > proxy** receives, once the exception has passed through a typed
@@ -410,7 +410,7 @@ caller as code **-32000**, `data` **`{"reason":"programmed"}` verbatim and
 unflattened**, and message `Request failed (remote): the fake child refused this
 navigation`. So the prefix is real and still needs stripping — but **`data`
 arrives reconstructed with the proxy doing nothing**, which is more than
-[step 9's plan](../../plan/build-order.md#9-lossless-passthrough) assumed when it
+the passthrough design assumed when it
 asked for it to be rebuilt from `Exception.Data`. Re-establish with
 `FakeChildHarnessTests.TheFakeChildInjectsAJsonRpcError`, which asserts all three
 by exact equality. `[FLOATS]`

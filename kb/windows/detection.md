@@ -120,8 +120,8 @@ and is declared unguarded in the public SDK, so the usual worry is unfounded.
 > `TheTwoTitleApisAgreeOnEveryMessageWindowOnThisMachine` in
 > `MessageWindowTests` compares the two on every window it walks, so a divergence
 > appearing is a red build rather than a silent behaviour change.
-> [§C](../../plan/C-sessions.md#detection-is-documented-attribution-may-fail-and-must-fail-safe)
-> and [step 16](../../plan/build-order.md#16-the-stray-sweep) both specified the
+> [The sweep's design](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
+> and the work that built it both specified the
 > fallback; this entry was the odd one out.
 
 > ⚠️ **We are depending on undocumented behaviour of a documented function, and
@@ -136,7 +136,7 @@ and is declared unguarded in the public SDK, so the usual worry is unfounded.
 ## The sweep, measured through the product's own code paths
 
 Every number here comes from the product's own code paths at build-order
-[step 16](../../plan/build-order.md#16-the-stray-sweep), on Windows 11 Pro 26200,
+while building the stray sweep, on Windows 11 Pro 26200,
 and each is re-established by running the named test. `[MACHINE]` for the counts
 and timings; `[STABLE]` for the API behaviours.
 
@@ -225,7 +225,7 @@ UAC-filtered administrator** token.
 
 > ⛔ **The feature these measurements were taken for is DROPPED**, decided
 > 2026-08-16 at
-> [step 19](../../plan/build-order.md#19-velopack-package-update-roll-back), on
+> the Velopack update lane, on
 > the strength of the first measurement below. `LogonSweepTask.cs` and its tests
 > are deleted and BrowserAI's own startup sweep is the only trigger.
 > **The measurements are kept and the section is not**, because both are facts
@@ -235,7 +235,7 @@ UAC-filtered administrator** token.
 > this section as a record rather than as a specification.
 
 > ⚠️ **Registering a scheduled task non-elevated fails on this machine, and
-> [step 16](../../plan/build-order.md#16-the-stray-sweep) said it had been
+> the sweep's own build notes said it had been
 > verified to work.** It has not. `schtasks /Create /XML` and the
 > `Schedule.Service` COM API both answer **`Access is denied` / `0x80070005`**,
 > in the task-library root and in a new `\BrowserAI\` folder alike. A **minimal**
@@ -471,15 +471,15 @@ the PID-reuse guard, re-verified with `GetProcessTimes` before any kill. Mozilla
 > carry. The *sequence* is the documented API contract and belongs to nobody;
 > `src/BrowserAI/Interop/RestartManager.cs` was written from that contract and
 > from the observed behaviour, which is the same route
-> [step 9](../../plan/build-order.md#9-lossless-passthrough) took when it built
+> the passthrough work took when it built
 > parse-error recovery from the MCP SDK's behaviour rather than from its
 > Apache-2.0 code. The measurement is unchanged; only the instruction was wrong.
-> [§D](../../plan/D-locking.md#firefox-the-preflight-and-a-second-detection-path)
+> [The Firefox preflight and its second detection path](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 > carried the same sentence and is corrected too.
 
 ## The Restart Manager, as the product uses it
 
-Measured at build-order [step 17](../../plan/build-order.md#17-firefox) on
+Measured while building Firefox support on
 Windows 11 Pro 26200, against `firefox-1539` (Firefox 153.0) launched through
 `@playwright/mcp` 0.0.79. `[FLOATS]`
 

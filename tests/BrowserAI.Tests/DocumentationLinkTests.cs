@@ -31,11 +31,12 @@ namespace BrowserAI.Tests;
 /// assertion here passing and the corpus nearly empty.
 /// </para>
 /// <para>
-/// <b>Written before the documentation restructure, not after.</b> The
-/// restructure moves and deletes several hundred kilobytes of build-session
-/// narrative, including the whole <c>plan/</c> folder. Until this existed there
-/// was no way to tell a link the restructure broke from one that had been broken
-/// all along, because nothing counted either.
+/// <b>Written before the documentation restructure, not after.</b> That
+/// restructure moved and deleted several hundred kilobytes of build-session
+/// narrative — the whole implementation plan, its index, a work list that was
+/// mostly closed items, and the log of the first release run. Until this existed
+/// there was no way to tell a link the restructure broke from one that had been
+/// broken all along, because nothing counted either.
 /// </para>
 /// <para>
 /// <b>What this deliberately does not check:</b> the <c>#anchor</c> half of a
@@ -77,7 +78,7 @@ internal sealed partial class DocumentationLinkTests
     /// shows it, not necessarily into a directory the scan already reads.
     /// </summary>
     private static readonly string[] HandWrittenDirectories =
-        ["src", "tests", "build", "kb", "plan", ".claude", ".github"];
+        ["src", "tests", "build", "kb", ".claude", ".github"];
 
     [Test]
     public async Task EveryRelativeLinkResolvesToSomethingThatExists()
@@ -115,6 +116,15 @@ internal sealed partial class DocumentationLinkTests
         // So: count the links the raw text carries, count what survives the
         // comment-stripping reader, and require the first to be far larger. It
         // is not a ratio anybody tuned; on 2026-08-17 it was 1413 against 4.
+        //
+        // Corrected 2026-08-17 (previously IsGreaterThan(1000)). The
+        // documentation restructure deleted the whole implementation plan, and
+        // the corpus went 1413 -> 725 in one commit -- so the floor was
+        // measuring the plan rather than the corpus this guards. The number is
+        // deliberately a long way under 725: it exists to catch a narrowing that
+        // empties the scan, not to pin a count that legitimately moves whenever
+        // a document is added or retired. The RATIO below is the real
+        // assertion, and it is untouched.
         var raw = (await LinksAsync()).Count;
 
         var throughTheCodeReader = 0;
@@ -123,7 +133,7 @@ internal sealed partial class DocumentationLinkTests
             throughTheCodeReader += MarkdownLink().Count(await RepositoryLayout.ReadCodeAsync(file));
         }
 
-        await Assert.That(raw).IsGreaterThan(1000);
+        await Assert.That(raw).IsGreaterThan(500);
         await Assert.That(throughTheCodeReader * 10).IsLessThan(raw);
     }
 

@@ -8,14 +8,14 @@
 
     Native compilation is configured in src/BrowserAI/BrowserAI.csproj rather
     than here, because AOT and trim analysis must be scoped per-assembly and
-    never repo-wide (plan/testing.md, "What the build itself must fail on").
+    never repo-wide (TESTING.md, "What the build itself must fail on").
     A repo-wide setting is permanent and invisible: it applies to every
     assembly added afterwards, including the one it will be wrong for.
   -->
 
   <PropertyGroup Label="Target and language">
     <!-- Newest GA major, `-windows` suffixed: Velopack's hook callbacks are
-         [SupportedOSPlatform("windows")] (plan/G-updates.md), and the suffix
+         [SupportedOSPlatform("windows")] on the update path, and the suffix
          is also what keeps CA1416 quiet across the Win32 interop this product
          is largely made of. .NET 11 is not GA on 2026-08-16. -->
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -65,7 +65,7 @@
       TreatWarningsAsErrors above is ever turned off.
 
       What it does NOT buy, measured 2026-08-16 on SDK 10.0.302, correcting
-      what plan/build-order.md asserted: it does not survive a NoWarn. With
+      what was asserted when this landed: it does not survive a NoWarn. With
       `NoWarn` set to CS0162, a full rebuild of a method containing a statement
       after a `return` reported 0 warnings and 0 errors. An `.editorconfig`
       entry of `dotnet_diagnostic.CS0162.severity = error` did not survive it
@@ -146,7 +146,7 @@
       it, restarted, and did it again an hour later. Fleet wide, forever,
       presenting only as "the clients restart every hour".
 
-      BrowserAI's update path matches too (plan/G-updates.md), so the same
+      BrowserAI's update path matches too, so the same
       trade applies here, and the property is turned off REPOSITORY WIDE rather
       than in the product project: a global property passed with `-p:` reaches
       every referenced project, and a project still carrying a decorated string
@@ -165,7 +165,7 @@
       UseSystemResourceKeys strips the framework's exception message strings
       and leaves bare resource keys behind. It is a real NativeAOT size win and
       completely wrong here: this product's error text is read by a MODEL
-      deciding what to do next (plan/H-model-surface.md, the error catalogue).
+      deciding what to do next (SessionErrors, the error catalogue).
       `Arg_DirectoryNotFound` in place of a sentence naming the path is an
       error catalogue that has been silently emptied.
 

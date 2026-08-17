@@ -79,7 +79,7 @@ on the schema. `[FLOATS]`
 
 **What BrowserAI's own modes expose, measured over the wire rather than added
 up:** `config` + `vision` + `devtools` gives **42**, and `persistent` adding
-`storage` gives **59** ([§C](../../plan/C-sessions.md#three-modes-and-tracing-as-a-modifier)).
+`storage` gives **59** ([the session modes](../../ARCHITECTURE.md#sessions)).
 Those are the same two numbers the `createConnection` experiment below produced
 from two connections in one process, which is a second, independent route to
 them. `[FLOATS]`

@@ -111,7 +111,7 @@ unreachable code compiled. Adding `dotnet_diagnostic.CS0162.severity = error`
 on top of that NoWarn, and forcing a full rebuild: still **0 warnings, 0
 errors**. So naming a warning in `WarningsAsErrors` does **not** protect it from
 a later bulk suppression, which is what
-[plan/build-order.md asserted](../plan/build-order.md) and what this
+the build order asserted and what this
 measurement corrected. What naming it there does buy is survival if
 `TreatWarningsAsErrors` is ever turned off — a smaller claim, and a true one.
 The protection that works has to sit outside the compiler's precedence order
@@ -185,7 +185,7 @@ line-ending change invisible instead.
 
 **`dotnet test` transiently reported zero tests once, and does not reproduce.**
 Observed 2026-08-16 during
-[build-order step 5](../plan/build-order.md#5-the-two-custom-transports) on
+the two custom transports on
 SDK **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
 `Microsoft.Testing.Platform` **2.3.3**: exit **5**, *"Zero tests ran"*, in about
 250 ms, with `--diagnostic` showing the host's log stopping right after
@@ -224,7 +224,7 @@ fall back to. `[MACHINE]` for the single observation; nothing here is
 
 **It recurred, it is now stable, and the retraction above still stands.**
 Measured 2026-08-16 during
-[build-order step 9](../plan/build-order.md#9-lossless-passthrough), following
+lossless passthrough, following
 the procedure the paragraph above prescribes. `dotnet test` reports *"Zero tests
 ran"*, `error: 1`, exit **5**, in 177–646 ms:
 

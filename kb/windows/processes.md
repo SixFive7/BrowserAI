@@ -253,7 +253,7 @@ survived was an empty directory. `Directory.Move(path, aside)` was refused with
 `IOException` **and the contents untouched**, and succeeded the moment the holder
 exited. So a working-directory lock is a liveness signal for a *rename* and not
 for a *delete*, and BrowserAI's instance sweep claims by renaming
-([§E](../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)). ⚠️ **The first
+([`TreeDelete`](../../src/BrowserAI/Runtime/TreeDelete.cs)). ⚠️ **The first
 arm of this measurement was run against a `cmd /c ping` holder and is not
 evidence**: killing `cmd.exe` leaves `ping.exe` alive holding the same cwd, so the
 "holder is dead" half never tested what it claimed. Re-established with a
@@ -310,7 +310,7 @@ Measured 2026-08-16, two runs of **100 sequential rewrites** through the product
 path — a temp file in the same directory opened `FileShare.None` with
 `FileOptions.WriteThrough`, `Flush(flushToDisk: true)`, then
 `File.Move(overwrite: true)` — at 1.61 s and 1.82 s wall including process start.
-[§D](../../plan/D-locking.md#durable-lockjson-writes) recorded this cost as
+The design recorded this cost as
 unmeasured and said to measure it before ever trading the guarantee away; this is
 that measurement, and at ~17 ms against a file written on `init`, on `resume` and
 on a purpose change, there is nothing to trade. Reproduce with
@@ -331,8 +331,8 @@ happens. Reproduce:
 walks all three share modes on every run.
 
 > **This is what forces close → rename → re-open under a mutex**, and it is worth
-> stating because the obvious repair does not exist. [§C](../../plan/C-sessions.md#the-session-directory-is-the-identity)
-> makes an open handle on `lock.json` the lock, and [§D](../../plan/D-locking.md#durable-lockjson-writes)
+> stating because the obvious repair does not exist. [The session design](../../ARCHITECTURE.md#sessions)
+> makes an open handle on `lock.json` the lock, and [the locking design](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 > requires the record to arrive by atomic rename. The natural guess is that
 > adding `FILE_SHARE_DELETE` to the lock handle reconciles them — it does not;
 > the rename is refused identically. So the handle has to be closed for the
@@ -378,7 +378,7 @@ released simultaneously from a shared start gate, each writing its own
 GUID-named temp in the target directory first. Both runs ended with **one file,
 content byte-exact, zero rename failures logged, and all eight processes exit
 0**. That is the measurement behind [the session index taking no lock at
-all](../../plan/D-locking.md#the-session-index-on-disk): `MoveFileEx` with
+all](../../ARCHITECTURE.md#locking-ownership-and-the-sweep): `MoveFileEx` with
 `MOVEFILE_REPLACE_EXISTING` replaces the directory entry in one step, so
 concurrent writers serialise in the filesystem and a concurrent reader sees the
 old file or the new one and never a torn one. `[STABLE]` for the mechanism,
@@ -402,7 +402,7 @@ created and written, `File.Move(overwrite: true)`, and the temp deleted in a
 `finally` — no `WriteThrough`, no `Flush(flushToDisk: true)`. So durability is
 roughly a **10× multiplier on an uncontended small write**, and contention on a
 single name is roughly **5×** on top of the base cost. That ratio is why
-[the session index is written without either](../../plan/D-locking.md#the-session-index-on-disk)
+[the session index is written without either](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 while `lock.json` keeps both: an index entry regenerates itself from the
 directory it names, and a lock record cannot. `[MACHINE]`
 
@@ -452,7 +452,7 @@ same eight-by-twenty-five run then loses nothing, repeated three times.
 
 This matters beyond the log. **The design has ~100 concurrent BrowserAI
 processes sharing one process log**, and a lock would have worked while also
-making logging able to block — the one thing [§E](../../plan/E-lifecycle.md)
+making logging able to block — the one thing [the observability design](../../ARCHITECTURE.md#process-containment-and-observability)
 says the sink may never do. `[FLOATS]` for the .NET half, which could change
 with any SDK; `[STABLE]` for the Win32 guarantee.
 

@@ -268,7 +268,7 @@ but **the relaunched app does not inherit the caller's stdio.** `[FLOATS]`
 ## The update lane, end to end against a real feed
 
 Everything here was run while building
-[build-order step 19](../../plan/build-order.md#19-velopack-package-update-roll-back),
+the Velopack update lane,
 against **Velopack 1.2.0** and **`vpk` 1.2.0**, on Windows 11 Pro 26200, SDK
 10.0.302. It is the first time this project has packed, installed, updated or
 rolled back its own payload rather than a test app. `[FLOATS]` — every number
@@ -467,7 +467,7 @@ timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
 > definition as much as for ours. One `schtasks` success in a spike directory
 > became a standing claim about the product, and it reached
 > [`README.md`](../../README.md) as *"verified"*. **The task is dropped**
-> ([step 19](../../plan/build-order.md#19-velopack-package-update-roll-back)), so
+> (the Velopack update lane), so
 > nothing now turns on it; the entry is corrected rather than deleted because a
 > reader who remembers *"confirmed"* has to be able to find out what happened to
 > it.
@@ -509,7 +509,7 @@ build conventions and must be justified on that basis or dropped.
 
 ## Deriving the version from git tags, with MinVer
 
-Measured while building [step 18](../../plan/build-order.md), on SDK **10.0.302**
+Measured while building the git-tag versioning, on SDK **10.0.302**
 with **MinVer 7.0.0** resolved through the float (`Version="*"`, product project
 only, `MinVerTagPrefix` of `v`). Everything below is read off the build or off
 the artifact, never off MinVer's documentation. `[FLOATS]` — MinVer, the SDK and

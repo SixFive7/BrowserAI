@@ -93,7 +93,7 @@ still `[UNVERIFIED]`, nothing having been built in that configuration.
 > of what is left — so every full-package download figure remains `[UNVERIFIED]`.
 
 **Verified 2026-08-16 @ Node v24.19.0 / `@playwright/mcp` 0.0.79, by assembling
-the payload** ([build-order step 3](../../plan/build-order.md#3-the-payload-build)).
+the payload** ([`build/Build-Payload.ps1`](../../build/Build-Payload.ps1)).
 Both rows hold to the byte, and the unit in this table is **MiB** rather than MB:
 `node.exe` is **92,825,416 B = 88.53 MiB**, and `node_modules` is
 **18,993,773 B = 18.11 MiB** — of which `playwright-core` is 13.18 MiB,
@@ -112,7 +112,7 @@ either path.** The only route to it is inside an archive:
 **160,552 B** beside the executable. That archive is **37,304,352 B =
 35.58 MiB**, so taking the licence route also downloads **~53 MB less** than
 fetching the bare `node.exe`. This matters because
-[§A](../../plan/A-runtime.md#a-ship-and-own-the-runtime) requires Node's full
+[Shipping our own runtime](../../ARCHITECTURE.md#the-runtime-it-ships) requires Node's full
 `LICENSE` to ship — it aggregates the OpenSSL, ICU, V8, zlib and c-ares terms —
 and the obvious build, one `GET` of `win-x64/node.exe`, ships no licence at all
 and reports nothing. Re-establish by listing both URLs. `[FLOATS]`
@@ -180,8 +180,8 @@ fresh directory. `[FLOATS]` `[MACHINE]`
 **Firefox 153.0 (rev 1539) is 125,706,704 B down and 352,898,062 B — 336.55 MiB
 — on disk**, provisioned in **6.2 s** on the same link, measured 2026-08-16 by
 `install-browser firefox --no-shell --no-progress`. BrowserAI creates no Firefox
-sessions ([step 17](../../plan/build-order.md#17-firefox)); the tree exists
-because [§E](../../plan/E-lifecycle.md#zero-process-leakage-the-job-object-contract)'s
+sessions; the tree exists
+because [the job-object contract](../../ARCHITECTURE.md#process-containment-and-observability)'s
 containment contract is stated against **both** families and the acceptance test
 needs a real one. `[FLOATS]`
 
@@ -392,7 +392,7 @@ next call brings the browser back in ~0.41 s.** `[MACHINE]` `[FLOATS]`
 to arrange.** Playwright creates the browser lazily on first use, so the call
 after a close simply works: no error, no `"browser is closed"` text on any path,
 and a snapshot immediately afterwards returns the new page. This is the
-measurement [the browser-idle timer](../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
+measurement [the browser-idle timer](../../ARCHITECTURE.md#sessions)
 rests on — if the relaunch were not implicit, the timer would be a way of
 breaking a session rather than a way of reclaiming memory.
 

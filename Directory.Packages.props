@@ -52,14 +52,14 @@
          ModelContextProtocol.Core: the hosting dependency it carries is
          abstractions-only and does not drag in ASP.NET, and dropping to Core
          buys a smaller surface at the cost of AddMcpServer() and assembly
-         scanning. Both halves of that trade are recorded in plan/stack.md.
+         scanning. Both halves of that trade are recorded in STACK.md.
 
          BrowserAI writes its own client AND server transports over this
          package's public TransportBase, because both of the SDK's own stdio
          transports are wrong for a proxy: the client one prepends `cmd.exe /c`
          and the server one hard-codes an encoder that escapes every backtick,
          apostrophe, angle bracket and non-ASCII character. See
-         plan/stack.md deviations 1 and 5. -->
+         STACK.md deviations 1 and 5. -->
     <PackageVersion Include="ModelContextProtocol" Version="*" />
     <!-- Logging. The console provider is taken for one setting only:
          LogToStandardErrorThreshold, which is what forces every record to
@@ -69,7 +69,7 @@
          exit code. -->
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="*" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="*" />
-    <!-- The update path (plan/G-updates.md). MIT, per-user install to
+    <!-- The update path (ARCHITECTURE.md, "Updates"). MIT, per-user install to
          %LocalAppData%, no elevation and no commercial tier, and the only
          option with both a stable executable path and a stage-now/swap-later
          primitive. It floats like everything else; the `vpk` CLI that produces
@@ -96,7 +96,7 @@
   <ItemGroup Label="Versioning">
     <!-- Reads the version out of the nearest git tag at build time, so no
          version number exists anywhere in this repository to edit, forget, or
-         get out of step with the tag (plan/stack.md, "Versions come from git
+         get out of step with the tag (STACK.md, "Versions come from git
          tags"). Build-time only, PrivateAssets="all", no runtime dependency
          and nothing for ILC to see.
 

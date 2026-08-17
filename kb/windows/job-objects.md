@@ -57,7 +57,7 @@ line's length. Every Chromium process in the tree answers `0x80070490`
 [kb: resurrection](../chromium/resurrection.md#the-mechanism-and-what-is-still-unproven)
 says it does, on a build BrowserAI provisioned. Containment is unaffected —
 `KILL_ON_JOB_CLOSE` happens now and Windows' restart happens after a reboot or an
-update — but **[step 17](../../plan/build-order.md#17-firefox) cannot ship Firefox
+update — but **the product cannot ship Firefox
 sessions without turning that pref off in the profile**, or a machine update will
 resurrect a browser no session claims. Asserted on both sides by
 `BrowserContainmentTests`, so the day Mozilla changes it the suite says so.
@@ -209,7 +209,7 @@ whole of the evidence.
 
 **Containment holds from a published NativeAOT binary, against a real browser.**
 Measured 2026-08-16 at
-[build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child),
+the first published-AOT vertical slice,
 which is the run that closes the caveat step 6 left open — `[LibraryImport]` and
 `PROC_THREAD_ATTRIBUTE_JOB_LIST` had until then only been exercised under the
 test host, never after ILC. The published `BrowserAI.exe` was started inside a

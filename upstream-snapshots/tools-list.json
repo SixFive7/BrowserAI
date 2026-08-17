@@ -166,7 +166,7 @@
     "browser_uncheck"
   ],
   "artifactPrefixes": {
-    "_what_this_is": "The artifact generator prefixes, read out of the resolved bundle source. A generated artifact is named `<prefix>-<timestamp>.<ext>`, and BrowserAI routes by prefix (plan/F-artifacts.md). The empty prefix is the traces template, which supplies its own suggestedFilename. A prefix appearing here with no folder in ArtifactRouting, or a folder with no prefix here, fails the build.",
+    "_what_this_is": "The artifact generator prefixes, read out of the resolved bundle source. A generated artifact is named `<prefix>-<timestamp>.<ext>`, and BrowserAI routes by prefix (see ARCHITECTURE.md, section Artifacts). The empty prefix is the traces template, which supplies its own suggestedFilename. A prefix appearing here with no folder in ArtifactRouting, or a folder with no prefix here, fails the build.",
     "prefixes": [
       "",
       "annotations",
