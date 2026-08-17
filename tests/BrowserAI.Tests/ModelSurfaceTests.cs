@@ -74,6 +74,47 @@ internal sealed class ModelSurfaceTests
     ];
 
     /// <summary>
+    /// What <c>browserai_init</c>'s description must say, beyond what its
+    /// arguments mean.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two requirements, from two documents, and neither was met until
+    /// 2026-08-17.</b>
+    /// [§C](../../plan/C-sessions.md#where-guidance-lives-three-channels-two-of-them-capped)
+    /// puts *"the real-Chrome-profile warning, and the retention policy"* in the
+    /// creation tool's description and says the spec requires retention to be
+    /// stated <i>there</i>; the
+    /// [README](../../README.md) demands the same thing independently, because
+    /// <c>init</c> accepts any path — *"the `init` tool description is a security
+    /// surface … say plainly what pointing at an existing browser profile
+    /// does"*. Retention was stated on <c>resume</c> and on <c>list</c>, which is
+    /// everywhere except where it was required.
+    /// </para>
+    /// <para>
+    /// <b>Phrases rather than a whole-string comparison</b>, for the same reason
+    /// <see cref="LoadBearingUpstreamPhrases"/> is: the text will be reworded,
+    /// and what must survive a rewording is the fact, not the sentence.
+    /// </para>
+    /// </remarks>
+    private static readonly string[] RequiredInitPhrases =
+    [
+        // The security surface. A model that reads this and still points a
+        // session at a real profile has been told; one that is not told has not.
+        "real Chrome profile",
+        "Any path is accepted and none is validated",
+        "live cookies and logins",
+
+        // The retention policy, stated where the session is created rather than
+        // only where one is resumed or listed. The tool name is part of the
+        // requirement: a retention policy with no way to act on it is a fact
+        // rather than guidance.
+        "nothing here expires",
+        "never deletes a session directory",
+        SessionToolSurface.Destroy,
+    ];
+
+    /// <summary>
     /// What each mode is expected to refuse, written down rather than computed.
     /// </summary>
     /// <remarks>
@@ -215,6 +256,45 @@ internal sealed class ModelSurfaceTests
         // ever expose. A count that had quietly shrunk would make the loop above
         // pass by measuring less.
         await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + 69);
+    }
+
+    [Test]
+    public async Task TheCreationToolsDescriptionCarriesTheProfileWarningAndTheRetentionPolicy()
+    {
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var description = (string?)Advertised(rig.SurfaceChild.ToolsListResult)[SessionToolSurface.Init]?["description"] ?? string.Empty;
+        var missing = new List<string>();
+
+        foreach (var required in RequiredInitPhrases)
+        {
+            if (!description.Contains(required, StringComparison.Ordinal))
+            {
+                missing.Add($"browserai_init's description no longer says '{required}'");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+
+        // ⚠️ Measured 2026-08-17, and the first draft DID NOT FIT. The
+        // description was 1,519 bytes with 529 of headroom; the two sentences as
+        // first written cost 773 and took it to 2,292, which the client would
+        // have truncated silently — removing the tail of the retention policy
+        // and reporting nothing. They were rewritten to 472 rather than anything
+        // else being cut, and the description now stands at 1,991 of 2,048.
+        //
+        // **57 bytes of headroom is the finding, and it is not a comfortable
+        // number.** Both required sentences are at the END of the string, so an
+        // overflow deletes exactly the two things §C and the README demanded be
+        // present. The description is composed from SessionModes.Table, so a
+        // fourth mode or a reclassified tool grows it without anybody editing
+        // this file — and the assertion below, together with
+        // EveryToolDescriptionFitsTheSameBudget, is what turns that into a red
+        // build instead of a warning nobody reads.
+        var bytes = Encoding.UTF8.GetByteCount(description);
+
+        await Assert.That(bytes).IsLessThanOrEqualTo(SessionToolSurface.DescriptionMaximumBytes);
     }
 
     [Test]

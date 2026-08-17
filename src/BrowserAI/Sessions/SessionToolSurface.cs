@@ -229,7 +229,9 @@ internal static class SessionToolSurface
             "Creates a browser session whose home is the directory you name. The directory IS the session: everything this session stores — its browser profile, its screenshots and downloads, its log — lives there, and you name it again on every browser call. "
             + $"There is no default directory and no fallback; an empty, relative or unusable path is refused rather than turned into one that happens to work. If the directory is already a session, this refuses and tells you to call {Resume} — being made to say so is the point. "
             + $"The mode is permanent for the directory's life and is required, because a mode chosen by omission is a security posture nobody decided on: {SessionModes.Table} "
-            + "'tracing' is a boolean orthogonal to all three and records the session into the output directory. 'debug' raises this session's log level only, for its life, and changes nothing else.",
+            + "'tracing' is a boolean orthogonal to all three and records the session into the output directory. 'debug' raises this session's log level only, for its life, and changes nothing else. "
+            + "SECURITY: name a NEW directory. Any path is accepted and none is validated: one that already holds a browser profile — the user's real Chrome profile, or a copy — becomes this session's, and a 'persistent' session then drives its live cookies and logins, as can any agent given the path. "
+            + $"RETENTION: nothing here expires. BrowserAI never deletes a session directory, so it stays until you call {Destroy}; {List} shows what has accumulated, and its size.",
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of the session directory. It is created if it does not exist. This is also the session's name, so make it say what the session is for — 'checkout-flow-bug' beats a timestamp."),

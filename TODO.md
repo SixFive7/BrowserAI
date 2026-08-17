@@ -175,7 +175,41 @@ did.
       that turning it off creates. Prune on a successful provision, keeping the
       revision the shipped manifest names.
 
-- [ ] **`init`'s description carries neither the real-Chrome-profile warning nor
+- [x] ~~**`init`'s description carries neither the real-Chrome-profile warning nor
+      the retention policy.**~~ ✅ **Both added 2026-08-17, and the first draft
+      did not fit.** `SessionToolSurface`'s `init` description gains two
+      sentences: the security one says any path is accepted and none validated,
+      that a directory already holding a browser profile — *"the user's real
+      Chrome profile, or a copy"* — becomes this session's, and that a
+      `persistent` session then drives its live cookies and logins, as can any
+      agent given the path; the retention one says nothing expires, that
+      BrowserAI never deletes a session directory, and names
+      `browserai_destroy` and `browserai_list`, because a retention policy with
+      no way to act on it is a fact rather than guidance.
+      <br><br>
+      **The budget was measured before and after, and it is the finding.** The
+      description was **1,519 bytes of 2,048** with 529 of headroom; the two
+      sentences as first written cost **773** and took it to **2,292** — which
+      the client truncates in silence, removing the tail of the retention policy
+      and reporting nothing. They were rewritten to **472** rather than anything
+      else being cut, and the description now measures **1,991**, confirmed by
+      an exact-value assertion run once and then replaced by the cap.
+      **57 bytes of headroom**, and both required sentences are at the end of the
+      string, so an overflow deletes exactly the two things that were required.
+      The description is composed from `SessionModes.Table`, so a fourth mode
+      grows it with nobody editing the file — which is why the cap assertion is
+      in the same test rather than left to the surface-wide one.
+      <br><br>
+      **Gated by `ModelSurfaceTests.TheCreationToolsDescriptionCarriesTheProfileWarningAndTheRetentionPolicy`**,
+      six declared phrases rather than a whole-string comparison, read out of the
+      advertised surface rather than off the class. **Planted by deleting both
+      sentences**: red, naming all six by name, then reverted, 7 of 7 green.
+      [Hazard row 113](plan/hazards.md) — *"the mitigation is descriptive … not
+      enforced"* — is closed with it, stating plainly that its other half
+      (`SessionManager` event 40, the resolved absolute directory at open) has no
+      test of its own. The original text follows.
+      <br><br>
+      **`init`'s description carries neither the real-Chrome-profile warning nor
       the retention policy.** [§C](plan/C-sessions.md#where-guidance-lives-three-channels-two-of-them-capped)
       requires both *in the creation tool's description specifically* — *"the
       spec requires retention to be stated here"* — and
