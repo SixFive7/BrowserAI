@@ -31,9 +31,22 @@
          -RollbackRepublish, so it is a stated intent rather than an accident.
 
       4. ILC'S RAW OUTPUT MUST BE EMPTY, and only reading it can establish that.
-         `SuppressTrimAnalysisWarnings=false` + `ILLinkTreatWarningsAsErrors`
-         already fail the publish on any IL2xxx/IL3xxx WARNING. They do not
-         cover the case the requirement was written for: ILC reports an
+         `SuppressTrimAnalysisWarnings=false` + `TreatWarningsAsErrors`
+         already fail the publish on any IL2xxx/IL3xxx WARNING.
+
+         Corrected 2026-08-17 (previously `SuppressTrimAnalysisWarnings=false`
+         + `ILLinkTreatWarningsAsErrors`). That second property has no
+         observable effect: measured on SDK 10.0.400 / ILC 10.0.11 across five
+         variants, setting it alone emitted 14 ILC warnings and exited 0 with a
+         working binary, identical to setting nothing. The table is in
+         src/BrowserAI/BrowserAI.csproj. Nothing about this script changes --
+         the gate below was always the real cover for the case named next --
+         but the sentence named a property that was not doing the work, and
+         the next person to trim a "redundant" property would have cleared the
+         wrong one.
+
+         Neither property covers the case the requirement was written for:
+         ILC reports an
          always-throwing method as neither a warning nor an error, and a
          publish that emitted `Method '...' will always throw because: Failed
          to load assembly '...'` exited 0 with zero warnings and produced an
