@@ -9,8 +9,7 @@ namespace BrowserAI.Sessions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Three scopes exist and must not be conflated</b>
-/// ([§C](../../../plan/C-sessions.md)):
+/// <b>Three scopes exist and must not be conflated:</b>
 /// </para>
 /// <list type="table">
 ///   <item>

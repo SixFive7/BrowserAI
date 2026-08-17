@@ -34,7 +34,17 @@ namespace BrowserAI.Logging;
 /// </remarks>
 internal sealed class SessionLogFile : ILogSink, IDisposable
 {
-    /// <summary>The file name, fixed by [§E](../../../plan/E-lifecycle.md).</summary>
+    /// <summary>
+    /// The file name, at the session root beside <c>lock.json</c>.
+    /// </summary>
+    /// <remarks>
+    /// It lives with the session rather than under the app data root because the
+    /// session directory is the identity: a log that travels with the directory
+    /// is one an agent can read with the path it already has, and one
+    /// <c>browserai_destroy</c> removes with everything else. Everything that
+    /// happens <i>outside</i> a session has no directory to attach to and goes to
+    /// <see cref="ProcessLog"/> instead.
+    /// </remarks>
     public const string FileName = "browserai.log";
 
     private readonly Lock _gate = new();

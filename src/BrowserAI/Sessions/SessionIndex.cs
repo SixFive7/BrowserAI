@@ -222,8 +222,10 @@ internal sealed class SessionIndex
     /// pointer, and removing a pointer is the only action this store has.
     /// </para>
     /// <para>
-    /// <b>Two states are deliberately <i>kept</i> that a first reading of
-    /// [§D](../../../plan/D-locking.md#the-session-index-on-disk) would remove.</b> A
+    /// <b>Two states are deliberately <i>kept</i> that a first reading of the
+    /// self-cleaning rule would remove.</b> That rule licenses removal only
+    /// because a wrongly-dropped entry is restored by the next <c>init</c> or
+    /// <c>resume</c>, and neither of these two can ever do that. A
     /// directory whose <c>lock.json</c> is present but unparseable is a session
     /// — a broken one — and it cannot restore its own entry, because
     /// <see cref="SessionLock.TryAcquire"/> refuses an unreadable record. And a

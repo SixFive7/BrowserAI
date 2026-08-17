@@ -17,7 +17,8 @@ namespace BrowserAI.Registration;
 /// the arguments go through <see cref="ProcessStartInfo.ArgumentList"/>, so the
 /// path being registered reaches the client as one argument however many spaces,
 /// ampersands or percent signs it contains. This is
-/// [stack.md deviation 1](../../../plan/stack.md) applied to a one-shot command:
+/// [SDK deviation 1](../../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from)
+/// applied to a one-shot command:
 /// the SDK's own transport rewrites every command into <c>cmd.exe /c …</c>, and
 /// the measured cost was a literal <c>%USERNAME%</c> arriving expanded and a
 /// path containing a space failing to start at all.

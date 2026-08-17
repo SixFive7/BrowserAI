@@ -35,8 +35,8 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// ⚠️ <b>This is the one place BrowserAI rewrites a child's answer rather than
 /// forwarding its bytes</b>, and it is worth naming the trade. Byte-identical
-/// passthrough is the property [step 9](../../../plan/build-order.md#9-lossless-passthrough)
-/// exists to provide; here it is deliberately given up for the one payload that
+/// passthrough is the property <c>LosslessPassthroughTests</c> exists to
+/// protect; here it is deliberately given up for the one payload that
 /// contains an instruction which would send the caller somewhere harmful. The
 /// rewrite fires only when the marker is present — every other answer, including
 /// every other error, goes through untouched — and the proxy logs the fact when

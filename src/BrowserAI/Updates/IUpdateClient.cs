@@ -13,7 +13,7 @@ namespace BrowserAI.Updates;
 /// install, so a build that called <c>UpdateManager</c> directly could only ever
 /// be exercised by installing itself — and a server that self-restarts would
 /// relaunch itself out of the suite
-/// ([§G landmine 6](../../../plan/G-updates.md)).
+/// ([kb](../../../kb/packaging/velopack.md#6-notinstalledexception-under-dotnet-run-and-every-test-host)).
 /// </para>
 /// <para>
 /// <b>It is deliberately four members.</b> Every one of them is a place Velopack

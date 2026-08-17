@@ -11,8 +11,10 @@ namespace BrowserAI.Updates;
 /// </summary>
 /// <remarks>
 /// <para>
-/// ⚠️ <b>The channel must never appear in the feed URL. This is the worst hazard
-/// in [§G](../../../plan/G-updates.md)</b>, because it is close to unrecoverable in
+/// ⚠️ <b>The channel must never appear in the feed URL. This is the worst of the
+/// Velopack hazards</b>
+/// ([kb](../../../kb/packaging/velopack.md#1-the-channel-must-not-go-in-the-feed-url)),
+/// because it is close to unrecoverable in
 /// the field: a client that cannot reach the feed cannot be told to roll back
 /// either, so every install already shipped needs a manual reinstall.
 /// <c>SimpleWebSource</c> composes the request as
@@ -137,9 +139,10 @@ internal sealed class UpdateFeed
         }
 
         // A local directory source composes paths differently and passes where
-        // production 404s, which is why plan/testing.md requires the real feed
-        // URL. Both are accepted here -- the local one is how the update lane is
-        // exercised at all -- but which is which must be visible.
+        // production 404s, which is why the release gate requires the REAL feed
+        // URL to be resolved over HTTP (TESTING.md, and `UpdateTests`). Both are
+        // accepted here -- the local one is how the update lane is exercised at
+        // all -- but which is which must be visible.
         if (!parsed.IsFile && parsed.Scheme != Uri.UriSchemeHttps && parsed.Scheme != Uri.UriSchemeHttp)
         {
             throw new ArgumentException(

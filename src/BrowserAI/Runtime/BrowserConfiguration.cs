@@ -162,8 +162,10 @@ internal static class BrowserConfiguration
     /// <c>@playwright/mcp</c> 0.0.79: neither the CLI surface nor
     /// <c>config.d.ts</c> carries a trace option at all — <c>tracesDir</c> is
     /// computed internally as <c>&lt;outputDir&gt;/traces</c> and is not
-    /// configurable — so [§C](../../../plan/C-sessions.md)'s <c>tracing</c> modifier
-    /// has no upstream trace key to reach. <c>saveSession</c> is the surviving
+    /// configurable — so BrowserAI's own <c>tracing</c> modifier, a boolean
+    /// orthogonal to all three modes, has no upstream trace key to reach
+    /// ([kb](../../../kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like)).
+    /// <c>saveSession</c> is the surviving
     /// feature with the same purpose: it records what the session did into the
     /// output directory.
     /// </remarks>

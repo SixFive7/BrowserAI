@@ -119,7 +119,7 @@ internal sealed record SessionEnvironment
     /// <b>O(1), and only ever O(1).</b> A directory walk here would make the check
     /// slower than the failure it prevents, and <c>init</c> is on the hot path of
     /// every session. It is a seam so the suite can trigger
-    /// [row 12](../../../plan/H-model-surface.md#h4-the-error-catalogue) through the
+    /// <see cref="SessionErrors.InsufficientDisk"/> through the
     /// real refusal path rather than by asserting a literal — a full volume is not
     /// something a test can arrange, and a row nobody can reach is documentation
     /// rather than behaviour.

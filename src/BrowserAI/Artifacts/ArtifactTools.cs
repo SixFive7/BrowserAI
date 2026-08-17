@@ -49,7 +49,9 @@ internal sealed record ArtifactToolRule(
 /// classify fails the build — <c>ArtifactRoutingTests</c> reads the committed
 /// <c>tools/list</c> snapshot and asserts it. An unjudged <c>filename</c> is a
 /// file landing wherever upstream's default happens to put it, which is the flat
-/// output directory [§F](../../../plan/F-artifacts.md) exists to replace.
+/// output directory this product's routing exists to replace: upstream writes
+/// every artifact into one folder with a generated name, mixing machine churn
+/// with hand-named work.
 /// </para>
 /// <para>
 /// <b>A name is supplied only where upstream would have generated one</b>, and

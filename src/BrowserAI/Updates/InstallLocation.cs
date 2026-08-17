@@ -12,9 +12,9 @@ namespace BrowserAI.Updates;
 /// <remarks>
 /// <para>
 /// <b>The seam is a boolean, not an exception handler, and that is measured
-/// rather than designed.</b> [§G landmine 6](../../../plan/G-updates.md) said
-/// <c>NotInstalledException</c> is the normal outcome under <c>dotnet run</c>
-/// and every test host. **That is wrong for 1.2.0**
+/// rather than designed.</b> The Velopack landmine list this product was built
+/// against said <c>NotInstalledException</c> is the normal outcome under
+/// <c>dotnet run</c> and every test host. **That is wrong for 1.2.0**
 /// ([kb](../../../kb/packaging/velopack.md#6-notinstalledexception-under-dotnet-run-and-every-test-host)):
 /// <c>VelopackLocator.Current</c> throws
 /// <c>InvalidOperationException: No VelopackLocator has been set</c> until

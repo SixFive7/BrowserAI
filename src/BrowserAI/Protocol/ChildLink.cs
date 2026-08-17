@@ -19,7 +19,7 @@ namespace BrowserAI.Protocol;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-16 (previously
-/// <see href="../../../plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from">deviation
+/// <see href="../../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from">deviation
 /// 7</see>: "observing and forwarding child→caller notifications needs an
 /// <c>ITransport</c> decorator (~30 lines)").</b> A decorator is needed, and not
 /// for that. Forwarding a <i>named</i> notification is public API —

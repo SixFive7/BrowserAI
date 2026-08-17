@@ -12,11 +12,16 @@ namespace BrowserAI.Sessions;
 /// <remarks>
 /// <para>
 /// <b>There is exactly one timer, and this is it.</b> No handle-expiry timer, no
-/// session TTL and no reclaim window —
-/// [reclaim is forever](../../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever),
-/// because the durable thing is the profile rather than the process. Every
-/// expiry timer that was considered was a cliff that deleted work in exchange
-/// for nothing.
+/// session TTL and no reclaim window — <b>reclaim is forever</b>, because the
+/// durable thing is the profile rather than the process: a resume after killing
+/// the node child preserves cookies, localStorage, IndexedDB, service workers and
+/// CacheStorage, losing only <c>sessionStorage</c>, in ~515 ms
+/// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
+/// Every expiry timer that was considered was a cliff that deleted work in
+/// exchange for nothing: an agent thinking for 61 minutes came back to a dead
+/// handle, and the recovery was a <c>resume</c> it could have done anyway. The
+/// cost is honest — directories accumulate forever — and it is why explicit
+/// <c>browserai_list</c> and <c>browserai_destroy</c> matter here more, not less.
 /// </para>
 /// <para>
 /// <b>The relaunch is implicit, and that is what makes the timer safe to have at
@@ -49,16 +54,25 @@ namespace BrowserAI.Sessions;
 internal sealed class BrowserIdleTimer : IAsyncDisposable
 {
     /// <summary>
-    /// The shipped period. <b>Ten minutes</b>, as
-    /// [§C](../../../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever)
-    /// specifies.
+    /// The shipped period: <b>ten minutes</b>, reset by any tool call.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// It closes the browser and keeps the node child. Re-measured 2026-08-16,
+    /// that is ~496 MB → ~118 MB, with the next call bringing the browser back in
+    /// ~0.41 s
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) —
+    /// so the period is long enough that ordinary think-time between calls never
+    /// closes a browser, and the cost of being wrong is under half a second on a
+    /// relaunch the caller cannot see.
+    /// </para>
+    /// <para>
     /// The suite drives the timer in milliseconds through
     /// <see cref="SessionEnvironment.BrowserIdlePeriod"/>, which is why this
     /// constant is asserted on directly: a test-friendly value that leaked into
     /// the product would show up nowhere else, because a browser closing too
     /// eagerly is invisible — the next call silently relaunches it.
+    /// </para>
     /// </remarks>
     public static TimeSpan DefaultIdlePeriod { get; } = TimeSpan.FromMinutes(10);
 

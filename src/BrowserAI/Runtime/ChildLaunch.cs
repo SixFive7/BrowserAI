@@ -11,10 +11,17 @@ namespace BrowserAI.Runtime;
 /// that says where browsers live.
 /// </summary>
 /// <remarks>
-/// This is the whole of the launch half of
-/// [§A](../../../plan/A-runtime.md) that build-order step 7 owns. Provisioning,
-/// modes, sessions and artifact routing are later steps; what is settled here is
-/// which browser runs and whether it is sandboxed.
+/// <b>What is settled here is which browser runs and whether it is sandboxed</b>,
+/// and both are settled the only way that works. <c>browserName</c> and an
+/// explicit chromium-alias channel are always both set: omit them and upstream
+/// fills in <c>channel: "chrome"</c>, the user's own installed Google Chrome, so
+/// the entire batteries-included premise becomes silently dead code — measured
+/// with an <b>empty</b> browsers directory, where <c>initialize</c>,
+/// <c>tools/list</c> and <c>browser_navigate</c> all succeeded. And
+/// <c>--sandbox</c> goes on the command line, never <c>chromiumSandbox</c> in the
+/// config file, because the config key parses, validates and is discarded
+/// ([kb](../../../kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like)).
+/// Provisioning, modes, sessions and artifact routing all live elsewhere.
 /// </remarks>
 internal static class ChildLaunch
 {

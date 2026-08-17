@@ -54,14 +54,17 @@ internal sealed record ArtifactDestination(string Prefix, string RelativeFolder,
 /// what happened.
 /// </para>
 /// <para>
-/// ⚠️ <b>Twelve entries, not nine.</b> [§F](../../../plan/F-artifacts.md) and
-/// [kb](../../../kb/playwright/tools-and-artifacts.md) both said nine until
-/// 2026-08-16, when the set was derived from the bundle for the first time
-/// rather than counted by hand: <c>element</c> (an element screenshot, chosen
-/// by a ternary the earlier scan could not see) and <c>annotations</c> (a
-/// template literal, from <c>browser_annotate</c>) were missing, and the empty
-/// prefix that produces <c>traces</c> was described as ours by choice when it is
-/// upstream's. Corrected in both documents on the same day.
+/// ⚠️ <b>Twelve entries, not nine.</b> Every document that had counted them —
+/// this project's design notes and
+/// [kb](../../../kb/playwright/tools-and-artifacts.md#artifacts-and-output-directory-behaviour)
+/// alike — said nine until 2026-08-16, when the set was derived from the bundle
+/// for the first time rather than counted by hand: <c>element</c> (an element
+/// screenshot, chosen by a ternary the earlier scan could not see) and
+/// <c>annotations</c> (a template literal, from <c>browser_annotate</c>) were
+/// missing, and the empty prefix that produces <c>traces</c> was described as
+/// ours by choice when it is upstream's. <b>The coverage gate found its first
+/// drift on the day it was written</b>, which is the whole argument for deriving
+/// the set instead of typing it.
 /// </para>
 /// </remarks>
 internal static class ArtifactRouting

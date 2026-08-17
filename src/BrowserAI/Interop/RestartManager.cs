@@ -38,9 +38,9 @@ namespace BrowserAI.Interop;
 /// a design note. What is reproduced is the <i>sequence</i>, which is the
 /// documented API contract and belongs to nobody: start a session, register the
 /// one file, ask for the list, end the session. The same route
-/// [step 9](../../../plan/build-order.md#9-lossless-passthrough) took when it
-/// implemented parse-error recovery from the MCP SDK's observed behaviour rather
-/// than from its Apache-2.0 source.
+/// <see cref="Protocol.JsonLinesTransport"/> took when it implemented
+/// parse-error recovery from the MCP SDK's observed behaviour rather than from
+/// its Apache-2.0 source.
 /// </para>
 /// <para>
 /// <b>Every holder carries its process start time, and that is not decoration.</b>
@@ -219,8 +219,11 @@ internal static partial class RestartManager
     /// <b>Diagnostic text and nothing else.</b> It is shown to a person so a
     /// refusal names something recognisable; nothing in this repository compares
     /// it, filters on it or acts on it, which is the whole of the distinction
-    /// [§D](../../../plan/D-locking.md#never-by-image-name) draws between observing
-    /// a name and choosing a process by one.
+    /// between <i>observing</i> a name and <i>choosing</i> a process by one.
+    /// BrowserAI may only terminate a process belonging to a job it created or
+    /// one whose full image path it verified against a binary it installed —
+    /// asserted at zero occurrences by <c>NeverByImageNameTests</c>, because a
+    /// name-keyed kill would one day close the developer's own browser.
     /// </remarks>
     private static unsafe string NameOf(RmProcessInfo entry)
     {

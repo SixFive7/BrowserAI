@@ -31,10 +31,15 @@ namespace BrowserAI.Sessions;
 /// milliseconds around create-or-take.
 /// </para>
 /// <para>
-/// <b>Two requirements collide here, and the collision is real.</b>
-/// [§C](../../../plan/C-sessions.md) makes the open handle the lock;
-/// [§D](../../../plan/D-locking.md) requires the record to be put in place by an
-/// atomic rename. <b>Measured 2026-08-16: a rename cannot replace a file whose
+/// <b>Two requirements collide here, and the collision is real.</b> The
+/// paragraph above makes the <i>open handle</i> the lock. Durability makes the
+/// <i>atomic rename</i> the way the record is put in place: a plain write returns
+/// once the bytes are in the file-system cache, so a power loss between the write
+/// and the flush leaves a file the writer believes it wrote — and <c>lock.json</c>
+/// is the one file whose loss cannot be reconstructed, because it is the entire
+/// ownership guard. So it is written <c>WriteThrough</c>, flushed with
+/// <c>Flush(true)</c>, and moved over the previous copy. <b>Measured 2026-08-16: a
+/// rename cannot replace a file whose
 /// handle is open, under any share mode.</b> Not <c>FileShare.Read</c>, not
 /// <c>Read | Delete</c>, not <c>ReadWrite | Delete</c> — all three fail
 /// identically, with <c>ERROR_ACCESS_DENIED</c> rather than the sharing
@@ -311,13 +316,22 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>This is the sweep's ownership test, and it is deliberately not
-    /// <see cref="TryAcquire"/>.</b> [Race R1](../../../plan/C-sessions.md#race-conditions-and-what-closes-each)
-    /// says the sweep may only kill a browser whose directory lock it can itself
-    /// acquire, and that the lock is held for the whole kill — but a sweep is
+    /// <see cref="TryAcquire"/>.</b> The rule it implements is race R1 —
+    /// <i>the sweep may only kill a browser whose directory lock it can itself
+    /// acquire, and it holds that lock for the whole kill</i> — which is what
+    /// stops process X killing a browser process Y is mid-<c>init</c> on the same
+    /// directory. If <c>lock.json</c> cannot be opened for write, someone owns the
+    /// directory, and the sweep skips it unconditionally.
+    /// <c>StraySweepTests</c> carries one test per race, this one included.
+    /// </para>
+    /// <para>
+    /// <b>But "whose lock we can acquire" must not mean <see cref="TryAcquire"/>,
+    /// and that distinction is the whole reason this method exists.</b> A sweep is
     /// not opening a session, and <see cref="TryAcquire"/> would rewrite
-    /// <c>lock.json</c> with the sweeper as holder. That would overwrite a
-    /// crashed session's own record with a janitor's, which is the one piece of
-    /// evidence about what the stray was.
+    /// <c>lock.json</c> with the sweeper as holder — overwriting a crashed
+    /// session's own record, its purpose and its history with a janitor's. That
+    /// record is the one piece of evidence about what the stray was, and a
+    /// janitor is the last party that should be destroying it.
     /// </para>
     /// <para>
     /// <b>The per-directory gate is taken and released around the open, and the

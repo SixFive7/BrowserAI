@@ -11,10 +11,11 @@ namespace BrowserAI.Hosting;
 /// <remarks>
 /// <para>
 /// The string is derived from the nearest git tag at build time and is typed
-/// nowhere ([plan/stack.md](../../../plan/stack.md), *Versions come from git
-/// tags*). On the tag <c>v0.1.0</c> it is <c>0.1.0</c>; five commits later,
-/// with no new tag, it is <c>0.1.1-alpha.0.5</c>. Both were measured on
-/// 2026-08-16 against MinVer 7.0.0.
+/// nowhere, so there is nothing in a project file to edit, forget, or get out of
+/// step with the tag ([kb](../../../kb/packaging/velopack.md#versions-from-git-tags--minver-700--2026-08-16)).
+/// On the tag <c>v0.1.0</c> it is <c>0.1.0</c>; five commits later, with no new
+/// tag, it is <c>0.1.1-alpha.0.5</c>. Both were measured on 2026-08-16 against
+/// MinVer 7.0.0.
 /// </para>
 /// <para>
 /// <b>It reads <see cref="AssemblyInformationalVersionAttribute"/> and never
@@ -71,8 +72,18 @@ internal static class BuildVersion
     /// a release" rule</b>, and it is why no magic development-build number is
     /// needed. An untagged build carries its own pre-release suffix, generated
     /// by the same mechanism that produced the version, so the check cannot be
-    /// forgotten on the build where it matters. Nothing consumes it yet;
-    /// [§G](../../../plan/G-updates.md) does, at build-order step 19.
+    /// forgotten on the build where it matters.
+    /// <para>
+    /// <b>Corrected 2026-08-17 (previously "Nothing consumes it yet; §G does, at
+    /// build-order step 19").</b> The update path shipped and it consumes the
+    /// rule rather than this property:
+    /// <see cref="Updates.UpdateService.StartInBackground"/> calls
+    /// <see cref="HasPreReleaseSuffix"/> on the version it was handed, because
+    /// the suite has to be able to drive that decision with a version string
+    /// this assembly was not built as. This property is the same predicate
+    /// applied to <see cref="Current"/>, and <c>BuildVersionTests</c> asserts the
+    /// two agree.
+    /// </para>
     /// </remarks>
     public static bool IsPreRelease { get; } = HasPreReleaseSuffix(Current);
 

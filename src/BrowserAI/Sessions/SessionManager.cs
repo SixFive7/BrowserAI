@@ -32,9 +32,9 @@ namespace BrowserAI.Sessions;
 /// <b>Every refusal names a recovery that is not the call that just failed.</b>
 /// A retry that repeats the failed call is not a recovery, and offering one to a
 /// model is how a caller ends up in a loop that never terminates and never
-/// explains itself. §H.4's catalogue wording is
-/// [step 13](../../../plan/build-order.md#13-the-one-table-enforcement-and-the-model-facing-surface)'s;
-/// what is fixed here is that a cause and a route out reach the caller at all.
+/// explains itself. The wording of every refusal belongs to
+/// <see cref="SessionErrors"/>; what this type fixes is that a cause and a route
+/// out reach the caller at all.
 /// </para>
 /// </remarks>
 internal sealed class SessionManager : IAsyncDisposable
@@ -55,16 +55,16 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <summary>The only browser family this build can create a session for.</summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-16 at [step 17](../../../plan/build-order.md#17-firefox)
-    /// (previously "Firefox is step 17").</b> Step 17 built §D's Firefox half —
-    /// the <c>parent.lock</c> preflight, Restart Manager attribution and the
-    /// restart-registration preference on every Firefox launch — and that is all
-    /// §D asks for. <b>Offering Firefox as a choice on <c>init</c> is not §D's
-    /// and is still owed</b>: it needs a per-family download size for
-    /// [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue) (this build
-    /// quotes Chromium's 203.8 MB) and a decision about what
+    /// ⚠️ <b>Corrected 2026-08-16 (previously "Firefox is a later step").</b> The
+    /// Firefox <i>locking</i> half is built — the <c>parent.lock</c> preflight,
+    /// Restart Manager attribution and the restart-registration preference on
+    /// every Firefox launch (<c>FirefoxTests</c>). <b>Offering Firefox as a choice
+    /// on <c>init</c> is a different question and is still owed</b>: it needs a
+    /// per-family download size for
+    /// <see cref="SessionErrors.ProvisioningInProgress"/> (this build quotes
+    /// Chromium's 203.8 MB) and a decision about what
     /// <c>browserai_reinstall_browser</c> reinstalls when there are two trees,
-    /// neither of which the plan has taken. Carried in
+    /// neither of which has been taken. Carried in
     /// [TODO.md](../../../TODO.md).
     /// </para>
     /// <para>
@@ -139,11 +139,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <b>Three distinguishable causes, three different recoveries.</b> A path
-    /// that is not absolute is [row 3](../../../plan/H-model-surface.md#h4-the-error-catalogue);
-    /// a path with no <c>lock.json</c> is row 2 and wants <c>init</c>; a path that
-    /// <i>is</i> a session this process is not driving wants <c>resume</c>.
-    /// Collapsing the last two — as this did before step 13 — sends half the
-    /// callers to a tool that will refuse them on the next turn with row 4.
+    /// that is not absolute is <see cref="SessionErrors.DirectoryNotAbsolute"/>;
+    /// a path with no <c>lock.json</c> is
+    /// <see cref="SessionErrors.SessionNamesNoSession"/> and wants <c>init</c>; a
+    /// path that <i>is</i> a session this process is not driving wants
+    /// <c>resume</c>. Collapsing the last two — as this once did — sends half the
+    /// callers to a tool that will refuse them on the next turn with
+    /// <see cref="SessionErrors.SessionAlreadyExists"/>.
     /// </remarks>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="session">The <c>session</c> argument, as it arrived.</param>
@@ -184,9 +186,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>Every upstream tool, with no exception — and the exception is what the
     /// measurement removed.</b> This was written to let
-    /// <see cref="ToolClass.Configuration"/> through, because
-    /// [§A](../../../plan/A-runtime.md#first-run-browser-provisioning) says
-    /// <c>browser_get_config</c> keeps working while the download runs. Measured
+    /// <see cref="ToolClass.Configuration"/> through, on the strength of a design
+    /// claim that <c>browser_get_config</c> keeps working while the download runs
+    /// ([kb](../../../kb/playwright/configuration.md#browser-provisioning)). Measured
     /// 2026-08-16 @ <c>@playwright/mcp</c> 0.0.79, twice, against the child
     /// directly with an empty browsers root: it does <b>not</b>. The tool
     /// resolves the browser before it answers and fails
@@ -198,7 +200,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// So letting it through bought a worse answer rather than a working one: a
     /// caller would get upstream's "not installed" error, whose advice is to
     /// provision — which is already happening — instead of
-    /// [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue), which says
+    /// <see cref="SessionErrors.ProvisioningInProgress"/>, which says
     /// how large the download is and that the same call will work shortly. What
     /// keeps a downloading session inspectable is BrowserAI's <b>own</b> tools:
     /// <c>browserai_list</c>, <c>browserai_resume</c> and
@@ -772,8 +774,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 _environment.Payload,
                 _environment.Paths.BrowsersDirectory,
 
-                // The OUTPUT root rather than the session root, which is
-                // [§F](../../../plan/F-artifacts.md)'s first lever: upstream
+                // The OUTPUT root rather than the session root, which is the
+                // first and cheapest of the artifact-routing levers: upstream
                 // resolves a relative `filename` against the child's cwd, so a
                 // bare `foo.png` that nothing rewrote still lands inside the
                 // instance tree by construction rather than in whatever
@@ -960,9 +962,11 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>This is the line <c>init</c> must not block on.</b> A caller held for
     /// three minutes inside one tool call has had whatever timing it was managing
     /// corrupted, with nothing to read and no basis for deciding whether to keep
-    /// waiting. So the download starts here and the answer says so; browser calls
-    /// are refused with [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue)
-    /// meanwhile, <c>browser_get_config</c> keeps working, and the same child
+    /// waiting. So the download starts here and the answer says so; every upstream
+    /// call is refused with
+    /// <see cref="SessionErrors.ProvisioningInProgress"/> meanwhile — including
+    /// <c>browser_get_config</c>, which resolves the executable before it answers
+    /// — BrowserAI's own tools keep working throughout, and the same child
     /// navigates once the install lands.
     /// </para>
     /// <para>

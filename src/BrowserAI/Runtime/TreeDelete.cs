@@ -9,6 +9,20 @@ namespace BrowserAI.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>
+/// <b>Post-order, because a directory cannot be removed while it holds
+/// entries.</b> The walk descends into each subdirectory and deletes its
+/// contents before deleting the directory itself; a node that will not go is
+/// recorded and skipped, and the walk continues through its siblings and its
+/// parents' siblings. The result is a count of what went and a list of what did
+/// not, which is what the caller reports.
+/// </para>
+/// <para>
+/// <b>Note also that <c>Directory.GetFiles(path)</c> is top-level only</b> unless
+/// <c>AllDirectories</c> is passed, so the safe-looking alternative is not a
+/// recursive delete at all — it silently leaves every subdirectory in place, and
+/// the failure is an empty-looking result rather than an error.
+/// </para>
+/// <para>
 /// <b>The framework primitive is the wrong shape, and the reason is that the
 /// caller is told one thing rather than everything.</b>
 /// <c>Directory.EnumerateFileSystemEntries(root, "*", SearchOption.AllDirectories)</c>
@@ -39,8 +53,7 @@ namespace BrowserAI.Runtime;
 /// the one the framework primitive cannot produce.
 /// </para>
 /// <para>
-/// <b>Three callers, three different reasons to meet the failure</b>
-/// ([§E](../../../plan/E-lifecycle.md#deleting-a-tree-that-fights-back)).
+/// <b>Three callers, three different reasons to meet the failure.</b>
 /// <c>browserai_destroy</c> deletes a directory that has just held a running
 /// browser, and Chromium leaves mapped files behind for a moment after exit —
 /// the race is the normal case rather than the unlucky one.
@@ -53,7 +66,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-16 (previously "The Velopack swap is the third, and
-/// arrives at [§G](../../../plan/G-updates.md)").</b> It shipped and it never
+/// arrives with the update path").</b> It shipped and it never
 /// arrived, because the swap is <c>force_stop_package</c> — upstream's own
 /// binary, which does not call into this. The third caller was
 /// <see cref="InstanceDirectory"/> all along, and it was using the framework

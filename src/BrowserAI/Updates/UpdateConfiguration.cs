@@ -17,14 +17,13 @@ namespace BrowserAI.Updates;
 /// been published and what gets published is still open**. Writing a URL here
 /// before one exists would produce a build that checks a 404 on every start and
 /// reports *"no update available"*, which is
-/// [precisely the failure §G is most afraid of](../../../plan/G-updates.md) wearing
-/// the costume of a working feature. A build with no feed configured says so
+/// [precisely the failure that bricked a shipped fleet](../../../kb/packaging/velopack.md#1-the-channel-must-not-go-in-the-feed-url),
+/// wearing the costume of a working feature. A build with no feed configured says so
 /// once, at Debug, and never asks.
 /// </para>
 /// <para>
-/// <b>This is the one bullet of
-/// [step 19's done-test](../../../plan/build-order.md#19-velopack-package-update-roll-back)
-/// that is deferred</b> — *the real production feed URL resolves over HTTP and
+/// <b>This is the one release-gate assertion that is deferred</b> — *the real
+/// production feed URL resolves over HTTP and
 /// returns a manifest* — and it is deferred rather than faked. A local HTTP
 /// server would compose paths the same way and pass, while proving nothing about
 /// the URL nobody has chosen yet.
@@ -51,8 +50,10 @@ internal static class UpdateConfiguration
     /// version it already is.
     /// </para>
     /// <para>
-    /// <b>The channel is NOT in this URL, and must never be.</b>
-    /// <c>plan/G-updates.md</c> calls that its worst hazard because it is
+    /// <b>The channel is NOT in this URL, and must never be.</b> It is the worst
+    /// of the Velopack hazards
+    /// ([kb](../../../kb/packaging/velopack.md#1-the-channel-must-not-go-in-the-feed-url))
+    /// because it is
     /// unrecoverable in the field: a client that cannot reach its feed cannot be
     /// told to roll back either. The channel goes in
     /// <c>UpdateOptions.ExplicitChannel</c>, which is asserted by a test that

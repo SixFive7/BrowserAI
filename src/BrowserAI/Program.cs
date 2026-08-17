@@ -65,8 +65,10 @@ internal static class Program
     /// <remarks>
     /// <para>
     /// <b>Corrected 2026-08-16 (previously "the argument the logon task's action
-    /// passes").</b> [The logon task is dropped](../../plan/build-order.md#16-the-stray-sweep),
-    /// so this argument has exactly one caller left and it is a
+    /// passes").</b> [The logon task is dropped](../../kb/windows/detection.md#the-logon-sweep-task) —
+    /// it cannot be registered from BrowserAI's own non-elevated token, measured
+    /// twice, for a minimal task definition as much as for ours — so this
+    /// argument has exactly one caller left and it is a
     /// <i>measurement</i> rather than a product path:
     /// [re-verification row 78](../../kb/README.md#re-verification-index) says to
     /// re-establish the sweep-pass census with <c>BrowserAI.exe --sweep</c> under
@@ -395,8 +397,8 @@ internal static partial class StartupLog
     /// version is recorded.
     /// </summary>
     /// <remarks>
-    /// <b>The version is here because the process log survives an update</b>
-    /// ([§E](../../plan/E-lifecycle.md)) — it lives outside <c>current\</c>, so
+    /// <b>The version is here because the process log survives an update</b> —
+    /// it lives outside <c>current\</c>, which an update replaces wholesale, so
     /// the log of a machine that updated itself carries both versions and the
     /// moment it changed. Without it, *"which build was running when this
     /// happened"* is unanswerable for every past run.

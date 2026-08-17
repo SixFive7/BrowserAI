@@ -25,15 +25,18 @@ namespace BrowserAI.Sessions;
 /// condition and compares what came back against this file, then asserts that
 /// <i>every</i> public method was matched by one of those provocations. A row
 /// nobody can reach is documentation rather than behaviour, and this is the check
-/// that says so. One row of §H.4's catalogue is therefore deliberately
-/// <b>absent</b> rather than written and unreachable: the Firefox profile dialog
-/// belongs to [step 17](../../../plan/build-order.md#17-firefox).
-/// Provisioning-in-progress and the unattributable stray arrived at
-/// [step 15](../../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser),
-/// which is the first build that can emit either — the first because nothing
-/// downloaded a browser before it, and the second because
-/// <c>browserai_reinstall_browser</c> is the first thing that has to ask whether
-/// one is running.
+/// that says so — which is why a row is written here only once something can
+/// provoke it, and never in advance.
+/// </para>
+/// <para>
+/// <b>Corrected 2026-08-17 (previously "One row of §H.4's catalogue is therefore
+/// deliberately absent rather than written and unreachable: the Firefox profile
+/// dialog belongs to step 17").</b> Nothing is absent now.
+/// <see cref="FirefoxProfileLocked"/> exists and <c>FirefoxTests</c> provokes it,
+/// so the exception the sentence described has been closed rather than carried;
+/// what survives is the rule that produced it, stated above. The build-order step
+/// numbers it named were coordinates in a planning document that no longer
+/// exists, and <c>git blame</c> answers what they were for.
 /// </para>
 /// <para>
 /// ⚠️ <b><c>purpose</c> is a channel between agents.</b> It is free text one

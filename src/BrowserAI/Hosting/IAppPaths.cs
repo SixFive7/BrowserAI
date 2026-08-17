@@ -90,8 +90,10 @@ internal interface IAppPaths
     /// <remarks>
     /// <para>
     /// A sibling of <c>current\</c> for the same reason the log is, and per-run
-    /// rather than shared, because [the child's working directory is the output
-    /// root](../../../plan/F-artifacts.md) and two runs must not write into one.
+    /// rather than shared, because the child's working directory <i>is</i> the
+    /// output root — upstream resolves a relative <c>filename</c> against the
+    /// child's cwd, so a bare <c>foo.png</c> lands inside this tree by
+    /// construction — and two runs must not write into one.
     /// </para>
     /// <para>
     /// <b>Corrected again 2026-08-16 (previously "The replacement is step 12's,
@@ -104,10 +106,10 @@ internal interface IAppPaths
     /// be answerable before any session exists, and the child that answers it
     /// needs a working directory and a profile of its own. The second is
     /// <b>every session's generated config</b>, which is a per-run artifact
-    /// rather than part of a session's durable state — and
-    /// [§C](../../../plan/C-sessions.md#the-session-directory-is-the-identity) keeps
-    /// the session root to <c>lock.json</c> and the session log, so a third file
-    /// there is out.
+    /// rather than part of a session's durable state — and no artifact is ever at
+    /// a session's root, so a third file there is out. See
+    /// <see cref="Sessions.SessionLayout"/> for what the root is allowed to hold
+    /// and why.
     /// </para>
     /// <para>
     /// <b>Corrected 2026-08-16 (previously "Sessions replace this at build-order

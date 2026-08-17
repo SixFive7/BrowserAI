@@ -27,7 +27,7 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>The handle is the mechanism, exactly as it is for a session directory</b>
-/// ([§D](../../../plan/D-locking.md)). Each run creates one file and holds it
+/// (<see cref="Sessions.SessionLock"/>). Each run creates one file and holds it
 /// <c>FileAccess.ReadWrite, FileShare.Read</c>: another process asking for write
 /// access is refused by the kernel, and a process that was killed, crashed or
 /// was terminated by a job object releases it anyway. A pid file would need a

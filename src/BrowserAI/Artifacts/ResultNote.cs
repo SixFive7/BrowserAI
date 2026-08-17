@@ -14,10 +14,14 @@ namespace BrowserAI.Artifacts;
 /// <remarks>
 /// <para>
 /// <b>This is where the byte-identity guarantee is made precise rather than
-/// weakened.</b> Step 9 established that a <c>tools/call</c> answer reaches the
-/// caller as the exact bytes the child wrote, and [§F](../../../plan/F-artifacts.md)
-/// requires every routed artifact's answer to carry the path it was routed to —
-/// which is, on its face, editing the result. The two are reconciled by
+/// weakened.</b> Lossless passthrough requires that a <c>tools/call</c> answer
+/// reach the caller as the exact bytes the child wrote; artifact routing
+/// requires every routed artifact's answer to carry the path it was routed to,
+/// because relocating a file while telling the model otherwise is a new silent
+/// failure introduced by the fix for an old one. Both are asserted, by
+/// <c>LosslessPassthroughTests</c> and <c>ArtifactRoutingTests</c>, and neither
+/// may be narrowed — the second is, on its face, editing the result. The two are
+/// reconciled by
 /// splicing: the child's <c>content</c> array is found by token offset and one
 /// element is inserted immediately before its closing bracket, so every byte the
 /// child produced survives in its original order and its original escaping, and

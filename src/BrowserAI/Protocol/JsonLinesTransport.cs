@@ -414,11 +414,12 @@ internal abstract class JsonLinesTransport : TransportBase
     /// aimed at a child would be a frame it has no pending request for.
     /// </para>
     /// <para>
-    /// The wording is deliberately transport-level. <b>The model-facing error
-    /// catalogue is</b>
-    /// <see href="../../../plan/H-model-surface.md">§H.4</see><b>'s and arrives
-    /// at step 13</b>; this is the one string that cannot wait for it, because
-    /// the alternative is a caller that hangs.
+    /// The wording is deliberately transport-level. <b>Every string a model is
+    /// meant to act on lives in <see cref="Sessions.SessionErrors"/></b>, where
+    /// each one is provoked by a real condition and checked by
+    /// <c>ErrorCatalogueTests</c>. This is the one string that cannot live there:
+    /// it is emitted below the session layer, by a transport that has no session
+    /// to name, and the alternative to emitting it is a caller that hangs.
     /// </para>
     /// </remarks>
     private async ValueTask AnswerUnparseableFrameAsync(ReadOnlySequence<byte> frame)

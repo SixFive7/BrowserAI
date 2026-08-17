@@ -12,31 +12,33 @@ namespace BrowserAI.Sessions;
 /// <remarks>
 /// <para>
 /// Everything a session accumulates is a subfolder, so the files at the root are
-/// the three that describe it — <c>lock.json</c>, the session log, and
-/// [§F](../../../plan/F-artifacts.md)'s <c>session.json</c> — and artifacts get a
-/// typed home instead of scattering among Chromium's internals.
+/// the three that describe it — <c>lock.json</c>, the session log, and the
+/// artifact index <c>session.json</c> — and artifacts get a typed home instead of
+/// scattering among Chromium's internals.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-16 (previously: "<c>lock.json</c> is the only file at
 /// the root and everything else is a subfolder").</b> That was true when this
 /// file was written and stopped being true twice: the session log landed beside
-/// it at step 12, and <c>session.json</c> — which [§F](../../../plan/F-artifacts.md)
-/// puts in the session folder by name — lands beside both at step 14. The claim
-/// it was making is still worth keeping and is restated above: no artifact is
-/// ever at the root, so the files that <i>are</i> there all describe the session
-/// rather than being things it produced.
+/// it once sessions had a lifetime to log, and <c>session.json</c> — which
+/// <see cref="Artifacts.ArtifactRouter"/> writes into the session folder by name
+/// — landed beside both once artifacts were routed. The claim it was making is
+/// still worth keeping and is restated above: <b>no artifact is ever at the
+/// root</b>, so the files that <i>are</i> there all describe the session rather
+/// than being things it produced. The generated Playwright config stays
+/// forbidden here for the same reason — it is a per-run artifact and lives in the
+/// run's instance directory.
 /// </para>
 /// <para>
 /// <b>The session log is deliberately not created here.</b>
-/// [§E](../../../plan/E-lifecycle.md) puts it at <c>&lt;session-dir&gt;\browserai.log</c>,
-/// beside <c>lock.json</c>, and it holds <i>anything a session did</i>. At this
-/// step a session does exactly one thing — it gets locked — and there is no
-/// session lifetime to log into it, so a file created here and written by
-/// nothing would be [a mechanism that only looks like
-/// one](../Logging/ProcessLog.cs). It lands with the session tools. What this
-/// step does provide is the half that is real today: every log record written
-/// while a lock is held carries the session, through
-/// <see cref="SessionLock"/>'s logging scope.
+/// <see cref="Logging.SessionLogFile"/> puts it at
+/// <c>&lt;session-dir&gt;\browserai.log</c>, beside <c>lock.json</c>, and it
+/// holds <i>anything a session did</i> — so a file created by the layout and
+/// written by nothing would be [a mechanism that only looks like
+/// one](../Logging/ProcessLog.cs). It is created by the thing that writes it.
+/// What the layout does provide is the half that is real from the moment a
+/// directory is claimed: every log record written while a lock is held carries
+/// the session, through <see cref="SessionLock"/>'s logging scope.
 /// </para>
 /// </remarks>
 internal static class SessionLayout
@@ -63,8 +65,8 @@ internal static class SessionLayout
     /// 2026-08-16, 120 sessions per pass) — about a second per suite run, plus
     /// the same again reclaiming them. It also leaves ten empty directories in
     /// every session a caller ever creates, for generators they never used,
-    /// which is navigational noise in the tree
-    /// [§F](../../../plan/F-artifacts.md) exists to make navigable.
+    /// which is navigational noise in the tree the typed folders exist to make
+    /// navigable in the first place.
     /// </para>
     /// <para>
     /// The property that would have bought is not lost: the folder set is

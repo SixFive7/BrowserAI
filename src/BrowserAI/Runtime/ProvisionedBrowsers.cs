@@ -9,8 +9,10 @@ namespace BrowserAI.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>This list is the whole detection surface of
-/// [the stray sweep](../../../plan/build-order.md#16-the-stray-sweep).</b> A
+/// <b>This list is the whole detection surface of the stray sweep</b>
+/// (<see cref="Sessions.StraySweep"/>, and
+/// [kb](../../../kb/windows/detection.md#process-image-path--the-fully-documented-detection-path)
+/// for the measurement). A
 /// process is a candidate because its full image path is one of these strings
 /// and for no other reason — which is why the strings are computed from the
 /// resolved revision and the app-paths seam, and never typed as a literal. A

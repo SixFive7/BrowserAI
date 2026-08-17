@@ -36,7 +36,7 @@ namespace BrowserAI.Protocol;
 /// further back than it asks; the sentence describing a <c>Clear()</c> that does
 /// not happen was left behind by the move to <c>CreateProcessW</c> and stood for
 /// as long as it existed. Found 2026-08-17 by <c>HazardIndexTests</c>, which
-/// caught the same claim in <c>plan/hazards.md</c> naming a method
+/// caught the same claim in the hazard index naming a method
 /// (<c>DirectStdioClientTransport.BuildStartInfo</c>) that has never existed.
 /// </para>
 /// <para>
@@ -72,10 +72,11 @@ internal static class ChildEnvironment
     /// costs a class of failure that only appears on someone else's machine.
     /// </para>
     /// <para>
-    /// The proxy and CA names are required by
-    /// <c>plan/A-runtime.md</c>: without them a machine behind TLS inspection
-    /// cannot provision a browser at all, and SOCKS is unsupported on that path
-    /// regardless.
+    /// The proxy and CA names are inherited because without them a machine behind
+    /// TLS inspection cannot provision a browser at all — first-run provisioning
+    /// downloads 203.8 MB from three hosts, and SOCKS is unsupported on that path
+    /// regardless
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
     /// </para>
     /// </remarks>
     public static FrozenSet<string> InheritedWhenSet { get; } = new[]

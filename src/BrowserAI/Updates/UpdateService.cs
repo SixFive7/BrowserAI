@@ -36,9 +36,8 @@ internal enum UpdateOutcome
 /// cannot update is degraded, one that will not answer is broken.
 /// </para>
 /// <para>
-/// <b>Three independent timers, because one cannot do the job</b>
-/// ([§G](../../../plan/G-updates.md)). A single timeout either aborts a healthy
-/// slow link or hangs forever on a stalled one:
+/// <b>Three independent timers, because one cannot do the job.</b> A single
+/// timeout either aborts a healthy slow link or hangs forever on a stalled one:
 /// </para>
 /// <list type="number">
 ///   <item><description><see cref="AbsoluteBudget"/> — the whole download, however fast it is going.</description></item>

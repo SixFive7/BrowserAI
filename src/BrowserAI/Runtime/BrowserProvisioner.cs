@@ -24,8 +24,9 @@ internal enum ProvisioningState
 
     /// <summary>
     /// A download is running, here or in another BrowserAI process. Browser calls
-    /// are refused with [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue)
-    /// rather than blocked.
+    /// are refused with
+    /// <see cref="Sessions.SessionErrors.ProvisioningInProgress"/> rather than
+    /// blocked.
     /// </summary>
     Downloading,
 
@@ -119,11 +120,26 @@ internal sealed record ProvisioningTimers
 /// A caller that waits three minutes inside one tool call has had whatever
 /// timing it was managing corrupted, with nothing to read and no way to decide
 /// whether waiting is worth it. So <see cref="Ensure"/> returns immediately with
-/// <see cref="ProvisioningState.Downloading"/>, browser-needing calls are
-/// refused with [row 6](../../../plan/H-model-surface.md#h4-the-error-catalogue),
-/// and <c>browser_get_config</c> keeps working because it needs no browser. The
+/// <see cref="ProvisioningState.Downloading"/> and every upstream call is
+/// refused with <see cref="Sessions.SessionErrors.ProvisioningInProgress"/>,
+/// which names the download size and says the same call will work shortly. The
 /// same child then navigates once the install lands — no restart, because
 /// nothing about the child depended on the browser existing when it started.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-16 (previously "and <c>browser_get_config</c> keeps
+/// working because it needs no browser").</b> It does not. Measured twice
+/// against the child directly with an empty browsers root, it answers
+/// <c>isError: true</c> from <c>throwIfExecutableMissing</c> — it never
+/// <i>launches</i> a browser, which is why the round trip is cheap on a
+/// provisioned machine, but the executable has to exist
+/// ([kb](../../../kb/playwright/configuration.md#browser-provisioning)). So
+/// <b>every</b> upstream tool is refused meanwhile, that one included, and
+/// letting it through would have bought a worse answer rather than a working
+/// one. What keeps a downloading session inspectable is BrowserAI's <b>own</b>
+/// tools — <c>browserai_list</c>, <c>browserai_resume</c> and
+/// <c>browserai_set_purpose</c> all answer throughout, because none of them
+/// needs a browser.
 /// </para>
 /// <para>
 /// <b>Browsers live outside <c>current\</c>, resolved through
