@@ -312,6 +312,48 @@ browser-launch path. `[FLOATS]`
 > `[UNVERIFIED]` and re-stamp each at the next run. The numbers themselves are
 > carried forward exactly as written — none has been adjusted.
 
+**A real browser reaches MCP-ready in 0.9–1.2 s (Chromium) and 3.1–4.0 s
+(Firefox), against a 180 s default patience.** Measured 2026-08-17, **four runs
+of each family**, through the product's own job object and launcher: the clock
+starts when `CreateProcessW` returns for the launcher and stops when the driving
+script has completed `initialize`, `tools/list` and a `browser_navigate` against
+a real browser out of the provisioned tree, so it covers `node` start, `cli.js`
+start, browser launch and one navigation.
+
+| Browser | Time to MCP-ready | Processes in the job | Escapees | Survivors after an external kill |
+|---|---|--:|--:|--:|
+| Chromium 152.0.7977.8 (`chromium-1237`) | 932.7 · 977.3 · 996.0 · **1165.8 ms** | 10 · 11 · 10 · 11 | 0 | 0 |
+| Firefox 153.0 (`firefox-1539`) | 3069.6 · 3206.0 · 3511.3 · **3997.9 ms** | 10 each run | 0 | 0 |
+
+**Firefox is ~3.4× slower to first answer**, consistently, across every pair —
+which is the transferable half, and it is the same direction as
+[the cost ratios](../history.md) recorded from a different session. The absolute
+numbers are this machine's.
+
+**The headroom is the point, not the latency.** Playwright's own
+`DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT` is `3 * 60 * 1e3`, and the harness waits the
+same 180 s. The slowest observed run used **2.2%** of it. A launch timeout is
+therefore not a knob worth tuning, and a launch that approaches it is not slow —
+it is stuck, and should be read as a failure rather than as a machine having a
+bad day. `[MACHINE]` for the times and counts; `[FLOATS]` for the ratio and the
+headroom, both of which move with a browser revision.
+
+**Re-establish by running the suite.** `BrowserContainmentTests` records
+`readyMilliseconds` beside its containment counts **on every run, including the
+ones that pass** — which is deliberate: a bound can only be called too tight
+against a distribution, and a distribution cannot be reconstructed from the runs
+that failed.
+
+> **Recorded here rather than left in the test output, and the earlier reasoning
+> for leaving it out was wrong.** These numbers were measured before and kept out
+> of the knowledge base on the grounds that an entry marked as floating creates a
+> re-verification obligation. That is backwards: the obligation is the feature,
+> and this is the cheapest kind of row there is — the fact is asserted by a test
+> that already runs on every build, so the row costs a line and nothing else.
+> [Row 89](../re-verification.md) carries it. *(Written in words rather than in
+> the marker, which is the rule for prose about the convention: the counter reads
+> the token and cannot tell a mention from a stamp.)*
+
 **Child spawn costs ~300 ms.** That is the baseline a flat 5 s discovery probe
 would be paid against ([the protocol split](../mcp/protocol.md#the-protocol-split)), and the
 per-instance price of one node child per handle.

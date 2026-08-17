@@ -37,11 +37,12 @@ reading upstream source — together with enough provenance to re-establish it.
 | [`toolchain.md`](toolchain.md) | MSBuild, NuGet, npm, PowerShell, analyzers, git line endings and the test host — traps in the tooling that builds this, none of them about processes or browsers |
 | [`history.md`](history.md) | The legacy setup this project replaces, and corrections applied after the fact |
 
-One page is not an article and is maintained differently:
+Two pages are not articles and are maintained differently:
 
 | Page | What it is for |
 |---|---|
 | [`re-verification.md`](re-verification.md) | The **build gate**. Every `[FLOATS]` fact a version bump can silently invalidate, what would break it, and whether a test covers it. Read line by line at every upstream review; three of its numbers are asserted on every build |
+| [`not-established.md`](not-established.md) | The negative results, aggregated: what this project has explicitly **not** measured, and why. Read it before treating a gap here as an oversight — several of them are deliberate and will stay open |
 
 ## Conventions
 
