@@ -339,8 +339,8 @@ Four, each with the single sentence that unblocks it:
 | # | Section | The ask |
 |---|---|---|
 | 1 | A | **File the sandbox defect upstream from your own GitHub account**: at `@playwright/mcp` 0.0.79, `"launchOptions": { "chromiumSandbox": true }` in a config file parses, validates and is then discarded — only the `--sandbox` CLI flag enables the sandbox — so every configuration that sets the key believes it has a sandbox and does not. |
-| 2 | G | **Create and publish the release feed repository, then hand back its base URL**, so `UpdateConfiguration.ProductionBaseUrl` stops being `null` and the one `[Skip]`ped test can resolve a real manifest instead of blocking the first release by design. |
-| 3 | pre-release | **Cut and push the release tag** (or say which version to cut), because the derived version is a pre-release suffix until a tag exists and [item 9](PRE-RELEASE.md) blocks a release on exactly that. |
+| 2 | G | ✅ **Done 2026-08-17.** ~~Create and publish the release feed repository, then hand back its base URL.~~ The feed is GitHub Releases on this now-public repository, and `ProductionBaseUrl` is `releases/latest/download/` — the alias that redirects to the newest **non-prerelease**, so it never needs rewriting per version. Resolved over real HTTP: **200, one asset, SHA-256 matching the package byte for byte.** The `[Skip]` is gone. |
+| 3 | pre-release | ✅ **Done 2026-08-17.** ~~Cut and push the release tag.~~ **`v1.0.0`**, annotated and pushed. MinVer stamps `1.0.0` with no pre-release suffix and no `+sha` decoration, which is what makes it a release rather than a build. Suite went to **392 tests, 0 failed, 0 skipped** — the first time in this build with nothing deferred. |
 | 4 | stack | **Decide whether to adopt `Microsoft.Windows.CsWin32`**: the stack's own threshold — *"once a seventh Win32 API is needed"* — was passed long ago and stands at **45 `[LibraryImport]` declarations across 9 files**, so the choice is now between rewriting proven, measured interop onto a source generator and striking the threshold as a heuristic that was never a commitment. |
 
 ### (c) — deliberately deferred, by a decision already recorded

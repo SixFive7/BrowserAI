@@ -565,12 +565,53 @@ reasoning, come here for the queue.**
       will close against tests that now exist; some are upstream behaviours that
       cannot close at all and should say so.
 
-- [ ] **Four things only the maintainer can do**, each stated in one sentence in
-      [`PLAN.md`](PLAN.md#b--blocked-on-the-maintainer): file the sandbox defect
-      upstream, publish the release feed and hand back its URL, cut the release
-      tag, and decide on `Microsoft.Windows.CsWin32` now that the stack's own
-      *"once a seventh Win32 API is needed"* threshold stands at **45
-      `[LibraryImport]` declarations across 9 files**.
+- [ ] **Report the `chromiumSandbox` defect to `@playwright/mcp`, from the
+      maintainer's own account.** Measured against **0.0.79** on 2026-08-16 and
+      confirmed at build-order steps 7 and 12.
+
+      **The defect.** `"launchOptions": { "chromiumSandbox": true }` in a config
+      file is parsed, validated, and then **discarded**. Only the `--sandbox`
+      CLI flag enables the sandbox. So a configuration that sets the key
+      believes it has a sandbox and does not, and **nothing anywhere reports
+      it** — no warning, no error, no difference in any health signal. It is
+      this project's founding failure class, arriving from upstream, on a
+      security control.
+
+      **The cause, so the report does not need them to find it.** Upstream
+      declares both `--sandbox` and `--no-sandbox`, and commander gives
+      `sandbox` a default of **`false`** rather than leaving it `undefined`.
+      Read twice by parsing an empty argv through `tools.decorateMCPCommand`:
+      `opts.sandbox === false` while `opts.headless === undefined`. The CLI
+      stage merges **last**, so it always overwrites the file, which makes
+      `validateBrowserConfig`'s non-Linux `chromiumSandbox = true` branch
+      **unreachable**. The key cannot work, rather than happening not to —
+      which is why this is a report rather than a workaround.
+
+      **How to show it in two commands.** Launch with the key set in a config
+      file, then read the browser's **resolved command line** — not the config,
+      which reads back fine. `--no-sandbox` is present. BrowserAI's
+      `SandboxFlagTests` does exactly this and asserts the flag is absent from
+      **every** node child, because only the command line proves it.
+
+      **Why it needs the maintainer.** It is an account and a public report to
+      own, not a code change. **Not urgent for this product** — BrowserAI
+      already passes `--sandbox` on the command line and tests that it survives
+      to the browser — but it is a live silent failure for everyone else who
+      sets that key, and this project has the measurement in hand.
+
+- [x] ~~**Four things only the maintainer can do.**~~ **Two remain; two were
+      done on 2026-08-17.** Split out because a bundled row cannot be ticked.
+      **Done:** the release feed is live (GitHub Releases on the now-public
+      repository, `releases/latest/download/`, resolving HTTP 200 with a
+      manifest whose SHA-256 matches the package byte for byte), and the tag was
+      cut — **`v1.0.0`**, which took the suite to **392 tests, 0 failed, 0
+      skipped**. **Remaining:** the sandbox report above, and deciding on
+      `Microsoft.Windows.CsWin32` now that the stack's own *"once a seventh
+      Win32 API is needed"* threshold stands at **45 `[LibraryImport]`
+      declarations across 9 files** — the standing recommendation is to strike
+      the threshold as a heuristic that was never a commitment, because the
+      interop is written, measured, and is the backbone of the containment
+      guarantees.
 
 - [ ] **The reclaim pass's second bullet is unbuilt, and it is the only one
       left.** [testing](plan/testing.md) asks that *"anything the previous run
