@@ -23,7 +23,21 @@ namespace BrowserAI.Protocol;
 /// <b><c>ProcessStartInfo.Environment</c> arrives pre-populated with the
 /// inherited block and assignment merges into it</b>, so an allowlist that does
 /// not call <c>Clear()</c> first is a no-op that reads like a policy.
-/// <see cref="DirectStdioClientTransport"/> is the one caller and it clears.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-17 (previously "<c>DirectStdioClientTransport</c> is
+/// the one caller and it clears").</b> It does not clear, because there is
+/// nothing to clear: the child is never started through <c>ProcessStartInfo</c>
+/// at all. What <see cref="Build"/> returns is passed whole to
+/// <see cref="Interop.JobLauncher"/>, which writes it into the <c>CreateProcessW</c>
+/// environment block under <c>CREATE_UNICODE_ENVIRONMENT</c> — so the allowlist
+/// is the child's entire block <b>by construction</b> rather than by a call
+/// somebody has to remember. The hazard above is real and is closed one step
+/// further back than it asks; the sentence describing a <c>Clear()</c> that does
+/// not happen was left behind by the move to <c>CreateProcessW</c> and stood for
+/// as long as it existed. Found 2026-08-17 by <c>HazardIndexTests</c>, which
+/// caught the same claim in <c>plan/hazards.md</c> naming a method
+/// (<c>DirectStdioClientTransport.BuildStartInfo</c>) that has never existed.
 /// </para>
 /// <para>
 /// The four hazards this closes are all silent, and all measured:
