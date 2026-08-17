@@ -101,10 +101,10 @@ internal sealed class BrowserContainmentTests
     /// that is now load-bearing rather than an omission.</b> Until 2026-08-17 the
     /// preflight's machine-wide reading was scoped to the browsers root rather
     /// than to the Firefox executable, so every Chromium in the suite could
-    /// falsify it — and the honest repair would have been to serialise fifteen
-    /// unrelated tests behind one Firefox assertion. It was scoped instead. This
-    /// group holds exactly the tests that start a Firefox or run a sweep, and it
-    /// must not grow to hold the Chromium ones.
+    /// falsify it — and the honest repair would have been to serialise seven
+    /// unrelated launch sites behind one Firefox assertion. It was scoped
+    /// instead. This group holds exactly the tests that start a Firefox or run a
+    /// sweep, and it must not grow to hold the Chromium ones.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>

@@ -44,9 +44,10 @@ namespace BrowserAI.Tests;
 /// executable, never to the browsers root.</b> The root holds Chromium too, and
 /// <see cref="BrowserProcesses.RunningFrom"/> is a prefix match on it — so a
 /// "did a browser appear" question asked of the root is answered by every
-/// Chromium renderer, GPU and utility process that about fifteen unrelated
-/// tests in this suite start, four at a time. That is a Firefox assertion
-/// failing for a Chromium reason, and it was a 2-in-5 flake until 2026-08-17.
+/// Chromium renderer, GPU and utility process that the seven unrelated launch
+/// sites elsewhere in this suite start, four tests at a time. That is a Firefox
+/// assertion failing for a Chromium reason, and it was a 4-in-15 flake until
+/// 2026-08-17.
 /// The <c>stray-sweep</c> group serialises the tests that start a <i>Firefox</i>
 /// and deliberately does not constrain the ones that start a Chromium; the
 /// scoping is what makes that division correct rather than lucky. The full
@@ -164,12 +165,21 @@ internal sealed class FirefoxTests
         // of the browsers ROOT it also caught every CHROMIUM on the machine, and
         // `BrowserProcesses.RunningFrom` is a prefix match on that root, so it
         // matched Chromium's browser process and each of its GPU, renderer and
-        // utility helpers as they appeared. About fifteen tests in this suite
-        // drive a real Chromium, none of them is in this test's constraint group,
-        // and the suite runs four at a time -- so any Chromium coming up during
-        // the ~600 ms this test is measuring made the difference non-empty and
-        // failed an assertion about Firefox for a reason that had nothing to do
-        // with Firefox.
+        // utility helpers as they appeared.
+        //
+        // Seven places in this suite launch a real Chromium out of that root, and
+        // they are counted rather than estimated because the first version of
+        // this note guessed: `SliceRun`'s shared capture (serving eight tests),
+        // `SessionRun`'s shared capture (twelve), the three `BrowserIdleTimerTests`
+        // arms that drive a live browser, `FirstRunProvisioningTests`, and
+        // `BrowserContainmentTests`' Chromium arm. Everything else that looks
+        // like a browser test drives a FAKE child through `RigSessionEnvironment`
+        // and starts nothing. Not one of those seven is in this test's constraint
+        // group -- the eighth real launcher, `StraySweepTests`' interactive-session
+        // arm, is -- and the suite runs four tests at a time. So any Chromium
+        // coming up during the ~600 ms this test is measuring made the difference
+        // non-empty and failed an assertion about Firefox for a reason that had
+        // nothing to do with Firefox.
         //
         // Measured 2026-08-17, on an unmodified tree: two failures in five full
         // runs, and with the pids resolved to image paths the intruder was
@@ -180,9 +190,9 @@ internal sealed class FirefoxTests
         // tests that start one are serialised now"; that was true and it was only
         // half the set. Serialising the Firefox launchers never constrained the
         // Chromium ones, and nothing should: they are unrelated to this
-        // assertion, and adding fifteen tests to a `NotInParallel` group to fix a
-        // Firefox test would cost the suite its parallelism to answer a question
-        // it should not have been asking.
+        // assertion, and pulling seven more launch sites into a `NotInParallel`
+        // group to fix a Firefox test would cost the suite its parallelism to
+        // answer a question it should not have been asking.
         //
         // So the two readings now divide honestly. In-job: any image, exact,
         // catches anything this test started. Machine-wide: Firefox only, catches
