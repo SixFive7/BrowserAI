@@ -3,6 +3,9 @@
 
 # The MCP protocol, and the client at the other end
 
+**Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · `ModelContextProtocol` 2.2.0 · MCP protocol revision `2025-11-25` · Windows 11 Pro 26200.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 ## The protocol split
 
 **`@playwright/mcp` 0.0.79 caps at protocol `2025-11-25`.** The child never

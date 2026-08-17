@@ -3,6 +3,9 @@
 
 # Payload sizes, first-run provisioning and timings
 
+**Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · `ffmpeg` revision 1011 · `winldd` revision 1007 · Node v24.19.0 LTS · Windows 11 Pro 26200.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 ## Component sizes
 
 Measured during the 2026-08-13 research. Every row is a version-specific artifact

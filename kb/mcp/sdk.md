@@ -3,6 +3,9 @@
 
 # The .NET MCP SDK, as a proxy has to drive it
 
+**Versions in force** unless an entry says otherwise: `ModelContextProtocol` **2.2.0** (1.4.1 where an entry says so) · `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · .NET SDK 10.0.400, runtime and ILC 10.0.11 · Windows 11 Pro 26200.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 ## SDK behaviours a proxy must work around
 
 All read from the shipped `ModelContextProtocol` package. `[FLOATS]`
@@ -302,7 +305,9 @@ from another assembly can reach `Name`, `IsConnected`, `MessageReader`,
 **not** the logger or the sensitive-message logging helper — so it carries its
 own `ILogger` and takes the `ILoggerFactory` twice. This one cannot fail
 silently, which is why it has no re-verification row: a change makes the build
-red or makes a field redundant. `[FLOATS]`
+red or makes a field redundant. That is
+[the stated exemption](../re-verification.md#a-floats-entry-with-no-row-the-one-rule),
+claimed here in place rather than left as a gap. `[FLOATS]`
 
 **A `RequestContext<T>.Params` is nullable and the tool handlers are two
 delegates.** `McpServerOptions.Handlers` is an `McpServerHandlers` with
@@ -539,7 +544,9 @@ response that is never sent takes its payload with it rather than pinning a
 megabyte of screenshot. Like
 [the `TransportBase.Logger` entry](#added-2026-08-16--writing-the-two-transports-at-220),
 this one has **no re-verification row on purpose**: a change here makes the build
-red or makes a workaround redundant, and neither is silent. `[FLOATS]`
+red or makes a workaround redundant, and neither is silent — which is
+[the stated exemption](../re-verification.md#a-floats-entry-with-no-row-the-one-rule),
+claimed in place. `[FLOATS]`
 
 **NativeAOT stays clean with the passthrough in it, including
 `Utf8JsonWriter.WriteRawValue` and `Utf8JsonReader` token-offset slicing.**

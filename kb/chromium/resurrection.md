@@ -3,6 +3,9 @@
 
 # Browser resurrection after a reboot
 
+**Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · system Google Chrome 151.0.7922.138 · `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 Measured 2026-08-15. Harness: `.work/restart-measure/RestartProbe.exe`.
 
 > ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously: the whole of this

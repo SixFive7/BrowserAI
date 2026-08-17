@@ -3,6 +3,9 @@
 
 # Velopack and the update path
 
+**Versions in force** unless an entry says otherwise: Velopack and `vpk` **1.2.0** (0.0.1298 where an entry says so) · MinVer **7.0.0** · .NET SDK 10.0.400, runtime and ILC 10.0.11 · Windows 11 Pro 26200.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 Read from Velopack **1.2.0** and its Rust binaries unless noted. `[FLOATS]` —
 this is a floating dependency like any other.
 

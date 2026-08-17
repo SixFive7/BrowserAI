@@ -3,6 +3,9 @@
 
 # Job objects and process containment
 
+**Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · Node **v24.19.0 LTS** (the bundled runtime) and **26.7.0** (libuv 1.52.1, the one the 2026-08-15 measurements ran on) · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · .NET SDK 10.0.400, runtime 10.0.11.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 How Windows job objects hold a process tree, what can escape one, and what a
 supervisor has to do to make "kill the parent and nothing survives" true. The
 process-level facts this rests on — startup, stdio and the interop surface — are

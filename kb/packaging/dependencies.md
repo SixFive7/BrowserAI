@@ -3,6 +3,9 @@
 
 # Dependencies: provenance, cost and payload licensing
 
+**Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · `ModelContextProtocol` 2.2.0 · Velopack 1.2.0 · Node v24.19.0 LTS · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · `chromium-headless-shell` 1237 · `ffmpeg` 1011 · `winldd` 1007.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 ## Package provenance, as looked up
 
 **`ModelContextProtocol` 2.2.0 was latest as of 2026-08-13**, Apache-2.0, 23.6M

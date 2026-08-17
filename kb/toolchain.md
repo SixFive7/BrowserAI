@@ -3,6 +3,9 @@
 
 # The build toolchain: MSBuild, NuGet, npm, analyzers and git
 
+**Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · .NET SDK **10.0.302** and **10.0.400**, runtime **10.0.11** · TUnit **1.65.0** · `Microsoft.Testing.Platform` **2.3.3** · npm **11.19.0** · PowerShell **7** · `Microsoft.CodeAnalysis.BannedApiAnalyzers` as resolved by the build.
+Measured on [the reference machine](README.md#the-reference-machine).
+
 Traps in the tooling that builds this kind of product rather than in the product
 itself. Nothing here is about processes or about browsers; it is here because
 every one of these cost a build, and most of them fail quietly.

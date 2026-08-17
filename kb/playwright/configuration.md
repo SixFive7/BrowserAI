@@ -3,6 +3,9 @@
 
 # Upstream configuration facts
 
+**Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05, read from the resolved bundle · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · Windows 11 Pro 26200.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 All `[FLOATS]`, all read from the shipped
 `playwright-core/lib/coreBundle.js` or the shipped binaries unless noted.
 

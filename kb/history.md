@@ -3,6 +3,9 @@
 
 # History: the legacy setup, and corrections
 
+**No upstream version applies to this article.** Everything here is a record of what was on one machine on the dates given, which is why it is all `[MACHINE]`; there is nothing an upstream release could invalidate.
+Measured on [the reference machine](README.md#the-reference-machine).
+
 ## The legacy setup and this machine
 
 Everything here is `[MACHINE]`. It is motivation for the project, and none of it

@@ -3,6 +3,9 @@
 
 # Processes: stdio, files and the interop surface
 
+**Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · .NET SDK 10.0.400, runtime 10.0.11 · `Serilog.Sinks.Console` 3.1.2 · `Microsoft.Extensions.Logging` 10.0.x · `Microsoft.Windows.CsWin32` 0.3.298.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 Measured facts about how Windows starts a process, what its standard streams and
 exit code really do, how a file write becomes durable, and the Win32 interop
 surface a supervisor needs to drive all three. Containment is in

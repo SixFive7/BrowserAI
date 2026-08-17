@@ -3,6 +3,9 @@
 
 # The tool surface and the artifacts it writes
 
+**Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · Windows 11 Pro 26200.
+Measured on [the reference machine](../README.md#the-reference-machine).
+
 ## The tool surface and the package shape
 
 Read from the shipped tree during the 2026-08-13 feasibility research unless a
