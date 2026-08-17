@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Tests.Harness;
 
@@ -147,13 +148,23 @@ internal sealed class JobContainmentTests
         var launcher = scope.Launch(
             ProbePath,
             scratch.Path,
-            ["job-launcher", scratch.Path, readyFile, command, .. arguments.Select(argument => argument.Replace("{ready}", readyFile, StringComparison.Ordinal))]);
+            [
+                "job-launcher",
+                scratch.Path,
+                readyFile,
+                // One budget: the launcher's ready-wait is this test's patience.
+                // It used to be a 60 s constant inside the probe, under a host
+                // advertising 90 s -- see JobProbe.Launcher's remarks.
+                ReportPatience.TotalSeconds.ToString(CultureInfo.InvariantCulture),
+                command,
+                .. arguments.Select(argument => argument.Replace("{ready}", readyFile, StringComparison.Ordinal)),
+            ]);
 
         // Recorded now, while the process is certainly the one we started. The
         // pair (pid, creation time) is the identity from here on.
         var launcherCreated = ProcessIdentity.CreationTimeOf(launcher.Id);
 
-        await WaitForFileAsync(donePath, ReportPatience);
+        await LauncherWait.ForDoneAsync(donePath, ReportPatience, scratch.Path, launcher.Id, launcherCreated);
 
         var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "report.json")))!;
         var walk = report["walk"]!.AsArray();
@@ -225,20 +236,4 @@ internal sealed class JobContainmentTests
         }
     }
 
-    private static async Task WaitForFileAsync(string path, TimeSpan patience)
-    {
-        var deadline = Stopwatch.StartNew();
-
-        while (deadline.Elapsed < patience)
-        {
-            if (File.Exists(path))
-            {
-                return;
-            }
-
-            await Task.Delay(50);
-        }
-
-        throw new TimeoutException($"The launcher never wrote '{path}'.");
-    }
 }

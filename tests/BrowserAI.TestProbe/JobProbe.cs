@@ -55,18 +55,45 @@ internal static partial class JobProbe
     private const uint JobObjectLimitSilentBreakawayOk = 0x00001000;
     private const int JobObjectExtendedLimitInformationClass = 9;
 
+    // The three evidence files the launcher writes into its output directory.
+    // Spelled here and nowhere else: the host does not name them, it inlines
+    // every small file it finds in the tree when it reports a failure, so
+    // renaming one here cannot silently drop it from the failure message.
+    private const string ChildStandardOutputFile = "child-stdout.log";
+    private const string ChildStandardErrorFile = "child-stderr.log";
+    private const string LauncherErrorFile = "launcher-error.txt";
+
     private static readonly HashSet<int> EverInJob = [];
 
     /// <summary>
     /// Creates a job with the product's own code, starts a child in it, proves
     /// what is inside it, and then waits to be killed.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b><paramref name="readyPatience"/> comes from the host and is not a
+    /// constant here, because two nested patiences is how the tighter one
+    /// silently becomes the real bound.</b> This used to wait 60 s regardless,
+    /// under a host that advertised 180 s for exactly the case the comment on it
+    /// names — "a cold browser on a loaded machine is the normal reason this is
+    /// slow". A launcher that gives up at a third of that makes the host's number
+    /// a decoration, and the failure it produces is reported by the host two
+    /// minutes later, wearing the host's number. Measured 2026-08-17: a Firefox
+    /// launch that failed at t=60 s was reported as a 3-minute timeout, which
+    /// reads as a budget being too tight rather than as a launch that never
+    /// happened. One budget, named by the caller.
+    /// </remarks>
     /// <param name="outputDirectory">Where the report and the done marker are written.</param>
     /// <param name="readyFile">The file the child writes once its own tree is up.</param>
+    /// <param name="readyPatience">How long the child gets to report, which is the host's whole budget.</param>
     /// <param name="command">The executable to start inside the job.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>Never, on the happy path: the process parks until it is terminated.</returns>
-    public static int Launcher(string outputDirectory, string readyFile, string command, IReadOnlyList<string> arguments)
+    public static int Launcher(
+        string outputDirectory,
+        string readyFile,
+        TimeSpan readyPatience,
+        string command,
+        IReadOnlyList<string> arguments)
     {
         _ = Directory.CreateDirectory(outputDirectory);
 
@@ -85,12 +112,44 @@ internal static partial class JobProbe
 
         using var process = JobLauncher.Start(job, command, arguments, outputDirectory, ChildEnvironment.Build());
 
-        // The child's own stdio is a pipe nobody is draining in this process;
-        // reading it here keeps a chatty child from blocking on a full buffer.
-        Drain(process.StandardOutput);
-        Drain(process.StandardError);
+        // ⚠️ Recorded rather than discarded, and that is the whole difference
+        // between a diagnosable failure and a three-minute mystery. This used to
+        // read the two pipes and throw the bytes away -- which kept a chatty
+        // child off a full buffer and left the host, when the child never came
+        // up, with nothing to read but "the launcher never wrote 'done'" naming
+        // a scratch tree the test then deletes. Measured 2026-08-17: that is
+        // exactly how a Firefox launch failure presented.
+        Drain(process.StandardOutput, Path.Combine(outputDirectory, ChildStandardOutputFile));
+        Drain(process.StandardError, Path.Combine(outputDirectory, ChildStandardErrorFile));
 
-        WaitForFile(readyFile, TimeSpan.FromSeconds(60));
+        // Measured on every run, not only on the failing ones: the distribution
+        // is what says whether a bound is too tight or whether something is
+        // broken, and it cannot be reconstructed from the runs that failed.
+        var readyClock = Stopwatch.StartNew();
+
+        try
+        {
+            WaitForFile(readyFile, readyPatience);
+        }
+        catch (TimeoutException failure)
+        {
+            // Written before the throw, because the throw kills this process and
+            // KILL_ON_JOB_CLOSE then takes the whole tree with it -- so this is
+            // the last moment at which anything can say what happened.
+            File.WriteAllText(
+                Path.Combine(outputDirectory, LauncherErrorFile),
+                $"{failure.Message}{Environment.NewLine}"
+                + $"The child had{(process.HasExited ? string.Empty : " not")} exited"
+                + (process.HasExited ? $" with code {process.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"}" : string.Empty)
+                + $". Job members at the timeout: {string.Join(", ", job.ProcessIds())}",
+                new UTF8Encoding(false));
+
+            throw;
+        }
+        finally
+        {
+            readyClock.Stop();
+        }
 
         // Descendants a browser or a runtime starts asynchronously -- renderers,
         // GPU, crashpad -- appear after the child reports ready.
@@ -161,6 +220,8 @@ internal static partial class JobProbe
         {
             ["launcherPid"] = Environment.ProcessId,
             ["rootChildPid"] = process.Id,
+            ["readyMilliseconds"] = readyClock.Elapsed.TotalMilliseconds,
+            ["readyPatienceMilliseconds"] = readyPatience.TotalMilliseconds,
             ["limitFlags"] = job.LimitFlags,
             ["uiRestrictions"] = job.UiRestrictions,
             ["handleIsInheritable"] = job.HandleIsInheritable,
@@ -355,15 +416,34 @@ internal static partial class JobProbe
         }
     }
 
-    private static void Drain(Stream stream) =>
+    /// <summary>
+    /// Drains one of the child's pipes into a file beside the report.
+    /// </summary>
+    /// <remarks>
+    /// The draining is what keeps a chatty child off a full pipe buffer; the
+    /// file is what makes a launch that never came up readable afterwards. Both
+    /// matter, and the version that only drained cost a three-minute failure
+    /// with no evidence in it.
+    /// </remarks>
+    /// <param name="stream">The pipe.</param>
+    /// <param name="path">Where to record what came out of it.</param>
+    private static void Drain(Stream stream, string path) =>
         _ = Task.Run(async () =>
         {
             var buffer = new byte[4096];
 
-            while (await stream.ReadAsync(buffer).ConfigureAwait(false) > 0)
+            using var file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+
+            int read;
+
+            while ((read = await stream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
             {
-                // Discarded on purpose: what the child says is not this test's
-                // subject, but a full pipe buffer would stop it saying anything.
+                await file.WriteAsync(buffer.AsMemory(0, read)).ConfigureAwait(false);
+
+                // Flushed per chunk on purpose: this process is killed from
+                // outside at the end of every successful run, and buffered
+                // evidence is evidence that is never written.
+                await file.FlushAsync().ConfigureAwait(false);
             }
         });
 

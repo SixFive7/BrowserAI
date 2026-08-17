@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
@@ -87,11 +88,24 @@ internal sealed class BrowserContainmentTests
         await RunAsync("chromium", BrowserAiPaths.ExpectedChromiumExecutable);
 
     /// <remarks>
-    /// <b>Serialised with the other tests that start a real Firefox</b> — under the sweep group, which is the one constraint key a test may carry — because
-    /// <see cref="FirefoxTests"/>' preflight
-    /// test asserts that <i>no</i> Firefox process appeared while it ran, and a
-    /// second test launching one in parallel makes that reading of the machine
-    /// wrong for the harness's reasons rather than the product's.
+    /// <para>
+    /// <b>Serialised with the other tests that start a real Firefox</b> — under
+    /// the sweep group, which is the one constraint key a test may carry —
+    /// because <see cref="FirefoxTests"/>' preflight test asserts that <i>no</i>
+    /// Firefox process appeared while it ran, and a second test launching one in
+    /// parallel makes that reading of the machine wrong for the harness's reasons
+    /// rather than the product's.
+    /// </para>
+    /// <para>
+    /// <b>The Chromium arm above is deliberately <i>not</i> in that group, and
+    /// that is now load-bearing rather than an omission.</b> Until 2026-08-17 the
+    /// preflight's machine-wide reading was scoped to the browsers root rather
+    /// than to the Firefox executable, so every Chromium in the suite could
+    /// falsify it — and the honest repair would have been to serialise fifteen
+    /// unrelated tests behind one Firefox assertion. It was scoped instead. This
+    /// group holds exactly the tests that start a Firefox or run a sweep, and it
+    /// must not grow to hold the Chromium ones.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -144,6 +158,9 @@ internal sealed class BrowserContainmentTests
                 "job-launcher",
                 scratch.Path,
                 readyFile,
+                // The launcher's ready-wait is this test's patience and nothing
+                // else, so there is one budget rather than a hidden tighter one.
+                ReportPatience.TotalSeconds.ToString(CultureInfo.InvariantCulture),
                 RepositoryPayload.Layout.NodeExecutable,
                 driver,
                 readyFile,
@@ -156,7 +173,7 @@ internal sealed class BrowserContainmentTests
         // pair (pid, creation time) is the identity from here on.
         var launcherCreated = ProcessIdentity.CreationTimeOf(launcher.Id);
 
-        await WaitForFileAsync(donePath, ReportPatience, scratch.Path);
+        await LauncherWait.ForDoneAsync(donePath, ReportPatience, scratch.Path, launcher.Id, launcherCreated);
 
         var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(scratch.Path, "report.json")))!;
         var walk = report["walk"]!.AsArray();
@@ -279,10 +296,35 @@ internal sealed class BrowserContainmentTests
         // assertions above are the gate; this is the evidence, and a measurement
         // recorded in a document with no reproducible source is the tally this
         // project keeps having to correct.
-        Record(browser, walk.Count, (int)report["escapees"]!, survivors.Count, fromOurRoot.Count, registered.Count);
+        Record(
+            browser,
+            walk.Count,
+            (int)report["escapees"]!,
+            survivors.Count,
+            fromOurRoot.Count,
+            registered.Count,
+            (double)report["readyMilliseconds"]!,
+            (double)report["readyPatienceMilliseconds"]!);
     }
 
-    private static void Record(string browser, int processes, int escapees, int survivors, int fromOurRoot, int restartRegistered)
+    /// <remarks>
+    /// ⚠️ <b><c>readyMilliseconds</c> is recorded on every run, including the
+    /// ones that pass, and that is the point of it.</b> A bound can only be
+    /// called too tight against a distribution, and a distribution cannot be
+    /// reconstructed from the runs that failed. Measured 2026-08-17 on this
+    /// machine: unloaded, this whole test is 5.3-5.7 s over eight consecutive
+    /// runs -- the launcher's ready-wait is a small fraction of that, against a
+    /// patience of 180 s.
+    /// </remarks>
+    private static void Record(
+        string browser,
+        int processes,
+        int escapees,
+        int survivors,
+        int fromOurRoot,
+        int restartRegistered,
+        double readyMilliseconds,
+        double readyPatienceMilliseconds)
     {
         var summary = new JsonObject
         {
@@ -293,6 +335,8 @@ internal sealed class BrowserContainmentTests
             ["processesRunningFromOurBrowsersRoot"] = fromOurRoot,
             ["processesRegisteredForRestart"] = restartRegistered,
             ["profileDeletedCleanly"] = true,
+            ["readyMilliseconds"] = readyMilliseconds,
+            ["readyPatienceMilliseconds"] = readyPatienceMilliseconds,
             ["utc"] = DateTimeOffset.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
         };
 
@@ -479,21 +523,4 @@ internal sealed class BrowserContainmentTests
         }
     }
 
-    private static async Task WaitForFileAsync(string path, TimeSpan patience, string scratch)
-    {
-        var deadline = Stopwatch.StartNew();
-
-        while (deadline.Elapsed < patience)
-        {
-            if (File.Exists(path))
-            {
-                return;
-            }
-
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException(
-            $"The launcher never wrote '{path}' within {patience.TotalSeconds:F0} s. Scratch tree: {scratch}");
-    }
 }

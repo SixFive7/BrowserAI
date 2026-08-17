@@ -39,6 +39,19 @@ namespace BrowserAI.Tests;
 /// maintainer's own <c>firefox.exe</c> out of <c>C:\Program Files</c>, and they
 /// are the reason the rule exists.
 /// </para>
+/// <para>
+/// ⚠️ <b>A machine-wide reading in a Firefox test must be scoped to the Firefox
+/// executable, never to the browsers root.</b> The root holds Chromium too, and
+/// <see cref="BrowserProcesses.RunningFrom"/> is a prefix match on it — so a
+/// "did a browser appear" question asked of the root is answered by every
+/// Chromium renderer, GPU and utility process that about fifteen unrelated
+/// tests in this suite start, four at a time. That is a Firefox assertion
+/// failing for a Chromium reason, and it was a 2-in-5 flake until 2026-08-17.
+/// The <c>stray-sweep</c> group serialises the tests that start a <i>Firefox</i>
+/// and deliberately does not constrain the ones that start a Chromium; the
+/// scoping is what makes that division correct rather than lucky. The full
+/// account, with the measurements, is on the assertion itself.
+/// </para>
 /// </remarks>
 internal sealed class FirefoxTests
 {
@@ -101,10 +114,10 @@ internal sealed class FirefoxTests
         var holderCreated = ProcessIdentity.CreationTimeOf(holder.Id);
         _ = await ProbeReport.ReadAsync(ready, TimeSpan.FromSeconds(60));
 
-        // What the desktop and the process table looked like before anything was
-        // asked. Both are re-read afterwards, so what is asserted is the
-        // difference rather than an absolute.
-        var browsersBefore = OurBrowserProcessIds();
+        // What the desktop and the Firefox process table looked like before
+        // anything was asked. Both are re-read afterwards, so what is asserted is
+        // the difference rather than an absolute.
+        var firefoxBefore = OurFirefoxProcessIds();
         var windowsBefore = TopLevelWindows.All().ToHashSet();
 
         var clock = Stopwatch.StartNew();
@@ -125,12 +138,11 @@ internal sealed class FirefoxTests
         await Assert.That(clock.Elapsed).IsLessThan(ModalTimeout);
 
         // ⚠️ No Firefox started, asserted two ways because neither is sufficient
-        // alone. This one is exact: a browser started by anything in this test
-        // would be inside this scope's job, and the kernel's own membership list
-        // is what says so. It is immune to whatever else on the machine starts
-        // while this runs, which the machine-wide reading below is not -- that
-        // one caught a Firefox another test in this file was launching in
-        // parallel, and the tests that start one are serialised now.
+        // alone. This one is exact and it is the WIDER of the two: everything
+        // this test could have started is inside this scope's job, whatever image
+        // it runs, and the kernel's own membership list is what says so. It is
+        // immune to whatever else on the machine starts while this runs, which is
+        // the property the machine-wide reading below cannot have.
         //
         // The membership is intersected with the image-path scan rather than
         // compared against the holder's pid alone: a console process started
@@ -143,18 +155,61 @@ internal sealed class FirefoxTests
 
         await Assert.That(string.Join(", ", browsersInScope)).IsEmpty();
 
-        // The machine-wide reading, by full image path against the binary
-        // BrowserAI provisioned -- never by image name, which on this machine
-        // would name dozens of the developer's own browser.
-        var appeared = OurBrowserProcessIds().Except(browsersBefore).ToList();
+        // ⚠️ The machine-wide reading, and it is scoped to the FIREFOX EXECUTABLE
+        // rather than to the browsers root. That distinction is the whole of a
+        // 2-in-5 flake, so it is stated rather than left to look like a
+        // narrowing.
+        //
+        // The reading exists to catch a Firefox that escaped the job above. Asked
+        // of the browsers ROOT it also caught every CHROMIUM on the machine, and
+        // `BrowserProcesses.RunningFrom` is a prefix match on that root, so it
+        // matched Chromium's browser process and each of its GPU, renderer and
+        // utility helpers as they appeared. About fifteen tests in this suite
+        // drive a real Chromium, none of them is in this test's constraint group,
+        // and the suite runs four at a time -- so any Chromium coming up during
+        // the ~600 ms this test is measuring made the difference non-empty and
+        // failed an assertion about Firefox for a reason that had nothing to do
+        // with Firefox.
+        //
+        // Measured 2026-08-17, on an unmodified tree: two failures in five full
+        // runs, and with the pids resolved to image paths the intruder was
+        // literally `…\browsers\chromium-1237\chrome-win64\chrome.exe` -- once as
+        // a single arrival, once as five at a time, which is a Chromium tree
+        // coming up. The file's own note here used to read "that one caught a
+        // Firefox another test in this file was launching in parallel, and the
+        // tests that start one are serialised now"; that was true and it was only
+        // half the set. Serialising the Firefox launchers never constrained the
+        // Chromium ones, and nothing should: they are unrelated to this
+        // assertion, and adding fifteen tests to a `NotInParallel` group to fix a
+        // Firefox test would cost the suite its parallelism to answer a question
+        // it should not have been asking.
+        //
+        // So the two readings now divide honestly. In-job: any image, exact,
+        // catches anything this test started. Machine-wide: Firefox only, catches
+        // the one thing the job could miss -- a Firefox that escaped it. Nothing
+        // that can falsify the second is outside the `stray-sweep` group, and the
+        // developer's own Firefox runs from `C:\Program Files` and cannot match a
+        // path under BrowserAI's browsers root.
+        //
+        // Matched by full image path against the binary BrowserAI provisioned --
+        // never by image name, which on this machine would name dozens of the
+        // developer's own browser. Reported with that path rather than as a bare
+        // pid, because by the time anyone reads the failure the process is gone
+        // and a number names nothing.
+        var appeared = OurFirefoxProcesses()
+            .Where(process => !firefoxBefore.Contains(process.ProcessId))
+            .Select(process => $"{process.ProcessId.ToString(CultureInfo.InvariantCulture)} {process.ImagePath}")
+            .ToList();
+
         await Assert.That(string.Join(", ", appeared)).IsEmpty();
 
         // And no window appeared for one. Every window that is new since the
-        // snapshot is resolved to its owner, and none of them may be a process
-        // running out of our browsers root -- which is what a profile dialog
-        // would be. A bare window count would be flaky on a live desktop and
-        // would prove less.
-        var ours = OurBrowserProcessIds().ToHashSet();
+        // snapshot is resolved to its owner, and none of them may be one of our
+        // Firefox processes -- which is what a profile dialog would be. A bare
+        // window count would be flaky on a live desktop and would prove less;
+        // scoping the owners to the browsers root rather than to Firefox would
+        // reintroduce the same Chromium race the reading above just lost.
+        var ours = OurFirefoxProcessIds().ToHashSet();
         var newWindowsOfOurs = TopLevelWindows.All()
             .Where(window => !windowsBefore.Contains(window))
             .Where(window => ours.Contains(TopLevelWindows.ProcessIdOf(window)))
@@ -214,7 +269,10 @@ internal sealed class FirefoxTests
             ["refusalMilliseconds"] = clock.Elapsed.TotalMilliseconds,
             ["budgetMilliseconds"] = PreflightBudget.TotalMilliseconds,
             ["modalWouldHaveBlockedMilliseconds"] = ModalTimeout.TotalMilliseconds,
-            ["browserProcessesStarted"] = appeared.Count,
+            // Named for what it counts. It used to say "browserProcesses" while
+            // counting everything under the browsers root, Chromium included,
+            // which is the reading this test stopped making.
+            ["firefoxProcessesStarted"] = appeared.Count,
             ["windowsOfOursThatAppeared"] = newWindowsOfOurs.Count,
             ["holderPid"] = holder.Id,
         });
@@ -687,9 +745,28 @@ internal sealed class FirefoxTests
         return path;
     }
 
-    /// <summary>Every pid running a binary BrowserAI provisioned, right now.</summary>
-    private static List<int> OurBrowserProcessIds() =>
-        [.. BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory).Select(process => process.ProcessId)];
+    /// <summary>
+    /// Every process running <b>the Firefox BrowserAI provisioned</b>, right now.
+    /// </summary>
+    /// <remarks>
+    /// <b>The exact executable, not the browsers root.</b> The root also holds
+    /// Chromium, and a prefix match on it answers a question about Chromium's
+    /// helper processes while wearing the name of a Firefox check — which is the
+    /// flake recorded on the assertion in
+    /// <see cref="ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists"/>.
+    /// An image <i>name</i> is not an option and never was: it would name the
+    /// dozens of the developer's own <c>firefox.exe</c> running out of
+    /// <c>C:\Program Files</c>.
+    /// </remarks>
+    /// <returns>The matching processes.</returns>
+    private static List<RunningImage> OurFirefoxProcesses() =>
+        [.. BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
+            .Where(process => string.Equals(process.ImagePath, BrowserAiPaths.FirefoxExecutable, StringComparison.OrdinalIgnoreCase))];
+
+    /// <summary>The pids of <see cref="OurFirefoxProcesses"/>.</summary>
+    /// <returns>The pids.</returns>
+    private static List<int> OurFirefoxProcessIds() =>
+        [.. OurFirefoxProcesses().Select(process => process.ProcessId)];
 
     /// <summary>
     /// Every Firefox profile on this machine that is <b>not</b> BrowserAI's.

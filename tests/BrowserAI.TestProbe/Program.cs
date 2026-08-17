@@ -32,8 +32,16 @@ internal static class Program
             "crash" when args.Length is 2 => Crash(args[1]),
             "transport-child" when args.Length is 4 =>
                 TransportChild(args[1], int.Parse(args[2], CultureInfo.InvariantCulture), args[3]),
-            "job-launcher" when args.Length >= 4 =>
-                JobProbe.Launcher(args[1], args[2], args[3], args[4..]),
+            // <outputDirectory> <readyFile> <readySeconds> <command> [arguments...].
+            // The patience is the caller's, never a constant inside the probe:
+            // see JobProbe.Launcher's remarks for what two nested budgets cost.
+            "job-launcher" when args.Length >= 5 =>
+                JobProbe.Launcher(
+                    args[1],
+                    args[2],
+                    TimeSpan.FromSeconds(double.Parse(args[3], CultureInfo.InvariantCulture)),
+                    args[4],
+                    args[5..]),
             "job-child" when args.Length is 3 =>
                 JobProbe.Child(args[1], int.Parse(args[2], CultureInfo.InvariantCulture)),
             "job-grandchild" when args.Length is 1 => JobProbe.Grandchild(),
