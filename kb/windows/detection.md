@@ -33,9 +33,12 @@ but the window title is backslashes.
 
 **The class alone is ambiguous — the title match is load-bearing.** The same
 process also owns a `Chrome_MessageWindow` titled `DeviceMonitorMessageWindow`
-plus several empty-titled ones, and the GPU process owns one too. 43 such windows
-exist on the maintainer's machine (Discord, Signal, VS Code, 1Password, Teams,
-WhatsApp, Steam, ChatGPT, `msedgewebview2`, …), enumerated in 52 ms. `[MACHINE]`
+plus several empty-titled ones, and the GPU process owns one too. **43 such
+windows existed on the reference machine**, published by a dozen unrelated
+Electron and CEF applications plus `msedgewebview2`, enumerated in 52 ms. The
+roster is deliberately not listed: what matters is that an ordinary desktop
+carries dozens of these, owned by software with no connection to browser
+automation at all. `[MACHINE]` for the count; the ambiguity is `[STABLE]`.
 
 ## Cross-process title reads — settled by two independent agents
 
@@ -281,9 +284,11 @@ exists for, observed rather than argued.
 > ⚠️ **Correction to an earlier claim in this file.** "The API is structurally
 > incapable of returning a profile you did not name" is true of the **exact-title
 > probe** and **false of the enumerating sweep**. Enumeration hands back
-> strangers' paths — Docker Desktop, Discord, Signal, 1Password, Steam, Teams,
-> WhatsApp and ChatGPT all publish real user-data-dirs there. **The ownership test
-> is therefore the entire safety boundary**, not a refinement on top of a safe
+> strangers' paths: **a dozen unrelated Electron and CEF applications on the
+> reference machine — chat clients, a password manager, a game launcher, a
+> container GUI — all publish real user-data-dirs there**, and a sweep that
+> trusted the channel would be handed every one of them. **The ownership test is
+> therefore the entire safety boundary**, not a refinement on top of a safe
 > primitive.
 
 **And the signal is forgeable.** A plain .NET console app called
@@ -359,7 +364,8 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 
 ## Process image path — the fully documented detection path
 
-Measured 2026-08-15 on this machine, `.work/procenum/measure.ps1`. `EnumProcesses`
+Measured 2026-08-15 with a PowerShell harness that is not in this repository; the
+sequence is three documented calls and is trivially rebuilt. `EnumProcesses`
 → `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` →
 `QueryFullProcessImageNameW`, comparing each full image path against a target.
 **Every API on this path is documented and supported.** `[MACHINE]` for the
@@ -467,7 +473,8 @@ the same pid, so the pair matches the identity the rest of this product uses wit
 no conversion. A second session's profile, whose `parent.lock` exists and is held
 by nobody, reports **zero**. Re-establish with
 `FirefoxTests.AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart`,
-which records its numbers to `.work/firefox-attribution.json`.
+which runs on every build and writes its numbers into the run's scratch directory
+as `firefox-attribution.json`.
 
 **`parent.lock` outlives its holder, confirmed rather than carried over.** After
 the holding process was terminated, the file was still on disk 15 seconds later
@@ -479,11 +486,11 @@ build rather than a silently stricter product.
 
 **It costs 638 ms a query, and that is a design constraint rather than a
 detail.** Measured on this machine 2026-08-16 across two real Firefox profiles,
-recorded to `.work/firefox-attribution-negative.json` by
+recorded as `firefox-attribution-negative.json` in the run's scratch directory by
 `FirefoxTests.AnUnheldLockAttributesNobodyAndAForeignFirefoxIsAttributedToNoSession`.
 The query walks every handle on the machine, so the cost scales with what else
-is running — 42 of the developer's own `firefox.exe` were, and a whole sweep
-pass is otherwise ~27 ms. Two consequences, both built:
+is running — **42 processes of a foreign Firefox, not launched by BrowserAI,**
+were, and a whole sweep pass is otherwise ~27 ms. Two consequences, both built:
 
 - **The sweep asks `File.Exists(parent.lock)` first** — 0.56 ms — and only pays
   the Restart Manager where a Firefox has ever run. Absence proves no Firefox
@@ -502,11 +509,14 @@ is `{ DWORD; FILETIME }` — 12 bytes, 4-aligned. Declaring the `FILETIME` as a
 pid, so every field after it is read from the wrong offset and the pid itself
 still looks right. Two `uint`s, recombined by hand. `[STABLE]`
 
-**The developer's own Firefox is the negative control, and it is a live one.**
-On this machine, 2026-08-16: **2** foreign profiles under
-`%APPDATA%\Mozilla\Firefox\Profiles`, **1** of them held, by a process running
-`C:\Program Files\Mozilla Firefox\firefox.exe` — dozens of processes, ~85 hours
-old, with a visible window. The Restart Manager names it perfectly, and it is
+**A foreign Firefox is the negative control, and it is a live one.** This arm is
+methodologically load-bearing rather than incidental: it proves the attribution
+path *rejects* a browser it did not launch, instead of merely never meeting one.
+Measured 2026-08-16: **2** foreign profiles under
+`%APPDATA%\Mozilla\Firefox\Profiles`, **1** of them held, by an ordinary
+system-installed `%ProgramFiles%\Mozilla Firefox\firefox.exe` — **42 processes**,
+~85 hours old, with a visible window, none of it launched by BrowserAI. The
+Restart Manager names it perfectly, and it is
 attributed to **none** of our sessions and is **not** a candidate, because the
 detection guard is a full-path match against the binary BrowserAI provisioned.
 That is the sharper half of this test: the process passes the mechanism the
@@ -524,10 +534,16 @@ the first filter and never reaching the second. `[MACHINE]`
 > bundled** — ["our own" is the build BrowserAI manages, not one shipped inside
 > the installer](../../README.md#settled-2026-08-15).
 
-> ⚠️ `--user-data-dir` alone is **not** an ownership signal. Discord, VS Code,
-> Signal, Teams, WhatsApp, Steam, ChatGPT and four `msedgewebview2.exe` processes
-> all pass it. Only an exact match against a directory BrowserAI created is safe.
-> `[MACHINE]`
+> ⚠️ **`--user-data-dir` alone is not an ownership signal, and this is one of
+> the most load-bearing facts in this article.** On the reference machine **a
+> dozen unrelated Electron and CEF applications** pass it — chat clients, an
+> editor, a password manager, a game launcher — plus **four `msedgewebview2.exe`
+> processes**, none of which has anything to do with browser automation. A
+> detector keyed on the switch would claim all of them. Only an exact match
+> against a directory BrowserAI created is safe. The roster is deliberately not
+> reproduced: it is a property of *a* desktop, while the count and the conclusion
+> transfer. `[MACHINE]` for the count; the conclusion is `[STABLE]` — the switch
+> is a public CLI argument any Chromium embedder may pass.
 
 ## Windows object names and window scoping
 
@@ -544,7 +560,7 @@ AppContainer processes do not. Re-establish by constructing those four names in
 a loop and catching. `[STABLE]`
 
 > ✅ **This settles the disagreement flagged
-> [below](#named-mutexes-and-lock-files--first-party-prior-art-in-c).**
+> [below](#named-mutexes-and-lock-files).**
 > `Corrected 2026-08-17`. The prior art's guard against a caller-supplied
 > backslash is commented *"one in the caller's string would silently relocate the
 > object"*; this entry recorded a throw. **The throw is what happens**, on every
@@ -569,25 +585,31 @@ session. `[STABLE]`
 browser holds `chrome.exe`. Download-alongside-and-swap is therefore not
 available for a browser reinstall. `[STABLE]`
 
-## Named mutexes and lock files — first-party prior art in C#
+## Named mutexes and lock files
 
-Read from source 2026-08-16, **not run here**:
-`C:\Source\SixFive7\StationeersPlus\TestRig\src\TestRig.Core\` —
-`Infrastructure\CrossProcessLock.cs` (131 lines), `Session\LockState.cs`,
-`Session\SessionLockService.cs`, `Infrastructure\BootIdentity.cs`. This is the C#
-successor to a retired PowerShell rig, in the same language BrowserAI is written
-in, and it is the only cross-process locking code on this machine with a suite
-behind it. Re-establish by reading those four files.
+Windows and .NET facts about cross-process locking, and the design lessons that
+arrived with them.
+
+**Provenance, stated once so no entry below has to repeat it.** The design
+lessons were read from source 2026-08-16 in an **unpublished first-party C#
+locking library** — four files, a few hundred lines, the successor to a retired
+PowerShell rig and the only cross-process locking code available here with a
+suite behind it. That codebase is **not reproducible from this repository**; its
+file names are kept so the finding stays auditable to whoever has it, and no
+entry rests on them alone. **The Windows behaviours are a different matter**:
+where an entry names a `SessionLockTests` case, that is this repository's own
+suite, it runs on every build, and it is the route to re-establish the fact.
+Those are the majority of what follows.
 
 **`AbandonedMutexException` means the wait *succeeded*.** The thread now owns the
 mutex; what the exception reports is that the *previous* holder died without
 releasing, so whatever that holder was mid-way through writing may be torn.
 Catching it and returning a plain success therefore **discards the only warning
 the OS gives that the protected state is suspect** — the acquisition was never in
-doubt. `CrossProcessLock.cs:96-101` surfaces it as a distinct
+doubt. That library surfaces it as a distinct
 `MutexAcquisition.AcquiredAbandoned` outcome rather than folding it into
-`Acquired`, and the type's own remarks name swallowing it as one of two things the
-PowerShell version got wrong. The holder must still be disposed, or the next
+`Acquired`, and its own remarks name swallowing it as one of two things the
+PowerShell version it replaced got wrong. The holder must still be disposed, or the next
 waiter inherits the abandonment. `[STABLE]`
 
 **An abandoned mutex is only observable by a process that already held a
@@ -638,8 +660,8 @@ difference between that scope and the gate above. `[MACHINE]`
 **A named mutex is owned by the thread that waited on it, and releasing it from
 another thread throws a message that names nothing relevant** —
 `ApplicationException` about "an unsynchronized block of code"
-(`CrossProcessLock.cs:134-145`, which pre-empts it with its own
-`InvalidOperationException` naming both thread ids). The operational consequence
+— the library pre-empts it with its own `InvalidOperationException` naming both
+thread ids, which is the mitigation worth copying. The operational consequence
 is one line and it is severe: **do not `await` across a named-mutex critical
 section**, because the continuation may resume on a different pool thread and the
 release then fails with a diagnostic that points nowhere near the cause. `[STABLE]`
@@ -649,7 +671,7 @@ silent.** `Global\` creation is caught for `UnauthorizedAccessException`,
 `IOException`, `NotSupportedException` and `WaitHandleCannotBeOpenedException`,
 then retried under `Local\`, with the resolved `Name` and an `IsProcessLocal` flag
 exposed as properties so a caller can print them and a test can assert on them
-(`CrossProcessLock.cs:60-75`). The reason given matches
+. The reason given matches
 [the entry above](#windows-object-names-and-window-scoping): `Global\` needs
 `SeCreateGlobalPrivilege`, which an interactive user normally has and a service or
 container user may not. **The recorded defect is instructive** — the PowerShell
@@ -668,7 +690,7 @@ both report success**. `[STABLE]` for the mechanism; `[MACHINE]` for the defect.
 > what to do when it is true.
 
 **A caller-supplied backslash in a mutex name is guarded against, and the guard's
-stated reason was wrong.** The prior art rejects any backslash in the base name
+stated reason was wrong.** That library rejects any backslash in the base name
 with the comment that it *"separates the namespace from the name, so one in the
 caller's string would silently relocate the object"*. **Settled by measurement
 2026-08-17** and recorded in full
@@ -686,26 +708,26 @@ layer, named as open in the entry above rather than left as a disagreement here.
 `SessionLockService.ReadLock` returns null for exactly three conditions — the file
 does not exist, it vanished mid-read, or the parsed field set carries no `owner`
 key (covering an empty file, a comment-only file and pure garbage) — while an
-**unreadable** file propagates the exception out of `RigFiles.ReadTextOrNull`. The
-stated reason is the whole point: *"a read failure that reads as 'the rig is free'
+**unreadable** file propagates the exception instead. The stated reason is the
+whole point: *"a read failure that reads as 'the rig is free'
 is exactly the answer that gets a live session stomped"*
-(`SessionLockService.cs:222-236`). The general shape is the one this project keeps
+. The general shape is the one this project keeps
 meeting — **an error path that resolves to the permissive answer is worse than a
 crash**, because it is silent and it is wrong in the direction that destroys
 state. `[STABLE]`
 
 **That lock records no process identity at all — and the boot id is for something
-else.** `LockState.cs:5-12` is explicit that "held by a dead process" is
+else.** Its lock-state type is explicit that "held by a dead process" is
 deliberately *not* a state: a session there spans many launcher processes (the
 launcher exits between commands), so **a dead owner is indistinguishable from an
 idle one**, and an idle ceiling is the entire substitute. There is no
-`(pid, creationFileTime)` pair to make reboot-safe. The boot id exists
-(`BootIdentity.cs`) but guards a different file — `session.dirty`, the crash
+`(pid, creationFileTime)` pair to make reboot-safe. A boot id exists
+there but guards a different file — a crash
 marker — where a *changed* boot id means a recorded pid means nothing and every
 world must be treated as protected. `[MACHINE]` for the design; the underlying
 constraint is `[STABLE]`.
 
-**Deriving a boot id without WMI.** `BootIdentity.cs` takes
+**Deriving a boot id without WMI.** That library takes
 `DateTimeOffset.UtcNow` minus `Environment.TickCount64` rather than
 `Win32_OperatingSystem.LastBootUpTime`, for two reasons that both bind here:
 LastBootUpTime **costs hundreds of milliseconds on a cold WMI service**, and
@@ -721,5 +743,8 @@ conservative; a boot id that failed to change across a real reboot is the
 dangerous one, and no bucket size can produce it. It cannot survive a **step**
 correction to the system clock, which Windows normally slews rather than steps.
 `[STABLE]` for `GetTickCount64` including sleep and for the WMI cost being
-non-trivial; `[MACHINE]` and carried from that file for the 10.4 ms / 0.12 ms
-figures, which were measured there and not re-run here.
+non-trivial — both reproducible anywhere, the first by suspending a machine and
+comparing, the second by timing a cold `Win32_OperatingSystem` query. `[MACHINE]`
+and **carried rather than re-measured** for the 10.4 ms / 0.12 ms figures: they
+were taken in that unpublished library on 2026-08-14 and not re-run here, so read
+them as an order of magnitude and not as this project's own numbers.

@@ -6,8 +6,9 @@
 **Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · system Google Chrome 151.0.7922.138 · `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
-Measured 2026-08-15. **The maintainer's poison-the-profile idea is refuted
-empirically, not merely from source.**
+Measured 2026-08-15. **The idea of deliberately poisoning a profile directory to
+make an unwanted Chrome fail to start is refuted empirically, not merely from
+source.**
 
 **Path occupied by a file** → `RecursiveDirectoryCreate` fails →
 `GetDefaultUserDataDirectory` fallback → **8 healthy processes, still running at
@@ -39,7 +40,7 @@ posting `WM_CLOSE`: **10 processes and registration**. `[FLOATS]`
 **This is the third native-dialog trap found this week**, after Firefox's
 profile-lock modal (blocking up to 180 s;
 `DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT = 3 * 60 * 1e3`) and the same dialog reaching
-the maintainer's desktop during measurement. The pattern is general enough to be
+a live desktop during measurement. The pattern is general enough to be
 a rule: **the child's failure modes include GUI dialogs on a headless server, so
 BrowserAI must validate every path it hands the child before launch.**
 
@@ -47,7 +48,7 @@ BrowserAI must validate every path it hands the child before launch.**
 > unusable user-data-dir, Playwright's Chrome falls back to the **personal**
 > profile, where `ProcessSingleton` forwards its command line to the
 > already-running personal Chrome and exits. Running it would have driven the
-> maintainer's browser. It follows directly from the fallback and singleton
+> operator's own browser. It follows directly from the fallback and singleton
 > behaviour both measured above, and it is a further argument for launching the
 > Chrome for Testing build BrowserAI **provisions** rather than
 > `channel: "chrome"`. **Provisioned, not bundled**: ["our own" means the build

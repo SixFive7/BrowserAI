@@ -368,7 +368,7 @@ anything costs a round trip rather than a failure.
 with `PLAYWRIGHT_BROWSERS_PATH` set — through `initialize` → `browser_navigate`
 → `browser_close` → `browser_navigate`, counting processes whose
 **`ExecutablePath` is under the browsers root** at each step and reading
-`WorkingSet64`. Never match a process by image name: the developer's own Firefox
+`WorkingSet64`. Never match a process by image name: a foreign Firefox
 and Chrome are on this machine. The *behaviour* half is asserted on every build
 by `BrowserIdleTimerTests.AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks`;
 only the numbers need the manual run.

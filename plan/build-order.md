@@ -1046,7 +1046,7 @@ than a detail of step 7.
 > Re-run at **64** processes, twice, with the same shape — 1 and 63, the slowest
 > refusal at **1.40 s** against a five-second gate. The sweep scope was measured
 > separately: 8 processes, zero timeout, 1 acquired and 7 refused immediately.
-> [The numbers are in kb](../kb/windows/detection.md#named-mutexes-and-lock-files--first-party-prior-art-in-c);
+> [The numbers are in kb](../kb/windows/detection.md#named-mutexes-and-lock-files);
 > the suite pays for N=16 on every run and the constant is documented as the way
 > to reproduce the rest.
 >
@@ -1070,7 +1070,7 @@ than a detail of step 7.
 > last handle, so a process that opens the name *after* the holder dies gets a
 > new, unabandoned object and observes a clean `Acquired`. The handle has to be
 > open **before** the kill. That ordering is now a comment in the test, an entry
-> in [kb](../kb/windows/detection.md#named-mutexes-and-lock-files--first-party-prior-art-in-c)
+> in [kb](../kb/windows/detection.md#named-mutexes-and-lock-files)
 > and a warning on [the hazard row](hazards.md), because nothing in the code
 > makes it obvious and the failure mode is a green test over a missing feature.
 >

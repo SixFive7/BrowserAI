@@ -6,7 +6,13 @@
 **Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · system Google Chrome 151.0.7922.138 · `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
-Measured 2026-08-15. Harness: `.work/restart-measure/RestartProbe.exe`.
+Measured 2026-08-15 with a throwaway probe that called
+`GetApplicationRestartSettings` against live browsers; that harness no longer
+exists, and **the parts that survived are re-established by
+`BrowserContainmentTests` and `FirefoxTests` in this repository's own suite**,
+named per entry below. Anything not carrying a test name was measured once by the
+spike and is marked as such — the general route is the same either way: ask the
+Win32 API of a live process, never argue from a command line's length.
 
 > ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously: the whole of this
 > article's verdict was stated of "Playwright-launched" browsers, and the margin
@@ -124,7 +130,8 @@ differing only by the switch: 206 chars → registered; 221 chars → not. At 22
 would have succeeded on length alone, so suppression is the only explanation. The
 browser stays fully functional through Playwright. `[FLOATS]`
 
-> **What actually resurrected the maintainer's browsers is `[UNVERIFIED]`.** By
+> **What actually resurrected the browsers that motivated this project is
+> `[UNVERIFIED]`.** By
 > elimination it is the Windows sign-in restore path rather than
 > `RegisterApplicationRestart`, which is now excluded by measurement. Observing
 > the sign-in path directly requires a reboot, which was not performed. The story

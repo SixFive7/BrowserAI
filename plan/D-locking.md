@@ -52,7 +52,7 @@ The resolution is **close → rename → re-open, entirely inside the per-direct
 Two consequences worth carrying:
 
 - **A reader must open `FileShare.ReadWrite | FileShare.Delete`.** `ReadWrite` because the holder has the file open for *write* and a reader that does not share write is refused outright — which would turn *"somebody owns this"* into *"this file cannot be read"*, the wrong answer in the dangerous direction. `Delete` because a reader without it blocks every rewrite.
-- **The rename's retry budget is bounded by time, not by attempts.** Five attempts over 150 ms — the shape the [C# prior art](../kb/windows/detection.md#named-mutexes-and-lock-files--first-party-prior-art-in-c) uses — was measured exhausting under load with a concurrent reader. Two seconds, backing off 5 ms to a 100 ms cap. And **a failed rewrite must not also release the lock**: the handle is dropped before the replacement, so an exception on the way through left the session silently unowned until the recovery path was added.
+- **The rename's retry budget is bounded by time, not by attempts.** Five attempts over 150 ms — the shape the [C# prior art](../kb/windows/detection.md#named-mutexes-and-lock-files) uses — was measured exhausting under load with a concurrent reader. Two seconds, backing off 5 ms to a 100 ms cap. And **a failed rewrite must not also release the lock**: the handle is dropped before the replacement, so an exception on the way through left the session silently unowned until the recovery path was added.
 
 ## The job object is unnamed
 

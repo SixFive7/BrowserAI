@@ -17,8 +17,8 @@ alone is a viable smaller surface (`McpServer.Create` + `StdioServerTransport`,
 and the `[McpServerTool]` attributes already live there). Verified 2026-08-14.
 `[FLOATS]`
 
-**A correctly stamped version comment went stale in three weeks.**
-`SixFive7/OutlookAI` pins `ModelContextProtocol` 1.4.1 with a csproj comment
+**A correctly stamped version comment went stale in three weeks.** A sibling MCP
+server of the author's pins `ModelContextProtocol` 1.4.1 with a csproj comment
 reading *"1.4.1 = latest stable on nuget.org as of 2026-07-23 (2.0.0 is still
 preview)."* Re-checked against nuget.org's flat-container index on **2026-08-14**:
 2.0.0, 2.1.0 and 2.2.0 have all shipped stable, so the comment's central claim is
@@ -74,49 +74,62 @@ Chrome, so google.com/chrome/terms applies"* — which forbids redistribution. T
 is a citation, not a measurement, and it is not legal advice; it is recorded
 because it is the single piece of evidence the provisioning decision rests on.
 
-### What vendoring a runtime actually costs — two in-house cases
+### What vendoring a runtime actually costs — two long-lived cases
 
-Measured **2026-08-16** by reading the repositories and their git history, on this
-machine. `[MACHINE]` throughout — true of two repositories, not of the world. The
-charter's provision-don't-bundle position currently argues from **licensing alone**;
-this is the empirical half, and it is also the evidence behind the statement that a
-bundled browser makes CVE response a release obligation.
+Measured **2026-08-16** by reading two unpublished repositories and their git
+history. `[MACHINE]` throughout — true of two repositories, not of the world, and
+**not reproducible from here**. What makes them worth keeping is that the route
+to re-establish them is generic: anyone can run it against any repository that
+vendors a runtime, including their own. The charter's provision-don't-bundle
+position argues from **licensing alone**; this is the empirical half, and it is
+the evidence behind the claim that a bundled browser makes CVE response a release
+obligation.
 
-**Vendoring a runtime fails by silence, not by breakage.**
-`C:\Source\ExoFabric\Netwerkplek` vendored eDEX-UI — an Electron app, so a full
-Chromium — **twice**: `Netwerkplek/eDEXUI/x64` at 162 MB and
-`Netwerkplek/eDEXUI/x86` at 148 MB, with `icudtl.dat` **byte-identical across both**
-(10,218,000 bytes, md5 `8cda0911…`) and never deduplicated. That is in a repository
-whose `.git` is **931 MB** for **38 tracked `.vb` files**.
+**Vendoring a runtime fails by silence, not by breakage.** One repository vendored
+an Electron desktop application — so a full Chromium — **twice**, once per
+architecture, at **162 MB** and **148 MB**, with `icudtl.dat` **byte-identical
+across both** (10,218,000 bytes) and never deduplicated. That is in a repository
+whose `.git` is **931 MB** for **38 tracked source files**.
 
-The history is the finding: `git log -- Netwerkplek/eDEXUI` returns **exactly six
-commits**, 2019-01-27 through 2019-04-28 — **91 days** — and then nothing, ever.
+The history is the finding: `git log` over the vendored directory returns
+**exactly six commits**, 2019-01-27 through 2019-04-28 — **91 days** — and then
+nothing, ever.
 Meanwhile the application itself was maintained until **2024-07-07** (the last
 substantive commit; the only later one is a 2026 `.gitattributes` housekeeping
 change). **That is 1,897 days — five years two months — of an unpatched 2019-era
 Chromium in production**, across a period in which the surrounding VB was edited
 freely. Nothing failed. Nothing warned. The vendored tree simply stopped being
 something anyone thought about, which is the entire mechanism: **a bundled runtime
-does not decay visibly, so nothing ever prompts the update.** Re-establish with
-`git log --format="%ad" --date=short -- Netwerkplek/eDEXUI` and `du -sh` on the two
-architecture directories.
+does not decay visibly, so nothing ever prompts the update.** **Run this on
+anything, including your own tree:** `git log --format="%ad" --date=short --
+<vendored dir>` beside the same command over the source directory, and read the
+gap between the two last dates. That gap is the number this entry is about.
 
 **A vendored binary can outlive its distributor, leaving the recorded build ID as
-the only identification.** `C:\Source\ExoFabric\Mill` commits ffmpeg at ~63 MB per
-executable — `ffmpeg.exe` 65,870,336 b, `ffplay.exe` 65,759,232 b, `ffprobe.exe`
-65,784,832 b — for a **33-`.cs`** project totalling **204,715,911 tracked bytes**.
-Its vendored `Tools/FFMpeg/README.txt` records
-`Build: ffmpeg-20190704-43e0ddd-win64-static` from Zeranoe, committed **2019-11-12**.
-**The Zeranoe build service shut down in September 2020.** Recording the exact build
-was the right call and is why the binary is identifiable at all — but the build is
-frozen at 2019 with **no update path from the source it came from**, so replacing it
-means re-sourcing from a different distributor and re-establishing provenance from
-scratch. Re-establish by reading that `README.txt` and
-`git log -- Tools/FFMpeg`. *(The Zeranoe shutdown date is a citation carried
-forward, not something re-checked here.)*
+the only identification.** A second repository commits ffmpeg at ~63 MB per
+executable — 65,870,336 b, 65,759,232 b and 65,784,832 b for the three tools —
+inside a **33-source-file** project totalling **204,715,911 tracked bytes**. Its
+vendored `README.txt` records `Build: ffmpeg-20190704-43e0ddd-win64-static` from
+Zeranoe, committed **2019-11-12**. **The Zeranoe build service shut down in
+September 2020.** Recording the exact build was the right call and is why the
+binary is identifiable at all — but it is frozen at 2019 with **no update path
+from the source it came from**, so replacing it means re-sourcing from a different
+distributor and re-establishing provenance from scratch. **The transferable
+check** is to take any vendored binary's recorded build ID and try to fetch that
+exact build today; if you cannot, the recorded ID is an epitaph rather than a
+provenance. *(The Zeranoe shutdown date is a citation carried forward, not
+something re-checked here.)*
 
 **Why both belong in this article rather than in the charter:** they are the
 measured cost of the alternative the charter rejected. `winldd` shipping with no
 license file is a licensing gap someone can close in an afternoon; a 2019 Chromium
 still running in 2024 is not a gap anyone can close, because nothing in the system
 was ever going to raise it.
+
+**Kept rather than cut, and the reasoning is worth stating**, because both rest
+entirely on repositories a reader cannot open. They survive because the claim is a
+measurement — git-log spans, byte counts, a shutdown date — rather than an
+impression; because the route to re-establish it is generic and stated; and
+because the conclusion is the strongest single argument for this project's
+provisioning design. What was cut is everything that served only to identify the
+repositories.

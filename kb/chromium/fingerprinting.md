@@ -6,8 +6,15 @@
 **Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · `chromium-headless-shell` revision 1237 · `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
-Measured 2026-08-15. 65 headless launches across four phases. Harness:
-`.work/fingerprint-test/`.
+Measured 2026-08-15: **65 headless launches across four phases**, each launch
+serialising a large fixed set of JS-visible properties out of a page and
+differencing the arms field by field, with replicates and interleaved arm order.
+**The harness was a spike and is not in this repository**, so nothing here is
+reproducible by running something we ship. What is reproducible is the method,
+which is stated in enough detail below to rebuild: enumerate the surface, take
+8–10 replicates per arm with alternating lead, and **split each arm against
+itself as a control** — that last step is what tells a real difference from
+harness noise, and it is what caught the two false positives recorded below.
 
 **`--browser-test` is not web-detectable.** **0 deterministic differences** across
 486 leaf fields (chrome.exe) / 487 (headless shell), with 8–10 replicates per arm,
@@ -31,7 +38,8 @@ including all Client Hints after `Accept-CH`/`Critical-CH`), and reachability of
 `null`, iframe → empty, `pushState` → `SecurityError`), byte-identically in both
 arms.
 
-**Two Phase-1 candidates were my own confounds** and vanished in Phase 2: a
+**Two Phase-1 candidates were artefacts of the harness itself** and vanished in
+Phase 2: a
 6-byte `performance.memory` delta caused by a per-run URL tag of differing length
 landing on the JS heap, and a Compute Pressure `fair`/`nominal` split caused by
 CPU-heavy benchmarks running inside the observation window. Worth recording

@@ -115,14 +115,14 @@ per-connection tool list — SEP-2567 stands — but the cited issues need re-da
 Measured 2026-08-16 @ **Claude Code 2.1.233** (`claude.exe`, native install at
 `%USERPROFILE%\.local\bin`), while building
 [§B](../../plan/B-mcp-server.md)'s registration. Every run below wrote into a
-**scratch `CLAUDE_CONFIG_DIR`**, never the maintainer's own configuration.
+**scratch `CLAUDE_CONFIG_DIR`**, never the operator's real configuration.
 `[FLOATS]` on a client version this project does not control.
 
 **`claude mcp add --scope user` writes `mcpServers.<name>` into
 `$CLAUDE_CONFIG_DIR\.claude.json`** — one entry, `{type, command, args, env}` —
 and prints the file it modified. Unset, that directory is `%USERPROFILE%`. The
-override is what makes a real registration testable without touching the file the
-maintainer uses daily.
+override is what makes a real registration testable without touching the file
+the operator's own client is using.
 
 **No elevation.** Both `add` and `remove` succeeded from a **non-elevated,
 non-administrator** token (`WindowsPrincipal.IsInRole(Administrator)` = false) —
@@ -160,9 +160,11 @@ BrowserAI's own installer.
 
 `Setup.exe --silent --installto <scratch>` at 0.9.0, updated to 0.9.1, rolled
 back to 0.9.0, uninstalled. `CLAUDE_CONFIG_DIR` was pointed at a scratch
-directory for every process in the chain, and the maintainer's own
-`~\.claude.json` was **SHA-256-identical before and after** the whole run
-(`3721c2ac…`). `[MACHINE]`
+directory for every process in the chain, and the operator's real
+`~\.claude.json` was **SHA-256-identical before and after** the whole run. That
+hash comparison is the assertion, not a courtesy: an installer that registered
+itself into the wrong file would otherwise pass every test in this table.
+`[MACHINE]`
 
 | Step | What the registration did | Time in the hook |
 |---|---|---|
@@ -188,8 +190,8 @@ all three registration records are on disk, written by the hook's own pid.
 ⚠️ **A clientless machine could not be simulated and the gap is named.** The
 fallback directory resolves from the process token rather than from
 `%USERPROFILE%`, so it cannot be redirected
-([kb](../windows/processes.md#the-win32-interop-surface)), and renaming the
-maintainer's own `claude.exe` aside was refused. What *was* measured on the real
+([kb](../windows/processes.md#the-win32-interop-surface)), and moving the
+operator's installed `claude.exe` aside was refused as too destructive to run. What *was* measured on the real
 installed binary: the hook exits **0 in 1,367 ms** with `PATH` stripped to
 `system32`, registering through the fallback. The absent-client path is exercised
 through the `IRegistrationCommand` seam instead.

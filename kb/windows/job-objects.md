@@ -12,7 +12,11 @@ process-level facts this rests on — startup, stdio and the interop surface —
 in [Processes: stdio, files and the interop surface](processes.md); detection of
 a browser that got away anyway is in [Detecting stray browsers](detection.md).
 
-Measured 2026-08-15. Harness: `.work/jobtest/`.
+First measured 2026-08-15 in a throwaway harness that no longer exists, then
+**re-established 2026-08-16 against the product's own job object, launcher and
+delete routine** — which is the version to trust and the one with a route. Where
+an entry names a test, run the suite; where it cites the 2026-08-15 numbers, they
+are the spike's and are kept only because the later run agrees with them.
 
 **The headline: containment holds.** 16 runs, **106 spawned processes, 0
 escapees, 0 survivors**, across real Chromium and Firefox trees. `[FLOATS]`
@@ -184,8 +188,8 @@ tree flag, never by image name. Upstream is clean on that axis.
 (`coreBundle.js:9046`) `[FLOATS]`
 
 **A supervisor can respawn its child while you are killing it, and
-kill-by-enumeration cannot win that race.** Shipped mitigation, read 2026-08-16:
-`C:\Source\ExoFabric\Updater\NetLoader2\Application.xaml.vb:98` wraps its entire
+kill-by-enumeration cannot win that race.** Shipped mitigation, read 2026-08-16
+in a long-lived in-house VB.NET updater stack: a loader wraps its entire
 enumerate-and-kill sweep in `For i = 1 To 2`, commented *"Need two runs because
 any subprocess (like WyUpdate) might be started again if the main assembly is not
 already killed."* Two passes is not a fix, it is a wider window: enumeration reads
@@ -197,8 +201,11 @@ the one this section already makes** — the escapee counts above say enumeratio
 says enumeration **cannot be made complete at any repetition count**, because the
 process set is adversarial rather than merely large. `KILL_ON_JOB_CLOSE` has no
 such race: the kernel tears the whole job down at once, and anything respawned
-inside it is already contained. Re-establish by reading that file. `[STABLE]` for
-the race; `[MACHINE]` for the observation.
+inside it is already contained. `[STABLE]` for the race, which follows from the
+kernel's own semantics; `[MACHINE]` for the observation, and **the code it was
+read in is not published, so that half is not reproducible from this
+repository** — the retry-count comment is quoted in full above because it is the
+whole of the evidence.
 
 **Containment holds from a published NativeAOT binary, against a real browser.**
 Measured 2026-08-16 at

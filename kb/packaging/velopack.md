@@ -92,7 +92,7 @@ differently and passes where production 404s.
 > verdict above is right that the 404 is catchable, but it leaves the impression
 > that catching one is enough for a health check to conclude something is wrong.
 > It is not — **a legitimately empty channel returns the same 404.** Read from
-> `C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Troubleshooting.md`, which lists
+> an in-house Velopack deployment's own troubleshooting notes, which list
 > *"Empty channel: no releases published to that channel yet"* first among the
 > causes and ships the discrimination as
 > `catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)`
@@ -101,7 +101,7 @@ differently and passes where production 404s.
 > misconfigured feed URL from an unpublished channel needs a second signal, such
 > as whether any channel resolves. Consequence for us: a health check that alarms
 > on 404 will cry wolf on every pre-release channel we have not yet published to.
-> Read from source, not run. `[MACHINE]` for the UCC code; the 404-on-empty
+> Read from source, not run. `[MACHINE]` for that deployment's code; the 404-on-empty
 > behaviour is Velopack's and `[FLOATS]` with it.
 
 ### 2. `SetAutoApplyOnStartup(false)` is mandatory
@@ -189,21 +189,21 @@ separate from .NET's**, and can fail *before* the managed app exists: before
 
 ## The restart handover race, and why `Update.exe` is the answer
 
-Read 2026-08-16 from
-`C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Application Restart.md`, which
-documents both wrong answers as well as the right one. Not run here. `[STABLE]`
+Read 2026-08-16 from the application-restart notes of a shipping in-house
+Velopack deployment, which document both wrong answers as well as the right one.
+Not run here. `[STABLE]`
 for the race; `[FLOATS]` for the API surface.
 
 The pieces are already elsewhere in this article — `UpdateExe.Start(waitPid)` in
 [landmine 7](#7-applyupdatesandrestartnull-as-a-bare-restart), `force_stop_package`
-in [landmine 4](#4-force_stop_package-kills-everything-under-the-root), and UCC
+in [landmine 4](#4-force_stop_package-kills-everything-under-the-root), and that deployment
 being single-instance via a named mutex in
-[Prior art](#prior-art-exofabricucc) — but they are never joined into the race
+[Prior art](#prior-art-one-shipping-velopack-deployment) — but they are never joined into the race
 itself, which is the part that bites:
 
 - **Spawn the new instance, then exit.** The new process checks the mutex while
   the old one still holds it, concludes another instance is running, takes the
-  secondary path — for UCC, sending a `TOGGLE` over the pipe — and exits. *"Result:
+  secondary path — there, sending a `TOGGLE` over the pipe — and exits. *"Result:
   App hides instead of restarting."*
 - **Release the mutex first, then spawn.** Now there is a window in which no
   instance holds it, and any unrelated launch in that window — a Start-menu click
@@ -226,7 +226,7 @@ Two consequences worth carrying:
 - **The update path must not double-restart.** `ApplyUpdatesAndRestart` restarts
   on its own (`WaitExitThenApplyUpdates(..., restart: true, ...)` then
   `Environment.Exit(0)`), so calling `UpdateExe.Start` as well produces two
-  relaunches. UCC's fix is to route the update case through the same cooperative
+  relaunches. Its fix is to route the update case through the same cooperative
   shutdown but with `IsRestart: false`.
 
 **Where this stops applying to us:** the whole race is about a *single-instance*
@@ -310,7 +310,7 @@ been measured.
 
 **`BrowserAI-0.9.1-delta.nupkg` is 97,216 b against a 49,043,493 b full
 package**, for a release in which only `BrowserAI.exe` changed. That is the
-claim §G bought Velopack for, and `ExoFabric/UCC` has never produced one in
+claim §G bought Velopack for, and the one shipping deployment available has never produced one in
 production. Confirmed on the receiving end as well: the client logged
 `deltas=1` and applied it.
 
@@ -483,8 +483,7 @@ as `1.0.0.0` wherever the app reads it back.** .NET assembly versions are 4-part
 by default, so packing succeeds with a 3-part semver while the running app — a
 window title, an about box, a log banner — shows a fourth component that exists
 nowhere in the feed. The two numbers are separate and only one of them is
-constrained by `vpk`. Read 2026-08-16 from
-`C:\Source\ExoFabric\UCC\KnowledgeBase\Velopack\Troubleshooting.md`
+constrained by `vpk`. Read 2026-08-16 from an in-house Velopack deployment's own troubleshooting notes
 (*Version Shows 4 Parts*), where it is filed as a shipped symptom rather than a
 theory. Not run here. `[STABLE]` — this is .NET assembly-version behaviour, not
 Velopack's.
@@ -618,17 +617,22 @@ Conveyor emits MSIX on Windows and inherits the same failure.
 Signing at roughly **$10/mo** buys instant reputation. `[UNVERIFIED]` price — a
 list figure, not a quote obtained.
 
-## Prior art: ExoFabric/UCC
+## Prior art: one shipping Velopack deployment
 
-In-house evidence, not upstream behaviour. `[MACHINE]` — true of one repository
-at one point in time.
+In-house evidence, not upstream behaviour, and **not reproducible from this
+repository** — the application is unpublished. `[MACHINE]` — true of one
+deployment at one point in time. It is kept because **five of the nine landmines
+above are ones it hit rather than avoided**, which is the only evidence available
+that they bite in production rather than only in a spike, and because what it does
+right is the restart choreography this project copied.
 
-**UCC runs Velopack 0.0.1298, not 1.2.0** — the pre-1.0 line, with both behaviour
-and API surface since moved. It ships per-user to `%LocalAppData%\UCC\current\`,
-no elevation, S3-compatible feed, silent background check, in production across
-multiple releases.
+**It runs Velopack 0.0.1298, not 1.2.0** — the pre-1.0 line, with both behaviour
+and API surface since moved, so read every item below as *this happened once*,
+never as *this is how Velopack behaves*. It ships per-user into a
+`%LocalAppData%\<app>\current\` layout, no elevation, S3-compatible feed, silent
+background check, in production across multiple releases.
 
-**Five of the nine landmines above are ones UCC hit rather than avoided**, and
+**Five of the nine landmines above are ones it hit rather than avoided**, and
 none announced itself:
 
 - **Feed URL composition** bricked auto-update for **three shipped versions**;
@@ -643,14 +647,14 @@ none announced itself:
 - **Rollback has no code and no documentation.** The client would accept one; the
   version-validation script refuses to emit one.
 
-**What UCC does prove:** the per-user `current\`-swap layout works in production;
+**What it does prove:** the per-user `current\`-swap layout works in production;
 a test seam of `virtual` network methods carries **48 hermetic update tests**; and
 its restart choreography — cooperative shutdown with per-component acks, a 10 s
 hard-kill backstop, log flush, *then* apply — is worth copying wholesale.
 
 **Coverage of the update wrapper itself is zero tests**, which is exactly where
-the feed-URL bug lived. **UCC is single-instance** via a named mutex, so
-`force_stop_package` is harmless there — meaning the landmine that matters most
+the feed-URL bug lived. **That application is single-instance** via a named mutex,
+so `force_stop_package` is harmless there — meaning the landmine that matters most
 for concurrent registrations is **untested by the only prior art available**. No
 signing: no certificate, no `--signParams`, package signature verification
 unexplored.

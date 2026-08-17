@@ -24,10 +24,9 @@ each of the three corrupts the stream on first contact. `[STABLE]`
 > observations are carried forward as written.
 
 > **Corroborated 2026-08-16 — and the date above stays `[UNVERIFIED]`.** Two
-> 2018-era repositories on this machine independently hand-reconstruct CP437 over
-> a raw console handle to make output appear at all:
-> `C:\Source\ExoFabric\WinUpdater\WinUpdate\WinUpdate.vb:18,71-77` and
-> `C:\Source\ExoFabric\Certifier\Certifier\Main.vb:22` — both `Const
+> unrelated 2018-era VB.NET codebases independently hand-reconstruct CP437 over
+> a raw console handle to make output appear at all — a console updater and a
+> certificate tool, by different authors, neither published. Both carry `Const
 > MY_CODE_PAGE As Integer = 437`, `CreateFile("CONOUT$")`, `New
 > IO.StreamWriter(FileStream, Encoding.GetEncoding(437))`, `Console.SetOut`, the
 > WinUpdate one commented *"VS console redirection fix"*. Two authors reaching
@@ -37,7 +36,10 @@ each of the three corrupts the stream on first contact. `[STABLE]`
 > `StreamWriter` the entry above warns about, and it emitted no BOM only because
 > the encoding was CP437 rather than UTF-8 — swap the encoding and the identical
 > code corrupts a JSON-RPC stream on its first byte. Read from source, not run.
-> `[MACHINE]` for the repositories; the underlying default is `[STABLE]`.
+> `[MACHINE]` for the two codebases, **which are not published, so that half is
+> not reproducible from here**; the underlying default is `[STABLE]` and is
+> reproducible anywhere — write a non-ASCII character to `Console.Out` from a
+> fresh console app and read the bytes.
 
 **A logging library's type initializer can write to the protocol channel.**
 `Serilog.Sinks.Console`'s `ConsoleSink` has a **static constructor** calling
@@ -60,10 +62,11 @@ so every level routes to `Console.Error`.
 > it is broader than the charter's: nothing may touch stdout's handle either, and
 > **a dependency's static constructor counts as our code.**
 
-Read from source 2026-08-16, not run. Local checkout **3.1.2**
-(`C:\Source\SixFive7\serilog-sinks-console\src\Serilog.Sinks.Console\Sinks\SystemConsole\ConsoleSink.cs:35-38`,
-`…\Platform\WindowsConsole.cs`), cross-checked against upstream `main` the same
-day. **The two differ, and the newer one is worse:** 3.1.2 wraps the entire
+Read from source 2026-08-16, not run, at **3.1.2** —
+`src/Serilog.Sinks.Console/Sinks/SystemConsole/ConsoleSink.cs:35-38` and
+`…/Platform/WindowsConsole.cs` in the public `serilog/serilog-sinks-console`
+repository — cross-checked against its `main` the same day. **This one is fully
+reproducible**: clone that repository at the tag and read those two files. **The two differ, and the newer one is worse:** 3.1.2 wraps the entire
 P/Invoke body in `#if PINVOKE`, defined only for `net45` and `netcoreapp1.1`
 (csproj lines 29-34), so a modern consumer resolving the `netstandard2.0` asset
 gets an empty method — the hazard is real but dormant there. **Upstream `main` has
@@ -77,15 +80,17 @@ referenced**, never at whichever copy is on disk. `[FLOATS]` for Serilog's code;
 **An async log sink plus `Environment.Exit` drops the final buffered messages**,
 so every `Logger.Fatal(...)` → `Exit(1)` path loses precisely the line describing
 the crash. `Environment.Exit` does not wait for a sink's own worker thread, and a
-buffered target has nothing else to flush it. Shipped pattern, read 2026-08-16 in
-`C:\Source\ExoFabric\Updater`: `Updater\Example NLog.config:9` declares
-`<targets async="true">`; all four loaders end their unhandled-exception handler
-with `Logger.Fatal(...)` then `Environment.Exit(1)`
-(`NetLoader2\Application.xaml.vb:12-14`, and the same three lines in `NetLoader1`,
-`NetLoader3` and `DomainLoader`); and **`LogManager.Shutdown` and
-`LogManager.Flush` appear nowhere in the repository** — grepped, zero hits.
-Re-establish with those two greps. `[STABLE]` for the mechanism; `[MACHINE]` for
-the observation.
+buffered target has nothing else to flush it. Shipped pattern, read 2026-08-16
+in a long-lived in-house VB.NET updater stack: its NLog config declares
+`<targets async="true">`; **all four** of its loader executables end their
+unhandled-exception handler with `Logger.Fatal(...)` then `Environment.Exit(1)`;
+and **`LogManager.Shutdown` and `LogManager.Flush` appear nowhere in the whole
+repository** — grepped, zero hits. `[STABLE]` for the mechanism, which follows
+from `Environment.Exit` not joining a sink's worker thread; `[MACHINE]` for the
+observation, and **that codebase is not published**. The general check is two
+greps on any codebase using a buffered sink: one for `Environment.Exit`, one for
+the sink's flush call, and the finding is the absence of the second near the
+first.
 
 **`UseShellExecute` defaults to `True` on .NET Framework and `False` on .NET
 Core**, changed in .NET Core 2.1 and recorded as a
@@ -103,8 +108,8 @@ the Win32 number lives on `NativeErrorCode`. In practice `ErrorCode` reads
 `0x80004005` (`E_FAIL`, *"unspecified failure"*) for essentially every
 `Win32Exception`, so **an exception filter keyed on it matches everything**. The
 value that actually means "the user cancelled the UAC prompt" is
-`NativeErrorCode == 1223` (`ERROR_CANCELLED`). Shipped bug, read 2026-08-16:
-`C:\Source\ExoFabric\Updater\NetLoader2\Application.xaml.vb:234` filters
+`NativeErrorCode == 1223` (`ERROR_CANCELLED`). Shipped bug, read 2026-08-16 in
+the same unpublished updater stack: a loader filters
 `Catch ex As ComponentModel.Win32Exception When ex.ErrorCode = &H80004005` around
 an elevating `Process.Start`, inside a `For i = 1 To 10` retry — so *every*
 elevation failure was read as a refusal and re-prompted, up to ten UAC dialogs for
@@ -113,8 +118,8 @@ a cause that was never the user. Verified against MS Learn 2026-08-16. `[STABLE]
 **`Console.ReadKey()` inside a `catch` in a non-interactive process hangs
 forever, with no output** — there is no console input to read, and nothing times
 out. It presents exactly as "the server is stuck". Shipped instance, read
-2026-08-16: `C:\Source\ExoFabric\Zombieraser\Zombieraser\Program.cs:247,277`, in a
-scheduled non-interactive job. Note the shape — both calls sit in the
+2026-08-16 in an unpublished C# directory-cleanup tool that runs as a scheduled
+non-interactive job — two calls, both inside `catch` blocks. Note the shape — both calls sit in the
 *unknown-exception* arm, below the specific `UnauthorizedAccessException` and
 `DirectoryNotFoundException` handlers, so they fire only on the cases nobody
 anticipated: the population least likely to have been exercised in testing and
@@ -173,9 +178,10 @@ a partially-walked tree is indistinguishable from a fully-walked smaller one. A
 robust recursive delete therefore needs a hand-rolled **post-order** walk with
 per-node exception discrimination: deepest child first, so a non-recursive
 `Directory.Delete` always sees an empty directory. Reference implementation, read
-2026-08-16:
-`C:\Source\ExoFabric\Zombieraser\Zombieraser\Program.cs:213-289` (`GetTreeRobust`)
-— recurse subdirectories, then yield files, then yield the directory itself, with
+2026-08-16 in that same unpublished cleanup tool — **the shape is recorded here
+rather than the path, because a path nobody else can open is not a
+re-establishment route** — recurse subdirectories, then yield files, then yield
+the directory itself, with
 `UnauthorizedAccessException` and `DirectoryNotFoundException` caught and logged
 **per node**, and an optional ACL-reset retry on the denied node. Directly relevant
 to `browserai_reinstall_browser`, session destroy, and the per-run instance
@@ -235,10 +241,9 @@ intermediate file buffers in the operating system."* Surviving a power cut needs
 an atomic `File.Move` into place so no reader ever observes a half-written file.
 Verified against MS Learn 2026-08-16. `[STABLE]`
 
-**A working reference implementation exists on this machine, in C#**, verified
-2026-08-16 by reading it:
-`C:\Source\SixFive7\StationeersPlus\TestRig\src\TestRig.Core\Infrastructure\SystemFileSystem.cs:248-296`
-(`WriteAllTextDurable`) does all three steps — a temp file **in the same
+**A working reference implementation was read rather than designed**, verified
+2026-08-16 in an unpublished first-party C# test rig: its `WriteAllTextDurable`
+does all three steps — a temp file **in the same
 directory**, opened `FileShare.None` with `FileOptions.WriteThrough`, then
 `stream.Flush(flushToDisk: true)`, then `File.Move(temp, full, overwrite: true)` —
 with the reasoning recorded inline at lines 229-247 and a `finally` that removes
@@ -495,9 +500,8 @@ is genuinely not on this machine is asserted by
 at the property set, not at load and not at compile time. The managed enum is only
 an integer; the rejection happens inside the COM object receiving it, so the
 compiler, the interop layer and any static analysis all see a valid value. Shipped
-mitigation, read 2026-08-16:
-`C:\Source\ExoFabric\WinUpdater\WinUpdater\WinUpdater.vb:71-76` wraps
-`UpdateDownloader.Priority = DownloadPriority.dpExtraHigh` — a Windows Update
+mitigation, read 2026-08-16 in an unpublished VB.NET Windows Update client, which
+wraps `UpdateDownloader.Priority = DownloadPriority.dpExtraHigh` — a Windows Update
 Agent value newer than the OS floor that project targeted — in a try/catch that
 logs *"Switching from ""dpExtraHigh"" priority to ""dpHigh"" priority due to OS
 incompatibility"* and downgrades. **Directly applicable here:** the job-object
@@ -505,7 +509,9 @@ information classes and the `NtQueryInformationProcess` information classes this
 project P/Invokes are the same shape, so every information class used must either
 be safe at our Windows floor or carry an explicit downgrade path — a value that is
 merely absent on an older build fails at the call site, where nothing else will
-catch it. Re-establish by reading that file. `[STABLE]`
+catch it. `[STABLE]` for the mechanism, which is how COM interop works and can be
+reproduced against any COM object with a version-gated enum; the shipped instance
+is `[MACHINE]` and **not reproducible from this repository**.
 
 **`WaitForSingleObject` needs `SYNCHRONIZE`, which
 `PROCESS_QUERY_LIMITED_INFORMATION` does not imply.** Measured 2026-08-16 while

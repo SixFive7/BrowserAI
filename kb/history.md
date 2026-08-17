@@ -13,13 +13,16 @@ generalises. It is recorded because the charter's opening argument cites these
 numbers and they carry no other provenance.
 
 **13 copies of `playwright/launch.ps1` across 10 repositories.** Filesystem sweep
-of `C:\Source` to depth 7, **2026-08-13**: `ExoFabric/Infrastructure`,
-`Netwerkplek`, `FluxTone`, `HitsterCardGenerator`, `ImmichDater`, `Jeeves`,
-`PortainerCompose`, `StationeersPlus`, `SyncthingMonitor`, `Workspace657` — plus
-3 worktree/backup copies inside `StationeersPlus`. **All nine non-Workspace657
-copies are byte-identical to each other and all differ from Workspace657**, and
-the same holds for `.claude/hooks/playwright-config-hook.ps1`. If the true count
-is 15+, the remainder live outside `C:\Source` or deeper than 7 levels.
+of the machine's source root to depth 7, **2026-08-13**: ten unrelated
+repositories carried one, plus 3 worktree/backup copies inside one of them.
+**Nine of the ten copies are byte-identical to each other and all nine differ
+from the tenth**, and the same holds for the accompanying
+`.claude/hooks/playwright-config-hook.ps1`. If the true count is 15+, the
+remainder live outside that root or deeper than 7 levels.
+
+The one that differs is the repository the script was last edited in — which is
+the whole mechanism: a copied script diverges once, in the place somebody needed
+it to, and the other nine keep the old behaviour with nothing to say so.
 
 **Thirteen checkouts means thirteen `persistent/profile/` directories**, so a
 login established in one repository does nothing for the other twelve.
