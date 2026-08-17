@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -63,6 +64,8 @@ internal sealed class RawStdioClient : IAsyncDisposable
     private readonly StringBuilder _standardError = new();
     private readonly Task _standardErrorPump;
     private readonly CancellationTokenSource _deadline;
+    private readonly TimeSpan _budget;
+    private readonly Stopwatch _sinceStart = Stopwatch.StartNew();
 
     private int _nextId;
     private int _disposed;
@@ -71,6 +74,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
     {
         _job = job;
         _process = process;
+        _budget = timeout;
         _deadline = new CancellationTokenSource(timeout);
 
         _toChild = new StreamWriter(process.StandardInput, Utf8NoBom) { NewLine = "\n", AutoFlush = false };
@@ -180,12 +184,37 @@ internal sealed class RawStdioClient : IAsyncDisposable
             request["params"] = parameters;
         }
 
+        try
+        {
+            return await ExchangeAsync(method, request, id).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (_deadline.IsCancellationRequested)
+        {
+            // ⚠️ Rethrown with the peer's stderr attached, because the raw
+            // cancellation carries nothing at all. The whole-conversation
+            // deadline firing used to surface as
+            // "OperationCanceledException: The operation was canceled." with no
+            // method, no elapsed time and — worst — none of the child's stderr,
+            // which is the one place a browser that failed to come up says so.
+            // Measured 2026-08-17 on a Firefox launch: that message, and nothing
+            // else, after exactly 3m00s. Every other failure on this path already
+            // went through FailureAsync and carried the stderr; this one was the
+            // hole.
+            throw new TimeoutException(
+                await DiagnosticsAsync(
+                    $"'{method}' (id {id.ToString(CultureInfo.InvariantCulture)}) did not complete before this client's whole-conversation budget of {_budget.TotalSeconds:F0} s expired, {_sinceStart.Elapsed.TotalSeconds:F1} s after the peer was started. Note that the budget covers everything since Start(), not this call alone.")
+                    .ConfigureAwait(false));
+        }
+    }
+
+    private async Task<JsonObject> ExchangeAsync(string method, JsonObject request, int id)
+    {
         await SendAsync(request).ConfigureAwait(false);
 
         while (true)
         {
             var line = await _fromChild.ReadLineAsync(_deadline.Token).ConfigureAwait(false)
-                ?? throw await FailureAsync($"The peer closed its stdout before answering '{method}' (id {id}).").ConfigureAwait(false);
+                ?? throw await FailureAsync($"The peer closed its stdout before answering '{method}' (id {id.ToString(CultureInfo.InvariantCulture)}).").ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(line))
             {
@@ -285,19 +314,33 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <summary>
     /// Builds the exception for any failure, with the peer's stderr attached.
     /// </summary>
-    private async Task<InvalidOperationException> FailureAsync(string message)
+    private async Task<InvalidOperationException> FailureAsync(string message) =>
+        new(await DiagnosticsAsync(message).ConfigureAwait(false));
+
+    /// <summary>
+    /// A failure message with the peer's exit code and stderr attached.
+    /// </summary>
+    /// <remarks>
+    /// <b>Separated from <see cref="FailureAsync"/> so a timeout can carry the
+    /// same evidence under a different exception type.</b> A deadline expiring is
+    /// a <see cref="TimeoutException"/> rather than an
+    /// <see cref="InvalidOperationException"/>, and before this split it carried
+    /// no evidence at all because it never reached this code.
+    /// </remarks>
+    /// <param name="message">What went wrong.</param>
+    /// <returns>The message, with the peer's own account of itself.</returns>
+    private async Task<string> DiagnosticsAsync(string message)
     {
         // A moment for the last lines to arrive: the interesting stderr is
-        // usually written as the peer dies, which is the same instant the read
-        // above returned null.
+        // usually written as the peer dies, which is the same instant a read
+        // returns null.
         await Task.Delay(250).ConfigureAwait(false);
 
         var exitCode = _process.HasExited
             ? _process.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"
             : "<still running>";
 
-        return new InvalidOperationException(
-            $"{message}{Environment.NewLine}--- peer exit code: {exitCode} ---{Environment.NewLine}--- peer stderr ---{Environment.NewLine}{StandardErrorSoFar()}");
+        return $"{message}{Environment.NewLine}--- peer exit code: {exitCode} ---{Environment.NewLine}--- peer stderr ---{Environment.NewLine}{StandardErrorSoFar()}";
     }
 
     private async Task PumpStandardErrorAsync()
