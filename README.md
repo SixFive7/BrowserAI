@@ -37,7 +37,8 @@ The lesson worth carrying into BrowserAI: **every one of those defects was invis
 | File | Holds | Changes when |
 |---|---|---|
 | **`README.md`** (this file) | What we **decided**, and why — the architecture, the scope boundary, the trade-offs taken | We change our minds |
-| **[`PLAN.md`](PLAN.md)** + **[`plan/`](plan/)** | What to **build**: the build order, the pre-release checklist, the requirements §A–§H, the implementation stack, the test suite, the hazard index. `PLAN.md` is the index; one file per section under [`plan/`](plan/), each marked as it is built and deleted when the whole plan is | It gets built, or the design behind it moves |
+| **[`PLAN.md`](PLAN.md)** + **[`plan/`](plan/)** | What to **build**: the build order, the requirements §A–§H, the implementation stack, the test suite, the hazard index. `PLAN.md` is the index; one file per section under [`plan/`](plan/), each marked as it is built and deleted when the whole plan is. *(**Corrected 2026-08-17, previously also "the pre-release checklist".** It moved to [`PRE-RELEASE.md`](PRE-RELEASE.md) at the root, because it is a live procedure and everything in `plan/` is deleted.)* | It gets built, or the design behind it moves |
+| **[`PRE-RELEASE.md`](PRE-RELEASE.md)** | The checklist a release must pass, and [the release gate](PRE-RELEASE.md#the-release-gate) it enforces. The only gate that exists | An item proves unevidenceable, or the gate moves into automation |
 | **[`kb/`](kb/README.md)** | What we **measured** — about Chromium, Firefox, Playwright, Node and Windows, one article per topic, with provenance and a re-verification hook | Upstream ships, and a re-measurement says something different |
 | **[`TODO.md`](TODO.md)** | Work settled in intent but not yet done | Something gets decided, or gets done |
 | **[`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md)** | The procedure for adopting a new upstream version | The procedure proves insufficient |
