@@ -36,7 +36,7 @@ namespace BrowserAI.Runtime;
 /// true)</c> inherits that behaviour because that is how it walks. The caller
 /// then sees an exception and no partial progress, which converts one locked
 /// file into a whole tree nobody ever cleans up").</b> Measured twice on .NET
-/// 10.0.11 ([kb](../../../kb/windows/processes.md#interop-and-the-toolchain)): the
+/// 10.0.11 ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)): the
 /// recursive delete <b>does</b> make partial progress. Against a tree with one
 /// file held <c>FileShare.None</c>, and again against one holding a subdirectory
 /// the caller may not read, it removed everything else and threw <b>one</b>

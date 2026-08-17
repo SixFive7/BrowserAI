@@ -74,7 +74,7 @@ internal sealed class ClientCommandLine : IRegistrationCommand
     /// <see cref="Environment.GetFolderPath(Environment.SpecialFolder, Environment.SpecialFolderOption)"/>
     /// reads the <i>token</i>, not the environment block, so setting that
     /// variable moves nothing
-    /// ([kb](../../../kb/windows/processes.md#interop-and-the-toolchain)). Right for
+    /// ([kb](../../../kb/windows/processes.md#the-win32-interop-surface)). Right for
     /// the product — an environment variable must not be able to point a
     /// registration at somebody else's profile — and it is written down because
     /// it silently defeated an attempt to measure a machine with no client on it.

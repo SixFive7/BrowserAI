@@ -185,7 +185,7 @@ all three registration records are on disk, written by the hook's own pid.
 ⚠️ **A clientless machine could not be simulated and the gap is named.** The
 fallback directory resolves from the process token rather than from
 `%USERPROFILE%`, so it cannot be redirected
-([kb](../windows/processes.md#interop-and-the-toolchain)), and renaming the
+([kb](../windows/processes.md#the-win32-interop-surface)), and renaming the
 maintainer's own `claude.exe` aside was refused. What *was* measured on the real
 installed binary: the hook exits **0 in 1,367 ms** with `PATH` stripped to
 `system32`, registering through the fallback. The absent-client path is exercised

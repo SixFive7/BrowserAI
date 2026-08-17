@@ -1,254 +1,13 @@
 <!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
 <!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
 
-# Windows processes: containment, stdio and interop
+# Processes: stdio, files and the interop surface
 
-Measured facts about how Windows creates, contains and reaps processes, and
-about the .NET and interop surface used to do it. Detection of processes that
-escaped anyway is in [Detecting stray browsers](detection.md).
-
-## Job objects and process containment
-
-Measured 2026-08-15. Harness: `.work/jobtest/`.
-
-**The headline: containment holds.** 16 runs, **106 spawned processes, 0
-escapees, 0 survivors**, across real Chromium and Firefox trees. `[FLOATS]`
-
-**Re-established 2026-08-16 against the product's own job, launcher and delete
-routine**, by `BrowserContainmentTests` — two runs of each family, on browsers
-BrowserAI provisioned into its own root:
-
-| Browser | Processes in the job | Escapees | Survivors after an external kill | Registered for restart | Profile deleted cleanly |
-|---|--:|--:|--:|--:|---|
-| Chromium 152.0.7977.8 (rev 1237) | 11, then 10 | 0 | 0 | **0** | yes |
-| Firefox 153.0 (rev 1539) | 10, then 10 | 0 | 0 | **1** | yes |
-
-The tree under test is launcher → `node` → `cli.js` → browser → helpers, which is
-one level deeper than production, and the launcher is `TerminateProcess`d from
-outside so that nothing but the kernel closing its last job handle can be what
-cleaned up. **The profile delete is the half a survivor count cannot make**: a
-process gone from the job's list but still holding a mapped file leaves a
-directory Windows refuses to remove, so a profile that deletes cleanly is the
-observable difference between *reported dead* and *nothing is left*. `[FLOATS]`
-
-> ⚠️ **A live browser is not a static tree, and the cross-check had to be
-> re-stated for it.** The probe's *"job members the walk missed"* check compared
-> the toolhelp walk against a membership list read **after** it, and against a
-> real Chromium that reports a phantom every time: helpers are started and
-> retired continuously, so a process born during the walk is in the later list
-> and not in the walk. Node trees never produced one, which is why step 6 never
-> saw it. The check now uses the **intersection** of two lists taken either side
-> of the walk — the members that were present throughout — and the per-row
-> membership check uses the union. Measured 2026-08-16; one phantom,
-> reproducibly, before the change.
-
-**Firefox registers itself for restart and Chromium does not**, asked of the live
-processes with `GetApplicationRestartSettings` rather than argued from a command
-line's length. Every Chromium process in the tree answers `0x80070490`
-(`HRESULT_FROM_WIN32(ERROR_NOT_FOUND)`); **exactly one** Firefox process answers
-`S_OK`. That is `toolkit.winRegisterApplicationRestart` doing what
-[kb: resurrection](../chromium/resurrection.md#the-mechanism-and-what-is-still-unproven)
-says it does, on a build BrowserAI provisioned. Containment is unaffected —
-`KILL_ON_JOB_CLOSE` happens now and Windows' restart happens after a reboot or an
-update — but **[step 17](../../plan/build-order.md#17-firefox) cannot ship Firefox
-sessions without turning that pref off in the profile**, or a machine update will
-resurrect a browser no session claims. Asserted on both sides by
-`BrowserContainmentTests`, so the day Mozilla changes it the suite says so.
-`[FLOATS]`
-
-**Job membership is inherited automatically.** MS Learn,
-[Job Objects](https://learn.microsoft.com/windows/win32/procthread/job-objects#managing-processes-in-jobs):
-*"After a process is associated with a job, by default any child processes it
-creates using CreateProcess are also associated with the job."* Escaping requires
-`CREATE_BREAKAWAY_FROM_JOB` **and** `JOB_OBJECT_LIMIT_BREAKAWAY_OK` on the job,
-or `JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK`. This is the inverse of Linux
-process-group semantics. `[STABLE]`
-
-**A denied breakaway fails the launch rather than escaping.** Measured:
-`CreateProcessW` returns `ERROR_ACCESS_DENIED` (5). libuv's own source gives the
-same reason for avoiding the flag (`src/win/process.c:1124`). **This is the fact
-the whole guarantee rests on** — a job granting no breakaway flags converts every
-escape attempt into a launch failure. `[STABLE]`
-
-> ⚠️ **That sentence is about the immediate job, and it is not the whole
-> answer.** With a permissive job nested *inside* ours the same call **succeeds**
-> — see the entry below, measured 2026-08-16. Read as universal it produces a
-> test that asserts error 5 in the production configuration and fails, which is
-> exactly what happened while writing `JobContainmentTests`.
-
-**A breakaway from a nested permissive job succeeds, and lands in our job
-anyway.** Measured twice, 2026-08-16, by `JobContainmentTests.
-ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`, which makes the same
-`CreateProcessW` call from one process in two states: `[STABLE]`
-
-| The process's jobs, innermost first | Result | Where the new process ends up |
-|---|---|---|
-| ours (`KILL_ON_JOB_CLOSE` only) | `ERROR_ACCESS_DENIED` (5), **no process created** | — |
-| a libuv-shaped job (`KILL_ON_JOB_CLOSE \| BREAKAWAY_OK \| SILENT_BREAKAWAY_OK`) nested inside ours | **success, error 0** | **in our job**, confirmed by `IsProcessInJob` and by the job's own pid list |
-
-Both outcomes are correct and neither is an escape. The breakaway is granted by
-the inner job, walks up the hierarchy, and stops at the first job that does not
-permit it — ours. **The observable that matters is where the process ended up,
-never the return value**: a check written as *"error 0 means we leaked"* reports
-a defect in the exact configuration production always runs in, because libuv's
-job is always in the chain.
-
-**The product implementation is measured, not only the prototype.** 2026-08-16,
-`JobContainmentTests`, both arms run twice with identical results — job created
-by `src/BrowserAI/Interop/JobObject.cs`, child started by
-`JobLauncher.Start`: `[FLOATS]`
-
-| Arm | Processes walked | Job pid-list | Escapees | Job members the walk missed | Survivors after the launcher is `TerminateProcess`d |
-|---|---|---|---|---|---|
-| Probe tree (child + 3 grandchildren + a breakaway, inside a libuv-shaped job) | **10** | 10 | **0** | **0** | **0** |
-| Bundled `node.exe` **v24.19.0** + 2 `child_process.spawn` grandchildren | **4** | 4 | **0** | **0** | **0** |
-
-Read back from the kernel in both arms: `LimitFlags` `0x2000`,
-`JobObjectBasicUIRestrictions` `0`, handle **not** inheritable. Re-establish by
-running the suite; the launcher writes its whole report to
-`<scratch>\report.json`.
-
-> **What the node arm does and does not close.** [The Node gap](../README.md)
-> notes that the 2026-08-15 containment measurements ran on **26.7.0** while the
-> shipped runtime is **v24.19.0**. Containment through the bundled runtime's own
-> `child_process.spawn` tree is now measured on v24.19.0 and holds. What was
-> **not** separately confirmed is that libuv still creates its permissive global
-> job under that version — the test observes containment, not libuv's internals.
-> The probe arm reproduces that job shape explicitly, so the nested-permissive
-> case is covered either way; the libuv source claim itself remains as it was.
-
-**Nested jobs cannot launder a process out.** MS Learn,
-[Nested Jobs](https://learn.microsoft.com/windows/win32/procthread/nested-jobs):
-a breakaway *"moves up the hierarchy until it reaches a job that does not permit
-breakaway."* Depth 4 measured (outer → ours → libuv's → Chromium sandbox).
-`KILL_ON_JOB_CLOSE` on the outer job reaches child jobs in the hierarchy. Jobs
-nest only if **neither sets UI limits** — so never call
-`SetInformationJobObject` with `JobObjectBasicUIRestrictions`. `[STABLE]`
-
-**libuv puts a permissive job in our chain.** `src/win/process.c:69-106` creates a
-global job with `BREAKAWAY_OK | SILENT_BREAKAWAY_OK | DIE_ON_UNHANDLED_EXCEPTION
-| KILL_ON_JOB_CLOSE` and assigns every non-detached child to it. Playwright
-spawns the browser with `detached: process.platform !== "win32"` — so **not**
-detached on Windows, so the browser lands in libuv's job. Containment held
-through it, which is the strongest available confirmation: that is exactly the
-configuration that would leak if our job permitted breakaway. Firefox stacks a
-second such job via its launcher process. `[FLOATS]`
-
-**Neither browser requests breakaway on a browser path.** Chromium: every caller
-of `CREATE_BREAKAWAY_FROM_JOB` is installer, updater or remote-desktop code
-(`chrome/installer/*`, `chrome/browser/updater/scheduler_impl.cc`,
-`remoting/host/win/wts_session_process_delegate.cc`). No renderer, GPU, utility,
-network-service or crashpad path. `crashpad_handler` is an ordinary child
-(`crashpad_client_win.cc:437-463`). Firefox's launcher uses `CREATE_SUSPENDED |
-CREATE_UNICODE_ENVIRONMENT` only. `[FLOATS]`
-
-**Firefox actively checks and declines.** `nsWindowsRestart.cpp`'s
-`NeedToBreakAwayFromJob()` returns false unless the job carries **both**
-`KILL_ON_JOB_CLOSE` and `BREAKAWAY_OK`. Ours carries only the first. Consequence:
-setting `BREAKAWAY_OK` would not merely permit an escape, it would **cause** one.
-`[FLOATS]`
-
-**Two implementation mistakes, both proven fatal by measurement:** `[STABLE]`
-
-| Mistake | Measured |
-|---|---|
-| `Process.Start` then `AssignProcessToJobObject` | **2 escapees** — the child spawns grandchildren before the assign lands |
-| Inheritable job handle (`bInheritHandle=TRUE`) | **All children survived** — ours is no longer the last handle, so `KILL_ON_JOB_CLOSE` never fires |
-
-The second is one flag away at all times: redirecting stdio forces
-`bInheritHandles=TRUE`.
-
-**`PROC_THREAD_ATTRIBUTE_JOB_LIST` beats `CREATE_SUSPENDED`.** Both measured at 0
-escapees, but the attribute makes membership part of process creation, so the
-race window does not exist rather than being closed afterwards — and it cannot
-leak a suspended process if we die mid-sequence. `.NET` can express neither;
-`ProcessStartInfo` has no creation-flags surface. A P/Invoke is mandatory.
-Measured with real sandboxed Chromium: 9 processes, 0 escapees. `[STABLE]`
-
-**BrowserAI inside someone else's job works**, measured in all three ancestor
-configurations — `KILL_ON_JOB_CLOSE` only, `+ BREAKAWAY_OK`, and
-`+ SILENT_BREAKAWAY_OK`. The third is the realistic case: any MCP client that
-spawns BrowserAI through Node `child_process` puts us in libuv's job. `[STABLE]`
-
-**Firefox background tasks and the crash reporter fail inside our job** with
-`ERROR_ACCESS_DENIED`, because `BackgroundTasksRunner` and
-`nsExceptionHandler.cpp` request breakaway. This is the correct trade — a failed
-helper launch beats an escaped `firefox.exe --backgroundtask`. Not a bug to fix.
-`[FLOATS]`
-
-**Playwright's own force-kill is `taskkill /pid <pid> /T /F`** — by PID with the
-tree flag, never by image name. Upstream is clean on that axis.
-(`coreBundle.js:9046`) `[FLOATS]`
-
-**A supervisor can respawn its child while you are killing it, and
-kill-by-enumeration cannot win that race.** Shipped mitigation, read 2026-08-16:
-`C:\Source\ExoFabric\Updater\NetLoader2\Application.xaml.vb:98` wraps its entire
-enumerate-and-kill sweep in `For i = 1 To 2`, commented *"Need two runs because
-any subprocess (like WyUpdate) might be started again if the main assembly is not
-already killed."* Two passes is not a fix, it is a wider window: enumeration reads
-a list the supervisor is still mutating, so correctness rests on the supervisor
-happening not to respawn during pass two. **This is the strongest available
-argument for a job object over enumeration, and it is a different argument from
-the one this section already makes** — the escapee counts above say enumeration
-*misses* processes, which sounds like something a better sweep could fix. This
-says enumeration **cannot be made complete at any repetition count**, because the
-process set is adversarial rather than merely large. `KILL_ON_JOB_CLOSE` has no
-such race: the kernel tears the whole job down at once, and anything respawned
-inside it is already contained. Re-establish by reading that file. `[STABLE]` for
-the race; `[MACHINE]` for the observation.
-
-**Containment holds from a published NativeAOT binary, against a real browser.**
-Measured 2026-08-16 at
-[build-order step 7](../../plan/build-order.md#7-vertical-slice-a-published-aot-binary-proxies-a-real-child),
-which is the run that closes the caveat step 6 left open — `[LibraryImport]` and
-`PROC_THREAD_ATTRIBUTE_JOB_LIST` had until then only been exercised under the
-test host, never after ILC. The published `BrowserAI.exe` was started inside a
-job the suite owns, brought up `node.exe` v24.19.0 and Chromium 152.0.7977.8 (7
-Chromium processes: browser, two crashpad handlers, a GPU process, two utility
-processes and renderers), and was then **`TerminateProcess`d from outside**, so
-no `finally`, no shutdown hook and no handler of ours ran. **Every recorded pid
-was gone**, with pid identity re-checked against its creation time before the
-survivor check acted on it. `VerticalSliceTests.KillingThePublishedBinaryLeavesNoNodeAndNoBrowser`
-re-runs it. `[FLOATS]`
-
-> **A `conhost.exe` joins the job for each child.** `JobLauncher` passes
-> `CREATE_NO_WINDOW`, which still allocates a console, so the job's member list
-> carries a `conhost.exe` per launched process. It is contained like everything
-> else; it is noted because a member list read for the first time otherwise
-> reads as a leak. `[MACHINE]`
-
-**A cleanup path in a `finally` is one this design guarantees will sometimes not
-run.** Observed the same day, and it is the containment contract biting its own
-author: BrowserAI deleted its per-run instance directory in a `finally`, the
-acceptance test terminates BrowserAI from outside on every run, and nineteen
-suite runs left nineteen directories behind. The fix is a sweep at startup that
-uses the **working-directory lock as the liveness check**, with no pid to
-recycle and no name to match. `[STABLE]` for the lock; re-establish with
-`InstanceDirectoryTests`.
-
-> ⚠️ **Corrected 2026-08-16 (previously "— Windows refuses to delete a directory
-> that is some process's current directory, so the delete simply fails for a live
-> run and succeeds for an abandoned one").** Measured twice: Windows refuses to
-> remove the **directory node** and does **not** refuse to delete the files
-> inside it, so `Directory.Delete(path, recursive: true)` emptied a live run's
-> directory completely and failed only afterwards — the sweep was not skipping
-> live runs, it was gutting them. The lock is a real liveness signal; the
-> operation that tests it has to be `Directory.Move`, which is refused **with the
-> contents untouched**. See the entry on it under
-> [Interop and the toolchain](#interop-and-the-toolchain).
-
-**A process's command line can be read by pid without a PEB walk.**
-`NtQueryInformationProcess` with `ProcessCommandLineInformation` (class **60**,
-Windows 8.1+) returns a `UNICODE_STRING` and needs only
-`PROCESS_QUERY_LIMITED_INFORMATION` — no `ReadProcessMemory`, no 32/64-bit
-pointer arithmetic. The documented two-call shape applies: the sizing call
-returns `STATUS_INFO_LENGTH_MISMATCH` (`0xC0000004`) with the required length,
-and a fixed buffer guess truncates, because a Chromium browser command line runs
-to several kilobytes of switches. Paired with `QueryFullProcessImageNameW` this
-is the sanctioned alternative to matching a process by image name: the full path
-is compared against a path BrowserAI owns. Used by `ProcessCommandLine` in the
-suite; it is what makes *"`--no-sandbox` is absent"* an assertion about the
-browser rather than about our config file. `[STABLE]`
+Measured facts about how Windows starts a process, what its standard streams and
+exit code really do, how a file write becomes durable, and the Win32 interop
+surface a supervisor needs to drive all three. Containment is in
+[Job objects and process containment](job-objects.md); the build tooling around
+this code is in [The build toolchain](../toolchain.md).
 
 ## stdio, exit codes and process startup
 
@@ -348,6 +107,60 @@ an elevating `Process.Start`, inside a `For i = 1 To 10` retry — so *every*
 elevation failure was read as a refusal and re-prompted, up to ten UAC dialogs for
 a cause that was never the user. Verified against MS Learn 2026-08-16. `[STABLE]`
 
+**`Console.ReadKey()` inside a `catch` in a non-interactive process hangs
+forever, with no output** — there is no console input to read, and nothing times
+out. It presents exactly as "the server is stuck". Shipped instance, read
+2026-08-16: `C:\Source\ExoFabric\Zombieraser\Zombieraser\Program.cs:247,277`, in a
+scheduled non-interactive job. Note the shape — both calls sit in the
+*unknown-exception* arm, below the specific `UnauthorizedAccessException` and
+`DirectoryNotFoundException` handlers, so they fire only on the cases nobody
+anticipated: the population least likely to have been exercised in testing and
+most likely to be hit in the field. `[STABLE]`
+
+**`Process.ExitCode` throws after `Dispose()`, and
+`Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
+PowerShell, which merely returns `$null`. Cache the value as an `int` the moment
+the child exits. `[STABLE]`
+
+**`WaitForExit(int)` does not drain the async readers** — only `WaitForExit()`
+and `WaitForExitAsync(ct)` do, so the timeout overload truncates stderr.
+`[STABLE]`
+
+**stderr survives the child.** The anonymous pipe exists before `CreateProcess`
+and the kernel buffers it: **5 lines survived a 3 s delay *and* child exit**. The
+real risk runs the other way — a full pipe blocks the child. `[STABLE]` for the
+mechanism; **the charter does not date the measurement**, so the date is
+`[UNVERIFIED]`.
+
+**stdin EOF fires instantly when the parent holding the pipe is
+`TerminateProcess`d**, which is what makes EOF a usable backstop for reaping
+instances. Measured; **undated in the charter**. `[STABLE]`
+
+**`ProcessStartInfo.Environment` is pre-populated with the inherited block and
+assignment *merges*** — an allowlist requires `Clear()` first. **`WorkingDirectory`
+left unset passes `null` to `CreateProcess`**, so the child inherits the parent's
+cwd, whatever the MCP client happened to have. **`ArgumentList` and `Arguments`
+are mutually exclusive**; setting both is undefined behaviour. `[STABLE]`
+
+**`Process.ExitCode` throwing after `Dispose()` is now reproduced rather than
+quoted**, by
+`DirectStdioClientTransportTests.ProcessExitCodeThrowsAfterDisposeWhichIsWhyTheSessionCachesIt`:
+a probe run to completion, its exit code read (2), the `Process` disposed, and
+`InvalidOperationException` on the next read. If a future runtime made the
+cached value survive disposal, that test says so and the caching in
+`ChildProcessSession` becomes belt-and-braces instead of load-bearing.
+`[STABLE]`
+
+**`ProcessStartInfo.Environment` merging is now reproduced too**, by
+`DirectStdioClientTransportTests.TheChildsEnvironmentIsExactlyTheAllowlist`,
+which plants eleven refused variables *in the test host* before spawning and
+asserts none of them reach the child. Written the other way round — assert only
+that the forced variables are present — it would pass against a transport that
+never called `Clear()`, on any machine that happened not to have them set.
+`[STABLE]`
+
+## Files, durable writes and deletes
+
 **`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on
 the first `UnauthorizedAccessException` rather than skipping the node.** MS Learn,
 on the `AllDirectories` overloads: *"`UnauthorizedAccessException` errors may make
@@ -406,16 +219,6 @@ evidence**: killing `cmd.exe` leaves `ping.exe` alive holding the same cwd, so t
 `Start-Process pwsh -ArgumentList '-NoProfile','-Command','Start-Sleep -Seconds 45'
 -WorkingDirectory $tree -PassThru`, then try the delete and the move, then
 `Stop-Process` and try the move again. `[STABLE]`
-
-**`Console.ReadKey()` inside a `catch` in a non-interactive process hangs
-forever, with no output** — there is no console input to read, and nothing times
-out. It presents exactly as "the server is stuck". Shipped instance, read
-2026-08-16: `C:\Source\ExoFabric\Zombieraser\Zombieraser\Program.cs:247,277`, in a
-scheduled non-interactive job. Note the shape — both calls sit in the
-*unknown-exception* arm, below the specific `UnauthorizedAccessException` and
-`DirectoryNotFoundException` handlers, so they fire only on the cases nobody
-anticipated: the population least likely to have been exercised in testing and
-most likely to be hit in the field. `[STABLE]`
 
 **A plain file write is not durable when it returns.** The bytes are in the system
 cache; MS Learn,
@@ -562,39 +365,57 @@ single name is roughly **5×** on top of the base cost. That ratio is why
 while `lock.json` keeps both: an index entry regenerates itself from the
 directory it names, and a lock record cannot. `[MACHINE]`
 
-**`Process.ExitCode` throws after `Dispose()`, and
-`Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
-PowerShell, which merely returns `$null`. Cache the value as an `int` the moment
-the child exits. `[STABLE]`
+**`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
+with a positive UTC offset is written with its sign as a `+` escape.
+Measured 2026-08-16 while writing `lock.json`: the file round-trips perfectly,
+parses everywhere, and is unreadable by the person the file exists for.
+`JavaScriptEncoder.UnsafeRelaxedJsonEscaping` — the same encoder
+[the server transport already takes](../mcp/sdk.md) — removes it. **It was caught
+only by an assertion on the literal bytes**; every assertion on the parsed value
+passed, in both directions, which is exactly the shape of a defect that ships.
+`[FLOATS]` — the encoder's safe list belongs to `System.Text.Json`, which the SDK
+floats. Reproduce:
+`LockRecordTests.TimestampsAreWrittenAsIso8601WithAnExplicitOffset`.
 
-**`WaitForExit(int)` does not drain the async readers** — only `WaitForExit()`
-and `WaitForExitAsync(ct)` do, so the timeout overload truncates stderr.
-`[STABLE]`
+**`LoggerFactory.Dispose()` never disposes a provider *instance* handed to
+`AddProvider`.** Measured 2026-08-16 on `Microsoft.Extensions.Logging` 10.0.x, by
+planting a provider that counts its own disposals:
+`LoggerFactory.Create(b => b.AddProvider(instance))` followed by
+`factory.Dispose()` reported **0 disposals** — a DI container does not dispose an
+instance it did not create. The consequence in this repository was a
+`ProcessLog.Dispose()` that closed nothing: its rolling file handle survived, and
+the log could not afterwards be opened with `FileShare.None`. It cost nothing in
+`Main`, which exits immediately after; it was found the first time something
+short-lived opened a process log and then read it back, which is a Velopack hook.
+`SessionLogging` was already immune because it disposes its file **explicitly
+after** the factory — a second call that reads as redundancy and is the actual
+mechanism. `[FLOATS]` on the logging packages. Reproduce:
+`ProcessLogTests.DisposingTheProcessLogReleasesTheFileHandle`, which fails at the
+exclusive open if the explicit `_writer.Dispose()` is removed.
 
-**stderr survives the child.** The anonymous pipe exists before `CreateProcess`
-and the kernel buffers it: **5 lines survived a 3 s delay *and* child exit**. The
-real risk runs the other way — a full pipe blocks the child. `[STABLE]` for the
-mechanism; **the charter does not date the measurement**, so the date is
-`[UNVERIFIED]`.
+**.NET's `FileMode.Append` loses records when several processes share a file;
+`FILE_APPEND_DATA` does not.** Measured 2026-08-16 while building the process
+log: **eight processes each writing 25 records lost 70 of the 200.** Every write
+returned success and the file grew, so nothing anywhere reported it — the lost
+records were simply absent. The cause is that .NET's append mode seeks to the
+end *at open* and then tracks the position itself, so two writers that opened at
+the same length overwrite each other. `FileShare.ReadWrite` permits the sharing
+and guarantees nothing about it.
 
-**stdin EOF fires instantly when the parent holding the pipe is
-`TerminateProcess`d**, which is what makes EOF a usable backstop for reaping
-instances. Measured; **undated in the charter**. `[STABLE]`
+The fix is the platform's own guarantee rather than a lock: a handle opened via
+`CreateFileW` with **`FILE_APPEND_DATA` and without `FILE_WRITE_DATA`** has its
+writes placed at the end of the file by the filesystem, atomically, regardless
+of how many other handles are open. **Requesting `GENERIC_WRITE` silently
+forfeits it**, because `GENERIC_WRITE` expands to include `FILE_WRITE_DATA`. The
+same eight-by-twenty-five run then loses nothing, repeated three times.
 
-**`ProcessStartInfo.Environment` is pre-populated with the inherited block and
-assignment *merges*** — an allowlist requires `Clear()` first. **`WorkingDirectory`
-left unset passes `null` to `CreateProcess`**, so the child inherits the parent's
-cwd, whatever the MCP client happened to have. **`ArgumentList` and `Arguments`
-are mutually exclusive**; setting both is undefined behaviour. `[STABLE]`
+This matters beyond the log. **The design has ~100 concurrent BrowserAI
+processes sharing one process log**, and a lock would have worked while also
+making logging able to block — the one thing [§E](../../plan/E-lifecycle.md)
+says the sink may never do. `[FLOATS]` for the .NET half, which could change
+with any SDK; `[STABLE]` for the Win32 guarantee.
 
-**Node's `child_process` has no job object support at all**, and Node's `spawn`
-cannot execute `.cmd` shims without `shell: true` — a live Claude Code bug for
-plugin-shipped servers using bare `npx`
-([#58510](https://github.com/anthropics/claude-code/issues/58510)). Every Node
-process supervisor on Windows falls back to `taskkill /T /F` or a native addon,
-and none survives a hard kill of the supervisor. `[FLOATS]`
-
-## Interop and the toolchain
+## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against
 ~3.3 ms for `Process.GetProcessById` and milliseconds for WMI. `dotnet/runtime`
@@ -651,18 +472,6 @@ warnings and passed all 41 runtime checks. **The shape is recorded rather than
 the path** — the probe lived outside the repository and a path nobody else can
 open is not a re-establishment route.
 
-**`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
-with a positive UTC offset is written with its sign as a `+` escape.
-Measured 2026-08-16 while writing `lock.json`: the file round-trips perfectly,
-parses everywhere, and is unreadable by the person the file exists for.
-`JavaScriptEncoder.UnsafeRelaxedJsonEscaping` — the same encoder
-[the server transport already takes](../mcp/sdk.md) — removes it. **It was caught
-only by an assertion on the literal bytes**; every assertion on the parsed value
-passed, in both directions, which is exactly the shape of a defect that ships.
-`[FLOATS]` — the encoder's safe list belongs to `System.Text.Json`, which the SDK
-floats. Reproduce:
-`LockRecordTests.TimestampsAreWrittenAsIso8601WithAnExplicitOffset`.
-
 **`Environment.GetFolderPath(SpecialFolder.UserProfile)` does not read
 `%USERPROFILE%`.** It resolves from the process token, so overriding the
 environment variable in a child's block moves nothing. Measured 2026-08-16 while
@@ -678,22 +487,6 @@ from the environment**; the client-absent path is exercised through the
 `IRegistrationCommand` seam instead, and `Locate` returning `null` for a name that
 is genuinely not on this machine is asserted by
 `RegistrationTests.TheClientIsLocatedByFileNameAndNeverAsAShim`.
-
-**`LoggerFactory.Dispose()` never disposes a provider *instance* handed to
-`AddProvider`.** Measured 2026-08-16 on `Microsoft.Extensions.Logging` 10.0.x, by
-planting a provider that counts its own disposals:
-`LoggerFactory.Create(b => b.AddProvider(instance))` followed by
-`factory.Dispose()` reported **0 disposals** — a DI container does not dispose an
-instance it did not create. The consequence in this repository was a
-`ProcessLog.Dispose()` that closed nothing: its rolling file handle survived, and
-the log could not afterwards be opened with `FileShare.None`. It cost nothing in
-`Main`, which exits immediately after; it was found the first time something
-short-lived opened a process log and then read it back, which is a Velopack hook.
-`SessionLogging` was already immune because it disposes its file **explicitly
-after** the factory — a second call that reads as redundancy and is the actual
-mechanism. `[FLOATS]` on the logging packages. Reproduce:
-`ProcessLogTests.DisposingTheProcessLogReleasesTheFileHandle`, which fails at the
-exclusive open if the explicit `_writer.Dispose()` is removed.
 
 **A COM/interop enum value the running OS does not know throws on assignment** —
 at the property set, not at load and not at compile time. The managed enum is only
@@ -724,327 +517,3 @@ worse than an exception, so `ProcessIdentity.IsAlive` refuses to interpret
 because a handle held by anyone keeps the pid and the object alive after the
 process is gone. Re-establish by removing `SYNCHRONIZE` from the access mask.
 `[STABLE]`
-
-**A double hyphen in an XML comment in `Directory.Build.props` presents as
-`NETSDK1207: Ahead-of-time compilation is not supported for the target
-framework`.** Measured twice, 2026-08-16, SDK **10.0.302**: XML forbids `--`
-inside a comment, MSBuild then cannot load the file, and the project builds
-*without* it — so `TargetFramework` is never set and the AOT check fails on a
-framework nobody chose. **The two entry points disagree, and only one is
-useful:** `dotnet build` reports NETSDK1207 from
-`Microsoft.NET.Sdk.FrameworkReferenceResolution.targets(120,5)`, while
-`dotnet msbuild <project> -getProperty:TargetFramework` reports the real cause,
-`MSB4024 … An XML comment cannot contain '--'`, with the line and column. Reach
-for `-getProperty` whenever a shared props file has just been edited and the
-error names something unrelated. `[FLOATS]` for the SDK version; `[STABLE]` for
-the XML rule.
-
-**`BannedApiAnalyzers` merges every additional file named `BannedSymbols.txt`.**
-Measured 2026-08-16 by planting one call per project: with
-`build/BannedSymbols.txt` supplied to all projects from `Directory.Build.props`
-and `src/BrowserAI/BannedSymbols.txt` supplied only to the product, the product
-project reports **both** files' bans on the same build. That is what lets the
-repository-wide rule and the product-only rules live in separate files instead of
-being duplicated. Re-establish by planting a banned call and reading the RS0030
-message, which quotes the entry's own text. `[FLOATS]`
-
-**No credible NuGet job-object wrapper exists** — the candidates have <6K
-downloads and the newest was published in **2017**. `dotnet/runtime`
-[#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in
-support and was closed as not planned. The hand-rolled surface is ~60 lines.
-`[FLOATS]`
-
-**Floating NuGet is two restore steps, not one.** `dotnet restore
---force-evaluate` resolves the float; a second, locked-mode restore verifies it.
-They are mutually exclusive in one invocation: **with a lock file present and no
-`--force-evaluate`, NuGet does not re-resolve and the float is silently dead**
-([NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512),
-warned by default from the .NET 11 SDK). `git diff --exit-code --
-"**/packages.lock.json"` after the resolve is then the cheapest available drift
-detector. `[FLOATS]`
-
-**Central package management refuses a floating version by default.** With
-`ManagePackageVersionsCentrally` set, a `PackageVersion` of `Version="*"` fails
-restore outright: *"NU1011: The following PackageVersion items cannot specify a
-floating version"*. The enabling property is
-`CentralPackageFloatingVersionsEnabled`, and without it the two properties the
-plan named produce a `Directory.Packages.props` that reads exactly like the
-float and cannot restore at all. Measured 2026-08-16 on SDK **10.0.302** while
-building the skeleton. Re-establish by deleting the property and restoring.
-`[FLOATS]`
-
-**npm keys a lock file's root package on the empty string, and PowerShell's
-`ConvertFrom-Json` refuses that outright.** Measured 2026-08-16 on npm **11.19.0**
-and PowerShell **7**, while building the payload: `package-lock.json`
-`lockfileVersion` 3 opens `"packages": { "": { … } }`, and parsing it raises *"The
-provided JSON includes a property whose name is an empty string, this is only
-supported using the -AsHashTable switch."* It is a hard parse failure rather than
-a dropped key, so it surfaces immediately — but only if something parses the lock
-at all, and the natural first version of a payload build does not. Re-establish
-by piping any npm lock through `ConvertFrom-Json` with and without
-`-AsHashtable`. `[FLOATS]`
-
-**`npm ci` does not rewrite the lock**, verified in the same run by comparing the
-file byte for byte either side of the call — which is what makes it usable as the
-npm half of the two-restore pattern above: `npm install` from a **deleted** lock
-and an empty `node_modules` resolves the `latest` dist-tag, `npm ci` then proves
-the resulting lock reproduces that tree on its own. Deleting the lock first is
-what guarantees the re-resolution. **Whether `npm install` re-resolves a dist-tag
-dependency with a lock already present was not measured** — the payload build
-never gets into that state, so the question is open rather than answered.
-`[FLOATS]`
-
-**.NET's `FileMode.Append` loses records when several processes share a file;
-`FILE_APPEND_DATA` does not.** Measured 2026-08-16 while building the process
-log: **eight processes each writing 25 records lost 70 of the 200.** Every write
-returned success and the file grew, so nothing anywhere reported it — the lost
-records were simply absent. The cause is that .NET's append mode seeks to the
-end *at open* and then tracks the position itself, so two writers that opened at
-the same length overwrite each other. `FileShare.ReadWrite` permits the sharing
-and guarantees nothing about it.
-
-The fix is the platform's own guarantee rather than a lock: a handle opened via
-`CreateFileW` with **`FILE_APPEND_DATA` and without `FILE_WRITE_DATA`** has its
-writes placed at the end of the file by the filesystem, atomically, regardless
-of how many other handles are open. **Requesting `GENERIC_WRITE` silently
-forfeits it**, because `GENERIC_WRITE` expands to include `FILE_WRITE_DATA`. The
-same eight-by-twenty-five run then loses nothing, repeated three times.
-
-This matters beyond the log. **The design has ~100 concurrent BrowserAI
-processes sharing one process log**, and a lock would have worked while also
-making logging able to block — the one thing [§E](../../plan/E-lifecycle.md)
-says the sink may never do. `[FLOATS]` for the .NET half, which could change
-with any SDK; `[STABLE]` for the Win32 guarantee.
-
-**`$(IntermediateOutputPath)` is empty in a `.targets` file imported from the
-project body.** Measured 2026-08-16 on SDK **10.0.302** while wiring the
-upstream-snapshot gate: a stamp written to `$(IntermediateOutputPath)x.stamp`
-landed in the **project directory**, not in `obj\`. The property is defined by
-`Microsoft.Common.CurrentVersion.targets`, which the SDK imports *after* the
-project body, so a `PropertyGroup` in an imported `.targets` evaluates it to
-nothing and the path degrades to a bare filename. `$(BaseIntermediateOutputPath)`
-comes from `Microsoft.Common.props` at the top and is set. The failure is
-quiet in the worst way: the build works, incrementality works, and the only
-symptom is an untracked file that `git status --porcelain` reports — which is
-why every build-order step ends by running exactly that. Re-establish by
-pointing a `Touch` task at `$(IntermediateOutputPath)` from an imported
-`.targets` and looking at where the file lands. `[FLOATS]`
-
-**Two PowerShell traps, both measured 2026-08-16 while making a build script's
-output into a build error message.** `Get-Command 'git' -CommandType
-Application` returns **two** entries on a Git-for-Windows machine —
-`cmd\git.exe` and `mingw64\bin\git.exe` are both on `PATH` — so `$git.Source`
-is one string naming two executables and invoking it fails with *"The term
-'C:\…\mingw64\bin\git.exe C:\…\cmd\git.exe' is not recognized"*. `Select-Object
--First 1` is required rather than tidy. And **PowerShell 7 emits ANSI colour
-escapes even when its output is redirected into a pipe**, which arrives in an
-MSBuild `<Error>` as line noise around the diff it is supposed to be carrying;
-`$PSStyle.OutputRendering = 'PlainText'` is the switch. `[MACHINE]` for the
-duplicate git, `[FLOATS]` for the rendering default.
-
-**A committed byte copy and its regenerated twin are not governed by the same
-line-ending rules, and `git add` is where they diverge.** Measured 2026-08-16
-with `git hash-object --path`: a two-line CRLF file hashes to its **raw** bytes
-under a path matched by `upstream-snapshots/** -text`, and to the **LF-converted**
-form under any other path in this repository, where `* text=auto eol=lf` and
-`*.json text` apply. `git add` on the second prints *"CRLF will be replaced by
-LF the next time Git touches it"* and stores the converted blob. So a
-regenerate-and-diff gate over committed copies of upstream files needs its
-directory exempted, or the comparison is between a normalised side and an
-unnormalised one — **permanently red on a difference that is not a difference**,
-whose tempting fix (normalise the generator's output too) makes an upstream
-line-ending change invisible instead.
-
-> **All four snapshots are LF today** — `config.d.ts` and
-> `playwright-core/browsers.json` as npm installs them, `cli.js --help`'s
-> output, and our generated JSON — so the exemption currently changes nothing
-> and is a guard against an upstream that changes its mind. **The conversion it
-> guards against is not hypothetical in this repository:** every
-> `dotnet restore` prints *"in the working copy of
-> `src/BrowserAI/packages.lock.json`, CRLF will be replaced by LF"*, because
-> NuGet writes those files CRLF and `*.json text` normalises them on the way in.
-> Nothing byte-compares a lock file, so there it is harmless. Re-establish by
-> counting CR **bytes**: `tr -cd '\r' < file | wc -c`. **Not** with `grep -c
-> $'\r'`, which in Git Bash reported every line of an all-LF file as a match
-> and produced a confident wrong answer that survived into four documents
-> before a byte count contradicted it. `[FLOATS]`
-
-**`dotnet test` transiently reported zero tests once, and does not reproduce.**
-Observed 2026-08-16 during
-[build-order step 5](../../plan/build-order.md#5-the-two-custom-transports) on
-SDK **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
-`Microsoft.Testing.Platform` **2.3.3**: exit **5**, *"Zero tests ran"*, in about
-250 ms, with `--diagnostic` showing the host's log stopping right after
-`Setting PlatformExitProcessOnUnhandledException` and a command line ending
-`--server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>` — the
-handshake `dotnet test` alone uses.
-
-> ⚠️ **Corrected 2026-08-16 (previously: "`dotnet test` runs zero tests against
-> this suite … It is not caused by anything in this repository, and that had to
-> be proven rather than assumed. A clean `git worktree` of `b8a6553` … reproduces
-> it exactly").** It does not reproduce. Re-run the same day against the same
-> machine and the same SDK: `dotnet test BrowserAI.slnx` at `e5f4684` returned
-> **51 passed, exit 0**, and a fresh `git worktree --detach` of **`b8a6553`** —
-> the exact commit the entry named as its proof — returned **30 passed, exit 0**.
-> The original entry's load-bearing sentence was therefore false, and so was its
-> consequence that *"the evidence recorded for every build-order done-test since
-> step 1 came from the executable"*: steps 1 and 2 were evidenced with
-> `dotnet test` reporting 5 and then 13 passing tests.
->
-> **What went wrong is worth more than the entry was.** A single failing
-> observation was written up as a standing property of the toolchain, complete
-> with a reproduction that had not been re-run at the moment it was cited. That
-> is the same shape as the `grep -c $'\r'` error two entries above, and it is the
-> failure this whole directory exists to prevent — the difference between *"I saw
-> this once"* and *"this is how it behaves"* is a second run, and it costs
-> seconds.
-
-**What to do if it recurs:** run `dotnet test`, then `BrowserAI.Tests.exe`, then
-`dotnet test` again. Two disagreeing runs of the same command are a transient;
-a stable disagreement between the two commands is the real thing and earns a new
-entry with the versions it held under. Do not remove `{ "test": { "runner":
-"Microsoft.Testing.Platform" } }` from `global.json` reaching for a fix — it is
-the documented MTP opt-in, TUnit is MTP-only, and there is no VSTest mode to
-fall back to. `[MACHINE]` for the single observation; nothing here is
-`[FLOATS]`, because no standing behaviour was established.
-
-**It recurred, it is now stable, and the retraction above still stands.**
-Measured 2026-08-16 during
-[build-order step 9](../../plan/build-order.md#9-lossless-passthrough), following
-the procedure the paragraph above prescribes. `dotnet test` reports *"Zero tests
-ran"*, `error: 1`, exit **5**, in 177–646 ms:
-
-| Run | Result |
-|---|---|
-| `dotnet test BrowserAI.slnx`, Git Bash, working tree | zero |
-| the same, repeated | zero |
-| the same, from PowerShell 7 | zero |
-| `dotnet test tests/BrowserAI.Tests/BrowserAI.Tests.csproj` | zero |
-| `dotnet test BrowserAI.slnx --list-tests` | *"Discovered 0 tests"* |
-| the working tree with every step-9 change stashed, i.e. `c9d30d4` | zero |
-| **a fresh `git worktree --detach` of `b8a6553`** | **zero** |
-| `BrowserAI.Tests.exe` | 106 passed, exit 0 |
-| `dotnet BrowserAI.Tests.dll --list-tests` | 88 found *(before the step-9 tests were written)* |
-
-**The last three rows are the whole finding.** The same commit that returned
-**30 passed** hours earlier returns zero from a clean worktree, while the same
-built assembly run directly finds and runs everything. So **nothing in this
-repository causes it**, and the earlier retraction was not wrong. Versions are
-identical either side: SDK **10.0.302**, .NET **10.0.11**, and the committed lock
-file still resolves TUnit **1.65.0** and `Microsoft.Testing.Platform` **2.3.3**,
-so it is not a package float.
-
-> ⚠️ **Corrected 2026-08-16, minutes after the table above was written
-> (previously: "It recurred, it is now stable").** It is **not** stable, and the
-> variable is not time. Immediately after that entry landed, the same
-> `dotnet test BrowserAI.slnx` was run three times in a row from the **root
-> session's** shell against the same commit: **106 passed / exit 0**,
-> **`Discovered 106 tests`**, **106 passed / exit 0**.
->
-> **The discriminator is which shell issues the command, not when.** Every
-> zero-test observation on record — the transient at step 5 and the seven-row
-> table above at step 9 — was made inside a **sub-agent's** shell, by two
-> different agents hours apart, including both times a clean worktree of
-> `b8a6553` was cited. Every successful run — 5, 13, 30, 51, 106, 106, 106 — was
-> made in the root session's shell. **Both sets of measurements are real**; what
-> was wrong each time was the generalisation from one shell to the toolchain.
->
-> This is worth more than the failure it describes. Twice tonight a correct
-> observation became a false standing claim by being attributed to the wrong
-> subject — first to the toolchain, then to the machine, when it belongs to the
-> execution context. **When a result cannot be reproduced by someone else,
-> suspect the environment before the artifact**, and name the environment in the
-> entry.
-
-**What is not established**, and must not be written in without measuring: why
-the sub-agent shell differs. Candidates not yet tested include MSBuild node
-reuse across many back-to-back builds, a stale build server, and concurrent
-`dotnet` processes — the agents run long build sequences, the root session does
-not.
-
-**The practical consequence is small, and it should be stated so nobody
-over-reacts to it.** `BrowserAI.Tests.exe` runs the whole suite in every
-environment, exit code and all, so the release gate is unaffected: the suite
-genuinely runs, and a red test is genuinely red. What a sub-agent must not do is
-read a zero-test result as *"the suite has never run"*.
-
-The cause is not established. `--diagnostic` shows the host launched with
-`--server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>` and the
-log ending immediately after `Setting
-PlatformExitProcessOnUnhandledException` — the same fingerprint as the transient,
-which is consistent with a defect in the `dotnet test` ↔ MTP handshake rather
-than in discovery. **Do not write a cause into this entry without measuring
-one.** [`TODO.md`](../../TODO.md) carries the investigation, and build-order
-step 9's evidence came from `BrowserAI.Tests.exe`, which is stated on that step
-rather than left implicit. `[MACHINE]` — it is a fact about this machine on this
-date, and the identical tree behaved differently on the same day.
-
-**`Process.ExitCode` throwing after `Dispose()` is now reproduced rather than
-quoted**, by
-`DirectStdioClientTransportTests.ProcessExitCodeThrowsAfterDisposeWhichIsWhyTheSessionCachesIt`:
-a probe run to completion, its exit code read (2), the `Process` disposed, and
-`InvalidOperationException` on the next read. If a future runtime made the
-cached value survive disposal, that test says so and the caching in
-`ChildProcessSession` becomes belt-and-braces instead of load-bearing.
-`[STABLE]`
-
-**`ProcessStartInfo.Environment` merging is now reproduced too**, by
-`DirectStdioClientTransportTests.TheChildsEnvironmentIsExactlyTheAllowlist`,
-which plants eleven refused variables *in the test host* before spawning and
-asserts none of them reach the child. Written the other way round — assert only
-that the forced variables are present — it would pass against a transport that
-never called `Clear()`, on any machine that happened not to have them set.
-`[STABLE]`
-
-### Diagnostic severity: what actually enforces a rule, and what only looks like it
-
-All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and
-rebuilding with `--no-incremental` rather than by reading documentation. They
-matter here because [style is law in this project](../../CLAUDE.md#style) and a
-severity that is quietly inert is the same defect as a config key
-`loadConfig` discards.
-
-**`NoWarn` beats `WarningsAsErrors`, and it beats an `.editorconfig` severity
-too.** A method holding a statement after a `return` was compiled three ways.
-With `TreatWarningsAsErrors` plus `WarningsAsErrors` naming `CS0162`: **1
-error**. Adding `<NoWarn>CS0162</NoWarn>`: **0 warnings, 0 errors** — the
-unreachable code compiled. Adding `dotnet_diagnostic.CS0162.severity = error`
-on top of that NoWarn, and forcing a full rebuild: still **0 warnings, 0
-errors**. So naming a warning in `WarningsAsErrors` does **not** protect it from
-a later bulk suppression, which is what
-[plan/build-order.md asserted](../../plan/build-order.md) and what this
-measurement corrected. What naming it there does buy is survival if
-`TreatWarningsAsErrors` is ever turned off — a smaller claim, and a true one.
-The protection that works has to sit outside the compiler's precedence order
-entirely, and here it is a test:
-`BuildConfigurationTests.NoBuildFileSuppressesWarnings` fails on any `NoWarn` or
-`WarningsNotAsErrors` in a project or shared-props file. `[FLOATS]`
-
-**Bulk `.editorconfig` analyzer configuration is ignored once `AnalysisMode` is
-set as an MSBuild property.** `dotnet_analyzer_diagnostic.category-<X>.severity`
-had no effect at all: set to `none` for the TUnit assertion category, the rule
-kept firing at error. The **per-rule** form is honoured in the same build —
-`dotnet_diagnostic.TUnitAssertions0002.severity = none` did suppress it. This is
-documented behaviour rather than a bug, and it is worth a measured entry because
-the failing form fails *silently*: a category line reads as protection, is
-ignored, and nothing reports that. Anything in this repository's
-`.editorconfig` that must actually hold is therefore written per-rule.
-`[FLOATS]`
-
-**IDE0005 will not run on build without `GenerateDocumentationFile`.** With
-`EnforceCodeStyleInBuild` on and IDE0005 escalated, the build fails with a
-diagnostic named `EnableGenerateDocumentationFile` telling you to set the
-property ([dotnet/roslyn#41640](https://github.com/dotnet/roslyn/issues/41640)).
-It is an error rather than a quiet skip, which is the good outcome; the trap is
-that the fix also turns on CS1591, so every publicly visible member then needs
-an XML doc comment or the build is red under `TreatWarningsAsErrors`. `[FLOATS]`
-
-**NativeAOT embeds `ApplicationManifest` into the published binary.** Verified by
-reading the bytes of a `PublishAot` win-x64 publish: `longPathAware`,
-`asInvoker` and the Windows 10/11 `supportedOS` GUID are all present in
-`BrowserAI.exe`. This is not inherited from an apphost — the publish output is
-the native exe, a `.pdb` and the XML doc file, with no managed `.dll` beside it.
-It matters because the long-path guarantee is otherwise unfalsifiable: session
-directories are caller-chosen and unbounded, and a manifest that silently failed
-to embed would present as a path failure deep inside a browser profile tree.
-`[FLOATS]`

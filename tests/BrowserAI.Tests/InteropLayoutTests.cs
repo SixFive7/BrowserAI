@@ -37,7 +37,7 @@ namespace BrowserAI.Tests;
 /// does: access masks.</b> <c>FILE_APPEND_DATA</c> without
 /// <c>FILE_WRITE_DATA</c> is a semantic choice, not a layout fact, and the
 /// atomic-append guarantee it buys is worth
-/// [70 lost records in 200](../../kb/windows/processes.md#interop-and-the-toolchain).
+/// [70 lost records in 200](../../kb/windows/processes.md#files-durable-writes-and-deletes).
 /// No size or offset assertion can see it. Only
 /// <c>ProcessLogTests.ConcurrentProcessesDoNotLoseEachOthersRecords</c> covers
 /// that, by failing the way the original defect presented.

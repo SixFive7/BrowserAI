@@ -86,7 +86,7 @@ did.
       it. And **`Environment.GetFolderPath(UserProfile)` does not read
       `%USERPROFILE%`**, which silently defeated an attempt to simulate a machine
       with no client on it — recorded with the gap named rather than papered
-      over. Both are in [kb](kb/windows/processes.md#interop-and-the-toolchain)
+      over. Both are in [kb](kb/windows/processes.md)
       with [rows 87–88](kb/README.md#re-verification-index). The original text
       follows.
       <br><br>
@@ -326,7 +326,7 @@ did.
       leaves the same nodes behind that the hand-rolled walk does — the
       difference is that it names **one** node where the walk named four and
       two. Both corrected carrying their previous text; the fact is in
-      [kb](kb/windows/processes.md#interop-and-the-toolchain) with
+      [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
       [row 86](kb/README.md#re-verification-index). `TreeDelete`'s *"third
       caller … at §G"* is corrected to `InstanceDirectory`, and the
       [hazard row](plan/hazards.md) is closed for all three callers with a
@@ -818,7 +818,7 @@ reasoning, come here for the queue.**
         `CreateFile` takes a raw `uint dwDesiredAccess` and returns a
         `SafeFileHandle`, and `FILE_APPEND_DATA = 0x4` is a distinct member of
         its `FILE_ACCESS_RIGHTS` enum. The
-        [70-records-in-200 fix](kb/windows/processes.md#interop-and-the-toolchain)
+        [70-records-in-200 fix](kb/windows/processes.md#files-durable-writes-and-deletes)
         was never at risk.
       - **CsWin32's `CreateProcessW` is better than ours, and we are not
         adopting it.** It generates
@@ -1083,7 +1083,7 @@ reasoning, come here for the queue.**
       is not the case that every done-test's evidence came from the executable.
       Retained struck through rather than deleted, because
       [kb row 54](kb/README.md#re-verification-index) and
-      [the kb entry](kb/windows/processes.md#interop-and-the-toolchain) are
+      [the kb entry](kb/toolchain.md#dotnet-test-and-the-test-host) are
       retracted in place for the same reason: a reader who saw the original must
       be able to find the retraction.
 
@@ -1148,7 +1148,7 @@ reasoning, come here for the queue.**
       > apart, including both times a clean worktree of `b8a6553` was cited as
       > proof. Both sets of measurements are real; the generalisation was not.
       > This correction reached
-      > [the kb entry](kb/windows/processes.md#interop-and-the-toolchain) in
+      > [the kb entry](kb/toolchain.md#dotnet-test-and-the-test-host) in
       > `c299cab` and **missed this item**, which is its own small instance of
       > the same lesson: a correction that does not sweep every place the claim
       > was written is a correction that half happened.
@@ -1157,7 +1157,7 @@ reasoning, come here for the queue.**
       launched with `--server dotnettestcli --dotnet-test-pipe …` and the log
       ending immediately after startup configuration, which points at the
       `dotnet test` ↔ MTP handshake rather than at discovery
-      ([kb](kb/windows/processes.md#interop-and-the-toolchain)). **Do not "fix"
+      ([kb](kb/toolchain.md#dotnet-test-and-the-test-host)). **Do not "fix"
       it by removing the MTP runner entry from `global.json`** — TUnit is
       MTP-only and there is no VSTest path to fall back to. Until it is
       understood, done-test evidence comes from the executable and the step that

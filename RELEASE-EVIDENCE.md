@@ -110,7 +110,7 @@ reported 352 green and proven nothing about any of this.
 > `Locate` returning `null` for a name that genuinely is not on this machine.
 
 Recorded in [kb: registering with the client](kb/mcp/protocol.md#registering-browserai-with-the-client)
-and [kb: interop and the toolchain](kb/windows/processes.md#interop-and-the-toolchain),
+and [kb: interop and the toolchain](kb/windows/processes.md#the-win32-interop-surface),
 with [re-verification rows 87 and 88](kb/README.md#re-verification-index).
 
 ---
@@ -178,7 +178,7 @@ Pro 26200.**
    contents untouched; successful the moment the holder exits; and atomic, so
    two BrowserAIs sweeping one root cannot both win a tree.
 
-Recorded in [kb](kb/windows/processes.md#interop-and-the-toolchain) with
+Recorded in [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
 [re-verification row 86](kb/README.md#re-verification-index), one hazard row
 rewritten and one added.
 

@@ -21,7 +21,7 @@ namespace BrowserAI.Tests;
 /// <b>This is the half a job-object test without a browser cannot reach.</b> The
 /// contract is stated as <i>16 runs, 106 processes, 0 escapees, 0 survivors</i>
 /// against real Chromium and Firefox trees
-/// ([kb](../../kb/windows/processes.md#job-objects-and-process-containment));
+/// ([kb](../../kb/windows/job-objects.md));
 /// <see cref="JobContainmentTests"/> proves the flags, the ownership and
 /// containment through the bundled runtime, and this proves it through the thing
 /// the guarantee is actually about.

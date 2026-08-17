@@ -52,7 +52,7 @@ internal static class BrowserAiPaths
     /// <remarks>
     /// Firefox is not a browser BrowserAI creates sessions for — that is still
     /// owed, and carried in [TODO.md](../../../TODO.md) — but the
-    /// [job-object containment contract](../../../kb/windows/processes.md#job-objects-and-process-containment)
+    /// [job-object containment contract](../../../kb/windows/job-objects.md)
     /// is stated against <b>both</b> families, and the
     /// second one is the harder case: Firefox stacks a second permissive job of
     /// its own, and its background tasks are the only code in either browser that

@@ -92,7 +92,7 @@ first step of touching this project, not a step before release.*
   > CS0162 the build reported **0 warnings and 0 errors**, and adding
   > `dotnet_diagnostic.CS0162.severity = error` on top did not change that
   > either, across a forced full rebuild.
-  > [`NoWarn` beats both](../kb/windows/processes.md#diagnostic-severity-what-actually-enforces-a-rule-and-what-only-looks-like-it).
+  > [`NoWarn` beats both](../kb/toolchain.md#analyzers-and-diagnostic-severity).
   > Naming CS0162 there is still worth doing — it survives
   > `TreatWarningsAsErrors` being turned off — but the protection against bulk
   > suppression had to come from outside the compiler's precedence order, and
@@ -154,7 +154,7 @@ first step of touching this project, not a step before release.*
 > rolling process log"* shared by ~100 processes loses records under .NET's
 > `FileMode.Append` — measured, eight processes lost 70 of 200 lines, silently.
 > The sink opens the file with `FILE_APPEND_DATA` instead;
-> [kb](../kb/windows/processes.md#interop-and-the-toolchain) has the numbers and
+> [kb](../kb/windows/processes.md#files-durable-writes-and-deletes) has the numbers and
 > re-verification row 45 has the regression guard.
 >
 > **And one is deliberately not built as described.** §E asks the sink to
@@ -346,7 +346,7 @@ this tree.
 > **zero** for all of them: every snapshot is LF. The `-text` exemption is
 > therefore a guard against a future upstream change rather than a fix for a
 > present one, and it is documented as that. The claim was corrected in
-> `.gitattributes`, [kb](../kb/windows/processes.md#interop-and-the-toolchain),
+> `.gitattributes`, [kb](../kb/toolchain.md#git-line-ending-normalisation),
 > [row 51](../kb/README.md#re-verification-index) and
 > [the hazard index](hazards.md) before this note was written.
 >
@@ -448,7 +448,7 @@ other two arrive at steps 10 and 11.
 > toolchain, with a reproduction that had not been re-run at the moment it was
 > cited. **The whole difference between "I saw this once" and "this is how it
 > behaves" is a second run**, and it costs seconds. Corrected in
-> [kb](../kb/windows/processes.md#interop-and-the-toolchain), row 54 and
+> [kb](../kb/toolchain.md#dotnet-test-and-the-test-host), row 54 and
 > [TODO.md](../TODO.md), all in place so a reader of the original meets the
 > retraction.
 >
@@ -551,7 +551,7 @@ byte-exact passthrough.
 > and asserts on **where the process ended up** rather than on the return value,
 > because a check written as *"0 means we leaked"* fails in exactly the
 > configuration production always runs in. Recorded, with the table, in
-> [kb](../kb/windows/processes.md#job-objects-and-process-containment), where the
+> [kb](../kb/windows/job-objects.md), where the
 > original entry now carries the qualifier it was missing.
 >
 > **What the acceptance test actually ran against, stated rather than implied.**
@@ -584,7 +584,7 @@ byte-exact passthrough.
 > which a liveness check that treats anything-but-signalled as "running" reports
 > as a process that never dies; it presented as a containment defect for half an
 > hour and the product was fine. Both in
-> [kb](../kb/windows/processes.md#interop-and-the-toolchain).
+> [kb](../kb/toolchain.md#analyzers-and-diagnostic-severity).
 >
 > **Re-verification row 2 was split rather than ticked.** It named
 > `JobContainmentTests`, which did not exist, and covered process trees *and*
@@ -698,7 +698,7 @@ a review item.
 > publish-only MSBuild target adds `payload/**` to `ResolvedFileToPublish` when
 > the tree exists, which is the layout the installed artifact needs anyway, and a
 > clean clone with no `payload/` still publishes. Writing that target hit
-> [the double-hyphen XML trap](../kb/windows/processes.md#interop-and-the-toolchain)
+> [the double-hyphen XML trap](../kb/toolchain.md#msbuild-property-evaluation)
 > for the third time on this machine.
 
 Deliberately thin: no sessions, no locking, no artifact routing, no injected

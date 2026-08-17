@@ -174,7 +174,7 @@ internal sealed class ProcessLog : IDisposable
     /// <see cref="SessionLogging"/> was already immune, because it disposes its
     /// file explicitly after the factory — that belt-and-braces second call was
     /// the mechanism, not the redundancy it read as
-    /// ([kb](../../../kb/windows/processes.md#interop-and-the-toolchain)).
+    /// ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)).
     /// </remarks>
     public void Dispose()
     {

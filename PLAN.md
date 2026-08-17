@@ -234,7 +234,7 @@ settled in intent but not yet done belongs.
 > surface child's profile, the output and downloads folders — and failed only on
 > the empty directory that was left, silently, against any instance older than
 > five minutes. Recorded in the [hazard index](plan/hazards.md) as a new row,
-> and in [kb](kb/windows/processes.md#interop-and-the-toolchain) with
+> and in [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
 > [row 86](kb/README.md#re-verification-index).
 
 ## The three buckets — every outstanding item, sorted, 2026-08-17

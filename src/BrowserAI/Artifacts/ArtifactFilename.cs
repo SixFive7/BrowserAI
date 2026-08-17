@@ -21,7 +21,7 @@ namespace BrowserAI.Artifacts;
 /// ⚠️ <b>Every check here is on the string, and none of them touches the
 /// filesystem.</b> That is not a performance preference: a <c>\\host\share</c>
 /// naming a host that is not answering blocks a single file call for <b>21
-/// seconds</b> (measured; [kb](../../../kb/windows/processes.md)), so a validator
+/// seconds</b> (measured; [kb](../../../kb/windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)), so a validator
 /// that probed before deciding would hand any caller a 21-second stall for the
 /// price of one bad argument.
 /// </para>
