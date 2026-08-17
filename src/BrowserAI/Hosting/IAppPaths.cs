@@ -31,9 +31,9 @@ namespace BrowserAI.Hosting;
 /// <b>Never <c>AppContext.BaseDirectory</c>.</b> It reads as "next to the
 /// binary" and resolves <i>inside</i> <c>current\</c>, which an update replaces
 /// wholesale — so a log or a browser tree placed there is deleted by the event
-/// most likely to have produced the line you came to read. ExoFabric/UCC does
-/// exactly this and carries a 10-day log retention policy that can therefore
-/// never once have applied.
+/// most likely to have produced the line you came to read. A shipped product
+/// examined for this project does exactly this and carries a 10-day log
+/// retention policy that can therefore never once have applied.
 /// </para>
 /// </remarks>
 internal interface IAppPaths

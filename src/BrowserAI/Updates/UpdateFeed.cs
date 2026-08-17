@@ -18,13 +18,13 @@ namespace BrowserAI.Updates;
 /// <c>SimpleWebSource</c> composes the request as
 /// <c>{BaseUrl}/releases.{channel}.json</c>, so a base URL built as
 /// <c>{BaseUrl}/{channel}</c> fetches <c>{BaseUrl}/{channel}/releases.{channel}.json</c>.
-/// <c>ExoFabric/UCC</c> shipped exactly that and lost auto-update for three
-/// versions.
+/// A shipped Velopack product did exactly that and lost auto-update for three
+/// releases; the only recovery was a manual reinstall of every client.
 /// </para>
 /// <para>
 /// <b>Three refusals, each from a measured failure</b>
 /// ([kb](../../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)):
-/// a base URL whose last segment is the channel is the UCC bug and is refused;
+/// a base URL whose last segment is the channel is the bug above and is refused;
 /// an empty channel is refused because <c>ExplicitChannel = ""</c> is
 /// <b>not</b> the same as unset — the code null-coalesces, so it yields
 /// <c>releases..json</c> and a 404; and a channel that is not already lower-case
@@ -75,8 +75,8 @@ internal sealed class UpdateFeed
     /// <remarks>
     /// Reported, never requested by this type. It exists so a health check, a
     /// log line and a test can all say the same thing about where the client is
-    /// actually looking — the UCC failure was invisible precisely because
-    /// nothing ever printed the composed URL.
+    /// actually looking — the shipped failure above was invisible precisely
+    /// because nothing ever printed the composed URL.
     /// </remarks>
     public string ManifestUrl => $"{BaseUrl}/releases.{Channel}.json";
 

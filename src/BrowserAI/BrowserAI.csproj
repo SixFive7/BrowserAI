@@ -53,8 +53,8 @@
         five commits later, no new tag     = 0.1.1 with an alpha.0.5 suffix
         no tag reachable at all            = 0.0.0 with an alpha.0.N suffix
 
-      The prefix is `v`, which is this estate's house prefix and the one
-      SixFive7/SpawnSpotter uses. It is a tag prefix rather than a version, so
+      The prefix is `v`, which is the house prefix across the repositories this
+      one shares conventions with. It is a tag prefix rather than a version, so
       it is not a pin and carries no digits.
 
       On the PRODUCT PROJECT ONLY. Versioning the test project buys nothing: no
@@ -74,9 +74,9 @@
       toolchain (link.exe, located through vswhere, installed by Visual
       Studio's "Desktop development with C++" workload). Without it the publish
       fails in a way that reads as an SDK or library incompatibility, and that
-      wrong diagnosis leads straight to the wrong fix. ExoFabric/UCC shipped
-      self-contained single-file instead of AOT for exactly this reason, and
-      only worked out why afterwards.
+      wrong diagnosis leads straight to the wrong fix. A shipped product
+      settled for self-contained single-file instead of AOT for exactly this
+      reason, and only worked out why afterwards.
 
       Set unconditionally rather than under a publish-only condition: the
       trimming feature switches key off this property, so conditioning it would

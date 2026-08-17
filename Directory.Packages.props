@@ -100,8 +100,8 @@
          tags"). Build-time only, PrivateAssets="all", no runtime dependency
          and nothing for ILC to see.
 
-         It floats like everything else. SpawnSpotter, the repository this was
-         taken from, pins 6.0.0; that number was never looked up here and is
+         It floats like everything else. The repository this arrangement was
+         taken from pins 6.0.0; that number was never looked up here and is
          not what restores. What restores is whatever is latest on the day, and
          the resolved version is recorded in packages.lock.json beside the
          projects. -->

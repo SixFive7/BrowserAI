@@ -23,7 +23,7 @@ namespace BrowserAI.Updates;
 /// At the concurrency BrowserAI is designed for — eight editors with a dozen
 /// agent sessions each — one process deciding to update destroys every other
 /// live session mid-task, and it is precisely the landmine the only prior art
-/// available cannot have hit, because <c>ExoFabric/UCC</c> is single-instance.
+/// available cannot have hit, that product being single-instance.
 /// </para>
 /// <para>
 /// <b>The handle is the mechanism, exactly as it is for a session directory</b>

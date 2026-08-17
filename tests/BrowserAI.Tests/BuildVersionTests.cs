@@ -38,9 +38,9 @@ internal sealed partial class BuildVersionTests
         // Three parts and an optional pre-release suffix: the shape `vpk`
         // accepts, and the shape MinVer produces from a `v` tag. A `+` anywhere
         // in it is the SourceRevisionId decoration, which is the hourly-restart
-        // defect this project inherited a warning about from SixFive7/FrameLink
-        // -- an update path that MATCHES the served version against the reported
-        // one can never match a decorated copy.
+        // defect this project inherited a warning about from a shipped product
+        // that hit it fleet-wide -- an update path that MATCHES the served
+        // version against the reported one can never match a decorated copy.
         await Assert.That(BuildVersion.Current).Matches(DerivedVersion());
 
         // And it is not the fallback. A binary that could not read its own
@@ -58,9 +58,10 @@ internal sealed partial class BuildVersionTests
         // MinVer's documentation, because the whole point is that the number a
         // caller would naturally reach for is not the version.
         //
-        // `ExoFabric/UCC` shipped the widened form of this ("Version Shows 4
-        // Parts") and BrowserAI carried the collapsed form live until step 18:
-        // SessionLock stamped every lock.json from GetName().Version.
+        // Another shipped Velopack product filed the widened form of this as an
+        // observed symptom -- "version shows 4 parts" -- and BrowserAI carried
+        // the collapsed form live until step 18: SessionLock stamped every
+        // lock.json from GetName().Version.
         var assemblyVersion = typeof(BuildVersion).Assembly.GetName().Version;
 
         await Assert.That(assemblyVersion).IsNotNull();

@@ -137,14 +137,14 @@
       IT.
 
       By default the SDK appends `.$(SourceRevisionId)` to InformationalVersion
-      even when the build sets that property explicitly. SixFive7/FrameLink
-      records what that cost: a release published as 0.0.0+a273b31 reported
-      itself as 0.0.0+a273b31 followed by the 40-character sha, the updater
-      MATCHES the served version against the reported one rather than comparing
-      them, so the two could never be equal, and every frame downloaded the
-      binary it was already running, swapped it, restarted, and did it again an
-      hour later. Fleet wide, forever, presenting only as "the frames restart
-      every hour".
+      even when the build sets that property explicitly. A shipped product
+      observed doing exactly this records what it cost: a release published as
+      0.0.0+<sha> reported itself as 0.0.0+<sha> followed by the 40-character
+      sha, the updater MATCHES the served version against the reported one
+      rather than comparing them, so the two could never be equal, and every
+      client in the fleet downloaded the binary it was already running, swapped
+      it, restarted, and did it again an hour later. Fleet wide, forever,
+      presenting only as "the clients restart every hour".
 
       BrowserAI's update path matches too (plan/G-updates.md), so the same
       trade applies here, and the property is turned off REPOSITORY WIDE rather

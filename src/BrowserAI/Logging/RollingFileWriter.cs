@@ -46,7 +46,9 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// <summary>
     /// How long a rolled file is kept. The number is ours rather than measured;
     /// what matters is that it is enforced somewhere that outlives an update,
-    /// which is the half ExoFabric/UCC's identical policy never had.
+    /// which is the half a shipped product's identical policy never had — its
+    /// logs sat inside the directory each update replaced wholesale, so the
+    /// retention window could never once have been reached.
     /// </summary>
     private const int RetentionDays = 30;
 

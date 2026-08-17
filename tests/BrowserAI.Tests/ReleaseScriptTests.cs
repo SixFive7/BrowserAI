@@ -74,9 +74,10 @@ internal sealed class ReleaseScriptTests
     /// <remarks>
     /// <b>Both halves or neither works.</b> <c>AllowVersionDowngrade</c> on the
     /// client makes an older version acceptable; a pipeline rule of *strictly
-    /// increasing* makes one impossible to publish. `ExoFabric/UCC` has exactly
-    /// that pair and therefore has no rollback at all, in either direction —
-    /// which is why the refusal here names the switch instead of being final.
+    /// increasing* makes one impossible to publish. A shipping product examined
+    /// for this project has exactly that pair and therefore has no rollback at
+    /// all, in either direction — which is why the refusal here names the switch
+    /// instead of being final.
     /// </remarks>
     [Test]
     public async Task ALowerVersionIsRefusedWithoutRollbackRepublishAndAcceptedWithIt()

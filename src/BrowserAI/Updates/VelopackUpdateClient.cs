@@ -24,8 +24,8 @@ namespace BrowserAI.Updates;
 /// which yields *"no updates"* silently. The other half is on the pipeline:
 /// <c>build/New-Release.ps1</c>'s validation rule reads *monotonic <b>or</b> an
 /// explicit rollback republish*. Turn on one without the other and the runtime
-/// accepts a rollback the build refuses to emit, which is the state
-/// <c>ExoFabric/UCC</c> is in.
+/// accepts a rollback the build refuses to emit, which is the state a shipping
+/// product examined for this project is in.
 /// </para>
 /// <para>
 /// <b>Constructing this is cheap and issues no request.</b>

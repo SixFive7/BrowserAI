@@ -26,7 +26,8 @@
          This is the pipeline half of rollback, and it only works paired with
          `AllowVersionDowngrade` on the client (VelopackUpdateClient sets it).
          Turn on one without the other and the runtime accepts a rollback the
-         build refuses to emit, which is the state ExoFabric/UCC is in today.
+         build refuses to emit, which is the state a shipping product this
+         project studied is in today.
          A republish of an older version is permitted only with
          -RollbackRepublish, so it is a stated intent rather than an accident.
 
@@ -54,10 +55,10 @@
          (TODO.md, "Capture ILC's raw output and fail the publish if it is
          non-empty".)
 
-      5. NO DECORATED VERSION STRING ANYWHERE IN THE LINKED BINARY. SixFive7/
-         FrameLink shipped `0.0.0+a273b31` followed by a 40-character sha; its
+      5. NO DECORATED VERSION STRING ANYWHERE IN THE LINKED BINARY. A shipped
+         product emitted `0.0.0+<sha>` followed by a 40-character sha; its
          updater MATCHES the served version against the reported one, so the
-         two could never be equal, and every frame in the fleet downloaded the
+         two could never be equal, and every client in the fleet downloaded the
          binary it was already running, swapped it, restarted, and repeated
          hourly, forever. BrowserAI's updater matches too. The repository-wide
          property and BuildVersionTests cover the entry assembly's own
@@ -189,7 +190,7 @@ if ($PackVersion -match '^0\.0\.0([-+]|$)') {
 }
 
 if ($PackVersion -match '\+') {
-    Write-Error "The derived version $PackVersion carries build metadata. The update path MATCHES the served version against the reported one, and a decorated copy can never equal an undecorated one -- this is the FrameLink hourly-restart failure. IncludeSourceRevisionInInformationalVersion must stay false."
+    Write-Error "The derived version $PackVersion carries build metadata. The update path MATCHES the served version against the reported one, and a decorated copy can never equal an undecorated one -- this is the observed hourly-restart failure a shipped product suffered fleet-wide. IncludeSourceRevisionInInformationalVersion must stay false."
     exit 1
 }
 
@@ -279,9 +280,10 @@ if (-not $SkipPublish) {
 
     Write-Host "ILC output is clean ($($ilc.Count) lines read, 0 complaints)."
 
-    # FrameLink's guard, and it is stronger than an assertion on the entry
-    # assembly's own attribute: a referenced project carrying a decorated
-    # string is linked into this same binary and nothing else would say so.
+    # The guard borrowed from the product that hit this, and it is stronger than
+    # an assertion on the entry assembly's own attribute: a referenced project
+    # carrying a decorated string is linked into this same binary and nothing
+    # else would say so.
     $binary = Join-Path $PackDir 'BrowserAI.exe'
 
     if (-not (Test-Path -LiteralPath $binary)) {
@@ -299,13 +301,14 @@ if (-not $SkipPublish) {
 
     # ⚠️ CORRECTED 2026-08-16, ON THE FIRST RUN (previously: fail on ANY
     # decorated string anywhere in the binary, which is how TODO.md described
-    # FrameLink's build.sh). THAT CHECK CAN NEVER GO GREEN HERE. Measured: the
-    # first publish of this repository carried SIX decorated strings and not one
-    # of them was ours -- Velopack 1.2.0+f2edcbc, ModelContextProtocol
-    # 2.2.0+6fa3825, Microsoft.Extensions.* 10.0.10 / 10.0.11 / 10.8.3, each
-    # decorated by its own publisher's SourceLink and linked into this binary by
-    # ILC. FrameLink's sweep is only sound for a build with no third-party
-    # dependencies carrying one, which is not this build and will not become one.
+    # the build script this check was modelled on). THAT CHECK CAN NEVER GO
+    # GREEN HERE. Measured: the first publish of this repository carried SIX
+    # decorated strings and not one of them was ours -- Velopack 1.2.0+f2edcbc,
+    # ModelContextProtocol 2.2.0+6fa3825, Microsoft.Extensions.* 10.0.10 /
+    # 10.0.11 / 10.8.3, each decorated by its own publisher's SourceLink and
+    # linked into this binary by ILC. That whole-binary sweep is only sound for
+    # a build with no third-party dependencies carrying one, which is not this
+    # build and will not become one.
     #
     # WHAT ACTUALLY MATTERS IS NARROWER AND IS STILL A SWEEP: a decorated string
     # whose version CORE is the version being packed. That is ours -- the entry
@@ -317,7 +320,7 @@ if (-not $SkipPublish) {
 
     if ($ours) {
         Write-Error ("The linked binary reports THIS build's version in decorated form:`n" +
-            ($ours -join "`n") + "`nThe updater MATCHES the served version against the reported one, so a decorated copy can never equal it -- this is FrameLink's hourly restart loop. Find the project that set SourceRevisionId; IncludeSourceRevisionInInformationalVersion is false repository-wide in Directory.Build.props.")
+            ($ours -join "`n") + "`nThe updater MATCHES the served version against the reported one, so a decorated copy can never equal it -- this is the hourly restart loop a shipped product ran fleet-wide. Find the project that set SourceRevisionId; IncludeSourceRevisionInInformationalVersion is false repository-wide in Directory.Build.props.")
         exit 1
     }
 

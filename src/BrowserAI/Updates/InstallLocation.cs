@@ -78,9 +78,9 @@ internal static class InstallLocation
     /// Two numbers that must agree and are produced by different mechanisms:
     /// this one comes from the package manifest <c>vpk</c> stamped, the other
     /// from the assembly attribute MinVer stamped. A build packed at one version
-    /// and compiled at another is exactly the state
-    /// <c>SixFive7/FrameLink</c>'s hourly restart loop was, so the disagreement
-    /// is worth being able to see.
+    /// and compiled at another is exactly the state a shipped product's
+    /// fleet-wide hourly restart loop was, so the disagreement is worth being
+    /// able to see.
     /// </remarks>
     public static string? InstalledVersion => Resolved.Value.Version;
 

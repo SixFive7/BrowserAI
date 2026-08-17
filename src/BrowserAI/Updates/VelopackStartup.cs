@@ -19,9 +19,9 @@ namespace BrowserAI.Updates;
 /// <see langword="true"/>: on finding a staged package, <c>Run()</c> applies it,
 /// <c>exit(0)</c>s and relaunches — <b>detached, with no inherited stdio</b>. An
 /// MCP client would see its server exit at handshake time and its pipes die,
-/// which is indistinguishable from a crash. <c>ExoFabric/UCC</c> never calls it
-/// and runs the default; that is survivable for a foreground tray app and fatal
-/// for a stdio child.
+/// which is indistinguishable from a crash. A shipped product examined for this
+/// project never calls it and runs the default; that is survivable for the
+/// foreground tray app it is, and fatal for a stdio child.
 /// </para>
 /// <para>
 /// <b>It runs before anything else, including logging, and that ordering is

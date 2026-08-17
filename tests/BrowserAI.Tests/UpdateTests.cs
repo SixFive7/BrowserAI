@@ -31,7 +31,7 @@ internal sealed class UpdateTests
     // ---- The feed URL: the worst hazard in the section -----------------------
 
     /// <summary>
-    /// The UCC bug, refused rather than reproduced.
+    /// The shipped channel-in-the-URL bug, refused rather than reproduced.
     /// </summary>
     /// <remarks>
     /// A base URL ending in the channel makes Velopack fetch
@@ -129,7 +129,7 @@ internal sealed class UpdateTests
     /// stand-in composes them the same way as the real one *by construction*
     /// rather than by evidence. What has to be checked is the URL somebody
     /// actually typed, against the storage somebody actually configured — the
-    /// exact pair that bricked <c>ExoFabric/UCC</c>'s auto-update for three
+    /// exact pair that bricked a production deployment's auto-update for three
     /// shipped versions.
     /// </para>
     /// <para>
@@ -467,9 +467,9 @@ internal sealed class UpdateTests
     /// updates"* — silently. The pipeline half is the release-validation rule
     /// reading *monotonic <b>or</b> an explicit rollback republish*; with the
     /// client half on and the pipeline half missing, the runtime accepts a
-    /// rollback the build refuses to emit, which is the state
-    /// <c>ExoFabric/UCC</c> is in. Only the pipeline half was driven before
-    /// 2026-08-17.
+    /// rollback the build refuses to emit, which is the state a shipping
+    /// product examined for this project is in. Only the pipeline half was
+    /// driven before 2026-08-17.
     /// </remarks>
     [Test]
     public async Task BothHalvesOfTheRollbackMechanismAreThereAndTheyAgree()
@@ -541,9 +541,9 @@ internal sealed class UpdateTests
     /// <b>It reads as "next to the binary" and resolves inside
     /// <c>current\</c></b>, which an update replaces wholesale — so a log, a
     /// cache or a browser tree placed there is deleted by the event most likely
-    /// to have produced the line somebody came to read. <c>ExoFabric/UCC</c> does
-    /// exactly this and carries a 10-day log retention policy that can therefore
-    /// never once have applied.
+    /// to have produced the line somebody came to read. A shipped product
+    /// examined for this project does exactly this and carries a 10-day log
+    /// retention policy that can therefore never once have applied.
     /// </para>
     /// <para>
     /// <b><c>PayloadLayout</c> is the sanctioned exception and is named

@@ -21,8 +21,9 @@
 
       * The PIPELINE half is this. A rule of "strictly increasing" alone makes a
         rollback impossible to PUBLISH while the runtime happily accepts one,
-        which is exactly the state ExoFabric/UCC is in today: the client would
-        take a rollback and the version-validation script refuses to emit one.
+        which is exactly the state a shipping product this project studied is in
+        today: the client would take a rollback and the version-validation
+        script refuses to emit one.
 
     So a lower version is permitted, and permitted only as a STATED INTENT.
     -RollbackRepublish is what states it. Without the switch a lower version is

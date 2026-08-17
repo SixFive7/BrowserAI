@@ -37,8 +37,8 @@
       "reviewed": "1.2.0",
       "date": "2026-08-13",
       "source": "https://github.com/velopack/velopack",
-      "why_it_matters": "Owns the update path, which is the most hazard-dense section of the charter. Five of its nine documented landmines were hit in production by ExoFabric/UCC rather than avoided.",
-      "notes": "Baseline. UCC runs 0.0.1298 (pre-1.0), so nothing learned there transfers without re-verification against 1.2.0."
+      "why_it_matters": "Owns the update path, which is the most hazard-dense section of the charter. Five of its nine documented landmines were hit in production by a shipped product examined for this project rather than avoided.",
+      "notes": "Baseline. That product runs 0.0.1298 (pre-1.0), so nothing learned there transfers without re-verification against 1.2.0."
     },
     "node": {
       "reviewed": "v24.19.0",

@@ -52,11 +52,10 @@ internal sealed partial class ChangelogTests
     [Test]
     public async Task EveryVersionHeadingIsTheBareVersionRatherThanTheTag()
     {
-        // The house form, used by SpawnSpotter, FluxTone, HitsterCardGenerator
-        // and DownloadDeleter: `## [0.1.0] - 2026-08-16`. The tag carries the
-        // `v` and the heading does not, and the two must not drift into each
-        // other -- the stamping path composes this line from a version string
-        // with no prefix on it.
+        // The house form, shared with four sibling repositories:
+        // `## [0.1.0] - 2026-08-16`. The tag carries the `v` and the heading
+        // does not, and the two must not drift into each other -- the stamping
+        // path composes this line from a version string with no prefix on it.
         var headings = VersionHeading().Matches(await File.ReadAllTextAsync(Changelog))
             .Select(match => match.Groups["version"].Value)
             .ToList();

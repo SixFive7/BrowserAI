@@ -22,9 +22,10 @@ namespace BrowserAI.Hosting;
 /// exists.</b> MinVer sets <c>AssemblyVersion</c> to
 /// <c>{Major}.0.0.0</c> by design, so every 0.x build reports
 /// <c>0.0.0.0</c> from the assembly version and every 1.x build reports
-/// <c>1.0.0.0</c> — measured here, on the artifact, at the tag. That is
-/// `ExoFabric/UCC`'s *Version Shows 4 Parts*
-/// ([kb](../../../kb/packaging/velopack.md)) with the number collapsed
+/// <c>1.0.0.0</c> — measured here, on the artifact, at the tag. That is the
+/// *version shows 4 parts* defect another shipped Velopack product filed as an
+/// observed symptom rather than a theory
+/// ([kb](../../../kb/packaging/velopack.md)), with the number collapsed
 /// as well as widened, and it was live in this repository before this type
 /// landed: <c>SessionLock</c> stamped every <c>lock.json</c> from
 /// <c>GetName().Version</c>, which would have recorded <c>0.0.0.0</c> for the
