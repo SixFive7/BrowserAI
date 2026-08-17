@@ -78,6 +78,33 @@ internal sealed record ArtifactRecord(
 internal sealed class ArtifactRouter
 {
     /// <summary>The artifact record, in the session's own directory.</summary>
+    /// <summary>
+    /// The schema version stamped into <c>session.json</c> and into the roll-up.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>§C names these files beside <c>lock.json</c> under "our own files
+    /// reject what they do not recognise", and until 2026-08-17 they carried no
+    /// version to reject anything against.</b> <c>lock.json</c> has had one from
+    /// the start because it is <i>read</i> — by the process that takes the
+    /// session, by the sweeper deciding ownership, by <c>destroy</c> refusing a
+    /// record it does not understand. These two are written and read by nobody
+    /// in this build.
+    /// </para>
+    /// <para>
+    /// <b>Which is why the version ships and a parser does not.</b> A strict
+    /// reader with no caller is the exact shape this project has already deleted
+    /// once — <c>BrowserProvisioner.PruneSupersededRevisions()</c> was public,
+    /// had zero callers, and its own documentation claimed one. What a version
+    /// buys with no reader is the thing that cannot be added afterwards: a
+    /// later BrowserAI meeting a file written by this one can tell what it is
+    /// looking at, and a file written by a later build announces itself rather
+    /// than being guessed at. Adding the field later would leave every file
+    /// written before the change indistinguishable from version 1, forever.
+    /// </para>
+    /// </remarks>
+    public const int CurrentSchemaVersion = 1;
+
     public const string IndexFileName = "session.json";
 
     /// <summary>The per-root roll-up, beside the sessions it covers.</summary>
@@ -364,6 +391,7 @@ internal sealed class ArtifactRouter
                 "_what_this_is",
                 "Every BrowserAI session beneath this directory, and nothing outside it. Written by BrowserAI when a session under this root is opened or destroyed. A machine-wide view is available by asking browserai_list about a wider directory.");
 
+            writer.WriteNumber("schemaVersion", CurrentSchemaVersion);
             writer.WriteString("root", root);
             writer.WriteString("updated", Stamp(DateTimeOffset.Now));
             writer.WriteNumber("sessions", sessions.Count);
@@ -678,6 +706,7 @@ internal sealed class ArtifactRouter
                 "_what_this_is",
                 "What is inside this session: one entry per artifact BrowserAI routed, with the tool that produced it and both path forms. The session's identity -- mode, browser, purpose -- is lock.json's and is deliberately not duplicated here.");
 
+            writer.WriteNumber("schemaVersion", CurrentSchemaVersion);
             writer.WriteString("session", _location.FullPath);
             writer.WriteString("created", Stamp(_created));
             writer.WriteString("lastTouched", Stamp(DateTimeOffset.Now));

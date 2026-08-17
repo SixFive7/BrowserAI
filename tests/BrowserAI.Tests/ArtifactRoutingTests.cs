@@ -186,6 +186,26 @@ internal sealed class ArtifactRoutingTests
 
         await Assert.That(index.RootElement.GetProperty("folders").EnumerateObject().Count())
             .IsEqualTo(ArtifactRouting.Folders.Count);
+
+        // §C names session.json beside lock.json under "our own files reject
+        // what they do not recognise", and it carried no version to reject
+        // anything against until 2026-08-17. The field is the half that cannot
+        // be added afterwards: every file written before it existed would be
+        // indistinguishable from version 1, forever. A strict *reader* is
+        // deliberately not built, because nothing in this build reads either
+        // file and a parser with no caller is the shape this project has
+        // already deleted once -- the reasoning is on ArtifactRouter.
+        await Assert.That(index.RootElement.GetProperty("schemaVersion").GetInt32())
+            .IsEqualTo(ArtifactRouter.CurrentSchemaVersion);
+
+        var rollUp = JsonDocument.Parse(await File.ReadAllBytesAsync(
+            Path.Combine(Directory.GetParent(rig.Session!)!.FullName, ArtifactRouter.RollUpFileName)));
+
+        using (rollUp)
+        {
+            await Assert.That(rollUp.RootElement.GetProperty("schemaVersion").GetInt32())
+                .IsEqualTo(ArtifactRouter.CurrentSchemaVersion);
+        }
     }
 
     [Test]
