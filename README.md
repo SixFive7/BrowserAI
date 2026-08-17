@@ -199,6 +199,7 @@ This is the whole model, and it needs stating precisely because the charter's fo
 | Node | Must exist on the host | Bundled (`node.exe`, 88.5 MB) |
 | .NET / Chrome | n/a / required for headed modes | Neither — NativeAOT single-file, and a Chromium we provision rather than the user's |
 | Browser patching | Chrome self-updates | **Ours to ship.** A Chromium CVE is now a release obligation |
+| Headed behaviour | Google Chrome | **Chromium, which is not Chrome:** no proprietary codecs, a different UA and fingerprint surface, no Widevine. DRM video, some enterprise SSO and anything fingerprinting the build will behave differently. **Verify the portals actually in use before cutting over** — this is the cost of dropping the host dependency, and it is paid by whoever migrates, once |
 | Tree teardown | `Get-CimInstance` walk + `Stop-Process`; nothing survives a hard kill of the launcher | Job object — the kernel reaps the tree even if BrowserAI is `TerminateProcess`d |
 | Lock granularity | Repository folder name | Resolved profile directory |
 | Output directories | Static, relative, cwd-dependent | Explicit argument to `init` |
