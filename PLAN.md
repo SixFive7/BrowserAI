@@ -352,9 +352,11 @@ day, so two remain. Named, not buried:**
    Handle routing 3"), which had itself been corrected the same day from "59 …
    Packaging 4" — **and the first number was the right one for this sentence.**
    59 counted rows open with a dash; 61 counted rows open. The re-derivation was
-   honest and answered the wrong question, and the breakdown was adjusted to make
-   it add up rather than re-counted, which is how Packaging went from 4 to a 6
-   that is in the file nowhere. Both numbers above are re-derived from
+   honest and answered the wrong question — **including the breakdown, which was
+   re-counted rather than adjusted**: under the open-at-all predicate Packaging
+   really is 6, and under this sentence's predicate it really is 4. Both figures
+   are in the file; they answer different questions. Both numbers above are
+   re-derived from
    `plan/hazards.md` on 2026-08-17, after `HazardIndexTests` landed and five rows
    were adjudicated with it.*
 

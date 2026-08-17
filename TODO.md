@@ -555,29 +555,42 @@ reasoning, come here for the queue.**
       that holds the replacement path at the right moment. Do the second if the
       first would put a test-only interface on the product's hot path.
 
-- [ ] **61 hazard rows still read `open` with `—` for evidence.** In
+- [ ] **54 hazard rows still read `open` with `—` for evidence.** In
       [the one file that outlives the plan](plan/hazards.md), and the file's own
       rule is that *"a row marked `closed` with `—` here is not closed"* — the
       converse is what this is: rows nobody has adjudicated either way. Counted
-      2026-08-17 by category: **Bundling and AOT 14, Process and OS (Windows)
-      13, Child runtime and configuration 10, Tooling and CI 8, Protocol and
-      SDK 7, Packaging and updates 6, Handle routing and instance lifetime 3.**
-      The previous round did 27 packaging rows and 8 named ones and left 6 open
-      *because they are open*, which is the standard to hold to: **an honest
-      `open` with a reason beats a `closed` with a weak one.** Many of these
-      will close against tests that now exist; some are upstream behaviours that
-      cannot close at all and should say so.
+      2026-08-17 by category: **Bundling and AOT 14, Child runtime and
+      configuration 10, Process and OS (Windows) 9, Tooling and CI 7, Protocol
+      and SDK 7, Packaging and updates 4, Handle routing and instance lifetime
+      3.** A further **3** rows read `open` while carrying evidence, so 57 are
+      open in total. The previous round did 27 packaging rows and 8 named ones
+      and left 6 open *because they are open*, which is the standard to hold to:
+      **an honest `open` with a reason beats a `closed` with a weak one.** Many
+      of these will close against tests that now exist; some are upstream
+      behaviours that cannot close at all and should say so.
 
-      **Corrected 2026-08-17 (previously "59 … Packaging and updates 4").**
-      Re-counted off the file rather than off this entry: the total is **61**
-      and packaging is **6**. Every other category was right. **The tell was in
-      this paragraph the whole time** — it says the previous round *left 6 open
-      because they are open*, two lines under a tally that said 4, so the entry
-      contradicted itself and the contradiction was the accurate half. Nothing
-      here can go red over a count, which is the same shape as the entry below
-      this one: a number nobody re-derives is indistinguishable from a measured
-      one. Re-derive with a category tally, not a total — a wrong total is
-      visible only against the sum.
+      **Corrected 2026-08-17, and this row is the cautionary one.** It briefly
+      read **61 … Packaging 6**, and *"59 … Packaging 4"* — the figure that
+      correction replaced — **had been right in every one of its seven
+      categories.** The mistake was not arithmetic. This entry counts rows that
+      are `open` **and** carry `—`; the re-count measured rows that are `open`
+      **at all**, which is a different predicate and a different number, and
+      nothing in the sentence forced the two to agree.
+
+      **What made it feel verified was the thing that should have raised the
+      alarm.** The paragraph says the previous round *left 6 open* two lines
+      above a tally reading *4*, and that was read as the entry contradicting
+      itself. It was not: **6 is the packaging count under one predicate and 4
+      under the other**, so both numbers were correct and the paragraph was
+      consistent. A measurement was taken, it was internally sound, it was
+      published with a confident account of what had gone wrong — and it broke
+      a correct figure.
+
+      **The rule this earns: when a count is corrected, quote the predicate
+      before the number.** Not *"54 rows"* but *"54 rows that are `open` and
+      carry `—`"*. Two plausible predicates over one table is all it takes, and
+      the difference here was five rows out of sixty, which is exactly the size
+      that looks like a stale count rather than a different question.
 
 - [ ] **Watch [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
       and act on what upstream decides.** Filed 2026-08-17; the record of what
