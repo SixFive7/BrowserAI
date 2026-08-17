@@ -455,7 +455,10 @@ internal sealed class StraySweepTests
 
         // The state an enumeration would capture a microsecond before an `init`
         // recreates the directory.
-        Directory.Delete(directory, recursive: true);
+        // TreeDelete, never Directory.Delete(recursive: true): banned
+        // repository-wide, and the assertions below depend on the directory
+        // actually being gone, so the survivors are asserted.
+        await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(directory))).IsEmpty();
         var stale = index.Follow().Single(entry => string.Equals(entry.Key, session.IndexKey, StringComparison.OrdinalIgnoreCase));
 
         await Assert.That(stale.State).IsEqualTo(SessionIndexEntryState.DirectoryMissing);
@@ -472,7 +475,7 @@ internal sealed class StraySweepTests
 
         // The other half: an entry that IS lost costs one cycle of invisibility
         // and no more, because every `init` and every `resume` re-asserts it.
-        Directory.Delete(directory, recursive: true);
+        await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(directory))).IsEmpty();
         await Assert.That(index.Sweep().Removed.Count).IsEqualTo(1);
 
         _ = NewSessionDirectory(scratch, "flickering");

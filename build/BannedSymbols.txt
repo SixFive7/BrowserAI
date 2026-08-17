@@ -35,7 +35,48 @@
 ; src/BrowserAI/BannedSymbols.txt. Both files are named BannedSymbols.txt
 ; because that is the name the analyzer looks for, and it reads every one it is
 ; given.
+;
+; -----------------------------------------------------------------------------
+; ADDED 2026-08-17. Two more rules, both repository-wide for the same reason the
+; one above is: the violation each exists to prevent has already happened here,
+; and one of the two happened in TEST code.
+;
+; NEVER Directory.Delete(recursive: true). Every tree delete goes through
+; Runtime/TreeDelete.cs. This file is the EDIT-time half -- the message appears
+; in the IDE before the edit is saved -- and it is the half that was missing:
+; ScratchRoot's reclaim pass used the framework primitive until 2026-08-17 and
+; was caught by a manual audit, which is not a mechanism. A ban scoped to src/
+; would not have caught the only violation of this rule this repository has.
+;
+; It takes ZERO suppressions, and that is worth stating because it is not what
+; anyone expects. TreeDelete itself calls the SINGLE-argument overload -- the
+; non-recursive one, post-order, at the last step of each level -- which is a
+; different symbol and is not banned. Banning it would be wrong: it is the
+; correct primitive inside a per-node walk. The suite's five call sites went to
+; ScratchDirectory.RemoveTree, so there is no exception anywhere.
+;
+; NEVER the timed Process.WaitForExit overload alone. It returns as soon as the
+; process is gone and does NOT drain the asynchronous output readers, so stderr
+; is silently truncated -- a green build that loses the line explaining a
+; failure, which is this project's founding defect class. The parameterless
+; overload is what flushes the event queue. There is exactly one legitimate call
+; site, Registration/ClientCommandLine.cs, and it carries an RS0030 suppression
+; with the reason beside it AND a bare WaitForExit() on the next statement. The
+; suppression permits the timed call and cannot require the flush, so the
+; pairing needs a test of its own; that test is OWED as of this entry and is not
+; written yet, which is said here rather than assumed.
+;
+; NOT HERE: the Microsoft.Playwright package. A banned symbol is the wrong
+; mechanism for a dependency -- with no PackageReference the type does not
+; resolve, the analyzer matches nothing, and the entry reads as coverage while
+; providing none until somebody has already added the package AND written code
+; against it. The reference itself is the earlier and stronger signal, so it is
+; asserted over Directory.Packages.props by
+; ForbiddenDependencyTests.NoProjectDrivesPlaywrightDirectly.
+; -----------------------------------------------------------------------------
 
 M:System.Diagnostics.Process.GetProcessesByName(System.String);Never by image name. Act only on a job object BrowserAI created, or on a pid whose identity was verified against a path BrowserAI owns. This call cannot tell our browser from the user's, and the user has ~40 of them.
 M:System.Diagnostics.Process.GetProcessesByName(System.String,System.String);Never by image name, and never on another machine either. Same rule as the single-argument overload.
 M:System.Diagnostics.Process.Kill(System.Boolean);Never Process.Kill(entireProcessTree: true). It walks parent-child links, which are re-parentable and pid-reusable, and it loses the race against anything that respawns while it walks. Dispose the JobObject instead: KILL_ON_JOB_CLOSE tears the whole job down at once and contains anything spawned mid-teardown.
+M:System.IO.Directory.Delete(System.String,System.Boolean);Never Directory.Delete(recursive: true). It reports ONE failed node where a tree may hold many, and a caller whose answer is 'what survived' then cannot give one. Use Runtime/TreeDelete.Remove, which walks post-order and names every node it could not remove. In the suite, ScratchDirectory.RemoveTree. The single-argument overload is not banned: it is the correct primitive inside that walk.
+M:System.Diagnostics.Process.WaitForExit(System.Int32);Never the timed overload on its own. It returns when the process is gone WITHOUT draining the asynchronous output readers, so stderr is silently truncated and the line explaining a failure is the line you lose. Prefer WaitForExitAsync. If a timeout is genuinely needed, suppress RS0030 with the reason and follow it with a bare WaitForExit() to flush the queue. Deleting that second call truncates stderr with nothing failing.

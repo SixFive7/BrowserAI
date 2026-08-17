@@ -165,7 +165,17 @@ internal sealed class ClientCommandLine : IRegistrationCommand
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
+            // RS0030: the timed WaitForExit overload is banned repository-wide
+            // because on its own it returns without draining the asynchronous
+            // readers, which truncates stderr silently. This is the one
+            // sanctioned exception in the tree, and it is sanctioned only
+            // because of the bare WaitForExit() below: a client CLI that hangs
+            // has to be given up on, and there is no WaitForExitAsync here
+            // because this whole path is synchronous by design -- it runs during
+            // registration, before any of the async machinery exists.
+#pragma warning disable RS0030
             if (!process.WaitForExit((int)budget.TotalMilliseconds))
+#pragma warning restore RS0030
             {
                 // Never Kill(entireProcessTree: true) -- it is banned, and it
                 // walks re-parentable links. This process spawns nothing.

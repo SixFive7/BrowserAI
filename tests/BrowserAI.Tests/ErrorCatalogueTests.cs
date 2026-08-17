@@ -313,7 +313,9 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(refused.Message).Contains("SeCreateGlobalPrivilege");
         Record(nameof(SessionErrors.NoMachineWideLock));
 
-        Directory.Delete(root, recursive: true);
+        // TreeDelete, never Directory.Delete(recursive: true), which is banned
+        // repository-wide. Teardown, so the survivors are discarded.
+        _ = ScratchDirectory.RemoveTree(root);
     }
 
     [Test]

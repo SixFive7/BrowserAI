@@ -114,7 +114,9 @@ internal sealed class SessionIndexTests
 
         await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
 
-        Directory.Delete(path.FullPath, recursive: true);
+        // The sweep below can only mean something if the directory really is
+        // gone, so the survivors are asserted rather than discarded.
+        await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(path.FullPath))).IsEmpty();
 
         var sweep = index.Sweep();
 

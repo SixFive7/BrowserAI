@@ -96,7 +96,8 @@ reported 352 green and proven nothing about any of this.
 2. **`Environment.GetFolderPath(UserProfile)` does not read `%USERPROFILE%`.** It
    resolves from the process token. This defeated an attempt to simulate a machine
    with no MCP client: the child was given an empty `USERPROFILE` and a `PATH` of
-   `system32`, and still found `C:\Users\jori\.local\bin\claude.exe`. **The failed
+   `system32`, and still found the client at `<user profile>\.local\bin\claude.exe`,
+   resolved from the token rather than from either variable. **The failed
    attempt is kept as evidence** — it is what proves the `PATH`-independent
    fallback works.
 

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Runtime;
+
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
@@ -28,19 +30,44 @@ internal sealed class ScratchDirectory : IDisposable
     public static ScratchDirectory Create(string label) =>
         new(System.IO.Path.Combine(ScratchRoot.Path, $"{label}-{Guid.NewGuid():N}"));
 
-    /// <inheritdoc />
-    public void Dispose()
+    /// <summary>
+    /// Removes a tree the way the product does, and answers with what would not
+    /// go.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The suite's one way to delete a directory, because
+    /// <c>Directory.Delete(recursive: true)</c> is banned repository-wide</b>
+    /// (<c>build/BannedSymbols.txt</c>). The ban has no exception for test code
+    /// and never had one to lose: the only recorded violation of that rule in
+    /// this repository was in test code — <see cref="ScratchRoot"/>'s reclaim
+    /// pass, which used the framework primitive until 2026-08-17 and was caught
+    /// by a manual audit rather than by anything mechanical.
+    /// </para>
+    /// <para>
+    /// It returns the survivors instead of throwing so that both callers are
+    /// honest ones: a teardown discards them, because a leftover directory is
+    /// the next run's reclaim problem rather than this run's failure, and a test
+    /// whose next assertion depends on the directory being gone asserts on the
+    /// list.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The directory to remove. One that does not exist is not a failure.</param>
+    /// <returns>Every node that could not be deleted, one line each.</returns>
+    public static IReadOnlyList<string> RemoveTree(string path)
     {
-        try
-        {
-            Directory.Delete(Path, recursive: true);
-        }
-#pragma warning disable CA1031 // A leftover directory is the next run's reclaim problem, never this run's failure.
-        catch (Exception)
-#pragma warning restore CA1031
-        {
-            // A browser or a log handle that has not let go yet is exactly the
-            // case ScratchRoot's sweep exists for.
-        }
+        var survivors = new List<string>();
+
+        TreeDelete.Remove(path, survivors);
+
+        return survivors;
     }
+
+    /// <inheritdoc />
+    public void Dispose() =>
+        // Best-effort by design: TreeDelete collects what would not go rather
+        // than throwing, so a browser or a log handle that has not let go yet
+        // becomes ScratchRoot's sweep problem instead of a failed test. That is
+        // also why there is no try/catch left here -- there is nothing to catch.
+        _ = RemoveTree(Path);
 }

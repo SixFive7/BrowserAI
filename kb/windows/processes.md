@@ -643,8 +643,13 @@ and [#1333](https://github.com/microsoft/CsWin32/issues/1333) are both closed
 *not planned*) is **not** ruled out by AOT. Note that CsWin32 #1333's own
 opening post repeats the same misconception, which is a fair guess at where it
 entered this repository. `[STABLE]` — re-establish by publishing any AOT project
-containing a `[DllImport]` and reading the ILC output; the probe used is
-`C:\Users\jori\Downloads\tmp-interop-eval\dllimport-verify\`.
+containing a `[DllImport]` and reading the ILC output. The probe used here was
+38 declarations across `kernel32`, `user32`, `ntdll` and `rstrtmgr` with
+`SetLastError=true`, covering `StringBuilder` marshalling, `SafeHandle` returns,
+struct byref and an `EnumWindows` callback delegate; it published with zero
+warnings and passed all 41 runtime checks. **The shape is recorded rather than
+the path** — the probe lived outside the repository and a path nobody else can
+open is not a re-establishment route.
 
 **`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
 with a positive UTC offset is written with its sign as a `+` escape.
@@ -663,7 +668,8 @@ floats. Reproduce:
 environment variable in a child's block moves nothing. Measured 2026-08-16 while
 trying to simulate a machine with no MCP client on it: the child was started with
 `USERPROFILE` pointed at an empty scratch directory and `PATH` cut to `system32`,
-and it still found `C:\Users\jori\.local\bin\claude.exe`. **The attempt failed and
+and it still found the client at `<user profile>\.local\bin\claude.exe`, resolved
+from the token rather than from either variable. **The attempt failed and
 the run is still evidence** — it proves the `PATH`-independent fallback in
 `ClientCommandLine` is load-bearing rather than decorative, because with `PATH`
 stripped that fallback is what completed the registration. `[STABLE]` — a Win32
