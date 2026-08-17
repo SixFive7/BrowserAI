@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -141,6 +142,17 @@ internal static class FirstRunCache
 
     private const string EntryPrefix = "entry-";
     private const string StagingPrefix = ".staging-";
+
+    /// <summary>
+    /// How long <see cref="Commit"/> waits out a scanner's handle before giving
+    /// up and reporting the refusal as itself.
+    /// </summary>
+    /// <remarks>
+    /// Two seconds, the same figure <see cref="InstallationMarker"/> uses
+    /// against the same class of transient. Every observed occurrence cleared
+    /// inside one retry.
+    /// </remarks>
+    private static readonly TimeSpan CommitBudget = TimeSpan.FromSeconds(2);
 
     /// <summary>
     /// The coverage row, written once by the first-run test and read once by
@@ -349,7 +361,7 @@ internal static class FirstRunCache
                 root,
                 $"{EntryPrefix}{downloadedUtc.UtcDateTime.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture)}-{Guid.NewGuid():N}");
 
-            Directory.Move(staging, published);
+            Commit(staging, published);
             Prune(root, published);
 
             return $"Cached {files} files / {bytes} B for the next {Minutes(Ttl)}.";
@@ -486,6 +498,66 @@ internal static class FirstRunCache
         return census == (files, bytes)
             ? (new FirstRunCacheEntry(candidate, browsers, downloaded, revision, files, bytes), string.Empty)
             : (null, $"{name} holds {census.Files} files / {census.Bytes} B where its stamp records {files} / {bytes}");
+    }
+
+    /// <summary>
+    /// Renames a staging directory to its published name, against a scanner that
+    /// may be holding a file inside it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A directory rename is refused while <i>anything</i> inside the tree
+    /// is open, and the thing holding it is not another test.</b> Windows fails
+    /// <c>MoveFileEx</c> on a directory with <c>ERROR_ACCESS_DENIED</c> when a
+    /// handle is open below it; a real-time scanner opens every file the copy
+    /// above has just written, milliseconds after it is written. The publish is
+    /// therefore racing a filter driver rather than a peer, and no amount of
+    /// locking between publishers can close it.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-08-17 with the suite running every test at once:</b>
+    /// <c>FirstRunCacheTests</c> failed in <b>five of twenty-one</b> full-suite
+    /// runs, always inside milliseconds of the copy, and always with
+    /// <i>"Access to the path '…\.staging-&lt;guid&gt;' is denied"</i>. It never
+    /// failed once in the same twenty-one runs at four-way parallelism, because
+    /// the scanner was never that far behind.
+    /// </para>
+    /// <para>
+    /// <b>This is the same shape, and the same justification, as
+    /// <see cref="InstallationMarker"/>'s retry</b> — a bounded wait against a
+    /// transient sharing state that resolves on its own, not a sleep inserted to
+    /// let a peer finish. The budget is small and the last failure is
+    /// <b>rethrown</b>, so a rename that is genuinely blocked still surfaces as
+    /// itself rather than as an empty directory. The product meets the identical
+    /// condition in <c>InstanceDirectory.Claim</c> and answers it differently and
+    /// correctly: there the refusal <i>means</i> "somebody holds it", the
+    /// directory is skipped, and the next startup reclaims it — a retry there
+    /// would weaken a liveness test, where here it protects a commit.
+    /// </para>
+    /// </remarks>
+    /// <param name="staging">The staging directory.</param>
+    /// <param name="published">The name that makes it visible.</param>
+    private static void Commit(string staging, string published)
+    {
+        var clock = Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                Directory.Move(staging, published);
+                return;
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                if (clock.Elapsed >= CommitBudget)
+                {
+                    throw;
+                }
+
+                Thread.Sleep(5);
+            }
+        }
     }
 
     /// <summary>Keeps the entry just published and removes every other one.</summary>

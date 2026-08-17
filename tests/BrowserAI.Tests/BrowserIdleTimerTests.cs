@@ -76,6 +76,49 @@ internal sealed partial class BrowserIdleTimerTests
     }
 
     /// <summary>
+    /// The shipped clock is the real one, and nothing in the product replaces it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same guard the idle period carries, for the seam added beside
+    /// it</b>, and it matters more than the period's does. A test-friendly period
+    /// leaking into a shipped build closes browsers too eagerly, which the next
+    /// call silently repairs; a test clock leaking in stops the only timer in the
+    /// product from <i>ever</i> firing, and a browser that is never closed is
+    /// indistinguishable from a browser in use. Nothing anywhere would go red.
+    /// </para>
+    /// <para>
+    /// An ASSIGNMENT, not a mention: <c>SessionManager</c> reads the seam on every
+    /// open and must, and the property's own declaration initialises it from
+    /// <see cref="TimeProvider.System"/> — neither matches, because both have
+    /// something other than whitespace between the name and the <c>=</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheShippedClockIsTheRealOneAndNothingInTheProductReplacesIt()
+    {
+        // The declaration itself, read out of the product's own source. A
+        // constructed SessionEnvironment would need a provisioner, a payload and
+        // a paths object to answer one question about a default, and the
+        // assignment scan below cannot see an initialiser — `{ get; init; } =`
+        // has something other than whitespace before the `=` and never matches,
+        // which is exactly what keeps the scan from flagging the declaration.
+        var seam = RepositoryLayout.ProductSourceFiles
+            .Single(file => file.Name is "SessionEnvironment.cs");
+
+        await Assert.That(await File.ReadAllTextAsync(seam.FullName))
+            .Contains("public TimeProvider Clock { get; init; } = TimeProvider.System;");
+
+        var offenders = RepositoryLayout.ProductSourceFiles
+            .Where(file => ClockAssignment().IsMatch(File.ReadAllText(file.FullName)))
+            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
+            .Order(StringComparer.Ordinal);
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+    }
+
+    /// <summary>
     /// The tool the timer calls is upstream's, by the name upstream publishes.
     /// </summary>
     /// <remarks>
@@ -118,121 +161,114 @@ internal sealed partial class BrowserIdleTimerTests
     /// real browser, which the next test drives.
     /// </para>
     /// <para>
-    /// ⚠️ <b>"A timer did not fire during this window" is a wall-clock claim, and
-    /// on this machine the harness itself stalls.</b> Measured twice over full
-    /// suite runs, 2026-08-16: a version pausing a quarter of a period between
-    /// calls saw the session go genuinely idle and the product close the browser
-    /// <i>correctly</i>, and a version driving flat out still recorded a
-    /// <b>1.65 s</b> gap between two in-process round trips against an 800 ms
-    /// period. Both times the product was right and the test was wrong.
+    /// ⚠️ <b>Rewritten 2026-08-17 against a <see cref="ManualClock"/> (previously
+    /// a wall-clock driving loop with a starvation detector and four retries).</b>
+    /// The old shape asserted that it had achieved a rate — every gap between two
+    /// in-process round trips under the 800 ms period — and on a machine running
+    /// every test at once it could not: one round trip measured <b>1.51 s</b> and
+    /// <b>2.27 s</b>, so all four attempts starved and the test failed <b>five
+    /// times in twenty runs</b> with the product correct every time. Before that
+    /// it had already cost a widened budget and the retry itself. A wall clock
+    /// cannot distinguish "the timer fired early" from "this thread was not
+    /// scheduled", and no amount of retrying makes it able to.
     /// </para>
     /// <para>
-    /// So each attempt <b>measures the longest gap it actually achieved</b> and
-    /// only makes the claim when that gap stayed under the period; a starved
-    /// attempt is retried against a fresh session rather than failing, and
-    /// running out of attempts fails naming starvation. That is deliberately not
-    /// the same as skipping: an attempt that was not starved always asserts, and
-    /// the failure mode this replaces was a red build that named the wrong
-    /// cause. The starvation it works around predates this step and is the same
-    /// one <see cref="TestDefaults.RigBudget"/> records — 2.57 s, 2.89 s and
-    /// 4.20 s against a rig that normally answers in milliseconds.
+    /// <b>Now nothing here reads a wall clock.</b> The clock moves only when this
+    /// test moves it, so <i>one tick short of the period</i> means exactly that:
+    /// three calls, each followed by an advance of one tick less than a whole
+    /// period, is <b>three periods of elapsed time with no close</b> — which is
+    /// impossible unless every call re-armed the timer. Then the clock is moved
+    /// past the deadline and the close must arrive.
+    /// </para>
+    /// <para>
+    /// <b>The one thing that is not observable from here</b> is the instant the
+    /// proxy releases its in-flight scope: <c>BrowserProxy</c> holds it across the
+    /// answer, so it may still be open when this test's round trip returns. A
+    /// timer that fires then re-arms for a whole period, correctly, so the quiet
+    /// half advances the clock until the close lands rather than assuming one
+    /// advance is enough. That is not a retry against flakiness — every advance
+    /// that meets an outstanding call is the product keeping its promise, and the
+    /// count assertion at the end is what makes it a bounded claim.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task EveryToolCallResetsTheTimerAndOnlyASessionThatGoesQuietIsClosed()
     {
+        var clock = new ManualClock();
+
         await using var rig = RigSessionEnvironment.Create(
             configure: child =>
             {
                 child.Tools["browser_navigate"] = new FakeToolBehaviour();
                 child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
             },
-            browserIdlePeriod: ShortPeriod);
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
 
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
-        const int Attempts = 4;
+        var session = Path.Combine(rig.Root, "driven");
 
-        for (var attempt = 1; attempt <= Attempts; attempt++)
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
         {
-            // A fresh session per attempt, so a starved one leaves nothing
-            // behind for the next: its own child, its own timer, its own record
-            // of what was called.
-            var session = Path.Combine(rig.Root, $"driven-{attempt.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            ["name"] = "browserai_init",
+            ["arguments"] = new JsonObject
+            {
+                ["directory"] = session,
+                ["purpose"] = "the session driven continuously",
+                ["mode"] = "persistent",
+            },
+        });
 
+        var child = rig.SessionChildren[^1];
+
+        // Three whole periods of elapsed time, in three calls. Each advance stops
+        // one tick short of the deadline the call just set, so a timer that
+        // ignored the call would have fired on the second advance.
+        const int Calls = 3;
+
+        for (var call = 1; call <= Calls; call++)
+        {
             _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
             {
-                ["name"] = "browserai_init",
-                ["arguments"] = new JsonObject
-                {
-                    ["directory"] = session,
-                    ["purpose"] = "the session driven continuously",
-                    ["mode"] = "persistent",
-                },
+                ["name"] = "browser_navigate",
+                ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session },
             });
 
-            var child = rig.SessionChildren[^1];
-            var driving = Stopwatch.StartNew();
-            var sinceLastCall = Stopwatch.StartNew();
-            var longestGap = TimeSpan.Zero;
-            var calls = 0;
+            clock.AdvanceTicks(ShortPeriod.Ticks - ManualClock.OneTick);
 
-            while (driving.Elapsed < ShortPeriod * 3)
-            {
-                _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
-                {
-                    ["name"] = "browser_navigate",
-                    ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session },
-                });
-
-                calls++;
-
-                if (sinceLastCall.Elapsed > longestGap)
-                {
-                    longestGap = sinceLastCall.Elapsed;
-                }
-
-                sinceLastCall.Restart();
-            }
-
-            if (longestGap >= ShortPeriod)
-            {
-                // This attempt let the session go genuinely idle, so it can say
-                // nothing about whether a call resets the timer. Never treated
-                // as a pass.
-                if (attempt == Attempts)
-                {
-                    throw new TimeoutException(
-                        $"All {Attempts.ToString(System.Globalization.CultureInfo.InvariantCulture)} attempts were starved: the longest gap between two in-process round trips was "
-                        + $"{longestGap.TotalSeconds:F2} s against a {ShortPeriod.TotalSeconds:F2} s period, so the harness — not the timer — let the session go idle.");
-                }
-
-                continue;
-            }
-
-            await Assert.That(calls).IsGreaterThan(10);
             await Assert.That(child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
-
-            // And now nothing at all. One close, and only one, however long it is
-            // left: the timer is one-shot and stays disarmed until the next call.
-            await WaitUntilAsync(
-                () => child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool),
-                ShortPeriod * 20,
-                "the idle close never reached the child");
-
-            await Task.Delay(ShortPeriod * 3);
-
-            await Assert.That(child.ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
-
-            // The evidence a caller would see, which is none: the close is
-            // BrowserAI's own call to its own child and no frame about it reaches
-            // the client.
-            var toTheCaller = string.Concat(harness.Client.FramesReceived.Select(Encoding.UTF8.GetString));
-
-            await Assert.That(toTheCaller).DoesNotContain(LiveSession.BrowserCloseTool);
-            return;
         }
+
+        // And now nothing at all.
+        await WaitUntilAsync(
+            () =>
+            {
+                clock.Advance(ShortPeriod);
+                return child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
+            },
+            TestDefaults.Patience,
+            "the idle close never reached the child, however far the clock was moved");
+
+        // One close, and only one, however long it is left: the timer is one-shot
+        // and stays disarmed until the next call. Twenty periods is twenty
+        // chances for a timer that wrongly re-armed, and the round trip after
+        // them is a real exchange through the same server and the same child —
+        // so anything the close path had queued has been through the child's loop
+        // by the time the count is read.
+        clock.Advance(ShortPeriod * 20);
+
+        _ = await harness.Client.RoundTripAsync("tools/list");
+
+        await Assert.That(child.ToolCallsReceived.Count(tool => tool == LiveSession.BrowserCloseTool)).IsEqualTo(1);
+
+        // The evidence a caller would see, which is none: the close is
+        // BrowserAI's own call to its own child and no frame about it reaches
+        // the client.
+        var toTheCaller = string.Concat(harness.Client.FramesReceived.Select(Encoding.UTF8.GetString));
+
+        await Assert.That(toTheCaller).DoesNotContain(LiveSession.BrowserCloseTool);
     }
 
     /// <summary>
@@ -728,6 +764,12 @@ internal sealed partial class BrowserIdleTimerTests
     /// </summary>
     [System.Text.RegularExpressions.GeneratedRegex(@"BrowserIdlePeriod\s*=[^=]")]
     private static partial System.Text.RegularExpressions.Regex IdlePeriodAssignment();
+
+    /// <summary>
+    /// An assignment to the clock seam, as opposed to a mention of it.
+    /// </summary>
+    [System.Text.RegularExpressions.GeneratedRegex(@"Clock\s*=[^=]")]
+    private static partial System.Text.RegularExpressions.Regex ClockAssignment();
 
     private static async Task DeleteWhenReleasedAsync(string directory, List<string> failures)
     {

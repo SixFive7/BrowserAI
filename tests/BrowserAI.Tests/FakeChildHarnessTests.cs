@@ -58,34 +58,55 @@ internal sealed class FakeChildHarnessTests
         "node" + ".exe",
     ];
 
+    /// <summary>
+    /// The whole hop, both ways: the caller's frames reach the child and the
+    /// child's answer reaches the caller.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>There is deliberately no stopwatch here any more.</b> Until
+    /// 2026-08-17 this test ended with
+    /// <c>Assert.That(stopwatch.Elapsed).IsLessThan(TestDefaults.RigBudget)</c>,
+    /// justified as a guard against the SDK's five-second
+    /// <see cref="McpClientOptions.DiscoverProbeTimeout"/> being paid on every
+    /// connect. It could never have detected that: this suite pins the probe to
+    /// <b>250 ms</b>, so the failure it named would have moved the measurement by
+    /// a quarter of a second against a bound of ten seconds — a fact the budget's
+    /// own remarks had already recorded without the assertion being removed.
+    /// What the mechanism actually needs is
+    /// asserted directly, from three sides, by
+    /// <see cref="TheClientPinIsWhatSkipsTheDiscoverProbe"/>.
+    /// <para>
+    /// What the stopwatch did instead was measure the machine. It had already
+    /// been raised once, from two seconds to ten, against three starved runs; at
+    /// full parallelism it failed again at <b>11.7 s</b>, twice in twenty-one
+    /// runs, for a rig whose work is a few milliseconds. A wall clock over an
+    /// async pipeline of four thread handoffs cannot tell a hang from a
+    /// descheduled continuation, and raising it a second time is the move this
+    /// repository forbids. A rig that has genuinely stopped is still caught, by
+    /// the per-exchange <see cref="TestDefaults.Patience"/> deadline inside the
+    /// client — which fails naming the method that did not answer, rather than
+    /// naming a number.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task ATestClientDrivesTheProxyToTheFakeChildAndBack()
     {
-        var stopwatch = Stopwatch.StartNew();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult });
 
-        await using (var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
-            child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult }))
-        {
-            var tools = await rig.Client.RoundTripAsync("tools/list");
-            var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_navigate"));
+        var tools = await rig.Client.RoundTripAsync("tools/list");
+        var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_navigate"));
 
-            // The child's two, behind BrowserAI's five authored ones. Written as
-            // a sum rather than as 7, so a sixth authored tool moves this number
-            // by construction instead of by somebody remembering.
-            await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 2);
-            await Assert.That(TextOf(call)).IsEqualTo("Page URL: data:text/html,<h1>ok</h1>");
+        // The child's two, behind BrowserAI's five authored ones. Written as
+        // a sum rather than as 7, so a sixth authored tool moves this number
+        // by construction instead of by somebody remembering.
+        await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 2);
+        await Assert.That(TextOf(call)).IsEqualTo("Page URL: data:text/html,<h1>ok</h1>");
 
-            // Both hops really carried it: the double saw the call, and the
-            // caller's answer came back through the server transport.
-            await Assert.That(rig.Child.MethodsReceived).Contains("tools/call");
-        }
-
-        stopwatch.Stop();
-
-        // Not a benchmark. The number this defends against is the SDK's
-        // five-second DiscoverProbeTimeout, which an unanswered probe costs on
-        // every connect with no error anywhere.
-        await Assert.That(stopwatch.Elapsed).IsLessThan(TestDefaults.RigBudget);
+        // Both hops really carried it: the double saw the call, and the
+        // caller's answer came back through the server transport.
+        await Assert.That(rig.Child.MethodsReceived).Contains("tools/call");
     }
 
     [Test]

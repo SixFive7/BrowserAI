@@ -801,7 +801,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, mode, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod);
+            session = new LiveSession(location, held, mode, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod, _environment.Clock);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))

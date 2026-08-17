@@ -50,6 +50,28 @@ namespace BrowserAI.Sessions;
 /// a second check rather than eliminated, and it is harmless for the reason above:
 /// the caller's next call relaunches the browser and answers normally.
 /// </para>
+/// <para>
+/// <b>The clock is a constructor parameter, and that is the only reason this
+/// class can be tested at all.</b> Every property above is a statement about
+/// <i>when</i> something happens, and a test that establishes one by letting real
+/// time pass is not testing the timer — it is testing the machine's scheduler.
+/// Measured 2026-08-17 with the suite running every test at once: a single
+/// in-process round trip through the rig took <b>1.51 s and 2.27 s</b> against an
+/// 800 ms period, so the test that drove this timer <i>correctly concluded</i>
+/// that the session had gone idle and failed, five times in twenty runs. The
+/// product was right every time. Four retries and a raised budget had already
+/// been spent on it, which is two of the three things this repository forbids.
+/// </para>
+/// <para>
+/// With <see cref="TimeProvider"/> handed in, the suite advances the clock
+/// itself: <i>one tick short of the period, no close; a call; one tick short
+/// again, still no close; one tick past, exactly one close.</i> None of that can
+/// be falsified by a loaded machine, because none of it reads a wall clock. The
+/// product passes <see cref="TimeProvider.System"/> and behaves exactly as it
+/// did — <c>SessionEnvironment.Clock</c> carries the same guard
+/// <c>BrowserIdlePeriod</c> carries, so a test clock cannot leak into a shipped
+/// build without a test going red.
+/// </para>
 /// </remarks>
 internal sealed class BrowserIdleTimer : IAsyncDisposable
 {
@@ -83,8 +105,9 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     private readonly string _session;
     private readonly Func<CancellationToken, Task<BrowserCloseResult>> _closeBrowser;
     private readonly ILogger _logger;
+    private readonly TimeProvider _time;
     private readonly CancellationTokenSource _stopping = new();
-    private readonly Timer _timer;
+    private readonly ITimer _timer;
 
     private int _inFlight;
     private bool _closing;
@@ -93,8 +116,8 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     private int _disposed;
 
     /// <summary>
-    /// When this session becomes idle, as a monotonic tick count. Guarded by
-    /// <see cref="_gate"/>.
+    /// When this session becomes idle, as a <see cref="TimeProvider.GetTimestamp"/>
+    /// reading. Guarded by <see cref="_gate"/>.
     /// </summary>
     private long Deadline { get; set; }
 
@@ -103,23 +126,31 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// <param name="period">How long idle is. The shipped value is <see cref="DefaultIdlePeriod"/>.</param>
     /// <param name="closeBrowser">Closes the browser and leaves the node child. Reports what went away.</param>
     /// <param name="logger">This session's own logger.</param>
+    /// <param name="time">
+    /// The clock this timer reads and schedules against.
+    /// <see cref="TimeProvider.System"/> in the product; a manual one in the
+    /// suite. See the remarks on the type.
+    /// </param>
     public BrowserIdleTimer(
         string session,
         TimeSpan period,
         Func<CancellationToken, Task<BrowserCloseResult>> closeBrowser,
-        ILogger logger)
+        ILogger logger,
+        TimeProvider time)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(closeBrowser);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(time);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(period, TimeSpan.Zero);
 
         _session = session;
         Period = period;
         _closeBrowser = closeBrowser;
         _logger = logger;
+        _time = time;
 
-        _timer = new Timer(static state => ((BrowserIdleTimer)state!).OnIdle(), this, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        _timer = time.CreateTimer(static state => ((BrowserIdleTimer)state!).OnIdle(), this, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
     }
 
     /// <summary>The period this session's browser may sit idle for.</summary>
@@ -207,7 +238,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
         // From `delay`, never from the period: re-arming a stale callback for
         // what is LEFT must reproduce the existing deadline rather than push it
         // out by another whole period.
-        Deadline = Environment.TickCount64 + (long)delay.TotalMilliseconds;
+        Deadline = _time.GetTimestamp() + (long)(delay.TotalSeconds * _time.TimestampFrequency);
 
         try
         {
@@ -246,11 +277,11 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
             // guarded rather than tested: the symptom would be a ten-minute
             // timer behaving like a two-second one, and nothing would show it,
             // because the caller's next call silently relaunches the browser.
-            var remaining = Deadline - Environment.TickCount64;
+            var remaining = _time.GetElapsedTime(_time.GetTimestamp(), Deadline);
 
-            if (remaining > 0)
+            if (remaining > TimeSpan.Zero)
             {
-                ArmFor(TimeSpan.FromMilliseconds(remaining));
+                ArmFor(remaining);
                 return;
             }
 

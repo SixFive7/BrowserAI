@@ -82,6 +82,33 @@ internal sealed record SessionEnvironment
     public TimeSpan BrowserIdlePeriod { get; init; } = BrowserIdleTimer.DefaultIdlePeriod;
 
     /// <summary>
+    /// The clock <see cref="BrowserIdleTimer"/> reads and schedules against.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A seam of exactly the same kind as <see cref="BrowserIdlePeriod"/>, and
+    /// it is here because shortening the period was not enough.</b> Every claim
+    /// the timer makes is a claim about <i>when</i>, and a test that establishes
+    /// one by letting real time pass is measuring the machine's scheduler rather
+    /// than the product. Measured 2026-08-17 with the suite running all 416 tests
+    /// at once: one in-process round trip took <b>1.51 s and 2.27 s</b> against
+    /// an 800 ms period, so the driving test concluded — correctly — that the
+    /// session had gone idle, and went red five times in twenty runs while the
+    /// product was right every time.
+    /// </para>
+    /// <para>
+    /// <b>The default is the real clock, and that it stays the real clock is
+    /// asserted rather than assumed.</b> A manual clock leaking into a shipped
+    /// build would stop the only timer in the product from ever firing, and
+    /// nothing would go red: a browser that is never closed looks exactly like a
+    /// browser that is being used. <c>BrowserIdleTimerTests</c> asserts that
+    /// nothing under <c>src/</c> assigns this, which is the same guard, written
+    /// the same way, that <see cref="BrowserIdlePeriod"/> already carries.
+    /// </para>
+    /// </remarks>
+    public TimeProvider Clock { get; init; } = TimeProvider.System;
+
+    /// <summary>
     /// Starts one session's <c>@playwright/mcp</c> child and completes the
     /// handshake with it.
     /// </summary>

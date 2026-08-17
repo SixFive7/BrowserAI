@@ -95,7 +95,10 @@ internal sealed class FirstRunCacheTests
         var root = Path.Combine(scratch.Path, "cache");
         var downloaded = DateTimeOffset.UtcNow;
 
-        _ = FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers")), downloaded, root);
+        // Asserted rather than discarded, for the reason given in RefusalFor: a
+        // publish that failed is reported by this sentence and by nothing else.
+        await Assert.That(FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers")), downloaded, root))
+            .StartsWith("Cached ");
 
         var (entry, refusal) = FirstRunCache.Newest(root);
 
@@ -112,7 +115,8 @@ internal sealed class FirstRunCacheTests
         // A second publish supersedes the first rather than accumulating beside
         // it. Each entry is ~430 MiB in a real run, so a cache that kept them
         // all would cost more disk than the browsers root it exists to spare.
-        _ = FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers-again")), downloaded.AddSeconds(1), root);
+        await Assert.That(FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers-again")), downloaded.AddSeconds(1), root))
+            .StartsWith("Cached ");
 
         await Assert.That(Directory.EnumerateDirectories(root).Count()).IsEqualTo(1);
     }
@@ -194,9 +198,18 @@ internal sealed class FirstRunCacheTests
     {
         var root = Path.Combine(scratch.Path, label);
 
-        _ = FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, $"{label}-browsers")), DateTimeOffset.UtcNow, root);
+        // ⚠️ The sentence is READ, never discarded. Publish is deliberately
+        // never fatal — a cache that will not publish costs a download — so a
+        // publish that failed used to reach the line below as an empty
+        // directory and fail with "Sequence contains no elements", which names
+        // neither the operation nor the reason. Measured 2026-08-17 under
+        // unbounded parallelism: three of sixteen full-suite runs failed here,
+        // and the swallowed exception was the whole diagnosis.
+        var published = FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, $"{label}-browsers")), DateTimeOffset.UtcNow, root);
 
-        var entry = Directory.EnumerateDirectories(root).Single();
+        var entry = Directory.EnumerateDirectories(root).SingleOrDefault()
+            ?? throw new InvalidOperationException(
+                $"Nothing was published under '{root}'. Publish said: {published}");
 
         damage(entry);
 

@@ -41,6 +41,7 @@ namespace BrowserAI.Sessions;
 /// <param name="createdHere">Whether this connection is the one that created the session.</param>
 /// <param name="artifacts">Where this session's files go, and what it knows about them.</param>
 /// <param name="idlePeriod">How long this session's browser may sit unused before it is closed.</param>
+/// <param name="clock">The clock the idle timer reads. <see cref="TimeProvider.System"/> in the product.</param>
 internal sealed class LiveSession(
     SessionPath location,
     SessionLock sessionLock,
@@ -51,7 +52,8 @@ internal sealed class LiveSession(
     string configFile,
     bool createdHere,
     ArtifactRouter artifacts,
-    TimeSpan idlePeriod) : IAsyncDisposable
+    TimeSpan idlePeriod,
+    TimeProvider clock) : IAsyncDisposable
 {
     /// <summary>
     /// Upstream's own tool, spelled as upstream spells it.
@@ -123,7 +125,8 @@ internal sealed class LiveSession(
         location.FullPath,
         idlePeriod,
         token => CloseBrowserAsync(child, token),
-        logging.Factory.CreateLogger<BrowserIdleTimer>());
+        logging.Factory.CreateLogger<BrowserIdleTimer>(),
+        clock);
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

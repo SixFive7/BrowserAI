@@ -16,52 +16,30 @@ internal static class TestDefaults
     /// hang.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Generous on purpose. This layer normally answers in single-digit
     /// milliseconds, so this is not a performance budget — it is the boundary
     /// between "slow machine" and "nothing is ever coming", and a test that
     /// trips it has found a deadlock rather than a busy CI agent.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>"Single" is load-bearing, and until 2026-08-17
+    /// <see cref="RawPipeClient"/> did not honour it</b>: it armed one
+    /// <see cref="CancellationTokenSource"/> of this length in its constructor
+    /// and passed that same token to every frame read for the life of the
+    /// client. A conversation of forty quick exchanges therefore died at thirty
+    /// seconds however promptly each one was answered — and died as a bare
+    /// <c>OperationCanceledException: The operation was canceled.</c>, naming
+    /// neither the method nor the elapsed time. Measured under full parallelism:
+    /// it took out <c>AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks</c>
+    /// at 34.7 s and <c>ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning</c>
+    /// at 30.0 s, both of which spend most of their time legitimately waiting on
+    /// a real browser. <see cref="RawStdioClient"/> keeps a whole-conversation
+    /// budget on purpose and says so in its own remarks; this one is per
+    /// exchange, which is what its name always claimed.
+    /// </para>
     /// </remarks>
     public static TimeSpan Patience { get; } = TimeSpan.FromSeconds(30);
-
-    /// <summary>
-    /// The budget for a whole rig: construct, handshake, one round trip, tear
-    /// down.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>It bounds a whole rig rather than one exchange</b>, which is what
-    /// separates it from <see cref="Patience"/>: a rig that constructs, hands
-    /// shakes, round-trips and tears down should take single-digit
-    /// milliseconds, and one that takes seconds is doing something nobody asked
-    /// for.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Corrected 2026-08-16 at build-order step 16 (previously two
-    /// seconds, "chosen against a specific failure, not as a benchmark": an
-    /// unanswered <c>server/discover</c> costing the client
-    /// <see cref="McpClientOptions.DiscoverProbeTimeout"/>, five seconds by
-    /// default).</b> That justification does not survive reading
-    /// <see cref="DiscoverProbeTimeout"/> beside it: this suite pins the probe
-    /// to <b>250 ms</b> for every in-process rig, so the failure the two-second
-    /// bound was chosen to catch would add a quarter of a second and the bound
-    /// could never have detected it. The mechanism is asserted directly instead,
-    /// from three sides, by
-    /// <c>FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe</c> —
-    /// which is what <a href="../../../kb/re-verification.md">row
-    /// 16</a> records.
-    /// </para>
-    /// <para>
-    /// <b>What the old value did do was fail three times in twelve full-suite
-    /// runs</b> — 2.57 s, 2.89 s and 4.20 s against a rig that normally answers
-    /// in milliseconds — because the suite runs in parallel and a pool thread
-    /// can simply be descheduled. Those are 250–400× the normal figure, so they
-    /// are starvation rather than creep, and a flaky test is a red build wearing
-    /// a disguise. Ten seconds is above every observed value and well below
-    /// <see cref="Patience"/>, so a rig that has genuinely stopped is still
-    /// caught here rather than thirty seconds later.
-    /// </para>
-    /// </remarks>
-    public static TimeSpan RigBudget { get; } = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// The <c>server/discover</c> probe timeout every test client pins.

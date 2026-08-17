@@ -48,7 +48,6 @@ internal readonly record struct RawResponse(byte[] Frame, JsonObject Envelope)
 internal sealed class RawPipeClient : IAsyncDisposable
 {
     private readonly FrameChannel _channel;
-    private readonly CancellationTokenSource _deadline;
 
     private int _nextId;
     private int _disposed;
@@ -60,7 +59,69 @@ internal sealed class RawPipeClient : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(link);
 
         _channel = new FrameChannel(link.ClientReads, link.ClientWrites);
-        _deadline = new CancellationTokenSource(TestDefaults.Patience);
+    }
+
+    /// <summary>
+    /// A fresh deadline for <b>one</b> frame, which is what
+    /// <see cref="TestDefaults.Patience"/> has always claimed to be.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-17 (previously one <see cref="CancellationTokenSource"/>
+    /// armed in the constructor and handed to every read and write for the life
+    /// of the client).</b> That made it a whole-conversation budget wearing a
+    /// per-exchange name: a test doing forty prompt round trips over
+    /// thirty-one seconds died on the fortieth, and died as a bare
+    /// <c>OperationCanceledException: The operation was canceled.</c> from
+    /// somewhere inside <c>System.IO.Pipelines</c> — no method, no id, no
+    /// elapsed time. Two real-browser tests hit it under full parallelism
+    /// because most of their thirty seconds is spent legitimately waiting for a
+    /// browser rather than for this pipe.
+    /// <para>
+    /// Per frame is also the stronger hang detector, not the weaker one: a peer
+    /// that has genuinely stopped sends nothing at all, and thirty seconds of
+    /// silence still fails — now with the operation named.
+    /// <see cref="RawStdioClient"/> keeps the whole-conversation shape
+    /// deliberately, because there the peer is a process that may never start;
+    /// here both ends are in this process.
+    /// </para>
+    /// </remarks>
+    /// <returns>A source the caller must dispose.</returns>
+    private static CancellationTokenSource OneFrame() => new(TestDefaults.Patience);
+
+    /// <summary>Reads one frame, or says which operation went unanswered.</summary>
+    /// <param name="what">What the caller was waiting for, for the failure message.</param>
+    /// <returns>The frame, or <see langword="null"/> if the peer closed its end.</returns>
+    private async Task<byte[]?> ReadOneAsync(string what)
+    {
+        using var deadline = OneFrame();
+
+        try
+        {
+            return await _channel.ReadFrameAsync(deadline.Token);
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"No frame arrived on this pipe within {TestDefaults.Patience.TotalSeconds:F0} s while waiting for {what}. The peer is in this process, so this is a deadlock or a dropped write rather than a slow machine.");
+        }
+    }
+
+    /// <summary>Writes one frame, or says which operation could not be sent.</summary>
+    /// <param name="frame">The frame's text.</param>
+    /// <param name="what">What was being sent, for the failure message.</param>
+    private async Task WriteOneAsync(string frame, string what)
+    {
+        using var deadline = OneFrame();
+
+        try
+        {
+            await _channel.WriteFrameAsync(frame, deadline.Token);
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"This pipe would not accept the frame for {what} within {TestDefaults.Patience.TotalSeconds:F0} s. Nothing is draining the client's end.");
+        }
     }
 
     /// <summary>Every frame this client received, exactly as it arrived.</summary>
@@ -148,7 +209,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
             request["params"] = parameters;
         }
 
-        await _channel.WriteFrameAsync(request.ToJsonString(), _deadline.Token);
+        await WriteOneAsync(request.ToJsonString(), $"the '{method}' request (id {id})");
         return id;
     }
 
@@ -191,7 +252,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
 
         while (outstanding.Count is not 0)
         {
-            var frame = await _channel.ReadFrameAsync(_deadline.Token)
+            var frame = await ReadOneAsync($"{outstanding.Count} of {requests.Count} outstanding answers")
                 ?? throw new InvalidOperationException(
                     $"The peer closed its end with {outstanding.Count} of {requests.Count} answers still owed.");
 
@@ -226,7 +287,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
     {
         while (true)
         {
-            var frame = await _channel.ReadFrameAsync(_deadline.Token)
+            var frame = await ReadOneAsync($"the answer to '{method}' (id {id})")
                 ?? throw new InvalidOperationException(
                     $"The peer closed its end before answering '{method}' (id {id}).");
 
@@ -276,7 +337,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
 
         while (!condition())
         {
-            _ = await _channel.ReadFrameAsync(_deadline.Token)
+            _ = await ReadOneAsync("the frames a caller is draining for")
                 ?? throw new InvalidOperationException("The peer closed its end before the expected frames arrived.");
         }
     }
@@ -287,7 +348,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// </summary>
     /// <param name="frame">The exact bytes of the frame, terminator excluded.</param>
     /// <returns>A task that completes once the frame is on the wire.</returns>
-    public Task SendRawAsync(string frame) => _channel.WriteFrameAsync(frame, _deadline.Token);
+    public Task SendRawAsync(string frame) => WriteOneAsync(frame, "a literal frame");
 
     /// <summary>Sends a notification, which has no reply.</summary>
     /// <param name="method">The JSON-RPC method.</param>
@@ -306,7 +367,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
             notification["params"] = parameters;
         }
 
-        await _channel.WriteFrameAsync(notification.ToJsonString(), _deadline.Token);
+        await WriteOneAsync(notification.ToJsonString(), $"the '{method}' notification");
     }
 
     /// <inheritdoc />
@@ -318,7 +379,6 @@ internal sealed class RawPipeClient : IAsyncDisposable
         }
 
         _channel.Dispose();
-        _deadline.Dispose();
         return ValueTask.CompletedTask;
     }
 

@@ -60,9 +60,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         Func<string, string, IInstallerRun>? installer,
         ProvisioningTimers? timers,
         TimeSpan? browserIdlePeriod,
+        ManualClock? clock,
         bool realSessionChildren)
     {
         Root = root;
+        Clock = clock;
 
         // ⚠️ THE ONE RIG THAT STARTS A REAL BROWSER STARTS IT WITHOUT A WINDOW,
         // and that is decided HERE rather than at the call site so it cannot be
@@ -161,6 +163,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             Environment = Environment with { BrowserIdlePeriod = period };
         }
 
+        if (clock is not null)
+        {
+            Environment = Environment with { Clock = clock };
+        }
+
         if (realSessionChildren)
         {
             // ⚠️ The product's own default, spelled again here for one reason:
@@ -225,6 +232,15 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
     /// <summary>The scratch tree every session this rig opens lives under.</summary>
     public string Root { get; }
+
+    /// <summary>
+    /// The clock this rig's sessions read, when the test brought one.
+    /// </summary>
+    /// <remarks>
+    /// Exposed so a test advances the same instance the product is scheduled
+    /// against rather than one it happens to hold a reference to.
+    /// </remarks>
+    public ManualClock? Clock { get; }
 
     /// <summary>
     /// The mode <see cref="McpTestHarness"/> opens this rig's own session in.
@@ -352,6 +368,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// suite ever reaches it; the tests whose subject <i>is</i> the timer pass
     /// milliseconds.
     /// </param>
+    /// <param name="clock">
+    /// A clock the test advances by hand, for the arms whose subject is
+    /// <i>when</i> the idle timer fires. Left unset, the product's real clock
+    /// applies. See <see cref="ManualClock"/> for why the alternative — letting
+    /// real time pass and hoping the machine cooperates — is not one.
+    /// </param>
     /// <param name="realSessionChildren">
     /// Whether each session gets a real <c>node.exe</c> out of the payload, in a
     /// real job, against the developer's real browsers root — rather than an
@@ -365,8 +387,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ProvisioningTimers? timers = null,
         bool opensDefaultSession = true,
         TimeSpan? browserIdlePeriod = null,
+        ManualClock? clock = null,
         bool realSessionChildren = false) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers, browserIdlePeriod, realSessionChildren)
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers, browserIdlePeriod, clock, realSessionChildren)
         {
             OpensDefaultSession = opensDefaultSession,
             // A volume this environment reports as full refuses every init,
@@ -391,7 +414,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), reason);
 
     private RigSessionEnvironment(string root, string reason)
-        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null, browserIdlePeriod: null, realSessionChildren: false)
+        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null, browserIdlePeriod: null, clock: null, realSessionChildren: false)
     {
         CanOpenSessions = false;
 
