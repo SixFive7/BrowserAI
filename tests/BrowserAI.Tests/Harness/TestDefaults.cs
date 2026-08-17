@@ -47,7 +47,7 @@ internal static class TestDefaults
     /// could never have detected it. The mechanism is asserted directly instead,
     /// from three sides, by
     /// <c>FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe</c> —
-    /// which is what <a href="../../../kb/README.md#re-verification-index">row
+    /// which is what <a href="../../../kb/re-verification.md">row
     /// 16</a> records.
     /// </para>
     /// <para>

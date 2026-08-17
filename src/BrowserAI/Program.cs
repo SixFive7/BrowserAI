@@ -70,7 +70,7 @@ internal static class Program
     /// twice, for a minimal task definition as much as for ours — so this
     /// argument has exactly one caller left and it is a
     /// <i>measurement</i> rather than a product path:
-    /// [re-verification row 78](../../kb/README.md#re-verification-index) says to
+    /// [re-verification row 78](../../kb/re-verification.md) says to
     /// re-establish the sweep-pass census with <c>BrowserAI.exe --sweep</c> under
     /// a scratch <c>BROWSERAI_ROOT</c> and read the process log. That row is the
     /// only route to the <b>published AOT</b> column of

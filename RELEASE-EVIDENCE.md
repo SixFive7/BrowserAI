@@ -111,7 +111,7 @@ reported 352 green and proven nothing about any of this.
 
 Recorded in [kb: registering with the client](kb/mcp/protocol.md#registering-browserai-with-the-client)
 and [kb: interop and the toolchain](kb/windows/processes.md#the-win32-interop-surface),
-with [re-verification rows 87 and 88](kb/README.md#re-verification-index).
+with [re-verification rows 87 and 88](kb/re-verification.md).
 
 ---
 
@@ -179,7 +179,7 @@ Pro 26200.**
    two BrowserAIs sweeping one root cannot both win a tree.
 
 Recorded in [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
-[re-verification row 86](kb/README.md#re-verification-index), one hazard row
+[re-verification row 86](kb/re-verification.md), one hazard row
 rewritten and one added.
 
 > ⚠️ **One arm of that measurement was discarded rather than reported.** The

@@ -821,7 +821,7 @@ internal sealed class FirefoxTests
 
     /// <summary>
     /// The run's own numbers, written where a person re-establishing
-    /// [rows 1 and 9](../../kb/README.md#re-verification-index) can read them.
+    /// [rows 1 and 9](../../kb/re-verification.md) can read them.
     /// </summary>
     private static void Record(string label, JsonObject summary)
     {

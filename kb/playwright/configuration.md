@@ -250,7 +250,7 @@ BrowserAI caller is told to install **`chrome-for-testing`**, which is not a
 the whole `Run \`…install-browser…\` to install` clause, so **both** branches of
 that ternary are covered by one pattern; a reword upstream would make the strip
 stop firing silently, which is why this shape has
-[a row of its own](../README.md#re-verification-index). `[FLOATS]`
+[a row of its own](../re-verification.md). `[FLOATS]`
 
 **⚠️ `browser_get_config` needs the browser executable to exist.** Measured
 2026-08-16 @ `@playwright/mcp` 0.0.79, twice, by driving `cli.js` directly with
@@ -322,7 +322,7 @@ The old sentence was true of the setup it was written against — all four of th
 launcher's `config.json` files set `saveSession: true` — and it is **not** true of
 BrowserAI's default, which writes the key from the `tracing` modifier and leaves
 it off. Nothing about the classifier changes either way: silence is benign too.
-`[FLOATS]`, [row 33](../README.md#re-verification-index).
+`[FLOATS]`, [row 33](../re-verification.md).
 
 **Which error shapes actually reach stderr at 0.0.79, measured twice each,
 2026-08-16.** The dead `--output-mode` flag still does: stderr carries `error:

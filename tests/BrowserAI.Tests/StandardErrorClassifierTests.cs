@@ -29,7 +29,7 @@ namespace BrowserAI.Tests;
 /// <b>The benign line comes from a real launch, never from a fixture.</b> A
 /// fixture asserts that our own idea of what upstream prints classifies the way
 /// we expect, which is a tautology; the point of
-/// <a href="../../kb/README.md#re-verification-index">row 33</a> is that upstream
+/// <a href="../../kb/re-verification.md">row 33</a> is that upstream
 /// still prints it. That test spends a browser to say so, which is why it is the
 /// only one here that does.
 /// </para>

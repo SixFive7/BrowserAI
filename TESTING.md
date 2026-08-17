@@ -344,7 +344,7 @@ survived into the child.
 
 ### Re-verification, automated where it can be
 
-[The re-verification index](kb/README.md#re-verification-index) lists the measured
+[The re-verification index](kb/re-verification.md) lists the measured
 facts a version bump can silently invalidate. Each row carries an **`Automated
 by`** column naming the test that re-establishes it, or `—` where no test can.
 

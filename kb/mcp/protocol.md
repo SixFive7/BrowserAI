@@ -70,7 +70,7 @@ with no error anywhere. The SDK's own test base class pins it explicitly, citing
 > the opposite of upstream's fixtures, because every peer in that layer is a
 > double that answers instantly — so a probe running to its timeout is a defect
 > to surface fast rather than latency to tolerate. That is also why the row's
-> wall-clock half is now [row 16a](../README.md#re-verification-index) and stays
+> wall-clock half is now [row 16a](../re-verification.md) and stays
 > manual: a deliberately short pin cannot measure the ~300 ms production
 > baseline.
 

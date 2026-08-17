@@ -25,7 +25,7 @@ installed payload is what `current\` holds, and it has now been **weighed rather
 than added up**: an installed `current\` measures **130,434,952 B = 124.39 MiB
 across 200 files** (`BrowserAI.exe` 17,853,952 · `payload\` 111,984,018 ·
 `BrowserAI.xml` 596,517 · `sq.version` 465) — **466 B more** than the *packaged*
-130,434,486 in [row 85](../README.md#re-verification-index), which is not a
+130,434,486 in [row 85](../re-verification.md), which is not a
 discrepancy: 465 of those bytes are `sq.version`, which Velopack writes into
 `current\` at install and which the package does not carry. **Disk after first
 run is 130,434,952 + 451,389,780 =
@@ -59,7 +59,7 @@ the point: this is the most volatile figure in this article, and it floats on
 **our own product** rather than on an upstream, which is why no marker is stamped
 on it — the checkable figure is the packaged `current\` above, which is a
 directory somebody can weigh, and it is carried by
-[row 85](../README.md#re-verification-index) with the rest of the update lane's
+[row 85](../re-verification.md) with the rest of the update lane's
 numbers.
 
 > ⚠️ **Corrected 2026-08-17 (previously "**BrowserAI's own binary is 9.76 MiB** —

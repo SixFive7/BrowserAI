@@ -23,7 +23,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>Re-verification rows 4, 4a and 4c live here</b>
-/// ([kb](../../kb/README.md#re-verification-index)): the title format and the
+/// ([kb](../../kb/re-verification.md)): the title format and the
 /// exact-title probe's canonicalisation rules, the cross-process
 /// <c>WM_GETTEXT</c> bypass, and the window walk that finds a titled window
 /// owned by a pid we name.

@@ -347,7 +347,7 @@ this tree.
 > therefore a guard against a future upstream change rather than a fix for a
 > present one, and it is documented as that. The claim was corrected in
 > `.gitattributes`, [kb](../kb/toolchain.md#git-line-ending-normalisation),
-> [row 51](../kb/README.md#re-verification-index) and
+> [row 51](../kb/re-verification.md) and
 > [the hazard index](hazards.md) before this note was written.
 >
 > **Not wired into `dotnet build` alone:** the gate lives in the test project,
@@ -369,7 +369,7 @@ the code is written records whatever the code happened to accept.
   in [`upstream-review.json`](../upstream-review.json). A red marker is a review
   that has not happened, never a stale file to fix.
 - Wire the `Automated by` column of the
-  [re-verification index](../kb/README.md#re-verification-index). A row naming a
+  [re-verification index](../kb/re-verification.md). A row naming a
   test that does not exist yet stays `manual` — **naming a test that does not
   exist is worse than leaving it manual, because it reads as covered.**
 
@@ -564,7 +564,7 @@ byte-exact passthrough.
 > and returns. **The cost of that branch is real and is not hidden:** on a clean
 > clone nothing about node is proven, and the guarantee for the bundled runtime
 > rests on the probe arm plus the recorded measurement. It half-closes
-> [the Node gap](../kb/README.md#re-verification-index) — containment through the
+> [the Node gap](../kb/re-verification.md) — containment through the
 > shipped runtime is now measured on v24.19.0; whether libuv still creates that
 > job under v24.19.0 was **not** established, because the test observes
 > containment rather than libuv's internals.
@@ -807,7 +807,7 @@ hand-written raw-protocol test client.
 > echoes** the protocol version instead of rejecting, which is the other measured
 > property of the real one. `TheClientPinIsWhatSkipsTheDiscoverProbe` now proves
 > the mechanism from three sides in 250 ms and moved
-> [row 16](../kb/README.md#re-verification-index) from *manual* to a test, with
+> [row 16](../kb/re-verification.md) from *manual* to a test, with
 > its wall-clock half split off as 16a.
 >
 > ⚠️ **Three things measured here contradict a document, and the measurements
@@ -822,13 +822,13 @@ hand-written raw-protocol test client.
 >    surfaces as `-32603`, an error rather than a hang"* — true of what the
 >    *client* throws, not of what the *caller of the proxy* receives.
 >    [Corrected in kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220),
->    with [row 59](../kb/README.md#re-verification-index).
+>    with [row 59](../kb/re-verification.md).
 > 2. **A child's JSON-RPC error keeps its `code` and its `data` verbatim through
 >    the proxy; only the message gains the `Request failed (remote): ` prefix.**
 >    [Step 9](#9-lossless-passthrough) asks for `data` to be *reconstructed from
 >    `Exception.Data`*, and on this path it arrives already reconstructed. The
 >    strip is still owed; the rebuild may not be. Noted on that step and in
->    [row 60](../kb/README.md#re-verification-index).
+>    [row 60](../kb/re-verification.md).
 > 3. **The teardown order's mechanism is not what the SDK's own note implies.**
 >    Removing one step at a time over the whole suite: cancelling the token and
 >    completing both writers *each* end `McpServer.RunAsync` independently, and
@@ -836,7 +836,7 @@ hand-written raw-protocol test client.
 >    which the first enables the second. Both are kept, the consequence is
 >    guarded on every build by the rig's liveness assertion, and
 >    [the four-way table is in kb](../kb/mcp/sdk.md#added-2026-08-16--the-in-process-harness-at-220)
->    with [row 61](../kb/README.md#re-verification-index).
+>    with [row 61](../kb/re-verification.md).
 >
 > **The rig's own liveness check was dead when first written, and the experiment
 > above is what found it.** It read the server task's state *after* disposing the
@@ -1089,7 +1089,7 @@ than a detail of step 7.
 > with a positive UTC offset was being written with its sign escaped — valid
 > JSON, round-trips perfectly, unreadable by the person `lock.json` exists for.
 > Every parse-side assertion passed. It was caught by the one assertion on the
-> **literal bytes**, which is now [row 64](../kb/README.md#re-verification-index).
+> **literal bytes**, which is now [row 64](../kb/re-verification.md).
 >
 > **`InstanceDirectory` is not replaced here, and this step is where that was
 > decided rather than assumed.** [`IAppPaths`](../src/BrowserAI/Hosting/IAppPaths.cs)
@@ -1433,7 +1433,7 @@ because it exists to re-provision something that does not yet exist.
 > bytes**, so §H.3's claim that the headroom "absorbs a fourth mode without a
 > rewrite" is true exactly once and a fifth would need the lines shortened.
 > [Corrected in §H.3](H-model-surface.md#h3-the-server-instructions-string) and
-> recorded with [row 70](../kb/README.md#re-verification-index).
+> recorded with [row 70](../kb/re-verification.md).
 >
 > **The headroom is deliberately not a gate, and the plant is what settled
 > that.** A first version asserted at least 200 bytes free; the fourth-mode plant
@@ -1897,7 +1897,7 @@ Route on the way in; do not sort on the way out.
 > Whether elevation fixes it is `[UNVERIFIED]`: a UAC prompt cannot be answered
 > from a non-interactive session. Recorded in
 > [kb](../kb/windows/detection.md#the-logon-sweep-task) with
-> [row 80](../kb/README.md#re-verification-index).
+> [row 80](../kb/re-verification.md).
 >
 > > ✅ **Resolved 2026-08-16 at [step 19](#19-velopack-package-update-roll-back):
 > > the logon task is DROPPED, and its code, its tests and its documents went
@@ -1909,7 +1909,7 @@ Route on the way in; do not sort on the way out.
 > > Deleted: `src/BrowserAI/Runtime/LogonSweepTask.cs` and
 > > `tests/BrowserAI.Tests/LogonSweepTaskTests.cs`. **`--sweep` is kept and has
 > > one caller left**, which is a measurement rather than the product:
-> > [row 78](../kb/README.md#re-verification-index) is the only route to the
+> > [row 78](../kb/re-verification.md) is the only route to the
 > > published-AOT column of the sweep-pass table, so the constant moved into
 > > `Program.SweepArgument` with that reason on it. R4, R5 and R9 in
 > > [§C's race table](C-sessions.md#race-conditions-and-what-closes-each) are
@@ -2375,7 +2375,7 @@ session TTL and no reclaim window;
 > setup it was written against, whose four `config.json` files all set it.
 > Corrected in [§E](E-lifecycle.md), [kb: startup output](../kb/playwright/configuration.md#environment-merge-order-and-startup-output),
 > [kb: history](../kb/history.md#the-legacy-setup-and-this-machine) and
-> [row 33](../kb/README.md#re-verification-index).
+> [row 33](../kb/re-verification.md).
 >
 > **And the second regex now matches nothing upstream currently writes.** The
 > missing-browser diagnostic has left stderr at 0.0.79: against an empty browsers

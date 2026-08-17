@@ -292,7 +292,7 @@ internal sealed class BrowserContainmentTests
         await Assert.That(Directory.Exists(profile)).IsFalse();
 
         // The run's own numbers, written where a person re-establishing
-        // [row 2a](../../kb/README.md#re-verification-index) can read them. The
+        // [row 2a](../../kb/re-verification.md) can read them. The
         // assertions above are the gate; this is the evidence, and a measurement
         // recorded in a document with no reproducible source is the tally this
         // project keeps having to correct.

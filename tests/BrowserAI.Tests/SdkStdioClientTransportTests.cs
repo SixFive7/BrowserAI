@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// This is not a test of the SDK, and a failure here is not a bug. It answers
-/// <a href="../../kb/README.md#re-verification-index">re-verification row
+/// <a href="../../kb/re-verification.md">re-verification row
 /// 31</a> — <i><c>StdioClientTransport</c> still wraps in <c>cmd.exe</c></i> —
 /// which was <i>manual</i> until the transport that replaces it existed to be
 /// compared against.

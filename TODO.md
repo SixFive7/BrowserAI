@@ -87,7 +87,7 @@ did.
       `%USERPROFILE%`**, which silently defeated an attempt to simulate a machine
       with no client on it — recorded with the gap named rather than papered
       over. Both are in [kb](kb/windows/processes.md)
-      with [rows 87–88](kb/README.md#re-verification-index). The original text
+      with [rows 87–88](kb/re-verification.md). The original text
       follows.
       <br><br>
       **BrowserAI registers itself as an MCP server. Nothing does this, and it is
@@ -327,7 +327,7 @@ did.
       difference is that it names **one** node where the walk named four and
       two. Both corrected carrying their previous text; the fact is in
       [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
-      [row 86](kb/README.md#re-verification-index). `TreeDelete`'s *"third
+      [row 86](kb/re-verification.md). `TreeDelete`'s *"third
       caller … at §G"* is corrected to `InstanceDirectory`, and the
       [hazard row](plan/hazards.md) is closed for all three callers with a
       second row added for the live-run gutting. The original text follows.
@@ -605,7 +605,7 @@ reasoning, come here for the queue.**
         BrowserAI floats across. `BrowserConfiguration` does not set it and
         `SandboxFlagTests` asserts the flag reaches every node child on the
         **command line**, so nothing breaks — but the [re-verification
-        index](kb/README.md#re-verification-index) should gain a row, because
+        index](kb/re-verification.md) should gain a row, because
         this is exactly the class of upstream change [the golden
         snapshot cannot see](plan/testing.md#the-upstream-review-gate): the
         tool surface does not move, the config schema does not move, and the
@@ -936,8 +936,8 @@ reasoning, come here for the queue.**
       [step 16](plan/build-order.md#16-the-stray-sweep),
       [README](README.md), [kb: detection](kb/windows/detection.md#the-logon-sweep-task),
       [kb: Velopack](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output) and
-      [rows 80–81](kb/README.md#re-verification-index). **`--sweep` is kept**: it
-      has one caller left, [row 78](kb/README.md#re-verification-index), which is
+      [rows 80–81](kb/re-verification.md). **`--sweep` is kept**: it
+      has one caller left, [row 78](kb/re-verification.md), which is
       the only route to the published-AOT column of the sweep-pass table. The
       original text follows.
       <br><br>
@@ -949,7 +949,7 @@ reasoning, come here for the queue.**
       **minimal** definition — one logon trigger, one `cmd.exe` action — fails
       identically. It is machine policy rather than anything about our XML
       ([kb](kb/windows/detection.md#the-logon-sweep-task),
-      [row 80](kb/README.md#re-verification-index)). Whether elevation fixes it
+      [row 80](kb/re-verification.md)). Whether elevation fixes it
       is **unverified**: a UAC prompt cannot be answered from a non-interactive
       session.
 
@@ -969,7 +969,7 @@ reasoning, come here for the queue.**
       only ever existed because a **Task Scheduler action** would run the binary
       under a logged-on user; with [the task dropped](#at-v1-launch) nothing
       launches `--sweep` except a person measuring
-      [row 78](kb/README.md#re-verification-index) from a terminal that already
+      [row 78](kb/re-verification.md) from a terminal that already
       has a console. A flash in that case is what was asked for. **It is still
       unmeasured, and that is now correct rather than owed**: there is no
       unattended caller left for it to bother. The original text follows.
@@ -1082,7 +1082,7 @@ reasoning, come here for the queue.**
       evidenced with `dotnet test` reporting 5 and then 13 passing tests, so it
       is not the case that every done-test's evidence came from the executable.
       Retained struck through rather than deleted, because
-      [kb row 54](kb/README.md#re-verification-index) and
+      [kb row 54](kb/re-verification.md) and
       [the kb entry](kb/toolchain.md#dotnet-test-and-the-test-host) are
       retracted in place for the same reason: a reader who saw the original must
       be able to find the retraction.
@@ -1114,7 +1114,7 @@ reasoning, come here for the queue.**
       fire-and-forget, and two `notifications/progress` written by the double in
       order were observed reaching the caller as 2 then 1
       ([kb](kb/mcp/sdk.md#added-2026-08-16--lossless-passthrough-at-220),
-      [row 63a](kb/README.md#re-verification-index)). **It cannot be fixed from a
+      [row 63a](kb/re-verification.md)). **It cannot be fixed from a
       notification handler** — the reordering has already happened by the time
       the handler runs — so a fix means the `ITransport` decorator
       [deviation 7](plan/stack.md#nine-places-where-the-sdk-must-be-deviated-from)
@@ -1206,7 +1206,7 @@ reasoning, come here for the queue.**
       needs a publish wrapper, and there is no build script yet to hang it on —
       so it lands with [step 19](plan/build-order.md), where packaging first
       needs one. Until then
-      [re-verification row 27](kb/README.md#re-verification-index) carries it as
+      [re-verification row 27](kb/re-verification.md) carries it as
       *manual*, which is accurate rather than reassuring.
 
 - [x] **Write `CHANGELOG.md`. The release refuses without it.** ✅ Done
@@ -1909,7 +1909,7 @@ later measurement overruled the original.
       +329 ms, cached 30 days. ✅ The promised line is now written: it is the
       *"one specific thing to watch in the `playwright-core` diff"* paragraph in
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), and the standing check is
-      [re-verification row 10](kb/README.md#re-verification-index) — if upstream
+      [re-verification row 10](kb/re-verification.md) — if upstream
       fixes the directory name, Chromium suddenly starts validating 39 binaries on
       cold start, and a one-character upstream fix becomes a latency regression.
 

@@ -229,7 +229,7 @@ correctly beside the new wording.
 
 ### 6. The re-verification index answered
 
-[`kb/` → re-verification index](kb/README.md#re-verification-index) lists the
+[`kb/` → re-verification index](kb/re-verification.md) lists the
 measured facts a version bump can silently invalidate — the half of the review no
 snapshot can do.
 

@@ -184,7 +184,7 @@ the load failed.
 > measured, and it remains the right thing to require. But **zero warnings plus
 > exit 0 is not sufficient evidence that the published binary is sound**, and the
 > spike's phrasing invites reading it as if it were. [Re-verification row
-> 27](../README.md#re-verification-index) has been amended accordingly: the check
+> 27](../re-verification.md) has been amended accordingly: the check
 > now includes grepping the publish output for `will always throw`.
 
 Two further traps visible in the same project. Its csproj carries
@@ -270,7 +270,7 @@ no subclass hook. **Now checked rather than remembered:**
 `SdkStdioClientTransportTests.TheSdkTransportStillPutsCmdExeBetweenUsAndTheChild`
 starts a child through the SDK's transport and asserts, via
 `NtQueryInformationProcess`, that the child's parent image is `cmd`.
-[Re-verification row 31](../README.md#re-verification-index) is automated by it.
+[Re-verification row 31](../re-verification.md) is automated by it.
 `[FLOATS]`
 
 **The server transport's escaping is `Utf8JsonWriter`'s, not the contract's —
@@ -550,4 +550,4 @@ bytes more than
 `JsonSerializerContext` of our own. `[MACHINE]` for the byte count, `[FLOATS]`
 for the warning-free claim; both re-established by the publish command plus
 `VerticalSliceTests`, which is what
-[row 27](../README.md#re-verification-index) already asks for.
+[row 27](../re-verification.md) already asks for.

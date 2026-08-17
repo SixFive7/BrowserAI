@@ -296,7 +296,7 @@ internal sealed class StraySweepTests
     /// [The logon task is dropped](../../kb/windows/detection.md#the-logon-sweep-task),
     /// so the second sweeper is no longer a task — it is
     /// <c>BrowserAI.exe --sweep</c>, the measurement entry point
-    /// [row 78](../../kb/README.md#re-verification-index) names. The half that
+    /// [row 78](../../kb/re-verification.md) names. The half that
     /// mattered is unchanged and is the half kept: the name is <c>Global\</c>
     /// prefixed and is spelled in exactly one product file, because a second
     /// spelling is how two sweepers come to serialise against nothing while both

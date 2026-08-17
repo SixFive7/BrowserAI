@@ -8,7 +8,8 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// Guards the <c>Automated by</c> column of the re-verification index in
-/// <c>kb/README.md</c>, and the marker count that index reports about itself.
+/// <c>kb/re-verification.md</c>, and the marker count that index reports about
+/// itself.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -22,13 +23,37 @@ namespace BrowserAI.Tests;
 /// <para>
 /// It is a real failure and not a hypothetical one. Wiring the <c>Automated by</c>
 /// column found eight rows naming test types that no build had ever produced —
-/// written from spike work that lived in <c>.work/</c>, never in the suite — and
-/// a planning document asserting those tests already existed.
+/// written from spike work that never reached the suite — and a planning
+/// document asserting those tests already existed.
+/// </para>
+/// <para>
+/// <b>The index moved out of <c>kb/README.md</c> on 2026-08-17</b>, because it
+/// was 74% of a file whose job is to be an article index. The anchor sentence
+/// it is read by is byte-identical across that move except for the marker
+/// count, which is the point: rewording the anchor is what would unhook this
+/// check, so it was not reworded.
+/// </para>
+/// <para>
+/// <b>The count is scoped to the articles, and that is a fix rather than a
+/// convenience.</b> It used to sweep every tracked <c>.md</c> in the
+/// repository, which meant five sentences of prose <i>about</i> the convention —
+/// in <c>CLAUDE.md</c>, <c>TODO.md</c> and the plan — were counted as if they
+/// stamped facts, and the recorded number was 195 for 190 stamped facts. The
+/// counter now reads <c>kb/</c> and nothing else, minus the two pages whose job
+/// is to discuss the convention. A real marker added anywhere in an article is
+/// still red.
 /// </para>
 /// </remarks>
 internal sealed partial class ReVerificationIndexTests
 {
     private static readonly string[] IgnoredDirectories = [".git", ".work", "payload", "bin", "obj", "node_modules"];
+
+    /// <summary>
+    /// The two pages under <c>kb/</c> that are not articles: they discuss the
+    /// convention rather than stamping facts with it, so their occurrences of
+    /// the token are mentions and must not be counted.
+    /// </summary>
+    private static readonly string[] NotArticles = ["README.md", "re-verification.md"];
 
     [Test]
     public async Task EveryRowIsEitherManualOrNamesSomethingThatExists()
@@ -76,11 +101,11 @@ internal sealed partial class ReVerificationIndexTests
     [Test]
     public async Task TheRecordedFloatsMarkerCountIsWhatTheTreeHolds()
     {
-        // The index's own command, in code: every tracked Markdown file except
-        // this index's self-references, and never the gitignored scratch tree.
-        // Recorded here rather than left as a habit because the note in that
-        // file has already been wrong twice, both times by arithmetic rather
-        // than by counting.
+        // "Across the articles", counted literally: the Markdown under kb/,
+        // minus the two pages that are about the convention rather than stamped
+        // with it. Recorded here rather than left as a habit because the note in
+        // that file has already been wrong twice, both times by arithmetic
+        // rather than by counting.
         var acrossTheArticles = MarkersAcrossTheArticles();
         var recorded = RecordedCounts();
 
@@ -88,16 +113,43 @@ internal sealed partial class ReVerificationIndexTests
         await Assert.That(acrossTheArticles).IsEqualTo(int.Parse(recorded.Groups["markers"].Value, CultureInfo.InvariantCulture));
     }
 
-    private static string IndexPath { get; } = Path.Combine(RepositoryLayout.Root.FullName, "kb", "README.md");
+    [Test]
+    public async Task TheTwoPagesExcludedFromTheCountAreTheOnlyOnesThatDiscussTheConvention()
+    {
+        // The exclusion list is justified by a fact about the tree, so the fact
+        // is asserted rather than remembered: both files must exist, and both
+        // must really carry the token, or the list is hiding an article.
+        var excluded = NotArticles
+            .Select(name => Path.Combine(RepositoryLayout.Root.FullName, "kb", name))
+            .ToList();
+
+        foreach (var path in excluded)
+        {
+            await Assert.That(File.Exists(path)).IsTrue();
+            await Assert.That(Floats().Count(await File.ReadAllTextAsync(path))).IsGreaterThan(0);
+        }
+
+        // And the scan must find the articles at all -- a narrowing that left
+        // the corpus empty would satisfy every assertion above.
+        await Assert.That(ArticleFiles().Count()).IsGreaterThan(10);
+    }
+
+    private static string IndexPath { get; } = Path.Combine(RepositoryLayout.Root.FullName, "kb", "re-verification.md");
 
     private static Match RecordedCounts() => RecordedCountsPattern().Match(File.ReadAllText(IndexPath));
 
     private static int MarkersAcrossTheArticles() =>
-        MarkdownFiles().Sum(file => Floats().Count(File.ReadAllText(file)))
-        - Floats().Count(File.ReadAllText(IndexPath));
+        ArticleFiles().Sum(file => Floats().Count(File.ReadAllText(file)));
 
-    private static IEnumerable<string> MarkdownFiles() =>
-        Directory.EnumerateFiles(RepositoryLayout.Root.FullName, "*.md", SearchOption.AllDirectories)
+    /// <summary>Every knowledge-base article: the Markdown under <c>kb/</c> that stamps facts.</summary>
+    private static IEnumerable<string> ArticleFiles() =>
+        MarkdownFiles(Path.Combine(RepositoryLayout.Root.FullName, "kb"))
+            .Where(file => !NotArticles.Contains(
+                Path.GetRelativePath(Path.Combine(RepositoryLayout.Root.FullName, "kb"), file),
+                StringComparer.OrdinalIgnoreCase));
+
+    private static IEnumerable<string> MarkdownFiles(string root) =>
+        Directory.EnumerateFiles(root, "*.md", SearchOption.AllDirectories)
             .Where(file => !Path.GetRelativePath(RepositoryLayout.Root.FullName, file)
                 .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 .Any(segment => IgnoredDirectories.Contains(segment, StringComparer.OrdinalIgnoreCase)));

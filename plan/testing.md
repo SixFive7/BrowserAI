@@ -223,7 +223,7 @@ Alongside them, the two things the suite already proves: **every test green**, a
 
 ### Re-verification, automated where it can be
 
-[The re-verification index](../kb/README.md#re-verification-index) lists the measured facts a version bump can silently invalidate. Each row carries an **`Automated by`** column naming the test that re-establishes it, or `—` where no test can.
+[The re-verification index](../kb/re-verification.md) lists the measured facts a version bump can silently invalidate. Each row carries an **`Automated by`** column naming the test that re-establishes it, or `—` where no test can.
 
 Some rows can be automated and some cannot: whether an upstream behaviour change affects an abstraction of ours is a judgement, not an assertion.
 

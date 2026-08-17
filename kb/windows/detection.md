@@ -261,7 +261,7 @@ user.~~ `[STABLE]` for the schema; `[MACHINE]` for the error text.
 > is retained because it is a property of Task Scheduler that the next person to
 > reach for a logon task on this machine will need, and it cost a *"the task XML
 > contains an unexpected node"* to learn. **It is no longer asserted by a test**,
-> so [row 81](../README.md#re-verification-index) is *manual*.
+> so [row 81](../re-verification.md) is *manual*.
 
 ## Enumeration works — and it moves the safety boundary
 

@@ -235,7 +235,7 @@ settled in intent but not yet done belongs.
 > the empty directory that was left, silently, against any instance older than
 > five minutes. Recorded in the [hazard index](plan/hazards.md) as a new row,
 > and in [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
-> [row 86](kb/README.md#re-verification-index).
+> [row 86](kb/re-verification.md).
 
 ## The three buckets — every outstanding item, sorted, 2026-08-17
 
@@ -384,7 +384,7 @@ listing them:
 | 2 | A | **A bundled-browser build** | §A: the redistribution position for Chrome for Testing is unresolved and the only on-point public statement is adverse, so browsers are provisioned on first run and the bundled figures are kept **as the fallback** if that question is ever answered favourably |
 | 3 | B | **Forwarding resources and prompts** | The hazard index's own row: `@playwright/mcp` 0.0.79 advertises neither, so a tools-only proxy loses nothing while that holds. The row stays `open` because a future release adding either would silently not appear |
 | 4 | testing | **The marker entry's `snapshots` and `reverification` adjudication** | [What the marker records](plan/testing.md#what-the-marker-records): at a baseline nothing has moved, so the fields could only be satisfied by typing an adjudication of no change for four snapshots and an outcome for ~40 manual rows — **a review that did not happen, written to make a suite green**, which is the one act the procedure exists to forbid. It lands at the first real bump, and the marker test fires on exactly that event |
-| 5 | build-order | **Step 19's five update-lane bullets have no automated coverage** | [kb row 85](kb/README.md#re-verification-index), which states it as a rule rather than a gap: *"**Manual and must be**: the suite may not run a publish, and it may certainly not run an installer — `Setup.exe` renames a non-empty root aside and deletes it, which against `%LocalAppData%\BrowserAI` is 768 MB of provisioned browsers."* The **decisions** in that lane are asserted on every build by `ReleaseScriptTests` and `UpdateTests`; the *numbers* are re-measured by running the script |
+| 5 | build-order | **Step 19's five update-lane bullets have no automated coverage** | [kb row 85](kb/re-verification.md), which states it as a rule rather than a gap: *"**Manual and must be**: the suite may not run a publish, and it may certainly not run an installer — `Setup.exe` renames a non-empty root aside and deletes it, which against `%LocalAppData%\BrowserAI` is 768 MB of provisioned browsers."* The **decisions** in that lane are asserted on every build by `ReleaseScriptTests` and `UpdateTests`; the *numbers* are re-measured by running the script |
 
 **And one that was listed as outstanding and turns out to be (c) on inspection**
 — *"no restart-to-apply signal exists for the **not alone** path, which is the
