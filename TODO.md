@@ -233,7 +233,7 @@ did.
       `TheSdkFloorRollsForwardAndTheRunnerIsTheOneTUnitNeeds` and
       `TheApplicationManifestIsLongPathAwareAndNeverAsksForElevation` — the last
       two because `global.json` and `src/BrowserAI/app.manifest` were outside
-      every scan the suite made, and [§stack](STACK.md#the-build-configuration-this-plan-has-never-mentioned)
+      every scan the suite made, and [§stack](STACK.md#the-build-configuration)
       requires four settings between them.
       <br><br>
       **Proven by removing all five properties at once**: 12 tests, 5 failed, 7

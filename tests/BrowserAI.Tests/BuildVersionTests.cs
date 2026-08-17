@@ -23,7 +23,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What is measured rather than asserted here is in
-/// [kb](../../kb/packaging/velopack.md#versions-from-git-tags-minver-700-2026-08-16).</b>
+/// [kb](../../kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver).</b>
 /// The suite cannot run a build of itself, so the shape of an untagged version
 /// and the refusal of a tagless one are recorded there with the commands that
 /// re-establish them; what these tests hold is that the mechanism producing them
