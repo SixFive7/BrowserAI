@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+
 # BrowserAI
 
 A self-contained, system-installed MCP server that fronts a **pinned** `@playwright/mcp` runtime and exposes browser automation to AI agents through a small, opinionated, centrally-updatable surface.

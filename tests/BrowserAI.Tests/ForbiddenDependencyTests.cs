@@ -43,12 +43,51 @@ internal sealed class ForbiddenDependencyTests
         await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.Playwright"))).IsEmpty();
     }
 
-    /// <summary>Every build file that names a package, and where it names it.</summary>
+    [Test]
+    public async Task NeitherFluentAssertionsNorTheTestSdkIsReferenced()
+    {
+        // Both are named in CLAUDE.md and in Directory.Packages.props's own
+        // comment, and both were held by nothing but that comment until
+        // 2026-08-17.
+        //
+        // FluentAssertions relicensed at 8.0.0 to a commercial tier, and the
+        // float in this repository resolves to latest by construction -- so
+        // "we would take an old one" is not available as an answer here.
+        //
+        // Microsoft.NET.Test.Sdk conflicts with TUnit, which is MTP-only. It is
+        // also the single most likely package for someone to add on reflex,
+        // because every other .NET test project in the world has it.
+        await Assert.That(string.Join(Environment.NewLine, Mentioning("FluentAssertions"))).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.NET.Test.Sdk"))).IsEmpty();
+
+        // And the scan is looking at the file that matters, so neither
+        // assertion can pass by reading nothing.
+        await Assert.That(RepositoryLayout.BuildFiles.Any(file =>
+            string.Equals(file.Name, "Directory.Packages.props", StringComparison.OrdinalIgnoreCase))).IsTrue();
+        await Assert.That(Mentioning("TUnit").Any()).IsTrue();
+    }
+
+    /// <summary>Every build file that declares a package, and where it declares it.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It matches the <c>Include=</c> attribute rather than the bare name,
+    /// and that distinction is load-bearing rather than tidy.</b>
+    /// <c>Directory.Packages.props</c> names FluentAssertions and
+    /// <c>Microsoft.NET.Test.Sdk</c> in a comment, precisely in order to forbid
+    /// them — so a substring scan reports the prohibition itself as a violation,
+    /// which it did on the first run. Writing down why a rule exists must not
+    /// violate the rule.
+    /// </para>
+    /// <para>
+    /// A commented-out <c>Include=</c> still matches, and that is deliberate: it
+    /// is a reference waiting for somebody to delete four characters.
+    /// </para>
+    /// </remarks>
     /// <param name="package">The package identifier.</param>
     /// <returns>One line per offending file, naming the line it was found on.</returns>
     private static IEnumerable<string> Mentioning(string package) =>
         from file in RepositoryLayout.BuildFiles
         from line in File.ReadAllLines(file.FullName).Index()
-        where line.Item.Contains(package, StringComparison.OrdinalIgnoreCase)
+        where line.Item.Contains($"Include=\"{package}\"", StringComparison.OrdinalIgnoreCase)
         select $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{line.Index + 1}: {line.Item.Trim()}";
 }
