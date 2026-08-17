@@ -86,8 +86,34 @@ satisfying a design.
 
 **Result: one section of thirteen is complete. Nothing was deleted.**
 
-> ⚠️ **Re-audited 2026-08-17, after five of the audit's findings were closed.
-> The result is unchanged: nothing is deleted, and it is not close.** What
+> ⚠️ **Third pass, 2026-08-17 (later the same day): twelve more items closed,
+> every remaining one classified — and the plan is still not deleted, for two
+> independent reasons, both measured.** The classification is
+> [below](#the-three-buckets--every-outstanding-item-sorted-2026-08-17) and it is
+> what this pass was for: an item that is **(b)** blocked on the maintainer or
+> **(c)** deferred by a recorded decision does not hold a section open, and
+> sorting them is what makes that visible. **Four items remain (a) — closable
+> now, and not done** — §D's failed-rewrite recovery test, the reclaim pass as a
+> test, step 3's four done-tests trapped in a PowerShell script, and **59 hazard
+> rows still carrying `—` for evidence**. Any one of those is enough on the
+> ending's own terms.
+>
+> **And the second reason is larger, was never counted before, and is the one
+> that decides it.** [`plan/hazards.md`](plan/hazards.md) was made
+> self-contained in `05f2803` — 146 links repointed — and that was **one file**.
+> Counted 2026-08-17 across everything that survives: **456 references into the
+> twelve consumable sections, from 87 files, 418 of them markdown links.**
+> `README.md` 38 · `kb/` 78 across ten articles · [`PRE-RELEASE.md`](PRE-RELEASE.md)
+> 16, in the only release gate this project has · **~60 from `src/`** across 30
+> product source files · ~30 from `tests/` · and the rest from build scripts,
+> `Directory.Build.props`, `global.json`, `.gitattributes` and a hook. Deleting
+> the twelve without that pass produces 456 dead references, and **a broken link
+> is a worse outcome than a section left on disk**. The `src/` half is not even
+> a link problem: `TreeDelete.cs` cites §E for *why* it is a post-order walk,
+> and that reasoning has nowhere else to live.
+>
+> ⚠️ **Second pass, 2026-08-17, after five of the audit's findings were closed.
+> The result was unchanged: nothing is deleted.** What
 > closed is real — §A's pruner audited and its missing guard written, §C's two
 > required sentences in `init`'s description, §G's five unguarded single lines,
 > 28 hazard rows adjudicated with evidence, and the hazard index made
@@ -141,6 +167,14 @@ correct in the tree today, and guarded by nothing, so it can be undone by a
 green build. All of them are now in [`TODO.md`](TODO.md), which is where work
 settled in intent but not yet done belongs.
 
+> **Read the table below as the audit's record, not as the current state.** Its
+> `What is outstanding` column is answered — item by item, and sorted into what
+> can be done, what needs the maintainer and what was deferred on purpose — by
+> [the three buckets](#the-three-buckets--every-outstanding-item-sorted-2026-08-17),
+> which supersedes it. The table is kept because the ✅ notes inside it record
+> *when* each thing closed, and a classification that erased its own history
+> would be the third of these passes with nothing to check itself against.
+
 | Section | Verdict | What is outstanding |
 |---|---|---|
 | [A](plan/A-runtime.md) | **not complete** | **Nothing prunes superseded browser revisions**, although §A mandates it as the direct consequence of `PLAYWRIGHT_SKIP_BROWSER_GC=1` — ~430 MiB stranded per bump per machine, forever. The sandbox defect was never raised upstream. The payload arithmetic is stale (9.76 MiB against a shipped **17,853,952 B**) and the stale copy is in `kb/`, not only here. Four properties are unguarded: no native-binary scan of the payload, no assertion on the proxy/CA passthrough allowlist (`NODE_EXTRA_CA_CERTS` could be deleted green), the env-var half of *"no build configuration relaxes the boundary"*, and the underscore/dash directory asymmetry. One in-place correction was never swept into the shipped comments, which still say the mirror rotation covers Chromium  ✅ **Pruning landed and was audited 2026-08-17** (`Runtime/RevisionPrune.cs`, `RevisionPruneTests`, 7 tests), and the audit found the guard the pruner's own author had not written: `PruneLog.PassFailed` was called from nowhere. ✅ The **underscore/dash asymmetry is now guarded** — `RevisionPruneTests.TheDirectoryNameIsSpelledTheWayUpstreamSpellsIt`, which is what forced `BrowserRevision.DirectoryPrefix` into existence. ✅ The mirror-rotation correction is **swept into the shipped comment** in `BrowserProvisioner`, carrying its previous text. **Still outstanding:** the sandbox defect was never raised upstream; the payload arithmetic is stale in `kb/`; and three properties are unguarded — no native-binary scan of the payload, no assertion on the proxy/CA passthrough allowlist, and the env-var half of *"no build configuration relaxes the boundary"* |
@@ -186,6 +220,119 @@ settled in intent but not yet done belongs.
 > five minutes. Recorded in the [hazard index](plan/hazards.md) as a new row,
 > and in [kb](kb/windows/processes.md#interop-and-the-toolchain) with
 > [row 86](kb/README.md#re-verification-index).
+
+## The three buckets — every outstanding item, sorted, 2026-08-17
+
+**This is the classification the plan's ending needs, and it is what the audit
+table above could not give.** The audit answered *what is left*. It could not
+answer the question that actually decides whether a section may be deleted:
+**is what is left something this build can do?** A section whose only remainder
+is a decision the maintainer has to take, or a thing the charter chose not to do
+yet, **is done as far as this build can take it** — and holding the whole plan
+open for it defeats the ending this document describes.
+
+Every item is in exactly one bucket:
+
+| | Bucket | What it means | What to do with it |
+|---|---|---|---|
+| **(a)** | **Closable now** | Nothing outside this repository is needed | Do it. The ones done on 2026-08-17 name their commit; the ones **not** done are named too, because a bucket used to bury work is worse than no bucket |
+| **(b)** | **Blocked on the maintainer** | A decision or an act only they can perform — an account, a repository, a tag, a dependency choice | One sentence naming exactly what is needed. Nothing else unblocks it |
+| **(c)** | **Deliberately deferred** | The charter or a recorded decision chose not to do this yet | Nothing. **A section is not incomplete because it names something we chose not to do** — but it has to say so, or it reads as an omission |
+
+### (a) — closable now
+
+**Twelve were closed on 2026-08-17**, across four commits, each proven by a
+plant that was then reverted:
+
+| Item | Section | Closed by |
+|---|---|---|
+| The proxy and CA passthrough allowlist was asserted by nothing — `NODE_EXTRA_CA_CERTS` was deletable with the suite green | A | `ChildEnvironmentTests.TheProxyAndCertificateNamesTheDownloadPathNeedsSurviveIntoAChildsBlock` |
+| No native-binary scan of the payload | A | `PayloadTests.TheVendoredTreeCarriesNoPlatformNativeBinary`. **It found what the table did not predict**: `playwright-core` ships `webp_codec.wasm`, so *"the tree is portable JS"* survives as a premise and not as a sentence. `.TheOneNonJavaScriptArtefactInTheTreeIsPortableAndIsNamed` names that file, so a second one arriving is red |
+| The env-var half of *"no build configuration relaxes the boundary"* | A | `ModelSurfaceTests.NoEnvironmentVariableOrLaunchSwitchReachesTheEnforcementPath`. The compile-time half was already guarded; this is the worse one, because it ships as **one** artifact that takes two decisions |
+| The payload arithmetic was stale in `kb/` | A | Corrected, and **weighed rather than summed**: an installed `current\` is **130,434,952 B = 124.39 MiB across 200 files**, so disk after first run is **554.87 MiB**, not 546.88. The stale term was `9.76 MiB`, the 2026-08-15 spike binary; the product is ~17.0 MiB and measured **three different sizes on one day**, which is recorded instead of one of them being picked |
+| No test asserted any authored tool's argument set | H | `ModelSurfaceTests.EveryAuthoredToolAdvertisesExactlyTheArgumentSetItIsSpecifiedWith` |
+| `resume` ships two arguments neither §H.2 nor §C gives it | H | The signature table records them **and why they are right**: `tracing` and `consoleLevel` become `saveSession` and `console.level` for *this run*, and §H.2's rule for refusing an argument on `resume` is about facts the directory already records. Refusing them would mean destroying a session to trace it once |
+| §H.6's *"rows 1–3 each name a recovery tool, and the named tool exists"* was unasserted | H | `ErrorCatalogueTests.TheFirstRowsNameARecoveryToolAndEveryToolTheyNameIsAdvertised`. **The first draft asked the weaker question and a plant walked past it** — rewriting row 1 to say *"call `browserai_open`"* left two real tools elsewhere in the sentence, so a check that looks for known names reported it healthy. It scans for anything `browserai_`-shaped now |
+| …and §H.6 is **wrong about row 3**, which asserting it is what found | H | Row 3 names no tool **because there is none**: no tool makes a relative path absolute. Its recovery is the argument's own shape, so the test asserts it carries one — the word `absolute` and a concrete example — and asserts it names **no** tool, because a tool named there sends the model somewhere that cannot help it |
+| `destroy`'s stated refusals were proven one layer down, never through `destroy` | H | `ErrorCatalogueTests.DestroyRefusesEveryRecordShapeItIsSpecifiedToRefuseThroughDestroyItself` — no record, a schema version from a later build, an unrecognised key; each refused, each leaving the file, and a real session destroyed afterwards so the three are not a tool that refuses everything |
+| The no-UNC-path rule had no mechanism | E | `RollingFileWriter` refuses a network directory **in its constructor**, because the next line sweeps the directory and would block the startup path. **The plant measured the hazard rather than citing it**: with the guard forced false that one test took **21s 198ms** against a 1-second bound, which is §C's measured 21 seconds reproduced at the moment it is relied on. A mapped drive letter is **not** caught and the method says so |
+| The console ban's wiring was one unasserted line | E | `ProcessLogTests.EveryConsoleProviderInTheStackIsPinnedToStderrAndIsNeverTheOnlyOne` — `LogToStandardErrorThreshold` counted at **every** `AddConsole` call site rather than spot-checked |
+| The console provider's exit drain was unverified and still in the stack | E | Discharged by §E's **own second branch** — *"verify it before relying on it, **or own the sink**"*. BrowserAI owns the sink, so no record exists only in a queue nobody measured. What makes that true is a **pairing**, and the test above asserts the pairing, because a pairing is what a later edit breaks |
+| `session.json` had no `schemaVersion`, though §C names it beside `lock.json` | C | Stamped into `session.json` **and** the roll-up. A strict **reader** is deliberately not built and the reasoning is on `ArtifactRouter`: nothing in this build reads either file, and a parser with no caller is the shape this project already deleted once (`BrowserProvisioner.PruneSupersededRevisions()`, public, zero callers, its own doc claiming one). The version is the half that **cannot** be added afterwards |
+
+**Two were closed by recording what supersedes them**, which is a closure and not
+a dodge — both were written before the thing that answered them existed:
+
+- **§C's *"last origins visited"*** was listed among *"the facts we get for
+  free"*. It is not free. Recording it means writing to `lock.json` on the
+  per-call hot path, which [§D](plan/D-locking.md#durable-lockjson-writes)
+  deliberately designed against — a durable write is 16–18 ms and is taken on
+  `init`, `resume` and a purpose change **only**. What partly answers the need
+  it was written for is `session.json`, which did not exist when §C was written:
+  it records the **page URL per routed artifact**. **Stated precisely rather than
+  claimed whole**: a session that browsed and produced no artifact records no
+  origin, so the gap is real and smaller than the row implied.
+- **§stack's `Verify.TUnit` and `@modelcontextprotocol/inspector`** were both
+  chosen and neither was adopted. The snapshot mechanism that replaced
+  `Verify.TUnit` is `build/upstream-snapshots.mjs` plus four committed files
+  under `upstream-snapshots/`, regenerated and diffed on **every build** — which
+  is stronger than a snapshot library, because it re-derives from the resolved
+  payload rather than recording what the last run happened to produce. The
+  inspector was superseded by [*"Automated checks: None"*](README.md): it was a
+  CI check, and there is no CI.
+
+**Four are (a) and are NOT done. Named, not buried:**
+
+1. **§D's failed-rewrite recovery has no test.** §D: *"a failed rewrite must not
+   also release the lock — the handle is dropped before the replacement, so an
+   exception on the way through left the session silently unowned until the
+   recovery path was added."* It **shipped broken once**, which is exactly the
+   kind of path that needs a regression test, and forcing the failure needs a
+   seam that does not exist yet.
+2. **The reclaim pass is not itself a test.** [testing](plan/testing.md) says
+   *"the pass is itself a test … so a defect in reclaim shows up as a suite that
+   cannot start clean"*. The pass runs; nothing asserts it did.
+3. **Build-order step 3's four done-tests live in a PowerShell script the suite
+   never runs.** `ChangelogTests` already proves the shape — drive it through
+   `pwsh` from the suite — so this is known work rather than an open question.
+4. **59 hazard rows still read `open` with `—` for evidence**, across seven
+   categories: Bundling and AOT 14, Process and OS 13, Child runtime 10, Tooling
+   and CI 8, Protocol and SDK 7, Packaging 4, Handle routing 3. The previous
+   round adjudicated 27 packaging rows and 8 named ones; these are the rest, in
+   **the one file that outlives the plan**.
+
+### (b) — blocked on the maintainer
+
+Four, each with the single sentence that unblocks it:
+
+| # | Section | The ask |
+|---|---|---|
+| 1 | A | **File the sandbox defect upstream from your own GitHub account**: at `@playwright/mcp` 0.0.79, `"launchOptions": { "chromiumSandbox": true }` in a config file parses, validates and is then discarded — only the `--sandbox` CLI flag enables the sandbox — so every configuration that sets the key believes it has a sandbox and does not. |
+| 2 | G | **Create and publish the release feed repository, then hand back its base URL**, so `UpdateConfiguration.ProductionBaseUrl` stops being `null` and the one `[Skip]`ped test can resolve a real manifest instead of blocking the first release by design. |
+| 3 | pre-release | **Cut and push the release tag** (or say which version to cut), because the derived version is a pre-release suffix until a tag exists and [item 9](PRE-RELEASE.md) blocks a release on exactly that. |
+| 4 | stack | **Decide whether to adopt `Microsoft.Windows.CsWin32`**: the stack's own threshold — *"once a seventh Win32 API is needed"* — was passed long ago and stands at **45 `[LibraryImport]` declarations across 9 files**, so the choice is now between rewriting proven, measured interop onto a source generator and striking the threshold as a heuristic that was never a commitment. |
+
+### (c) — deliberately deferred, by a decision already recorded
+
+Five. **None of these makes a section incomplete**, and that is the point of
+listing them:
+
+| # | Section | Deferred | The decision it rests on |
+|---|---|---|---|
+| 1 | G | **Code signing** | §G's own UCC comparison: *"Signing — none, no certificate, no `--signParams`, package signature verification unexplored. **Decide before first colleague handoff**; see the SmartScreen hazard."* No handoff has happened |
+| 2 | A | **A bundled-browser build** | §A: the redistribution position for Chrome for Testing is unresolved and the only on-point public statement is adverse, so browsers are provisioned on first run and the bundled figures are kept **as the fallback** if that question is ever answered favourably |
+| 3 | B | **Forwarding resources and prompts** | The hazard index's own row: `@playwright/mcp` 0.0.79 advertises neither, so a tools-only proxy loses nothing while that holds. The row stays `open` because a future release adding either would silently not appear |
+| 4 | testing | **The marker entry's `snapshots` and `reverification` adjudication** | [What the marker records](plan/testing.md#what-the-marker-records): at a baseline nothing has moved, so the fields could only be satisfied by typing an adjudication of no change for four snapshots and an outcome for ~40 manual rows — **a review that did not happen, written to make a suite green**, which is the one act the procedure exists to forbid. It lands at the first real bump, and the marker test fires on exactly that event |
+| 5 | build-order | **Step 19's five update-lane bullets have no automated coverage** | [kb row 85](kb/README.md#re-verification-index), which states it as a rule rather than a gap: *"**Manual and must be**: the suite may not run a publish, and it may certainly not run an installer — `Setup.exe` renames a non-empty root aside and deletes it, which against `%LocalAppData%\BrowserAI` is 768 MB of provisioned browsers."* The **decisions** in that lane are asserted on every build by `ReleaseScriptTests` and `UpdateTests`; the *numbers* are re-measured by running the script |
+
+And one that is (c) in a different sense — **§H.5 direction 2**, the three-way
+adjudication of an upstream reword, is deliberately **a pre-release gate rather
+than a test**, because the question it asks (*does our sentence still belong
+beside their new one?*) is a judgement and a suite can only ask whether one was
+recorded. Detection already exists: the `tools-list.json` snapshot diffs
+description strings on every build.
+
+---
 
 ### What was decided, and what is raised
 
