@@ -88,7 +88,10 @@ internal static class ChildEnvironment
     /// collector deleting any registry directory not referenced by a
     /// <c>.links</c> entry — against a tree BrowserAI provisioned, the blast
     /// radius of that sweep is "deletes our own Chromium". Pruning old revisions
-    /// becomes BrowserAI's job as a direct consequence.
+    /// becomes BrowserAI's job as a direct consequence, and that obligation is
+    /// discharged by <see cref="Runtime.RevisionPrune"/> on every successful
+    /// provision — without it each <c>browsers.json</c> bump strands ~430 MiB per
+    /// machine, forever.
     /// <c>PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD</c> keeps provisioning a decision
     /// BrowserAI makes rather than a side effect of the child starting.
     /// </remarks>

@@ -110,7 +110,57 @@ did.
       written, then whether the installer or the binary performs it — and gate it
       with a test, because nothing about its absence is red.
 
-- [ ] **Nothing prunes a superseded browser revision.**
+- [x] ~~**Nothing prunes a superseded browser revision.**~~ ✅ **Built 2026-08-16
+      by an agent an API limit killed mid-edit, restored 2026-08-17, and
+      audited 2026-08-17 — the audit is what this line records.**
+      `src/BrowserAI/Runtime/RevisionPrune.cs` runs from
+      `BrowserProvisioner.Install` after a successful provision, inside that
+      family's mutex. **Against §A it does what it must**: it deletes only a
+      directory whose name carries a prefix the resolved manifest itself names
+      and whose revision the manifest no longer carries, so the current revision,
+      `.links` — whose deletion is the exact hazard
+      `PLAYWRIGHT_SKIP_BROWSER_GC=1` exists to prevent — and anything a person
+      put there are all left alone; it holds **every** family's provisioning
+      mutex at a zero timeout for the whole pass; and it retains, names and logs
+      a revision a live process is running out of, proven against a **real**
+      planted process rather than a stub.
+      <br><br>
+      **What the audit found, and it is the reason this entry exists.**
+      `PruneLog.PassFailed` — *"Pruning superseded browser revisions failed. The
+      browser that was just provisioned is installed and usable"* — was declared
+      and **called from nowhere**, and the call site sat bare inside
+      `Install`'s catch-all. **Planted 2026-08-17**: with the `catch` removed,
+      a prune that throws makes the provisioner log
+      `Provisioning chromium failed` at **Error**, carrying the pruner's
+      exception, over a 203.8 MB download that had just succeeded —
+      `RevisionPruneTests.APruneThatThrowsLeavesTheProvisionItFollowedSuccessful`
+      red at *"Expected to be true"*, then reverted, 7 of 7 green. **The plant
+      also corrected the fix's own justification**: the status the caller sees
+      stays `Installed` either way, because `Peek` reads the completion marker
+      before the cached result — so what the guard prevents is a confident wrong
+      answer in the log, not a wrong answer to the model, and the test asserts
+      the absence of event 70 as well as the presence of event 86.
+      **`BrowserProvisioner.PruneSupersededRevisions()` was deleted**: it was
+      public, had **zero** callers, and its own doc claimed one — *"so the pass
+      can be driven on its own, by the suite"*.
+      <br><br>
+      **Three documents were contradicted by the tree and were corrected with
+      it**, all of which asserted the obligation as outstanding:
+      `src/BrowserAI/Protocol/ChildEnvironment.cs`,
+      [pre-release item 4](plan/pre-release.md) and
+      [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md)'s `browsers.json` row. The
+      [hazard index](plan/hazards.md) gained the two rows it had never had: the
+      obligation itself, **closed** with the tests that hold it, and the
+      consequence nobody had written down — **a rollback re-downloads 203.8 MB**,
+      because the build it rolls back from has already pruned the revision the
+      older one names, accepted with the alternative (keep every revision
+      forever) named beside it.
+      <br><br>
+      **The maintainer's own browsers root was measured either side of every
+      run: 768 MB before, 768 MB after**, four revisions unchanged. Every test
+      drives a scratch root. The original text follows.
+      <br><br>
+      **Nothing prunes a superseded browser revision.**
       [§A](plan/A-runtime.md#first-run-browser-provisioning): *"`PLAYWRIGHT_SKIP_BROWSER_GC=1`
       is mandated, so pruning old revisions becomes BrowserAI's job."* No code
       prunes anything. `browserai_reinstall_browser` deletes the **whole** tree

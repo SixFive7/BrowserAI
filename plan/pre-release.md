@@ -167,8 +167,13 @@ adjudication fails the gate, so this item is answered by the suite being green â
 what is recorded here is the adjudication text, not a second assertion.
 
 A moved `browsers.json` deserves its own line in the release notes: every machine
-re-downloads the browser and re-extracts it, and the old revision sits on disk
-until something prunes it.
+re-downloads the browser and re-extracts it. **Updated 2026-08-17 (previously
+"and the old revision sits on disk until something prunes it").** Something does:
+`RevisionPrune` runs on the next successful provision and reclaims the ~430 MiB
+the old revision holds, so what the note has to carry is the download, not the
+disk. The one consequence worth a sentence is the other direction â€” a **rollback**
+to the previous build re-downloads 203.8 MB, because the revision it names has
+already been pruned.
 
 ### 5. Upstream tool-description drift adjudicated
 

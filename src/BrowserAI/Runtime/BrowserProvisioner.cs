@@ -284,6 +284,7 @@ internal sealed class BrowserProvisioner : IDisposable
         // the payload. An object initialiser still replaces it, which is what
         // makes it a seam.
         StartInstaller = (browser, root) => new NodeInstallerRun(_payload, browser, root);
+        PruneRevisions = browser => _ = RevisionPrune.Run(BrowsersDirectory, Manifest(), _logger, familyAlreadyHeld: browser);
     }
 
     /// <summary>
@@ -305,6 +306,22 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// </remarks>
     public Func<string, string, IInstallerRun> StartInstaller { get; init; }
+
+    /// <summary>
+    /// What a successful provision does about superseded revisions, so the suite
+    /// can prove that a prune which throws never fails the provision it followed.
+    /// </summary>
+    /// <remarks>
+    /// <b>The seam exists for exactly one property, and that property is
+    /// otherwise unassertable.</b> Nothing on
+    /// <see cref="RevisionPrune.Run(string, BrowsersManifest, ILogger, string?)"/>'s
+    /// own path throws by design — the process census, the enumeration and the
+    /// sizing all catch — so the <c>catch</c> at the call site is a guard against
+    /// a future edit rather than against a reachable case today, and a guard
+    /// nothing exercises is the shape this project's audit keeps finding. The
+    /// argument is the family whose mutex the calling thread already holds.
+    /// </remarks>
+    public Action<string> PruneRevisions { get; init; }
 
     /// <summary>The browsers root this provisioner installs into. Always absolute.</summary>
     public string BrowsersDirectory { get; }
@@ -479,26 +496,6 @@ internal sealed class BrowserProvisioner : IDisposable
         return new ReinstallOutcome(browser, directory, removedBytes, failures, status);
     }
 
-    /// <summary>
-    /// Deletes every browser revision the shipped manifest no longer names.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The public entry point exists so the pass can be driven on its own</b>,
-    /// by the suite and by anything that later wants to reclaim disk without
-    /// downloading anything. The product's own call site is a successful provision,
-    /// which is the only moment the answer changes.
-    /// </para>
-    /// <para>
-    /// The caller must hold <b>no</b> provisioning mutex; the pass takes every
-    /// family's for itself. Inside the install path the private overload is used
-    /// instead, because that thread already owns one and a named mutex is owned by
-    /// the thread that waited on it.
-    /// </para>
-    /// </remarks>
-    /// <returns>What was removed, what was kept, and why.</returns>
-    public PruneReport PruneSupersededRevisions() => RevisionPrune.Run(BrowsersDirectory, Manifest(), _logger);
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -570,6 +567,23 @@ internal sealed class BrowserProvisioner : IDisposable
     /// would deadlock against this very call.
     /// </para>
     /// <para>
+    /// <b>The <c>catch</c> is the whole reason this is a method rather than a
+    /// line</b>, and what it prevents was measured rather than assumed. It runs
+    /// inside <see cref="Install"/>'s catch-all, so without it a prune that threw
+    /// would be logged as
+    /// <see cref="ProvisioningLog.Failed"/> — <i>"Provisioning chromium failed"</i>
+    /// at <see cref="LogLevel.Error"/>, carrying the pruner's exception — over a
+    /// 203.8 MB download that had just succeeded, and nothing anywhere would say
+    /// the disk went unreclaimed. Planted 2026-08-17: the status the caller sees
+    /// stays <see cref="ProvisioningState.Installed"/>, because
+    /// <see cref="Peek"/> reads the completion marker before it reads the cached
+    /// result — so the damage is a confident wrong answer in the log rather than
+    /// a wrong answer to the model, which is exactly the kind that survives.
+    /// <see cref="PruneLog.PassFailed"/> was written for this and was called from
+    /// nowhere until 2026-08-17; the audit of the reconstructed call site is what
+    /// found it.
+    /// </para>
+    /// <para>
     /// Reconstructed 2026-08-17 after the agent building it was cut off
     /// mid-edit by an API limit, having reverted this call site and not yet
     /// restored it. The build was red on exactly one symbol, which is the
@@ -577,8 +591,19 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// </remarks>
     /// <param name="browser">The family whose mutex the caller already holds.</param>
-    private void Prune(string browser) =>
-        _ = RevisionPrune.Run(BrowsersDirectory, Manifest(), _logger, familyAlreadyHeld: browser);
+    private void Prune(string browser)
+    {
+        try
+        {
+            PruneRevisions(browser);
+        }
+#pragma warning disable CA1031 // Reclaiming disk is never urgent and never worth failing an install that succeeded; every failure shape means the same thing here.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            PruneLog.PassFailed(_logger, failure);
+        }
+    }
 
     private Attempt Start(string browser, BrowserRevision revision)
     {

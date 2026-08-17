@@ -217,6 +217,55 @@ internal sealed class RevisionPruneTests
     }
 
     [Test]
+    public async Task APruneThatThrowsLeavesTheProvisionItFollowedSuccessful()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        using var captured = new CapturingLoggerProvider();
+        using var log = LoggerFactory.Create(builder =>
+        {
+            _ = builder.AddProvider(new TUnitLoggerProvider());
+            _ = builder.AddProvider(captured);
+        });
+
+        using var scratch = ScratchDirectory.Create("prune-throws");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var current = Path.Combine(root, manifest.For(ProvisionedBrowsers.Chromium).DirectoryName);
+
+        using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log)
+        {
+            StartInstaller = (_, _) => FakeInstaller.Succeeding(current, TimeSpan.Zero),
+
+            // The prune runs INSIDE the install path's catch-all, which turns any
+            // exception into a Failed status. Without a catch of its own, a disk
+            // that would not give up an old tree would report a 203.8 MB download
+            // that succeeded as a provisioning failure — and the caller would
+            // download it again.
+            PruneRevisions = _ => throw new IOException("The pruner fell over."),
+        };
+
+        var status = await provisioner.WaitAsync(ProvisionedBrowsers.Chromium);
+
+        await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
+        await Assert.That(Directory.Exists(current)).IsTrue();
+
+        // ⚠️ The status alone does NOT prove the guard, and the plant is what
+        // showed it: `Peek` reads the completion marker before the cached result,
+        // so an unguarded throw still answers `Installed`. What it also does is
+        // write `Provisioning chromium failed` at Error over a download that
+        // succeeded — a confident wrong answer in the one place this project
+        // treats as evidence. Both halves are asserted.
+        await Assert.That(captured.Records.Any(record => record.EventId.Id is 70)).IsFalse();
+
+        // And it is not silent about it either: the disk an old revision holds
+        // will not come back by waiting, so somebody has to be told.
+        await Assert.That(captured.Logged("Pruning superseded browser revisions failed")).IsTrue();
+        await Assert.That(captured.Records.Any(record => record.EventId.Id is 86 && record.Exception is IOException)).IsTrue();
+    }
+
+    [Test]
     public async Task TheDirectoryNameIsSpelledTheWayUpstreamSpellsIt()
     {
         SuiteEnvironment.RequireRepositoryPayload();
