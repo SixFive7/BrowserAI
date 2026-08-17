@@ -532,6 +532,56 @@ did.
       moving to `PRE-RELEASE.md` at the root beside
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), which is the precedent.
 
+## What is left after the classification pass — 2026-08-17
+
+[`PLAN.md`](PLAN.md#the-three-buckets--every-outstanding-item-sorted-2026-08-17)
+sorts every outstanding item into **(a)** closable now, **(b)** blocked on the
+maintainer and **(c)** deferred by a recorded decision. Fourteen closed that
+day. What follows is everything that did not, so this file stays the work list
+rather than becoming a second copy of the classification — **go there for the
+reasoning, come here for the queue.**
+
+- [ ] **The failed-rewrite recovery of `lock.json` has no test.** §D:
+      *"a failed rewrite must not also release the lock — the handle is dropped
+      before the replacement, so an exception on the way through left the
+      session silently unowned until the recovery path was added."* **It shipped
+      broken once**, which is precisely the shape that earns a regression test,
+      and it has none. What is missing is a seam: the rename is
+      `SessionLock`'s own and nothing can make it fail on demand, so provoking
+      the failure means either an injectable file operation or a probe process
+      that holds the replacement path at the right moment. Do the second if the
+      first would put a test-only interface on the product's hot path.
+
+- [ ] **59 hazard rows still read `open` with `—` for evidence.** In
+      [the one file that outlives the plan](plan/hazards.md), and the file's own
+      rule is that *"a row marked `closed` with `—` here is not closed"* — the
+      converse is what this is: rows nobody has adjudicated either way. Counted
+      2026-08-17 by category: **Bundling and AOT 14, Process and OS (Windows)
+      13, Child runtime and configuration 10, Tooling and CI 8, Protocol and
+      SDK 7, Packaging and updates 4, Handle routing and instance lifetime 3.**
+      The previous round did 27 packaging rows and 8 named ones and left 6 open
+      *because they are open*, which is the standard to hold to: **an honest
+      `open` with a reason beats a `closed` with a weak one.** Many of these
+      will close against tests that now exist; some are upstream behaviours that
+      cannot close at all and should say so.
+
+- [ ] **Four things only the maintainer can do**, each stated in one sentence in
+      [`PLAN.md`](PLAN.md#b--blocked-on-the-maintainer): file the sandbox defect
+      upstream, publish the release feed and hand back its URL, cut the release
+      tag, and decide on `Microsoft.Windows.CsWin32` now that the stack's own
+      *"once a seventh Win32 API is needed"* threshold stands at **45
+      `[LibraryImport]` declarations across 9 files**.
+
+- [ ] **The reclaim pass's second bullet is unbuilt, and it is the only one
+      left.** [testing](plan/testing.md) asks that *"anything the previous run
+      recorded is terminated by `(pid, creationFileTime)` from its own spawn
+      record"*. **No spawn record is persisted across runs** — verified
+      2026-08-17, nothing in `src/` or `tests/` writes one — so a run killed
+      mid-test leaves a process the next run cannot identify, only a directory
+      it cannot delete. The other three bullets are built and the pass is now
+      itself a test, which is what makes this gap visible: the survivors are
+      **named** rather than silently skipped.
+
 ## At v1 launch
 
 - [x] ~~**Decide how the logon sweep task actually gets registered — it cannot be
