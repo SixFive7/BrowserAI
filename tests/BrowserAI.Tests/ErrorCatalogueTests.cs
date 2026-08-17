@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
@@ -29,7 +30,7 @@ namespace BrowserAI.Tests;
 /// build rather than a sentence nobody ever sees.
 /// </para>
 /// </remarks>
-internal sealed class ErrorCatalogueTests
+internal sealed partial class ErrorCatalogueTests
 {
     /// <summary>Which catalogue methods a trigger matched, accumulated across the arms.</summary>
     private static readonly HashSet<string> Triggered = new(StringComparer.Ordinal);
@@ -698,6 +699,171 @@ internal sealed class ErrorCatalogueTests
             [SessionToolSurface.SessionParameter] = session,
             ["filename"] = filename,
         });
+
+    [Test]
+    public async Task TheFirstRowsNameARecoveryToolAndEveryToolTheyNameIsAdvertised()
+    {
+        // §H.6: "Rows 1-3 each name a recovery tool, and the named tool exists."
+        // Asserted here for the first time on 2026-08-17, and asserting it is
+        // what found that the sentence is wrong about row 3.
+        //
+        // Rows 1, 2 and 2's companion name authored tools, and the check that
+        // matters is not that a name appears -- it is that the name is one this
+        // build actually advertises. A refusal naming `browserai_open` reads
+        // perfectly and costs the model a turn discovering the tool does not
+        // exist, which is exactly the "recoverable in one turn" rule failing
+        // while looking like it holds.
+        var rows = new (string Row, string Text)[]
+        {
+            (nameof(SessionErrors.SessionMissing), SessionErrors.SessionMissing("browser_navigate")),
+            (nameof(SessionErrors.SessionNamesNoSession), SessionErrors.SessionNamesNoSession("browser_navigate", @"C:\work\x")),
+            (nameof(SessionErrors.SessionNotOpen), SessionErrors.SessionNotOpen("browser_navigate", @"C:\work\x")),
+        };
+
+        var advertised = SessionToolSurface.Names.ToHashSet(StringComparer.Ordinal);
+        var wrong = new List<string>();
+
+        foreach (var (row, text) in rows)
+        {
+            // Every browserai_ token in the sentence, not every known tool that
+            // happens to appear in it. The first draft of this test asked the
+            // weaker question and a plant walked straight past it: rewriting
+            // row 1 to say "call browserai_open" left the row still mentioning
+            // two real tools elsewhere in the sentence, so a check that only
+            // looks for known names reported it healthy. What has to be true is
+            // that nothing tool-shaped in the text is a tool that does not
+            // exist -- that is the sentence that costs a model a turn.
+            var named = AuthoredToolToken().Matches(text).Select(match => match.Value).Distinct(StringComparer.Ordinal).ToList();
+
+            if (named.Count is 0)
+            {
+                wrong.Add($"{row}: names no recovery tool at all");
+                continue;
+            }
+
+            wrong.AddRange(named
+                .Where(name => !advertised.Contains(name))
+                .Select(name => $"{row}: names '{name}', which this build does not advertise"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
+
+        // Row 3 names NO tool, and that is correct rather than a gap. §H.6's
+        // sentence says "rows 1-3", and row 3 is a malformed argument: there is
+        // no tool a caller could call to make a relative path absolute. Its
+        // recovery is the argument's own shape, so what is asserted is that it
+        // carries one -- the word `absolute` and a concrete example -- and that
+        // it does NOT name a tool, because a tool named here would send the
+        // model somewhere that cannot help it.
+        var rowThree = SessionErrors.DirectoryNotAbsolute("directory", "relative\\path");
+
+        await Assert.That(rowThree).Contains("absolute");
+        await Assert.That(rowThree).Contains(@"C:\");
+
+        await Assert.That(string.Join(", ", AuthoredToolToken().Matches(rowThree).Select(match => match.Value))).IsEmpty();
+    }
+
+    [Test]
+    public async Task DestroyRefusesEveryRecordShapeItIsSpecifiedToRefuseThroughDestroyItself()
+    {
+        // §H.6 asks for three refusals from `browserai_destroy` specifically:
+        // no lock.json, a lock.json of the wrong schema version, and one
+        // carrying a key it does not recognise. All three were proven at the
+        // LockRecord layer and none through the tool, which is the gap that
+        // matters -- `destroy` is the one authored tool that deletes a tree, and
+        // "the parser refuses it" is a claim about a different call than the one
+        // a model makes.
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var real = Path.Combine(sessions.Root, "a-real-session");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = real,
+            ["purpose"] = "opened so its lock.json can be copied and corrupted three ways",
+            ["mode"] = "headless",
+        });
+
+        // FileShare.ReadWrite | FileShare.Delete, because the live session holds
+        // this file open for write: a reader that does not share write is
+        // refused outright, which is §D's own reader rule met from the test
+        // side. File.ReadAllText asks for FileShare.Read and fails here.
+        var valid = ReadWhileHeld(Path.Combine(real, SessionLayout.LockFileName));
+
+        // 1 -- no record at all. The check that makes it safe to hand a model a
+        // tool that deletes trees: it cannot be aimed at Documents.
+        var documents = Path.Combine(sessions.Root, "not-a-session-at-all");
+        Directory.CreateDirectory(documents);
+        await File.WriteAllTextAsync(Path.Combine(documents, "something-precious.txt"), "keep me");
+
+        var refusedNoRecord = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = documents });
+
+        await Assert.That((bool?)refusedNoRecord["isError"]).IsTrue();
+        await Assert.That(Directory.Exists(documents)).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(documents, "something-precious.txt"))).IsTrue();
+
+        // 2 -- a schema version this build does not know. A record from a later
+        // BrowserAI is not a record to guess at.
+        var futureSchema = Path.Combine(sessions.Root, "from-a-later-build");
+        Directory.CreateDirectory(futureSchema);
+        await File.WriteAllTextAsync(
+            Path.Combine(futureSchema, SessionLayout.LockFileName),
+            SwapFirstNumber(valid, "schemaVersion", 9999));
+
+        var refusedSchema = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = futureSchema });
+
+        await Assert.That((bool?)refusedSchema["isError"]).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(futureSchema, SessionLayout.LockFileName))).IsTrue();
+
+        // 3 -- a key this build does not recognise, which is the same event seen
+        // from the other side: something wrote a field we have no rule for.
+        var unknownKey = Path.Combine(sessions.Root, "carrying-an-unknown-key");
+        Directory.CreateDirectory(unknownKey);
+        await File.WriteAllTextAsync(
+            Path.Combine(unknownKey, SessionLayout.LockFileName),
+            valid.TrimEnd().TrimEnd('}') + ",\n  \"aKeyNoBuildOfBrowserAiHasEverWritten\": true\n}");
+
+        var refusedUnknown = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = unknownKey });
+
+        await Assert.That((bool?)refusedUnknown["isError"]).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(unknownKey, SessionLayout.LockFileName))).IsTrue();
+
+        // And destroy still works on the real one, so the three refusals above
+        // are not a tool that refuses everything.
+        var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = real });
+
+        await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
+        await Assert.That(Directory.Exists(real)).IsFalse();
+    }
+
+    /// <summary>Anything shaped like one of BrowserAI's own tool names.</summary>
+    [GeneratedRegex(@"browserai_[a-z_]+")]
+    private static partial Regex AuthoredToolToken();
+
+    /// <summary>Reads a file another process is holding open for write.</summary>
+    private static string ReadWhileHeld(string path)
+    {
+        using var stream = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+
+        using var reader = new StreamReader(stream);
+
+        return reader.ReadToEnd();
+    }
+
+    /// <summary>Rewrites the first JSON number under <paramref name="key"/>.</summary>
+    private static string SwapFirstNumber(string json, string key, int replacement)
+    {
+        var at = json.IndexOf($"\"{key}\"", StringComparison.Ordinal);
+        var colon = json.IndexOf(':', at) + 1;
+        var end = json.IndexOfAny([',', '}', '\r', '\n'], colon);
+
+        return string.Concat(json.AsSpan(0, colon), $" {replacement}", json.AsSpan(end));
+    }
 
     /// <summary>Asserts an observed refusal is exactly the catalogue row it claims.</summary>
     private static void Match(string observed, string row, string expected)

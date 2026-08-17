@@ -33,6 +33,48 @@ namespace BrowserAI.Tests;
 internal sealed class ModelSurfaceTests
 {
     /// <summary>
+    /// Every authored tool's argument set and its required subset, written
+    /// here rather than read from the class under test.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two of these differ from §H.2's table, and the difference is
+    /// deliberate rather than drift.</b> <c>browserai_resume</c> ships
+    /// <c>tracing</c> and <c>consoleLevel</c>, which §H.2 gives only to
+    /// <c>init</c>. The rule §H.2 states for refusing an argument on
+    /// <c>resume</c> is that <i>"a profile is browser-specific"</i> — it is
+    /// about <c>browser</c>, and about facts the directory on disk already
+    /// records. Neither of these is such a fact: <c>tracing</c> becomes
+    /// <c>saveSession</c> and <c>consoleLevel</c> becomes <c>console.level</c>
+    /// in the config generated for <i>this run</i>, both of which may honestly
+    /// differ from run to run without contradicting anything the session
+    /// recorded. Refusing them would have meant destroying and recreating a
+    /// session to turn tracing on for one afternoon.
+    /// </para>
+    /// <para>
+    /// Recorded here because §H.2 is a plan section and this is what outlives
+    /// it. The reason a signature table lives in the suite at all is that the
+    /// arguments are the half of the model-facing surface nothing measured: the
+    /// descriptions were budgeted in bytes and the mode table was rendered into
+    /// four consumers, while the property names were whatever the class
+    /// declared on the day.
+    /// </para>
+    /// </remarks>
+    private static readonly (string Tool, string[] Properties, string[] Required)[] TheAuthoredSignatures =
+    [
+        (SessionToolSurface.Init,
+            ["directory", "purpose", "mode", "browser", "tracing", "consoleLevel", "debug"],
+            ["directory", "purpose", "mode"]),
+        (SessionToolSurface.Resume,
+            ["directory", "purpose", "debug", "tracing", "consoleLevel", "acknowledgeCopy"],
+            ["directory"]),
+        (SessionToolSurface.List, ["directory"], ["directory"]),
+        (SessionToolSurface.Destroy, ["directory"], ["directory"]),
+        (SessionToolSurface.SetPurpose, ["session", "purpose"], ["session", "purpose"]),
+        (SessionToolSurface.ReinstallBrowser, [], []),
+    ];
+
+    /// <summary>
     /// The declared list of upstream phrases whose disappearance is a red build.
     /// </summary>
     /// <remarks>
@@ -489,6 +531,64 @@ internal sealed class ModelSurfaceTests
     }
 
     /// <summary>The advertised surface, keyed by name, as a caller receives it.</summary>
+    [Test]
+    public async Task EveryAuthoredToolAdvertisesExactlyTheArgumentSetItIsSpecifiedWith()
+    {
+        // §H.2 gives each of the six a signature, and until 2026-08-17 nothing
+        // asserted any of them. Descriptions were measured, the mode table was
+        // rendered into four consumers and checked -- and the *arguments*, which
+        // are the half a model actually fills in, were whatever the class
+        // happened to declare. An argument silently dropped from `init` would
+        // show as a call the model stopped making, not as a red build.
+        //
+        // Read out of the advertised surface rather than off the class, for the
+        // same reason the description assertions are: the rewrite is what a
+        // model receives, and it is the rewrite that could lose a property.
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var wrong = new List<string>();
+
+        foreach (var (tool, expectedProperties, expectedRequired) in TheAuthoredSignatures)
+        {
+            var schema = advertised[tool]?["inputSchema"]?.AsObject();
+
+            if (schema is null)
+            {
+                wrong.Add($"{tool}: not advertised at all");
+                continue;
+            }
+
+            var properties = (schema["properties"]?.AsObject() ?? [])
+                .Select(property => property.Key)
+                .Order(StringComparer.Ordinal)
+                .ToList();
+
+            var required = (schema["required"]?.AsArray() ?? [])
+                .Select(entry => (string)entry!)
+                .Order(StringComparer.Ordinal)
+                .ToList();
+
+            if (!properties.SequenceEqual(expectedProperties.Order(StringComparer.Ordinal), StringComparer.Ordinal))
+            {
+                wrong.Add($"{tool}: arguments are [{string.Join(", ", properties)}], specified as [{string.Join(", ", expectedProperties.Order(StringComparer.Ordinal))}]");
+            }
+
+            if (!required.SequenceEqual(expectedRequired.Order(StringComparer.Ordinal), StringComparer.Ordinal))
+            {
+                wrong.Add($"{tool}: required are [{string.Join(", ", required)}], specified as [{string.Join(", ", expectedRequired.Order(StringComparer.Ordinal))}]");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
+
+        // And the table above covers all six, so a seventh authored tool cannot
+        // arrive unasserted.
+        await Assert.That(TheAuthoredSignatures.Select(signature => signature.Tool).Order(StringComparer.Ordinal))
+            .IsEquivalentTo(SessionToolSurface.Names.Order(StringComparer.Ordinal).ToArray());
+    }
+
     private static Dictionary<string, JsonObject?> Advertised(string childToolsList)
     {
         var rewritten = SessionToolSurface.Rewrite(JsonNode.Parse(childToolsList)!.AsObject());
