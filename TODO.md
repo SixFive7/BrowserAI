@@ -378,7 +378,39 @@ did.
       is currently silent, in a project whose first rule is that silent failure
       is the enemy.
 
-- [ ] **Load-bearing single lines in [§G](plan/G-updates.md) that no test
+- [x] ~~**Load-bearing single lines in [§G](plan/G-updates.md) that no test
+      touches.**~~ ✅ **All five guarded 2026-08-17, in `UpdateTests`, and
+      proven by removing all five at once**: 21 tests, 5 failed, 15 passed, 1
+      skipped, each failure naming its own line — *"Expected to contain
+      \".SetAutoApplyOnStartup(false)\""*, *"…\"AllowVersionDowngrade = true\""*,
+      *"…\"ExplicitChannel = feed.Channel\""*, *"…\"Copy-Item -LiteralPath $full
+      -Destination $ArchiveDir -Force\""*, and, for the ban rather than the
+      line, *"LocalAppDataPaths.cs resolves a path from
+      AppContext.BaseDirectory"* after planting a use of it in the one class
+      §G forbids it in. Reverted, 21 of 21 green, and `git diff --stat` showed
+      the test file alone — which is what proves the revert rather than a
+      re-read.
+      <br><br>
+      **Two of the five assert more than the line.** `SetAutoApplyOnStartup` is
+      paired with an **ordering** check, because the hazard is a reorder: the
+      same call serves the installer's fast-exit hooks, so four startup steps —
+      `InstallLocation.RootAppDir`, `new LocalAppDataPaths(`, `ProcessLog.Create(`
+      and `Environment.GetEnvironmentVariable(` — are asserted to appear *after*
+      it in `Program.cs` by position. `AllowVersionDowngrade` is asserted
+      **together with its pipeline half** (`Test-ReleaseVersion.ps1`'s
+      `RollbackRepublish`, `'rollback'`, `'monotonic'`), because §G's requirement
+      is that the two agree and either alone is the `ExoFabric/UCC` state.
+      <br><br>
+      **The `ExplicitChannel` scan was too broad on the first draft, and the
+      failure is worth keeping.** A scan for the bare name fails on
+      `UpdateFeed`'s own refusal messages, which name
+      `UpdateOptions.ExplicitChannel` in the sentence telling a caller where the
+      channel belongs — so the needle is the **assignment**, exactly as
+      `ReleaseScriptTests` scopes its `--msi` check to the argument array. A test
+      that fails on the documentation of the rule it enforces trains the next
+      person to delete the explanation. The original text follows.
+      <br><br>
+      **Load-bearing single lines in [§G](plan/G-updates.md) that no test
       touches.** `SetAutoApplyOnStartup(false)` — which the code itself calls
       *"the single most important line in this file"* — `AllowVersionDowngrade`
       (§G: *"both halves have to agree"*, and only the pipeline half is driven),

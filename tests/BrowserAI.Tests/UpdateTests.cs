@@ -399,6 +399,210 @@ internal sealed class UpdateTests
         await Assert.That(client.Applies).IsEqualTo(0);
     }
 
+    // ---- The single lines, each of which survived its own deletion green -----
+
+    /// <summary>
+    /// <c>SetAutoApplyOnStartup(false)</c> is there, and the call carrying it is
+    /// still the first thing <c>Main</c> does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The code calls this "the single most important line in this file" and
+    /// nothing asserted it.</b> Its default is <see langword="true"/>: an
+    /// installed BrowserAI would <c>exit(0)</c> at handshake time and relaunch
+    /// detached with dead pipes, which presents to the client as a server that
+    /// started and vanished — the exact failure shape this project exists to
+    /// remove.
+    /// </para>
+    /// <para>
+    /// <b>Order is asserted as well as presence, because the hazard is a
+    /// reorder.</b> The same call serves the installer's own fast-exit hooks, so
+    /// anything placed above it runs inside every hook too — and a line moved
+    /// above it breaks nothing that any other test looks at. The four names
+    /// checked below are the startup steps that must come after it, each read
+    /// from <c>Program.cs</c> by position.
+    /// </para>
+    /// <para>
+    /// A source scan rather than a behavioural one, for the reason this whole
+    /// file states: under a test host this process is not an install, and
+    /// <c>VelopackApp.Build().Run()</c> cannot be driven twice in one process.
+    /// It is the same mechanism <c>MachineMutex</c> and the never-by-image-name
+    /// rule are guarded with.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AutoApplyIsOffAndTheVelopackCallIsStillTheFirstThingMainDoes()
+    {
+        var startup = await RepositoryLayout.ReadCodeAsync(ProductFile("Updates", "VelopackStartup.cs"));
+
+        await Assert.That(startup).Contains(".SetAutoApplyOnStartup(false)");
+
+        var program = await RepositoryLayout.ReadCodeAsync(ProductFile("Program.cs"));
+        var velopack = program.IndexOf("VelopackStartup.Run(", StringComparison.Ordinal);
+
+        await Assert.That(velopack).IsGreaterThan(-1);
+
+        var late = new List<string>();
+
+        foreach (var after in new[] { "InstallLocation.RootAppDir", "new LocalAppDataPaths(", "ProcessLog.Create(", "Environment.GetEnvironmentVariable(" })
+        {
+            var at = program.IndexOf(after, StringComparison.Ordinal);
+
+            if (at >= 0 && at < velopack)
+            {
+                late.Add($"'{after}' now runs BEFORE VelopackStartup.Run, which also serves the installer's fast-exit hooks");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, late)).IsEmpty();
+    }
+
+    /// <summary>
+    /// Both halves of the rollback mechanism, asserted together because §G's
+    /// requirement is that they agree.
+    /// </summary>
+    /// <remarks>
+    /// <b>Either half alone is a defect, and the one-sided version is a shipping
+    /// product.</b> <c>AllowVersionDowngrade</c> defaults to
+    /// <see langword="false"/>, which reports an available rollback as *"no
+    /// updates"* — silently. The pipeline half is the release-validation rule
+    /// reading *monotonic <b>or</b> an explicit rollback republish*; with the
+    /// client half on and the pipeline half missing, the runtime accepts a
+    /// rollback the build refuses to emit, which is the state
+    /// <c>ExoFabric/UCC</c> is in. Only the pipeline half was driven before
+    /// 2026-08-17.
+    /// </remarks>
+    [Test]
+    public async Task BothHalvesOfTheRollbackMechanismAreThereAndTheyAgree()
+    {
+        var client = await RepositoryLayout.ReadCodeAsync(ProductFile("Updates", "VelopackUpdateClient.cs"));
+
+        await Assert.That(client).Contains("AllowVersionDowngrade = true");
+
+        var validation = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", "Test-ReleaseVersion.ps1"));
+
+        // The pipeline half, in the two shapes it has to have: a rollback is
+        // refused by default and permitted as a stated intent.
+        await Assert.That(validation).Contains("RollbackRepublish");
+        await Assert.That(validation).Contains("'rollback'");
+        await Assert.That(validation).Contains("'monotonic'");
+    }
+
+    /// <summary>
+    /// The channel reaches Velopack through <c>UpdateOptions.ExplicitChannel</c>
+    /// and through nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <b>§G calls this its worst hazard because it is unrecoverable in the
+    /// field</b> — a client that cannot reach the feed cannot be told to roll
+    /// back either, and the only fix is a manual reinstall of every machine. The
+    /// three feed-URL shapes are asserted above; <b>the assignment that consumes
+    /// them was asserted by nothing</b>, so a deletion would leave every URL
+    /// test green while Velopack composed the default channel's manifest name.
+    /// </remarks>
+    [Test]
+    public async Task TheChannelReachesVelopackThroughExplicitChannelAndNothingElse()
+    {
+        var client = await RepositoryLayout.ReadCodeAsync(ProductFile("Updates", "VelopackUpdateClient.cs"));
+
+        await Assert.That(client).Contains("ExplicitChannel = feed.Channel");
+
+        // And assigned nowhere else in the product: a second assignment is a
+        // second place the channel can be got wrong.
+        //
+        // ⚠️ The needle is the ASSIGNMENT rather than the name, and the first
+        // draft of this test proved why: `UpdateFeed`'s refusal messages name
+        // `UpdateOptions.ExplicitChannel` in the sentence that tells a caller
+        // where the channel belongs, so a scan for the bare name fails on the
+        // documentation of the very rule it is enforcing — which trains the next
+        // person to delete the explanation to make a test pass.
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+
+            if (code.Contains("ExplicitChannel =", StringComparison.Ordinal)
+                && !file.Name.Equals("VelopackUpdateClient.cs", StringComparison.Ordinal))
+            {
+                offenders.Add($"{file.Name} assigns ExplicitChannel; VelopackUpdateClient is the one place that may");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+    }
+
+    /// <summary>
+    /// Nothing the product ships resolves a path from
+    /// <c>AppContext.BaseDirectory</c>, except the one type for which it is
+    /// correct.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It reads as "next to the binary" and resolves inside
+    /// <c>current\</c></b>, which an update replaces wholesale — so a log, a
+    /// cache or a browser tree placed there is deleted by the event most likely
+    /// to have produced the line somebody came to read. <c>ExoFabric/UCC</c> does
+    /// exactly this and carries a 10-day log retention policy that can therefore
+    /// never once have applied.
+    /// </para>
+    /// <para>
+    /// <b><c>PayloadLayout</c> is the sanctioned exception and is named
+    /// rather than excluded silently.</b> The payload is the one thing that
+    /// <i>should</i> be replaced wholesale by an update: it is the vendored copy
+    /// of upstream the running build was tested against, and a payload surviving
+    /// an update would mean the new binary driving the old upstream.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task NoProductPathIsResolvedFromAppContextBaseDirectory()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+
+            if (!code.Contains("AppContext.BaseDirectory", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!file.Name.Equals("PayloadLayout.cs", StringComparison.Ordinal))
+            {
+                offenders.Add(
+                    $"{file.Name} resolves a path from AppContext.BaseDirectory, which is inside current\\ and is replaced by every update. PayloadLayout is the one type for which that is correct.");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+    }
+
+    /// <summary>
+    /// The release script archives the full <c>.nupkg</c>, and refuses when
+    /// there is none to archive.
+    /// </summary>
+    /// <remarks>
+    /// <b>Velopack prunes <c>packages\</c> to the current full package and deltas
+    /// are forward-only</b> — watched happening at step 19: after 0.9.0 → 0.9.1,
+    /// the 0.9.0 package it had been reconstructed from was gone. So an
+    /// unarchived release has no rollback target at all, and the symptom arrives
+    /// only when somebody needs to roll back. The refusal is asserted with the
+    /// copy, because an archive step that silently skips a missing package is the
+    /// same defect wearing a green tick.
+    /// </remarks>
+    [Test]
+    public async Task TheReleaseScriptArchivesTheFullPackageAndRefusesWhenThereIsNone()
+    {
+        var script = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", "New-Release.ps1"));
+
+        await Assert.That(script).Contains("Copy-Item -LiteralPath $full -Destination $ArchiveDir -Force");
+        await Assert.That(script).Contains("there is nothing to archive and no rollback target for this release");
+    }
+
+    private static FileInfo ProductFile(params string[] segments) =>
+        new(Path.Combine([RepositoryLayout.Root.FullName, "src", "BrowserAI", .. segments]));
+
     /// <summary>
     /// A scripted <see cref="IUpdateClient"/>: everything the service asks for,
     /// and nothing that touches Velopack.
