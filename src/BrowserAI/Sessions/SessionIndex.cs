@@ -233,6 +233,12 @@ internal sealed class SessionIndex
     /// simply not there. Removing either would make a directory that still exists
     /// permanently invisible to the only inventory there is, which is this
     /// project's founding failure shape rather than a tidy index.
+    /// <b>Both are asserted</b>, by
+    /// <c>SessionIndexTests.AnEntryWhoseLockFileCannotBeParsedIsKeptBecauseNothingElseCanRestoreIt</c>
+    /// and
+    /// <c>SessionIndexTests.AnEntryOnAVolumeThatIsNotMountedIsKeptRatherThanSwept</c>
+    /// — named here because a distinction this paragraph argues for and nothing
+    /// checks is one refactor from being tidied away.
     /// </para>
     /// </remarks>
     public SessionIndexSweep Sweep()
