@@ -94,12 +94,13 @@ satisfying a design.
 > **(c)** deferred by a recorded decision does not hold a section open, and
 > sorting them is what makes that visible. **Four items remain (a) — closable
 > now, and not done** — §D's failed-rewrite recovery test, the reclaim pass as a
-> test, step 3's four done-tests trapped in a PowerShell script, and **59 hazard
+> test, step 3's four done-tests trapped in a PowerShell script, and **61 hazard
 > rows still carrying `—` for evidence**. Any one of those is enough on the
 > ending's own terms. *(Two of those four closed later the same day — the
 > reclaim pass, whose closure found it was **also** using the one delete
 > primitive §E forbids, and step 3's four done-tests — so **two** remain:
-> §D's failed-rewrite recovery test, and the 59 hazard rows.)*
+> §D's failed-rewrite recovery test, and the 61 hazard rows. That count read 59
+> until it was re-derived from the file on 2026-08-17.)*
 >
 > **And the second reason is larger, was never counted before, and is the one
 > that decides it.** [`plan/hazards.md`](plan/hazards.md) was made
@@ -326,11 +327,13 @@ day, so two remain. Named, not buried:**
    because it stops being vacuous the moment anyone points
    `PLAYWRIGHT_BROWSERS_PATH` at the staging tree — the exact conflation §A
    carries a correction for.
-4. **59 hazard rows still read `open` with `—` for evidence**, across seven
+4. **61 hazard rows still read `open` with `—` for evidence**, across seven
    categories: Bundling and AOT 14, Process and OS 13, Child runtime 10, Tooling
-   and CI 8, Protocol and SDK 7, Packaging 4, Handle routing 3. The previous
+   and CI 8, Protocol and SDK 7, Packaging 6, Handle routing 3. The previous
    round adjudicated 27 packaging rows and 8 named ones; these are the rest, in
-   **the one file that outlives the plan**.
+   **the one file that outlives the plan**. *Corrected 2026-08-17 (previously
+   "59 … Packaging 4"), by re-counting the file instead of trusting this line;
+   [TODO.md](TODO.md) carries how it went wrong.*
 
 ### (b) — blocked on the maintainer
 

@@ -552,18 +552,29 @@ reasoning, come here for the queue.**
       that holds the replacement path at the right moment. Do the second if the
       first would put a test-only interface on the product's hot path.
 
-- [ ] **59 hazard rows still read `open` with `—` for evidence.** In
+- [ ] **61 hazard rows still read `open` with `—` for evidence.** In
       [the one file that outlives the plan](plan/hazards.md), and the file's own
       rule is that *"a row marked `closed` with `—` here is not closed"* — the
       converse is what this is: rows nobody has adjudicated either way. Counted
       2026-08-17 by category: **Bundling and AOT 14, Process and OS (Windows)
       13, Child runtime and configuration 10, Tooling and CI 8, Protocol and
-      SDK 7, Packaging and updates 4, Handle routing and instance lifetime 3.**
+      SDK 7, Packaging and updates 6, Handle routing and instance lifetime 3.**
       The previous round did 27 packaging rows and 8 named ones and left 6 open
       *because they are open*, which is the standard to hold to: **an honest
       `open` with a reason beats a `closed` with a weak one.** Many of these
       will close against tests that now exist; some are upstream behaviours that
       cannot close at all and should say so.
+
+      **Corrected 2026-08-17 (previously "59 … Packaging and updates 4").**
+      Re-counted off the file rather than off this entry: the total is **61**
+      and packaging is **6**. Every other category was right. **The tell was in
+      this paragraph the whole time** — it says the previous round *left 6 open
+      because they are open*, two lines under a tally that said 4, so the entry
+      contradicted itself and the contradiction was the accurate half. Nothing
+      here can go red over a count, which is the same shape as the entry below
+      this one: a number nobody re-derives is indistinguishable from a measured
+      one. Re-derive with a category tally, not a total — a wrong total is
+      visible only against the sum.
 
 - [ ] **Report the `chromiumSandbox` defect to `@playwright/mcp`, from the
       maintainer's own account.** Measured against **0.0.79** on 2026-08-16 and
