@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -17,15 +18,31 @@ namespace BrowserAI.Tests;
 /// green build, a committed lock, a passing suite — reads healthy.
 /// </para>
 /// <para>
-/// These read the tracked files under <c>build/payload/</c>, never the
-/// assembled tree under <c>payload/</c>, so they run on a clean clone with no
-/// payload built. What the assembled tree must satisfy is checked by
-/// <c>build/Build-Payload.ps1</c> as it builds it.
+/// The two declaration tests read the tracked files under
+/// <c>build/payload/</c>, so they run on a clean clone with no payload built.
+/// The two content tests read the assembled tree under <c>payload/</c> and go
+/// through <see cref="SuiteEnvironment"/>'s gate for it, because a scan of a
+/// tree that is not there passes trivially and reads identically to a scan that
+/// found nothing — which is the whole failure this suite's capability gate
+/// exists to make loud. <i>(Corrected 2026-08-17, previously "These read the
+/// tracked files under <c>build/payload/</c>, never the assembled tree under
+/// <c>payload/</c>".)</i>
 /// </para>
 /// </remarks>
 internal sealed class PayloadTests
 {
     private static readonly string[] ExpectedDependencies = ["@playwright/mcp"];
+
+    /// <summary>
+    /// What a platform-native binary looks like on any platform, not only this
+    /// one — a tree that is portable is portable everywhere or it is not
+    /// portable.
+    /// </summary>
+    private static readonly HashSet<string> NativeExtensions =
+        new([".node", ".dll", ".exe", ".so", ".dylib", ".a", ".lib", ".pdb"], StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] TheOnePortableBinary =
+        ["node_modules/playwright-core/lib/webp_codec.wasm"];
 
     [Test]
     public async Task ThePayloadDeclaresOneDependencyAndItIsADistTag()
@@ -70,6 +87,54 @@ internal sealed class PayloadTests
         await Assert.That(declared).IsEqualTo(resolved);
         await Assert.That(declared).DoesNotContain("^");
         await Assert.That(declared).DoesNotContain("~");
+    }
+
+    [Test]
+    public async Task TheVendoredTreeCarriesNoPlatformNativeBinary()
+    {
+        // The one claim in the payload table that nothing checked. "Zero native
+        // binaries; the tree is portable JS" is what makes the JS half of the
+        // payload a per-file delta of text rather than an architecture-specific
+        // artifact -- and it is upstream's property, not ours, so it can be
+        // undone by a dependency upstream adds without a word to us. A `.node`
+        // arriving in `mcp\` would also cross the batteries-included boundary:
+        // it would need a toolchain the installer does not carry.
+        //
+        // `node\` is deliberately outside the scan. `node.exe` is the native
+        // binary the payload exists to ship.
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        var mcp = new DirectoryInfo(Path.Combine(RepositoryPayload.Layout.Root, "mcp"));
+
+        var native = mcp.EnumerateFiles("*", SearchOption.AllDirectories)
+            .Where(file => NativeExtensions.Contains(file.Extension))
+            .Select(file => Path.GetRelativePath(mcp.FullName, file.FullName))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        await Assert.That(string.Join(", ", native)).IsEmpty();
+    }
+
+    [Test]
+    public async Task TheOneNonJavaScriptArtefactInTheTreeIsPortableAndIsNamed()
+    {
+        // Measured 2026-08-17 @ @playwright/mcp 0.0.79 / playwright-core
+        // 1.63.0-alpha-2026-08-05: the tree is not JS alone. It carries exactly
+        // one `.wasm`, and a `.wasm` is portable bytecode rather than a native
+        // binary -- so the premise survives and the wording above it did not.
+        // Named rather than allowed by extension, because the interesting event
+        // is a *second* one arriving: upstream adding a WASM codec is how a
+        // "portable JS tree" acquires a component nobody reviewed.
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        var mcp = new DirectoryInfo(Path.Combine(RepositoryPayload.Layout.Root, "mcp"));
+
+        var portable = mcp.EnumerateFiles("*.wasm", SearchOption.AllDirectories)
+            .Select(file => Path.GetRelativePath(mcp.FullName, file.FullName).Replace('\\', '/'))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        await Assert.That(portable).IsEquivalentTo(TheOnePortableBinary);
     }
 
     private static JsonDocument ReadJson(string name) =>

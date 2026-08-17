@@ -95,6 +95,16 @@ missing row as a gap in this table, never as permission to skip the fact.
 > hand is a tally that is wrong, and the two paragraphs after this one are what
 > that looked like. **The test reads the sentence above as its anchor**, so
 > rewording it fails the suite rather than quietly unhooking the check.
+>
+> ⚠️ **The count is of the token, so it cannot tell a marker from a mention.**
+> Found 2026-08-17 by walking into it: two sentences of prose *about* the
+> convention, in `playwright/provisioning-and-timings.md`, moved the count from
+> 195 to 197 and turned the suite red. That is the check behaving correctly —
+> a marker really might have been added — but it means **an article that wants to
+> discuss the convention must say "floats" in words**, as that article now does,
+> and never spell the token unless it is stamping a fact. The alternative,
+> teaching the counter to exclude block quotes, would make it possible to add a
+> real marker inside one and have nobody notice.
 
 > **There was an earlier row 54, added and withdrawn on 2026-08-16.** The
 > number has since been reused by a different fact, so read this note as being

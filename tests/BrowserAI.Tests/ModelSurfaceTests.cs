@@ -411,6 +411,75 @@ internal sealed class ModelSurfaceTests
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
 
+    [Test]
+    public async Task NoEnvironmentVariableOrLaunchSwitchReachesTheEnforcementPath()
+    {
+        // The other half of §A's sentence, and the half nothing checked until
+        // 2026-08-17. `#if` is the compile-time route to relaxing a refusal;
+        // this is the run-time one, and it is the worse of the two, because a
+        // conditionally-compiled check at least ships as one artifact. A
+        // variable read here means the binary the suite proved and the binary a
+        // developer runs with BROWSERAI_LET_ME_THROUGH=1 set are the same
+        // artifact taking different decisions, and nothing about the second
+        // reads differently from the first.
+        //
+        // The convenience this forbids is real and is answered elsewhere:
+        // `debug` on init and resume raises the log level so a refusal can be
+        // *seen*, and changes no decision. That is the supported way to find
+        // out why a call was refused.
+        string[] enforcement =
+        [
+            "src/BrowserAI/Sessions/SessionToolPolicy.cs",
+            "src/BrowserAI/Sessions/SessionMode.cs",
+            "src/BrowserAI/Sessions/SessionErrors.cs",
+            "src/BrowserAI/Proxy/ServerInstructions.cs",
+        ];
+
+        string[] forbidden =
+        [
+            "Environment.GetEnvironmentVariable",
+            "Environment.GetEnvironmentVariables",
+            "Environment.GetCommandLineArgs",
+            "AppContext.TryGetSwitch",
+            "Debugger.IsAttached",
+            "RuntimeFeature",
+        ];
+
+        var offenders = new List<string>();
+
+        foreach (var relative in enforcement)
+        {
+            var file = new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, relative));
+
+            if (!file.Exists)
+            {
+                offenders.Add($"{relative}: missing, so this scan no longer covers the path it names");
+                continue;
+            }
+
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+
+            offenders.AddRange(forbidden
+                .Where(needle => code.Contains(needle, StringComparison.Ordinal))
+                .Select(needle => $"{relative}: reads '{needle}' on the enforcement path"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // BrowserProxy is deliberately outside the list above rather than
+        // silently omitted from it. It is the enforcement *call site* and also
+        // the process's own composition root, so it legitimately reads the
+        // environment for things that are not the decision -- and a scan that
+        // banned the read outright would either be red today or would train the
+        // next person to move the decision somewhere the scan does not look.
+        // What is asserted instead is that the decision it calls is the one in
+        // SessionToolPolicy, which the four files above are closed against.
+        var callSite = await RepositoryLayout.ReadCodeAsync(
+            new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src/BrowserAI/Proxy/BrowserProxy.cs")));
+
+        await Assert.That(callSite).Contains("SessionToolPolicy.Decide");
+    }
+
     private static void Require(List<string> missing, string rendered, string expected, string consumer)
     {
         if (!rendered.Contains(expected, StringComparison.Ordinal))

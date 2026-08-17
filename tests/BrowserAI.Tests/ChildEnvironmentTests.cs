@@ -25,6 +25,19 @@ internal sealed class ChildEnvironmentTests
         "PLAYWRIGHT_SKIP_BROWSER_GC",
     ];
 
+    /// <summary>
+    /// The five names a machine behind a corporate proxy or TLS inspection
+    /// cannot provision a browser without.
+    /// </summary>
+    private static readonly string[] TheEgressNames =
+    [
+        "ALL_PROXY",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "NODE_EXTRA_CA_CERTS",
+        "NO_PROXY",
+    ];
+
     private static readonly string[] EveryRefusedName =
     [
         "DEBUG",
@@ -50,6 +63,39 @@ internal sealed class ChildEnvironmentTests
         // a wiped capability list, or a line on stderr that trips the error
         // classifier merely by the variable being set.
         await Assert.That(ChildEnvironment.Refused.Order(StringComparer.Ordinal)).IsEquivalentTo(EveryRefusedName);
+    }
+
+    [Test]
+    public async Task TheProxyAndCertificateNamesTheDownloadPathNeedsSurviveIntoAChildsBlock()
+    {
+        // The one half of the allowlist whose absence is invisible on the
+        // machine that writes it. Deleting NODE_EXTRA_CA_CERTS costs nothing
+        // here and nothing in CI, and costs everything on a laptop behind TLS
+        // inspection: the 203.8 MB provision fails on a certificate the host
+        // was configured to trust and BrowserAI never asked for. Every other
+        // name in the list is asserted by shape -- refused, forced, or covered
+        // by the closed-world check below -- and these five were covered by
+        // nothing until 2026-08-17.
+        //
+        // Asserted through Build() rather than against the set, because the
+        // set is only half the mechanism: an inherited name reaches a child
+        // only if this process has it, so the test seeds each one first.
+        foreach (var name in TheEgressNames)
+        {
+            await Assert.That(ChildEnvironment.InheritedWhenSet.Contains(name)).IsTrue();
+            await Assert.That(ChildEnvironment.Refused.Contains(name)).IsFalse();
+        }
+
+        var seeded = TheEgressNames
+            .Select(name => new KeyValuePair<string, string>(name, $"value-of-{name}"))
+            .ToList();
+
+        var built = ChildEnvironment.Build(seeded);
+
+        foreach (var name in TheEgressNames)
+        {
+            await Assert.That(built[name]).IsEqualTo($"value-of-{name}");
+        }
     }
 
     [Test]

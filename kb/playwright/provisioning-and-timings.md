@@ -21,21 +21,57 @@ size, so every row is `[FLOATS]`.
 `-mx=5`. That is the figure for a **bundled** build, browsers inside the
 installer, and it excludes BrowserAI's own binary. **Nothing ships in that shape
 today.** Browsers are [provisioned on first run](#first-run-provisioning), so the
-installed payload is `node.exe` + the JS tree + BrowserAI = **116.40 MiB**
-(88.53 + 18.11 + 9.76), and **disk after first run is 116.40 + 430.48 =
-546.88 MiB ≈ 573 MB**. The ~806 MB total is kept
+installed payload is what `current\` holds, and it has now been **weighed rather
+than added up**: an installed `current\` measures **130,434,952 B = 124.39 MiB
+across 200 files** (`BrowserAI.exe` 17,853,952 · `payload\` 111,984,018 ·
+`BrowserAI.xml` 596,517 · `sq.version` 465) — **466 B more** than the *packaged*
+130,434,486 in [row 85](../README.md#re-verification-index), which is not a
+discrepancy: 465 of those bytes are `sq.version`, which Velopack writes into
+`current\` at install and which the package does not carry. **Disk after first
+run is 130,434,952 + 451,389,780 =
+581,824,732 B = 554.87 MiB ≈ 582 MB**. The ~806 MB total is kept
 because a bundled build is the fallback if the Chrome-for-Testing redistribution
 question is ever resolved favourably — but it is **not** the figure for disk
 after first run, as this file and the charter both once said: it counts
 `chrome-headless-shell` (268.49 MB), which is not provisioned at all.
 
-**BrowserAI's own binary is 9.76 MiB** — 10,233,856 bytes, `PublishAot`, win-x64,
-self-contained, measured by
-[the 2026-08-15 spike](../mcp/sdk.md#measured-by-spike-2026-08-15). This retires
-the "~10–15 MB `[UNVERIFIED]`" estimate that stood here after the measurement
-that replaced it, which is the same defect as everything under
-[corrections](../history.md#corrections-applied-2026-08-15-late): an estimate
-outliving its own measurement. The trimmed self-contained fallback at ~70 MB is
+> ⚠️ **Corrected 2026-08-17 (previously "the installed payload is `node.exe` +
+> the JS tree + BrowserAI = **116.40 MiB** (88.53 + 18.11 + 9.76), and disk after
+> first run is 116.40 + 430.48 = **546.88 MiB ≈ 573 MB**").** The arithmetic was
+> right and one of its three terms had gone stale: `9.76` was the **2026-08-15
+> spike** binary, taken before the proxy had sessions, artifact routing,
+> provisioning, a sweeper, an update lane or a registrar in it, and the number
+> outlived the artifact by two days and roughly 7 MiB. **This is the failure the
+> floats-and-re-verify convention exists to catch and did not**, because a
+> derived total carries no date of its own: the sum read as current while one
+> addend was a fortnight old. The replacement is a **weight, not a sum** — the directory that
+> actually ships, measured whole — so the next stale term cannot hide inside it.
+> The old figure is retained above in this note rather than deleted, because a
+> reader who learned `116.40` needs to find out it was reviewed and replaced.
+
+**BrowserAI's own binary is ~17.0 MiB and it moves on every commit.** Three
+publishes present on the machine on **2026-08-17** measured **17,853,952 B**
+(the one inside the 0.9.x install above, 17.03 MiB), **17,911,808 B**
+(`artifacts/publish-release`) and **17,954,304 B** (the current Release publish)
+— `PublishAot`, win-x64, self-contained, all three. **Do not treat any of them as
+*the* size.** The spread across three artifacts of the same product on one day is
+the point: this is the most volatile figure in this article, and it floats on
+**our own product** rather than on an upstream, which is why no marker is stamped
+on it — the checkable figure is the packaged `current\` above, which is a
+directory somebody can weigh, and it is carried by
+[row 85](../README.md#re-verification-index) with the rest of the update lane's
+numbers.
+
+> ⚠️ **Corrected 2026-08-17 (previously "**BrowserAI's own binary is 9.76 MiB** —
+> 10,233,856 bytes … measured by [the 2026-08-15 spike](../mcp/sdk.md#measured-by-spike-2026-08-15)").**
+> The spike's measurement stays true of the spike and is still recorded there;
+> what was wrong was carrying it forward as the product's size. It had already
+> been contradicted in this repository without this line being swept — the
+> build order's own step 5 recorded **10,461,696 bytes** the following day —
+> which is the same half-done correction the entry it replaced was itself
+> written to fix.
+
+The trimmed self-contained fallback at ~70 MB is
 still `[UNVERIFIED]`, nothing having been built in that configuration.
 
 > ⚠️ **Where ~380 MB came from, and why it is retired.** The update budget was
