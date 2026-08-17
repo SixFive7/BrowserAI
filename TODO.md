@@ -606,7 +606,8 @@ reasoning, come here for the queue.**
 
       **What happened.** *"`[DllImport]` relies on runtime IL-stub generation
       that NativeAOT does not do"* is **false on Windows** — ILC compiles those
-      stubs ahead of time, measured with a 29-declaration probe that published
+      stubs ahead of time, re-measured 2026-08-17 with a **38**-declaration probe
+      (across kernel32, user32, ntdll and rstrtmgr) that published
       with zero warnings and ran correctly. That sentence was written into
       **three source files** as the justification for `[LibraryImport]`, and
       into every agent brief of the build. It survived twenty-two build steps,
@@ -991,6 +992,17 @@ reasoning, come here for the queue.**
       > check matched a **suppression list** and refused a clean build. The
       > severity word is what makes a match a diagnostic
       > ([kb](kb/packaging/velopack.md#the-ilc-output-check-needs-the-severity-word-not-the-code)).
+
+      > ⚠️ **`Corrected 2026-08-17`: the sentence below credits the wrong
+      > property.** It says `ILLinkTreatWarningsAsErrors=true` is what makes an
+      > `IL2xxx`/`IL3xxx` warning fail the publish. It is not. Measured on SDK
+      > 10.0.400 / ILC 10.0.11 across five variants, that property had **no
+      > observable effect at all** — with it set alone the publish emitted 14
+      > ILC warnings and **exited 0** with a working binary, identical to
+      > setting nothing. `TreatWarningsAsErrors`, in `Directory.Build.props`,
+      > is both necessary and sufficient, and BrowserAI sets it, so **the
+      > outcome described below is real and nothing is broken** — only the
+      > attribution was wrong.
 
       Original text follows.
       <br><br>

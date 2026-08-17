@@ -11,11 +11,33 @@
          mystery failure somewhere inside a browser profile tree. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!--
-      Required by [LibraryImport], which the plan mandates over [DllImport]
-      because DllImport relies on runtime IL-stub generation that NativeAOT does
-      not do. The source generator emits unsafe marshalling stubs and the build
-      fails with SYSLIB1062 without this. Not a licence to hand-write unsafe
-      code: every use is a P/Invoke declaration under Interop\.
+      Required by [LibraryImport]. The source generator emits unsafe marshalling
+      stubs and the build fails with SYSLIB1062 without this. Not a licence to
+      hand-write unsafe code: every use is a P/Invoke declaration under Interop\.
+
+      WHY [LibraryImport] RATHER THAN [DllImport]. Corrected 2026-08-17
+      (previously: "because DllImport relies on runtime IL-stub generation that
+      NativeAOT does not do"). THAT REASON IS FALSE ON WINDOWS and was never
+      measured. ILC compiles DllImport marshalling stubs ahead of time, exactly
+      as it does LibraryImport's. Measured 2026-08-17 on SDK 10.0.400 / ILC
+      10.0.11, win-x64, net10.0-windows: a probe carrying 38 [DllImport]
+      declarations across kernel32, user32, ntdll and rstrtmgr, SetLastError
+      true throughout and including StringBuilder marshalling and a managed
+      callback delegate, published NativeAOT with ZERO trim or AOT warnings and
+      returned correctly from all 41 runtime checks.
+
+      The rule survives; only its justification was wrong. The real reasons are
+      that [LibraryImport] is Microsoft's documented first recommendation for
+      .NET 7 and later, that the marshalling it generates is ordinary C# that a
+      human can read and step through rather than a stub the toolchain hides,
+      and that SYSLIB1054 exists to move code toward it.
+
+      Recorded at this length because a false reason is worse than no reason:
+      anyone asking "could we use a generator that emits [DllImport]?" would
+      have read the old sentence and concluded "impossible under AOT". It is
+      not impossible, and the answer to that question has to be reached on
+      other grounds. See TODO.md, "Audit the repository for justifications
+      that are stated as fact and were never measured".
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -71,9 +93,40 @@
 
     <!--
       ILC OUTPUT MUST BE EMPTY. A trim or AOT warning fails the publish; it is
-      a silent-failure warrant, not advice. TrimmerSingleWarn=false is what
-      makes the report name the member rather than emitting one line per
-      assembly.
+      a silent-failure warrant, not advice.
+
+      WHICH PROPERTY ACTUALLY DOES THAT, corrected 2026-08-17 (previously the
+      three properties below were described as though ILLinkTreatWarningsAsErrors
+      were the one that fails the publish). IT IS NOT. The property that
+      promotes an ILC warning to an error is TreatWarningsAsErrors, set
+      repository wide in Directory.Build.props.
+
+      Measured 2026-08-17, SDK 10.0.400 / ILC 10.0.11, win-x64, on a probe
+      emitting 14 IL2xxx/IL3xxx diagnostics, five variants:
+
+        ILLinkTreatWarningsAsErrors alone   exit 0, 14 warnings, binary produced
+        TreatWarningsAsErrors alone         exit 1, 14 errors,   MSB3077, no binary
+        both                                exit 1, 14 errors,   MSB3077, no binary
+        neither                             exit 0, 14 warnings, binary produced
+        ILLink true + TreatWarnings false   exit 0, 14 warnings, binary produced
+
+      So ILLinkTreatWarningsAsErrors had NO observable effect at all here: rows
+      1, 4 and 5 are identical. TreatWarningsAsErrors alone is both necessary
+      and sufficient.
+
+      THE CURRENT CONFIGURATION IS SAFE AND NOTHING NEEDS CHANGING.
+      Directory.Build.props sets TreatWarningsAsErrors true for every project,
+      so the publish does fail on ILC warnings today. The property below is kept
+      rather than deleted: it is asserted by BuildConfigurationTests as one of
+      the per-assembly-only knobs, it is harmless, and it is the documented knob
+      for this intent even though this toolchain does not appear to honour it on
+      its own. What is corrected is the ATTRIBUTION, because someone tuning
+      either property later would otherwise draw the wrong conclusion, and
+      removing TreatWarningsAsErrors while trusting the property below would
+      silently reopen the exact hole this block exists to close.
+
+      TrimmerSingleWarn=false is what makes the report name the member rather
+      than emitting one line per assembly.
     -->
     <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>

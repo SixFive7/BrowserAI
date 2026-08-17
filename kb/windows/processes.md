@@ -602,8 +602,33 @@ itself uses it. `[MACHINE]` for the numbers, `[STABLE]` for the API.
 
 **`LibraryImport` does not support `StringBuilder`**, so a `CreateProcessW`
 command line must be passed as a writable `char[]`/`Span<char>` — the API mutates
-the buffer, and a `string` literal is not valid. `DllImport` is the wrong choice
-under NativeAOT because it relies on runtime IL-stub generation. `[STABLE]`
+the buffer, and a `string` literal is not valid. `[STABLE]`
+
+**`[DllImport]` works under NativeAOT on Windows, and ILC generates its
+marshalling stubs ahead of time.** `Corrected 2026-08-17` (previously
+*"`DllImport` is the wrong choice under NativeAOT because it relies on runtime
+IL-stub generation"*, carried here as `[STABLE]` and never measured). Measured
+2026-08-17 on **SDK 10.0.400 / ILC 10.0.11**, `win-x64`, `net10.0-windows`: a
+probe with **38 `[DllImport]` declarations** across kernel32, user32, ntdll and
+rstrtmgr — `SetLastError = true` throughout, and including `StringBuilder`
+marshalling, `SafeHandle` returns, struct byref and a managed callback delegate
+passed to `EnumWindows` — published with **zero trim or AOT warnings** and
+passed all **41** runtime checks, in a 1,209,856-byte binary. `SYSLIB1054` did
+not fire at default analyzer settings either.
+
+**This does not change the rule, only its reason.** `[LibraryImport]` remains
+correct here because it is Microsoft's documented first recommendation for .NET
+7+, because the marshalling it emits is ordinary C# that can be read and stepped
+through, and because `SYSLIB1054` exists to move code toward it. What the old
+sentence would have caused is a wrong answer to a *different* question: a
+generator that emits `[DllImport]` (which is what `Microsoft.Windows.CsWin32`
+does, and will keep doing — [#593](https://github.com/microsoft/CsWin32/issues/593)
+and [#1333](https://github.com/microsoft/CsWin32/issues/1333) are both closed
+*not planned*) is **not** ruled out by AOT. Note that CsWin32 #1333's own
+opening post repeats the same misconception, which is a fair guess at where it
+entered this repository. `[STABLE]` — re-establish by publishing any AOT project
+containing a `[DllImport]` and reading the ILC output; the probe used is
+`C:\Users\jori\Downloads\tmp-interop-eval\dllimport-verify\`.
 
 **`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
 with a positive UTC offset is written with its sign as a `+` escape.

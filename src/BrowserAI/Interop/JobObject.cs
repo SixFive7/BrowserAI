@@ -345,8 +345,15 @@ internal sealed partial class JobObject : IDisposable
     }
 #pragma warning restore CS0649
 
-    // LibraryImport rather than DllImport on every declaration: DllImport
-    // relies on runtime IL-stub generation, which NativeAOT does not do.
+    // LibraryImport rather than DllImport on every declaration, because it is
+    // Microsoft's documented first recommendation for .NET 7+ and the
+    // marshalling it generates is readable C# rather than a hidden stub.
+    //
+    // Corrected 2026-08-17 (previously: "DllImport relies on runtime IL-stub
+    // generation, which NativeAOT does not do"). That is false on Windows: ILC
+    // compiles DllImport stubs ahead of time. Measured on SDK 10.0.400 / ILC
+    // 10.0.11 with a 38-declaration probe that published NativeAOT with zero
+    // warnings and ran correctly. The rule is unchanged; the reason was wrong.
     // System32 only, because without it the loader searches the application
     // directory first and a kernel32.dll dropped beside the binary would win
     // (CA5392).

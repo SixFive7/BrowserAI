@@ -36,6 +36,23 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Warnings are errors">
+    <!--
+      THIS PROPERTY ALSO GATES THE AOT PUBLISH, which is not obvious from its
+      name or its location. Established 2026-08-17 on SDK 10.0.400 / ILC
+      10.0.11, win-x64, against a probe emitting 14 IL2xxx/IL3xxx diagnostics:
+      with ILLinkTreatWarningsAsErrors=true and this property absent, the
+      publish emitted 14 warnings and EXITED 0 with a working binary; with this
+      property alone it emitted 14 errors and failed with MSB3077. Neither, and
+      ILLink-true-plus-this-false, both behaved exactly like the first case.
+
+      In other words the "ILC output must be empty" guarantee documented in
+      src/BrowserAI/BrowserAI.csproj is carried by THIS line, not by the
+      ILLinkTreatWarningsAsErrors beside it. Turning this off to quiet an
+      ordinary CS warning would silently also stop trim and AOT warnings
+      failing the publish, which is the founding failure class of this project.
+      If that is ever wanted, narrow it with WarningsNotAsErrors for the
+      specific code, never by clearing this.
+    -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!--
       CS0162 (unreachable code) is named explicitly. This is not a tidiness
