@@ -23,7 +23,7 @@ internal sealed class ProbeChild : IAsyncDisposable
     /// Generous on purpose: a machine under load starting a process is slow,
     /// and a flaky timeout reports as a transport bug.
     /// </summary>
-    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan Patience = TestDefaults.ProcessHang;
 
     private readonly ScratchDirectory _scratch;
     private readonly string _framePath;

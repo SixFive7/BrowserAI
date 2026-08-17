@@ -63,19 +63,17 @@ internal sealed class RawStdioClient : IAsyncDisposable
     private readonly StreamReader _fromChild;
     private readonly StringBuilder _standardError = new();
     private readonly Task _standardErrorPump;
-    private readonly CancellationTokenSource _deadline;
-    private readonly TimeSpan _budget;
+    private readonly TimeSpan _perExchange;
     private readonly Stopwatch _sinceStart = Stopwatch.StartNew();
 
     private int _nextId;
     private int _disposed;
 
-    private RawStdioClient(JobObject job, LaunchedProcess process, TimeSpan timeout)
+    private RawStdioClient(JobObject job, LaunchedProcess process, TimeSpan perExchange)
     {
         _job = job;
         _process = process;
-        _budget = timeout;
-        _deadline = new CancellationTokenSource(timeout);
+        _perExchange = perExchange;
 
         _toChild = new StreamWriter(process.StandardInput, Utf8NoBom) { NewLine = "\n", AutoFlush = false };
         _fromChild = new StreamReader(process.StandardOutput, Utf8NoBom);
@@ -103,14 +101,17 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <param name="arguments">Its arguments.</param>
     /// <param name="workingDirectory">Its working directory. Explicit, never inherited.</param>
     /// <param name="environment">Its complete environment block.</param>
-    /// <param name="timeout">How long the whole conversation may take.</param>
+    /// <param name="perExchange">
+    /// The hang detector for <b>one</b> exchange. Defaults to
+    /// <see cref="TestDefaults.BrowserHang"/>.
+    /// </param>
     /// <returns>The client. Dispose it to close the job and stop everything in it.</returns>
     public static RawStdioClient Start(
         string command,
         IReadOnlyList<string> arguments,
         string workingDirectory,
         IReadOnlyDictionary<string, string> environment,
-        TimeSpan? timeout = null)
+        TimeSpan? perExchange = null)
     {
         var job = JobObject.CreateKillOnClose();
 
@@ -118,7 +119,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
         {
             var process = JobLauncher.Start(job, command, arguments, workingDirectory, environment);
 
-            return new RawStdioClient(job, process, timeout ?? TimeSpan.FromMinutes(3));
+            return new RawStdioClient(job, process, perExchange ?? TestDefaults.BrowserHang);
         }
         catch
         {
@@ -184,36 +185,55 @@ internal sealed class RawStdioClient : IAsyncDisposable
             request["params"] = parameters;
         }
 
+        // ⚠️ ONE DEADLINE PER EXCHANGE, armed here rather than in the
+        // constructor.
+        //
+        // Corrected 2026-08-18 (previously a single CancellationTokenSource armed
+        // in the constructor with a three-minute whole-conversation budget, and
+        // documented as deliberate). It was the same defect RawPipeClient was
+        // corrected for a day earlier: a budget covering everything since Start()
+        // cannot distinguish "this peer has stopped answering" from "this
+        // conversation has a lot of exchanges in it", and it fires on the latter
+        // while naming the former. Worse, it was numerically equal to — and
+        // therefore always won against — Playwright's own three-minute launch
+        // timeout, so upstream's diagnosis was replaced by ours in exactly the
+        // case upstream had something to say. Measured 2026-08-17: a Firefox
+        // launch reported at 3m00s with the peer still running and its stderr
+        // empty.
+        //
+        // Per exchange is the STRONGER hang detector, not the weaker one. A peer
+        // that has genuinely stopped sends nothing, so the deadline still fires;
+        // a peer that has DIED closes its stdout, and the read below returns null
+        // immediately with the exit code and the stderr attached, which is the
+        // event-driven half and needs no clock at all.
+        using var deadline = new CancellationTokenSource(_perExchange);
+
         try
         {
-            return await ExchangeAsync(method, request, id).ConfigureAwait(false);
+            return await ExchangeAsync(method, request, id, deadline.Token).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (_deadline.IsCancellationRequested)
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
         {
             // ⚠️ Rethrown with the peer's stderr attached, because the raw
-            // cancellation carries nothing at all. The whole-conversation
-            // deadline firing used to surface as
-            // "OperationCanceledException: The operation was canceled." with no
-            // method, no elapsed time and — worst — none of the child's stderr,
-            // which is the one place a browser that failed to come up says so.
-            // Measured 2026-08-17 on a Firefox launch: that message, and nothing
-            // else, after exactly 3m00s. Every other failure on this path already
-            // went through FailureAsync and carried the stderr; this one was the
-            // hole.
+            // cancellation carries nothing at all -- no method, no elapsed time
+            // and, worst, none of the child's stderr, which is the one place a
+            // browser that failed to come up says so. Every other failure on this
+            // path already went through FailureAsync; this one was the hole.
             throw new TimeoutException(
                 await DiagnosticsAsync(
-                    $"'{method}' (id {id.ToString(CultureInfo.InvariantCulture)}) did not complete before this client's whole-conversation budget of {_budget.TotalSeconds:F0} s expired, {_sinceStart.Elapsed.TotalSeconds:F1} s after the peer was started. Note that the budget covers everything since Start(), not this call alone.")
+                    $"'{method}' (id {id.ToString(CultureInfo.InvariantCulture)}) went unanswered for {_perExchange.TotalMinutes:F0} minutes, {_sinceStart.Elapsed.TotalSeconds:F1} s after the peer was started. "
+                    + "That is a hang detector with more than a hundred times the cost of a cold browser launch in it, so a busy machine cannot reach it: the peer is alive and has stopped answering.")
                     .ConfigureAwait(false));
         }
     }
 
-    private async Task<JsonObject> ExchangeAsync(string method, JsonObject request, int id)
+    private async Task<JsonObject> ExchangeAsync(string method, JsonObject request, int id, CancellationToken cancellationToken)
     {
-        await SendAsync(request).ConfigureAwait(false);
+        await SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         while (true)
         {
-            var line = await _fromChild.ReadLineAsync(_deadline.Token).ConfigureAwait(false)
+            var line = await _fromChild.ReadLineAsync(cancellationToken).ConfigureAwait(false)
                 ?? throw await FailureAsync($"The peer closed its stdout before answering '{method}' (id {id.ToString(CultureInfo.InvariantCulture)}).").ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(line))
@@ -248,8 +268,12 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <summary>Sends a notification, which has no reply.</summary>
     /// <param name="method">The JSON-RPC method.</param>
     /// <returns>A task that completes once the frame is on the wire.</returns>
-    public Task NotifyAsync(string method) =>
-        SendAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = method });
+    public async Task NotifyAsync(string method)
+    {
+        using var deadline = new CancellationTokenSource(_perExchange);
+
+        await SendAsync(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = method }, deadline.Token).ConfigureAwait(false);
+    }
 
     /// <summary>Everything the peer has written to stderr so far.</summary>
     /// <returns>The captured stderr.</returns>
@@ -287,7 +311,10 @@ internal sealed class RawStdioClient : IAsyncDisposable
 
         try
         {
-            await _standardErrorPump.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            // The job closed above kills the peer, which closes the pipe, which
+            // ends the pump -- so this normally returns at once. The bound is a
+            // hang detector on a teardown path and nothing asserts on it.
+            await _standardErrorPump.WaitAsync(TestDefaults.InProcessHang).ConfigureAwait(false);
         }
 #pragma warning disable CA1031 // A stderr reader that will not finish must not turn a teardown into a hang.
         catch (Exception)
@@ -300,15 +327,14 @@ internal sealed class RawStdioClient : IAsyncDisposable
         _toChild.Dispose();
         _fromChild.Dispose();
         _process.Dispose();
-        _deadline.Dispose();
     }
 
     private static string Trim(string line) => line.Length <= 400 ? line : line[..400] + "…";
 
-    private async Task SendAsync(JsonNode message)
+    private async Task SendAsync(JsonNode message, CancellationToken cancellationToken)
     {
-        await _toChild.WriteLineAsync(message.ToJsonString().AsMemory(), _deadline.Token).ConfigureAwait(false);
-        await _toChild.FlushAsync(_deadline.Token).ConfigureAwait(false);
+        await _toChild.WriteLineAsync(message.ToJsonString().AsMemory(), cancellationToken).ConfigureAwait(false);
+        await _toChild.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -331,10 +357,28 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <returns>The message, with the peer's own account of itself.</returns>
     private async Task<string> DiagnosticsAsync(string message)
     {
-        // A moment for the last lines to arrive: the interesting stderr is
-        // usually written as the peer dies, which is the same instant a read
-        // returns null.
-        await Task.Delay(250).ConfigureAwait(false);
+        // ⚠️ The event, not a settle. The interesting stderr is written as the
+        // peer dies, which is the same instant a read returns null -- so the
+        // thing to wait for is "the pump has seen EOF", which is precisely "every
+        // line the peer wrote has been captured".
+        //
+        // Corrected 2026-08-18 (previously `await Task.Delay(250)`). A quarter of
+        // a second is a guess at how long a pipe takes to drain, and on a starved
+        // machine it is the wrong guess in the direction that loses evidence.
+        // Conditional on the peer having exited because a peer that is still
+        // alive is holding stderr open, and there is then nothing to wait for.
+        if (_process.HasExited)
+        {
+            try
+            {
+                await _standardErrorPump.WaitAsync(TestDefaults.InProcessHang).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                // Reported below as whatever was captured so far. A diagnostic
+                // that cannot itself complete must not replace the failure.
+            }
+        }
 
         var exitCode = _process.HasExited
             ? _process.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"

@@ -90,6 +90,41 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// </remarks>
     public const string ChildProtocolVersion = "2025-11-25";
 
+    /// <summary>
+    /// How long a child gets to answer <c>initialize</c> before BrowserAI calls
+    /// it hung.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Set here because the SDK's default is sixty seconds and inheriting it
+    /// silently is the worst version of this decision.</b> Measured by reflection
+    /// on <c>ModelContextProtocol.Core</c> 2.2.0, 2026-08-18:
+    /// <c>McpClientOptions.InitializationTimeout</c> defaults to <c>00:01:00</c>.
+    /// Nothing in this repository chose that number, nothing documented it, and
+    /// the failure it produces — <c>Initialization timed out</c> — carries no
+    /// elapsed time, no child identity and none of the child's stderr, so it
+    /// reads as a protocol fault rather than as a slow start.
+    /// </para>
+    /// <para>
+    /// <b>What is on the far side of it is a node process starting.</b> The child
+    /// is <c>node.exe</c> loading <c>cli.js</c> out of a bundled payload; a warm
+    /// spawn hands shakes in roughly 300 ms, and a cold one on a contended machine
+    /// takes seconds. Sixty seconds is therefore not a hang detector at all on a
+    /// loaded box — it is a promptness assertion on somebody else's process
+    /// start. Ten minutes is more than two orders of magnitude above the warm
+    /// cost and <b>must never be reached by a slow machine</b>; a child that has
+    /// not spoken in ten minutes is not starting slowly, it is not starting.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-08-17 at unbounded suite parallelism, before this
+    /// existed:</b> 46 <c>Initialization timed out</c> failures in one twenty-run
+    /// session, none of them a logic fault, all of them this bound expiring while
+    /// 419 tests contended for one machine. The suite pins the same value for the
+    /// same reason in <c>TestDefaults.InitializationHang</c>.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan ChildInitializationHang { get; } = TimeSpan.FromMinutes(10);
+
     /// <summary>The revision actually negotiated, as opposed to the one asked for.</summary>
     public string? NegotiatedProtocolVersion { get; }
 
@@ -142,6 +177,9 @@ internal sealed class ChildConnection : IAsyncDisposable
             {
                 ClientInfo = new Implementation { Name = "BrowserAI", Version = BuildVersion.Current },
                 ProtocolVersion = ChildProtocolVersion,
+
+                // Never left at the SDK's 60 s default. See ChildInitializationHang.
+                InitializationTimeout = ChildInitializationHang,
             },
             loggerFactory,
             cancellationToken).ConfigureAwait(false);

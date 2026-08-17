@@ -83,7 +83,7 @@ internal sealed class FakeChildHarnessTests
     /// async pipeline of four thread handoffs cannot tell a hang from a
     /// descheduled continuation, and raising it a second time is the move this
     /// repository forbids. A rig that has genuinely stopped is still caught, by
-    /// the per-exchange <see cref="TestDefaults.Patience"/> deadline inside the
+    /// the per-exchange <see cref="TestDefaults.InProcessHang"/> deadline inside the
     /// client — which fails naming the method that did not answer, rather than
     /// naming a number.
     /// </para>

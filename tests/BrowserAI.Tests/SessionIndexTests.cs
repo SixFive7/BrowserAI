@@ -42,7 +42,7 @@ internal sealed class SessionIndexTests
     /// a slow machine starting eight processes is the ordinary reason this is
     /// slow, and a tight deadline reports as an index failure.
     /// </summary>
-    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan Patience = TestDefaults.ProcessHang;
 
     /// <summary>How many processes re-assert one entry at the same instant.</summary>
     /// <remarks>

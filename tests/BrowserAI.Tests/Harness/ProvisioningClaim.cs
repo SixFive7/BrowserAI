@@ -62,7 +62,7 @@ internal sealed class ProvisioningClaim : IDisposable
         {
             using var mutex = MachineMutex.Create(name);
 
-            Held = mutex.Acquire(TestDefaults.Patience) is not MutexAcquisition.NotAcquired;
+            Held = mutex.Acquire(TestDefaults.ProcessHang) is not MutexAcquisition.NotAcquired;
             _taken.Set();
 
             _ = _release.Wait(Ceiling);
@@ -78,7 +78,7 @@ internal sealed class ProvisioningClaim : IDisposable
         };
 
         _holder.Start();
-        _ = _taken.Wait(TestDefaults.Patience);
+        _ = _taken.Wait(TestDefaults.ProcessHang);
     }
 
     /// <summary>The kernel object's name, for a failure message to quote.</summary>
@@ -101,7 +101,7 @@ internal sealed class ProvisioningClaim : IDisposable
     public void Dispose()
     {
         _release.Set();
-        _ = _holder.Join(TestDefaults.Patience);
+        _ = _holder.Join(TestDefaults.ProcessHang);
         _release.Dispose();
         _taken.Dispose();
     }

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using BrowserAI.Interop;
 using BrowserAI.Tests.Harness;
 
@@ -66,20 +65,26 @@ internal sealed class MessageWindowTests
         await Assert.That((string?)report["sameProcessSendMessage"]).IsEmpty();
         await Assert.That((bool?)report["suppressing"]).IsTrue();
 
-        var clock = Stopwatch.StartNew();
         var crossProcess = MessageWindows.WindowText(window);
-        var elapsed = clock.Elapsed;
 
+        // ⚠️ THE ANSWER IS THE ASSERTION, and it is why the stopwatch that used
+        // to be here is gone.
+        //
+        // Deleted 2026-08-18: `Assert.That(elapsed).IsLessThan(250 ms)`, whose
+        // note read "a read that started costing a timeout would mean it had
+        // started going through the message queue". The window under test
+        // SUPPRESSES WM_GETTEXT -- the two same-process reads above are asserted
+        // empty for exactly that reason -- so a read that went through the
+        // message queue would time out and come back EMPTY. Getting the name at
+        // all is therefore proof that the queue was bypassed, whatever the clock
+        // said. Two hundred and fifty milliseconds, meanwhile, is a number a
+        // starved machine reaches while the product is behaving perfectly.
         await Assert.That(crossProcess).IsEqualTo(name);
 
         // The documented fallback agrees, which is the only reason it is worth
         // carrying at all.
         await Assert.That(MessageWindows.InternalWindowText(window)).IsEqualTo(name);
         await Assert.That(MessageWindows.TitleOf(window)).IsEqualTo(name);
-
-        // Milliseconds, on every build. A read that started costing a timeout
-        // would mean it had started going through the message queue.
-        await Assert.That(elapsed).IsLessThan(TimeSpan.FromMilliseconds(250));
     }
 
     [Test]

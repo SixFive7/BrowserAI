@@ -39,7 +39,30 @@ internal static class SessionProbe
     /// A leaked process is a defect in the test; this is the backstop for the
     /// case where the test itself is what failed.
     /// </summary>
-    private static readonly TimeSpan Patience = TimeSpan.FromMinutes(2);
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously two minutes).</b> This is a
+    /// SELF-DESTRUCT BACKSTOP, and a backstop that fires while its test is still
+    /// running is not a backstop — it is a promptness assertion on the test host,
+    /// enforced from another process, that fails as <i>"the process I planted has
+    /// gone"</i>. Two minutes is reachable: at
+    /// <c>SuiteParallelism.Unbounded</c> the suite puts 419 tests on one machine
+    /// at once and <c>SaturationTests</c> alone runs a hundred processes, and a
+    /// test that holds one of these probes across that can legitimately take
+    /// longer.
+    /// </para>
+    /// <para>
+    /// <b>Nothing depends on this being tight.</b> Every probe is launched into a
+    /// <c>JobObjectScope</c> carrying <c>KILL_ON_JOB_CLOSE</c>, so the host
+    /// finishing — or dying — closes the last handle and the kernel takes the
+    /// probe with it. This only has to be shorter than "forever", so that a probe
+    /// started outside a job by a hand-run command cannot outlive the day. Half
+    /// an hour is that, and it is the same shape as the suite's own
+    /// <c>TestDefaults.ProcessHang</c>, which cannot be referenced from here
+    /// because this is a separate executable.
+    /// </para>
+    /// </remarks>
+    private static readonly TimeSpan Patience = TimeSpan.FromMinutes(30);
 
     /// <summary>
     /// Reports every name the canonicaliser derives from one spelling of a
@@ -196,7 +219,10 @@ internal static class SessionProbe
         var path = SessionPath.Resolve(directory);
 
         using var gate = MachineMutex.Create(path.MutexName);
-        var acquisition = gate.Acquire(TimeSpan.FromSeconds(30));
+        // Patience, not thirty seconds: this probe exists to BE the holder, and an
+        // acquire that gave up early would make the test flaky in the one
+        // direction that reads as a product defect. Corrected 2026-08-18.
+        var acquisition = gate.Acquire(Patience);
 
         Write(readyPath, new JsonObject
         {
@@ -232,7 +258,7 @@ internal static class SessionProbe
     public static int HoldNamed(string mutexName, string readyPath)
     {
         using var mutex = MachineMutex.Create(mutexName);
-        var acquisition = mutex.Acquire(TimeSpan.FromSeconds(30));
+        var acquisition = mutex.Acquire(Patience);
 
         Write(readyPath, new JsonObject
         {

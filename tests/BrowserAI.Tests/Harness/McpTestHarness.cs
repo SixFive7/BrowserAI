@@ -319,7 +319,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
         //    rather than open-ended.
         try
         {
-            await _serverTask.WaitAsync(TestDefaults.Patience);
+            await _serverTask.WaitAsync(TestDefaults.InProcessHang);
         }
         catch (OperationCanceledException)
         {

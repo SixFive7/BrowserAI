@@ -78,7 +78,7 @@ internal sealed class SessionPathTests
 
         await Assert.That(run.ExitCode).IsEqualTo(0);
 
-        var report = await ProbeReport.ReadAsync(Path.Combine(scratch.Path, "relative.json"), TimeSpan.FromSeconds(30));
+        var report = await ProbeReport.ReadAsync(Path.Combine(scratch.Path, "relative.json"), TestDefaults.ProcessHang);
 
         await Assert.That((string?)report["workingDirectory"]).IsEqualTo(scratch.Path);
         await Assert.That((string?)report["mutexName"]).IsEqualTo(absolute.MutexName);

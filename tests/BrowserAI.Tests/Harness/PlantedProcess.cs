@@ -72,7 +72,7 @@ internal static class PlantedProcess
 
         while (BrowserProcesses.RunningFrom(root).All(entry => entry.ProcessId != process.Id))
         {
-            if (waited.Elapsed > TestDefaults.Patience)
+            if (waited.Elapsed > TestDefaults.ProcessHang)
             {
                 throw new InvalidOperationException(
                     $"The process planted at '{planted}' (pid {process.Id}) was never visible under '{root}' after {waited.Elapsed.TotalSeconds:F1} s. "

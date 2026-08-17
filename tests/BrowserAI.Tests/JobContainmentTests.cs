@@ -49,14 +49,14 @@ internal sealed class JobContainmentTests
     /// a slow machine starting a runtime is the normal reason this is slow, and
     /// a tight deadline here reports as a containment failure.
     /// </summary>
-    private static readonly TimeSpan ReportPatience = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan ReportPatience = TestDefaults.ProcessHang;
 
     /// <summary>
     /// How long every member of the tree gets to be gone after the launcher is
     /// terminated. <c>KILL_ON_JOB_CLOSE</c> is a kernel operation, so this is
     /// scheduling latency rather than a shutdown sequence.
     /// </summary>
-    private static readonly TimeSpan TeardownPatience = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
     /// <summary>
     /// A node child that spawns two of its own, then reports the tree. The

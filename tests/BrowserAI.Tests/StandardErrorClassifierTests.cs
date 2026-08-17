@@ -309,7 +309,7 @@ internal sealed class StandardErrorClassifierTests
         // the assertions that follow report what was and was not seen.
         var deadline = Stopwatch.StartNew();
 
-        while (deadline.Elapsed < TestDefaults.Patience)
+        while (deadline.Elapsed < TestDefaults.ProcessHang)
         {
             if (Records(capture, eventId).Any(predicate ?? (_ => true)))
             {

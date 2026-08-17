@@ -63,7 +63,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
 
     /// <summary>
     /// A fresh deadline for <b>one</b> frame, which is what
-    /// <see cref="TestDefaults.Patience"/> has always claimed to be.
+    /// <see cref="TestDefaults.InProcessHang"/> is.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-08-17 (previously one <see cref="CancellationTokenSource"/>
@@ -78,15 +78,14 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// browser rather than for this pipe.
     /// <para>
     /// Per frame is also the stronger hang detector, not the weaker one: a peer
-    /// that has genuinely stopped sends nothing at all, and thirty seconds of
-    /// silence still fails — now with the operation named.
-    /// <see cref="RawStdioClient"/> keeps the whole-conversation shape
-    /// deliberately, because there the peer is a process that may never start;
-    /// here both ends are in this process.
+    /// that has genuinely stopped sends nothing at all, so the silence still
+    /// fails — now with the operation named. <see cref="RawStdioClient"/> was
+    /// corrected the same way on 2026-08-18; the last whole-conversation budget
+    /// in the suite went with it.
     /// </para>
     /// </remarks>
     /// <returns>A source the caller must dispose.</returns>
-    private static CancellationTokenSource OneFrame() => new(TestDefaults.Patience);
+    private static CancellationTokenSource OneFrame() => new(TestDefaults.InProcessHang);
 
     /// <summary>Reads one frame, or says which operation went unanswered.</summary>
     /// <param name="what">What the caller was waiting for, for the failure message.</param>
@@ -102,7 +101,9 @@ internal sealed class RawPipeClient : IAsyncDisposable
         catch (OperationCanceledException) when (deadline.IsCancellationRequested)
         {
             throw new TimeoutException(
-                $"No frame arrived on this pipe within {TestDefaults.Patience.TotalSeconds:F0} s while waiting for {what}. The peer is in this process, so this is a deadlock or a dropped write rather than a slow machine.");
+                $"No frame arrived on this pipe in {TestDefaults.InProcessHang.TotalMinutes:F0} minutes while waiting for {what}. "
+                + "That bound is a hang detector with roughly 30,000× the normal cost of this hop in it, so a busy machine cannot reach it: "
+                + "the peer is in this process and has deadlocked, or a write was dropped.");
         }
     }
 
@@ -120,7 +121,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
         catch (OperationCanceledException) when (deadline.IsCancellationRequested)
         {
             throw new TimeoutException(
-                $"This pipe would not accept the frame for {what} within {TestDefaults.Patience.TotalSeconds:F0} s. Nothing is draining the client's end.");
+                $"This pipe would not accept the frame for {what} in {TestDefaults.InProcessHang.TotalMinutes:F0} minutes. Nothing is draining the client's end.");
         }
     }
 

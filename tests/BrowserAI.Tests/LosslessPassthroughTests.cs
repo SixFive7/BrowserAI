@@ -719,7 +719,7 @@ internal sealed class LosslessPassthroughTests
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow + TestDefaults.Patience;
+        var deadline = DateTime.UtcNow + TestDefaults.InProcessHang;
 
         while (!condition())
         {

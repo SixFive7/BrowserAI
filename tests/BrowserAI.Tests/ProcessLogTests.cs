@@ -148,21 +148,24 @@ internal sealed partial class ProcessLogTests
         // never be a real host on anyone's network -- and the whole point is
         // that the test must not depend on how long it takes to fail, because a
         // check that reaches the network is the thing being prevented.
-        var clock = System.Diagnostics.Stopwatch.StartNew();
-
         using var writer = new RollingFileWriter(@"\\192.0.2.1\browserai$\logs");
 
         writer.Write("a record that must not cost a network round trip");
-        clock.Stop();
 
+        // ⚠️ THE DECISION IS THE ASSERTION, and it is why the stopwatch that used
+        // to be here is gone.
+        //
+        // Deleted 2026-08-18: `Assert.That(clock.Elapsed).IsLessThan(1 s)`, whose
+        // note read "decided on the string, so it cannot have been a timeout".
+        // `RefusedNetworkDirectory` is set on ONE path only -- the string check
+        // that rejects a UNC root before any file call -- so it being true is
+        // itself the proof that nothing reached the network; a writer that had
+        // gone out to the share and failed would have a null CurrentFile and this
+        // flag CLEAR. One second, meanwhile, is a number a starved machine
+        // reaches while the product is behaving perfectly, and this test then
+        // fails saying the product went to the network when it did not.
         await Assert.That(writer.RefusedNetworkDirectory).IsTrue();
         await Assert.That(writer.CurrentFile).IsNull();
-
-        // Decided on the string, so it cannot have been a timeout: a single
-        // file call against a dead share was measured at 21 s, and one second
-        // is two orders of magnitude inside that without being a tight bound
-        // that fails on a loaded machine.
-        await Assert.That(clock.Elapsed).IsLessThan(TimeSpan.FromSeconds(1));
 
         // And a local directory is still written, so the guard refuses shares
         // rather than refusing everything.

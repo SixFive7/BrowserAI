@@ -453,10 +453,21 @@ internal sealed partial class ErrorCatalogueTests
     [Test]
     public async Task TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading()
     {
+        // ⚠️ A GATE, NOT A DURATION.
+        //
+        // Corrected 2026-08-18 (previously `FakeInstaller.Succeeding(..., 30 s)`).
+        // Thirty seconds was an assumption that this test finishes inside thirty
+        // seconds; at unbounded suite parallelism that is not safe, and a run
+        // slow enough to break it would see the install LAND and the row-6
+        // refusal below become a success — a red build caused by a busy machine
+        // and reported as the product emitting the wrong error. Never released,
+        // so "still downloading" is a fact about state rather than about time.
+        var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         await using var sessions = RigSessionEnvironment.Create(
-            installer: (_, root) => FakeInstaller.Succeeding(
+            installer: (_, root) => FakeInstaller.SucceedingWhenReleased(
                 Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
-                TimeSpan.FromSeconds(30)));
+                stillDownloading.Task));
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
         var directory = Path.Combine(sessions.Root, "still-downloading");
@@ -469,8 +480,8 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         // Row 6. The condition is real — this rig's browsers root is empty and
-        // its installer takes thirty seconds — and the call is answered
-        // immediately rather than held.
+        // its installer cannot finish until this test releases it, which it never
+        // does — and the call is answered rather than held.
         var refused = await CallAsync(rig, "browser_navigate", new JsonObject
         {
             ["url"] = "data:text/html,x",
@@ -568,7 +579,7 @@ internal sealed partial class ErrorCatalogueTests
             $@"Global\BrowserAI-Test-{Guid.NewGuid():N}",
             ready);
 
-        _ = await ProbeReport.ReadAsync(ready, TimeSpan.FromSeconds(60));
+        _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
         await PlantedProbe.WaitUntilDetectableAsync([PlantedProbe.ExecutablePath], process.Id);
 
         var logger = capturing.CreateLogger("BrowserAI.Sweep");
@@ -624,7 +635,7 @@ internal sealed partial class ErrorCatalogueTests
             ready);
 
         var holderCreated = ProcessIdentity.CreationTimeOf(holder.Id);
-        _ = await ProbeReport.ReadAsync(ready, TimeSpan.FromSeconds(60));
+        _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
 
         var held = FirefoxProfileLockedException.For(config);
 
@@ -663,7 +674,7 @@ internal sealed partial class ErrorCatalogueTests
     /// </summary>
     private static async Task<StraySweepResult> RunSweepAsync(Microsoft.Extensions.Logging.ILogger logger)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
 
         while (true)
         {

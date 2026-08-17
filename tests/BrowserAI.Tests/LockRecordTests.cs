@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text;
 using BrowserAI.Sessions;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -135,7 +136,7 @@ internal sealed class LockRecordTests
         };
 
         worker.Start();
-        worker.Join(TimeSpan.FromSeconds(30));
+        worker.Join(TestDefaults.InProcessHang);
 
         await Assert.That(failure).IsNull();
         await Assert.That(parsed).IsEqualTo(original);

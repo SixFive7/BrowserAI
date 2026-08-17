@@ -247,7 +247,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
         {
             // Held calls first: each is a task this object started, and a task
             // nobody waits for is a task whose exception nobody sees.
-            await Task.WhenAll(_held).WaitAsync(TestDefaults.Patience);
+            await Task.WhenAll(_held).WaitAsync(TestDefaults.InProcessHang);
         }
 #pragma warning disable CA1031 // A held call ending because the child stopped is the ordinary path.
         catch (Exception)
@@ -257,7 +257,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
         try
         {
-            await _loop.WaitAsync(TestDefaults.Patience);
+            await _loop.WaitAsync(TestDefaults.InProcessHang);
         }
 #pragma warning disable CA1031 // The loop's stream closing under a read in flight is how it normally ends.
         catch (Exception)

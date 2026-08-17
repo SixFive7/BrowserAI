@@ -23,18 +23,26 @@ namespace BrowserAI.Tests;
 /// be removed.
 /// </para>
 /// <para>
-/// ⚠️⚠️ <b>THE SUITE IS INTERMITTENTLY RED AT THIS SETTING, AND THAT IS THE
-/// SETTING. DO NOT "FIX" IT BY CAPPING IT.</b> The maintainer's ruling,
+/// ⚠️⚠️ <b>DO NOT "FIX" A RED RUN BY CAPPING THIS.</b> The maintainer's ruling,
 /// 2026-08-17, verbatim: <i>"Keep unbounded regardless — It is also a test for
 /// race conditions and interferences. It is not only there for speed."</i>
 /// Running every test at once is a <b>race detector</b>, and the fixture that
-/// only ever runs four-wide finds nothing. The intermittency is a symptom of
-/// timing assumptions that are being removed next — it is not evidence that this
-/// number is wrong, and the last person who read a red run as evidence about
-/// the number set <c>Limit => 4</c> and hid four defects behind it for a day.
+/// only ever runs four-wide finds nothing. The last person who read a red run as
+/// evidence about this number set <c>Limit => 4</c> and hid four defects behind
+/// it for a day.
 /// </para>
 /// <para>
-/// <b>Unbounded was tried, measured, and is not yet quiet. That is the point.</b>
+/// ✅ <b>Unbounded is quiet as of 2026-08-18, and the tally is on the
+/// changelog.</b> It was red 11 runs in 20 the day before. Nothing about the
+/// number changed; what changed is that every <i>promptness assertion</i> in the
+/// suite was deleted or made event-driven, and every surviving duration was
+/// given headroom a starved machine cannot reach — the maintainer's instruction,
+/// verbatim: <i>"Remove any timings other than timeouts that catch really hung
+/// processes. Even on slow systems."</i> The vocabulary those bounds now come
+/// from is <c>TestDefaults</c>, and its remarks are where a reader should start.
+/// </para>
+/// <para>
+/// <b>Unbounded was tried and measured before that work, and it was not quiet.</b>
 /// Twenty runs with the limiter above the test count went red eleven times, and
 /// every single failure was a defect four-way parallelism had been hiding rather
 /// than a limit being exceeded. All four are fixed:
@@ -63,44 +71,34 @@ namespace BrowserAI.Tests;
 /// </description></item>
 /// </list>
 /// <para>
-/// <b>THE BLOCKER, and it is the reason this is not <see cref="Unbounded"/>
-/// today.</b> With those four fixed, what remains is a class rather than a bug:
-/// <b>fixed patience bounds that are promptness assertions in disguise</b>. They
-/// do not fail because anything is wrong; they fail because the machine is busy,
-/// and every one of them reports something other than "this machine is busy".
-/// Measured at unbounded after the four fixes, with the saturation test already
-/// exclusive:
-/// </para>
-/// <list type="bullet">
-/// <item><description>
-/// <c>BrowserContainmentTests</c>' 180 s <c>ReportPatience</c>: a real Firefox
-/// launcher did not finish inside it, at 3m01s, with <b>zero bytes</b> on the
-/// child's stdout and stderr — so nothing had gone wrong, it had not got that
-/// far. One run in four.
-/// </description></item>
-/// <item><description>
-/// <c>FirefoxTests</c>' launch budget, which was <i>equal</i> to Playwright's own
-/// launch timeout and therefore always won the race, replacing upstream's
-/// diagnosis with <i>"the budget expired"</i>. Corrected there, but the shape is
-/// the same one.
-/// </description></item>
-/// <item><description>
-/// <c>TestDefaults.Patience</c>, thirty seconds, applied to in-process
-/// frames and to rig teardown. Under a saturated machine a thirty-second silence
-/// between two objects <i>in the same process</i> stops meaning "deadlock".
-/// </description></item>
-/// </list>
-/// <para>
-/// <b>The maintainer's instruction is the fix, and it is not this change's
-/// work:</b> <i>remove any timings other than timeouts that catch really hung
-/// processes, even on slow systems</i>. That is the next task. Every bound
-/// listed above is a <i>promptness</i> assertion wearing a timeout's clothes,
-/// and each one should either become a genuine hang detector or go.
+/// <b>WHAT THE BLOCKER WAS, and what closed it on 2026-08-18.</b> With those
+/// four fixed, what remained was a class rather than a bug: <b>fixed patience
+/// bounds that were promptness assertions in disguise</b>. They did not fail
+/// because anything was wrong; they failed because the machine was busy, and
+/// every one of them reported something other than "this machine is busy". The
+/// three that were named here — <c>BrowserContainmentTests</c>' 180 s
+/// <c>ReportPatience</c>, <c>FirefoxTests</c>' launch budget, and
+/// <c>TestDefaults.Patience</c> at thirty seconds — are all gone, and so are the
+/// twenty-odd that were not named. The whole failure population at unbounded was
+/// three messages: <c>Initialization timed out</c> (46), <c>No frame arrived on
+/// this pipe within 30 s</c> (71) and a bare <c>A task was canceled</c> (48).
 /// </para>
 /// <para>
-/// <b>THE MEASURED FALLBACK, recorded so nobody has to rediscover it.</b> If a
-/// green gate is needed before the timing work lands, <see cref="Demonstrated"/>
-/// is the number, and it is a measurement rather than a guess:
+/// The fix had four parts, each recorded where the code is: a single named
+/// vocabulary of hang detectors in <c>TestDefaults</c>, sized so a
+/// 25×-overcommitted machine cannot reach them; the SDK's <b>60 s</b>
+/// <c>InitializationTimeout</c>, which nobody had chosen and which the product
+/// inherited silently, set explicitly on both sides; the last
+/// whole-conversation budget (<see cref="Harness.RawStdioClient"/>) split per
+/// exchange; and seven wall-clock assertions deleted in favour of the event each
+/// was standing in for.
+/// </para>
+/// <para>
+/// <b>THE MEASURED FALLBACK, kept because it is a measurement.</b>
+/// <see cref="Demonstrated"/> is not needed today and is not the default; it is
+/// the number to reach for if this suite ever has to go green on a machine
+/// smaller than the one these runs were made on, and it exists so that choice is
+/// a one-line informed change rather than a rediscovery:
 /// </para>
 /// <list type="bullet">
 /// <item><description>
@@ -109,17 +107,15 @@ namespace BrowserAI.Tests;
 /// not because it broke.
 /// </description></item>
 /// <item><description>
-/// <b>Unbounded: 3 green then 1 red</b> in the same session, on the same tree —
-/// <c>BrowserContainmentTests.AFirefoxTreeIsContainedAndItsProfileDeletesCleanly</c>,
-/// whose launcher did not finish inside its fixed 180 s bound and had written
-/// <b>zero bytes</b> to either stream, so nothing had gone wrong; it had not got
-/// that far.
+/// <b>Unbounded, before the timing work: 11 red in 20.</b>
+/// <b>Unbounded, after it: see the changelog.</b>
 /// </description></item>
 /// </list>
 /// <para>
 /// Flipping <c>Limit</c> to <see cref="Demonstrated"/> is a one-line, informed
 /// choice. Flipping it because a run went red is the mistake this whole comment
-/// exists to prevent.
+/// exists to prevent — and it is now also the wrong diagnosis, because the class
+/// of failure that made unbounded red has been removed rather than accommodated.
 /// </para>
 /// <para>
 /// <b>Wall clock, and what is actually in it.</b> Before this work:
@@ -147,12 +143,27 @@ internal sealed class SuiteParallelism : IParallelLimit
     /// Sixteen: the measured fallback, <b>not the default</b>.
     /// </summary>
     /// <remarks>
-    /// Thirteen consecutive green runs, against three-green-then-red at
+    /// <para>
+    /// Thirteen consecutive green runs, against eleven-red-in-twenty at
     /// <see cref="Unbounded"/> on the same tree. Kept as a named constant so that
-    /// anyone who needs a green gate before the timing work lands can make an
-    /// informed one-line change instead of rediscovering the number — and so
-    /// that <see cref="Limit"/> below is visibly a <i>choice</i> rather than the
-    /// only value anyone measured.
+    /// <see cref="Limit"/> below is visibly a <i>choice</i> rather than the only
+    /// value anyone measured.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is no longer the fallback it was written as, and it is kept
+    /// anyway — deliberately.</b> The reason it existed was <i>"if a green gate
+    /// is needed before the timing work lands"</i>, and that work landed on
+    /// 2026-08-18. Deleting it then was tempting and would have been wrong twice
+    /// over. It is a <b>measurement</b>, and this repository does not delete
+    /// measurements because the situation they were taken in has passed; and it
+    /// is the only recorded answer to a question that will be asked again the
+    /// first time this suite meets a machine smaller than the 32-core one every
+    /// number here was taken on. What has changed is its <i>meaning</i>: it is no
+    /// longer a way to avoid a defect, because the defect is fixed. It is a
+    /// capacity figure. Somebody choosing it now is saying "this machine cannot
+    /// carry 419 at once", which is a true thing to say about some machines and
+    /// was never what this constant meant before.
+    /// </para>
     /// </remarks>
     public const int Demonstrated = 16;
 

@@ -153,7 +153,7 @@ internal static partial class JobProbe
 
         // Descendants a browser or a runtime starts asynchronously -- renderers,
         // GPU, crashpad -- appear after the child reports ready.
-        Thread.Sleep(1500);
+        WaitUntilTheTreeStopsGrowing(job, readyPatience);
 
         // ⚠️ Two snapshots of the job's own membership, taken either side of the
         // walk, because a live browser is not a static tree: Chromium starts and
@@ -446,6 +446,66 @@ internal static partial class JobProbe
                 await file.FlushAsync().ConfigureAwait(false);
             }
         });
+
+    /// <summary>
+    /// Waits until the job's membership has stopped changing, rather than for a
+    /// fixed number of milliseconds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously <c>Thread.Sleep(1500)</c>, with the
+    /// note "descendants a browser or a runtime starts asynchronously appear
+    /// after the child reports ready").</b> That is true and 1,500 ms was a guess
+    /// at how long they take. A guess in this position does not fail loudly — it
+    /// fails <i>quietly</i>, by walking a tree that is still coming up, which
+    /// makes "every process is in our job" a claim about fewer processes than
+    /// existed. On a machine running the whole suite at once, the guess is wrong
+    /// in exactly that direction.
+    /// </para>
+    /// <para>
+    /// <b>The event is quiescence.</b> The kernel's own membership list is read
+    /// until it has been identical ten times running, which is the observable
+    /// form of "the tree has finished coming up" and costs whatever it needs to
+    /// on a slow machine instead of a fixed 1.5 s. Anything still appearing
+    /// resets the count, so a tree that takes ten seconds to finish is waited out
+    /// and one that is already complete is not.
+    /// </para>
+    /// <para>
+    /// <b>It never fails, and it asserts no floor.</b> The patience is the host's,
+    /// and running it out is not an error here — the host's own assertions
+    /// (<c>walk.Count &gt;= 4</c> among them) are what decide, and they have the
+    /// evidence. A wait that threw, or that insisted on a member count before
+    /// returning, would replace those assertions with this one and could hang a
+    /// suite for the whole of a browser-shaped patience.
+    /// </para>
+    /// </remarks>
+    /// <param name="job">The job whose membership is being watched.</param>
+    /// <param name="patience">The host's budget, shared rather than re-invented.</param>
+    private static void WaitUntilTheTreeStopsGrowing(JobObject job, TimeSpan patience)
+    {
+        // Ten readings 100 ms apart: one second of stillness, which is the
+        // criterion rather than a duration to spend.
+        const int StillReadings = 10;
+
+        var deadline = Stopwatch.StartNew();
+        var previous = new HashSet<int>();
+        var still = 0;
+
+        while (deadline.Elapsed < patience)
+        {
+            var members = job.ProcessIds().ToHashSet();
+
+            still = members.SetEquals(previous) ? still + 1 : 0;
+            previous = members;
+
+            if (still >= StillReadings)
+            {
+                return;
+            }
+
+            Thread.Sleep(100);
+        }
+    }
 
     private static void WaitForFile(string path, TimeSpan patience)
     {

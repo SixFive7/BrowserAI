@@ -37,14 +37,21 @@ internal sealed partial class BrowserIdleTimerTests
     private static readonly string ProbePath = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
 
     /// <summary>
-    /// Short enough that the suite never waits, long enough that a rig which
-    /// opens a session, hands shakes and forwards a call is not closed while it
-    /// is still starting.
+    /// The nominal idle period every in-process arm in this file is configured
+    /// with.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Nominal: nothing waits for it.</b> Every arm that uses it drives a
+    /// <see cref="ManualClock"/>, so this is the unit the test advances in and
+    /// not a duration anything sleeps for. Its actual value is therefore
+    /// irrelevant to how long the suite takes, and a reader should not read
+    /// "800 ms" as a promptness decision. The last arm that let a real timer run
+    /// against it was converted on 2026-08-18.
+    /// </remarks>
     private static readonly TimeSpan ShortPeriod = TimeSpan.FromMilliseconds(800);
 
     /// <summary>How long a real browser tree gets to go away once it has been asked to.</summary>
-    private static readonly TimeSpan TeardownPatience = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
     /// <summary>
     /// The shipped period is what §C says, and nothing in the product moves it.
@@ -248,7 +255,7 @@ internal sealed partial class BrowserIdleTimerTests
                 clock.Advance(ShortPeriod);
                 return child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
             },
-            TestDefaults.Patience,
+            TestDefaults.InProcessHang,
             "the idle close never reached the child, however far the clock was moved");
 
         // One close, and only one, however long it is left: the timer is one-shot
@@ -276,6 +283,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// closed underneath it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>This is the half of "reset by any tool call" that no wall clock can
     /// make flaky</b>, and it is the case that actually matters in production: a
     /// navigation to a slow site, a download, a <c>browser_wait_for</c>. The call
@@ -283,12 +291,25 @@ internal sealed partial class BrowserIdleTimerTests
     /// outstanding for three periods by construction rather than by timing, and a
     /// timer that ignored in-flight calls would close the browser under a caller
     /// that was mid-request.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously a real 800 ms period and
+    /// <c>await Task.Delay(ShortPeriod * 3)</c>).</b> The sentence above claimed
+    /// "by construction rather than by timing" while the test slept for 2.4 s and
+    /// hoped the request had reached the child inside them — which is a guess at
+    /// how long a round trip takes, and on a starved machine it is the wrong
+    /// guess in the direction that makes the whole thing vacuous: an advance made
+    /// before the call was in flight would fire the timer legitimately. Both
+    /// halves are events now. The call being in flight is read off the child, and
+    /// "three periods" is three periods of a clock this test moves by hand.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ACallThatOutlivesThePeriodIsNotClosedUnderneath()
     {
         var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var clock = new ManualClock();
 
         await using var rig = RigSessionEnvironment.Create(
             configure: child =>
@@ -296,7 +317,8 @@ internal sealed partial class BrowserIdleTimerTests
                 child.Tools["browser_navigate"] = new FakeToolBehaviour { HoldUntil = held.Task };
                 child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
             },
-            browserIdlePeriod: ShortPeriod);
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
 
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
@@ -306,9 +328,21 @@ internal sealed partial class BrowserIdleTimerTests
             ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session! },
         });
 
-        // Outstanding for three whole periods, and the only thing ending it is
+        // The event that says the call is really outstanding: the double records
+        // the tool name before it starts holding, and the proxy registered its
+        // in-flight scope earlier still. Advancing before this point would move
+        // the clock past a period during which nothing was in flight, and a close
+        // would then be correct — which is a test that can only fail for the
+        // wrong reason.
+        await WaitUntilAsync(
+            () => harness.Child.ToolCallsReceived.Contains("browser_navigate"),
+            TestDefaults.InProcessHang,
+            "the held call never reached the child, so nothing was outstanding to protect");
+
+        // Outstanding for three whole periods — exactly three, because this is
+        // the only thing that moves the clock — and the only thing ending it is
         // the line below.
-        await Task.Delay(ShortPeriod * 3);
+        clock.Advance(ShortPeriod * 3);
 
         await Assert.That(harness.Child.ToolCallsReceived).DoesNotContain(LiveSession.BrowserCloseTool);
 
@@ -320,11 +354,18 @@ internal sealed partial class BrowserIdleTimerTests
 
         // And the period restarts from the moment the call was answered, so the
         // close still comes — a suppressed timer that never re-armed would be
-        // the same defect this step exists to remove.
+        // the same defect this step exists to remove. Advanced repeatedly rather
+        // than once: the proxy releases its in-flight scope after the caller's
+        // answer is on the wire, so an advance that lands while the release is
+        // still in flight re-arms for a whole period, correctly.
         await WaitUntilAsync(
-            () => harness.Child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool),
-            ShortPeriod * 20,
-            "the timer never re-armed after the held call was answered");
+            () =>
+            {
+                clock.Advance(ShortPeriod);
+                return harness.Child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
+            },
+            TestDefaults.InProcessHang,
+            "the timer never re-armed after the held call was answered, however far the clock was moved");
     }
 
     /// <summary>
@@ -517,7 +558,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(members.Count).IsGreaterThanOrEqualTo(2);
 
         // Closing stdin, and nothing else. No kill anywhere on this path.
-        var exited = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(60));
+        var exited = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang);
 
         await Assert.That(exited).IsTrue();
 
@@ -591,7 +632,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         await WaitUntilAsync(
             () => File.Exists(reportPath),
-            TimeSpan.FromSeconds(180),
+            TestDefaults.ProcessHang,
             $"the wrapper never reported. Scratch tree: {scratch.Path}");
 
         var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(reportPath))!;
@@ -729,7 +770,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         await WaitUntilAsync(
             () => Volatile.Read(ref fires) > 0,
-            TimeSpan.FromSeconds(10),
+            TestDefaults.ProcessHang,
             "the watch never fired after the process it holds a handle on was terminated");
 
         await Assert.That(watcher.HasFired).IsTrue();

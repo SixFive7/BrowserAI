@@ -179,7 +179,7 @@ internal sealed class DirectStdioClientTransportTests
         // wrote while failing to launch are the only explanation there will be.
         var deadline = Stopwatch.StartNew();
 
-        while (lines.Count < 5 && deadline.Elapsed < TimeSpan.FromSeconds(30))
+        while (lines.Count < 5 && deadline.Elapsed < TestDefaults.ProcessHang)
         {
             await Task.Delay(25);
         }
@@ -224,7 +224,7 @@ internal sealed class DirectStdioClientTransportTests
         // sampler.
         var deadline = Stopwatch.StartNew();
 
-        while (Volatile.Read(ref drained) < Lines && deadline.Elapsed < TimeSpan.FromSeconds(30))
+        while (Volatile.Read(ref drained) < Lines && deadline.Elapsed < TestDefaults.ProcessHang)
         {
             await Task.Delay(25);
         }

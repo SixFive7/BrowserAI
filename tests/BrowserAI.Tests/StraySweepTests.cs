@@ -130,7 +130,7 @@ internal sealed class StraySweepTests
 {
     private const string SweepGroup = "stray-sweep";
 
-    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan Patience = TestDefaults.ProcessHang;
 
     /// <summary>
     /// R1, the positive half, and R10.
@@ -501,7 +501,7 @@ internal sealed class StraySweepTests
         }
 
         await stop.CancelAsync();
-        writer.Join(TimeSpan.FromSeconds(30));
+        writer.Join(TestDefaults.InProcessHang);
 
         // Not vacuous: writes really did land while sweeps were running.
         await Assert.That(passes).IsGreaterThan(0);
@@ -619,16 +619,22 @@ internal sealed class StraySweepTests
         _ = scope.Launch(ProbeExecutable, scratch.Path, "session-hold-named", LockScopes.Sweep, ready);
         _ = await ProbeReport.ReadAsync(ready, Patience);
 
-        var clock = Stopwatch.StartNew();
         var skipped = await Sweep();
-        var elapsed = clock.Elapsed;
 
+        // ⚠️ TRY-ACQUIRE-AND-SKIP, NEVER QUEUE — and the three assertions below
+        // are what say so, which is why the stopwatch that used to be here is
+        // gone.
+        //
+        // Deleted 2026-08-18: `Assert.That(elapsed).IsLessThan(1 s)`, whose note
+        // read "a skip that waited even briefly would be the wrong mechanism
+        // wearing the right answer". The probe launched above holds the sweep
+        // mutex for its whole life, so a pass that QUEUED would block on it and
+        // then run — returning `Ran`, with a non-zero candidate count and a
+        // terminated process. `Skipped` with zero candidates and the planted
+        // process still alive is unreachable by a queueing implementation at any
+        // speed. One second, meanwhile, is a number a starved machine reaches
+        // while the product is behaving perfectly.
         await Assert.That(skipped.Outcome).IsEqualTo(StraySweepOutcome.Skipped);
-
-        // Try-acquire-and-skip, never queue. The ten-minute re-check overrunning
-        // a pass must cost nothing at all, so a skip that waited even briefly
-        // would be the wrong mechanism wearing the right answer.
-        await Assert.That(elapsed).IsLessThan(TimeSpan.FromSeconds(1));
 
         // It did no work: nothing was looked at and nothing was touched.
         await Assert.That(skipped.Candidates).IsEqualTo(0);
@@ -725,7 +731,8 @@ internal sealed class StraySweepTests
     /// <remarks>
     /// ⚠️ <b>The failure this prevents is a twenty-one-second stall, not a wrong
     /// answer</b> — measured 21,037 ms for <c>\\10.255.255.1\share</c> and
-    /// 22,225 ms for a dead hostname — so the elapsed time is what is asserted.
+    /// 22,225 ms for a dead hostname. <b>It is asserted on the rejection, not on
+    /// the clock</b>; see the note in the body.
     /// </remarks>
     [Test]
     [NotInParallel(SweepGroup)]
@@ -744,17 +751,23 @@ internal sealed class StraySweepTests
 
         var (pid, created) = await PublishAsync(scope, scratch, Unc);
 
-        var clock = Stopwatch.StartNew();
         var result = await SweepAsync();
-        var elapsed = clock.Elapsed;
 
+        // ⚠️ THE REJECTION IS THE ASSERTION, and it is why the stopwatch that
+        // used to be here is gone.
+        //
+        // Deleted 2026-08-18: `Assert.That(elapsed).IsLessThan(2 s)`, whose note
+        // read "a pass that reached File.Exists with this string would take
+        // twenty-one seconds". `RejectedTitles` is populated by the string check
+        // and by nothing else, so a title appearing in it is proof that the pass
+        // stopped at the characters and never formed a path -- a pass that had
+        // reached the filesystem would have this title ABSENT from the list, and
+        // the first four assertions in this test pin the string check itself from
+        // both directions. Two seconds, meanwhile, is a number a starved machine
+        // reaches while the product is behaving perfectly.
         await Assert.That(result.RejectedTitles).Contains(Unc);
         await Assert.That(result.Terminated).IsEmpty();
         await Assert.That(ProcessIdentity.IsAlive(pid, created)).IsTrue();
-
-        // Two orders of magnitude below the measured stall. A pass that reached
-        // File.Exists with this string would take twenty-one seconds.
-        await Assert.That(elapsed).IsLessThan(TimeSpan.FromSeconds(2));
     }
 
     /// <summary>

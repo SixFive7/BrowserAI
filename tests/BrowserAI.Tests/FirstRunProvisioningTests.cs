@@ -155,6 +155,10 @@ internal sealed class FirstRunProvisioningTests
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
         var startedUtc = DateTimeOffset.UtcNow;
+
+        // ⚠️ MEASURED AND RECORDED, NEVER ASSERTED ON. The whole-run clock below
+        // feeds the first-run cache's coverage row; nothing compares it to a
+        // constant.
         var clock = Stopwatch.StartNew();
 
         var init = await CallAsync(client, SessionToolSurface.Init, new JsonObject
@@ -164,14 +168,17 @@ internal sealed class FirstRunProvisioningTests
             ["mode"] = "headless",
         });
 
-        var initElapsed = clock.Elapsed;
-
-        // ⚠️ The bullet this whole step turns on. A 204 MB download is running
-        // and init answered anyway; if it had waited, this number would be the
-        // download's. On a cached run it is the other half of the same property:
-        // the process that LOST the mutex answers just as fast, rather than
-        // blocking on the winner.
-        await Assert.That(initElapsed).IsLessThan(TimeSpan.FromSeconds(20));
+        // ⚠️ The bullet this whole step turns on, and it is asserted on STATE
+        // rather than on a stopwatch.
+        //
+        // Deleted 2026-08-18: `Assert.That(initElapsed).IsLessThan(20 s)`, with
+        // the note "a 204 MB download is running and init answered anyway; if it
+        // had waited, this number would be the download's". The state assertion
+        // on the next line says the same thing and says it better: an init that
+        // had waited for the download would report `ready`, not `downloading`, so
+        // the word IS the proof that it did not wait. Twenty seconds, meanwhile,
+        // is a number a starved machine reaches while the product is behaving
+        // perfectly -- and this test runs beside 418 others.
         await Assert.That((bool?)init["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(init)).Contains("browserProvisioning: downloading");
 
@@ -275,7 +282,7 @@ internal sealed class FirstRunProvisioningTests
         await Assert.That(File.Exists(Path.Combine(installed, "chrome-win64", "chrome.exe"))).IsTrue();
         await Assert.That(Directory.EnumerateDirectories(browsers, "chromium_headless_shell-*").Any()).IsFalse();
 
-        _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30));
+        _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang);
 
         // Published only by the run that actually paid for the bytes, and after
         // the client is gone so nothing still holds a file in the tree. A cached

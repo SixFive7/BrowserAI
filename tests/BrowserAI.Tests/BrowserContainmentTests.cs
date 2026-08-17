@@ -74,14 +74,14 @@ internal sealed class BrowserContainmentTests
     /// Generous: a cold Chromium on a loaded machine is the normal reason this is
     /// slow, and a tight deadline reports as a containment failure.
     /// </summary>
-    private static readonly TimeSpan ReportPatience = TimeSpan.FromSeconds(180);
+    private static readonly TimeSpan ReportPatience = TestDefaults.BrowserHang;
 
     /// <summary>
     /// How long every member of the tree gets to be gone. <c>KILL_ON_JOB_CLOSE</c>
     /// is a kernel operation, so this is scheduling latency rather than a
     /// shutdown sequence.
     /// </summary>
-    private static readonly TimeSpan TeardownPatience = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
     [Test]
     public async Task AChromiumTreeIsContainedAndItsProfileDeletesCleanly() =>

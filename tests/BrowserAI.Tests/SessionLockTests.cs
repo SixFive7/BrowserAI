@@ -45,7 +45,7 @@ internal sealed class SessionLockTests
     /// a slow machine starting sixteen processes is the ordinary reason this is
     /// slow, and a tight deadline reports as a locking failure.
     /// </summary>
-    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan Patience = TestDefaults.ProcessHang;
 
     /// <summary>
     /// How many processes race one directory.

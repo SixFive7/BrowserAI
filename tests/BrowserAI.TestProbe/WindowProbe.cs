@@ -49,7 +49,13 @@ internal static partial class WindowProbe
     // desktop.
     private static readonly nint HwndMessage = -3;
 
-    private static readonly TimeSpan Patience = TimeSpan.FromMinutes(2);
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously two minutes).</b> A self-destruct
+    /// backstop that can fire while its test is still running is a promptness
+    /// assertion on the test host wearing a leak guard's name. Containment is the
+    /// job object, not this; see <c>SessionProbe.Patience</c> for the full note.
+    /// </remarks>
+    private static readonly TimeSpan Patience = TimeSpan.FromMinutes(30);
 
     private static bool _suppressWindowText;
 

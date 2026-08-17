@@ -390,7 +390,30 @@ internal sealed class UpdateTests
         var service = new UpdateService(client, mine, NullLogger.Instance, () => { });
 
         var pass = service.RunOnceAsync(stopping.Token);
-        await Task.Delay(80);
+
+        // ⚠️ Cancelled on the EVENT that the download really started, not after a
+        // guess at how long starting takes.
+        //
+        // Corrected 2026-08-18 (previously `await Task.Delay(80)`). Eighty
+        // milliseconds against a scripted pass of 200 × 20 ms assumed the pass
+        // would still be running when the cancel landed; at unbounded suite
+        // parallelism that delay can overshoot the whole four seconds, the pass
+        // then COMPLETES, and this test fails claiming the product applied an
+        // update during shutdown. The first reported progress step is the
+        // observable that says the download is under way, and it cannot be
+        // reached late relative to itself.
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+
+        while (client.ProgressReported is 0)
+        {
+            if (waited.Elapsed > TestDefaults.InProcessHang)
+            {
+                throw new TimeoutException("The scripted download never reported a step, so there was no pass in flight to cancel.");
+            }
+
+            await Task.Delay(5);
+        }
+
         await stopping.CancelAsync();
 
         await Assert.That(await pass).IsEqualTo(UpdateOutcome.NothingToDo);

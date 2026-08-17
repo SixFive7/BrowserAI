@@ -159,7 +159,7 @@ internal sealed record SliceRun(
 
         var survivors = await WaitForNoneAliveAsync(
             [.. processes.Where(process => process.ProcessId != browserAi)],
-            TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            TestDefaults.ProcessHang).ConfigureAwait(false);
 
         return new SliceRun(
             initialize,

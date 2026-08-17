@@ -152,7 +152,7 @@ internal static class FirstRunCache
     /// against the same class of transient. Every observed occurrence cleared
     /// inside one retry.
     /// </remarks>
-    private static readonly TimeSpan CommitBudget = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan CommitBudget = TestDefaults.ProcessHang;
 
     /// <summary>
     /// The coverage row, written once by the first-run test and read once by

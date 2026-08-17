@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
@@ -37,31 +36,58 @@ internal sealed class ProvisioningTests
     [Test]
     public async Task InitReturnsImmediatelyAndSaysTheBrowserIsDownloading()
     {
+        // ⚠️ A GATE, NOT A DURATION, and that is the whole test.
+        //
+        // Corrected 2026-08-18 (previously `FakeInstaller.Succeeding(..., 30 s)`
+        // with `Assert.That(clock.Elapsed).IsLessThan(10 s)` and the note "the
+        // installer this rig was given takes thirty seconds and init did not wait
+        // for it"). Both halves were guesses about how long things take: that the
+        // install would still be running after ten seconds, and that init would
+        // answer inside them. Under a saturated machine the second is false while
+        // the product is behaving perfectly -- and if a run were ever slow enough
+        // for the first to be false too, the test would go GREEN for the wrong
+        // reason, because a finished install also answers fast.
+        //
+        // Never released. The install is therefore provably still running when
+        // the assertions below are made, whatever the machine is doing, and
+        // "init did not wait for it" is an ordered fact rather than a race
+        // against a clock.
+        var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         await using var sessions = RigSessionEnvironment.Create(
-            installer: (browser, root) => FakeInstaller.Succeeding(Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName), TimeSpan.FromSeconds(30)));
+            installer: (browser, root) => FakeInstaller.SucceedingWhenReleased(
+                Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
+                stillDownloading.Task));
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var clock = Stopwatch.StartNew();
         var answer = await CallAsync(rig, SessionToolSurface.Init, Init(sessions, "downloading"));
-        clock.Stop();
 
-        // The whole design in one assertion: the installer this rig was given
-        // takes thirty seconds and init did not wait for it.
-        await Assert.That(clock.Elapsed).IsLessThan(TimeSpan.FromSeconds(10));
         await Assert.That((bool?)answer["isError"]).IsFalse();
 
-        // The state is a word rather than a sentence to parse, and it is the
-        // word §A names.
+        // The whole design in one assertion, and it is an assertion about STATE:
+        // the install cannot have completed, so an init that had waited for it
+        // could not have returned at all. The state is a word rather than a
+        // sentence to parse, and it is the word §A names.
         await Assert.That(TextOf(answer)).Contains("browserProvisioning: downloading");
     }
 
     [Test]
     public async Task EveryBrowserToolIsRefusedWithRowSixIncludingTheConfigOne()
     {
+        // Held open for the same reason, and here the alternative was worse than
+        // a promptness assertion: a thirty-second installer is an assumption that
+        // this whole test finishes inside thirty seconds, and a run that took
+        // longer would see the install LAND and the refusals below turn into
+        // successes -- a red build caused by a slow machine, reported as a
+        // product defect.
+        var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         await using var sessions = RigSessionEnvironment.Create(
             Answering,
-            installer: (browser, root) => FakeInstaller.Succeeding(Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName), TimeSpan.FromSeconds(30)));
+            installer: (browser, root) => FakeInstaller.SucceedingWhenReleased(
+                Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName),
+                stillDownloading.Task));
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
         var directory = Init(sessions, "refused-while-downloading")["directory"]!.GetValue<string>();
@@ -484,10 +510,29 @@ internal sealed class ProvisioningTests
         };
     }
 
+    /// <summary>
+    /// The provisioner's timers for an in-process arm: polled fast, and watched
+    /// by a hang detector rather than by a budget.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b><c>OuterDeadline</c> corrected 2026-08-18 (previously 30 s).</b>
+    /// Nothing here asserts that it fires — the arms that exercise a cap
+    /// configure that cap explicitly — so its only job is to stop a wedged
+    /// provisioner hanging the run. Thirty seconds is reachable at unbounded
+    /// suite parallelism: this loop calls <c>Thread.Sleep</c> on a pool thread
+    /// between polls, and the pool grows by about one worker a second, so under
+    /// 419 concurrent tests a fake install that costs milliseconds can still be
+    /// scheduled late. When it expired, the provisioner reported <i>"another
+    /// process has been provisioning for more than 0 minutes"</i>, which is a
+    /// product message about a condition that did not exist.
+    /// <c>Poll</c> stays at 20 ms because it is a sampling rate, not a bound: it
+    /// can make the arm slower, never redder.
+    /// </remarks>
+    /// <returns>The timers.</returns>
     private static ProvisioningTimers Quick() => new()
     {
         Poll = TimeSpan.FromMilliseconds(20),
-        OuterDeadline = TimeSpan.FromSeconds(30),
+        OuterDeadline = TestDefaults.ProcessHang,
     };
 
     private static JsonObject Init(RigSessionEnvironment sessions, string name) => new()

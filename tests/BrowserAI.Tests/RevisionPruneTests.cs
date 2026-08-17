@@ -157,9 +157,9 @@ internal sealed class RevisionPruneTests
         var holder = new Thread(() =>
         {
             using var mutex = MachineMutex.Create(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
-            _ = mutex.Acquire(TestDefaults.Patience);
+            _ = mutex.Acquire(TestDefaults.ProcessHang);
             taken.Set();
-            _ = release.Wait(TestDefaults.Patience);
+            _ = release.Wait(TestDefaults.ProcessHang);
             mutex.Release();
         })
         {
@@ -167,7 +167,7 @@ internal sealed class RevisionPruneTests
         };
 
         holder.Start();
-        _ = taken.Wait(TestDefaults.Patience);
+        _ = taken.Wait(TestDefaults.ProcessHang);
 
         try
         {
@@ -183,7 +183,7 @@ internal sealed class RevisionPruneTests
         finally
         {
             release.Set();
-            _ = holder.Join(TestDefaults.Patience);
+            _ = holder.Join(TestDefaults.ProcessHang);
         }
     }
 

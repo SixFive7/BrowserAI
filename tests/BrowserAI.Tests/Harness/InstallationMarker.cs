@@ -32,7 +32,7 @@ namespace BrowserAI.Tests.Harness;
 /// </remarks>
 internal static class InstallationMarker
 {
-    private static readonly TimeSpan Budget = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan Budget = TestDefaults.ProcessHang;
 
     /// <summary>Writes the marker into a browser revision directory.</summary>
     /// <param name="directory">The revision directory. Created if absent.</param>

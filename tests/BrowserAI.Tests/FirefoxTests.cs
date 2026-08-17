@@ -63,35 +63,16 @@ internal sealed class FirefoxTests
     private static readonly TimeSpan ModalTimeout = TimeSpan.FromMinutes(3);
 
     /// <summary>
-    /// What the preflight is allowed to cost.
-    /// </summary>
-    /// <remarks>
-    /// <b>An order of magnitude under <see cref="ModalTimeout"/> and still
-    /// decisive</b>: nothing dismisses a desktop modal in fifteen seconds, and a
-    /// call that actually reached Firefox would block for the whole three
-    /// minutes. It is not tighter because of where the time goes — the sharing
-    /// violation that <i>decides</i> the refusal is immediate, and <b>naming the
-    /// holder costs 638 ms on this machine</b>, because the Restart Manager
-    /// walks every handle on it. Measured 1,367 ms end to end with 42 of the
-    /// developer's own Firefox processes for it to walk; a budget of a second
-    /// would be a test that fails when the machine is busy and says the product
-    /// is slow.
-    /// </remarks>
-    private static readonly TimeSpan PreflightBudget = TimeSpan.FromSeconds(15);
-
-    /// <summary>
-    /// How long the whole conversation with a real Firefox may take: start the
+    /// The hang detector for a whole conversation with a real Firefox: start the
     /// process, hand shake, launch the browser, navigate.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Strictly larger than <see cref="ModalTimeout"/>, and that is a
-    /// correctness property rather than slack.</b> <see cref="RawStdioClient"/>
-    /// applies this budget from <c>Start()</c>, not per call — it says so in its
-    /// own remarks — so a value equal to Playwright's launch timeout can never
-    /// let Playwright's launch timeout fire: the client's clock starts earlier
-    /// and always wins. The test then reports <i>"the budget expired"</i> in
-    /// place of the diagnosis the product and upstream were about to give.
+    /// correctness property rather than slack.</b> A harness bound at or below
+    /// Playwright's own launch timeout always wins the race, so the test reports
+    /// <i>"the budget expired"</i> in place of the diagnosis the product and
+    /// upstream were about to give.
     /// </para>
     /// <para>
     /// <b>Measured 2026-08-17 under a fully parallel suite:</b> exactly that.
@@ -104,14 +85,17 @@ internal sealed class FirefoxTests
     /// suite; it was being cut off.
     /// </para>
     /// <para>
-    /// <b>This is not a budget being loosened to make a failure go away.</b>
-    /// Nothing asserts on it, and widening it cannot turn a broken launch green:
-    /// a Firefox that will not come up now fails with Playwright's own message
-    /// after <see cref="ModalTimeout"/>, which is the error worth having. What
-    /// the old value bought was the strictly worse of the two reports.
+    /// ⚠️ <b>Corrected 2026-08-18 (previously <c>ModalTimeout + 2 minutes</c>,
+    /// a whole-conversation budget).</b> Two things changed and both matter.
+    /// <see cref="RawStdioClient"/> now applies its bound <b>per exchange</b>
+    /// rather than from <c>Start()</c>, so this no longer has to be padded to
+    /// cover however many calls a test happens to make; and the value is now the
+    /// suite's shared <see cref="TestDefaults.BrowserHang"/>, so a Firefox launch
+    /// and a Chromium one are watched by the same number rather than by two that
+    /// can drift apart.
     /// </para>
     /// </remarks>
-    private static readonly TimeSpan LaunchPatience = ModalTimeout + TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan LaunchPatience = TestDefaults.BrowserHang;
 
     /// <summary>
     /// The preflight refuses a held profile, immediately, with no Firefox
@@ -143,7 +127,7 @@ internal sealed class FirefoxTests
             ready);
 
         var holderCreated = ProcessIdentity.CreationTimeOf(holder.Id);
-        _ = await ProbeReport.ReadAsync(ready, TimeSpan.FromSeconds(60));
+        _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
 
         // What the desktop and the Firefox process table looked like before
         // anything was asked. Both are re-read afterwards, so what is asserted is
@@ -151,6 +135,10 @@ internal sealed class FirefoxTests
         var firefoxBefore = OurFirefoxProcessIds();
         var windowsBefore = TopLevelWindows.All().ToHashSet();
 
+        // ⚠️ MEASURED AND RECORDED, NEVER ASSERTED ON. What the refusal costs is
+        // evidence a person re-establishing the Restart Manager's price can read
+        // (it lands in `Record` below); it is not a bound, and no assertion in
+        // this file compares it to anything.
         var clock = Stopwatch.StartNew();
         var refusal = FirefoxProfileLockedException.For(config);
         clock.Stop();
@@ -162,12 +150,24 @@ internal sealed class FirefoxTests
         await Assert.That(refusal.Message).Contains("up to three minutes");
         await Assert.That(refusal.Message).Contains(FirefoxProfile.LockFileName);
 
-        // ⚠️ The assertion this test exists for. Three minutes is what the modal
-        // costs; anything that reached Firefox at all could not answer inside
-        // five seconds.
-        await Assert.That(clock.Elapsed).IsLessThan(PreflightBudget);
-        await Assert.That(clock.Elapsed).IsLessThan(ModalTimeout);
-
+        // ⚠️ Deleted 2026-08-18: a stopwatch around the call above, asserted
+        // under a 15 s "preflight budget" and again under ModalTimeout, with the
+        // note "anything that reached Firefox at all could not answer inside five
+        // seconds".
+        //
+        // It was a PROMPTNESS assertion wearing a hang detector's name, and the
+        // property it claimed to establish -- that the refusal was decided
+        // without launching anything -- is asserted directly, twice, immediately
+        // below: no browser in this test's job, and no Firefox out of BrowserAI's
+        // root anywhere on the machine. A preflight that reached Firefox would
+        // leave a process; those two readings are what say it did not, and they
+        // say it whatever the machine's load. Fifteen seconds, by contrast, is a
+        // number a starved box can reach while the product is behaving perfectly
+        // -- and the Restart Manager walk inside the refusal is exactly the kind
+        // of machine-wide handle enumeration that goes slow when the machine is
+        // busy. Measured on this machine: 638 ms for the walk, 1,367 ms end to
+        // end with 42 of the developer's own Firefox processes to enumerate.
+        //
         // ⚠️ No Firefox started, asserted two ways because neither is sufficient
         // alone. This one is exact and it is the WIDER of the two: everything
         // this test could have started is inside this scope's job, whatever image
@@ -308,7 +308,7 @@ internal sealed class FirefoxTests
         // time) pair recorded when it was started -- never by anything that
         // could name another process.
         ProcessIdentity.Terminate(holder.Id, holderCreated);
-        await WaitUntilFreeAsync(profile, TimeSpan.FromSeconds(30));
+        await WaitUntilFreeAsync(profile, TestDefaults.ProcessHang);
 
         await Assert.That(FirefoxProfileLockedException.For(config)).IsNull();
 
@@ -328,7 +328,6 @@ internal sealed class FirefoxTests
         Record("preflight", new JsonObject
         {
             ["refusalMilliseconds"] = clock.Elapsed.TotalMilliseconds,
-            ["budgetMilliseconds"] = PreflightBudget.TotalMilliseconds,
             ["modalWouldHaveBlockedMilliseconds"] = ModalTimeout.TotalMilliseconds,
             // Named for what it counts. It used to say "browserProcesses" while
             // counting everything under the browsers root, Chromium included,
@@ -632,7 +631,7 @@ internal sealed class FirefoxTests
         // sharing violation does. That is what this asserts: the file is still
         // there after the process holding it was terminated, which is precisely
         // the state an existence check would misread as "a browser is running".
-        var lockSurvived = await LockFileStillThereAsync(profile, attributedPid, holders, TimeSpan.FromSeconds(15));
+        var lockSurvived = await LockFileStillThereAsync(profile, attributedPid, holders, TestDefaults.ProcessHang);
 
         Record("attribution", new JsonObject
         {
@@ -728,7 +727,7 @@ internal sealed class FirefoxTests
     /// </remarks>
     private static async Task<StraySweepResult> SweepAsync(SessionIndex index)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
 
         while (true)
         {

@@ -26,7 +26,7 @@ internal sealed class InstanceDirectoryTests
 {
     private static readonly string ProbePath = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
 
-    private static readonly TimeSpan ReadyPatience = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ReadyPatience = TestDefaults.ProcessHang;
 
     [Test]
     public async Task AFreshDirectoryIsCreatedAndAbandonedOnesAreReclaimed()

@@ -5,6 +5,7 @@ using System.IO.Pipelines;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
+using BrowserAI.Tests.Harness;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -36,7 +37,7 @@ internal sealed class DirectStdioServerTransportTests
     /// </summary>
     private const string AwkwardText = "Page URL: `x` it's <b>&amp;</b> café — ünïcødé";
 
-    private static readonly TimeSpan Patience = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan Patience = TestDefaults.InProcessHang;
 
     [Test]
     public async Task AResultLeavesWithItsCharactersIntact()

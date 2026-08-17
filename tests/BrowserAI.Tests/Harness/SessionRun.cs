@@ -273,7 +273,7 @@ internal sealed record SessionRun
 
             // Closed rather than killed: BrowserAI's own graceful path, and what
             // releases the session directory so the move below can happen.
-            _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang).ConfigureAwait(false);
 
             return new FirstProcess
             {
@@ -313,7 +313,7 @@ internal sealed record SessionRun
             }
             catch (Exception failure) when (failure is UnauthorizedAccessException or IOException)
             {
-                if (waited.Elapsed > TestDefaults.Patience)
+                if (waited.Elapsed > TestDefaults.ProcessHang)
                 {
                     throw new InvalidOperationException(
                         $"'{from}' was still pinned {waited.Elapsed.TotalSeconds:F1} s after BrowserAI exited, so it could not be renamed. "
@@ -392,7 +392,7 @@ internal sealed record SessionRun
 
         var movedLog = ReadSharing(Path.Combine(moved, "browserai.log"));
 
-        _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+        _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang).ConfigureAwait(false);
 
         return new SessionRun
         {

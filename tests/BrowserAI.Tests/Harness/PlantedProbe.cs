@@ -99,7 +99,7 @@ internal static class PlantedProbe
             report,
             suppress ? "suppress" : "answer");
 
-        var published = await ProbeReport.ReadAsync(report, TestDefaults.Patience).ConfigureAwait(false);
+        var published = await ProbeReport.ReadAsync(report, TestDefaults.ProcessHang).ConfigureAwait(false);
 
         return (string?)published["error"] is { } failure
             ? throw new InvalidOperationException($"The window probe could not publish '{title}': {failure}")
@@ -122,7 +122,7 @@ internal static class PlantedProbe
     /// <exception cref="InvalidOperationException">It never appeared.</exception>
     public static async Task WaitUntilDetectableAsync(IReadOnlyCollection<string> images, int processId)
     {
-        var deadline = DateTime.UtcNow + TestDefaults.Patience;
+        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
 
         while (DateTime.UtcNow < deadline)
         {

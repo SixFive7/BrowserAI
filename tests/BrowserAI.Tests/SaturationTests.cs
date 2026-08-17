@@ -166,7 +166,7 @@ internal sealed partial class SaturationTests
     private const int WithBrowsers = 8;
 
     /// <summary>How long a real browser tree gets to die once its job has closed.</summary>
-    private static readonly TimeSpan TeardownPatience = TimeSpan.FromSeconds(120);
+    private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
     /// <summary>
     /// One process's whole conversation. Generous, because this is a hundred
@@ -177,7 +177,7 @@ internal sealed partial class SaturationTests
     /// wedged conversation is reported as wedged instead of hanging the run, and
     /// the failure it produces carries that process's own stderr.
     /// </remarks>
-    private static readonly TimeSpan Conversation = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan Conversation = TestDefaults.BrowserHang;
 
     /// <summary>
     /// A hundred BrowserAI processes, two dozen browsers, one process log, and
