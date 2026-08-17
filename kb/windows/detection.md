@@ -633,36 +633,47 @@ through a harness that opened its session in `persistent` mode
 timer close the browser and then drives it again. `[MACHINE]`
 
 **Headless Chromium creates window objects and never shows one. This is the
-guess that was wrong.** In the same run the headless browsers created **308**
-other top-level windows and **not one of them was ever visible or took the
-foreground**: 52 `Chrome_MessageWindow`, 45 `OleMainThreadWndClass`, 30 `IME`,
-24 `Chrome_WidgetWin_0`, 15 `Chrome_StatusTrayWindow`, 15
-`crashpad_SessionEndWatcher`, 15 `CicMarshalWndClass`, 14 **`Chrome_WidgetWin_1`**
-and 10 `Base_PowerMessageWindow`. The last of those is the one that matters:
+guess that was wrong.** That run created **297** distinct top-level windows in
+all, and **295 of them were never visible and never took the foreground**.
+Chromium accounted for 202: 43 `OleMainThreadWndClass`, 38
+`Chrome_MessageWindow`, 35 `IME`, 26 `Chrome_WidgetWin_0`, 19
+`crashpad_SessionEndWatcher`, 11 `Base_PowerMessageWindow`, 10
+`CicMarshalWndClass`, 10 `Chrome_StatusTrayWindow`, **8 `Chrome_WidgetWin_1`**
+and 2 `MSCTFIME UI`. The last-but-one is the one that matters:
 **`Chrome_WidgetWin_1` — the class a visible browser window uses — is created in
 headless mode too, without `WS_VISIBLE`, and is never shown.** So "the full
 `chrome.exe` runs in every mode, therefore headless must flash a window" is
 false, and a detector that keys on the class rather than on visibility will
 report windows that do not exist on screen. `[FLOATS]`
 
-**Firefox is the same:** 24 `OleMainThreadWndClass`, 4
-`Chrome_MessagePumpWindow`, 2 each of `nsAppShell:EventWindowClass`, `IME` and
-`MozillaHiddenWindowClass`, plus its per-profile
-`Mozilla_firefox-default_<profile>_RemoteWindow` — none visible. `[FLOATS]`
+**Firefox is the same**, 26 windows and none of them visible: 14
+`OleMainThreadWndClass`, 4 `Chrome_MessagePumpWindow`, 2 each of
+`nsAppShell:EventWindowClass`, `IME` and `MozillaHiddenWindowClass`, and 2
+per-profile `Mozilla_firefox-default_<profile>_RemoteWindow`. `[FLOATS]`
 
-**`CREATE_NO_WINDOW` really does suppress the console window.** 8
-`ConsoleWindowClass` windows were created by `conhost.exe` during the run and
-**none was ever shown**. A console-window flash is not a cause of this class of
-complaint on a launcher that sets the flag, and the flag is set on every launch
-here. `[STABLE]`
+**`CREATE_NO_WINDOW` really does suppress the console window.** 9
+`ConsoleWindowClass` windows were created by `conhost.exe` and `pwsh.exe` during
+the run and **none was ever shown**. A console-window flash is not a cause of
+this class of complaint on a launcher that sets the flag, and the flag is set on
+every launch here. `[STABLE]`
 
 **After making that one arm windowless** — the rig that starts real children now
 opens its session in `headless`, decided in `RigSessionEnvironment` rather than
-at the call site — the same watcher across a full 411-test run recorded **zero
-visible windows and zero foreground events**, against 377 top-level windows
-created. Suite duration was **35.95 s** against **37.88 s** before, so the change
-costs nothing measurable; the two runs differ by less than the run-to-run spread
-of this suite and neither number should be read as a timing result. `[MACHINE]`
+at the call site — the same watcher across a full green 411-test run recorded
+**zero visible windows and zero foreground events**, against 283 top-level
+windows created, with the developer's editor holding the foreground throughout.
+Both runs took the same time to the tenth of a second — **35.99 s** before and
+**35.50 s** after, from TUnit's own `totalDurationMs` — so the change costs
+nothing measurable. Neither number should be read as a timing result: they
+differ by less than this suite's run-to-run spread. `[MACHINE]`
+
+**`EnumWindows` returns invisible top-level windows in bulk.** The watcher's
+baseline sweep of the developer's own desktop, three times across the session:
+**590, 586 and 587** top-level windows, of which **100** were visible each time.
+So roughly five in six of what `EnumWindows` returns is not on screen. Recorded
+because a count of `EnumWindows`' result is sometimes read as *"how busy is this
+screen"* and it is not that; `MessageWindowTests`' non-vacuity floor of 50 is
+sensitive to this, and it is a `[MACHINE]` property. `[MACHINE]`
 
 > ⚠️ **The first version of the watcher reported zero shows and was wrong**, and
 > the mistake is worth carrying because it is the shape of every silent detector
