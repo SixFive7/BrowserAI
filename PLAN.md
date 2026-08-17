@@ -335,13 +335,15 @@ day, so two remain. Named, not buried:**
    "59 … Packaging 4"), by re-counting the file instead of trusting this line;
    [TODO.md](TODO.md) carries how it went wrong.*
 
-### (b) — blocked on the maintainer
+### (b) — ~~blocked on the maintainer~~ ✅ all four discharged, 2026-08-17
 
-Four, each with the single sentence that unblocks it:
+Four, each with the single sentence that unblocked it. **This bucket is now
+empty**, which is worth stating plainly: nothing in this project is waiting on
+an account, a decision or a person any more.
 
 | # | Section | The ask |
 |---|---|---|
-| 1 | A | **File the sandbox defect upstream from your own GitHub account**: at `@playwright/mcp` 0.0.79, `"launchOptions": { "chromiumSandbox": true }` in a config file parses, validates and is then discarded — only the `--sandbox` CLI flag enables the sandbox — so every configuration that sets the key believes it has a sandbox and does not. |
+| 1 | A | ✅ **Filed 2026-08-17 as [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716).** ~~File the sandbox defect upstream from your own GitHub account~~: at `@playwright/mcp` 0.0.79, `"launchOptions": { "chromiumSandbox": true }` in a config file parses, validates and is then discarded — only the `--sandbox` CLI flag enables the sandbox — so every configuration that sets the key believes it has a sandbox and does not. **The cause was re-traced from the shipped bundle immediately before filing and it changed**: the earlier account blamed commander for defaulting `sandbox` to `false`, and commander leaves it `undefined`, exactly as it does `headless`. The `false` is manufactured by upstream's own normaliser, `options.sandbox = options.sandbox === true ? void 0 : false`, which collapses *no flag given* into *`--no-sandbox` given*. Same defect, same severity, wrong reason — and the reason was what was about to be sent to someone else. |
 | 2 | G | ✅ **Done 2026-08-17.** ~~Create and publish the release feed repository, then hand back its base URL.~~ The feed is GitHub Releases on this now-public repository, and `ProductionBaseUrl` is `releases/latest/download/` — the alias that redirects to the newest **non-prerelease**, so it never needs rewriting per version. Resolved over real HTTP: **200, one asset, SHA-256 matching the package byte for byte.** The `[Skip]` is gone. |
 | 3 | pre-release | ✅ **Done 2026-08-17.** ~~Cut and push the release tag.~~ **`v1.0.0`**, annotated and pushed. MinVer stamps `1.0.0` with no pre-release suffix and no `+sha` decoration, which is what makes it a release rather than a build. Suite went to **392 tests, 0 failed, 0 skipped** — the first time in this build with nothing deferred. |
 | 4 | stack | ~~**Decide whether to adopt `Microsoft.Windows.CsWin32`**~~ ✅ **Decided 2026-08-17: threshold STRUCK, hand-written `[LibraryImport]` kept, CsWin32 adopted TEST-ONLY as a layout oracle.** The threshold was set before any code existed and stood at **41 declarations across 9 files** (**`Corrected 2026-08-17`, previously “45”**; 83 across 18 counting `tests/`). A verified comparison put the hand-written declarations ahead of CsWin32, Vanara, TerraFX and `dotnet/pinvoke`; **Vanara is disqualified** (32 ILC diagnostics and a runtime `NotSupportedException` under AOT the moment a helper is used). `tests/BrowserAI.Tests/InteropLayoutTests.cs` now checks all seven structs against Microsoft's metadata, proven by two injected faults. Full record, including an **unresolved** licence question about the non-MIT metadata packages, in [`TODO.md`](TODO.md). |

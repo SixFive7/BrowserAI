@@ -576,9 +576,24 @@ reasoning, come here for the queue.**
       one. Re-derive with a category tally, not a total — a wrong total is
       visible only against the sum.
 
-- [ ] **Report the `chromiumSandbox` defect to `@playwright/mcp`, from the
-      maintainer's own account.** Measured against **0.0.79** on 2026-08-16 and
+- [x] ~~**Report the `chromiumSandbox` defect to `@playwright/mcp`, from the
+      maintainer's own account.**~~ ✅ **Filed 2026-08-17 as
+      [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)**,
+      from SixFive7. Measured against **0.0.79** on 2026-08-16 and
       confirmed at build-order steps 7 and 12.
+
+      **The cause was re-traced immediately before filing, and it changed** —
+      see the corrected chain below. The version that would have gone out an
+      hour earlier blamed commander for a default it does not set, which is a
+      claim the maintainer would have disproved in one command before finding
+      the real cause four lines away. **Verifying a finding because it is about
+      to leave the building is the cheapest place this project has ever caught
+      a wrong reason**, and the only one where the cost of not catching it
+      would have been someone else's afternoon.
+
+      **What is left here is the record, not a task.** BrowserAI itself was
+      never exposed: it passes `--sandbox` on the command line and
+      `SandboxFlagTests` asserts the flag survives to every node child.
 
       **The defect.** `"launchOptions": { "chromiumSandbox": true }` in a config
       file is parsed, validated, and then **discarded**. Only the `--sandbox`
@@ -826,16 +841,22 @@ reasoning, come here for the queue.**
       repository where a prerelease version appears at all, and it arrived
       because CsWin32 pins it rather than because anything here chose it.
 
-- [x] ~~**Four things only the maintainer can do.**~~ **One remains; three were
-      done on 2026-08-17.** Split out because a bundled row cannot be ticked.
+- [x] ~~**Four things only the maintainer can do.**~~ ✅ **All four done on
+      2026-08-17.** Split out because a bundled row cannot be ticked.
       **Done:** the release feed is live (GitHub Releases on the now-public
       repository, `releases/latest/download/`, resolving HTTP 200 with a
       manifest whose SHA-256 matches the package byte for byte); the tag was
       cut — **`v1.0.0`**, which took the suite to **392 tests, 0 failed, 0
       skipped**; and **the `Microsoft.Windows.CsWin32` question is decided** —
       the threshold is struck and CsWin32 is adopted as a test-only layout
-      oracle, recorded in full above. **Remaining:** the sandbox report, which
-      is an account and a public post to own rather than a code change.
+      oracle, recorded in full above; and **the sandbox defect is filed**, as
+      [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716),
+      after its cause was re-traced and corrected on the way out the door.
+
+      **Nothing is blocked on the maintainer any more.** This row existed
+      because four items needed an account, a public repository or a decision
+      no test could make; all four are spent. What is left on the board is
+      work, and every piece of it is doable without asking anyone.
 
 - [ ] **The reclaim pass's second bullet is unbuilt, and it is the only one
       left.** [testing](plan/testing.md) asks that *"anything the previous run
