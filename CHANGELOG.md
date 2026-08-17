@@ -21,7 +21,22 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`browserai_reinstall_browser` could delete the browser tree and then wait an
+  hour with nothing installed.** Provisioning that could not take the
+  machine-wide mutex assumed another process was mid-download and watched for the
+  marker it would write. The holder is not always downloading — it keeps the
+  mutex through its revision prune, which walks every process on the machine —
+  so a caller that had just deleted the tree waited out the full 60-minute
+  deadline for a marker nobody was going to write. It now watches for the mutex
+  as well, and installs when the holder lets go without having completed the
+  tree; a genuine second downloader is still never started, because the marker is
+  still checked first. Reachable without any unusual sequencing: `init`
+  provisions on a background thread and returns immediately.
+
 ### Added
+
 
 - **BrowserAI registers itself with your MCP client when it installs, and
   unregisters when it goes.** One registration at *user* scope — available in
