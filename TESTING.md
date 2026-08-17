@@ -286,7 +286,7 @@ What we build, and what each replaces:
 | `FakePlaywrightChild` | Scriptable in-process MCP server standing in for `@playwright/mcp`: canned `tools/list`, programmable `tools/call` results, injectable errors, delays, oversized payloads, unknown content types, mid-call death | `TestServerTransport` |
 | `TUnitLoggerProvider` | Routes `ILogger` into TUnit's per-test output | `XunitLoggerProvider` + `DelegatingTestOutputHelper` |
 | `CapturingLoggerProvider` | Captures log records for assertions | `MockLoggerProvider` |
-| `TestDefaults` | Shared timeouts, including the probe-timeout pin above | `TestConstants` |
+| `TestDefaults` | The suite's whole vocabulary of **hang detectors** — `InProcessHang`, `ProcessHang`, `BrowserHang` — plus the probe-timeout pin above and the initialization pin below | `TestConstants` |
 | `JobObjectScope` | `using`-scoped job object so a failed assertion cannot leak a `chrome.exe` | *(nothing upstream)* |
 | `RawStdioClient` | A **hand-written JSON-RPC client over raw stdio**, sharing no code with the product. The independent oracle for the real-child and smoke tiers | *(nothing upstream — and nothing of ours)* |
 
@@ -331,6 +331,51 @@ client that:
 note in this project put it at 233 lines; it has grown since.) It exists there for
 the same reason it is needed here: to prove the wire protocol rather than the
 SDK's model of it.
+
+## Every duration is a hang detector, or it is a defect
+
+**Settled 2026-08-18**, the maintainer's instruction verbatim: *"Remove any
+timings other than timeouts that catch really hung processes. Even on slow
+systems. … Best case scenario is that we remove all the timing things and have
+everything push or event driven with only timeouts for VERY good reasons. Like
+relaxed timeouts that catch hung tests or something. But these should have ample
+of room so tests do not hit these even under constrained system resources."*
+
+Every duration in `tests/` therefore answers one question, and the answer decides
+what happens to it.
+
+| It is… | Then |
+|---|---|
+| **guessing how long something takes** | Delete it. Replace it with the event it was standing in for: a handle that signals, a process that exits, a file that appears, a frame that arrives, a gate the test releases, a `ManualClock` the test drives |
+| **catching a hang** | Keep it, take it from `TestDefaults`, and give it headroom a starved machine cannot reach. Say on it that it is a hang detector and that nothing may assert on it |
+
+**A promptness assertion wearing a hang detector's name is the defect**, not the
+safeguard. Deleting one is not weakening a test; it is deleting a test of the
+wrong thing — and in every case here the property the stopwatch claimed to
+establish was already asserted, decisively, one or two lines away.
+
+Three rules follow, each of which has a scar behind it:
+
+- **The vocabulary is `TestDefaults` and nothing else invents a number.**
+  `InProcessHang` (5 min), `ProcessHang` (10 min), `BrowserHang` (30 min),
+  `InitializationHang`. Twenty-two per-file constants used to hold 30, 60, 90,
+  120 or 180 seconds of their own; they derive now, so two layers cannot
+  disagree.
+- **The same bound must never be expressed twice.** The shape to hunt hardest is
+  the tighter of two layers winning invisibly: a launcher that gave up at 60 s
+  under a host advertising 180 s reported a launch that failed at 60 s as a
+  three-minute timeout, and an unset SDK `InitializationTimeout` did the same
+  thing wearing a dependency's clothes. Make the inner one derive from the outer,
+  or delete it.
+- **A bound a busy machine can reach is not detecting a hang.** At
+  `SuiteParallelism.Unbounded` the entire failure population was three messages —
+  46 `Initialization timed out`, 71 `No frame arrived on this pipe within 30 s`,
+  48 bare `A task was canceled` — and not one was a logic fault
+  ([kb](kb/toolchain.md#running-419-tests-at-once-what-starves-and-by-how-much)).
+
+**A polling interval is not a bound and is not covered by this.** A loop that
+samples every 25 ms until a condition holds can make a run slower; it cannot make
+it redder. What matters is the deadline the loop gives up at.
 
 ## What the build itself must fail on
 

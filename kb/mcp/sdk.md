@@ -415,6 +415,25 @@ asked for it to be rebuilt from `Exception.Data`. Re-establish with
 `FakeChildHarnessTests.TheFakeChildInjectsAJsonRpcError`, which asserts all three
 by exact equality. `[FLOATS]`
 
+**`McpClientOptions.InitializationTimeout` is 60 seconds at 2.2.0, and leaving it
+unset is how a proxy inherits a bound nobody chose.** Read by reflection off the
+shipped `ModelContextProtocol.Core.dll`, 2026-08-18: constructing
+`McpClientOptions` and enumerating its properties gives
+`InitializationTimeout = 00:01:00` and `DiscoverProbeTimeout = 00:00:05`. Sixty
+seconds is not a hang detector when what is on the far side of it is `node.exe`
+loading `cli.js` out of a bundled payload on a contended machine — a warm spawn
+hands shakes in ~300 ms, and the failure it produces, `Initialization timed
+out`, carries **no elapsed time, no child identity and none of the child's
+stderr**. Measured at `SuiteParallelism.Unbounded` before it was set explicitly:
+**46 `Initialization timed out` failures in one twenty-run session**, not one of
+them a logic fault. Both sides now set it — `ChildConnection.ChildInitializationHang`
+in the product and `TestDefaults.InitializationHang` in the suite, both ten
+minutes — so a version whose default moves cannot move BrowserAI's behaviour
+with it. **Re-establish** with
+`[Reflection.Assembly]::LoadFrom(...).GetType('ModelContextProtocol.Client.McpClientOptions')`
+and read the property off a fresh instance; do not read it out of the source,
+which is a different question. `[FLOATS]`
+
 **`McpClientOptions.DiscoverProbeTimeout` is 5 seconds at 2.2.0, and the pin is
 what skips the probe — measured from both sides rather than read.** With
 `ProtocolVersion` pinned to `2025-11-25`, a double that records every method it

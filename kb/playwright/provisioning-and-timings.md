@@ -385,7 +385,7 @@ is [in TESTING.md](../../TESTING.md#the-first-run-download-runs-at-most-once-an-
 > carried forward exactly as written — none has been adjusted.
 
 **A real browser reaches MCP-ready in 0.9–1.2 s (Chromium) and 3.1–4.0 s
-(Firefox), against a 180 s default patience.** Measured 2026-08-17, **four runs
+(Firefox), against a 30-minute hang detector.** Measured 2026-08-17, **four runs
 of each family**, through the product's own job object and launcher: the clock
 starts when `CreateProcessW` returns for the launcher and stops when the driving
 script has completed `initialize`, `tools/list` and a `browser_navigate` against
@@ -403,12 +403,25 @@ which is the transferable half, and it is the same direction as
 absolute numbers are this machine's.
 
 **The headroom is the point, not the latency.** Playwright's own
-`DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT` is `3 * 60 * 1e3`, and the harness waits the
-same 180 s. The slowest observed run used **2.2%** of it. A launch timeout is
+`DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT` is `3 * 60 * 1e3`. The slowest observed run
+used **2.2%** of the 180 s the harness then waited. A launch timeout is
 therefore not a knob worth tuning, and a launch that approaches it is not slow —
 it is stuck, and should be read as a failure rather than as a machine having a
 bad day. `[MACHINE]` for the times and counts; `[FLOATS]` for the ratio and the
 headroom, both of which move with a browser revision.
+
+> ⚠️ **Corrected 2026-08-18 (previously "against a 180 s default patience …
+> the harness waits the same 180 s").** *The measured times above are unchanged
+> and were not re-run; what changed is the harness they were measured against.*
+> `BrowserContainmentTests.ReportPatience` is now `TestDefaults.BrowserHang`,
+> **thirty minutes**, so the slowest observed run uses 0.22% of it rather than
+> 2.2%. The reason is the one this paragraph already gives, applied properly: a
+> harness bound *equal* to Playwright's own launch timeout always wins the race
+> against it, so upstream's diagnosis is replaced by *"the budget expired"* in
+> the one case upstream had something to say — observed at exactly 3m00s on a
+> Firefox launch, 2026-08-17. And at unbounded suite parallelism 180 s was
+> reachable by a launch that was merely starved: one run in four
+> ([kb](../toolchain.md#running-419-tests-at-once-what-starves-and-by-how-much)).
 
 **Re-establish by running the suite.** `BrowserContainmentTests` records
 `readyMilliseconds` beside its containment counts **on every run, including the

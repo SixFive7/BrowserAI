@@ -23,6 +23,15 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **A child that took longer than sixty seconds to start was reported as a
+  protocol failure.** BrowserAI never set the MCP SDK's
+  `InitializationTimeout`, so it inherited the default — sixty seconds, chosen by
+  nobody here and documented nowhere — for a handshake whose far side is
+  `node.exe` loading a bundled runtime. On a loaded machine that is reachable,
+  and the failure it produced said `Initialization timed out` with no elapsed
+  time, no child identity and none of the child's stderr in it. It is now an
+  explicit ten-minute hang detector with the reasoning written on it: a child
+  that has not spoken in ten minutes is not starting slowly, it is not starting.
 - **`browserai_reinstall_browser` could delete the browser tree and then wait an
   hour with nothing installed.** Provisioning that could not take the
   machine-wide mutex assumed another process was mid-download and watched for the

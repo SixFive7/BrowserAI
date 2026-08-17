@@ -293,6 +293,47 @@ step 9's evidence came from `BrowserAI.Tests.exe`, which is stated on that step
 rather than left implicit. `[MACHINE]` — it is a fact about this machine on this
 date, and the identical tree behaved differently on the same day.
 
+### Running 419 tests at once: what starves, and by how much
+
+**At `SuiteParallelism.Unbounded` the whole failure population is bounds
+expiring, not logic.** Measured 2026-08-17, twenty consecutive runs of the full
+suite with the TUnit parallel limiter set to 1024 — above the test count, so the
+scheduler's semaphore never blocks. **Eleven runs of twenty went red**, and every
+failure across all eleven was one of three messages:
+
+| Message | Occurrences | The bound behind it |
+|---|---|--:|
+| `No frame arrived on this pipe within 30 s` | 71 | `TestDefaults.Patience`, applied per frame over an **in-process** pipe |
+| `A task was canceled` | 48 | assorted 30 s `CancellationTokenSource`s, carrying no method, no elapsed time and no peer |
+| `Initialization timed out` | 46 | the MCP SDK's unset 60 s `InitializationTimeout` ([kb](mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation)) |
+
+**Not one was a logic fault.** The mechanism is thread-pool starvation and it is
+arithmetic rather than mystery: the .NET pool starts at `ProcessorCount` workers
+and injects roughly **one a second** beyond it, so 419 tests admitted at once —
+several of which block a worker in `Thread.Sleep` inside a polling loop, and one
+of which (`SaturationTests`) puts a hundred processes on the machine — leave an
+in-process exchange that normally costs single-digit milliseconds waiting
+**tens of seconds** for a thread to run its continuation on. A thirty-second
+silence between two objects in the same process stops meaning *deadlock* at that
+point, which is exactly what those messages claimed it meant.
+
+**The fix was the bounds, not the parallelism.** Re-measured 2026-08-18 with
+every promptness assertion removed and every surviving bound sized so a starved
+machine cannot reach it (`TestDefaults`: 5 minutes in-process, 10 minutes across
+a process, 30 minutes for a real browser): **20 consecutive green runs**, 419
+tests, 0 failed, 0 skipped, 78–108 s each. The limiter did not move.
+
+**Two shapes are worth carrying off this machine.** First, *the same bound
+expressed at two layers, with the tighter one winning invisibly*: a launcher that
+waited 60 s under a host advertising 180 s reported a launch that failed at 60 s
+as a three-minute timeout, and the SDK's unset 60 s initialization timeout is the
+same defect wearing a dependency's clothes. Second, *a promptness assertion
+wearing a hang detector's name*: a bound that a busy machine can reach is not
+detecting a hang, and every one of them here reported something other than
+"this machine is busy". `[MACHINE]` for the counts and the wall clock — the
+reference machine is 32 cores, and a smaller one will starve harder rather than
+differently.
+
 ## What a NativeAOT publish emits
 
 **NativeAOT embeds `ApplicationManifest` into the published binary.** Verified by

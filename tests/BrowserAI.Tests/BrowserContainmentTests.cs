@@ -208,7 +208,21 @@ internal sealed class BrowserContainmentTests
         // with the walk, so a browser another test has open cannot satisfy it.
         var child = report["childReport"]!;
 
-        await Assert.That((bool?)child["navigated"]).IsTrue();
+        // ⚠️ The driver's own answer and the launcher's tree are inlined into
+        // this failure, because without them it says `Expected to be true but
+        // found False` and nothing else — about a browser, in a scratch
+        // directory the test then deletes.
+        //
+        // Added 2026-08-18, after this arm failed at 3m04s with exactly that
+        // message. Three minutes is Playwright's own
+        // DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, so the answer sitting unread in the
+        // report was upstream's account of a launch that did not happen — the
+        // one thing worth having, and the one thing not printed.
+        await Assert.That((bool?)child["navigated"])
+            .IsTrue()
+            .Because(
+                $"the driver did not navigate. Its answer was: {(string?)child["answer"] ?? "<none>"}"
+                + Environment.NewLine + LauncherWait.Evidence(scratch.Path));
 
         var walked = walk.Select(row => (int)row!["pid"]!).ToHashSet();
 
