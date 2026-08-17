@@ -150,14 +150,74 @@ internal sealed class FirstRunProvisioningTests
         await Assert.That((bool?)navigate["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(navigate)).Contains("Page URL: data:text/html");
 
+        // ⚠️ ffmpeg gets its own wait, because Chromium's marker says nothing
+        // about it and asserting on it here was a race the suite lost.
+        //
+        // `browsers.json` lists chromium at index 0 and ffmpeg at index 4, and
+        // upstream installs in registry order, one component at a time. The kb's
+        // own phase boundaries, timestamped from the installer's output on a
+        // ~300 Mbps link, are the measurement: chromium 0.3 s → 11.7 s, then
+        // ffmpeg a further 0.5 s, then winldd 0.4 s
+        // ([kb](../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
+        // So the marker waited on above lands at the exact instant ffmpeg's
+        // download BEGINS, and the only slack this assertion ever had was
+        // however long the navigation took. It held on a fast link and lost on a
+        // slow one -- seen once in five runs, 2026-08-17 -- and it was a race
+        // rather than a slow test: the fix is to wait for the thing being
+        // asserted, not to give the whole sequence longer.
+        //
+        // It also makes the two assertions beneath it stronger rather than
+        // merely later. ffmpeg is the LAST component this install fetches, so a
+        // headless shell that was going to appear would already have appeared by
+        // the time ffmpeg's marker lands.
+        var ffmpeg = await WaitForAnyMarkerAsync(browsers, "ffmpeg-*", Patience);
+
+        await Assert.That(ffmpeg).IsNotNull();
+
         // And what landed is what the payload pins, not something that happened
         // to be lying around: ffmpeg and winldd come with it on Windows, and the
         // headless shell deliberately does not.
         await Assert.That(File.Exists(Path.Combine(installed, "chrome-win64", "chrome.exe"))).IsTrue();
-        await Assert.That(Directory.EnumerateDirectories(browsers, "ffmpeg-*").Any()).IsTrue();
         await Assert.That(Directory.EnumerateDirectories(browsers, "chromium_headless_shell-*").Any()).IsFalse();
 
         _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30));
+    }
+
+    /// <summary>
+    /// Waits for <b>any</b> directory matching <paramref name="pattern"/> to
+    /// carry the completion marker upstream writes last.
+    /// </summary>
+    /// <remarks>
+    /// <b>The marker, not the directory.</b> A component's directory exists from
+    /// the moment its archive starts extracting, so a check on the directory
+    /// alone would swap one race for a narrower one. The pattern is a glob rather
+    /// than a composed name because the revision is upstream's to move and this
+    /// assertion is about the component being installed at all.
+    /// </remarks>
+    /// <param name="root">The browsers root.</param>
+    /// <param name="pattern">The directory glob, for example <c>ffmpeg-*</c>.</param>
+    /// <param name="patience">How long to wait.</param>
+    /// <returns>The installed directory, or <see langword="null"/> if none arrived.</returns>
+    private static async Task<string?> WaitForAnyMarkerAsync(string root, string pattern, TimeSpan patience)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (waited.Elapsed < patience)
+        {
+            var landed = Directory.Exists(root)
+                ? Directory.EnumerateDirectories(root, pattern)
+                    .FirstOrDefault(directory => File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker)))
+                : null;
+
+            if (landed is not null)
+            {
+                return landed;
+            }
+
+            await Task.Delay(250);
+        }
+
+        return null;
     }
 
     private static async Task<bool> WaitForMarkerAsync(string directory, TimeSpan patience)
