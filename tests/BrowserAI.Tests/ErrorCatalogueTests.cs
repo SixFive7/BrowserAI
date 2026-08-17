@@ -536,6 +536,19 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(File.Exists(planted)).IsTrue();
     }
 
+    /// <summary>
+    /// The unattributable-stray row comes from a real sweep meeting a real
+    /// candidate no window claims.
+    /// </summary>
+    /// <remarks>
+    /// <b>In the sweep key because it runs a sweep, and for no other reason.</b>
+    /// <c>Global\BrowserAI-Sweep</c> is machine-wide and try-acquired at zero
+    /// timeout (race R9), so a second sweep running beside this one does nothing
+    /// at all — which would make this test assert on a pass that never happened.
+    /// Re-justified 2026-08-17 when the suite went to unbounded parallelism;
+    /// <see cref="StraySweepTests"/> carries the full account of the key.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     [NotInParallel("stray-sweep")]
     public async Task TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims()

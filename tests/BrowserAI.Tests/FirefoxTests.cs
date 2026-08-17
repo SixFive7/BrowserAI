@@ -87,7 +87,6 @@ internal sealed class FirefoxTests
     /// process and no window anywhere.
     /// </summary>
     [Test]
-    [NotInParallel("stray-sweep")]
     public async Task ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists()
     {
         using var scratch = ScratchDirectory.Create("firefox-preflight");
@@ -196,10 +195,25 @@ internal sealed class FirefoxTests
         //
         // So the two readings now divide honestly. In-job: any image, exact,
         // catches anything this test started. Machine-wide: Firefox only, catches
-        // the one thing the job could miss -- a Firefox that escaped it. Nothing
-        // that can falsify the second is outside the `stray-sweep` group, and the
+        // the one thing the job could miss -- a Firefox that escaped it. The
         // developer's own Firefox runs from `C:\Program Files` and cannot match a
         // path under BrowserAI's browsers root.
+        //
+        // ⚠️ AND SCOPED TO A DIRECT CHILD OF THIS PROCESS, which is what took this
+        // test out of the `stray-sweep` group on 2026-08-17. Narrowing the image
+        // match to `firefox.exe` closed the Chromium half of the race and left the
+        // Firefox half: the two other tests that start a real Firefox could still
+        // falsify a machine-wide reading, so all three were serialised -- and that
+        // chain, 13.05 s of which is one containment test, WAS the suite's whole
+        // critical path at 20.4 s of a 20.6 s run.
+        //
+        // The preflight is a static call on this thread. Anything it launched
+        // would be a DIRECT CHILD of the test host, because it has no node child
+        // and no BrowserAI to launch one through. Every other Firefox in this
+        // suite is a child of a `node.exe`, which is itself a child of a probe or
+        // of the rig -- never of this process. So the parent pid is an exact
+        // discriminator: it cannot miss what this test could produce, and it
+        // cannot see what another test produces.
         //
         // Matched by full image path against the binary BrowserAI provisioned --
         // never by image name, which on this machine would name dozens of the
@@ -208,6 +222,7 @@ internal sealed class FirefoxTests
         // and a number names nothing.
         var appeared = OurFirefoxProcesses()
             .Where(process => !firefoxBefore.Contains(process.ProcessId))
+            .Where(process => ParentProcess.IdOf(process.ProcessId) == Environment.ProcessId)
             .Select(process => $"{process.ProcessId.ToString(CultureInfo.InvariantCulture)} {process.ImagePath}")
             .ToList();
 
@@ -218,8 +233,13 @@ internal sealed class FirefoxTests
         // Firefox processes -- which is what a profile dialog would be. A bare
         // window count would be flaky on a live desktop and would prove less;
         // scoping the owners to the browsers root rather than to Firefox would
-        // reintroduce the same Chromium race the reading above just lost.
-        var ours = OurFirefoxProcessIds().ToHashSet();
+        // reintroduce the same Chromium race the reading above just lost, and
+        // leaving them unscoped by parent would reintroduce the Firefox half.
+        var ours = OurFirefoxProcesses()
+            .Where(process => ParentProcess.IdOf(process.ProcessId) == Environment.ProcessId)
+            .Select(process => process.ProcessId)
+            .ToHashSet();
+
         var newWindowsOfOurs = TopLevelWindows.All()
             .Where(window => !windowsBefore.Contains(window))
             .Where(window => ours.Contains(TopLevelWindows.ProcessIdOf(window)))

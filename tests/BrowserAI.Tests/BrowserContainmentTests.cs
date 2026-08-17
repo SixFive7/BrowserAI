@@ -89,27 +89,27 @@ internal sealed class BrowserContainmentTests
 
     /// <remarks>
     /// <para>
-    /// <b>Serialised with the other tests that start a real Firefox</b> — under
-    /// the sweep group, which is the one constraint key a test may carry —
-    /// because <see cref="FirefoxTests"/>' preflight test asserts that <i>no</i>
-    /// Firefox process appeared while it ran, and a second test launching one in
-    /// parallel makes that reading of the machine wrong for the harness's reasons
-    /// rather than the product's.
+    /// ⚠️ <b>Not serialised against anything, and the history of that is worth
+    /// more than the current state.</b> This arm carried
+    /// <c>[NotInParallel("stray-sweep")]</c> until 2026-08-17 — not for anything
+    /// it does, but because <see cref="FirefoxTests"/>' preflight test asked the
+    /// <i>machine</i> whether a Firefox had appeared, and this arm starts one.
+    /// Two rounds of narrowing that reading fixed it: first to the Firefox
+    /// executable rather than the browsers root, which stopped every Chromium in
+    /// the suite falsifying it, and then to a <b>direct child of the test
+    /// host</b>, which is what this arm's Firefox — a grandchild of a probe, by
+    /// way of <c>node.exe</c> — can never be.
     /// </para>
     /// <para>
-    /// <b>The Chromium arm above is deliberately <i>not</i> in that group, and
-    /// that is now load-bearing rather than an omission.</b> Until 2026-08-17 the
-    /// preflight's machine-wide reading was scoped to the browsers root rather
-    /// than to the Firefox executable, so every Chromium in the suite could
-    /// falsify it — and the honest repair would have been to serialise seven
-    /// unrelated launch sites behind one Firefox assertion. It was scoped
-    /// instead. This group holds exactly the tests that start a Firefox or run a
-    /// sweep, and it must not grow to hold the Chromium ones.
+    /// <b>It is worth stating what that cost while it stood.</b> This test is
+    /// <b>13.05 s</b>, and the chain it was pinned into spanned <b>20.4 s of a
+    /// 20.6 s run</b> — so one test's machine-wide question was the suite's
+    /// entire critical path. Serialising to protect an over-wide observation is
+    /// never free, and here the bill was most of the wall clock.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    [NotInParallel("stray-sweep")]
     public async Task AFirefoxTreeIsContainedAndItsProfileDeletesCleanly() =>
         await RunAsync("firefox", BrowserAiPaths.FirefoxExecutable);
 

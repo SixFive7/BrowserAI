@@ -61,8 +61,36 @@ internal sealed class DirectStdioClientTransportTests
         await Assert.That(child.ReportedProcessId).IsEqualTo(child.Session.ProcessId);
     }
 
+    /// <summary>
+    /// A child sees the allowlist and nothing else, proved against a host that
+    /// has every hazardous variable set.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This mutates the process-wide environment, and it carried
+    /// <c>[NotInParallel(nameof(TheChildsEnvironmentIsExactlyTheAllowlist))]</c>
+    /// until 2026-08-17 — a constraint key with exactly one member, which
+    /// constrains nothing.</b> TUnit serialises tests that <i>share</i> a key, so
+    /// a group of one is a no-op wearing the clothes of a guard, and it read as
+    /// protection for four months.
+    /// <para>
+    /// Removed rather than widened, because the mutation is provably harmless and
+    /// the reason is the thing under test. Every name planted below is in
+    /// <see cref="ChildEnvironment.Refused"/> except one that nothing reads, and
+    /// none is in <see cref="ChildEnvironment.InheritedWhenSet"/> — so no child
+    /// this suite starts through the product can see any of them, including the
+    /// real Playwright installer, whose block comes from the same allowlist. The
+    /// only other route is the harness handing a published binary this process's
+    /// raw block, and BrowserAI itself reads exactly three variables: its app
+    /// root, its update feed, and <c>PATH</c>. None is planted here.
+    /// </para>
+    /// <para>
+    /// <b>The allowlist being an allowlist is what makes this safe</b>, which is
+    /// a pleasing property: the mechanism under test is also the reason testing
+    /// it cannot disturb anything.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    [NotInParallel(nameof(TheChildsEnvironmentIsExactlyTheAllowlist))]
     public async Task TheChildsEnvironmentIsExactlyTheAllowlist()
     {
         // Planted in THIS process, which is what makes the assertion mean

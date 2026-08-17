@@ -44,9 +44,23 @@ internal sealed class RegistrationTests
 
     /// <summary>The group the real-client arms serialise on.</summary>
     /// <remarks>
-    /// They set a process-wide environment variable so the client they start
-    /// inherits it, so two of them running at once would each register into the
-    /// other's scratch directory.
+    /// <para>
+    /// <b>They both write one process-wide environment variable —
+    /// <c>CLAUDE_CONFIG_DIR</c> — and then start a process that reads it.</b> Two
+    /// at once would each register into the other's scratch directory, and the
+    /// loser would assert against a file the winner wrote. That is shared mutable
+    /// state with no per-test channel: the client is an external executable and
+    /// the variable is the only way to reach it.
+    /// </para>
+    /// <para>
+    /// <b>Re-justified 2026-08-17, when the suite went to unbounded
+    /// parallelism</b> and every constraint in it had to say why it existed.
+    /// This one survives on its own terms: the key has exactly two members, both
+    /// of them write the same variable, and nothing else in the suite starts the
+    /// client. Note what does <i>not</i> follow — the variable is set for the
+    /// whole process while these run, so a third test that started the client
+    /// would have to join this key rather than get its own.
+    /// </para>
     /// </remarks>
     private const string ClientGroup = "mcp-client-cli";
 

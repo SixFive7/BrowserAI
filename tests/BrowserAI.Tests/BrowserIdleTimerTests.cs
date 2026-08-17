@@ -362,12 +362,24 @@ internal sealed partial class BrowserIdleTimerTests
         // browser is the batteries-included premise being silently dead code.
         SuiteEnvironment.RequireProvisionedChromium();
 
-        // Long enough that bringing a cold Chromium up cannot outlast it, short
-        // enough that the test costs seconds. The call scope is what makes that
-        // safe: a navigation in flight holds the timer off however long it takes.
+        // ⚠️ A clock this test moves by hand, so the close happens exactly when
+        // this test asks for it and at no other moment.
+        //
+        // Corrected 2026-08-17 (previously a real 3 s period). Every census
+        // below is a question about a live browser, and with a real period the
+        // timer was racing them: at full parallelism the relaunch on the last
+        // line took longer than the period, so the browser was closed again
+        // before it could be counted and the test failed reporting zero
+        // browsers — with the product having done exactly what it promises,
+        // twice. The period is nominal now; nothing waits for it.
+        var clock = new ManualClock();
         var period = TimeSpan.FromSeconds(3);
 
-        await using var rig = RigSessionEnvironment.Create(browserIdlePeriod: period, realSessionChildren: true);
+        await using var rig = RigSessionEnvironment.Create(
+            browserIdlePeriod: period,
+            clock: clock,
+            realSessionChildren: true);
+
         await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
 
         var navigate = await harness.Client.RoundTripAsync("tools/call", new JsonObject
@@ -396,8 +408,19 @@ internal sealed partial class BrowserIdleTimerTests
         // browsers would otherwise pass vacuously.
         await Assert.That(BrowsersIn(child, rig).Count).IsGreaterThan(0);
 
+        // Now, and only now, the session goes idle. The clock is advanced until
+        // the browser has actually gone rather than once: the proxy releases its
+        // in-flight scope after the caller's answer is on the wire, so an advance
+        // that lands while a call is still outstanding re-arms for a whole
+        // period — correctly — and the wait is what absorbs that. What is being
+        // waited for afterwards is a real process tree dying, which is real time
+        // and is bounded by the teardown patience.
         await WaitUntilAsync(
-            () => BrowsersIn(child, rig).Count is 0,
+            () =>
+            {
+                clock.Advance(period);
+                return BrowsersIn(child, rig).Count is 0;
+            },
             TeardownPatience,
             "the browser was still running long after the session went idle");
 

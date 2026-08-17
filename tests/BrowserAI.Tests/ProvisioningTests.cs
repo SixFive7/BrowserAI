@@ -300,6 +300,103 @@ internal sealed class ProvisioningTests
         await Assert.That(starts).IsEqualTo(1);
     }
 
+    /// <summary>
+    /// A holder that lets go of the provisioning mutex without leaving a complete
+    /// tree is overtaken, not waited on forever.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the regression test for a sixty-minute product hang, and it
+    /// was found by running the suite with every test at once rather than by
+    /// review.</b> Failing to take the mutex was read as <i>somebody is
+    /// downloading and a marker is coming</i>. It is not the same statement: the
+    /// holder keeps the mutex through its revision prune, which walks every
+    /// process on the machine, so there is a real window in which the holder is
+    /// finished and no marker will ever appear. A caller that had just deleted
+    /// the tree — which is exactly what <c>browserai_reinstall_browser</c>
+    /// does — then sat in <see cref="ProvisioningTimers.OuterDeadline"/> with no
+    /// browser installed.
+    /// </para>
+    /// <para>
+    /// <b>What makes this test the right shape is that it never mentions the
+    /// prune.</b> The prune is only how the window is reached today; the defect
+    /// is the inference. So the claim is held by
+    /// <see cref="ProvisioningClaim"/> — the product's own cross-process
+    /// contract, taken from a thread of its own exactly as another BrowserAI
+    /// process would take it — and then released with the tree still incomplete,
+    /// which is the condition rather than one route to it.
+    /// </para>
+    /// <para>
+    /// <b>And it asserts the install happened here.</b> "It returned Installed"
+    /// would also pass against a provisioner that waited for a marker somebody
+    /// else wrote, so the installer-start count is what distinguishes being
+    /// overtaken from being lucky.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AHolderThatLetsGoWithoutInstallingIsOvertakenRatherThanWaitedOnForever()
+    {
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("provision-holder-let-go");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+        var starts = 0;
+
+        using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log, Quick())
+        {
+            StartInstaller = (_, _) =>
+            {
+                _ = Interlocked.Increment(ref starts);
+                return FakeInstaller.Succeeding(directory, TimeSpan.Zero);
+            },
+        };
+
+        // Taken before anything asks for it, and released while the tree is
+        // still incomplete. Nothing is ever going to write a marker here.
+        var claim = ProvisioningClaim.Take(root, SessionManager.SupportedBrowser);
+
+        try
+        {
+            // The claim is real, or this test would be asserting nothing at all.
+            await Assert.That(claim.Held).IsTrue();
+            await Assert.That(Directory.Exists(directory)).IsFalse();
+
+            var provisioning = provisioner.WaitAsync(SessionManager.SupportedBrowser);
+
+            // It must be watching rather than installing: the mutex is held, and
+            // a provisioner that started an install here would be the second
+            // downloader the mutex exists to prevent.
+            await Assert.That(Volatile.Read(ref starts)).IsEqualTo(0);
+
+            claim.Dispose();
+
+            // ⚠️ The bound is the provisioner's OWN outer deadline, not a
+            // budget written here, and that is what makes this test bearable in
+            // a suite that runs everything at once: Quick() sets it to 30 s, so
+            // a regression comes back as `Failed` after thirty seconds rather
+            // than hanging. Measured against the injected fault on 2026-08-17 —
+            // the pre-fix inference restored, this test failed at 30.4 s with
+            // "Expected to be equal to Installed but received Failed". In a
+            // shipped build the same path is sixty minutes with no browser
+            // installed. Nothing here reads a stopwatch, so nothing here can be
+            // made red by a loaded machine.
+            var status = await provisioning;
+
+            await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
+
+            // Installed HERE. Without this the assertion above passes against
+            // the very behaviour that hung.
+            await Assert.That(Volatile.Read(ref starts)).IsEqualTo(1);
+            await Assert.That(File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker))).IsTrue();
+        }
+        finally
+        {
+            claim.Dispose();
+        }
+    }
+
     [Test]
     public async Task TheMutexNameIsPerBrowsersRootRatherThanPerBrowser()
     {

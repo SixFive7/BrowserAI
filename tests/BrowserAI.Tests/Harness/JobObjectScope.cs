@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Collections.Concurrent;
+using System.Text;
 using BrowserAI.Interop;
 using BrowserAI.Protocol;
 
@@ -31,6 +33,7 @@ internal sealed class JobObjectScope : IDisposable
 {
     private readonly JobObject _job = JobObject.CreateKillOnClose();
     private readonly List<LaunchedProcess> _started = [];
+    private readonly ConcurrentDictionary<int, StringBuilder> _said = [];
 
     /// <summary>Starts a process inside this scope's job.</summary>
     /// <param name="command">The executable's absolute path.</param>
@@ -42,13 +45,46 @@ internal sealed class JobObjectScope : IDisposable
         var process = JobLauncher.Start(_job, command, arguments, workingDirectory, ChildEnvironment.Build());
         _started.Add(process);
 
-        // Nothing in the suite reads these, and an undrained pipe stops the
-        // child once its buffer fills -- which presents as "the launcher never
-        // finished" rather than as a full pipe.
-        Drain(process.StandardOutput);
-        Drain(process.StandardError);
+        // ⚠️ Drained because an undrained pipe stops the child once its buffer
+        // fills -- which presents as "the launcher never finished" rather than
+        // as a full pipe -- and KEPT because a discarded one is worse.
+        //
+        // Corrected 2026-08-17 (previously "nothing in the suite reads these",
+        // and they were thrown away). A real Chromium launched here died 267 ms
+        // in during a fully parallel run, and the only thing any assertion could
+        // say was that it was gone: the browser's own account of why went into a
+        // 4 KiB buffer and was discarded a line later. That is this repository's
+        // founding failure class inside the harness that exists to catch it.
+        var said = _said.GetOrAdd(process.Id, _ => new StringBuilder());
+
+        Drain(process.StandardOutput, said);
+        Drain(process.StandardError, said);
 
         return process;
+    }
+
+    /// <summary>
+    /// Everything a process this scope started has written to either stream.
+    /// </summary>
+    /// <remarks>
+    /// <b>For failure messages, and only for them.</b> No assertion should read
+    /// this: what a browser writes to stderr is upstream's business and changes
+    /// between revisions. What it is for is the sentence a test prints when the
+    /// process it was asserting about is no longer there.
+    /// </remarks>
+    /// <param name="processId">The pid <see cref="Launch"/> returned.</param>
+    /// <returns>The captured text, or a note that there was none.</returns>
+    public string SaidBy(int processId)
+    {
+        if (!_said.TryGetValue(processId, out var said))
+        {
+            return "<this scope never started that pid>";
+        }
+
+        lock (said)
+        {
+            return said.Length is 0 ? "<it wrote nothing to either stream>" : said.ToString();
+        }
     }
 
     /// <summary>
@@ -78,16 +114,29 @@ internal sealed class JobObjectScope : IDisposable
         _started.Clear();
     }
 
-    private static void Drain(Stream stream) =>
+    private static void Drain(Stream stream, StringBuilder said) =>
         _ = Task.Run(async () =>
         {
             var buffer = new byte[4096];
 
             try
             {
-                while (await stream.ReadAsync(buffer).ConfigureAwait(false) > 0)
+                int read;
+
+                while ((read = await stream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
                 {
-                    // Discarded deliberately.
+                    var text = Encoding.UTF8.GetString(buffer, 0, read);
+
+                    lock (said)
+                    {
+                        // Bounded: a chatty child must not turn a failure message
+                        // into a megabyte, and the first lines are the ones that
+                        // say why something would not start.
+                        if (said.Length < 16 * 1024)
+                        {
+                            _ = said.Append(text);
+                        }
+                    }
                 }
             }
 #pragma warning disable CA1031 // The stream closing under a read in flight is how this loop normally ends.

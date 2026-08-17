@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
@@ -100,6 +101,29 @@ namespace BrowserAI.Tests;
 /// the real machine-wide sweep mutex; two of them at once would be two sweeps
 /// racing for the same candidates, which is the product's problem to solve and
 /// not the suite's to reproduce accidentally.
+/// </para>
+/// <para>
+/// ⚠️ <b>Re-justified 2026-08-17, when the suite went to unbounded parallelism
+/// and every <c>[NotInParallel]</c> in it had to state a mechanism.</b> This one
+/// is genuine exclusivity rather than flakiness avoidance, and it is the
+/// product's own design that makes it so: <c>Global\BrowserAI-Sweep</c> is a
+/// machine-wide mutex, R4 and R9 in the table above are <i>about</i> it, and a
+/// second sweeper is by construction either serialised behind the first or
+/// skipped entirely — so a second sweep test would be asserting on a pass that
+/// either did not run or ran against candidates the first had already killed.
+/// The key holds exactly the tests that <b>run a sweep</b>: these, plus
+/// <c>ErrorCatalogueTests</c>' unattributable-stray row and
+/// <c>FirefoxTests</c>' attribution arm, which sweeps at both ends.
+/// </para>
+/// <para>
+/// <b>What left the key on the same day, and why it is worth writing down.</b>
+/// Two Firefox tests were in it — one that only <i>observed</i> the machine and
+/// one that merely started a browser — and neither swept anything. They were
+/// there because the observation was machine-wide; scoping it to a direct child
+/// of the test host removed the need. The cost of not noticing was the whole
+/// suite's critical path: the chain spanned <b>20.4 s of a 20.6 s run</b>, and
+/// <b>13.05 s</b> of it was the containment test that had no business being
+/// here.
 /// </para>
 /// </remarks>
 internal sealed class StraySweepTests
@@ -386,7 +410,7 @@ internal sealed class StraySweepTests
             "about:blank");
 
         var browserCreated = ProcessIdentity.CreationTimeOf(browser.Id);
-        var attributed = await WaitForAttributionAsync(chromium, profile, browser.Id, browserCreated);
+        var attributed = await WaitForAttributionAsync(chromium, profile, browser, browserCreated, scope);
 
         // The browser is still running, so what was attributed is a live process
         // rather than the last echo of one that was leaving.
@@ -926,17 +950,32 @@ internal sealed class StraySweepTests
     private static Task<StraySweepResult> Sweep(ILogger? logger = null) =>
         Task.Run(() => new StraySweep([PlantedProbe.ExecutablePath], index: null, logger ?? NullLogger.Instance).Run());
 
-    private static async Task<Attribution> WaitForAttributionAsync(string image, string profile, int browserId, long browserCreated)
+    private static async Task<Attribution> WaitForAttributionAsync(
+        string image,
+        string profile,
+        LaunchedProcess browser,
+        long browserCreated,
+        JobObjectScope scope)
     {
+        var browserId = browser.Id;
         var deadline = DateTime.UtcNow + Patience;
 
         while (true)
         {
             if (!ProcessIdentity.IsAlive(browserId, browserCreated))
             {
+                // ⚠️ With the browser's exit code and its own account of itself.
+                // Added 2026-08-17: this message fired once in five fully
+                // parallel runs and said only that the process was gone, which
+                // is the one thing already obvious from the exception's
+                // existence. Chromium says why it would not start, on stderr,
+                // and until today the harness drained that into a discarded
+                // buffer.
                 throw new InvalidOperationException(
                     $"The browser (pid {browserId}) exited before it published a message window for '{profile}'. "
-                    + "That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one.");
+                    + "That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one."
+                    + $"{Environment.NewLine}--- exit code: {browser.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"} ---"
+                    + $"{Environment.NewLine}--- what it wrote ---{Environment.NewLine}{scope.SaidBy(browserId)}");
             }
 
             using (var scan = BrowserProcesses.ScanFor([image]))

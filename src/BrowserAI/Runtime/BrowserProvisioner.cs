@@ -654,7 +654,15 @@ internal sealed class BrowserProvisioner : IDisposable
             if (acquisition is MutexAcquisition.NotAcquired)
             {
                 ProvisioningLog.AnotherProcessIsInstalling(_logger, browser);
-                return WaitForAnotherProcess(browser, directory, deadline);
+
+                var (finished, taken) = WaitForAnotherProcess(browser, directory, mutex, deadline);
+
+                if (finished is not null)
+                {
+                    return finished;
+                }
+
+                acquisition = taken;
             }
 
             try
@@ -701,10 +709,76 @@ internal sealed class BrowserProvisioner : IDisposable
         }
     }
 
-    private ProvisioningResult WaitForAnotherProcess(string browser, string directory, Stopwatch deadline)
+    /// <summary>
+    /// Waits out whoever holds the provisioning mutex, watching for <b>both</b>
+    /// the marker they may write and the mutex they will certainly drop.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-17 (previously: wait only for the
+    /// marker).</b> Losing the mutex was taken to mean <i>somebody is
+    /// downloading, and a marker is coming</i>. That inference is false whenever
+    /// the holder is past its download - and it is reachably false, because the
+    /// holder keeps the mutex through <see cref="Prune"/>, which walks every
+    /// process on the machine and is slow exactly when the machine is busy. A
+    /// caller that had just <b>deleted</b> the tree then waited for a marker
+    /// nobody was going to write, for the full
+    /// <see cref="ProvisioningTimers.OuterDeadline"/> of <b>sixty minutes</b>,
+    /// with no browser installed the whole time.
+    /// </para>
+    /// <para>
+    /// <b>Found 2026-08-17 by running the suite with every test at once</b> -
+    /// <c>ReinstallBrowserTests.ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning</c>
+    /// hung twice in thirteen runs, and the process log named it exactly:
+    /// <i>"browserai_reinstall_browser is deleting ..."</i> followed by
+    /// <i>"Another BrowserAI process is already provisioning chromium; watching
+    /// for its marker"</i>. There was no other process. It is not a test-only
+    /// shape: <c>init</c> provisions on a background thread and returns at once,
+    /// so any caller that follows an <c>init</c> with a
+    /// <c>browserai_reinstall_browser</c> can meet it in production, and at the
+    /// ~100-process design point it needs no sequencing at all.
+    /// </para>
+    /// <para>
+    /// <b>The marker is still checked first</b>, so a genuine second downloader
+    /// is still never started: the mutex is only taken when the holder has let go
+    /// <i>without</i> leaving a complete tree, which is precisely the case that
+    /// used to hang.
+    /// </para>
+    /// </remarks>
+    /// <param name="browser">The family.</param>
+    /// <param name="directory">The revision directory a complete install marks.</param>
+    /// <param name="mutex">The provisioning mutex, not held by this thread.</param>
+    /// <param name="deadline">The clock the outer tripwire reads.</param>
+    /// <returns>
+    /// Either a finished result - the other process installed it, or the
+    /// tripwire fired - or no result and the acquisition this thread now holds.
+    /// </returns>
+    private (ProvisioningResult? Finished, MutexAcquisition Acquisition) WaitForAnotherProcess(
+        string browser,
+        string directory,
+        MachineMutex mutex,
+        Stopwatch deadline)
     {
-        while (!IsComplete(directory))
+        while (true)
         {
+            if (IsComplete(directory))
+            {
+                return (
+                    new ProvisioningResult(true, $"{browser} was provisioned by another BrowserAI process into '{directory}'."),
+                    MutexAcquisition.NotAcquired);
+            }
+
+            // The holder let go and left no complete tree, so there is nothing to
+            // wait for: this thread installs. Zero timeout, so a holder that is
+            // genuinely mid-download keeps it and this loop keeps watching.
+            var acquisition = mutex.Acquire(LockScopes.NeverWaits);
+
+            if (acquisition is not MutexAcquisition.NotAcquired)
+            {
+                ProvisioningLog.TheOtherProcessLetGoWithoutInstalling(_logger, browser, directory);
+                return (null, acquisition);
+            }
+
             if (deadline.Elapsed > _timers.OuterDeadline)
             {
                 // The tripwire. It should be unreachable -- the installing
@@ -712,20 +786,22 @@ internal sealed class BrowserProvisioner : IDisposable
                 // that process died without releasing, or the caps are wrong.
                 ProvisioningLog.OuterDeadlineReached(_logger, browser, (int)deadline.Elapsed.TotalMinutes);
 
-                return new ProvisioningResult(
-                    false,
-                    $"Another process has been provisioning {browser} for more than {_timers.OuterDeadline.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture)} minutes and has not finished. Nothing was downloaded here.");
+                return (
+                    new ProvisioningResult(
+                        false,
+                        $"Another process has been provisioning {browser} for more than {_timers.OuterDeadline.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture)} minutes and has not finished. Nothing was downloaded here."),
+                    MutexAcquisition.NotAcquired);
             }
 
             if (_stopping.IsCancellationRequested)
             {
-                return new ProvisioningResult(false, $"BrowserAI is shutting down; the wait for another process to finish provisioning {browser} was abandoned.");
+                return (
+                    new ProvisioningResult(false, $"BrowserAI is shutting down; the wait for another process to finish provisioning {browser} was abandoned."),
+                    MutexAcquisition.NotAcquired);
             }
 
             Thread.Sleep(_timers.Poll);
         }
-
-        return new ProvisioningResult(true, $"{browser} was provisioned by another BrowserAI process into '{directory}'.");
     }
 
     private ProvisioningResult RunInstaller(string browser, BrowserRevision revision, string directory, Stopwatch deadline)
@@ -1156,4 +1232,17 @@ internal static partial class ProvisioningLog
         Level = LogLevel.Error,
         Message = "Provisioning {Browser} failed. The state is reported to the caller; this is the cause.")]
     public static partial void Failed(ILogger logger, string browser, Exception exception);
+
+    /// <summary>
+    /// The holder of the provisioning mutex released it without leaving a
+    /// complete tree, so this process installs after all.
+    /// </summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="browser">The family.</param>
+    /// <param name="directory">The revision directory that is still incomplete.</param>
+    [LoggerMessage(
+        EventId = 71,
+        Level = LogLevel.Information,
+        Message = "The process that held the {Browser} provisioning mutex let go without completing {Directory}, so this process is installing it rather than waiting for a marker that is not coming.")]
+    public static partial void TheOtherProcessLetGoWithoutInstalling(ILogger logger, string browser, string directory);
 }
