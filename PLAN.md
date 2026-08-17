@@ -94,13 +94,25 @@ satisfying a design.
 > **(c)** deferred by a recorded decision does not hold a section open, and
 > sorting them is what makes that visible. **Four items remain (a) — closable
 > now, and not done** — §D's failed-rewrite recovery test, the reclaim pass as a
-> test, step 3's four done-tests trapped in a PowerShell script, and **61 hazard
+> test, step 3's four done-tests trapped in a PowerShell script, and **54 hazard
 > rows still carrying `—` for evidence**. Any one of those is enough on the
 > ending's own terms. *(Two of those four closed later the same day — the
 > reclaim pass, whose closure found it was **also** using the one delete
 > primitive §E forbids, and step 3's four done-tests — so **two** remain:
-> §D's failed-rewrite recovery test, and the 61 hazard rows. That count read 59
-> until it was re-derived from the file on 2026-08-17.)*
+> §D's failed-rewrite recovery test, and the hazard rows.)*
+>
+> ⚠️ **Corrected 2026-08-17 (previously "61 hazard rows still carrying `—` for
+> evidence … That count read 59 until it was re-derived from the file on
+> 2026-08-17").** The re-derivation replaced a right number with a wrong one by
+> answering a different question: **59** was the count of rows open **with an em
+> dash**, which is what this sentence says; **61** is the count of rows open at
+> all. Two Packaging rows are open and carry a real reason instead of a dash, and
+> they are the whole of the difference. Later the same day five more rows were
+> adjudicated — four `Process and OS` and one `Tooling and CI` — and one
+> `Bundling and AOT` row was re-opened, leaving **57 open, 54 of them with a
+> dash**. The lesson is not the arithmetic: a count and the sentence it sits in
+> have to be re-derived **together**, because correcting one against the other's
+> definition is invisible in a diff.
 >
 > **And the second reason is larger, was never counted before, and is the one
 > that decides it.** [`plan/hazards.md`](plan/hazards.md) was made
@@ -327,13 +339,24 @@ day, so two remain. Named, not buried:**
    because it stops being vacuous the moment anyone points
    `PLAYWRIGHT_BROWSERS_PATH` at the staging tree — the exact conflation §A
    carries a correction for.
-4. **61 hazard rows still read `open` with `—` for evidence**, across seven
-   categories: Bundling and AOT 14, Process and OS 13, Child runtime 10, Tooling
-   and CI 8, Protocol and SDK 7, Packaging 6, Handle routing 3. The previous
-   round adjudicated 27 packaging rows and 8 named ones; these are the rest, in
-   **the one file that outlives the plan**. *Corrected 2026-08-17 (previously
-   "59 … Packaging 4"), by re-counting the file instead of trusting this line;
-   [TODO.md](TODO.md) carries how it went wrong.*
+4. **54 hazard rows still read `open` with `—` for evidence**, across seven
+   categories: Bundling and AOT 14, Child runtime 10, Process and OS 9, Protocol
+   and SDK 7, Tooling and CI 7, Packaging 4, Handle routing 3. **57 rows are open
+   in total**; the other three carry a reason rather than a dash, which is the
+   state this list wants more of. The previous round adjudicated 27 packaging
+   rows and 8 named ones; these are the rest, in **the one file that outlives the
+   plan**.
+
+   ⚠️ *Corrected 2026-08-17 (previously "61 … Bundling and AOT 14, Process and OS
+   13, Child runtime 10, Tooling and CI 8, Protocol and SDK 7, Packaging 6,
+   Handle routing 3"), which had itself been corrected the same day from "59 …
+   Packaging 4" — **and the first number was the right one for this sentence.**
+   59 counted rows open with a dash; 61 counted rows open. The re-derivation was
+   honest and answered the wrong question, and the breakdown was adjusted to make
+   it add up rather than re-counted, which is how Packaging went from 4 to a 6
+   that is in the file nowhere. Both numbers above are re-derived from
+   `plan/hazards.md` on 2026-08-17, after `HazardIndexTests` landed and five rows
+   were adjudicated with it.*
 
 ### (b) — ~~blocked on the maintainer~~ ✅ all four discharged, 2026-08-17
 
