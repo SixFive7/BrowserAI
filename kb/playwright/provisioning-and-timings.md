@@ -305,7 +305,7 @@ browser-launch path. `[FLOATS]`
 
 ## What the first-run download costs the suite
 
-**Measured 2026-08-17, seven full-suite runs, from TUnit's own per-test report.**
+**Measured 2026-08-17, eight full-suite runs, from TUnit's own per-test report.**
 Nobody had asked: `FirstRunProvisioningTests` is the suite's longest test by a
 factor of two and was assumed to dominate the wall clock. It does not, because
 the suite runs four-wide.
@@ -314,10 +314,10 @@ the suite runs four-wide.
 |---|--:|--:|--:|
 | Cold, before a cache existed | 36.50 · 35.84 · 35.91 s | 13.77 · 15.81 · 15.92 s | 132.6 · 130.1 · 129.5 s |
 | Cold, and publishing the cache | 36.84 s | 17.13 s | 136.0 s |
-| Seeded from the cache | 31.89 · 34.74 · 31.16 s | 3.49 · 3.88 · 3.36 s | 117.3 · 124.8 · 112.7 s |
+| Seeded from the cache | 31.89 · 34.74 · 31.16 · 31.97 s | 3.49 · 3.88 · 3.36 · 3.22 s | 117.3 · 124.8 · 112.7 · 117.8 s |
 
-**The download is worth 3.5–4.2 s of a ~36 s run — 10 to 12% — while the test
-that performs it takes 12 to 14 s longer than its seeded form.** Means: 32.60 s
+**The download is worth 3.6–4.4 s of a ~36 s run — 10 to 12% — while the test
+that performs it takes 12 to 14 s longer than its seeded form.** Means: 32.44 s
 seeded, against 36.08 s for the pre-cache baseline and 36.84 s for a cold run
 that also publishes. The gap between 13 s of test and 4 s of suite is the
 parallelism: with the suite capped at four concurrent tests and ~130 s of total

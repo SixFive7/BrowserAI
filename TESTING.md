@@ -234,10 +234,10 @@ so two publishers cannot collide and neither needs a lock — the same answer, f
 the same reason, that the session index gives to eight concurrent writers rather
 than reaching for `FileMode.Append`.
 
-**The cost, measured 2026-08-17 over seven full-suite runs on the reference
+**The cost, measured 2026-08-17 over eight full-suite runs on the reference
 machine** ([kb](kb/playwright/provisioning-and-timings.md#what-the-first-run-download-costs-the-suite)):
 a cached run's suite wall time is **31.2–34.7 s** against **35.8–36.8 s** cold,
-and the test itself drops from **13.8–17.1 s** to **3.4–3.9 s**. The download is
+and the test itself drops from **13.8–17.1 s** to **3.2–3.9 s**. The download is
 therefore worth **10–12%** of the suite's wall clock — far less than the test's
 own duration suggests, because the suite runs four-wide and the download overlaps
 other tests. **The saving is bandwidth, not seconds**, which is what was asked
