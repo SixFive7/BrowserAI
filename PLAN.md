@@ -96,9 +96,10 @@ satisfying a design.
 > now, and not done** — §D's failed-rewrite recovery test, the reclaim pass as a
 > test, step 3's four done-tests trapped in a PowerShell script, and **59 hazard
 > rows still carrying `—` for evidence**. Any one of those is enough on the
-> ending's own terms. *(One of those four — the reclaim pass — closed later the
-> same day, so **three** remain; closing it found the pass was also using the
-> one delete primitive §E forbids.)*
+> ending's own terms. *(Two of those four closed later the same day — the
+> reclaim pass, whose closure found it was **also** using the one delete
+> primitive §E forbids, and step 3's four done-tests — so **two** remain:
+> §D's failed-rewrite recovery test, and the 59 hazard rows.)*
 >
 > **And the second reason is larger, was never counted before, and is the one
 > that decides it.** [`plan/hazards.md`](plan/hazards.md) was made
@@ -283,8 +284,8 @@ a dodge — both were written before the thing that answered them existed:
   inspector was superseded by [*"Automated checks: None"*](README.md): it was a
   CI check, and there is no CI.
 
-**Four were (a) and not done when this list was written; one closed the same
-day, so three remain. Named, not buried:**
+**Four were (a) and not done when this list was written; two closed the same
+day, so two remain. Named, not buried:**
 
 1. **§D's failed-rewrite recovery has no test.** §D: *"a failed rewrite must not
    also release the lock — the handle is dropped before the replacement, so an
@@ -311,9 +312,20 @@ day, so three remain. Named, not buried:**
    the next run cannot identify, only a directory it cannot delete. That is the
    remaining third, and it is a smaller gap than it reads: the directory it
    holds is now **named** rather than silently skipped.
-3. **Build-order step 3's four done-tests live in a PowerShell script the suite
-   never runs.** `ChangelogTests` already proves the shape — drive it through
-   `pwsh` from the suite — so this is known work rather than an open question.
+3. ~~**Build-order step 3's four done-tests live in a PowerShell script the
+   suite never runs.**~~ ✅ **Closed 2026-08-17**, and not by driving the script:
+   the four checks are properties of a tree that is already on disk, so
+   `PayloadTests.TheAssembledPayloadSatisfiesTheFourChecksThatLivedOnlyInTheBuildScript`
+   and `.TheBrowsersRootHoldsFullChromiumAndNoHeadlessShell` assert them
+   directly, in milliseconds, on every run. **`node.exe --version` is asked of
+   the binary rather than read back out of the manifest beside it** — a manifest
+   agreeing with itself proves nothing about the executable — and `cli.js
+   --help` is the check that would catch a tree that installed and cannot start,
+   which is this project's founding failure class arriving from npm instead of
+   from a browser. The `.links/` assertion is vacuous today and is made anyway,
+   because it stops being vacuous the moment anyone points
+   `PLAYWRIGHT_BROWSERS_PATH` at the staging tree — the exact conflation §A
+   carries a correction for.
 4. **59 hazard rows still read `open` with `—` for evidence**, across seven
    categories: Bundling and AOT 14, Process and OS 13, Child runtime 10, Tooling
    and CI 8, Protocol and SDK 7, Packaging 4, Handle routing 3. The previous

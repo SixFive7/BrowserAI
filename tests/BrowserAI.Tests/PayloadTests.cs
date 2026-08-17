@@ -137,6 +137,94 @@ internal sealed class PayloadTests
         await Assert.That(portable).IsEquivalentTo(TheOnePortableBinary);
     }
 
+    [Test]
+    public async Task TheAssembledPayloadSatisfiesTheFourChecksThatLivedOnlyInTheBuildScript()
+    {
+        // Build-order step 3's done-tests. Every one of them was run once, by
+        // hand, on the day the payload was first assembled, and then lived in a
+        // PowerShell script the suite never invokes -- so a payload rebuilt
+        // wrongly on any later day is caught by nothing. They cost milliseconds
+        // apiece against a tree that is already on disk, which is why "the
+        // script asserts it" was never a good enough answer.
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        var layout = RepositoryPayload.Layout;
+        using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(layout.Root, "payload.json")));
+
+        // 1 -- node.exe is the version the resolver returned, asked of the
+        // binary rather than read back out of the manifest beside it. A
+        // manifest agreeing with itself proves nothing about the executable.
+        var recorded = manifest.RootElement.GetProperty("node").GetProperty("version").GetString();
+        var (versionExit, versionOutput) = await RunAsync(layout.NodeExecutable, "--version");
+
+        await Assert.That(versionExit).IsEqualTo(0);
+        await Assert.That(versionOutput.Trim()).IsEqualTo(recorded);
+
+        // 2 -- the vendored cli.js runs under that node and prints a usage
+        // block. This is the check that would have caught a tree that installed
+        // and cannot start, which is the founding failure class of this project
+        // arriving from npm instead of from a browser.
+        var (helpExit, helpOutput) = await RunAsync(layout.NodeExecutable, $"\"{layout.PlaywrightMcpCli}\" --help");
+
+        await Assert.That(helpExit).IsEqualTo(0);
+        await Assert.That(helpOutput).Contains("Usage:");
+
+        // 3 -- `.links/` absent, `LICENSE` present. The first is vacuous today
+        // and is asserted anyway, because it stops being vacuous the moment
+        // anyone runs an installer with PLAYWRIGHT_BROWSERS_PATH pointed at the
+        // staging tree -- the exact conflation §A carries a correction for. The
+        // second is the obligation: Node's LICENSE ships or the payload is not
+        // redistributable, and it comes out of the archive rather than from a
+        // standalone URL that does not exist.
+        await Assert.That(Directory.Exists(Path.Combine(layout.Root, "mcp", ".links"))).IsFalse();
+        await Assert.That(Directory.Exists(Path.Combine(layout.Root, "node", ".links"))).IsFalse();
+        await Assert.That(File.Exists(Path.Combine(layout.Root, "node", "LICENSE"))).IsTrue();
+    }
+
+    [Test]
+    public async Task TheBrowsersRootHoldsFullChromiumAndNoHeadlessShell()
+    {
+        // Step 3's fourth done-test, and the one with a decision inside it.
+        // `--no-shell` is load-bearing rather than tidy: full Chromium in every
+        // mode is settled, and a shell directory appearing here means something
+        // asked for one -- 268.49 MB nobody chose, on every machine.
+        //
+        // The path also pins the asymmetry §A names: the outer directory uses
+        // underscores and the inner one dashes, so a path built on the wrong
+        // guess fails here rather than at a browser launch.
+        SuiteEnvironment.RequireProvisionedChromium();
+
+        await Assert.That(File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)).IsTrue();
+        await Assert.That(BrowserAiPaths.ExpectedChromiumExecutable).Contains("chrome-win64");
+        await Assert.That(BrowserAiPaths.ChromiumDirectory).Contains("chromium-");
+        await Assert.That(Directory.Exists(BrowserAiPaths.HeadlessShellDirectory)).IsFalse();
+    }
+
+    private static async Task<(int ExitCode, string Output)> RunAsync(string executable, string arguments)
+    {
+        using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = executable,
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+
+            // Explicit, because an unset WorkingDirectory passes null to
+            // CreateProcess and the child inherits the test host's -- which for
+            // a tree that resolves anything relative is a different answer per
+            // runner.
+            WorkingDirectory = RepositoryLayout.Root.FullName,
+        })!;
+
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+
+        await process.WaitForExitAsync();
+
+        return (process.ExitCode, output + error);
+    }
+
     private static JsonDocument ReadJson(string name) =>
         JsonDocument.Parse(File.ReadAllText(
             Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", name)));
