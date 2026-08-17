@@ -151,7 +151,6 @@ internal sealed class UpdateTests
     /// </para>
     /// </remarks>
     [Test]
-    [Skip("The production feed has not been published: UpdateConfiguration.ProductionBaseUrl is null, so there is no URL to resolve. Deferred at build-order step 19 rather than faked with a local HTTP server, which would compose paths the same way by construction and pass while proving nothing. Blocks the first release by design.")]
     public async Task TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest()
     {
         await Assert.That(UpdateConfiguration.ProductionBaseUrl).IsNotNull();

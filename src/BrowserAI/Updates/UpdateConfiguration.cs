@@ -41,7 +41,25 @@ internal static class UpdateConfiguration
     /// <b>not</b> carry the channel — <see cref="UpdateFeed.Create"/> refuses one
     /// that does.
     /// </remarks>
-    public const string? ProductionBaseUrl = null;
+    /// <remarks>
+    /// <para>
+    /// <b>Set 2026-08-17, on the maintainer's instruction to cut v1.0.0.</b> It
+    /// is GitHub's <c>releases/latest/download/</c> alias rather than a
+    /// tag-specific path, and that choice is the whole point: the alias
+    /// redirects to the newest <b>non-prerelease</b> release, so it never needs
+    /// rewriting per version and a build can never be pointed at the feed of the
+    /// version it already is.
+    /// </para>
+    /// <para>
+    /// <b>The channel is NOT in this URL, and must never be.</b>
+    /// <c>plan/G-updates.md</c> calls that its worst hazard because it is
+    /// unrecoverable in the field: a client that cannot reach its feed cannot be
+    /// told to roll back either. The channel goes in
+    /// <c>UpdateOptions.ExplicitChannel</c>, which is asserted by a test that
+    /// fails if the line is removed.
+    /// </para>
+    /// </remarks>
+    public const string? ProductionBaseUrl = "https://github.com/SixFive7/BrowserAI/releases/latest/download/";
 
     /// <summary>
     /// Points this build at a different feed: an absolute directory or an
