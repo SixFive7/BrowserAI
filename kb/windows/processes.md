@@ -616,6 +616,22 @@ passed to `EnumWindows` — published with **zero trim or AOT warnings** and
 passed all **41** runtime checks, in a 1,209,856-byte binary. `SYSLIB1054` did
 not fire at default analyzer settings either.
 
+**All seven hand-written interop structs match Microsoft's own Win32 metadata
+exactly.** Measured 2026-08-17 against `Microsoft.Windows.CsWin32` **0.3.298**,
+which generates from the same metadata Windows ships: `STARTUPINFOW` **104**,
+`STARTUPINFOEXW` **112**, `PROCESS_INFORMATION` **24**, `SECURITY_ATTRIBUTES`
+**24**, `IO_COUNTERS` **48**, `JOBOBJECT_BASIC_LIMIT_INFORMATION` **64**,
+`JOBOBJECT_EXTENDED_LIMIT_INFORMATION` **144**; `offsetof(Affinity)` **48**,
+`offsetof(LimitFlags)` **16**, `offsetof(IoInfo)` **64**, agreeing both ways.
+**A size check alone is not sufficient and this was demonstrated rather than
+argued**: reordering `Affinity` after `PriorityClass`/`SchedulingClass` leaves
+the struct at 64 bytes and slides that field to offset 56, so the size assertion
+passes and only the offset assertion fails. `[STABLE]` — these are the x64
+Windows ABI and do not move. Re-establish by running
+`InteropLayoutTests`, which is now a permanent guard rather than a
+re-measurement, and which reads the shipped `private` nested types by reflection
+rather than copies of them.
+
 **This does not change the rule, only its reason.** `[LibraryImport]` remains
 correct here because it is Microsoft's documented first recommendation for .NET
 7+, because the marshalling it emits is ordinary C# that can be read and stepped

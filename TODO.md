@@ -644,85 +644,163 @@ reasoning, come here for the queue.**
       measured reason and a rule with a plausible reason are indistinguishable
       until someone acts on the reason instead of the rule.*
 
-- [ ] **Decide the Win32 interop question, and consider Vanara alongside
-      CsWin32.** [`plan/stack.md`](plan/stack.md) set a threshold **before any
-      code existed** — *"once a seventh Win32 API is needed, adopt
-      `Microsoft.Windows.CsWin32`"* — and it is long past. Counted 2026-08-17:
-      **41 `[LibraryImport]` declarations across 9 files** in
-      `src/BrowserAI/Interop/`. **The threshold is therefore in breach and has
-      been for most of the build**, which is the state this repository keeps
-      finding and dislikes most: a rule that is stated, correct-sounding, and
-      quietly not followed. **It wants a decision either way** — adopt, or
-      strike it as a heuristic that was never a commitment.
+- [x] ~~**Decide the Win32 interop question, and consider Vanara alongside
+      CsWin32.**~~ ✅ **Decided 2026-08-17. The threshold is STRUCK, the
+      hand-written `[LibraryImport]` declarations stay, and CsWin32 is adopted
+      for one job only — a *test-only layout oracle*.**
+      [`plan/stack.md`](plan/stack.md) set the threshold **before any code
+      existed** — *"once a seventh Win32 API is needed, adopt
+      `Microsoft.Windows.CsWin32`"* — and it was long past: **41
+      `[LibraryImport]` declarations across 9 files** in
+      `src/BrowserAI/Interop/`, with a further **42 across 9 files** in
+      `tests/`, so a rewrite would have been **83 across 18**. A rule that is
+      stated, correct-sounding and quietly not followed is the state this
+      repository dislikes most, so it wanted a decision either way. This is it.
 
-      **The candidates**, on the maintainer's prompt to look past CsWin32:
+      **The comparison, looked up 2026-08-17 via the NuGet v3 API and the
+      GitHub API, and re-verified in this session rather than carried over:**
 
-      - **`Microsoft.Windows.CsWin32`** — a source generator; you name an API
-        and it emits the declaration from Windows' own metadata.
-      - **`Vanara.PInvoke.*`** — the different one, and the reason this item
-        exists rather than being a straight yes/no. It offers **typed wrappers**
-        — real .NET types, `SafeHandle`s, enums instead of raw flags — so it
-        could make this code *simpler* rather than merely differently-sourced.
-        Every other candidate only changes who wrote the declaration.
-      - **`TerraFX.Interop.Windows`** — pre-generated raw bindings for the whole
-        Win32 surface.
-      - **`dotnet/pinvoke`** — hand-maintained signature packages; **believed
-        unmaintained, unverified.**
-      - **Keep hand-written and strike the threshold** — the status quo, and the
-        option to beat.
+      | Candidate | Licence | Latest stable | Published | AOT | Size Δ | Upstream | Verdict |
+      |---|---|---|---|---|---|---|---|
+      | **Hand-written `[LibraryImport]`** | — | — | — | native, and proven by 396 tests | 0 | ours | ✅ **kept** |
+      | `Microsoft.Windows.CsWin32` | MIT *(generator only — see the open question below)* | `0.3.298` | 2026-06-17 | emits **`[DllImport]`, never `[LibraryImport]`** (measured **30/0** in generated output); publishes clean and runs | +31 KB † | active, pushed 2026-08-14 | ⚠️ **test-only** |
+      | `TerraFX.Interop.Windows` | MIT | `10.0.26100.6` | 2025-12-12 | `[DllImport]`, blittable; publishes clean | +90 KB † | repo pushed 2026-07-20, but **no release in 8 months** | ❌ |
+      | `Vanara.PInvoke.*` | MIT | `5.0.7` | 2026-08-15 | **disqualified** | +1.35 MB † | very active, pushed 2026-08-15 | ❌ **disqualified** |
+      | `PInvoke.*` (`dotnet/pinvoke`) | MIT | `0.7.124` | **2022-06-30** | not assessed | — | **archived 2023-07-26** | ❌ |
 
-      **Four axes decide it, and the first is disqualifying.** ① **NativeAOT**:
-      the product publishes with `PublishAot` and *any* trim or AOT warning
-      fails the publish, so a candidate built on runtime-marshalled
-      `[DllImport]` is out regardless of how good its API is. ② **Binary size**
-      — the AOT binary is ~17 MB and everything linked ships. ③ **Licence** —
-      anything linked needs its notice in `THIRD-PARTY-NOTICES.txt`, which has
-      six obligations and a test asserting them. ④ **Floating** — every
-      dependency here resolves to latest at build time and nothing is pinned, so
-      a library that breaks between minors is a worse fit than usual.
+      † The three size deltas are from the commissioning research pass against
+      a 1,106,944-byte empty-AOT baseline and were **not re-measured here**.
+      Everything else in the table was.
 
-      **Two cases will decide it in practice**, both places a generated
-      signature tends not to fit, both already load-bearing here:
+      **The axis that was thought disqualifying was resting on a false
+      premise.** ① said *"a candidate built on runtime-marshalled `[DllImport]`
+      is out regardless of how good its API is"*. `[DllImport]` is **not**
+      runtime-marshalled under NativeAOT on Windows — ILC compiles its stubs
+      ahead of time, measured with a 38-declaration probe, and the three places
+      this repository asserted otherwise are corrected. **So CsWin32 emitting
+      `[DllImport]` never disqualified it**, and the axis that actually decides
+      is ④ floating, ② size, and the value of a rewrite — which is negative.
 
-      - **`CreateProcessW` mutates its command-line buffer**, so it needs a
-        writable `char[]`/`Span<char>`. A `string` parameter is wrong, and a
-        generator has every reason to emit one.
-      - **`NativeFile` must request `FILE_APPEND_DATA` *without*
-        `FILE_WRITE_DATA`.** Asking for `GENERIC_WRITE` silently forfeits the
-        filesystem's atomic-append guarantee — the fix for
-        [a measured loss of 70 records in 200](kb/windows/processes.md#interop-and-the-toolchain).
-        That distinction lives in the **access mask**, not the signature, so a
-        wrapper that hides the mask hides the fix.
+      **CsWin32 will never emit `LibraryImport`, and the reason is structural
+      rather than a backlog item.** Issues
+      [#593](https://github.com/microsoft/CsWin32/issues/593) (2022-08-10) and
+      [#1333](https://github.com/microsoft/CsWin32/issues/1333) (2025-01-21)
+      were both closed **not planned**: Roslyn does not chain source
+      generators, so a generator emitting `LibraryImport` would produce code
+      that nothing then processes. Worth noting that **#1333's own opening post
+      repeats this repository's false premise verbatim** (*"`DllImport` will
+      need to create an IL stub runtime … allowing for NativeAOT
+      compilation"*), which is a fair guess at where it entered here.
 
-      **What a rewrite actually risks.** These 41 declarations back the most
-      heavily measured guarantees in the repository — job containment at **0
-      escapees** across two browser families, the atomic-append fix above, and a
-      cross-process `GetWindowTextW` read that bypasses `WM_GETTEXT` and is
-      pinned by a test on every build. **Interop is the one place a subtle
-      change is invisible**: a wrong access mask or a mis-shaped struct does not
-      throw, it returns a plausible wrong answer.
+      **Vanara's failure is this project's named enemy, and it deserves saying
+      so.** A narrow raw-P/Invoke slice publishes clean and runs — **that is
+      the trap, not a reprieve.** The moment a Vanara *helper* is used, which
+      is the entire reason to choose Vanara,
+      `QueryInformationJobObject<T>` produces **32 ILC diagnostics** (counted
+      in the probe logs: 13× IL3050, 9× IL2075, 3× IL2067, 3× IL2072, 2×
+      IL2070, 1× IL2057, 1× IL2077) and the published binary dies at runtime
+      with `NotSupportedException: '…JOBOBJECT_BASIC_ACCOUNTING_INFORMATION' is
+      missing structure marshalling data. This can happen for code that is not
+      compatible with AOT.` **A library whose safe subset is silent and whose
+      value-add is fatal is exactly the shape of every defect in the charter's
+      opening table.** It also drags in `Vanara.PInvoke.Gdi32` transitively and
+      its `Kernel32.FileAccess` enum lacks `SYNCHRONIZE`. *(The runtime
+      exception, the Gdi32 drag and the enum gap are the research pass's
+      findings and were not re-run here; the 32 diagnostics were re-counted.)*
 
-      **Standing recommendation: strike the threshold**, unless Vanara's typed
-      wrappers turn out to be both AOT-clean and able to express the two cases
-      above — in which case adopting it buys something the hand-written code
-      does not have, rather than re-deriving what it already proves. A
-      verified comparison of licences, versions, AOT stories and sizes was
-      commissioned 2026-08-17 and **is not yet recorded here**; nothing above
-      asserts a fact about any library beyond its name and its published intent.
+      **Both awkward cases survive, and one is a finding against our own
+      code.**
 
-- [x] ~~**Four things only the maintainer can do.**~~ **Two remain; two were
+      - **`FILE_APPEND_DATA` without `FILE_WRITE_DATA` is safe from every
+        candidate.** No candidate forces `GENERIC_WRITE`; CsWin32's generated
+        `CreateFile` takes a raw `uint dwDesiredAccess` and returns a
+        `SafeFileHandle`, and `FILE_APPEND_DATA = 0x4` is a distinct member of
+        its `FILE_ACCESS_RIGHTS` enum. The
+        [70-records-in-200 fix](kb/windows/processes.md#interop-and-the-toolchain)
+        was never at risk.
+      - **CsWin32's `CreateProcessW` is better than ours, and we are not
+        adopting it.** It generates
+        `ref Span<char> lpCommandLine`, which carries a length, validates the
+        null terminator and writes the mutation back.
+        `JobLauncher.cs:468` declares `ref char lpCommandLine` and the call
+        site passes `ref commandLine[0]` — **no length, no terminator check**.
+        Nothing is known to be wrong with it and 396 tests pass over it, but it
+        is a weaker signature than the vendor's for the same call. **Recorded
+        as a finding against our own code, not as an argument for adoption.**
+
+      **What was built instead, and it is the option nobody had listed.**
+      CsWin32 is referenced **from the test project only**, `PrivateAssets="all"`,
+      as a *layout oracle*: `tests/BrowserAI.Tests/InteropLayoutTests.cs` asks
+      Microsoft's own Win32 metadata what each hand-written struct should
+      weigh, and asserts it. All **seven** already match exactly — `STARTUPINFOW`
+      104, `STARTUPINFOEXW` 112, `PROCESS_INFORMATION` 24,
+      `SECURITY_ATTRIBUTES` 24, `IO_COUNTERS` 48,
+      `JOBOBJECT_BASIC_LIMIT_INFORMATION` 64,
+      `JOBOBJECT_EXTENDED_LIMIT_INFORMATION` 144 — with
+      `offsetof(Affinity)` 48, `offsetof(LimitFlags)` 16 and `offsetof(IoInfo)`
+      64 agreeing both ways.
+
+      **Why it earns the dependency.** A mis-shaped struct is the one defect
+      class here that *cannot present as an error*: the kernel reads whatever
+      is at the offset it expects and returns a plausible wrong answer. **Two
+      faults were injected and both were caught** — ① two `nuint` fields to
+      `uint`, size 64 → 48, 2 of 4 tests red; ② `Affinity` reordered, which
+      **leaves the size at 64** and slides its offset 48 → 56, where the size
+      assertion *passed* and only the offset assertion caught it. The second is
+      the case a size-only oracle misses, and it is why the offsets are
+      asserted. Both reverted; `JobObject.cs` is byte-identical to its
+      committed state.
+
+      **It reads the shipped types, not copies of them.** The structs are
+      `private` nested types and are reached by reflection. An oracle built on
+      copies would assert that the copies match Windows and say nothing about
+      what the product marshals through — the two would be free to drift, which
+      is the defect being guarded against.
+
+      **It does not ship, verified rather than asserted:** 0 CsWin32 entries in
+      `src/BrowserAI/packages.lock.json`, no `win32` artifact anywhere in the
+      publish output, absent from `THIRD-PARTY-NOTICES.txt` exactly as MinVer
+      is, and the generated code compiles under the full analyzer stack with 0
+      warnings. Suite: **396 tests, 0 failed, 0 skipped.**
+
+      **What the oracle does NOT catch, and no reader should infer otherwise:
+      access masks.** `FILE_APPEND_DATA` vs `GENERIC_WRITE` is a semantic
+      choice, not a layout fact, and no size or offset assertion can see it.
+      Only `ProcessLogTests.ConcurrentProcessesDoNotLoseEachOthersRecords`
+      covers that.
+
+      **⚠️ One thing flagged and deliberately NOT resolved.** CsWin32 the
+      generator is MIT, but **the metadata it generates from is not**:
+      `Microsoft.Windows.SDK.Win32Metadata` and `WDK.Win32Metadata` ship under
+      Microsoft Windows SDK licence terms and `SDK.Win32Docs` under
+      `aka.ms/WinSDKLicenseURL` — all three carry **no SPDX licence expression
+      at all** on nuget.org, checked 2026-08-17. Generated code, doc comments
+      included, compiles into whatever references it. **Test-only adoption
+      sidesteps this entirely rather than answering it.** Whether those terms
+      would create a notices obligation for *shipped* generated code is **not
+      assessed, and must not be asserted either way** until it is. It becomes a
+      live question the moment anyone proposes moving CsWin32 into
+      `src/BrowserAI/`.
+
+      **⚠️ A second cost, recorded because it is real:** CsWin32 pins three
+      **prerelease** transitive packages — `SDK.Win32Metadata 70.0.11-preview`,
+      `WDK.Win32Metadata 0.13.25-experimental`, `SDK.Win32Docs 0.1.42-alpha` —
+      which are now in `tests/BrowserAI.Tests/packages.lock.json`. They are
+      build-time only and nothing ships, so the README's *"GA is a hard floor"*
+      rule is not violated in the artifact, but this is the only place in the
+      repository where a prerelease version appears at all, and it arrived
+      because CsWin32 pins it rather than because anything here chose it.
+
+- [x] ~~**Four things only the maintainer can do.**~~ **One remains; three were
       done on 2026-08-17.** Split out because a bundled row cannot be ticked.
       **Done:** the release feed is live (GitHub Releases on the now-public
       repository, `releases/latest/download/`, resolving HTTP 200 with a
-      manifest whose SHA-256 matches the package byte for byte), and the tag was
+      manifest whose SHA-256 matches the package byte for byte); the tag was
       cut — **`v1.0.0`**, which took the suite to **392 tests, 0 failed, 0
-      skipped**. **Remaining:** the sandbox report above, and deciding on
-      `Microsoft.Windows.CsWin32` now that the stack's own *"once a seventh
-      Win32 API is needed"* threshold stands at **41 `[LibraryImport]`
-      declarations across 9 files** — the standing recommendation is to strike
-      the threshold as a heuristic that was never a commitment, because the
-      interop is written, measured, and is the backbone of the containment
-      guarantees.
+      skipped**; and **the `Microsoft.Windows.CsWin32` question is decided** —
+      the threshold is struck and CsWin32 is adopted as a test-only layout
+      oracle, recorded in full above. **Remaining:** the sandbox report, which
+      is an account and a public post to own rather than a code change.
 
 - [ ] **The reclaim pass's second bullet is unbuilt, and it is the only one
       left.** [testing](plan/testing.md) asks that *"anything the previous run
