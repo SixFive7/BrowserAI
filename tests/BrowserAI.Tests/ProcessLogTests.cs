@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Tests.Harness;
@@ -12,7 +13,7 @@ namespace BrowserAI.Tests;
 /// Asserts the process log's durability properties at process scope, which is
 /// the only scope at which they are true.
 /// </summary>
-internal sealed class ProcessLogTests
+internal sealed partial class ProcessLogTests
 {
     /// <summary>
     /// Disposing the stack actually closes the file.
@@ -219,6 +220,119 @@ internal sealed class ProcessLogTests
 
         await Assert.That(string.Join(", ", elsewhere)).IsEmpty();
     }
+
+    /// <summary>
+    /// A timed <c>WaitForExit</c> is always followed by a bare one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same shape as the pairing above, for the same reason: deleting one
+    /// half loses diagnostics and nothing goes red.</b>
+    /// <c>Process.WaitForExit(int)</c> returns as soon as the process is gone
+    /// and does <b>not</b> drain the asynchronous output readers, so a
+    /// <c>ErrorDataReceived</c> handler is routinely left holding half the
+    /// child's stderr. The parameterless overload is what flushes the event
+    /// queue. The SDK's own transport documents this in as many words, and this
+    /// repository's one timed call site carries the second call and a comment
+    /// saying why.
+    /// </para>
+    /// <para>
+    /// <b>The analyzer cannot express this and the suppression makes it worse.</b>
+    /// <c>build/BannedSymbols.txt</c> bans the timed overload, so the call site
+    /// carries an <c>RS0030</c> suppression — which permits the timed call and
+    /// has no way to require the flush. A later edit that deletes the bare call
+    /// leaves the suppression, its comment and the whole build intact, and
+    /// truncates stderr silently. That is the exact gap this fills.
+    /// </para>
+    /// <para>
+    /// <b>Why it does not assert that a timed call exists.</b> A corpus check
+    /// would pin today's tree and go red the day the last timed call is
+    /// legitimately replaced by <c>WaitForExitAsync</c>, which is the direction
+    /// this repository wants to move in. What is asserted instead is that the
+    /// matcher still works, against two samples held here — so the scan cannot
+    /// pass by having quietly stopped matching, and an empty tree stays green.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryTimedWaitForExitIsFollowedByABareOne()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.SourceAndScriptFiles.Where(file => file.Extension is ".cs"))
+        {
+            // Comments stripped, because ProbeProcess.cs explains this very rule
+            // in a comment that names the banned call, and a scan that could not
+            // tell a rule from its statement would fail on the sentence
+            // describing it. No line number is reported for the same reason:
+            // ReadCodeAsync removes those lines rather than emptying them, so
+            // what survives no longer agrees with the file about numbering.
+            offenders.AddRange(UnpairedWaits(await RepositoryLayout.ReadCodeAsync(file))
+                .Select(call => $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}: '{call}' is not followed by a bare WaitForExit()"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ Composed rather than spelled, so that this file does not match its
+        // own scan. It is the trap NeverByImageNameTests assembles its needles
+        // to avoid, and this test fell straight into it on the first run: the
+        // samples below were offenders in the very list they exist to verify.
+        // Excluding this file would have been the other way out, and it is the
+        // worse one -- it would create the single place in the repository where
+        // the rule does not apply.
+        const string Timed = ".WaitFor" + "Exit(5000)";
+        const string Later = ".WaitFor" + "Exit(9000)";
+        const string Bare = ".WaitFor" + "Exit()";
+
+        // The matcher is alive: one sample pairs and one does not.
+        await Assert.That(UnpairedWaits($"if (!p{Timed}) {{ return; }}\np{Bare};\nvar code = p.ExitCode;")).IsEmpty();
+        await Assert.That(UnpairedWaits($"if (!p{Timed}) {{ return; }}\nvar code = p.ExitCode;").Count).IsEqualTo(1);
+
+        // And a second timed call cannot be covered by the first one's flush.
+        await Assert.That(UnpairedWaits($"p{Timed};\np{Bare};\np{Later};").Count).IsEqualTo(1);
+    }
+
+    /// <summary>Every timed wait with no bare wait between it and the next one.</summary>
+    /// <param name="code">Source with comment-only lines already removed.</param>
+    /// <returns>The offending call text, one entry each.</returns>
+    private static List<string> UnpairedWaits(string code)
+    {
+        var unpaired = new List<string>();
+        var timed = TimedWait().Matches(code).ToList();
+
+        for (var at = 0; at < timed.Count; at++)
+        {
+            // The window ends at the NEXT timed call rather than at the end of
+            // the file: one bare call flushes one wait, so two timed calls
+            // sharing a single flush is the same defect wearing a disguise.
+            var from = timed[at].Index + timed[at].Length;
+            var to = at + 1 < timed.Count ? timed[at + 1].Index : code.Length;
+
+            if (!BareWait().IsMatch(code[from..to]))
+            {
+                unpaired.Add(timed[at].Value.Trim());
+            }
+        }
+
+        return unpaired;
+    }
+
+    /// <summary>
+    /// A <c>WaitForExit</c> call with an argument.
+    /// </summary>
+    /// <remarks>
+    /// Anchored on the dot so a declaration cannot match, and it cannot reach
+    /// <c>WaitForExitAsync</c> because the parenthesis has to follow the name
+    /// immediately. Both overloads of the async form are what this repository
+    /// uses everywhere else, and they are correct: on .NET,
+    /// <c>WaitForExitAsync</c> waits for the readers as well.
+    /// </remarks>
+    [GeneratedRegex(@"\.WaitForExit\((?!\s*\))(?:[^()]|\([^()]*\))*\)")]
+    private static partial Regex TimedWait();
+
+    /// <summary>The parameterless overload, which is the one that drains the queue.</summary>
+    [GeneratedRegex(@"\.WaitForExit\(\s*\)")]
+    private static partial Regex BareWait();
 
     private static int CountOf(string source, string needle)
     {
