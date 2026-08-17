@@ -576,6 +576,42 @@ reasoning, come here for the queue.**
       one. Re-derive with a category tally, not a total — a wrong total is
       visible only against the sum.
 
+- [ ] **Watch [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
+      and act on what upstream decides.** Filed 2026-08-17; the record of what
+      was reported and why is in the closed item directly below this one.
+
+      **Why this is a standing item rather than a filed-and-forgotten one.**
+      The report proposes a fix, and **any of the three plausible outcomes
+      changes something here**:
+
+      - **Fixed upstream.** `chromiumSandbox` in a config file starts working,
+        which means the key silently changes meaning between two versions that
+        BrowserAI floats across. `BrowserConfiguration` does not set it and
+        `SandboxFlagTests` asserts the flag reaches every node child on the
+        **command line**, so nothing breaks — but the [re-verification
+        index](kb/README.md#re-verification-index) should gain a row, because
+        this is exactly the class of upstream change [the golden
+        snapshot cannot see](plan/testing.md#the-upstream-review-gate): the
+        tool surface does not move, the config schema does not move, and the
+        behaviour behind one key inverts.
+      - **Declined, or closed as intended.** Then the non-Linux `= true` arm of
+        `validateBrowserConfig` is dead code by design rather than by accident,
+        and that is worth writing into [kb](kb/playwright/configuration.md) as
+        a settled upstream position rather than leaving it recorded here as a
+        defect. **A declined report with a reason is worth as much as a fix**,
+        and it is the half that never gets written down.
+      - **No response.** The most likely outcome, and the one needing an
+        explicit decision rather than drift: either let it sit, or fix it
+        forward with a PR. **Do not work around it** — BrowserAI is already
+        immune, so a workaround would be code carrying risk for no benefit.
+
+      **What to check, and how.** `gh issue view 1716 --repo microsoft/playwright-mcp
+      --comments`. The natural moment is [the daily drift check](CLAUDE.md#the-daily-drift-check):
+      when `@playwright/mcp` moves, this is one of the things the bump can
+      silently invalidate, which is the same argument the re-verification index
+      exists for. **A version bump that closes this issue and a version bump
+      that ignores it look identical from the registry.**
+
 - [x] ~~**Report the `chromiumSandbox` defect to `@playwright/mcp`, from the
       maintainer's own account.**~~ ✅ **Filed 2026-08-17 as
       [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)**,
