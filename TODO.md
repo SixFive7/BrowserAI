@@ -10,7 +10,7 @@ somewhere.
 
 **What does not:** open design questions and known hazards. Those live in the
 README, under [Open design decisions](README.md#open-design-decisions) and the
-[hazard index](plan/hazards.md#hazard-index). An item moves here once the decision
+[hazard index](HAZARDS.md#hazard-index). An item moves here once the decision
 behind it is made.
 
 **Format:** `- [ ] **Title.** Why it matters, then what to actually do.` Carry the
@@ -152,7 +152,7 @@ did.
       `src/BrowserAI/Protocol/ChildEnvironment.cs`,
       [pre-release item 4](PRE-RELEASE.md) and
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md)'s `browsers.json` row. The
-      [hazard index](plan/hazards.md) gained the two rows it had never had: the
+      [hazard index](HAZARDS.md) gained the two rows it had never had: the
       obligation itself, **closed** with the tests that hold it, and the
       consequence nobody had written down — **a rollback re-downloads 203.8 MB**,
       because the build it rolls back from has already pruned the revision the
@@ -207,7 +207,7 @@ did.
       six declared phrases rather than a whole-string comparison, read out of the
       advertised surface rather than off the class. **Planted by deleting both
       sentences**: red, naming all six by name, then reverted, 7 of 7 green.
-      [Hazard row 113](plan/hazards.md) — *"the mitigation is descriptive … not
+      [Hazard row 113](HAZARDS.md) — *"the mitigation is descriptive … not
       enforced"* — is closed with it, stating plainly that its other half
       (`SessionManager` event 40, the resolved absolute directory at open) has no
       test of its own. The original text follows.
@@ -329,7 +329,7 @@ did.
       [kb](kb/windows/processes.md#files-durable-writes-and-deletes) with
       [row 86](kb/re-verification.md). `TreeDelete`'s *"third
       caller … at §G"* is corrected to `InstanceDirectory`, and the
-      [hazard row](plan/hazards.md) is closed for all three callers with a
+      [hazard row](HAZARDS.md) is closed for all three callers with a
       second row added for the live-run gutting. The original text follows.
       <br><br>
       **`InstanceDirectory` uses the one primitive [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back)
@@ -423,7 +423,7 @@ did.
       guarded exactly that way), and the `.nupkg` archive step. A deletion or a
       reorder in `Main` above the first of these is caught by nothing.
 
-- [x] ~~**All 27 `Packaging and updates` rows in the [hazard index](plan/hazards.md)
+- [x] ~~**All 27 `Packaging and updates` rows in the [hazard index](HAZARDS.md)
       still read `open` with `—` for evidence**~~ ✅ **Adjudicated one at a time
       2026-08-17: 21 of the 27 are now closed with evidence and 6 are left open,
       because they are open.** The closures rest on what actually exists — the
@@ -461,7 +461,7 @@ did.
       Every closure names what would re-open it where it does not rest on a
       test. The original text follows.
       <br><br>
-      **All 27 `Packaging and updates` rows in the [hazard index](plan/hazards.md)
+      **All 27 `Packaging and updates` rows in the [hazard index](HAZARDS.md)
       still read `open` with `—` for evidence**, after
       [step 19](plan/build-order.md#19-velopack-package-update-roll-back) ran the
       whole lane for real and closed most of them. Six more rows across §B, §C
@@ -493,7 +493,7 @@ did.
       `#anchor` slugs both. The original text follows.
       <br><br>
       **The hazard index cannot outlive the plan until its links are repointed.**
-      [`plan/hazards.md`](plan/hazards.md) carries **135 links into the twelve
+      [`HAZARDS.md`](HAZARDS.md) carries **135 links into the twelve
       files that are consumed**, on 106 lines, across 104 of its 139 rows —
       including its own *Section shorthands* legend, one line that links all nine
       lettered sections and gives every `§X` token below it its meaning.
@@ -556,7 +556,7 @@ reasoning, come here for the queue.**
       first would put a test-only interface on the product's hot path.
 
 - [ ] **54 hazard rows still read `open` with `—` for evidence.** In
-      [the one file that outlives the plan](plan/hazards.md), and the file's own
+      [the one file that outlives the plan](HAZARDS.md), and the file's own
       rule is that *"a row marked `closed` with `—` here is not closed"* — the
       converse is what this is: rows nobody has adjudicated either way. Counted
       2026-08-17 by category: **Bundling and AOT 14, Child runtime and

@@ -64,7 +64,7 @@ Note the asymmetry with the mutexes above, because it looks like an inconsistenc
 
 ## Never by image name
 
-**Killing a user's own `chrome.exe` or `firefox.exe` must be impossible by construction, not merely avoided.** This is a structural rule, not a review item, because a review already passed on code that would have violated it: our own Chromium probes counted and killed by image name — harmless for Chromium on that machine, and it would have killed ~40 personal `firefox.exe` processes if adapted naively ([kb: the legacy setup](../kb/history.md#the-legacy-setup-and-this-machine)).
+**Killing a user's own `chrome.exe` or `firefox.exe` must be impossible by construction, not merely avoided.** This is a structural rule, not a review item, because a review already passed on code that would have violated it: our own Chromium probes counted and killed by image name — harmless for Chromium on that machine, and it would have killed ~40 personal `firefox.exe` processes if adapted naively ([kb: never by image name](../kb/windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)).
 
 The invariant: **BrowserAI can only terminate a process that belongs to a job object it created, or whose identity it verified against a path it owns.** Two mechanisms, no third — *for processes BrowserAI terminates*:
 

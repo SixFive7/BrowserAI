@@ -3,18 +3,19 @@
 
 # Knowledge base — what we measured
 
-[`../README.md`](../README.md) records what we **decided** and [`../PLAN.md`](../PLAN.md)
-records what we are going to **build**. This directory records what we
-**measured**, and it exists because those are different things with different
-half-lives. A decision stays true until we change our minds. A plan is consumed
-as the code gets written. A measurement stays true until upstream ships.
+[`../README.md`](../README.md) records what we **decided** and
+[`../ARCHITECTURE.md`](../ARCHITECTURE.md) records how the product is **put
+together**. This directory records what we **measured**, and it exists because
+those are different things with different half-lives. A decision stays true until
+we change our minds. An architecture stays true until the code moves. A
+measurement stays true until upstream ships.
 
 **What belongs here:** a fact about Chromium, Firefox, Playwright, Node or
 Windows that we established by running something, reading a shipped binary, or
 reading upstream source — together with enough provenance to re-establish it.
 
-**What does not:** design decisions (`../README.md`), the implementation plan
-(`../PLAN.md`), work items (`../TODO.md`), or the review procedure
+**What does not:** design decisions (`../README.md`), what implements what
+(`../ARCHITECTURE.md`), work items (`../TODO.md`), or the review procedure
 ([`../UPSTREAM-REVIEW.md`](../UPSTREAM-REVIEW.md)).
 
 ## The articles
@@ -35,7 +36,6 @@ reading upstream source — together with enough provenance to re-establish it.
 | [`packaging/velopack.md`](packaging/velopack.md) | The update path, its nine landmines, the install/update/rollback verification of each, and the restart/mutex handover race |
 | [`packaging/dependencies.md`](packaging/dependencies.md) | Package provenance with date stamps, token cost, the licence terms of everything shipped, and **what vendoring a runtime cost two long-lived repositories** |
 | [`toolchain.md`](toolchain.md) | MSBuild, NuGet, npm, PowerShell, analyzers, git line endings and the test host — traps in the tooling that builds this, none of them about processes or browsers |
-| [`history.md`](history.md) | The legacy setup this project replaces, and corrections applied after the fact |
 
 Two pages are not articles and are maintained differently:
 

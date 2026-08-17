@@ -8,16 +8,16 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// Guards the <c>How we proved it</c> column of the hazard index in
-/// <c>plan/hazards.md</c>: a row that names a symbol names one that exists.
+/// <c>HAZARDS.md</c>: a row that names a symbol names one that exists.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>Nothing in the suite read this file until 2026-08-17</b>, and it is the
-/// one section of the plan that outlives the plan — 137 rows, 76 of them
+/// longest-lived document in the repository — 137 rows, 76 of them
 /// <c>closed</c>, each closure resting on evidence nobody checked. The rule it
 /// states about itself is the rule enforced here, borrowed from the
-/// re-verification index one directory across: <b>naming a test that does not
-/// exist is worse than leaving a row open, because it reads as covered.</b>
+/// re-verification index: <b>naming a test that does not exist is worse than
+/// leaving a row open, because it reads as covered.</b>
 /// </para>
 /// <para>
 /// <b>It found three stale claims on the first run.</b> Two rows credited
@@ -50,7 +50,7 @@ namespace BrowserAI.Tests;
 internal sealed partial class HazardIndexTests
 {
     private static string IndexPath { get; } =
-        Path.Combine(RepositoryLayout.Root.FullName, "plan", "hazards.md");
+        Path.Combine(RepositoryLayout.Root.FullName, "HAZARDS.md");
 
     private static Assembly[] OurAssemblies { get; } =
         [typeof(HazardIndexTests).Assembly, typeof(BrowserAI.Protocol.StdioChannel).Assembly];
@@ -64,7 +64,7 @@ internal sealed partial class HazardIndexTests
         {
             offenders.AddRange(Named(evidence)
                 .Where(Missing)
-                .Select(name => $"hazards.md:{line}: '{name}' does not exist — {Excerpt(hazard)}"));
+                .Select(name => $"HAZARDS.md:{line}: '{name}' does not exist — {Excerpt(hazard)}"));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
@@ -81,7 +81,7 @@ internal sealed partial class HazardIndexTests
         var offenders = Rows()
             .Where(row => row.Status.Contains("closed", StringComparison.OrdinalIgnoreCase))
             .Where(row => row.Evidence.Length == 0 || row.Evidence is "—" or "-")
-            .Select(row => $"hazards.md:{row.Line}: closed with no evidence — {Excerpt(row.Hazard)}");
+            .Select(row => $"HAZARDS.md:{row.Line}: closed with no evidence — {Excerpt(row.Hazard)}");
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
@@ -95,7 +95,7 @@ internal sealed partial class HazardIndexTests
         var offenders = Rows()
             .Where(row => !row.Status.Contains("closed", StringComparison.OrdinalIgnoreCase)
                 && !row.Status.Contains("open", StringComparison.OrdinalIgnoreCase))
-            .Select(row => $"hazards.md:{row.Line}: status '{row.Status}' is neither open nor closed");
+            .Select(row => $"HAZARDS.md:{row.Line}: status '{row.Status}' is neither open nor closed");
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }

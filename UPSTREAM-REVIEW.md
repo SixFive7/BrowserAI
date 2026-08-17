@@ -47,7 +47,7 @@ Update the entry in [`upstream-review.json`](upstream-review.json):
 
 A decline with a reason is worth as much as an adoption: it stops the same question being re-litigated at the next bump. An empty note is a review that did not happen, and it is visible as such in the diff.
 
-If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the plan's [hazard index](plan/hazards.md#hazard-index), and the fact behind it in the [`kb/`](kb/README.md) article that owns the topic — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.
+If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the plan's [hazard index](HAZARDS.md#hazard-index), and the fact behind it in the [`kb/`](kb/README.md) article that owns the topic — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.
 
 **If a re-verification comes back different, update the [`kb/`](kb/README.md) article that carries the fact by re-running the measurement — never by reasoning.** An entry whose number was adjusted to match an expectation reads identically to one that was measured, which makes it worse than no entry at all. If a check is owed and has not been run, mark it `[STALE]` and say so; a gap that announces itself is recoverable, a confident wrong number is not.
 

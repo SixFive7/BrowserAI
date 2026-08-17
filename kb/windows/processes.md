@@ -130,9 +130,42 @@ most likely to be hit in the field. `[STABLE]`
 PowerShell, which merely returns `$null`. Cache the value as an `int` the moment
 the child exits. `[STABLE]`
 
+> **An uncached exit code does not fail — it reads back empty, and a hard startup
+> failure then logs identically to a clean shutdown.** Observed over **five days**
+> in the PowerShell launcher this project replaces: the process handle was not
+> captured before `WaitForExit`, so `.ExitCode` read `$null`, and the supervisor's
+> "child finished" record was byte-identical whether the child had served a
+> session or died on its first line. What it hid was total: a CLI flag deleted
+> upstream (`--output-mode`, removed in `@playwright/mcp` 0.0.79) made the child
+> print `error: unknown option` and exit **1**, with **all four supervised servers
+> dead**, and no signal anywhere said so. Recorded 2026-08-13; `[MACHINE]` as an
+> observation, `[STABLE]` as a mechanism — the null read follows from the handle
+> being gone, on every Windows and every PowerShell. Re-establish by calling
+> `WaitForExit` on a `Process` whose handle has been released and reading
+> `.ExitCode`. **This is the entry behind the rule that a child's exit code is
+> cached as an `int` the moment it is available**, and behind treating "the log
+> looks the same either way" as a defect rather than as tidiness.
+
 **`WaitForExit(int)` does not drain the async readers** — only `WaitForExit()`
 and `WaitForExitAsync(ct)` do, so the timeout overload truncates stderr.
 `[STABLE]`
+
+**Redirecting a child's streams does not stop a *grandchild* inheriting the
+stderr pipe, and the parent then blocks until the grandchild exits.** Measured
+2026-08-12/13 on the PowerShell launcher this project replaces: a detached
+installer started through `Start-Process` with redirection configured inherited
+the same stderr pipe handle, so the supervisor reading that pipe never saw EOF
+and **every spawn cost 11.71 s — the entire browser download — falling to 0.37 s
+once the inheritance was cut.** The pipe stays open because a handle to its write
+end is still held, not because anything is still writing; the process that was
+redirected has already exited. `[MACHINE]` for the two figures, `[STABLE]` for
+the mechanism, which is ordinary Windows handle inheritance. Re-establish by
+timing a spawn whose child starts a long-running grandchild, with the parent
+reading stderr to EOF, against the same spawn with inheritance suppressed. **The
+general form is worth more than the numbers: a redirected stream is drained when
+the last holder of its write end closes it, which is not the same event as the
+child exiting** — so a supervisor that waits on EOF is waiting on the whole
+process tree unless it prevents the handle travelling.
 
 **stderr survives the child.** The anonymous pipe exists before `CreateProcess`
 and the kernel buffers it: **5 lines survived a 3 s delay *and* child exit**. The

@@ -307,6 +307,23 @@ indistinguishable from a real Chromium singleton. `[STABLE]`
    wherever it appears. It also independently catches the personal-Chrome fallback
    hazard below.
 
+> **The measurement behind the rule, and it is a near miss rather than a
+> principle.** The probe scripts this project grew out of counted and killed
+> Chromium **by image name**. That was harmless where it ran — the only
+> `chrome.exe` processes on that machine were the probe's own — and it passed
+> review for exactly that reason. Swept 2026-08-13 on the same machine, the same
+> predicate against `firefox.exe` would have matched **roughly forty of the
+> user's own processes**. `[MACHINE]` for the count, and the count is not the
+> finding: **an image-name match is a query whose blast radius is a property of
+> whoever's desktop it runs on**, so it can be correct in every test and
+> catastrophic on first contact with a real machine. Re-establish by enumerating
+> processes by image name on any developer workstation and comparing the result
+> against the set the tool actually owns. This is why ownership here is
+> structural — a job object for the living, a full image path for survivors — and
+> why `GetProcessesByName`, `taskkill /IM` and name-filtered WMI are refused by
+> an analyzer rather than by review
+> ([`NeverByImageNameTests`](../../tests/BrowserAI.Tests/NeverByImageNameTests.cs)).
+
 **Two hazards specific to enumeration:** `[FLOATS]`
 
 - **The title is an untrusted string on a filesystem path.** Measured
@@ -402,7 +419,7 @@ report-don't-kill path; but knowing beats not knowing.
 > single call and could pre-filter before any `OpenProcess`. At 13.88 ms there is
 > nothing to buy, and it would put an image-name comparison inside the detection
 > path — which is exactly the pattern that erodes into
-> [the rule against it](../../plan/D-locking.md#never-by-image-name) once someone later treats
+> [the rule against it](../../tests/BrowserAI.Tests/NeverByImageNameTests.cs) once someone later treats
 > the pre-filter as the filter.
 
 **Launch race: 225 ms** from `chrome.exe` start to the titled window existing.

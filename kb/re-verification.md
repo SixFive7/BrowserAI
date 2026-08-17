@@ -19,7 +19,7 @@ time an upstream version moves.
 ## What it covers, and what it does not
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **193**
+table is how that happens. **It does not yet cover all of them**: **189**
 `[FLOATS]` markers stand across the articles against the **89** numbered rows
 below (98 lines, counting 2a, 2b, 4a, 4b, 4c, 16a, 26a, 38a and 63a),
 because one row often stands for a cluster of related entries and because rows
@@ -52,6 +52,14 @@ permission to skip the fact.
 > sentence true as written, and a real marker added anywhere in an article is
 > still red. `Corrected 2026-08-17 (previously "195 … stand across the
 > articles")`.
+>
+> `Corrected 2026-08-17 (previously "193 … stand across the articles")` — the
+> documentation restructure retired `history.md`, whose five markers left with
+> it, and gave the Firefox cost ratios a home of their own in
+> [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md#firefox-against-chromium-the-standing-cost-ratios),
+> which is one marker back. **Nothing was re-measured and no number moved**: this
+> is a re-count of the same facts after a file boundary changed, which is the
+> only kind of edit this sentence ever takes without a measurement behind it.
 
 > **There was an earlier row 54, added and withdrawn on 2026-08-16, and the
 > number has since been reused.** Read this note as being about the withdrawal
@@ -61,9 +69,9 @@ permission to skip the fact.
 > transient observation had been written up as a standing property, so the row
 > was **deleted rather than marked**, because this index lists facts that must
 > be re-checked and there was no fact left to re-check. The retraction is kept
-> in [the article](toolchain.md#dotnet-test-and-the-test-host) and in
-> [`TODO.md`](../TODO.md), so a reader who met the original meets the
-> correction. **The row was caught by this table's own test** —
+> in [the article](toolchain.md#dotnet-test-and-the-test-host), so a reader who
+> met the original meets the correction. **The row was caught by this table's own
+> test** —
 > `EveryRowIsEitherManualOrNamesSomethingThatExists` refused `— *withdrawn*` in
 > the `Automated by` column, which is the mechanism working on the person
 > maintaining it rather than only on upstream.
@@ -89,7 +97,6 @@ Counted 2026-08-17 — markers each article carries, against rows that cite it:
 | [`mcp/protocol.md`](mcp/protocol.md) | 8 | 4 | Covered |
 | [`chromium/fingerprinting.md`](chromium/fingerprinting.md) | 7 | 1 | **Thin.** Row 6 is the call-site inventory; the 486-field differ result, the baseline-exposure list and the renderer-propagation finding have nothing |
 | [`packaging/dependencies.md`](packaging/dependencies.md) | 5 | 3 | Covered |
-| [`history.md`](history.md) | 5 | 0 | **None**, and that is right: it records what was replaced, not a live dependency |
 | [`chromium/profiles.md`](chromium/profiles.md) | 3 | 1 | Thin |
 
 Those per-article numbers are a map of the holes, not a second tally to
@@ -172,7 +179,7 @@ decision:
 | 31 | `StdioClientTransport` still wraps in `cmd.exe` ([kb](mcp/sdk.md#writing-replacement-transports-against-the-public-surface)) | SDK fixes it — the custom transport stays correct either way, but the rationale changes | Start a child through the SDK's own transport and read its **real** parent, via `NtQueryInformationProcess` rather than `process.ppid`: the answer has to come from outside the child, or a child that cannot report is indistinguishable from one with no shell above it | `SdkStdioClientTransportTests.TheSdkTransportStillPutsCmdExeBetweenUsAndTheChild` |
 | 32 | An unusable `--user-data-dir` still falls back invisibly, a deny-all DACL still exits 21, and the "failed to create data directory" dialog still blocks startup ([kb](chromium/profiles.md)) | Chromium changes `RecursiveDirectoryCreate`, `ProcessSingleton` or its error dialogs | Launch against a file-occupied path and against a DACL'd directory; assert fallback, exit 21 and the dialog behave as recorded. **That article is the whole basis for [validate every path before launch](../README.md#settled-2026-08-15)** and had no row here until 2026-08-15 | — *manual* |
 | 33 | A healthy start still prints `Session: <path>` to stderr — **and only when `saveSession` is on**, which is a condition this row did not carry until 2026-08-16. With it off, a healthy start writes nothing at all; with it on, exactly that one line. Both re-measured twice ([kb](playwright/configuration.md#environment-merge-order-and-startup-output)) | Upstream changes startup output — in either direction: a new benign line trips the classifier, a removed one turns it into dead code. Also if the missing-browser diagnostic returns to stderr, which it has left at 0.0.79 | Classify a **real** start's stderr, never a fixture. [§E](../plan/E-lifecycle.md#e-lifecycle-and-observability) ports the two regexes **verbatim**, so this is behaviour our code copies rather than merely observes; the test takes the line off the captured log record rather than retyping it, so it cannot pass against a string no child produced | `StandardErrorClassifierTests.ARealHealthyStartPrintsTheBenignSessionLineAndIsNotWarnedAbout` |
-| 34 | Firefox's cost ratios against Chromium — ~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk ([kb](history.md#the-legacy-setup-and-this-machine)) | Any Firefox revision bump | Re-measure. The original harness was not preserved, so these are order-of-magnitude guidance; re-establish them properly before any decision turns on them again | — *manual* |
+| 34 | Firefox's cost ratios against Chromium — ~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk ([kb](playwright/provisioning-and-timings.md#firefox-against-chromium-the-standing-cost-ratios)) | Any Firefox revision bump | Re-measure. The original harness was not preserved, so these are order-of-magnitude guidance; re-establish them properly before any decision turns on them again | — *manual* |
 | 35 | Floating NuGet still needs **two** restores — `--force-evaluate` to resolve, locked-mode to verify ([kb](toolchain.md#nuget-floating-versions-and-central-package-management)) | NuGet changes lock-file semantics, or the SDK's default. A one-step `--locked-mode` build looks green with the float silently dead | Resolve, then `git diff --exit-code -- "**/packages.lock.json"`. The whole floating-dependency policy rests on this being two commands | — *manual* |
 | 36 | `setupExitWatchdog` still hooks stdin close / `SIGINT` / `SIGTERM` → `gracefullyCloseAll()`, hard-exiting after **15 s** ([kb](playwright/configuration.md#shutdown)) | Upstream changes its shutdown path or that ceiling | Close stdin on a real child; assert graceful close, and that nothing survives the ceiling. Teardown is built on it — [no killing is involved in the normal path](../plan/C-sessions.md#lifetime-one-timer-and-reclaim-is-forever) | — *manual* |
 | 37 | `--console-level` still defaults to `info`, silently dropping `debug` ([kb](playwright/configuration.md#defaults-that-are-not-what-they-look-like)) | Upstream changes the default | Config round-trip via `browser_get_config`. The default is [exposed on `init`](../README.md#settled-2026-08-15), so an upstream change silently changes what a caller is choosing between | — *manual* |

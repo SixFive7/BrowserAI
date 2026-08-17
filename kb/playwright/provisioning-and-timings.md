@@ -327,8 +327,8 @@ start, browser launch and one navigation.
 
 **Firefox is ~3.4× slower to first answer**, consistently, across every pair —
 which is the transferable half, and it is the same direction as
-[the cost ratios](../history.md) recorded from a different session. The absolute
-numbers are this machine's.
+[the cost ratios](#firefox-against-chromium-the-standing-cost-ratios) below. The
+absolute numbers are this machine's.
 
 **The headroom is the point, not the latency.** Playwright's own
 `DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT` is `3 * 60 * 1e3`, and the harness waits the
@@ -430,3 +430,28 @@ product.
 
 **Suite costs, for cadence decisions:** real-child contract 2–5 s, smoke 10–30 s,
 update 1–3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
+
+## Firefox against Chromium: the standing cost ratios
+
+**~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk.** Measured
+2026-08-14 against Chromium as the unit. This is the whole of the evidence behind
+Chromium being the default family, and the reason a Firefox session is an
+explicit request rather than an equal option.
+
+`[UNVERIFIED]` **as to method, and that qualifier is the point of the entry.**
+The figures come from a measurement session whose harness was not preserved, so
+they cannot be reproduced as written — treat them as order-of-magnitude guidance
+and **re-measure before any decision turns on them**. They are recorded rather
+than dropped because they were being cited in design discussion while living
+nowhere in the repository, which is the worse of the two failures: a number with
+a stated weakness can be checked, and a number carried only in conversation
+cannot. `[FLOATS]` — every one of the four moves with a browser revision.
+
+**To re-establish:** open one session per family through the product, drive the
+same navigation in each, and compare resident set, wall time to first paint,
+idle CPU over a fixed window with no page activity, and profile-directory size
+on disk. The **ratio** is the transferable half; the absolute numbers are
+whichever machine ran them. The independently measured
+[time-to-MCP-ready figures](#timings-spawn-resume-idle-close-proxy-overhead)
+above agree in direction — Firefox ~3.4× slower to first answer — which is
+corroboration of the sign, not of the magnitudes.

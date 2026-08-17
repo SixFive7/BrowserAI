@@ -226,7 +226,7 @@ retro-fitted to a tree is a rule already broken somewhere in it.
 > superseded payload table in [§A](A-runtime.md). The script still asserts the
 > payload holds none, because the requirement is about what ships and a future
 > upstream could move it. Corrected in [§A](A-runtime.md),
-> [the hazard index](hazards.md#hazard-index) and
+> [the hazard index](../HAZARDS.md#hazard-index) and
 > [kb](../kb/playwright/provisioning-and-timings.md#first-run-provisioning).
 >
 > **Node's `LICENSE` cannot be fetched beside `node.exe`.** Measured 2026-08-16:
@@ -348,7 +348,7 @@ this tree.
 > present one, and it is documented as that. The claim was corrected in
 > `.gitattributes`, [kb](../kb/toolchain.md#git-line-ending-normalisation),
 > [row 51](../kb/re-verification.md) and
-> [the hazard index](hazards.md) before this note was written.
+> [the hazard index](../HAZARDS.md) before this note was written.
 >
 > **Not wired into `dotnet build` alone:** the gate lives in the test project,
 > because [the gate is the suite](../CLAUDE.md#before-changing-upstream-reviewjson--stop-and-read-the-procedure),
@@ -1071,7 +1071,7 @@ than a detail of step 7.
 > new, unabandoned object and observes a clean `Acquired`. The handle has to be
 > open **before** the kill. That ordering is now a comment in the test, an entry
 > in [kb](../kb/windows/detection.md#named-mutexes-and-lock-files)
-> and a warning on [the hazard row](hazards.md), because nothing in the code
+> and a warning on [the hazard row](../HAZARDS.md), because nothing in the code
 > makes it obvious and the failure mode is a green test over a missing feature.
 >
 > ⚠️ **Two defects were found by making an invisible failure visible, and both
@@ -2374,7 +2374,7 @@ session TTL and no reclaim window;
 > BrowserAI starts print nothing at all. The unconditional claim was true of the
 > setup it was written against, whose four `config.json` files all set it.
 > Corrected in [§E](E-lifecycle.md), [kb: startup output](../kb/playwright/configuration.md#environment-merge-order-and-startup-output),
-> [kb: history](../kb/history.md#the-legacy-setup-and-this-machine) and
+> [kb: processes](../kb/windows/processes.md#stdio-exit-codes-and-process-startup) and
 > [row 33](../kb/re-verification.md).
 >
 > **And the second regex now matches nothing upstream currently writes.** The

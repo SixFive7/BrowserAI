@@ -84,7 +84,7 @@ the same omission this page exists to prevent, one level up.
 | Dates for the spawn, navigation, idle-close and proxy-overhead figures | Not established | Only the resume figure was dated in the charter. The numbers are carried forward **exactly as written** — none has been adjusted — and each is owed a re-stamp at the next run. [kb](playwright/provisioning-and-timings.md) |
 | Whether the ~50 ms proxy overhead predicts **this** product's | Not established | It measured an equivalent Node prototype, not the C# proxy. A precedent, not a measurement of what ships. [kb](playwright/provisioning-and-timings.md) |
 | Suite costs — real-child contract 2–5 s, smoke 10–30 s, update 1–3 min | Estimates | Not stopwatch figures, and labelled as such. [kb](playwright/provisioning-and-timings.md) |
-| The method behind Firefox's cost ratios — ~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk | Not established | Carried from a session whose harness was not preserved. Order-of-magnitude guidance; re-measure before any decision turns on them. [kb](history.md) |
+| The method behind Firefox's cost ratios — ~2× RAM, ~10× first navigate, ~24× idle CPU, ~20× profile disk | Not established | Carried from a session whose harness was not preserved. Order-of-magnitude guidance; re-measure before any decision turns on them. [kb](playwright/provisioning-and-timings.md#firefox-against-chromium-the-standing-cost-ratios) |
 
 ## What this page is not
 
