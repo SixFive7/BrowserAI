@@ -588,15 +588,39 @@ reasoning, come here for the queue.**
       this project's founding failure class, arriving from upstream, on a
       security control.
 
-      **The cause, so the report does not need them to find it.** Upstream
-      declares both `--sandbox` and `--no-sandbox`, and commander gives
-      `sandbox` a default of **`false`** rather than leaving it `undefined`.
-      Read twice by parsing an empty argv through `tools.decorateMCPCommand`:
-      `opts.sandbox === false` while `opts.headless === undefined`. The CLI
-      stage merges **last**, so it always overwrites the file, which makes
-      `validateBrowserConfig`'s non-Linux `chromiumSandbox = true` branch
-      **unreachable**. The key cannot work, rather than happening not to —
-      which is why this is a report rather than a workaround.
+      **The cause, so the report does not need them to find it.** Traced
+      through the shipped bundle 2026-08-17 and measured; four links, each
+      quoted from `playwright-core/lib/coreBundle.js` at 0.0.79:
+
+      1. `decorateMCPCommand`'s action normalises the flag —
+         `options.sandbox = options.sandbox === true ? void 0 : false;`
+      2. `configFromCLIOptions` is guarded and looks correct —
+         `if (cliOptions.sandbox !== void 0) launchOptions.chromiumSandbox = cliOptions.sandbox;`
+      3. `mergeConfig` runs **CLI last** (file → env → CLI) and merges through
+         `pickDefined`, so `undefined` is dropped and `false` is kept.
+      4. `validateBrowserConfig` defaults only what is still unset —
+         `if (browserName === "chromium" && launchOptions.chromiumSandbox === void 0)`,
+         whose non-Linux arm is `= true`.
+
+      **Step 1 is the defect: it collapses *"no flag"* into *"`--no-sandbox`"*.**
+      Measured over `tools.decorateMCPCommand` with the action replaced, so the
+      raw commander values are read
+      ([`.work/sandbox-probe/probe.js`](.work/sandbox-probe/probe.js)):
+      empty argv → `undefined`, `--sandbox` → `true`, `--no-sandbox` → `false`.
+      The ternary turns the first and third into the same `false`, which is
+      defined, so it survives `pickDefined`, overwrites the file at step 3 and
+      leaves step 4's `= true` arm **unreachable**. The key cannot work, rather
+      than happening not to.
+
+      **Corrected 2026-08-17 (previously "commander gives `sandbox` a default
+      of `false` rather than leaving it `undefined`").** Commander leaves it
+      `undefined`, exactly like `headless`, which the same probe reads as the
+      control. The earlier observation of `false` was real — it was read after
+      upstream's own ternary had run — but the *attribution* was wrong, and it
+      was the attribution that was about to be filed. **A report blaming
+      commander would not have reproduced**, and would have cost the maintainer
+      the time it takes to disprove a wrong cause before finding the real one
+      four lines away.
 
       **How to show it in two commands.** Launch with the key set in a config
       file, then read the browser's **resolved command line** — not the config,
