@@ -420,7 +420,45 @@ did.
       guarded exactly that way), and the `.nupkg` archive step. A deletion or a
       reorder in `Main` above the first of these is caught by nothing.
 
-- [ ] **All 27 `Packaging and updates` rows in the [hazard index](plan/hazards.md)
+- [x] ~~**All 27 `Packaging and updates` rows in the [hazard index](plan/hazards.md)
+      still read `open` with `—` for evidence**~~ ✅ **Adjudicated one at a time
+      2026-08-17: 21 of the 27 are now closed with evidence and 6 are left open,
+      because they are open.** The closures rest on what actually exists — the
+      feed-URL refusal and the `ExplicitChannel` assignment, the
+      `SetAutoApplyOnStartup` call and its position, the solitude gate against
+      `force_stop_package` (measured at step 19 against **two real installed
+      instances**, both offered 0.9.1, neither applying), `WaitExitThenApplyUpdates`
+      with a requested shutdown rather than `Environment.Exit`, the three
+      download timers, the archive step and its refusal, both halves of the
+      rollback pair, `InstallLocation` for state outside `current\`, the
+      `AppContext.BaseDirectory` scan, and the **real delta** — 97,216 b against
+      49,043,493 b, applied by a client that logged `deltas=1`.
+      <br><br>
+      **What was left open, and why, because that is the half that makes the
+      rest believable.** The production feed URL (the row's gate is the one
+      `[Skip]`ped test, which blocks the release by design); the transient
+      disk budget of the swap, unmeasured; the Rust binaries' own Windows floor,
+      unmeasured; SmartScreen on an unsigned `Setup.exe`, unmitigated; the
+      repair-install that destroys the root, unguarded; and the shortcuts row,
+      **half** of which is guarded — `--shortcuts None` is asserted and was read
+      back out of a real install's `sq.version`, while nothing removes
+      `%LOCALAPPDATA%\velopack\` at uninstall and nobody has looked at what it
+      holds. Those last two carry that text in the evidence column rather than
+      `—`, because *what is guarded and what is not* is worth more than an em
+      dash.
+      <br><br>
+      **The eight named rows outside packaging are closed too**, by line number
+      at the audit commit: 100 and 101 (the protocol split, both halves asserted
+      by `ProtocolSplitTests`), 156 (`T:System.Console` banned outright, so
+      CP437, CRLF and a BOM are unreachable), 176 (R5 session-0 blindness —
+      closed by *deleting* the only caller that could land in session 0), 185
+      (no queue exists for an abrupt exit to discard), 186 (the same ban, and it
+      is the stronger half of it), 188 (`LockRecord` parses strictly and names
+      the unrecognised key). 184 was already closed by the tree-delete work.
+      Every closure names what would re-open it where it does not rest on a
+      test. The original text follows.
+      <br><br>
+      **All 27 `Packaging and updates` rows in the [hazard index](plan/hazards.md)
       still read `open` with `—` for evidence**, after
       [step 19](plan/build-order.md#19-velopack-package-update-roll-back) ran the
       whole lane for real and closed most of them. Six more rows across §B, §C
