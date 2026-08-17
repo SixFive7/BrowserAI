@@ -7,7 +7,7 @@
     optionally stamps it under the version being cut.
 
 .DESCRIPTION
-    Build-order step 18, and the enforcement behind pre-release item 10:
+    The enforcement behind RELEASING.md item 10:
     REFUSE TO RELEASE ON AN EMPTY UNRELEASED SECTION. A release with nothing to
     say is a release nobody can describe afterwards, and the first thing a
     rollback needs is a statement of what changed.
@@ -25,7 +25,7 @@
         come to disagree.
 
       * It does not create the tag, publish anything, or decide that a release
-        happens. PRE-RELEASE.md item 14 is a human.
+        happens. RELEASING.md item 14 is a human.
 
       * It does not touch a released section. Stamping inserts a new heading
         below `## [Unreleased]` and moves nothing, so the unreleased entries

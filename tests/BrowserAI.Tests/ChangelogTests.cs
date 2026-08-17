@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// [Pre-release item 10](../../PRE-RELEASE.md) refuses a release whose
+/// [Release checklist item 10](../../RELEASING.md) refuses a release whose
 /// unreleased section is empty, and until build-order step 18 there was no file
 /// for it to be empty <i>of</i>. The refusal lives in
 /// <c>build/Get-ReleaseNotes.ps1</c> rather than in the product, because it is

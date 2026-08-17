@@ -79,7 +79,7 @@ internal enum SuiteCapability
 /// <b>An ordinary run skips, loudly.</b> <see cref="Skip.Test(string)"/> makes
 /// the test report as <i>skipped</i> rather than as <i>passed</i>, so the run's
 /// own summary carries a skipped count that a healthy run does not — and
-/// [pre-release item 8](../../../PRE-RELEASE.md) already requires that count
+/// [release checklist item 8](../../../RELEASING.md) already requires that count
 /// to be zero. A clean clone can still run the suite, which is the property the
 /// early returns existed to preserve.
 /// </description>
@@ -312,7 +312,7 @@ internal static class SuiteEnvironment
                 .Append(" test executions took a path that proves less than the\n")
                 .Append("      test's name claims. They are reported as SKIPPED, not as passed, so this\n")
                 .Append("      run's summary is not the summary of a healthy one. A release may not be\n")
-                .Append("      cut from it: pre-release item 8 requires the skipped count to be zero.\n");
+                .Append("      cut from it: release checklist item 8 requires the skipped count to be zero.\n");
         }
         else if (absent is not 0)
         {

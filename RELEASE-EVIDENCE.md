@@ -3,10 +3,10 @@
 
 # Release evidence
 
-The record of a [pre-release checklist](PRE-RELEASE.md) run: **what was run,
+The record of a [release checklist](RELEASING.md) run: **what was run,
 and what it returned.** One section per item, in the checklist's own order.
 
-**This file is the log; [`PRE-RELEASE.md`](PRE-RELEASE.md) is the
+**This file is the log; [`RELEASING.md`](RELEASING.md) is the
 list.** A rule belongs there and a result belongs here, and a second copy of
 either is a defect.
 
@@ -819,7 +819,7 @@ Everything else is green, and two of the three are one action each.
 
 Step 20's other half: an item that cannot be evidenced is a defect in the
 checklist. Six were, and each carries a `Corrected 2026-08-16` note in
-[`PRE-RELEASE.md`](PRE-RELEASE.md) with its previous text.
+[`RELEASING.md`](RELEASING.md) with its previous text.
 
 | Item | Could not be evidenced because | Rewritten to |
 |---|---|---|
@@ -836,7 +836,7 @@ to run at all"*, which step 19 made false. **Eight items have a command today.**
 
 ## What contradicted a document
 
-- **`PRE-RELEASE.md` vs `TESTING.md` on item 6** — resolved above, in
+- **`RELEASING.md` vs `TESTING.md` on item 6** — resolved above, in
   favour of Testing, which is the document that owns the marker's shape.
 - **`TODO.md` on `AnOversizedPayloadArrivesByteIdentical`** — recorded as *"1 m
   59 s, and it dominates the whole suite's 2 m 15 s"*. Measured this run:

@@ -13,14 +13,18 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Every one of these survived to a release gate because nothing looked.</b>
-/// [Item 13](../../PRE-RELEASE.md) names four obligations that attach at
+/// [Item 13](../../RELEASING.md) names the obligations that attach at
 /// first installer handoff, independently of BrowserAI's own licence, and the
 /// first run of that checklist — 2026-08-16, reading the packed
-/// <c>.nupkg</c> rather than the source tree — found <b>two of the four absent
-/// from an otherwise releasable package</b>: Velopack's MIT notice, because a
-/// NuGet dependency's licence stays in the package cache and is never copied to
-/// a publish output, and the trademark disclaimer, because no upstream file
-/// carries one.
+/// <c>.nupkg</c> rather than the source tree — found <b>two of the four it then
+/// listed absent from an otherwise releasable package</b>: Velopack's MIT
+/// notice, because a NuGet dependency's licence stays in the package cache and
+/// is never copied to a publish output, and the trademark disclaimer, because no
+/// upstream file carries one.
+/// <i>Corrected 2026-08-17 (previously "names four obligations")</i> — the same
+/// day's audit found the item itself short by two, the Apache-2.0 MCP SDK and
+/// the MIT <c>Microsoft.Extensions.*</c> family, so it names six and this
+/// sentence must not fix a count that is allowed to grow.
 /// </para>
 /// <para>
 /// <b>The set is data, so a fifth obligation is a red build rather than a

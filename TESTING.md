@@ -107,7 +107,7 @@ Two things close it, and neither is a scheduled job:
 - **[The daily drift check](CLAUDE.md#the-daily-drift-check)** — a directive that
   fires at the start of a working session rather than on a clock. It runs by
   construction, because the check happens when the work happens.
-- **[The pre-release checklist](PRE-RELEASE.md)** — which re-resolves everything
+- **[The release checklist](RELEASING.md)** — which re-resolves everything
   and requires green before a release may be cut, so a quiet period cannot reach
   a user unexamined.
 
@@ -299,7 +299,7 @@ Assert the property is unset, so it cannot arrive later as somebody's size
 optimisation. ✅ **Asserted 2026-08-16 by
 `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`**,
 which had been required and written nowhere for as long as the sentence existed —
-found by [pre-release item 7](PRE-RELEASE.md) looking for the evidence it asks
+found by [release checklist item 7](RELEASING.md) looking for the evidence it asks
 for. It refuses any value other than `false` in any build file **and requires the
 declaration to be present in `Directory.Build.props`**: the default is already off,
 so a file that never mentions it would pass a "not true" check while telling the
@@ -421,7 +421,7 @@ nothing, blocks nothing, and prompts nobody.
 
 ## The release gate
 
-**Lives in [`PRE-RELEASE.md`](PRE-RELEASE.md#the-release-gate)**, beside the
+**Lives in [`RELEASING.md`](RELEASING.md#the-release-gate)**, beside the
 checklist that enforces it — the six-step sequence of resolve, build, run
 everything, green-or-stop, the maintainer decides, cut it. This heading is kept so
 every link into it still resolves.

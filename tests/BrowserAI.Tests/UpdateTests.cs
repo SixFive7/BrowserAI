@@ -144,7 +144,7 @@ internal sealed class UpdateTests
     /// <para>
     /// ⚠️ <b>This skip blocks a release, and that is intended.</b>
     /// [`CLAUDE.md`](../../CLAUDE.md) forbids releasing with a skipped test, and
-    /// [pre-release item 8](../../PRE-RELEASE.md) requires the skipped count
+    /// [release checklist item 8](../../RELEASING.md) requires the skipped count
     /// to be zero. So the debt is not a note somebody has to remember — it is a
     /// red gate on the first release, which is exactly where it belongs.
     /// </para>

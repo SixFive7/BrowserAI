@@ -150,7 +150,7 @@ did.
       **Three documents were contradicted by the tree and were corrected with
       it**, all of which asserted the obligation as outstanding:
       `src/BrowserAI/Protocol/ChildEnvironment.cs`,
-      [pre-release item 4](PRE-RELEASE.md) and
+      [release checklist item 4](RELEASING.md) and
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md)'s `browsers.json` row. The
       [hazard index](HAZARDS.md) gained the two rows it had never had: the
       obligation itself, **closed** with the tests that hold it, and the
@@ -170,7 +170,7 @@ did.
       and re-downloads, which is a different operation. The obligation is
       asserted in three surviving places and satisfied in none —
       `src/BrowserAI/Protocol/ChildEnvironment.cs`,
-      [pre-release item 4](PRE-RELEASE.md) (*"the old revision sits on disk
+      [release checklist item 4](RELEASING.md) (*"the old revision sits on disk
       until something prunes it"*) and
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md). **Every `browsers.json` bump
       strands ~430 MiB per machine, forever**, and the hazard index has a
@@ -291,7 +291,7 @@ did.
       attribution reads. `RequireRepositoryPayload` and
       `RequireProvisionedChromium` already exist for exactly this; the gate was
       built and these two were missed, which means
-      [pre-release item 8](PRE-RELEASE.md)'s *"every layer ran"* still has
+      [release checklist item 8](RELEASING.md)'s *"every layer ran"* still has
       two holes.
 
 - [x] ~~**`InstanceDirectory` uses the one primitive [§E](plan/E-lifecycle.md#deleting-a-tree-that-fights-back)
@@ -506,9 +506,9 @@ did.
       the plan does go, that is a rewrite pass over the surviving file, and **no
       step owns it.**
 
-- [x] ~~**Decide whether [`PRE-RELEASE.md`](PRE-RELEASE.md) is consumed
+- [x] ~~**Decide whether [`RELEASING.md`](RELEASING.md) is consumed
       or survives**~~ ✅ **Decided and done 2026-08-17: it survives, and it has
-      moved out of `plan/`.** It is `PRE-RELEASE.md` at the repository root
+      moved out of `plan/`.** It is `RELEASING.md` at the repository root
       beside [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), which is the precedent
       the audit named. **The release gate moved into it whole rather than being
       copied** — [`TESTING.md`](TESTING.md#the-release-gate) keeps the
@@ -522,7 +522,7 @@ did.
       editing the only release gate this project has in the same pass as twelve
       file removals. The original text follows.
       <br><br>
-      **Decide whether [`PRE-RELEASE.md`](PRE-RELEASE.md) is consumed
+      **Decide whether [`RELEASING.md`](RELEASING.md) is consumed
       or survives — raised at [step 20](plan/build-order.md#20-the-first-release),
       recommended at the audit, still the maintainer's.** It is the only release
       gate that exists, four of its fourteen items are executable nowhere else,
@@ -532,7 +532,7 @@ did.
       [testing](TESTING.md), and its own rule is *"this file points; it does
       not restate"* — so surviving means absorbing
       [testing's release gate](TESTING.md#the-release-gate) first, then
-      moving to `PRE-RELEASE.md` at the root beside
+      moving to `RELEASING.md` at the root beside
       [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), which is the precedent.
 
 ## What is left after the classification pass — 2026-08-17
@@ -988,7 +988,7 @@ reasoning, come here for the queue.**
       word changed — same mechanism, same absence — and Apache-2.0 §4(a) is the
       stricter of the two clauses rather than the looser. The product is
       publicly distributed now, which is what turned a defensible deferral into
-      one that had to be closed. [`PRE-RELEASE.md`](PRE-RELEASE.md)
+      one that had to be closed. [`RELEASING.md`](RELEASING.md)
       item 13 now names **six** obligations with a `Corrected` note carrying its
       previous text, `README.md` and
       [`kb/packaging/dependencies.md`](kb/packaging/dependencies.md) carry the
@@ -1525,7 +1525,7 @@ reasoning, come here for the queue.**
       The original text follows.
       <br><br>
       Found 2026-08-16 by the first run of
-      [the pre-release checklist](PRE-RELEASE.md), reading item 13 against
+      [the release checklist](RELEASING.md), reading item 13 against
       the packaged `.nupkg` rather than against the source tree. Two of the four
       obligations are **absent from the artifact**: Velopack is a NuGet
       dependency, so its licence stays in the package cache and is never copied
@@ -1564,7 +1564,7 @@ reasoning, come here for the queue.**
       1.63.0-alpha-2026-08-05 · node v24.19.0 · chromium 1237 · firefox 1539.
       The original text follows.
       <br><br>
-      Found 2026-08-16 by the same run: [item 11](PRE-RELEASE.md) requires the
+      Found 2026-08-16 by the same run: [item 11](RELEASING.md) requires the
       resolved set recorded beside the artifact, and **nothing produces one** —
       the item named a file that has never existed, so it could be neither
       satisfied nor failed. The script already knows the version, the sizes and
@@ -1591,7 +1591,7 @@ reasoning, come here for the queue.**
       as somebody's size optimisation"* — and `grep -rn "ResourceKeys" tests/`
       returns nothing. Found 2026-08-16 at
       [step 20](plan/build-order.md#20-the-first-release), while looking for the
-      evidence [item 7](PRE-RELEASE.md) asks for. The property is correctly
+      evidence [item 7](RELEASING.md) asks for. The property is correctly
       `false` at `Directory.Build.props:160`; what is missing is the thing that
       keeps it that way. It strips the framework's exception message strings,
       which is a few kilobytes against a ~117 MB payload and an
@@ -1654,7 +1654,7 @@ reasoning, come here for the queue.**
       green summary**, which is this project's founding failure class inside its
       own release gate. Found 2026-08-16 at
       [step 20](plan/build-order.md#20-the-first-release), where the answer was a
-      paragraph of instructions in [item 8](PRE-RELEASE.md) telling a person
+      paragraph of instructions in [item 8](RELEASING.md) telling a person
       to check two paths by hand. A release-only assertion that
       `PublishedSlice.IsPresent` — an environment variable the release run sets,
       or a test that reads one — turns it back into a mechanism.
@@ -2017,7 +2017,7 @@ later measurement overruled the original.
 
 - [ ] **Review the "no automated checks" decision once the product is finished.**
       Taken 2026-08-16 with the cost stated plainly: the
-      [pre-release checklist](PRE-RELEASE.md) is the only gate, it works when
+      [release checklist](RELEASING.md) is the only gate, it works when
       it is invoked, and nothing makes it fire. That trade is right while both the
       suite and the release cadence are predicted rather than observed — many
       commits without re-running everything, and no hosted CI — and it is

@@ -256,7 +256,7 @@ internal sealed partial class BuildConfigurationTests
     /// it cannot arrive later as somebody's size optimisation"</i> — and until
     /// 2026-08-16 nothing did: <c>grep -rn "ResourceKeys" tests/</c> returned
     /// nothing, found while assembling the evidence
-    /// [item 7](../../PRE-RELEASE.md) asks for. The property was correct
+    /// [item 7](../../RELEASING.md) asks for. The property was correct
     /// and unguarded, which is the state a size optimisation walks into.
     /// </para>
     /// <para>

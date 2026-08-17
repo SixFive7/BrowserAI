@@ -14,7 +14,7 @@ in a project file, in this file, or anywhere else. A section heading carries the
 bare version and the tag carries the `v`.
 
 **Entries are written as the work lands, never reconstructed at release time.**
-[The pre-release checklist](PRE-RELEASE.md) refuses a release whose
+[The release checklist](RELEASING.md) refuses a release whose
 `[Unreleased]` section is empty, and `build/Get-ReleaseNotes.ps1` is what
 enforces it — a checklist satisfied by fifteen minutes of `git log` archaeology
 has been satisfied in form only.
