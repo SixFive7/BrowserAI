@@ -307,7 +307,7 @@ Two things follow, and they are design obligations rather than caveats:
 | Decision | Outcome |
 |---|---|
 | **License** | **Source-available**, under a bespoke five-year variant of the Functional Source License 1.1 (MIT Future License). Fixed before any code exists, and it constrains dependency selection from here. See [License](#license). |
-| **Repository visibility** | **Private for now.** Source-available is the licensing posture, not a commitment to publish. Opening the repository is a separate decision and has not been made. |
+| **Repository visibility** | **Public**, opened at `v1.0.0`. Source-available is the licensing posture and publishing was always a separate decision; this row recorded that the decision had not been made. It has. *Corrected 2026-08-17 (previously "Private for now").* |
 | **Third-party payload** | Keeps its own terms. Bundling creates redistribution obligations that bite at first installer handoff *regardless* of which license BrowserAI itself carries — enumerated under [Third-party components](#third-party-components). |
 | **Update tracks** | **One.** No beta channel. A second track doubles the release matrix and makes the version string load-bearing — UCC derives its runtime track from a `-beta` suffix, so a formatting change breaks track detection silently. A single track still requires the channel to be set explicitly, for the reason in [§G](plan/G-updates.md#g-updates) landmine 1. |
 | **Dependency versioning** | **Everything floats at build time; the build freezes it.** Nothing is pinned by hand, the payload included. The build resolves latest, the suite gates it, the release records exactly what shipped, and the client resolves nothing at runtime. Adopted from `SixFive7/Jeeves` and applied without exception. See [Versioning policy](#versioning-policy-everything-floats-the-build-freezes-it). |
@@ -362,7 +362,7 @@ Two things follow, and they are design obligations rather than caveats:
 
 1. ~~**Firefox's `parent.lock` preflight and its own stray detection.**~~ **Closed 2026-08-16** at [step 17](plan/build-order.md#17-firefox), and it is a charter requirement now rather than a design. The preflight opens `parent.lock` for write before every Firefox launch and refuses on a sharing violation with [error row 11](plan/H-model-surface.md#h4-the-error-catalogue); attribution is `RmStartSession` → `RmRegisterResources` → `RmGetList`, intersected with the image-path candidate set and guarded on `ProcessStartTime`; and the restart-registration preference is written into every Firefox config. Measured against the developer's own running Firefox as the negative subject: a foreign browser is attributed to none of our sessions and cannot become a candidate. **What remains open is not §D's**: `browserai_init` still refuses `browser: "firefox"`, because offering it needs a per-family download size for [row 6](plan/H-model-surface.md#h4-the-error-catalogue) and a decision about what `browserai_reinstall_browser` reinstalls when there are two trees — both carried in [TODO.md](TODO.md).
 
-2. **Nothing here is built, and the first vertical slice is what will say which of it survives.** Several decisions — the three lock scopes under real concurrency, `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, the session-index file layout — are settled on paper and unexercised. Expect at least one to move when code first drives them end to end. (The SDK and NativeAOT halves closed on 2026-08-15; see [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15).)
+2. ~~**Nothing here is built, and the first vertical slice is what will say which of it survives.**~~ **Closed 2026-08-17 at `v1.0.0`.** The three decisions this named as *"settled on paper and unexercised"* were all exercised: the three lock scopes under real concurrency (300 tool calls and 50 session open/destroys outstanding at once across three modes), `PROC_THREAD_ATTRIBUTE_JOB_LIST` in a published AOT binary, and the session-index file layout. The prediction that *"at least one will move"* was correct several times over, and each move is recorded where the decision lives rather than here. (The SDK and NativeAOT halves closed earlier, on 2026-08-15; see [kb: the 2026-08-15 spike](kb/mcp/sdk.md#measured-by-spike-2026-08-15).)
 
    > **All three are now exercised, and the expectation was right — twice.** Closed 2026-08-16, one line each:
    >
@@ -414,7 +414,11 @@ The `playwright/README.md` settings table carries `Verified <date> @ <version>` 
 
 ## Status
 
-**Design phase. Nothing is built.**
+**Shipped. `v1.0.0`.**
+
+396 tests, 0 failed, 0 skipped. The publish emits a NativeAOT binary with ILC reporting nothing, and the update feed resolves over real HTTP with a manifest whose SHA-256 matches the package byte for byte.
+
+*Corrected 2026-08-17 (previously "Design phase. Nothing is built."). That sentence outlived the design phase by a full build and was the first thing a reader of the public repository met. It is recorded rather than quietly replaced because the failure is worth keeping: a status line is written once, at the moment it is true, and nothing anywhere goes red when it stops being true.*
 
 Feasibility research completed 2026-08-13 across five streams: MCP SDK capability, Windows auto-update, Node/Chromium bundling, .NET process supervision, and test harness design. Everything marked *measured* or *verified* in this document was executed on a real machine against `@playwright/mcp` 0.0.79 — not inferred from documentation. Three claims in the first draft of this charter were wrong and have been corrected: the tool count, the framing of the protocol split as a risk, and the assumption that a bundled Chromium is used by default.
 
