@@ -239,8 +239,11 @@ machine** ([kb](kb/playwright/provisioning-and-timings.md#what-the-first-run-dow
 a cached run's suite wall time is **31.2–34.7 s** against **35.8–36.8 s** cold,
 and the test itself drops from **13.8–17.1 s** to **3.2–3.9 s**. The download is
 therefore worth **10–12%** of the suite's wall clock — far less than the test's
-own duration suggests, because the suite runs four-wide and the download overlaps
-other tests. **The saving is bandwidth, not seconds**, which is what was asked
+own duration suggests, because the suite runs every test at once and the download
+overlaps other tests. *(Corrected 2026-08-17 (previously "the suite runs
+four-wide"): the four-way cap was removed the next day, and the percentage above
+was measured under it — the ratio is not re-measured here and the wall times it
+quotes are the capped ones.)* **The saving is bandwidth, not seconds**, which is what was asked
 for; and the same measurement establishes that a cached run reaches the network
 for **133,761 B** where a cold one moves **425 MB** across the adapter counters.
 

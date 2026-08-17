@@ -334,6 +334,8 @@ the two gates. What implements it:
 | The in-process harness and the scriptable fake child | `tests/BrowserAI.Tests/Harness/{McpTestHarness, FakePlaywrightChild, PipeDuplex, PipeClientTransport, FrameChannel, RawPipeClient, RigSessionEnvironment}.cs` |
 | Session-level oracles | `tests/BrowserAI.Tests/Harness/{SessionRun, UpstreamSurface}.cs` |
 | Out-of-process probes | `tests/BrowserAI.TestProbe/` |
+| The clock the suite advances by hand, so the one timer in the product is asserted on rather than raced | `tests/BrowserAI.Tests/Harness/ManualClock.cs`, `src/BrowserAI/Sessions/SessionEnvironment.cs` (`Clock`) |
+| How wide the suite runs, and the design point run for real: 100 concurrent BrowserAI processes | `tests/BrowserAI.Tests/{SuiteParallelism, SaturationTests}.cs` |
 | The capability gate that makes a degraded run visible | `tests/BrowserAI.Tests/Harness/SuiteEnvironment.cs`, `tests/BrowserAI.Tests/SuiteCoverageTests.cs` |
 | The upstream-review gate | `upstream-snapshots/`, `build/upstream-snapshots.mjs`, `build/Update-UpstreamSnapshots.ps1`, `build/UpstreamSnapshots.targets`, `tests/BrowserAI.Tests/{UpstreamSnapshotTests, UpstreamReviewTests, ReVerificationIndexTests, ResolvedVersions}.cs` |
 | The documents themselves | `tests/BrowserAI.Tests/{DocumentationLinkTests, HazardIndexTests, ChangelogTests, BuildConfigurationTests}.cs` |
