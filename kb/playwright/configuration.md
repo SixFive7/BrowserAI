@@ -88,18 +88,26 @@ binary even headless.
 > [step 15](../../plan/build-order.md#15-first-run-provisioning-and-browserai_reinstall_browser)'s
 > job. `[FLOATS]`
 
-> **This selector is authoritative, and one observation disagrees with it.**
+> ✅ **`--browser chromium` supplies a channel, so it takes the alias branch.**
+> `Corrected 2026-08-17 (previously "This selector is authoritative, and one
+> observation disagrees with it … `[UNVERIFIED]` as to which branch the 0.0.79
+> run took")`. `resolveBrowserParam` is the stage between the CLI and this
+> selector, and for the single value `"chromium"` it substitutes
+> `channel: "chrome-for-testing"` — which `isChromiumAlias` then matches, so
+> `getExecutableName` returns before it ever reaches its `headless ? …` line.
 > [kb: detection](../windows/detection.md#enumeration-works--and-it-moves-the-safety-boundary)
-> records `--headless --browser chromium` spawning full `chrome.exe` — which the
-> selector predicts only if a chromium-alias channel was in force, and that run
-> did not record the resolved channel, so it cannot tell us which branch it took.
-> A selector read out of the shipped bundle covers **every** configuration; an
-> observation covers one. **The selector governs what BrowserAI generates** —
-> always `browserName` *and* an explicit chromium-alias channel, never neither.
-> Neither entry is retracted: re-run the observation capturing
-> `browser_get_config`'s resolved channel. Until then, "a headless launch gets the
-> full binary" is true **because we set the channel**, and must never be relied on
-> as an upstream default. `[UNVERIFIED]` as to which branch the 0.0.79 run took.
+> recorded `--headless --browser chromium` spawning full `chrome.exe`, and that
+> is what this selector predicts once the stage above it is read. **Nothing is
+> retracted on either side**; what was missing was one function.
+>
+> The `headless ? "chromium-headless-shell" : "chromium"` line is the
+> **fall-through**, reachable only when no channel is set at all, which no
+> `--browser` value produces. It is still true that BrowserAI gets the full
+> binary **because it sets the channel** — it sets `browserName` *and* an explicit
+> chromium-alias channel in every mode — and the shell branch is not something to
+> rely on being unreachable by accident. `[FLOATS]` — re-establish by reading
+> `resolveBrowserParam`, `configFromCLIOptions` and `getExecutableName` together
+> in the resolved bundle, never `getExecutableName` alone.
 
 **On Windows `headless` defaults to `false`.** `resolveCLIConfigForMCP` sets it
 only to `os.platform() === "linux" && !process.env.DISPLAY`.

@@ -322,18 +322,31 @@ which spawns it. `@playwright/mcp` 0.0.79 does not take that path: headed by
 default, and `--headless --browser chromium` spawns full `chrome.exe` with a
 titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 
-> ⚠️ **That last observation disagrees with the selector logic, and the selector
-> is authoritative.**
-> [`getExecutableName`](../playwright/configuration.md#defaults-that-are-not-what-they-look-like),
-> read from the shipped bundle, picks `headless ? "chromium-headless-shell" :
-> "chromium"` when **no channel** is set — so a headless launch with no channel
-> should have taken the shell. The run above did not record its resolved channel
-> and so cannot say which branch it went down, and a source read covering every
-> configuration outranks a single run. **The observation stands and is not
-> retracted**; re-run it capturing `browser_get_config`'s resolved channel. It
-> changes nothing about what BrowserAI builds: `browserName` and an explicit
-> chromium-alias channel are set in every mode, which lands on the full binary
-> down either branch. `[UNVERIFIED]` as to which branch the run took.
+> ✅ **Settled 2026-08-17. `Corrected 2026-08-17 (previously "That last
+> observation disagrees with the selector logic, and the selector is
+> authoritative … `[UNVERIFIED]` as to which branch the run took")`.** There was
+> never a disagreement: `--browser chromium` **is** a channel, and the missing
+> half was the CLI stage that supplies it. Read from the resolved
+> `playwright-core/lib/coreBundle.js`, three functions in a row —
+>
+> 1. `resolveBrowserParam("chromium")` returns
+>    `{ browserName: "chromium", channel: "chrome-for-testing" }`. It is a
+>    `switch`, and `"chromium"` is the one case that substitutes a channel the
+>    caller did not type.
+> 2. `configFromCLIOptions` copies that straight into `launchOptions.channel`.
+> 3. `getExecutableName` tests `options.channel && registry.isChromiumAlias(…)`
+>    **before** it reaches the `headless ? "chromium-headless-shell" :
+>    "chromium"` line, and `chromiumAliases` is exactly `["chrome-for-testing"]`.
+>
+> So `--headless --browser chromium` resolves the **full binary**, which is what
+> was observed. The headless-shell branch is reachable only with **no channel at
+> all**, and no `--browser` value produces that state. The earlier note read
+> `getExecutableName` in isolation and treated its last line as the default; it
+> is the fall-through. **Both entries were right and neither needed retracting** —
+> what was missing was one function upstream of the one being read.
+> `[FLOATS]` — re-establish by grepping the resolved bundle for
+> `resolveBrowserParam` and `getExecutableName` and reading them together, never
+> either alone.
 
 > **This is recorded as a property of the shell, not as a risk to us.** BrowserAI
 > [does not provision it](../../README.md#settled-2026-08-15) — full Chromium in every
@@ -518,13 +531,33 @@ the first filter and never reaching the second. `[MACHINE]`
 
 ## Windows object names and window scoping
 
-**You cannot put a path in a mutex name.** Backslashes are illegal after the
-`Global\` prefix — `"Global\C:\Source\..."` throws `DirectoryNotFoundException`,
-so a path-keyed lock must canonicalise and hash. The real length limit is
-**~32,000 characters, not the documented 260**, but hashing is required
-regardless. `Global\` additionally needs `SeCreateGlobalPrivilege`, which
-interactive users have and low-integrity / AppContainer processes do not.
-`[STABLE]`
+**You cannot put a path in a mutex name, and .NET throws rather than relocating
+the object.** Any backslash after the namespace prefix is refused: re-measured
+2026-08-17 on **.NET 10.0.400**, `new Mutex(false, name)` threw
+`System.IO.DirectoryNotFoundException` — *"Could not find a part of the path"* —
+for `Global\<a drive-letter path>`, for `Global\a\b` and for `Local\a\b` alike,
+while `Global\plain` succeeded. So a path-keyed lock must canonicalise and hash.
+The real length limit is **~32,000 characters, not the documented 260**, but
+hashing is required regardless. `Global\` additionally needs
+`SeCreateGlobalPrivilege`, which interactive users have and low-integrity /
+AppContainer processes do not. Re-establish by constructing those four names in
+a loop and catching. `[STABLE]`
+
+> ✅ **This settles the disagreement flagged
+> [below](#named-mutexes-and-lock-files--first-party-prior-art-in-c).**
+> `Corrected 2026-08-17`. The prior art's guard against a caller-supplied
+> backslash is commented *"one in the caller's string would silently relocate the
+> object"*; this entry recorded a throw. **The throw is what happens**, on every
+> shape tested, and *silent relocation* does not describe .NET's behaviour at
+> all — the framework validates the name before the kernel ever sees it. The
+> guard is still right; only its stated reason was.
+>
+> **What was not measured is raw `CreateMutexW`**, which is where the relocation
+> story would have to be true if it is true anywhere: the object manager treats
+> a backslash as a path separator, so a name with one in it plausibly names an
+> object in a different directory rather than failing. Nothing in this project
+> calls `CreateMutexW` directly, so the question is left open rather than
+> answered. `[UNVERIFIED]` for the Win32 layer; the .NET layer is measured.
 
 **`FindWindowExW(HWND_MESSAGE, …)` is scoped to a window station and desktop.** A
 scheduled task configured *"run whether user is logged on or not"* lands in
@@ -634,17 +667,20 @@ both report success**. `[STABLE]` for the mechanism; `[MACHINE]` for the defect.
 > matters. Both need `IsProcessLocal`-style visibility — the divergence is only in
 > what to do when it is true.
 
-**A caller-supplied backslash in a mutex name is guarded against, and the two
-descriptions of *why* do not agree.** `CrossProcessLock.cs:52-58` rejects any
-backslash in the base name with the comment that it *"separates the namespace from
-the name, so one in the caller's string would silently relocate the object"*. [The
-entry above](#windows-object-names-and-window-scoping) instead records a
-**measured** `DirectoryNotFoundException` for `"Global\C:\Source\..."`. **Unresolved
-and flagged rather than reconciled:** one says silent relocation, the other says a
-throw, and only the second was measured. Both agree the name must be hashed or
-canonicalised, which is what the design already does, so nothing turns on it
-today. `[UNVERIFIED]` as to which failure a given name produces — settle it by
-running both shapes if anything ever depends on the distinction.
+**A caller-supplied backslash in a mutex name is guarded against, and the guard's
+stated reason was wrong.** The prior art rejects any backslash in the base name
+with the comment that it *"separates the namespace from the name, so one in the
+caller's string would silently relocate the object"*. **Settled by measurement
+2026-08-17** and recorded in full
+[above](#windows-object-names-and-window-scoping): .NET refuses such a name with
+`DirectoryNotFoundException` on every shape tried, so there is no silent
+relocation to guard against at that layer — the guard is correct and its
+justification was not. Both descriptions always agreed on the action, which is
+why nothing ever turned on it: the name must be hashed or canonicalised either
+way, which is what the design does. `Corrected 2026-08-17 (previously
+"Unresolved and flagged rather than reconciled … `[UNVERIFIED]` as to which
+failure a given name produces")`. What stays open is the raw `CreateMutexW`
+layer, named as open in the entry above rather than left as a disagreement here.
 
 **An unreadable lock file must throw, not read as free.**
 `SessionLockService.ReadLock` returns null for exactly three conditions — the file
