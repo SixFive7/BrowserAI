@@ -599,6 +599,72 @@ reasoning, come here for the queue.**
       to the browser — but it is a live silent failure for everyone else who
       sets that key, and this project has the measurement in hand.
 
+- [ ] **Decide the Win32 interop question, and consider Vanara alongside
+      CsWin32.** [`plan/stack.md`](plan/stack.md) set a threshold **before any
+      code existed** — *"once a seventh Win32 API is needed, adopt
+      `Microsoft.Windows.CsWin32`"* — and it is long past. Counted 2026-08-17:
+      **45 `[LibraryImport]` declarations across 9 files** in
+      `src/BrowserAI/Interop/`. **The threshold is therefore in breach and has
+      been for most of the build**, which is the state this repository keeps
+      finding and dislikes most: a rule that is stated, correct-sounding, and
+      quietly not followed. **It wants a decision either way** — adopt, or
+      strike it as a heuristic that was never a commitment.
+
+      **The candidates**, on the maintainer's prompt to look past CsWin32:
+
+      - **`Microsoft.Windows.CsWin32`** — a source generator; you name an API
+        and it emits the declaration from Windows' own metadata.
+      - **`Vanara.PInvoke.*`** — the different one, and the reason this item
+        exists rather than being a straight yes/no. It offers **typed wrappers**
+        — real .NET types, `SafeHandle`s, enums instead of raw flags — so it
+        could make this code *simpler* rather than merely differently-sourced.
+        Every other candidate only changes who wrote the declaration.
+      - **`TerraFX.Interop.Windows`** — pre-generated raw bindings for the whole
+        Win32 surface.
+      - **`dotnet/pinvoke`** — hand-maintained signature packages; **believed
+        unmaintained, unverified.**
+      - **Keep hand-written and strike the threshold** — the status quo, and the
+        option to beat.
+
+      **Four axes decide it, and the first is disqualifying.** ① **NativeAOT**:
+      the product publishes with `PublishAot` and *any* trim or AOT warning
+      fails the publish, so a candidate built on runtime-marshalled
+      `[DllImport]` is out regardless of how good its API is. ② **Binary size**
+      — the AOT binary is ~17 MB and everything linked ships. ③ **Licence** —
+      anything linked needs its notice in `THIRD-PARTY-NOTICES.txt`, which has
+      six obligations and a test asserting them. ④ **Floating** — every
+      dependency here resolves to latest at build time and nothing is pinned, so
+      a library that breaks between minors is a worse fit than usual.
+
+      **Two cases will decide it in practice**, both places a generated
+      signature tends not to fit, both already load-bearing here:
+
+      - **`CreateProcessW` mutates its command-line buffer**, so it needs a
+        writable `char[]`/`Span<char>`. A `string` parameter is wrong, and a
+        generator has every reason to emit one.
+      - **`NativeFile` must request `FILE_APPEND_DATA` *without*
+        `FILE_WRITE_DATA`.** Asking for `GENERIC_WRITE` silently forfeits the
+        filesystem's atomic-append guarantee — the fix for
+        [a measured loss of 70 records in 200](kb/windows/processes.md#interop-and-the-toolchain).
+        That distinction lives in the **access mask**, not the signature, so a
+        wrapper that hides the mask hides the fix.
+
+      **What a rewrite actually risks.** These 45 declarations back the most
+      heavily measured guarantees in the repository — job containment at **0
+      escapees** across two browser families, the atomic-append fix above, and a
+      cross-process `GetWindowTextW` read that bypasses `WM_GETTEXT` and is
+      pinned by a test on every build. **Interop is the one place a subtle
+      change is invisible**: a wrong access mask or a mis-shaped struct does not
+      throw, it returns a plausible wrong answer.
+
+      **Standing recommendation: strike the threshold**, unless Vanara's typed
+      wrappers turn out to be both AOT-clean and able to express the two cases
+      above — in which case adopting it buys something the hand-written code
+      does not have, rather than re-deriving what it already proves. A
+      verified comparison of licences, versions, AOT stories and sizes was
+      commissioned 2026-08-17 and **is not yet recorded here**; nothing above
+      asserts a fact about any library beyond its name and its published intent.
+
 - [x] ~~**Four things only the maintainer can do.**~~ **Two remain; two were
       done on 2026-08-17.** Split out because a bundled row cannot be ticked.
       **Done:** the release feed is live (GitHub Releases on the now-public
