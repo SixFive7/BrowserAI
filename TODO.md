@@ -599,6 +599,50 @@ reasoning, come here for the queue.**
       to the browser — but it is a live silent failure for everyone else who
       sets that key, and this project has the measurement in hand.
 
+- [ ] **Audit the repository for justifications that are stated as fact and were
+      never measured.** A new failure shape, found 2026-08-17, and it is worse
+      than the ones already catalogued because **nothing in this project can
+      catch it**.
+
+      **What happened.** *"`[DllImport]` relies on runtime IL-stub generation
+      that NativeAOT does not do"* is **false on Windows** — ILC compiles those
+      stubs ahead of time, measured with a 29-declaration probe that published
+      with zero warnings and ran correctly. That sentence was written into
+      **three source files** as the justification for `[LibraryImport]`, and
+      into every agent brief of the build. It survived twenty-two build steps,
+      a plan audit that enumerated ~450 requirements, and 392 tests.
+
+      **Why nothing caught it.** Every mechanism this repository has protects
+      *claims about behaviour*: a test fails, a snapshot diffs, an analyzer
+      errors, a marker test goes red. **This was a claim about a reason.** The
+      rule it justified was correct — `[LibraryImport]` really is right, and is
+      Microsoft's documented first recommendation — so nothing behaved wrongly
+      and nothing could be red. A false *why* attached to a true *what* is
+      invisible to every gate here, and it propagates: it was copied into
+      comments precisely **because** it sounded like the kind of thing worth
+      writing down.
+
+      **Why it matters even when the conclusion survives.** A reason is what the
+      next person reasons *from*. Someone deciding whether a generated
+      `[DllImport]` library is viable would have concluded "impossible under
+      AOT" and stopped — which is exactly the question that surfaced this, and
+      the wrong answer was one search away from being acted on.
+
+      **What to do.** Sweep the load-bearing justifications — the `<remarks>`
+      blocks and MSBuild comments that explain *why* a rule exists, especially
+      where they assert a platform or toolchain behaviour — and sort each into
+      measured here, cited to a source, or **assumed**. The third bucket is the
+      finding. Two known instances are already corrected (this one, and
+      `ILLinkTreatWarningsAsErrors` being credited with a failure that
+      `TreatWarningsAsErrors` causes); **the sweep is to find out whether they
+      were the only two.** Start with `src/BrowserAI/Interop/`, `Directory.Build.props`
+      and `src/BrowserAI/BrowserAI.csproj`, which is where toolchain reasoning
+      is densest.
+
+      **The general form, worth keeping even after the sweep:** *a rule with a
+      measured reason and a rule with a plausible reason are indistinguishable
+      until someone acts on the reason instead of the rule.*
+
 - [ ] **Decide the Win32 interop question, and consider Vanara alongside
       CsWin32.** [`plan/stack.md`](plan/stack.md) set a threshold **before any
       code existed** — *"once a seventh Win32 API is needed, adopt
