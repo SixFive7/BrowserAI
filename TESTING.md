@@ -166,6 +166,84 @@ generated and that the installed version moved**. Delta granularity is the reaso
 Velopack was chosen at all ([kb](kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed)),
 and nothing in-house had ever proved `vpk` produces one before 2026-08-16.
 
+## The first-run download runs at most once an hour
+
+**Settled 2026-08-17, on the maintainer's instruction:** *"Add a cache of sorts
+so that it only downloads once per hour. I don't want to hammer the servers.
+Especially if we are going to run this more with more tests now."*
+
+`FirstRunProvisioningTests` provisions Chromium into an **empty** browsers root
+through the published binary, which is **203.8 MB** off Playwright's CDN every
+run ([kb](kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
+That was one run a day. It is about to be dozens.
+
+**What is cached is the provisioned tree, and the hour runs from the download.**
+`.work/first-run-cache/` holds a single entry — the browsers root a cold run
+produced, and a stamp naming when the bytes were fetched, which revision they
+are, and how many files and bytes the tree holds. Inside the hour the test seeds
+from it; outside it, the test downloads for real and replaces the entry. **A
+cached run never touches the stamp**, so the ceiling is also a floor: the
+genuinely cold path runs at least once per hour of runs, rather than being
+deferred forever by use.
+
+**A cached run is not a different test wearing the same name — it is the same
+test taking the product's own cross-process path.** BrowserAI serialises installs
+on a `Global\` mutex keyed on the browsers root, and a process that does not get
+it *does not download*: it watches for the marker the holder will write. So a
+cached run takes that mutex first, and everything else is unchanged — `init`
+answers at once and reports `downloading`, every browser tool is refused with the
+size and a route out, `browserai_list` keeps answering, and the same child
+navigates against a real Chromium once the marker lands, with no restart. The
+seed writes every byte before it writes a single `INSTALLATION_COMPLETE`, which
+is upstream's own ordering and the reason a watching process cannot see a
+half-copied tree. It also exercises `WaitForAnotherProcess` end to end, which
+nothing else does outside a double.
+
+**What a cached run cannot prove**, stated here because a test that quietly stops
+exercising its subject is the failure class this repository exists to eliminate:
+that Playwright's CDN is up, that `cftUrl` still resolves, that the revision the
+payload pins is still served, and that `install-browser --no-shell` still does
+what its name says. The layout assertions still run, against bytes a real
+download produced **within the hour** rather than within the second.
+
+**Four mechanisms stop that becoming silent, and the first is the one that
+matters:**
+
+- **A release run never uses the cache.** `BROWSERAI_RELEASE_RUN=1` forces the
+  CDN, so no release is cut on evidence that came out of `.work\`.
+- **Every run says which path it took**, in the same coverage block that makes a
+  degraded run distinguishable from a real one — a `first-run bytes` row reading
+  `CDN`, `CACHED` or `NOT RUN`, with the age of the tree it used.
+- **The ceiling is a ceiling**, and a stamp dated in the future is refused rather
+  than trusted forever.
+- **`BROWSERAI_FIRST_RUN_CACHE=off`** forces a cold run without editing anything.
+
+**A partial cache is refused rather than used**, and the completeness signal is
+the same one BrowserAI itself trusts plus a census the marker cannot give:
+`chromium-<rev>/INSTALLATION_COMPLETE`, an `ffmpeg-*` marker, `chrome.exe` where
+the payload says, **no** `chromium_headless_shell-*` — a cache carrying one would
+make the negative assertion pass for the wrong reason — and a file-and-byte count
+matching the stamp. `FirstRunCacheTests` drives every one of those refusals
+against a three-file planted tree, in milliseconds, and never touches the real
+cache.
+
+**Publishing is committed by a rename, never by a write.** The tree is copied
+into `.staging-<guid>\`, which readers do not enumerate, and then moved to
+`entry-<stamp>-<guid>\` in one `MoveFileEx`. The destination name carries a GUID,
+so two publishers cannot collide and neither needs a lock — the same answer, for
+the same reason, that the session index gives to eight concurrent writers rather
+than reaching for `FileMode.Append`.
+
+**The cost, measured 2026-08-17 over seven full-suite runs on the reference
+machine** ([kb](kb/playwright/provisioning-and-timings.md#what-the-first-run-download-costs-the-suite)):
+a cached run's suite wall time is **31.2–34.7 s** against **35.8–36.8 s** cold,
+and the test itself drops from **13.8–17.1 s** to **3.4–3.9 s**. The download is
+therefore worth **10–12%** of the suite's wall clock — far less than the test's
+own duration suggests, because the suite runs four-wide and the download overlaps
+other tests. **The saving is bandwidth, not seconds**, which is what was asked
+for; and the same measurement establishes that a cached run reaches the network
+for **133,761 B** where a cold one moves **425 MB** across the adapter counters.
+
 ## We write our own harness
 
 We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines

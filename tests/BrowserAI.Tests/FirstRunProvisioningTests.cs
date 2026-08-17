@@ -10,7 +10,7 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The empty-root run: a browsers directory with nothing in it, a real download,
+/// The empty-root run: a browsers directory with nothing in it, a real install,
 /// and the same child navigating afterwards.
 /// </summary>
 /// <remarks>
@@ -36,6 +36,58 @@ namespace BrowserAI.Tests;
 /// twelve seconds.</b> That is stated rather than hidden: it is the price of the
 /// only evidence there is that the batteries-included premise is alive.
 /// </para>
+/// <para>
+/// ⚠️ <b>It pays that price at most once an hour, and the two modes prove
+/// different things.</b> Added 2026-08-17 on the maintainer's instruction —
+/// <i>"only download once per hour. I don't want to hammer the servers"</i> —
+/// because a suite that was run once a day is about to be run dozens of times.
+/// <see cref="FirstRunCache"/> keeps the tree the last CDN run produced;
+/// <see cref="FirstRunCache.Plan"/> decides which mode this run is in, and
+/// <see cref="FirstRunCache.Record"/> puts the answer in the coverage block that
+/// every run prints. <b>A release run always downloads</b>, so no release is cut
+/// on cached evidence.
+/// </para>
+/// <list type="table">
+/// <listheader>
+/// <term>Asserted below</term>
+/// <description>Cold (CDN) · Cached</description>
+/// </listheader>
+/// <item>
+/// <term><c>init</c> answers at once and reports <c>downloading</c></term>
+/// <description>real · real — the cached mode drives the <i>loser</i> of the
+/// machine-wide mutex, which is a production path nothing else covers end to
+/// end</description>
+/// </item>
+/// <item>
+/// <term>Every browser tool is refused with the size and a route out</term>
+/// <description>real · real</description>
+/// </item>
+/// <item>
+/// <term>BrowserAI's own tools keep answering meanwhile</term>
+/// <description>real · real</description>
+/// </item>
+/// <item>
+/// <term>The same child navigates once the marker lands, no restart</term>
+/// <description>real · real, against a real Chromium</description>
+/// </item>
+/// <item>
+/// <term>The layout is what the payload pins, and no headless shell exists</term>
+/// <description>real · <b>a byte copy of what a CDN run produced ≤ 1 h
+/// ago</b></description>
+/// </item>
+/// <item>
+/// <term>Upstream's installer works, the mirror answers, the revision resolves</term>
+/// <description>real · <b>not exercised</b></description>
+/// </item>
+/// </list>
+/// <para>
+/// <b>So the last row is the whole cost, and it is stated rather than
+/// discovered.</b> A cached run cannot tell you that Playwright's CDN is up,
+/// that <c>cftUrl</c> still resolves, or that <c>install-browser --no-shell</c>
+/// still does what its name says. It can tell you everything BrowserAI does with
+/// the result, which is the larger half of this test and the half that changes
+/// when our code changes.
+/// </para>
 /// </remarks>
 internal sealed class FirstRunProvisioningTests
 {
@@ -47,11 +99,15 @@ internal sealed class FirstRunProvisioningTests
     private static readonly TimeSpan Patience = TimeSpan.FromMinutes(45);
 
     [Test]
-    public async Task AnEmptyBrowsersRootDownloadsAndTheSameChildThenNavigates()
+    public async Task AnEmptyBrowsersRootIsProvisionedAndTheSameChildThenNavigates()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
         PublishedSlice.EnsureFresh();
+
+        // Decided before anything is started, because the decision changes what
+        // has to be held before BrowserAI's first init.
+        var plan = FirstRunCache.Plan();
 
         using var scratch = ScratchDirectory.Create("first-run");
 
@@ -66,6 +122,27 @@ internal sealed class FirstRunProvisioningTests
 
         await Assert.That(Directory.Exists(browsers)).IsFalse();
 
+        // ⚠️ On a cached run the machine-wide provisioning mutex is taken FIRST,
+        // and everything below then runs against BrowserAI's cross-process
+        // path: it finds the mutex held, declines to start a second download of
+        // the same 203.8 MB, and watches for the marker the holder will write.
+        // The holder is this test, and what it writes is last hour's tree.
+        //
+        // Nothing about the assertions changes. What changes is who fills the
+        // directory -- upstream's installer, or a copy -- which is exactly the
+        // distinction the class remarks tabulate.
+        using var elsewhere = plan.Source is FirstRunSource.Cache
+            ? ProvisioningClaim.Take(browsers, SessionManager.SupportedBrowser)
+            : null;
+
+        if (elsewhere is not null)
+        {
+            // A claim that silently failed would let BrowserAI download while
+            // this test believed it was reading a cache -- green, and 203.8 MB
+            // heavier than the run says it is.
+            await Assert.That(elsewhere.Held).IsTrue();
+        }
+
         var environment = PublishedSlice.InheritedEnvironment();
         environment[BrowserAiPaths.AppRootOverride] = appRoot;
 
@@ -77,6 +154,7 @@ internal sealed class FirstRunProvisioningTests
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
+        var startedUtc = DateTimeOffset.UtcNow;
         var clock = Stopwatch.StartNew();
 
         var init = await CallAsync(client, SessionToolSurface.Init, new JsonObject
@@ -90,7 +168,9 @@ internal sealed class FirstRunProvisioningTests
 
         // ⚠️ The bullet this whole step turns on. A 204 MB download is running
         // and init answered anyway; if it had waited, this number would be the
-        // download's.
+        // download's. On a cached run it is the other half of the same property:
+        // the process that LOST the mutex answers just as fast, rather than
+        // blocking on the winner.
         await Assert.That(initElapsed).IsLessThan(TimeSpan.FromSeconds(20));
         await Assert.That((bool?)init["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(init)).Contains("browserProvisioning: downloading");
@@ -131,6 +211,14 @@ internal sealed class FirstRunProvisioningTests
         await Assert.That((bool?)listed["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(listed)).Contains(session);
 
+        // On a cached run the tree arrives here, markers last, which is where a
+        // real install's would have arrived. On a CDN run this is a no-op and
+        // upstream's installer is already several seconds into the download.
+        if (plan.Entry is { } cached)
+        {
+            FirstRunCache.SeedInto(browsers, cached);
+        }
+
         // Now wait for the real thing: the marker upstream writes last, into the
         // directory the payload's own browsers.json names.
         var installed = Path.Combine(browsers, $"chromium-{BrowserAiPaths.ChromiumRevision}");
@@ -170,6 +258,13 @@ internal sealed class FirstRunProvisioningTests
         // merely later. ffmpeg is the LAST component this install fetches, so a
         // headless shell that was going to appear would already have appeared by
         // the time ffmpeg's marker lands.
+        //
+        // ⚠️ The ordering survives a cached run and is not weakened by it.
+        // FirstRunCache.SeedInto copies every byte before it writes a single
+        // marker, so chromium's marker still cannot precede ffmpeg's bytes; and
+        // a cache carrying a chromium_headless_shell-* is refused outright, so
+        // the negative assertion below cannot pass because the cache is missing
+        // something rather than because --no-shell works.
         var ffmpeg = await WaitForAnyMarkerAsync(browsers, "ffmpeg-*", Patience);
 
         await Assert.That(ffmpeg).IsNotNull();
@@ -181,6 +276,17 @@ internal sealed class FirstRunProvisioningTests
         await Assert.That(Directory.EnumerateDirectories(browsers, "chromium_headless_shell-*").Any()).IsFalse();
 
         _ = await client.CloseAndWaitForExitAsync(TimeSpan.FromSeconds(30));
+
+        // Published only by the run that actually paid for the bytes, and after
+        // the client is gone so nothing still holds a file in the tree. A cached
+        // run deliberately touches nothing: the TTL runs from the download, so a
+        // cache refreshed by use would never expire and the cold path would
+        // never run again.
+        var note = plan.Source is FirstRunSource.Cdn
+            ? FirstRunCache.Publish(browsers, startedUtc, FirstRunCache.Root)
+            : "The cached tree is untouched, so its hour still runs from the download that produced it.";
+
+        FirstRunCache.Record(plan, clock.Elapsed, note);
     }
 
     /// <summary>

@@ -126,6 +126,11 @@ internal sealed class SuiteCoverageTests
         await Assert.That(summary).Contains("client CLI");
         await Assert.That(summary).Contains(SuiteEnvironment.ReleaseRunVariable);
 
+        // Not a capability -- Chromium reads PRESENT whether this run downloaded
+        // it or read it out of .work\ -- and that is exactly why the block has to
+        // say which. FirstRunCacheTests asserts what the row may contain.
+        await Assert.That(summary).Contains("first-run bytes");
+
         foreach (var capability in SuiteEnvironment.All)
         {
             var state = SuiteEnvironment.StateOf(capability);

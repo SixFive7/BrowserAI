@@ -303,6 +303,78 @@ its output *is* a copy of `node.exe` plus the blob. `vercel/pkg` was archived
 **2024-01-13**. Bun and Deno both carry open issues on the Playwright
 browser-launch path. `[FLOATS]`
 
+## What the first-run download costs the suite
+
+**Measured 2026-08-17, seven full-suite runs, from TUnit's own per-test report.**
+Nobody had asked: `FirstRunProvisioningTests` is the suite's longest test by a
+factor of two and was assumed to dominate the wall clock. It does not, because
+the suite runs four-wide.
+
+| Run | Suite wall (test execution) | `FirstRunProvisioningTests` | Sum of all test durations |
+|---|--:|--:|--:|
+| Cold, before a cache existed | 36.50 · 35.84 · 35.91 s | 13.77 · 15.81 · 15.92 s | 132.6 · 130.1 · 129.5 s |
+| Cold, and publishing the cache | 36.84 s | 17.13 s | 136.0 s |
+| Seeded from the cache | 31.89 · 34.74 · 31.16 s | 3.49 · 3.88 · 3.36 s | 117.3 · 124.8 · 112.7 s |
+
+**The download is worth 3.5–4.2 s of a ~36 s run — 10 to 12% — while the test
+that performs it takes 12 to 14 s longer than its seeded form.** Means: 32.60 s
+seeded, against 36.08 s for the pre-cache baseline and 36.84 s for a cold run
+that also publishes. The gap between 13 s of test and 4 s of suite is the
+parallelism: with the suite capped at four concurrent tests and ~130 s of total
+test work, it is **work-bound rather than critical-path-bound**, so removing 13 s
+of work returns about a quarter of it to the clock. A test's own duration is
+therefore not its cost to the suite, and this is the second time that distinction
+has mattered here — the first being a slice test that took 2.6 ms on a run that
+really did launch a browser. `[MACHINE]`
+
+**What publishing and seeding each cost is not separable from this data**, and is
+recorded as unmeasured rather than divided out: the single cold-with-publish run
+(17.13 s) sits above a baseline whose own spread is 13.77–15.92 s, so the
+451,389,838 B same-volume copy is inside that difference and cannot be read off
+it. The seeded figure of 3.49–3.88 s is a whole first-run sequence — published
+binary start, `initialize`, `init`, two refusals, a `browserai_list`, the copy,
+and one real navigation against a real Chromium — not a copy time. `[MACHINE]`
+
+**A cached run really does not reach the network, measured at the adapter rather
+than inferred from the code.** `Get-NetAdapterStatistics` sampled either side of
+the first-run test alone, 2026-08-17:
+
+| Mode | Bytes received across all adapters |
+|---|--:|
+| Seeded from the cache | **133,761** |
+| `BROWSERAI_FIRST_RUN_CACHE=off`, forced cold | **425,355,150** |
+
+A factor of **3,180**. `[MACHINE]`
+
+> **The cold figure is ~2× the download because two adapters count the same
+> bytes.** This machine carries `Ethernet` and `vEthernet (LAN-Bridge)` over it,
+> and summing every adapter counts bridged traffic twice: 425,355,150 / 2 =
+> 212.7 MB against a 203.8 MB payload, the remainder being TLS and TCP overhead.
+> **Sum one physical adapter, not all of them**, when re-establishing this — the
+> ratio is the finding and the absolute number needs that correction.
+
+**A cached tree is 432 MiB on disk and exactly one is kept**, pruned by the run
+that publishes its replacement. Full census of what a first run produces, as
+copied: **318 files, 451,389,838 B**. `[MACHINE]`
+
+> ⚠️ **That is 58 B larger than [the figure above](#first-run-provisioning)
+> (451,389,780 B), and the difference is not drift.** `.links/` holds one file
+> whose *content* is the absolute path of the `playwright-core` package that
+> installed the tree, so its length tracks where the installer ran from: 69 B
+> from `payload\mcp\node_modules\playwright-core` at the repository root, 127 B
+> from the same relative path under
+> `src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\`, which is where
+> the suite drives the published binary from. Both numbers are right for what
+> they measured. **A census compared across two machines will differ for the same
+> reason**, which is worth knowing before treating a mismatch as corruption —
+> and is why the cache's own completeness check compares a tree against the stamp
+> *it* was published with rather than against a figure written down here.
+
+**Re-establish** by running the suite twice within the hour and reading the
+`first-run bytes` row of the coverage block, or `.work/suite-coverage.txt`, which
+names the source, the age of the tree used, and the elapsed time. The mechanism
+is [in TESTING.md](../../TESTING.md#the-first-run-download-runs-at-most-once-an-hour).
+
 ## Timings: spawn, resume, idle close, proxy overhead
 
 `[MACHINE]` for every number, `[FLOATS]` for what they are numbers *about*.

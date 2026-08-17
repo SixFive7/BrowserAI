@@ -325,6 +325,14 @@ Three things to record rather than assume, because each is easy to skim past:
   path, and whether this was a release run. It is printed to the run's output
   and written to `.work/suite-coverage.txt`.
 
+  ⚠️ **The same variable is what makes the first-run download real.** Ordinary
+  runs download 203.8 MB from Playwright's CDN [at most once an
+  hour](TESTING.md#the-first-run-download-runs-at-most-once-an-hour) and seed
+  from a cached tree in between; under `BROWSERAI_RELEASE_RUN=1` the cache is
+  bypassed unconditionally, so **no release can be cut on evidence that came out
+  of `.work\`.** The coverage block's `first-run bytes` row says which happened,
+  in every run.
+
   ⚠️ **Do not read a slice test's own duration as the signal.** The rig shares
   one `SliceRun`, so its cost lands on whichever test triggered it first:
   measured 2026-08-16, `TheResolvedBrowserIsOurChromiumAndNotTheHeadlessShell`

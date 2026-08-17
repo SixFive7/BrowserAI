@@ -295,6 +295,16 @@ internal static class SuiteEnvironment
             .Append(IsReleaseRun ? " is set, so a missing capability is a failure" : "=1 turns every skip below into a failure")
             .Append('\n');
 
+        // ⚠️ Where the first-run test's 203.8 MB came from, and it is a row here
+        // rather than a capability because it is not one: Chromium is provisioned
+        // either way and every capability above reads PRESENT either way. What
+        // this line says is who PAID for it -- Playwright's CDN, or a tree the
+        // last cold run left in .work\. Without it, a suite that had quietly
+        // stopped downloading for a week would report exactly what one that
+        // downloaded every time reports, which is this block's founding defect
+        // met one layer down. See FirstRunCache.
+        _ = report.Append(FirstRunCache.CoverageRow).Append('\n');
+
         _ = report.Append(rule).Append('\n');
 
         var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);
