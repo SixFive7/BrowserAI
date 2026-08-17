@@ -602,6 +602,78 @@ session. `[STABLE]`
 browser holds `chrome.exe`. Download-alongside-and-swap is therefore not
 available for a browser reinstall. `[STABLE]`
 
+## What a suite run puts on the screen
+
+Measured 2026-08-17, because a developer running the suite while working
+reported windows flickering over their work and stealing focus, and **nobody had
+established which tests actually showed a window** — two guesses had already been
+wrong. The point of the entry is that the answer was one test, and that
+everything the guesses blamed was measurably innocent.
+
+**How.** Two independent detectors running in one out-of-process watcher for the
+duration of a full run: a `SetWinEventHook` on `EVENT_OBJECT_CREATE`,
+`EVENT_OBJECT_SHOW` and `EVENT_SYSTEM_FOREGROUND`, and a 40 ms `EnumWindows`
+poll. Both filtered to whole top-level windows (`GetAncestor(hwnd, GA_ROOT) ==
+hwnd`, `idObject == OBJID_WINDOW`, `idChild == CHILDID_SELF`); every window that
+already existed was recorded as a baseline and could not be reported as new. Each
+record carries the owning process's image path from
+`QueryFullProcessImageNameW`, so a window can be attributed to a binary rather
+than to a pid. Correlation to a test is by timestamp against TUnit's own
+per-test `startTime`/`endTime` in its JSON report. Re-establish by running that
+watcher across `dotnet test` and intersecting the two timelines.
+
+**The result, before the fix: two windows in a 410-test run, and both took the
+foreground.** Both were `Chrome_WidgetWin_1`, both full size at
+`10,10,1905x2092`, both titled *Untitled – Google Chrome for Testing*, four
+seconds apart, and both fell inside the single interval of
+`BrowserIdleTimerTests.AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks`
+— the suite's only `realSessionChildren: true` arm, which reached a real Chromium
+through a harness that opened its session in `persistent` mode
+(`Headed: true`). Two windows rather than one because that test lets the idle
+timer close the browser and then drives it again. `[MACHINE]`
+
+**Headless Chromium creates window objects and never shows one. This is the
+guess that was wrong.** In the same run the headless browsers created **308**
+other top-level windows and **not one of them was ever visible or took the
+foreground**: 52 `Chrome_MessageWindow`, 45 `OleMainThreadWndClass`, 30 `IME`,
+24 `Chrome_WidgetWin_0`, 15 `Chrome_StatusTrayWindow`, 15
+`crashpad_SessionEndWatcher`, 15 `CicMarshalWndClass`, 14 **`Chrome_WidgetWin_1`**
+and 10 `Base_PowerMessageWindow`. The last of those is the one that matters:
+**`Chrome_WidgetWin_1` — the class a visible browser window uses — is created in
+headless mode too, without `WS_VISIBLE`, and is never shown.** So "the full
+`chrome.exe` runs in every mode, therefore headless must flash a window" is
+false, and a detector that keys on the class rather than on visibility will
+report windows that do not exist on screen. `[FLOATS]`
+
+**Firefox is the same:** 24 `OleMainThreadWndClass`, 4
+`Chrome_MessagePumpWindow`, 2 each of `nsAppShell:EventWindowClass`, `IME` and
+`MozillaHiddenWindowClass`, plus its per-profile
+`Mozilla_firefox-default_<profile>_RemoteWindow` — none visible. `[FLOATS]`
+
+**`CREATE_NO_WINDOW` really does suppress the console window.** 8
+`ConsoleWindowClass` windows were created by `conhost.exe` during the run and
+**none was ever shown**. A console-window flash is not a cause of this class of
+complaint on a launcher that sets the flag, and the flag is set on every launch
+here. `[STABLE]`
+
+**After making that one arm windowless** — the rig that starts real children now
+opens its session in `headless`, decided in `RigSessionEnvironment` rather than
+at the call site — the same watcher across a full 411-test run recorded **zero
+visible windows and zero foreground events**, against 377 top-level windows
+created. Suite duration was **35.95 s** against **37.88 s** before, so the change
+costs nothing measurable; the two runs differ by less than the run-to-run spread
+of this suite and neither number should be read as a timing result. `[MACHINE]`
+
+> ⚠️ **The first version of the watcher reported zero shows and was wrong**, and
+> the mistake is worth carrying because it is the shape of every silent detector
+> failure in this repository. It de-duplicated by window handle alone, so a
+> window **created hidden and shown a moment later** was recorded once, as a
+> `create`, with `visible: false` — and the `EVENT_OBJECT_SHOW` that actually put
+> it on screen was dropped as a duplicate. It reported **308 creates and 0
+> shows**, which reads as *nothing was ever shown* and is the opposite of what
+> happened. **Create and show are distinct events about the same handle**; a
+> detector must key on both. `[STABLE]`
+
 ## Named mutexes and lock files
 
 Windows and .NET facts about cross-process locking, and the design lessons that

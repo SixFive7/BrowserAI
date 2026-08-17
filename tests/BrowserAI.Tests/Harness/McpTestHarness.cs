@@ -463,7 +463,16 @@ internal sealed class McpTestHarness : IAsyncDisposable
                 // `persistent` so the policy permits every tool this layer
                 // calls: the passthrough assertions are about bytes, and a mode
                 // refusal would replace the child's answer with ours.
-                ["mode"] = "persistent",
+                //
+                // ⚠️ Read off the rig rather than written here, because the
+                // reason above stops holding the moment the child is real.
+                // `persistent` is Headed:true, and behind a real node child that
+                // is a Chromium window on the developer's screen which takes
+                // their foreground — measured 2026-08-17 as the ONLY thing in
+                // the whole suite that did. RigSessionEnvironment decides, so a
+                // second real-child arm inherits the answer instead of
+                // rediscovering the defect.
+                ["mode"] = sessions.DefaultSessionMode,
                 ["purpose"] = "the in-process rig's own session",
             },
         });

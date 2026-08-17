@@ -394,6 +394,83 @@ internal sealed class FakeChildHarnessTests
     }
 
     /// <summary>
+    /// A rig that starts a real browser opens it in a mode with no window; a rig
+    /// whose children are doubles keeps the mode that permits every tool.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the whole of the developer-facing fix, as an assertion.</b>
+    /// Measured 2026-08-17 by watching a full 410-test run with
+    /// <c>SetWinEventHook</c> and a 40 ms <c>EnumWindows</c> poll
+    /// ([kb](../../kb/windows/detection.md#what-a-suite-run-puts-on-the-screen)):
+    /// the suite showed exactly two windows and took the foreground twice, both
+    /// from the single <c>realSessionChildren: true</c> arm, because
+    /// <see cref="McpTestHarness"/> opened its default session in
+    /// <c>persistent</c> — which is <c>Headed: true</c>. Every other real browser
+    /// the suite launches was already headless and showed nothing.
+    /// </para>
+    /// <para>
+    /// <b>Both halves are asserted, because fixing one by breaking the other is
+    /// the available mistake.</b> Making every rig headless would change the mode
+    /// the passthrough layer runs under — <c>headless</c> permits 41 tools where
+    /// <c>persistent</c> permits 58 — and a refusal there would replace the
+    /// child's answer with ours, which is precisely what that layer exists to
+    /// detect. So the double-backed rig must stay on the permissive mode and the
+    /// real-backed one must be windowless, and neither is free to drift.
+    /// </para>
+    /// <para>
+    /// <b>Asserted through the mode table rather than against the string
+    /// <c>"headless"</c>.</b> What matters is <c>Headed</c>; a fourth windowless
+    /// mode added later must satisfy this test by being windowless, not by being
+    /// spelled a particular way.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoRigThatStartsARealBrowserOpensItWithAWindow()
+    {
+        await using var real = RigSessionEnvironment.Create(realSessionChildren: true, opensDefaultSession: false);
+        await using var doubles = RigSessionEnvironment.Create(opensDefaultSession: false);
+
+        var realMode = SessionModes.Find(real.DefaultSessionMode);
+        var doubleMode = SessionModes.Find(doubles.DefaultSessionMode);
+
+        // A mode the product does not know would make everything below vacuous:
+        // the rig would fail to open its session and this test would be asserting
+        // about a null.
+        await Assert.That(realMode).IsNotNull();
+        await Assert.That(doubleMode).IsNotNull();
+
+        // THE POINT. A real node child means a real Chromium, and a headed one
+        // lands on the developer's screen and takes their foreground.
+        await Assert.That(realMode!.Headed).IsFalse();
+
+        // And the half that keeps the fix from being a regression somewhere else:
+        // the double-backed rigs still run under the mode whose policy permits
+        // every tool, so a passthrough assertion still sees the child's bytes
+        // rather than a refusal of ours.
+        await Assert.That(doubleMode!.Headed).IsTrue();
+
+        // ⚠️ THE DIFFERENCE BETWEEN THE TWO MODES IS THE STORAGE CLASS AND
+        // NOTHING ELSE, and this test asserts that rather than describing it,
+        // because the first version of it named `browser_annotate` and was RED:
+        // that tool is HumanPresent, which `persistent` refuses too — the only
+        // mode permitting it is `interactive`. Measured 2026-08-17 from
+        // SessionToolPolicy's own table: headless permits Ordinary,
+        // Configuration and ArbitraryCode; persistent permits those three plus
+        // Storage. So a cookie tool is the one thing the real-child rig gives up
+        // by being windowless, and the arm that needs it does not exist.
+        await Assert.That(SessionToolPolicy.Decide("browser_cookie_list", doubleMode).Refusal).IsNull();
+        await Assert.That(SessionToolPolicy.Decide("browser_cookie_list", realMode).Refusal).IsNotNull();
+
+        // And the tools that arm actually calls are permitted in both, so the
+        // change costs it nothing. `browser_navigate` is the call under test and
+        // the close tool is the product's own idle close.
+        await Assert.That(SessionToolPolicy.Decide("browser_navigate", realMode).Refusal).IsNull();
+        await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool, realMode).Refusal).IsNull();
+    }
+
+    /// <summary>
     /// One <c>tools/call</c>, naming the rig's own session.
     /// </summary>
     /// <remarks>

@@ -64,6 +64,36 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     {
         Root = root;
 
+        // ⚠️ THE ONE RIG THAT STARTS A REAL BROWSER STARTS IT WITHOUT A WINDOW,
+        // and that is decided HERE rather than at the call site so it cannot be
+        // forgotten by whoever adds the second one.
+        //
+        // Measured 2026-08-17, a full 410-test run watched by SetWinEventHook
+        // and a 40 ms EnumWindows poll (kb/windows/detection.md): the suite put
+        // exactly TWO windows on the developer's screen, both full-size
+        // `Chrome_WidgetWin_1` at 10,10,1905x2092, and both TOOK THE FOREGROUND
+        // out of the window the developer was typing in. Both came from this
+        // rig, in the single arm that passes `realSessionChildren: true`, because
+        // McpTestHarness opened its default session in `persistent` -- which is
+        // Headed:true. Nothing else in the suite showed a window at all: 308
+        // other top-level windows were created by Chromium, Firefox, the probes
+        // and conhost, and every one of them stayed hidden.
+        //
+        // `persistent` is right for a rig whose child is a double: it is the mode
+        // whose policy permits every tool, the passthrough assertions are about
+        // bytes, and a mode refusal would replace the child's answer with ours --
+        // and no window can exist behind a child that is a Pipe. It is wrong the
+        // moment the child is a real node with a real Chromium under it, where
+        // the headedness is incidental to every assertion and lands on a
+        // developer's screen.
+        //
+        // Headless permits a smaller tool set (41 against 58) and refuses
+        // `browser_annotate`, so a future real-child arm needing a headed-only
+        // tool gets a refusal naming the tool rather than a silent difference.
+        // That is the correct trade: loud, and about the tool it is actually
+        // about.
+        DefaultSessionMode = realSessionChildren ? "headless" : "persistent";
+
         // Created here because the product does not create it: Program.cs makes
         // this run's own directory before the proxy exists, and a session's
         // GENERATED CONFIG is written into it. Left out, every init fails with a
@@ -195,6 +225,21 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
     /// <summary>The scratch tree every session this rig opens lives under.</summary>
     public string Root { get; }
+
+    /// <summary>
+    /// The mode <see cref="McpTestHarness"/> opens this rig's own session in.
+    /// </summary>
+    /// <remarks>
+    /// <b>A rig whose children are doubles gets <c>persistent</c>; a rig whose
+    /// children are real gets <c>headless</c>.</b> The first is about tool
+    /// policy — <c>persistent</c> permits every tool, and the passthrough
+    /// assertions are about bytes, so a mode refusal would replace the child's
+    /// answer with ours. The second is about a window: <c>persistent</c> is
+    /// <c>Headed: true</c>, and behind a real node child that is a full Chromium
+    /// window on the developer's screen, taking their foreground. Asserted by
+    /// <c>FakeChildHarnessTests.NoRigThatStartsARealBrowserOpensItWithAWindow</c>.
+    /// </remarks>
+    public string DefaultSessionMode { get; }
 
     /// <summary>The provisioner this rig's sessions ask about their browser.</summary>
     public BrowserProvisioner Provisioner { get; }
