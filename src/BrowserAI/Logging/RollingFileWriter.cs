@@ -63,14 +63,45 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     private bool _disabled;
 
     /// <summary>Creates the writer and sweeps expired files, both best-effort.</summary>
+    /// <param name="directory">Where the log files live.</param>
     public RollingFileWriter(string directory)
     {
         _directory = directory;
+
+        // The UNC refusal, and it has to happen HERE rather than at the first
+        // write. `SweepExpired()` on the next line enumerates the directory, so
+        // a `\\host\share` that is not answering would block the constructor --
+        // which runs on the startup path, before anything is serving -- for the
+        // 21 seconds a dead share costs a single file call. That is logging
+        // becoming the outage, on the one path where nothing is yet running to
+        // report it.
+        if (IsNetworkPath(directory))
+        {
+            RefusedNetworkDirectory = true;
+            _disabled = true;
+            return;
+        }
+
         SweepExpired();
     }
 
     /// <summary>The file currently being appended to, or null if none is open.</summary>
     public string? CurrentFile { get; private set; }
+
+    /// <summary>
+    /// Whether this writer refused its directory outright for being a network
+    /// path, as opposed to failing a write against a local one.
+    /// </summary>
+    /// <remarks>
+    /// <b>A distinct fact rather than an absent <see cref="CurrentFile"/>.</b>
+    /// "Nothing is open" is also true of a writer that has not been written to
+    /// yet and of one whose last write failed, and the three want different
+    /// answers from anyone looking: the first is normal, the second is a disk
+    /// problem, and this one is a configuration nobody should be in. Records
+    /// still reach stderr through the console provider, so this degrades the
+    /// process log rather than silencing the process.
+    /// </remarks>
+    public bool RefusedNetworkDirectory { get; }
 
     /// <inheritdoc />
     /// <remarks>There is no buffer, so a record that has been written is already durable.</remarks>
@@ -131,6 +162,34 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
             Close();
         }
     }
+
+    /// <summary>Whether a path names a network location, decided on the string.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decided on the string and never by touching the filesystem</b>, which
+    /// is the same rule the artifact router applies to a caller-supplied
+    /// filename and for the same measured reason: asking the filesystem about a
+    /// share that is not answering is the 21-second call this check exists to
+    /// prevent. Every UNC spelling starts with two separators —
+    /// <c>\\host\share</c>, <c>//host/share</c>, <c>\\?\UNC\host\share</c> and
+    /// the device form <c>\\.\</c> — so two separators is the whole test.
+    /// </para>
+    /// <para>
+    /// <b>A mapped drive letter is not caught, and that is stated rather than
+    /// implied.</b> A <c>Z:\</c> that resolves to a share reads as local here,
+    /// and telling the difference needs <c>GetDriveType</c> — a filesystem call,
+    /// which on a disconnected mapping can block for exactly as long as the
+    /// thing being avoided. The rule §E states names UNC, this closes UNC, and
+    /// what remains open is named here rather than left for someone to
+    /// rediscover.
+    /// </para>
+    /// </remarks>
+    /// <param name="directory">The path to judge.</param>
+    /// <returns><see langword="true"/> if it is a network path.</returns>
+    private static bool IsNetworkPath(string directory) =>
+        directory.Length >= 2
+        && directory[0] is '\\' or '/'
+        && directory[1] is '\\' or '/';
 
     private SafeFileHandle EnsureOpen()
     {

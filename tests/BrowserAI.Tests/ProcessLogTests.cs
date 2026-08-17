@@ -105,6 +105,105 @@ internal sealed class ProcessLogTests
     }
 
     [Test]
+    public async Task ALogDirectoryOnAShareIsRefusedOutrightRatherThanWrittenTo()
+    {
+        // §E: "No destination that can block or produce a window ... no UNC
+        // path -- a \\host\share that is not answering blocks a file call for
+        // 21 seconds, measured, and a log write is not somewhere to discover
+        // that." That rule was stated in a doc comment and enforced by nothing
+        // until 2026-08-17.
+        //
+        // The address below is in the RFC 5737 documentation range, so it can
+        // never be a real host on anyone's network -- and the whole point is
+        // that the test must not depend on how long it takes to fail, because a
+        // check that reaches the network is the thing being prevented.
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        using var writer = new RollingFileWriter(@"\\192.0.2.1\browserai$\logs");
+
+        writer.Write("a record that must not cost a network round trip");
+        clock.Stop();
+
+        await Assert.That(writer.RefusedNetworkDirectory).IsTrue();
+        await Assert.That(writer.CurrentFile).IsNull();
+
+        // Decided on the string, so it cannot have been a timeout: a single
+        // file call against a dead share was measured at 21 s, and one second
+        // is two orders of magnitude inside that without being a tight bound
+        // that fails on a loaded machine.
+        await Assert.That(clock.Elapsed).IsLessThan(TimeSpan.FromSeconds(1));
+
+        // And a local directory is still written, so the guard refuses shares
+        // rather than refusing everything.
+        using var scratch = ScratchDirectory.Create("rollingwriter-local");
+        using var local = new RollingFileWriter(scratch.Path);
+
+        local.Write("a record that must reach disk");
+
+        await Assert.That(local.RefusedNetworkDirectory).IsFalse();
+        await Assert.That(local.CurrentFile).IsNotNull();
+    }
+
+    [Test]
+    public async Task EveryConsoleProviderInTheStackIsPinnedToStderrAndIsNeverTheOnlyOne()
+    {
+        // Two claims §E makes about the same few lines, both load-bearing and
+        // both asserted by nothing before 2026-08-17.
+        //
+        // One: "Set it to the lowest level that exists and no severity has a
+        // path to stdout at all." That is one argument on one call, in two
+        // places, and deleting it silently routes Information to stdout -- the
+        // protocol channel. NothingIsWrittenToStdoutByTheLoggingStack catches
+        // it at the default level; this catches the wiring itself, at every
+        // call site, including one added later that nobody thinks about.
+        //
+        // Two: §E leaves "whether the framework's own console provider drains
+        // its queue at process exit" explicitly unverified and offers two ways
+        // out -- verify it, or own the sink. BrowserAI takes the second: every
+        // factory that adds the console provider also adds a FileLoggerProvider
+        // over RollingFileWriter, which is one unbuffered WriteFile per record.
+        // So no record exists ONLY in a queue whose drain nobody measured, and
+        // the unverified behaviour is not relied on rather than being assumed
+        // benign. What makes that true is a pairing, and a pairing is exactly
+        // what a later edit breaks.
+        var source = await RepositoryLayout.ReadCodeAsync(
+            new FileInfo(Path.Combine(
+                RepositoryLayout.Root.FullName, "src", "BrowserAI", "Logging", "ProcessLog.cs")));
+
+        var consoleCallSites = CountOf(source, "AddConsole(");
+        var pinned = CountOf(source, "LogToStandardErrorThreshold = LogLevel.Trace");
+        var fileProviders = CountOf(source, "new FileLoggerProvider(");
+
+        await Assert.That(consoleCallSites).IsGreaterThan(0);
+        await Assert.That(pinned).IsEqualTo(consoleCallSites);
+        await Assert.That(fileProviders).IsGreaterThanOrEqualTo(consoleCallSites);
+
+        // And nowhere else in the product builds a logging stack, so counting
+        // one file is counting all of them.
+        var elsewhere = RepositoryLayout.ProductSourceFiles
+            .Where(file => !string.Equals(file.Name, "ProcessLog.cs", StringComparison.Ordinal))
+            .Select(file => (file.Name, Code: File.ReadAllText(file.FullName)))
+            .Where(entry => entry.Code.Contains("AddConsole(", StringComparison.Ordinal))
+            .Select(entry => entry.Name)
+            .ToList();
+
+        await Assert.That(string.Join(", ", elsewhere)).IsEmpty();
+    }
+
+    private static int CountOf(string source, string needle)
+    {
+        var found = 0;
+
+        for (var at = source.IndexOf(needle, StringComparison.Ordinal); at >= 0;
+             at = source.IndexOf(needle, at + needle.Length, StringComparison.Ordinal))
+        {
+            found++;
+        }
+
+        return found;
+    }
+
+    [Test]
     public async Task ConcurrentProcessesDoNotLoseEachOthersRecords()
     {
         using var scratch = ScratchDirectory.Create("processlog-concurrent");
