@@ -18,6 +18,34 @@
             "command": "powershell.exe -ExecutionPolicy Bypass -File .claude/hooks/upstream-review-gate.ps1",
             "timeout": 15,
             "statusMessage": "Upstream-review gate"
+          },
+          {
+            "type": "command",
+            "if": "Edit(*\\\\Sessions\\\\\\\\*.cs)",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File .claude/hooks/process-identity-reminder.ps1",
+            "timeout": 15,
+            "statusMessage": "Process-identity reminder"
+          },
+          {
+            "type": "command",
+            "if": "Write(*\\\\Sessions\\\\\\\\*.cs)",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File .claude/hooks/process-identity-reminder.ps1",
+            "timeout": 15,
+            "statusMessage": "Process-identity reminder"
+          },
+          {
+            "type": "command",
+            "if": "Edit(*\\\\Interop\\\\\\\\*.cs)",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File .claude/hooks/process-identity-reminder.ps1",
+            "timeout": 15,
+            "statusMessage": "Process-identity reminder"
+          },
+          {
+            "type": "command",
+            "if": "Write(*\\\\Interop\\\\\\\\*.cs)",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File .claude/hooks/process-identity-reminder.ps1",
+            "timeout": 15,
+            "statusMessage": "Process-identity reminder"
           }
         ]
       }
