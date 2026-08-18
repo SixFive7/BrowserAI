@@ -128,3 +128,66 @@ removing the test that produced it.
   four golden snapshots already cover more than the policy did.
 - **Git history is accepted as-is.** Nothing in it justifies a rewrite; the
   exposure that exists is at HEAD, and has been generalized.
+
+---
+
+## Added 2026-08-18, after the load-failure investigation
+
+Four decisions raised by the agent that chased the two flakes. None blocks
+anything; all four are recorded rather than taken, because each is a matter of
+product voice or of reopening a safety-critical path.
+
+### 5. The Velopack warning, 100 times per saturation run
+
+`warn: velopack: Failed to initialize WindowsVelopackLocator` fires on **every
+startup of a binary that was not installed by Velopack** — a normal, supported
+configuration, and the one CI runs in. It is not a channel violation (stderr is
+the diagnostic channel by design) and it did not cause either CI failure. But it
+is a hundred warnings per saturation run on the stream this project relies on for
+diagnosis.
+
+**Directions.** (a) Leave it. (b) **Demote "not installed" to `Debug` and keep
+`Warning` for genuine locator failures.** (c) Suppress it once per process.
+
+**Recommendation: (b), and the agent independently reached the same view.** A
+supported configuration should not warn. Not taken alone because what severity a
+message carries is the product's voice, and that is yours.
+
+### 6. The per-directory gate at 60 seconds
+
+Raised from 5 s. That is 2× `RenameWindow.Budget` and roughly 18× the measured
+queue at the charter's 100-process design point. `TheGateOutlastsEveryWaitTakenInsideIt`
+now fails the build if either number crosses the other — which is the part that
+matters more than the value.
+
+**Defensible, not uniquely correct.** Reversible in one line, guarded by a test.
+
+### 7. The deeper fix that was NOT taken
+
+A loser holds the gate **only to name the holder** — the sharing violation alone
+already proves ownership. A contender that probed *before* taking the gate would
+remove the queue entirely, and with it the whole class of defect. It was not
+taken because it has TOCTOU subtleties and reopens the most safety-critical path
+in the product.
+
+**This is the real fix, and it deserves a decision rather than a drive-by.**
+
+### 8. The silent Chromium death — how hard to chase it
+
+**The leading theory is disproven:** 80 concurrent headless Chromium instances
+started with **zero** failures at 1,436 machine processes, nearly double what the
+saturation test produces. So no ceiling was recorded, because there is none to
+record at this scale. CPU starvation and desktop heap (no documented API reports
+it) remain open.
+
+It is now **self-explaining**: Chromium runs with `--enable-logging --log-file
+--v=1` — on Windows it writes startup failures to a file, not stderr, and nobody
+had asked for one — and the failure carries that log plus `GetPerformanceInfo`
+figures.
+
+**Directions.** (a) **Wait for the next occurrence, which will now diagnose
+itself.** (b) Build a deliberate CPU-saturation reproduction.
+
+**Recommendation: (a).** It has been seen three times in three days, the cheap
+theories are dead, and a speculative reproduction is expensive against a failure
+that will now explain itself the first time it recurs.
