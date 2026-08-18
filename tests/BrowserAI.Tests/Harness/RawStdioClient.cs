@@ -276,6 +276,15 @@ internal sealed class RawStdioClient : IAsyncDisposable
     }
 
     /// <summary>Everything the peer has written to stderr so far.</summary>
+    /// <remarks>
+    /// ⚠️ <b>"So far" is literal, and an assertion must not use this.</b> The
+    /// pump is a thread-pool work item; at <c>SuiteParallelism.Unbounded</c> on a
+    /// small machine it can be descheduled for seconds, so this returns a
+    /// snapshot of a stream that is still arriving. Use
+    /// <see cref="DrainedStandardErrorAsync"/> for anything that will be asserted
+    /// on. This one is for a failure message written while the peer is still
+    /// alive, where waiting for end-of-file would wait for ever.
+    /// </remarks>
     /// <returns>The captured stderr.</returns>
     public string StandardErrorSoFar()
     {
@@ -283,6 +292,56 @@ internal sealed class RawStdioClient : IAsyncDisposable
         {
             return _standardError.ToString();
         }
+    }
+
+    /// <summary>
+    /// Everything the peer wrote to stderr, once the pipe has reached
+    /// end-of-file.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-18, and it is a CI-only failure that no local run
+    /// could produce.</b> <c>SliceRun</c> asserted on
+    /// <see cref="StandardErrorSoFar"/> and
+    /// <c>ProtocolSplitTests.TheChildNegotiatesItsCeilingAndTheProductRecordsWhichVersionThatWas</c>
+    /// went red on the runner with the record it wanted missing — along with
+    /// <i>every</i> record after a certain point, session-lock acquisitions
+    /// included, which is what proves it was a truncated read rather than an
+    /// absent log line. The product had written it; the pump had not been
+    /// scheduled to read it. On a developer's machine the pool has cores to spare
+    /// and the snapshot is always complete, so the assertion looked sound for as
+    /// long as it only ever ran there.
+    /// </para>
+    /// <para>
+    /// <b>Bounded, and it says so when the bound is reached.</b> End-of-file
+    /// arrives when the last holder of the write end exits — the peer, and any
+    /// grandchild that inherited it — so a caller must have stopped those first.
+    /// If it has not, the capture is returned anyway with a line saying it is
+    /// incomplete, because a silently short capture is exactly the defect this
+    /// method exists to remove and reproducing it inside the fix would be absurd.
+    /// </para>
+    /// </remarks>
+    /// <returns>The captured stderr, complete unless the returned text says otherwise.</returns>
+    public async Task<string> DrainedStandardErrorAsync()
+    {
+        var complete = true;
+
+        try
+        {
+            await _standardErrorPump.WaitAsync(TestDefaults.InProcessHang).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            complete = false;
+        }
+
+        var captured = StandardErrorSoFar();
+
+        return complete
+            ? captured
+            : captured
+                + Environment.NewLine
+                + $"<INCOMPLETE CAPTURE: the stderr pipe had not reached end-of-file after {TestDefaults.InProcessHang.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s, so something is still holding its write end and records may be missing from the text above.>";
     }
 
     /// <summary>

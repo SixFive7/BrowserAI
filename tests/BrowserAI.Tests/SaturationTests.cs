@@ -329,8 +329,28 @@ internal sealed partial class SaturationTests
             // Not vacuous: the check above only means something if this log
             // actually holds records, and a run that read the wrong file or an
             // empty one would satisfy it perfectly.
-            await Assert.That(lines.Count(line => RecordHeader().IsMatch(line) && RecordHeader().Match(line).Index is 0))
-                .IsGreaterThanOrEqualTo(Processes);
+            //
+            // ⚠️ COUNTED OVER THIS RUN'S OWN PIDS, and that is the 2026-08-18
+            // correction. It used to count every record header in every log file
+            // on the machine — so on a developer's machine, with months of
+            // history under `%LocalAppData%\BrowserAI\logs`, it was satisfied
+            // before this test started and could not fail. The first machine it
+            // ever met with an empty log directory was a CI runner, where it read
+            // 6; with the directory moved aside here, 0. A check whose subject is
+            // "what this run wrote" must not be answerable by what a previous one
+            // wrote, however many files that takes.
+            var ours = new HashSet<int>(reports.Select(report => report.ProcessId));
+
+            var written = lines.Count(line =>
+                RecordHeader().Match(line) is { Success: true, Index: 0 } header
+                && int.TryParse(
+                    header.Value.AsSpan(header.Value.LastIndexOf("pid=", StringComparison.Ordinal) + 4),
+                    CultureInfo.InvariantCulture,
+                    out var pid)
+                && ours.Contains(pid));
+
+            await Assert.That(written).IsGreaterThanOrEqualTo(Processes)
+                .Because($"{ours.Count.ToString(CultureInfo.InvariantCulture)} peers ran and the shared log holds {lines.Count.ToString(CultureInfo.InvariantCulture)} line(s) across {LogFilesNow().Count.ToString(CultureInfo.InvariantCulture)} file(s)");
 
             // Every peer really did write into it. Without this the check above
             // passes against a log none of them reached.
@@ -481,9 +501,41 @@ internal sealed partial class SaturationTests
     /// rule about what every other line must look like is a second, weaker copy
     /// of the message catalogue.
     /// </para>
+    /// <para>
+    /// ⚠️⚠️ <b>Corrected 2026-08-18 (previously <c>…\s\S+\s\spid=\d+</c>, with
+    /// TWO spaces before <c>pid=</c>), and it had never matched a single
+    /// <c>INFO</c> or <c>WARN</c> record in its life.</b>
+    /// <c>FileLoggerProvider.Abbreviate</c> pads every level name to five
+    /// characters so the columns line up — <c>"INFO "</c>, <c>"WARN "</c>,
+    /// <c>"CRIT "</c> — and then writes <c>"  pid="</c>. So a four-letter level
+    /// is followed by <b>three</b> spaces and <c>\s\s</c> could not reach
+    /// <c>pid=</c>; only the five-letter levels <c>TRACE</c>, <c>DEBUG</c> and
+    /// <c>ERROR</c> ever matched. Measured 2026-08-18 against a real
+    /// hundred-process run: <b>2,217 records, 2,117 INFO and 100 WARN, and
+    /// zero matches.</b>
+    /// </para>
+    /// <para>
+    /// <b>Both assertions that use this were therefore green while blind, which
+    /// is the failure class this repository exists to eliminate.</b> The torn
+    /// check could not see 99.7% of the log it was scanning, so it passed by
+    /// matching nothing. The count check passed only because it reads <i>every</i>
+    /// log file on the machine and a developer's has months of history: on a CI
+    /// runner with an empty log directory it returned <b>6</b>, and here, with
+    /// the directory moved aside, <b>0</b>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And the 2026-08-17 note above was a misdiagnosis of this same
+    /// defect.</b> It recorded "the header count came back as 12 against a
+    /// hundred peers … on a log that was perfectly intact" and blamed a
+    /// last-write-time filter. Twelve was the number of <c>DEBUG</c> records in
+    /// the file. Removing the filter raised the number by reading more history
+    /// and left the cause untouched — which is why the same test failed again the
+    /// first time it met a machine with no history. With the expression fixed,
+    /// that same run reads 2,217 headers, all at index 0, from 100 distinct pids.
+    /// </para>
     /// </remarks>
     /// <returns>The compiled expression.</returns>
-    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s\spid=\d+")]
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+")]
     private static partial System.Text.RegularExpressions.Regex RecordHeader();
 
     private static List<string> IndexEntriesPointingInto(string root)

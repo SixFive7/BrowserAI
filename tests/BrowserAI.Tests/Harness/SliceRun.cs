@@ -161,6 +161,18 @@ internal sealed record SliceRun(
             [.. processes.Where(process => process.ProcessId != browserAi)],
             TestDefaults.ProcessHang).ConfigureAwait(false);
 
+        // ⚠️ DRAINED, never `StandardErrorSoFar`, and this is read AFTER the
+        // waits above rather than before them. Everything that could hold the
+        // write end of that pipe — BrowserAI, and the node and browser processes
+        // that inherited it — is gone by this line, so end-of-file is guaranteed
+        // and waiting for it is an event rather than a duration.
+        //
+        // Taking the snapshot instead is what put CI red on 2026-08-18: the
+        // pump is a pool work item, the runner had four cores and 431 tests on
+        // them, and the capture stopped mid-run. The assertion that failed named
+        // the product for the harness's own starvation.
+        var standardError = await client.DrainedStandardErrorAsync().ConfigureAwait(false);
+
         return new SliceRun(
             initialize,
             names,
@@ -170,7 +182,7 @@ internal sealed record SliceRun(
             processes,
             browserAi,
             survivors,
-            client.StandardErrorSoFar(),
+            standardError,
             session);
     }
 
