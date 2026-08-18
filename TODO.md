@@ -29,23 +29,6 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 [`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
 by effort.**
 
-- [ ] **`ReinstallAsync` deletes without the provisioning mutex.** Its guard looks
-      for processes *running from* the tree; a concurrent installer is `node.exe`
-      from the payload and is invisible to it. End state: `INSTALLATION_COMPLETE`
-      written over a gutted tree, `spawn EFTYPE`, and upstream's 30-day
-      `DEPENDENCIES_VALIDATED` suppression. Both stated reasons for taking no lock
-      are wrong.
-
-- [ ] **Concurrent `JobLauncher.Start` calls cross-inherit each other's pipes.**
-      All six pipe ends are made inheritable and only the parent's three are
-      cleared, and `bInheritHandles: true` inherits **every** inheritable handle in
-      the process. Session B's browser tree ends up holding session A's stdout and
-      stderr write ends for B's whole life — which is exactly the hang
-      `JobLauncher` documents, closed for the parent and left open for a sibling.
-      **It also puts our own stdout handle in every child.**
-      `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` closes all of it, and
-      `ProcessAttributeList` already exists with one attribute.
-
 - [ ] **Path aliasing defeats the per-directory gate.** `Path.GetFullPath` does
       not resolve `\\?\`, 8.3 names, junctions, `subst` or mapped drives, so two
       spellings give two mutex names and **one `lock.json`**. `\\?\C:\...`

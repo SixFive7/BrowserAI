@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.IO.Pipes;
 using System.Text.Json.Nodes;
 using BrowserAI.Tests.Harness;
 
@@ -216,6 +217,68 @@ internal sealed class JobContainmentTests
         await Assert.That(string.Join(", ", survivors)).IsEmpty();
 
         return report;
+    }
+
+    /// <summary>
+    /// A child inherits this launch's three pipe ends and <b>nothing else in the
+    /// process</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Asserted through the consequence rather than through the handle
+    /// table.</b> A Windows pipe reaches EOF when its <i>last</i> write handle
+    /// closes, which is not the same event as the process that created it
+    /// letting go. So the test creates a pipe that belongs to nobody in
+    /// particular, makes its write end inheritable exactly as
+    /// <c>ChildPipes.Create</c> makes a launch's child ends inheritable, launches
+    /// a child through the product's own launcher, and then drops its own copy of
+    /// that write end. If the child inherited it, the read below never returns.
+    /// </para>
+    /// <para>
+    /// <b>That is the defect, not a proxy for it.</b>
+    /// <c>bInheritHandles: true</c> duplicates every inheritable handle in the
+    /// process, and with several sessions opening at once the pipe ends of a
+    /// launch in flight on another thread are exactly this: inheritable, and
+    /// nothing to do with the child being started. The consequence was a sibling
+    /// session's stdout read that never saw EOF, a graceful close that always
+    /// fell through to the job kill, and this process's own stdout handle sitting
+    /// inside a Chromium tree
+    /// ([the adversarial review](../../docs/reviews/2026-08-18-adversarial-processes.md),
+    /// finding 5).
+    /// </para>
+    /// <para>
+    /// <b>The wait is a hang detector and nothing asserts on its length.</b> EOF
+    /// on a pipe whose last writer has closed is immediate; reaching
+    /// <see cref="TestDefaults.ProcessHang"/> means the handle is in the child,
+    /// which is the failure this exists to catch and is precisely a hang with no
+    /// error anywhere.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AChildInheritsThisLaunchsPipesAndNoOtherInheritableHandle()
+    {
+        using var scope = new JobObjectScope();
+
+        // Created BEFORE the launch, so it is one of the process's inheritable
+        // handles at the instant CreateProcessW runs -- which is what a
+        // concurrent launch's child ends are.
+        using var sibling = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
+
+        // cmd.exe with no arguments reads its stdin forever, and the scope holds
+        // the write end, so it stays alive without a timer or a script.
+        var child = scope.Launch(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
+            Path.GetTempPath());
+
+        await Assert.That(ProcessIdentity.IsAlive(child.Id, ProcessIdentity.CreationTimeOf(child.Id))).IsTrue();
+
+        // Our copy of the write end goes. Every writer is now gone unless the
+        // child has one.
+        sibling.DisposeLocalCopyOfClientHandle();
+
+        var read = await Task.Run(sibling.ReadByte).WaitAsync(TestDefaults.ProcessHang);
+
+        await Assert.That(read).IsEqualTo(-1);
     }
 
     private static async Task<List<int>> WaitForNoneAliveAsync(List<(int ProcessId, long CreatedFileTime)> recorded, TimeSpan patience)

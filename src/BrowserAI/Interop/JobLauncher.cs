@@ -41,6 +41,16 @@ namespace BrowserAI.Interop;
 /// and containment would fail silently. Only the three pipe ends the child needs
 /// are left inheritable; ours are cleared before the process exists.
 /// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-18 (previously the paragraph above stood alone, and
+/// its last sentence was true of one launch and false of the process).</b>
+/// <c>bInheritHandles=TRUE</c> duplicates every inheritable handle <i>in the
+/// process</i>, and with several sessions opening at once the pipe ends of a
+/// launch in flight on another thread are inheritable too — so each child got
+/// its siblings' stdout and stderr write ends and held them for its whole life.
+/// <c>PROC_THREAD_ATTRIBUTE_HANDLE_LIST</c> makes the inherited set exact rather
+/// than ambient; see <see cref="ProcessAttributeList"/> for what that closed.
+/// </para>
 /// </remarks>
 internal static partial class JobLauncher
 {
@@ -54,6 +64,11 @@ internal static partial class JobLauncher
     // ProcThreadAttributeJobList = 13, marked as a thread-creation attribute:
     // 13 | PROC_THREAD_ATTRIBUTE_INPUT (0x00020000).
     private static readonly nuint ProcThreadAttributeJobList = 0x0002000D;
+
+    // ProcThreadAttributeHandleList = 2, same encoding: 2 | 0x00020000. It makes
+    // the inherited set EXACT rather than "every inheritable handle in the
+    // process", which is what bInheritHandles alone means.
+    private static readonly nuint ProcThreadAttributeHandleList = 0x00020002;
 
     /// <summary>
     /// Starts <paramref name="command"/> inside <paramref name="job"/>.
@@ -82,7 +97,12 @@ internal static partial class JobLauncher
 
         try
         {
-            using var attributes = ProcessAttributeList.WithJob(job);
+            // The job AND the exact set of handles this child may inherit. The
+            // three named here are the three the STARTUPINFO below points at,
+            // which the handle-list attribute requires.
+            using var attributes = ProcessAttributeList.For(
+                job,
+                [pipes.ChildStandardInput, pipes.ChildStandardOutput, pipes.ChildStandardError]);
 
             var commandLine = BuildCommandLine(command, arguments);
             var environmentBlock = BuildEnvironmentBlock(environment);
@@ -272,29 +292,69 @@ internal static partial class JobLauncher
 #pragma warning restore CS0649
 
     /// <summary>
-    /// The attribute list that carries the job, alive for exactly as long as
+    /// The attribute list that carries the job <b>and the exact set of handles
+    /// the child may inherit</b>, alive for exactly as long as
     /// <c>CreateProcessW</c> needs to read it.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The handle list was added 2026-08-18; before it there was one
+    /// attribute and the inherited set was "everything".</b>
+    /// <c>bInheritHandles: true</c> duplicates <b>every inheritable handle in the
+    /// process</b> into the child, not just this launch's three — and
+    /// <see cref="ChildPipes.Create"/> makes both ends of all three pipes
+    /// inheritable before clearing the parent's, because
+    /// <c>SetHandleInformation</c> cannot add inheritance to a handle created
+    /// without it. With several sessions in one process and no lock anywhere
+    /// between <c>ChildPipes.Create</c> and <c>CreateProcessW</c>, thread B's
+    /// <c>node.exe</c> — and therefore B's whole Chromium tree — inherited
+    /// thread A's stdout and stderr write ends and held them for B's entire life.
+    /// </para>
+    /// <para>
+    /// <b>That is the hang this file already documents, closed for the parent and
+    /// left open for a sibling</b>: <i>"a stdout read that never sees EOF because
+    /// the parent still holds the write end is a hang with no error anywhere."</i>
+    /// It also broke the graceful close — A's stdin never reaching EOF means
+    /// every teardown falls through to the 5 s timeout and the job kill — and it
+    /// put <b>our own stdout handle</b>, the JSON-RPC channel, inside a Chromium
+    /// tree, which is a route to stdout no banned-symbol analyzer can see. One
+    /// attribute closes all three. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+    /// finding 5.
+    /// </para>
+    /// <para>
+    /// <b>The constraints the list imposes are all already met.</b> Every handle
+    /// in it must be inheritable and must be valid;
+    /// <c>bInheritHandles</c> must stay <c>TRUE</c>; and if
+    /// <c>STARTUPINFO</c> names standard handles they must be in the list. The
+    /// three passed here are exactly those three.
+    /// </para>
+    /// </remarks>
     private sealed class ProcessAttributeList : IDisposable
     {
-        private readonly nint _jobHandleStorage;
+        /// <summary>The job, then the handle list.</summary>
+        private const int AttributeCount = 2;
 
-        private ProcessAttributeList(nint list, nint jobHandleStorage)
+        private readonly nint _jobHandleStorage;
+        private readonly nint _handleListStorage;
+
+        private ProcessAttributeList(nint list, nint jobHandleStorage, nint handleListStorage)
         {
             Pointer = list;
             _jobHandleStorage = jobHandleStorage;
+            _handleListStorage = handleListStorage;
         }
 
         /// <summary>The attribute list, for the one call that reads it.</summary>
         public nint Pointer { get; }
 
-        public static ProcessAttributeList WithJob(JobObject job)
+        public static ProcessAttributeList For(JobObject job, IReadOnlyList<nint> inheritable)
         {
             // The documented two-call shape: the first call fails with
             // ERROR_INSUFFICIENT_BUFFER and reports the size.
             var size = nuint.Zero;
 
-            if (InitializeProcThreadAttributeList(nint.Zero, 1, 0, ref size))
+            if (InitializeProcThreadAttributeList(nint.Zero, AttributeCount, 0, ref size))
             {
                 throw new Win32Exception("InitializeProcThreadAttributeList unexpectedly succeeded while sizing the buffer.");
             }
@@ -307,36 +367,50 @@ internal static partial class JobLauncher
             }
 
             var list = Marshal.AllocHGlobal((nint)size);
-            var storage = nint.Zero;
+            var jobStorage = nint.Zero;
+            var handleStorage = nint.Zero;
 
             try
             {
-                if (!InitializeProcThreadAttributeList(list, 1, 0, ref size))
+                if (!InitializeProcThreadAttributeList(list, AttributeCount, 0, ref size))
                 {
                     throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not initialise the process attribute list.");
                 }
 
-                // The job handle has to stay at a fixed address until
-                // CreateProcessW returns, so it lives on the native heap rather
-                // than as a pinned managed local.
-                storage = Marshal.AllocHGlobal(nint.Size);
-                Marshal.WriteIntPtr(storage, job.Handle.DangerousGetHandle());
+                // Both buffers have to stay at a fixed address until
+                // CreateProcessW returns -- the attribute list stores pointers,
+                // not copies -- so they live on the native heap rather than as
+                // pinned managed locals.
+                jobStorage = Marshal.AllocHGlobal(nint.Size);
+                Marshal.WriteIntPtr(jobStorage, job.Handle.DangerousGetHandle());
 
-                if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeJobList, storage, (nuint)nint.Size, nint.Zero, nint.Zero))
+                if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeJobList, jobStorage, (nuint)nint.Size, nint.Zero, nint.Zero))
                 {
                     throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not put the job object on the process attribute list.");
                 }
 
+                var handleListBytes = nint.Size * inheritable.Count;
+                handleStorage = Marshal.AllocHGlobal(handleListBytes);
+
+                for (var i = 0; i < inheritable.Count; i++)
+                {
+                    Marshal.WriteIntPtr(handleStorage, i * nint.Size, inheritable[i]);
+                }
+
+                if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeHandleList, handleStorage, (nuint)handleListBytes, nint.Zero, nint.Zero))
+                {
+                    throw new Win32Exception(
+                        Marshal.GetLastPInvokeError(),
+                        "Could not restrict the child's inherited handles to this launch's own three. Every handle in the list must be inheritable and valid.");
+                }
+
                 GC.KeepAlive(job);
-                return new ProcessAttributeList(list, storage);
+                return new ProcessAttributeList(list, jobStorage, handleStorage);
             }
             catch
             {
-                if (storage != nint.Zero)
-                {
-                    Marshal.FreeHGlobal(storage);
-                }
-
+                Free(jobStorage);
+                Free(handleStorage);
                 DeleteProcThreadAttributeList(list);
                 Marshal.FreeHGlobal(list);
                 throw;
@@ -347,7 +421,16 @@ internal static partial class JobLauncher
         {
             DeleteProcThreadAttributeList(Pointer);
             Marshal.FreeHGlobal(Pointer);
-            Marshal.FreeHGlobal(_jobHandleStorage);
+            Free(_jobHandleStorage);
+            Free(_handleListStorage);
+        }
+
+        private static void Free(nint storage)
+        {
+            if (storage != nint.Zero)
+            {
+                Marshal.FreeHGlobal(storage);
+            }
         }
     }
 
