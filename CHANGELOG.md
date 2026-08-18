@@ -23,6 +23,16 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **A session another BrowserAI was writing to could not be opened.** Every
+  `lock.json` is replaced by an atomic rename, and while that rename is in flight
+  Windows refuses every other open of the file — with `ACCESS_DENIED`, not the
+  sharing violation the code was watching for. So `browserai_init` or
+  `browserai_resume` against a directory a second BrowserAI happened to be
+  touching at that instant failed with an unhandled exception, and the session
+  list reported a perfectly good session as unreadable. Both sides of the rename
+  wait the window out now. It needed two processes and a coincidence measured in
+  microseconds, which is why it took running the whole test suite at once to find
+  it.
 - **A child that took longer than sixty seconds to start was reported as a
   protocol failure.** BrowserAI never set the MCP SDK's
   `InitializationTimeout`, so it inherited the default — sixty seconds, chosen by

@@ -321,7 +321,25 @@ point, which is exactly what those messages claimed it meant.
 every promptness assertion removed and every surviving bound sized so a starved
 machine cannot reach it (`TestDefaults`: 5 minutes in-process, 10 minutes across
 a process, 30 minutes for a real browser): **20 consecutive green runs**, 419
-tests, 0 failed, 0 skipped, 78–108 s each. The limiter did not move.
+tests, 0 failed, 0 skipped, **66–91 s** each. The limiter did not move.
+
+> ⚠️ **The range in that sentence was written before it was measured, and was
+> wrong.** It said *78–108 s* on the strength of a handful of earlier runs; the
+> twenty it claimed to describe were 66–91 s. Corrected the moment the streak
+> finished, and recorded rather than quietly overwritten, because a plausible
+> number typed ahead of the measurement is indistinguishable from a measured one
+> — which is the failure this whole directory's first rule exists to prevent, and
+> it happened here.
+
+**Getting there took three streaks, and the two that failed did not fail on
+time.** Sixty runs in all: the first found `File.Move` refused
+`ERROR_ACCESS_DENIED` on a destination the test had just closed its own handle
+to, and the second found the same delete-pending window on the *read* side,
+where it had been throwing out of `SessionLock.ReadRecord` past every handler on
+the path ([kb](windows/processes.md#files-durable-writes-and-deletes)). Both were
+real defects that four-way parallelism had never surfaced, and neither was a
+duration. That is the argument for the limiter being where it is, made by the
+limiter.
 
 **Two shapes are worth carrying off this machine.** First, *the same bound
 expressed at two layers, with the tighter one winning invisibly*: a launcher that

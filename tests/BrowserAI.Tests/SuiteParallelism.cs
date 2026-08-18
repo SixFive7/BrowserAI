@@ -32,14 +32,26 @@ namespace BrowserAI.Tests;
 /// it for a day.
 /// </para>
 /// <para>
-/// ✅ <b>Unbounded is quiet as of 2026-08-18, and the tally is on the
-/// changelog.</b> It was red 11 runs in 20 the day before. Nothing about the
-/// number changed; what changed is that every <i>promptness assertion</i> in the
-/// suite was deleted or made event-driven, and every surviving duration was
-/// given headroom a starved machine cannot reach — the maintainer's instruction,
-/// verbatim: <i>"Remove any timings other than timeouts that catch really hung
-/// processes. Even on slow systems."</i> The vocabulary those bounds now come
-/// from is <c>TestDefaults</c>, and its remarks are where a reader should start.
+/// ✅ <b>Unbounded is quiet as of 2026-08-18: 20 consecutive green runs</b>, 419
+/// tests, 0 failed, 0 skipped, 66–91 s each. It was red <b>11 runs in 20</b> the
+/// day before. Nothing about the number changed; what changed is that every
+/// <i>promptness assertion</i> in the suite was deleted or made event-driven, and
+/// every surviving duration was given headroom a starved machine cannot reach —
+/// the maintainer's instruction, verbatim: <i>"Remove any timings other than
+/// timeouts that catch really hung processes. Even on slow systems."</i> The
+/// vocabulary those bounds now come from is <c>TestDefaults</c>, and its remarks
+/// are where a reader should start.
+/// </para>
+/// <para>
+/// ⚠️ <b>It took three streaks, and the two that failed are the better argument
+/// for this line than the one that passed.</b> Sixty runs in all. Neither
+/// failure was a duration: one was <c>File.Move</c> refused
+/// <c>ERROR_ACCESS_DENIED</c> on a destination the test had just closed its own
+/// handle to, and the other was the <i>read</i> side of the same delete-pending
+/// window, throwing out of <c>SessionLock.ReadRecord</c> past every handler on
+/// the path — a product defect at the entry point that opens a session, found by
+/// running every test at once and not reachable four at a time
+/// ([kb](../../kb/windows/processes.md#files-durable-writes-and-deletes)).
 /// </para>
 /// <para>
 /// <b>Unbounded was tried and measured before that work, and it was not quiet.</b>
@@ -108,7 +120,7 @@ namespace BrowserAI.Tests;
 /// </description></item>
 /// <item><description>
 /// <b>Unbounded, before the timing work: 11 red in 20.</b>
-/// <b>Unbounded, after it: see the changelog.</b>
+/// <b>Unbounded, after it: 20 green in 20.</b>
 /// </description></item>
 /// </list>
 /// <para>
