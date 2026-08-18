@@ -35,11 +35,11 @@ than closed.
 | locking **A1** — `destroy` releases the lock before deleting the tree | **fixed**, `SessionDestroyTests` |
 | locking **A2** — `AcquiredAbandoned` deletes a complete, in-use tree | **fixed**, `ProvisioningTests` |
 | locking **A3** — `reinstall` deletes with no provisioning mutex | **fixed**, `ReinstallBrowserTests` |
-| locking **A4** — path aliasing gives one directory two gates | open, in [`TODO.md`](../../TODO.md) |
+| locking **A4** — path aliasing gives one directory two gates | **closed by refusal** 2026-08-19 — `SessionDirectoryGuard` refuses an aliased spelling at `init` and `resume`, and one of A4's four aliases was measured away: `Path.GetFullPath` **does** expand 8.3 short names on .NET 10 ([kb](../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)). Two gaps stayed open as hazard rows |
 | locking **A5** — `SessionIndex.Sweep` deletes a live session's entry | open, hazard row; the kb claim it falsified is corrected |
 | locking **A6** — `init`'s `Existing` guard acts on a transient absence | open, hazard row |
 | locking **B1** — the gate is outlasted by the waits inside it | **fixed**: the sum is asserted and the gate re-sized |
-| locking **B2** — unbounded calls inside the gate, incl. UNC | open, hazard row — closing it is a caller-visible decision |
+| locking **B2** — unbounded calls inside the gate, incl. UNC | **network half closed** 2026-08-19, the rest open. The caller-visible decision was taken: a network session directory is refused, **by semantics rather than by spelling** — a mapped drive letter costs the same measured 22 s and passes every string test |
 | locking **B3**, **B4**, **B5** | not yet triaged |
 | locking **D** — the probe-before-gate redesign | not adopted; the verdict stands as written |
 | processes **1** — the client watch acts on a bare pid | **fixed**, `ProcessLivenessTests`, plus a mechanism for the next one |

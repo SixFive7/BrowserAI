@@ -37,11 +37,6 @@ found and this pass did **not** do; the bounded ones also have rows in the
 [hazard index](HAZARDS.md#hazard-index), because a thing that is open needs to be
 findable from more than one direction.
 
-- [ ] **Path aliasing defeats the per-directory gate.** `Path.GetFullPath` does
-      not resolve `\\?\`, 8.3 names, junctions, `subst` or mapped drives, so two
-      spellings give two mutex names and **one `lock.json`**. `\\?\C:\...`
-      needs no filesystem setup at all.
-
 - [ ] **Two of thirteen ungated `lock.json` readers ACT on an absence rather than
       reporting it.** `SessionIndex.Locate` → `IsRemovable` → `Sweep` **deletes
       the index entry** for a live session; `SessionManager.Existing` reads null
@@ -220,8 +215,18 @@ findable from more than one direction.
       the index's own `Area` cells verbatim: Bundling and AOT 13, Child runtime and
       configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      9 more are `open` while carrying evidence, so 62 are `open` in total, against
+      12 more are `open` while carrying evidence, so 65 are `open` in total, against
       91 `closed`.
+
+      ***Corrected 2026-08-19 (previously "9 more are `open` while carrying
+      evidence, so 62 are `open` in total")*** — re-counted by the test, not
+      adjusted. **The 53 and every category number are unchanged, and that is the
+      predicate working rather than an oversight**: the three rows the boundary
+      refusals added are all `open` **and** all carry evidence, so none of them
+      is a row that is `open` **and** carries `—`. The three are what the two
+      refusals leave open — the door that nothing re-checks, the component this
+      process cannot open, and `destroy` and `list` being deliberately unguarded
+      — and each says what would close it.
 
       ***Corrected 2026-08-18, later the same day (previously "54 rows that are
       `open` and carry `—`", with "Child runtime and configuration 11", "63 are

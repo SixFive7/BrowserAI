@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
 
@@ -54,7 +53,7 @@ internal sealed class TreeDeleteTests
 
         var link = Path.Combine(tree, "link");
 
-        await MakeJunctionAsync(link, target);
+        await PathAliases.JunctionAsync(link, target);
 
         // The positive control, and it is not decoration: a junction that was
         // not created would make every assertion below pass for the one reason
@@ -87,7 +86,7 @@ internal sealed class TreeDeleteTests
 
         var link = Path.Combine(scratch.Path, "link");
 
-        await MakeJunctionAsync(link, target);
+        await PathAliases.JunctionAsync(link, target);
         await Assert.That(File.Exists(Path.Combine(link, "on-the-other-side.txt"))).IsTrue();
 
         var failures = new List<string>();
@@ -128,40 +127,5 @@ internal sealed class TreeDeleteTests
         await Assert.That(failures.Any(line => line.Contains("held.bin", StringComparison.Ordinal))).IsTrue();
         await Assert.That(File.Exists(held)).IsTrue();
         await Assert.That(Directory.Exists(deep)).IsFalse();
-    }
-
-    /// <summary>
-    /// Creates a directory junction, which the BCL has no API for.
-    /// </summary>
-    /// <remarks>
-    /// <c>cmd /c mklink /J</c> rather than <c>CreateSymbolicLink</c>: a junction
-    /// needs no privilege, so this works for an ordinary user and in CI, and it
-    /// is the link kind actually found inside a relocated browser profile.
-    /// </remarks>
-    /// <param name="link">The link to create.</param>
-    /// <param name="target">What it points at.</param>
-    private static async Task MakeJunctionAsync(string link, string target)
-    {
-        using var process = Process.Start(new ProcessStartInfo(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
-            ["/c", "mklink", "/J", link, target])
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = Path.GetDirectoryName(link)!,
-        })!;
-
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync();
-
-        if (process.ExitCode is not 0 || !Directory.Exists(link))
-        {
-            throw new InvalidOperationException(
-                $"mklink /J could not create '{link}' -> '{target}'. This test proves nothing without one. {output} {error}");
-        }
     }
 }

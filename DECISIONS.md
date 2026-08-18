@@ -249,6 +249,95 @@ Recorded because the research raised it from two directions and the answer is no
 
 **The price is two failure modes .NET makes *worse*, both silent, both already named above**: `Process.ExitCode` throwing after `Dispose()` (§E), and stdio encoding defaulting to CP437 with CRLF and BOM hazards (§E). Neither is hard to handle; both must be **invariants owned by a single wrapper type**, not conventions maintained by discipline. If those two are handled properly, the choice pays for itself.
 
+### Refusing network paths and aliased spellings at the door
+
+**Settled 2026-08-19.** Two refusals, one shape: *refuse at the boundary rather
+than handle it everywhere*. Both take something away from a caller who may be
+using it today, which is why they are recorded here with their costs rather than
+as implementation detail. The predicate is
+[`SessionDirectoryGuard`](src/BrowserAI/Sessions/SessionDirectoryGuard.cs), and
+it runs at `browserai_init` and `browserai_resume` only.
+
+**The measured problem, first half.** One `File.Exists` against a share that has
+stopped answering costs **22,210 ms**, measured 2026-08-19 — and that number is
+through a mapped **drive letter**, not a UNC spelling
+([kb](kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
+Several such calls happen inside `LockScopes.PerDirectoryGate`, which is
+per-directory and machine-wide, so **the caller who names the dead share is not
+the one who waits**: every other process contending for that directory does. The
+alternative was to move the slow calls out of the critical section, which is a
+redesign of the most safety-critical code in the product to accommodate a
+configuration nobody should be in. **Refusing is one predicate; the argument is
+that the alternative is twenty-two seconds inside a machine-wide mutex.**
+
+**The measured problem, second half.** `Path.GetFullPath` resolves neither
+`\?\`, junctions, `subst` nor mapped drives, so two spellings of one directory
+produce **two mutex names and one `lock.json`**: the per-directory gate stops
+serialising while every signal still reads healthy, and
+[review A4](docs/reviews/2026-08-18-adversarial-locking.md) gives two
+interleavings, one ending with two processes driving one browser profile and the
+other destroying a session's purpose and history. The correct fix is to
+canonicalise through the filesystem's own final name and hash *that*. **It was
+not taken because it rewrites the identity of every mutex name, index key and
+lock path in the product** — every session directory in existence would acquire a
+new identity on the day it shipped, and the two spellings would still both be
+accepted, just as one session. Refusal is bounded, and BrowserAI creates its own
+session directories in the common case.
+
+**What "network path" means operationally.** Two tests, in this order, and
+**neither touches the filesystem**:
+
+1. The spelling begins with two path separators — `\host\share`, `//host/share`,
+   `\?\UNC\…`, `\.\…`. Characters only, no syscall at all.
+2. `GetDriveTypeW` answers `DRIVE_REMOTE` for the drive letter. This is the
+   operating system's own classification, so SMB, WebDAV and NFS are all covered
+   without this repository maintaining a list of redirector device names.
+
+**What "aliased" means operationally**, and this is the half where what is *not*
+caught matters as much as what is:
+
+| Alias | Caught by | Cost |
+|---|---|---|
+| `\?\` and `\.\` device-namespace prefixes | characters | none |
+| a `subst`ed drive letter | `QueryDosDeviceW` returns a target under `\??\` | ~0.02 ms, object manager only |
+| a junction, a directory symlink, a volume mount point | `GetFinalPathNameByHandleW` on the deepest **existing** ancestor differs from that ancestor's own spelling | ~0.07 ms, one directory open on a volume already proven local |
+| an 8.3 short name | **nothing here — `Path.GetFullPath` already expanded it** | none |
+
+**Three candidate definitions were rejected.** *A string check for the `~N`
+shape* — it would refuse a directory genuinely named `data~1`, and it cannot see
+a junction at all; the final-name test subsumes it without either fault. *A
+reparse-point walk of every component* — one `GetFileAttributes` per level to
+learn what one `GetFinalPathNameByHandleW` answers outright. *Full
+canonicalisation* — correct, and the identity rewrite above.
+
+**What it knowingly leaves open, stated rather than implied:**
+
+- **A component this process cannot open.** The ancestor walk stops at the first
+  failure that is not *the name does not exist*, and the path is then accepted
+  unverified — so a junction underneath a directory this token cannot open is
+  invisible. Turning *unknown* into a refusal would refuse ordinary directories
+  on a locked-down machine, which is the worse error.
+- **Anything that becomes true after the check.** This is a **door, not a
+  guard**. A `subst`, a `mklink /J` or a drive remapped while a session is open
+  moves the directory underneath a session that was admitted correctly, and
+  nothing re-checks. **The honest answer to "what about a local path that later
+  becomes a network path" is: `resume` catches it on the next open, and a
+  session already live is not protected at all.** Re-checking per call would put
+  the guard on the hot path and still lose the race, because the remap can land
+  between the check and the call it was protecting.
+- **Case.** Two spellings differing only in case are one session by design, so
+  the comparison is case-insensitive and `C:\A` is not an alias of `c:\a`.
+
+**What it costs a caller, and where it deliberately does not apply.** A caller
+whose sessions live on a share is refused, and told to run locally and copy
+afterwards; a caller who spells a path through `\?\` is told the spelling to use
+instead. Both refusals name the accepted form, so the next call is the same call
+with one argument replaced. **`browserai_destroy` and `browserai_list` are not
+guarded**: a session that predates this build on a network path must still be
+listable and still be removable, and a refusal that left a directory unremovable
+would be a worse trap than the one it closes.
+
+
 ---
 
 ## Open design decisions

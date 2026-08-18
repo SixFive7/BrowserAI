@@ -49,10 +49,10 @@ internal sealed class ReleaseScriptTests
     public async Task AnEmptyChannelAcceptsTheFirstRelease()
     {
         using var scratch = ScratchDirectory.Create("release-first");
-        var (exit, output) = await RunAsync(ValidationScript, "-Manifest", Path.Combine(scratch.Path, "releases.win.json"), "-Version", "0.1.0");
+        var (exit, verdict, _) = await RunAsync(ValidationScript, "-Manifest", Path.Combine(scratch.Path, "releases.win.json"), "-Version", "0.1.0");
 
         await Assert.That(exit).IsEqualTo(0);
-        await Assert.That(output.Trim()).IsEqualTo("first");
+        await Assert.That(verdict.Trim()).IsEqualTo("first");
     }
 
     /// <summary>A newer version is ordinary and needs nothing said.</summary>
@@ -62,10 +62,10 @@ internal sealed class ReleaseScriptTests
         using var scratch = ScratchDirectory.Create("release-monotonic");
         var manifest = await WriteFeedAsync(scratch.Path, "0.9.0");
 
-        var (exit, output) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1");
+        var (exit, verdict, _) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1");
 
         await Assert.That(exit).IsEqualTo(0);
-        await Assert.That(output.Trim()).IsEqualTo("monotonic");
+        await Assert.That(verdict.Trim()).IsEqualTo("monotonic");
     }
 
     /// <summary>
@@ -86,17 +86,17 @@ internal sealed class ReleaseScriptTests
         using var scratch = ScratchDirectory.Create("release-rollback");
         var manifest = await WriteFeedAsync(scratch.Path, "0.9.0", "0.9.1");
 
-        var (refusedExit, refusedOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.0");
+        var (refusedExit, _, refusedOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.0");
 
         await Assert.That(refusedExit).IsNotEqualTo(0);
         await Assert.That(refusedOutput).Contains("ROLLBACK");
         await Assert.That(refusedOutput).Contains("-RollbackRepublish");
         await Assert.That(refusedOutput).Contains("AllowVersionDowngrade");
 
-        var (statedExit, statedOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.0", "-RollbackRepublish");
+        var (statedExit, statedVerdict, _) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.0", "-RollbackRepublish");
 
         await Assert.That(statedExit).IsEqualTo(0);
-        await Assert.That(statedOutput.Trim()).IsEqualTo("rollback");
+        await Assert.That(statedVerdict.Trim()).IsEqualTo("rollback");
     }
 
     /// <summary>Publishing a version over itself is refused in both directions.</summary>
@@ -106,7 +106,7 @@ internal sealed class ReleaseScriptTests
         using var scratch = ScratchDirectory.Create("release-same");
         var manifest = await WriteFeedAsync(scratch.Path, "0.9.1");
 
-        var (exit, output) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1", "-RollbackRepublish");
+        var (exit, _, output) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1", "-RollbackRepublish");
 
         await Assert.That(exit).IsNotEqualTo(0);
         await Assert.That(output).Contains("already the newest release");
@@ -125,11 +125,11 @@ internal sealed class ReleaseScriptTests
         using var scratch = ScratchDirectory.Create("release-shape");
         var manifest = Path.Combine(scratch.Path, "releases.win.json");
 
-        var (fourPartExit, fourPartOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1.0");
+        var (fourPartExit, _, fourPartOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.9.1.0");
         await Assert.That(fourPartExit).IsNotEqualTo(0);
         await Assert.That(fourPartOutput).Contains("four-part");
 
-        var (noTagExit, noTagOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.0.0-alpha.0.71");
+        var (noTagExit, _, noTagOutput) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "0.0.0-alpha.0.71");
         await Assert.That(noTagExit).IsNotEqualTo(0);
         await Assert.That(noTagOutput).Contains("no git tag");
     }
@@ -212,7 +212,7 @@ internal sealed class ReleaseScriptTests
         var root = await SyntheticRootAsync(scratch.Path);
         var destination = Path.Combine(scratch.Path, "manifest");
 
-        var (exit, output) = await RunAsync(
+        var (exit, _, output) = await RunAsync(
             ManifestScript, "-Root", root, "-Destination", destination, "-Version", "0.9.1", "-Tag", "v0.9.0-3-gabc1234");
 
         await Assert.That(exit).IsEqualTo(0);
@@ -264,7 +264,7 @@ internal sealed class ReleaseScriptTests
 
         var destination = Path.Combine(scratch.Path, "manifest");
 
-        var (exit, output) = await RunAsync(
+        var (exit, _, output) = await RunAsync(
             ManifestScript, "-Root", root, "-Destination", destination, "-Version", "0.9.1");
 
         await Assert.That(exit).IsNotEqualTo(0);
@@ -352,7 +352,31 @@ internal sealed class ReleaseScriptTests
         return manifest;
     }
 
-    private static async Task<(int Exit, string Output)> RunAsync(string script, params string[] arguments)
+    /// <summary>
+    /// Runs a release script and returns its exit code, its <b>verdict</b> and
+    /// everything it said.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The verdict is stdout alone, and the two are separated because
+    /// merging them asserted on the machine rather than on the script.</b> Every
+    /// script here writes one word to stdout and its reasoning to stderr, so an
+    /// exact-equality assertion over the concatenation is also an assertion that
+    /// <c>pwsh</c> had nothing of its own to say. It does, on an ordinary
+    /// machine: a drive letter whose root cannot be reached — a disconnected
+    /// <c>net use</c> mapping is enough — makes <c>pwsh</c> write
+    /// <i>"Attempting to perform the InitializeDefaultDrives operation on the
+    /// 'FileSystem' provider failed"</i> to stderr at startup, and the assertion
+    /// then fails for a reason no part of this repository owns. <b>Found
+    /// 2026-08-19</b>, when `SessionDirectoryGuardTests` began creating a real
+    /// mapped drive to prove the network refusal and this test went red beside
+    /// it. <c>Everything</c> is still what the <c>Contains</c> arms read, because
+    /// what those want is *did it explain itself*, and the explanation is on
+    /// stderr.
+    /// </remarks>
+    /// <param name="script">The script to run.</param>
+    /// <param name="arguments">Its arguments.</param>
+    /// <returns>The exit code, stdout alone, and stdout followed by stderr.</returns>
+    private static async Task<(int Exit, string Verdict, string Everything)> RunAsync(string script, params string[] arguments)
     {
         var start = new ProcessStartInfo("pwsh")
         {
@@ -380,10 +404,11 @@ internal sealed class ReleaseScriptTests
 
         await process.WaitForExitAsync();
 
-        _ = captured.Append(await stdout).Append(await stderr);
+        var verdict = await stdout;
+        _ = captured.Append(verdict).Append(await stderr);
 
         // Cached immediately: Process.ExitCode throws after Dispose(), and this
         // object is disposed on the way out of the using.
-        return (process.ExitCode, captured.ToString());
+        return (process.ExitCode, verdict, captured.ToString());
     }
 }

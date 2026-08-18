@@ -112,6 +112,67 @@ internal static class SessionErrors
     public static string DirectoryUnusable(string argument, string value, string why) =>
         $"'{argument}' = '{value}' is not a usable directory path: {why} Nothing was changed. Name an absolute path BrowserAI can create a directory at.";
 
+    /// <summary>
+    /// Row 3's second companion — the path is absolute, usable, and on a network
+    /// volume.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Refused because the cost lands on somebody else.</b> One
+    /// <c>File.Exists</c> against a share that has stopped answering measured
+    /// <b>22,210 ms</b> on this machine, and several such calls happen inside
+    /// <see cref="LockScopes.PerDirectoryGate"/> — so the caller who named the
+    /// dead share is not the one who waits. Every other process contending for
+    /// that directory does.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The <paramref name="why"/> clause is not decoration.</b> The
+    /// commonest way into this refusal is a mapped drive letter, which does not
+    /// look like a network path at all — a caller told only <i>"that is a network
+    /// path"</i> about <c>Z:\work\thing</c> would reasonably conclude BrowserAI
+    /// was wrong. Naming the mapping is what makes the next turn the right one.
+    /// </para>
+    /// </remarks>
+    /// <param name="argument">Which argument carried the path.</param>
+    /// <param name="value">The path, canonicalised.</param>
+    /// <param name="why">Which kind of network path it is, as a clause.</param>
+    /// <returns>The refusal.</returns>
+    public static string DirectoryOnANetworkPath(string argument, string value, string why) =>
+        $"'{argument}' = '{value}' is on a network path — {why} — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. "
+        + "This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. "
+        + "Name a directory on a local drive, such as C:\\work\\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.";
+
+    /// <summary>
+    /// Row 3's third companion — the path names a real directory by a name the
+    /// filesystem does not use for it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The failure this prevents is silent and it is the worst one in the
+    /// product.</b> A session directory is simultaneously the name, the handle
+    /// and the lock, and every derived name — the mutex, the index key — comes
+    /// from the spelling. <c>Path.GetFullPath</c> resolves neither <c>\\?\</c>,
+    /// 8.3 short names, junctions, <c>subst</c> nor mapped drives, so two
+    /// spellings of one directory produce two mutexes and one <c>lock.json</c>:
+    /// the gate stops serialising while every signal still reads healthy.
+    /// </para>
+    /// <para>
+    /// <b>One turn to fix, by construction.</b> The refusal carries the spelling
+    /// the filesystem itself uses, so the next call is the same call with one
+    /// argument replaced — which is why the accepted form is a parameter rather
+    /// than advice about how to find it.
+    /// </para>
+    /// </remarks>
+    /// <param name="argument">Which argument carried the path.</param>
+    /// <param name="value">The path, as it was given.</param>
+    /// <param name="accepted">The spelling BrowserAI will take.</param>
+    /// <param name="why">Which alias it is, as a clause.</param>
+    /// <returns>The refusal.</returns>
+    public static string DirectoryIsAnAliasedSpelling(string argument, string value, string accepted, string why) =>
+        $"'{argument}' = '{value}' is a second spelling of a directory the filesystem calls something else — {why}. Nothing was created and nothing was changed. "
+        + "BrowserAI takes only the filesystem's own spelling, because a session directory is also its lock: two spellings of one directory produce two locks and one lock file, and the lock then reports success while guarding nothing. "
+        + $"Call the same tool again with {argument}='{accepted}'.";
+
     /// <summary>Row 4 — <c>init</c> met a directory that is already a session.</summary>
     /// <param name="path">The directory.</param>
     /// <param name="mode">The mode it records.</param>

@@ -379,6 +379,95 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 > reports `chrome.exe` for **both** binaries, so it is not a usable indicator of
 > which one is running.
 
+## A mapped drive letter is a network path, and costs the same 22 seconds
+
+Measured 2026-08-19 on this machine, .NET 10, Windows 11 Pro 26200. The entry
+above says *"reject anything that is not a rooted local drive-letter path before
+touching the filesystem"*, and this is the half that sentence does not cover: a
+drive letter **is** a rooted local drive-letter path by every character in it and
+can still be the redirector.
+
+The alias was made with `DefineDosDeviceW(DDD_RAW_TARGET_PATH, "T:",
+@"\Device\LanmanRedirector\;T:0000000000012345\<host>\share")`, which is the same
+object-manager symbolic link the multiple-UNC provider writes for `net use` —
+**and needs no administrator rights**, which is what makes this testable at all.
+No SMB session is established by it; the redirector establishes one on first use,
+which is exactly the call being timed. `[MACHINE]` for the timings,
+`[FLOATS]` for the .NET and SMB timeouts behind them.
+
+| call | through `T:` (mapped) | through the UNC spelling |
+|---|---|---|
+| `File.Exists`, dead **hostname** | **22,210 ms** | 22,186 ms |
+| `File.Exists`, unroutable **address** `10.255.255.1` | 12.8 ms | 11.4 ms |
+| `File.Exists`, local missing path | — | 1.1 ms |
+
+> ⚠️ **The address row is 11 ms here and was 21,037 ms on 2026-08-14**, on the
+> same machine and the same address. Nothing was re-reasoned and the older number
+> is **not** retracted: an unroutable address fails at whatever layer answers
+> first, and that depends on the network the machine is attached to at the time.
+> **The dead-hostname figure is the stable one** — it reproduced at 22,210 ms
+> against 22,225 ms five days earlier — because a name that does not resolve
+> fails at DNS, which does not depend on the route. Use the hostname case to
+> re-establish this, and expect the address case to move.
+>
+> **Negative caching makes the second measurement of a dead hostname worthless:**
+> the same lookup immediately afterwards came back in 17.7 ms. Re-measure from a
+> cold cache or with a hostname nothing has asked for yet.
+
+**The two cheap ways to ask, and what each can and cannot see.** Both read the
+object manager rather than the filesystem, and neither talks to a server.
+
+| | `GetDriveTypeW("X:\")` | `QueryDosDeviceW("X:")` |
+|---|---|---|
+| an ordinary local volume | `DRIVE_FIXED` (3) | `\Device\HarddiskVolume3` |
+| a mapped network drive | **`DRIVE_REMOTE` (4)** | `\Device\LanmanRedirector\…` or `\Device\Mup\…` |
+| a `subst` | `DRIVE_FIXED` (3) — **invisible** | **`\??\C:\the\real\path`** |
+| a letter that names nothing | `DRIVE_NO_ROOT_DIR` (1) | fails, `ERROR_FILE_NOT_FOUND` |
+| cost | **0.9 ms** warm | **0.0103–0.0212 ms**, 1,000 calls |
+
+**`GetDriveTypeW` does not block on a dead mapping.** 0.9 ms against `T:`
+*immediately after* the 22,210 ms `File.Exists` on that same letter, so the SMB
+session was unestablished and the redirector unresponsive at the moment it was
+asked. `[FLOATS]` — this is the entry that would invalidate the whole ordering if
+it moved, so it has a re-verification row.
+
+> ⚠️ **`Corrected 2026-08-19 (previously, in `RollingFileWriter`: "telling the
+> difference needs GetDriveType — a filesystem call, which on a disconnected
+> mapping can block for exactly as long as the thing being avoided")`.** That
+> sentence justified leaving mapped drives uncovered, and it was **reasoning
+> rather than a measurement** — the one thing this knowledge base exists to stop.
+> It is false as written: `GetDriveTypeW` is not a filesystem call, and it did
+> not block.
+
+**Which alias forms `Path.GetFullPath` resolves, on .NET 10.** Measured
+2026-08-19 by round-tripping each spelling of one real directory. `[FLOATS]` —
+this is a BCL behaviour and the two `no` rows are what
+`Sessions/SessionDirectoryGuard` exists for.
+
+| spelling | resolved by `Path.GetFullPath`? |
+|---|---|
+| 8.3 short name of an existing path | **yes** — expanded in full |
+| 8.3 short prefix with a tail that does not exist | **yes** — prefix expanded, tail preserved verbatim |
+| `\\?\C:\…` and `\\.\…` | no — passed through untouched |
+| a directory junction | no |
+| a `subst` or mapped drive letter | no |
+
+> ⚠️ **The 8.3 rows correct
+> [the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
+> finding A4**, which lists 8.3 names among the four things `Path.GetFullPath`
+> "does not resolve". On this toolchain it does: `PathHelper.Normalize` expands a
+> path containing `~` through the filesystem. The review's other three hold, and
+> A4's conclusion is untouched — it needed only one unresolved alias and has
+> three. Re-establish with `GetShortPathNameW` on a directory whose name has a
+> space in it, then `Path.GetFullPath` on what comes back.
+
+**`GetFinalPathNameByHandleW` resolves all of them in one call, for 0.071 ms.**
+Measured over 200 calls on a local volume, `CreateFileW` with no access and
+`FILE_FLAG_BACKUP_SEMANTICS` plus `GetFinalPathNameByHandleW` with
+`VOLUME_NAME_DOS | FILE_NAME_NORMALIZED`. A junction, an 8.3 name, a `\\?\`
+prefix and a `subst`ed letter all came back as the same `\\?\C:\…` true path.
+`[MACHINE]` for the figure, `[STABLE]` for the resolution behaviour.
+
 ## Process image path — the fully documented detection path
 
 Measured 2026-08-15 with a PowerShell harness that is not in this repository; the

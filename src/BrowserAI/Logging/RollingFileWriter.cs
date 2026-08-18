@@ -77,7 +77,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
         // 21 seconds a dead share costs a single file call. That is logging
         // becoming the outage, on the one path where nothing is yet running to
         // report it.
-        if (IsNetworkPath(directory))
+        if (VolumeIdentity.IsUncOrDeviceSpelling(directory))
         {
             RefusedNetworkDirectory = true;
             _disabled = true;
@@ -165,33 +165,27 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
         }
     }
 
-    /// <summary>Whether a path names a network location, decided on the string.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Decided on the string and never by touching the filesystem</b>, which
-    /// is the same rule the artifact router applies to a caller-supplied
-    /// filename and for the same measured reason: asking the filesystem about a
-    /// share that is not answering is the 21-second call this check exists to
-    /// prevent. Every UNC spelling starts with two separators —
-    /// <c>\\host\share</c>, <c>//host/share</c>, <c>\\?\UNC\host\share</c> and
-    /// the device form <c>\\.\</c> — so two separators is the whole test.
-    /// </para>
-    /// <para>
-    /// <b>A mapped drive letter is not caught, and that is stated rather than
-    /// implied.</b> A <c>Z:\</c> that resolves to a share reads as local here,
-    /// and telling the difference needs <c>GetDriveType</c> — a filesystem call,
-    /// which on a disconnected mapping can block for exactly as long as the
-    /// thing being avoided. The rule §E states names UNC, this closes UNC, and
-    /// what remains open is named here rather than left for someone to
-    /// rediscover.
-    /// </para>
-    /// </remarks>
-    /// <param name="directory">The path to judge.</param>
-    /// <returns><see langword="true"/> if it is a network path.</returns>
-    private static bool IsNetworkPath(string directory) =>
-        directory.Length >= 2
-        && directory[0] is '\\' or '/'
-        && directory[1] is '\\' or '/';
+    // WHY THE TEST ABOVE IS THE SPELLING TEST AND NOT THE WHOLE ANSWER.
+    //
+    // Corrected 2026-08-19. This file used to carry its own IsNetworkPath and a
+    // paragraph explaining that a mapped drive letter was NOT caught, because
+    // "telling the difference needs GetDriveType -- a filesystem call, which on
+    // a disconnected mapping can block for exactly as long as the thing being
+    // avoided." That last clause was reasoning, not a measurement, and it was
+    // wrong: GetDriveTypeW answered DRIVE_REMOTE in 0.9 ms against a letter
+    // mapped to a dead hostname, measured immediately after a File.Exists on
+    // that same letter had taken 22 s (kb/windows/detection.md). The whole
+    // question now lives in Interop/VolumeIdentity, where the two halves --
+    // characters, then the object manager -- sit together.
+    //
+    // THIS SITE STILL USES ONLY THE SPELLING HALF, deliberately. The directory
+    // here is the PROCESS log's, derived from the install location rather than
+    // supplied by a caller, and this constructor runs on the startup path before
+    // anything is serving. The spelling test is what a value of unknown
+    // provenance needs; VolumeIdentity.Of would add a syscall on every start to
+    // answer a question nobody has ever been able to pose here. The
+    // caller-supplied path is the SESSION directory, and that one goes through
+    // Sessions/SessionDirectoryGuard, which asks both halves.
 
     private SafeFileHandle EnsureOpen()
     {

@@ -409,6 +409,21 @@ Three rules follow, each of which has a scar behind it:
   48 bare `A task was canceled` — and not one was a logic fault
   ([kb](kb/toolchain.md#running-419-tests-at-once-what-starves-and-by-how-much)).
 
+⚠️ **And a third case the two rows above do not cover: a property whose only
+witness is the clock.** Added 2026-08-19. `SessionDirectoryGuard` answers *is
+this a network path* before the one call in it that opens a directory, and an
+**ordering** cannot be observed any other way — the answer is identical either
+way, twenty-two seconds apart. There is no bound that satisfies both halves of
+the rule: one with headroom a 419-test run cannot reach is far above a single
+22-second stall. **So it is not asserted, and the test says so in place** rather
+than carrying a number that would eventually go red on a busy machine and be
+"fixed" by raising it. What is asserted instead is *which branch produced the
+answer*, which is decisive about the branch and silent about the order;
+`SessionDirectoryGuardTests.TheNetworkRefusalDoesNotComeFromTheCallThatOpensThings`
+names the gap, and [the re-verification index](kb/re-verification.md) carries the
+22-second figure as a manual row. **A named gap beats a bound that measures the
+machine.**
+
 **A polling interval is not a bound and is not covered by this.** A loop that
 samples every 25 ms until a condition holds can make a run slower; it cannot make
 it redder. What matters is the deadline the loop gives up at.

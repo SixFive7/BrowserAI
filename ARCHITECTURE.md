@@ -246,6 +246,23 @@ lock file's identity and the index key alike. `LockScopes` names the three scope
 no `Local\` fallback anywhere and a test that fails the build if any other file in
 `src/` constructs a named waitable object.
 
+**Two spellings never reach that function, because two spellings are refused
+first.** `SessionDirectoryGuard` runs at `browserai_init` and `browserai_resume`,
+before anything is created and before the gate is taken, and answers two
+questions in a fixed order that is itself the design: *is this a network path*,
+from characters and then `GetDriveTypeW`, with **no filesystem call in either**;
+then *is this an alias*, from `QueryDosDeviceW` for a `subst` and one
+`GetFinalPathNameByHandleW` on the deepest existing ancestor for a junction,
+symlink or mount point. The order matters because the second question opens a
+directory and the first exists to ensure that open is local — a drive letter
+mapped to a dead hostname was measured at **22,210 ms for one `File.Exists`**
+([kb](kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
+The Win32 half is `Interop/VolumeIdentity`; the policy half, including what it
+knowingly cannot see, is `Sessions/SessionDirectoryGuard` and
+[the decision](DECISIONS.md#refusing-network-paths-and-aliased-spellings-at-the-door).
+**8.3 short names are not in that list** — `Path.GetFullPath` expands them, so
+they arrive canonical and there is nothing to refuse.
+
 **Acquisition never waits.** It is zero-timeout and answers contention with the
 holder's pid, start time, lock time and purpose. The one bounded wait is the
 create-or-take gate, and an `AbandonedMutexException` on it is a distinct

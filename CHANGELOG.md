@@ -21,6 +21,63 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+### Changed
+
+- **A session directory on a network path is refused, and a mapped drive letter
+  counts as one.** One `File.Exists` against a share that has stopped answering
+  costs a measured **22,210 ms**, and several such calls happen inside the
+  per-directory gate — so the caller who names the dead share is not the one who
+  waits; every other process contending for that directory is. `browserai_init`
+  and `browserai_resume` now refuse before anything is created and before the
+  gate is taken.
+
+  ⚠️ **It refuses network *semantics*, not the `\host\share` spelling, and that
+  distinction is the whole point.** A `net use Z:` mapping is a rooted local
+  drive-letter path by every character in it, resolves through the same
+  redirector and costs the same twenty-two seconds — measured 2026-08-19 through
+  a real redirector alias, which is the first time this repository has had that
+  number for a drive letter rather than for a UNC path
+  ([kb](kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
+  A check on the string shape looks closed and leaves the hole open.
+
+  **The guard cannot pay the cost it prevents.** The network question is answered
+  by characters and then by `GetDriveTypeW`, both of which read the object
+  manager rather than the filesystem — `GetDriveTypeW` answered `DRIVE_REMOTE`
+  in 0.9 ms against a letter whose `File.Exists` had just taken 22 s. That
+  corrects a sentence this repository had carried since the log writer was
+  built: *"telling the difference needs GetDriveType — a filesystem call, which
+  on a disconnected mapping can block for exactly as long as the thing being
+  avoided."* It was reasoning rather than a measurement, and it was wrong.
+
+  `browserai_destroy` and `browserai_list` are deliberately **not** guarded, so a
+  session created on a share by an older build can still be seen and still be
+  removed.
+
+- **A second spelling of one session directory is refused, with the spelling to
+  use instead.** `Path.GetFullPath` resolves neither `\?\`, junctions, `subst`
+  nor mapped drives, so two spellings of one directory produced **two mutex names
+  and one `lock.json`** — the per-directory gate stopped serialising while every
+  signal still read healthy, which
+  [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md) traced
+  to two processes driving one browser profile in one interleaving and a
+  destroyed session history in the other.
+
+  Refusal rather than canonicalisation, taken as a decision: canonicalising
+  through the filesystem's own final name is correct and **rewrites the identity
+  of every mutex name, index key and lock path in the product**, giving every
+  session directory in existence a new identity on the day it ships. The refusal
+  names the accepted form, so the next call is the same call with one argument
+  replaced. Reasoning, and what it knowingly leaves open, in
+  [`DECISIONS.md`](DECISIONS.md#refusing-network-paths-and-aliased-spellings-at-the-door).
+
+  ⚠️ **One of the review's four aliases turned out not to be one.**
+  `Path.GetFullPath` **does** expand 8.3 short names on .NET 10 — in full for an
+  existing path, and prefix-only-with-the-tail-preserved for one `init` has not
+  created yet — so a short spelling arrives already canonical and there is
+  nothing to refuse. Measured rather than assumed, and the review is corrected in
+  place; its conclusion is untouched, because it needed one unresolved alias and
+  has three.
+
 ### Fixed
 
 - **A screenshot comes back inline again, and the defect was ours.** Upstream

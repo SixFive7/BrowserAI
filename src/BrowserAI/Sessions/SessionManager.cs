@@ -300,7 +300,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private async Task<ToolOutcome> InitAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
-        var location = Resolve(Required(arguments, "directory"), "directory");
+        var location = ResolveToOpen(Required(arguments, "directory"), "directory");
         var purpose = Required(arguments, "purpose");
         var mode = Mode(arguments);
         var browser = Browser(arguments);
@@ -352,7 +352,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private async Task<ToolOutcome> ResumeAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
-        var location = Resolve(Required(arguments, "directory"), "directory");
+        var location = ResolveToOpen(Required(arguments, "directory"), "directory");
         var appended = Optional(arguments, "purpose");
         var debug = Flag(arguments, "debug") ?? false;
         var tracing = Flag(arguments, "tracing");
@@ -1301,6 +1301,50 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             throw new SessionToolException(SessionErrors.DirectoryUnusable(argument, directory, failure.Message));
         }
+    }
+
+    /// <summary>
+    /// <see cref="Resolve(string, string)"/>, plus the two things a directory
+    /// this process is about to <b>open</b> may not be.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A separate entry point rather than a check inside
+    /// <see cref="SessionPath.Resolve"/>, and the difference is what the path is
+    /// for.</b> <c>Resolve</c> canonicalises every path this product handles,
+    /// including ones read back out of a <c>lock.json</c> written by another
+    /// machine and ones that are only ever compared. Refusing there would make
+    /// <see cref="SamePath"/> throw on a recorded network path, and
+    /// <c>browserai_list</c> unable to show a session it can see.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Only <c>init</c> and <c>resume</c> take this route, and
+    /// <c>destroy</c> deliberately does not.</b> Those two are the calls that
+    /// create files, take <see cref="LockScopes.PerDirectoryGate"/> and hold a
+    /// directory for a session's life. A session that predates this build on a
+    /// network path can therefore still be listed and still be destroyed — a
+    /// refusal that left a directory unremovable would be a worse trap than the
+    /// one it closes.
+    /// </para>
+    /// <para>
+    /// <b>It runs before everything.</b> Ahead of <see cref="Existing"/>, which
+    /// reads <c>lock.json</c>; ahead of <see cref="FreeSpaceRefusal"/>, which
+    /// queries the volume; ahead of <see cref="SessionLayout.Create"/> and ahead
+    /// of the gate. Each of those is a filesystem call, which is the thing the
+    /// network half of the guard exists to keep off an unreachable share.
+    /// </para>
+    /// </remarks>
+    /// <param name="directory">The path the caller named.</param>
+    /// <param name="argument">Which argument it arrived in.</param>
+    /// <returns>The canonical session path.</returns>
+    /// <exception cref="SessionToolException">It is on a network path, or an aliased spelling.</exception>
+    private static SessionPath ResolveToOpen(string directory, string argument)
+    {
+        var location = Resolve(directory, argument);
+
+        return SessionDirectoryGuard.Refuse(argument, location) is { } refusal
+            ? throw new SessionToolException(refusal)
+            : location;
     }
 
     private static string Required(JsonObject? arguments, string name) =>

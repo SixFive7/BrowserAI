@@ -4,6 +4,7 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
+using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -129,6 +130,87 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That((bool?)malformed["isError"]).IsTrue();
         await Assert.That(TextOf(malformed)).Contains("is not a usable directory path");
         Record(nameof(SessionErrors.DirectoryUnusable));
+    }
+
+    [Test]
+    public async Task InitAndResumeBothRefuseANetworkPathAndAnAliasedSpelling()
+    {
+        // Both doors, both rows, through the wire. The predicate has tests of
+        // its own in SessionDirectoryGuardTests; what this arm establishes is
+        // that the two refusals are REACHABLE -- which is the one thing the
+        // catalogue's census exists to require and the one thing a unit test of
+        // the predicate cannot say.
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // A UNC path, refused on its characters before any filesystem call.
+        const string Share = @"\\10.255.255.1\share\a-session";
+
+        var uncInit = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Share,
+            ["purpose"] = "should never be created",
+            ["mode"] = "headless",
+        });
+
+        await Assert.That((bool?)uncInit["isError"]).IsTrue();
+        Match(
+            TextOf(uncInit),
+            nameof(SessionErrors.DirectoryOnANetworkPath),
+            SessionErrors.DirectoryOnANetworkPath("directory", Share, "it is a UNC path"));
+
+        // And through resume, because a guard on one door is not a guard.
+        var uncResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = Share });
+
+        await Assert.That((bool?)uncResume["isError"]).IsTrue();
+        await Assert.That(TextOf(uncResume)).Contains("is on a network path");
+
+        // An aliased spelling, on a directory that really exists. The extended
+        // prefix is the one alias that needs no filesystem setup at all, which
+        // is why it is the one an unlucky caller reaches first.
+        var real = Path.Combine(sessions.Root, "aliased");
+        _ = Directory.CreateDirectory(real);
+
+        var aliasedInit = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
+            ["purpose"] = "should never be created",
+            ["mode"] = "headless",
+        });
+
+        await Assert.That((bool?)aliasedInit["isError"]).IsTrue();
+        Match(
+            TextOf(aliasedInit),
+            nameof(SessionErrors.DirectoryIsAnAliasedSpelling),
+            SessionErrors.DirectoryIsAnAliasedSpelling(
+                "directory",
+                VolumeIdentity.ExtendedLengthPrefix + real,
+                real,
+                $"'{VolumeIdentity.ExtendedLengthPrefix}' is the device-namespace prefix, which is a second spelling of an ordinary path"));
+
+        var aliasedResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
+        });
+
+        await Assert.That((bool?)aliasedResume["isError"]).IsTrue();
+        await Assert.That(TextOf(aliasedResume)).Contains("is a second spelling");
+
+        // Nothing was created under either name, which is the half a refusal
+        // cannot claim for itself.
+        await Assert.That(File.Exists(Path.Combine(real, SessionLayout.LockFileName))).IsFalse();
+
+        // The positive control, and it is load-bearing: with it, the two
+        // refusals above are about the SPELLING rather than about init being
+        // broken in this rig.
+        var accepted = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = real,
+            ["purpose"] = "the same directory, spelled the way the filesystem spells it",
+            ["mode"] = "headless",
+        });
+
+        await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true);
     }
 
     [Test]
@@ -717,10 +799,20 @@ internal sealed partial class ErrorCatalogueTests
         // timestamped statements: a resumed copy is now told what it is instead
         // of being refused until it says that it knows.
         //
+        // ⚠️ **Corrected 2026-08-19 to 23 (previously 21).** Two boundary
+        // refusals arrived together, `DirectoryOnANetworkPath` and
+        // `DirectoryIsAnAliasedSpelling`, and they are the first rows in this
+        // catalogue whose whole purpose is to refuse something that WORKED
+        // before -- a session on a share, a session named through the device-namespace prefix. That
+        // makes the census's own requirement more than bookkeeping here: a row
+        // that takes a capability away and is reachable from nowhere would read
+        // in review as a restriction that had shipped, while every caller kept
+        // the old behaviour.
+        //
         // Every one of them was **deleted rather than orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
-        await Assert.That(rows.Count).IsEqualTo(21);
+        await Assert.That(rows.Count).IsEqualTo(23);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>
