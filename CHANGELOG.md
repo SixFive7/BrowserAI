@@ -70,6 +70,27 @@ has been satisfied in form only.
   replaced. Reasoning, and what it knowingly leaves open, in
   [`DECISIONS.md`](DECISIONS.md#refusing-network-paths-and-aliased-spellings-at-the-door).
 
+  ⚠️ **And 8.3 generation turned out to be per-volume, which CI found rather
+  than a document.** The developer machine shortens on its system volume and not
+  on its other three; the GitHub Windows runner does not shorten on the volume it
+  checks out onto, so the test that builds an 8.3 alias had nothing to build and
+  its own positive control caught it. **It is not skipped there**: a volume with
+  no short names is a volume on which the hazard does not exist, and the test
+  asserts that instead, plus the backstop that would catch a short spelling if
+  one ever arrived unexpanded. Which branch ran is printed, and the
+  [re-verification row](kb/re-verification.md) says plainly that a green CI run
+  does not re-verify the .NET behaviour.
+
+  **Both tools now say so to the model, and one sentence had to be corrected
+  rather than extended.** `browserai_init`'s description said *"Any path is
+  accepted and none is validated"* and `browserai_resume`'s said *"This never
+  refuses a directory for what it is"* — neither is true any more. The fact the
+  first sentence was carrying is untouched and is still stated: nothing about
+  what the directory **contains** is looked at, so pointing a session at a real
+  Chrome profile still works and still does everything the surrounding warning
+  describes. `ModelSurfaceTests` requires the fact rather than the sentence,
+  which is what let the phrase move with it.
+
   ⚠️ **One of the review's four aliases turned out not to be one.**
   `Path.GetFullPath` **does** expand 8.3 short names on .NET 10 — in full for an
   existing path, and prefix-only-with-the-tail-preserved for one `init` has not

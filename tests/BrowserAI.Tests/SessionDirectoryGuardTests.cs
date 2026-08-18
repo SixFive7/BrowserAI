@@ -188,7 +188,7 @@ internal sealed class SessionDirectoryGuardTests
     }
 
     [Test]
-    public async Task An83ShortNameIsCanonicalisedBeforeTheGuardEverSeesIt()
+    public async Task An83SpellingNeverReachesASecondIdentityOnEitherKindOfVolume()
     {
         // ⚠️ **Measured 2026-08-19 on .NET 10, and it corrects the review this
         // work came from.** Finding A4 lists 8.3 short names among the things
@@ -196,34 +196,74 @@ internal sealed class SessionDirectoryGuardTests
         // `PathHelper.Normalize` expands a path containing `~` through the
         // filesystem, and it expands the part that EXISTS while leaving a
         // non-existent tail alone -- so a short spelling reaches this product
-        // already canonical and there is no second identity to refuse.
+        // already canonical and there is no second identity to refuse. That is
+        // why the first branch below asserts an EQUALITY rather than a refusal:
+        // a refusal would be the wrong answer, because the caller named the
+        // right directory in a legal spelling.
         //
-        // That is why this arm asserts an EQUALITY rather than a refusal. A
-        // refusal here would be the wrong answer: the caller named the right
-        // directory in a legal spelling and nothing about it is ambiguous by the
-        // time the guard runs.
+        // ⚠️⚠️ **AND 8.3 GENERATION IS A PER-VOLUME SETTING, WHICH THIS TEST
+        // FOUND OUT FROM CI RATHER THAN FROM A DOCUMENT.** The developer machine
+        // generates short names on C:; the GitHub Windows runner does not on the
+        // D: it checks out onto, so `GetShortPathNameW` hands back the long path
+        // and there is no alias to build. **It is not skipped there**: a volume
+        // with no 8.3 names is a volume on which this hazard does not exist, and
+        // saying so is a real assertion. What the second branch proves instead is
+        // the BACKSTOP -- that the guard refuses a path whose final name differs
+        // -- which is the mechanism that would catch a short name if one ever
+        // arrived unexpanded, and it is available on every volume.
+        //
+        // Which branch ran is printed rather than inferred, because a two-branch
+        // test whose branch nobody can see is a test that can quietly take the
+        // emptier one for ever.
         using var scratch = ScratchDirectory.Create("guard-short-name");
 
         var real = Path.Combine(scratch.Path, "a real session directory");
         _ = Directory.CreateDirectory(real);
 
         var shortName = PathAliases.ShortNameOf(real);
+        var volumeGeneratesShortNames = !string.Equals(shortName, real, StringComparison.Ordinal);
 
-        // The positive control. A volume with 8.3 generation switched off hands
-        // back the long path, and every assertion below would then be asserting
-        // that a path equals itself.
-        await Assert.That(shortName).IsNotEqualTo(real);
-        await Assert.That(shortName).Contains("~");
+        if (TestContext.Current?.OutputWriter is { } report)
+        {
+            await report.WriteLineAsync(
+                volumeGeneratesShortNames
+                    ? $"8.3 names ON for this volume: '{real}' is also '{shortName}'."
+                    : $"8.3 names OFF for this volume: GetShortPathNameW returned '{real}' unchanged, so no short alias exists here and the backstop is asserted instead.");
+        }
 
-        await Assert.That(SessionPath.Resolve(shortName).Key).IsEqualTo(SessionPath.Resolve(real).Key);
-        await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(shortName))).IsNull();
+        if (volumeGeneratesShortNames)
+        {
+            await Assert.That(shortName).Contains("~");
+            await Assert.That(SessionPath.Resolve(shortName).Key).IsEqualTo(SessionPath.Resolve(real).Key);
+            await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(shortName))).IsNull();
 
-        // And the half that matters for `init`: a short prefix with a tail that
-        // does not exist yet is expanded too, tail preserved.
-        var notYetThere = Path.Combine(shortName, "not", "created", "yet");
+            // And the half that matters for `init`: a short prefix with a tail
+            // that does not exist yet is expanded too, tail preserved.
+            var notYetThere = Path.Combine(shortName, "not", "created", "yet");
 
-        await Assert.That(SessionPath.Resolve(notYetThere).FullPath).IsEqualTo(Path.Combine(real, "not", "created", "yet"));
-        await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(notYetThere))).IsNull();
+            await Assert.That(SessionPath.Resolve(notYetThere).FullPath).IsEqualTo(Path.Combine(real, "not", "created", "yet"));
+            await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(notYetThere))).IsNull();
+
+            return;
+        }
+
+        // No short alias on this volume, so the claim is that there is none --
+        // asserted as a whole-string identity rather than as "it did not
+        // contain a tilde", because a partially shortened path is the case a
+        // tilde test would let through.
+        await Assert.That(shortName).IsEqualTo(real);
+
+        // The backstop, on the same directory: whatever spelling reaches the
+        // guard, a path the filesystem calls something else is refused with the
+        // name it does call it. This is what would catch an 8.3 spelling on a
+        // volume that had them and a .NET that had stopped expanding them.
+        var link = Path.Combine(scratch.Path, "short-name-backstop");
+        await PathAliases.JunctionAsync(link, real);
+
+        var refusal = SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(link));
+
+        await Assert.That(refusal).IsNotNull();
+        await Assert.That(refusal!).Contains($"directory='{real}'");
     }
 
     [Test]

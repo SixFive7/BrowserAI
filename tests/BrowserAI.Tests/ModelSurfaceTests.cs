@@ -151,7 +151,17 @@ internal sealed class ModelSurfaceTests
         // The security surface. A model that reads this and still points a
         // session at a real profile has been told; one that is not told has not.
         "real Chrome profile",
-        "Any path is accepted and none is validated",
+
+        // ⚠️ Corrected 2026-08-19 (previously "Any path is accepted and none
+        // is validated"). That sentence stopped being true on 2026-08-19: a
+        // network path and a second spelling of one directory are both refused
+        // now. The FACT it stood for is untouched and is what is required here --
+        // nothing about what the directory CONTAINS is looked at, so pointing a
+        // session at a real profile still works and still does what the rest of
+        // this list warns about. This is the rewording the remark above
+        // anticipated, and the phrase moved WITH the fact rather than the fact
+        // being trimmed to keep the phrase.
+        "nothing else about it is validated",
         "live cookies and logins",
 
         // The retention policy, stated where the session is created rather than

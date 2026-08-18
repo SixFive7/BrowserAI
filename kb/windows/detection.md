@@ -452,6 +452,17 @@ this is a BCL behaviour and the two `no` rows are what
 | a directory junction | no |
 | a `subst` or mapped drive letter | no |
 
+> ⚠️ **8.3 generation is PER VOLUME, and half the volumes here do not do it.**
+> Measured 2026-08-19 by creating a directory with spaces in its name on each
+> volume and calling `GetShortPathNameW`: **`C:` shortens, `D:`, `E:` and `F:` do
+> not** — and neither does the volume the **GitHub Windows runner** checks out
+> onto, which is how this was found. A path with no short name comes back
+> unchanged rather than failing, so a test that builds an 8.3 alias and does not
+> check that it got one is asserting that a path equals itself. `[MACHINE]` for
+> which volumes, `[STABLE]` for the setting being per-volume — it is
+> `fsutil 8dot3name query <volume>`, and reading it needs administrator rights,
+> which is why the observable check is the round trip rather than the setting.
+
 > ⚠️ **The 8.3 rows correct
 > [the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
 > finding A4**, which lists 8.3 names among the four things `Path.GetFullPath`
