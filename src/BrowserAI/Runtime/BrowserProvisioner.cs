@@ -462,10 +462,38 @@ internal sealed class BrowserProvisioner : IDisposable
     /// atomicity that does not exist.
     /// </para>
     /// <para>
-    /// The caller is responsible for having established that nothing is using the
-    /// tree. This method refuses nothing; refusing is
-    /// <c>browserai_reinstall_browser</c>'s job, and it does it before calling
-    /// here.
+    /// The caller establishes that nothing is <b>running from</b> the tree; this
+    /// method establishes that nothing is <b>writing into</b> it. Those are two
+    /// different questions and only the first one used to be asked.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The provisioning mutex is taken across the delete, added
+    /// 2026-08-18 (previously no lock at all).</b> The two reasons the old
+    /// comment gave were both wrong. <i>"The delete is itself the guard"</i> — it
+    /// guards against running <b>executables</b>, and a concurrent installer is
+    /// not one: it is <c>node.exe</c> out of the payload directory, extracting
+    /// <i>into</i> the tree, so <see cref="BrowserProcesses.RunningFrom"/>
+    /// returns empty and the guard passes. The reinstall then deleted the
+    /// installer's partially-extracted files, the installer finished and wrote
+    /// <c>INSTALLATION_COMPLETE</c> over the gutted tree, and both processes
+    /// reported success — after which <c>IsComplete</c> reports installed for
+    /// ever, the first launch produces <c>spawn EFTYPE</c>, and upstream writes
+    /// <c>DEPENDENCIES_VALIDATED</c> into the corrupt directory and suppresses
+    /// revalidation for thirty days. A durable confident wrong answer.
+    /// </para>
+    /// <para>
+    /// <i>"Taking the provisioning mutex here would deadlock against the
+    /// installer, which takes it on its own thread"</i> — a different thread
+    /// taking a mutex is a wait, not a deadlock. The real obstacle is that this
+    /// method is <c>async</c> and a named mutex is owned by the <b>thread</b>
+    /// that waited on it, so a continuation resuming on another pool thread would
+    /// make the release throw. That is a shape problem with a known answer, and
+    /// it is the one <see cref="Start"/> already uses: the locked section runs on
+    /// its own <c>LongRunning</c> thread and is finished before anything is
+    /// awaited. The mutex is <b>released before</b> <see cref="WaitAsync"/>, or
+    /// the install this method exists to trigger would queue behind it. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// A3.
     /// </para>
     /// </remarks>
     /// <param name="browser">The family, as upstream names it.</param>
@@ -477,18 +505,35 @@ internal sealed class BrowserProvisioner : IDisposable
 
         var revision = Manifest().For(browser);
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
-        var removedBytes = SizeOf(directory);
-        var failures = new List<string>();
 
-        ProvisioningLog.Reinstalling(_logger, browser, directory);
+        // On a thread of its own, for the reason in the remarks: everything
+        // inside the named mutex has to happen on the thread that took it, and
+        // nothing may be awaited while it is held.
+        var (removed, removedBytes, failures) = await Task.Factory.StartNew(
+            () => RemoveForReinstall(browser, directory),
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default).ConfigureAwait(false);
 
-        // §E's routine, not a second one: a per-node try/catch, so one locked
-        // file costs that file rather than the whole tree.
-        TreeDelete.Remove(directory, failures);
+        if (!removed)
+        {
+            // An install is in flight. Nothing was deleted, and saying so is the
+            // whole value of the lock: the alternative is deleting the files a
+            // running installer is about to declare complete.
+            ProvisioningLog.ReinstallDeferred(_logger, browser, directory);
 
-        // A completed attempt would otherwise make Ensure believe the tree it
-        // just deleted is still there.
-        _ = _attempts.TryRemove(browser, out _);
+            return new ReinstallOutcome(
+                browser,
+                directory,
+                RemovedBytes: 0,
+                Failures: [],
+                new ProvisioningStatus(
+                    browser,
+                    ProvisioningState.Failed,
+                    directory,
+                    $"Another BrowserAI process is provisioning {browser} into '{directory}' right now, so nothing was deleted and nothing was downloaded. "
+                    + "Deleting a tree an installer is extracting into produces a directory that is neither the old install nor the new one, and upstream then marks it complete. Wait for that download to finish and call this again."));
+        }
 
         if (failures.Count is not 0)
         {
@@ -533,6 +578,53 @@ internal sealed class BrowserProvisioner : IDisposable
     /// which upstream writes <c>DEPENDENCIES_VALIDATED</c> into the corrupt
     /// directory and suppresses revalidation for thirty days.
     /// </remarks>
+    /// <summary>
+    /// The destructive half of <see cref="ReinstallAsync"/>, inside the
+    /// machine-wide provisioning mutex, on one thread.
+    /// </summary>
+    /// <remarks>
+    /// <b>Zero timeout, exactly as the install path uses it.</b> An install in
+    /// flight is not something to queue behind — the caller is a model waiting on
+    /// a tool call, and a 203.8 MB download is minutes — it is a reason to refuse
+    /// and say which. <b>An abandoned mutex is an acquisition</b> (race R3): the
+    /// previous holder died, this thread owns it, and refusing here would make one
+    /// crashed installer disable reinstalls until the machine is rebooted.
+    /// </remarks>
+    /// <param name="browser">The family.</param>
+    /// <param name="directory">Its revision directory.</param>
+    /// <returns>What was there, what would not go, and whether the delete happened at all.</returns>
+    private (bool Removed, long RemovedBytes, List<string> Failures) RemoveForReinstall(string browser, string directory)
+    {
+        using var mutex = MachineMutex.Create(MutexNameFor(BrowsersDirectory, browser));
+
+        if (mutex.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
+        {
+            return (false, 0, []);
+        }
+
+        try
+        {
+            var removedBytes = SizeOf(directory);
+            var failures = new List<string>();
+
+            ProvisioningLog.Reinstalling(_logger, browser, directory);
+
+            // §E's routine, not a second one: a per-node try/catch, so one locked
+            // file costs that file rather than the whole tree.
+            TreeDelete.Remove(directory, failures);
+
+            // A completed attempt would otherwise make Ensure believe the tree it
+            // just deleted is still there.
+            _ = _attempts.TryRemove(browser, out _);
+
+            return (true, removedBytes, failures);
+        }
+        finally
+        {
+            mutex.Release();
+        }
+    }
+
     private static bool IsComplete(string directory) =>
         File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker));
 
@@ -1363,4 +1455,16 @@ internal static partial class ProvisioningLog
         Level = LogLevel.Information,
         Message = "The process that held the {Browser} provisioning mutex let go without completing {Directory}, so this process is installing it rather than waiting for a marker that is not coming.")]
     public static partial void TheOtherProcessLetGoWithoutInstalling(ILogger logger, string browser, string directory);
+
+    /// <summary>
+    /// A reinstall did not delete anything, because an install is in flight.
+    /// </summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="browser">The family.</param>
+    /// <param name="directory">The revision directory that was left alone.</param>
+    [LoggerMessage(
+        EventId = 72,
+        Level = LogLevel.Warning,
+        Message = "browserai_reinstall_browser did not delete {Directory}: another BrowserAI process holds the {Browser} provisioning mutex, so an installer is extracting into that tree right now. Deleting it here would leave a directory that is neither install, which upstream would then mark complete.")]
+    public static partial void ReinstallDeferred(ILogger logger, string browser, string directory);
 }

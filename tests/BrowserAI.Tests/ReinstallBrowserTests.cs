@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Tests;
 
@@ -176,6 +177,85 @@ internal sealed class ReinstallBrowserTests
             // then short-circuits on without validating anything.
             await Assert.That(Volatile.Read(ref installs) - before).IsEqualTo(0);
         }
+    }
+
+    /// <summary>
+    /// The question the running-process guard cannot ask: is something
+    /// <b>writing into</b> the tree?
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A concurrent installer is invisible to every check this tool used to
+    /// make.</b> It is <c>node.exe</c> out of the payload directory, extracting
+    /// <i>into</i> the browser tree, so <c>BrowserProcesses.RunningFrom</c>
+    /// returns empty and the guard passes. The reinstall then deleted the
+    /// installer's partially-extracted files; the installer finished and wrote
+    /// <c>INSTALLATION_COMPLETE</c> over what was left; both processes reported
+    /// success; and <c>IsComplete</c> answered <i>installed</i> for ever after,
+    /// with <c>spawn EFTYPE</c> at every launch and upstream's thirty-day
+    /// <c>DEPENDENCIES_VALIDATED</c> suppression on top
+    /// ([the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// A3).
+    /// </para>
+    /// <para>
+    /// <b>The claim below is not a stand-in for that installer, it is the same
+    /// object.</b> A BrowserAI extracting into this tree holds exactly this
+    /// machine-wide mutex, for exactly this reason, and holds it on a thread of
+    /// its own for the same reason the product does. The positive control is
+    /// <see cref="ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning"/>,
+    /// which is the same call with nothing holding it.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task ItDeletesNothingWhileAnotherProcessIsInstallingIntoTheTree()
+    {
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("reinstall-while-installing");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+        var beingExtracted = Path.Combine(directory, "being-extracted.bin");
+
+        _ = Directory.CreateDirectory(directory);
+        await File.WriteAllTextAsync(beingExtracted, "the other process's half-written tree");
+
+        using var claim = ProvisioningClaim.Take(root, ProvisionedBrowsers.Chromium);
+
+        await Assert.That(claim.Held).IsTrue();
+
+        var installs = 0;
+
+        using var provisioner = new BrowserProvisioner(
+            RepositoryPayload.Layout,
+            root,
+            log,
+            new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20), OuterDeadline = TestDefaults.ProcessHang })
+        {
+            StartInstaller = (_, installRoot) =>
+            {
+                Interlocked.Increment(ref installs);
+                return FakeInstaller.Succeeding(Path.Combine(installRoot, RigSessionEnvironment.ChromiumDirectoryName), TimeSpan.Zero);
+            },
+            PruneRevisions = _ => { },
+        };
+
+        var outcome = await provisioner.ReinstallAsync(SessionManager.SupportedBrowser);
+
+        // The whole point: the other process's files are still there.
+        await Assert.That(File.Exists(beingExtracted)).IsTrue();
+        await Assert.That(outcome.RemovedBytes).IsEqualTo(0);
+        await Assert.That(outcome.Failures).IsEmpty();
+
+        // And nothing was downloaded on top of them either, which is the second
+        // half of the corruption: a download into a tree somebody else is
+        // extracting into produces one that is neither install.
+        await Assert.That(installs).IsEqualTo(0);
+
+        // Said, not merely done. A refusal a model cannot act on is the failure
+        // shape this project exists to remove.
+        await Assert.That(outcome.Status.State).IsEqualTo(ProvisioningState.Failed);
+        await Assert.That(outcome.Status.Detail).Contains("nothing was deleted");
+        await Assert.That(outcome.Status.Detail).Contains(SessionManager.SupportedBrowser);
     }
 
     [Test]

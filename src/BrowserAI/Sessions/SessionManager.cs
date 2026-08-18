@@ -598,13 +598,27 @@ internal sealed class SessionManager : IAsyncDisposable
     /// with no browser installed is unavoidable and is stated.
     /// </para>
     /// <para>
-    /// <b>No extra lock is taken around the check-then-delete, and the reason is
-    /// that the delete is itself the guard.</b> A session that opened a browser
-    /// between the check and the delete makes the delete fail on an open
-    /// executable, and the outcome reports exactly which files survived — so the
-    /// race produces a refusal with evidence rather than a corrupted tree. Taking
-    /// the provisioning mutex here instead would deadlock against the installer,
-    /// which takes it on its own thread.
+    /// <b>The check here answers "is anything RUNNING FROM the tree", and that is
+    /// half the question.</b> A session that opened a browser between the check
+    /// and the delete makes the delete fail on an open executable, and the
+    /// outcome reports exactly which files survived — so <i>that</i> race
+    /// produces a refusal with evidence rather than a corrupted tree.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously "No extra lock is taken around the
+    /// check-then-delete, and the reason is that the delete is itself the guard …
+    /// Taking the provisioning mutex here instead would deadlock against the
+    /// installer, which takes it on its own thread").</b> Both halves were wrong.
+    /// The delete guards against running <b>executables</b> and the case that
+    /// corrupts is a <b>writer</b>: a concurrent installer is <c>node.exe</c> out
+    /// of the payload, extracting <i>into</i> the tree, which
+    /// <see cref="BrowserProcesses.RunningFrom"/> cannot see at all. And a
+    /// different thread taking a mutex is a wait rather than a deadlock — the
+    /// real obstacle was thread affinity in an <c>async</c> method, which
+    /// <c>BrowserProvisioner.ReinstallAsync</c> now solves the same way
+    /// <c>BrowserProvisioner.Start</c> always did. <b>The second question is
+    /// asked there, under the provisioning mutex</b>, because that is where the
+    /// answer can be held across the delete.
     /// </para>
     /// </remarks>
     private async Task<ToolOutcome> ReinstallBrowserAsync(CancellationToken cancellationToken)
