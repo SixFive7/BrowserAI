@@ -452,6 +452,23 @@ internal sealed class SessionLockTests
 
         // Closing first is the only thing that works, which is what makes the
         // gap real and the per-directory mutex the thing that covers it.
+        //
+        // ⚠️ The rename below is retried, and the reason is a live-system
+        // condition rather than a defect in either side of it. A file this
+        // process has just closed is briefly held by something OUTSIDE this
+        // repository — the same scanner's handle that
+        // `SessionLock`'s two-second move budget, `InstallationMarker` and the
+        // first-run cache's commit all exist for — and `MOVEFILE_REPLACE_EXISTING`
+        // wants DELETE on the destination, so it is refused ACCESS_DENIED rather
+        // than as a sharing violation. Measured 2026-08-18: one run in twenty of
+        // the full suite at `SuiteParallelism.Unbounded`, 47 ms into this test,
+        // as a bare `UnauthorizedAccessException` naming neither the holder nor
+        // the fact that a retry would have worked.
+        //
+        // The assertion is unchanged and is not weakened by this: what this test
+        // establishes is that closing the handle is what makes the rename
+        // POSSIBLE, and the arms above still prove it is refused while the handle
+        // is open, on a single attempt, under every share mode.
         await File.WriteAllTextAsync(temp, "{}");
 
         using (var held = new FileStream(path.LockFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
@@ -459,7 +476,7 @@ internal sealed class SessionLockTests
             await Assert.That(held.CanWrite).IsTrue();
         }
 
-        File.Move(temp, path.LockFile, overwrite: true);
+        await MoveOnceNothingElseHoldsItAsync(temp, path.LockFile);
         await Assert.That(File.Exists(temp)).IsFalse();
 
         // The `{}` that landed there is now a lock file this build refuses,
@@ -760,6 +777,44 @@ internal sealed class SessionLockTests
         if (ProcessIdentity.IsAlive(processId, createdFileTime))
         {
             throw new TimeoutException($"Process {processId} was still running {Patience} after being terminated.");
+        }
+    }
+
+    /// <summary>
+    /// Renames a file over another, waiting out whatever outside this repository
+    /// is briefly holding the destination.
+    /// </summary>
+    /// <remarks>
+    /// <b>The bound is a hang detector and nothing asserts on it.</b> Every
+    /// observed occurrence of this transient cleared on the first retry; what the
+    /// budget is there for is a destination that is held for good, which is a
+    /// different failure and gets a message that says so.
+    /// </remarks>
+    /// <param name="from">The file to rename.</param>
+    /// <param name="to">What to rename it over.</param>
+    /// <returns>The rename.</returns>
+    private static async Task MoveOnceNothingElseHoldsItAsync(string from, string to)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                File.Move(from, to, overwrite: true);
+                return;
+            }
+            catch (Exception failure) when (failure is UnauthorizedAccessException or IOException)
+            {
+                if (waited.Elapsed > TestDefaults.ProcessHang)
+                {
+                    throw new InvalidOperationException(
+                        $"'{to}' could not be replaced by a rename in {TestDefaults.ProcessHang.TotalMinutes:F0} minutes, and this process closed its own handle to it before the first attempt. Something outside this repository is holding it permanently.",
+                        failure);
+                }
+
+                await Task.Delay(10);
+            }
         }
     }
 

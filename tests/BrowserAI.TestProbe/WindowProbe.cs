@@ -200,11 +200,46 @@ internal static partial class WindowProbe
         }
     }
 
+    /// <summary>
+    /// Writes a report the host polls for, published by rename so a host that
+    /// reads the instant it appears cannot read a partly-written one.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The rename is retried, added 2026-08-18</b>, for the reason spelled
+    /// out on <c>SessionProbe.Publish</c>: a file this process has just closed is
+    /// briefly held by something outside this repository, and
+    /// <c>MOVEFILE_REPLACE_EXISTING</c> is refused <c>ACCESS_DENIED</c> rather
+    /// than as a sharing violation. An unretried rename kills the probe and the
+    /// host reports the wrong cause.
+    /// </remarks>
+    /// <param name="path">Where the host is looking.</param>
+    /// <param name="report">What to write.</param>
     private static void Write(string path, JsonObject report)
     {
         var temp = $"{path}.writing";
         File.WriteAllText(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        File.Move(temp, path, overwrite: true);
+
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                File.Move(temp, path, overwrite: true);
+                return;
+            }
+            catch (Exception failure) when (failure is UnauthorizedAccessException or IOException)
+            {
+                if (waited.Elapsed > Patience)
+                {
+                    throw new InvalidOperationException(
+                        $"'{path}' could not be replaced by a rename within {Patience}. Something outside this repository is holding it.",
+                        failure);
+                }
+
+                Thread.Sleep(10);
+            }
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -563,6 +563,48 @@ internal static class SessionProbe
     {
         var temp = $"{path}.writing";
         File.WriteAllText(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        File.Move(temp, path, overwrite: true);
+        Publish(temp, path);
+    }
+
+    /// <summary>
+    /// Renames a report into place, waiting out a scanner's handle on the
+    /// destination.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-08-18.</b> A file this process has just closed is briefly
+    /// held by something outside this repository, and
+    /// <c>MOVEFILE_REPLACE_EXISTING</c> wants DELETE on the destination — so it
+    /// is refused <c>ACCESS_DENIED</c> rather than as a sharing violation, and an
+    /// unretried rename kills the probe. The host then reports <i>"the probe
+    /// never wrote its report"</i>, which is true and names the wrong cause.
+    /// Measured elsewhere in this suite at one occurrence in twenty full runs.
+    /// The bound is <see cref="Patience"/>, the probe's own hang detector; every
+    /// observed occurrence cleared on the first retry.
+    /// </remarks>
+    /// <param name="temp">The fully written temporary file.</param>
+    /// <param name="path">Where the host is looking.</param>
+    private static void Publish(string temp, string path)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                File.Move(temp, path, overwrite: true);
+                return;
+            }
+            catch (Exception failure) when (failure is UnauthorizedAccessException or IOException)
+            {
+                if (waited.Elapsed > Patience)
+                {
+                    throw new InvalidOperationException(
+                        $"'{path}' could not be replaced by a rename within {Patience}. Something outside this repository is holding it.",
+                        failure);
+                }
+
+                Thread.Sleep(10);
+            }
+        }
     }
 }
