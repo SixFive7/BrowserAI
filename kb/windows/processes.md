@@ -371,6 +371,39 @@ syscall wide.
 > holds that table and only the first group goes through it. `[STABLE]` for the
 > delete-pending refusal, `[MACHINE]` for the observed frequency.
 
+**The window has a second face, and waiting out the first one lands in it: the
+name is momentarily UNBOUND, and the open fails NOT FOUND rather than denied.**
+Measured 2026-08-18, three occurrences in thirty-two full-suite runs at
+`SuiteParallelism.Unbounded`, all from a reader spinning on a file another
+process was rewriting a hundred times. The sequence a reader can observe across
+one `MoveFileEx` is therefore **denied → absent → the new record**, and a retry
+that handles only the first of those converts a throw into a *null*. `[STABLE]`
+for the sequence, `[MACHINE]` for the frequency. Reproduce with
+`SessionLockTests.ARewriteIsNeverObservedTorn`, which records every absence and
+re-reads immediately: a rename window cannot survive a second read, so a null
+that does is real damage and fails.
+
+> **BrowserAI is safe under the absence and is deliberately not defended against
+> it, which is a different judgement from the denial above.** A denial was an
+> unhandled exception escaping `TryAcquire`; an absence is a documented return
+> value every caller already handles — `SessionLock` even carries the sentence
+> *"which removed its `lock.json` between the refusal and the read"* for exactly
+> this. And the mechanism bounds it: **every rewrite happens under the
+> per-directory mutex**, so no gated reader can see the window at all, and the
+> ungated ones all fail in the safe direction — the sweep's
+> `SessionDirectoryFrom` reads a missing lock as *"not a BrowserAI session
+> directory"* and spares the process, and `ActOn` gates the kill on
+> `SessionLock.TryHoldUnowned`, which takes the same mutex.
+>
+> **What it would cost to defend, and why that is a decision rather than an
+> omission.** A reader cannot tell a transient absence from a real one without
+> waiting, and waiting is the common path: `browserai_list` over ten
+> destroyed-but-indexed sessions would pay the full budget ten times. The only
+> cheap discriminator is the writer's own `lock.json.new-<guid>` temp file, which
+> exists exactly while a rewrite is in flight — and reaching for it couples
+> `RenameWindow` to two different temp-naming conventions. Recorded here so the
+> next person meets the reasoning rather than the gap.
+
 **A file that has just been renamed into place can still be briefly unopenable.**
 Observed once on 2026-08-16, roughly one run in a dozen: a probe report written
 temp-then-renamed failed `File.ReadAllTextAsync` on the destination with *"the

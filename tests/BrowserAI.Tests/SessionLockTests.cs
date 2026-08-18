@@ -525,6 +525,37 @@ internal sealed class SessionLockTests
         var damaged = new List<string>();
         var reads = 0;
 
+        // ⚠️ COUNTED, NOT DAMAGE — and the distinction is a measured property of
+        // Windows rather than a concession.
+        //
+        // Corrected 2026-08-18 (previously a null record was added to `damaged`
+        // as "the lock file was momentarily absent", which failed this test).
+        // `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING`, over a destination a
+        // reader holds open with `FILE_SHARE_DELETE`, passes through a state in
+        // which the OLD file is delete-pending and the name is momentarily
+        // unbound — so an open in that instant is refused, first as
+        // `ACCESS_DENIED` and then, a moment later, as NOT FOUND. Measured at
+        // `SuiteParallelism.Unbounded`: three occurrences in thirty-two
+        // full-suite runs, all in this arm, which is the only place in the suite
+        // where a reader spins on a file another process is rewriting a hundred
+        // times.
+        //
+        // A momentary absence is not what this test is named for. "Never
+        // observed torn" is a claim about CONTENT — the reader sees the old
+        // record or the new one and never half of either — and absence is
+        // neither half. Asserting it never happens would be asserting something
+        // about `MoveFileEx` that is not true.
+        //
+        // ⚠️ It is not swallowed, and the line below is what keeps it from
+        // being: every null is re-read IMMEDIATELY, and a second null in a row is
+        // recorded as damage. That is the assertion that distinguishes the two
+        // things a null can mean. The rename window is microseconds wide and
+        // cannot survive a second read; a zero-length or deleted `lock.json` --
+        // real damage, and the reason `Parse` returns null for an empty file --
+        // persists and is caught. So the tolerance is exactly as wide as the
+        // window and no wider.
+        var absences = 0;
+
         // Every distinct record the reader actually saw. This, not a read
         // count, is what proves the reader was looking WHILE the rewriter was
         // writing: two different purposes cannot both be observed unless the
@@ -569,7 +600,16 @@ internal sealed class SessionLockTests
 
                     if (record is null)
                     {
-                        damaged.Add("the lock file was momentarily absent");
+                        absences++;
+
+                        // Immediately, with nothing in between: a rename window
+                        // is one syscall wide and cannot survive this. Anything
+                        // that does is the file really being gone or really
+                        // being empty, which is damage.
+                        if (SessionLock.ReadRecord(path) is null)
+                        {
+                            damaged.Add("the lock file was absent on two consecutive reads, so it was not a rename in flight");
+                        }
                     }
                     else
                     {
@@ -606,6 +646,13 @@ internal sealed class SessionLockTests
         // property the superseded "retry a torn read once" scheme could only
         // approximate.
         await Assert.That(string.Join(Environment.NewLine, damaged.Distinct(StringComparer.Ordinal))).IsEmpty();
+
+        // And it is still there afterwards, readable, with the rewriter finished
+        // and nothing renaming anything. This is what makes the tolerance above
+        // safe rather than a hole: however many rename windows the reader fell
+        // into while the writing was going on, the file was never actually lost.
+        await Assert.That(SessionLock.ReadRecord(path)).IsNotNull()
+            .Because($"the reader saw the lock file absent {absences.ToString(CultureInfo.InvariantCulture)} time(s) during the rewrite, and it has not come back");
 
         // The reader has to have been looking, and looking WHILE the rewriter
         // wrote, or "never torn" is a claim about an empty observation.
