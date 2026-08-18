@@ -17,6 +17,12 @@ namespace BrowserAI.Artifacts;
 /// <param name="Asked">The name the caller asked for, or <see langword="null"/> when it named none.</param>
 /// <param name="RenamedFrom">The name that was already taken, when one was.</param>
 /// <param name="Writes">Whether the child is about to write this file rather than read it.</param>
+/// <param name="InlineImageMediaType">
+/// The media type of the image block this answer has to regain, or
+/// <see langword="null"/> when it has none. Set only where BrowserAI supplied
+/// the name — which is the caller-visible condition upstream's own
+/// <c>if (!params.filename)</c> tests.
+/// </param>
 internal sealed record ArtifactPlan(
     string Tool,
     string Prefix,
@@ -24,7 +30,21 @@ internal sealed record ArtifactPlan(
     string SessionRelativePath,
     string? Asked,
     string? RenamedFrom,
-    bool Writes);
+    bool Writes,
+    string? InlineImageMediaType);
+
+/// <summary>The image block an answer regained, read back off disk.</summary>
+/// <param name="Data">The bytes, exactly as the child wrote them.</param>
+/// <param name="MediaType">What upstream would have called them.</param>
+internal sealed record ArtifactImage(byte[] Data, string MediaType);
+
+/// <summary>What the caller is told about one call's artifacts.</summary>
+/// <param name="Note">The text block, naming every path and what happened to it.</param>
+/// <param name="Image">
+/// The image block to append after it, or <see langword="null"/> — which is
+/// every call but a screenshot BrowserAI named.
+/// </param>
+internal sealed record ArtifactAnswer(string Note, ArtifactImage? Image);
 
 /// <summary>One routed artifact, as <c>session.json</c> records it.</summary>
 /// <param name="Tool">What produced it.</param>
@@ -59,13 +79,22 @@ internal sealed record ArtifactRecord(
 /// rather than by a rule somebody has to keep.
 /// </para>
 /// <para>
-/// <b>Two things cannot be routed inbound, and both are handled after the
-/// fact.</b> A browser-initiated download is named by the site rather than by an
-/// argument, and <c>browser_annotate</c> generates its own name with no argument
-/// to rewrite. Both land directly in the output root, so anything found there is
-/// classified by its generator prefix — and a name carrying no prefix is a
-/// download, because a download is the one artifact whose name upstream did not
-/// choose. That sweep is scoped to the output root and never to the machine.
+/// <b>What cannot be routed inbound is handled after the fact.</b> A
+/// browser-initiated download is named by the site rather than by an argument,
+/// so it lands directly in the output root; anything found there is classified
+/// by its generator prefix, and a name carrying no prefix is a download, because
+/// a download is the one artifact whose name upstream did not choose. That sweep
+/// is scoped to the output root and never to the machine.
+/// </para>
+/// <para>
+/// <i>Corrected 2026-08-18 (previously "Two things cannot be routed inbound …
+/// and <c>browser_annotate</c> generates its own name with no argument to
+/// rewrite").</i> That tool is withheld from the surface and refused if named
+/// anyway, so this build cannot produce an <c>annotations-*</c> file at all. The
+/// sweep still runs, for downloads and for anything upstream writes loose in a
+/// future version, and the <c>annotations</c> folder stays declared because the
+/// prefix set is derived from the resolved bundle rather than from what this
+/// build calls — see <see cref="ArtifactRouting"/>.
 /// </para>
 /// <para>
 /// <b>Levers two and three ship together.</b> Relocating a file while telling
@@ -226,9 +255,28 @@ internal sealed class ArtifactRouter
             ? SessionLayout.OutputFolderName
             : ArtifactRouting.FolderFor(prefix);
 
-        var name = asked is null
-            ? Generated(prefix, rule.GeneratedExtension!(arguments))
-            : ArtifactFilename.Relative(tool, asked);
+        string name;
+        string? inlineImageMediaType = null;
+
+        if (asked is null)
+        {
+            // The one expression upstream derives BOTH from: the file type
+            // decides the extension it writes and the `image/<type>` it sends,
+            // so reading it once here is what keeps the two from disagreeing.
+            var extension = rule.GeneratedExtension!(arguments);
+
+            name = Generated(prefix, extension);
+
+            // ⚠️ Only on this branch. `asked is null` IS upstream's
+            // `!params.filename`: a caller that named the file was never sent an
+            // image, and appending one here would be adding a block to an answer
+            // upstream did not put one in.
+            inlineImageMediaType = rule.RestoresUpstreamsInlineImage ? "image/" + extension : null;
+        }
+        else
+        {
+            name = ArtifactFilename.Relative(tool, asked);
+        }
 
         var target = Path.GetFullPath(Path.Combine(_location.FullPath, folder, name));
 
@@ -266,7 +314,8 @@ internal sealed class ArtifactRouter
             Path.GetRelativePath(_location.FullPath, target),
             asked,
             renamedFrom,
-            writes);
+            writes,
+            inlineImageMediaType);
     }
 
     /// <summary>Rewrites the arguments the child will actually receive.</summary>
@@ -293,9 +342,17 @@ internal sealed class ArtifactRouter
     /// Records what the call produced and returns what the caller is told about
     /// it.
     /// </summary>
+    /// <remarks>
+    /// <b>The image is read back off disk rather than kept from anywhere.</b>
+    /// BrowserAI never holds the bytes: the child took the screenshot and wrote
+    /// the file, and what goes back inline is what a reader following the path
+    /// in the note would find. That is the only version of "the same image" a
+    /// proxy can honestly claim, and it makes the block impossible to produce
+    /// for a file that is not there.
+    /// </remarks>
     /// <param name="plan">What <see cref="Plan"/> decided, or <see langword="null"/>.</param>
-    /// <returns>The note to append to the answer, or <see langword="null"/> when there is nothing to say.</returns>
-    public string? Complete(ArtifactPlan? plan)
+    /// <returns>What to append to the answer, or <see langword="null"/> when there is nothing to say.</returns>
+    public ArtifactAnswer? Complete(ArtifactPlan? plan)
     {
         // A call that was refused inside a success envelope -- upstream's
         // `isError: true` -- wrote nothing, and reporting a file that is not
@@ -324,6 +381,10 @@ internal sealed class ArtifactRouter
 
         written.AddRange(moved);
 
+        // Read while the file is known to exist and before the note is built, so
+        // a read that failed can say so in the same answer.
+        var image = ReadInlineImage(plan);
+
         // ⚠️ The answer, not a discard. Until 2026-08-16 this call site read
         // `WriteIndex();` and the one below it `_ = TryWrite(...)`, so an index
         // that could not be written was silent -- while the note underneath
@@ -342,7 +403,41 @@ internal sealed class ArtifactRouter
             indexed = WriteIndex();
         }
 
-        return Note(plan, written, indexed);
+        return new ArtifactAnswer(Note(plan, written, indexed, image), image.Bytes);
+    }
+
+    /// <summary>
+    /// The image an answer regained, and why it did not when it did not.
+    /// </summary>
+    /// <param name="Bytes">The block to append, or <see langword="null"/>.</param>
+    /// <param name="Expected">Whether this call was one that should have carried an image.</param>
+    /// <param name="Failure">Why the file could not be read back, when it could not.</param>
+    private readonly record struct InlineImage(ArtifactImage? Bytes, bool Expected, string? Failure);
+
+    /// <summary>Reads back the image this call is to answer with.</summary>
+    /// <remarks>
+    /// <b>A read that fails must not fail the call.</b> The screenshot is on
+    /// disk, the note names it, and turning a taken screenshot into a failed one
+    /// because a scanner held the file for 40 ms would be worse than the missing
+    /// block. It is not silent either: the note says the image is missing and
+    /// why, so a model that expected one is told rather than left to conclude
+    /// the page was blank.
+    /// </remarks>
+    private static InlineImage ReadInlineImage(ArtifactPlan? plan)
+    {
+        if (plan is not { Writes: true, InlineImageMediaType: { } mediaType })
+        {
+            return new InlineImage(null, Expected: false, Failure: null);
+        }
+
+        try
+        {
+            return new InlineImage(new ArtifactImage(File.ReadAllBytes(plan.AbsolutePath), mediaType), Expected: true, Failure: null);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return new InlineImage(null, Expected: true, failure.Message);
+        }
     }
 
     /// <summary>
@@ -636,7 +731,7 @@ internal sealed class ArtifactRouter
         return new ArtifactRecord(tool, DateTimeOffset.Now, url, bytes, absolute, relative, renamedFrom, sortedAfterTheFact);
     }
 
-    private string Note(ArtifactPlan? plan, IReadOnlyList<ArtifactRecord> written, bool indexed)
+    private string Note(ArtifactPlan? plan, IReadOnlyList<ArtifactRecord> written, bool indexed, InlineImage image)
     {
         var note = new StringBuilder();
 
@@ -683,6 +778,16 @@ internal sealed class ArtifactRouter
         _ = note.Append(indexed
             ? "\n"
             : " -- ⚠️ COULD NOT BE WRITTEN on this call (the volume is read-only, or something holds it open), so it does NOT list the artifact(s) above. Everything named above is on disk at the path given; only the index is behind.\n");
+
+        // Said out loud, because the alternative is a model concluding something
+        // about the page from a block that is missing for a reason that has
+        // nothing to do with it.
+        if (image is { Expected: true, Bytes: null })
+        {
+            _ = note.Append("  ⚠️ the image block that normally follows this note is MISSING on this call: the file above could not be read back (")
+                .Append(image.Failure)
+                .Append("). The screenshot itself is on disk at the path given -- read it there, and do not treat the absent image as anything about the page.\n");
+        }
 
         return note.ToString();
     }

@@ -336,6 +336,123 @@ internal sealed class ArtifactRoutingTests
         await Assert.That(TextOf(body)).Contains(Path.Combine("response", "body.txt"));
     }
 
+    /// <summary>
+    /// Naming the file for the caller must not cost the caller the image
+    /// upstream would have sent.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is a regression test for a defect of ours that shipped.</b>
+    /// Upstream's screenshot handler ends <c>await
+    /// response.addFileResult(resolvedFile, data); if (!params.filename) await
+    /// response.registerImageResult(data, fileType);</c> — the only
+    /// <c>registerImageResult</c> call site in the resolved bundle. This class's
+    /// own routing always writes <c>arguments["filename"]</c>, so <b>that guard
+    /// was never true and no screenshot came back inline in any mode</b>, while
+    /// bare <c>@playwright/mcp</c> returned one. Every arm below fails without
+    /// the fix.
+    /// </para>
+    /// <para>
+    /// <b>The condition reproduced is upstream's, expressed in what the CALLER
+    /// did</b> — did it name a file? — rather than in what BrowserAI sent the
+    /// child, which is always a name. That is why the second arm matters as much
+    /// as the first: a caller that named the file gets no image, because upstream
+    /// would not have sent one either.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AScreenshotTheCallerDidNotNameCarriesTheImageUpstreamWouldHaveSent()
+    {
+        // Distinctive bytes rather than the zero-fill the other arms use: a run
+        // of zeros base64-encodes to a run of `A`s, so a proxy that inlined a
+        // buffer of its own rather than the file would pass on those.
+        var content = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x7F };
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+        {
+            child.Tools["browser_take_screenshot"] = new FakeToolBehaviour { WritesArtifactContent = content };
+            child.Tools["browser_pdf_save"] = new FakeToolBehaviour { WritesArtifactContent = content };
+        });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var generated = await ScreenshotAsync(rig, filename: null);
+        var image = ImagesIn(generated);
+
+        // One image block, carrying the file's own bytes and upstream's own
+        // media type.
+        await Assert.That(image.Count).IsEqualTo(1);
+        await Assert.That((string?)image[0]!["mimeType"]).IsEqualTo("image/png");
+        await Assert.That(Convert.FromBase64String((string)image[0]!["data"]!).SequenceEqual(content)).IsTrue();
+
+        // And the legible name is still there, which is the whole point of the
+        // routing this used to trade the image away for.
+        await Assert.That(TextOf(generated)).Contains(Path.Combine(SessionLayout.OutputFolderName, "page"));
+        await Assert.That(TextOf(generated)).Contains(".png");
+
+        // The guard's other side: a caller that named the file gets no image,
+        // because upstream would not have sent one.
+        await Assert.That(ImagesIn(await ScreenshotAsync(rig, "login.png"))).IsEmpty();
+
+        // `type` decides the media type, the same expression upstream reads it
+        // from -- `params.type ?? fromExtension(filename) ?? "png"`.
+        var jpeg = await CallAsync(rig, "browser_take_screenshot", new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            ["type"] = "jpeg",
+        });
+
+        await Assert.That((string?)ImagesIn(jpeg)[0]!["mimeType"]).IsEqualTo("image/jpeg");
+
+        // ⚠️ And nothing else gets one. `browser_pdf_save` generates a name
+        // exactly as the screenshot does, so it is the tool a "restore the block
+        // wherever we renamed" reading would have swept in -- and a PDF is not
+        // an image: upstream never registered one, and a client is not obliged
+        // to render `application/pdf` in an image block.
+        var pdf = await CallAsync(rig, "browser_pdf_save", new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+        });
+
+        await Assert.That(TextOf(pdf)).Contains(".pdf");
+        await Assert.That(ImagesIn(pdf)).IsEmpty();
+    }
+
+    [Test]
+    public async Task AScreenshotWhoseFileCannotBeReadBackSaysSoRatherThanSayingNothing()
+    {
+        // The failure arm, and it exists rather than being a branch nobody has
+        // seen taken: a scanner or a backup agent holding the file for a moment
+        // must not turn a screenshot that was taken into a call that failed --
+        // and must not silently drop the block either, because a model that
+        // expected an image and got none concludes something about the PAGE.
+        // The child writes the artifact and then holds it with FileShare.None
+        // while it answers, so the router meets a file that exists, has a
+        // length, and cannot be read. Nothing the caller can pass reaches this
+        // arm, which is why the double has to produce it.
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
+            {
+                WritesArtifactBytes = 32,
+                HoldsArtifactOpen = true,
+            });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var answer = await ScreenshotAsync(rig, filename: null);
+
+        // The call still succeeded and the artifact is still reported: a held
+        // file must not become a failed screenshot.
+        await Assert.That((bool?)answer["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(answer)).Contains("BrowserAI routed this artifact");
+
+        // No image block, and the note says why rather than leaving the absence
+        // to be interpreted.
+        await Assert.That(ImagesIn(answer)).IsEmpty();
+        await Assert.That(TextOf(answer)).Contains("image block that normally follows this note is MISSING");
+        await Assert.That(TextOf(answer)).Contains("do not treat the absent image as anything about the page");
+    }
+
     [Test]
     public async Task ASecondArtifactWithTheSameNameIsSuffixedAndTheResultSaysSo()
     {
@@ -751,4 +868,8 @@ internal sealed class ArtifactRoutingTests
     private static string TextOf(JsonObject result) =>
         string.Concat((result["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
+
+    /// <summary>Every <c>image</c> content block of one answer, in order.</summary>
+    private static List<JsonNode?> ImagesIn(JsonObject result) =>
+        [.. (result["content"]?.AsArray() ?? []).Where(block => (string?)block?["type"] is "image")];
 }

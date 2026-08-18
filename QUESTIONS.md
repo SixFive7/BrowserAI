@@ -156,11 +156,13 @@ removing the test that produced it.
   **Nothing is re-opened by this**; it is recorded because the decision was right
   and was still taken on an assumption, and the same day's measurement of
   `browser_annotate` ([kb](kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18))
-  earned the one refusal that survived it. Change control moved to the release gate,
+  withdrew the one tool that survived it. Change control moved to the release gate,
   where four golden snapshots already covered more. What survives is `session`
-  staying mandatory — that is *routing* — and one `browser_annotate` refusal
-  wherever no window was promised, as a **liveness** guard with no security
-  claim. See [ARCHITECTURE](ARCHITECTURE.md#sessions) and
+  staying mandatory — that is *routing* — and `browser_annotate` being withheld
+  from `tools/list` in every mode, as a **liveness** decision with no security
+  claim. *Corrected 2026-08-18, later the same day (previously "earned the one
+  refusal that survived it … one `browser_annotate` refusal wherever no window was
+  promised").* See [ARCHITECTURE](ARCHITECTURE.md#sessions) and
   [§trade-offs](DECISIONS.md#the-init-design-weakens-a-security-boundary).
 - **Git history is accepted as-is.** Nothing in it justifies a rewrite; the
   exposure that exists is at HEAD, and has been generalized.

@@ -100,6 +100,16 @@ internal static class ArtifactRouting
             // sorts. All but `annotations` are routed inbound; that one has no
             // `filename` argument to rewrite, so it is sorted after the fact
             // like a download.
+            //
+            // ⚠️ `annotations` is now a folder nothing can fill: `browser_annotate`
+            // is withheld from the surface and refused if named anyway
+            // (SessionToolPolicy.IsWithheldFromTheSurface), so no call this build
+            // forwards writes one. It stays because THIS TABLE IS NOT A LIST OF
+            // WHAT WE CALL -- it is the folder for every prefix upstream's bundle
+            // can generate, and `ArtifactRoutingTests` compares it against the
+            // snapshot in both directions. Deleting the row would be a prefix
+            // with no folder, which is a red build, and correctly so: the day the
+            // tool comes back the folder is already right.
             Under("annotations", ArtifactRoute.AfterTheFact),
             Under("console", ArtifactRoute.Inbound),
             Under("element", ArtifactRoute.Inbound),

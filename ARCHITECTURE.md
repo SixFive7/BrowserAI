@@ -216,14 +216,20 @@ resolved payload and diffed on every build, and `upstream-review.json` blocks a
 release until a human adjudicates what moved. That catches a changed schema and a
 new CLI flag, which deny-by-default on a tool *name* never did.
 
-**Two refusals survive, and neither is a permission.** `session` is **mandatory**:
-a call naming none is refused rather than reaching the run's own child, because
-that is *routing* — a proxy holding N children has to be told which one a call
-belongs to, and a default would silently pick a session nobody chose. And
-`browser_annotate` is refused on a mode that opens no window, as a **liveness**
-guard with no security claim attached: it opens the Playwright Dashboard and
-blocks until a human draws, the window appears on a headless session too, and an
-unattended run that called it would hang until it was killed.
+**One argument is mandatory and one tool is withheld; neither is a permission.**
+`session` is **mandatory**: a call naming none is refused rather than reaching the
+run's own child, because that is *routing* — a proxy holding N children has to be
+told which one a call belongs to, and a default would silently pick a session
+nobody chose. And `browser_annotate` is **filtered out of `tools/list`**, in every
+mode, as a **liveness** decision with no security claim attached: it opens the
+Playwright Dashboard and blocks until a human draws, with no self-timeout, and the
+window belongs to a second non-headless browser under a daemon that writes into
+`%TEMP%` and outlives the session. Filtering the surface is in scope by the
+charter where renaming is not, and a caller that names the tool anyway is refused
+rather than forwarded — a model knows upstream's names from everywhere except this
+server's list. *Corrected 2026-08-18 (previously "Two refusals survive …
+`browser_annotate` is refused on a mode that opens no window").* Implemented by
+`SessionToolPolicy.IsWithheldFromTheSurface` and `SessionToolSurface.Rewrite`.
 
 **Lifetime is one timer and no expiry.** A ten-minute browser-idle timer closes
 the browser and keeps the node child; the relaunch on the next call is upstream's
@@ -336,6 +342,18 @@ change. **The classification is the log level:** Debug for the benign
 3. The answer to any rewritten call carries the absolute path, the
    session-relative path, any rename, the session's cumulative size and the index
    path.
+
+⚠️ **And a fourth thing, which lever 2 had been silently costing.** Upstream
+answers a screenshot with an `image` content block *as well as* a file, under
+`if (!params.filename)` — so supplying a name to make the artifact legible turned
+that guard off and **no screenshot came back inline in any mode**, where bare
+`@playwright/mcp` returns one. Added 2026-08-18: the block is appended to the same
+answers this section already rewrites, read back off disk after the child wrote
+it, under the caller-visible condition upstream tests — *the caller named no
+file*. `browser_take_screenshot` only, because it is upstream's only
+`registerImageResult` call site; a PDF is not an image. Sizes, and why there is no
+threshold, are in
+[kb](kb/playwright/tools-and-artifacts.md#the-inline-screenshot-and-what-it-costs--measured-2026-08-18).
 
 | Concern | Implemented by |
 |---|---|

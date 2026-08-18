@@ -119,11 +119,27 @@ internal static class UpstreamSurface
     /// first.
     /// </remarks>
     /// <returns>The literal JSON a fake child can answer <c>tools/list</c> with.</returns>
+    /// <remarks>
+    /// ⚠️ <b>Minified, and that is a framing requirement rather than a
+    /// preference.</b> The snapshot on disk is pretty-printed, so
+    /// <c>GetRawText()</c> hands back a string full of newlines — and the
+    /// double's transport is <b>newline-delimited</b>, so answering with it
+    /// splits one result into three hundred unparseable frames, the caller waits
+    /// out its five-minute hang detector, and the failure names the pipe rather
+    /// than the payload. Measured 2026-08-18, on the first test that answered
+    /// <c>tools/list</c> with this over the wire rather than passing it to
+    /// <c>SessionToolSurface.Rewrite</c> in process. Minified through the node
+    /// API for the same reason <see cref="ServerCapabilities"/> is: stripping
+    /// whitespace by hand would corrupt any string that contains a newline.
+    /// </remarks>
     public static string SnapshotToolsListResult()
     {
         using var snapshot = Snapshot();
 
-        return $$"""{"tools":{{snapshot.RootElement.GetProperty("tools").GetRawText()}}}""";
+        return new System.Text.Json.Nodes.JsonObject
+        {
+            ["tools"] = System.Text.Json.Nodes.JsonNode.Parse(snapshot.RootElement.GetProperty("tools").GetRawText()),
+        }.ToJsonString();
     }
 
     /// <summary>Upstream's own description for every tool it can expose.</summary>

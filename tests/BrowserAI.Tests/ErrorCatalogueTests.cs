@@ -189,7 +189,7 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     [Test]
-    public async Task TheAnnotationLivenessRowIsEmittedByARealCallOnAWindowlessSession()
+    public async Task TheAnnotationLivenessRowIsEmittedByARealCallNamingAToolThatIsNotAdvertised()
     {
         // ⚠️ Replaced 2026-08-18 (previously ModeRefusalAndTheUnclassifiedToolAreEmittedByRealCalls,
         // which provoked `ModeRefusal` with `browser_run_code_unsafe` on an
@@ -201,9 +201,14 @@ internal sealed partial class ErrorCatalogueTests
         // compile -- which is why they were deleted rather than left to rot.
         //
         // What survives is one row, and it is a LIVENESS refusal:
-        // `browser_annotate` blocks until a human draws, and its window appears
-        // on a windowless session too, so the call would hang until the run was
-        // killed.
+        // `browser_annotate` blocks until a human draws, with no self-timeout,
+        // so the call would hang until the run was killed.
+        //
+        // ⚠️ Renamed 2026-08-18 from ...OnAWindowlessSession, with the row it
+        // provokes: the tool is now withheld from `tools/list` in every mode and
+        // the refusal no longer depends on one, so the provocation is a caller
+        // naming a tool it was never offered -- which is the only way the row is
+        // reachable, and exactly the case it was written for.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -217,13 +222,12 @@ internal sealed partial class ErrorCatalogueTests
         });
 
         var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory });
-        var mode = SessionModes.Recorded("headless");
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         Match(
             TextOf(refused),
-            nameof(SessionErrors.AnnotationWouldHangAWindowlessSession),
-            SessionErrors.AnnotationWouldHangAWindowlessSession(SessionToolPolicy.AnnotateTool, mode));
+            nameof(SessionErrors.AnnotationIsNotInTheSurface),
+            SessionErrors.AnnotationIsNotInTheSurface(SessionToolPolicy.AnnotateTool));
 
         // And a tool this build has never heard of is FORWARDED now rather than
         // refused, so nothing of ours is in that answer at all. Asserted here
@@ -673,7 +677,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
-    [DependsOn(nameof(TheAnnotationLivenessRowIsEmittedByARealCallOnAWindowlessSession))]
+    [DependsOn(nameof(TheAnnotationLivenessRowIsEmittedByARealCallNamingAToolThatIsNotAdvertised))]
     [DependsOn(nameof(TheLockRowsAreEmittedByRealLockConditions))]
     [DependsOn(nameof(TheBrowserRuntimeFailureRowIsEmittedByAChildThatCannotStart))]
     [DependsOn(nameof(TheFilenameRowsAreEmittedByRealCallsThatNameAFileOutsideTheSession))]

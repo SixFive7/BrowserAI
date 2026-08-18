@@ -496,8 +496,9 @@ the gate, and five things about it are deliberate:
 - **Three surfaces, and the third is the one that was uncovered:** the server
   `instructions`, every tool `description`, and **every parameter `description`
   inside every `inputSchema`**. That last is where BrowserAI's own injected
-  `session` description lands on 59 upstream tools at once, and it was asserted by
-  nothing at all.
+  `session` description lands on 58 upstream tools at once, and it was asserted by
+  nothing at all. *Corrected 2026-08-18 (previously "59") — `browser_annotate` is
+  withheld from the surface, so its schema is one fewer place that string lands.*
 - **Enumerated dynamically**, so a tool upstream adds next year is covered without
   anybody editing the test. Per-surface floors keep that from becoming vacuous.
 - **Characters and UTF-8 bytes measured, failing on characters.** *Corrected

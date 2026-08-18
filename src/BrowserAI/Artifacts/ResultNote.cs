@@ -68,11 +68,62 @@ internal static class ResultNote
         return buffer.ToArray();
     }
 
+    /// <summary>One image content block, as bytes.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The shape is upstream's own, member for member:</b>
+    /// <c>{ type: "image", data: &lt;base64&gt;, mimeType: `image/${imageType}` }</c>,
+    /// written in <c>Response.serialize()</c> in the resolved bundle. It is
+    /// reproduced here rather than invented because this block stands in for one
+    /// upstream would have written itself — see
+    /// <see cref="ArtifactToolRule.RestoresUpstreamsInlineImage"/>.
+    /// </para>
+    /// <para>
+    /// <c>WriteBase64String</c> rather than <c>Convert.ToBase64String</c> into
+    /// <c>WriteString</c>: it encodes straight into the writer's buffer, so a
+    /// megabyte of screenshot does not also become a megabyte-and-a-third
+    /// <see langword="string"/> on the way past. The output is identical — the
+    /// base64 alphabet needs no JSON escaping.
+    /// </para>
+    /// </remarks>
+    /// <param name="data">The image bytes, exactly as they are on disk.</param>
+    /// <param name="mediaType">The IANA media type, which upstream derives from the same file type.</param>
+    /// <returns>The encoded block, with no surrounding punctuation.</returns>
+    public static byte[] ImageBlock(byte[] data, string mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        using var buffer = new MemoryStream();
+
+        using (var writer = new Utf8JsonWriter(buffer, BlockOptions))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("type", "image");
+            writer.WriteBase64String("data", data);
+            writer.WriteString("mimeType", mediaType);
+            writer.WriteEndObject();
+        }
+
+        return buffer.ToArray();
+    }
+
     /// <summary>The same block, as a node, for the path that cannot splice.</summary>
     /// <param name="text">What it says.</param>
     /// <returns>The block.</returns>
     public static JsonObject Node(string text) =>
         new() { ["type"] = "text", ["text"] = text };
+
+    /// <summary>The image block, as a node, for the path that cannot splice.</summary>
+    /// <param name="data">The image bytes.</param>
+    /// <param name="mediaType">The IANA media type.</param>
+    /// <returns>The block.</returns>
+    public static JsonObject ImageNode(byte[] data, string mediaType) =>
+        new()
+        {
+            ["type"] = "image",
+            ["data"] = Convert.ToBase64String(data ?? throw new ArgumentNullException(nameof(data))),
+            ["mimeType"] = mediaType,
+        };
 
     /// <summary>
     /// Inserts a text block at the end of a raw result's <c>content</c> array.
@@ -83,28 +134,66 @@ internal static class ResultNote
     /// The spliced bytes, or <see langword="null"/> when the payload carries no
     /// top-level <c>content</c> array to append to.
     /// </returns>
-    public static byte[]? Append(byte[] result, string text)
+    public static byte[]? Append(byte[] result, string text) => Append(result, Block(text));
+
+    /// <summary>
+    /// Inserts already-encoded blocks at the end of a raw result's
+    /// <c>content</c> array, in the order given.
+    /// </summary>
+    /// <remarks>
+    /// <b>One splice for however many blocks there are</b>, rather than a splice
+    /// per block: each pass would re-walk and re-copy the whole payload, and a
+    /// screenshot's result is the largest one this proxy handles.
+    /// </remarks>
+    /// <param name="result">The child's <c>result</c> member, exactly as it arrived.</param>
+    /// <param name="blocks">The encoded blocks, each with no surrounding punctuation.</param>
+    /// <returns>
+    /// The spliced bytes, or <see langword="null"/> when the payload carries no
+    /// top-level <c>content</c> array to append to.
+    /// </returns>
+    public static byte[]? Append(byte[] result, params ReadOnlySpan<byte[]> blocks)
     {
         ArgumentNullException.ThrowIfNull(result);
+
+        if (blocks.Length is 0)
+        {
+            return result;
+        }
 
         if (EndOfContent(result) is not { } end)
         {
             return null;
         }
 
-        var block = Block(text);
         var separator = end.Empty ? 0 : 1;
-        var spliced = new byte[result.Length + separator + block.Length];
+        var added = separator;
+
+        foreach (var block in blocks)
+        {
+            added += block.Length;
+        }
+
+        // Every block after the first needs its own comma.
+        added += blocks.Length - 1;
+
+        var spliced = new byte[result.Length + added];
 
         result.AsSpan(0, end.At).CopyTo(spliced);
 
-        if (!end.Empty)
+        var at = end.At;
+
+        foreach (var block in blocks)
         {
-            spliced[end.At] = (byte)',';
+            if (at != end.At || !end.Empty)
+            {
+                spliced[at++] = (byte)',';
+            }
+
+            block.CopyTo(spliced.AsSpan(at));
+            at += block.Length;
         }
 
-        block.CopyTo(spliced.AsSpan(end.At + separator));
-        result.AsSpan(end.At).CopyTo(spliced.AsSpan(end.At + separator + block.Length));
+        result.AsSpan(end.At).CopyTo(spliced.AsSpan(at));
 
         return spliced;
     }

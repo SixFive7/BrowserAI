@@ -33,6 +33,20 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// <param name="ToolList">The whole <c>tools</c> array, for the assertions about injected schema members.</param>
 /// <param name="NavigateEnvelope">The whole <c>tools/call</c> response envelope.</param>
 /// <param name="NavigateText">Every text content block of that result, joined.</param>
+/// <param name="ScreenshotEnvelope">
+/// The whole <c>tools/call</c> envelope for a <c>browser_take_screenshot</c>
+/// that named no file — which is upstream's own condition for answering with an
+/// inline image, and the case BrowserAI's routing used to swallow.
+/// </param>
+/// <param name="ScreenshotFile">
+/// The absolute path BrowserAI routed that screenshot to, read out of its own
+/// note rather than reconstructed.
+/// </param>
+/// <param name="ScreenshotBytes">
+/// What is on disk at that path, captured <b>before</b> the scratch tree is
+/// removed, so a test can compare the answer against the file rather than
+/// against itself.
+/// </param>
 /// <param name="Processes">Every member of the job at the moment the browser was up.</param>
 /// <param name="BrowserAiProcessId">The published binary's own pid.</param>
 /// <param name="Survivors">Processes still alive after the published binary was terminated from outside.</param>
@@ -55,6 +69,9 @@ internal sealed record SliceRun(
     JsonArray ToolList,
     JsonObject NavigateEnvelope,
     string NavigateText,
+    JsonObject ScreenshotEnvelope,
+    string ScreenshotFile,
+    byte[] ScreenshotBytes,
     IReadOnlyList<ObservedProcess> Processes,
     int BrowserAiProcessId,
     IReadOnlyList<ObservedProcess> Survivors,
@@ -161,6 +178,28 @@ internal sealed record SliceRun(
                 .Where(block => (string?)block!["type"] == "text")
                 .Select(block => (string?)block!["text"] ?? string.Empty));
 
+        // ⚠️ NO `filename` argument, deliberately. That is upstream's own
+        // condition for putting the image in the answer as well as on disk --
+        // `if (!params.filename) await response.registerImageResult(...)` -- and
+        // it is the case BrowserAI's routing swallowed for the life of the
+        // feature, because the routing always supplied one. The answer is
+        // captured whole so the test can assert on the block rather than on a
+        // summary of it.
+        var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_take_screenshot",
+            ["arguments"] = new JsonObject { ["session"] = session },
+        }).ConfigureAwait(false);
+
+        var screenshotFile = ArtifactPathIn(screenshot);
+
+        // Read here rather than in the test: `scratch` is removed when this
+        // method returns, so a test that opened the path afterwards would be
+        // asserting against a file that had been deleted.
+        var screenshotBytes = screenshotFile.Length is not 0 && File.Exists(screenshotFile)
+            ? await File.ReadAllBytesAsync(screenshotFile).ConfigureAwait(false)
+            : [];
+
         // Read while the browser is up. Everything after this line is teardown.
         var processes = Observe(client.JobProcessIds());
 
@@ -191,12 +230,51 @@ internal sealed record SliceRun(
             toolList,
             navigate,
             text,
+            screenshot,
+            screenshotFile,
+            screenshotBytes,
             processes,
             browserAi,
             survivors,
             standardError,
             ProcessLogRecords.ForPid(browserAi),
             session);
+    }
+
+    /// <summary>
+    /// The absolute path BrowserAI's own note names, out of a <c>tools/call</c>
+    /// envelope.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read from the answer rather than rebuilt from the layout.</b> The
+    /// generated name depends on the last URL the session navigated to and on a
+    /// per-stem counter, so a test that composed the path would be asserting its
+    /// own arithmetic; and the claim under test is that the path in the note is
+    /// the path the file is at, which cannot be checked by producing both ends.
+    /// </remarks>
+    /// <param name="envelope">The whole response envelope.</param>
+    /// <returns>The path, or an empty string when the note names none.</returns>
+    private static string ArtifactPathIn(JsonObject envelope)
+    {
+        const string Marker = "  file: ";
+
+        foreach (var block in envelope["result"]?["content"]?.AsArray() ?? [])
+        {
+            if ((string?)block?["type"] is not "text" || (string?)block["text"] is not { } content)
+            {
+                continue;
+            }
+
+            foreach (var line in content.Split('\n'))
+            {
+                if (line.StartsWith(Marker, StringComparison.Ordinal))
+                {
+                    return line[Marker.Length..].Trim();
+                }
+            }
+        }
+
+        return string.Empty;
     }
 
     private static List<ObservedProcess> Observe(IEnumerable<int> processIds)

@@ -141,9 +141,9 @@ internal sealed partial class BrowserIdleTimerTests
     {
         await Assert.That(UpstreamSurface.DefaultSurface()).Contains(LiveSession.BrowserCloseTool);
 
-        // Callable in every mode: the timer bypasses the decision anyway — it is
+        // Callable at all: the timer bypasses the decision anyway — it is
         // BrowserAI calling its own child rather than a caller calling a tool —
-        // but a close that a mode refused would mean a session whose browser can
+        // but a close the policy refused would mean a session whose browser can
         // never be closed, and this is where that would be decided.
         //
         // Corrected 2026-08-18 (previously this also asserted the tool carried a
@@ -151,10 +151,16 @@ internal sealed partial class BrowserIdleTimerTests
         // table: it was part of the (tool, mode) permission matrix, which was
         // never a boundary against the caller and was removed. What the tool
         // must still be is upstream's own and callable, which is what remains.
-        foreach (var mode in SessionModes.All)
-        {
-            await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool, mode).IsAllowed).IsTrue();
-        }
+        //
+        // Corrected 2026-08-18 again (previously a loop over `SessionModes.All`
+        // asking `Decide(tool, mode)`). `Decide` no longer takes a mode: the one
+        // tool it refuses is refused everywhere, so a per-mode loop here would
+        // ask the same question three times and read as coverage it is not.
+        await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool).IsAllowed).IsTrue();
+
+        // And it is in the surface a caller sees, which is the other half of
+        // "callable": the timer's own tool must not be the withheld one.
+        await Assert.That(SessionToolPolicy.IsWithheldFromTheSurface(LiveSession.BrowserCloseTool)).IsFalse();
     }
 
     /// <summary>

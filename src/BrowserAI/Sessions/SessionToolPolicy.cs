@@ -4,8 +4,9 @@
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// The one refusal BrowserAI takes on a browser call, and it is about
-/// <b>liveness</b> rather than about permission.
+/// The one tool BrowserAI keeps out of the surface, and the refusal a caller
+/// that names it anyway meets. Both are about <b>liveness</b> rather than
+/// permission.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -48,8 +49,10 @@ namespace BrowserAI.Sessions;
 /// <c>session</c> stays mandatory — a call naming none is refused rather than
 /// reaching the run's own child — because that is <b>routing</b>: it is how a
 /// proxy holding N children knows which one a call belongs to, and a default
-/// would silently pick one nobody chose. And <see cref="AnnotateTool"/> stays
-/// refused on a windowless session, for the reason on <see cref="Decide"/>.
+/// would silently pick one nobody chose. And <see cref="AnnotateTool"/> is
+/// withheld from <c>tools/list</c> — see
+/// <see cref="IsWithheldFromTheSurface"/> — because the call it advertises
+/// cannot return.
 /// </para>
 /// <para>
 /// <b>Nothing here is conditional on the build.</b> No preprocessor branch, no
@@ -67,95 +70,108 @@ internal static class SessionToolPolicy
     public const string AnnotateTool = "browser_annotate";
 
     /// <summary>
-    /// Decides one call. The answer is <see cref="ToolDecision.Allowed"/> for
-    /// every tool but one.
+    /// Whether a tool the child advertises is kept out of the list BrowserAI
+    /// advertises. True of <see cref="AnnotateTool"/> and of nothing else.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>The refusal is a liveness guard and carries no security claim.</b>
-    /// <see cref="AnnotateTool"/> opens the Playwright Dashboard and waits for a
-    /// human to draw — and <b>the window appears on a headless session too</b>,
-    /// so a windowless session that called it would put an unexplained window on
-    /// a screen nobody is watching and then <b>hang until the run is killed</b>.
-    /// Unattended overnight runs are this product's primary use, and one hung
-    /// call takes the whole run with it. Nothing about this protects any secret;
-    /// it stops a session deadlocking.
+    /// ⚠️ <b>Corrected 2026-08-18 (previously a refusal keyed on
+    /// <c>SessionModeDefinition.Headed</c>: the tool was advertised to every
+    /// session, permitted on the two modes that open a window, and refused on the
+    /// one that does not).</b> The measurement that justified the refusal also
+    /// took the ground out from under permitting it anywhere, so what was a
+    /// <c>(tool, mode)</c> decision became a decision about the <i>surface</i>:
+    /// the tool is filtered out of <c>tools/list</c> in every mode, and a caller
+    /// that names it anyway is refused. <b>Filtering is in scope by the
+    /// charter</b> — <i>filter, re-describe, inject <c>session</c></i> — and it
+    /// is renaming that is not.
     /// </para>
     /// <para>
-    /// <b>Measured 2026-08-18, three runs, after standing undated for the life of
-    /// the decision it justified</b>
+    /// <b>Measured 2026-08-18, three runs against a real child on the config this
+    /// product generates</b>
     /// ([kb](../../../kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18)).
-    /// Against a real child on the config this product generates for
-    /// <c>headless</c>: a <b>visible</b> <c>Chrome_WidgetWin_1</c> at
-    /// <c>100,100,1280x800</c> took the <b>foreground</b> within 1.2 s on every
-    /// run, and the call was still silent 90 s later in the arm nothing
-    /// interrupted. The window is not the session's own browser changing its
-    /// mind — it is a <i>second</i>, non-headless Chromium under a detached
-    /// dashboard daemon, launched headed on an upstream test variable that no
-    /// session configuration reaches — so <c>launchOptions.headless</c> cannot
-    /// prevent it and neither can anything else this proxy sets. The only
-    /// bounded arm is the daemon failing to start, at 15 s.
+    /// Four facts, and each is its own reason:
+    /// </para>
+    /// <list type="number">
+    /// <item><b>It has no self-timeout.</b> The control run stood silent for the
+    /// full 90 s budget; the two that returned did so in the same 40 ms tick
+    /// their window disappeared, which is a human closing it. The wait is
+    /// <c>await new Promise(resolve =&gt; client.on("exit", ...))</c>, unbounded
+    /// by construction. The one bounded arm is the daemon failing to start at
+    /// all, at 15 s.</item>
+    /// <item><b>The window is a SECOND, non-headless Chromium</b>, at upstream's
+    /// <c>--window-position=100,100 --window-size=1280,800</c>, and its pid owns
+    /// the visible <c>Chrome_WidgetWin_1</c>. It is not the session's own browser
+    /// changing its mind.</item>
+    /// <item><b>There is no configuration in which it runs headless.</b> The
+    /// dashboard's headedness is
+    /// <c>headless: !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE</c> — an
+    /// upstream <i>test</i> variable, which no session config reaches and which
+    /// this build's child-environment allowlist would not pass on in any
+    /// case.</item>
+    /// <item><b>It escapes the session's containment.</b> The daemon is spawned
+    /// <c>detached</c>, <c>stdio: "ignore"</c> and <c>unref</c>'d, is a per-USER
+    /// singleton on a named pipe, and writes its profile into <c>%TEMP%</c> —
+    /// outside every session directory. Of the 18-process tree captured while the
+    /// call was blocked, a parent walk after the probe exited found <b>zero</b>:
+    /// only the job object collected it.</item>
+    /// </list>
+    /// <para>
+    /// <b>What it would take to put it back</b>, so that this is a reversible
+    /// decision rather than a dead end. Three things, and no two of them are
+    /// enough: a <b>bounded</b> call, so that no unattended run can hang on it; a
+    /// dashboard <b>inside the session's own containment</b>, writing into the
+    /// session directory and dying with it rather than living in <c>%TEMP%</c>
+    /// under a user-wide singleton; and a <b>headless path that does not depend
+    /// on an upstream test variable</b> — a real config key, upstream's or a
+    /// documented flag, rather than something named <c>PWTEST_*</c>. The decision
+    /// and its consequences are in
+    /// [DECISIONS](../../../DECISIONS.md#licence-release-policy-and-the-tool-surface).
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool name, as the child spells it.</param>
+    /// <returns>Whether BrowserAI keeps it out of the surface.</returns>
+    public static bool IsWithheldFromTheSurface(string? tool) =>
+        string.Equals(tool, AnnotateTool, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Decides one call. The answer is <see cref="ToolDecision.Allowed"/> for
+    /// every tool but one, in every mode.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The refusal is not decoration for a tool nobody was offered.</b> A
+    /// model knows <c>@playwright/mcp</c>'s tool names from everywhere except
+    /// this server's <c>tools/list</c>, and a name it remembers is a name it can
+    /// send. Forwarding that call would start the daemon, put a window on a
+    /// screen nobody is watching, and block until the run was killed — so
+    /// withholding the tool without refusing the call would leave the hang
+    /// reachable by exactly the caller most likely to reach for it. <b>The
+    /// unadvertised half is what saves the model anything:</b> attention and
+    /// description budget are spent on the tools in the list, and this is not one
+    /// of them.
     /// </para>
     /// <para>
-    /// <b>It keys on <see cref="SessionModeDefinition.Headed"/> rather than on a
-    /// mode name</b>, because the fact it turns on is "was a window expected" and
-    /// that is the mode table's own column. A mode added to the table is
-    /// therefore judged by what it promises rather than by whether anybody
-    /// remembered this file.
+    /// ⚠️ <b>Corrected 2026-08-18 (previously
+    /// <c>Decide(string tool, SessionModeDefinition mode)</c>, refusing only
+    /// where <c>mode.Headed</c> was false).</b> The mode parameter went with the
+    /// per-mode answer: the daemon lands in <c>%TEMP%</c> and outlives its parent
+    /// on an <c>interactive</c> session exactly as it does on a <c>headless</c>
+    /// one, and <i>a human might be at the keyboard</i> was never something a
+    /// session record could know. Keeping the parameter and ignoring it would
+    /// have left a signature claiming this varies by mode when it does not.
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool the caller named.</param>
-    /// <param name="mode">The mode recorded for the session the caller named.</param>
     /// <returns>Permission, or a refusal a model can act on in one turn.</returns>
-    public static ToolDecision Decide(string tool, SessionModeDefinition mode)
+    public static ToolDecision Decide(string tool)
     {
         ArgumentNullException.ThrowIfNull(tool);
-        ArgumentNullException.ThrowIfNull(mode);
 
-        return !mode.Headed && string.Equals(tool, AnnotateTool, StringComparison.Ordinal)
-            ? ToolDecision.Refused(SessionErrors.AnnotationWouldHangAWindowlessSession(tool, mode))
+        return IsWithheldFromTheSurface(tool)
+            ? ToolDecision.Refused(SessionErrors.AnnotationIsNotInTheSurface(tool))
             : ToolDecision.Allowed;
     }
-
-    /// <summary>
-    /// What BrowserAI appends to one upstream tool's description, or
-    /// <see langword="null"/> when it appends nothing — which is every tool but
-    /// <see cref="AnnotateTool"/>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The rewrite is append-only, and this is the whole of it.</b> Upstream's
-    /// sentence is never trimmed or re-framed: a phrase dropped in a rewrite is a
-    /// warning the model no longer receives, and nothing fails when that happens —
-    /// the tool still works and the model simply stops being told the thing that
-    /// stopped it doing something stupid. <c>ModelSurfaceTests</c> asserts a
-    /// declared list of upstream phrases survives, per tool, which is the only
-    /// check that catches it.
-    /// </para>
-    /// <para>
-    /// <b>The tool is still advertised in every session</b>, because the MCP spec
-    /// forbids the tool set varying per connection and SEP-2567 removed
-    /// protocol-level sessions outright. Saying here which modes it works in is
-    /// the only way a model can choose correctly at <c>init</c>, which is hours
-    /// before the refusal would otherwise arrive.
-    /// </para>
-    /// </remarks>
-    /// <param name="tool">The upstream tool name.</param>
-    /// <returns>A sentence to append, or <see langword="null"/>.</returns>
-    public static string? Note(string tool) =>
-        string.Equals(tool, AnnotateTool, StringComparison.Ordinal)
-            ? $"BrowserAI refuses this on a session whose mode opens no window ({Windowless}), and the reason is liveness rather than security: the dashboard window appears even there, in front of nobody, and the call then blocks until the run is killed. Create the session in {Headed} mode if a human will be at the keyboard."
-            : null;
-
-    /// <summary>The modes that open a window, as a clause.</summary>
-    private static string Headed { get; } = Names(headed: true);
-
-    /// <summary>The modes that open none, as a clause.</summary>
-    private static string Windowless { get; } = Names(headed: false);
-
-    private static string Names(bool headed) => string.Join(
-        " or ",
-        SessionModes.All.Where(mode => mode.Headed == headed).Select(mode => $"'{mode.Name}'"));
 }
 
 /// <summary>Whether one call may proceed, and why not if it may not.</summary>

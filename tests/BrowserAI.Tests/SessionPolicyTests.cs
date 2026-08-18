@@ -67,8 +67,8 @@ namespace BrowserAI.Tests;
 /// <b>What is asserted instead is what is actually true.</b> A call names its
 /// session or it is refused — that is <b>routing</b>, and the concurrency arm
 /// below drives it across sessions being opened and destroyed at the same time.
-/// And <c>browser_annotate</c> is refused on a windowless session because it
-/// would <b>hang</b>, which is a liveness claim and is asserted as one — and
+/// And <c>browser_annotate</c> is <b>not advertised at all</b>, because it would
+/// <b>hang</b>: that is a liveness claim and is asserted as one — and
 /// <b>measured on 2026-08-18</b>, three runs against a real headless child: a
 /// visible window took the foreground within 1.2 s every time and the call was
 /// still silent 90 s later
@@ -77,38 +77,65 @@ namespace BrowserAI.Tests;
 /// that a call does not return means spending the budget waiting for it, with a
 /// focus-stealing window on the developer's screen throughout.
 /// </para>
+/// <para>
+/// ⚠️ <b>Amended 2026-08-18, later the same day (previously "<c>browser_annotate</c>
+/// is refused on a windowless session … permitted on the two modes that open
+/// one").</b> The same measurement said the daemon is detached, per-user and
+/// writes into <c>%TEMP%</c>, and that the call is unbounded on every mode — so
+/// the tool is withheld from <c>tools/list</c> in every mode and refused if a
+/// caller names it anyway. Both halves are asserted below, and against a child
+/// double that would happily answer the call.
+/// </para>
 /// </remarks>
 internal sealed class SessionPolicyTests
 {
     /// <summary>
-    /// What each mode permits of the 59-tool union surface, written down rather
-    /// than computed.
+    /// What each mode permits of the surface BrowserAI advertises, written down
+    /// rather than computed.
     /// </summary>
     /// <remarks>
-    /// <b>Corrected 2026-08-18 (previously 41 / 41 / 58, measured 2026-08-16
-    /// against the five-class permission matrix).</b> The matrix is gone, so the
-    /// only tool any mode refuses is <c>browser_annotate</c>, and only where no
-    /// window was promised. Written down rather than derived for the reason the
-    /// old table was: derived from the product's own decision it would agree with
-    /// it by construction and could never fail.
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 to 58 / 58 / 58 of 58 (previously 58 / 59 / 59
+    /// of 59, and 41 / 41 / 58 before that, measured 2026-08-16 against the
+    /// five-class permission matrix).</b> The denominator moved because
+    /// <c>browser_annotate</c> is no longer advertised: of the 59 upstream tools
+    /// the union child exposes, BrowserAI's <c>tools/list</c> carries <b>58</b>.
+    /// The numerators moved with it — every mode permits everything it
+    /// advertises, and the tool that would hang is not in the list to permit.
+    /// </para>
+    /// <para>
+    /// <b>Written down rather than derived, for the reason the old table was:</b>
+    /// derived from the product's own decision it would agree with it by
+    /// construction and could never fail. This one still can — a per-mode
+    /// refusal reintroduced anywhere, a surface that changed size, or a fourth
+    /// mode nobody wrote a row for.
+    /// </para>
     /// </remarks>
     private static readonly (string Mode, int Allowed, string[] Refused)[] Expected =
     [
-        ("headless", 58, [SessionToolPolicy.AnnotateTool]),
-        ("interactive", 59, []),
-        ("persistent", 59, []),
+        ("headless", 58, []),
+        ("interactive", 58, []),
+        ("persistent", 58, []),
     ];
 
     [Test]
-    public async Task EveryModePermitsEveryToolItAdvertisesExceptTheOneThatWouldHang()
+    public async Task EveryModePermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised()
     {
         var union = UpstreamSurface.For(BrowserConfiguration.UnionCapabilities);
+        var advertised = union.Where(tool => !SessionToolPolicy.IsWithheldFromTheSurface(tool)).ToList();
         var offenders = new List<string>();
 
-        // The denominator is stated before the numerators: of the 59 tools
-        // BrowserAI advertises, headless permits 58 and the two headed modes
-        // permit all 59.
+        // The denominators are stated before the numerators, and there are two
+        // of them: the union child exposes 59 tools, BrowserAI advertises 58 of
+        // them, and every mode permits all 58.
         await Assert.That(union.Count).IsEqualTo(59);
+        await Assert.That(advertised.Count).IsEqualTo(58);
+
+        // The named hole, individually, because a count is satisfied by the
+        // wrong tool as easily as by the right one. It is in the child's surface
+        // and out of ours, which is the whole of the change.
+        await Assert.That(union).Contains(SessionToolPolicy.AnnotateTool);
+        await Assert.That(advertised).DoesNotContain(SessionToolPolicy.AnnotateTool);
 
         foreach (var mode in SessionModes.All)
         {
@@ -121,11 +148,11 @@ internal sealed class SessionPolicyTests
             }
 
             var (_, declared, refused) = rows[0];
-            var allowed = union.Where(tool => SessionToolPolicy.Decide(tool, mode).IsAllowed).ToList();
+            var allowed = advertised.Where(tool => SessionToolPolicy.Decide(tool).IsAllowed).ToList();
 
             if (allowed.Count != declared)
             {
-                offenders.Add($"{mode.Name}: permits {allowed.Count} of {union.Count}, declared {declared}");
+                offenders.Add($"{mode.Name}: permits {allowed.Count} of {advertised.Count}, declared {declared}");
             }
 
             offenders.AddRange(refused
@@ -135,23 +162,23 @@ internal sealed class SessionPolicyTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // The named hole, individually, because a count is satisfied by the
-        // wrong tool as easily as by the right one -- and because the refusal
-        // keys on the table's own `Headed` column rather than on a mode name.
-        await Assert.That(Allows("headless", SessionToolPolicy.AnnotateTool)).IsFalse();
-        await Assert.That(Allows("interactive", SessionToolPolicy.AnnotateTool)).IsTrue();
-        await Assert.That(Allows("persistent", SessionToolPolicy.AnnotateTool)).IsTrue();
+        // And the call is refused as well as unadvertised, which is the half a
+        // filtered list cannot do: a model that knows the name from upstream can
+        // still send it.
+        //
+        // ⚠️ Asserted ONCE rather than per mode. `Decide` no longer takes a
+        // mode, so a loop here would ask the same question three times and read
+        // as coverage it is not — the per-mode claim that survives is the one
+        // above, that every mode's advertised surface is the same 58.
+        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).IsAllowed).IsFalse();
 
-        // And the tools the old matrix turned on are permitted everywhere now.
-        // Asserted rather than left implied: these three are the whole of what
-        // the removal changed, and a reader who learned the old behaviour needs
-        // to see it stated.
-        foreach (var mode in SessionModes.All)
-        {
-            await Assert.That(Allows(mode.Name, "browser_run_code_unsafe")).IsTrue();
-            await Assert.That(Allows(mode.Name, "browser_cookie_list")).IsTrue();
-            await Assert.That(Allows(mode.Name, "browser_get_config")).IsTrue();
-        }
+        // The tools the old matrix turned on are permitted now. Asserted rather
+        // than left implied: these three are the whole of what that removal
+        // changed, and a reader who learned the old behaviour needs to see it
+        // stated.
+        await Assert.That(Allows("browser_run_code_unsafe")).IsTrue();
+        await Assert.That(Allows("browser_cookie_list")).IsTrue();
+        await Assert.That(Allows("browser_get_config")).IsTrue();
     }
 
     [Test]
@@ -198,61 +225,80 @@ internal sealed class SessionPolicyTests
     }
 
     [Test]
-    public async Task TheAnnotationToolIsRefusedWhereNoWindowWasPromisedAndForwardedWhereOneWas()
+    public async Task TheAnnotationToolIsAbsentFromTheSurfaceInEveryModeAndRefusedIfNamedAnyway()
     {
-        // Both arms against one rig, because separately either is vacuous: "it
-        // refuses" passes against a proxy that refuses everything, and "it
-        // forwards" passes against one that forwards everything.
+        // ⚠️ Rewritten 2026-08-18 (previously
+        // TheAnnotationToolIsRefusedWhereNoWindowWasPromisedAndForwardedWhereOneWas,
+        // which asserted the headed arm FORWARDED the call and got the child's
+        // answer back). It no longer does, and the child double below is what
+        // makes that a real claim rather than a missing case: it answers the
+        // tool happily, so a proxy that forwarded would visibly succeed here.
         await using var sessions = RigSessionEnvironment.Create(child =>
             child.Tools[SessionToolPolicy.AnnotateTool] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"the human drew something"}]}""",
             });
 
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+        // The surface child answers with upstream's own committed list, so the
+        // absence asserted below is a filter rather than a double that never had
+        // the tool.
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
+            sessions: sessions);
 
-        var windowless = Path.Combine(sessions.Root, "windowless");
-        var headed = Path.Combine(sessions.Root, "headed");
+        // The surface half, off the wire: the child advertises it, BrowserAI
+        // does not. Both halves matter — "absent from our list" is satisfied
+        // vacuously by a child that never had it.
+        var childsOwn = rig.SurfaceChild.ToolsListResult;
+        var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
 
-        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        var names = (advertised["tools"]?.AsArray() ?? [])
+            .Select(tool => (string?)tool?["name"] ?? string.Empty)
+            .ToList();
+
+        await Assert.That(childsOwn).Contains(SessionToolPolicy.AnnotateTool);
+        await Assert.That(names).DoesNotContain(SessionToolPolicy.AnnotateTool);
+        await Assert.That(names.Count).IsGreaterThan(10);
+
+        // And nothing of it is left in the surface for a model to read: no
+        // description mentioning it, no note saying it would refuse.
+        await Assert.That(advertised.ToJsonString()).DoesNotContain(SessionToolPolicy.AnnotateTool);
+
+        // The call half, on a session of every mode, because "in every mode" is
+        // the claim and one session cannot make it.
+        foreach (var mode in SessionModes.All)
         {
-            ["directory"] = windowless,
-            ["purpose"] = "the unattended session the annotation tool would hang",
-            ["mode"] = "headless",
-        });
+            var directory = Path.Combine(sessions.Root, $"annotate-{mode.Name}");
 
-        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
-        {
-            ["directory"] = headed,
-            ["purpose"] = "the session with a window, where a human may be at the keyboard",
-            ["mode"] = "interactive",
-        });
+            _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = directory,
+                ["purpose"] = $"a '{mode.Name}' session that reaches for the annotation tool by name",
+                ["mode"] = mode.Name,
+            });
 
-        var callsBefore = sessions.SessionChildren.Sum(child =>
-            child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool));
+            var callsBefore = sessions.SessionChildren.Sum(child =>
+                child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool));
 
-        var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = windowless });
-        var text = TextOf(refused);
+            var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory });
+            var text = TextOf(refused);
 
-        await Assert.That((bool?)refused["isError"]).IsTrue();
+            await Assert.That((bool?)refused["isError"]).IsTrue();
 
-        // ⚠️ The sentence has to say LIVENESS. A model told "not permitted" goes
-        // looking for a permission to acquire; a model told the call would hang
-        // can act on it in one turn, which is the catalogue's own rule.
-        await Assert.That(text).Contains("block until this run is killed");
-        await Assert.That(text).Contains("liveness refusal and not a security one");
-        await Assert.That(text).Contains("'interactive'");
-        await Assert.That(text).Contains(SessionToolSurface.Init);
+            // ⚠️ The sentence has to say LIVENESS, and it has to say the tool is
+            // not in the list. A model told "not permitted" goes looking for a
+            // permission to acquire; a model told the tool broke retries; a
+            // model told the call cannot return acts on it in one turn.
+            await Assert.That(text).Contains("NOT in this server's tools/list");
+            await Assert.That(text).Contains("liveness rather than security");
+            await Assert.That(text).Contains("no self-timeout");
+            await Assert.That(text).Contains("browser_take_screenshot");
 
-        // Nothing reached the child: a refusal that forwarded first and hid the
-        // answer would still have hung.
-        await Assert.That(sessions.SessionChildren.Sum(child =>
-            child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool))).IsEqualTo(callsBefore);
-
-        var forwarded = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = headed });
-
-        await Assert.That((bool?)forwarded["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(forwarded)).IsEqualTo("the human drew something");
+            // Nothing reached the child: a refusal that forwarded first and hid
+            // the answer would still have hung.
+            await Assert.That(sessions.SessionChildren.Sum(child =>
+                child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool))).IsEqualTo(callsBefore);
+        }
     }
 
     [Test]
@@ -345,12 +391,12 @@ internal sealed class SessionPolicyTests
             {
                 foreach (var tool in Probes)
                 {
-                    // The annotation probe on the windowless session is refused
-                    // before it is routed, so it is counted out of the
-                    // expectation rather than out of the batch: the call still
-                    // goes over the wire, and a proxy that forwarded it anyway
-                    // would show up as a surplus in that child's log.
-                    if (SessionToolPolicy.Decide(tool, mode).IsAllowed)
+                    // The annotation probe is refused before it is routed, on
+                    // every mode, so it is counted out of the expectation rather
+                    // than out of the batch: the call still goes over the wire,
+                    // and a proxy that forwarded it anyway would show up as a
+                    // surplus in that child's log.
+                    if (SessionToolPolicy.Decide(tool).IsAllowed)
                     {
                         expected[directories[mode.Name]] = expected.GetValueOrDefault(directories[mode.Name]) + 1;
                     }
@@ -421,14 +467,20 @@ internal sealed class SessionPolicyTests
 
         // The denominator, so a proxy that dropped calls could not pass by
         // making every count zero: 25 rounds × 3 sessions × 4 probes = 300
-        // calls, minus the 25 annotation probes the windowless session refuses.
-        var refusedByLiveness = Rounds * SessionModes.All.Count(mode =>
-            !SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool, mode).IsAllowed);
+        // calls, minus the annotation probe, which every session refuses.
+        //
+        // Corrected 2026-08-18 (previously 25, counted as the rounds times the
+        // modes that refused it — one of three). The tool is withheld from the
+        // surface and refused everywhere now, so it is 75, one per round per
+        // session.
+        var refusedByLiveness = SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).IsAllowed
+            ? 0
+            : Rounds * SessionModes.All.Count;
 
         await Assert.That(expected.Values.Sum())
             .IsEqualTo((Rounds * SessionModes.All.Count * Probes.Length) - refusedByLiveness);
 
-        await Assert.That(refusedByLiveness).IsEqualTo(25);
+        await Assert.That(refusedByLiveness).IsEqualTo(75);
 
         // The batch really was concurrent rather than a queue the client drained
         // one at a time: answers came back in a different order from the
@@ -450,8 +502,7 @@ internal sealed class SessionPolicyTests
     private static readonly string[] Probes =
         ["browser_storage_state", "browser_run_code_unsafe", SessionToolPolicy.AnnotateTool, "browser_navigate"];
 
-    private static bool Allows(string mode, string tool) =>
-        SessionToolPolicy.Decide(tool, SessionModes.Recorded(mode)).IsAllowed;
+    private static bool Allows(string tool) => SessionToolPolicy.Decide(tool).IsAllowed;
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments)
     {

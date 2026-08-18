@@ -132,7 +132,7 @@ internal static class SessionErrors
         + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
 
     /// <summary>
-    /// Row 5 — the annotation tool, on a session whose mode opens no window.
+    /// Row 5 — the annotation tool, which this build does not advertise.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -140,36 +140,36 @@ internal static class SessionErrors
     /// a permission: nothing about <c>browser_annotate</c> reaches a credential,
     /// and BrowserAI makes no claim to be a boundary against the agent calling
     /// it. What it does is open the Playwright Dashboard and block until a human
-    /// draws — and the window appears on a windowless session too, so the call
-    /// would hang until the whole run is killed. A model told "not permitted"
-    /// would go looking for a permission to acquire; a model told the call would
-    /// hang can act on it.
+    /// draws in it, with no self-timeout — so the call would hang until the whole
+    /// run is killed. A model told "not permitted" would go looking for a
+    /// permission to acquire; a model told the call cannot return can act on it.
     /// </para>
     /// <para>
-    /// <b>Corrected 2026-08-18 (previously <c>ModeRefusal</c>, which named the
-    /// mode that would permit a tool the <c>(tool, mode)</c> matrix refused).</b>
-    /// The matrix is gone — it was never a boundary against the caller, who owns
-    /// the session directory and therefore the profile inside it — and with it
-    /// went the only other refusals this file took on a browser call. The
-    /// permitting modes here are still looked up rather than written down, for
-    /// the reason they always were: a mode added to the table changes this
-    /// sentence with nobody editing it.
+    /// <b>It says the tool is not in the list, first.</b> The reader of this
+    /// sentence asked for a tool this server never offered, so it almost
+    /// certainly knows the name from <c>@playwright/mcp</c> rather than from
+    /// <c>tools/list</c> — and a refusal that did not say so reads as a tool that
+    /// broke rather than one that is absent, which is a retry.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously
+    /// <c>AnnotationWouldHangAWindowlessSession(string tool,
+    /// SessionModeDefinition mode)</c>: "a '{mode}' session opens no window …
+    /// create a session in 'interactive' or 'persistent' mode if a human will be
+    /// at the keyboard").</b> The tool is now withheld from the surface in every
+    /// mode, so there is no mode to name and no session to create that would make
+    /// the call work — offering one would send a model to build a session for a
+    /// tool that is still not there. The mode parameter went with the sentence.
+    /// Before that it was <c>ModeRefusal</c>, which named the mode that would
+    /// permit a tool the <c>(tool, mode)</c> permission matrix refused.
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool that was refused.</param>
-    /// <param name="mode">The mode of the session the caller named.</param>
     /// <returns>The refusal.</returns>
-    public static string AnnotationWouldHangAWindowlessSession(string tool, SessionModeDefinition mode)
-    {
-        ArgumentNullException.ThrowIfNull(mode);
-
-        var headed = SessionModes.All.Where(candidate => candidate.Headed).ToList();
-        var names = string.Join(" or ", headed.Select(candidate => $"'{candidate.Name}'"));
-
-        return $"'{tool}' opens the Playwright Dashboard and waits for a human to draw in it, and a '{mode.Name}' session opens no window — so the call would block until this run is killed. It was not run and nothing was changed. "
-            + "This is a liveness refusal and not a security one: the dashboard window appears even on a windowless session, in front of nobody, and BrowserAI will not hand an unattended run a call that cannot return. "
-            + $"Create a session with {SessionToolSurface.Init} in {names} mode if a human will be at the keyboard; the mode is bound at creation and no session can change what it is. To see the page without one, use browser_snapshot or browser_take_screenshot.";
-    }
+    public static string AnnotationIsNotInTheSurface(string tool) =>
+        $"'{tool}' is deliberately NOT in this server's tools/list, in any session mode, and calling it by name does not reach the browser. It was not run and nothing was changed. "
+        + "The reason is liveness rather than security: it opens the Playwright Dashboard and waits for a human to draw, it has no self-timeout — one measured call stood silent for a full 90 s and returned only when its window was closed — and the window it opens belongs to a SECOND, non-headless browser under a detached daemon that writes outside the session directory. There is no configuration in which it runs headless. An unattended run that called it would hang until it was killed. "
+        + "To see the page, use browser_snapshot for structure or browser_take_screenshot for pixels; both return immediately. If a human really is at the keyboard and has to mark something up, take a screenshot and have them annotate the file.";
 
     /// <summary>Row 6 — the browser this session needs is still being provisioned.</summary>
     /// <remarks>

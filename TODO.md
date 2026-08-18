@@ -134,8 +134,9 @@ findable from more than one direction.
       their items are deleted**, which is what this file's own rule asks for.
       `browser_annotate`'s window and its unbounded wait went to
       [kb](kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18),
-      cited from `SessionToolPolicy.Decide` and covered by re-verification row
-      94; the DPAPI claim that removed the permission layer went to
+      cited from `SessionToolPolicy.IsWithheldFromTheSurface` — the citation moved
+      there when the refusal became a withholding — and covered by re-verification
+      row 94; the DPAPI claim that removed the permission layer went to
       [kb](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18),
       cited from all six documents that used to cite each other, and covered by
       row 95. **Both confirmed the decision they had been holding up**, which is
@@ -213,14 +214,25 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **54 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **53 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
       the index's own `Area` cells verbatim: Bundling and AOT 13, Child runtime and
-      configuration 11, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
+      configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      9 more are `open` while carrying evidence, so 63 are `open` in total, against
-      90 `closed`.
+      9 more are `open` while carrying evidence, so 62 are `open` in total, against
+      91 `closed`.
+
+      ***Corrected 2026-08-18, later the same day (previously "54 rows that are
+      `open` and carry `—`", with "Child runtime and configuration 11", "63 are
+      `open` in total" and "90 `closed`")*** — re-counted by the test, not
+      adjusted, and it is back to the figures two corrections down because
+      **the same measurement that added the `browser_annotate` daemon row closed
+      it**: the tool is withheld from `tools/list` and refused wherever it is
+      named, so this build cannot start the daemon at all. ⚠️ **That row closed by
+      losing its trigger, not by containing anything** — the daemon is still
+      detached, still per-user and still writes into `%TEMP%` — so the row says in
+      place that it must be re-opened the day the tool comes back.
 
       ***Corrected 2026-08-18 (previously "53 rows that are `open` and carry `—`",
       with "Child runtime and configuration 10" and "62 are `open` in total")*** —

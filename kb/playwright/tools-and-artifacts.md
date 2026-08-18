@@ -174,18 +174,33 @@ key comes back. `Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committe
 ### What BrowserAI's own modes permit, after its own filtering
 
 **Re-measured 2026-08-18 @ `@playwright/mcp` 0.0.79 / `playwright-core`
-1.63.0-alpha-2026-08-05, and corrected from 41 / 41 / 58.** Upstream's per-mode
-surfaces are 42 / 42 / 59 above; these are what survives BrowserAI's own decision,
-out of the **59-tool union** it advertises to every caller. Re-establish by
-running `SessionPolicyTests.EveryModePermitsEveryToolItAdvertisesExceptTheOneThatWouldHang`,
-which computes the union from the committed snapshot and asks the product's own
-decision function about every name in it. `[FLOATS]`
+1.63.0-alpha-2026-08-05, and corrected twice on that day — from 41 / 41 / 58 to
+58 / 59 / 59 of 59, and then to 58 / 58 / 58 of 58.** Upstream's per-mode
+surfaces are 42 / 42 / 59 above; these are what survives BrowserAI's own
+decision, out of the **58-tool surface** it advertises to every caller — the
+59-tool union minus the one it withholds. Re-establish by running
+`SessionPolicyTests.EveryModePermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`,
+which computes the union from the committed snapshot, applies the product's own
+withholding predicate, and asks its decision function about every name that
+survives. `[FLOATS]`
 
-| Mode | Permitted | Refused, and why |
-|---|---:|---|
-| `headless` | **58** | `browser_annotate`, whose window appears even here and then blocks until a human draws in it — [measured 2026-08-18](#what-browser_annotate-actually-does--measured-2026-08-18), three runs |
-| `interactive` | **59** | nothing |
-| `persistent` | **59** | nothing |
+| Mode | Advertised | Permitted | Refused, and why |
+|---|---:|---:|---|
+| `headless` | **58** | **58** | nothing it advertises |
+| `interactive` | **58** | **58** | nothing it advertises |
+| `persistent` | **58** | **58** | nothing it advertises |
+
+**The 59th tool is `browser_annotate`, and it is not refused per mode — it is
+not offered at all.** It is filtered out of `tools/list` in every mode, and a
+caller that names it anyway is refused wherever it is named, because the daemon
+lands in `%TEMP%` and outlives its parent on a headed session exactly as it does
+on a headless one. The measurement is
+[what `browser_annotate` actually does](#what-browser_annotate-actually-does--measured-2026-08-18);
+the decision and what it would take to reverse are in
+[DECISIONS](../../DECISIONS.md#licence-release-policy-and-the-tool-surface).
+⚠️ *Corrected 2026-08-18 (previously "`headless` **58** — `browser_annotate`,
+whose window appears even here … `interactive` **59** — nothing; `persistent`
+**59** — nothing").*
 
 ⚠️ **Corrected 2026-08-18 (previously "`headless` **41** — the 17 `storage`
 tools; `browser_annotate` … `interactive` **41** — the 17 `storage` tools;
@@ -199,11 +214,13 @@ and its cookie database are created inside it, and the agent runs as the same
 Windows user, so DPAPI decrypts for it — an agent holding any file tool reads what
 the matrix declined to return — **measured 2026-08-18 and not merely argued**, in
 [Chromium's cookie store, and what it takes to read one](../chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18).
-The one refusal left is **liveness, not security**: `browser_annotate` blocks
+The one decision left is **liveness, not security**: `browser_annotate` blocks
 until a human draws, and the dashboard window appears on a windowless session
 too, so an unattended run that called it would hang until it was killed — also
 [measured 2026-08-18](#what-browser_annotate-actually-does--measured-2026-08-18),
-after standing undated for the life of the decision it justified.
+after standing undated for the life of the decision it justified. Later the same
+day that measurement withdrew the tool from the surface entirely rather than
+refusing it per mode, for the reason under the table.
 
 **The `storage` tools are still absent from a windowless session's child**, and
 that is a different mechanism which did not change: a `headless` or `interactive`
@@ -309,6 +326,90 @@ call, because it will not bound itself.
 
 ⚠️ **A run of this probe puts a focus-stealing window on the operator's screen
 for the whole budget.** That is the finding, not a side effect.
+
+**What was decided on the strength of this, the same day.** The tool is
+**withheld from `tools/list` in every mode** and refused wherever a caller names
+it anyway. The three things that would have to change before it could come back
+— a bounded call, a daemon inside the session's own containment, and a headless
+path that does not turn on an upstream test variable — are recorded in
+[DECISIONS](../../DECISIONS.md#licence-release-policy-and-the-tool-surface) and
+beside the code in `SessionToolPolicy.IsWithheldFromTheSurface`. Nothing about
+this entry is superseded by that: it is the evidence the decision rests on, and
+re-implementing the feature starts by re-running it.
+
+## The inline screenshot, and what it costs — measured 2026-08-18
+
+**Measured 2026-08-18 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05 / Chrome for Testing 152.0.7977.8 (`chromium-1237`) /
+Node v24.19.0**, off the wire against the published BrowserAI binary and a real
+child, on [the reference machine](../README.md#the-reference-machine). Three
+pages, one screenshot each, no `filename` argument.
+
+**Upstream returns a screenshot twice — as a file and as an `image` content
+block — and the second half is conditional on the caller naming no file.** The
+handler ends:
+
+```js
+await response2.addFileResult(resolvedFile, data);
+if (!params2.filename)
+  await response2.registerImageResult(data, fileType);
+```
+
+That is the **only** `registerImageResult` call site in the whole resolved
+bundle, so `browser_take_screenshot` is the only tool that ever answers with an
+image. `Verified 2026-08-18 @ playwright-core 1.63.0-alpha-2026-08-05` against
+`coreBundle.js`. `[FLOATS]`
+
+**The bytes are the file's bytes, and the media type is `image/${fileType}`**,
+where `fileType = params.type ?? fromExtension(filename) ?? "png"` — the same
+expression that decides the extension on disk. Serialisation is
+`content.push({ type: "image", data: scaledData.toString("base64"), mimeType: ... })`,
+gated once more on `config.imageResponses !== "omit"`. **BrowserAI never writes
+that key and its child-environment allowlist does not pass
+`PLAYWRIGHT_MCP_IMAGE_RESPONSES`, so the gate is open in every session this
+product opens.** `[FLOATS]`
+
+⚠️ **One divergence, deliberate and recorded rather than fixed.** Upstream passes
+the bytes through `scaleImageToFitMessage` first, which shrinks anything over
+**1,568 px on a side or ~1.15 MP** and *returns the buffer untouched otherwise*
+(`shrink = min(1568/w, 1568/h, sqrt(1.15·1024·1024/pixels))`, and `shrink > 1`
+returns early). BrowserAI appends what is on disk, so for an image inside that
+budget the two are byte-identical and for a larger one — a `fullPage` screenshot
+of a long page — BrowserAI sends the unscaled original where upstream would have
+sent a shrunk copy. Re-implementing the scaler would mean decoding and
+resampling PNG, JPEG and WebP inside the proxy, which is the scope boundary's own
+example of what this product must not grow. `[FLOATS]`
+
+### What it costs
+
+| Page (1280×720 viewport) | Bytes on disk | base64 characters | Whole `tools/call` frame | Frame without the image |
+|---|---:|---:|---:|---:|
+| `<h1>ok</h1>` — near blank | 5,105 | 6,808 | 7,625 | 817 |
+| 24 paragraphs of prose | 52,648 | 70,200 | 71,014 | 814 |
+| 120 solid colour bands | 4,417 | 5,892 | 6,710 | 818 |
+
+**The wire cost varies 12× across those three; the token cost does not vary at
+all.** An image block is billed by *patches*, not by bytes:
+`⌈width / 28⌉ × ⌈height / 28⌉` visual tokens, so a 1280×720 screenshot is
+`46 × 26 =` **1,196 visual tokens** whatever it compresses to, and stays under
+both the standard tier's 1,568 px long edge and the high-resolution tier's
+2,576 px, so nothing downscales it.
+`Verified 2026-08-18 @ platform.claude.com/docs/en/build-with-claude/vision`.
+`[FLOATS]`
+
+**Which is why there is no size threshold in the routing.** A byte-count gate
+would fire on the page that costs the model nothing extra and stay silent on the
+one that does; the only figure that would justify a gate is the pixel count, and
+that is the caller's viewport rather than anything a proxy should second-guess.
+Upstream has no threshold either.
+
+**How to re-establish.** Start the published binary, `browserai_init` a
+`headless` session, `browser_navigate` to the page, then call
+`browser_take_screenshot` **with no `filename`**; read `bytes on disk` from the
+path in BrowserAI's own note, `base64 characters` from `content[].data`, and the
+frame sizes from the raw response. `VerticalSliceTests.AScreenshotComesBackInlineAsWellAsAsAFileWithALegibleName`
+does exactly this against the real child and prints the first three columns on a
+passing run.
 
 ## Artifacts and output-directory behaviour
 

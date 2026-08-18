@@ -487,17 +487,21 @@ internal sealed class FakeChildHarnessTests
         await Assert.That(doubleMode.Storage).IsTrue();
         await Assert.That(realMode.Storage).IsFalse();
 
-        // And the one refusal that is left goes the other way from the old
-        // `browser_annotate` note: it is a liveness guard keyed on `Headed`, so
-        // the headless rig refuses it and the headed one does not.
-        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool, realMode).Refusal).IsNotNull();
-        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool, doubleMode).Refusal).IsNull();
+        // And the one refusal that is left is not keyed on either rig's mode.
+        //
+        // Corrected 2026-08-18 (previously "it is a liveness guard keyed on
+        // `Headed`, so the headless rig refuses it and the headed one does
+        // not"). `browser_annotate` is now withheld from the surface outright
+        // and refused wherever it is named, so both rigs refuse it — which is
+        // what makes the mode difference above the ONLY difference between them.
+        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).Refusal).IsNotNull();
+        await Assert.That(SessionToolPolicy.IsWithheldFromTheSurface(SessionToolPolicy.AnnotateTool)).IsTrue();
 
-        // The tools that arm actually calls are permitted in both, so the
-        // change costs it nothing. `browser_navigate` is the call under test and
-        // the close tool is the product's own idle close.
-        await Assert.That(SessionToolPolicy.Decide("browser_navigate", realMode).Refusal).IsNull();
-        await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool, realMode).Refusal).IsNull();
+        // The tools that arm actually calls are permitted, so the change costs
+        // it nothing. `browser_navigate` is the call under test and the close
+        // tool is the product's own idle close.
+        await Assert.That(SessionToolPolicy.Decide("browser_navigate").Refusal).IsNull();
+        await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool).Refusal).IsNull();
     }
 
     /// <summary>

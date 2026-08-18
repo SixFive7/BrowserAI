@@ -23,6 +23,84 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **A screenshot comes back inline again, and the defect was ours.** Upstream
+  answers `browser_take_screenshot` with an `image` content block as well as a
+  file, guarded by `if (!params.filename)` — and BrowserAI's artifact routing
+  always supplies a `filename`, to give the artifact a name a human can read a
+  month later. So **the guard was never true and no screenshot came back inline
+  in any mode**, where bare `@playwright/mcp` returns one: the model paid an
+  extra file read on the most-used artifact tool, on every call, and nothing
+  anywhere reported the difference.
+
+  The block is now appended to the same answers this build already rewrites,
+  **read back off disk after the child wrote it** — the same bytes a reader
+  following the path in the note would find, with upstream's own
+  `image/<fileType>` media type — under the caller-visible condition upstream
+  tests: *the caller named no file*. The legible filename is kept; the two were
+  never actually in tension.
+
+  **`browser_take_screenshot` and nothing else.** `registerImageResult` has
+  exactly one call site in the whole resolved bundle and that is it.
+  `browser_pdf_save` generates a name in exactly the same way and gets no image
+  block: a PDF is not an image, upstream never registered one, and no client is
+  obliged to render `application/pdf` in an image block.
+
+  **No size threshold, because upstream has none** and because a byte count is
+  the wrong axis anyway. Measured off the wire against the published binary:
+  the same 1280×720 viewport costs 5,105 B on a near-blank page and 52,648 B on
+  one with two dozen paragraphs — a 12× spread on the wire — while the model-side
+  cost is `⌈w/28⌉ × ⌈h/28⌉` = **1,196 visual tokens either way**. A gate on bytes
+  would fire on the page that costs nothing extra and stay silent on the one that
+  does ([kb](kb/playwright/tools-and-artifacts.md#the-inline-screenshot-and-what-it-costs--measured-2026-08-18)).
+
+  One divergence is recorded rather than fixed: upstream shrinks anything over
+  1,568 px on a side or ~1.15 MP first, and BrowserAI sends what is on disk.
+  Matching it would mean a PNG/JPEG/WebP resampler inside the proxy, which is the
+  scope boundary's own example of what this product must not grow.
+
+### Removed
+
+- **`browser_annotate` is gone from the model-facing surface.** Not refused —
+  **absent**: filtered out of `tools/list` in every mode, so it costs a model no
+  attention and no description budget for a call that cannot succeed. Filtering
+  the surface is in scope by the charter, where renaming is not.
+
+  Yesterday's measurement earned a refusal; read again it withdraws the tool.
+  **It has no self-timeout** — the control run stood silent for a full 90 s, and
+  the wait is `await new Promise(resolve => client.on("exit", …))`, whose only
+  bounded arm is the daemon failing to start at 15 s. Its window is a **second,
+  non-headless Chromium**. There is **no configuration in which it runs
+  headless**, because the dashboard's headedness is
+  `headless: !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE` — an upstream *test*
+  variable no session config reaches. And it **escapes the session's
+  containment**: a `detached`, `unref`'d, per-user-singleton daemon writing its
+  profile into `%TEMP%`, of whose 18-process tree a parent walk found **zero**
+  after the probe exited. None of that is about whether a window was promised, so
+  the per-mode refusal it used to get was the wrong shape.
+
+  **A caller that names it anyway is refused rather than forwarded**, because a
+  model knows upstream's tool names from everywhere except this server's list,
+  and forwarding one would hang an unattended run — the thing this product exists
+  not to do.
+
+  **What it would take to bring it back** is recorded in
+  [DECISIONS](DECISIONS.md#licence-release-policy-and-the-tool-surface) and beside
+  the code: a bounded call, a dashboard inside the session's own containment, and
+  a headless path that does not turn on a `PWTEST_*` variable. No two of the three
+  are enough.
+
+  **What went with it**, rather than being left unreachable: the mode-keyed
+  refusal row `SessionErrors.AnnotationWouldHangAWindowlessSession` (replaced by
+  `AnnotationIsNotInTheSurface`, which names the absence first); the mode
+  parameter on `SessionToolPolicy.Decide`; `SessionToolPolicy.Note` and
+  `SessionToolSurface.AppendModeNote`, the entire description-rewrite path — so
+  **every upstream description now passes through byte for byte**, which is a
+  stronger property than the append-only rule it replaces and is asserted as one.
+  The surface is **58** upstream tools where it was 59, in every mode, and the
+  `annotations` artifact folder stays declared because that set is derived from
+  upstream's bundle rather than from what this build calls.
+
+
 - **The sweep's two highest-value assumptions, measured — and both decisions
   they were holding up survive.** They were the worst kind of unmeasured
   justification: each already justified a decision that had been *taken*, so

@@ -100,9 +100,14 @@ internal sealed class ModelSurfaceTests
         ("browser_run_code_unsafe", "RCE-equivalent"),
         ("browser_run_code_unsafe", "executes arbitrary JavaScript in the Playwright server process"),
 
-        // Blocks on a human. A model that does not know this schedules it and
-        // waits forever.
-        ("browser_annotate", "wait for the user to draw annotations"),
+        // ⚠️ DELETED 2026-08-18: ("browser_annotate", "wait for the user to draw
+        // annotations") — "blocks on a human. A model that does not know this
+        // schedules it and waits forever." The tool is withheld from the surface
+        // now, so there is no description of it for a phrase to survive in, and
+        // the fact the phrase protected is answered by removal rather than by
+        // warning. Keeping the row would have failed the test below on its
+        // "not in the advertised surface at all" arm, which is the arm that
+        // exists to stop exactly this becoming a silent skip.
 
         // Names the tool whose output the argument comes from; without it the
         // number is unguessable.
@@ -167,24 +172,27 @@ internal sealed class ModelSurfaceTests
     /// precisely because it is written by hand.</b> Derived from the product's
     /// own decision it would agree with it by construction and could never fail;
     /// written down, a fourth mode is a red build with a number in the message.
-    /// The counts are of the <b>59-tool union surface</b> BrowserAI advertises.
+    /// The counts are of the <b>58-tool surface</b> BrowserAI advertises.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-18 to 58 / 59 / 59 (previously 41 / 41 / 58,
-    /// measured 2026-08-16 against the five-class <c>(tool, mode)</c> permission
-    /// matrix).</b> That matrix was removed: it was never a boundary against the
+    /// ⚠️ <b>Corrected 2026-08-18 to 58 / 58 / 58 of 58 (previously 58 / 59 / 59
+    /// of 59; and 41 / 41 / 58 before that, measured 2026-08-16 against the
+    /// five-class <c>(tool, mode)</c> permission matrix).</b> Two changes, on the
+    /// same day. The matrix went first: it was never a boundary against the
     /// caller, who chooses the session directory and can read the profile inside
-    /// it as the same Windows user. The single tool any mode still refuses is
-    /// <c>browser_annotate</c>, on a mode that promised no window, and the reason
-    /// is <b>liveness</b> — it blocks until a human draws, and the window appears
-    /// on a headless session too.
+    /// it as the same Windows user. Then <c>browser_annotate</c> — the one tool
+    /// any mode still refused — was withheld from <c>tools/list</c> altogether,
+    /// which moved the denominator from 59 to 58 and left no per-mode refusal at
+    /// all. The reason is <b>liveness</b>: it blocks with no self-timeout, its
+    /// window belongs to a second non-headless browser, and its daemon outlives
+    /// the session in <c>%TEMP%</c>.
     /// </para>
     /// </remarks>
     private static readonly (string Mode, int Allowed, string[] Refused)[] Expected =
     [
-        ("headless", 58, [SessionToolPolicy.AnnotateTool]),
-        ("interactive", 59, []),
-        ("persistent", 59, []),
+        ("headless", 58, []),
+        ("interactive", 58, []),
+        ("persistent", 58, []),
     ];
 
     [Test]
@@ -366,7 +374,15 @@ internal sealed class ModelSurfaceTests
         // things to remember on the day upstream adds a tool. It is now read from
         // the snapshot the build regenerates from the resolved payload, which is
         // where it comes from in the first place.
-        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + UpstreamSurface.SnapshotToolCount());
+        //
+        // ⚠️ Corrected again, later the same day: minus whatever this build
+        // withholds, which is one tool. Through the product's own predicate
+        // rather than `- 1`, so the day the decision is reversed this follows it.
+        var advertisedUpstream = UpstreamSurface.SnapshotDescriptions()
+            .Count(entry => !SessionToolPolicy.IsWithheldFromTheSurface(entry.Name));
+
+        await Assert.That(advertisedUpstream).IsEqualTo(UpstreamSurface.SnapshotToolCount() - 1);
+        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + advertisedUpstream);
     }
 
     [Test]
@@ -697,7 +713,7 @@ internal sealed class ModelSurfaceTests
     }
 
     [Test]
-    public async Task OurAdditionIsAppendedAndNeverReplacesUpstreamsOwnText()
+    public async Task EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll()
     {
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
@@ -708,58 +724,66 @@ internal sealed class ModelSurfaceTests
 
         foreach (var (name, original) in upstream)
         {
+            // ⚠️ Corrected 2026-08-18 (previously every upstream tool was
+            // expected in the advertised list, and one of them — `browser_annotate`
+            // — was expected to have a sentence of ours appended). That tool is
+            // now filtered out of `tools/list` entirely, so the shape of this
+            // test changed with it: the withheld one must be ABSENT, and every
+            // other description must be upstream's own, unchanged, to the byte.
+            if (SessionToolPolicy.IsWithheldFromTheSurface(name))
+            {
+                if (advertised.ContainsKey(name))
+                {
+                    offenders.Add($"{name}: withheld from the surface, and still in it");
+                }
+
+                continue;
+            }
+
+            if (!advertised.ContainsKey(name))
+            {
+                offenders.Add($"{name}: upstream advertises it and BrowserAI does not");
+                continue;
+            }
+
             var rewritten = (string?)advertised[name]?["description"] ?? string.Empty;
 
-            // Append-only, asserted as a prefix rather than as containment: an
-            // insertion in the middle would still "contain" upstream's text
-            // while changing where a model reads it.
-            if (!rewritten.StartsWith(original, StringComparison.Ordinal))
+            // Unchanged, asserted as equality rather than as a prefix. The
+            // append hook was the only thing that ever made these differ and it
+            // is gone (`SessionToolSurface.AppendModeNote`, deleted the same
+            // day), so equality is now true and is the stronger claim: a prefix
+            // check passes anything appended, which is what would come back if
+            // the hook were reintroduced by habit.
+            if (!string.Equals(rewritten, original, StringComparison.Ordinal))
             {
-                offenders.Add($"{name}: upstream's description is no longer the start of ours");
-            }
-
-            var note = SessionToolPolicy.Note(name);
-
-            if (note is null && rewritten.Length != original.Length)
-            {
-                offenders.Add($"{name}: every mode permits it, so nothing should have been appended");
-            }
-
-            if (note is not null && !rewritten.EndsWith(note, StringComparison.Ordinal))
-            {
-                offenders.Add($"{name}: the mode note is missing from the end of the description");
+                offenders.Add($"{name}: the advertised description is no longer upstream's own, byte for byte");
             }
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // ⚠️ Corrected 2026-08-18 (previously this asserted that
-        // `browser_storage_state`'s description named 'persistent' and
-        // 'headless', because the (tool, mode) permission matrix appended a
-        // sentence to every restricted tool). There is one appended sentence
-        // left in the whole surface, and this is it — so what is asserted now is
-        // that it is the ONLY one, which the old form could not say.
-        var annotated = (string?)advertised[SessionToolPolicy.AnnotateTool]?["description"] ?? string.Empty;
+        // Not vacuous: an `Advertised` that returned nothing would satisfy every
+        // "unchanged" check above by never running one. The authored tools are
+        // in that dictionary too, so the arithmetic names both halves.
+        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + upstream.Count - 1);
+        await Assert.That(advertised.ContainsKey(SessionToolPolicy.AnnotateTool)).IsFalse();
 
-        await Assert.That(annotated).Contains("blocks until the run is killed");
-        await Assert.That(annotated).Contains("'headless'");
-        await Assert.That(annotated).Contains("'interactive' or 'persistent'");
-
-        var appended = upstream
-            .Where(entry => SessionToolPolicy.Note(entry.Name) is not null)
-            .Select(entry => entry.Name)
-            .ToList();
-
-        await Assert.That(string.Join(", ", appended)).IsEqualTo(SessionToolPolicy.AnnotateTool);
-
-        // And nothing of the removed matrix survives anywhere in the surface a
-        // model reads. A positive control comes first, because a sweep that
-        // matches nothing is indistinguishable from a genuine absence.
+        // And nothing of the removed matrix — or of the withheld tool — survives
+        // anywhere in the surface a model reads. A positive control comes first,
+        // because a sweep that matches nothing is indistinguishable from a
+        // genuine absence.
         var everyDescription = string.Concat(advertised.Values.Select(tool => (string?)tool?["description"] ?? string.Empty));
 
-        await Assert.That(everyDescription).Contains("BrowserAI refuses this");
+        await Assert.That(everyDescription).Contains("Take a screenshot of the current page");
 
-        foreach (var gone in (string[])["needs a session created in", "is not one this build has classified", "refuses every browser tool"])
+        foreach (var gone in (string[])
+        [
+            "needs a session created in",
+            "is not one this build has classified",
+            "refuses every browser tool",
+            "BrowserAI refuses this",
+            SessionToolPolicy.AnnotateTool,
+        ])
         {
             await Assert.That(everyDescription).DoesNotContain(gone);
         }

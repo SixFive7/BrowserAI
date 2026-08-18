@@ -33,6 +33,17 @@ namespace BrowserAI.Sessions;
 /// order.</b> <c>init</c> is the call that has to happen before any other, and
 /// the surface is the first thing a model reads.
 /// </para>
+/// <para>
+/// <b>Exactly one upstream tool is dropped on the way through</b>, and the
+/// charter allows it in as many words: <i>filter, re-describe, inject
+/// <c>session</c></i> is in scope and renaming is not. Which one, and the
+/// measurement behind it, is
+/// <see cref="SessionToolPolicy.IsWithheldFromTheSurface"/>'s to say. What
+/// belongs here is the shape: it is <b>dropped, not disabled</b> — no entry, no
+/// description explaining that it will refuse, nothing for a model to read and
+/// weigh. A tool that can never succeed still costs attention and description
+/// budget for as long as it is in the list.
+/// </para>
 /// </remarks>
 internal static class SessionToolSurface
 {
@@ -104,9 +115,11 @@ internal static class SessionToolSurface
     /// characters included. It stays enforced because it floats with a client
     /// version this project does not control and because this is the surface this
     /// type is most exposed on: <see cref="SessionDescription"/> is injected into
-    /// every upstream tool's schema, so one string lands fifty-nine times and the
-    /// day a release does start cutting schemas, one edit becomes fifty-nine
-    /// silent truncations.
+    /// every upstream tool's schema, so one string lands fifty-eight times and
+    /// the day a release does start cutting schemas, one edit becomes fifty-eight
+    /// silent truncations. <i>Corrected 2026-08-18 (previously "fifty-nine",
+    /// twice): <c>browser_annotate</c> is withheld from the surface, so it is no
+    /// longer one of the schemas this lands in.</i>
     /// </remarks>
     public const int ParameterDescriptionMaximumCharacters = Proxy.ClientTruncationBudget.ParameterDescriptionCharacters;
 
@@ -150,8 +163,17 @@ internal static class SessionToolSurface
 
                 if (tool is JsonObject definition)
                 {
+                    // Dropped before anything is done to it. The name is read
+                    // from the child's own node, so a tool upstream renames
+                    // stops being filtered rather than being filtered by a stale
+                    // spelling -- and the golden snapshot is what says the
+                    // rename happened.
+                    if (SessionToolPolicy.IsWithheldFromTheSurface((definition[NameMember] as JsonValue)?.GetValue<string>()))
+                    {
+                        continue;
+                    }
+
                     InjectSession(definition);
-                    AppendModeNote(definition);
                 }
 
                 rewritten.Add(tool);
@@ -171,41 +193,23 @@ internal static class SessionToolSurface
         "The session directory, exactly as browserai_init or browserai_resume returned it. "
         + "This is the session: BrowserAI has no default and will not guess one.";
 
-    private const string DescriptionMember = "description";
     private const string NameMember = "name";
 
-    /// <summary>
-    /// Appends BrowserAI's own sentence to the one tool this build refuses on
-    /// some modes, and leaves every other description exactly as upstream wrote
-    /// it.
-    /// </summary>
-    /// <remarks>
-    /// <b>Append, never rewrite.</b> Upstream's descriptions carry text a model
-    /// acts on — what a tool refuses, what it costs, which argument is
-    /// destructive — and a phrase lost in a rewrite fails silently: the tool
-    /// still works and the model is simply no longer warned. So ours goes on the
-    /// end, upstream's is untouched, and a declared list of upstream phrases is
-    /// asserted to survive.
-    /// </remarks>
-    private static void AppendModeNote(JsonObject tool)
-    {
-        if ((tool[NameMember] as JsonValue)?.GetValue<string>() is not { } name)
-        {
-            return;
-        }
-
-        if (SessionToolPolicy.Note(name) is not { } note)
-        {
-            return;
-        }
-
-        var upstream = (tool[DescriptionMember] as JsonValue)?.GetValue<string>();
-
-        tool[DescriptionMember] = upstream is null or ""
-            ? note
-            : $"{upstream}\n\n{note}";
-    }
-
+    // ⚠️ DELETED 2026-08-18: `AppendModeNote`, which appended
+    // `SessionToolPolicy.Note(name)` -- a sentence naming the modes
+    // `browser_annotate` worked in -- to the one upstream description this build
+    // rewrote.
+    //
+    // It is dead because the tool it wrote on is no longer in the list. The
+    // sentence existed so a model could choose correctly at `init`, hours before
+    // the refusal would otherwise arrive; a tool that is never advertised needs
+    // no such warning, and a hook that can never fire reads as a live rewrite
+    // path to whoever meets it next. So EVERY upstream description now passes
+    // through byte for byte, which is a stronger property than "append, never
+    // rewrite" and is asserted as one by
+    // ModelSurfaceTests.EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll.
+    // Restoring the tool means restoring this method with it --
+    // SessionToolPolicy.IsWithheldFromTheSurface says what that would take.
     private static void InjectSession(JsonObject tool)
     {
         if (tool[SchemaMember] is not JsonObject schema)

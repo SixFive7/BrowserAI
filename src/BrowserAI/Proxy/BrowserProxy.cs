@@ -432,19 +432,25 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
 
         // The one refusal left, and it is a LIVENESS guard rather than a
-        // permission: `browser_annotate` opens a window and blocks until a human
-        // draws in it, and the window appears on a headless session too, so an
-        // unattended run that called it would hang until it was killed. The mode
-        // is read off the session the caller's own argument resolved to -- an
-        // immutable field of that record -- so nothing another thread does can
-        // change what this call is judged against.
+        // permission: `browser_annotate` opens a dashboard window, has no
+        // self-timeout, and blocks until a human draws in it -- so an unattended
+        // run that called it would hang until it was killed. It is withheld from
+        // `tools/list` as well, and this is the other half of that: a model that
+        // knows the name from upstream rather than from this server can still
+        // send the call, and forwarding it is what the withholding exists to
+        // prevent.
+        //
+        // Corrected 2026-08-18 (previously `Decide(tool, live.Mode)`, refusing
+        // only on a mode that opens no window). The daemon lands in %TEMP% and
+        // outlives its parent on every mode alike, so there is no mode this is
+        // safe on and no mode argument left to pass.
         //
         // Corrected 2026-08-18 (previously "THE enforcement point", deciding a
         // (tool, mode) permission matrix): that matrix was never a boundary
         // against the caller, who chooses the session directory and reads the
         // profile inside it as the same user. Change control lives at the
         // release gate, in the four golden snapshots.
-        var decision = SessionToolPolicy.Decide(tool, live.Mode);
+        var decision = SessionToolPolicy.Decide(tool);
 
         if (!decision.IsAllowed)
         {
@@ -531,10 +537,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             // §F's second half, which ships with the first or not at all:
             // relocating a file while telling the model otherwise is a new
-            // silent failure introduced by the fix for an old one.
-            var note = live.Artifacts.Complete(plan);
+            // silent failure introduced by the fix for an old one. It carries
+            // the image block back as well, on the calls whose name BrowserAI
+            // supplied -- see ArtifactTools.
+            var completion = live.Artifacts.Complete(plan);
 
-            await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, note, cancellationToken).ConfigureAwait(false);
+            await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -613,12 +621,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// <b>Byte-identity is a property of forwarding, and this is where that is
-    /// made precise.</b> With no note — every call that names no file, which is
-    /// nearly all of them — the child's own bytes are written unchanged, which is
-    /// step 9's guarantee untouched. With a note, the child's <c>content</c>
-    /// array gains one element by a splice into those same bytes: nothing the
-    /// child wrote is re-serialised, re-escaped or reordered, and exactly one
-    /// array element is appended.
+    /// made precise.</b> With nothing to append — every call that names no file,
+    /// which is nearly all of them — the child's own bytes are written unchanged,
+    /// which is step 9's guarantee untouched. Otherwise the child's
+    /// <c>content</c> array gains elements by a splice into those same bytes:
+    /// nothing the child wrote is re-serialised, re-escaped or reordered, and
+    /// what is added is appended at the end.
+    /// </para>
+    /// <para>
+    /// <b>One element, or two.</b> The note is always one text block. A
+    /// screenshot BrowserAI named gains a second, and it is the <c>image</c>
+    /// block upstream itself would have sent had the caller's own arguments
+    /// reached it — see <c>ArtifactTools</c> for why that is a restoration
+    /// rather than an addition, and why it is that tool alone.
     /// </para>
     /// <para>
     /// The <see cref="JsonNode"/> arm is the fallback for a result carrying no
@@ -631,7 +646,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         RequestId callerId,
         JsonRpcResponse response,
         VerbatimPayload? payload,
-        string? note,
+        ArtifactAnswer? completion,
         CancellationToken cancellationToken)
     {
         // A fresh envelope rather than the child's own: JsonRpcMessage.Context
@@ -640,7 +655,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // be sent back to the child it came from.
         var answer = new JsonRpcResponse { Id = callerId, Result = response.Result };
 
-        if (note is null)
+        if (completion is null)
         {
             if (payload is { } untouched)
             {
@@ -660,7 +675,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        var spliced = payload is { } captured ? ResultNote.Append(captured.Json, note) : null;
+        byte[][] blocks = completion.Image is { } image
+            ? [ResultNote.Block(completion.Note), ResultNote.ImageBlock(image.Data, image.MediaType)]
+            : [ResultNote.Block(completion.Note)];
+
+        // The IsEnabled guard is the analyzer's (CA1873) and it is right: this
+        // line is Debug, and formatting the request id to build a message
+        // nobody has asked for is work on the hot path of every screenshot.
+        if (completion.Image is { } appended)
+        {
+            ProxyLog.InlineImageRestored(_logger, callerId, appended.MediaType, appended.Data.Length);
+        }
+
+        var spliced = payload is { } captured ? ResultNote.Append(captured.Json, blocks) : null;
 
         if (spliced is not null)
         {
@@ -674,26 +701,30 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // Kept in step with the bytes on both arms. On the spliced arm nothing
         // reads it, but a message whose object and whose bytes disagree is a
         // trap for whatever reads it next.
-        answer.Result = WithNote(response.Result, note);
+        answer.Result = WithNote(response.Result, completion);
 
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>The child's result with one text block appended, as a node.</summary>
-    private static JsonObject WithNote(JsonNode? result, string note)
+    /// <summary>The child's result with what BrowserAI appended, as nodes.</summary>
+    private static JsonObject WithNote(JsonNode? result, ArtifactAnswer completion)
     {
         var copy = result?.DeepClone() as JsonObject ?? [];
 
-        if (copy["content"] is JsonArray content)
+        if (copy["content"] is not JsonArray content)
         {
-            // The (JsonNode) cast is the one AOT trap the 2026-08-15 spike found
-            // in our own code rather than the SDK's: the generic overload is
-            // RequiresDynamicCode and turns the publish red.
-            content.Add((JsonNode)ResultNote.Node(note));
+            content = [];
+            copy["content"] = content;
         }
-        else
+
+        // The (JsonNode) cast is the one AOT trap the 2026-08-15 spike found
+        // in our own code rather than the SDK's: the generic overload is
+        // RequiresDynamicCode and turns the publish red.
+        content.Add((JsonNode)ResultNote.Node(completion.Note));
+
+        if (completion.Image is { } image)
         {
-            copy["content"] = new JsonArray(ResultNote.Node(note));
+            content.Add((JsonNode)ResultNote.ImageNode(image.Data, image.MediaType));
         }
 
         return copy;
@@ -893,12 +924,16 @@ internal static partial class ProxyLog
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="tool">The tool that was refused.</param>
-    /// <param name="mode">The mode of the session named.</param>
+    /// <param name="mode">
+    /// The mode of the session named. Context rather than cause since
+    /// 2026-08-18: the refusal no longer depends on it, and the line records
+    /// which session met it.
+    /// </param>
     /// <param name="session">The session directory named.</param>
     [LoggerMessage(
         EventId = 9,
         Level = LogLevel.Information,
-        Message = "'{Tool}' was refused on the '{Mode}' session at {Session}: it would have blocked until this run was killed.")]
+        Message = "'{Tool}' was refused on the '{Mode}' session at {Session}: it is not in this build's tools/list and would have blocked until this run was killed.")]
     public static partial void ToolRefused(ILogger logger, string tool, string mode, string session);
 
     /// <summary>
@@ -918,6 +953,35 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' on the session at {Session} answered with upstream's 'npx @playwright/mcp install-browser' advice, which does not apply to a BrowserAI install. It was replaced, so that answer is not byte-identical.")]
     public static partial void RemediationRewritten(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// An answer regained the image block that renaming its file had cost it.
+    /// </summary>
+    /// <remarks>
+    /// Debug rather than Information: it happens on every screenshot a caller
+    /// did not name, which is most of them, and Information would make the log
+    /// of a session that took a hundred screenshots a hundred lines longer for a
+    /// fact nobody is looking for. It is logged at all because the block is the
+    /// one thing in an answer that costs the caller tokens without appearing in
+    /// any file, so "why is this conversation so expensive" has an answer with a
+    /// size in it.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="callerRequestId">
+    /// The caller request being answered, taken as the id itself rather than as
+    /// <c>id.ToString()</c>. At <see cref="LogLevel.Debug"/> the analyzer counts
+    /// a conversion at the call site as work done to build a message that is
+    /// usually discarded, and this one would do it on every screenshot (CA1873);
+    /// handed the struct, the generated method formats it only if the level is
+    /// enabled.
+    /// </param>
+    /// <param name="mediaType">What the block says it is.</param>
+    /// <param name="bytes">How big the file was, before base64 grew it by a third.</param>
+    [LoggerMessage(
+        EventId = 10,
+        Level = LogLevel.Debug,
+        Message = "Appended the inline {MediaType} upstream would have sent for caller request {CallerRequestId}: {Bytes} bytes on disk.")]
+    public static partial void InlineImageRestored(ILogger logger, RequestId callerRequestId, string mediaType, int bytes);
 
     /// <summary>A call named a file outside the session it named.</summary>
     /// <param name="logger">Where to write.</param>

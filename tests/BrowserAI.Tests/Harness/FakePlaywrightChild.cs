@@ -80,6 +80,32 @@ internal sealed record FakeToolBehaviour
     /// carries" is not, and it is the claim §F needs.
     /// </remarks>
     public int? WritesArtifactBytes { get; init; }
+
+    /// <summary>
+    /// Writes these exact bytes instead, for an assertion about <i>which</i>
+    /// bytes came back.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="WritesArtifactBytes"/> writes zeros, which is enough for "the
+    /// file is there and is this big" and not enough for "the image block is the
+    /// file". A run of zeros base64-encodes to a run of <c>A</c>s, so a proxy
+    /// that inlined a buffer it had allocated itself rather than one it read off
+    /// disk would pass.
+    /// </remarks>
+    public byte[]? WritesArtifactContent { get; init; }
+
+    /// <summary>
+    /// Keeps the artifact open with <see cref="FileShare.None"/> while it
+    /// answers, which is what a scanner or a backup agent looks like from the
+    /// proxy's side.
+    /// </summary>
+    /// <remarks>
+    /// The file exists and its length is readable — that much is metadata — but
+    /// its contents are not, which is the one arm of the inline-image path that
+    /// cannot be reached by any argument the caller controls. The handle is
+    /// released when the child stops.
+    /// </remarks>
+    public bool HoldsArtifactOpen { get; init; }
 }
 
 /// <summary>
@@ -136,6 +162,14 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     private readonly List<string> _methods = [];
     private readonly List<string> _tools = [];
     private readonly ConcurrentBag<Task> _held = [];
+
+    /// <summary>
+    /// Artifacts this child is still holding open, for
+    /// <see cref="FakeToolBehaviour.HoldsArtifactOpen"/>. Released at teardown,
+    /// so a test that used it cannot leave a locked file behind for the scratch
+    /// sweep to trip over.
+    /// </summary>
+    private readonly ConcurrentBag<FileStream> _heldFiles = [];
 
     private Task _loop = Task.CompletedTask;
     private int _disposed;
@@ -263,6 +297,11 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
         catch (Exception)
 #pragma warning restore CA1031
         {
+        }
+
+        foreach (var file in _heldFiles)
+        {
+            file.Dispose();
         }
 
         _channel.Dispose();
@@ -461,12 +500,22 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             }
         }
 
-        if (behaviour.WritesArtifactBytes is { } size
+        var artifactContent = behaviour.WritesArtifactContent
+            ?? (behaviour.WritesArtifactBytes is { } size ? new byte[size] : null);
+
+        if (artifactContent is not null
             && request?["params"]?["arguments"]?["filename"]?.GetValue<string>() is { } artifact)
         {
             // The path arrives absolute because BrowserAI made it so. Written
             // before the answer, which is the order upstream writes in.
-            await File.WriteAllBytesAsync(artifact, new byte[size], _stopping.Token);
+            await File.WriteAllBytesAsync(artifact, artifactContent, _stopping.Token);
+
+            if (behaviour.HoldsArtifactOpen)
+            {
+                // Opened AFTER the write and before the answer, so the router
+                // meets a file that exists, has a length, and cannot be read.
+                _heldFiles.Add(new FileStream(artifact, FileMode.Open, FileAccess.Read, FileShare.None));
+            }
         }
 
         var frame = behaviour.ErrorCode is { } code

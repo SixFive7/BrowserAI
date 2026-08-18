@@ -32,11 +32,16 @@ internal enum ArtifactArgument
 /// The extension to use when BrowserAI supplies a name upstream would otherwise
 /// have generated, or <see langword="null"/> when it must never supply one.
 /// </param>
+/// <param name="RestoresUpstreamsInlineImage">
+/// Whether an answer this build renamed must regain the image block upstream
+/// would have put in it. See <see cref="ArtifactTools"/>.
+/// </param>
 internal sealed record ArtifactToolRule(
     string Tool,
     ArtifactArgument Kind,
     Func<JsonObject?, string> Prefix,
-    Func<JsonObject?, string>? GeneratedExtension);
+    Func<JsonObject?, string>? GeneratedExtension,
+    bool RestoresUpstreamsInlineImage = false);
 
 /// <summary>
 /// Every tool whose <c>filename</c> argument BrowserAI has judged, and what it
@@ -76,6 +81,50 @@ internal sealed record ArtifactToolRule(
 /// were read out of the resolved bundle, where they are a ternary and a
 /// parameter switch.
 /// </para>
+/// <para>
+/// ⚠️ <b>Supplying a name silently cost the caller upstream's inline image, and
+/// <see cref="ArtifactToolRule.RestoresUpstreamsInlineImage"/> is what gives it
+/// back.</b> Upstream's screenshot handler ends
+/// <c>await response.addFileResult(resolvedFile, data); if (!params.filename)
+/// await response.registerImageResult(data, fileType);</c> — so a screenshot
+/// taken with no <c>filename</c> comes back <i>both</i> as a file and as an
+/// <c>image</c> content block, and one taken with a <c>filename</c> comes back
+/// as a file alone. This table always supplies a name for that tool, so the
+/// guard was never true and <b>BrowserAI returned no screenshot inline in any
+/// mode</b>, where bare <c>@playwright/mcp</c> does: the model paid an extra
+/// file read on the most-used artifact tool, and nothing recorded it until
+/// 2026-08-18. The fix is to append the block ourselves, to the same answers
+/// this class already rewrites, under the caller-visible condition upstream
+/// used — <i>the caller named no file</i>.
+/// </para>
+/// <para>
+/// <b>Screenshots and nothing else, deliberately.</b>
+/// <c>registerImageResult</c> has exactly one call site in the whole resolved
+/// bundle and it is the one above. <c>browser_pdf_save</c> also generates a
+/// name, and a PDF is not an image: MCP's image block carries a <c>mimeType</c>
+/// a client renders as one, an <c>application/pdf</c> there is a block no
+/// client is obliged to display, and upstream never sent it. The same holds for
+/// <c>browser_start_video</c> (<c>.webm</c>) and <c>browser_storage_state</c>
+/// (<c>.json</c>). Adding any of them would be inventing a behaviour rather than
+/// restoring one.
+/// </para>
+/// <para>
+/// <b>No size threshold, because upstream has none.</b> Upstream sends the image
+/// unconditionally whenever no <c>filename</c> was passed — the only gate is
+/// <c>config.imageResponses !== "omit"</c>, a key this build never writes and
+/// whose environment route (<c>PLAYWRIGHT_MCP_IMAGE_RESPONSES</c>) cannot reach
+/// the child through <see cref="Protocol.ChildEnvironment"/>'s allowlist, so it
+/// is <c>allow</c> in every session BrowserAI opens. A threshold here would be a
+/// new decision about what a model is allowed to see, taken by a proxy, and
+/// invisible from both ends. One divergence <b>does</b> survive and is recorded
+/// rather than argued away: upstream passes the bytes through
+/// <c>scaleImageToFitMessage</c> first, which shrinks anything over 1,568 px on
+/// a side or ~1.15 MP and <i>returns the buffer untouched otherwise</i>. This
+/// build appends what is on disk. Re-encoding here would mean decoding and
+/// resampling PNG, JPEG and WebP in this process — a second image pipeline, and
+/// the scope boundary's own example of what a proxy must not grow
+/// ([kb](../../../kb/playwright/tools-and-artifacts.md#the-inline-screenshot-and-what-it-costs--measured-2026-08-18)).
+/// </para>
 /// </remarks>
 internal static class ArtifactTools
 {
@@ -87,8 +136,10 @@ internal static class ArtifactTools
         new ArtifactToolRule[]
         {
             // Always writes; upstream would generate the name. BrowserAI
-            // supplies a legible one instead.
-            Written("browser_take_screenshot", ScreenshotPrefix, ScreenshotExtension),
+            // supplies a legible one instead -- and gives back the image block
+            // that supplying it costs, which is the one tool upstream sends one
+            // for.
+            Written("browser_take_screenshot", ScreenshotPrefix, ScreenshotExtension, restoresUpstreamsInlineImage: true),
             Written("browser_pdf_save", _ => "page", _ => "pdf"),
             Written("browser_storage_state", _ => "storage-state", _ => "json"),
 
@@ -125,8 +176,9 @@ internal static class ArtifactTools
     private static ArtifactToolRule Written(
         string tool,
         Func<JsonObject?, string> prefix,
-        Func<JsonObject?, string>? generatedExtension) =>
-        new(tool, ArtifactArgument.Written, prefix, generatedExtension);
+        Func<JsonObject?, string>? generatedExtension,
+        bool restoresUpstreamsInlineImage = false) =>
+        new(tool, ArtifactArgument.Written, prefix, generatedExtension, restoresUpstreamsInlineImage);
 
     /// <summary>
     /// <c>prefix: target ? "element" : "page"</c>, read from the resolved
