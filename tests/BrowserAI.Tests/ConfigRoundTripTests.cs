@@ -171,7 +171,7 @@ internal sealed class ConfigRoundTripTests
         BrowserConfiguration.ForSession(
             SessionPath.Resolve(Path.Combine(run.Root, "alpha")),
             SessionModes.Recorded("headless"),
-            SessionManager.SupportedBrowser,
+            SessionManager.DefaultBrowser,
             tracing: false,
             BrowserConfiguration.DefaultConsoleLevel);
 

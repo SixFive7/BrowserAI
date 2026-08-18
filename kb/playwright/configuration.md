@@ -287,10 +287,21 @@ passes `["chrome-win"]` while Chromium extracts to `chrome-win64`
 (`EXECUTABLE_PATHS.chromium["win-x64"] = ["chrome-win64","chrome.exe"]`), so it
 checks a directory that does not exist. Same for `chromium-headless-shell` vs
 `chrome-headless-shell-win64`. Firefox passes `["firefox"]`, the real directory,
-so it **does** run — 39 binaries, +329 ms, cached in `DEPENDENCIES_VALIDATED` with
+so it **does** run — **39 binaries and +329 ms for Firefox**, cached in
+`DEPENDENCIES_VALIDATED` with
 `kMaximumReValidationPeriod = 30 * 24 * 60 * 60 * 1e3`, i.e. a recurring monthly
-cost. If upstream ever fixes the directory name, Chromium starts validating 39
-binaries on cold start — a latency regression from a one-character fix.
+cost. If upstream ever fixes the directory name, Chromium starts validating on
+cold start too — a latency regression from a one-character fix.
+
+⚠️ **Corrected 2026-08-19 (previously "Chromium starts validating 39 binaries on
+cold start").** **39 is Firefox's measured count and Chromium's has never been
+measured** — it cannot be, from here, precisely because the check does not run
+against a directory that exists. What is known about Chromium is the shape of the
+regression, not its size; treat a Chromium figure as `[UNVERIFIED]` until the
+directory name is fixed upstream and the count is taken. The Firefox number
+matters more than it did: `browserai_init` has offered `browser: "firefox"` since
+2026-08-19, so this cost is now paid on a caller's cold start rather than only by
+the suite. [HAZARDS](../../HAZARDS.md#hazard-index) carries the row.
 
 ## Environment, merge order and startup output
 

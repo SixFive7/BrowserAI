@@ -73,7 +73,7 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory"], ["directory"]),
         (SessionToolSurface.SetPurpose, ["session", "purpose"], ["session", "purpose"]),
-        (SessionToolSurface.ReinstallBrowser, [], []),
+        (SessionToolSurface.ReinstallBrowser, ["browser"], ["browser"]),
     ];
 
     /// <summary>
@@ -262,7 +262,7 @@ internal sealed class ModelSurfaceTests
             var generated = BrowserConfiguration.ForSession(
                 SessionPath.Resolve(Path.Combine(sessions.Root, $"config-{mode.Name}")),
                 mode,
-                SessionManager.SupportedBrowser,
+                SessionManager.DefaultBrowser,
                 tracing: false,
                 BrowserConfiguration.DefaultConsoleLevel);
 

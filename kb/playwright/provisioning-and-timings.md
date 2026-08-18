@@ -188,13 +188,72 @@ fresh directory. `[FLOATS]` `[MACHINE]`
 > are of what BrowserAI actually downloads, so the figure is now a measurement of
 > the thing rather than of a superset of it.
 
-**Firefox 153.0 (rev 1539) is 125,706,704 B down and 352,898,062 B — 336.55 MiB
-— on disk**, provisioned in **6.2 s** on the same link, measured 2026-08-16 by
-`install-browser firefox --no-shell --no-progress`. BrowserAI creates no Firefox
-sessions; the tree exists
-because [the job-object contract](../../ARCHITECTURE.md#process-containment-and-observability)'s
-containment contract is stated against **both** families and the acceptance test
-needs a real one. `[FLOATS]`
+### Firefox, measured the same way — 2026-08-19
+
+**Firefox provisioning is 127,247,129 B down = 127.2 MB, and 356,674,059 B =
+340.15 MiB on disk across 71 files.** Measured 2026-08-19 at Firefox rev
+**1539** / 153.0, ffmpeg **1011**, winldd **1007**, by two clean runs of
+`node.exe cli.js install-browser firefox --no-shell --no-progress` into an empty
+`PLAYWRIGHT_BROWSERS_PATH` — **byte-identical across both runs** — with the wire
+figure taken from the exact `content-length` of each archive, which is how
+[Chromium's 203.8 MB](#first-run-provisioning) was taken:
+
+| Archive / directory | Down (`content-length`) | On disk | Files |
+|---|---:|---:|---:|
+| `firefox-win64.zip` → `firefox-1539` | 125,706,704 B | 352,898,062 B (336.55 MiB) | 63 |
+| `ffmpeg-win64.zip` → `ffmpeg-1011` | 1,411,741 B | 3,517,342 B (3.35 MiB) | 4 |
+| `winldd-win64.zip` → `winldd-1007` | 128,684 B | 258,560 B (0.25 MiB) | 3 |
+| `.links` | — | 95 B | 1 |
+| **total** | **127,247,129 B = 127.2 MB** | **356,674,059 B = 340.15 MiB** | **71** |
+
+⚠️ **Corrected 2026-08-19 (previously "Firefox 153.0 (rev 1539) is 125,706,704 B
+down and 352,898,062 B — 336.55 MiB — on disk … BrowserAI creates no Firefox
+sessions").** Both halves needed work. The **numbers were the Firefox archive and
+the Firefox directory alone**, while Chromium's were stated for the whole
+provisioning run — so the two were not comparable, and the smaller pair was the
+one about to be quoted at a caller. `install-browser firefox` fetches the same
+three archives `install-browser chromium` does; `ffmpeg` and `winldd` are shared
+by both families and land in the same root. And the second half stopped being
+true on 2026-08-19, when `browserai_init` began accepting `browser: "firefox"`.
+
+**Beside an existing Chromium, Firefox downloads 125,706,704 B and nothing
+else — 125.7 MB, not 127.2.** Measured 2026-08-19 on a third run: `ffmpeg-1011`
+and `winldd-1007` copied into an empty root **with their `INSTALLATION_COMPLETE`
+markers**, then `install-browser firefox`, which printed exactly one
+`Downloading` line and left the root at the same 356,674,059 B. So the family has
+**two honest figures and they answer different questions** — 127.2 MB is what a
+machine with no browsers at all pays for Firefox, and 125.7 MB is what a machine
+that already has Chromium pays. `BrowserProvisioner.FirstRunDownloadSizes` quotes
+**127.2 MB**: it is the upper bound, it is the same predicate as
+[Chromium's 203.8 MB](#first-run-provisioning) — one family into an empty root —
+and the 1.5 MB between them cannot change a caller's decision about waiting.
+CI quotes the incremental one, because there the Chromium step runs first.
+
+**`.links` is path-dependent and is not a constant.** It holds the absolute path
+of the `playwright-core` package that requested the install — 95 B from this
+repository's assembled payload, 69 B in [the Chromium
+measurement](#first-run-provisioning) taken from a shorter one. Compare the three
+component subtrees, not the root total, when comparing across machines.
+
+**Against Chromium: 62.4% of the download and 79.0% of the disk.** Slow-link
+arithmetic, stated as arithmetic: **1 m 42 s at 10 Mbps, 16 m 58 s at 1 Mbps**.
+Peak disk while archive and tree coexist would be ~461 MiB, which is *arithmetic
+and not a measurement* for exactly the reason [the Chromium
+figure](#first-run-provisioning) is — nobody has sampled free space across a run.
+`SessionManager.RequiredFreeBytes` stays at 640 MiB for both families: it is
+sized on the larger, both of Firefox's halves are smaller, and a per-family bound
+would refuse nothing this one permits.
+
+**End to end it took 7.30 s and 6.60 s** on the same ~300 Mbps link, exit 0 both
+times, against Chromium's 12.6 s and 12.0 s. Phase boundaries from the
+installer's own timestamped output: Firefox's download and extraction together
+**1.1 s → 5.9 s** and **0.3 s → 5.2 s**, `ffmpeg` a further 0.4–0.5 s, `winldd`
+0.4 s. `[FLOATS]` `[MACHINE]`
+
+**Re-establish** by running that command against a fresh directory and summing
+the files, and `HEAD`ing the three URLs under
+`https://cdn.playwright.dev/dbazure/download/playwright/builds/{firefox/1539,ffmpeg/1011,winldd/1007}/`.
+The revisions come from the payload's own `browsers.json`; never type one.
 
 **⚠️ Chrome for Testing has exactly one mirror, so the retry rotation does not
 help it.** Read 2026-08-16 out of `playwright-core/lib/coreBundle.js`: `cftUrl`

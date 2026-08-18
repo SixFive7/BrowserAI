@@ -15,7 +15,8 @@ namespace BrowserAI.Sessions;
 /// <b>This is not a hand-written upstream schema.</b> The scope boundary forbids
 /// typing a <c>@playwright/mcp</c> tool definition into C# — every one of those
 /// originates from the child's <c>tools/list</c> at runtime, and this file never
-/// describes one. What it declares is BrowserAI's own five tools, which no child
+/// describes one. What it declares is BrowserAI's own six tools — the six in
+/// <see cref="Names"/> — which no child
 /// knows about, and the <c>session</c> property that is <b>injected into</b> the
 /// child's raw schemas rather than replacing them.
 /// </para>
@@ -63,15 +64,20 @@ internal static class SessionToolSurface
     public const string SetPurpose = "browserai_set_purpose";
 
     /// <summary>
-    /// Deletes the shared browser tree and downloads it again. The one authored
+    /// Deletes one shared browser tree and downloads it again. The one authored
     /// tool that is machine-scoped rather than session-scoped.
     /// </summary>
     /// <remarks>
-    /// It takes no arguments <b>because there is nothing to name</b>: the browser
-    /// install is shared by every session on the host, which is exactly why it
-    /// refuses to act while any of them has a browser open. Every other authored
-    /// tool names its session explicitly and none has an implicit scope; this one
-    /// has no session at all, which is a different thing from a default.
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "It takes no arguments because
+    /// there is nothing to name: the browser install is shared by every session
+    /// on the host").</b> That was true of a build with one family and stopped
+    /// being true the day <c>browserai_init</c> accepted
+    /// <c>browser: "firefox"</c> — there are now two trees, and the caller's
+    /// broken browser is one of them. It takes exactly one required argument,
+    /// naming the family; the weighing of both alternatives is in
+    /// <c>SessionManager.ReinstallBrowserAsync</c>'s remarks. Still no session
+    /// argument and still no force flag: this one has no session at all, which
+    /// is a different thing from a default.
     /// </remarks>
     public const string ReinstallBrowser = "browserai_reinstall_browser";
 
@@ -263,7 +269,7 @@ internal static class SessionToolSurface
                 ["directory"] = Property("string", "Absolute path of the session directory, on a LOCAL drive and spelled the way the filesystem spells it. It is created if it does not exist. This is also the session's name, so make it say what the session is for — 'checkout-flow-bug' beats a timestamp. A network path or a mapped network drive is refused, because one unreachable share stalls every session sharing that directory; so is a second spelling of one directory — a \\\\?\\ prefix, a junction, a subst drive — because two spellings make two locks over one lock file. Both refusals name the spelling to use instead."),
                 ["purpose"] = Property("string", "One sentence saying what this session is for. It is recorded, replayed to whoever resumes the directory later, and is the only thing that makes an old session identifiable."),
                 ["mode"] = Enumerated("Permanent for the life of the directory. " + SessionModes.Table, [.. SessionModes.All.Select(mode => mode.Name)]),
-                ["browser"] = Enumerated($"The browser family. Defaults to '{SessionManager.SupportedBrowser}', which is the only one this build supports.", [SessionManager.SupportedBrowser]),
+                ["browser"] = Enumerated($"The browser family, permanent for the directory's life like the mode — a profile belongs to the browser that made it, so this cannot be changed on resume. Defaults to '{SessionManager.DefaultBrowser}'. Each family is downloaded once per machine on first use ({string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}), so naming the other one for the first time starts a download and the first browser call is refused until it lands.", ProvisionedBrowsers.Families),
                 ["tracing"] = Property("boolean", "Record this session into its output directory. Orthogonal to the mode; defaults to false."),
                 ["consoleLevel"] = Enumerated($"Which console messages browser tools return. Defaults to '{BrowserConfiguration.DefaultConsoleLevel}', which silently drops debug messages.", BrowserConfiguration.ConsoleLevels),
                 ["debug"] = Property("boolean", "Raise this session's own log level for its life. Per session, so turning it on for the one misbehaving does not drown the others. Defaults to false."),
@@ -322,13 +328,17 @@ internal static class SessionToolSurface
 
         yield return Tool(
             ReinstallBrowser,
-            "Delete BrowserAI's shared browser install and download it again.",
-            "Removes the browser tree BrowserAI provisioned and downloads the exact revision this build pins, into BrowserAI's own directory. It takes no arguments because there is nothing to name: the install is shared by every session on this machine. "
-            + "It REFUSES while any session anywhere has a browser open, and names what is running instead — there is deliberately no force option, because forcing here means terminating browsers other agents are driving, and Windows will not delete a directory whose executables are open in any case. "
+            "Delete one of BrowserAI's shared browser installs and download it again.",
+            "Removes the browser tree BrowserAI provisioned for the family you name and downloads the exact revision this build pins, into BrowserAI's own directory. "
+            + $"'browser' is REQUIRED and there is no default: BrowserAI provisions {string.Join(" and ", ProvisionedBrowsers.Families)} into separate trees, and a default would delete and re-download a healthy one while the broken one stayed broken and the answer said it had been reinstalled. "
+            + "It REFUSES while any session on this machine has a browser of THAT family open, and names what is running instead — there is deliberately no force option, because forcing here means terminating browsers other agents are driving, and Windows will not delete a directory whose executables are open in any case. A session on the other family does not block it. "
             + "Use it for a browser that is installed and broken: an install that completed once is never re-downloaded on its own, because the marker written at the end short-circuits every later check without validating anything, so a single quarantined or corrupted file stays broken forever. "
             + "For a browser that was simply never downloaded, call browserai_init instead — it starts the download and returns immediately. This one waits for the download to finish, so it takes as long as the download does.",
-            [],
-            []);
+            new JsonObject
+            {
+                ["browser"] = Enumerated($"Which family to delete and download again. The two trees are independent, so name the one that is broken — the other is untouched. Download sizes: {string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}.", ProvisionedBrowsers.Families),
+            },
+            ["browser"]);
     }
 
     private static JsonObject Tool(string name, string title, string description, JsonObject properties, string[] required)

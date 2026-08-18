@@ -50,8 +50,11 @@ internal static class BrowserAiPaths
 
     /// <summary>The firefox revision the committed snapshot names.</summary>
     /// <remarks>
-    /// Firefox is not a browser BrowserAI creates sessions for — that is still
-    /// owed, and carried in [TODO.md](../../../TODO.md) — but the
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "Firefox is not a browser BrowserAI
+    /// creates sessions for — that is still owed, and carried in TODO.md").</b>
+    /// It is one now: <c>browserai_init</c> accepts <c>browser: "firefox"</c>,
+    /// and <c>FirefoxSessionTests</c> drives one through the front door. The
+    /// revision was already needed before that, because the
     /// [job-object containment contract](../../../kb/windows/job-objects.md)
     /// is stated against <b>both</b> families, and the
     /// second one is the harder case: Firefox stacks a second permissive job of

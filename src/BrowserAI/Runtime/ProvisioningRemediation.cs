@@ -97,7 +97,7 @@ internal static partial class ProvisioningRemediation
     /// <returns>The replacement clause.</returns>
     public static string Replacement(string browsersDirectory) =>
         $"Call browserai_init again to re-provision it — BrowserAI downloads the exact revision it pins, into '{browsersDirectory}', and returns immediately while that happens. "
-        + "If it was already downloaded and is damaged, call browserai_reinstall_browser: an install that completed once is never re-downloaded on its own, because the marker upstream writes short-circuits the check without validating anything. "
+        + "If it was already downloaded and is damaged, call browserai_reinstall_browser naming the session's own browser family: an install that completed once is never re-downloaded on its own, because the marker upstream writes short-circuits the check without validating anything. "
         + "Do NOT run npx or npm: BrowserAI ships neither, and that command would fetch a different revision into a directory BrowserAI never launches from.";
 
     /// <summary>

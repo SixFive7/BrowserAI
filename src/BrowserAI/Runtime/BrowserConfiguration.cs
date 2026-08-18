@@ -403,10 +403,15 @@ internal sealed record BrowserConfigurationRequest
     /// The browser family, as upstream names it.
     /// </summary>
     /// <remarks>
-    /// Defaulted rather than required: every caller in this build asks for
-    /// Chromium, and a required property would make the Firefox branch look like
-    /// a decision each call site takes rather than a property of the session's
-    /// own record.
+    /// Defaulted rather than required, and the default is the same one
+    /// <c>browserai_init</c> applies. ⚠️ <b>Corrected 2026-08-19 (previously
+    /// "every caller in this build asks for Chromium").</b> That stopped being
+    /// true when Firefox was offered — <see cref="BrowserConfiguration.ForSession"/> passes whatever
+    /// the session's <c>lock.json</c> records. The default survives for the
+    /// reason it always had: it keeps the Firefox branch a property of the
+    /// session's own record rather than a decision each call site takes, and
+    /// <see cref="BrowserConfiguration.ForSurface"/> — the run's own browser-less child — genuinely
+    /// has no family to state.
     /// </remarks>
     public string Browser { get; init; } = BrowserConfiguration.BrowserName;
 

@@ -132,7 +132,7 @@ internal sealed class FirstRunProvisioningTests
         // directory -- upstream's installer, or a copy -- which is exactly the
         // distinction the class remarks tabulate.
         using var elsewhere = plan.Source is FirstRunSource.Cache
-            ? ProvisioningClaim.Take(browsers, SessionManager.SupportedBrowser)
+            ? ProvisioningClaim.Take(browsers, SessionManager.DefaultBrowser)
             : null;
 
         if (elsewhere is not null)
@@ -192,7 +192,7 @@ internal sealed class FirstRunProvisioningTests
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
-        await Assert.That(TextOf(refused)).Contains(BrowserProvisioner.FirstRunDownloadSize);
+        await Assert.That(TextOf(refused)).Contains(BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser));
 
         // ⚠️ browser_get_config is refused as well, and that is a CORRECTION to
         // §A found by this very test. It said the tool keeps working; measured
@@ -206,7 +206,7 @@ internal sealed class FirstRunProvisioningTests
         });
 
         await Assert.That((bool?)config["isError"]).IsTrue();
-        await Assert.That(TextOf(config)).Contains(BrowserProvisioner.FirstRunDownloadSize);
+        await Assert.That(TextOf(config)).Contains(BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser));
 
         // What does keep working: the session is listable, resumable and
         // re-purposable throughout, because none of those needs a browser.

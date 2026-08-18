@@ -31,6 +31,12 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class ReinstallBrowserTests
 {
+    /// <summary>The one argument the tool takes, named once so no assertion carries a literal array.</summary>
+    private static readonly string[] TheOnlyArgument = ["browser"];
+
+    /// <summary>The family every arm of this class reinstalls, which is the one the rig seeds.</summary>
+    private static JsonObject Chromium => new() { ["browser"] = ProvisionedBrowsers.Chromium };
+
     [Test]
     public async Task ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning()
     {
@@ -58,7 +64,7 @@ internal sealed class ReinstallBrowserTests
         // the assertion, making the delta 2. Observed twice on 2026-08-16 under
         // a loaded machine, the second time against a version of this comment
         // that had the wait in the wrong place.
-        _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         // And then for the mutex, which WaitAsync does not answer for -- see
         // WaitUntilNoInstallIsInFlight. Since 2026-08-18 a reinstall refuses
@@ -74,7 +80,7 @@ internal sealed class ReinstallBrowserTests
         InstallationMarker.Write(sessions.ChromiumDirectory);
 
         var before = Volatile.Read(ref installs);
-        var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, []);
+        var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
         var text = TextOf(answer);
 
         await Assert.That((bool?)answer["isError"]).IsNotEqualTo(true);
@@ -117,7 +123,7 @@ internal sealed class ReinstallBrowserTests
             Path.Combine(sessions.ChromiumDirectory, "chrome-win64"),
             sessions.ChromiumDirectory);
 
-        var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, []);
+        var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
         var text = TextOf(answer);
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -155,7 +161,7 @@ internal sealed class ReinstallBrowserTests
         // `WaitAsync` short-circuits on a complete tree, so waiting after
         // planting the marker would join nothing and the in-flight install would
         // land inside the window this test measures. Observed 2026-08-16.
-        _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         // And for the mutex, for the reason in WaitUntilNoInstallIsInFlight.
         WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
@@ -174,7 +180,7 @@ internal sealed class ReinstallBrowserTests
         // and the delete is what fails.
         using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None))
         {
-            var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, []);
+            var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
             var text = TextOf(answer);
 
             await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -248,7 +254,7 @@ internal sealed class ReinstallBrowserTests
             PruneRevisions = _ => { },
         };
 
-        var outcome = await provisioner.ReinstallAsync(SessionManager.SupportedBrowser);
+        var outcome = await provisioner.ReinstallAsync(SessionManager.DefaultBrowser);
 
         // The whole point: the other process's files are still there.
         await Assert.That(File.Exists(beingExtracted)).IsTrue();
@@ -265,7 +271,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(outcome.Deleted).IsFalse();
         await Assert.That(outcome.Status.State).IsEqualTo(ProvisioningState.Failed);
         await Assert.That(outcome.Status.Detail).Contains("nothing was deleted");
-        await Assert.That(outcome.Status.Detail).Contains(SessionManager.SupportedBrowser);
+        await Assert.That(outcome.Status.Detail).Contains(SessionManager.DefaultBrowser);
     }
 
     /// <summary>
@@ -313,8 +319,23 @@ internal sealed class ReinstallBrowserTests
         mutex.Release();
     }
 
+    /// <summary>
+    /// It takes the family and nothing else, and says why in its description.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-08-19 (previously
+    /// <c>ItTakesNoArgumentsAndSaysWhyInItsDescription</c>, asserting a property
+    /// count of zero).</b> The no-arguments property was real and its stated
+    /// reason — <i>"there is nothing to name"</i> — expired when
+    /// <c>browserai_init</c> began offering a second family. What survives
+    /// unchanged is everything else: still no <c>session</c> argument, because
+    /// this tool is machine-scoped rather than session-scoped, and still no force
+    /// flag. The assertion is on the exact argument set rather than on a count,
+    /// so a second argument appearing is as red as the first one vanishing.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ItTakesNoArgumentsAndSaysWhyInItsDescription()
+    public async Task ItTakesTheFamilyAndNothingElseAndSaysWhyInItsDescription()
     {
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -324,17 +345,25 @@ internal sealed class ReinstallBrowserTests
         var tool = (tools["tools"]?.AsArray() ?? [])
             .Single(entry => (string?)entry!["name"] == SessionToolSurface.ReinstallBrowser)!;
 
-        // Machine-scoped by design, which is exactly why it refuses while any
-        // session has a browser open. Every other authored tool names its
-        // session explicitly; this one has none, which is a different thing from
-        // a default.
-        await Assert.That(tool["inputSchema"]!["properties"]!.AsObject().Count).IsEqualTo(0);
-        await Assert.That(tool["inputSchema"]!["required"]!.AsArray().Count).IsEqualTo(0);
+        await Assert.That(tool["inputSchema"]!["properties"]!.AsObject().Select(property => property.Key))
+            .IsEquivalentTo(TheOnlyArgument);
+        await Assert.That(tool["inputSchema"]!["required"]!.AsArray().Select(entry => (string)entry!))
+            .IsEquivalentTo(TheOnlyArgument);
+
+        // No session argument, which is the property that never depended on how
+        // many families there are.
+        await Assert.That(tool["inputSchema"]!["properties"]![SessionToolSurface.SessionParameter]).IsNull();
 
         var description = (string)tool["description"]!;
 
         await Assert.That(description).Contains("REFUSES");
         await Assert.That(description).Contains(SessionToolSurface.Init);
+
+        // The reason the argument exists, in the sentence a model reads: without
+        // it, a caller has a required argument and no way to know why guessing
+        // is worse than asking.
+        await Assert.That(description).Contains("REQUIRED");
+        await Assert.That(description).Contains("no default");
     }
 
     [Test]

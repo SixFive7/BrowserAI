@@ -172,8 +172,12 @@ file that is not broken.
 is injected into every upstream tool's raw `inputSchema`, appended so upstream's
 own properties keep their order; a call naming no session is refused rather than
 reaching the run's own child. `init` takes a required directory, purpose and mode
-with no default and no fallback; `resume` reads mode and browser from `lock.json`
+with no default and no fallback, and an optional `browser` defaulting to
+`chromium`; `resume` reads mode and browser from `lock.json`
 and **refuses them as arguments**, because a profile is browser-specific.
+`browserai_reinstall_browser` takes a **required** `browser` and nothing else —
+*changed 2026-08-19 (previously no arguments, "because there is nothing to
+name")*, which stopped being true the day a second family could be on disk.
 
 **One table drives six consumers.** `SessionMode` is the table; the server
 `instructions`, `init`'s description, `resume`'s result, the refusal text, the
@@ -304,6 +308,16 @@ Attribution may fail and must fail safe: a class-qualified
 and the walk restarted, and a candidate no window claims is reported loudly and
 never touched. A stray is a process running our binary **whose** attributed
 directory holds a `lock.json` this sweeper can take itself, without writing to it.
+
+**Both families are offered, and everything below the front door reads the family
+from the session's own record.** `browserai_init` accepts `chromium` or
+`firefox`; provisioning, the config generator, the launch preflight and the stray
+sweep all take it from `lock.json` rather than assuming one, so a Firefox record
+can never be run as Chromium against a Firefox profile. *Corrected 2026-08-19
+(previously Firefox was built, measured and not offered.)* The per-family
+first-run download sizes a refusal quotes are in
+`BrowserProvisioner.FirstRunDownloadSizes`, measured and dated
+([kb](kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way--2026-08-19)).
 
 **Firefox needs a preflight and a second attribution path.** `FirefoxProfile`
 opens `<profile>\parent.lock` for write before any Firefox starts and refuses on a

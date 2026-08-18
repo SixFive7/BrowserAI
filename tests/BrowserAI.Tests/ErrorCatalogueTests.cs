@@ -558,9 +558,9 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.ProvisioningInProgress),
             SessionErrors.ProvisioningInProgress(
                 "browser_navigate",
-                SessionManager.SupportedBrowser,
+                SessionManager.DefaultBrowser,
                 Path.Combine(sessions.Environment.Paths.BrowsersDirectory, RigSessionEnvironment.ChromiumDirectoryName),
-                BrowserProvisioner.FirstRunDownloadSize));
+                BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser)));
     }
 
     [Test]
@@ -585,7 +585,10 @@ internal sealed partial class ErrorCatalogueTests
         // Row 13. No session on this machine has a browser open -- this rig has
         // opened none -- so the process is real, running out of our tree, and
         // attributable to nothing.
-        var refused = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, []);
+        var refused = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, new JsonObject
+        {
+            ["browser"] = ProvisionedBrowsers.Chromium,
+        });
         var text = TextOf(refused);
 
         await Assert.That((bool?)refused["isError"]).IsTrue();

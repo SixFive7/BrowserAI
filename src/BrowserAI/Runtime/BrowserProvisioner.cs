@@ -83,7 +83,9 @@ internal sealed record ProvisioningTimers
     /// 45 minutes is <b>27 minutes of headroom over the 1 Mbps arithmetic</b>
     /// for a 203.8 MB download, so it never fires on a slow link — which is what
     /// a cap has to be, because a cap that fires on a legitimate case teaches
-    /// callers to retry into it.
+    /// callers to retry into it. <b>One cap for both families, sized on the
+    /// larger:</b> Firefox's 127.2 MB is 16 m 58 s at 1 Mbps, so a cap that is
+    /// generous for Chromium cannot be tight for Firefox.
     /// </remarks>
     public TimeSpan AbsoluteCap { get; init; } = TimeSpan.FromMinutes(45);
 
@@ -256,22 +258,84 @@ internal sealed class BrowserProvisioner : IDisposable
     }
 
     /// <summary>
-    /// How large the first-run download is, quoted to a caller deciding whether
-    /// waiting is worth it.
+    /// How large each family's first-run download is, quoted to a caller
+    /// deciding whether waiting is worth it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Measured, dated, and re-established by asking the CDN rather than by
-    /// reasoning.</b> 202,283,919 + 1,411,741 + 128,684 = 203,824,344 B, from the
-    /// exact <c>content-length</c> of <c>chrome-win64.zip</c>,
-    /// <c>ffmpeg-win64.zip</c> and <c>winldd-win64.zip</c> — re-measured
-    /// 2026-08-16 at chromium rev 1237 / 152.0.7977.8, unchanged from 2026-08-15.
-    /// It is a string rather than a number because the only thing done with it is
-    /// putting it in a sentence, and a byte count formatted at the call site is a
-    /// second place for it to drift.
+    /// reasoning.</b> Every figure is the sum of the exact <c>content-length</c>
+    /// of the three archives that family's install fetches — the browser, plus
+    /// <c>ffmpeg-win64.zip</c> (1,411,741 B) and <c>winldd-win64.zip</c>
+    /// (128,684 B), which both families download into the same root:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><b>chromium</b> — 202,283,919 + 1,411,741 + 128,684 =
+    /// 203,824,344 B. Re-measured 2026-08-16 at rev 1237 / 152.0.7977.8,
+    /// unchanged from 2026-08-15.</item>
+    /// <item><b>firefox</b> — 125,706,704 + 1,411,741 + 128,684 =
+    /// 127,247,129 B. Measured 2026-08-19 at rev 1539 / 153.0, the same way and
+    /// on the same day as a clean provisioning run that produced 356,674,059 B
+    /// on disk, twice, byte-identical.</item>
+    /// </list>
+    /// <para>
+    /// <b>Both figures are for one family into an empty root, which is the
+    /// predicate and not an accident.</b> A machine that already has the other
+    /// family pays less — measured 2026-08-19, Firefox beside an existing
+    /// <c>ffmpeg</c> and <c>winldd</c> downloads 125,706,704 B and nothing else,
+    /// because each of the three archives carries its own completion marker. The
+    /// upper bound is quoted, for the same reason
+    /// <see cref="Sessions.SessionManager.RequiredFreeBytes"/> is sized on the
+    /// larger family: a caller deciding whether to wait is not helped by a
+    /// number that is right only on the machines that already paid.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-19 at Firefox support (previously a single
+    /// <c>FirstRunDownloadSize</c> const of <c>"203.8 MB"</c>).</b> The const
+    /// was reached through a <c>browser</c> parameter that never varied, so the
+    /// day <c>browserai_init</c> accepted <c>firefox</c> it would have quoted
+    /// Chromium's figure for a Firefox download — a measured-looking number
+    /// measured of something else, which is the exact defect class this
+    /// repository exists to catch.
+    /// </para>
+    /// <para>
+    /// Strings rather than numbers because the only thing done with one is
+    /// putting it in a sentence, and a byte count formatted at the call site is
+    /// a second place for it to drift. <b>Keyed on
+    /// <see cref="ProvisionedBrowsers.Families"/>, and
+    /// <c>ProvisioningTests.EveryProvisionedFamilyHasAMeasuredDownloadSize</c>
+    /// fails the build for a family with no figure</b> — a third family added
+    /// with no measurement cannot reach a caller wearing another one's number.
     /// [kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
-    /// carries the figure and how to re-establish it.
+    /// carries both figures and how to re-establish them.
+    /// </para>
     /// </remarks>
-    public const string FirstRunDownloadSize = "203.8 MB";
+    public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [ProvisionedBrowsers.Chromium] = "203.8 MB",
+            [ProvisionedBrowsers.Firefox] = "127.2 MB",
+        };
+
+    /// <summary>
+    /// How large one family's first-run download is, as a sentence fragment.
+    /// </summary>
+    /// <remarks>
+    /// <b>A family with no measured figure is named rather than given one.</b>
+    /// The caller is a refusal explaining why a browser is not there yet, and
+    /// "an amount nobody has measured" is a worse sentence than a number and a
+    /// better one than the wrong number.
+    /// </remarks>
+    /// <param name="browser">The family, as upstream names it.</param>
+    /// <returns>The measured download size, or a phrase saying there is none.</returns>
+    public static string DownloadSizeFor(string browser)
+    {
+        ArgumentNullException.ThrowIfNull(browser);
+
+        return FirstRunDownloadSizes.TryGetValue(browser, out var size)
+            ? size
+            : "a size nobody has measured for this browser";
+    }
 
     private readonly ConcurrentDictionary<string, Attempt> _attempts = new(StringComparer.OrdinalIgnoreCase);
     private readonly PayloadLayout _payload;

@@ -159,6 +159,15 @@ findable from more than one direction.
       repository has already retracted twice · and `Console.ReadKey`'s
       console-attached arm, the redirected arm now being measured.
 
+      ***Two of those are done, 2026-08-19.*** The *"39 binaries"* sentence no
+      longer asserts Firefox's measured count of Chromium — Chromium's is
+      unmeasurable while the check does not run at all, and saying so is the
+      honest form; it gained a [hazard row](HAZARDS.md#hazard-index), because
+      offering `browser: "firefox"` moved the measured half onto a shipped path.
+      And the Firefox provisioning pair was **re-measured rather than adjusted**:
+      it had been the Firefox archive and directory alone beside Chromium's
+      whole-run figures, which is a different predicate wearing the same units.
+
       **In [`src/`](src/BrowserAI)** — the update stall budget is sized off
       Playwright's socket timeout, a different downloader in a different runtime ·
       the crash tripwire's *"nothing that is working can reach it"* covers the
@@ -209,14 +218,25 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **53 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **55 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
       the index's own `Area` cells verbatim: Bundling and AOT 13, Child runtime and
-      configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
+      configuration 12, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      12 more are `open` while carrying evidence, so 65 are `open` in total, against
+      12 more are `open` while carrying evidence, so 67 are `open` in total, against
       91 `closed`.
+
+      ***Corrected 2026-08-19, later the same day (previously "53 rows … Child
+      runtime and configuration 10 … 65 are `open` in total")*** — re-counted by
+      the test, not adjusted. **Offering `browser: "firefox"` added two rows, both
+      unadjudicated and both about the two components nobody thinks of as
+      browsers:** `winldd` dependency validation really runs for Firefox and its
+      39-binary figure has never been measured for Chromium though one sentence
+      asserted it of both; and `ffmpeg` and `winldd` are shared by both families,
+      so `browserai_reinstall_browser` — which deletes one family's revision
+      directory — cannot repair either, which makes a corrupted `ffmpeg` permanent
+      through the product's own surface.
 
       ***Corrected 2026-08-19 (previously "9 more are `open` while carrying
       evidence, so 62 are `open` in total")*** — re-counted by the test, not
@@ -378,18 +398,6 @@ findable from more than one direction.
       add `!.vscode/mcp.json` below the marker. *(c)* `/staging/` and `/.staging/`
       were inferred from a predicted install layout and nothing emits them — keep
       them deliberately or delete them, but not by accident.
-
-- [ ] **`browserai_init` still refuses `browser: "firefox"`.** Everything else is
-      already family-parameterised — provisioning, the config generator, the launch
-      preflight and the sweep all read the family from the session's own
-      `lock.json`, so a record naming Firefox is honoured on `resume` rather than
-      silently run as Chromium against a Firefox profile. Two things are owed:
-      **(a)** the error-catalogue row for a browser that is still downloading
-      quotes a download size, and the only one measured is Chromium's — naming it
-      for a Firefox install would be a measured-looking number that was never
-      measured; **(b)** `browserai_reinstall_browser` takes no arguments *because
-      there is nothing to name*, which stops being true with two browser trees on
-      disk.
 
 - [ ] **Review the *no automated checks* decision once the product is finished.**
       The [release checklist](RELEASING.md) is the only gate that exists; it works

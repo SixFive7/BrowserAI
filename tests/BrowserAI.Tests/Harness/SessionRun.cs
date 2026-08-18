@@ -158,7 +158,10 @@ internal sealed record SessionRun
                     }),
                     ["isError"] = true,
                 }
-                : await CallAsync(client, SessionToolSurface.ReinstallBrowser, []).ConfigureAwait(false);
+                : await CallAsync(client, SessionToolSurface.ReinstallBrowser, new JsonObject
+                {
+                    ["browser"] = SessionManager.DefaultBrowser,
+                }).ConfigureAwait(false);
 
             answers["setPurpose"] = await CallAsync(client, SessionToolSurface.SetPurpose, new JsonObject
             {

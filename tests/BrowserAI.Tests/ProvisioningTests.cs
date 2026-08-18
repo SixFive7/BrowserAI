@@ -126,7 +126,7 @@ internal sealed class ProvisioningTests
 
         // §H.4 row 6, and each clause is something a model acts on: the size it
         // is waiting for, where it is going, and that the same call will work.
-        await Assert.That(text).Contains(BrowserProvisioner.FirstRunDownloadSize);
+        await Assert.That(text).Contains(BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser));
         await Assert.That(text).Contains("call the same tool again on the same session");
         await Assert.That(text).Contains(RigSessionEnvironment.ChromiumDirectoryName);
 
@@ -146,7 +146,7 @@ internal sealed class ProvisioningTests
         var config = await CallAsync(rig, "browser_get_config", new JsonObject { ["session"] = directory });
 
         await Assert.That((bool?)config["isError"]).IsTrue();
-        await Assert.That(TextOf(config)).Contains(BrowserProvisioner.FirstRunDownloadSize);
+        await Assert.That(TextOf(config)).Contains(BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser));
 
         // Still nothing reached the child, which is what makes the refusal
         // cheaper as well as more useful than upstream's own error.
@@ -187,7 +187,7 @@ internal sealed class ProvisioningTests
         // The install lands. Nothing is restarted, nothing is re-created, and no
         // tool is called to make it happen.
         release.SetResult();
-        _ = await sessions.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        _ = await sessions.Provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         var accepted = await CallAsync(rig, "browser_navigate", Navigate(directory));
 
@@ -216,7 +216,7 @@ internal sealed class ProvisioningTests
             StartInstaller = (_, _) => FakeInstaller.ExitingCleanWithoutTheMarker(directory),
         };
 
-        var status = await provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         // Exit code 0 and a directory full of files is not an install. Upstream
         // never makes this check at launch, which is why a tree in this state
@@ -250,7 +250,7 @@ internal sealed class ProvisioningTests
             StartInstaller = (_, _) => started = FakeInstaller.Hanging(),
         };
 
-        var status = await provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
         await Assert.That(status.Detail).Contains("cap");
@@ -289,7 +289,7 @@ internal sealed class ProvisioningTests
             StartInstaller = (_, _) => started = FakeInstaller.StallingInExtraction(directory),
         };
 
-        var status = await provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
         await Assert.That(status.Detail).Contains("Extracting");
@@ -333,8 +333,8 @@ internal sealed class ProvisioningTests
         };
 
         var both = await Task.WhenAll(
-            first.WaitAsync(SessionManager.SupportedBrowser),
-            second.WaitAsync(SessionManager.SupportedBrowser));
+            first.WaitAsync(SessionManager.DefaultBrowser),
+            second.WaitAsync(SessionManager.DefaultBrowser));
 
         await Assert.That(both[0].State).IsEqualTo(ProvisioningState.Installed);
         await Assert.That(both[1].State).IsEqualTo(ProvisioningState.Installed);
@@ -401,7 +401,7 @@ internal sealed class ProvisioningTests
 
         // Taken before anything asks for it, and released while the tree is
         // still incomplete. Nothing is ever going to write a marker here.
-        var claim = ProvisioningClaim.Take(root, SessionManager.SupportedBrowser);
+        var claim = ProvisioningClaim.Take(root, SessionManager.DefaultBrowser);
 
         try
         {
@@ -409,7 +409,7 @@ internal sealed class ProvisioningTests
             await Assert.That(claim.Held).IsTrue();
             await Assert.That(Directory.Exists(directory)).IsFalse();
 
-            var provisioning = provisioner.WaitAsync(SessionManager.SupportedBrowser);
+            var provisioning = provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
             // It must be watching rather than installing: the mutex is held, and
             // a provisioner that started an install here would be the second
@@ -491,7 +491,7 @@ internal sealed class ProvisioningTests
             StartInstaller = (_, _) => FakeInstaller.Succeeding(directory, TimeSpan.Zero),
         };
 
-        var claim = ProvisioningClaim.Take(root, SessionManager.SupportedBrowser);
+        var claim = ProvisioningClaim.Take(root, SessionManager.DefaultBrowser);
 
         try
         {
@@ -501,7 +501,7 @@ internal sealed class ProvisioningTests
             // answers immediately by design, so the phase it reports is whatever
             // the background thread has reached -- which is why this reads Peek in
             // a loop rather than asserting on the first answer.
-            var started = provisioner.Ensure(SessionManager.SupportedBrowser);
+            var started = provisioner.Ensure(SessionManager.DefaultBrowser);
 
             await Assert.That(started.State).IsEqualTo(ProvisioningState.Provisioning);
 
@@ -510,7 +510,7 @@ internal sealed class ProvisioningTests
 
             while (true)
             {
-                waiting = provisioner.Peek(SessionManager.SupportedBrowser);
+                waiting = provisioner.Peek(SessionManager.DefaultBrowser);
 
                 if (waiting.Detail.Contains("holds the provisioning lock", StringComparison.Ordinal))
                 {
@@ -730,7 +730,7 @@ internal sealed class ProvisioningTests
             PruneRevisions = _ => { },
         };
 
-        var status = await provisioner.WaitAsync(SessionManager.SupportedBrowser);
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
 

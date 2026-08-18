@@ -21,7 +21,81 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+### Added
+
+- **Firefox is a browser you can ask for.** `browserai_init` accepts
+  `browser: "firefox"` beside `chromium`, which stays the default. Everything
+  below the front door was already family-parameterised — provisioning, the
+  config generator, the `parent.lock` preflight, Restart Manager attribution, the
+  restart-registration preference and the stray sweep all read the family from
+  the session's own `lock.json` — so what changed is the door, and what was owed
+  before it could open was a **measurement** and a **decision**.
+
+  **The measurement: Firefox is 127.2 MB down and 340.15 MiB on disk.**
+  127,247,129 B from the CDN's own `content-length` (`firefox-win64.zip`
+  125,706,704 + `ffmpeg-win64.zip` 1,411,741 + `winldd-win64.zip` 128,684) and
+  356,674,059 B across 71 files, from two clean provisioning runs into an empty
+  root that were byte-identical, in 7.30 s and 6.60 s
+  ([kb](kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way--2026-08-19)).
+  The refusal a caller reads while a browser is still downloading quotes this
+  figure; before today it would have quoted Chromium's 203.8 MB for a Firefox
+  install, which is a measured-looking number measured of something else.
+
+  ⚠️ **The Firefox pair that was already recorded was not comparable to
+  Chromium's and has been replaced** — *previously "125,706,704 B down and
+  352,898,062 B — 336.55 MiB — on disk"*. Those were the Firefox archive and the
+  Firefox directory alone, where Chromium's counted a whole provisioning run;
+  `install-browser firefox` fetches the same three archives. Re-measured, never
+  adjusted.
+
+  **The tool surface does not depend on the family.** Measured the same day
+  against real children of the resolved payload: 42 tools at BrowserAI's base
+  capability set and 59 with `storage`, identical names, identical order,
+  byte-identical schemas under `chromium` and `firefox`
+  ([kb](kb/playwright/tools-and-artifacts.md#does-the-surface-differ-by-browser-family--measured-2026-08-19)).
+  It matters because BrowserAI builds its one static tool list from a single
+  Chromium-configured surface child and the MCP spec forbids the set varying per
+  connection — so every tool-surface number in this repository is now a measured
+  claim about both families rather than an assumed one.
+
+  `FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy`
+  drives the front door end to end against a real Firefox — init, navigate,
+  screenshot, destroy — and asserts by **full image path** that the browser that
+  came up was Firefox, because every other assertion in it is satisfied just as
+  happily by a Chromium.
+
 ### Changed
+
+- **`browserai_reinstall_browser` now takes one required argument, naming the
+  family.** ⚠️ *Previously it took none, "because there is nothing to name: the
+  install is shared by every session on this machine."* **The stated reason
+  expired rather than being overruled** — with two families provisioned there are
+  two trees, two revisions and two mutexes, and the caller's broken browser is
+  exactly one of them.
+
+  Two alternatives were weighed and rejected in writing. **Reinstalling both**
+  keeps the no-arguments property and makes the blast radius worse in the one
+  situation the tool exists for: a caller with a broken Firefox pays 331 MB,
+  loses a working Chromium for the length of its own re-download, and a network
+  failure part-way ends the call with two broken browsers instead of one. A
+  repair tool must not be able to break something that was working.
+  **Defaulting to Chromium** is worse still — a broken Firefox, a healthy
+  Chromium deleted and fetched again, and an answer reporting a successful
+  reinstall. Required rather than optional-with-no-default follows `mode` on
+  `init`, this product's settled shape for an argument whose omission cannot be
+  answered honestly.
+
+  **The refusal narrowed with it.** The running-process check was always
+  per-directory, so naming the family makes it per-family in effect: an open
+  Chromium session no longer blocks a Firefox reinstall, and the sessions listed
+  in the refusal are now only those of the family being reinstalled — listing a
+  live Chromium beside a blocked Firefox reinstall told the caller to close the
+  wrong browser. Still no force flag; still no session argument.
+
+  `ffmpeg` and `winldd` are shared by both families, each carries its own
+  completion marker, and neither is touched by either family's reinstall — so a
+  corrupt `ffmpeg` is not repairable through this tool. Recorded as a limitation
+  rather than left to be discovered as one.
 
 - **A session directory on a network path is refused, and a mapped drive letter
   counts as one.** One `File.Exists` against a share that has stopped answering

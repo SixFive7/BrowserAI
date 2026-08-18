@@ -105,6 +105,43 @@ them. `[FLOATS]`
 > `[UNVERIFIED]` marker is gone because the numbers were observed, not because
 > anybody reasoned about them.
 
+### Does the surface differ by browser family? — measured 2026-08-19
+
+**No, at any capability set: it does not depend on `browserName` at all.**
+Measured 2026-08-19 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05 / Chrome for Testing 152.0.7977.8 (`chromium-1237`) /
+Firefox 153.0 (`firefox-1539`) by spawning four real children of the resolved
+payload — `chromium` and `firefox` × BrowserAI's base and union capability sets —
+and diffing the `tools/list` each answered:
+
+| Config | Tools | Names | Order | Schemas |
+|---|---:|---|---|---|
+| `chromium` + `config,vision,devtools` | 42 | — | — | — |
+| `firefox` + `config,vision,devtools` | 42 | identical | identical | identical |
+| `chromium` + `…,storage` | 59 | — | — | — |
+| `firefox` + `…,storage` | 59 | identical | identical | identical |
+
+Zero names present in one and absent from the other, and zero shared names whose
+serialised tool object differed. **The mechanism is visible in the source and the
+measurement is what makes it a fact rather than a reading:** `filteredTools`
+([above](#the-per-capability-breakdown-counted)) filters on `tool.capability` and
+`tool.skillOnly` and consults nothing else — there is no `browserName` in it.
+
+**Why it was asked, and what it buys.** BrowserAI's static tool list is built
+from one surface child, which is Chromium-configured, and the MCP spec forbids
+the tool set varying per connection — so a family-dependent surface would mean
+Firefox sessions advertising tools their child does not have, or the reverse.
+Every tool-surface number in this repository is a claim about **both** families,
+and it is now measured rather than assumed.
+
+**Re-establish it** by giving [`build/upstream-snapshots.mjs`](../../build/upstream-snapshots.mjs)'s
+`session()` helper a config carrying `browser.browserName: "firefox"` — plus the
+`firefoxUserPrefs` launch option in place of `channel`, because upstream's
+`validateBrowserConfig` drops a channel for a non-chromium family — and diffing
+its `tools/list` against the one the same helper already takes. Note that no
+browser is launched to answer `tools/list`, so the comparison needs the payload
+and not a provisioned Firefox. `[FLOATS]`
+
 **One node process can serve several configurations.** Verified: two connections
 built through the programmatic `createConnection` API produced correctly
 divergent surfaces — **42 vs 59 tools** — with no module-global browser state and

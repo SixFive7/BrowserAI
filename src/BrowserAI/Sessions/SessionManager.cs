@@ -43,39 +43,54 @@ internal sealed class SessionManager : IAsyncDisposable
     /// How much room a volume must have before a session is created there.
     /// </summary>
     /// <remarks>
-    /// First-run browser provisioning needs 203.8 MB down and 430.48 MiB
-    /// extracted — both re-measured 2026-08-16 — so peak usage is ~640 MiB while
-    /// both the archive and the tree exist. A
+    /// <para>
+    /// <b>One number for both families, sized on the larger.</b> Chromium's
+    /// first-run provisioning needs 203.8 MB down and 430.48 MiB extracted —
+    /// both re-measured 2026-08-16 — so peak usage is ~640 MiB while both the
+    /// archive and the tree exist. Firefox needs 127.2 MB down and 340.15 MiB
+    /// extracted (measured 2026-08-19), which is smaller in both halves, so this
+    /// bound holds for it without being restated per family. A
     /// refusal here that names the number is recoverable in one turn; a failure
     /// partway through the download is the <c>spawn EFTYPE</c> shape — success
     /// shaped, stderr empty, discovered at first navigation.
+    /// </para>
+    /// <para>
+    /// <b>It is deliberately not the sum of both families.</b> A session names
+    /// one browser and provisions one tree; a machine that ends up with two has
+    /// paid for them one at a time, and asking for 1.1 GiB free before the first
+    /// session on a volume would refuse work that fits.
+    /// </para>
     /// </remarks>
     public const long RequiredFreeBytes = 640L * 1024 * 1024;
 
-    /// <summary>The only browser family this build can create a session for.</summary>
+    /// <summary>The family <c>browserai_init</c> uses when the caller names none.</summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-16 (previously "Firefox is a later step").</b> The
-    /// Firefox <i>locking</i> half is built — the <c>parent.lock</c> preflight,
-    /// Restart Manager attribution and the restart-registration preference on
-    /// every Firefox launch (<c>FirefoxTests</c>). <b>Offering Firefox as a choice
-    /// on <c>init</c> is a different question and is still owed</b>: it needs a
-    /// per-family download size for
-    /// <see cref="SessionErrors.ProvisioningInProgress"/> (this build quotes
-    /// Chromium's 203.8 MB) and a decision about what
-    /// <c>browserai_reinstall_browser</c> reinstalls when there are two trees,
-    /// neither of which has been taken. Carried in
-    /// [TODO.md](../../../TODO.md).
+    /// ⚠️ <b>Corrected 2026-08-19 (previously <c>SupportedBrowser</c>, "the only
+    /// browser family this build can create a session for").</b> Both families
+    /// in <see cref="ProvisionedBrowsers.Families"/> are now offered on
+    /// <c>init</c>; what survives is a <i>default</i>, which is a different
+    /// claim. The two things that were owed before Firefox could be offered are
+    /// done: <see cref="BrowserProvisioner.FirstRunDownloadSizes"/> carries a
+    /// measured figure per family, and
+    /// <c>browserai_reinstall_browser</c> now names the family it reinstalls.
     /// </para>
     /// <para>
-    /// <b>The rest of the product is family-parameterised regardless.</b>
+    /// <b>A default at all, where <c>mode</c> has none, and the asymmetry is the
+    /// point.</b> A mode chosen by omission is a security posture nobody
+    /// decided on; a browser chosen by omission is a rendering engine, and every
+    /// session in this product's history has been Chromium. Naming the other one
+    /// is the deliberate act, not naming either.
+    /// </para>
+    /// <para>
+    /// <b>The rest of the product was already family-parameterised.</b>
     /// Provisioning, the config generator, the launch preflight and the stray
     /// sweep all take the family from the session's own <c>lock.json</c>, so a
     /// record that names Firefox is honoured on <c>resume</c> rather than
     /// silently run as Chromium against a Firefox profile.
     /// </para>
     /// </remarks>
-    public const string SupportedBrowser = ProvisionedBrowsers.Chromium;
+    public const string DefaultBrowser = ProvisionedBrowsers.Chromium;
 
     private readonly ConcurrentDictionary<string, LiveSession> _live = new(StringComparer.Ordinal);
     private readonly SessionEnvironment _environment;
@@ -247,7 +262,7 @@ internal sealed class SessionManager : IAsyncDisposable
         SessionToolLog.CallRefusedWhileProvisioning(_logger, tool, browser, status.State);
 
         return status.State is ProvisioningState.Provisioning
-            ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.FirstRunDownloadSize)
+            ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.DownloadSizeFor(browser))
             : SessionErrors.BrowserRuntimeDidNotStart(session.Location.FullPath, status.Detail);
     }
 
@@ -267,7 +282,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolSurface.List => List(arguments),
                 SessionToolSurface.Destroy => await DestroyAsync(arguments).ConfigureAwait(false),
                 SessionToolSurface.SetPurpose => SetPurpose(arguments),
-                SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(cancellationToken).ConfigureAwait(false),
+                SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(arguments, cancellationToken).ConfigureAwait(false),
                 _ => new ToolOutcome($"'{tool}' is not a BrowserAI session tool. The session tools are: {string.Join(", ", SessionToolSurface.Names)}.", IsError: true),
             };
         }
@@ -303,7 +318,7 @@ internal sealed class SessionManager : IAsyncDisposable
         var location = ResolveToOpen(Required(arguments, "directory"), "directory");
         var purpose = Required(arguments, "purpose");
         var mode = Mode(arguments);
-        var browser = Browser(arguments);
+        var browser = Browser(arguments, "browser", DefaultBrowser);
         var tracing = Flag(arguments, "tracing") ?? false;
         var consoleLevel = ConsoleLevel(arguments);
         var debug = Flag(arguments, "debug") ?? false;
@@ -582,16 +597,68 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// The sixth authored tool: delete the shared browser tree and download it
+    /// The sixth authored tool: delete one shared browser tree and download it
     /// again, or refuse and say what is using it.
     /// </summary>
     /// <remarks>
     /// <para>
+    /// ⚠️ <b>Changed 2026-08-19 at Firefox support (previously no arguments at
+    /// all — "there is nothing to name: the install is shared by every session
+    /// on this machine").</b> <b>The stated reason expired rather than being
+    /// overruled.</b> With one family provisioned there was genuinely nothing to
+    /// name; with <see cref="ProvisionedBrowsers.Families"/> holding two there
+    /// are two trees, two revisions and two mutexes, and the caller's broken
+    /// browser is exactly one of them. So the tool now takes one
+    /// <b>required</b> argument. The other two candidates were weighed and
+    /// rejected:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>
+    /// <b>Reinstall both trees.</b> Keeps the no-arguments property, and makes
+    /// the blast radius worse in the one situation the tool exists for: a
+    /// caller with a broken Firefox pays 331 MB, loses a working Chromium for
+    /// the length of its own re-download, and if the network fails mid-way ends
+    /// the call with two broken browsers instead of one. A repair tool must not
+    /// be able to break something that was working.
+    /// </item>
+    /// <item>
+    /// <b>Optional, defaulting to Chromium.</b> The worst of the three: a caller
+    /// whose Firefox is broken calls it, Chromium is deleted and re-downloaded,
+    /// and the answer says a reinstall succeeded. Success-shaped, nothing fixed
+    /// — the failure class the whole product is written against.
+    /// </item>
+    /// </list>
+    /// <para>
+    /// <b>Required rather than optional-with-no-default, following <c>mode</c>
+    /// on <c>init</c>.</b> That is the precedent already settled in this file
+    /// for an argument whose omission cannot be answered honestly, and the
+    /// caller always knows which family: the refusal that sent them here names
+    /// it, <c>lock.json</c> records it, and <c>browserai_list</c> prints it per
+    /// session.
+    /// </para>
+    /// <para>
+    /// <b>Naming the family narrows the refusal as well as the delete.</b> The
+    /// running-process check was always per-directory; with the family named it
+    /// is per-family in effect too, so an open Chromium session no longer blocks
+    /// a Firefox reinstall. Nothing was relaxed to achieve that — the check asks
+    /// the same question of a smaller tree.
+    /// </para>
+    /// <para>
     /// <b>It refuses rather than coordinates, and that is the design rather than
-    /// a limitation.</b> The browser install is shared by every session on the
-    /// machine, so "make this safe" would mean terminating browsers other agents
-    /// are driving. There is deliberately no force argument: force here has
-    /// exactly one meaning and it is the wrong one.
+    /// a limitation.</b> A browser install is shared by every session on the
+    /// machine that uses that family, so "make this safe" would mean terminating
+    /// browsers other agents are driving. There is deliberately no force
+    /// argument: force here has exactly one meaning and it is the wrong one.
+    /// </para>
+    /// <para>
+    /// <b><c>ffmpeg</c> and <c>winldd</c> are shared by both families and are
+    /// deliberately not touched.</b> Both installs fetch them into the same
+    /// browsers root under their own revision directories, each with its own
+    /// completion marker, so a family's reinstall deletes
+    /// <c>chromium-&lt;rev&gt;</c> or <c>firefox-&lt;rev&gt;</c> and nothing
+    /// else. A corrupt <c>ffmpeg</c> is therefore <i>not</i> repairable through
+    /// this tool by either family — recorded as a limitation rather than
+    /// discovered as one.
     /// </para>
     /// <para>
     /// <b>Download-beside-and-swap does not work on Windows</b>, which is what
@@ -624,9 +691,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// answer can be held across the delete.
     /// </para>
     /// </remarks>
-    private async Task<ToolOutcome> ReinstallBrowserAsync(CancellationToken cancellationToken)
+    private async Task<ToolOutcome> ReinstallBrowserAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
-        var browser = SupportedBrowser;
+        var browser = Browser(arguments, "browser", fallback: null);
         var directory = _environment.Provisioner.DirectoryFor(browser);
 
         // Every process running an executable out of the tree about to be
@@ -647,12 +714,12 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (running.Count is not 0)
         {
-            var claimants = LiveSessions();
+            var claimants = LiveSessions(browser);
 
             if (claimants.Count is not 0)
             {
                 return new ToolOutcome(
-                    $"{SessionToolSurface.ReinstallBrowser} was not run: {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) are running from '{directory}', and these sessions are open on this machine:\n"
+                    $"{SessionToolSurface.ReinstallBrowser} was not run: {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) are running from '{directory}', and these {browser} sessions are open on this machine:\n"
                     + string.Join("\n", claimants.Take(20))
                     + "\nNothing was changed and nothing was terminated. There is deliberately no force option — forcing here means killing browsers other agents are driving. Close those sessions, or wait, and call this tool again.",
                     IsError: true);
@@ -714,14 +781,31 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <see cref="ProcessLiveness.IsAlive"/> — pid and creation time together,
     /// never a pid alone, because Windows reuses pids and a reclaim keyed on one
     /// eventually reads a stranger as the holder.
+    /// <para>
+    /// <b>Filtered by family since 2026-08-19, and the filter is what makes the
+    /// refusal actionable.</b> Its one caller is
+    /// <c>browserai_reinstall_browser</c>, which now names the tree it is about
+    /// to delete: only a session of <i>that</i> family can be holding an
+    /// executable out of it, so listing a live Chromium session beside a blocked
+    /// Firefox reinstall would tell the caller to close the wrong browser. A
+    /// session whose family cannot be read is <b>listed</b> rather than
+    /// filtered out — the list exists to explain a refusal, and dropping a
+    /// session because its record was unreadable is how a refusal stops naming
+    /// its own cause.
+    /// </para>
     /// </remarks>
-    private List<string> LiveSessions()
+    /// <param name="browser">The family to report, as upstream names it.</param>
+    /// <returns>One line per live session of that family.</returns>
+    private List<string> LiveSessions(string browser)
     {
         var lines = new List<string>();
 
         foreach (var session in _live.Values)
         {
-            lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (mode '{session.Mode.Name}')");
+            if (Family(session.Lock.Record.Browser, browser))
+            {
+                lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (mode '{session.Mode.Name}', browser '{session.Lock.Record.Browser}')");
+            }
         }
 
         foreach (var entry in _index.Follow())
@@ -731,7 +815,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 continue;
             }
 
-            if (_live.ContainsKey(session.Key))
+            if (_live.ContainsKey(session.Key) || !Family(record.Browser, browser))
             {
                 continue;
             }
@@ -744,6 +828,19 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return lines;
     }
+
+    /// <summary>Whether a recorded family is the one being asked about.</summary>
+    /// <remarks>
+    /// An unreadable or unrecognised recorded family answers <see langword="true"/>
+    /// deliberately: see <see cref="LiveSessions"/>' remarks.
+    /// </remarks>
+    /// <param name="recorded">What the session's record says, which may be anything.</param>
+    /// <param name="asked">The canonical family being reinstalled.</param>
+    /// <returns>Whether the session belongs in the answer.</returns>
+    private static bool Family(string? recorded, string asked) =>
+        string.IsNullOrWhiteSpace(recorded)
+        || string.Equals(recorded, asked, StringComparison.OrdinalIgnoreCase)
+        || !ProvisionedBrowsers.Families.Contains(recorded, StringComparer.OrdinalIgnoreCase);
 
     private static LockRecord Repurpose(LockRecord record, string purpose) =>
         record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
@@ -862,9 +959,10 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             // Row 11 rather than row 7, because it is not a runtime that failed
             // to start: nothing was started, deliberately, and the sentence
-            // already names the recovery. Reachable through `resume`, which
-            // reads the family out of lock.json -- `init` cannot record Firefox
-            // in this build (see SupportedBrowser).
+            // already names the recovery. Reachable from `init` as well as
+            // `resume` since 2026-08-19 -- previously only from `resume`, which
+            // reads the family out of lock.json, because `init` could not record
+            // Firefox at all.
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, collision);
 
             return new ToolOutcome(collision.Message, IsError: true);
@@ -1403,14 +1501,36 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"'{name}' is not a BrowserAI session mode. The three are: {SessionModes.Table} There is deliberately no default: a mode chosen by omission is a security posture nobody decided on, and the whole point of 'interactive' is that a human relies on it.");
     }
 
-    private static string Browser(JsonObject? arguments)
+    /// <summary>
+    /// The family a call named, normalised to the spelling upstream uses.
+    /// </summary>
+    /// <remarks>
+    /// <b>Normalised rather than echoed, because the answer is written to
+    /// <c>lock.json</c> and read back forever.</b> The comparison is
+    /// case-insensitive so <c>"Firefox"</c> is accepted, and what is stored is
+    /// the canonical member of <see cref="ProvisionedBrowsers.Families"/> — the
+    /// same string <c>browsers.json</c> keys on, the config generator writes as
+    /// <c>browserName</c>, and the provisioner mutex hashes.
+    /// </remarks>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="name">The parameter to read, which differs between the two callers.</param>
+    /// <param name="fallback">What an absent argument means, or <see langword="null"/> to require one.</param>
+    /// <returns>The canonical family name.</returns>
+    private static string Browser(JsonObject? arguments, string name, string? fallback)
     {
-        var name = Optional(arguments, "browser") ?? SupportedBrowser;
+        var asked = (fallback is null ? Required(arguments, name) : Optional(arguments, name)) ?? fallback;
 
-        return string.Equals(name, SupportedBrowser, StringComparison.OrdinalIgnoreCase)
-            ? SupportedBrowser
-            : throw new SessionToolException(
-                $"'{name}' is not a browser this build of BrowserAI can create a session for. Only '{SupportedBrowser}' is supported. Nothing was changed.");
+        foreach (var family in ProvisionedBrowsers.Families)
+        {
+            if (string.Equals(asked, family, StringComparison.OrdinalIgnoreCase))
+            {
+                return family;
+            }
+        }
+
+        throw new SessionToolException(
+            $"'{asked}' is not a browser family BrowserAI provisions. The {ProvisionedBrowsers.Families.Count.ToString(CultureInfo.InvariantCulture)} are: "
+            + $"{string.Join(", ", ProvisionedBrowsers.Families)}. Nothing was changed.");
     }
 
     private static string ConsoleLevel(JsonObject? arguments)
