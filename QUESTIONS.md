@@ -64,8 +64,20 @@ argument attached* moves to `DECISIONS.md`. The test: a first-time visitor
 should reach "how do I run this" without scrolling past a decision table.
 
 **To reverse:** it is one file split along heading boundaries; recombining is a
-concatenation. No links break either way, because `DocumentationLinkTests` will
-not let them.
+concatenation.
+
+⚠️ **Corrected 2026-08-18 (previously "No links break either way, because
+`DocumentationLinkTests` will not let them").** That was false, and the split
+depended on it. **The link test checks the path half and deliberately not the
+`#anchor` half** — it says so in its own remarks. Retitling the four
+`Settled <date>` headings moved **53 anchored links across 20 files**, four of
+them from `src/`, and not one would have gone red. They were resolved by hand
+against GitHub's slug rule instead, and all resolve.
+
+The lesson is the one this repository keeps relearning: **a test that reads as
+covering something, and says honestly that it does not, is still read as
+covering it.** The stated gap was doing no work, because the person relying on
+it did not read that far. Closing it is on the queue.
 
 ### B. Where the three directory-scoped `CLAUDE.md` files go
 
