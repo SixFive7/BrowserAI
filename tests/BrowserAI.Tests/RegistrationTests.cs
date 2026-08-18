@@ -11,7 +11,7 @@ namespace BrowserAI.Tests;
 /// The charter's founding sentence, which nothing implemented until 2026-08-16:
 /// <i>"registered once at system or user scope, available in every repository,
 /// with no per-repo files"</i>
-/// ([README](../../README.md#settled-2026-08-16)).
+/// ([DECISIONS](../../DECISIONS.md#locking-logging-versioning-and-registration)).
 /// </summary>
 /// <remarks>
 /// <para>

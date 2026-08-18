@@ -5,7 +5,7 @@
 
 How BrowserAI is put together, and which code satisfies which part of it.
 
-[`README.md`](README.md) says what was decided and why. This file says where each
+[`DECISIONS.md`](DECISIONS.md) says what was decided and why. This file says where each
 decision lives in the tree, so that a reader who wants to change something can
 find the one place that owns it. [`kb/`](kb/README.md) holds the measurements
 behind the choices; [`HAZARDS.md`](HAZARDS.md) holds the failure modes each area

@@ -124,6 +124,21 @@ has been satisfied in form only.
   stating the version, the tag, the package's SHA-256 and the resolved version
   read back out of each copy.
 
+### Changed
+
+- **The charter is split in two, and `README.md` is a README again.** It was
+  84 KB and opened with a table of settled decisions, so a first-time visitor
+  scrolled past four years of argument to find out how to install anything. What
+  it is, what it does, how to install it, how to use it, the scope boundary and
+  the licence stay; every settled decision with an argument attached moves to a
+  new [`DECISIONS.md`](DECISIONS.md), whose four date-titled tables are now
+  titled by topic. No reasoning was dropped in the move and every inbound link
+  was repointed.
+- **The hazard index says what each step was rather than where it stood.**
+  `HAZARDS.md`'s evidence cells carried 55 references to a build order that was
+  deleted with the rest of the plan; each is now that step's own title, recovered
+  from git history. No hazard was re-adjudicated.
+
 ### Fixed
 
 - **Closing the process log did not close its file.** Disposing the logging stack

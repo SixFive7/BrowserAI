@@ -8,7 +8,7 @@
     Every dependency resolves to the latest release at build time and the build
     freezes what it resolved into the artifact. `Version="*"` is what performs
     that resolution; it is a floating version, and it excludes prerelease by
-    construction, which is how README's rule 3 ("GA is a hard floor") is
+    construction, which is how DECISIONS.md's rule 3 ("GA is a hard floor") is
     enforced mechanically rather than by review.
 
     The resolved set is RECORDED rather than remembered, in packages.lock.json
@@ -20,7 +20,7 @@
     (NU1512). A one-step locked-mode build is the failure this project exists
     to eliminate, wearing a safety helmet.
 
-    The two commands verbatim are in README.md, "The five rules that make
+    The two commands verbatim are in DECISIONS.md, "The five rules that make
     floating safe". They are named rather than quoted here only because an XML
     comment cannot contain a double hyphen, which is what both flags begin with.
 

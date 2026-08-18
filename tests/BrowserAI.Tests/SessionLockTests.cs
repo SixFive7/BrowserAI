@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The three lock scopes under real concurrency — the decision
-/// [README → Still open](../../README.md#still-open) named as settled on paper
+/// [DECISIONS → Still open](../../DECISIONS.md#still-open) named as settled on paper
 /// and unexercised.
 /// </summary>
 /// <remarks>

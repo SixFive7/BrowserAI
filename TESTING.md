@@ -13,9 +13,9 @@
 > move except links that pointed at files being deleted.
 
 > **This document is a requirement, not an aspiration, and it is not severable
-> from the [versioning policy](README.md#versioning-policy-everything-floats-the-build-freezes-it).**
+> from the [versioning policy](DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it).**
 >
-> [Versioning policy](README.md#versioning-policy-everything-floats-the-build-freezes-it)
+> [Versioning policy](DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
 > puts every dependency on latest at build time. That makes the suite **the only
 > thing standing between an upstream change and a shipped regression** —
 > floating without a suite that can catch a breaking change is strictly worse
@@ -90,7 +90,7 @@ ports, fully parallel-safe.
 > notification it is being asked to observe.
 
 **The most important test in the suite** is mechanical and follows from the
-charter's [Known trade-offs](README.md#known-trade-offs): read the real child's
+charter's [Known trade-offs](DECISIONS.md#known-trade-offs): read the real child's
 `tools/list`, then assert **every** tool name carries an explicit session-type
 classification. An unclassified tool fails the build. That turns "a new upstream
 tool leaks into interactive mode" from a security incident into a red build.
@@ -100,7 +100,7 @@ latest, so every build is already a drift check. What remains is the quiet week:
 upstream publishes **daily alphas**, so a week with no commits is a week in which
 the tree silently diverges from what was last proven green. There are **no
 automated checks of any kind** — no hosted CI, no scheduled job, no git hook
-([Settled 2026-08-16](README.md#settled-2026-08-16)).
+([DECISIONS → Locking, logging, versioning and registration](DECISIONS.md#locking-logging-versioning-and-registration)).
 
 Two things close it, and neither is a scheduled job:
 
@@ -322,7 +322,7 @@ client that:
   — a test harness that gets this wrong fails the product for the harness's
   defect;
 - sets **`WorkingDirectory` explicitly**, because
-  [an unset one passes `null` to `CreateProcess`](README.md#windows-process-spawning)
+  [an unset one passes `null` to `CreateProcess`](DECISIONS.md#windows-process-spawning)
   and the child silently inherits the test host's cwd.
 
 **Prior art to copy rather than reinvent:** an in-house `McpStdioClient` in a
@@ -400,7 +400,7 @@ because: Failed to load assembly '...'`.** Exit code zero, an artifact on disk, 
 a binary that throws the moment that code path is reached. Analyzers at error
 severity do not see it, because the analyzer ran against source and this was
 decided by the AOT compiler afterwards —
-[the same shape as everything in the README's opening table](README.md#read-this-before-designing-anything),
+[the same shape as everything in the charter's opening table](DECISIONS.md#the-setup-this-replaces),
 arriving from the toolchain instead of from upstream. The gate is mechanical:
 capture ILC's output and fail the publish if it is non-empty. Publishing AOT and
 running the suite against it is required before committing to it, and this is the

@@ -466,7 +466,7 @@ timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
 > — `Access is denied` / `0x80070005` from the same machine, for a minimal
 > definition as much as for ours. One `schtasks` success in a spike directory
 > became a standing claim about the product, and it reached
-> [`README.md`](../../README.md) as *"verified"*. **The task is dropped**
+> [the charter](../../DECISIONS.md) as *"verified"*. **The task is dropped**
 > (the Velopack update lane), so
 > nothing now turns on it; the entry is corrected rather than deleted because a
 > reader who remembers *"confirmed"* has to be able to find out what happened to

@@ -8,8 +8,8 @@ somewhere.
 
 **What belongs here:** work settled in intent but not yet done.
 
-**What does not:** open design questions and known hazards. Those live in the
-README under [Open design decisions](README.md#open-design-decisions), and in the
+**What does not:** open design questions and known hazards. Those live in
+[`DECISIONS.md`](DECISIONS.md) under [Open design decisions](DECISIONS.md#open-design-decisions), and in the
 [hazard index](HAZARDS.md#hazard-index). An item moves here once the decision
 behind it is made, and is **deleted** when it is done — `git log` is the record of
 what was done; this file is the record of what is not.

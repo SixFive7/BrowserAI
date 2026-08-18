@@ -3,7 +3,7 @@
 
 # Knowledge base — what we measured
 
-[`../README.md`](../README.md) records what we **decided** and
+[`../DECISIONS.md`](../DECISIONS.md) records what we **decided** and
 [`../ARCHITECTURE.md`](../ARCHITECTURE.md) records how the product is **put
 together**. This directory records what we **measured**, and it exists because
 those are different things with different half-lives. A decision stays true until
@@ -14,7 +14,7 @@ measurement stays true until upstream ships.
 Windows that we established by running something, reading a shipped binary, or
 reading upstream source — together with enough provenance to re-establish it.
 
-**What does not:** design decisions (`../README.md`), what implements what
+**What does not:** design decisions (`../DECISIONS.md`), what implements what
 (`../ARCHITECTURE.md`), work items (`../TODO.md`), or the review procedure
 ([`../UPSTREAM-REVIEW.md`](../UPSTREAM-REVIEW.md)).
 

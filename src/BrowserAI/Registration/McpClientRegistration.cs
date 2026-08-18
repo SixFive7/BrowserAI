@@ -11,10 +11,10 @@ namespace BrowserAI.Registration;
 /// <remarks>
 /// <para>
 /// <b>The requirement is one sentence, and it is
-/// [the charter's](../../../README.md#settled-2026-08-16)</b> —
+/// [the charter's](../../../DECISIONS.md#locking-logging-versioning-and-registration)</b> —
 /// <i>"registered once at system or user scope, available in every repository,
 /// with no per-repo files"</i> — and it is the founding promise:
-/// [README §1](../../../README.md) opens by rejecting a world where onboarding
+/// [DECISIONS §1](../../../DECISIONS.md#1-there-is-no-update-path-and-that-is-the-actual-problem) opens by rejecting a world where onboarding
 /// <i>"requires a repo, a `.mcp.json`, hook registrations"</i>. Until this
 /// existed, what shipped was an installed, self-updating, self-sweeping binary
 /// that no client was configured to talk to.
@@ -43,7 +43,7 @@ namespace BrowserAI.Registration;
 /// <item><description>
 /// <b>A documented manual step.</b> Abandons the promise that distinguishes this
 /// product from the setup it replaces — the whole complaint in
-/// [README §7](../../../README.md) is that onboarding is a list of manual steps.
+/// [DECISIONS §7](../../../DECISIONS.md#7-distribution-to-colleagues-has-no-story) is that onboarding is a list of manual steps.
 /// </description></item>
 /// </list>
 /// <para>
@@ -73,7 +73,7 @@ internal static class McpClientRegistration
     /// <remarks>
     /// Lower-case and unqualified, matching the product name. It is <b>not</b> a
     /// tool name — upstream tool names pass through byte-for-byte
-    /// ([README → Tool naming](../../../README.md#settled-2026-08-14)) — it is the
+    /// ([DECISIONS → Tool naming](../../../DECISIONS.md#licence-release-policy-and-the-tool-surface)) — it is the
     /// server key in the client's own configuration.
     /// </remarks>
     public const string ServerName = "browserai";

@@ -47,7 +47,7 @@ namespace BrowserAI.Updates;
 /// <see cref="Registration.HookRegistration"/> — the charter's
 /// <i>"registered once at system or user scope, available in every repository,
 /// with no per-repo files"</i>
-/// ([README](../../../README.md#settled-2026-08-16)). Before
+/// ([DECISIONS](../../../DECISIONS.md#locking-logging-versioning-and-registration)). Before
 /// 2026-08-16 every hook here existed only to log, and what shipped was an
 /// installed, self-updating, self-sweeping binary that no client was configured
 /// to talk to.

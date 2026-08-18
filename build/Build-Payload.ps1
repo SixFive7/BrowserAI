@@ -331,7 +331,8 @@ else {
     }
 
     # --no-shell is load-bearing, not tidiness: chrome-headless-shell is never
-    # provisioned (README, settled 2026-08-15 -- full Chromium in every mode).
+    # provisioned (DECISIONS.md, "Processes, browsers and session modes" --
+    # full Chromium in every mode).
     & $nodeExe (Join-Path $mcpDir 'node_modules' '@playwright' 'mcp' 'cli.js') install-browser chromium --no-shell --no-progress
     Assert-ExitCode 'install-browser chromium'
 

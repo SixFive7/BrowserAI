@@ -127,7 +127,7 @@ internal sealed class ModelSurfaceTests
     /// the spec requires retention to be stated <i>there</i>, and <c>init</c>'s
     /// description is the channel a model sees at the moment it reaches for the
     /// tool; the
-    /// [README](../../README.md) demands the same thing independently, because
+    /// [DECISIONS](../../DECISIONS.md#shape-and-packaging) demands the same thing independently, because
     /// <c>init</c> accepts any path — *"the `init` tool description is a security
     /// surface … say plainly what pointing at an existing browser profile
     /// does"*. Retention was stated on <c>resume</c> and on <c>list</c>, which is
@@ -328,7 +328,7 @@ internal sealed class ModelSurfaceTests
         //
         // **57 bytes of headroom is the finding, and it is not a comfortable
         // number.** Both required sentences are at the END of the string, so an
-        // overflow deletes exactly the two things §C and the README demanded be
+        // overflow deletes exactly the two things §C and the charter demanded be
         // present. The description is composed from SessionModes.Table, so a
         // fourth mode or a reclassified tool grows it without anybody editing
         // this file — and the assertion below, together with

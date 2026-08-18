@@ -7,7 +7,7 @@
 
 ## Why this exists
 
-Every dependency floats to latest at build time ([README → Versioning policy](README.md#versioning-policy-everything-floats-the-build-freezes-it)). Our suite going green after a bump means **our assumptions still hold**. It cannot mean **we noticed what upstream learned**.
+Every dependency floats to latest at build time ([DECISIONS → Versioning policy](DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)). Our suite going green after a bump means **our assumptions still hold**. It cannot mean **we noticed what upstream learned**.
 
 The golden `tools/list` snapshot catches surface changes — a new tool, a renamed one, a changed schema. It is blind to:
 
@@ -57,4 +57,4 @@ A big upstream jump is not a reason to skip the review; it is the reason the rev
 
 ## If a change breaks us
 
-**Fix forward. Do not pin back.** The response to a breaking upstream change is to make the newest version work — that is [rule 4](README.md#the-five-rules-that-make-floating-safe) of the versioning policy, and "pin it back for now" is the failure the policy exists to prevent. A red suite blocks the *release*, never the *update*.
+**Fix forward. Do not pin back.** The response to a breaking upstream change is to make the newest version work — that is [rule 4](DECISIONS.md#the-five-rules-that-make-floating-safe) of the versioning policy, and "pin it back for now" is the failure the policy exists to prevent. A red suite blocks the *release*, never the *update*.

@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The session-index file layout — the third of the three decisions
-/// [README → Still open](../../README.md#still-open) named as settled on paper
+/// [DECISIONS → Still open](../../DECISIONS.md#still-open) named as settled on paper
 /// and unexercised.
 /// </summary>
 /// <remarks>

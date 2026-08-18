@@ -24,7 +24,7 @@ Win32 API of a live process, never argue from a command line's length.
 > [the measurement below](#the-firefox-half-measured-on-both-sides--2026-08-16)
 > is what fills the gap. The consequence is that BrowserAI does ship a
 > restart-registration lever after all, for Firefox only; see
-> [README → Settled 2026-08-15](../../README.md#settled-2026-08-15).
+> [DECISIONS → Processes, browsers and session modes](../../DECISIONS.md#processes-browsers-and-session-modes).
 
 ## The verdict
 

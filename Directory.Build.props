@@ -19,7 +19,7 @@
          is also what keeps CA1416 quiet across the Win32 interop this product
          is largely made of. .NET 11 is not GA on 2026-08-16. -->
     <TargetFramework>net10.0-windows</TargetFramework>
-    <!-- `latestMajor`, never `preview`: README, "Versioning policy". -->
+    <!-- `latestMajor`, never `preview`: DECISIONS.md, "Versioning policy". -->
     <LangVersion>latestMajor</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

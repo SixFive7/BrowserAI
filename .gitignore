@@ -589,7 +589,7 @@ id_ed25519
 
 # --- BrowserAI session directories -------------------------------------------
 # BrowserAI requires an explicit session directory and accepts any path the
-# caller names (README, settled 2026-08-13), so a session driven against this
+# caller names (DECISIONS.md, "Shape and packaging"), so a session driven
 # repository during development -- which will happen -- lands its tree wherever
 # it was pointed. There is no path to anchor to, only names. These are the real
 # names, taken from the plan's session-directory and artifact-management

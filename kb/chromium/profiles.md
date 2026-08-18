@@ -53,5 +53,5 @@ BrowserAI must validate every path it hands the child before launch.**
 > Chrome for Testing build BrowserAI **provisions** rather than
 > `channel: "chrome"`. **Provisioned, not bundled**: ["our own" means the build
 > BrowserAI manages, never one shipped inside the
-> installer](../../README.md#settled-2026-08-15) — the installer carries no
+> installer](../../DECISIONS.md#processes-browsers-and-session-modes) — the installer carries no
 > browser at all.

@@ -11,12 +11,12 @@ git hook. Nothing else stands between a change and a shipped release.
 Every item is **executed and evidenced**, and **any failing item blocks the
 release**. A failure is a work item, never a waiver — the response to a breaking
 upstream change is to make the newest version work
-([rule 4](README.md#the-five-rules-that-make-floating-safe)), and where there
+([rule 4](DECISIONS.md#the-five-rules-that-make-floating-safe)), and where there
 is no forward fix, **blocking the release indefinitely is the intended answer.**
 
 **Green is necessary and not sufficient.** This checklist decides whether a
 release is *permitted*, never whether one *happens*. A human decides when a green
-build becomes a release — [README → Release trigger](README.md#settled-2026-08-14)
+build becomes a release — [DECISIONS → Release trigger](DECISIONS.md#licence-release-policy-and-the-tool-surface)
 and [the release gate](#the-release-gate). Nothing here overrides that,
 and item 14 is where it lands.
 
@@ -38,7 +38,7 @@ The sequence, in order, no step skippable:
 1. **Resolve.** The build takes the latest of every dependency and records what it got — `packages.lock.json`, the resolved `package-lock.json`, browser revisions from the resolved `browsers.json`.
 2. **Build.** NativeAOT (or trimmed self-contained), analyzers at error severity. A warning-as-error is a red build.
 3. **Run everything.** All five layers, including the two marked *mandatory before release*. Not a subset, not "the fast ones", not "the ones related to this change". This is also where [the upstream-review gate](TESTING.md#the-upstream-review-gate) fires: if the resolved version moved past the reviewed one, or a snapshot changed without an adjudication, or a manual re-verification row has no outcome, the suite is red and there is nothing to decide at step 5.
-4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](README.md#the-five-rules-that-make-floating-safe).
+4. **Green, or stop.** A failure is a work item, never a waiver. If upstream broke something, the fix is to make the new version work — [rule 4](DECISIONS.md#the-five-rules-that-make-floating-safe).
 5. **A human decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
 6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
 
@@ -60,7 +60,7 @@ file. An item whose evidence is *"I believe this is fine"* is not evidence; it i
 worse than a gap, because a gap announces itself.
 
 **Where the evidence goes:** beside the release, with the resolved-set manifest
-that [rule 1](README.md#the-five-rules-that-make-floating-safe) already
+that [rule 1](DECISIONS.md#the-five-rules-that-make-floating-safe) already
 requires. The adjudications in items 3–6 go in the
 [`upstream-review.json`](upstream-review.json) entry, which is where the suite
 reads them from. Not in this file — this file is the list, not the log.
@@ -191,7 +191,7 @@ already been pruned.
 
 **New, and it closes a gap nothing else covers.** BrowserAI's tool descriptions
 are **append-only** on top of upstream's
-([README → Tool naming](README.md#settled-2026-08-14)). Upstream can reword
+([DECISIONS → Tool naming](DECISIONS.md#licence-release-policy-and-the-tool-surface)). Upstream can reword
 the text underneath ours, leaving our sentence **contradicting or duplicating**
 it — and nothing notices, because both halves remain individually valid and the
 composed result is only ever read by a model.
@@ -440,7 +440,7 @@ from the resolved `browsers.json`, and the Node version.
 
 **An artifact that cannot state exactly what went into it is not releasable** —
 that is what makes a rollback meaningful and a regression bisectable
-([rule 1](README.md#the-five-rules-that-make-floating-safe)).
+([rule 1](DECISIONS.md#the-five-rules-that-make-floating-safe)).
 
 **`build/New-Release.ps1` emits it**, beside the archived `.nupkg`, at
 `<ArchiveDir>/BrowserAI-<version>-manifest/`. It holds exactly these, copied

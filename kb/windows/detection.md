@@ -371,7 +371,7 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 > either alone.
 
 > **This is recorded as a property of the shell, not as a risk to us.** BrowserAI
-> [does not provision it](../../README.md#settled-2026-08-15) — full Chromium in every
+> [does not provision it](../../DECISIONS.md#processes-browsers-and-session-modes) — full Chromium in every
 > mode — and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` means it cannot appear on disk
 > later. So an upstream change to binary selection would produce a **failed
 > launch**, which is loud, rather than a silently untrackable browser. It matters
@@ -549,7 +549,7 @@ the first filter and never reaching the second. `[MACHINE]`
 > before launch so the fallback never happens**, and launch the Chrome for Testing
 > build BrowserAI provisions rather than `channel: "chrome"`. **Provisioned, not
 > bundled** — ["our own" is the build BrowserAI manages, not one shipped inside
-> the installer](../../README.md#settled-2026-08-15).
+> the installer](../../DECISIONS.md#processes-browsers-and-session-modes).
 
 > ⚠️ **`--user-data-dir` alone is not an ownership signal, and this is one of
 > the most load-bearing facts in this article.** On the reference machine **a

@@ -173,7 +173,7 @@ fresh directory. `[FLOATS]` `[MACHINE]`
 > ⚠️ **Corrected 2026-08-16 (previously "20.3 s on a 300 Mbps link, measured
 > 2026-08-14 … an upper bound rather than a measurement").** It was an upper
 > bound because that run also fetched `chrome-headless-shell`, which is
-> [no longer provisioned](../../README.md#settled-2026-08-15). The two runs above
+> [no longer provisioned](../../DECISIONS.md#processes-browsers-and-session-modes). The two runs above
 > are of what BrowserAI actually downloads, so the figure is now a measurement of
 > the thing rather than of a superset of it.
 
@@ -216,7 +216,7 @@ installer's output and looks exactly like an outage. `[MACHINE]`
 > 2026-08-14 sum, whose total was *"chromium 202.3 MB + shell 119.7 MB + ffmpeg +
 > winldd = 323.5 MB down, ~700 MiB on disk"*, and the superseded slow-link
 > figures — 4 m 19 s at 10 Mbps, 43 m at 1 Mbps — belonged to that larger total.
-> The [2026-08-15 decision](../../README.md#settled-2026-08-15) to run full Chromium
+> The [2026-08-15 decision](../../DECISIONS.md#processes-browsers-and-session-modes) to run full Chromium
 > in every mode stopped provisioning the shell, which is what moved the number:
 > the old measurement was never wrong, it stopped applying.
 
@@ -229,7 +229,7 @@ The flag is read in exactly two places in `lib/coreBundle.js` —
 `ensureConfiguredBrowserInstalled`, the server's start-up auto-install — and
 `registry.install()`, which the `install-browser` command calls, does not
 consult it. **Both halves matter to us:** the variable is
-[mandated in the child's environment](../../README.md#the-five-rules-that-make-floating-safe)
+[mandated in the child's environment](../../DECISIONS.md#the-five-rules-that-make-floating-safe)
 to stop the child provisioning behind our back, and it does still close that
 door; but a build or a provisioning subsystem that relied on it as a global
 kill-switch would be relying on something that was never true. Re-establish by
