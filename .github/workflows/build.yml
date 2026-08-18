@@ -75,6 +75,17 @@ jobs:
         # Resolved 2026-08-18 to v7.0.1. The major tag floats within v7, which is
         # this project's versioning policy applied to its own CI.
         uses: actions/checkout@v7
+        with:
+          # THE WHOLE HISTORY, FOR THE TAGS. MinVer derives the version by
+          # counting from the nearest `v*` tag, and a shallow clone carries no
+          # tags at all -- so the default depth-1 checkout produces
+          # `0.0.0-alpha.0`, which BrowserAI.csproj REFUSES rather than stamps.
+          # Measured on this workflow's first run, 2026-08-18: the publish
+          # failed exactly there, and the build's own error named this fix.
+          # A binary that does not know what it is cannot be rolled back to or
+          # bisected against, which is why the refusal exists and why the cost
+          # of a full clone is the right trade.
+          fetch-depth: 0
 
       - name: Install the SDK named by global.json
         # Resolved 2026-08-18 to v6.0.0.
