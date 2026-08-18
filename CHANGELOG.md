@@ -23,6 +23,21 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **Five product source files were outside every scan built on the repository
+  walk.** The prune list matched a directory *name* at any depth and
+  case-insensitively, so `src\BrowserAI\Artifacts\` matched the root's
+  `artifacts\` build output and was removed from the link check, the new
+  fragment check and the SPDX house rule alike. No symptom: a prune reports
+  nothing when it removes the wrong thing. Found because the fragment scan
+  counted 552 where an independent count of the same corpus counted 554, and the
+  walk now asserts it loses nothing the source enumeration finds.
+- **A test asserted that the developer's screen was busy.** The message-window
+  test proved `EnumWindows` had really enumerated by requiring more than fifty
+  top-level windows — true of a desktop somebody is using and false on a CI agent,
+  where a service window station holds a handful, so it would have gone red on a
+  machine where nothing was wrong. The probe now publishes a second window that
+  is top-level and never shown, and the assertion is disjointness by handle
+  identity instead.
 - **A session another BrowserAI was writing to could not be opened.** Every
   `lock.json` is replaced by an atomic rename, and while that rename is in flight
   Windows refuses every other open of the file — with `ACCESS_DENIED`, not the
@@ -56,7 +71,25 @@ has been satisfied in form only.
 
 ### Added
 
-
+- **The build runs on a machine nobody owns.** There was no `.github/` at all,
+  so every test and every release-phase check ran only when somebody remembered
+  to run it locally — invisible, on a public repository, to anyone opening a pull
+  request. [`.github/workflows/build.yml`](.github/workflows/build.yml) builds
+  the payload, provisions both browsers, publishes the NativeAOT binary and runs
+  the **whole** suite including `SaturationTests`, on every push and pull request.
+  It states its own cost in its header: about 204 MB of first-run browser
+  download per run, uncached on purpose, because a cache key would have to be
+  guessed ahead of the resolve it depends on.
+- **The `#anchor` half of every relative link is checked too.** The link test
+  resolved the path and said, honestly, that it did not resolve the fragment. A
+  documentation restructure then retitled four headings and moved 53 anchored
+  links across 20 files, four of them under `src\`, and not one would have gone
+  red. 554 fragments are now checked against GitHub's own heading-to-slug rule,
+  which is itself asserted against worked examples rather than trusted.
+- **`Interop\`, `Sessions\` and `Runtime\` have working instructions of their
+  own**, twelve lines each, carrying only what the mechanisms cannot say — and a
+  second `PreToolUse` hook puts the two invariants no analyzer can fully catch in
+  front of whoever edits the first two.
 - **BrowserAI registers itself with your MCP client when it installs, and
   unregisters when it goes.** One registration at *user* scope — available in
   every repository, with no `.mcp.json`, no hook registration and no file added
@@ -126,6 +159,15 @@ has been satisfied in form only.
 
 ### Changed
 
+- **`CLAUDE.md` is 50 lines instead of 89, and every rule names its mechanism.**
+  It is the first thing an agent reads and roughly half its rules had no
+  mechanism at all — indistinguishable, on the page, from the half that did.
+  *Prefer a mechanism over a habit* was the best line in it and was buried in the
+  last third; it is now the frame, and the rules sit in two lists that say which
+  kind they are. The six-line `[STALE]` defence went (it is defined properly in
+  `kb/README.md`'s conventions table) and the daily drift check went from 21
+  lines to four plus a pointer, because its resolution table and its Dependabot
+  reasoning already exist verbatim inside `drift-check.json`.
 - **The charter is split in two, and `README.md` is a README again.** It was
   84 KB and opened with a table of settled decisions, so a first-time visitor
   scrolled past four years of argument to find out how to install anything. What
