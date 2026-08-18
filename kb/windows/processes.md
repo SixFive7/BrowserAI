@@ -583,6 +583,54 @@ with any SDK; `[STABLE]` for the Win32 guarantee.
 
 ## Saturation: the 100-process design point
 
+**80 concurrent headless Chromium instances start cleanly on this machine, and
+that is a negative result about a failure we were chasing.** Measured
+2026-08-18, sweeping N = 5, 10, 20, 40, 60, 80 real
+`chrome.exe --headless=new` launches, each with its own `--user-data-dir` and
+`about:blank` — the exact command line
+`StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`
+uses — held for 20 s and then counted:
+
+| Concurrent browsers | Died at launch | Machine processes | Free physical | Commit |
+|---:|---:|---:|---:|---|
+| 5 | 0 | 669 | 75.9 GiB | 86.7 / 141.2 GiB |
+| 20 | 0 | 834 | 73.1 GiB | 91.5 / 141.2 GiB |
+| 40 | 0 | 1,070 | 69.2 GiB | 97.9 / 141.2 GiB |
+| 60 | 0 | 1,267 | 66.4 GiB | 102.0 / 141.2 GiB |
+| **80** | **0** | **1,436** | 65.3 GiB | 103.6 / 141.2 GiB |
+
+**Zero launch failures at any level**, at nearly double the process count the
+saturation test's own 802 produces.
+
+> **So "the machine was carrying too many browsers" is not the explanation for
+> that test's intermittent death, and it was the leading one.** What this sweep
+> does *not* reproduce is the suite's other axis: it ran on an otherwise-idle
+> machine, so every browser had CPU. The suite starves CPU rather than memory or
+> handles, and that remains the open candidate — along with **desktop heap**,
+> which no documented API reports and which none of the columns above would show.
+> Recorded here as a bounded negative result rather than a diagnosis.
+> `[MACHINE]`, and reproduce with `.work/chromium-ceiling.ps1`.
+
+**A record on stderr is not durable, and a record in the process log is — the
+two diagnostic channels differ and only the file's guarantee is written down.**
+Measured 2026-08-18 on two consecutive CI runs. `ProcessLog` wires stderr through
+`AddConsole`, which hands every record to a background processor thread;
+`RollingFileWriter` is one unbuffered `WriteFile` per record against a
+`FILE_APPEND_DATA` handle. A process ended with `TerminateProcess` therefore
+keeps everything the file sink wrote and **loses whatever the console queue still
+held** — and the two runs lost *different* amounts of the tail, which is the
+signature of a queue rather than of a call that never happened.
+
+> **The consequence for tests, and it cost two red CI runs:** an assertion of the
+> form *"the product recorded X"* must read the process log, not stderr, whenever
+> the process is killed rather than shut down. A developer's machine drains that
+> queue before the kill and stderr looks complete, so the defect is invisible
+> until the suite meets a smaller machine. `ProcessLogRecords.ForPid` is the
+> reader, and it is scoped to one pid because the log is machine-wide.
+> `[STABLE]` for the asymmetry, which follows from the two sinks' designs;
+> `[MACHINE]` for the observation that four cores under 431 tests is enough to
+> expose it.
+
 **100 concurrent BrowserAI processes with 24 live Chromium trees is 802
 processes, and this machine carries it.** Measured 2026-08-17 by
 `SaturationTests`, which starts 100 published binaries at once, gives each its

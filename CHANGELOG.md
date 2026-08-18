@@ -23,6 +23,44 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The per-directory session gate refused sessions that nothing was wrong
+  with, and told the caller so in as many words.**
+  `LockScopes.PerDirectoryGate` was five seconds because the section it guards
+  takes milliseconds — but every process naming one directory enters that gate
+  *in turn* just to discover the file is held, so the wait is behind the whole
+  queue. Measured on an **idle** machine: 100 contenders, the charter's design
+  point, put the slowest refusal at **3,349 ms against a 5,000 ms timeout** — a
+  margin of 1.49× — and 200 contenders produced **73 `Busy` refusals of 796**,
+  every one at the timeout exactly. `Busy` withholds the holder's identity, which
+  is the one thing the lock exists to report, and its message asserted *"something
+  is wrong that waiting longer will not fix"* about a machine where waiting was
+  the entire remedy. The gate was also **smaller than a wait taken inside it** —
+  `RenameWindow.Budget` became 30 s on 2026-08-18 and is consumed under this
+  mutex — so one entitled reader could starve every peer into a wrong answer.
+  Now sixty seconds, with `SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt`
+  failing the build if either number crosses the other, and re-measured at 200
+  contenders with zero `Busy`. `Updates.LiveInstances` shared the constant and is
+  split out at its existing five seconds, because raising it would have put a
+  sixty-second stall on the startup path.
+- **The suite's torn-log check had never matched a log record.**
+  `SaturationTests`' record-header expression required two spaces before `pid=`,
+  but `FileLoggerProvider` pads level names to five characters and then writes
+  two more — so `INFO` and `WARN` are followed by three, and only `TRACE`,
+  `DEBUG` and `ERROR` ever matched. Against a real hundred-process run: 2,217
+  records, 2,117 `INFO` and 100 `WARN`, **zero matches**. The check that proves a
+  hundred concurrent appenders cannot corrupt one file was passing by seeing
+  nothing, and the count beside it — meant to stop exactly that — counted every
+  log file on the machine, so a developer's months of history satisfied it before
+  the test began. On a fresh CI runner it read 6; with the log directory moved
+  aside locally, 0. Fixed, scoped to the run's own pids, and the same run now
+  reads 2,217 headers from 100 distinct pids with none torn.
+- **A test asserted a durable property on a channel that is not durable.**
+  `ProtocolSplitTests` read the protocol-negotiation record from stderr, which
+  `AddConsole` hands to a background processor thread, while `SliceRun` ends
+  BrowserAI with `TerminateProcess` on purpose to prove containment — so the
+  queue's tail went with it. Two CI runs lost different amounts, which is a queue
+  and not a missing call. It now reads the process log, which
+  `RollingFileWriter` writes unbuffered per record, scoped to that run's pid.
 - **Five product source files were outside every scan built on the repository
   walk.** The prune list matched a directory *name* at any depth and
   case-insensitively, so `src\BrowserAI\Artifacts\` matched the root's
@@ -71,6 +109,24 @@ has been satisfied in form only.
 
 ### Added
 
+- **Both intermittent failures now name their own state.** The race probe
+  reported an outcome and a message; it now reports the holder's pid *and*
+  creation time, whether that holder was running, the gate's timeout beside the
+  elapsed figure, anything `TryAcquire` threw, and `lock.json` as it stood at
+  that instant — and every assertion in the race carries all sixteen contenders'
+  reports rather than the one that tripped. `JobObjectScope.SaidBy` waited for
+  nothing and so reported *"it wrote nothing to either stream"* for a drain the
+  thread pool had not scheduled; it now drains to end-of-file and tells the two
+  silences apart. The sweep's real-browser arm launches Chromium with
+  `--enable-logging --log-file --v=1`, because on Windows a browser that will not
+  start writes to a log file and not to stderr, and puts that log and the
+  machine's process, handle and commit figures into the failure.
+- **CI's four skipped tests are settled rather than rediscovered.**
+  [`TESTING.md`](TESTING.md#continuous-integration) records why a green CI run
+  reports skips, which four they are, that the no-skip rule is about `[Skip]` in
+  the tree and is enforced by `HouseRuleTests`, and that zero skipped is a
+  release requirement met by cutting from a machine with every capability —
+  never by softening the gate to tidy a badge.
 - **The build runs on a machine nobody owns.** There was no `.github/` at all,
   so every test and every release-phase check ran only when somebody remembered
   to run it locally — invisible, on a public repository, to anyone opening a pull

@@ -763,6 +763,48 @@ five-second gate**, and no run came close to it. Reproduce by raising
 `UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho` alone; the
 suite pays for N=16 on every run.
 
+**⚠️ Extended to the design point on 2026-08-18, and the gate's five-second
+timeout turned out to be reachable by queueing alone.** Same rig, same idle
+machine, N processes released together on one event; 6 runs at N=100 and 4 at
+N=200. The entry above stopped at N=64 and read its 1.40 s as comfortable, which
+it is — the problem is what happens between 64 and the hundred the charter
+designs for.
+
+| N | slowest refusal | p50 | p99 | what the refusals said |
+|---:|---:|---:|---:|---|
+| 16 | 367 ms | 209 ms | 367 ms | all `Held`, holder named |
+| **100** | **3,349 ms** | 1,353 ms | 3,227 ms | all `Held` — **a margin of 1.49× on the five-second gate, with the machine otherwise idle** |
+| 200 | 5,056 ms | 2,750 ms | 5,032 ms | **73 refusals of 796 came back `Busy`**, every one at 5,022–5,056 ms |
+
+**The cost is super-linear in N and the gate is the reason.** Each contender
+enters the per-directory mutex *in turn* merely to discover the file is held —
+open, meet the sharing violation, read the record to name the holder, release —
+so the slowest refusal is the whole queue, not one section. 64→100 is 1.56× the
+contenders and 2.4× the wait.
+
+> **`Busy` was therefore reachable with nothing wrong: no wedged holder, no
+> abandoned mutex, no starvation.** That matters because of what `Busy` *said*:
+> *"That section takes milliseconds, so something is wrong that waiting longer
+> will not fix"* — a diagnosis the code could not support, about a machine where
+> waiting was the entire remedy — and because a `Busy` withholds the holder's
+> identity, which is the one thing this lock exists to be able to report.
+>
+> **And the gate was smaller than a wait taken inside it.** `SessionLock`'s own
+> `OpenHeld` and `ReadRecord` run under this mutex and both go through
+> [`RenameWindow`](processes.md#files-durable-writes-and-deletes), whose budget
+> became **30 s** on 2026-08-18 — six times the gate that contained it. Nobody
+> looked at the pair when the second number moved.
+>
+> **Re-measured after `LockScopes.PerDirectoryGate` was raised to sixty
+> seconds:** N=200, 4 runs of 4, **zero `Busy`**, every loser naming the holder,
+> slowest refusal 5,736 ms. `SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt`
+> fails the build if either number crosses the other again.
+
+Reproduce with `.work/race-rig.ps1 -Contenders <n> -Iterations <k>`, which drives
+`BrowserAI.TestProbe.exe session-race` directly and needs no test host; or by
+raising `Contenders` in `SessionLockTests`. `[MACHINE]` for every timing,
+`[STABLE]` for the outcome and for the super-linear shape.
+
 The machine-wide sweep scope was measured the same way and separately: **8
 processes, zero timeout, 1 acquired and 7 refused**, each refusal asserted under
 one second — try-acquire-and-skip, with no queue behind it, which is the whole

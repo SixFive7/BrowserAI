@@ -557,11 +557,34 @@ for Firefox, uncached on purpose) and what it does **not** cover.
 
 Two things a reader should know before treating a red build as a defect:
 
-- **`BROWSERAI_RELEASE_RUN` is deliberately unset.** It turns an absent capability
-  from a loud skip into a failure, and two capabilities are genuinely absent on a
-  runner — the packed release and an installed MCP client. CI is an ordinary run
-  that states its own coverage; the release gate is still
+- **`BROWSERAI_RELEASE_RUN` is deliberately unset, so a green CI run reports
+  skips and that is correct.** It turns an absent capability from a loud skip
+  into a failure, and two capabilities are genuinely absent on a runner — the
+  packed release and an installed MCP client. CI is an ordinary run that states
+  its own coverage; the release gate is still
   [`RELEASING.md`](RELEASING.md#the-release-gate), driven locally.
+
+  **Settled 2026-08-18, because a green build reporting four skips reads like a
+  rule being broken and is not.** [The house rule](CLAUDE.md) — *no skipped,
+  quarantined or conditionally-ignored test in the tree* — is about the **tree**,
+  and `HouseRuleTests.NoTestInTheTreeIsSkipped` enforces exactly that: no `[Skip]`
+  attribute anywhere. A capability skip is a different thing. It is decided at run
+  time, it names the capability, the path to restore it and the switch that makes
+  it fatal, and it is reported as **skipped rather than passed** so the run's
+  summary cannot be mistaken for a healthy one. That is the gate working.
+
+  On a GitHub runner the count is **4**: `EveryNoticeIsInsideThePackedRelease`
+  (no packed `.nupkg`), and `TheClientIsLocatedByFileNameAndNeverAsAShim`,
+  `TheClientStillSaysWhatTheExitCodesCannot` and
+  `TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched` (no
+  `claude.exe`). **Do not change the gating to make CI read zero** — that would
+  buy a tidier badge by deleting the run's own account of what it did not cover,
+  which is the whole point of the mechanism. **Zero skipped is a release
+  requirement, not a CI one**: [release checklist item 8](RELEASING.md#the-release-gate)
+  demands it, and it is met by cutting from a machine that has every capability
+  present. If that ever needs proving on a runner, the answer is to install the
+  missing capabilities there and set `BROWSERAI_RELEASE_RUN=1`, never to soften
+  the skip.
 - **A red `UpstreamReviewTests` means upstream moved and nobody reviewed it.**
   That is [the marker gate](#the-upstream-review-gate) working, not a stale file.
   Lock-file drift is reported into the job summary and never fails the build,
