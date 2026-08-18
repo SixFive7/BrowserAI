@@ -55,8 +55,22 @@ internal sealed class ProtocolSplitTests
         // sees only its own negotiation -- so the product logs it, and this is
         // the assertion the kb's protocol row has been owed since it was
         // written.
-        await Assert.That(run.StandardError)
-            .Contains($"requested={BrowserProxy.ChildProtocolVersion} negotiated={BrowserProxy.ChildProtocolVersion}");
+        //
+        // ⚠️ ASSERTED ON THE PROCESS LOG, NOT ON STDERR, and the difference is a
+        // durability guarantee rather than a preference. Corrected 2026-08-18
+        // (previously `run.StandardError`), which was red on CI twice for a
+        // record the product had written correctly both times. stderr goes
+        // through `AddConsole`, which hands records to a background processor
+        // thread; `SliceRun` then kills BrowserAI with TerminateProcess, on
+        // purpose, to prove containment -- and the queue's contents go with it.
+        // The two runs lost different amounts of the tail, which is the
+        // signature of a queue and not of a missing call. `RollingFileWriter`
+        // is unbuffered per record and `ProcessLog`'s own remarks say so, so the
+        // file is where "the product recorded this" can actually be asserted.
+        // Scoped to this run's pid, because that log is machine-wide.
+        await Assert.That(run.ProcessLog)
+            .Contains($"requested={BrowserProxy.ChildProtocolVersion} negotiated={BrowserProxy.ChildProtocolVersion}")
+            .Because($"BrowserAI ran as pid {run.BrowserAiProcessId} and wrote {run.ProcessLog.Split('\n').Length} record(s) to the shared process log");
 
         // And the pin itself is the child's measured ceiling rather than a
         // number somebody liked: the same value the snapshot generator recorded

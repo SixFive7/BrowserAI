@@ -27,15 +27,25 @@ namespace BrowserAI.Sessions;
 /// </list>
 /// <para>
 /// <b>The discriminator is the duration the object is held for, and it decides
-/// the timeout.</b> Milliseconds is internal, so the per-directory gate keeps a
-/// short bounded wait — asking a calling model to retry a 5 ms operation would
-/// be absurd. Anything held for a session's life is the caller's business and
-/// never waits: BrowserAI cannot know what a wait costs its caller, so it
-/// returns the fact — <i>this directory is busy, and here is who has it</i> —
-/// and the decision to retry belongs to the model. The sweep is
-/// try-acquire-and-skip at zero timeout for a third reason: a skipped sweep is
+/// whether there is a wait at all.</b> Anything held for a session's life is the
+/// caller's business and never waits: BrowserAI cannot know what a wait costs
+/// its caller, so it returns the fact — <i>this directory is busy, and here is
+/// who has it</i> — and the decision to retry belongs to the model. The sweep is
+/// try-acquire-and-skip at zero timeout for a second reason: a skipped sweep is
 /// not a missed sweep, because whoever holds the mutex is scanning the same
 /// store.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-18 (previously: "Milliseconds is internal, so the
+/// per-directory gate keeps a short bounded wait — asking a calling model to
+/// retry a 5 ms operation would be absurd").</b> That reasoning sizes the
+/// timeout against <i>one</i> holder and is why the gate was five seconds; the
+/// wait is behind the <b>queue</b> of every process naming the same directory,
+/// and each of them enters the gate in turn merely to discover the file is held.
+/// So the duration something is held for decides <i>whether</i> a scope waits;
+/// the design point decides <i>how long</i>. See
+/// <see cref="PerDirectoryGate"/> for the measurement, which found <c>Busy</c>
+/// reachable by queueing alone.
 /// </para>
 /// <para>
 /// <b>Every name carries the <c>Global\</c> prefix and there is no
@@ -81,17 +91,89 @@ internal static class LockScopes
     /// that waits at all.
     /// </summary>
     /// <remarks>
-    /// It covers the create-or-take critical section and nothing else. The
-    /// section is a file open, a durable write, a rename and a re-open — single
-    /// milliseconds — so five seconds is four orders of magnitude of headroom
-    /// rather than a guess at a busy machine. Exceeding it means something is
-    /// wrong that a longer wait would not fix.
+    /// <para>
+    /// It covers the create-or-take critical section and nothing else: a file
+    /// open, a durable write, a rename and a re-open.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 to sixty seconds (previously five, described as
+    /// "four orders of magnitude of headroom … exceeding it means something is
+    /// wrong that a longer wait would not fix"). Both halves of that sentence
+    /// were false, and the second one was printed at the caller.</b> The headroom
+    /// is not against one section — it is against the <b>queue of every process
+    /// contending for the same directory</b>, because each of them enters this
+    /// gate in turn just to discover the file is held. Measured on an
+    /// <b>idle</b> machine, 200 real processes released together against one
+    /// directory
+    /// ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)):
+    /// </para>
+    /// <list type="table">
+    /// <listheader><term>Contenders</term><description>Slowest refusal, and what it answered</description></listheader>
+    /// <item><term>16</term><description>367 ms — every refusal named the holder</description></item>
+    /// <item><term>100 — <b>the charter's design point</b></term><description>3,349 ms, p99 3,227 ms. <b>A margin of 1.49× on an idle machine</b></description></item>
+    /// <item><term>200</term><description><b>73 refusals of 796 came back <c>Busy</c> at 5,022–5,056 ms</b>, in 4 runs of 4</description></item>
+    /// </list>
+    /// <para>
+    /// <b>So <c>Busy</c> was reachable by queueing alone</b> — no stuck holder, no
+    /// starvation, nothing wrong at all — and the sentence it printed told the
+    /// calling model that waiting would not help, when waiting was the entire
+    /// remedy. At the design point the old value had less headroom than a single
+    /// browser launch takes.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And it was smaller than a wait taken INSIDE it, which is incoherent
+    /// on its face.</b> <c>SessionLock.OpenHeld</c> and
+    /// <c>SessionLock.ReadRecord</c> both run under this gate and both go through
+    /// <see cref="RenameWindow"/>, whose budget has been <b>30 s</b> since
+    /// 2026-08-18. One entitled reader legitimately waiting out a rename window
+    /// therefore held this gate six times longer than its own timeout, turning
+    /// every peer's correct <i>"held by PID n"</i> into a wrong <i>"something is
+    /// wrong"</i>. <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c>
+    /// is what stops that ordering being broken again by a change to either
+    /// number.
+    /// </para>
+    /// <para>
+    /// <b>Sixty seconds, and it is a hang detector rather than a budget.</b> It is
+    /// twice <see cref="RenameWindow.Budget"/>, ~18× the measured design-point
+    /// queue, and ~2,400× the ~25 ms one contender spends inside. A slow machine
+    /// must not reach it; a holder that has genuinely wedged still does, which is
+    /// why it stays bounded.
+    /// </para>
     /// </remarks>
-    public static TimeSpan PerDirectoryGate => TimeSpan.FromSeconds(5);
+    public static TimeSpan PerDirectoryGate => TimeSpan.FromSeconds(60);
 
     /// <summary>
     /// Zero. Every lock a caller can reason about is attempted with this, and
     /// contention is answered immediately with the holder's identity.
     /// </summary>
     public static TimeSpan NeverWaits => TimeSpan.Zero;
+
+    /// <summary>
+    /// The bounded wait on the live-instance set's own gate, which
+    /// <c>Updates.LiveInstances</c> takes around joining and around the census.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Split out on 2026-08-18, at the value it already had.</b> That code
+    /// used <see cref="PerDirectoryGate"/>, and raising the gate to sixty seconds
+    /// would have silently taken this with it — putting a <b>sixty-second stall
+    /// on the startup path</b>, because <c>Join</c> runs while BrowserAI is
+    /// starting and blocks until this expires. Nothing about this scope asked for
+    /// that; it inherited it from a constant that was re-sized for a different
+    /// problem, which is exactly the coupling that produced the defect the gate
+    /// was re-sized for in the first place.
+    /// </para>
+    /// <para>
+    /// <b>Five seconds is right HERE and was wrong there, and the difference is
+    /// the section, not the taste.</b> The per-directory gate is held across a
+    /// durable write, a rename, a re-open and a <see cref="RenameWindow"/> wait;
+    /// this one is held across creating one <c>.live</c> file, or one directory
+    /// enumeration. A hundred processes starting at once queue about 200 ms here
+    /// against 3.3 s there. And the consequences differ: expiring here means
+    /// <i>no update is applied this run</i>, which
+    /// <c>LiveInstances.Join</c> documents as the safe direction and logs; there
+    /// it means a caller is told the wrong thing about who owns a session.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan LiveInstanceGate => TimeSpan.FromSeconds(5);
 }

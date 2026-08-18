@@ -96,7 +96,7 @@ internal sealed class LiveInstances : IDisposable
             _ = Directory.CreateDirectory(directory);
 
             using var gate = MachineMutex.Create(mutexName);
-            var acquired = gate.Acquire(LockScopes.PerDirectoryGate);
+            var acquired = gate.Acquire(LockScopes.LiveInstanceGate);
 
             if (acquired is MutexAcquisition.NotAcquired)
             {
@@ -154,7 +154,7 @@ internal sealed class LiveInstances : IDisposable
         {
             using var gate = MachineMutex.Create(_mutexName);
 
-            if (gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
+            if (gate.Acquire(LockScopes.LiveInstanceGate) is MutexAcquisition.NotAcquired)
             {
                 return false;
             }

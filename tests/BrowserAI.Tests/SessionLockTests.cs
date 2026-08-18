@@ -350,6 +350,40 @@ internal sealed class SessionLockTests
         await Assert.That(LockScopes.PerDirectoryGate).IsGreaterThan(TimeSpan.Zero);
     }
 
+    /// <summary>
+    /// The gate must outlast every wait taken while holding it, or one entitled
+    /// reader converts every peer's correct answer into a wrong one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is an ordering constraint between two numbers in two files, and
+    /// on 2026-08-18 it was violated in shipped code.</b>
+    /// <see cref="RenameWindow.Budget"/> was raised to 30 s that day for good
+    /// measured reasons; <see cref="LockScopes.PerDirectoryGate"/> was 5 s and
+    /// nobody noticed the pair. <c>SessionLock.OpenHeld</c> and
+    /// <c>SessionLock.ReadRecord</c> both run <i>inside</i> the gate and both go
+    /// through <see cref="RenameWindow"/> — so a reader legitimately waiting out
+    /// a rename could hold the gate six times longer than the gate's own
+    /// timeout, and every other contender would be told <c>Busy</c>: <i>"something
+    /// is wrong"</i>, about a machine where nothing was.
+    /// </para>
+    /// <para>
+    /// <b>Asserted rather than commented, because the two values are three
+    /// directories apart and each has its own long justification.</b> Either can
+    /// be re-tuned on its own evidence; what may not happen is the two crossing,
+    /// and the only thing that can notice that is a build.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheGateOutlastsEveryWaitTakenInsideIt()
+    {
+        await Assert.That(LockScopes.PerDirectoryGate).IsGreaterThan(RenameWindow.Budget)
+            .Because(
+                "every open performed under the per-directory gate goes through RenameWindow, so a gate that expires "
+                + "before that wait does turns a peer's correct 'held by PID n' into a wrong 'Busy'");
+    }
+
     [Test]
     public async Task AMachineMutexRefusesAnyNameThatIsNotGlobal()
     {

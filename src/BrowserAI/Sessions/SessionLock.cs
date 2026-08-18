@@ -191,10 +191,21 @@ internal sealed class SessionLock : IDisposable
 
             if (acquisition is MutexAcquisition.NotAcquired)
             {
+                // ⚠️ The old sentence here asserted "that section takes
+                // milliseconds, so something is wrong that waiting longer will
+                // not fix", and it was measured false on 2026-08-18: at 200
+                // processes released together against one directory, 73 refusals
+                // of 796 arrived here purely because each peer enters this gate
+                // in turn to discover the file is held. Waiting longer was the
+                // whole remedy. A refusal that misdiagnoses the machine is worse
+                // than a bare one, because the model reading it acts on the
+                // diagnosis -- so this now names both possibilities and neither
+                // is presented as established.
                 return new SessionLockResult(
                     SessionLockOutcome.Busy,
-                    $"'{location.FullPath}' is being opened or closed by another BrowserAI right now, and it did not finish within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
-                    "That section takes milliseconds, so something is wrong that waiting longer will not fix. Nothing was changed.");
+                    $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
+                    "Either a process is wedged holding it, or more BrowserAI processes are opening this one directory at once than that will serve — every process naming it queues here. Nothing was changed. " +
+                    "Wait and call again, or give this session a directory of its own, which is the arrangement this design expects and which never queues at all.");
             }
 
             if (acquisition is MutexAcquisition.AcquiredAbandoned)

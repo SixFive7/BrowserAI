@@ -36,7 +36,18 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// <param name="Processes">Every member of the job at the moment the browser was up.</param>
 /// <param name="BrowserAiProcessId">The published binary's own pid.</param>
 /// <param name="Survivors">Processes still alive after the published binary was terminated from outside.</param>
-/// <param name="StandardError">Everything BrowserAI wrote to stderr.</param>
+/// <param name="StandardError">
+/// Everything BrowserAI wrote to stderr — <b>as much of it as survived the kill</b>.
+/// ⚠️ Do not assert that a record was written on this: stderr goes through
+/// <c>AddConsole</c>, whose background processor loses whatever it still holds
+/// when the process is terminated, and this run terminates it on purpose. Use
+/// <paramref name="ProcessLog"/>, which is durable per record by construction.
+/// </param>
+/// <param name="ProcessLog">
+/// Every record <b>this run's BrowserAI</b> wrote to the shared process log,
+/// which <c>RollingFileWriter</c> writes unbuffered — so a record that was
+/// logged is on disk whatever happens to the process afterwards.
+/// </param>
 /// <param name="SessionDirectory">The session this run's browser belongs to.</param>
 internal sealed record SliceRun(
     JsonObject InitializeResult,
@@ -48,6 +59,7 @@ internal sealed record SliceRun(
     int BrowserAiProcessId,
     IReadOnlyList<ObservedProcess> Survivors,
     string StandardError,
+    string ProcessLog,
     string SessionDirectory)
 {
     private static readonly Lazy<Task<SliceRun>> Shared = new(CaptureAsync);
@@ -183,6 +195,7 @@ internal sealed record SliceRun(
             browserAi,
             survivors,
             standardError,
+            ProcessLogRecords.ForPid(browserAi),
             session);
     }
 
