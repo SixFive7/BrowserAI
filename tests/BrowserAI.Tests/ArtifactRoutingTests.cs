@@ -110,10 +110,15 @@ internal sealed class ArtifactRoutingTests
     [Test]
     public async Task EveryToolCarryingAFilenameHasBeenJudged()
     {
-        // The same rule as the session-type policy, applied to files: a tool
-        // whose `filename` nobody has classified writes wherever upstream's
-        // default puts it, which is the flat output directory §F exists to
-        // replace.
+        // Deny-by-default, applied to files: a tool whose `filename` nobody has
+        // classified writes wherever upstream's default puts it, which is the
+        // flat output directory §F exists to replace.
+        //
+        // Corrected 2026-08-18 (previously "The same rule as the session-type
+        // policy, applied to files"). That policy was removed -- it was never a
+        // boundary against the caller -- and this rule stands on its own: an
+        // unjudged filename is not a permission question, it is a file nobody
+        // can find.
         using var snapshot = JsonDocument.Parse(await File.ReadAllBytesAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "tools-list.json")));
 

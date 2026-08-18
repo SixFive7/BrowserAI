@@ -195,71 +195,54 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     [Test]
-    public async Task ModeRefusalAndTheUnclassifiedToolAreEmittedByRealCalls()
+    public async Task TheAnnotationLivenessRowIsEmittedByARealCallOnAWindowlessSession()
     {
+        // ⚠️ Replaced 2026-08-18 (previously ModeRefusalAndTheUnclassifiedToolAreEmittedByRealCalls,
+        // which provoked `ModeRefusal` with `browser_run_code_unsafe` on an
+        // `interactive` session and `UnclassifiedTool` with a name no build
+        // knows; and beside it AConfigAnswerCarryingSecretsIsWithheldRatherThanForwarded,
+        // which provoked `ConfigurationWouldDiscloseSecrets`). All three rows
+        // are gone from the catalogue with the permission matrix that emitted
+        // them, and a provocation for a row that no longer exists would not
+        // compile -- which is why they were deleted rather than left to rot.
+        //
+        // What survives is one row, and it is a LIVENESS refusal:
+        // `browser_annotate` blocks until a human draws, and its window appears
+        // on a windowless session too, so the call would hang until the run was
+        // killed.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var directory = Path.Combine(sessions.Root, "interactive");
+        var directory = Path.Combine(sessions.Root, "unattended");
 
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["purpose"] = "the interactive session a back door is refused on",
-            ["mode"] = "interactive",
-        });
-
-        // Row 5, on the measured hole rather than on a storage tool: it is in
-        // `core`, so no capability setting removes it and this decision is the
-        // only thing that does.
-        var refused = await CallAsync(rig, "browser_run_code_unsafe", new JsonObject { ["session"] = directory });
-        var mode = SessionModes.Recorded("interactive");
-
-        await Assert.That((bool?)refused["isError"]).IsTrue();
-        Match(TextOf(refused), nameof(SessionErrors.ModeRefusal), SessionToolPolicy.Decide("browser_run_code_unsafe", mode).Refusal!);
-
-        var unclassified = await CallAsync(rig, "browser_not_a_real_tool", new JsonObject { ["session"] = directory });
-
-        await Assert.That((bool?)unclassified["isError"]).IsTrue();
-        Match(
-            TextOf(unclassified),
-            nameof(SessionErrors.UnclassifiedTool),
-            SessionErrors.UnclassifiedTool("browser_not_a_real_tool", "interactive"));
-    }
-
-    [Test]
-    public async Task AConfigAnswerCarryingSecretsIsWithheldRatherThanForwarded()
-    {
-        await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools["browser_get_config"] = new FakeToolBehaviour
-            {
-                // Upstream's own shape: the whole resolved config, serialised
-                // with no filtering, inside a Markdown heading.
-                RawResult =
-                    """{"content":[{"type":"text","text":"### Config\n{\n  \"browser\": { \"browserName\": \"chromium\" },\n  \"secrets\": { \"TOKEN\": \"hunter2\" }\n}"}]}""",
-            });
-
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
-
-        var directory = Path.Combine(sessions.Root, "config-session");
-
-        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
-        {
-            ["directory"] = directory,
-            ["purpose"] = "reads a config that should never have had secrets in it",
+            ["purpose"] = "the unattended session an annotation call would hang",
             ["mode"] = "headless",
         });
 
-        var answer = await CallAsync(rig, "browser_get_config", new JsonObject { ["session"] = directory });
-        var text = TextOf(answer);
+        var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory });
+        var mode = SessionModes.Recorded("headless");
 
-        await Assert.That((bool?)answer["isError"]).IsTrue();
-        await Assert.That(text).DoesNotContain("hunter2");
-        Match(text, nameof(SessionErrors.ConfigurationWouldDiscloseSecrets), SessionErrors.ConfigurationWouldDiscloseSecrets());
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        Match(
+            TextOf(refused),
+            nameof(SessionErrors.AnnotationWouldHangAWindowlessSession),
+            SessionErrors.AnnotationWouldHangAWindowlessSession(SessionToolPolicy.AnnotateTool, mode));
 
-        // The child WAS asked -- this is a guard on the answer, not on the call,
-        // and saying so is what stops it being read as a second refusal rule.
-        await Assert.That(sessions.SessionChildren.Any(child => child.MethodsReceived.Contains("tools/call"))).IsTrue();
+        // And a tool this build has never heard of is FORWARDED now rather than
+        // refused, so nothing of ours is in that answer at all. Asserted here
+        // because the deleted row was the one thing that used to make it ours.
+        var unknown = await rig.Client.SendAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_not_a_real_tool",
+            ["arguments"] = new JsonObject { ["session"] = directory },
+        });
+
+        await Assert.That(sessions.SessionChildren.Any(child =>
+            child.ToolCallsReceived.Contains("browser_not_a_real_tool", StringComparer.Ordinal))).IsTrue();
+        await Assert.That(unknown.Envelope.ToJsonString()).DoesNotContain("does not classify");
     }
 
     [Test]
@@ -696,8 +679,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
-    [DependsOn(nameof(ModeRefusalAndTheUnclassifiedToolAreEmittedByRealCalls))]
-    [DependsOn(nameof(AConfigAnswerCarryingSecretsIsWithheldRatherThanForwarded))]
+    [DependsOn(nameof(TheAnnotationLivenessRowIsEmittedByARealCallOnAWindowlessSession))]
     [DependsOn(nameof(TheLockRowsAreEmittedByRealLockConditions))]
     [DependsOn(nameof(TheBrowserRuntimeFailureRowIsEmittedByAChildThatCannotStart))]
     [DependsOn(nameof(TheFilenameRowsAreEmittedByRealCallsThatNameAFileOutsideTheSession))]
@@ -725,10 +707,18 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(string.Join(Environment.NewLine, untriggered)).IsEmpty();
 
         // And the count, so a row deleted rather than triggered does not make
-        // this pass by shrinking the question. 24 since build-order step 17,
-        // which added §H.4's row 11 — the Firefox profile dialog, the last row
-        // of the catalogue that had been written down and never built.
-        await Assert.That(rows.Count).IsEqualTo(24);
+        // this pass by shrinking the question.
+        //
+        // ⚠️ **Corrected 2026-08-18 to 22 (previously "24 since build-order
+        // step 17, which added §H.4's row 11 — the Firefox profile dialog").**
+        // Three rows went with the tool-permission matrix — `ModeRefusal`,
+        // `UnclassifiedTool` and `ConfigurationWouldDiscloseSecrets` — and one
+        // arrived in their place, `AnnotationWouldHangAWindowlessSession`. They
+        // were **deleted rather than orphaned**: this census fails on a row
+        // nobody emits, so a refusal left in the catalogue after the code that
+        // produced it went would have been a red build, which is the mechanism
+        // working.
+        await Assert.That(rows.Count).IsEqualTo(22);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

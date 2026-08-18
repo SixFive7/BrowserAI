@@ -472,19 +472,28 @@ internal sealed class FakeChildHarnessTests
         // rather than a refusal of ours.
         await Assert.That(doubleMode!.Headed).IsTrue();
 
-        // ⚠️ THE DIFFERENCE BETWEEN THE TWO MODES IS THE STORAGE CLASS AND
-        // NOTHING ELSE, and this test asserts that rather than describing it,
-        // because the first version of it named `browser_annotate` and was RED:
-        // that tool is HumanPresent, which `persistent` refuses too — the only
-        // mode permitting it is `interactive`. Measured 2026-08-17 from
-        // SessionToolPolicy's own table: headless permits Ordinary,
-        // Configuration and ArbitraryCode; persistent permits those three plus
-        // Storage. So a cookie tool is the one thing the real-child rig gives up
-        // by being windowless, and the arm that needs it does not exist.
-        await Assert.That(SessionToolPolicy.Decide("browser_cookie_list", doubleMode).Refusal).IsNull();
-        await Assert.That(SessionToolPolicy.Decide("browser_cookie_list", realMode).Refusal).IsNotNull();
+        // ⚠️ THE DIFFERENCE BETWEEN THE TWO MODES IS THE STORAGE CAPABILITY AND
+        // NOTHING ELSE, and this test asserts that rather than describing it.
+        //
+        // Corrected 2026-08-18 (previously this asserted the difference through
+        // `SessionToolPolicy.Decide("browser_cookie_list", ...)`, which refused
+        // it on the windowless mode; and it carried a note that
+        // `browser_annotate` was `HumanPresent` and so refused on `persistent`
+        // too). The (tool, mode) permission matrix is gone, so `Decide` now
+        // allows the cookie tools everywhere and that assertion would be a
+        // tautology. The difference it was reaching for is still real and is
+        // now asserted where it lives: the windowless mode's child is launched
+        // WITHOUT the `storage` capability, so those tools do not exist in it.
+        await Assert.That(doubleMode.Storage).IsTrue();
+        await Assert.That(realMode.Storage).IsFalse();
 
-        // And the tools that arm actually calls are permitted in both, so the
+        // And the one refusal that is left goes the other way from the old
+        // `browser_annotate` note: it is a liveness guard keyed on `Headed`, so
+        // the headless rig refuses it and the headed one does not.
+        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool, realMode).Refusal).IsNotNull();
+        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool, doubleMode).Refusal).IsNull();
+
+        // The tools that arm actually calls are permitted in both, so the
         // change costs it nothing. `browser_navigate` is the call under test and
         // the close tool is the product's own idle close.
         await Assert.That(SessionToolPolicy.Decide("browser_navigate", realMode).Refusal).IsNull();

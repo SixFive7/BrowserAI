@@ -362,10 +362,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        // THE enforcement point. The mode is read off the session the caller's
-        // own argument resolved to -- an immutable field of that record -- so
-        // there is no cell another thread could change between the lookup and
-        // the decision.
+        // The one refusal left, and it is a LIVENESS guard rather than a
+        // permission: `browser_annotate` opens a window and blocks until a human
+        // draws in it, and the window appears on a headless session too, so an
+        // unattended run that called it would hang until it was killed. The mode
+        // is read off the session the caller's own argument resolved to -- an
+        // immutable field of that record -- so nothing another thread does can
+        // change what this call is judged against.
+        //
+        // Corrected 2026-08-18 (previously "THE enforcement point", deciding a
+        // (tool, mode) permission matrix): that matrix was never a boundary
+        // against the caller, who chooses the session directory and reads the
+        // profile inside it as the same user. Change control lives at the
+        // release gate, in the four golden snapshots.
         var decision = SessionToolPolicy.Decide(tool, live.Mode);
 
         if (!decision.IsAllowed)
@@ -432,14 +441,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         if (answer.Response is { } response)
         {
-            if (GuardAnswer(tool, response) is { } withheld)
-            {
-                live.Artifacts.Release(plan);
-                ProxyLog.AnswerWithheld(_logger, tool, live.Location.FullPath);
-                await RefuseAsync(caller, request.Id, withheld, cancellationToken).ConfigureAwait(false);
-                return;
-            }
-
             // The one answer BrowserAI rewrites rather than forwards, and the
             // trade is deliberate: upstream's "not installed" message ends with
             // an npx command this product does not ship, which resolves a
@@ -470,33 +471,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         live.Artifacts.Release(plan);
         await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Checks a child's answer before it is forwarded, for the one class of tool
-    /// whose <i>result</i> can disclose more than the call did.
-    /// </summary>
-    /// <remarks>
-    /// <b>On every ordinary call this returns <see langword="null"/> and the
-    /// child's own bytes go back untouched</b>, which is what keeps the
-    /// passthrough byte-identical. It exists because
-    /// <c>browser_get_config</c>'s handler is
-    /// <c>JSON.stringify(context.config, null, 2)</c> with no filtering, and
-    /// <c>secrets</c> is a real config key.
-    /// </remarks>
-    private static string? GuardAnswer(string tool, JsonRpcResponse response)
-    {
-        if (!SessionToolPolicy.Classification.TryGetValue(tool, out var toolClass)
-            || toolClass is not ToolClass.Configuration)
-        {
-            return null;
-        }
-
-        var text = string.Concat(
-            (response.Result?["content"] as JsonArray ?? [])
-                .Select(block => (block?["text"] as JsonValue)?.GetValue<string>() ?? string.Empty));
-
-        return SessionToolPolicy.Guard(text);
     }
 
     /// <summary>
@@ -836,13 +810,17 @@ internal static partial class ProxyLog
     public static partial void SessionMissing(ILogger logger, string tool);
 
     /// <summary>
-    /// A call was refused by the <c>(tool, mode)</c> decision.
+    /// A call was refused because it would not have returned.
     /// </summary>
     /// <remarks>
-    /// Logged at Information rather than Debug: this is the record that the
-    /// security boundary the charter traded away for one process is actually
-    /// being enforced, and an operator asking "did anything try to read cookies
-    /// out of an interactive session" has nowhere else to look.
+    /// <b>Corrected 2026-08-18 (previously "refused by the <c>(tool, mode)</c>
+    /// decision … the record that the security boundary the charter traded away
+    /// for one process is actually being enforced").</b> There is no such
+    /// boundary and there never was one here: the caller owns the session
+    /// directory and reads the profile inside it as the same user. What this
+    /// records now is the single liveness refusal, and Information is still the
+    /// right level — a call that was declined is a call whose absence somebody
+    /// will eventually have to explain.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="tool">The tool that was refused.</param>
@@ -851,18 +829,8 @@ internal static partial class ProxyLog
     [LoggerMessage(
         EventId = 9,
         Level = LogLevel.Information,
-        Message = "'{Tool}' was refused on the '{Mode}' session at {Session} by the session-type policy.")]
+        Message = "'{Tool}' was refused on the '{Mode}' session at {Session}: it would have blocked until this run was killed.")]
     public static partial void ToolRefused(ILogger logger, string tool, string mode, string session);
-
-    /// <summary>A child's answer was withheld because forwarding it would disclose something.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool that was called.</param>
-    /// <param name="session">The session directory named.</param>
-    [LoggerMessage(
-        EventId = 10,
-        Level = LogLevel.Warning,
-        Message = "'{Tool}' answered for the session at {Session}, and the answer was withheld rather than forwarded.")]
-    public static partial void AnswerWithheld(ILogger logger, string tool, string session);
 
     /// <summary>
     /// Upstream's install advice was replaced, and byte-identity was given up to

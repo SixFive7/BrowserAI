@@ -21,15 +21,19 @@ namespace BrowserAI.Tests.Harness;
 /// double</b>, substituted through <see cref="SessionEnvironment.ConnectChild"/>.
 /// Everything above that seam is the product: the lock, the record, the session
 /// log, the index entry, the generated config, the routing and — the reason this
-/// exists — the <c>(tool, mode)</c> decision. What is absent is
+/// exists — routing a call to the child of the session it named. What is absent is
 /// <c>ChildProcessSession</c>: the launcher, the job, the stderr pump and the
 /// cached exit code, which steps 5, 6 and 7 prove against real processes and
 /// which no assertion in this layer is evidence about.
 /// </para>
 /// <para>
-/// <b>Why it is worth the seam.</b> The lookup that decides whether a call may
-/// touch cookies has to be driven across sessions of different modes <i>at the
-/// same time</i>, at a level of contention that would actually expose a race.
+/// <b>Why it is worth the seam.</b> The lookup that decides which child a call
+/// reaches has to be driven across sessions of different modes <i>at the same
+/// time</i>, at a level of contention that would actually expose a race — a call
+/// routed to a neighbour's child drives the wrong browser and looks like a
+/// success. *Corrected 2026-08-18 (previously "The lookup that decides whether a
+/// call may touch cookies").* The <c>(tool, mode)</c> permission policy was
+/// removed; the lookup it shared with routing did not go anywhere.
 /// Against real children that is three node processes per assertion and a suite
 /// measured in minutes; here it is milliseconds, so the concurrency is exercised
 /// on every run rather than once.
@@ -247,10 +251,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <b>A rig whose children are doubles gets <c>persistent</c>; a rig whose
-    /// children are real gets <c>headless</c>.</b> The first is about tool
-    /// policy — <c>persistent</c> permits every tool, and the passthrough
-    /// assertions are about bytes, so a mode refusal would replace the child's
-    /// answer with ours. The second is about a window: <c>persistent</c> is
+    /// children are real gets <c>headless</c>.</b> The first is so that no
+    /// BrowserAI refusal can stand between the double and the caller —
+    /// <c>persistent</c> opens a window, so even the one surviving refusal
+    /// (<c>browser_annotate</c> on a windowless session) does not fire, and the
+    /// passthrough assertions are about bytes. The second is about a window:
+    /// <c>persistent</c> is
     /// <c>Headed: true</c>, and behind a real node child that is a full Chromium
     /// window on the developer's screen, taking their foreground. Asserted by
     /// <c>FakeChildHarnessTests.NoRigThatStartsARealBrowserOpensItWithAWindow</c>.

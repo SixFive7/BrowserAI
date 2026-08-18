@@ -168,34 +168,46 @@ key comes back. `Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committe
 
 ### What BrowserAI's own modes permit, after its own filtering
 
-**Measured 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
-1.63.0-alpha-2026-08-05.** Upstream's per-mode surfaces are 42 / 42 / 59 above;
-these are what survives BrowserAI's `(tool, mode)` decision, out of the **59-tool
-union** it advertises to every caller. Re-establish by running
-`SessionPolicyTests.EachModePermitsExactlyTheSurfaceTheTestsDeclare`, which
-computes the union from the committed snapshot and asks the product's own
+**Re-measured 2026-08-18 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05, and corrected from 41 / 41 / 58.** Upstream's per-mode
+surfaces are 42 / 42 / 59 above; these are what survives BrowserAI's own decision,
+out of the **59-tool union** it advertises to every caller. Re-establish by
+running `SessionPolicyTests.EveryModePermitsEveryToolItAdvertisesExceptTheOneThatWouldHang`,
+which computes the union from the committed snapshot and asks the product's own
 decision function about every name in it. `[FLOATS]`
 
 | Mode | Permitted | Refused, and why |
 |---|---:|---|
-| `headless` | **41** | the 17 `storage` tools; `browser_annotate`, whose window appears with nobody watching |
-| `interactive` | **41** | the 17 `storage` tools; `browser_run_code_unsafe`, which reaches the same cookies through the Playwright server process |
-| `persistent` | **58** | `browser_annotate` — nothing about a stored profile implies a human is present |
+| `headless` | **58** | `browser_annotate`, whose window appears even here and then blocks until a human draws in it |
+| `interactive` | **59** | nothing |
+| `persistent` | **59** | nothing |
 
-**The two 41s are different sets**, which is the whole point: `headless` permits
-arbitrary code and refuses the annotation tool, `interactive` does the opposite.
-The classification behind them is 69 names in five classes — **49 ordinary, 17
-`storage`, and one each of `ArbitraryCode`, `HumanPresent` and `Configuration`** —
-and a name absent from it is refused in every mode. `[FLOATS]`
+⚠️ **Corrected 2026-08-18 (previously "`headless` **41** — the 17 `storage`
+tools; `browser_annotate` … `interactive` **41** — the 17 `storage` tools;
+`browser_run_code_unsafe`, which reaches the same cookies through the Playwright
+server process … `persistent` **58** — `browser_annotate`", and beside the table
+"the classification behind them is 69 names in five classes — 49 ordinary, 17
+`storage`, and one each of `ArbitraryCode`, `HumanPresent` and `Configuration`").**
+The `(tool, mode)` permission matrix was removed. **It was never a boundary
+against the caller:** the calling agent chooses the session directory, the profile
+and its cookie database are created inside it, and the agent runs as the same
+Windows user, so DPAPI decrypts for it — an agent holding any file tool reads what
+the matrix declined to return. The one refusal left is **liveness, not security**:
+`browser_annotate` blocks until a human draws, and the dashboard window appears on
+a windowless session too, so an unattended run that called it would hang until it
+was killed.
 
-> **Why the numbers are not simply upstream's minus ours.** A `headless` or
-> `interactive` session's child is started without the `storage` capability, so
-> those 17 tools do not exist in that process at all; they are still *advertised*,
-> because the MCP spec forbids the tool set varying per connection, and BrowserAI
-> refuses them itself so the caller gets a sentence naming the mode that would
-> permit the call rather than upstream's *"unknown tool"*.
-> `browser_run_code_unsafe` is the one that cannot be handled that way — it is in
-> `core`, which upstream ors in unconditionally.
+**The `storage` tools are still absent from a windowless session's child**, and
+that is a different mechanism which did not change: a `headless` or `interactive`
+session's child is started **without the `storage` capability**, so those 17 tools
+do not exist in that process at all. They are still *advertised*, because the MCP
+spec forbids the tool set varying per connection — so calling one on such a
+session now reaches the child and gets upstream's *"unknown tool"* rather than a
+BrowserAI sentence naming the mode that would permit it. That is the one thing the
+removal cost a model, and it is recorded here rather than argued away.
+`browser_run_code_unsafe` was never coverable that way in any case: it is in
+`core`, which upstream ors in unconditionally, so **it is reachable from every
+mode** — as it always was from `headless` and `persistent`. `[FLOATS]`
 
 ## Artifacts and output-directory behaviour
 

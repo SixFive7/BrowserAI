@@ -34,13 +34,24 @@ internal enum SessionMode
 /// <para>
 /// <b>One table, because six consumers have to agree.</b> The server
 /// <c>instructions</c>, <c>init</c>'s description, <c>resume</c>'s result, the
-/// refusal text, the <c>(tool, mode)</c> enforcement decision and the tests all
-/// render from here — and a fourth mode added in one place and missed in another
-/// is a mode nobody picks correctly, failing silently.
-/// <c>ModelSurfaceTests</c> asserts each consumer renders every row of this
-/// table, and <see cref="SessionToolPolicy"/> refuses everything for a mode it
-/// has no policy row for, so a mode added here alone leaves the build red rather
-/// than quietly permitting whatever the derivation happened to produce.
+/// refusal text, the generated child config and the tests all render from here —
+/// and a fourth mode added in one place and missed in another is a mode nobody
+/// picks correctly, failing silently. <c>ModelSurfaceTests</c> asserts each
+/// consumer renders every row of this table.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-18 (previously the fifth consumer was "the
+/// <c>(tool, mode)</c> enforcement decision", and this paragraph added that
+/// <see cref="SessionToolPolicy"/> "refuses everything for a mode it has no
+/// policy row for").</b> The permission matrix is gone: it was never a boundary
+/// against the caller, who chooses the session directory and can read the profile
+/// inside it as the same Windows user. The consumer named in its place is the one
+/// that was always doing the real work — <c>BrowserConfiguration.ForSession</c>
+/// turns <see cref="SessionModeDefinition.Headed"/> into upstream's
+/// <c>headless</c> and <see cref="SessionModeDefinition.Storage"/> into the
+/// capability set the session's own child is launched with, so a mode without
+/// storage has no cookie tools <i>in its child at all</i> rather than a lookup
+/// declining to forward them.
 /// </para>
 /// <para>
 /// <b>Rows 3 and 4 of §C's eight combinations are deliberately absent.</b>
@@ -80,19 +91,23 @@ internal static class SessionModes
     public static string Names { get; } = string.Join(", ", All.Select(mode => mode.Name));
 
     /// <summary>
-    /// The whole table as one clause per mode — name, what it grants, and what it
-    /// refuses — for <c>init</c>'s description and for the refusal a bad
-    /// <c>mode</c> argument produces.
+    /// The whole table as one clause per mode — name and what it grants — for
+    /// <c>init</c>'s description and for the refusal a bad <c>mode</c> argument
+    /// produces.
     /// </summary>
     /// <remarks>
-    /// <b>The "refuses" half is read out of <see cref="SessionToolPolicy"/>
-    /// rather than written beside the grant.</b> A hand-written refusal clause is
-    /// the fourth copy this file exists to prevent: it would still read correctly
-    /// on the day a tool changed class, and nothing would say otherwise.
+    /// ⚠️ <b>Corrected 2026-08-18 (previously each clause carried a second half,
+    /// <c>SessionToolPolicy.Summary(mode)</c>, naming what the mode
+    /// <i>refuses</i>).</b> There is no permission matrix left to summarise: it
+    /// was removed because it was never a boundary against the caller, who owns
+    /// the session directory and therefore the profile inside it. What a mode
+    /// <b>is</b> — a window or none, a profile that persists or one that does
+    /// not — is the whole of what a model needs to choose on, and it is what
+    /// <see cref="SessionModeDefinition.Grants"/> already said.
     /// </remarks>
     public static string Table { get; } = string.Join(
         " ",
-        All.Select(mode => $"'{mode.Name}' — {mode.Grants}; {SessionToolPolicy.Summary(mode.Mode)}."));
+        All.Select(mode => $"'{mode.Name}' — {mode.Grants}."));
 
     /// <summary>
     /// The mode table as the server <c>instructions</c> renders it: one line per
@@ -107,7 +122,7 @@ internal static class SessionModes
     /// </remarks>
     public static string Lines { get; } = string.Join(
         "\n",
-        All.Select(mode => $"· {mode.Name} — {mode.Grants}; {SessionToolPolicy.Summary(mode.Mode)}."));
+        All.Select(mode => $"· {mode.Name} — {mode.Grants}."));
 
     private static FrozenDictionary<string, SessionModeDefinition> ByName { get; } =
         All.ToFrozenDictionary(mode => mode.Name, StringComparer.OrdinalIgnoreCase);

@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Proxy;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
@@ -160,18 +161,29 @@ internal sealed class ModelSurfaceTests
     /// What each mode is expected to refuse, written down rather than computed.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>This is the sixth consumer of the one table, and it is a consumer
-    /// precisely because it is written by hand.</b> Derived from the policy it
-    /// would agree with the policy by construction and could never fail; written
-    /// down, a reclassified tool or a fourth mode is a red build with a number in
-    /// the message. The counts are of the <b>59-tool union surface</b> BrowserAI
-    /// advertises — measured 2026-08-16 from the committed snapshot.
+    /// precisely because it is written by hand.</b> Derived from the product's
+    /// own decision it would agree with it by construction and could never fail;
+    /// written down, a fourth mode is a red build with a number in the message.
+    /// The counts are of the <b>59-tool union surface</b> BrowserAI advertises.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 to 58 / 59 / 59 (previously 41 / 41 / 58,
+    /// measured 2026-08-16 against the five-class <c>(tool, mode)</c> permission
+    /// matrix).</b> That matrix was removed: it was never a boundary against the
+    /// caller, who chooses the session directory and can read the profile inside
+    /// it as the same Windows user. The single tool any mode still refuses is
+    /// <c>browser_annotate</c>, on a mode that promised no window, and the reason
+    /// is <b>liveness</b> — it blocks until a human draws, and the window appears
+    /// on a headless session too.
+    /// </para>
     /// </remarks>
     private static readonly (string Mode, int Allowed, string[] Refused)[] Expected =
     [
-        ("headless", 41, ["browser_cookie_list", "browser_storage_state", "browser_localstorage_get", "browser_annotate"]),
-        ("interactive", 41, ["browser_cookie_list", "browser_storage_state", "browser_localstorage_get", "browser_run_code_unsafe"]),
-        ("persistent", 58, ["browser_annotate"]),
+        ("headless", 58, [SessionToolPolicy.AnnotateTool]),
+        ("interactive", 59, []),
+        ("persistent", 59, []),
     ];
 
     [Test]
@@ -215,12 +227,45 @@ internal sealed class ModelSurfaceTests
             Require(missing, badMode, mode.Name, "the refusal text");
             Require(missing, badMode, mode.Grants, "the refusal text");
 
-            // 5. Session-type enforcement. Deny-by-default means an unclassified
-            //    mode refuses everything, so this asks for a real policy row
-            //    rather than for the sentinel.
-            if (SessionToolPolicy.Decide("browser_navigate", mode) is { IsAllowed: false })
+            // 5. The generated child config, which is where a mode stops being
+            //    a description and becomes two switches on a real browser.
+            //
+            //    ⚠️ Corrected 2026-08-18 (previously "session-type enforcement",
+            //    asserting the mode had a row in the (tool, mode) permission
+            //    matrix). That matrix is gone, and a check against it would now
+            //    pass for every mode including one nobody had considered — a
+            //    consumer that cannot fail is worse than a missing one. This is
+            //    the consumer that was always doing the work: `Headed` becomes
+            //    upstream's `headless`, and `Storage` becomes the capability set
+            //    the session's own child is launched with, so a mode without it
+            //    has no cookie tools IN ITS CHILD rather than a lookup declining
+            //    to forward them.
+            var generated = BrowserConfiguration.ForSession(
+                SessionPath.Resolve(Path.Combine(sessions.Root, $"config-{mode.Name}")),
+                mode,
+                SessionManager.SupportedBrowser,
+                tracing: false,
+                BrowserConfiguration.DefaultConsoleLevel);
+
+            var opinions = generated.Opinions.ToDictionary(
+                opinion => opinion.Path,
+                opinion => opinion.Value.ToJsonString(),
+                StringComparer.Ordinal);
+
+            var headless = mode.Headed ? "false" : "true";
+
+            if (opinions.GetValueOrDefault("browser.launchOptions.headless") != headless)
             {
-                missing.Add($"session-type enforcement has no policy row for '{mode.Name}': {SessionToolPolicy.Summary(mode.Mode)}");
+                missing.Add($"the generated config does not render '{mode.Name}' headed={mode.Headed}");
+            }
+
+            var capabilities = new JsonArray(
+                [.. (mode.Storage ? BrowserConfiguration.UnionCapabilities : BrowserConfiguration.BaseCapabilities)
+                    .Select(capability => (JsonNode)capability!)]).ToJsonString();
+
+            if (opinions.GetValueOrDefault("capabilities") != capabilities)
+            {
+                missing.Add($"the generated config does not render '{mode.Name}' storage={mode.Storage}");
             }
 
             // 6. The tests. A mode nobody wrote an expectation for is a mode
@@ -248,18 +293,25 @@ internal sealed class ModelSurfaceTests
         // sends is the same as not having one.
         await Assert.That(ServerInstructions.ByteCount).IsGreaterThan(400);
 
-        // ⚠️ Measured 2026-08-16: 1,613 characters and **1,628 bytes**, against
-        // §H.3's predicted ~1,050. The prediction was written before the mode
-        // lines carried what each mode REFUSES, which is most of the difference.
+        // ⚠️ Re-measured 2026-08-18 off the published binary's own `initialize`
+        // response: **1,261 characters and 1,276 bytes**, leaving 772. The three
+        // mode lines cost 106, 121 and 92 bytes apiece.
         //
-        // The headroom is 420 bytes, and it is deliberately NOT a gate. Planting
-        // a fourth mode measured its cost at 223 bytes, leaving 197 — so §H.3's
-        // claim that the headroom "absorbs a fourth mode without a rewrite" is
-        // true exactly once, and a fifth would need the lines shortened. A gate
-        // on the headroom would have failed that plant on a budget line instead
-        // of on the six-consumer line it was aimed at, which is the wrong test
-        // failing; the hard cap above is the requirement and it already catches
-        // running out.
+        // Corrected 2026-08-18 (previously "Measured 2026-08-16: 1,613
+        // characters and **1,628 bytes** … The headroom is 420 bytes … Planting
+        // a fourth mode measured its cost at 223 bytes, leaving 197"). The mode
+        // lines used to carry what each mode REFUSES, rendered from the
+        // (tool, mode) permission policy, and that policy was removed -- it was
+        // never a boundary against the caller, who chooses the session directory
+        // and reads the profile inside it as the same Windows user. The string
+        // lost 352 bytes with it. The 223-byte figure is NOT carried forward: it
+        // was measured against a line shape that no longer exists, and an
+        // adjusted number is indistinguishable from a measured one.
+        //
+        // The headroom is still deliberately NOT a gate. A gate on it would fail
+        // a fourth mode on a budget line instead of on the six-consumer line the
+        // plant was aimed at, which is the wrong test failing; the hard cap above
+        // is the requirement and it already catches running out.
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync();
         var initialize = await rig.Client.RoundTripAsync("initialize", new JsonObject
@@ -319,21 +371,25 @@ internal sealed class ModelSurfaceTests
 
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
 
-        // ⚠️ Measured 2026-08-17, and the first draft DID NOT FIT. The
-        // description was 1,519 bytes with 529 of headroom; the two sentences as
-        // first written cost 773 and took it to 2,292, which the client would
-        // have truncated silently — removing the tail of the retention policy
-        // and reporting nothing. They were rewritten to 472 rather than anything
-        // else being cut, and the description now stands at 1,991 of 2,048.
+        // ⚠️ Re-measured 2026-08-18 off the published binary's own tools/list:
+        // **1,639 bytes of 2,048, leaving 409.**
         //
+        // Corrected 2026-08-18 (previously "Measured 2026-08-17, and the first
+        // draft DID NOT FIT … the description now stands at 1,991 of 2,048 …
         // **57 bytes of headroom is the finding, and it is not a comfortable
-        // number.** Both required sentences are at the END of the string, so an
-        // overflow deletes exactly the two things §C and the charter demanded be
-        // present. The description is composed from SessionModes.Table, so a
-        // fourth mode or a reclassified tool grows it without anybody editing
-        // this file — and the assertion below, together with
-        // EveryToolDescriptionFitsTheSameBudget, is what turns that into a red
-        // build instead of a warning nobody reads.
+        // number**"). It is comfortable now, and nothing was cut to make it so:
+        // this description renders SessionModes.Table, whose clauses each carried
+        // a second half naming what the mode REFUSES. That half came from the
+        // (tool, mode) permission policy, which was removed, and the description
+        // lost 352 bytes with it.
+        //
+        // The finding the old note carried still stands and is why the assertion
+        // below exists: both required sentences are at the END of the string, so
+        // an overflow deletes exactly the two things the charter demanded be
+        // present, and the description grows without anybody editing this file
+        // whenever the mode table does. Together with
+        // EveryToolDescriptionFitsTheSameBudget that is a red build rather than a
+        // warning nobody reads.
         var bytes = Encoding.UTF8.GetByteCount(description);
 
         await Assert.That(bytes).IsLessThanOrEqualTo(SessionToolSurface.DescriptionMaximumBytes);
@@ -404,20 +460,52 @@ internal sealed class ModelSurfaceTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // And the note itself is derived from the table: the storage tools name
-        // the mode that permits them rather than carrying a hand-written word.
-        var storage = (string?)advertised["browser_storage_state"]?["description"] ?? string.Empty;
-        await Assert.That(storage).Contains("'persistent'");
-        await Assert.That(storage).Contains("'headless'");
+        // ⚠️ Corrected 2026-08-18 (previously this asserted that
+        // `browser_storage_state`'s description named 'persistent' and
+        // 'headless', because the (tool, mode) permission matrix appended a
+        // sentence to every restricted tool). There is one appended sentence
+        // left in the whole surface, and this is it — so what is asserted now is
+        // that it is the ONLY one, which the old form could not say.
+        var annotated = (string?)advertised[SessionToolPolicy.AnnotateTool]?["description"] ?? string.Empty;
+
+        await Assert.That(annotated).Contains("blocks until the run is killed");
+        await Assert.That(annotated).Contains("'headless'");
+        await Assert.That(annotated).Contains("'interactive' or 'persistent'");
+
+        var appended = upstream
+            .Where(entry => SessionToolPolicy.Note(entry.Name) is not null)
+            .Select(entry => entry.Name)
+            .ToList();
+
+        await Assert.That(string.Join(", ", appended)).IsEqualTo(SessionToolPolicy.AnnotateTool);
+
+        // And nothing of the removed matrix survives anywhere in the surface a
+        // model reads. A positive control comes first, because a sweep that
+        // matches nothing is indistinguishable from a genuine absence.
+        var everyDescription = string.Concat(advertised.Values.Select(tool => (string?)tool?["description"] ?? string.Empty));
+
+        await Assert.That(everyDescription).Contains("BrowserAI refuses this");
+
+        foreach (var gone in (string[])["needs a session created in", "is not one this build has classified", "refuses every browser tool"])
+        {
+            await Assert.That(everyDescription).DoesNotContain(gone);
+        }
     }
 
     [Test]
     public async Task NoConditionalCompilationReachesTheEnforcementPath()
     {
-        // §H.6, and it is a property of the artifact rather than of the source:
-        // the decision a released binary takes must be the decision the suite
-        // took. A `#if DEBUG` here would make every test above evidence about a
-        // build nobody ships.
+        // A property of the artifact rather than of the source: the decision a
+        // released binary takes must be the decision the suite took. A `#if
+        // DEBUG` here would make every test above evidence about a build nobody
+        // ships.
+        //
+        // The five files are unchanged since 2026-08-18, when the (tool, mode)
+        // permission matrix was removed from the first of them. What they carry
+        // now is routing — `session` is mandatory and resolves to one child —
+        // plus the single liveness refusal, and both deserve the same guarantee
+        // for the same reason: a caller cannot tell from the outside which build
+        // it is talking to.
         string[] enforcement =
         [
             "src/BrowserAI/Sessions/SessionToolPolicy.cs",
@@ -456,14 +544,19 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task NoEnvironmentVariableOrLaunchSwitchReachesTheEnforcementPath()
     {
-        // The other half of §A's sentence, and the half nothing checked until
-        // 2026-08-17. `#if` is the compile-time route to relaxing a refusal;
-        // this is the run-time one, and it is the worse of the two, because a
-        // conditionally-compiled check at least ships as one artifact. A
-        // variable read here means the binary the suite proved and the binary a
-        // developer runs with BROWSERAI_LET_ME_THROUGH=1 set are the same
-        // artifact taking different decisions, and nothing about the second
-        // reads differently from the first.
+        // The other half, and the half nothing checked until 2026-08-17. `#if`
+        // is the compile-time route to relaxing a refusal; this is the run-time
+        // one, and it is the worse of the two, because a conditionally-compiled
+        // check at least ships as one artifact. A variable read here means the
+        // binary the suite proved and the binary a developer runs with
+        // BROWSERAI_LET_ME_THROUGH=1 set are the same artifact taking different
+        // decisions, and nothing about the second reads differently from the
+        // first.
+        //
+        // It matters more rather than less now that only the liveness refusal is
+        // left: an environment variable that turned `browser_annotate` back on
+        // in a headless session would hang an overnight run, and the hang is the
+        // thing this product exists not to do.
         //
         // The convenience this forbids is real and is answered elsewhere:
         // `debug` on init and resume raises the log level so a refusal can be

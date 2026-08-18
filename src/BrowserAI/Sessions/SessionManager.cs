@@ -186,7 +186,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>Every upstream tool, with no exception — and the exception is what the
     /// measurement removed.</b> This was written to let
-    /// <see cref="ToolClass.Configuration"/> through, on the strength of a design
+    /// <c>browser_get_config</c> through, on the strength of a design
     /// claim that <c>browser_get_config</c> keeps working while the download runs
     /// ([kb](../../../kb/playwright/configuration.md#browser-provisioning)). Measured
     /// 2026-08-16 @ <c>@playwright/mcp</c> 0.0.79, twice, against the child

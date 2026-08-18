@@ -44,12 +44,17 @@ internal sealed record ArtifactToolRule(
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The same rule as the session-type policy, applied to files.</b> A tool in
+/// <b>Deny-by-default, applied to files.</b> A tool in
 /// the resolved surface carrying a <c>filename</c> that this table does not
 /// classify fails the build — <c>ArtifactRoutingTests</c> reads the committed
 /// <c>tools/list</c> snapshot and asserts it. An unjudged <c>filename</c> is a
 /// file landing wherever upstream's default happens to put it, which is the flat
-/// output directory this product's routing exists to replace: upstream writes
+/// output directory this product's routing exists to replace. *Corrected
+/// 2026-08-18 (previously "The same rule as the session-type policy, applied to
+/// files").* The session-type policy was removed — it was never a boundary
+/// against the caller — and the rule survives here on its own merits: an
+/// unjudged <c>filename</c> is not a permission question, it is a file nobody
+/// can find. Upstream writes
 /// every artifact into one folder with a generated name, mixing machine churn
 /// with hand-named work.
 /// </para>

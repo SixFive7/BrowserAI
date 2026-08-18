@@ -88,14 +88,27 @@ anything.
 **Server `instructions` and every tool description are truncated silently at
 2 KB.** The tail simply does not exist and nothing reports it.
 
-> **What BrowserAI actually spends of that, measured 2026-08-16 at build-order
-> step 13: 1,613 characters and `1,628` bytes, leaving 420.**
-> The design predicted
-> ~1,050, and the difference is almost entirely the mode lines carrying what each
-> mode *refuses* as well as what it grants — which is the half a model needs to
-> choose correctly and the half §H.3's draft did not have. **Planting a fourth
-> mode measured its cost at 223 bytes**, so the headroom absorbs exactly one more
-> mode and a fifth would need the lines shortened. Re-establish by running
+> **What BrowserAI actually spends of that, re-measured 2026-08-18 off the
+> shipped binary's own `initialize` response: 1,261 characters and `1,276`
+> bytes, leaving 772.** The three mode lines cost **106, 121 and 92 bytes**
+> apiece, plus a newline each, measured from the same emitted string.
+>
+> ⚠️ **Corrected 2026-08-18 (previously "measured 2026-08-16 at build-order step
+> 13: 1,613 characters and `1,628` bytes, leaving 420 … the difference is almost
+> entirely the mode lines carrying what each mode *refuses* as well as what it
+> grants — which is the half a model needs to choose correctly … **Planting a
+> fourth mode measured its cost at 223 bytes**, so the headroom absorbs exactly
+> one more mode and a fifth would need the lines shortened").** The `refuses`
+> half was rendered from the `(tool, mode)` permission policy, and that policy
+> was removed — it was never a boundary against the caller, who chooses the
+> session directory and reads the profile inside it as the same Windows user. So
+> the string lost 352 bytes and the mode lines now say only what a mode **is**.
+> **The 223-byte figure is not carried forward**: it was measured against a line
+> shape that no longer exists, and an adjusted number is indistinguishable from a
+> measured one. What replaces it is the per-line costs above, taken from the
+> emitted string, which is the same question asked in a form anybody can re-ask.
+>
+> Re-establish by running
 > `ModelSurfaceTests.TheInstructionsStringFitsTheClientsSilentTruncationBudget`,
 > which measures in **bytes**: the string carries `·` (2 bytes) and `—`
 > (3 bytes), so a character count under-reports precisely the string that uses

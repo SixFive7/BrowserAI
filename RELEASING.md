@@ -301,8 +301,14 @@ Three things to record rather than assume, because each is easy to skim past:
   conditional ignore anywhere in the tree. A `Skip` at release time is a red
   build wearing a disguise, and flakiness is a defect to fix rather than a state
   to tolerate.
-- **Every tool classified.** An unclassified tool fails the build. That rule is
-  what turns an upstream addition into a red run instead of a security incident.
+- **Every tool in the snapshot, with its schema.** A tool upstream adds, removes
+  or re-shapes fails the build, and `upstream-review.json` holds the release
+  until a human has adjudicated it. ⚠️ *Corrected 2026-08-18 (previously "**Every
+  tool classified.** An unclassified tool fails the build. That rule is what
+  turns an upstream addition into a red run instead of a **security incident**").*
+  The tool-permission policy was removed — it was never a boundary against the
+  caller — and the golden snapshot was doing this job all along, over the schemas
+  as well as the names.
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
   **Run the suite with `BROWSERAI_RELEASE_RUN=1` set**, which is what makes this

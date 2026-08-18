@@ -106,7 +106,7 @@ The largest area, and the one everything else keys on.
 | Concern | Implemented by |
 |---|---|
 | The directory, the lock and the record | `src/BrowserAI/Sessions/{SessionPath, SessionLayout, LockRecord, SessionLock}.cs` |
-| The authored tools and their enforcement | `src/BrowserAI/Sessions/{SessionMode, SessionToolSurface, SessionToolPolicy, SessionManager, SessionEnvironment, LiveSession}.cs` |
+| The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionMode, SessionToolSurface, SessionToolPolicy, SessionManager, SessionEnvironment, LiveSession}.cs` |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs` |
@@ -139,15 +139,47 @@ and **refuses them as arguments**, because a profile is browser-specific.
 
 **One table drives six consumers.** `SessionMode` is the table; the server
 `instructions`, `init`'s description, `resume`'s result, the refusal text, the
-`(tool, mode)` decision and the tests all render from it, and `ModelSurfaceTests`
+generated child config and the tests all render from it, and `ModelSurfaceTests`
 asserts each consumer renders every row. A mode added to the table alone turns the
-build red naming the consumers that do not render it.
+build red naming the consumers that do not render it. *Corrected 2026-08-18
+(previously the fifth consumer was "the `(tool, mode)` decision").*
 
-**Enforcement is deny-by-default in two dimensions.** `SessionToolPolicy` is the
-single place a call is permitted or refused, with a **written-down** policy row
-per mode rather than one derived from the table's flags — a permission inferred
-for a mode nobody considered is a security posture arrived at by accident. A tool
-it does not classify and a mode it has no row for both refuse everything.
+**A mode is two switches on a real browser, not a permission set.**
+`BrowserConfiguration.ForSession` turns `Headed` into upstream's `headless` and
+`Storage` into the capability set the session's own child is launched with — so a
+session without storage has no cookie tools **in its child at all**, which is the
+"the capability does not exist" form rather than "our code declines to use it".
+
+⚠️ **The tool-permission policy was removed on 2026-08-18.** *Corrected
+2026-08-18 (previously "**Enforcement is deny-by-default in two dimensions.**
+`SessionToolPolicy` is the single place a call is permitted or refused, with a
+**written-down** policy row per mode rather than one derived from the table's
+flags — a permission inferred for a mode nobody considered is a security posture
+arrived at by accident. A tool it does not classify and a mode it has no row for
+both refuse everything.")* Five tool classes, the `(tool, mode)` matrix, both
+deny-by-default fallbacks and the `browser_get_config` secrets guard are gone.
+**The reason is that it was never a boundary against the caller**, though it was
+described as one: the calling agent chooses the session directory, the browser
+profile and its cookie database are created inside it, and the agent runs as the
+same Windows user — so DPAPI decrypts for it and any file tool the agent holds
+reads what the matrix declined to return. Prompt injection is real and is not
+addressed at this layer; a model tricked into wanting the cookies is capable of
+opening the file, and a defeated motivation is not answered by more execution
+complexity. **Change control moved to [the release gate](TESTING.md#the-upstream-review-gate)**,
+where four golden snapshots — `tools-list.json` with every tool's `inputSchema`,
+`cli-help.txt`, `config-schema.d.ts`, `browsers.json` — are regenerated from the
+resolved payload and diffed on every build, and `upstream-review.json` blocks a
+release until a human adjudicates what moved. That catches a changed schema and a
+new CLI flag, which deny-by-default on a tool *name* never did.
+
+**Two refusals survive, and neither is a permission.** `session` is **mandatory**:
+a call naming none is refused rather than reaching the run's own child, because
+that is *routing* — a proxy holding N children has to be told which one a call
+belongs to, and a default would silently pick a session nobody chose. And
+`browser_annotate` is refused on a mode that opens no window, as a **liveness**
+guard with no security claim attached: it opens the Playwright Dashboard and
+blocks until a human draws, the window appears on a headless session too, and an
+unattended run that called it would hang until it was killed.
 
 **Lifetime is one timer and no expiry.** A ten-minute browser-idle timer closes
 the browser and keeps the node child; the relaunch on the next call is upstream's

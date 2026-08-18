@@ -50,7 +50,7 @@ BrowserAI presents **upstream's `browser_*` tools under upstream's own names, by
 | `browserai_set_purpose` | Rewrites what a session is for. The previous purpose is kept in the session's history rather than lost |
 | `browserai_reinstall_browser` | Deletes and re-provisions the browser tree. Takes no arguments, and **refuses** — naming what is running — while any session anywhere has a browser open. There is deliberately no force option |
 
-**Three modes**, bound at `init`, recorded in the session's `lock.json`, and enforced server-side on every call:
+**Three modes**, bound at `init` and recorded in the session's `lock.json`. A mode is two switches on the browser BrowserAI launches for that session — whether a window appears, and whether the profile keeps cookies and logins between runs:
 
 | Mode | Window | Stored credentials |
 |---|---|---|
@@ -58,7 +58,15 @@ BrowserAI presents **upstream's `browser_*` tools under upstream's own names, by
 | `interactive` | Yes | No — a human may type a password the agent must never capture |
 | `persistent` | Yes | Yes — logged-in agent work |
 
+A session without stored credentials has its child launched **without upstream's `storage` capability**, so the 17 cookie, `localStorage` and `storageState` tools do not exist in that process at all.
+
 `tracing` is a boolean on any of the three, not a mode of its own. Headless-with-storage is deliberately not offered.
+
+⚠️ **Corrected 2026-08-18 (previously "bound at `init`, recorded in the session's `lock.json`, and *enforced server-side on every call*").** There was a `(tool, mode)` permission policy behind that phrase — five tool classes, deny-by-default in both directions, plus a guard that refused a `browser_get_config` answer carrying `"secrets"` — and it has been **removed**. It was described as a security boundary and was never one **against the caller**: the calling agent chooses the session directory, the profile and its cookie database are created inside it, and the agent runs as the same Windows user, so DPAPI decrypts for it. Any file tool the agent holds reads what the policy declined to return. Prompt injection is real and is not solved at this layer.
+
+Change control moved to [the release gate](TESTING.md#the-upstream-review-gate), which covers more: four golden snapshots — including `tools-list.json` with every tool's `inputSchema` — are diffed against the resolved payload on every build, and `upstream-review.json` holds a release until a human adjudicates what moved.
+
+**Two refusals survive and neither is a permission.** `session` is mandatory, because that is *routing*. And `browser_annotate` is refused on a mode that opens no window, as a **liveness** guard: it blocks until a human draws in it and its window appears on a headless session too, so an unattended run that called it would hang until it was killed.
 
 **The session directory is the identity.** One directory holds `lock.json` at its root and `profile/`, `output/` and `downloads/` beneath it. There is no handle to keep, no token to store and no expiry: a session stays resumable against its recorded directory for as long as the directory exists, and a resume costs about 515 ms and loses only `sessionStorage`. Artifacts are routed into typed subfolders on the way in, and every result carries the resolved absolute path.
 

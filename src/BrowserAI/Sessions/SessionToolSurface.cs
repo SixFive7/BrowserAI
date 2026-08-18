@@ -153,8 +153,8 @@ internal static class SessionToolSurface
     private const string NameMember = "name";
 
     /// <summary>
-    /// Appends BrowserAI's own sentence to a tool whose mode this build
-    /// restricts, and leaves every other description exactly as upstream wrote
+    /// Appends BrowserAI's own sentence to the one tool this build refuses on
+    /// some modes, and leaves every other description exactly as upstream wrote
     /// it.
     /// </summary>
     /// <remarks>

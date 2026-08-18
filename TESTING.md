@@ -29,11 +29,21 @@
 > - **No release is cut with a skipped, quarantined or conditionally-ignored
 >   test.** A `Skip` attribute in the tree at release time is a red build wearing
 >   a disguise. Flakiness is a defect to fix, not a state to tolerate.
-> - **Coverage of the boundary is mandatory, not incidental.** Every tool
->   classified by session type, every config key validated against the shipped
->   runtime, every `PLAYWRIGHT_MCP_*` override accounted for. An unclassified
->   tool fails the build — that rule is what makes an upstream addition a red
->   build instead of a security incident.
+> - **Coverage of the boundary is mandatory, not incidental.** Every tool in the
+>   surface diffed against the golden `tools/list` snapshot **with its
+>   `inputSchema`**, every config key validated against the shipped runtime,
+>   every `PLAYWRIGHT_MCP_*` override accounted for. A tool upstream adds,
+>   removes or re-shapes fails the build — that rule is what makes an upstream
+>   change a red build instead of a surprise in production.
+>
+>   ⚠️ *Corrected 2026-08-18 (previously "Every tool **classified by session
+>   type** … An unclassified tool fails the build — that rule is what makes an
+>   upstream addition a red build instead of a **security incident**").* The
+>   tool-permission policy was removed: it was never a boundary against the
+>   caller, who chooses the session directory and reads the profile inside it as
+>   the same Windows user. The snapshot was doing the change-detection all along
+>   and does it better — a name-keyed classification never saw a schema change.
+>   See [the upstream-review gate](#the-upstream-review-gate).
 
 The founding bug was reproduced during research. Pointing `executablePath` at a
 non-existent binary produces:
@@ -59,7 +69,7 @@ Five layers, run at different cadences:
 
 | Layer | Drives | Cost | When |
 |---|---|---|---|
-| **Unit** | stderr classifier, artifact prefix sort, tool filter and re-describe with **names passed through unchanged**, **session-type enforcement**, lock signature and PID-recycle logic, config validator | ms | every build |
+| **Unit** | stderr classifier, artifact prefix sort, tool filter and re-describe with **names passed through unchanged**, **`session` routing and the one liveness refusal**, lock signature and PID-recycle logic, config validator | ms | every build |
 | **Fake child** | Full proxy over an in-process `Pipe` pair — no `Process`, no Node. Passthrough fidelity, error shapes, image bytes, cancellation, child death | ms | every build |
 | **Real-child contract** | Real `node` + the **resolved** `cli.js`, **no browser**. Golden `tools/list` snapshot, negotiated protocol version, argv contract, config-key validation | 2–5 s | **every build** |
 | **Smoke** | Real child **and real browser**. `browser_navigate`, `isError`, real stderr classification, process-tree lifecycle | 10–30 s | every build · **mandatory before release** |
@@ -89,11 +99,24 @@ ports, fully parallel-safe.
 > holds open without blocking its own read loop, so it can still hear the
 > notification it is being asked to observe.
 
-**The most important test in the suite** is mechanical and follows from the
-charter's [Known trade-offs](DECISIONS.md#known-trade-offs): read the real child's
-`tools/list`, then assert **every** tool name carries an explicit session-type
-classification. An unclassified tool fails the build. That turns "a new upstream
-tool leaks into interactive mode" from a security incident into a red build.
+**The most important test in the suite** is mechanical: read the real child's
+`tools/list` and assert it is exactly the committed snapshot — every name, in
+order, **with every `inputSchema`** — so a tool upstream adds, removes or
+re-shapes is a red build that a human has to adjudicate before a release can be
+cut. `VerticalSliceTests` also asserts every one of those names gained
+BrowserAI's `session` parameter, because a tool that slipped through the rewrite
+would be answerable by the run's own child.
+
+⚠️ *Corrected 2026-08-18 (previously "assert **every** tool name carries an
+explicit session-type classification. An unclassified tool fails the build. That
+turns 'a new upstream tool leaks into interactive mode' from a security incident
+into a red build", following the charter's
+[Known trade-offs](DECISIONS.md#known-trade-offs)).* The classification and the
+`(tool, mode)` permission matrix behind it were removed on 2026-08-18: they were
+never a boundary against the caller, who owns the session directory and therefore
+the profile inside it. The sentence is kept in corrected form rather than deleted
+because "the most important test in the suite" moved, and a reader who learned the
+old one needs to be told where.
 
 **The gap between builds, and what actually covers it.** Every build resolves
 latest, so every build is already a drift check. What remains is the quiet week:

@@ -116,7 +116,7 @@ internal sealed record SessionEnvironment
     /// <para>
     /// <b>A seam of exactly the same kind as <see cref="OpenSessionLog"/>, and it
     /// exists for one test that could not otherwise be written.</b> The
-    /// <c>(tool, mode)</c> decision has to be driven across sessions of
+    /// routing has to be driven across sessions of
     /// <i>different</i> modes at once, and doing that against real children costs
     /// three node processes and a browser per assertion — which is slow enough
     /// that the concurrency would be tested once rather than at every level of

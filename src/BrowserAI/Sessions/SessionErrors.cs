@@ -132,67 +132,44 @@ internal static class SessionErrors
         + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
 
     /// <summary>
-    /// Row 5 — the tool is real, the session is real, and this mode does not
-    /// permit the two together.
+    /// Row 5 — the annotation tool, on a session whose mode opens no window.
     /// </summary>
     /// <remarks>
-    /// <b>The permitting mode is looked up rather than written down.</b> §H.6
-    /// requires exactly that: the sentence names the mode that <i>would</i> allow
-    /// the call, derived from the policy table, so a mode added or a tool
-    /// reclassified changes this text without anyone editing it. It is also the
-    /// refusal a model meets most often, and the one that teaches the mode system
-    /// at the moment it is ready to learn — which is why it explains the reason
-    /// rather than only the rule.
+    /// <para>
+    /// ⚠️ <b>A liveness refusal, and the sentence has to say so.</b> This is not
+    /// a permission: nothing about <c>browser_annotate</c> reaches a credential,
+    /// and BrowserAI makes no claim to be a boundary against the agent calling
+    /// it. What it does is open the Playwright Dashboard and block until a human
+    /// draws — and the window appears on a windowless session too, so the call
+    /// would hang until the whole run is killed. A model told "not permitted"
+    /// would go looking for a permission to acquire; a model told the call would
+    /// hang can act on it.
+    /// </para>
+    /// <para>
+    /// <b>Corrected 2026-08-18 (previously <c>ModeRefusal</c>, which named the
+    /// mode that would permit a tool the <c>(tool, mode)</c> matrix refused).</b>
+    /// The matrix is gone — it was never a boundary against the caller, who owns
+    /// the session directory and therefore the profile inside it — and with it
+    /// went the only other refusals this file took on a browser call. The
+    /// permitting modes here are still looked up rather than written down, for
+    /// the reason they always were: a mode added to the table changes this
+    /// sentence with nobody editing it.
+    /// </para>
     /// </remarks>
     /// <param name="tool">The tool that was refused.</param>
     /// <param name="mode">The mode of the session the caller named.</param>
-    /// <param name="describes">What the tool's class reaches, in a clause.</param>
-    /// <param name="permitting">Every mode that would permit it.</param>
     /// <returns>The refusal.</returns>
-    public static string ModeRefusal(
-        string tool,
-        SessionModeDefinition mode,
-        string describes,
-        IReadOnlyList<SessionModeDefinition> permitting)
+    public static string AnnotationWouldHangAWindowlessSession(string tool, SessionModeDefinition mode)
     {
         ArgumentNullException.ThrowIfNull(mode);
-        ArgumentNullException.ThrowIfNull(permitting);
 
-        if (permitting.Count is 0)
-        {
-            return $"'{tool}' is one of {describes}, which no BrowserAI session mode permits, so it was not run and nothing was changed. "
-                + $"There is no mode to switch to; this build refuses it everywhere. The modes are: {SessionModes.Table}";
-        }
+        var headed = SessionModes.All.Where(candidate => candidate.Headed).ToList();
+        var names = string.Join(" or ", headed.Select(candidate => $"'{candidate.Name}'"));
 
-        var names = string.Join(" or ", permitting.Select(candidate => $"'{candidate.Name}'"));
-        var target = permitting[^1];
-
-        return $"'{tool}' needs a session in {names} mode; this one is '{mode.Name}'. It was not run and nothing was changed. "
-            + $"A '{mode.Name}' session {SessionToolPolicy.Summary(mode.Mode)} — that is the mode working as designed rather than a fault. "
-            + $"A '{target.Name}' session {target.Grants}. Create one with {SessionToolSurface.Init} on a different directory if what it would reach is yours to read; the mode is bound at creation and no session can change what it is.";
+        return $"'{tool}' opens the Playwright Dashboard and waits for a human to draw in it, and a '{mode.Name}' session opens no window — so the call would block until this run is killed. It was not run and nothing was changed. "
+            + "This is a liveness refusal and not a security one: the dashboard window appears even on a windowless session, in front of nobody, and BrowserAI will not hand an unattended run a call that cannot return. "
+            + $"Create a session with {SessionToolSurface.Init} in {names} mode if a human will be at the keyboard; the mode is bound at creation and no session can change what it is. To see the page without one, use browser_snapshot or browser_take_screenshot.";
     }
-
-    /// <summary>Deny-by-default, said out loud: BrowserAI does not know this tool.</summary>
-    /// <remarks>
-    /// Reached when the child exposes a tool no build of BrowserAI has
-    /// classified. It refuses rather than forwarding, because the alternative is
-    /// allow-by-default for exactly the tools nobody has looked at yet — and the
-    /// same condition turns the suite red, so this text is what a caller sees in
-    /// the window between an upstream bump and the review that adjudicates it.
-    /// </remarks>
-    /// <param name="tool">The tool that was called.</param>
-    /// <param name="mode">The mode of the session the caller named.</param>
-    /// <returns>The refusal.</returns>
-    public static string UnclassifiedTool(string tool, string mode) =>
-        $"'{tool}' is a tool this build of BrowserAI does not classify, so it is refused in every session mode, including '{mode}'. Nothing was changed. "
-        + "BrowserAI decides what each tool may reach before it forwards it, and a tool it has never judged is refused rather than allowed — a newer BrowserAI will know it. Use another tool, or update BrowserAI.";
-
-    /// <summary>The configuration answer would have disclosed secrets.</summary>
-    /// <param name="tool">The tool that was called.</param>
-    /// <returns>The refusal.</returns>
-    public static string ConfigurationWouldDiscloseSecrets(string tool = "browser_get_config") =>
-        $"'{tool}' was answered by the browser child, and BrowserAI did not pass the answer on: it carries a 'secrets' key, which upstream serialises in plaintext with no redaction. Nothing was changed. "
-        + "BrowserAI never writes that key, so a config that has one came from outside this process; find what set it before reading the config back.";
 
     /// <summary>Row 6 — the browser this session needs is still downloading.</summary>
     /// <remarks>

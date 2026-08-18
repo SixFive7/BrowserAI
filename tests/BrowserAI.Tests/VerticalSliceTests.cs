@@ -59,17 +59,26 @@ internal sealed class VerticalSliceTests
         // so.
         await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 59);
 
-        // And every one of them carries an explicit classification, asserted
+        // And every one of them gains BrowserAI's `session` parameter, asserted
         // against the REAL child's list rather than against the snapshot the
-        // build regenerates from it. Deny-by-default means an unclassified tool
-        // is refused at runtime, so this is the check that turns a tool upstream
-        // added into a red build instead of a silent refusal in production.
-        var unclassified = run.ToolNames
-            .Where(name => !SessionToolSurface.IsAuthored(name))
-            .Where(name => !SessionToolPolicy.Classification.ContainsKey(name))
+        // build regenerates from it: routing is the one thing this proxy cannot
+        // get wrong, and a tool upstream added that slipped through the rewrite
+        // would be answerable by the run's own child.
+        //
+        // Corrected 2026-08-18 (previously this asserted every name carried a
+        // row in `SessionToolPolicy.Classification`, deny-by-default). That
+        // table was part of the (tool, mode) permission matrix, which was never
+        // a boundary against the caller — who chooses the session directory and
+        // reads the profile inside it as the same user — and change detection
+        // for a tool upstream adds now lives in the golden `tools-list.json`
+        // snapshot, which diffs each tool's inputSchema as well as its name.
+        var unrouted = run.ToolList
+            .Where(tool => !SessionToolSurface.IsAuthored((string)tool!["name"]!))
+            .Where(tool => tool!["inputSchema"]?["properties"]?[SessionToolSurface.SessionParameter] is null)
+            .Select(tool => (string)tool!["name"]!)
             .ToList();
 
-        await Assert.That(string.Join(", ", unclassified)).IsEmpty();
+        await Assert.That(string.Join(", ", unrouted)).IsEmpty();
     }
 
     [Test]

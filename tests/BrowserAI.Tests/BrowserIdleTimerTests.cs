@@ -141,13 +141,16 @@ internal sealed partial class BrowserIdleTimerTests
     {
         await Assert.That(UpstreamSurface.DefaultSurface()).Contains(LiveSession.BrowserCloseTool);
 
-        // Classified, and permitted everywhere: the timer bypasses the policy —
-        // it is BrowserAI calling its own child rather than a caller calling a
-        // tool — but a close that a mode forbids would mean an `interactive`
-        // session whose browser can never be closed, and the policy is where
-        // that would be decided.
-        await Assert.That(SessionToolPolicy.Classification.ContainsKey(LiveSession.BrowserCloseTool)).IsTrue();
-
+        // Callable in every mode: the timer bypasses the decision anyway — it is
+        // BrowserAI calling its own child rather than a caller calling a tool —
+        // but a close that a mode refused would mean a session whose browser can
+        // never be closed, and this is where that would be decided.
+        //
+        // Corrected 2026-08-18 (previously this also asserted the tool carried a
+        // row in `SessionToolPolicy.Classification`). There is no classification
+        // table: it was part of the (tool, mode) permission matrix, which was
+        // never a boundary against the caller and was removed. What the tool
+        // must still be is upstream's own and callable, which is what remains.
         foreach (var mode in SessionModes.All)
         {
             await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool, mode).IsAllowed).IsTrue();
