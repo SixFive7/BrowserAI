@@ -23,6 +23,90 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **BrowserAI advertised an MCP capability it does not implement.** The SDK's
+  `McpServerImpl` gates `Tools`, `Prompts`, `Resources` and `Completion` on
+  configuration, and `ConfigureLogging` on nothing at all — so `initialize`
+  answered `{"tools":{},"logging":{}}` from a server that has never emitted a
+  `notifications/message`, and a client calling `logging/setLevel` got `{}` and
+  then silence for ever. `BrowserProxy.UnadvertiseLogging` removes it in an
+  outgoing message filter, which is the only route: the options object cannot
+  un-set it and the property is `[Obsolete("MCP9005")]`. What this server
+  advertises is now byte-identical to what the child advertises, and
+  `VerticalSliceTests` asserts the whole object off the published binary's wire
+  rather than only that `tools` is present.
+
+- **The test double was more capable than the thing it doubles.**
+  `FakePlaywrightChild` answered `initialize` with
+  `{"tools":{"listChanged":true},"logging":{}}` against a real child that
+  advertises `{"tools":{}}`, so the whole in-process layer ran against
+  capabilities production can never produce. It now answers the snapshot's own
+  string, and `UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes`
+  holds the two together. No test depended on the lie.
+
+- **`browserProvisioning` said `downloading` when this process had started no
+  download.** A provisioner that loses the machine-wide provisioning mutex is
+  watching for another process's completion marker — and cannot see whether that
+  process is downloading, extracting, or walking every process on the machine
+  inside its revision prune. It rendered *"… is being downloaded into '…'"*
+  anyway. The attempt now carries a phase and the sentence says what this process
+  is actually doing. **The state word is unchanged**: `downloading` is still
+  narrower than the state it names, and renaming what a model reads is recorded
+  in [`QUESTIONS.md`](QUESTIONS.md) as a decision rather than taken.
+
+- **A supported configuration warned on every startup.**
+  `warn: velopack: Failed to initialize WindowsVelopackLocator` fired on every
+  start of a binary Velopack did not install — every test host, and the
+  configuration CI runs in — a hundred per saturation run, on the stream this
+  project relies on for diagnosis. Demoted to `Debug` on three independent
+  conditions; a genuine locator failure carries different text at `Error` and is
+  untouched.
+
+- **`HazardIndexTests.EveryRowIsOpenOrClosedAndNothingElse` did not enforce the
+  invariant its name promises.** It asked whether the `Status` cell *contained*
+  "open" or "closed", so a row reading `**half closed**` passed it for eight days
+  while being in neither tally. It now matches the leading word exactly. The row
+  is adjudicated on its evidence: **closed**, with the pre-check's limit stated —
+  the hazard is that disk exhaustion mid-provision is *success-shaped*, and the
+  source fix removes the shape.
+
+- **Four counts in prose were wrong**, including one where a correction had
+  replaced a right number with a wrong one by measuring a different predicate over
+  the same table. `TODO.md`'s hazard tally said 3 rows were `open` while carrying
+  evidence and 57 open in total; it was 4 and 58. `DECISIONS.md` said the
+  installer is *"~117 MB"*, which was the installed payload rather than the
+  installer: re-measured off the artifact `build/New-Release.ps1` packed for
+  `v1.0.0`, it is **53,567,930 bytes — 51.1 MiB**.
+
+### Added
+
+- **A budget gate over every model-facing string, measured off the wire.**
+  `ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget`
+  drives the published NativeAOT binary over real JSON-RPC with a real
+  `@playwright/mcp` child and measures three surfaces: the server `instructions`,
+  every tool `description`, and **every parameter `description` inside every
+  `inputSchema`** — the last of which was asserted by nothing, and is where
+  BrowserAI's own injected `session` description lands on 59 upstream tools at
+  once. Enumerated dynamically, so a tool added next year is covered; measured in
+  characters *and* UTF-8 bytes and failed on whichever is larger; hard at 100%
+  with no warning tier, because under the cut the text simply never reaches the
+  model. Every length is printed sorted on a passing run, to `.work/description-budget.txt`.
+  ⚠️ **The per-string reading of the documentation's *"2KB each"* is an
+  assumption**, recorded on `ClientTruncationBudget` and raised in
+  [`QUESTIONS.md`](QUESTIONS.md): under a per-tool-total reading `browserai_init`'s
+  whole `tools/list` entry is 3,428 bytes on the wire and already truncated. The test
+  every tool's entry total, unasserted, so the experiment that settles it has its
+  data.
+
+- **`RecordedCountTests`, which generalises the one place counting discipline was
+  mechanised.** Every count a surviving document publishes about this repository
+  is now checked against a live scan, through the *same* implementation that
+  produces the figure: the hazard tally in `TODO.md` — **category by category, not
+  just the total**, because a wrong total is only visible against the sum — the
+  fragment count in `CLAUDE.md`, the tool-surface numbers in `DECISIONS.md`, and
+  `kb/README.md`'s claim that no article carries `[STALE]`, with a positive
+  control. Four counts it cannot mechanise are named in the class and say why.
+
+
 - **The per-directory session gate refused sessions that nothing was wrong
   with, and told the caller so in as many words.**
   `LockScopes.PerDirectoryGate` was five seconds because the section it guards

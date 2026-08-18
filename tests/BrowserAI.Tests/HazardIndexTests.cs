@@ -3,6 +3,7 @@
 
 using System.Reflection;
 using System.Text.RegularExpressions;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -13,8 +14,12 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Nothing in the suite read this file until 2026-08-17</b>, and it is the
-/// longest-lived document in the repository — 137 rows, 76 of them
-/// <c>closed</c>, each closure resting on evidence nobody checked. The rule it
+/// longest-lived document in the repository — 137 rows on that day, 76 of them
+/// <c>closed</c>, each closure resting on evidence nobody checked. (Those two
+/// figures are a measurement of 2026-08-17 and are deliberately left at it; the
+/// live tally is checked against the sentence in <c>TODO.md</c> by
+/// <c>RecordedCountTests</c>, which is where a number about this table belongs
+/// now that one is asserted.) The rule it
 /// states about itself is the rule enforced here, borrowed from the
 /// re-verification index: <b>naming a test that does not exist is worse than
 /// leaving a row open, because it reads as covered.</b>
@@ -49,9 +54,6 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed partial class HazardIndexTests
 {
-    private static string IndexPath { get; } =
-        Path.Combine(RepositoryLayout.Root.FullName, "HAZARDS.md");
-
     private static Assembly[] OurAssemblies { get; } =
         [typeof(HazardIndexTests).Assembly, typeof(BrowserAI.Protocol.StdioChannel).Assembly];
 
@@ -60,11 +62,11 @@ internal sealed partial class HazardIndexTests
     {
         var offenders = new List<string>();
 
-        foreach (var (line, hazard, _, evidence) in Rows())
+        foreach (var row in HazardIndex.Rows())
         {
-            offenders.AddRange(Named(evidence)
+            offenders.AddRange(Named(row.Evidence)
                 .Where(Missing)
-                .Select(name => $"HAZARDS.md:{line}: '{name}' does not exist — {Excerpt(hazard)}"));
+                .Select(name => $"HAZARDS.md:{row.Line}: '{name}' does not exist — {Excerpt(row.Hazard)}"));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
@@ -78,8 +80,8 @@ internal sealed partial class HazardIndexTests
         // columns: `closed` is a claim, and this column is what makes it
         // checkable." It was true of every row on 2026-08-17 and had never been
         // asserted, so the next row closed in a hurry was free to break it.
-        var offenders = Rows()
-            .Where(row => row.Status.Contains("closed", StringComparison.OrdinalIgnoreCase))
+        var offenders = HazardIndex.Rows()
+            .Where(row => row.State is HazardIndex.Closed)
             .Where(row => row.Evidence.Length == 0 || row.Evidence is "—" or "-")
             .Select(row => $"HAZARDS.md:{row.Line}: closed with no evidence — {Excerpt(row.Hazard)}");
 
@@ -92,10 +94,20 @@ internal sealed partial class HazardIndexTests
         // The Status column has two values by the file's own definition. A third
         // spelling is not a new state, it is a row that neither the open count
         // nor the closed count will ever include again.
-        var offenders = Rows()
-            .Where(row => !row.Status.Contains("closed", StringComparison.OrdinalIgnoreCase)
-                && !row.Status.Contains("open", StringComparison.OrdinalIgnoreCase))
-            .Select(row => $"HAZARDS.md:{row.Line}: status '{row.Status}' is neither open nor closed");
+        //
+        // ⚠️ Corrected 2026-08-18 (previously: the cell had to CONTAIN "open"
+        // or "closed", case-insensitively). That is weaker than this test's name
+        // promises and it passed a row reading `**half closed**` for eight days,
+        // which is exactly the state the two-state invariant forbids: not open,
+        // not closed, and in neither tally. Containment was ambiguous the other
+        // way too -- `**open** — bounded, not closed` carries both words, and the
+        // old rule counted it as closed because it looked for "closed" first.
+        // HazardIndex.StateOf now matches the LEADING word exactly; what may
+        // follow it is a date, emphasis or a qualifying clause, none of which
+        // changes the state.
+        var offenders = HazardIndex.Rows()
+            .Where(row => row.State is null)
+            .Select(row => $"HAZARDS.md:{row.Line}: status '{row.Status}' declares neither '{HazardIndex.Open}' nor '{HazardIndex.Closed}' as its leading word, so it is in neither tally and no count will ever include it again");
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
@@ -108,11 +120,17 @@ internal sealed partial class HazardIndexTests
         // moved to another file. That is the failure mode of every test that
         // reads a document, and it is silent, so the corpus is asserted rather
         // than assumed.
-        var rows = Rows();
+        var rows = HazardIndex.Rows();
 
         await Assert.That(rows.Count).IsGreaterThan(130);
-        await Assert.That(rows.Count(row => row.Status.Contains("closed", StringComparison.OrdinalIgnoreCase))).IsGreaterThan(50);
-        await Assert.That(rows.Count(row => row.Status.Contains("open", StringComparison.OrdinalIgnoreCase))).IsGreaterThan(30);
+        await Assert.That(rows.Count(row => row.State is HazardIndex.Closed)).IsGreaterThan(50);
+        await Assert.That(rows.Count(row => row.State is HazardIndex.Open)).IsGreaterThan(30);
+
+        // Every row lands in exactly one of the two, which is what makes the two
+        // floors above a partition rather than two overlapping counts. Under the
+        // containment rule they were not: one row satisfied both.
+        await Assert.That(rows.Count(row => row.State is HazardIndex.Open) + rows.Count(row => row.State is HazardIndex.Closed))
+            .IsEqualTo(rows.Count);
 
         // And the names really are being extracted and really are resolving --
         // a matcher that found nothing would leave the gate above green while
@@ -177,36 +195,6 @@ internal sealed partial class HazardIndexTests
             && type.GetMember(
                 parts[1],
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy).Length is 0;
-    }
-
-    /// <summary>Every row of the hazard table, with the line it is written on.</summary>
-    private static List<(int Line, string Hazard, string Status, string Evidence)> Rows()
-    {
-        var rows = new List<(int, string, string, string)>();
-        var number = 0;
-
-        foreach (var line in File.ReadAllLines(IndexPath))
-        {
-            number++;
-
-            if (!line.StartsWith('|'))
-            {
-                continue;
-            }
-
-            // Six cells, with an empty before the first pipe and after the last.
-            // A line that does not split into exactly that is not a row of this
-            // table -- which includes the header and the separator.
-            var cells = line.Split('|', StringSplitOptions.None);
-            if (cells.Length != 8 || cells[1].Trim() is "Area" || cells[1].Trim().Trim('-', ':', ' ').Length is 0)
-            {
-                continue;
-            }
-
-            rows.Add((number, cells[2].Trim(), cells[5].Trim(), cells[6].Trim()));
-        }
-
-        return rows;
     }
 
     /// <summary>The first words of a hazard, so an offender can be found by eye.</summary>

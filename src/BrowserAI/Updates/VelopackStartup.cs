@@ -118,6 +118,68 @@ internal static class VelopackStartup
     }
 
     /// <summary>
+    /// The one sentence Velopack writes at <c>Warn</c> when the locator found no
+    /// install, matched by its leading clause.
+    /// </summary>
+    /// <remarks>
+    /// Read out of <c>WindowsVelopackLocator</c>'s own source at 1.2.0: the full
+    /// text is <i>"Failed to initialize WindowsVelopackLocator. This could be
+    /// because the program is not installed or packaged properly."</i> Only the
+    /// leading clause is matched, so an upstream reword of the second sentence
+    /// does not silently unhook <see cref="IsRoutineNotInstalledNotice"/> — and if
+    /// upstream rewords the first, the record goes back to <c>Warning</c>, which
+    /// is the safe direction.
+    /// </remarks>
+    public const string NotInstalledNotice = "Failed to initialize WindowsVelopackLocator";
+
+    /// <summary>
+    /// Whether a Velopack record is the ordinary <i>this binary was not installed
+    /// by Velopack</i> notice rather than a genuine locator failure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Running uninstalled is a supported configuration</b> — it is what
+    /// <c>dotnet run</c>, every test host and CI do — and a supported
+    /// configuration must not warn. Before 2026-08-18 it did, once per process:
+    /// a hundred <c>warn:</c> records per saturation run on the stream this
+    /// project relies on for diagnosis, all of them saying that nothing was
+    /// wrong.
+    /// </para>
+    /// <para>
+    /// <b>The two cases ARE distinguishable from outside Velopack, and this is
+    /// how far that goes.</b> 1.2.0 emits this sentence at <c>Warn</c> from
+    /// exactly one place — the <c>AppId is null</c> branch at the end of
+    /// <c>WindowsVelopackLocator</c>'s constructor. Its other <c>Warn</c>s
+    /// (a legacy <c>app-*</c> directory, a deeply nested <c>current\</c>) and all
+    /// of its <c>Error</c>s (no valid manifest beside <c>Update.exe</c>, an
+    /// unwritable root with no <c>LocalAppData</c>, a failed <c>Update.exe</c>
+    /// copy, a log file that could not be opened) carry different text and are
+    /// untouched by this predicate. So a genuinely broken package still warns:
+    /// upstream's own message admits it cannot tell <i>not installed</i> from
+    /// <i>packaged improperly</i>, but the specific record that distinguishes the
+    /// two — <i>"unable to locate a valid manifest file"</i> — is a separate
+    /// <c>Error</c> that is still reported.
+    /// </para>
+    /// <para>
+    /// <b>Three conditions, each independently safe.</b> The record must be at
+    /// <c>Warning</c> exactly, never <c>Error</c>; it must carry this sentence;
+    /// and the process must not be an installed one. The last is corroboration
+    /// from our own side rather than from upstream's text, and it is available
+    /// because <c>Program</c> replays these buffered records <i>after</i>
+    /// <see cref="InstallLocation"/> can answer.
+    /// </para>
+    /// </remarks>
+    /// <param name="level">The level Velopack logged at.</param>
+    /// <param name="message">What Velopack said.</param>
+    /// <param name="installed">Whether this process is an installed BrowserAI.</param>
+    /// <returns>Whether the record is routine and belongs at <c>Debug</c>.</returns>
+    public static bool IsRoutineNotInstalledNotice(VelopackLogLevel level, string? message, bool installed) =>
+        level is VelopackLogLevel.Warning
+        && !installed
+        && message is not null
+        && message.Contains(NotInstalledNotice, StringComparison.Ordinal);
+
+    /// <summary>
     /// The version a hook was handed, as the string everything downstream
     /// records.
     /// </summary>

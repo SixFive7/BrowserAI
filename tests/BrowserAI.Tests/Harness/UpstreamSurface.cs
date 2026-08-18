@@ -60,6 +60,40 @@ internal static class UpstreamSurface
         ];
     }
 
+    /// <summary>
+    /// How many tools the snapshot carries in total — every tool upstream can
+    /// expose under any capability set.
+    /// </summary>
+    /// <remarks>
+    /// <b>Derived so that no document and no test carries the literal.</b> It is
+    /// stated in <c>DECISIONS.md</c> and asserted in two tests, and a number
+    /// typed into three places is a number that will disagree with itself the
+    /// first time upstream adds a tool.
+    /// </remarks>
+    /// <returns>The count.</returns>
+    public static int SnapshotToolCount()
+    {
+        using var snapshot = Snapshot();
+
+        return snapshot.RootElement.GetProperty("tools").GetArrayLength();
+    }
+
+    /// <summary>
+    /// The capability object the real child advertises on <c>initialize</c>,
+    /// exactly as the snapshot recorded it.
+    /// </summary>
+    /// <returns>The minified JSON.</returns>
+    public static string ServerCapabilities()
+    {
+        using var snapshot = Snapshot();
+
+        // Minified through the node API rather than by stripping characters out
+        // of the raw text: the snapshot is pretty-printed, and the double it is
+        // compared against is a compact literal.
+        return System.Text.Json.Nodes.JsonNode.Parse(
+            snapshot.RootElement.GetProperty("serverCapabilities").GetRawText())!.ToJsonString();
+    }
+
     /// <summary>The snapshot's own record of the default, no-capabilities surface.</summary>
     /// <returns>The 24 names upstream exposes with nothing configured.</returns>
     public static IReadOnlyList<string> DefaultSurface()

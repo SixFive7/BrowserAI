@@ -84,15 +84,32 @@ about an external source needs the date and version it was true at.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **54 rows of the [hazard index](HAZARDS.md) read `open` with `—` for
-      evidence.** The file's rule is that a row marked `closed` with `—` is not
-      closed; this is the converse — rows nobody has adjudicated either way. By
-      category: Bundling and AOT 14, Child runtime and configuration 10, Process
-      and OS 9, Tooling and CI 7, Protocol and SDK 7, Packaging and updates 4,
-      Handle routing and lifetime 3. Three more read `open` while carrying
-      evidence, so 57 are open in total. Many will close against tests that now
-      exist; some are upstream behaviours that cannot close at all and should say
-      so. **An honest `open` with a reason beats a `closed` with a weak one.**
+- [ ] **54 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+      The file's rule is that a row marked `closed` with `—` is not closed; this
+      is the converse — rows nobody has adjudicated either way. By category, using
+      the index's own `Area` cells verbatim: Bundling and AOT 14, Child runtime and
+      configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
+      CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
+      5 more are `open` while carrying evidence, so 59 are `open` in total, against
+      88 `closed`. Many will close against tests that now exist; some are upstream
+      behaviours that cannot close at all and should say so. **An honest `open` with
+      a reason beats a `closed` with a weak one.**
+
+      **Every number in the paragraph above is asserted on each build** by
+      `RecordedCountTests.TheHazardTallyInTodoIsWhatTheIndexHolds`, which reads the
+      sentence as its anchor and re-counts the table through the same
+      `HazardIndex` parser `HazardIndexTests` uses — the categories individually,
+      the total separately, and the sum of the categories against the total.
+      Rewording the sentence fails the build rather than quietly unhooking the
+      check.
+
+      ***Corrected 2026-08-18 (previously "Three more read `open` while carrying
+      evidence, so 57 are open in total")*** — re-counted, not adjusted: it was 4
+      and 58 when the drift was found, and is 5 and 59 now that today's own work
+      has added five rows to the index. The row that moved is the CVE-response row, corrected from
+      `closed 2026-08-16` to `open` on 2026-08-17 without anybody touching this
+      tally. That is the fourth wrong count of the day and the reason the
+      paragraph now has a test.
 
       **When correcting a count here, quote the predicate before the number** —
       not *"54 rows"* but *"54 rows that are `open` **and** carry `—`"*. That has

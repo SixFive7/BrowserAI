@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Proxy;
@@ -346,10 +347,17 @@ internal sealed class ModelSurfaceTests
 
         await Assert.That(string.Join(Environment.NewLine, oversized)).IsEmpty();
 
-        // The whole surface, not a sample: 5 authored plus the 69 upstream can
-        // ever expose. A count that had quietly shrunk would make the loop above
-        // pass by measuring less.
-        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + 69);
+        // The whole surface, not a sample: the authored tools plus every tool
+        // upstream can ever expose. A count that had quietly shrunk would make
+        // the loop above pass by measuring less.
+        //
+        // ⚠️ Corrected 2026-08-18 (previously the literal `+ 69`). The same
+        // number is published in DECISIONS.md and asserted in
+        // RecordedCountTests, and three copies of an upstream count is three
+        // things to remember on the day upstream adds a tool. It is now read from
+        // the snapshot the build regenerates from the resolved payload, which is
+        // where it comes from in the first place.
+        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + UpstreamSurface.SnapshotToolCount());
     }
 
     [Test]
@@ -421,6 +429,247 @@ internal sealed class ModelSurfaceTests
         }
 
         await Assert.That(string.Join(Environment.NewLine, lost)).IsEmpty();
+    }
+
+    /// <summary>
+    /// Every model-facing string the published binary actually emits, measured
+    /// off the wire and gated at 100% of the client's silent truncation budget.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The gap this closes is parameter descriptions.</b> The two tests above
+    /// cover the <c>instructions</c> string and every tool <c>description</c>;
+    /// <c>inputSchema.properties[*].description</c> was asserted by nothing at
+    /// all — and it is the surface BrowserAI is most exposed on, because
+    /// <c>SessionToolSurface</c> injects one shared <c>session</c> description
+    /// into every upstream tool, so a single edit lands on it fifty-nine times.
+    /// </para>
+    /// <para>
+    /// <b>From the wire, not from source, and that distinction is the whole
+    /// design.</b> These strings are assembled from concatenated constants,
+    /// interpolated tables and a schema rewrite performed on the child's own
+    /// nodes, so a scan of string literals in <c>.cs</c> files misses precisely
+    /// the cases that break. This reads <see cref="SliceRun"/>'s capture: the
+    /// published NativeAOT binary, a real <c>@playwright/mcp</c> child, real
+    /// JSON-RPC over real pipes, <c>initialize</c> → <c>notifications/initialized</c>
+    /// → <c>tools/list</c>. (⚠️ A client that feeds the server from a redirected
+    /// <i>file</i> gets instant EOF on stdin and the server exits before
+    /// answering — <see cref="RawStdioClient"/> holds the pipe open and flushes
+    /// per frame, which is why it is the client here.)
+    /// </para>
+    /// <para>
+    /// <b>Enumerated dynamically.</b> Nothing here names a tool or a parameter,
+    /// so a tool upstream adds next year is covered without anybody editing this
+    /// file. The floors below are what keep that from becoming vacuous.
+    /// </para>
+    /// <para>
+    /// <b>Hard failure at 100%, and no warning tier — deliberately.</b> The
+    /// recorded argument against a headroom gate stands and is not contradicted
+    /// here: that argument was against failing <i>below</i> 100%, because a
+    /// fourth session mode should fail on the six-consumer line rather than on a
+    /// budget line. This fails only at the point where the client starts
+    /// discarding text, which is a broken state rather than a tight one.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The per-string reading is an ASSUMPTION — see
+    /// <see cref="ClientTruncationBudget"/>.</b> The documented sentence says
+    /// <i>"at 2KB each"</i> and does not say each <i>what</i>. If the cap is per
+    /// tool — description plus schema plus every parameter description in one
+    /// bucket — the arithmetic here is wrong, and this run's own numbers say what
+    /// that would mean: <c>browserai_init</c>'s whole <c>tools/list</c> entry is
+    /// <b>3,428 bytes</b>, so under that reading it is already truncated while
+    /// every string in it fits. That is why the per-tool totals are reported
+    /// beside the per-string figures rather than asserted on: the experiment that
+    /// settles the reading needs the data, and a test must not pretend to have
+    /// settled it.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task EveryModelFacingStringFitsTheClientsSilentTruncationBudget()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SliceRun.SharedAsync();
+        var measured = new List<ModelFacingString>();
+        var entryTotals = new List<(string Tool, int Characters, int Bytes)>();
+
+        measured.Add(ModelFacingString.Of(
+            "instructions",
+            "initialize.instructions",
+            (string?)run.InitializeResult["instructions"]));
+
+        foreach (var tool in run.ToolList)
+        {
+            if (tool?.AsObject() is not { } definition || (string?)definition["name"] is not { } name)
+            {
+                continue;
+            }
+
+            measured.Add(ModelFacingString.Of("tool", name, (string?)definition["description"]));
+
+            foreach (var (parameter, schema) in definition["inputSchema"]?["properties"]?.AsObject() ?? [])
+            {
+                measured.Add(ModelFacingString.Of("parameter", $"{name}.{parameter}", (string?)schema?["description"]));
+            }
+
+            // Reported, never asserted. See the ⚠️ paragraph in the remarks.
+            //
+            // ⚠️ Serialised through Unminified rather than ToJsonString(), and it
+            // is not a nicety: the default encoder is JavaScriptEncoder.Default,
+            // which escapes every non-ASCII character to \uXXXX and would report
+            // `browserai_init` at 3,614 bytes for a 3,428-byte entry. That is a
+            // 5% over-count on the one figure the per-tool-total experiment turns
+            // on, and it over-counts most on exactly the strings that use em
+            // dashes. Verified 2026-08-18 against the raw `tools/list` frame,
+            // sliced by brace depth: 3,428 B / 3,404 c, and the whole frame
+            // 56,946 B for 65 tools.
+            var entry = definition.ToJsonString(Unminified);
+            entryTotals.Add((name, entry.Length, Encoding.UTF8.GetByteCount(entry)));
+        }
+
+        Report(measured, entryTotals);
+
+        // ⚠️ Both counts, failing on whichever is larger. It is not documented
+        // whether the client counts characters or bytes, and the two diverge on
+        // the first em dash: `initialize.instructions` is 1,261 characters and
+        // 1,276 bytes. For UTF-8 the byte count is never below the character
+        // count, so `Largest` is always the byte count -- which makes bytes the
+        // conservative gate and the character count a thing the report shows
+        // rather than a second way to fail. Written as a max anyway, so that a
+        // future encoding change cannot silently make the weaker half the gate.
+        var oversized = measured
+            .Where(entry => entry.Largest > BudgetFor(entry.Surface))
+            .OrderByDescending(entry => entry.Largest)
+            .Select(entry =>
+                $"{entry.Surface} '{entry.Name}' is {entry.Bytes} bytes / {entry.Characters} characters, "
+                + $"{entry.Largest - BudgetFor(entry.Surface)} over the {BudgetFor(entry.Surface)} the client silently truncates at. "
+                + "Everything past the cut is discarded without a word, so it exists in source, reads correctly in review, and never reaches the model.");
+
+        await Assert.That(string.Join(Environment.NewLine, oversized)).IsEmpty();
+
+        // Not vacuous, in each surface separately. A rewrite that stopped
+        // injecting `session`, or a capture that returned an empty tool array,
+        // would leave every assertion above green over nothing -- which is the
+        // standing failure mode of a test that enumerates rather than names.
+        await Assert.That(measured.Count(entry => entry.Surface is "instructions")).IsEqualTo(1);
+        await Assert.That(measured.Count(entry => entry.Surface is "tool")).IsEqualTo(run.ToolNames.Count);
+        await Assert.That(measured.Count(entry => entry.Surface is "parameter")).IsGreaterThan(100);
+
+        // And every one of them is a real string rather than an absent member
+        // counted as zero: an empty description would satisfy the budget for
+        // ever.
+        await Assert.That(measured.Count(entry => entry.Largest is 0)).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// Serialisation that escapes nothing it does not have to, so a measured
+    /// size is the size the server actually wrote.
+    /// </summary>
+    /// <remarks>
+    /// The default encoder turns <c>—</c> into six ASCII characters. Measuring a
+    /// budget through it reports a number that is not on any wire.
+    /// </remarks>
+    private static readonly System.Text.Json.JsonSerializerOptions Unminified = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    /// <summary>One model-facing string, measured both ways.</summary>
+    /// <param name="Surface">Which of the three surfaces it belongs to.</param>
+    /// <param name="Name">What to look at when it is over budget.</param>
+    /// <param name="Characters">Its length in UTF-16 characters.</param>
+    /// <param name="Bytes">Its length in UTF-8 bytes.</param>
+    private sealed record ModelFacingString(string Surface, string Name, int Characters, int Bytes)
+    {
+        /// <summary>The conservative figure: whichever count is larger.</summary>
+        public int Largest => Math.Max(Characters, Bytes);
+
+        /// <summary>Measures one string, treating an absent one as empty.</summary>
+        /// <param name="surface">Which surface it belongs to.</param>
+        /// <param name="name">What to name it in a failure.</param>
+        /// <param name="text">The string, as it came off the wire.</param>
+        /// <returns>The measurement.</returns>
+        public static ModelFacingString Of(string surface, string name, string? text) =>
+            new(surface, name, text?.Length ?? 0, text is null ? 0 : Encoding.UTF8.GetByteCount(text));
+    }
+
+    /// <summary>The budget one surface is held to.</summary>
+    /// <param name="surface">The surface name.</param>
+    /// <returns>The cap in bytes.</returns>
+    /// <remarks>
+    /// Two of the three are the documented number; the parameter surface is the
+    /// assumed one, and it is a separate constant so the assumption is visible at
+    /// the point it is applied rather than only in prose.
+    /// </remarks>
+    private static int BudgetFor(string surface) => surface switch
+    {
+        "instructions" => ServerInstructions.MaximumBytes,
+        "tool" => SessionToolSurface.DescriptionMaximumBytes,
+        _ => SessionToolSurface.ParameterDescriptionMaximumBytes,
+    };
+
+    /// <summary>
+    /// Writes every measured length, sorted, so the strings near the line are
+    /// visible on a run that passes.
+    /// </summary>
+    /// <remarks>
+    /// A gate that only speaks when it fails cannot tell anybody they are 40
+    /// bytes from silent truncation. The per-tool entry totals go in the same
+    /// block, unasserted, as the data the per-string-versus-per-tool experiment
+    /// needs.
+    /// </remarks>
+    /// <param name="measured">Every measured string.</param>
+    /// <param name="entryTotals">Each tool's whole serialized <c>tools/list</c> entry.</param>
+    private static void Report(
+        IReadOnlyList<ModelFacingString> measured,
+        IReadOnlyList<(string Tool, int Characters, int Bytes)> entryTotals)
+    {
+        var report = new StringBuilder();
+
+        _ = report.AppendLine("Model-facing string budget, measured off the published binary's own wire.");
+        _ = report.AppendLine(CultureInfo.InvariantCulture, $"Per-string budget: {ServerInstructions.MaximumBytes} bytes (documented for instructions and tool descriptions; ASSUMED for parameter descriptions).");
+
+        foreach (var surface in new[] { "instructions", "tool", "parameter" })
+        {
+            var rows = measured.Where(entry => entry.Surface == surface).OrderByDescending(entry => entry.Largest).ToList();
+
+            _ = report.AppendLine();
+            _ = report.AppendLine(CultureInfo.InvariantCulture, $"--- {surface}: {rows.Count} strings, largest {(rows.Count is 0 ? 0 : rows[0].Largest)} bytes ---");
+
+            foreach (var row in rows)
+            {
+                _ = report.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"  {row.Bytes,6} B  {row.Characters,6} c  {row.Largest * 100 / BudgetFor(surface),3}%  {row.Name}");
+            }
+        }
+
+        _ = report.AppendLine();
+        _ = report.AppendLine("--- UNASSERTED: each tool's WHOLE tools/list entry, for the per-tool-total reading of \"2KB each\" ---");
+
+        foreach (var (tool, characters, bytes) in entryTotals.OrderByDescending(entry => entry.Bytes))
+        {
+            _ = report.AppendLine(CultureInfo.InvariantCulture, $"  {bytes,6} B  {characters,6} c  {(bytes > ServerInstructions.MaximumBytes ? "OVER" : "    ")}  {tool}");
+        }
+
+        TestContext.Current?.OutputWriter.WriteLine(report.ToString());
+
+        try
+        {
+            var path = Path.Combine(RepositoryLayout.Root.FullName, ".work", "description-budget.txt");
+
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, report.ToString());
+        }
+        catch (IOException)
+        {
+            // The written copy is a convenience; the assertions are the contract
+            // and a scratch directory that cannot be written must not turn a
+            // green run red.
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     [Test]

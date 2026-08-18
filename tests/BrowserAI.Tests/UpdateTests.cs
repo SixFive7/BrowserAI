@@ -5,6 +5,7 @@ using BrowserAI.Hosting;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
+using Velopack.Logging;
 
 namespace BrowserAI.Tests;
 
@@ -375,6 +376,73 @@ internal sealed class UpdateTests
     {
         await Assert.That(UpdateService.StallBudget).IsLessThan(UpdateService.AbsoluteBudget);
         await Assert.That(UpdateService.CrashTripwire).IsGreaterThan(UpdateService.AbsoluteBudget + UpdateService.StallBudget);
+    }
+
+    /// <summary>
+    /// Running uninstalled is a supported configuration and must not warn — and
+    /// a genuine locator failure still must.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The record this demotes fired on every startup of a binary Velopack did
+    /// not install</b> — <c>dotnet run</c>, every test host, and the configuration
+    /// CI runs in — at <c>Warning</c>, on stderr, which is the stream this project
+    /// relies on for diagnosis. A hundred of them per saturation run, every one
+    /// of them saying that nothing was wrong.
+    /// </para>
+    /// <para>
+    /// <b>What makes the demotion safe is that the two cases ARE distinguishable
+    /// from outside Velopack, and the arms below are the proof.</b> The
+    /// not-installed notice is one sentence emitted from one branch at
+    /// <c>Warn</c>; upstream's other warnings and all of its errors carry
+    /// different text and different levels. The <c>Error</c> arm matters most:
+    /// upstream's message admits it cannot tell <i>not installed</i> from
+    /// <i>packaged improperly</i>, and the record that DOES tell them apart —
+    /// <i>"unable to locate a valid manifest file"</i> — is logged at
+    /// <c>Error</c> and is untouched.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OnlyTheNotInstalledNoticeIsDemotedAndOnlyWhenNotInstalled()
+    {
+        const string Notice =
+            "Failed to initialize WindowsVelopackLocator. This could be because the program is not installed or packaged properly.";
+
+        // The one routine case: warning level, upstream's own sentence, and a
+        // process that really is not an install.
+        await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(VelopackLogLevel.Warning, Notice, installed: false)).IsTrue();
+
+        // An INSTALLED process saying it cannot locate itself is a real problem,
+        // whatever the text.
+        await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(VelopackLogLevel.Warning, Notice, installed: true)).IsFalse();
+
+        // Error is never demoted. This is the arm that keeps a genuinely broken
+        // package loud: upstream logs "unable to locate a valid manifest file" at
+        // Error from the branch that distinguishes broken from absent.
+        await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(VelopackLogLevel.Error, Notice, installed: false)).IsFalse();
+
+        await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(
+            VelopackLogLevel.Error,
+            @"Update.exe in parent dir, but unable to locate a valid manifest file at: C:\x\sq.version",
+            installed: false)).IsFalse();
+
+        // Upstream's other WARNINGS are not this one and stay at Warning.
+        foreach (var other in new[]
+        {
+            "Update.exe in parent dir, Legacy app-* directory detected, sq.version not found. Using directory name for AppId and Version.",
+            "Running in deeply nested directory. This is not an advised use-case.",
+        })
+        {
+            await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(VelopackLogLevel.Warning, other, installed: false)).IsFalse();
+        }
+
+        // A null message must not be treated as the notice, and the matched
+        // clause is upstream's leading sentence rather than the whole record --
+        // so a reword of the second half changes nothing and a reword of the
+        // first half sends it back to Warning, which is the safe direction.
+        await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(VelopackLogLevel.Warning, null, installed: false)).IsFalse();
+        await Assert.That(Notice).StartsWith(VelopackStartup.NotInstalledNotice);
     }
 
     /// <summary>A process going down abandons the pass without reporting a failure.</summary>

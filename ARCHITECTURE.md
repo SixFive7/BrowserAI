@@ -89,6 +89,18 @@ short-circuits both methods, and the answer is the child's `result` sliced by
 passthrough lossless — an unknown content type, an unmodelled tool member and a
 non-ASCII character all survive, none of which a typed round trip preserves.
 
+**There is one outgoing filter, and it removes a capability the SDK adds behind
+our back.** `McpServerImpl` builds its own `ServerCapabilities` and gates
+`Tools`, `Prompts`, `Resources` and `Completion` on configuration —
+`ConfigureLogging` has no such guard and sets `Logging = new()` unconditionally, so
+`initialize` advertised MCP logging that this server has never implemented and
+never declared. `BrowserProxy.UnadvertiseLogging` takes it back out of the
+`initialize` result on the way to the caller; the property cannot be un-set from
+the options object, because the constructor overwrites it and it is
+`[Obsolete("MCP9005")]`. What BrowserAI advertises is now byte-identical to what
+the child advertises — `{"tools":{}}` — and `VerticalSliceTests` asserts the whole
+object off the wire against the child's own snapshot. *Added 2026-08-18.*
+
 **Registration is one file's decision.** `McpClientRegistration` is the only place
 that decides *how* BrowserAI registers, and it carries the three rejected
 alternatives and what a replacement must keep. The mechanism is the client's own

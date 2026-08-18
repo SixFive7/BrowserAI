@@ -130,7 +130,14 @@ internal static class Program
 
         foreach (var (level, message, failure) in velopack)
         {
-            if (level >= VelopackLogLevel.Warning)
+            // Replayed here rather than at the call site because THIS is where
+            // the second half of the question can be answered: InstallLocation
+            // cannot speak until VelopackApp.Run() above has set the locator.
+            // "Not installed" is a supported configuration -- dotnet run, every
+            // test host, CI -- and a supported configuration must not warn; a
+            // genuine locator failure carries different text and still does.
+            if (level >= VelopackLogLevel.Warning
+                && !VelopackStartup.IsRoutineNotInstalledNotice(level, message, InstallLocation.IsInstalled))
             {
                 UpdateLog.VelopackProblem(updateLogger, message, failure);
             }

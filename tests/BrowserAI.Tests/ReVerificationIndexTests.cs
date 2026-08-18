@@ -142,7 +142,13 @@ internal sealed partial class ReVerificationIndexTests
         ArticleFiles().Sum(file => Floats().Count(File.ReadAllText(file)));
 
     /// <summary>Every knowledge-base article: the Markdown under <c>kb/</c> that stamps facts.</summary>
-    private static IEnumerable<string> ArticleFiles() =>
+    /// <remarks>
+    /// <b>Internal rather than private so the marker corpus has one definition.</b>
+    /// <c>RecordedCountTests</c> checks a second claim about the same corpus — that
+    /// no article carries a <c>[STALE]</c> marker — and a scan of its own would be
+    /// free to disagree with this one about which files are articles.
+    /// </remarks>
+    internal static IEnumerable<string> ArticleFiles() =>
         MarkdownFiles(Path.Combine(RepositoryLayout.Root.FullName, "kb"))
             .Where(file => !NotArticles.Contains(
                 Path.GetRelativePath(Path.Combine(RepositoryLayout.Root.FullName, "kb"), file),

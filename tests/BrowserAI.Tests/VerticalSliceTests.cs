@@ -34,6 +34,27 @@ internal sealed class VerticalSliceTests
         // below would still be right, and the surface would still be invisible.
         await Assert.That(run.InitializeResult["capabilities"]?["tools"]).IsNotNull();
 
+        // ⚠️ AND NOTHING ELSE. Added 2026-08-18, and it is the founding failure
+        // shape caught in our own handshake: the SDK's McpServerImpl builds a
+        // fresh ServerCapabilities and gates Tools, Prompts, Resources and
+        // Completion on configuration -- but ConfigureLogging has no such guard
+        // and sets `Logging = new()` unconditionally, so BrowserAI advertised MCP
+        // logging it has never implemented, never declared, and would never emit
+        // a single notifications/message for. A client that called
+        // logging/setLevel got {} and then silence for ever.
+        //
+        // Asserted as the WHOLE object rather than as "logging is absent",
+        // because the next capability the SDK adds a guardless Configure* for
+        // would be advertised the same silent way. The value is byte-identical to
+        // the child's own snapshot, which is the second thing this fixes: the two
+        // ends of the proxy now agree about what this server is.
+        //
+        // BrowserProxy.UnadvertiseLogging is what removes it, from an outgoing
+        // message filter -- the only route that neither lies nor suppresses
+        // MCP9005 on an obsolete property the constructor overwrites anyway.
+        await Assert.That(run.InitializeResult["capabilities"]?.ToJsonString())
+            .IsEqualTo(UpstreamSurface.ServerCapabilities());
+
         // Byte for byte, and in upstream's order. Renaming is settled as
         // forbidden, so this asserts identity rather than exercising a map; the
         // day a rename map appears, this is what says so. The expected list is

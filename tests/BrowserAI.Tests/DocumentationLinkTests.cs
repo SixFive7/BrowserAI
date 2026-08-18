@@ -197,12 +197,21 @@ internal sealed partial class DocumentationLinkTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // Not vacuous, and not vacuous in each half separately. Corrected
-        // 2026-08-18 to 556 fragments — 501 across documents, 55 within one, and
-        // 77 of the 501 written in a `.cs` doc comment (previously "554: 500,
-        // 54, and 76", earlier the same day, before the session-gate work added
-        // links). That half is the one no renderer ever displays and the one the
-        // retitling incident broke four of. The floors are a long way under
+        // Not vacuous, and not vacuous in each half separately. Re-measured
+        // 2026-08-18 by the procedure below to **568 fragments — 512 across
+        // documents, 56 within one, and 76 of the 512 written in a `.cs` doc
+        // comment** (previously "556: 501, 55, and 77", and "554: 500, 54, and
+        // 76" before that, both earlier the same day). That half is the one no
+        // renderer ever displays and the one the retitling incident broke four
+        // of.
+        //
+        // ⚠️ **The `.cs` figure went 77 → 76 and no `.cs` file in this change
+        // set gained or lost a fragment link**, checked file by file against
+        // HEAD. The cause is not established and is deliberately not guessed at;
+        // the number above is what the scan returned. The total is separately
+        // asserted against the sentence in `CLAUDE.md` by
+        // `RecordedCountTests.TheFragmentCountInClaudeMdIsWhatTheScanFinds`, so
+        // it is now a red build rather than a stamp somebody has to remember. The floors are a long way under
         // these numbers on purpose: they exist to catch a narrowing that empties
         // the scan, not to pin counts that move whenever a document is written.
         //
@@ -413,6 +422,20 @@ internal sealed partial class DocumentationLinkTests
 
         return found;
     }
+
+    /// <summary>
+    /// How many <c>#fragment</c> links the repository carries, for the sentence
+    /// in <c>CLAUDE.md</c> that publishes the number.
+    /// </summary>
+    /// <remarks>
+    /// <b>Exposed so the published count and its check come from one
+    /// implementation.</b> A second scan written beside the sentence would be a
+    /// second definition of "a fragment", and the two would eventually answer
+    /// different questions over the same tree — which is exactly the accident
+    /// <c>RecordedCountTests</c> exists to stop.
+    /// </remarks>
+    /// <returns>The count.</returns>
+    internal static async Task<int> FragmentCountAsync() => (await FragmentsAsync()).Count;
 
     /// <summary>Every link in the repository that carries a <c>#fragment</c>.</summary>
     /// <remarks>

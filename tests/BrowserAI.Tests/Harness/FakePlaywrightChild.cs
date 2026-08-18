@@ -477,6 +477,25 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
         return true;
     }
 
+    /// <summary>
+    /// The capability set this double advertises, which is the real child's,
+    /// byte for byte.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-18 (previously
+    /// <c>{"tools":{"listChanged":true},"logging":{}}</c>).</b> The double was
+    /// more capable than the thing it doubles: the committed
+    /// <c>upstream-snapshots/tools-list.json</c> records
+    /// <c>@playwright/mcp</c> 0.0.79 advertising exactly <c>{"tools":{}}</c> — no
+    /// <c>listChanged</c>, no <c>logging</c> — and
+    /// <c>UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes</c> now
+    /// holds the two together. A test passing against capability behaviour that
+    /// cannot occur in production is worse than no test: it reads as coverage of
+    /// a branch nothing will ever take, and a proxy that one day branches on
+    /// <c>listChanged</c> would have been green here and wrong on the wire.
+    /// </remarks>
+    private const string RealChildCapabilities = """{"tools":{}}""";
+
     private string Initialize(JsonNode? request)
     {
         var requested = request?["params"]?["protocolVersion"]?.GetValue<string>() ?? ProtocolCeiling;
@@ -485,6 +504,9 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
         // ordinal comparison is a chronological one.
         var negotiated = string.CompareOrdinal(requested, ProtocolCeiling) > 0 ? ProtocolCeiling : requested;
 
-        return $$$"""{"protocolVersion":{{{JsonSerializer.Serialize(negotiated)}}},"capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"fake-playwright-mcp","version":"0.0.0-fake"}}""";
+        return $$$"""{"protocolVersion":{{{JsonSerializer.Serialize(negotiated)}}},"capabilities":{{{RealChildCapabilities}}},"serverInfo":{"name":"fake-playwright-mcp","version":"0.0.0-fake"}}""";
     }
+
+    /// <summary>What this double advertises on <c>initialize</c>, for the test that pins it.</summary>
+    internal static string AdvertisedCapabilities => RealChildCapabilities;
 }

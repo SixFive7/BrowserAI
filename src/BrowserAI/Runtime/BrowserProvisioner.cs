@@ -562,7 +562,16 @@ internal sealed class BrowserProvisioner : IDisposable
             browser,
             ProvisioningState.Downloading,
             directory,
-            $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}.");
+            attempt.Phase.IsWaitingForAnotherProcess
+
+                // ⚠️ Never "is being downloaded" on this branch. This process has
+                // started nothing: it lost the machine-wide provisioning mutex
+                // and is watching for the holder's completion marker. What the
+                // holder is doing -- downloading, extracting, or pruning old
+                // revisions, which walks every process on the machine -- is not
+                // knowable from here, so it is not claimed. See AttemptPhase.
+                ? $"Another BrowserAI process holds the provisioning lock for {browser}; this one is watching for its completion marker into '{directory}' rather than starting a second copy, and has been since {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}."
+                : $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}.");
 
     private BrowsersManifest Manifest() => _manifest ??= BrowsersManifest.Read(_payload);
 
@@ -624,20 +633,21 @@ internal sealed class BrowserProvisioner : IDisposable
     private Attempt Start(string browser, BrowserRevision revision)
     {
         var started = DateTimeOffset.Now;
+        var phase = new AttemptPhase();
 
         // LongRunning, so this gets a thread of its own rather than a pool
         // thread: the body takes a named mutex, and a named mutex is owned by
         // the thread that waited on it.
         var task = Task.Factory.StartNew(
-            () => Install(browser, revision),
+            () => Install(browser, revision, phase),
             CancellationToken.None,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default);
 
-        return new Attempt(task, started);
+        return new Attempt(task, started, phase);
     }
 
-    private ProvisioningResult Install(string browser, BrowserRevision revision)
+    private ProvisioningResult Install(string browser, BrowserRevision revision, AttemptPhase phase)
     {
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
         var deadline = Stopwatch.StartNew();
@@ -655,14 +665,27 @@ internal sealed class BrowserProvisioner : IDisposable
             {
                 ProvisioningLog.AnotherProcessIsInstalling(_logger, browser);
 
-                var (finished, taken) = WaitForAnotherProcess(browser, directory, mutex, deadline);
+                // Recorded before the wait and cleared after it, so the sentence
+                // a caller reads says what this process is actually doing.
+                // Nothing here knows what the HOLDER is doing, which is the whole
+                // reason the old sentence was wrong.
+                phase.EnterWait();
 
-                if (finished is not null)
+                try
                 {
-                    return finished;
-                }
+                    var (finished, taken) = WaitForAnotherProcess(browser, directory, mutex, deadline);
 
-                acquisition = taken;
+                    if (finished is not null)
+                    {
+                        return finished;
+                    }
+
+                    acquisition = taken;
+                }
+                finally
+                {
+                    phase.LeaveWait();
+                }
             }
 
             try
@@ -915,7 +938,50 @@ internal sealed class BrowserProvisioner : IDisposable
     }
 
     /// <summary>One provisioning attempt in this process.</summary>
-    private sealed record Attempt(Task<ProvisioningResult> Task, DateTimeOffset Started);
+    /// <param name="Task">The background install.</param>
+    /// <param name="Started">When it was started.</param>
+    /// <param name="Phase">What it is doing right now, for the sentence a caller reads.</param>
+    private sealed record Attempt(Task<ProvisioningResult> Task, DateTimeOffset Started, AttemptPhase Phase);
+
+    /// <summary>
+    /// Which half of an attempt is running, written by the installing thread and
+    /// read by whichever thread is answering a caller.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This exists because the detail sentence was stating a fact that was
+    /// not true.</b> Every path that has not finished rendered
+    /// <i>"… is being downloaded into '…'"</i>, including the one where this
+    /// process is <b>not</b> downloading anything: it lost the machine-wide
+    /// provisioning mutex and is watching for the holder's marker. The holder may
+    /// be downloading, or extracting, or walking every process on the machine
+    /// inside <see cref="BrowserProvisioner.Prune"/> — and the loser cannot tell
+    /// which, so it must not claim one.
+    /// </para>
+    /// <para>
+    /// <b>The state WORD is unchanged and that is deliberate rather than an
+    /// oversight.</b> <c>downloading</c> is caller-visible surface: every consumer
+    /// branches on <i>installed</i> / <i>not yet, work is in progress</i> /
+    /// <i>failed</i>, and the loser belongs in the middle bucket exactly as
+    /// before. The word being narrower than the state it names is a real defect,
+    /// and the honest replacement is <c>provisioning</c> — but renaming what a
+    /// model reads is a product-voice decision, so it is recorded in
+    /// <c>QUESTIONS.md</c> and not taken here.
+    /// </para>
+    /// </remarks>
+    private sealed class AttemptPhase
+    {
+        private int _waitingForAnotherProcess;
+
+        /// <summary>Whether this attempt is waiting out another process rather than installing.</summary>
+        public bool IsWaitingForAnotherProcess => Volatile.Read(ref _waitingForAnotherProcess) is not 0;
+
+        /// <summary>Records that the machine-wide mutex went to somebody else.</summary>
+        public void EnterWait() => Volatile.Write(ref _waitingForAnotherProcess, 1);
+
+        /// <summary>Records that this thread now holds the mutex and is installing.</summary>
+        public void LeaveWait() => Volatile.Write(ref _waitingForAnotherProcess, 0);
+    }
 
     /// <summary>How one attempt ended.</summary>
     private sealed record ProvisioningResult(bool Succeeded, string Detail);

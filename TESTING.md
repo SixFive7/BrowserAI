@@ -454,6 +454,75 @@ declaration to be present in `Directory.Build.props`**: the default is already o
 so a file that never mentions it would pass a "not true" check while telling the
 next reader nothing.
 
+## The model-facing surface, and the counts documents publish
+
+**Added 2026-08-18.** Two gates that are the same idea in two places: a claim the
+repository makes about itself is checked against the thing it claims about.
+
+**Nothing model-facing may exceed the client's silent truncation budget.** Claude
+Code's MCP documentation states, verbatim, *"Claude Code truncates tool
+descriptions and server instructions at 2KB each. Keep them concise to avoid
+truncation, and put critical details near the start."* The truncation is
+**positional, not semantic** — it cuts wherever the limit falls, mid-sentence, and
+everything after it is never seen. That is the worst failure shape available: the
+text exists in source, reads correctly in review, and never arrives.
+
+`ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget` is
+the gate, and five things about it are deliberate:
+
+- **It measures off the wire, not off source.** It reads `SliceRun` — the
+  published NativeAOT binary, a real `@playwright/mcp` child, real JSON-RPC over
+  real pipes. These strings are assembled from concatenated constants,
+  interpolated tables and a schema rewrite performed on the child's own nodes, so
+  a scan of string literals misses precisely the cases that break.
+- **Three surfaces, and the third is the one that was uncovered:** the server
+  `instructions`, every tool `description`, and **every parameter `description`
+  inside every `inputSchema`**. That last is where BrowserAI's own injected
+  `session` description lands on 59 upstream tools at once, and it was asserted by
+  nothing at all.
+- **Enumerated dynamically**, so a tool upstream adds next year is covered without
+  anybody editing the test. Per-surface floors keep that from becoming vacuous.
+- **Characters and UTF-8 bytes, failing on whichever is larger.** It is not
+  documented which the client counts, and the two diverge on the first em dash.
+- **Hard at 100%, with no warning tier.** This does not contradict the recorded
+  argument against a headroom gate — that argument was against failing *below*
+  100%, so that a fourth session mode fails on the six-consumer line rather than
+  on a budget line. Over 100% is a broken state rather than a tight one.
+
+It prints every length sorted on a **passing** run, to the run output and to
+`.work/description-budget.txt`, because a gate that only speaks when it fails
+cannot tell anybody they are forty bytes from silent truncation.
+
+> ⚠️ **The per-string reading is an assumption and the constant says so.**
+> *"2KB each"* does not say each **what**. The competing reading is per tool —
+> description plus serialized schema plus every parameter description in one
+> bucket — under which `browserai_init`'s whole `tools/list` entry is **3,428
+> bytes** and already truncated today, while every string in it fits. The gate is
+> built on the per-string reading because it is the conservative one to be wrong
+> about; the per-tool totals are **reported and not asserted**, so the experiment
+> commissioned to settle it has its data. See `ClientTruncationBudget` and
+> [QUESTIONS.md](QUESTIONS.md).
+
+**Every count a surviving document publishes about this repository is checked
+against a live scan.** `ReVerificationIndexTests` had done this for one sentence
+since 2026-08-17; on 2026-08-18 four counts in prose were wrong at once — one of
+them because a *correction* had replaced a right number with a wrong one by
+measuring a different predicate over the same table. `RecordedCountTests`
+generalises it, on two rules:
+
+- **The published number and its check derive from one implementation.** Nothing
+  re-implements a scan, because a second definition of *what counts as a row* is a
+  second answer waiting to happen.
+- **A per-category count is asserted category by category**, and the sum against
+  the total. A wrong total is only visible against the sum of its parts, which is
+  exactly how the earlier error survived.
+
+The sentence in the document is the anchor, so **rewording it fails the build**
+rather than silently unhooking the check. Four counts it cannot mechanise are
+named in the class, each with the reason — the executed-test count in `README.md`
+is a different predicate from any reflection over `[Test]` methods, and the
+installer size needs an artifact that `Releases/` gitignores.
+
 ## The upstream-review gate
 
 **Settled 2026-08-15, replacing an approval prompt with evidence.** The first

@@ -168,6 +168,34 @@ internal sealed class UpstreamSnapshotTests
         await Assert.That(string.Join(", ", defective)).IsEmpty();
     }
 
+    /// <summary>
+    /// The test double advertises exactly what the real child advertises.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The double was more capable than the thing it doubles, and nothing
+    /// said so.</b> Until 2026-08-18 <c>FakePlaywrightChild</c> answered
+    /// <c>initialize</c> with <c>{"tools":{"listChanged":true},"logging":{}}</c>
+    /// while the snapshot recorded <c>{"tools":{}}</c>. Every test in the
+    /// in-process layer therefore ran against a child that could send
+    /// <c>notifications/tools/list_changed</c> and <c>notifications/message</c> —
+    /// two things production can never produce. That is coverage of a branch
+    /// nothing will take, which reads as coverage and is not.
+    /// </para>
+    /// <para>
+    /// <b>Asserted against the snapshot rather than against a literal</b>, so the
+    /// day upstream starts advertising something the diff moves both the record
+    /// and the double's obligation at once, and a hand-edit of the double is a
+    /// red build rather than a fidelity gap nobody measures.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDoubleAdvertisesWhatTheRealChildDoes() =>
+        await Assert.That(FakePlaywrightChild.AdvertisedCapabilities)
+            .IsEqualTo(UpstreamSurface.ServerCapabilities())
+            .Because("the fake child must not advertise a capability @playwright/mcp does not, or the in-process layer covers behaviour production cannot reach.");
+
     /// <summary>The snapshot's provenance is the marker test's idea of "resolved".</summary>
     [Test]
     public async Task TheSnapshotProvenanceMatchesTheCommittedPayloadLock()

@@ -162,6 +162,17 @@ diagnosis.
 supported configuration should not warn. Not taken alone because what severity a
 message carries is the product's voice, and that is yours.
 
+> ✅ **Taken 2026-08-18: (b).** `VelopackStartup.IsRoutineNotInstalledNotice`
+> demotes that one record to `Debug` on three independent conditions — the level
+> is `Warning` and not `Error`, the message carries upstream's leading clause,
+> and this process is not an installed one. **The two cases turned out to be
+> distinguishable from outside Velopack**, which was the condition on the answer:
+> 1.2.0 emits that sentence at `Warn` from exactly one branch, and the record
+> that tells a broken package from an absent one — *"unable to locate a valid
+> manifest file"* — is a separate `Error` and is untouched.
+> `UpdateTests.OnlyTheNotInstalledNoticeIsDemotedAndOnlyWhenNotInstalled` holds
+> all six arms.
+
 ### 6. The per-directory gate at 60 seconds
 
 Raised from 5 s. That is 2× `RenameWindow.Budget` and roughly 18× the measured
@@ -200,3 +211,74 @@ itself.** (b) Build a deliberate CPU-saturation reproduction.
 **Recommendation: (a).** It has been seen three times in three days, the cheap
 theories are dead, and a speculative reproduction is expensive against a failure
 that will now explain itself the first time it recurs.
+
+---
+
+## Added 2026-08-18, from the honesty pass
+
+### 9. What the `browserProvisioning` state word should say
+
+`init` answers with one of three words — `installed`, `downloading`, `failed` —
+and the word is the surface, deliberately: *"a caller that has to parse English to
+find out whether a navigation will work is one upstream wording change away from
+getting it wrong."*
+
+**`downloading` is narrower than the state it names.** One word covers waiting on
+another process's provisioning mutex, deleting an abandoned tree, downloading,
+extracting, and pruning superseded revisions. The waiting case is the one that
+bites: that process has started nothing, cannot see what the holder is doing, and
+the holder may well be finished. **The sentence beside the word has been fixed**
+and now says it is watching for another process's marker rather than claiming a
+download (`ProvisioningTests.AProcessWaitingOnAnotherOneDoesNotSayItIsDownloading`).
+The word has not, because renaming what a model reads is product voice.
+
+**Directions.** (a) **Leave `downloading`.** It is what every consumer branches
+on — *installed* / *not yet* / *failed* — and the middle bucket is correct for
+every phase it covers. (b) **Rename it `provisioning`**, which is true of all five
+phases; costs an edit to `ARCHITECTURE.md`, `TESTING.md` and two test assertions,
+and any external consumer parsing the word breaks once, loudly. (c) **Add a fourth
+word, `waiting`**, distinguishing the mutex-loser; most precise, and it makes a
+three-state surface a four-state one for a distinction no caller acts on
+differently. (d) **Keep the word and lean on the sentence**, which is what is
+shipped today.
+
+**Recommendation: (b).** The word is read by a model, and `downloading` invites it
+to reason about bandwidth and download time in a state where neither applies. The
+migration cost is one commit and there is no external consumer to break — this
+build has never shipped a caller that parses it. (d) is a defensible hold; (c) is
+the only option that adds surface without adding an action.
+
+### 10. Whether the client's 2 KB cap is per string or per tool
+
+Claude Code's MCP documentation says, verbatim: *"Claude Code truncates tool
+descriptions and server instructions at 2KB each."* **"Each" does not say each
+what**, and the answer changes what the new budget gate means.
+
+Everything shipped today assumes **per string**: one budget for `instructions`,
+one per tool `description`, one per parameter `description`. Under that reading the
+whole surface fits with room to spare — the largest string is
+`browserai_init`'s description at **1,639 bytes of 2,048**.
+
+**Under a per-tool-total reading it does not fit.** `browserai_init`'s whole
+`tools/list` entry — name, title, description and the serialized `inputSchema`
+with all seven parameter descriptions — is **3,428 bytes**, sliced out of the raw
+frame the server wrote rather than re-serialised, and it is the only one
+of the 65 over the line. If that reading is right, `browserai_init` is truncated
+today, mid-schema, and trimming its description would move text from one capped
+bucket into the same capped bucket rather than fixing anything.
+
+**Nobody has checked, and the gate says so** rather than hiding the assumption
+behind a passing test: `ClientTruncationBudget` records it, and
+`ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget`
+reports every tool's entry total unasserted beside the per-string figures.
+
+**Directions.** (a) **Settle it empirically** — a probe server advertising one
+tool with a description just under 2 KB and a marker sentence at the very end of a
+large schema, asked to repeat the marker. (b) Read Claude Code's own truncation
+code if it is reachable. (c) Assume the worse reading and split `browserai_init`
+into two tools, which reopens the charter's tool-surface decision. (d) Leave it,
+and accept that a truncation here is silent.
+
+**Recommendation: (a), and it is already commissioned.** It is one probe server and
+one conversation, it settles the question for every MCP server this estate ships,
+and (c) is unjustifiable before it is answered.

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
@@ -416,6 +417,95 @@ internal sealed class ProvisioningTests
             // the very behaviour that hung.
             await Assert.That(Volatile.Read(ref starts)).IsEqualTo(1);
             await Assert.That(File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker))).IsTrue();
+        }
+        finally
+        {
+            claim.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// A process waiting out another one does not claim to be downloading.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The status sentence was stating a fact that was not true.</b> Every
+    /// unfinished attempt rendered <i>"… is being downloaded into '…'"</i>,
+    /// including the one where this process has started nothing at all: it lost
+    /// the machine-wide provisioning mutex and is watching for the holder's
+    /// marker. What the holder is doing is unknowable from here — downloading,
+    /// extracting, or walking every process on the machine inside its revision
+    /// prune — and the same window is what produced the sixty-minute hang two
+    /// tests above, so it is neither hypothetical nor rare.
+    /// </para>
+    /// <para>
+    /// <b>The state WORD is unchanged and this test says so on purpose.</b>
+    /// <c>downloading</c> stays, because every consumer of it branches on
+    /// <i>installed</i> / <i>not yet</i> / <i>failed</i> and the loser belongs in
+    /// the middle exactly as before; the honest word for the state is
+    /// <c>provisioning</c>, and renaming what a model reads is recorded in
+    /// <c>QUESTIONS.md</c> as the maintainer's call rather than taken here. What
+    /// is fixed is the sentence, which was a claim about the world.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProcessWaitingOnAnotherOneDoesNotSayItIsDownloading()
+    {
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("provision-waiting-detail");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+
+        using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log, Quick())
+        {
+            StartInstaller = (_, _) => FakeInstaller.Succeeding(directory, TimeSpan.Zero),
+        };
+
+        var claim = ProvisioningClaim.Take(root, SessionManager.SupportedBrowser);
+
+        try
+        {
+            await Assert.That(claim.Held).IsTrue();
+
+            // Starts the attempt, which loses the mutex on its own thread. Ensure
+            // answers immediately by design, so the phase it reports is whatever
+            // the background thread has reached -- which is why this reads Peek in
+            // a loop rather than asserting on the first answer.
+            var started = provisioner.Ensure(SessionManager.SupportedBrowser);
+
+            await Assert.That(started.State).IsEqualTo(ProvisioningState.Downloading);
+
+            var patience = Stopwatch.StartNew();
+            ProvisioningStatus waiting;
+
+            while (true)
+            {
+                waiting = provisioner.Peek(SessionManager.SupportedBrowser);
+
+                if (waiting.Detail.Contains("holds the provisioning lock", StringComparison.Ordinal))
+                {
+                    break;
+                }
+
+                // A hang detector, never an assertion: nothing below reads this
+                // clock, so a loaded machine cannot turn this test red -- it can
+                // only make it take longer to reach the same answer.
+                if (patience.Elapsed > TestDefaults.InProcessHang)
+                {
+                    throw new TimeoutException(
+                        $"The attempt never reported that it was waiting on another process. Last status: {waiting.State} — {waiting.Detail}");
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(20));
+            }
+
+            // The word is unchanged; the sentence no longer claims a download
+            // that this process has not started and cannot see.
+            await Assert.That(waiting.State).IsEqualTo(ProvisioningState.Downloading);
+            await Assert.That(waiting.Detail).DoesNotContain("is being downloaded");
+            await Assert.That(waiting.Detail).Contains("watching for its completion marker");
         }
         finally
         {

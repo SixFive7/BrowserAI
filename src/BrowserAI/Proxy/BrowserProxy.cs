@@ -226,7 +226,74 @@ internal sealed class BrowserProxy : IAsyncDisposable
         options.Filters.Message.IncomingFilters.Add(next => (context, cancellationToken) =>
             OnIncomingAsync(next, context, cancellationToken));
 
+        // ⚠️ The one thing this outgoing filter does, and it exists because the
+        // SDK advertises a capability we never asked for. See UnadvertiseLogging.
+        options.Filters.Message.OutgoingFilters.Add(next => (context, cancellationToken) =>
+        {
+            UnadvertiseLogging(context);
+            return next(context, cancellationToken);
+        });
+
         return options;
+    }
+
+    /// <summary>
+    /// Removes <c>capabilities.logging</c> from the <c>initialize</c> result on
+    /// its way out.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>BrowserAI advertised MCP logging and never asked to.</b>
+    /// <see cref="ServerOptions"/> declares <c>Tools</c> and nothing else, but
+    /// <c>McpServerImpl</c>'s constructor builds a fresh
+    /// <see cref="ServerCapabilities"/> and then calls nine <c>Configure*</c>
+    /// methods over it. <c>ConfigureTools</c>, <c>ConfigurePrompts</c>,
+    /// <c>ConfigureResources</c> and <c>ConfigureCompletion</c> each begin with an
+    /// early return when nothing was supplied; <c>ConfigureLogging</c> has no such
+    /// guard and reaches <c>ServerCapabilities.Logging = new()</c>
+    /// unconditionally, registering a <c>logging/setLevel</c> handler with it.
+    /// Read out of <c>ModelContextProtocol</c> 2.2.0's shipped source at
+    /// <c>v2.2.0</c>.
+    /// </para>
+    /// <para>
+    /// <b>So the handshake claimed a capability this server does not implement</b>
+    /// — it has never emitted a <c>notifications/message</c> and never will — and
+    /// a client that called <c>logging/setLevel</c> got <c>{}</c> and then silence
+    /// for ever. That is this project's founding failure shape: something reports
+    /// a capability it does not have, and nothing anywhere goes red. It was also a
+    /// live divergence from the child, whose golden snapshot records
+    /// <c>{"tools":{}}</c> and no logging at all, so a reader comparing the two
+    /// ends would have concluded BrowserAI adds logging.
+    /// </para>
+    /// <para>
+    /// <b>Why an outgoing filter rather than the options object.</b> Setting
+    /// <c>Capabilities.Logging = null</c> does nothing — the constructor overwrites
+    /// it — and the property is <c>[Obsolete(DiagnosticId = "MCP9005")]</c> at
+    /// 2.2.0, so naming it at all needs a suppression, which the style rule
+    /// forbids. Rewriting the frame is the only route that neither lies nor
+    /// suppresses. It is <b>subtractive only</b>: nothing is added, nothing is
+    /// reordered, and every other member of the result is the SDK's own node.
+    /// </para>
+    /// <para>
+    /// <b>MCP deprecated logging in SEP-2577</b> and its stated migration path for
+    /// a stdio server is <i>log to stderr</i>, which is what BrowserAI already
+    /// does. So there is nothing here to adopt later that this removes.
+    /// </para>
+    /// </remarks>
+    /// <param name="context">The outgoing message.</param>
+    private static void UnadvertiseLogging(MessageContext context)
+    {
+        // Shape rather than id, and deliberately: `initialize` is the only result
+        // carrying both of these, the SDK owns the id, and matching on shape needs
+        // no state shared between the two filter directions. A `tools/list` result
+        // has `tools`; a `tools/call` result has `content`; neither has
+        // `protocolVersion`.
+        if (context.JsonRpcMessage is JsonRpcResponse { Result: JsonObject result }
+            && result.ContainsKey("protocolVersion")
+            && result["capabilities"] is JsonObject capabilities)
+        {
+            _ = capabilities.Remove("logging");
+        }
     }
 
     /// <inheritdoc />

@@ -41,7 +41,13 @@ internal static class ServerInstructions
     /// What the client silently truncates at, and therefore what this string
     /// must fit inside.
     /// </summary>
-    public const int MaximumBytes = 2048;
+    /// <remarks>
+    /// One of the two surfaces <see cref="ClientTruncationBudget"/> quotes the
+    /// documentation for by name. The number lives there so that all three
+    /// model-facing surfaces cannot drift apart, and so the unresolved reading of
+    /// the documentation's <i>"each"</i> is stated once where it can be read.
+    /// </remarks>
+    public const int MaximumBytes = ClientTruncationBudget.Bytes;
 
     /// <summary>The instructions sent on <c>initialize</c>.</summary>
     public static string Text { get; } =

@@ -85,8 +85,24 @@ internal static class SessionToolSurface
     /// tail of a longer description does not exist and nothing reports it.
     /// Measured in <b>bytes</b>, because these strings carry <c>—</c> and <c>'</c>
     /// and a character count would under-report the ones that use them.
+    /// Documented for this surface: see <see cref="Proxy.ClientTruncationBudget"/>
+    /// for the sentence it is quoted from and for what that sentence leaves open.
     /// </remarks>
-    public const int DescriptionMaximumBytes = 2048;
+    public const int DescriptionMaximumBytes = Proxy.ClientTruncationBudget.Bytes;
+
+    /// <summary>
+    /// What a <c>description</c> <b>inside</b> an <c>inputSchema</c> must fit
+    /// inside.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Assumed rather than documented</b> — see
+    /// <see cref="Proxy.ClientTruncationBudget.ParameterDescriptionBytes"/>. It is
+    /// the surface this type is most exposed on: <see cref="SessionDescription"/>
+    /// is injected into every upstream tool's schema, so one string lands
+    /// fifty-nine times and an overflow would be fifty-nine silent truncations
+    /// from one edit.
+    /// </remarks>
+    public const int ParameterDescriptionMaximumBytes = Proxy.ClientTruncationBudget.ParameterDescriptionBytes;
 
     /// <summary>The six authored tools, in the order they are offered.</summary>
     public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose, ReinstallBrowser];
