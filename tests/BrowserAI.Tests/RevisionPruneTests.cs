@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -296,6 +297,109 @@ internal sealed class RevisionPruneTests
         await Assert.That(names).Contains("ffmpeg");
         await Assert.That(names).Contains("winldd");
         await Assert.That(manifest.Entries.Count).IsGreaterThanOrEqualTo(5);
+    }
+
+    [Test]
+    public async Task TheCensusIsAskedAgainForEveryCandidateRatherThanOncePerPass()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("prune-census-per-candidate");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+
+        var first = Plant(root, "chromium-1000", bytes: 1024);
+        var second = Plant(root, "chromium-1001", bytes: 1024);
+
+        // A browser that starts DURING the pass. It cannot be staged with a real
+        // process -- the pass would have to be paused at an instant nothing can
+        // reach -- so what is staged is the state it produces: a census that
+        // answers "idle" the first time it is asked and "in use" afterwards. A
+        // pass that asks once cannot tell the difference and deletes both.
+        var asked = new List<string>();
+
+        IReadOnlyList<RunningImage> census(string directory)
+        {
+            lock (asked)
+            {
+                asked.Add(directory);
+
+                return asked.Count is 1
+                    ? []
+                    : [new RunningImage(4242, 0x01DC00000000000L, Path.Combine(directory, "chrome-win64", "chrome.exe"))];
+            }
+        }
+
+        var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>(), census: census);
+
+        // The first candidate was idle when it was asked about, so it went.
+        await Assert.That(Directory.Exists(first)).IsFalse();
+        await Assert.That(report.Removed).Contains(first);
+
+        // The second was not, and only a second question could have said so.
+        await Assert.That(Directory.Exists(second)).IsTrue();
+        await Assert.That(report.Removed).DoesNotContain(second);
+
+        var retained = string.Join(Environment.NewLine, report.Retained);
+
+        await Assert.That(retained).Contains("chromium-1001");
+        await Assert.That(retained).Contains("4242");
+
+        // And the census was asked about each candidate by name, not once about
+        // the root -- which is the shape that makes the freshness real rather
+        // than an accident of when the one question was asked.
+        await Assert.That(asked.Count).IsEqualTo(2);
+        await Assert.That(asked).Contains(first);
+        await Assert.That(asked).Contains(second);
+        await Assert.That(asked).DoesNotContain(root);
+    }
+
+    [Test]
+    public async Task ARevisionThatWouldNotDeleteSaysWhetherABrowserIsRunningOutOfIt()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("prune-would-not-go");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var superseded = Plant(root, SupersededChromium, bytes: 1024);
+        var held = Path.Combine(superseded, "chrome-win64", "payload.bin");
+
+        // Idle when the decision was taken, in use by the time the delete had
+        // half finished: the ordinary shape of the race, and the one whose
+        // report used to read as a stuck file.
+        var asked = 0;
+
+        IReadOnlyList<RunningImage> census(string directory) =>
+            Interlocked.Increment(ref asked) is 1
+                ? []
+                : [new RunningImage(4243, 0x01DC00000000000L, Path.Combine(directory, "chrome-win64", "chrome.exe"))];
+
+        PruneReport report;
+
+        using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>(), census: census);
+        }
+
+        await Assert.That(Directory.Exists(superseded)).IsTrue();
+        await Assert.That(report.Removed).IsEmpty();
+
+        var retained = string.Join(Environment.NewLine, report.Retained);
+
+        // The survivors are still listed -- that was never the defect.
+        await Assert.That(retained).Contains("would not fully delete");
+        await Assert.That(retained).Contains("payload.bin");
+
+        // The diagnosis is what was missing: a live browser whose tree has just
+        // been gutted, not a file a scanner is holding.
+        await Assert.That(retained).Contains("RIGHT NOW");
+        await Assert.That(retained).Contains("4243");
+        await Assert.That(asked).IsEqualTo(2);
     }
 
     /// <summary>

@@ -66,6 +66,42 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// a log line and a retained row, never an error handed to a model that asked for
 /// a browser.
 /// </para>
+/// <para>
+/// ⚠️ <b>The census is asked once per candidate, immediately before that
+/// candidate is deleted — corrected 2026-08-18 (previously once for the whole
+/// pass, defended as "the answer cannot become more true by being asked
+/// again").</b> It cannot become more true; it can become <i>fresher</i>, and
+/// that is the whole of what stands between this delete and a browser somebody
+/// launched a moment ago. A pass that measures, deletes and re-measures a 200 MB
+/// tree is seconds long, and every candidate after the first was being judged on
+/// a snapshot taken before all of it.
+/// </para>
+/// <para>
+/// <b>And the sweep's held handle is deliberately NOT adopted here, because on
+/// this path there is nothing to hold.</b>
+/// <see cref="BrowserProcesses.ScanFor"/> keeps an open handle on every process
+/// it found, and that handle is what stops Windows recycling a pid between
+/// deciding to terminate it and terminating it — race R2.
+/// <see cref="BrowserProcesses.RunningFrom"/> closes its handles, which looks
+/// like the same defect and is not: this pass never terminates anything, and its
+/// destructive act is taken on the <b>empty</b> set. A revision is deleted
+/// precisely when no process was found running from it, so there is no handle in
+/// existence to carry across the delete. A held census would make the
+/// <i>retain</i> path marginally more accurate about which pids it names — and
+/// retaining is the direction that is already safe.
+/// </para>
+/// <para>
+/// <b>What is left is a real window and it is named rather than papered over.</b>
+/// Nothing on the launch path takes the provisioning mutex —
+/// <c>ChildLaunch.Create</c> and <c>JobLauncher.Start</c> take no mutex at all —
+/// so a launch out of a superseded revision between this census and this delete
+/// is unguarded, and no census can see a process that does not exist yet. The
+/// second-best thing is available and is done: when a delete leaves survivors,
+/// the census is re-asked and the report says whether those survivors are a stuck
+/// file or a live browser whose tree has just been gutted. See
+/// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+/// finding 3, and the hazard row it opened.
+/// </para>
 /// </remarks>
 internal static class RevisionPrune
 {
@@ -78,12 +114,28 @@ internal static class RevisionPrune
     /// pass does not wait on itself. <see langword="null"/> when the caller holds
     /// none, which is how the suite and any future maintenance caller drive it.
     /// </param>
+    /// <param name="census">
+    /// How the pass asks what is running out of a directory.
+    /// <see langword="null"/> is <see cref="BrowserProcesses.RunningFrom"/>, which
+    /// is the only thing production uses.
+    /// <para>
+    /// <b>It is a parameter because the property this pass has to hold is an
+    /// <i>order</i>, and no end state can show an order.</b> The census is asked
+    /// once per candidate, immediately before that candidate is deleted, rather
+    /// than once for the whole pass — and a test can only tell those two apart by
+    /// answering differently on the second question. This is not a seam on a hot
+    /// path: <see cref="Run"/> runs once per successful provision, and the only
+    /// other injectable in this area, <c>BrowserProvisioner.PruneRevisions</c>,
+    /// exists for the same reason.
+    /// </para>
+    /// </param>
     /// <returns>What it did.</returns>
     public static PruneReport Run(
         string browsersDirectory,
         BrowsersManifest manifest,
         ILogger logger,
-        string? familyAlreadyHeld = null)
+        string? familyAlreadyHeld = null,
+        Func<string, IReadOnlyList<RunningImage>>? census = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
         ArgumentNullException.ThrowIfNull(manifest);
@@ -124,7 +176,7 @@ internal static class RevisionPrune
                 held.Add(mutex);
             }
 
-            return Sweep(browsersDirectory, manifest, logger);
+            return Sweep(browsersDirectory, manifest, logger, census ?? BrowserProcesses.RunningFrom);
         }
         finally
         {
@@ -136,22 +188,15 @@ internal static class RevisionPrune
         }
     }
 
-    private static PruneReport Sweep(string browsersDirectory, BrowsersManifest manifest, ILogger logger)
+    private static PruneReport Sweep(
+        string browsersDirectory,
+        BrowsersManifest manifest,
+        ILogger logger,
+        Func<string, IReadOnlyList<RunningImage>> census)
     {
         var entries = manifest.Entries;
         var current = new HashSet<string>(entries.Select(entry => entry.DirectoryName), StringComparer.OrdinalIgnoreCase);
         var prefixes = entries.Select(entry => entry.DirectoryPrefix).ToArray();
-
-        // ONE enumeration of the machine's process list for the whole pass. Asking
-        // per candidate would open every process on the machine once per directory,
-        // and the answer cannot become more true by being asked again.
-        if (Live(browsersDirectory, logger) is not { } live)
-        {
-            return new PruneReport(
-                [],
-                0,
-                [$"Nothing was pruned: the machine's process list could not be read, so nothing under '{browsersDirectory}' could be shown to be idle."]);
-        }
 
         var removed = new List<string>();
         var retained = new List<string>();
@@ -174,16 +219,28 @@ internal static class RevisionPrune
                 continue;
             }
 
-            var holders = live
-                .Where(image => image.ImagePath.StartsWith(candidate + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
+            // ⚠️ Corrected 2026-08-18 (previously ONE enumeration for the whole
+            // pass, defended as "the answer cannot become more true by being
+            // asked again"). It can: it can become FRESHER, and freshness is the
+            // only thing standing between this delete and a browser somebody
+            // launched while the pass was working through an earlier candidate.
+            // A pass that measures, deletes and re-measures a 200 MB tree is not
+            // instantaneous, and every candidate after the first was being
+            // judged on a census taken before all of that.
+            if (Live(candidate, logger, census) is not { } holders)
+            {
+                retained.Add(
+                    $"'{candidate}' is superseded and was left alone: the machine's process list could not be read, so it could not be shown to be idle.");
 
-            if (holders.Length is not 0)
+                continue;
+            }
+
+            if (holders.Count is not 0)
             {
                 var pids = string.Join(", ", holders.Select(holder => holder.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
                 PruneLog.RevisionIsInUse(logger, name, pids);
-                retained.Add($"'{candidate}' is superseded but {holders.Length} process(es) are running out of it (pid {pids}), so it was left alone.");
+                retained.Add($"'{candidate}' is superseded but {holders.Count} process(es) are running out of it (pid {pids}), so it was left alone.");
                 continue;
             }
 
@@ -198,7 +255,12 @@ internal static class RevisionPrune
             if (Directory.Exists(candidate))
             {
                 PruneLog.RevisionWouldNotGo(logger, name, failures.Count);
-                retained.Add($"'{candidate}' is superseded and would not fully delete; {failures.Count} node(s) survived:{Environment.NewLine}{string.Join(Environment.NewLine, failures)}");
+
+                retained.Add(
+                    $"'{candidate}' is superseded and would not fully delete; {failures.Count} node(s) survived:{Environment.NewLine}"
+                    + string.Join(Environment.NewLine, failures)
+                    + Diagnose(candidate, name, logger, census));
+
                 continue;
             }
 
@@ -215,7 +277,7 @@ internal static class RevisionPrune
     }
 
     /// <summary>
-    /// Every process running out of the browsers root, or <see langword="null"/>
+    /// Every process running out of one directory, or <see langword="null"/>
     /// when the machine's process list could not be read at all.
     /// </summary>
     /// <remarks>
@@ -225,19 +287,52 @@ internal static class RevisionPrune
     /// <see langword="null"/> is what keeps those two answers apart, and the pass
     /// prunes nothing on it.
     /// </remarks>
-    private static IReadOnlyList<RunningImage>? Live(string browsersDirectory, ILogger logger)
+    private static IReadOnlyList<RunningImage>? Live(string directory, ILogger logger, Func<string, IReadOnlyList<RunningImage>> census)
     {
         try
         {
-            return BrowserProcesses.RunningFrom(browsersDirectory);
+            return census(directory);
         }
 #pragma warning disable CA1031 // Any failure to read the process list means the same thing here: idleness cannot be proven, so nothing may be deleted.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            PruneLog.CensusFailed(logger, browsersDirectory, failure);
+            PruneLog.CensusFailed(logger, directory, failure);
             return null;
         }
+    }
+
+    /// <summary>
+    /// Whether a tree that would not fully delete is a stuck file or a browser
+    /// running out of it — asked <b>after</b> the delete, because those two
+    /// produce the same failure list and want opposite responses.
+    /// </summary>
+    /// <remarks>
+    /// <b>The plain report reads as a virus scanner, and that is the wrong
+    /// diagnosis for the only case that is damage.</b> A running browser's
+    /// <c>.exe</c> and <c>.dll</c> images are refused by the image section while
+    /// everything it opens lazily — its <c>.pak</c> files, its ICU data — has
+    /// already gone, so a partially-deleted revision with a live process in it is
+    /// a browser that will fail on its next resource load. The unremarkable case
+    /// (a scanner, an editor, a handle a crashed run leaked) leaves the same
+    /// list. One extra census is what tells them apart, and it costs nothing:
+    /// this path is already the slow one.
+    /// </remarks>
+    private static string Diagnose(string candidate, string name, ILogger logger, Func<string, IReadOnlyList<RunningImage>> census)
+    {
+        if (Live(candidate, logger, census) is not { Count: > 0 } holders)
+        {
+            return string.Empty;
+        }
+
+        var pids = string.Join(", ", holders.Select(holder => holder.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+        PruneLog.RevisionIsInUse(logger, name, pids);
+
+        return Environment.NewLine
+            + $"⚠️ {holders.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} process(es) are running out of '{candidate}' RIGHT NOW (pid {pids}), "
+            + "so those survivors are a live browser rather than a stuck file — and the parts of that tree which did delete are gone from underneath it. "
+            + "It was idle when this pass checked and is not now. Expect that browser to fail on its next resource load; close it and run the prune again.";
     }
 
     private static IReadOnlyList<string> Subdirectories(string browsersDirectory)

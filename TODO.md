@@ -29,13 +29,6 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 [`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
 by effort.**
 
-- [ ] **`RevisionPrune` decides on a census whose handles it already closed.**
-      `BrowserProcesses.RunningFrom` closes each handle before returning, unlike
-      `ScanFor`, whose held handle is the whole point of race R2. The prune holds
-      the provisioning mutexes; nothing on the launch path takes them. A
-      concurrent instance launching from a superseded revision has its tree
-      deleted underneath it.
-
 - [ ] **The provisioning mutex still carries one false inference.**
       `BrowserProvisioner` deletes the revision tree on `AcquiredAbandoned`
       **before** asking whether it is complete. A holder that dies inside `Prune`
@@ -156,7 +149,7 @@ by effort.**
       the index's own `Area` cells verbatim: Bundling and AOT 14, Child runtime and
       configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      5 more are `open` while carrying evidence, so 59 are `open` in total, against
+      6 more are `open` while carrying evidence, so 60 are `open` in total, against
       88 `closed`. Many will close against tests that now exist; some are upstream
       behaviours that cannot close at all and should say so. **An honest `open` with
       a reason beats a `closed` with a weak one.**
@@ -171,11 +164,19 @@ by effort.**
 
       ***Corrected 2026-08-18 (previously "Three more read `open` while carrying
       evidence, so 57 are open in total")*** — re-counted, not adjusted: it was 4
-      and 58 when the drift was found, and is 5 and 59 now that today's own work
-      has added five rows to the index. The row that moved is the CVE-response row, corrected from
+      and 58 when the drift was found, and 5 and 59 once that day's own work
+      had added five rows to the index. The row that moved is the CVE-response row, corrected from
       `closed 2026-08-16` to `open` on 2026-08-17 without anybody touching this
       tally. That is the fourth wrong count of the day and the reason the
       paragraph now has a test.
+
+      ***Corrected again 2026-08-18 (previously "5 more are `open` while carrying
+      evidence, so 59 are `open` in total")*** — the adversarial-review work added
+      one `open`-with-evidence row, for the revision prune's launch-path window.
+      **The category numbers above did not move**, and that is the predicate doing
+      its job rather than an oversight: they count rows that are `open` **and**
+      carry `—`, and the new row carries evidence. Caught by the test in the same
+      run that added the row, which is what it is for.
 
       **When correcting a count here, quote the predicate before the number** —
       not *"54 rows"* but *"54 rows that are `open` **and** carry `—`"*. That has

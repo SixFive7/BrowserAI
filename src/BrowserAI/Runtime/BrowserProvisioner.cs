@@ -330,7 +330,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <remarks>
     /// <b>The seam exists for exactly one property, and that property is
     /// otherwise unassertable.</b> Nothing on
-    /// <see cref="RevisionPrune.Run(string, BrowsersManifest, ILogger, string?)"/>'s
+    /// <see cref="RevisionPrune.Run"/>'s
     /// own path throws by design — the process census, the enumeration and the
     /// sizing all catch — so the <c>catch</c> at the call site is a guard against
     /// a future edit rather than against a reachable case today, and a guard
