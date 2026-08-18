@@ -619,6 +619,123 @@ internal sealed class ProvisioningTests
     /// can make the arm slower, never redder.
     /// </remarks>
     /// <returns>The timers.</returns>
+    /// <summary>
+    /// The rule an abandoned provisioning mutex obeys, all four combinations.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Asserted on the predicate rather than on an interleaving, because the
+    /// interleaving cannot be staged.</b> The tree becomes complete when the
+    /// holder writes its marker, and the holder abandons the mutex when it dies;
+    /// reaching <c>Install</c> with both true at once means landing in the
+    /// microseconds between another process's marker write and this process's
+    /// acquire, and nothing can put a test there.
+    /// <c>Ensure</c> short-circuits on a complete tree, so the end-to-end route
+    /// is closed by construction. What <i>is</i> assertable is the rule itself —
+    /// and it is the rule that was wrong: an abandoned mutex was taken as
+    /// sufficient, and the marker was consulted one line after the tree had gone
+    /// ([the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// A2).
+    /// </para>
+    /// <para>
+    /// The arm that <i>is</i> reachable end to end — abandoned over an unmarked
+    /// tree — is asserted below, so the branch is known to be wired rather than
+    /// merely correct in isolation.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AnAbandonedMutexIsOnlyAReasonToDeleteAnUnmarkedTree()
+    {
+        using var scratch = ScratchDirectory.Create("provision-abandoned-predicate");
+
+        var complete = Path.Combine(scratch.Path, "complete");
+        var unmarked = Path.Combine(scratch.Path, "unmarked");
+
+        _ = Directory.CreateDirectory(complete);
+        _ = Directory.CreateDirectory(unmarked);
+        await File.WriteAllTextAsync(Path.Combine(complete, BrowsersManifest.InstallationCompleteMarker), string.Empty);
+
+        // The defect: an abandoned mutex over a COMPLETE tree used to be a
+        // reason to delete 203.8 MB that ~100 processes may be running out of.
+        // What it actually means is that the holder died inside its prune.
+        await Assert.That(BrowserProvisioner.AbandonedTreeIsUnusable(MutexAcquisition.AcquiredAbandoned, complete)).IsFalse();
+
+        // The recovery this branch exists for, unchanged.
+        await Assert.That(BrowserProvisioner.AbandonedTreeIsUnusable(MutexAcquisition.AcquiredAbandoned, unmarked)).IsTrue();
+
+        // And an ordinary acquisition is never a reason to delete anything, on
+        // either tree.
+        await Assert.That(BrowserProvisioner.AbandonedTreeIsUnusable(MutexAcquisition.Acquired, unmarked)).IsFalse();
+        await Assert.That(BrowserProvisioner.AbandonedTreeIsUnusable(MutexAcquisition.Acquired, complete)).IsFalse();
+    }
+
+    [Test]
+    public async Task AnAbandonedMutexOverAnUnmarkedTreeStillDeletesItAndInstallsAgain()
+    {
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("provision-abandoned-unmarked");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+        var residue = Path.Combine(directory, "half-extracted.bin");
+
+        _ = Directory.CreateDirectory(directory);
+        await File.WriteAllTextAsync(residue, "what a holder that died mid-extraction left behind");
+
+        // Held open across the abandonment, because a named mutex is
+        // reference-counted by its handles: if the abandoning thread held the
+        // last one the kernel object dies with it and the next Create makes a
+        // brand new, unabandoned object -- the same trap SessionLockTests
+        // records having fallen into.
+        using var keepAlive = MachineMutex.Create(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
+
+        AbandonOnAThread(BrowserProvisioner.MutexNameFor(root, ProvisionedBrowsers.Chromium));
+
+        using var provisioner = new BrowserProvisioner(RepositoryPayload.Layout, root, log, Quick())
+        {
+            StartInstaller = (_, _) => FakeInstaller.Succeeding(directory, TimeSpan.Zero),
+            PruneRevisions = _ => { },
+        };
+
+        var status = await provisioner.WaitAsync(SessionManager.SupportedBrowser);
+
+        await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
+
+        // The unmarked residue went, which is what makes this a recovery rather
+        // than a re-run on top of somebody's wreckage.
+        await Assert.That(File.Exists(residue)).IsFalse();
+        await Assert.That(File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker))).IsTrue();
+    }
+
+    /// <summary>
+    /// Abandons a named mutex: a thread that ends while owning one is the whole
+    /// of what <c>AbandonedMutexException</c> reports.
+    /// </summary>
+    /// <param name="name">The <c>Global\</c> name to abandon.</param>
+    private static void AbandonOnAThread(string name)
+    {
+        var thread = new Thread(() =>
+        {
+#pragma warning disable CA2000 // Deliberately neither released nor disposed: releasing is the opposite of abandoning, and the caller holds a second handle so the kernel object outlives this thread.
+            var mutex = MachineMutex.Create(name);
+#pragma warning restore CA2000
+
+            _ = mutex.Acquire(TestDefaults.ProcessHang);
+        })
+        {
+            IsBackground = true,
+            Name = "browserai-abandoning-holder",
+        };
+
+        thread.Start();
+
+        if (!thread.Join(TestDefaults.ProcessHang))
+        {
+            throw new InvalidOperationException(
+                $"The thread that was to abandon '{name}' never ended, so the mutex is held rather than abandoned and this test would measure the wrong branch.");
+        }
+    }
+
     private static ProvisioningTimers Quick() => new()
     {
         Poll = TimeSpan.FromMilliseconds(20),

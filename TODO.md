@@ -29,13 +29,6 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 [`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
 by effort.**
 
-- [ ] **The provisioning mutex still carries one false inference.**
-      `BrowserProvisioner` deletes the revision tree on `AcquiredAbandoned`
-      **before** asking whether it is complete. A holder that dies inside `Prune`
-      — the slow post-marker window the 2026-08-17 fix identified — makes the next
-      acquirer **wipe a complete, in-use install** and re-download 203.8 MB. The
-      fix is a reordering.
-
 - [ ] **`ReinstallAsync` deletes without the provisioning mutex.** Its guard looks
       for processes *running from* the tree; a concurrent installer is `node.exe`
       from the payload and is invisible to it. End state: `INSTALLATION_COMPLETE`

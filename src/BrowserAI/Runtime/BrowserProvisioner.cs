@@ -536,6 +536,40 @@ internal sealed class BrowserProvisioner : IDisposable
     private static bool IsComplete(string directory) =>
         File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker));
 
+    /// <summary>
+    /// Whether an abandoned provisioning mutex is a reason to delete the tree —
+    /// which it is <b>only when the tree is unmarked</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Extracted 2026-08-18, so that the rule has a name and a test.</b> It
+    /// was <c>acquisition is AcquiredAbandoned</c> alone, and the marker — the
+    /// discriminator — was consulted on the line <i>after</i> the tree had already
+    /// been deleted. An abandoned mutex over a <b>complete</b> install therefore
+    /// wiped a tree ~100 processes may have been running out of and re-downloaded
+    /// 203.8 MB, on the strength of an inference that is simply false: <i>the
+    /// holder died, therefore what is in the directory is unusable</i>. The holder
+    /// keeps this mutex through <see cref="Prune"/>, which walks every process on
+    /// the machine and is slow exactly when the machine is busy, so <i>died after
+    /// writing the marker</i> is the reachable case rather than the exotic one —
+    /// it is the same interval the 2026-08-17 fix was made in, and the mirror of
+    /// the same false inference.
+    /// </para>
+    /// <para>
+    /// <b>The window between the marker appearing and this line is microseconds
+    /// and cannot be staged</b>, which is why the test is of this predicate rather
+    /// than of an interleaving: all four combinations, so removing the second half
+    /// is red. What an abandoned mutex over a marked tree means is that the holder
+    /// died during <see cref="Prune"/>, and the recovery for that is to re-run the
+    /// prune — which the success path below already does.
+    /// </para>
+    /// </remarks>
+    /// <param name="acquisition">How the provisioning mutex was acquired.</param>
+    /// <param name="directory">The revision directory the acquisition guards.</param>
+    /// <returns>Whether the tree must be removed before installing.</returns>
+    internal static bool AbandonedTreeIsUnusable(MutexAcquisition acquisition, string directory) =>
+        acquisition is MutexAcquisition.AcquiredAbandoned && !IsComplete(directory);
+
     private static ProvisioningResult Result(Attempt attempt) =>
         attempt.Task.IsCompletedSuccessfully
             ? attempt.Task.Result
@@ -690,12 +724,30 @@ internal sealed class BrowserProvisioner : IDisposable
 
             try
             {
-                if (acquisition is MutexAcquisition.AcquiredAbandoned)
+                // ⚠️ Corrected 2026-08-18 (previously `if (acquisition is
+                // AcquiredAbandoned)` alone, justified as "whatever it left is
+                // unmarked and therefore unusable"). The marker is the
+                // discriminator and it was asked on the line AFTER the tree was
+                // deleted, so an abandoned mutex over a COMPLETE tree wiped an
+                // install ~100 processes may be running out of, and re-downloaded
+                // 203.8 MB. That is the same false inference the 2026-08-17 fix
+                // removed from the other side -- "I lost the mutex, therefore a
+                // download is in flight" -- and it lives in the same interval:
+                // the holder keeps the mutex through Prune, which walks every
+                // process on the machine and is slow exactly when the machine is
+                // busy, so dying after the marker and before the release is the
+                // reachable case rather than the exotic one.
+                //
+                // An abandoned mutex over a MARKED tree means the holder died
+                // during Prune. The correct recovery is to re-run Prune, which is
+                // what the success path below already does.
+                // (docs/reviews/2026-08-18-adversarial-locking.md, A2.)
+                if (AbandonedTreeIsUnusable(acquisition, directory))
                 {
-                    // The previous holder died mid-install. Whatever it left is
-                    // unmarked and therefore unusable, and re-running on top of
-                    // it is the same call again -- so the tree goes first, which
-                    // is what makes this a recovery rather than a retry.
+                    // The previous holder died mid-install and left something
+                    // unmarked, and re-running on top of it is the same call
+                    // again -- so the tree goes first, which is what makes this a
+                    // recovery rather than a retry.
                     ProvisioningLog.AbandonedInstallFound(_logger, browser, directory);
                     TreeDelete.Remove(directory, []);
                 }
