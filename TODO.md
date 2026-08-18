@@ -19,15 +19,23 @@ about an external source needs the date and version it was true at.
 
 ---
 
-## Adversarial review, 2026-08-18 — seven wrong-answer defects
+## Adversarial review, 2026-08-18 — what is left of it
 
 Two adversarial readers were asked to **break** the design by reasoning rather
 than by load, on the maintainer's argument that *"just running 100 concurrent
 browsers is not enough of a test to find all concurrency bugs."* He was right:
 reading found ~18 findings in about half an hour each, against seven from a night
 of load testing. Full reasoning, with every interleaving spelled out, in
-[`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
-by effort.**
+[`docs/reviews/`](docs/reviews/README.md), whose index carries **the status of
+every finding** — fixed, narrowed, or open.
+
+**The seven wrong-answer defects are fixed**, each with a regression test that
+was watched red first, and each is in `git log` rather than here. Two of them
+could not be reproduced as interleavings at all and are tested as invariants
+instead, which the tests say out loud. What remains below is what the same review
+found and this pass did **not** do; the bounded ones also have rows in the
+[hazard index](HAZARDS.md#hazard-index), because a thing that is open needs to be
+findable from more than one direction.
 
 - [ ] **Path aliasing defeats the per-directory gate.** `Path.GetFullPath` does
       not resolve `\\?\`, 8.3 names, junctions, `subst` or mapped drives, so two
