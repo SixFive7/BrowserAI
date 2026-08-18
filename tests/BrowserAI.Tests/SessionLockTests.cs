@@ -525,36 +525,44 @@ internal sealed class SessionLockTests
         var damaged = new List<string>();
         var reads = 0;
 
-        // ⚠️ COUNTED, NOT DAMAGE — and the distinction is a measured property of
-        // Windows rather than a concession.
+        // ⚠️ A NULL RECORD IS STILL DAMAGE. What is added here is not tolerance,
+        // it is EVIDENCE — because a null has three different causes and the
+        // message it used to produce, "the lock file was momentarily absent",
+        // asserted one of them.
         //
-        // Corrected 2026-08-18 (previously a null record was added to `damaged`
-        // as "the lock file was momentarily absent", which failed this test).
-        // `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING`, over a destination a
-        // reader holds open with `FILE_SHARE_DELETE`, passes through a state in
-        // which the OLD file is delete-pending and the name is momentarily
-        // unbound — so an open in that instant is refused, first as
-        // `ACCESS_DENIED` and then, a moment later, as NOT FOUND. Measured at
-        // `SuiteParallelism.Unbounded`: three occurrences in thirty-two
-        // full-suite runs, all in this arm, which is the only place in the suite
-        // where a reader spins on a file another process is rewriting a hundred
-        // times.
+        // ⚠️⚠️ Corrected 2026-08-18, TWICE, and the second correction is the one
+        // worth reading. The first attempt tolerated a null when an immediate
+        // re-read succeeded, on the reasoning that "a rename window is one
+        // syscall wide and cannot survive a second read". That reasoning was a
+        // GUESS about the width of a window nobody had measured, and it was
+        // falsified on the third run of the next streak: the lock file was
+        // absent on two consecutive reads. Which makes it exactly the kind of
+        // unmeasured timing assumption this whole change set exists to remove,
+        // written into the code that removes them. It is gone, and what replaces
+        // it asks the machine instead of assuming.
         //
-        // A momentary absence is not what this test is named for. "Never
-        // observed torn" is a claim about CONTENT — the reader sees the old
-        // record or the new one and never half of either — and absence is
-        // neither half. Asserting it never happens would be asserting something
-        // about `MoveFileEx` that is not true.
+        // `SessionLock.ReadRecord` returns null for THREE conditions it does not
+        // distinguish, and they are not equally serious:
         //
-        // ⚠️ It is not swallowed, and the line below is what keeps it from
-        // being: every null is re-read IMMEDIATELY, and a second null in a row is
-        // recorded as damage. That is the assertion that distinguishes the two
-        // things a null can mean. The rename window is microseconds wide and
-        // cannot survive a second read; a zero-length or deleted `lock.json` --
-        // real damage, and the reason `Parse` returns null for an empty file --
-        // persists and is caught. So the tolerance is exactly as wide as the
-        // window and no wider.
-        var absences = 0;
+        //   1. the name is genuinely unbound       -- FileNotFoundException
+        //   2. the directory is gone               -- DirectoryNotFoundException
+        //   3. the file exists and is ZERO-LENGTH  -- `Parse` returns null,
+        //      deliberately, because nothing this product writes can produce one
+        //
+        // (1) observed while a rewrite is in flight would say a reader can see a
+        // session as UNOWNED while another process owns it, which is the
+        // precondition for two BrowserAI processes driving one directory and is
+        // the single thing this file's locking exists to prevent. (3) would say
+        // the atomic rename is not atomic. They need completely different fixes
+        // and the old message named neither.
+        //
+        // So every null is probed on the spot -- does the name resolve, how long
+        // is the file, is a rewrite in flight (the writer's own
+        // `lock.json.new-<guid>` temp is present for exactly the length of one),
+        // and does an immediate re-read succeed -- and the probe goes in the
+        // failure. The next occurrence answers the question instead of
+        // re-opening it.
+        var absences = new List<string>();
 
         // Every distinct record the reader actually saw. This, not a read
         // count, is what proves the reader was looking WHILE the rewriter was
@@ -600,16 +608,12 @@ internal sealed class SessionLockTests
 
                     if (record is null)
                     {
-                        absences++;
-
-                        // Immediately, with nothing in between: a rename window
-                        // is one syscall wide and cannot survive this. Anything
-                        // that does is the file really being gone or really
-                        // being empty, which is damage.
-                        if (SessionLock.ReadRecord(path) is null)
-                        {
-                            damaged.Add("the lock file was absent on two consecutive reads, so it was not a rename in flight");
-                        }
+                        // Probed BEFORE anything else runs, so the state
+                        // recorded is as close to the moment of the null as this
+                        // process can get.
+                        var evidence = StateOfTheLockFile(path.LockFile);
+                        absences.Add(evidence);
+                        damaged.Add($"the lock file read as no record — {evidence}");
                     }
                     else
                     {
@@ -648,11 +652,10 @@ internal sealed class SessionLockTests
         await Assert.That(string.Join(Environment.NewLine, damaged.Distinct(StringComparer.Ordinal))).IsEmpty();
 
         // And it is still there afterwards, readable, with the rewriter finished
-        // and nothing renaming anything. This is what makes the tolerance above
-        // safe rather than a hole: however many rename windows the reader fell
-        // into while the writing was going on, the file was never actually lost.
+        // and nothing renaming anything — so a run that somehow passed the line
+        // above while having actually lost the file still fails here.
         await Assert.That(SessionLock.ReadRecord(path)).IsNotNull()
-            .Because($"the reader saw the lock file absent {absences.ToString(CultureInfo.InvariantCulture)} time(s) during the rewrite, and it has not come back");
+            .Because($"the reader read no record {absences.Count.ToString(CultureInfo.InvariantCulture)} time(s) during the rewrite, and the file has not come back");
 
         // The reader has to have been looking, and looking WHILE the rewriter
         // wrote, or "never torn" is a claim about an empty observation.
@@ -825,6 +828,60 @@ internal sealed class SessionLockTests
         {
             throw new TimeoutException($"Process {processId} was still running {Patience} after being terminated.");
         }
+    }
+
+    /// <summary>
+    /// What the lock file looks like at the instant a read of it produced no
+    /// record.
+    /// </summary>
+    /// <remarks>
+    /// <b>Three conditions produce a null and this is what tells them apart.</b>
+    /// A name that does not resolve is a reader seeing an owned session as
+    /// unowned; a zero-length file is an atomic rename that was not atomic; a
+    /// file that reads perfectly well a microsecond later is the rename window,
+    /// which is the only one of the three that is Windows rather than a defect.
+    /// The temp count is the decisive half: the writer creates
+    /// <c>lock.json.new-&lt;guid&gt;</c> in this directory and it exists for
+    /// exactly the length of one rewrite, so its presence is direct evidence
+    /// that a rename was in flight at this instant rather than an inference
+    /// about how wide a window is.
+    /// </remarks>
+    /// <param name="lockFile">The lock file that read as no record.</param>
+    /// <returns>One line of evidence, for the failure message.</returns>
+    private static string StateOfTheLockFile(string lockFile)
+    {
+        var exists = File.Exists(lockFile);
+        var length = -1L;
+
+        try
+        {
+            if (exists)
+            {
+                length = new FileInfo(lockFile).Length;
+            }
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            length = -2;
+        }
+
+        var directory = Path.GetDirectoryName(lockFile)!;
+        int temps;
+
+        try
+        {
+            temps = Directory.EnumerateFiles(directory, $"{SessionLayout.LockFileName}.new-*").Count();
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        {
+            temps = -1;
+        }
+
+        var reread = SessionLock.ReadRecord(SessionPath.Resolve(directory)) is not null;
+
+        return $"name resolves: {exists}; length: {length.ToString(CultureInfo.InvariantCulture)}; "
+            + $"directory exists: {Directory.Exists(directory)}; rewrite temps present: {temps.ToString(CultureInfo.InvariantCulture)}; "
+            + $"immediate re-read found a record: {reread}";
     }
 
     /// <summary>
