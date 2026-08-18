@@ -99,7 +99,7 @@ message, which quotes the entry's own text. `[FLOATS]`
 
 All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and
 rebuilding with `--no-incremental` rather than by reading documentation. They
-matter here because [style is law in this project](../CLAUDE.md#style) and a
+matter here because [a severity is never weakened to make code pass](../CLAUDE.md#rules-a-mechanism-enforces) and a
 severity that is quietly inert is the same defect as a config key
 `loadConfig` discards.
 

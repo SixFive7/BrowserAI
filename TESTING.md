@@ -527,7 +527,7 @@ property the approval prompt never had.
 > for four snapshots and an outcome for **every manual row** — around forty of
 > them. That is a review that did not happen, typed out to make a suite green,
 > which is the same act as
-> [editing the marker to make a test pass](CLAUDE.md#before-changing-upstream-reviewjson--stop-and-read-the-procedure).
+> [editing the marker to make a test pass](CLAUDE.md#rules-a-mechanism-enforces).
 > The fields land with the **first real bump**, when there is something true to
 > write in them; until then the marker test is what fires, and it fires on exactly
 > the event that creates the obligation.

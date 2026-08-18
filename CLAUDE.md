@@ -3,87 +3,48 @@
 
 # BrowserAI — working instructions
 
-BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@playwright/mcp` child over stdio. [`README.md`](README.md) says what BrowserAI is, how to install it, how to use it and where the scope boundary sits; [`DECISIONS.md`](DECISIONS.md) is the charter — the reasoning behind every decision. *Corrected 2026-08-18 (previously "[`README.md`](README.md) is the charter — scope and the reasoning behind every decision") — the charter was split on that date, at 84 KB, because a first-time visitor met a settled-decision table before the install instructions.* [`ARCHITECTURE.md`](ARCHITECTURE.md) is how it is put together and which code satisfies which part of it. This file is the standing rules for working in the repository.
+BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@playwright/mcp` child over stdio. **Shipped at `v1.0.0`.** [`README.md`](README.md) is what it is and how to use it; [`DECISIONS.md`](DECISIONS.md) is the charter and the still-open design questions; [`ARCHITECTURE.md`](ARCHITECTURE.md) maps each part of it to the code that satisfies it; [`HAZARDS.md`](HAZARDS.md) is the known failure modes, maintained by addition and never by removal; [`TESTING.md`](TESTING.md) is the suite and the release gate; [`RELEASING.md`](RELEASING.md) is the checklist; [`TODO.md`](TODO.md) is work settled in intent and not yet done. **Measured facts go in [`kb/`](kb/README.md)** — in the article they belong to, never a new top-level file, each with a date, the versions it held under, and how to re-establish it. **Never update a measurement by reasoning: re-run it, or mark the entry `[STALE]`.**
 
-**Status: shipped at `v1.0.0`.** Work settled in intent but not yet done lives in [`TODO.md`](TODO.md); open design questions stay in [`DECISIONS.md`](DECISIONS.md); known failure modes are in [`HAZARDS.md`](HAZARDS.md). *Corrected 2026-08-17 (previously "design phase, nothing is built") — it was the first factual claim an agent read, and every rule below was read through it.*
+## Prefer a mechanism over a habit
 
-**The implementation plan was consumed and then deleted**, on 2026-08-17, once every section was built and audited. *Corrected 2026-08-17 (previously "The plan is consumed and then deleted … a section is marked `built` in `PLAN.md`'s table the day the code satisfying it lands").* What that convention leaves behind is the shape of this repository: measurements went into [`kb/`](kb/README.md) as they were made, reasoning went into the doc comment above the code it explains, and the `Implemented by` column became [`ARCHITECTURE.md`](ARCHITECTURE.md). **The rule that made the deletion safe still applies to anything written to be consumed: never delete it without first recording what implements it.** [`HAZARDS.md`](HAZARDS.md) was never consumable and is maintained by addition — its rows gain a status and the evidence that closed them, and are never removed.
+**If a rule can be a failing test, a hook or an analyzer, make it one — and then say which one.** The SPDX rule was kept by 222 files out of 224, which is what a habit looks like right up to the moment somebody adds the 225th. So every rule below either names what enforces it or says plainly that nothing does, and the second list is the one that needs a reader rather than a build.
 
-**Measured facts go in the knowledge base at [`kb/`](kb/README.md), not in the charter and not in the plan.** [`DECISIONS.md`](DECISIONS.md) says what we decided; the plan says what to build; `kb/` says what we measured about Chromium, Firefox, Playwright, Node and Windows. It is a directory tree with one article per topic and a topic-sorted index at [`kb/README.md`](kb/README.md) — put a new fact in the article it belongs to, never in a new top-level file. Every entry carries a date, the versions it held under, and how to re-establish it. **Never update a result by reasoning — re-run the measurement, or mark the entry `[STALE]`.** An adjusted number is indistinguishable from a measured one, which makes it worse than a gap. New `[FLOATS]` entries need a row in the [re-verification index](kb/re-verification.md), or nobody will ever re-check them.
+## Rules a mechanism enforces
 
-**`[STALE]` is a marker like the other four**, not an aside — it belongs in [`kb/README.md`](kb/README.md#conventions)'s conventions table beside `[FLOATS]`, `[STABLE]`, `[MACHINE]` and `[UNVERIFIED]`, and means *a re-check is owed and has not happened*. That no article carries one is the healthy state, not evidence the marker is dead: it is the sanctioned alternative to the one thing this whole convention exists to forbid, so removing it would leave guessing as the only way out of an owed re-check. [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) already instructs a reviewer to apply it, so deleting the definition would strand a procedure step as well. Resolved 2026-08-16; before that it was defined in prose under `kb/README.md`'s table, referenced by two procedures, and carried by no article — which reads as dead and is not.
-
-## Before changing `upstream-review.json` — stop and read the procedure
-
-[`upstream-review.json`](upstream-review.json) records the upstream versions a human has actually **reviewed**. A test asserts those equal the versions the build **resolved**, so a red marker test is not a stale file to fix — it is a review that has not happened yet.
-
-**Do not edit that file to make a test pass.** Read [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) and follow it: diff upstream's `tests/`, diff `config.d.ts`, check `browsers.json` and the CLI surface, then record what changed, what was adopted, **and what was declined and why**. A `notes` field left empty or unchanged is a review that did not happen.
-
-**A hook does not gate this file, and cannot.** Measured 2026-08-15: under bypass-permissions a hook's `ask` returned to a sub-agent is silently downgraded to allow, so the prompt never fires for the caller most likely to need it — and against a human it only ever proved a click. [The gate is the suite](TESTING.md#the-upstream-review-gate): four snapshots diffed against the resolved payload, every test green, and an entry that must adjudicate whatever actually moved. Editing the file without that evidence produces a red build, not a prompt.
-
-## Versioning: everything floats, the build freezes it
-
-Every dependency resolves to latest at build time and is frozen into the artifact. **Version numbers in [`DECISIONS.md`](DECISIONS.md), in [`STACK.md`](STACK.md#implementation-stack), in [`kb/`](kb/README.md) and in `upstream-review.json` are provenance stamps, not targets** — the build does not read them.
-
-- **Update first, then work.** Re-resolving everything to latest is the *first* step of touching this project, not a step before release: re-resolve, fix the fallout, then do what was asked. Deferring it is how a project stops following the lead and starts accumulating one upgrade nobody ever takes.
-- **Never pin a dependency to work around a break.** Fix forward; make the new version work.
-- **Never assert a version or a "latest" claim from memory.** If it was not looked up this session, say plainly that it is unverified. A confident stale version is worse than an admitted gap. Route package questions to the `nuget` MCP server, .NET/C# questions to `microsoft-learn`, and anything else to `context7` — but prefer a vendor's own server over `context7`, which is metered.
-- **Stamp what you verify, and stamp what you correct.** Two conventions, both from [`DECISIONS.md`](DECISIONS.md#provenance-stamps): `Verified <date> @ <version>` for a claim confirmed still true, and **`Corrected <date> @ <version> (previously "X")`** for one that was not. A bare "Default: X" claim cannot tell you when it was last true; a correction with no `previously` clause cannot tell a reader who remembers the old value that it was reviewed and replaced rather than lost. **The `previously` clause is the load-bearing half** — it is what makes a change legible to someone who learned the file before it moved, and what stops the same correction being made twice.
-
-### The daily drift check
-
-**Once per day of work, before anything substantive, check whether upstream moved.** Read [`drift-check.json`](drift-check.json). If `lastChecked` is today, skip it and say nothing. Otherwise resolve all five upstreams, compare against `upstream-review.json`, and write the result back.
-
-Resolve them **the way the build resolves them**, which is not the way a registry query defaults:
-
-| Upstream | How |
+| Rule | Mechanism |
 |---|---|
-| `@playwright/mcp` | npm dist-tag `latest` |
-| `playwright-core` | **`@playwright/mcp`'s own exact dependency** — never npm `latest`. Upstream publishes daily alphas and pins one exactly; on 2026-08-15 `latest` was `1.62.1` while the shipping version was `1.63.0-alpha-2026-08-05` |
-| `ModelContextProtocol`, `Velopack` | nuget.org, stable only, via the `nuget` MCP server |
-| `node` | `nodejs.org/dist/index.json`, newest entry carrying an `lts` field. The Current line is deliberately not tracked |
+| **`stdout` is the JSON-RPC channel — nothing anywhere may write to it**, including inside a `catch`. UTF-8, LF, no BOM, owned by `StdioChannel` | `BannedApiAnalyzers` over [`src/BrowserAI/BannedSymbols.txt`](src/BrowserAI/BannedSymbols.txt) at error severity. One per-line suppression exists, in `StdioChannel` itself, and it is visible in a diff |
+| **Never terminate a process found by image name.** Act only on a job object BrowserAI created, or on a pid whose identity was verified against a path BrowserAI owns | [`build/BannedSymbols.txt`](build/BannedSymbols.txt) repository-wide, plus `NeverByImageNameTests` reading the tree as text for what an analyzer cannot see — `taskkill /IM`, a WMI `Name` filter, a toolhelp `szExeFile` walk |
+| **Every tree delete goes through `Runtime/TreeDelete`**, which walks post-order and names every node it could not remove | [`build/BannedSymbols.txt`](build/BannedSymbols.txt): `Directory.Delete(String, Boolean)` is banned with zero suppressions anywhere |
+| **Never the timed `WaitForExit` overload alone** — it returns without draining the async readers, so stderr truncates silently | [`build/BannedSymbols.txt`](build/BannedSymbols.txt), plus `ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne` for the pairing a suppression cannot require |
+| **Never hand-write a tool schema, and never rename an upstream tool.** Schemas come from the child's `tools/list` at run time; upstream names pass through byte-for-byte | `LosslessPassthroughTests.ToolsListKeepsUpstreamsNamesOrderAndExtensionsThroughTheRewrite` and `.ThereIsNoTypedToolHandlerLeftToFallBackTo` |
+| **Never drive Playwright directly** — no `Microsoft.Playwright`, no reimplemented snapshot/ref system, no tool composed out of several upstream calls | `ForbiddenDependencyTests.NoProjectDrivesPlaywrightDirectly`, asserted over the package files because a banned symbol proves nothing until the package is already referenced |
+| **Every tool carries an explicit session-type classification, deny-by-default** | `SessionPolicyTests.EveryToolTheChildCanExposeCarriesAnExplicitClassification` |
+| **TUnit, and only TUnit** — `await Assert.That(actual).IsEqualTo(expected)`. Never FluentAssertions (commercial from 8.0.0); never `Microsoft.NET.Test.Sdk` (TUnit is MTP-only and conflicts with it) | `ForbiddenDependencyTests.NeitherFluentAssertionsNorTheTestSdkIsReferenced`, plus TUnit's own analyzers at error severity — an unawaited assertion passes silently, which is green-when-broken |
+| **No release with a red test, and no skipped, quarantined or conditionally-ignored test in the tree** | `HouseRuleTests.NoTestInTheTreeIsSkipped` |
+| **Two-line SPDX header on every source file, in the `LicenseRef-` form** — the bare `FSL-1.1-MIT` identifier is forbidden by the licence | `HouseRuleTests.EverySourceFileCarriesTheTwoLineSpdxHeader` |
+| **Never weaken a severity or suppress a warning to make code pass** — fix the code | `BuildConfigurationTests.NoBuildFileSuppressesWarnings` and `.WarningsAreErrorsForEveryProject`, with `.editorconfig` at error severity |
+| **Everything floats and the build freezes it; never pin to work around a break.** Version numbers in prose are provenance stamps, not targets — the build does not read them | `BuildConfigurationTests.EveryCentrallyManagedPackageVersionFloats` and `.NoProjectFileDeclaresAPackageVersion` |
+| **Do not edit [`upstream-review.json`](upstream-review.json) to make a test pass.** A red marker is a review that has not happened yet. Follow [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), and record what was adopted, what was **declined**, and why | `UpstreamReviewTests` and `UpstreamSnapshotTests` make a bad edit a red build rather than a prompt. The [hook](.claude/hooks/upstream-review-gate.ps1) is a reminder only: under bypass-permissions an `ask` returned to a sub-agent is silently downgraded to allow |
+| **Every relative Markdown link resolves, `#anchor` half included** | `DocumentationLinkTests` — 554 fragments, and the path half in every `.cs`, `.ps1` and `.md` |
+| **A hazard row names symbols that exist; a new `[FLOATS]` fact gets a row in the [re-verification index](kb/re-verification.md)** | `HazardIndexTests`, `ReVerificationIndexTests` |
 
-**Rules that make this worth having:**
+## Rules nothing enforces — these need a person
 
-- **Only stamp `lastChecked` after a lookup actually returned a version.** A date written from intent reads identically to a real one and silences the next check for a day. This is the same failure as editing `upstream-review.json` to make a test pass.
-- **Never block work on it.** Drift is information, not a gate. Report it, offer to run [the review procedure](UPSTREAM-REVIEW.md), and carry on with what was asked.
-- **Drift is not a bump.** Finding a newer version does not license editing `upstream-review.json` — that still requires the review.
-- **A confirmed move puts the [re-verification index](kb/re-verification.md) in play.** That table is where the `[FLOATS]` facts a bump can silently invalidate are listed, and it is the half of the review the golden snapshot cannot do.
+- **Update first, then work.** Re-resolving every dependency to latest is the *first* step of touching this project, not a step before release. Deferring it is how a project stops following the lead and starts accumulating one upgrade nobody ever takes.
+- **Never assert a version or a "latest" claim from memory.** If it was not looked up this session, say plainly that it is unverified — a confident stale version is worse than an admitted gap. Package questions to the `nuget` MCP server, .NET and C# to `microsoft-learn`, the rest to `context7`, preferring a vendor's own server because `context7` is metered.
+- **Stamp what you verify and what you correct.** `Verified <date> @ <version>` for a claim confirmed still true; `Corrected <date> @ <version> (previously "X")` for one that was not. **The `previously` clause is the load-bearing half** — it is what tells a reader who learned the old value that it was reviewed and replaced rather than lost, and what stops the same correction being made twice.
+- **Quote the predicate before the number.** Not *"54 rows"* but *"54 rows that are `open` and carry `—`"*. A re-count of the hazard index measured a different predicate over the same table and broke a figure that was correct; the five-row gap read as staleness rather than as a different question, and the fix went in the wrong direction.
+- **A search that returns zero needs a positive control.** A sweep for personal paths reported the tree clean and was wrong, because a pattern that matches nothing is indistinguishable from a genuine absence. Prove the search can find something before believing that it found nothing.
+- **Never delete a document written to be consumed without first recording what implements it.** That is what made deleting the implementation plan safe on 2026-08-17: the measurements had gone to `kb/`, the reasoning to the doc comment above the code it explains, and the `Implemented by` column had become [`ARCHITECTURE.md`](ARCHITECTURE.md).
+- **Newest stable idioms the GA toolchain compiles.** Familiar-but-dated patterns are style defects. `.editorconfig` catches the mechanical half and nothing catches the rest.
 
-**Why a directive rather than a scheduled job.** The obvious answer is a CI poller, and it is not needed here: this project is built entirely through an agent, so a rule that fires at the start of a working session runs by construction — the check happens because the work happens. Dependabot cannot do the job in any case (verified 2026-08-14 against `dependabot-core`'s own test table: a NuGet `Version="*"` is rewritten to `*` and produces no PR, and npm `"latest"` is skipped by a dist-tag guard — it bumps declared floors, and this project declares none).
+## The daily drift check
 
-## Testing is a hard requirement, not a phase
+**Once per day of work, before anything substantive:** read [`drift-check.json`](drift-check.json). If `lastChecked` is today, skip it and say nothing. Otherwise resolve all five upstreams **the way the build resolves them and not the way a registry query defaults** — the table is `_how_to_resolve` in that file, and the trap it exists for is `playwright-core`, which arrives as `@playwright/mcp`'s own exact dependency and never as npm `latest`. Compare against [`upstream-review.json`](upstream-review.json) and write the result back.
 
-The suite is the only thing standing between an upstream change and a shipped regression. Floating without a suite that catches breakage is strictly worse than pinning.
-
-- **No release with a red test.** Not "a known failure", not "unrelated to this change".
-- **No release with a skipped, quarantined or conditionally-ignored test.** A `Skip` in the tree at release time is a red build wearing a disguise.
-- **An unclassified tool fails the build.** Every tool in the surface carries an explicit session-type classification, deny-by-default.
-- Framework is **TUnit** — `await Assert.That(actual).IsEqualTo(expected)`. **Never add FluentAssertions** (relicensed at 8.0.0 to a commercial tier). **Never add `Microsoft.NET.Test.Sdk`** — TUnit is MTP-only and conflicts with it.
-- **TUnit's analyzers run at error severity.** A TUnit assertion that is not awaited passes silently. That is green-when-broken, which is the exact failure class this project exists to eliminate, so the analyzer is not optional.
-
-## The scope boundary
-
-BrowserAI is a **proxy**. It spawns `@playwright/mcp` and forwards JSON-RPC.
-
-- **Never hand-write a tool schema in a `.cs` file.** Every schema originates from the child's `tools/list` at runtime. If a tool definition is being typed into C#, the boundary has been crossed.
-- **Never drive Playwright directly** — no `Microsoft.Playwright`, no reimplementation of the snapshot/ref system, response formatting or error shaping.
-- Rewriting `tools/list` (filter, re-describe, inject the `session` parameter) is in scope. **Renaming is not** — upstream names pass through byte-for-byte, settled in [`DECISIONS.md` → Tool naming](DECISIONS.md#licence-release-policy-and-the-tool-surface), because a `deny` hook keyed on `browser_take_screenshot` exists in ten repositories and a rename map is a second surface to re-review on every bump. Composing new tools out of several upstream calls is also out of scope, and would require reopening the charter.
-
-## Silent failure is the enemy
-
-Every defect in the charter's opening table reported healthy while broken. Observability is a feature requirement here, not a nicety.
-
-- `stdout` is the protocol channel. **Nothing anywhere in the process may call `Console.WriteLine`**, including inside a `catch`. UTF-8, LF, no BOM, owned by one wrapper type.
-- Cache a child's `ExitCode` as an `int` immediately — `Process.ExitCode` throws after `Dispose()`.
-- Prefer a mechanism over a habit. If a rule can be a failing test, a hook or an analyzer, make it one.
-
-## Style
-
-- Newest stable idioms the GA toolchain compiles; familiar-but-dated patterns are style defects.
-- Analyzers and `.editorconfig` at error severity. **Never weaken a severity to make code pass** — fix the code.
-- Source files carry the two-line SPDX header used at the top of this file. Use the `LicenseRef-` form; the bare `FSL-1.1-MIT` identifier is forbidden by the licence.
+**Only stamp `lastChecked` after a lookup actually returned a version** — a date written from intent reads identically to a real one and silences the next check for a day. **Never block work on it:** drift is information, report it, offer [the review procedure](UPSTREAM-REVIEW.md), and carry on with what was asked. **Drift is not a bump** — finding a newer version does not license editing the marker. A confirmed move puts the [re-verification index](kb/re-verification.md) in play, which is the half of a review the golden snapshot cannot do. Why a directive rather than a CI poller: `_why_this_is_enough`, in the same file.
 
 ## Scratch work
 
-Agent-produced temporary files go in `.work/` at the repository root (gitignored, created on demand). Do not scatter them elsewhere on the machine. This supersedes any user-global temp-directory convention while working in this repository.
+Agent-produced temporary files go in `.work/` at the repository root — gitignored, created on demand, and nowhere else on the machine. This supersedes any user-global temp-directory convention while working in this repository. Nothing enforces it but `.gitignore`, which keeps the residue out of the tree rather than stopping it being written somewhere worse.
