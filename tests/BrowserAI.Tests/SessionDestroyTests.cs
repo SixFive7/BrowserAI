@@ -106,10 +106,19 @@ internal sealed class SessionDestroyTests
                 // before the destroy re-takes the directory is legitimately
                 // unowned, and probing it would contend with the acquisition
                 // this test needs to succeed.
+                _ = Thread.Yield();
             }
 
             while (!stop.IsCancellationRequested)
             {
+                // Yielded rather than spun flat out. The suite runs every test
+                // at once on purpose, and a busy loop that never lets go of its
+                // core would be this test paying for its evidence with somebody
+                // else's timing. It costs nothing here: the interval this is
+                // watching for is the removal of ~2,000 files, so thousands of
+                // probes land inside it either way.
+                _ = Thread.Yield();
+
                 if (SessionLock.TryHoldUnowned(location, out var hold) is not null)
                 {
                     continue;
