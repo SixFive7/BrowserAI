@@ -371,38 +371,74 @@ syscall wide.
 > holds that table and only the first group goes through it. `[STABLE]` for the
 > delete-pending refusal, `[MACHINE]` for the observed frequency.
 
-**The window has a second face, and waiting out the first one lands in it: the
-name is momentarily UNBOUND, and the open fails NOT FOUND rather than denied.**
-Measured 2026-08-18, three occurrences in thirty-two full-suite runs at
-`SuiteParallelism.Unbounded`, all from a reader spinning on a file another
-process was rewriting a hundred times. The sequence a reader can observe across
-one `MoveFileEx` is therefore **denied → absent → the new record**, and a retry
-that handles only the first of those converts a throw into a *null*. `[STABLE]`
-for the sequence, `[MACHINE]` for the frequency. Reproduce with
-`SessionLockTests.ARewriteIsNeverObservedTorn`, which records every absence and
-re-reads immediately: a rename window cannot survive a second read, so a null
-that does is real damage and fails.
+**⚠️ `MoveFileEx` with `MOVEFILE_REPLACE_EXISTING` does NOT keep the destination
+name bound throughout: a reader can see the name vanish and come back.**
+Measured 2026-08-18 at `SuiteParallelism.Unbounded`, by probing the filesystem at
+the instant a read returned no record:
 
-> **BrowserAI is safe under the absence and is deliberately not defended against
-> it, which is a different judgement from the denial above.** A denial was an
+| What was asked | What the machine said |
+|---|---|
+| does the name resolve | **False** |
+| the file's length | — (it did not exist) |
+| does the directory exist | True |
+| is one of the writer's `lock.json.new-<guid>` temps on disk | **1** |
+| does an immediate re-read find a record | **True** |
+
+**All five together are the finding, and no single one of them is.** The name was
+genuinely unbound — not a zero-length file, not a missing directory, which are
+the other two conditions a null record can mean. A rewrite was **demonstrably**
+in flight, because the writer's own temp existed at that instant. And the record
+was back on the very next read.
+
+**The sequence a reader can observe across one replace is therefore `denied →
+absent → the new record`**, and the practical consequence is sharp: a retry that
+handles only the *denial* converts a throw into a **null**, which is the more
+dangerous of the two because null means *not locked*.
+
+> **Why the name is unbound at all, which is a hypothesis and is labelled as
+> one.** [The entry above](#files-durable-writes-and-deletes) measures that a
+> rename over a file with an open handle is **refused**, so the writer's own
+> retry loop is running; the reader's handle then closes, the delete that the
+> refused attempt left pending completes, and the name is free until the writer's
+> *next* retry lands — a gap governed by that loop's 5→100 ms backoff, which fits
+> the observed width. `[UNVERIFIED]`: nothing has instrumented the writer and the
+> reader on one timeline to confirm it. **The observation is not a hypothesis;
+> the explanation is.**
+>
+> **The fix, if it is ever wanted, is POSIX-semantics rename.**
+> `SetFileInformationByHandle` with `FileRenameInfoEx` and
+> `FILE_RENAME_POSIX_SEMANTICS | FILE_RENAME_REPLACE_IF_EXISTS` (Windows 10 RS1
+> and later) replaces a file that has open handles without refusing and without
+> unlinking the name — the old file simply becomes nameless and its handles stay
+> valid. .NET exposes no overload for it, so it is a P/Invoke against the most
+> safety-critical primitive in this product, and it needs its own measurement
+> before it is trusted. Not taken; see the hazard index.
+
+> **BrowserAI is safe under the absence today, and that is a different judgement
+> from the denial above rather than the same one repeated.** A denial was an
 > unhandled exception escaping `TryAcquire`; an absence is a documented return
 > value every caller already handles — `SessionLock` even carries the sentence
 > *"which removed its `lock.json` between the refusal and the read"* for exactly
 > this. And the mechanism bounds it: **every rewrite happens under the
-> per-directory mutex**, so no gated reader can see the window at all, and the
-> ungated ones all fail in the safe direction — the sweep's
-> `SessionDirectoryFrom` reads a missing lock as *"not a BrowserAI session
-> directory"* and spares the process, and `ActOn` gates the kill on
-> `SessionLock.TryHoldUnowned`, which takes the same mutex.
+> per-directory mutex**, so no gated reader can see the window at all, and every
+> ungated one fails in the safe direction — the sweep's `SessionDirectoryFrom`
+> reads a missing lock as *"not a BrowserAI session directory"* and **spares**
+> the process, and `ActOn` gates the kill on `SessionLock.TryHoldUnowned`, which
+> takes that same mutex.
 >
-> **What it would cost to defend, and why that is a decision rather than an
-> omission.** A reader cannot tell a transient absence from a real one without
-> waiting, and waiting is the common path: `browserai_list` over ten
-> destroyed-but-indexed sessions would pay the full budget ten times. The only
-> cheap discriminator is the writer's own `lock.json.new-<guid>` temp file, which
-> exists exactly while a rewrite is in flight — and reaching for it couples
-> `RenameWindow` to two different temp-naming conventions. Recorded here so the
-> next person meets the reasoning rather than the gap.
+> **What defending it would cost, so the gap is a decision and not an oversight.**
+> A reader cannot tell a transient absence from a real one without waiting, and
+> waiting is the common path: `browserai_list` over ten destroyed-but-indexed
+> sessions would pay the full budget ten times over. The cheap discriminator is
+> the writer's own temp file — which is what the test uses — but reaching for it
+> from `RenameWindow` couples it to two different temp-naming conventions.
+>
+> `[STABLE]` for the unbound window and the sequence; `[MACHINE]` for the
+> frequency, three occurrences in thirty-six full-suite runs, all from the one
+> arm in this suite where a reader spins on a file another process is rewriting a
+> hundred times. Reproduce with
+> `SessionLockTests.ARewriteIsNeverObservedTorn`, which probes all five columns
+> above on every null and fails on one with no rewrite in flight.
 
 **A file that has just been renamed into place can still be briefly unopenable.**
 Observed once on 2026-08-16, roughly one run in a dozen: a probe report written
