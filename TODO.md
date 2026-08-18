@@ -91,8 +91,8 @@ by effort.**
       `ProcessAttributeList` already exists with one attribute.
 
 - [ ] **Path aliasing defeats the per-directory gate.** `Path.GetFullPath` does
-      not resolve `\?\`, 8.3 names, junctions, `subst` or mapped drives, so two
-      spellings give two mutex names and **one `lock.json`**. `\?\C:\...`
+      not resolve `\\?\`, 8.3 names, junctions, `subst` or mapped drives, so two
+      spellings give two mutex names and **one `lock.json`**. `\\?\C:\...`
       needs no filesystem setup at all.
 
 - [ ] **Two of thirteen ungated `lock.json` readers ACT on an absence rather than
