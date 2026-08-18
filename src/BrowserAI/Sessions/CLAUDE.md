@@ -1,0 +1,12 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+
+# `Sessions\` — one directory is one session
+
+The directory is simultaneously the name, the handle and the lock, so everything here is a claim about **whose** directory it is. The rules below hold for every file; each says what enforces it, and the gaps are named as gaps.
+
+- **A path is canonicalised once, by `SessionPath`, and every derived name comes from it** — the mutex, `lock.json`, the index key. `SessionPathTests` covers the canonicalisation. **Nothing stops a new caller canonicalising a path of its own**, and two components that canonicalise separately eventually disagree about one path — at which point two processes hold the same session.
+- **Compare two Windows paths by upper-casing both sides and then comparing ordinally.** `SessionPath.Key` and `SessionManager.Beneath` do. **Nothing asserts it**, and a bare ordinal compare makes the result a property of whichever shell launched the process — measured 2026-08-17: green from PowerShell, red from Git Bash, same file both times.
+- **A holder is `(pid, creationFileTime)`, never a bare pid.** `LockRecordTests` and `SessionLockTests` cover the record and the reclaim path. **Nothing stops new code reading `ProcessId` on its own** — and a pid alone reclaims a live session's directory the moment Windows reuses the number.
+- **Attribution may fail; detection may not.** `StraySweep` ends only what it can tie to both an image path BrowserAI owns and a window title it can read. Anything it cannot attribute is **reported loudly by full path and left running** — never terminated on a guess, never silently dropped. `StraySweepTests` holds the shape of this; the judgement about a new candidate kind is yours.
+- **A refusal is a sentence the model reading it can act on, and it lives in `SessionErrors`.** `ErrorCatalogueTests` proves every catalogue entry is reachable from a real path. **It cannot tell you that a refusal you wrote inline belongs in the catalogue**, which is the only way this rule is ever broken.
