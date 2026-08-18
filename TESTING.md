@@ -545,6 +545,29 @@ nothing, blocks nothing, and prompts nobody.
 > it must be one — and this is the case that proves the rule applies to our own
 > tooling too.
 
+## Continuous integration
+
+**Added 2026-08-18, and it is the first time any of this ran on a machine nobody
+owns.** [`.github/workflows/build.yml`](.github/workflows/build.yml) builds the
+payload, provisions Chromium and Firefox, publishes the NativeAOT binary and runs
+the **whole** suite — `SaturationTests` included, because a CI that skipped the
+expensive half would recreate the gap it exists to close. Its own header states
+what it costs (about 204 MB of first-run browser download per run, plus ~125.7 MB
+for Firefox, uncached on purpose) and what it does **not** cover.
+
+Two things a reader should know before treating a red build as a defect:
+
+- **`BROWSERAI_RELEASE_RUN` is deliberately unset.** It turns an absent capability
+  from a loud skip into a failure, and two capabilities are genuinely absent on a
+  runner — the packed release and an installed MCP client. CI is an ordinary run
+  that states its own coverage; the release gate is still
+  [`RELEASING.md`](RELEASING.md#the-release-gate), driven locally.
+- **A red `UpstreamReviewTests` means upstream moved and nobody reviewed it.**
+  That is [the marker gate](#the-upstream-review-gate) working, not a stale file.
+  Lock-file drift is reported into the job summary and never fails the build,
+  because drift is information; **adopting** a moved version is what needs the
+  review.
+
 ## The release gate
 
 **Lives in [`RELEASING.md`](RELEASING.md#the-release-gate)**, beside the

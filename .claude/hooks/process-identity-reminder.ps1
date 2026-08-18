@@ -35,7 +35,14 @@ try {
     $path = ($raw | ConvertFrom-Json).tool_input.file_path
     if ([string]::IsNullOrWhiteSpace($path)) { exit 0 }
     if ($path -notmatch '\.cs$') { exit 0 }
-    if ($path -notmatch '[\\/](Sessions|Interop)[\\/]') { exit 0 }
+
+    # Two matches rather than one alternation, and that is not a style choice.
+    # A bracket-alternation spelled the way it wants to be spelled puts a closing
+    # bracket immediately before an opening parenthesis, which is a Markdown link
+    # to DocumentationLinkTests -- with the alternation as a target that does not
+    # resolve. Caught by that test on 2026-08-18, which is the same trap its own
+    # remarks record falling into.
+    if ($path -notmatch '[\\/]Sessions[\\/]' -and $path -notmatch '[\\/]Interop[\\/]') { exit 0 }
 }
 catch {
     exit 0

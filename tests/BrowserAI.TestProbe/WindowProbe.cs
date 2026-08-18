@@ -60,9 +60,36 @@ internal static partial class WindowProbe
     private static bool _suppressWindowText;
 
     /// <summary>
-    /// Registers a window class, publishes one message-only window titled as
-    /// asked, reports, and stays alive.
+    /// Registers two window classes, publishes one message-only window titled as
+    /// asked and one top-level window that is never shown, reports, and stays
+    /// alive.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The second window was added 2026-08-18, and it exists to take a
+    /// property of the developer's screen out of an assertion.</b>
+    /// <c>MessageWindowTests.EnumWindowsFindsNoMessageWindowsAtAllWhileTheWalkFindsThem</c>
+    /// proved <c>EnumWindows</c> had really enumerated by requiring it to return
+    /// more than fifty windows — true of a desktop somebody is using, and
+    /// <b>false on a CI agent with no interactive desktop</b>, where a service
+    /// window station holds a handful. <c>kb/windows/detection.md</c> already
+    /// carried that floor as a <c>[MACHINE]</c> property.
+    /// </para>
+    /// <para>
+    /// A window of our own is the honest control: it is <b>ours</b>, so finding
+    /// it proves the enumeration ran, whatever else is on the machine. It takes
+    /// its own class, because the assertion beside it counts windows of the
+    /// singleton class that <c>EnumWindows</c> returns and requires zero — a
+    /// second window of the same class would make that count one and the test
+    /// would be asserting the opposite of what it means.
+    /// </para>
+    /// <para>
+    /// <b>Never shown, and that is deliberate</b>: style zero carries no
+    /// <c>WS_VISIBLE</c> and no <c>WS_EX_APPWINDOW</c>, so nothing appears on a
+    /// screen or in a taskbar. The suite stopped putting windows in front of the
+    /// developer on purpose and this does not undo it.
+    /// </para>
+    /// </remarks>
     /// <param name="className">The class to register. Per-process, so any name works.</param>
     /// <param name="title">The window's kernel-side name.</param>
     /// <param name="reportPath">Where to write what was created.</param>
@@ -70,7 +97,7 @@ internal static partial class WindowProbe
     /// <c>suppress</c> to make the WndProc answer <c>WM_GETTEXT</c> with an empty
     /// string; anything else to let <c>DefWindowProc</c> answer it.
     /// </param>
-    /// <returns>Zero once it is asked to stop, or one if the window could not be made.</returns>
+    /// <returns>Zero once it is asked to stop, or one if a window could not be made.</returns>
     public static unsafe int Publish(string className, string title, string reportPath, string suppress)
     {
         _suppressWindowText = string.Equals(suppress, "suppress", StringComparison.Ordinal);
@@ -111,6 +138,50 @@ internal static partial class WindowProbe
             return 1;
         }
 
+        // The top-level half: parent NULL rather than HWND_MESSAGE, which is the
+        // entire difference between the two windows.
+        //
+        // Its own class, and a GUID in the name so the class is unique to THIS
+        // probe process. The suite runs unbounded-parallel and several tests
+        // publish a probe of the same singleton class at once; without the GUID,
+        // a count of windows carrying the control class is a count of however
+        // many probes happen to be alive, which is not a number a test can
+        // assert on.
+        var topLevelClassName = $"{className}_TopLevel_{Guid.NewGuid():N}";
+        var topLevelClassBuffer = Marshal.StringToHGlobalUni(topLevelClassName);
+
+        var topLevelRegistration = new WindowClass
+        {
+            Size = (uint)Unsafe.SizeOf<WindowClass>(),
+            WindowProcedure = (nint)(delegate* unmanaged<nint, uint, nint, nint, nint>)&Procedure,
+            Instance = instance,
+            ClassName = topLevelClassBuffer,
+        };
+
+        if (RegisterClassExW(ref topLevelRegistration) is 0)
+        {
+            Write(reportPath, new JsonObject
+            {
+                ["pid"] = Environment.ProcessId,
+                ["error"] = $"RegisterClassExW failed for '{topLevelClassName}' with {Marshal.GetLastPInvokeError()}",
+            });
+
+            return 1;
+        }
+
+        var topLevelWindow = CreateWindowExW(0, topLevelClassBuffer, titleBuffer, 0, 0, 0, 0, 0, nint.Zero, nint.Zero, instance, nint.Zero);
+
+        if (topLevelWindow == nint.Zero)
+        {
+            Write(reportPath, new JsonObject
+            {
+                ["pid"] = Environment.ProcessId,
+                ["error"] = $"CreateWindowExW failed for the top-level window with {Marshal.GetLastPInvokeError()}",
+            });
+
+            return 1;
+        }
+
         Write(reportPath, new JsonObject
         {
             ["pid"] = Environment.ProcessId,
@@ -118,6 +189,11 @@ internal static partial class WindowProbe
             ["className"] = className,
             ["title"] = title,
             ["suppressing"] = _suppressWindowText,
+
+            // The control window: top-level, never shown, and of a class nothing
+            // else on the machine registers.
+            ["topLevelWindow"] = topLevelWindow.ToInt64(),
+            ["topLevelClassName"] = topLevelClassName,
 
             // The same-process halves, measured here because they cannot be
             // measured anywhere else: from this thread both of these DO go

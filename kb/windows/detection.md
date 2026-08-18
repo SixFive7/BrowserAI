@@ -672,8 +672,19 @@ baseline sweep of the developer's own desktop, three times across the session:
 **590, 586 and 587** top-level windows, of which **100** were visible each time.
 So roughly five in six of what `EnumWindows` returns is not on screen. Recorded
 because a count of `EnumWindows`' result is sometimes read as *"how busy is this
-screen"* and it is not that; `MessageWindowTests`' non-vacuity floor of 50 is
-sensitive to this, and it is a `[MACHINE]` property. `[MACHINE]`
+screen"* and it is not that. `[MACHINE]`
+
+> **Corrected 2026-08-18 (previously: "`MessageWindowTests`' non-vacuity floor of
+> 50 is sensitive to this, and it is a `[MACHINE]` property").** That floor is
+> gone. It asserted the developer's screen was busy, which is false on a CI agent
+> with no interactive desktop — a service window station holds a handful of
+> windows and nothing is wrong. The probe now publishes a **second window, top-level
+> and never shown, in its own GUID-suffixed class**, and the test asserts
+> **disjointness by handle identity**: `EnumWindows` returns the control and never
+> the message-only window, both created seconds apart in one process, differing
+> only in the parent each was given. Proven by planting — give the control
+> `HWND_MESSAGE` as its parent and the assertion goes red. The numbers above stay
+> as a measurement; nothing asserts on them now.
 
 > ⚠️ **The first version of the watcher reported zero shows and was wrong**, and
 > the mistake is worth carrying because it is the shape of every silent detector

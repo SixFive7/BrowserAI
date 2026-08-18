@@ -42,6 +42,7 @@ assumed and nothing on `PATH` is used.
 | Concern | Implemented by |
 |---|---|
 | Building the payload: Node, the vendored `node_modules`, the provenance stamp | `build/Build-Payload.ps1`, `build/payload/{package.json, package-lock.json}`, the publish-only payload copy in `src/BrowserAI/BrowserAI.csproj` |
+| Running all of that on a machine nobody owns | `.github/workflows/build.yml` — payload, both browsers, the AOT publish and the whole suite, on every push and pull request |
 | Finding the payload at run time | `src/BrowserAI/Runtime/PayloadLayout.cs` |
 | Composing the child's configuration and command line | `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
 | First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, ProvisioningRemediation, RevisionPrune, TreeDelete}.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |

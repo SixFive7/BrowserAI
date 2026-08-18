@@ -135,7 +135,14 @@ internal sealed class MessageWindowTests
         using var scope = new JobObjectScope();
 
         var name = $@"C:\BrowserAI-enumwindows-{Guid.NewGuid():N}";
-        _ = await PlantedProbe.PublishWindowAsync(scope, ProbeExecutable, scratch.Path, SingletonClass, name);
+        var report = await PlantedProbe.PublishWindowAsync(scope, ProbeExecutable, scratch.Path, SingletonClass, name);
+
+        // Two windows in one probe process, differing in one thing: the
+        // message-only one has HWND_MESSAGE as its parent and the control has
+        // none. Everything below is about that difference.
+        var messageOnly = (nint)(long)report["window"]!;
+        var control = (nint)(long)report["topLevelWindow"]!;
+        var controlClass = (string?)report["topLevelClassName"];
 
         var topLevel = TopLevelWindows.All();
         var throughEnumWindows = topLevel.Count(window =>
@@ -149,9 +156,37 @@ internal sealed class MessageWindowTests
         // report a clean machine forever.
         await Assert.That(throughEnumWindows).IsEqualTo(0);
         await Assert.That(walk.Windows.Count).IsGreaterThan(0);
+        await Assert.That(walk.Windows.Any(found => found.Handle == messageOnly)).IsTrue();
 
-        // And the question was not vacuous: EnumWindows really did enumerate.
-        await Assert.That(topLevel.Count).IsGreaterThan(50);
+        // ⚠️ THE POSITIVE CONTROL, and it is by HANDLE IDENTITY rather than by
+        // population.
+        //
+        // Corrected 2026-08-18 (previously `Assert.That(topLevel.Count)
+        // .IsGreaterThan(50)`, "the question was not vacuous: EnumWindows really
+        // did enumerate"). That floor asserted the developer's screen was busy.
+        // It is a [MACHINE] property -- kb/windows/detection.md says so, at 590,
+        // 586 and 587 windows across three sweeps of one desktop -- and a CI
+        // agent with no interactive desktop has a service window station holding
+        // a handful, so the assertion would have gone red on a machine where
+        // nothing was wrong.
+        //
+        // The replacement asks the question the zero above needs answered: could
+        // this enumeration have found a window of a class we just registered, if
+        // there had been one? The probe publishes a second window that is
+        // top-level and never shown, and EnumWindows must return exactly that
+        // one and never the message-only one. Both are in the same process, both
+        // were created seconds ago, and the answer depends on nothing but the
+        // parent each was given.
+        await Assert.That(topLevel.Contains(control)).IsTrue();
+        await Assert.That(topLevel.Contains(messageOnly)).IsFalse();
+
+        // And the class filter that produced the zero above is not itself broken:
+        // read through the same call, our control window carries the class the
+        // probe registered. Exactly one, because the probe puts a GUID in that
+        // class name -- several tests publish a probe of the singleton class at
+        // once and a count without it would be a count of live probes.
+        await Assert.That(topLevel.Count(window =>
+            string.Equals(TopLevelWindows.ClassNameOf(window), controlClass, StringComparison.Ordinal))).IsEqualTo(1);
     }
 
     [Test]
