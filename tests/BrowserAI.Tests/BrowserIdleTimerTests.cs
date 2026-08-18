@@ -760,8 +760,12 @@ internal sealed partial class BrowserIdleTimerTests
         var created = ProcessIdentity.CreationTimeOf(client.Id);
         var fires = 0;
 
+        // The creation time is passed rather than left to be assumed: since
+        // 2026-08-18 the watcher proves the pid is the process it was told about
+        // before it arms anything. ProcessLivenessTests covers the refusals.
         using var watcher = ClientLivenessWatcher.ForProcess(
             client.Id,
+            created,
             () => Interlocked.Increment(ref fires),
             factory.CreateLogger("watch"))!;
 

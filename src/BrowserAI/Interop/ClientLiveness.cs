@@ -23,6 +23,17 @@ namespace BrowserAI.Interop;
 /// guarantee <see cref="BrowserProcesses.ScanFor"/> takes for the sweep.
 /// </para>
 /// <para>
+/// ⚠️ <b>Corrected 2026-08-18 (previously the paragraph above stood alone).</b>
+/// The guarantee it claims begins at the instant the handle is opened and says
+/// nothing whatever about the interval before it — which is the interval that
+/// matters, because the pid comes from a field the kernel never invalidates. So
+/// the handle is necessary and was not sufficient, and
+/// <see cref="ForProcess"/> now proves the identity on that handle before it is
+/// held. Read its remarks: a watch pointed at a recycled pid is not a missing
+/// mechanism, it is an <i>active</i> one aimed at a stranger, and firing it
+/// tears down every session on the machine.
+/// </para>
+/// <para>
 /// <b>It is the second of two teardown mechanisms, and neither is a close
 /// tool.</b> stdin EOF is the backstop and fires instantly when the parent
 /// holding the pipe is <c>TerminateProcess</c>d; this covers the case EOF cannot
@@ -56,9 +67,10 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     private int _fired;
     private int _disposed;
 
-    private ClientLivenessWatcher(int processId, ManualResetEvent signal, Action onExit, ILogger logger)
+    private ClientLivenessWatcher(int processId, long createdFileTime, ManualResetEvent signal, Action onExit, ILogger logger)
     {
         ProcessId = processId;
+        CreatedFileTime = createdFileTime;
         _signal = signal;
         _onExit = onExit;
         _logger = logger;
@@ -77,10 +89,23 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// <summary>The client process this watcher holds a handle on.</summary>
     public int ProcessId { get; }
 
+    /// <summary>
+    /// Its creation time, read off the handle this watcher holds — the other
+    /// half of the identity, because a pid on its own is not one.
+    /// </summary>
+    public long CreatedFileTime { get; }
+
     /// <summary>Whether the watched process has been observed to exit.</summary>
     public bool HasFired => Volatile.Read(ref _fired) is not 0;
 
     /// <summary>Watches the process that started this one.</summary>
+    /// <remarks>
+    /// The parent's pid arrives from <c>InheritedFromUniqueProcessId</c> with no
+    /// creation time beside it anywhere, so this passes
+    /// <see langword="null"/> for the recorded time and
+    /// <see cref="ForProcess"/> falls back to the weaker — and, for this one
+    /// question, equally exact — test that the process did not start after us.
+    /// </remarks>
     /// <param name="onExit">What to do when it goes. Runs on a thread-pool thread.</param>
     /// <param name="logger">Where the watcher reports.</param>
     /// <returns>The watcher, or <see langword="null"/> when there is nothing to watch.</returns>
@@ -96,15 +121,43 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             return null;
         }
 
-        return ForProcess(parent, onExit, logger);
+        return ForProcess(parent, recordedCreation: null, onExit, logger);
     }
 
-    /// <summary>Watches one named process.</summary>
+    /// <summary>Watches one named process, after proving it is that process.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The identity check was added 2026-08-18; before it this opened a
+    /// bare pid and held whatever answered.</b> The pid comes from
+    /// <c>InheritedFromUniqueProcessId</c>, which the kernel writes once at
+    /// creation and never invalidates. A client that started BrowserAI through a
+    /// wrapper — the arrangement this whole mechanism exists for — leaves that
+    /// number pointing at an exited process, and Windows reuses pids in seconds.
+    /// The watch then fires when an <b>unrelated</b> process exits, and firing it
+    /// takes every session's child, its browser and its job down while the log
+    /// asserts a cause that is false. The mirror is as bad: if the recycler is
+    /// long-lived the watch never fires at all, in precisely the case it was
+    /// built for. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+    /// finding 1; <c>Interop\CLAUDE.md</c> had already stated the rule it broke.
+    /// </para>
+    /// <para>
+    /// <b>The check runs on the handle that will be held, never on a re-opened
+    /// one.</b> A second open would put a second recycling window between the
+    /// proof and the use, which is the window being closed.
+    /// </para>
+    /// </remarks>
     /// <param name="processId">The client's pid.</param>
+    /// <param name="recordedCreation">
+    /// The creation time recorded beside that pid, when the caller has one.
+    /// <see langword="null"/> means there is no record — the pid came from the
+    /// parent field — and the pairing is then
+    /// <see cref="ProcessLiveness.StartedNoLaterThanThisProcess"/>.
+    /// </param>
     /// <param name="onExit">What to do when it goes. Runs on a thread-pool thread.</param>
     /// <param name="logger">Where the watcher reports.</param>
     /// <returns>The watcher, or <see langword="null"/> when the process cannot be watched.</returns>
-    public static ClientLivenessWatcher? ForProcess(int processId, Action onExit, ILogger logger)
+    public static ClientLivenessWatcher? ForProcess(int processId, long? recordedCreation, Action onExit, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(onExit);
         ArgumentNullException.ThrowIfNull(logger);
@@ -127,6 +180,28 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             return null;
         }
 
+        // THE PAIRING, on the handle that is about to be held rather than on a
+        // second open of the same number.
+        if (!GetProcessTimes(handle, out var created, out _, out _, out _))
+        {
+            // Read first, before CloseHandle can replace it with its own.
+            var reason = new Win32Exception(Marshal.GetLastPInvokeError()).Message;
+
+            _ = CloseHandle(handle);
+            ClientLivenessLog.ClientCannotBeWatched(logger, processId, reason);
+
+            return null;
+        }
+
+        if (recordedCreation is { } recorded
+            ? created != recorded
+            : !ProcessLiveness.StartedNoLaterThanThisProcess(handle, out _))
+        {
+            _ = CloseHandle(handle);
+            ClientLivenessLog.ClientPidIsNotTheClient(logger, processId);
+            return null;
+        }
+
         ManualResetEvent? signal = null;
 
         try
@@ -141,7 +216,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             signal.SafeWaitHandle = new SafeWaitHandle(handle, ownsHandle: true);
             placeholder.Dispose();
 
-            var watcher = new ClientLivenessWatcher(processId, signal, onExit, logger);
+            var watcher = new ClientLivenessWatcher(processId, created, signal, onExit, logger);
             ClientLivenessLog.WatchingClient(logger, processId);
 
             return watcher;
@@ -197,6 +272,25 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
         uint dwDesiredAccess,
         [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
         uint dwProcessId);
+
+    // Declared here rather than reached through ProcessLiveness so that the
+    // pairing is visible in the same twenty lines as the OpenProcess it pairs
+    // with -- which is what ProcessLivenessTests.EveryProcessHandleOpenedInThe
+    // ProductIsPairedWithACreationTimeRead reads for.
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimes(
+        nint hProcess,
+        out long lpCreationTime,
+        out long lpExitTime,
+        out long lpKernelTime,
+        out long lpUserTime);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(nint hObject);
 }
 
 /// <summary>Source-generated log messages for the client-liveness watcher.</summary>
@@ -248,4 +342,13 @@ internal static partial class ClientLivenessLog
         Level = LogLevel.Error,
         Message = "The MCP client, pid {ProcessId}, exited and asking BrowserAI to stop threw. stdin EOF and the job object are what remain.")]
     public static partial void TeardownFailed(ILogger logger, int processId, Exception failure);
+
+    /// <summary>The pid opened is not the process it was supposed to be.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="processId">The pid that answered.</param>
+    [LoggerMessage(
+        EventId = 75,
+        Level = LogLevel.Warning,
+        Message = "Pid {ProcessId} was opened as the MCP client and is a different process from the one that number named — it started after this one, so it cannot be the process that launched BrowserAI. Windows had reused the number. Nothing is watched: teardown falls back to stdin EOF alone, which is correct, where firing this watch on a stranger's exit would have taken every session's browser down.")]
+    public static partial void ClientPidIsNotTheClient(ILogger logger, int processId);
 }

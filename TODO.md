@@ -29,18 +29,6 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 [`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
 by effort.**
 
-- [ ] **The client-liveness watch acts on a bare pid, and firing it kills every
-      session.** `ClientLiveness` opens the pid from
-      `InheritedFromUniqueProcessId` — stale by design — with **no creation-time
-      pairing**, while `ProcessLiveness` right beside it does pair. A wrapper
-      launcher exits, the pid is recycled, and when the stranger exits *"every
-      session's child, its browser and its job go down with this process."* The
-      mirror is as bad: a long-lived recycler means the watch never fires, in the
-      wrapper case the mechanism exists for. **`src/BrowserAI/Interop/CLAUDE.md`
-      states this exact rule and explains why no analyzer can catch a violation of
-      it** — the file predicted its own gap and the gap was already there. One
-      `GetProcessTimes` closes it.
-
 - [ ] **`TreeDelete` follows directory junctions; the primitive it replaced does
       not.** The post-order walk descends into reparse points and deletes the
       target's contents. `Directory.Delete(recursive: true)` — the call
