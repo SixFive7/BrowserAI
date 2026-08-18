@@ -19,6 +19,102 @@ about an external source needs the date and version it was true at.
 
 ---
 
+## Adversarial review, 2026-08-18 — seven wrong-answer defects
+
+Two adversarial readers were asked to **break** the design by reasoning rather
+than by load, on the maintainer's argument that *"just running 100 concurrent
+browsers is not enough of a test to find all concurrency bugs."* He was right:
+reading found ~18 findings in about half an hour each, against seven from a night
+of load testing. Full reasoning, with every interleaving spelled out, in
+[`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
+by effort.**
+
+- [ ] **`browserai_destroy` can delete a live session out from under another
+      process.** `SessionManager` releases the lock, then walks the whole tree for
+      a size, then deletes. A peer that `resume`s in that gap gets `Reclaimed`,
+      launches a browser into `profile/`, and has its tree deleted underneath it.
+      **The window is a recursive walk of a Chromium profile wide** — thousands of
+      files, not microseconds. The comment defending the early release is true
+      about `lock.json` and irrelevant to the delete. Hold ownership until the
+      delete is done.
+
+- [ ] **The client-liveness watch acts on a bare pid, and firing it kills every
+      session.** `ClientLiveness` opens the pid from
+      `InheritedFromUniqueProcessId` — stale by design — with **no creation-time
+      pairing**, while `ProcessLiveness` right beside it does pair. A wrapper
+      launcher exits, the pid is recycled, and when the stranger exits *"every
+      session's child, its browser and its job go down with this process."* The
+      mirror is as bad: a long-lived recycler means the watch never fires, in the
+      wrapper case the mechanism exists for. **`src/BrowserAI/Interop/CLAUDE.md`
+      states this exact rule and explains why no analyzer can catch a violation of
+      it** — the file predicted its own gap and the gap was already there. One
+      `GetProcessTimes` closes it.
+
+- [ ] **`TreeDelete` follows directory junctions; the primitive it replaced does
+      not.** The post-order walk descends into reparse points and deletes the
+      target's contents. `Directory.Delete(recursive: true)` — the call
+      `BannedSymbols.txt` bans — checks the reparse attribute and removes the link
+      without following. **So the hand-rolled replacement is less safe than the
+      banned call**, on a caller-named path, in a profile tree where junctions are
+      ordinary. Neither `TreeDelete`'s 60 lines of remarks nor the ban message
+      mentions reparse points.
+
+- [ ] **`RevisionPrune` decides on a census whose handles it already closed.**
+      `BrowserProcesses.RunningFrom` closes each handle before returning, unlike
+      `ScanFor`, whose held handle is the whole point of race R2. The prune holds
+      the provisioning mutexes; nothing on the launch path takes them. A
+      concurrent instance launching from a superseded revision has its tree
+      deleted underneath it.
+
+- [ ] **The provisioning mutex still carries one false inference.**
+      `BrowserProvisioner` deletes the revision tree on `AcquiredAbandoned`
+      **before** asking whether it is complete. A holder that dies inside `Prune`
+      — the slow post-marker window the 2026-08-17 fix identified — makes the next
+      acquirer **wipe a complete, in-use install** and re-download 203.8 MB. The
+      fix is a reordering.
+
+- [ ] **`ReinstallAsync` deletes without the provisioning mutex.** Its guard looks
+      for processes *running from* the tree; a concurrent installer is `node.exe`
+      from the payload and is invisible to it. End state: `INSTALLATION_COMPLETE`
+      written over a gutted tree, `spawn EFTYPE`, and upstream's 30-day
+      `DEPENDENCIES_VALIDATED` suppression. Both stated reasons for taking no lock
+      are wrong.
+
+- [ ] **Concurrent `JobLauncher.Start` calls cross-inherit each other's pipes.**
+      All six pipe ends are made inheritable and only the parent's three are
+      cleared, and `bInheritHandles: true` inherits **every** inheritable handle in
+      the process. Session B's browser tree ends up holding session A's stdout and
+      stderr write ends for B's whole life — which is exactly the hang
+      `JobLauncher` documents, closed for the parent and left open for a sibling.
+      **It also puts our own stdout handle in every child.**
+      `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` closes all of it, and
+      `ProcessAttributeList` already exists with one attribute.
+
+- [ ] **Path aliasing defeats the per-directory gate.** `Path.GetFullPath` does
+      not resolve `\?\`, 8.3 names, junctions, `subst` or mapped drives, so two
+      spellings give two mutex names and **one `lock.json`**. `\?\C:\...`
+      needs no filesystem setup at all.
+
+- [ ] **Two of thirteen ungated `lock.json` readers ACT on an absence rather than
+      reporting it**, which falsifies a claim `kb/` currently makes.
+      `SessionIndex.Locate` → `IsRemovable` → `Sweep` **deletes the index entry**
+      for a live session; `SessionManager.Existing` reads null as *"free,
+      proceed"*. Correct the kb claim in the same change.
+
+- [ ] **One gate hold contains three serial 30 s budgets.** The test asserts the
+      60 s gate outlasts `RenameWindow.Budget`, but `TakeOrReport` and `Rewrite`
+      each take three in series — 90 s against 60 s. Also unpaired inside the
+      gate: `Flush(flushToDisk: true)`, a parent-process walk, and **any
+      filesystem call on a caller-supplied UNC path**, where this repository has
+      measured 21,037 ms for one call.
+
+- [ ] **The probe-before-gate redesign, attacked before it was built.** It is a
+      sound *ownership* test and an unsound *freedom* test: with the gate skipped
+      on the free path, both contenders probe, A wins the rename, and B's retry
+      loop hands B the name the instant anything closes A's handle — A then holds
+      a valid handle to a nameless file. **Adopt the probe as a fast refusal in
+      front of an unchanged `TryAcquire`, never as a replacement for the gate.**
+
 - [ ] **Watch [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
       and act on what upstream decides.** The report: `"launchOptions":
       { "chromiumSandbox": true }` in a config file is parsed, validated and then
