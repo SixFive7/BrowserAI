@@ -122,10 +122,19 @@ removing the test that produced it.
   is no `ref/tool`, so the `session` argument can never be completed.
 - **Resources: output artifacts only** — screenshots, downloads, log,
   `lock.json`. Never the profile.
-- **The tool-permission policy is being removed**, keeping one hard-coded
-  `browser_annotate` refusal in headless as a **liveness** guard with no security
-  claim, and dropping `Guard`. Change control moves to the release gate, where
-  four golden snapshots already cover more than the policy did.
+- **The tool-permission policy was removed**, on 2026-08-18. *Corrected
+  2026-08-18 (previously "is being removed").* What went: five `ToolClass`
+  values, the 69-name classification, the `(tool, mode)` matrix, deny-by-default
+  in both directions, and `Guard` — the refusal of a `browser_get_config` answer
+  containing `"secrets"`. **The reason is that it was never a boundary against
+  the caller**, though its own doc comment said it was: the agent chooses the
+  session directory, the profile and its cookie database sit inside it, and the
+  agent runs as the same Windows user. Change control moved to the release gate,
+  where four golden snapshots already covered more. What survives is `session`
+  staying mandatory — that is *routing* — and one `browser_annotate` refusal
+  wherever no window was promised, as a **liveness** guard with no security
+  claim. See [ARCHITECTURE](ARCHITECTURE.md#sessions) and
+  [§trade-offs](DECISIONS.md#the-init-design-weakens-a-security-boundary).
 - **Git history is accepted as-is.** Nothing in it justifies a rewrite; the
   exposure that exists is at HEAD, and has been generalized.
 
