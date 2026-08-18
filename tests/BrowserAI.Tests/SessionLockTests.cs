@@ -64,6 +64,24 @@ internal sealed class SessionLockTests
     /// </remarks>
     private const int Contenders = 16;
 
+    /// <summary>
+    /// How long <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/>
+    /// watches a call that must not return.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not a hang detector and not a promptness assertion — the inverse of
+    /// both.</b> Everything else in this suite bounds how long something may
+    /// take, and must be unreachable by a slow machine. This bounds how long a
+    /// call is <i>observed failing to return</i>, so a slow, starved or paging
+    /// machine can only make it pass. The number therefore has to be sized
+    /// against the <b>defect</b> rather than against the product: a free
+    /// directory acquired without the gate costs tens of milliseconds, so three
+    /// seconds is roughly two orders of magnitude of headroom on the behaviour
+    /// being excluded, and it is three seconds of a suite that is otherwise
+    /// event-driven.
+    /// </remarks>
+    private static readonly TimeSpan StillBlocked = TimeSpan.FromSeconds(3);
+
     [Test]
     public async Task UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho()
     {
@@ -160,6 +178,166 @@ internal sealed class SessionLockTests
         await Assert.That(record).IsNotNull();
         await Assert.That(record!.Holder.ProcessId).IsEqualTo(winner);
         await Assert.That(Directory.GetFiles(directory).Length).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// A contender that can name the holder is refused <b>in front of</b> the
+    /// per-directory gate, so the answer does not queue behind everything else
+    /// naming the same directory.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The gate is held by a third process for the whole call, and that is the
+    /// assertion rather than the setup.</b> A <c>TryAcquire</c> that still went
+    /// through the gate could only come back <c>Busy</c>, at
+    /// <see cref="LockScopes.PerDirectoryGate"/>; one that comes back
+    /// <c>Held</c> naming the holder's pid provably never entered it. No clock is
+    /// read, because the outcome is the discriminator.
+    /// </para>
+    /// <para>
+    /// <b>Why this exists.</b> Every process that wanted to know who held a
+    /// session took the gate, losers included — so a refusal waited behind the
+    /// whole queue rather than behind one critical section, and the cost was
+    /// super-linear: 367 ms at 16 contenders, 3,349 ms at the charter's design
+    /// point of 100, and at 200 the then-five-second gate was reached by queueing
+    /// alone. The sharing violation on <c>lock.json</c> already proves ownership,
+    /// so the gate was being taken to answer a question the kernel had answered.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AContenderThatCanNameTheHolderIsRefusedInFrontOfTheGate()
+    {
+        using var scratch = ScratchDirectory.Create("session-probe-held");
+        var (directory, path) = NewSession(scratch, "probe-held");
+
+        var heldReady = Path.Combine(scratch.Path, "held.json");
+        var gateReady = Path.Combine(scratch.Path, "gate.json");
+
+        using var scope = new JobObjectScope();
+
+        // Ordered, and the order is load-bearing: the holder needs the gate to
+        // take the directory, so it has to be finished with it before the gate
+        // is taken away from everybody.
+        _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold", directory, heldReady, "reading the customer portal");
+
+        var holder = await ProbeReport.ReadAsync(heldReady, Patience);
+        await Assert.That((bool)holder["taken"]!).IsTrue();
+
+        var holderPid = (int)holder["pid"]!;
+
+        _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, gateReady);
+
+        var gate = await ProbeReport.ReadAsync(gateReady, Patience);
+        await Assert.That((string?)gate["acquisition"]).IsEqualTo(nameof(MutexAcquisition.Acquired));
+        await Assert.That((string?)gate["mutexName"]).IsEqualTo(path.MutexName);
+
+        var refused = SessionLock.TryAcquire(path, Request("a peer that only wants a name"), NullLogger.Instance);
+
+        try
+        {
+            // Not Busy. The gate is provably held by a process that will not let
+            // go until this scope is disposed, so reaching it at all could only
+            // end at its timeout.
+            await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Held);
+            await Assert.That(refused.Taken).IsFalse();
+            await Assert.That(refused.Holder?.Holder.ProcessId).IsEqualTo(holderPid);
+            await Assert.That(refused.HolderRunning).IsTrue();
+
+            // The same sentence a gated refusal produced, because both routes go
+            // through one place. A model must not be able to tell which path
+            // answered it.
+            await Assert.That(refused.Message).Contains($"PID {holderPid.ToString(CultureInfo.InvariantCulture)}");
+            await Assert.That(refused.Message).Contains("reading the customer portal");
+            await Assert.That(refused.Message).Contains("Nothing was changed.");
+        }
+        finally
+        {
+            refused.Acquired?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// A probe that finds the directory <b>free</b> proves nothing, and still has
+    /// to prove it at the gate.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the test that stops the optimisation being taken one step
+    /// too far, and the step was attacked before it was built</b> —
+    /// [the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// D. With the gate skipped on the free path, two contenders both probe and
+    /// both see "free"; A writes and holds its record; B's rename is refused
+    /// because A's handle is open, and B <i>retries</i>. The moment anything
+    /// closes A's handle — a rewrite, a teardown, a destroy — B's next retry
+    /// lands, and <b>B holds <c>lock.json</c> while A holds a valid handle to a
+    /// now-nameless file</b>. Both report ownership. The retry loop becomes the
+    /// serialiser, and a retry loop is not a lock.
+    /// </para>
+    /// <para>
+    /// <b>The check that the call is still running is safe in the only direction
+    /// that matters, and it is not a promptness assertion.</b> A machine that is
+    /// slow, starved or paging can only make the call take <i>longer</i>, which
+    /// makes this pass. The one thing that makes it fail is the call returning
+    /// while a foreign process holds the gate — which is precisely the defect.
+    /// Against the product as written, a free directory is taken in tens of
+    /// milliseconds, so the window below is more than two orders of magnitude of
+    /// headroom on the failing behaviour.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate()
+    {
+        using var scratch = ScratchDirectory.Create("session-probe-free");
+        var (directory, path) = NewSession(scratch, "probe-free");
+
+        // No lock.json at all, so the probe's open fails with "not found" rather
+        // than with a sharing violation -- the "looks free" answer, which is the
+        // one it is not allowed to act on.
+        await Assert.That(File.Exists(path.LockFile)).IsFalse();
+
+        var gateReady = Path.Combine(scratch.Path, "gate.json");
+        Task<SessionLockResult> call;
+
+        using (var scope = new JobObjectScope())
+        {
+            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", directory, gateReady);
+
+            var gate = await ProbeReport.ReadAsync(gateReady, Patience);
+            await Assert.That((string?)gate["acquisition"]).IsEqualTo(nameof(MutexAcquisition.Acquired));
+
+            var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            call = Task.Run(() =>
+            {
+                entered.SetResult();
+                return SessionLock.TryAcquire(path, Request("a peer that found nothing"), NullLogger.Instance);
+            });
+
+            await entered.Task;
+
+            var blocked = await Task.WhenAny(call, Task.Delay(StillBlocked));
+
+            await Assert.That(blocked).IsNotEqualTo((Task)call).Because(
+                "the per-directory gate is held by another process, so a TryAcquire that reached it cannot have returned; "
+                + "one that returned took the probe's 'looks free' as an answer and skipped the gate, which is how two "
+                + "processes end up owning one directory");
+        }
+
+        // The gate holder is gone with the job object, so the wait clears and the
+        // directory is taken -- by the route it was always meant to be taken by.
+        var taken = await call.WaitAsync(TestDefaults.InProcessHang);
+
+        try
+        {
+            await Assert.That(taken.Outcome).IsEqualTo(SessionLockOutcome.Acquired);
+            await Assert.That(taken.Taken).IsTrue();
+        }
+        finally
+        {
+            taken.Acquired?.Dispose();
+        }
     }
 
     [Test]

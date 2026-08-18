@@ -31,6 +31,17 @@ namespace BrowserAI.Sessions;
 /// milliseconds around create-or-take.
 /// </para>
 /// <para>
+/// ⚠️ <b>"Immediately" was not true of a contender until 2026-08-18, and the gap
+/// was the gate.</b> A loser took the per-directory mutex too — behind every peer
+/// naming the same directory — purely to discover the file was held and read a
+/// name out of it. <see cref="ProbeForHolder"/> now answers that question in
+/// front of the gate, because the sharing violation is the kernel's answer and
+/// the mutex never made it more true. <b>It refuses; it never acquires.</b>
+/// Anything the probe cannot settle falls through to the gate unchanged, and the
+/// reason that constraint is absolute is written out at
+/// <see cref="ProbeForHolder"/>.
+/// </para>
+/// <para>
 /// <b>Two requirements collide here, and the collision is real.</b> The
 /// paragraph above makes the <i>open handle</i> the lock. Durability makes the
 /// <i>atomic rename</i> the way the record is put in place: a plain write returns
@@ -156,6 +167,14 @@ internal sealed class SessionLock : IDisposable
                 $"'{location.FullPath}' does not exist. A session directory is created by BrowserAI, never assumed: create the directory, or name one that is already a session.");
         }
 
+        // ⚠️ IN FRONT OF THE GATE, NEVER INSTEAD OF IT. Everything below this
+        // line is unchanged, and that is the design rather than caution -- see
+        // ProbeForHolder.
+        if (ProbeForHolder(location, logger) is { } refusal)
+        {
+            return refusal;
+        }
+
         // Declared before the try and disposed unconditionally in the finally,
         // set to null the moment ownership moves into the returned lock.
         MachineMutex? gate = null;
@@ -201,10 +220,19 @@ internal sealed class SessionLock : IDisposable
                 // than a bare one, because the model reading it acts on the
                 // diagnosis -- so this now names both possibilities and neither
                 // is presented as established.
+                //
+                // ⚠️ And "every process naming it queues here" stopped being true
+                // when ProbeForHolder was added: a peer that can name the holder
+                // is refused in front of this gate and never creates the mutex,
+                // so what queues here is only processes that intend to TAKE the
+                // directory and found it unheld a moment ago. That makes reaching
+                // this line a much stronger signal than it used to be, and the
+                // sentence says so rather than keeping a diagnosis the code can
+                // no longer support.
                 return new SessionLockResult(
                     SessionLockOutcome.Busy,
                     $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
-                    "Either a process is wedged holding it, or more BrowserAI processes are opening this one directory at once than that will serve — every process naming it queues here. Nothing was changed. " +
+                    "Only processes trying to TAKE this directory queue here — one that merely wanted to know who holds it would already have been told — so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than that will serve. Nothing was changed. " +
                     "Wait and call again, or give this session a directory of its own, which is the arrangement this design expects and which never queues at all.");
             }
 
@@ -569,6 +597,135 @@ internal sealed class SessionLock : IDisposable
         }
     }
 
+    /// <summary>
+    /// Answers <i>who holds this directory</i> without taking the per-directory
+    /// gate — or answers nothing at all, and lets the gate decide.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The problem it removes.</b> Every process that wanted to know who held
+    /// a session took <see cref="LockScopes.PerDirectoryGate"/>, losers included,
+    /// and a loser only wants to read a name so it can report it. So a refusal
+    /// waited behind the whole queue rather than behind one critical section, and
+    /// the cost is super-linear in the number of contenders: measured on an idle
+    /// machine, 16 contenders produced a slowest refusal of 367 ms, 100 — the
+    /// charter's design point — produced 3,349 ms, and 200 reached the
+    /// then-five-second gate and came back <c>Busy</c> by queueing alone, with
+    /// nothing wrong ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)).
+    /// <b>The gate was being taken to answer a question the kernel had already
+    /// answered.</b>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE PROBE IS A SOUND OWNERSHIP TEST AND AN UNSOUND FREEDOM TEST, and
+    /// the whole design is that asymmetry.</b> A sharing violation is the
+    /// kernel's answer and no mutex ever made it more true, so a probe that can
+    /// say <i>held, by X</i> may refuse immediately. A probe that says
+    /// <i>looks free</i> proves nothing and <b>must</b> fall through to the
+    /// unchanged <see cref="MachineMutex.Create"/> →
+    /// <c>Acquire(PerDirectoryGate)</c> → <see cref="TakeOrReport"/> below.
+    /// </para>
+    /// <para>
+    /// <b>What happens if the free path skips the gate</b>, from
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// D — this was attacked before it was built, and it is why the constraint is
+    /// absolute. Two contenders both probe and both see "free". A writes its
+    /// record, renames it into place and holds it. B's rename is refused —
+    /// <c>ERROR_ACCESS_DENIED</c>, because A's handle is open — and B
+    /// <i>retries</i>, to <see cref="MoveBudget"/>. The instant anything closes
+    /// A's handle for a moment — a <see cref="Rewrite"/>, a teardown, a
+    /// <c>destroy</c> — B's next retry lands, B renames over A's record and
+    /// re-opens it. <b>B now holds <c>lock.json</c> and A holds a valid handle to
+    /// a now-nameless file</b>, which is what a Windows rename over an open file
+    /// does to the loser; A finds out only on its next rewrite. Both report
+    /// ownership and two processes drive one profile. The mechanism underneath:
+    /// with the gate gone, <b>the rename retry loop becomes the serialiser</b>,
+    /// and a retry loop is not a lock — it hands the name to whoever happens to
+    /// be retrying when the incumbent lets go.
+    /// </para>
+    /// <para>
+    /// <b>Deliberately not through <see cref="RenameWindow"/>.</b> By that type's
+    /// own table this is the archetype of a <i>not entitled</i> caller: it exists
+    /// to find out whether something else holds the file, so waiting a refusal
+    /// out would invert the mechanism. It also cannot tell a delete-pending
+    /// destination from a permanent ACL denial — both arrive as
+    /// <see cref="UnauthorizedAccessException"/> — so it does not try: anything
+    /// that is not a sharing violation falls through and is decided under the
+    /// gate, where the window is unobservable.
+    /// </para>
+    /// <para>
+    /// <b>It short-circuits only when it can NAME the holder.</b> A read taken
+    /// outside the gate can land in the transient absence between the unlink and
+    /// the rename of a record being replaced, and come back <see langword="null"/>
+    /// about a holder that removed nothing. Rather than print that hedge, an
+    /// unreadable or absent record falls through too — under the gate that window
+    /// does not exist, and the answer costs exactly what it cost before this
+    /// method was written.
+    /// </para>
+    /// <para>
+    /// <b>The share mode is wider than a holder's, on purpose.</b>
+    /// <see cref="OpenHeld"/> asks for <c>FileShare.Read</c> because it intends to
+    /// keep the file; this asks for <c>ReadWrite | Delete</c> because it intends
+    /// to let go immediately, and a transient handle without <c>Delete</c> would
+    /// refuse a concurrent holder's rename for as long as it lived. The
+    /// <i>access</i> is what makes the test work and it is unchanged:
+    /// <c>ReadWrite</c> is refused by a holder's <c>FileShare.Read</c>, which is
+    /// the sharing violation being read as ownership.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The canonicalised session directory.</param>
+    /// <param name="logger">Where the refusal is recorded.</param>
+    /// <returns>
+    /// A refusal naming the holder, or <see langword="null"/> when the question
+    /// must be settled under the gate.
+    /// </returns>
+    private static SessionLockResult? ProbeForHolder(SessionPath location, ILogger logger)
+    {
+        try
+        {
+            using var probe = new FileStream(
+                location.LockFile,
+                FileMode.Open,
+                FileAccess.ReadWrite,
+                FileShare.ReadWrite | FileShare.Delete,
+                bufferSize: 1);
+
+            // Opened, so nobody holds it as an owner right now. That is not the
+            // same statement as "it is free", and it is not acted on here.
+            return null;
+        }
+        catch (IOException failure) when (IsSharingViolation(failure))
+        {
+            // The one answer this method is allowed to give.
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            // Absent, mid-rename, or denied outright -- and this caller cannot
+            // tell those apart. The gate can.
+            return null;
+        }
+
+        LockRecord? holder;
+
+        try
+        {
+            holder = ReadRecord(location);
+        }
+        catch (LockFileException)
+        {
+            // Damage is a real answer, but it is not "held by X", and TakeOrReport
+            // reports it better because it holds the gate while it looks.
+            return null;
+        }
+
+        if (holder is null)
+        {
+            return null;
+        }
+
+        SessionLog.Contended(logger, location.FullPath, holder.Holder.ProcessId);
+        return HeldBy(location, holder);
+    }
+
     private static SessionLockResult TakeOrReport(
         SessionPath location,
         SessionLockRequest request,
@@ -715,20 +872,36 @@ internal sealed class SessionLock : IDisposable
                 $"'{location.FullPath}' is held by another process, which removed its '{SessionLayout.LockFileName}' between the refusal and the read. Nothing was changed. Try again, or choose another directory.");
         }
 
-        var started = DateTimeOffset.FromFileTime(holder.Holder.ProcessCreatedFileTime);
+        return HeldBy(location, holder);
+    }
 
-        return new SessionLockResult(
+    /// <summary>
+    /// The one refusal that names a live holder, written once so that the
+    /// pre-gate probe and the gated open cannot answer the same fact differently.
+    /// </summary>
+    /// <remarks>
+    /// <b><c>holderRunning: true</c> is a statement about the handle, not about
+    /// the pid.</b> Both call sites arrive here having just been refused by the
+    /// kernel on an open of <c>lock.json</c>, and Windows releases a handle when
+    /// its process dies however it dies — so something is alive holding it, and
+    /// that is a stronger fact than any liveness check on the recorded
+    /// <c>(pid, creationFileTime)</c> could produce.
+    /// </remarks>
+    /// <param name="location">The session directory.</param>
+    /// <param name="holder">The record read from it.</param>
+    /// <returns>The refusal.</returns>
+    private static SessionLockResult HeldBy(SessionPath location, LockRecord holder) =>
+        new(
             SessionLockOutcome.Held,
             SessionErrors.LockHeld(
                 location.FullPath,
                 holder.Holder.ProcessId,
                 holder.Holder.ClientProcessName,
-                started,
+                DateTimeOffset.FromFileTime(holder.Holder.ProcessCreatedFileTime),
                 holder.LastUsed,
                 holder.Purpose),
             holder: holder,
             holderRunning: true);
-    }
 
     private static LockRecord Compose(SessionPath location, SessionLockRequest request, LockRecord? previous, DateTimeOffset now)
     {

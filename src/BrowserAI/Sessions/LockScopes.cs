@@ -48,6 +48,15 @@ namespace BrowserAI.Sessions;
 /// reachable by queueing alone.
 /// </para>
 /// <para>
+/// ⚠️ <b>Later the same day, the better answer: stop putting the peers in the
+/// queue.</b> A process that only wants to <i>report</i> the holder is now
+/// answered by <c>SessionLock.ProbeForHolder</c> in front of the gate, because
+/// the sharing violation on <c>lock.json</c> already proves ownership and the
+/// mutex never made it more true. <b>Sizing the timeout and removing the queue
+/// are both needed and neither replaces the other</b> — the probe is why the
+/// queue is short, the timeout is what still has to be right when it is not.
+/// </para>
+/// <para>
 /// <b>Every name carries the <c>Global\</c> prefix and there is no
 /// <c>Local\</c> fallback anywhere in this product.</b> A <c>Local\</c> name is
 /// scoped to the logon session, so falling back to it does not weaken the lock
@@ -131,6 +140,29 @@ internal static class LockScopes
     /// wrong"</i>. <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c>
     /// is what stops that ordering being broken again by a change to either
     /// number.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And since 2026-08-18 most of that queue does not exist, because
+    /// most of it never wanted this mutex.</b> <c>SessionLock.ProbeForHolder</c>
+    /// opens <c>lock.json</c> <b>in front of</b> this gate: a sharing violation
+    /// is the kernel's answer to <i>who owns this</i>, so a peer that only wants
+    /// to report the holder is answered there and never creates the object. What
+    /// queues here now is processes that intend to <b>take</b> the directory.
+    /// Measured before and after against a directory a live holder already had,
+    /// 3 runs at each N on an idle machine
+    /// ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)):
+    /// slowest refusal <b>329 ms → 30 ms</b> at 16, <b>2,084 ms → 203 ms</b> at
+    /// the design point of 100, <b>4,267 ms → 449 ms</b> at 200 — and the shape
+    /// changed from <c>p50 ≈ max/2</c>, which is a queue draining one entrant at
+    /// a time, to a cluster.
+    /// </para>
+    /// <para>
+    /// <b>The number below is deliberately unchanged by that.</b> It was never
+    /// sized against the common case; it is sized against
+    /// <see cref="RenameWindowWaitsInsideTheGate"/> waits in series plus a queue
+    /// of genuine takers, and a smaller value would only be safe while the probe
+    /// keeps working. A timeout that depends on an optimisation is not a hang
+    /// detector.
     /// </para>
     /// <para>
     /// <b>A hang detector rather than a budget.</b> It is ~36× the measured

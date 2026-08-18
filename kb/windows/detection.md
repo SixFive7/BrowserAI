@@ -800,6 +800,52 @@ contenders and 2.4× the wait.
 > slowest refusal 5,736 ms. `SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt`
 > fails the build if either number crosses the other again.
 
+**⚠️ The queue is gone for contenders that can name the holder, measured
+2026-08-18 before and after `SessionLock.ProbeForHolder`.** A contender now
+opens `lock.json` **in front of** the per-directory gate; a sharing violation is
+the kernel's answer to *who owns this*, so it refuses there and never creates
+the mutex. Same rig, same idle machine, 3 runs at each N, gate at 120 s
+throughout so nothing can reach `Busy` on either side. Every refusal named the
+holder in all 18 runs. `[MACHINE]` for the timings, `[STABLE]` for the shape.
+
+**A live holder is planted before the contenders are released**, which is what
+the entry above does *not* do and is the whole reason the two tables differ.
+
+| N | slowest refusal, before | slowest refusal, after | p50 before → after |
+|---:|---:|---:|---:|
+| 16 | 329.2 · 330.1 · 331.9 ms | **30.3 · 36.8 · 33.2 ms** | 165 → 29 ms |
+| **100 — the charter's design point** | 2,083.9 · 2,047.3 · 2,063.9 ms | **202.8 · 219.4 · 244.9 ms** | 1,047 → 194 ms |
+| 200 | 4,267.4 · 4,496.6 · 4,344.5 ms | **448.6 · 485.5 · 559.2 ms** | 2,195 → 406 ms |
+
+**Roughly an order of magnitude at every N — 9.9×, 9.4×, 8.7× on the slowest
+refusal — and the *shape* is the stronger evidence.** Before, `p50 ≈ max/2` at
+every N, which is the signature of a queue being drained one entrant at a time.
+After, `p50 ≈ 0.85 × max` and the fastest and slowest refusals sit within a
+factor of three: no queue, just N processes doing the same two file opens at
+once.
+
+> **The cold race is unchanged, and that is the design rather than a
+> disappointment.** Run the same N contenders against an **empty** directory —
+> the rig in the entry above, where the winner is one of the N — and the numbers
+> barely move: 349.8–365.7 → 284.1–396.7 ms at 16, 2,100–2,508 → 1,661–2,747 ms
+> at 100, 4,191–4,269 → 3,391–4,376 ms at 200, inside the run-to-run noise. At
+> `t=0` nothing is held, so **every contender's probe correctly answers "looks
+> free"** and every one of them falls through to the gate, exactly as it is
+> required to — a probe is a sound ownership test and an unsound freedom test,
+> and the free path is not allowed to act on it
+> ([review](../../docs/reviews/2026-08-18-adversarial-locking.md), D). The
+> queue that gets removed is the queue of peers arriving at a session somebody
+> already has, which is the case the product is in for a session's whole life.
+
+**To re-establish the pair**, use the same recipe as below with one addition:
+start one `BrowserAI.TestProbe.exe session-hold <directory> <ready.json>
+<purpose>` and wait for its report before releasing the contenders, then kill it
+afterwards. The suite's own arm is
+`SessionLockTests.AContenderThatCanNameTheHolderIsRefusedInFrontOfTheGate`,
+which holds the gate from a third process for the whole call — so a `TryAcquire`
+that still entered it could only come back `Busy`, and the outcome is the
+discriminator rather than any clock.
+
 **To re-establish**, at any N without a test host: create a session directory and
 a manual-reset `EventWaitHandle`, start N ×
 `BrowserAI.TestProbe.exe session-race <directory> <eventName> <report-i.json> <release.flag>`,

@@ -213,6 +213,20 @@ holder's pid, start time, lock time and purpose. The one bounded wait is the
 create-or-take gate, and an `AbandonedMutexException` on it is a distinct
 `AcquiredAbandoned` outcome that is logged and proceeded through.
 
+**A contender probes for the holder in front of that gate, and only in front of
+it.** `SessionLock.ProbeForHolder` opens `lock.json` before the per-directory
+mutex is created: a sharing violation is the kernel's answer to *who owns this*,
+so a peer that only wants to name the holder is answered there and never queues
+behind every other peer. Measured against a directory a live holder already had,
+the slowest refusal falls from **2,084 ms to 203 ms at 100 contenders** — the
+charter's design point — and from 4,267 ms to 449 ms at 200
+([kb](kb/windows/detection.md#named-mutexes-and-lock-files)). **A probe that says
+*looks free* proves nothing and falls through to the unchanged gated path**,
+because with the gate skipped on the free path the rename retry loop becomes the
+serialiser and two processes end up owning one directory — the failure
+[the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md) found in
+the version that replaced the gate rather than fronting it.
+
 **Writes are durable and atomic.** `WriteThrough` + `Flush(flushToDisk: true)` +
 `File.Move(overwrite: true)`, with the temp file in the target's own directory.
 A rename cannot replace a file whose handle is open under any share mode, so

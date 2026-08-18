@@ -135,7 +135,7 @@ findable from more than one direction.
       configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
       8 more are `open` while carrying evidence, so 62 are `open` in total, against
-      89 `closed`. Many will close against tests that now exist; some are upstream
+      90 `closed`. Many will close against tests that now exist; some are upstream
       behaviours that cannot close at all and should say so. **An honest `open` with
       a reason beats a `closed` with a weak one.**
 

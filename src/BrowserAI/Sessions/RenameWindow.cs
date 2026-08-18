@@ -67,12 +67,19 @@ namespace BrowserAI.Sessions;
 /// </item>
 /// <item>
 /// <term><b>Not entitled</b> — <c>InstanceDirectory</c>'s claim,
-/// <c>LiveInstances</c>' registration, <c>FirefoxProfile</c>'s probe</term>
+/// <c>LiveInstances</c>' registration, <c>FirefoxProfile</c>'s probe,
+/// <c>SessionLock.ProbeForHolder</c></term>
 /// <description>
 /// The refusal <b>is the answer</b>. Each of those opens exists precisely to
 /// find out whether something else holds the thing, and a retry would convert
 /// <i>somebody owns this</i> into <i>eventually, nobody did</i> — which is the
 /// mechanism, inverted. <b>Never route one of those through here.</b>
+/// <c>SessionLock.ProbeForHolder</c> is the newest and the clearest case: it
+/// opens <c>lock.json</c> in front of the per-directory gate to find out whether
+/// anyone owns it, so a denial waited out would be a live owner waited out. It
+/// is also the one that cannot decide <see cref="UnauthorizedAccessException"/>
+/// at all — delete-pending and a permanent ACL denial arrive identically — so it
+/// treats that as <i>no answer</i> and lets the gate settle it.
 /// </description>
 /// </item>
 /// </list>

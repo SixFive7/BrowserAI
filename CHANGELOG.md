@@ -107,6 +107,35 @@ has been satisfied in form only.
 
 ### Changed
 
+- **A contender asks the kernel who holds a session before it queues for the
+  right to ask.** Every process that wanted to know who held a directory took
+  `LockScopes.PerDirectoryGate` — losers included, whose entire remaining
+  business is to print *held by PID n, since t, for this purpose*. So a refusal
+  waited behind the whole queue of peers rather than behind one critical section,
+  and the cost is super-linear in contenders. `SessionLock.ProbeForHolder` opens
+  `lock.json` **in front of** the gate; the sharing violation is the kernel's
+  answer and no mutex made it more true. Measured before and after against a
+  directory a live holder already had, 3 runs at each N on an idle machine:
+  slowest refusal **329 → 30 ms** at 16 contenders, **2,084 → 203 ms** at the
+  charter's design point of 100, **4,267 → 449 ms** at 200 — and the shape
+  changed from `p50 ≈ max/2`, which is a queue draining one entrant at a time, to
+  a cluster. **The free path is unchanged and that is the design, not caution**:
+  a probe is a sound *ownership* test and an unsound *freedom* test, so anything
+  that is not a sharing violation — absent, mid-rename, `UnauthorizedAccess`,
+  unparseable, or an open that succeeded — falls through to the untouched
+  `MachineMutex.Create` → `Acquire` → `TakeOrReport`. With the gate skipped there
+  instead, both contenders probe free, the loser's rename retry loop becomes the
+  serialiser, and it takes the name off a live holder's still-open handle;
+  [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md) found
+  that before it was built, and
+  `SessionLockTests.AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate` is
+  what stops it being built later. **The cold race is deliberately not improved**
+  — with the directory empty at `t=0` every contender correctly probes *looks
+  free* and every one falls through, so 100 contenders racing an unheld directory
+  measure the same as before. The queue that goes away is the one that forms
+  around a session somebody already has, which is every moment of a session's
+  life after the first.
+
 - **`browserProvisioning` now answers `provisioning` where it answered
   `downloading`.** One word covers five phases — waiting on another process's
   provisioning mutex, deleting an abandoned tree, downloading, extracting, and
