@@ -19,13 +19,22 @@ namespace BrowserAI.Proxy;
 /// is a sentence that arrives after the failure it was meant to prevent.
 /// </para>
 /// <para>
-/// <b>Hard cap 2 KB, and the truncation is silent.</b> The client cuts both this
-/// string and every tool description at 2 KB with nothing reported: the tail
-/// simply does not exist, and a paragraph past the cut is a paragraph nobody has
-/// ever read. <c>ModelSurfaceTests</c> measures it in <b>bytes</b> rather than
-/// characters — <c>·</c> and <c>—</c> are two and three bytes of UTF-8 apiece, so
-/// a character count would under-report exactly the string that uses them — and
-/// fails over budget.
+/// <b>Hard cap 2,048 UTF-16 characters, and the truncation is silent.</b> The
+/// client cuts both this string and every tool description with nothing
+/// reported: the tail simply does not exist, and a paragraph past the cut is a
+/// paragraph nobody has ever read. <c>ModelSurfaceTests</c> gates on
+/// <b>characters</b>, matching <see cref="ClientTruncationBudget"/> and
+/// <see cref="MaximumCharacters"/> below.
+/// <i>Corrected 2026-08-18 (previously "Hard cap 2 KB … <c>ModelSurfaceTests</c>
+/// measures it in <b>bytes</b> rather than characters — <c>·</c> and <c>—</c> are
+/// two and three bytes of UTF-8 apiece, so a character count would under-report
+/// exactly the string that uses them").</i> That was the unit this file's own
+/// constant, <c>ClientTruncationBudget</c> and <c>ModelSurfaceTests</c> were all
+/// corrected away from on 2026-08-18, measured @ Claude Code 2.1.234 — the cut
+/// is on <c>string.Length</c> and a byte count is never consulted. The sweep
+/// changed the constants and the test and left the paragraph that argued for the
+/// old reading standing twenty lines above the corrected one, which is why
+/// nothing went red.
 /// </para>
 /// <para>
 /// <b>The mode lines are rendered from

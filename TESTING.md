@@ -128,8 +128,19 @@ automated checks of any kind** — no hosted CI, no scheduled job, no git hook
 Two things close it, and neither is a scheduled job:
 
 - **[The daily drift check](CLAUDE.md#the-daily-drift-check)** — a directive that
-  fires at the start of a working session rather than on a clock. It runs by
-  construction, because the check happens when the work happens.
+  fires at the start of a working session rather than on a clock.
+  ***Corrected 2026-08-18 (previously "It runs by construction, because the check
+  happens when the work happens").*** **That is reasoned, not measured, and the
+  reasoning does not hold in the case this bullet is answering.** The gap
+  [`drift-check.json`](drift-check.json) names is *"a quiet month is a month in
+  which upstream can move unobserved"* — and a directive that fires only when
+  work happens is, by definition, silent during a quiet month. It closes the
+  *working-session* half and nothing else. What is actually established is
+  compliance so far: `lastChecked` was stamped on four consecutive days against
+  commits on six, on a repository that has never yet had a quiet period. **The
+  release checklist below is what really closes the gap**, because it re-resolves
+  before anything reaches a user; this bullet catches drift earlier and only
+  while somebody is working.
 - **[The release checklist](RELEASING.md)** — which re-resolves everything
   and requires green before a release may be cut, so a quiet period cannot reach
   a user unexamined.
@@ -442,8 +453,13 @@ NativeAOT binary and completely wrong for this product. **This product's error
 text is read by a model deciding what to do next**, which is the founding premise
 of the error catalogue (`SessionErrors`); an exception surfacing as
 `Arg_DirectoryNotFound` instead of a sentence naming the path is an error
-catalogue that has been silently emptied. The saving is measured in kilobytes
-against a ~117 MB payload, so there is no version of this trade that is close.
+catalogue that has been silently emptied. The saving is **161,280 bytes, 157.5 KiB, 0.9% of the
+binary** against a shipped payload of **111,984,018 bytes (106.8 MiB)** — both
+halves *measured 2026-08-18* by publishing twice and changing only this property.
+*Corrected 2026-08-18 (previously "The saving is measured in kilobytes against a
+~117 MB payload")*: the word **measured** was doing work nothing supported —
+there was no numerator and the denominator was never weighed. The number came out
+where the sentence guessed, and there is no version of this trade that is close.
 Assert the property is unset, so it cannot arrive later as somebody's size
 optimisation. ✅ **Asserted 2026-08-16 by
 `BuildConfigurationTests.UseSystemResourceKeysIsExplicitlyFalseEverywhereItAppears`**,

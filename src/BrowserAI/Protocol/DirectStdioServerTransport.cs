@@ -56,9 +56,15 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Synchronous, and honestly so: the handle behind stdout is not opened
-        // for overlapped I/O, so an async write against it queues the same
-        // blocking call to the thread pool and reads as if it did not block.
+        // Synchronous, and honestly so: an async write queues the same blocking
+        // call to the thread pool and reads as if it did not block. Corrected
+        // 2026-08-18 (previously "the handle behind stdout is not opened for
+        // overlapped I/O"). Measured 2026-08-18 on .NET 10:
+        // Console.OpenStandardOutput returns a WindowsConsoleStream and not a
+        // FileStream, redirected to a file and to a pipe alike, so the
+        // thread-pool fallback comes from Stream's own base implementation
+        // rather than from how a handle was opened. Same conclusion, different
+        // mechanism.
         // The base class holds the send lock across this, so frames cannot
         // interleave.
         _channel.WriteFrame(utf8Payload.Span);

@@ -115,11 +115,24 @@ an elevating `Process.Start`, inside a `For i = 1 To 10` retry — so *every*
 elevation failure was read as a refusal and re-prompted, up to ten UAC dialogs for
 a cause that was never the user. Verified against MS Learn 2026-08-16. `[STABLE]`
 
-**`Console.ReadKey()` inside a `catch` in a non-interactive process hangs
-forever, with no output** — there is no console input to read, and nothing times
-out. It presents exactly as "the server is stuck". Shipped instance, read
+**`Console.ReadKey()` with stdin redirected throws immediately; it does not
+hang.** ***Corrected 2026-08-18 (previously "`Console.ReadKey()` inside a `catch`
+in a non-interactive process hangs forever, with no output — there is no console
+input to read, and nothing times out. It presents exactly as 'the server is
+stuck'", carried as `[STABLE]` and never run.)*** Measured 2026-08-18 on .NET 10,
+stdin redirected — which is BrowserAI's own configuration under an MCP client:
+the call threw `System.InvalidOperationException`, *"Cannot read keys when either
+application does not have a console or when console input has been redirected.
+Try Console.Read."*, with no delay. **The rule that a `catch` must not call
+console input survives, and the real failure is worse in a different way**: a
+throw inside a `catch` replaces the original exception with a new one, so the
+cause is not merely delayed, it is destroyed. **What was measured and what was
+not**: the redirected-stdin arm was run here; the *console-attached-but-nobody-typing*
+arm — which is the case the old sentence actually describes, and which would
+block — was **not** run and is not established. Shipped instance, read
 2026-08-16 in an unpublished C# directory-cleanup tool that runs as a scheduled
-non-interactive job — two calls, both inside `catch` blocks. Note the shape — both calls sit in the
+non-interactive job — two calls, both inside `catch` blocks; that read
+established that the calls exist, never what they do. Note the shape — both calls sit in the
 *unknown-exception* arm, below the specific `UnauthorizedAccessException` and
 `DirectoryNotFoundException` handlers, so they fire only on the cases nobody
 anticipated: the population least likely to have been exercised in testing and
@@ -718,10 +731,19 @@ frees on the order of two hundred pids within a second. Keyed on
 for the mechanism; the count is `[MACHINE]`.
 
 **`Directory.Move` is refused with `ERROR_ACCESS_DENIED` on a directory whose
-files were written milliseconds earlier, and the holder is a scanner rather than
-a process anyone can name.** Windows refuses to rename a directory while any
-handle is open below it, and a real-time anti-malware filter opens every file
-just after it is written. Measured 2026-08-17 in two independent places under a
+files were written milliseconds earlier, and nobody has identified the holder.**
+***Corrected 2026-08-18 (previously "…and the holder is a scanner rather than a
+process anyone can name", which asserted in the heading what the body concedes
+was never established).*** The refusal rates below are measured; **the cause is
+not**. Windows refuses to rename a directory while any handle is open below it —
+that half is documented — and a real-time anti-malware filter opening every file
+just after it is written is a *plausible* holder that was never confirmed. **The
+distinction is load-bearing**, because the rule drawn from it is that a rename
+used as a *commit* gets a bounded retry while a rename used as a *liveness test*
+gets none: if the holder is transient and foreign the retry is right, and if it
+is ever something of ours the retry masks a defect. **The tool to settle it
+already ships** — `Interop/RestartManager.cs` exists to answer *who holds this*;
+call `RmGetList` on the path at the instant of the denial. Measured 2026-08-17 in two independent places under a
 fully parallel suite: the first-run cache's publish-by-rename failed in **five of
 twenty-one** runs with *"Access to the path '…\.staging-&lt;guid&gt;' is
 denied"*, and `InstanceDirectoryTests`' planted abandoned directory failed to be
@@ -841,6 +863,106 @@ merely absent on an older build fails at the call site, where nothing else will
 catch it. `[STABLE]` for the mechanism, which is how COM interop works and can be
 reproduced against any COM object with a version-gated enum; the shipped instance
 is `[MACHINE]` and **not reproducible from this repository**.
+
+**A running executable can be renamed, and so can every directory above it;
+only deleting the image is refused.** Measured 2026-08-18 on Windows
+**10.0.26200**, .NET 10, against a live process started from
+`outer\inner\held.exe` with its **current directory set to `C:\`**, so that
+[the separate cwd rule](#files-durable-writes-and-deletes) could not be the
+cause:
+
+| Operation, while the image is running | Outcome |
+|---|---|
+| `Directory.Move` of the parent (`outer\inner`) | **succeeded** |
+| `Directory.Move` of the grandparent (`outer`) | **succeeded** |
+| `File.Move` of the running `.exe` itself | **succeeded** |
+| `File.Delete` of the running `.exe` | **refused**, `UnauthorizedAccessException` |
+
+The image section keeps the *file* alive, not its *name*, which is why
+rename-aside-then-replace is the ordinary Windows update pattern. **This
+falsified a settled design row**: `browserai_reinstall_browser` closed the
+download-alongside-and-swap option on *"Windows will not rename a directory
+holding open executables"*, which is not so
+([DECISIONS](../../DECISIONS.md)). The refusal it justified is left standing —
+what a browser does when its tree is renamed underneath it has **not** been
+measured — but the option is open rather than impossible. `[STABLE]`.
+Re-establish by starting any long-running exe from a nested directory with its
+cwd elsewhere, then renaming the parent, the grandparent and the image.
+
+**Windows does not reuse a pid while any handle to that process is open, and
+the control shows reuse is otherwise quick.** Measured 2026-08-18 on Windows
+**10.0.26200**, spawning `cmd.exe /c exit` in a loop and recording each pid.
+*Control arm* — the process handle released as soon as the child exited:
+**2,009 distinct pids over 2,010 spawns, and the 2,010th repeated one** (59424).
+*Claim arm* — an `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` handle taken on
+each child **after it had already exited** and never closed: **6,030 spawns,
+6,030 handles held, 0 failed opens, and not one pid repeated** — three times the
+control's budget without a single collision. Before this it was asserted as a
+bare platform fact at four sites and measured at none. `[STABLE]` for the kernel
+behaviour, `[MACHINE]` for the 2,010. **The control is the load-bearing half**:
+without it a run with no repeats is indistinguishable from a pid space too large
+to wrap during the test. Re-establish by spawning a trivial child in a loop
+twice — once disposing the handle at exit, once keeping an `OpenProcess` handle
+in a list — and comparing the spawn count at the first repeated pid. This is
+what `(pid, creationFileTime)` and `LaunchedProcess`'s held handle rest on.
+
+**KnownDLLs makes `[DefaultDllImportSearchPaths(DllImportSearchPath.System32)]`
+inert for 39 of this product's 43 P/Invoke declarations, and load-bearing for
+the other 4.** Measured 2026-08-18 on Windows **10.0.26200**, .NET 10, with
+genuine `System32` copies of `kernel32.dll`, `user32.dll` and `rstrtmgr.dll`
+planted beside a probe executable and the same calls declared twice, once with
+the attribute and once without:
+
+| Library | Declarations | Without the attribute | With it |
+|---|--:|---|---|
+| `kernel32.dll` | 33 | `C:\WINDOWS\System32` | `C:\WINDOWS\System32` |
+| `user32.dll` | 5 | `C:\WINDOWS\System32` | `C:\WINDOWS\System32` |
+| `ntdll.dll` | 1 | `C:\WINDOWS\SYSTEM32` | `C:\WINDOWS\SYSTEM32` |
+| `rstrtmgr.dll` | 4 | **the application directory** | `C:\WINDOWS\SYSTEM32` |
+
+`kernel32` and `user32` are **KnownDLLs** — resolved from the `\KnownDlls`
+section objects before any path search runs, confirmed against
+`HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs` on this
+machine — and `ntdll` is mapped by the loader before user code runs. Only
+`rstrtmgr.dll` is neither, and it is the only one whose resolution the attribute
+changes. **The rule survives unchanged and every declaration keeps the
+attribute**: it costs nothing, it is correct for the one library here that is not
+a KnownDLL, and the next library added may not be one either. **The trap is the
+audit, not the rule** — anyone testing this by planting a fake `kernel32.dll`
+sees nothing happen and concludes the attribute is decorative. `[STABLE]` for
+KnownDLLs, `[MACHINE]` for the list membership. Re-establish by copying a
+`System32` DLL beside a probe and reading `GetModuleFileNameW(GetModuleHandleW(name))`
+after a call, with and without the attribute.
+
+**`Marshal.GetLastPInvokeError()` survives managed work and is destroyed by the
+next P/Invoke, and without `SetLastError = true` there is nothing to read at
+all.** Measured 2026-08-18 on .NET 10, `win-x64`, against a deliberately failing
+`OpenProcess` on pid 4 (`ERROR_ACCESS_DENIED`, 5), reading the error after each
+of seven intervening operations:
+
+| Between the call and the read | Error read back |
+|---|--:|
+| nothing | **5** |
+| a 5,000-append `StringBuilder` (pure allocation) | **5** |
+| `GC.Collect()` | **5** |
+| a `MemoryStream` written and disposed | **5** |
+| `Console.Out.Flush()` | **5** |
+| a second failing P/Invoke of our own | **5** |
+| **`File.Exists` on a path that is not there** | **0** |
+| *declared without `SetLastError`, nothing in between* | **0** |
+
+So the danger is narrower and sharper than "anything at all": the captured value
+is a thread-local that **only another capturing P/Invoke overwrites**, and pure
+managed work — allocation, a GC, a managed `Dispose` — leaves it intact. What
+destroys it is a `Dispose`, a log call or a guard that *itself reaches the
+platform*, and `File.Exists` alone is enough. **The rule stands and is now
+measured rather than asserted**; what changes is which intervening statements are
+actually dangerous. **The second row is the trap nobody was looking for**: the 11
+of this product's 43 declarations that omit `SetLastError = true` make
+`Marshal.GetLastPInvokeError()` return a confident **0**, which reads as success
+rather than as "not captured". `[STABLE]` for the mechanism, `[FLOATS]` for the
+BCL call sites that do the clobbering. Re-establish by calling a failing import
+with capture on, then reading after each candidate statement in turn.
 
 **`WaitForSingleObject` needs `SYNCHRONIZE`, which
 `PROCESS_QUERY_LIMITED_INFORMATION` does not imply.** Measured 2026-08-16 while

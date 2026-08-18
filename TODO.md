@@ -91,31 +91,133 @@ findable from more than one direction.
       at [the daily drift check](CLAUDE.md#the-daily-drift-check). A bump that
       closes this issue and one that ignores it look identical from the registry.
 
-- [ ] **Audit the repository for justifications stated as fact and never
-      measured.** Every mechanism here protects claims about *behaviour* — a test
-      fails, a snapshot diffs, an analyzer errors. A claim about a **reason** is
-      invisible to all of them.
+- [ ] **The browser-reinstall row was settled on an impossibility that is not
+      one.** [`DECISIONS.md`](DECISIONS.md) closed *download alongside and swap*
+      with *"Windows will not rename a directory holding open executables"*.
+      **Measured 2026-08-18 and it is false**: with a live process's working
+      directory deliberately elsewhere, `Directory.Move` of the running image's
+      parent and grandparent both succeeded, and so did renaming the running
+      `.exe`; only *deleting* it was refused
+      ([kb](kb/windows/processes.md#the-win32-interop-surface)). **This is the
+      one case the justification sweep found where the reason was wrong AND the
+      rule it justified rests on the wrong ground.** The refusal is deliberately
+      left standing — a browser whose tree is renamed underneath it holds open
+      handles into a path that no longer has that name, and **nothing has
+      measured what Chromium then does**. Two things are owed: measure that, then
+      re-decide the row on evidence rather than leaving a settled position
+      resting on a retracted sentence.
 
-      The instance that surfaced it: *"`[DllImport]` relies on runtime IL-stub
-      generation that NativeAOT does not do"* is false on Windows — ILC compiles
-      those stubs ahead of time, re-measured with a 38-declaration probe that
-      published with zero warnings and ran correctly. The rule it justified was
-      **right**, so nothing behaved wrongly and nothing could be red, and it was
-      copied into three source files precisely *because* it sounded like the kind
-      of thing worth writing down. It matters even though the conclusion survives:
-      a reason is what the next person reasons *from*, and anyone asking whether a
-      generated `[DllImport]` library is viable under AOT would have concluded
-      "impossible" and stopped.
+- [ ] **The only refusal left in the product may be aimed at nothing.**
+      `SessionToolPolicy.Decide` refuses `browser_annotate` on any mode that did
+      not promise a window, entirely because
+      [kb](kb/playwright/tools-and-artifacts.md) says *"the window appears in
+      headless too"* — a sentence with **no date, no version and no method**,
+      whose two list-neighbours both quote upstream source. A measurement in the
+      same knowledge base points the other way: headless Chromium created 308
+      top-level windows across a suite run and **showed zero**
+      ([kb](kb/windows/detection.md)). Settle it with the rig that already
+      exists: drive the resolved child at `headless: true`, call
+      `browser_annotate` under a hard timeout with the `SetWinEventHook` watcher
+      that measured the 308, and record whether a window is realised and whether
+      the call returns. **Either outcome is worth having** — it either earns the
+      product's last refusal or retires it.
 
-      **What to do.** Sweep the load-bearing justifications — the `<remarks>`
-      blocks and MSBuild comments explaining *why* a rule exists, especially where
-      they assert a platform or toolchain behaviour — and sort each into
-      **measured here**, **cited to a source**, or **assumed**. The third bucket
-      is the finding. Two instances are already corrected; the sweep is to find
-      out whether they were the only two. Start with
-      [`src/BrowserAI/Interop/`](src/BrowserAI/Interop), `Directory.Build.props`
-      and [`BrowserAI.csproj`](src/BrowserAI/BrowserAI.csproj), where toolchain
-      reasoning is densest.
+- [ ] **The reason that deleted the whole tool-permission layer is itself
+      unmeasured.** The matrix went on 2026-08-18 because *"the agent runs as the
+      same Windows user, so DPAPI decrypts for it — an agent holding any file
+      tool reads what the matrix declined to return"*. That sentence is now in
+      [`DECISIONS.md`](DECISIONS.md), [`README.md`](README.md),
+      [`ARCHITECTURE.md`](ARCHITECTURE.md), [`TESTING.md`](TESTING.md),
+      [`QUESTIONS.md`](QUESTIONS.md), `SessionToolPolicy.cs`, `SessionMode.cs`,
+      `SessionPolicyTests.cs` and [kb](kb/playwright/tools-and-artifacts.md) —
+      **and the kb entry, where the chain terminates, carries no date, no version
+      and no method.** Six documents citing each other is a circle, not a source.
+      **The specific risk has a name**: Chromium's App-Bound Encryption binds
+      cookie decryption to the browser's own code identity, and whether Chrome
+      for Testing 152 / `chromium-1237` enables it under a custom
+      `--user-data-dir` is exactly the unasked question. Settle it from a second
+      process as the same user: `CryptUnprotectData` the `os_crypt.encrypted_key`
+      out of `Local State` and decrypt one row of `Network\Cookies`. **The
+      removal may well still be right on cost alone. It was not made on cost.**
+
+- [ ] **Headless-with-storage is still refused on a reason the same pass
+      declared void.** [`DECISIONS.md`](DECISIONS.md) keeps it out because *"it
+      is the one combination granting full credential access with no visible
+      signal"* — a security reason of precisely the class the 2026-08-18 removal
+      above ruled out. The pass that retired the tool matrix, the
+      `browser_get_config` secrets guard and the annotate permission judgement
+      did not revisit this row; it simply was not looked at. **It cannot be both
+      ways**: either the reason above holds and this row falls with the rest, or
+      it does not and the removal needs re-opening. Nothing to measure — this is
+      a consistency decision that is owed either way.
+
+- [ ] **The justification sweep's residue: 24 assumed justifications named and
+      not settled.** The sweep ran 2026-08-18; what it *settled* is in `git log`
+      rather than here, and what it did not is below. Three read-only inventories
+      plus a first-hand pass over [`Interop/`](src/BrowserAI/Interop), the build
+      files and [`build/`](build) examined **598 load-bearing justifications**:
+      **309 measured here**, **226 cited to a source**, **63 assumed**. Of the
+      63, **13 were settled by measurement and 11 relabelled** in the same pass;
+      the four highest-value remainders have their own items above. The rest,
+      each stated as fact, load-bearing, undated and uncited, and each cheap:
+
+      **In [`kb/`](kb/README.md)** — a measurement store, so an assumed entry
+      there is a category violation. The long-path guarantee rests on
+      `app.manifest` alone and **nothing in the tree mentions `LongPathsEnabled`**,
+      the registry value Windows also requires; it is `1` on this machine, so
+      every long-path measurement here is conditional on a value nobody recorded.
+      *"The damage is a lost session rather than corruption"* is why nothing
+      defends against Velopack's `force_stop_package`, while another article
+      asserts concurrent profile writers cause *"silent corruption"* — neither
+      was run. *"The 156 denials do not matter"* infers the denied set is all
+      SYSTEM from the denial itself, and leans on a claim marked `[UNVERIFIED]`
+      elsewhere. *"Schemas are deferred"* is the whole reason `ServerInstructions`
+      exists, and the 2026-08-18 capture that could have retired it was performed
+      and the sentence left standing beside it. Then: `spawn EFTYPE` forever ·
+      screenshots not byte-stable · the stale-browser GC blast radius · *"39
+      binaries"*, which is Firefox's measured count asserted of Chromium ·
+      *"768 MB"*, a derived sum with no date, the same construction this
+      repository has already retracted twice · and `Console.ReadKey`'s
+      console-attached arm, the redirected arm now being measured.
+
+      **In [`src/`](src/BrowserAI)** — the update stall budget is sized off
+      Playwright's socket timeout, a different downloader in a different runtime ·
+      the crash tripwire's *"nothing that is working can reach it"* covers the
+      download and not the unbounded `CheckAsync` · *"the SDK refuses to negotiate
+      BELOW a pinned version"* decides how much the explicit check is doing ·
+      *"durable"* is used four times meaning *survives this process* against a kb
+      entry that reserves the word for *survives the machine* · *"an unhandled
+      exception is not guaranteed to unwind the stack"* is the entire crash-log
+      design · *"a shim cannot be started without `cmd.exe`"* cites two kb entries
+      about other subjects · *"nothing a child writes to stderr can be lost"* is
+      broader than both the measurement and the code, which abandons the pump
+      after 2 s · `win` as Velopack's default channel · *"a rollback always
+      reports zero"* · the `NUL.png` and trailing-dot filename refusals.
+
+      **In the top-level documents** — SmartScreen *"instant reputation"* for
+      ~$10/mo is the basis on which somebody will one day spend money, and
+      *instant* is the historically EV-only property · `claude mcp list` exit
+      codes carry **no client version**, in a repository that stamps every other
+      client fact · *"upstream renamed one of its own tools inside four months"*
+      is labelled *the deciding argument* for never renaming and names no version
+      pair · the flat-namespace reason for the `browserai_` prefix, when the one
+      client that matters delivers tools as `mcp__<server>__<tool>` · Chrome's
+      `ProcessSingleton` forwarding · MTP IDE discovery for two vendors with no
+      versions · two [`STACK.md`](STACK.md) rows justifying components **nothing
+      in the tree references** · *"a one-step locked build passes while resolving
+      nothing"*, where the cited NU1512 describes a loud failure and the
+      conclusion drawn is a silent one · Node v26's `node.exe` being *"10 MB
+      larger"* · and the single 2023 statement by an unnamed Google engineer that
+      is the entire basis for *Chrome for Testing may not be redistributed*, and
+      therefore for first-run provisioning existing at all.
+
+      **What the sweep could not cover.** [`tests/`](tests) was read only where a
+      claim pointed into it, [`docs/reviews/`](docs/reviews/README.md) was not
+      swept, and the three inventories judged a citation sound on the
+      *specificity* of the pointer without opening most upstream sources — so
+      **the cited-to-a-source count is an upper bound and the assumed count a
+      lower one**. Two of the three found exactly that whenever they did follow a
+      chain to its end.
 
 - [ ] **The failed-rewrite recovery of `lock.json` has no test.** A failed rewrite
       must not also release the lock: the handle is dropped before the
@@ -128,14 +230,21 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **54 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **53 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
-      the index's own `Area` cells verbatim: Bundling and AOT 14, Child runtime and
+      the index's own `Area` cells verbatim: Bundling and AOT 13, Child runtime and
       configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      8 more are `open` while carrying evidence, so 62 are `open` in total, against
-      90 `closed`. Many will close against tests that now exist; some are upstream
+      9 more are `open` while carrying evidence, so 62 are `open` in total, against
+      90 `closed`.
+
+      ***Corrected 2026-08-18 (previously "54 rows that are `open` and carry `—`",
+      with "Bundling and AOT 14" and "8 more are `open` while carrying
+      evidence")*** — re-counted by the test, not adjusted: the justification
+      sweep measured the `UseSystemResourceKeys` saving, so that row moved from
+      `open` with `—` to `open` with evidence. **The total of 62 did not move**,
+      which is the predicate doing its job rather than an oversight. Many will close against tests that now exist; some are upstream
       behaviours that cannot close at all and should say so. **An honest `open` with
       a reason beats a `closed` with a weak one.**
 

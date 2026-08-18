@@ -23,6 +23,70 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The justification sweep: 598 load-bearing reasons sorted, 63 assumed, 13
+  settled by measurement and 11 relabelled.** Every mechanism in this repository
+  protects a claim about *behaviour* — a test fails, a snapshot diffs, an
+  analyzer errors. A claim about a *reason* is invisible to all of them, and a
+  rule with a measured reason reads exactly like a rule with a plausible one.
+  Nothing below could ever have gone red.
+
+  **The one where the reason was wrong and so was the rule's ground.**
+  [`DECISIONS.md`](DECISIONS.md) closed *download alongside and swap* for
+  `browserai_reinstall_browser` with *"Windows will not rename a directory
+  holding open executables"*, cited to an article about mutex naming that does
+  not discuss renames. Measured against a live process whose working directory
+  was deliberately elsewhere: `Directory.Move` of the running image's **parent**
+  and **grandparent** both succeeded, and renaming the **running `.exe`** itself
+  succeeded; only `File.Delete` of it was refused. **The refusal is left
+  standing** — what a browser does when its tree is renamed underneath it has
+  never been measured — but it is no longer resting on an impossibility.
+
+  **`[DefaultDllImportSearchPaths(System32)]` is inert for 39 of the 43
+  declarations it is written over.** With genuine `System32` copies planted
+  beside a probe, `kernel32`, `user32` and `ntdll` loaded from `System32`
+  with or without the attribute; only `rstrtmgr.dll` — the one library here that
+  is not a KnownDLL — loaded from the application directory without it. The rule
+  is kept on every declaration; the trap was the audit, since anyone testing it
+  with a fake `kernel32.dll` sees nothing happen and concludes it is decorative.
+
+  **`Debug.Assert` does not raise a modal dialog.** That is .NET Framework's
+  `DefaultTraceListener` and has not been true on .NET Core. Measured on .NET 10
+  with stdio redirected: a Debug build wrote the assertion to stderr and **died
+  at once with exit code 35**, and a Release build ran straight past it, because
+  `[Conditional("DEBUG")]` compiles the call out. So the shipped artifact carries
+  a guard that does nothing and the suite one that kills the server. The ban
+  stands, for better reasons than it had.
+
+  **Also settled by measurement**: a held handle stops pid reuse — with the
+  handle released a pid repeated after 2,010 spawns, with one held there was no
+  repeat in 6,030, and the *control* is what makes that mean anything;
+  `Marshal.GetLastPInvokeError()` survives allocation, a GC, a `MemoryStream` and
+  a `Console.Out.Flush()` and is destroyed only by another capturing P/Invoke,
+  while the 11 declarations without `SetLastError` return a confident `0`;
+  `Console.Out` really does write CP437 and CRLF under redirection, putting
+  `82 2E` on the wire for two non-ASCII characters; `UseSystemResourceKeys` saves
+  **161,280 bytes** against a **111,984,018-byte** payload, both halves of a
+  trade that had a word for a numerator and an unweighed denominator;
+  `Console.OpenStandardOutput` returns a `WindowsConsoleStream` and not a
+  `FileStream`, so the `FileOptions.Asynchronous` the comments named was never
+  involved; and the SDK's version decoration appends `+<sha>`, not `.<sha>`.
+
+  **Relabelled rather than settled**, because an admitted gap beats a confident
+  sentence: *"every Node process supervisor on Windows"* (never surveyed, and it
+  is the "nobody else solved this" half of the decision that chose C# for the
+  whole product) · the *~640 MiB* provisioning peak (arithmetic that does not
+  reach its own number, shipped as a refusal constant) · *"the holder is a
+  scanner"* (rates measured, cause never established, and the retry rule
+  depends on which it is) · the thread pool's injection rate (two articles a
+  factor of two apart, and one of them measures injection away as the mechanism)
+  · and the drift check *"runs by construction"* (it cannot fire during the quiet
+  month that defines the gap it answers).
+
+  **Three citations pointed at `plan/`**, deleted with the implementation plan on
+  2026-08-17 and never re-aimed; and `Interop/CLAUDE.md` published a count of 41
+  beside its own 43, under a stated re-count predicate that returns 45 because
+  two doc comments mention the attribute in prose.
+
 - **The client's *"2KB each"* is per string, and the gate was measuring the wrong
   unit.** `ClientTruncationBudget` had said for four days that the per-string
   reading was an **assumption** — the competing reading being one 2 KB bucket per

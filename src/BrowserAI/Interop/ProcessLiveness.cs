@@ -114,7 +114,9 @@ internal static partial class ProcessLiveness
     /// would put a second window between the check and the use, which is the
     /// window being closed. The caller opens once, verifies that handle, and
     /// holds it — and from the moment it is open Windows will not recycle the
-    /// number underneath it.
+    /// number underneath it — measured 2026-08-18, 6,030 spawns without a repeat
+    /// against a control that repeated at 2,010
+    /// (<see href="../../../kb/windows/processes.md">kb</see>).
     /// </para>
     /// <para>
     /// <b>A read that fails answers <see langword="false"/>.</b> An identity that

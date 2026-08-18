@@ -94,10 +94,18 @@ internal sealed class StdioChannel : IDisposable
     /// wire.
     /// </summary>
     /// <remarks>
-    /// Synchronous on purpose. <c>Console.OpenStandardOutput</c> hands back a
-    /// stream opened without <c>FileOptions.Asynchronous</c>, so an async write
-    /// against it only queues the same blocking call to the thread pool. The
-    /// caller serialises frames; this does not.
+    /// Synchronous on purpose, and an async write here would buy nothing: the
+    /// base <see cref="Stream"/> implementation of <c>WriteAsync</c> queues the
+    /// same blocking call to the thread pool. <i>Corrected 2026-08-18
+    /// (previously "<c>Console.OpenStandardOutput</c> hands back a stream opened
+    /// without <c>FileOptions.Asynchronous</c>").</i> Measured 2026-08-18 on
+    /// .NET 10: it hands back a
+    /// <c>System.ConsolePal+WindowsConsoleStream</c>, which is <b>not</b> a
+    /// <c>FileStream</c> at all — with stdout redirected to a file and to a
+    /// pipe alike — so there is no <c>FileOptions</c> flag involved and nothing
+    /// an overlapped open would change. The conclusion is unaffected; the
+    /// mechanism named was the wrong type. The caller serialises frames; this
+    /// does not.
     /// </remarks>
     /// <param name="utf8Payload">The frame body, already UTF-8 and free of newlines.</param>
     public void WriteFrame(ReadOnlySpan<byte> utf8Payload)

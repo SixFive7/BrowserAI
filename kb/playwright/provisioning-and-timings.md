@@ -140,9 +140,20 @@ byte-identical to the 2026-08-15 figures at the same revisions (chromium
 **1237** / 152.0.7977.8, ffmpeg **1011**, winldd **1007** — the revision did not
 move). Arithmetic for slower links: **2 m 43 s at 10 Mbps, 27 m 11 s at 1 Mbps**.
 Peak disk during provisioning is **~640 MiB**, while the archive and the
-extracted tree coexist. **This file is where that number lives** — the rest of
-the repository cites it rather than restating it. Re-establish with a `HEAD` on
-the three URLs below. `[FLOATS]`
+extracted tree coexist. ***Relabelled 2026-08-18: that is arithmetic, not a
+measurement*** — nobody has sampled free space across a provisioning run, and the
+sum does not land where the number does (203,824,344 B is 194.4 MiB, plus the
+430.48 MiB extracted tree, is ~625 MiB; 640 is 5 × 128 MiB, a round number the
+arithmetic does not give). It also assumes an ordering nobody observed: that the
+archive is fully present before extraction begins and is removed afterwards.
+**It matters because it ships as a refusal** — `SessionManager.RequiredFreeBytes`
+is `640L * 1024 * 1024` and a session is declined against it. The margin is in
+the safe direction and the constant is left alone. **This file is where that
+number lives** — the rest of the repository cites it rather than restating it.
+Settle it by sampling free space every 250 ms across the run already timed twice
+at 12.6 s and 12.0 s. The component byte counts above **are** measured;
+re-establish those with a `HEAD` on the three URLs below. `[FLOATS]` for the
+components, `[UNVERIFIED]` for the peak.
 
 > ⚠️ **Corrected 2026-08-16 @ chromium rev 1237 (previously "433 MiB on disk …
 > chromium 428 MiB + ffmpeg 4 + winldd 1").** **On disk it is 430.48 MiB**, and

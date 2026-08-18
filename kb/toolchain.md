@@ -308,8 +308,17 @@ failure across all eleven was one of three messages:
 | `Initialization timed out` | 46 | the MCP SDK's unset 60 s `InitializationTimeout` ([kb](mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation)) |
 
 **Not one was a logic fault.** The mechanism is thread-pool starvation and it is
-arithmetic rather than mystery: the .NET pool starts at `ProcessorCount` workers
-and injects roughly **one a second** beyond it, so 419 tests admitted at once —
+arithmetic rather than mystery. ***Corrected 2026-08-18*** on the *reason*, not
+the conclusion: the injection rate quoted here was *"roughly **one a second**"*
+while the same platform fact in
+[`windows/processes.md`](windows/processes.md) says *"roughly one thread per
+500 ms"* — **two numbers a factor of two apart, for one behaviour, neither of
+them measured** — and that article goes further and **measures injection away as
+the mechanism**: `ThreadPool.SetMinThreads(1024, 1024)` made the same run
+*worse*, not better. The starvation is real and the fix was right; what is
+**not** established is that hill-climbing injection causes it, and the surviving
+explanation is the one that article does measure, plain CPU oversubscription.
+Read the rate as `[UNVERIFIED]`. So 419 tests admitted at once —
 several of which block a worker in `Thread.Sleep` inside a polling loop, and one
 of which (`SaturationTests`) puts a hundred processes on the machine — leave an
 in-process exchange that normally costs single-digit milliseconds waiting

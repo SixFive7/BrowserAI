@@ -103,7 +103,10 @@ internal static partial class BrowserProcesses
     /// <remarks>
     /// <b>The handle is what closes race R2.</b> Windows will not recycle a pid
     /// while a handle to that process is open, so a pid captured here still
-    /// names the same process when the sweep gets round to acting on it. The
+    /// names the same process when the sweep gets round to acting on it. Measured
+    /// 2026-08-18 against a control that repeated a pid after 2,010 spawns with
+    /// no handle held, and did not repeat once in 6,030 with one
+    /// (<see href="../../../kb/windows/processes.md">kb</see>). The
     /// creation time is re-verified regardless, immediately before terminating,
     /// because belt-and-braces is the only acceptable posture for a call that
     /// cannot be undone.

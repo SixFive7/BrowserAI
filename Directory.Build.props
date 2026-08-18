@@ -136,8 +136,14 @@
       THE SHIPPED VERSION STRING IS A WIRE VALUE, AND THE SDK MUST NOT DECORATE
       IT.
 
-      By default the SDK appends `.$(SourceRevisionId)` to InformationalVersion
-      even when the build sets that property explicitly. A shipped product
+      By default the SDK appends the SourceRevisionId to InformationalVersion
+      even when the build sets that property explicitly. MEASURED HERE
+      2026-08-18, correcting the separator this comment used to assert: with a
+      SourceRevisionId supplied and this property forced true, the product's
+      InformationalVersion came back as `1.0.1-alpha.0.104+<sha>` and with the
+      property as set below it came back as `1.0.1-alpha.0.104`. The separator
+      is `+` when the string carries no build metadata yet and `.` only when it
+      already does, which is the shape the shipped product below hit. A shipped product
       observed doing exactly this records what it cost: a release published as
       0.0.0+<sha> reported itself as 0.0.0+<sha> followed by the 40-character
       sha, the updater MATCHES the served version against the reported one
@@ -170,9 +176,17 @@
       error catalogue that has been silently emptied.
 
       Set explicitly to false rather than left at its default, so it cannot
-      arrive later as somebody's size optimisation. The saving is kilobytes
-      against a ~117 MB payload; there is no version of this trade that is
-      close.
+      arrive later as somebody's size optimisation.
+
+      BOTH HALVES OF THAT TRADE ARE NOW MEASURED, 2026-08-18, and until then
+      neither was: the numerator was the word "kilobytes" and the denominator
+      was a payload figure nobody had weighed. Publishing this project twice on
+      SDK 10.0.400 / ILC 10.0.11, win-x64, changing only this property:
+      BrowserAI.exe is 17,954,304 bytes with it false and 17,793,024 with it
+      true, so the whole saving is 161,280 bytes (157.5 KiB, 0.9% of the
+      binary). The payload that actually ships alongside it is 111,984,018
+      bytes, or 106.8 MiB. So the trade is 157.5 KiB against 106.8 MiB, and the
+      conclusion is unchanged.
     -->
     <UseSystemResourceKeys>false</UseSystemResourceKeys>
   </PropertyGroup>

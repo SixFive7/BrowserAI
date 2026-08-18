@@ -46,8 +46,12 @@
     <!--
       THE VERSION IS DERIVED FROM THE NEAREST GIT TAG AND IS TYPED NOWHERE.
 
-      MinVer reads `git describe` at build time (plan/stack.md, "Versions come
-      from git tags"):
+      MinVer reads `git describe` at build time. CITATION CORRECTED 2026-08-18
+      (previously plan/stack.md, "Versions come from git tags"): that file was
+      deleted with the rest of the implementation plan on 2026-08-17 and this
+      pointer was left aimed at nothing. The surviving statement of the same
+      decision is STACK.md, "Versions come from git tags"; the measured
+      behaviour is kb/packaging/velopack.md.
 
         on the tag v0.1.0                  = 0.1.0
         five commits later, no new tag     = 0.1.1 with an alpha.0.5 suffix
@@ -187,8 +191,11 @@
     shallow clone, a tarball with no `.git` at all. Nothing about that build is
     wrong until it ships, and then it is unrollbackable, unbisectable, and
     indistinguishable in a feed from every other build that also found no tag.
-    plan/pre-release.md item 9 refuses it; this is that refusal, moved from a
-    checklist a human reads to the build that produces the artifact.
+    CITATION CORRECTED 2026-08-18 (previously "plan/pre-release.md item 9
+    refuses it"): that file went with the implementation plan on 2026-08-17.
+    The surviving checklist is RELEASING.md; this target is that refusal moved
+    from a checklist a human reads to the build that produces the artifact,
+    which is why deleting the checklist item did not delete the guarantee.
 
     It fails the BUILD rather than the publish deliberately. A check that only
     fired at publish would leave every test in this suite running against a
@@ -214,8 +221,11 @@
     THE NOTICES SHIP WITH THE BINARY, AND THIS IS THE ONLY THING THAT PUTS THEM
     THERE.
 
-    Four redistribution obligations attach at first installer handoff
-    (plan/pre-release.md item 13). Three of them travel by themselves: node's
+    Four redistribution obligations attach at first installer handoff.
+    CITATION CORRECTED 2026-08-18 (previously "plan/pre-release.md item 13"),
+    deleted with the plan on 2026-08-17; the surviving statement is
+    RELEASING.md and kb/packaging/dependencies.md, which carries the licence
+    texts themselves. Three of them travel by themselves: node's
     LICENSE and the two Playwright packages' notices are files inside the
     payload tree, which the target below copies whole. The fourth does not.
     Velopack is a NuGet dependency compiled INTO BrowserAI.exe, so its licence

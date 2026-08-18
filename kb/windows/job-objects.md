@@ -263,9 +263,19 @@ browser rather than about our config file. `[STABLE]`
 **Node's `child_process` has no job object support at all**, and Node's `spawn`
 cannot execute `.cmd` shims without `shell: true` — a live Claude Code bug for
 plugin-shipped servers using bare `npx`
-([#58510](https://github.com/anthropics/claude-code/issues/58510)). Every Node
-process supervisor on Windows falls back to `taskkill /T /F` or a native addon,
-and none survives a hard kill of the supervisor. `[FLOATS]`
+([#58510](https://github.com/anthropics/claude-code/issues/58510)). The first
+half is Node's own documented API surface. **The second half is reasoned, not
+surveyed** — ***relabelled 2026-08-18 (previously "Every Node process supervisor
+on Windows falls back to `taskkill /T /F` or a native addon, and none survives a
+hard kill of the supervisor", stated as fact)***: no supervisor was named, no
+version was recorded and no list was enumerated, so "every" and "none" rest on
+nothing this repository can produce. It follows from the first half rather than
+from a survey, which is a plausible inference and not a measurement. **It is
+load-bearing** — it is the "nobody else has solved this" half of the
+build-versus-adopt decision that chose C# for the whole product
+([DECISIONS](../../DECISIONS.md)) — so it is left standing and labelled rather
+than deleted. To settle it, name the supervisors actually examined and record
+what each one does. `[UNVERIFIED]`
 
 **No credible NuGet job-object wrapper exists** — the candidates have <6K
 downloads and the newest was published in **2017**. `dotnet/runtime`

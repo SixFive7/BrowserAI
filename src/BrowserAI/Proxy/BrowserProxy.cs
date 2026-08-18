@@ -198,8 +198,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // The only channel that reaches a model before it calls anything,
             // and the only one that can pre-empt the first mistake after a
             // restart: a browser tool called with no session. Rendered from the
-            // one mode table, capped at 2 KB because the client truncates it
-            // there in silence.
+            // one mode table, capped at 2,048 UTF-16 characters because the
+            // client truncates it there in silence. Corrected 2026-08-18
+            // (previously "capped at 2 KB"), which was the byte reading the
+            // 2026-08-18 measurement @ Claude Code 2.1.234 retired.
             ServerInstructions = Proxy.ServerInstructions.Text,
 
             // Upward: null means every revision the SDK implements. The caller
