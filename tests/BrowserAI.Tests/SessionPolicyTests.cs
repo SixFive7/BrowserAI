@@ -17,11 +17,16 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>Rewritten 2026-08-18 (previously "the <c>(tool, mode)</c> decision:
 /// classified exhaustively, deny-by-default, and correct while sessions of
-/// different modes are being driven at once").</b> Five tests here asserted a
-/// permission matrix that no longer exists, and they were deleted rather than
-/// left asserting a tautology — a test that can no longer fail is worse than a
-/// gap, because it reads as covered. What went, and why each was testing
-/// something that is gone:
+/// different modes are being driven at once").</b> Seven of this file's eight
+/// tests asserted a permission matrix that no longer exists. <b>Six were deleted
+/// outright</b> and the seventh was inverted, rather than any of them being left
+/// asserting a tautology — a test that can no longer fail is worse than a gap,
+/// because it reads as covered. The eighth, the concurrency arm, was reframed and
+/// is the last test below. Across the suite that is <b>432 tests before and 428
+/// after</b>: six deleted here plus one in <c>ErrorCatalogueTests</c>
+/// (<c>AConfigAnswerCarryingSecretsIsWithheldRatherThanForwarded</c>, which
+/// provoked the removed <c>Guard</c>), against three added. What went, and why
+/// each was testing something that is gone:
 /// </para>
 /// <list type="bullet">
 /// <item><c>EveryToolTheChildCanExposeCarriesAnExplicitClassification</c> and
