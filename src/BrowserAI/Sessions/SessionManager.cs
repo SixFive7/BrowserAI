@@ -667,6 +667,16 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var outcome = await _environment.Provisioner.ReinstallAsync(browser, cancellationToken).ConfigureAwait(false);
 
+        if (!outcome.Deleted)
+        {
+            // Nothing happened, and the answer says only that. Every sentence
+            // below asserts a delete, and a tool answer that claims a
+            // destructive act it did not perform is worse than a refusal.
+            return new ToolOutcome(
+                $"{SessionToolSurface.ReinstallBrowser} was not run and nothing was changed. {outcome.Status.Detail}",
+                IsError: true);
+        }
+
         var removed = outcome.RemovedBytes < 0
             ? "an amount that could not be measured"
             : Megabytes(outcome.RemovedBytes);

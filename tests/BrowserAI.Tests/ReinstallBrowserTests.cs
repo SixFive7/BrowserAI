@@ -60,6 +60,12 @@ internal sealed class ReinstallBrowserTests
         // that had the wait in the wrong place.
         _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
 
+        // And then for the mutex, which WaitAsync does not answer for -- see
+        // WaitUntilNoInstallIsInFlight. Since 2026-08-18 a reinstall refuses
+        // while an install holds it, so without this the call below measures
+        // the refusal rather than the delete.
+        WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
+
         // A complete tree with a file in it that must not survive, so "the
         // directory exists afterwards" cannot pass for "it was replaced".
         var stale = Path.Combine(sessions.ChromiumDirectory, "stale-from-the-old-install.bin");
@@ -150,6 +156,9 @@ internal sealed class ReinstallBrowserTests
         // planting the marker would join nothing and the in-flight install would
         // land inside the window this test measures. Observed 2026-08-16.
         _ = await sessions.Environment.Provisioner.WaitAsync(SessionManager.SupportedBrowser);
+
+        // And for the mutex, for the reason in WaitUntilNoInstallIsInFlight.
+        WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
 
         InstallationMarker.Write(sessions.ChromiumDirectory);
 
@@ -253,9 +262,55 @@ internal sealed class ReinstallBrowserTests
 
         // Said, not merely done. A refusal a model cannot act on is the failure
         // shape this project exists to remove.
+        await Assert.That(outcome.Deleted).IsFalse();
         await Assert.That(outcome.Status.State).IsEqualTo(ProvisioningState.Failed);
         await Assert.That(outcome.Status.Detail).Contains("nothing was deleted");
         await Assert.That(outcome.Status.Detail).Contains(SessionManager.SupportedBrowser);
+    }
+
+    /// <summary>
+    /// Blocks until no install is in flight against a browsers root.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b><c>WaitAsync</c> is not enough for this, and never was — it is the
+    /// wait the two tests below already do and it does not answer this
+    /// question.</b> <c>WaitAsync</c> begins with <c>Ensure</c>, which
+    /// short-circuits the instant <c>INSTALLATION_COMPLETE</c> appears; the
+    /// installing thread is still inside <c>Install</c> at that moment, holding
+    /// the machine-wide provisioning mutex while it prunes superseded revisions,
+    /// and it releases only on the way out. The gap was invisible until
+    /// 2026-08-18, when <c>browserai_reinstall_browser</c> started refusing while
+    /// that mutex is held — which is the point of the fix and is exactly what a
+    /// caller would meet.
+    /// </para>
+    /// <para>
+    /// <b>Found by CI rather than locally</b>, because a fake installer that
+    /// finishes in microseconds closes the gap on a fast machine and does not on
+    /// a slower one. Waiting on the mutex is waiting for the thing the product
+    /// waits for, which is why this is not a sleep.
+    /// </para>
+    /// <para>
+    /// <b>Acquire and release with no <c>await</c> between them</b>: a named
+    /// mutex is owned by the thread that waited on it, and a continuation
+    /// resuming elsewhere would make the release throw about "an unsynchronized
+    /// block of code".
+    /// </para>
+    /// </remarks>
+    /// <param name="browsersDirectory">The browsers root whose install to wait out.</param>
+    private static void WaitUntilNoInstallIsInFlight(string browsersDirectory)
+    {
+        using var mutex = MachineMutex.Create(
+            BrowserProvisioner.MutexNameFor(browsersDirectory, ProvisionedBrowsers.Chromium));
+
+        if (mutex.Acquire(TestDefaults.ProcessHang) is MutexAcquisition.NotAcquired)
+        {
+            throw new InvalidOperationException(
+                $"An install has held the provisioning mutex for '{browsersDirectory}' for longer than this suite's hang detector, "
+                + "so whatever this test goes on to assert about a reinstall would be about a refusal rather than about a delete.");
+        }
+
+        mutex.Release();
     }
 
     [Test]

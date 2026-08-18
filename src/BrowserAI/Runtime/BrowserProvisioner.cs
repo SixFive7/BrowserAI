@@ -525,6 +525,7 @@ internal sealed class BrowserProvisioner : IDisposable
             return new ReinstallOutcome(
                 browser,
                 directory,
+                Deleted: false,
                 RemovedBytes: 0,
                 Failures: [],
                 new ProvisioningStatus(
@@ -543,6 +544,7 @@ internal sealed class BrowserProvisioner : IDisposable
             return new ReinstallOutcome(
                 browser,
                 directory,
+                Deleted: true,
                 removedBytes,
                 failures,
                 new ProvisioningStatus(
@@ -554,7 +556,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
         var status = await WaitAsync(browser, cancellationToken).ConfigureAwait(false);
 
-        return new ReinstallOutcome(browser, directory, removedBytes, failures, status);
+        return new ReinstallOutcome(browser, directory, Deleted: true, removedBytes, failures, status);
     }
 
     /// <inheritdoc />
@@ -1310,12 +1312,26 @@ internal sealed class NodeInstallerRun : IInstallerRun
 /// <summary>What <c>browserai_reinstall_browser</c> did.</summary>
 /// <param name="Browser">The family.</param>
 /// <param name="Directory">The tree that was removed and re-created.</param>
+/// <param name="Deleted">
+/// Whether the delete happened at all.
+/// <para>
+/// ⚠️ <b>Added 2026-08-18, with the provisioning mutex.</b> Before it, "nothing
+/// was deleted" and "everything deleted and the download failed" were the same
+/// shape — no failures, and a status that is not <c>Installed</c> — so the
+/// caller was told <i>"'…' was deleted (0.0 MiB) and the download that should
+/// have replaced it did not complete, so there is no browser installed now"</i>
+/// about a tree that is entirely intact. An answer that asserts a destructive
+/// act which did not happen is the failure class this product exists to remove,
+/// and it arrived in the same change that added the refusal.
+/// </para>
+/// </param>
 /// <param name="RemovedBytes">What was there before, or -1 when it could not be measured.</param>
 /// <param name="Failures">What would not delete, one line each. Empty on the ordinary path.</param>
 /// <param name="Status">Where the family stands now.</param>
 internal sealed record ReinstallOutcome(
     string Browser,
     string Directory,
+    bool Deleted,
     long RemovedBytes,
     IReadOnlyList<string> Failures,
     ProvisioningStatus Status);
