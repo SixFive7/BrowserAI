@@ -800,10 +800,17 @@ contenders and 2.4× the wait.
 > slowest refusal 5,736 ms. `SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt`
 > fails the build if either number crosses the other again.
 
-Reproduce with `.work/race-rig.ps1 -Contenders <n> -Iterations <k>`, which drives
-`BrowserAI.TestProbe.exe session-race` directly and needs no test host; or by
-raising `Contenders` in `SessionLockTests`. `[MACHINE]` for every timing,
-`[STABLE]` for the outcome and for the super-linear shape.
+**To re-establish**, at any N without a test host: create a session directory and
+a manual-reset `EventWaitHandle`, start N ×
+`BrowserAI.TestProbe.exe session-race <directory> <eventName> <report-i.json> <release.flag>`,
+wait for every `<report-i.json>.ready` to appear — that handshake is what makes it
+a race rather than a queue — set the event, then read the reports and group them
+by `outcome`. Each one carries `elapsedMilliseconds` and `gateTimeoutMilliseconds`
+beside it. The suite's own arm is
+`SessionLockTests.UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho`,
+which pays for N=16 on every run and takes any N by raising `Contenders`.
+`[MACHINE]` for every timing, `[STABLE]` for the outcome and for the super-linear
+shape.
 
 The machine-wide sweep scope was measured the same way and separately: **8
 processes, zero timeout, 1 acquired and 7 refused**, each refusal asserted under

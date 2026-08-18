@@ -608,8 +608,21 @@ saturation test's own 802 produces.
 > machine, so every browser had CPU. The suite starves CPU rather than memory or
 > handles, and that remains the open candidate — along with **desktop heap**,
 > which no documented API reports and which none of the columns above would show.
-> Recorded here as a bounded negative result rather than a diagnosis.
-> `[MACHINE]`, and reproduce with `.work/chromium-ceiling.ps1`.
+> Recorded here as a bounded negative result rather than a diagnosis. `[MACHINE]`
+>
+> **To re-establish**, for each N: give every instance its own `--user-data-dir`
+> under a scratch root and start
+> `chrome.exe --headless=new --user-data-dir=<own> --no-first-run
+> --no-default-browser-check --disable-component-update --enable-logging
+> --log-file=<own> --v=1 about:blank`; let them settle 20 s; count how many have
+> exited and read the log of each that has. Take the machine figures from
+> `GetPerformanceInfo` — `MachineLoad.Describe()` in the suite's harness prints
+> exactly these columns. **Clean up by pid and verify by full image path**: stop
+> each browser you started, then re-enumerate for any process whose image path is
+> the provisioned `chrome.exe` and stop those too, because the children of a
+> headless browser do not always go with it — 102 survived one level here. Never
+> by image name; that is [the rule](../../HAZARDS.md) a measurement does not get
+> an exception to.
 
 **A record on stderr is not durable, and a record in the process log is — the
 two diagnostic channels differ and only the file's guarantee is written down.**
