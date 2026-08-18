@@ -339,6 +339,38 @@ walks all three share modes on every run.
 > rename, and the only thing that makes the resulting gap unobservable is that
 > every BrowserAI takes the per-directory mutex before create-or-take.
 
+**The rename refuses *readers* too, for the same reason and in the same
+direction: a file being replaced is DELETE-PENDING, and every new open of that
+name is refused `ERROR_ACCESS_DENIED`.** Measured 2026-08-18 at
+`SuiteParallelism.Unbounded`, twice in twenty-eight full-suite runs and at two
+different call sites — `File.Move(temp, lock.json, overwrite: true)` refused on a
+destination this process had just closed its own handle to, and
+`new FileStream(lock.json, FileMode.Open, FileAccess.Read, FileShare.ReadWrite |
+FileShare.Delete)` refused while another process was renaming over it. **Sharing
+the delete does not help the reader**, and that is the half the entry above does
+not cover: `FILE_SHARE_DELETE` is what lets the *other* process's rename proceed,
+not what lets this one's open succeed while it is proceeding. The window is one
+syscall wide.
+
+> **It is the same `UnauthorizedAccessException`, so the same handler trap
+> applies, and this time on the read path where nobody had looked.** Before
+> 2026-08-18 both of BrowserAI's *writers* waited it out and neither of its
+> *readers* did: `SessionLock.ReadRecord` and the acquire path's own open threw
+> straight past `Contended`, which handles a sharing violation and a
+> `LockFileException` and not this — so one BrowserAI asking whether a session
+> was locked, at the instant another rewrote its own lock, threw out of
+> `TryAcquire`. `SessionIndex.FollowOne` did not throw and was worse: it caught
+> the denial and reported a perfectly good entry as `EntryUnreadable`.
+>
+> **The distinction that makes the fix safe is who is entitled to the open.** A
+> reader of a record, and a holder re-opening under the per-directory mutex, are
+> entitled — a denial is a window that closes, so they wait. `InstanceDirectory`'s
+> claim, `LiveInstances`' registration and `FirefoxProfile`'s probe are **not** —
+> each exists to discover whether something else holds the thing, so for them the
+> refusal *is* the answer and a retry would invert the mechanism. `RenameWindow`
+> holds that table and only the first group goes through it. `[STABLE]` for the
+> delete-pending refusal, `[MACHINE]` for the observed frequency.
+
 **A file that has just been renamed into place can still be briefly unopenable.**
 Observed once on 2026-08-16, roughly one run in a dozen: a probe report written
 temp-then-renamed failed `File.ReadAllTextAsync` on the destination with *"the

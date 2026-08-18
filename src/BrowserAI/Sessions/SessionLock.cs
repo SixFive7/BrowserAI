@@ -76,8 +76,14 @@ internal sealed class SessionLock : IDisposable
     /// so the answer is a budget generous enough to outlast it — and a bound, so
     /// that a permanent condition is still reported rather than waited on
     /// forever.
+    /// <para>
+    /// ⚠️ <b>Read from <see cref="RenameWindow.Budget"/> since 2026-08-18, not
+    /// re-declared.</b> The number has not changed; what changed is that the
+    /// reader side of this same rename now waits the same amount, and two
+    /// literals here could drift apart while one cannot.
+    /// </para>
     /// </remarks>
-    private static readonly TimeSpan MoveBudget = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan MoveBudget = RenameWindow.Budget;
 
     private const int ErrorSharingViolation = 32;
     private const int ErrorLockViolation = 33;
@@ -455,17 +461,23 @@ internal sealed class SessionLock : IDisposable
 
         try
         {
-            // FileShare.ReadWrite because the holder has it open for WRITE, and
-            // a reader that does not share write is refused outright -- which
-            // would turn "somebody owns this" into "this file is unreadable".
-            // FileShare.Delete because the atomic rename needs DELETE on the
-            // destination, and one reader without it blocks every rewrite.
-            using var stream = new FileStream(
-                location.LockFile,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
+            // ⚠️ Through RenameWindow, which is the READ side of the rename this
+            // class's own `Replace` performs. A reader that arrives while another
+            // process is replacing `lock.json` is refused ACCESS_DENIED -- not a
+            // sharing violation -- and nothing on this path caught it. See that
+            // type's remarks for the measurement and for which callers may use it.
+            using var stream = RenameWindow.WaitOut(() =>
+                // FileShare.ReadWrite because the holder has it open for WRITE, and
+                // a reader that does not share write is refused outright -- which
+                // would turn "somebody owns this" into "this file is unreadable".
+                // FileShare.Delete because the atomic rename needs DELETE on the
+                // destination, and one reader without it blocks every rewrite.
+                new FileStream(
+                    location.LockFile,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete,
+                    bufferSize: 1));
 
             return Parse(stream, location.LockFile);
         }
@@ -672,8 +684,28 @@ internal sealed class SessionLock : IDisposable
 
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
 
+    /// <summary>
+    /// Opens <c>lock.json</c> the way a holder holds it: read-write, sharing
+    /// only reads, so any other BrowserAI trying to take the same directory
+    /// meets a sharing violation.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Through <see cref="RenameWindow"/>, added 2026-08-18, and every one
+    /// of the four call sites needs it.</b> Two of them open the file straight
+    /// after this class has renamed a new record over it, and the other two open
+    /// a file another process may be renaming right now — and a delete-pending
+    /// destination refuses an open with <c>ACCESS_DENIED</c>, which
+    /// <see cref="TakeOrReport"/> does not catch: it handles the sharing
+    /// violation (which means <i>owned</i>, and must not be waited out) and a
+    /// <c>LockFileException</c>, so an <see cref="UnauthorizedAccessException"/>
+    /// propagated out of <c>TryAcquire</c> — the product's primary entry point
+    /// for opening a session.
+    /// </remarks>
+    /// <param name="lockFile">The lock file.</param>
+    /// <returns>The held handle.</returns>
     private static FileStream OpenHeld(string lockFile) =>
-        new(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+        RenameWindow.WaitOut(() =>
+            new FileStream(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1));
 
     private static bool IsSharingViolation(IOException failure) =>
         (failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation;

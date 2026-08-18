@@ -329,7 +329,19 @@ internal sealed class SessionIndex
             // FileShare.ReadWrite | Delete for the same reason SessionLock's
             // reader has it: a reader that does not share delete blocks the
             // rename another process is using to re-assert this very entry.
-            using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            //
+            // ⚠️ Through RenameWindow, added 2026-08-18. Sharing the delete is
+            // what lets the other process's rename PROCEED; it does not stop
+            // this open being refused ACCESS_DENIED while that rename is in
+            // flight, because the file being replaced is delete-pending. Without
+            // the wait this read did not throw — it fell into the catch below and
+            // reported the entry as `EntryUnreadable`, which is a wrong answer
+            // rather than an exception and therefore the worse of the two
+            // failures. The entry is kept either way, so nothing was ever
+            // destroyed by it; what was lost is a session the caller should have
+            // been told about.
+            using var stream = RenameWindow.WaitOut(() =>
+                new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
             using var buffer = new MemoryStream();
             stream.CopyTo(buffer);
 
