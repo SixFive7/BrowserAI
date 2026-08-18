@@ -70,6 +70,20 @@ internal sealed class SessionDestroyTests
     /// <summary>The first planted name, and therefore the first node the delete pass removes.</summary>
     private const string FirstPlantedFile = "aaa-00000.bin";
 
+    /// <summary>How long the peer waits between probes.</summary>
+    /// <remarks>
+    /// <b>A sleep rather than a spin, and it is not a promptness bound.</b> The
+    /// suite runs every test at once on purpose; a thread spinning on a named
+    /// mutex and a file open for the length of a directory delete is this test
+    /// paying for its evidence with everybody else's timing, and it showed —
+    /// the most start-up-sensitive test in the suite began meeting its own
+    /// budget. It costs nothing here, because what the peer is watching for is
+    /// the removal of two thousand files: hundreds of probes land inside that
+    /// interval at a millisecond apiece, and against the pre-fix code the count
+    /// they returned was in the thousands.
+    /// </remarks>
+    private static readonly TimeSpan ProbeInterval = TimeSpan.FromMilliseconds(1);
+
     [Test]
     public async Task DestroyKeepsTheDirectoryOwnedForAsLongAsAnyOfItIsStillOnDisk()
     {
@@ -106,18 +120,12 @@ internal sealed class SessionDestroyTests
                 // before the destroy re-takes the directory is legitimately
                 // unowned, and probing it would contend with the acquisition
                 // this test needs to succeed.
-                _ = Thread.Yield();
+                Thread.Sleep(ProbeInterval);
             }
 
             while (!stop.IsCancellationRequested)
             {
-                // Yielded rather than spun flat out. The suite runs every test
-                // at once on purpose, and a busy loop that never lets go of its
-                // core would be this test paying for its evidence with somebody
-                // else's timing. It costs nothing here: the interval this is
-                // watching for is the removal of ~2,000 files, so thousands of
-                // probes land inside it either way.
-                _ = Thread.Yield();
+                Thread.Sleep(ProbeInterval);
 
                 if (SessionLock.TryHoldUnowned(location, out var hold) is not null)
                 {

@@ -414,17 +414,45 @@ dangerous of the two because null means *not locked*.
 > safety-critical primitive in this product, and it needs its own measurement
 > before it is trusted. Not taken; see the hazard index.
 
-> **BrowserAI is safe under the absence today, and that is a different judgement
-> from the denial above rather than the same one repeated.** A denial was an
-> unhandled exception escaping `TryAcquire`; an absence is a documented return
-> value every caller already handles — `SessionLock` even carries the sentence
-> *"which removed its `lock.json` between the refusal and the read"* for exactly
-> this. And the mechanism bounds it: **every rewrite happens under the
-> per-directory mutex**, so no gated reader can see the window at all, and every
-> ungated one fails in the safe direction — the sweep's `SessionDirectoryFrom`
-> reads a missing lock as *"not a BrowserAI session directory"* and **spares**
-> the process, and `ActOn` gates the kill on `SessionLock.TryHoldUnowned`, which
-> takes that same mutex.
+> ⚠️ **Corrected 2026-08-18 (previously "BrowserAI is safe under the absence
+> today … every ungated one fails in the safe direction — the sweep's
+> `SessionDirectoryFrom` … and `ActOn` …").** The judgement was right about the
+> two readers it named and wrong as a claim about all of them, and the reason is
+> worth stating: it was written by checking the readers on the *sweep* path,
+> which is where the danger was expected, and generalised to *every* ungated
+> reader without enumerating them. An [adversarial
+> review](../../docs/reviews/2026-08-18-adversarial-locking.md) enumerated all
+> thirteen. **Eleven fail safe. Two act on the absence:**
+>
+> - **`SessionIndex.Locate`** → a `null` record becomes `NotASession` →
+>   `SessionIndexEntry.IsRemovable` → `Sweep` **deletes the index entry for a live
+>   session**. The R7 re-check does not close it: it re-reads microseconds later,
+>   inside the same window, because the window's width is governed by the
+>   *writer's* 5→100 ms backoff. Nothing re-asserts the entry afterwards —
+>   `Record` is called from `OpenAsync` only — so the session stays invisible to
+>   `browserai_list` and to `LiveSessions()` for the rest of its life. Nothing
+>   downstream treats an index entry as authority, so the outcome is a wrong
+>   *report* rather than a wrong destructive action, which is what keeps it out of
+>   the first class.
+> - **`SessionManager.Existing`**, `init`'s existence guard → `null` means *"the
+>   directory is free, proceed"*. The gated `TryAcquire` downstream stops it
+>   becoming two owners; what gets through is a **stale-locked** directory being
+>   rebound, because `Compose` takes `Mode` and `Browser` from the request. So
+>   `init` can silently re-bind a closed session's browser family over a profile
+>   on disk belonging to the other one — the exact thing `resume` refuses
+>   explicitly.
+>
+> **What still holds, and is the reason the original judgement was nearly
+> right.** A denial was an unhandled exception escaping `TryAcquire`; an absence
+> is a documented return value every caller already handles — `SessionLock` even
+> carries the sentence *"which removed its `lock.json` between the refusal and
+> the read"* for exactly this. **Every rewrite happens under the per-directory
+> mutex**, so no gated reader can see the window at all. The sweep's
+> `SessionDirectoryFrom` reads a missing lock as *"not a BrowserAI session
+> directory"* and **spares** the process, and `ActOn` gates the kill on
+> `SessionLock.TryHoldUnowned`, which takes that same mutex. **No ungated reader
+> reaches a wrongful kill or a wrongful delete of a tree.** Both rows above are
+> in the hazard index.
 >
 > **What defending it would cost, so the gap is a decision and not an oversight.**
 > A reader cannot tell a transient absence from a real one without waiting, and

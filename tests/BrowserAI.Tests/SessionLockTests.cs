@@ -378,10 +378,24 @@ internal sealed class SessionLockTests
     [Test]
     public async Task TheGateOutlastsEveryWaitTakenInsideIt()
     {
-        await Assert.That(LockScopes.PerDirectoryGate).IsGreaterThan(RenameWindow.Budget)
+        // ⚠️ Corrected 2026-08-18 (previously `IsGreaterThan(RenameWindow.Budget)`,
+        // i.e. the PAIR). It is the SUM that has to fit: one hold of the gate
+        // contains three of those waits in series, so a 60 s gate was being
+        // outlasted by 90 s of legitimate waiting inside it, and this test read
+        // green throughout. The pair was the relationship the comment reasoned
+        // about and the sum is the one the code has.
+        var inside = LockScopes.RenameWindowWaitsInsideTheGate * RenameWindow.Budget;
+
+        await Assert.That(LockScopes.PerDirectoryGate).IsGreaterThan(inside)
             .Because(
-                "every open performed under the per-directory gate goes through RenameWindow, so a gate that expires "
-                + "before that wait does turns a peer's correct 'held by PID n' into a wrong 'Busy'");
+                "every open performed under the per-directory gate goes through RenameWindow, and one hold contains "
+                + $"{LockScopes.RenameWindowWaitsInsideTheGate.ToString(CultureInfo.InvariantCulture)} of them in series — so a gate that expires "
+                + "before that total does turns a peer's correct 'held by PID n' into a wrong 'Busy', on a holder that "
+                + "is doing exactly what the design tells it to");
+
+        // The count is not decoration: it is what a fourth wait has to be added
+        // to, and this asserts it still describes something.
+        await Assert.That(LockScopes.RenameWindowWaitsInsideTheGate).IsGreaterThan(0);
     }
 
     [Test]

@@ -35,17 +35,18 @@ by effort.**
       needs no filesystem setup at all.
 
 - [ ] **Two of thirteen ungated `lock.json` readers ACT on an absence rather than
-      reporting it**, which falsifies a claim `kb/` currently makes.
-      `SessionIndex.Locate` → `IsRemovable` → `Sweep` **deletes the index entry**
-      for a live session; `SessionManager.Existing` reads null as *"free,
-      proceed"*. Correct the kb claim in the same change.
-
-- [ ] **One gate hold contains three serial 30 s budgets.** The test asserts the
-      60 s gate outlasts `RenameWindow.Budget`, but `TakeOrReport` and `Rewrite`
-      each take three in series — 90 s against 60 s. Also unpaired inside the
-      gate: `Flush(flushToDisk: true)`, a parent-process walk, and **any
-      filesystem call on a caller-supplied UNC path**, where this repository has
-      measured 21,037 ms for one call.
+      reporting it.** `SessionIndex.Locate` → `IsRemovable` → `Sweep` **deletes
+      the index entry** for a live session; `SessionManager.Existing` reads null
+      as *"free, proceed"* and can rebind a stale-locked session's browser
+      family. **The kb claim they falsified is corrected** — `kb/windows/processes.md`
+      said *"every ungated one fails in the safe direction"* and now enumerates
+      all thirteen — and each reader has a [hazard row](HAZARDS.md#hazard-index)
+      naming what would close it. What is left here is the code: make
+      `NotASession` non-removable while a `lock.json.new-<guid>` temp is on disk,
+      and move `Existing`'s check inside `TakeOrReport` where the record is
+      already read under the gate. **Neither is a change to make in the same pass
+      as something else** — the second restructures the refusal on the
+      most-exercised path in the product.
 
 - [ ] **The probe-before-gate redesign, attacked before it was built.** It is a
       sound *ownership* test and an unsound *freedom* test: with the gate skipped
@@ -125,7 +126,7 @@ by effort.**
       the index's own `Area` cells verbatim: Bundling and AOT 14, Child runtime and
       configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      6 more are `open` while carrying evidence, so 60 are `open` in total, against
+      9 more are `open` while carrying evidence, so 63 are `open` in total, against
       88 `closed`. Many will close against tests that now exist; some are upstream
       behaviours that cannot close at all and should say so. **An honest `open` with
       a reason beats a `closed` with a weak one.**
@@ -147,12 +148,14 @@ by effort.**
       paragraph now has a test.
 
       ***Corrected again 2026-08-18 (previously "5 more are `open` while carrying
-      evidence, so 59 are `open` in total")*** — the adversarial-review work added
-      one `open`-with-evidence row, for the revision prune's launch-path window.
-      **The category numbers above did not move**, and that is the predicate doing
-      its job rather than an oversight: they count rows that are `open` **and**
-      carry `—`, and the new row carries evidence. Caught by the test in the same
-      run that added the row, which is what it is for.
+      evidence, so 59 are `open` in total", then briefly 6 and 60)*** — the
+      adversarial-review work added **four** `open`-with-evidence rows: the
+      revision prune's launch-path window, the two ungated `lock.json` readers
+      that act on an absence, and the unbounded calls inside the per-directory
+      gate. **The category numbers above did not move**, and that is the predicate
+      doing its job rather than an oversight: they count rows that are `open`
+      **and** carry `—`, and all four carry evidence. Caught by the test in the
+      same run that added them, which is what it is for.
 
       **When correcting a count here, quote the predicate before the number** —
       not *"54 rows"* but *"54 rows that are `open` **and** carry `—`"*. That has

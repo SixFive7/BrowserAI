@@ -133,14 +133,52 @@ internal static class LockScopes
     /// number.
     /// </para>
     /// <para>
-    /// <b>Sixty seconds, and it is a hang detector rather than a budget.</b> It is
-    /// twice <see cref="RenameWindow.Budget"/>, ~18× the measured design-point
-    /// queue, and ~2,400× the ~25 ms one contender spends inside. A slow machine
-    /// must not reach it; a holder that has genuinely wedged still does, which is
-    /// why it stays bounded.
+    /// <b>A hang detector rather than a budget.</b> It is ~36× the measured
+    /// design-point queue and ~4,800× the ~25 ms one contender spends inside. A
+    /// slow machine must not reach it; a holder that has genuinely wedged still
+    /// does, which is why it stays bounded.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-18 to one hundred and twenty seconds (previously
+    /// sixty, described as "twice <see cref="RenameWindow.Budget"/>").</b> Twice
+    /// the budget was the wrong comparison, and it was the comparison the test
+    /// encoded: <b>one hold of this gate contains
+    /// <see cref="RenameWindowWaitsInsideTheGate"/> of them in series</b>, so the
+    /// number to beat is 90 s and the gate was 60. A holder legitimately waiting
+    /// out three rename windows therefore made every peer's <c>TryAcquire</c>
+    /// return <c>Busy</c> — and the <c>Busy</c> sentence offers <i>"a process is
+    /// wedged holding it"</i> as one of two explanations, which would again be a
+    /// diagnosis the code cannot support. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// B1. What is asserted now is the sum.
     /// </para>
     /// </remarks>
-    public static TimeSpan PerDirectoryGate => TimeSpan.FromSeconds(60);
+    public static TimeSpan PerDirectoryGate => TimeSpan.FromSeconds(120);
+
+    /// <summary>
+    /// How many <see cref="RenameWindow.Budget"/>-bounded waits one hold of
+    /// <see cref="PerDirectoryGate"/> can contain, <b>in series</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Three, and they are enumerable rather than estimated.</b>
+    /// <c>SessionLock.TakeOrReport</c>, inside the gate: the first
+    /// <c>OpenHeld</c>, then <c>WriteDurably</c>'s replace loop — whose
+    /// <c>MoveBudget</c> is this same value — then the re-open.
+    /// <c>SessionLock.Rewrite</c>, inside the gate, takes the same three in a
+    /// different order: the replace, the re-open, and <c>Reclaim</c>'s re-open on
+    /// the failure path.
+    /// </para>
+    /// <para>
+    /// <b>It is a constant so that adding a fourth is a red build rather than a
+    /// silent 30 s.</b> A new wait inside the critical section has to be counted
+    /// here, and counting it fails
+    /// <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c> until the
+    /// gate above is re-sized — which is the conversation that should happen and
+    /// did not when the third one was added.
+    /// </para>
+    /// </remarks>
+    public static int RenameWindowWaitsInsideTheGate => 3;
 
     /// <summary>
     /// Zero. Every lock a caller can reason about is attempted with this, and
