@@ -399,6 +399,18 @@ internal sealed class StraySweepTests
         // Observed 2026-08-16 — the test passed alone and failed under a fully
         // parallel suite, which is the shape of every timing bug this project
         // has met.
+        // ⚠️ `--enable-logging --log-file --v=1`, added 2026-08-18, and it is a
+        // diagnostic rather than a change to what is under test. This arm has
+        // failed at least three times in two days with *"exited before it
+        // published a message window … it wrote nothing to either stream"*, and
+        // the reason it stayed open that long is that Chromium's account of a
+        // failed start does not go to stderr by default on Windows — it goes to a
+        // log file, and nobody had asked for one. A browser that dies saying
+        // nothing anywhere is a very different finding from one whose reasons
+        // were never collected, and until now this test could not distinguish
+        // them.
+        var chromiumLog = Path.Combine(scratch.Path, "chrome_debug.log");
+
         var browser = scope.Launch(
             chromium,
             scratch.Path,
@@ -407,10 +419,13 @@ internal sealed class StraySweepTests
             "--no-first-run",
             "--no-default-browser-check",
             "--disable-component-update",
+            "--enable-logging",
+            $"--log-file={chromiumLog}",
+            "--v=1",
             "about:blank");
 
         var browserCreated = ProcessIdentity.CreationTimeOf(browser.Id);
-        var attributed = await WaitForAttributionAsync(chromium, profile, browser, browserCreated, scope);
+        var attributed = await WaitForAttributionAsync(chromium, profile, browser, browserCreated, scope, chromiumLog);
 
         // The browser is still running, so what was attributed is a live process
         // rather than the last echo of one that was leaving.
@@ -968,7 +983,8 @@ internal sealed class StraySweepTests
         string profile,
         LaunchedProcess browser,
         long browserCreated,
-        JobObjectScope scope)
+        JobObjectScope scope,
+        string chromiumLog)
     {
         var browserId = browser.Id;
         var deadline = DateTime.UtcNow + Patience;
@@ -977,18 +993,26 @@ internal sealed class StraySweepTests
         {
             if (!ProcessIdentity.IsAlive(browserId, browserCreated))
             {
-                // ⚠️ With the browser's exit code and its own account of itself.
-                // Added 2026-08-17: this message fired once in five fully
-                // parallel runs and said only that the process was gone, which
-                // is the one thing already obvious from the exception's
-                // existence. Chromium says why it would not start, on stderr,
-                // and until today the harness drained that into a discarded
-                // buffer.
+                // ⚠️ With the browser's exit code, its own account of itself, its
+                // log file and the state of the machine it died on.
+                //
+                // Added 2026-08-17 with the exit code and the streams, because
+                // this message fired once in five fully parallel runs and said
+                // only that the process was gone. Extended 2026-08-18 with the
+                // log and the machine, because it then fired again saying the
+                // browser *"wrote nothing to either stream"* — which was true,
+                // uninformative, and left the actual question open: on Windows a
+                // Chromium that will not start writes to a log file and not to
+                // stderr, and the failure is suspected to be a resource ceiling
+                // rather than anything about this test, so what the machine was
+                // carrying at that instant is the measurement.
                 throw new InvalidOperationException(
                     $"The browser (pid {browserId}) exited before it published a message window for '{profile}'. "
                     + "That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one."
                     + $"{Environment.NewLine}--- exit code: {browser.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"} ---"
-                    + $"{Environment.NewLine}--- what it wrote ---{Environment.NewLine}{scope.SaidBy(browserId)}");
+                    + $"{Environment.NewLine}--- what it wrote ---{Environment.NewLine}{scope.SaidBy(browserId)}"
+                    + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{ChromiumLog(chromiumLog)}"
+                    + $"{Environment.NewLine}--- the machine at that instant ---{Environment.NewLine}{MachineLoad.Describe()}");
             }
 
             using (var scan = BrowserProcesses.ScanFor([image]))
@@ -1010,10 +1034,45 @@ internal sealed class StraySweepTests
             if (DateTime.UtcNow > deadline)
             {
                 throw new TimeoutException(
-                    $"No message-only window titled '{profile}' appeared within {Patience}. A real Chromium publishes its user-data-dir there, and the sweep's attribution half reads it.");
+                    $"No message-only window titled '{profile}' appeared within {Patience}. A real Chromium publishes its user-data-dir there, and the sweep's attribution half reads it."
+                    + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{ChromiumLog(chromiumLog)}"
+                    + $"{Environment.NewLine}--- the machine at that instant ---{Environment.NewLine}{MachineLoad.Describe()}");
             }
 
             await Task.Delay(50);
+        }
+    }
+
+    /// <summary>
+    /// Whatever Chromium wrote to its own log, or why there is none.
+    /// </summary>
+    /// <remarks>
+    /// <b>Opened sharing everything.</b> The browser may still be writing, or may
+    /// have died with the handle open, and a diagnostic that threw while
+    /// collecting the only evidence there is would leave the next occurrence as
+    /// undiagnosable as the last one.
+    /// </remarks>
+    /// <param name="path">Where the browser was told to log.</param>
+    /// <returns>The log, or a sentence saying why there is not one.</returns>
+    private static string ChromiumLog(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            var text = reader.ReadToEnd();
+
+            return text.Length is 0 ? "<the log file exists and is empty>" : text;
+        }
+        catch (FileNotFoundException)
+        {
+            return "<no log file: the browser did not get far enough to open one>";
+        }
+#pragma warning disable CA1031 // Anything at all that stops this being read is part of the finding, and none of it may replace the failure being reported.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            return $"<the log file could not be read: {failure.GetType().Name}: {failure.Message}>";
         }
     }
 

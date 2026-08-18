@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
+using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Sessions;
 using Microsoft.Extensions.Logging;
@@ -126,37 +127,147 @@ internal static class SessionProbe
             Purpose = $"race contender {Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}",
         };
 
+        // ⚠️ EVERY FIELD BELOW IS THERE BECAUSE ONE OCCURRENCE WENT UNDIAGNOSED.
+        // Measured 2026-08-18: a loser reported an outcome other than `Held` once
+        // in eighteen full-suite runs, and the report it wrote carried the
+        // outcome, the message and nothing else — so the run that caught it could
+        // not say which outcome, what the machine looked like, or whether the
+        // holder it failed to name was even alive. A failure that names its own
+        // state costs one run to diagnose; one that says "not Held" costs twenty.
+        //
+        // The three non-`Held` refusals `TryAcquire` can return are told apart by
+        // different fields, which is why they are all here:
+        //
+        //   Busy       -- the per-directory gate expired. `elapsedMilliseconds`
+        //                 sits at the gate's own timeout and the lock file is
+        //                 perfectly readable, naming a live holder.
+        //   Unreadable -- the record parsed as damage, or could not be written.
+        //                 `lockFile` carries the bytes that did it.
+        //   Refused    -- the machine-wide mutex could not be created at all.
+        //                 Nothing is on disk and the message names the Win32 cause.
         var clock = Stopwatch.StartNew();
-        var result = SessionLock.TryAcquire(path, request, NullLogger.Instance);
+        SessionLockResult? result = null;
+        string? failure = null;
+
+        try
+        {
+            result = SessionLock.TryAcquire(path, request, NullLogger.Instance);
+        }
+#pragma warning disable CA1031 // A throw out of TryAcquire is the most interesting outcome of all, and unwritten it presents to the host as a report that never appeared.
+        catch (Exception thrown)
+#pragma warning restore CA1031
+        {
+            failure = $"{thrown.GetType().Name}: {thrown.Message}";
+        }
+
         var elapsed = clock.Elapsed;
+
+        // Taken AFTER the attempt and before anything else runs, so it is as
+        // close to the instant of the outcome as this process can get.
+        var onDisk = StateOfTheLockFile(path.LockFile);
 
         try
         {
             Write(reportPath, new JsonObject
             {
                 ["pid"] = Environment.ProcessId,
-                ["outcome"] = result.Outcome.ToString(),
-                ["taken"] = result.Taken,
-                ["message"] = result.Message,
-                ["holderPid"] = result.Holder?.Holder.ProcessId,
-                ["gateWasAbandoned"] = result.Acquired?.GateWasAbandoned ?? false,
+                ["createdFileTime"] = ProcessLiveness.CreationTimeOfThisProcess(),
+                ["outcome"] = result?.Outcome.ToString(),
+                ["taken"] = result?.Taken ?? false,
+                ["message"] = result?.Message,
+                ["failure"] = failure,
+                ["holderPid"] = result?.Holder?.Holder.ProcessId,
+                ["holderCreatedFileTime"] = result?.Holder?.Holder.ProcessCreatedFileTime,
+                ["holderRunning"] = result?.HolderRunning ?? false,
+                ["gateWasAbandoned"] = result?.Acquired?.GateWasAbandoned ?? false,
                 ["elapsedMilliseconds"] = elapsed.TotalMilliseconds,
+                ["gateTimeoutMilliseconds"] = LockScopes.PerDirectoryGate.TotalMilliseconds,
+                ["lockFile"] = onDisk,
             });
 
             // The winner must still be holding when the losers make their
             // attempt, or a second acquire would be correct behaviour and the
             // race would prove nothing. The host decides when that is over.
-            if (result.Taken)
+            if (result?.Taken is true)
             {
                 WaitForFile(releasePath);
             }
         }
         finally
         {
-            result.Acquired?.Dispose();
+            result?.Acquired?.Dispose();
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// What <c>lock.json</c> looked like at the instant an attempt on it ended.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read with every share flag set, so that this diagnostic can never be
+    /// the thing that fails.</b> It is looking at a file another process holds
+    /// <c>FileAccess.ReadWrite, FileShare.Read</c> and may be renaming over, and
+    /// a probe that threw while describing the state would destroy the only
+    /// evidence there was. The temp count is the decisive column when the record
+    /// is absent: the writer's <c>lock.json.new-&lt;guid&gt;</c> exists for
+    /// exactly the length of one rewrite.
+    /// </remarks>
+    /// <param name="lockFile">The lock file to describe.</param>
+    /// <returns>What the machine said, for the host's failure message.</returns>
+    private static JsonObject StateOfTheLockFile(string lockFile)
+    {
+        var state = new JsonObject { ["exists"] = File.Exists(lockFile) };
+        var directory = Path.GetDirectoryName(lockFile);
+
+#pragma warning disable CA1031 // Every catch in this method is deliberately unnarrowed: this is the only evidence a failed run will have, and a diagnostic that throws while describing a failure destroys it.
+        try
+        {
+            var file = new FileInfo(lockFile);
+            state["length"] = file.Exists ? file.Length : -1;
+        }
+        catch (Exception thrown)
+        {
+            state["length"] = -2;
+            state["lengthFailure"] = thrown.Message;
+        }
+
+        try
+        {
+            using var stream = new FileStream(
+                lockFile,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                bufferSize: 1);
+
+            using var reader = new StreamReader(stream);
+            state["text"] = reader.ReadToEnd();
+        }
+        catch (Exception thrown)
+        {
+            state["text"] = null;
+            state["textFailure"] = $"{thrown.GetType().Name}: {thrown.Message}";
+        }
+
+        try
+        {
+            state["rewriteTempsPresent"] = directory is null
+                ? -1
+                : Directory.EnumerateFiles(directory, $"{SessionLayout.LockFileName}.new-*").Count();
+
+            state["entries"] = directory is null
+                ? null
+                : string.Join(", ", Directory.EnumerateFileSystemEntries(directory).Select(Path.GetFileName).Order(StringComparer.Ordinal));
+        }
+        catch (Exception thrown)
+        {
+            state["rewriteTempsPresent"] = -2;
+            state["entriesFailure"] = $"{thrown.GetType().Name}: {thrown.Message}";
+        }
+#pragma warning restore CA1031
+
+        return state;
     }
 
     /// <summary>

@@ -3,6 +3,8 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
+using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Sessions;
@@ -101,29 +103,51 @@ internal sealed class SessionLockTests
             var taken = outcomes.Where(report => (bool)report["taken"]!).ToList();
             var refused = outcomes.Where(report => !(bool)report["taken"]!).ToList();
 
-            await Assert.That(taken.Count).IsEqualTo(1);
-            await Assert.That(refused.Count).IsEqualTo(Contenders - 1);
+            // ⚠️ EVERY ASSERTION BELOW CARRIES THE WHOLE DOSSIER, and that is the
+            // 2026-08-18 correction rather than decoration. This test failed once
+            // in eighteen full-suite runs with a loser reporting an outcome other
+            // than `Held`, and the run that caught it recorded only that much: not
+            // which outcome, not the holder it named, not what was on disk. The
+            // property under test is a property of sixteen processes, so a
+            // failure that shows one of them cannot be diagnosed — it took twenty
+            // further runs to not reproduce. The dossier is the whole set, and it
+            // is read before the release flag is written, so the winner is still
+            // holding while it is taken.
+            var dossier = Dossier(outcomes, path);
+
+            await Assert.That(taken.Count).IsEqualTo(1).Because(dossier);
+            await Assert.That(refused.Count).IsEqualTo(Contenders - 1).Because(dossier);
 
             winner = (int)taken[0]["pid"]!;
-            await Assert.That((string?)taken[0]["outcome"]).IsEqualTo(nameof(SessionLockOutcome.Acquired));
+            await Assert.That((string?)taken[0]["outcome"]).IsEqualTo(nameof(SessionLockOutcome.Acquired)).Because(dossier);
 
             foreach (var loser in refused)
             {
                 // Not "busy", not a timeout, not a wait: the holder, named.
-                await Assert.That((string?)loser["outcome"]).IsEqualTo(nameof(SessionLockOutcome.Held));
-                await Assert.That((int?)loser["holderPid"]).IsEqualTo(winner);
+                await Assert.That((string?)loser["outcome"]).IsEqualTo(nameof(SessionLockOutcome.Held)).Because(dossier);
+                await Assert.That((int?)loser["holderPid"]).IsEqualTo(winner).Because(dossier);
 
                 var message = (string)loser["message"]!;
-                await Assert.That(message).Contains($"PID {winner.ToString(CultureInfo.InvariantCulture)}");
-                await Assert.That(message).Contains("running since");
-                await Assert.That(message).Contains("took the lock at");
-                await Assert.That(message).Contains("race contender");
-                await Assert.That(message).Contains("Nothing was changed.");
+                await Assert.That(message).Contains($"PID {winner.ToString(CultureInfo.InvariantCulture)}").Because(dossier);
+                await Assert.That(message).Contains("running since").Because(dossier);
+                await Assert.That(message).Contains("took the lock at").Because(dossier);
+                await Assert.That(message).Contains("race contender").Because(dossier);
+                await Assert.That(message).Contains("Nothing was changed.").Because(dossier);
 
-                // Acquisition never waits. The only bounded wait in the design
-                // is the per-directory gate, and a loser that had waited on it
-                // to the limit would be sitting at five seconds.
-                await Assert.That((double)loser["elapsedMilliseconds"]!).IsLessThan(LockScopes.PerDirectoryGate.TotalMilliseconds);
+                // Acquisition never waits. The only bounded wait in the design is
+                // the per-directory gate, and a loser that had waited on it to
+                // the limit would be sitting at the gate's own timeout.
+                //
+                // ⚠️ This is NOT a promptness assertion, and the distinction is
+                // the whole reason the gate was re-sized on 2026-08-18. What it
+                // asserts is that no contender reached the gate's timeout, which
+                // is the same statement as "every refusal named the holder" —
+                // reaching it produces `Busy`, which the outcome assertion above
+                // catches first. It is kept because a build that changed `Busy`
+                // into something else would slip past that one.
+                await Assert.That((double)loser["elapsedMilliseconds"]!)
+                    .IsLessThan(LockScopes.PerDirectoryGate.TotalMilliseconds)
+                    .Because(dossier);
             }
 
             await File.WriteAllTextAsync(release, "go");
@@ -803,6 +827,50 @@ internal sealed class SessionLockTests
 
         await Assert.That(text).Contains("something a session did");
         await Assert.That(text).Contains("Session lock released");
+    }
+
+    /// <summary>
+    /// Every contender's own account of the race, plus what the host can see on
+    /// disk while the winner is still holding.
+    /// </summary>
+    /// <remarks>
+    /// <b>The whole set, never the failing member.</b> "Exactly one acquires and
+    /// every other is told who" is a statement about all sixteen at once, and a
+    /// message naming one of them cannot say whether the other fifteen agreed. It
+    /// is rendered once and attached to every assertion in the race, so whichever
+    /// one trips carries the same complete picture.
+    /// </remarks>
+    /// <param name="outcomes">What each contender wrote.</param>
+    /// <param name="path">The session every one of them was racing for.</param>
+    /// <returns>The dossier, for a failure message.</returns>
+    private static string Dossier(IReadOnlyList<JsonNode> outcomes, SessionPath path)
+    {
+        var lines = new StringBuilder();
+
+        _ = lines.Append(CultureInfo.InvariantCulture, $"{Contenders} contenders raced '{path.FullPath}'. What each one reported:");
+
+        foreach (var report in outcomes.OrderByDescending(report => (double)report["elapsedMilliseconds"]!))
+        {
+            _ = lines.AppendLine().Append(CultureInfo.InvariantCulture,
+                $"  pid {report["pid"]} (created {report["createdFileTime"]}): outcome={report["outcome"]} taken={report["taken"]} "
+                + $"holderPid={report["holderPid"]} holderCreated={report["holderCreatedFileTime"]} holderRunning={report["holderRunning"]} "
+                + $"gateAbandoned={report["gateWasAbandoned"]} elapsed={report["elapsedMilliseconds"]}ms of a {report["gateTimeoutMilliseconds"]}ms gate");
+
+            if (report["failure"] is not null)
+            {
+                _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"    THREW: {report["failure"]}");
+            }
+
+            _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"    said: {report["message"]}");
+            _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"    saw on disk: {report["lockFile"]?.ToJsonString()}");
+        }
+
+        // The host's own look, taken while the winner still holds: a contender
+        // describing the file it could not read is one witness, and this is the
+        // second.
+        _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"The host, with the winner still holding, reads: {StateOfTheLockFile(path.LockFile).Description}");
+
+        return lines.ToString();
     }
 
     private static bool IsProductCode(FileInfo file) =>
