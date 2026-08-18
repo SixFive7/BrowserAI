@@ -26,7 +26,7 @@ BrowserAI is a Windows-only, NativeAOT .NET MCP server that proxies a bundled `@
 | **Never weaken a severity or suppress a warning to make code pass** — fix the code | `BuildConfigurationTests.NoBuildFileSuppressesWarnings` and `.WarningsAreErrorsForEveryProject`, with `.editorconfig` at error severity |
 | **Everything floats and the build freezes it; never pin to work around a break.** Version numbers in prose are provenance stamps, not targets — the build does not read them | `BuildConfigurationTests.EveryCentrallyManagedPackageVersionFloats` and `.NoProjectFileDeclaresAPackageVersion` |
 | **Do not edit [`upstream-review.json`](upstream-review.json) to make a test pass.** A red marker is a review that has not happened yet. Follow [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md), and record what was adopted, what was **declined**, and why | `UpstreamReviewTests` and `UpstreamSnapshotTests` make a bad edit a red build rather than a prompt. The [hook](.claude/hooks/upstream-review-gate.ps1) is a reminder only: under bypass-permissions an `ask` returned to a sub-agent is silently downgraded to allow |
-| **Every relative Markdown link resolves, `#anchor` half included** | `DocumentationLinkTests` — 554 fragments, and the path half in every `.cs`, `.ps1` and `.md` |
+| **Every relative Markdown link resolves, `#anchor` half included** | `DocumentationLinkTests` — 556 fragments as of 2026-08-18 (*previously 554*, re-measured rather than adjusted), and the path half in every `.cs`, `.ps1` and `.md` |
 | **A hazard row names symbols that exist; a new `[FLOATS]` fact gets a row in the [re-verification index](kb/re-verification.md)** | `HazardIndexTests`, `ReVerificationIndexTests` |
 
 ## Rules nothing enforces — these need a person

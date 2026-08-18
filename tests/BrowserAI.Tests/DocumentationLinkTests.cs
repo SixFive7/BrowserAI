@@ -197,13 +197,21 @@ internal sealed partial class DocumentationLinkTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // Not vacuous, and not vacuous in each half separately. On 2026-08-18
-        // this was 554 fragments: 500 across documents, 54 within one, and 76 of
-        // the 500 written in a `.cs` doc comment — which is the half no renderer
-        // ever displays and the half the retitling incident broke four of. The
-        // floors are a long way under those numbers on purpose: they exist to
-        // catch a narrowing that empties the scan, not to pin counts that move
-        // whenever a document is written.
+        // Not vacuous, and not vacuous in each half separately. Corrected
+        // 2026-08-18 to 556 fragments — 501 across documents, 55 within one, and
+        // 77 of the 501 written in a `.cs` doc comment (previously "554: 500,
+        // 54, and 76", earlier the same day, before the session-gate work added
+        // links). That half is the one no renderer ever displays and the one the
+        // retitling incident broke four of. The floors are a long way under
+        // these numbers on purpose: they exist to catch a narrowing that empties
+        // the scan, not to pin counts that move whenever a document is written.
+        //
+        // ⚠️ These three are MEASURED, never derived from the last figure by
+        // counting the links in a diff. Re-establish by temporarily asserting
+        // `IsEqualTo(-1).Because($"{resolved} {fromCode} {withinOneDocument}")`
+        // and running this test alone; the failure prints all three. Adjusting
+        // them by arithmetic would make a stamp that reads exactly like a
+        // measurement and is not one.
         //
         // ⚠️ Those three numbers are what found the prune defect recorded on
         // RepositoryLayout.NotOursAtTheRoot: this scan counted 552 where a

@@ -614,12 +614,22 @@ saturation test's own 802 produces.
 **A record on stderr is not durable, and a record in the process log is — the
 two diagnostic channels differ and only the file's guarantee is written down.**
 Measured 2026-08-18 on two consecutive CI runs. `ProcessLog` wires stderr through
-`AddConsole`, which hands every record to a background processor thread;
-`RollingFileWriter` is one unbuffered `WriteFile` per record against a
-`FILE_APPEND_DATA` handle. A process ended with `TerminateProcess` therefore
+`AddConsole`; `RollingFileWriter` is one unbuffered `WriteFile` per record against
+a `FILE_APPEND_DATA` handle. A process ended with `TerminateProcess` therefore
 keeps everything the file sink wrote and **loses whatever the console queue still
 held** — and the two runs lost *different* amounts of the tail, which is the
 signature of a queue rather than of a call that never happened.
+
+**That the console provider queues at all is first-party documented rather than
+inferred**, which matters because the observation above would otherwise have only
+an explanation nobody had checked. `ConsoleLoggerOptions.QueueFullMode` exists,
+its default is `Wait`, and `ConsoleLoggerQueueFullMode.Wait` is defined as
+*"Blocks the logging threads once the queue limit is reached"* — a queue that can
+fill, and that blocks *the logging threads* rather than the writing one, is
+drained by something else. Verified against MS Learn 2026-08-18. The same page
+gives the other half of the shape: the full mode is `Wait`, **not** `DropWrite`,
+so records are not discarded under pressure and process death is the only way
+this loses one.
 
 > **The consequence for tests, and it cost two red CI runs:** an assertion of the
 > form *"the product recorded X"* must read the process log, not stderr, whenever
