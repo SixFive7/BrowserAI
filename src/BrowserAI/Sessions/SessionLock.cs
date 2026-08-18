@@ -308,6 +308,73 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
+    /// Releases the directory and deletes what is left of it, with the release
+    /// and the delete inside <b>one hold</b> of the per-directory gate.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This exists because <c>browserai_destroy</c>'s destructive act has to
+    /// happen while the directory is still ours, and its last two nodes cannot
+    /// be removed while it is.</b> Windows will not unlink a file this process
+    /// is holding open, so <c>lock.json</c> — and therefore the directory above
+    /// it — can only go after the handle does. The instant between is exactly
+    /// the instant a peer's <see cref="TryAcquire"/> reclaims the directory and
+    /// launches a browser into a tree that is about to be deleted. Every
+    /// BrowserAI takes the per-directory gate before create-or-take, so holding
+    /// it across the release makes that instant unobservable — the same
+    /// mechanism, for the same reason, that makes <see cref="Rewrite"/>'s
+    /// close/rename/re-open gap unobservable.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-18 (previously the caller released the lock and then
+    /// walked the tree for a size before deleting it).</b> The comment defending
+    /// that release said <i>"the lock has done its job the moment ownership is
+    /// proven"</i>, which is the defect stated as a justification: ownership was
+    /// proven for an instant and the destructive act happened outside it, with a
+    /// full recursive walk of a Chromium profile in between. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// A1.
+    /// </para>
+    /// <para>
+    /// <b>A gate that could not be taken narrows the window rather than
+    /// abandoning the delete.</b> Refusing here would leave a directory whose
+    /// record claims a holder that has finished with it, and a session nobody
+    /// destroys is worse than the race this closes.
+    /// </para>
+    /// </remarks>
+    /// <param name="delete">
+    /// Removes what is left. It runs <b>after</b> the handle is closed and
+    /// <b>before</b> the gate is released, so it may unlink <c>lock.json</c>
+    /// and no peer can be inside create-or-take while it does.
+    /// </param>
+    /// <exception cref="ObjectDisposedException">This lock has already been released.</exception>
+    public void ReleaseAndDelete(Action delete)
+    {
+        ArgumentNullException.ThrowIfNull(delete);
+        ObjectDisposedException.ThrowIf(Interlocked.Exchange(ref _disposed, 1) is not 0, this);
+
+        var acquisition = _gate.Acquire(LockScopes.PerDirectoryGate);
+
+        try
+        {
+            SessionLog.Released(_logger, Location.FullPath);
+
+            _held.Dispose();
+            delete();
+        }
+        finally
+        {
+            if (acquisition is not MutexAcquisition.NotAcquired)
+            {
+                _gate.Release();
+            }
+
+            _logScope?.Dispose();
+            _gate.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Releases the directory. <c>lock.json</c> stays: the holder record
     /// outliving the holder is what makes a stale lock a sentence rather than a
     /// refusal.

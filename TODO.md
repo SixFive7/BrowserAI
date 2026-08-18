@@ -29,15 +29,6 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 [`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
 by effort.**
 
-- [ ] **`browserai_destroy` can delete a live session out from under another
-      process.** `SessionManager` releases the lock, then walks the whole tree for
-      a size, then deletes. A peer that `resume`s in that gap gets `Reclaimed`,
-      launches a browser into `profile/`, and has its tree deleted underneath it.
-      **The window is a recursive walk of a Chromium profile wide** — thousands of
-      files, not microseconds. The comment defending the early release is true
-      about `lock.json` and irrelevant to the delete. Hold ownership until the
-      delete is done.
-
 - [ ] **The client-liveness watch acts on a bare pid, and firing it kills every
       session.** `ClientLiveness` opens the pid from
       `InheritedFromUniqueProcessId` — stale by design — with **no creation-time

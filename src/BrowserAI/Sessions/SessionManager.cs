@@ -484,11 +484,17 @@ internal sealed class SessionManager : IAsyncDisposable
             return new ToolOutcome($"'{location.FullPath}' was not destroyed. {taken.Message}", IsError: true);
         }
 
-        // Released before the delete: Windows will not remove a file this
-        // process is holding open, and the lock has done its job the moment
-        // ownership is proven.
-        held.Dispose();
-
+        // ⚠️ Corrected 2026-08-18 (previously `held.Dispose()` on this line,
+        // defended as "Windows will not remove a file this process is holding
+        // open, and the lock has done its job the moment ownership is proven").
+        // The first half is true of lock.json and the second half is the defect:
+        // ownership was proven for an instant and the DELETE happened outside
+        // it, with the recursive walk below in between. A peer that resumed in
+        // that gap was told it owned the directory, launched a browser into
+        // profile\, and had its tree removed underneath it -- while this call
+        // reported the peer's own open files as "something still has them open".
+        // The window is a full walk of a Chromium profile wide, not microseconds
+        // (docs/reviews/2026-08-18-adversarial-locking.md, A1).
         var size = SessionLayout.SizeOnDisk(location.FullPath);
         var failures = new List<string>();
 
@@ -497,7 +503,19 @@ internal sealed class SessionManager : IAsyncDisposable
         // a virus scanner still holds open costs that file rather than the whole
         // call. A destroy that silently left half a tree would be the founding
         // failure shape.
-        TreeDelete.Remove(location.FullPath, failures);
+        //
+        // This pass runs with lock.json STILL HELD, so it removes everything
+        // except lock.json and the directory above it. Its failure list is
+        // discarded because those two are in it by construction and neither is
+        // news; the pass below is the one whose survivors the caller is told
+        // about, and it re-tries anything this one could not take.
+        TreeDelete.Remove(location.FullPath, []);
+
+        // Release and finish inside one hold of the per-directory gate, so the
+        // instant in which lock.json is unheld and still on disk is an instant
+        // no peer's create-or-take can be inside. The gate is held across two
+        // unlinks in the ordinary case -- everything else is already gone.
+        held.ReleaseAndDelete(() => TreeDelete.Remove(location.FullPath, failures));
 
         _index.Forget(location);
         var rollUp = RefreshRollUp(location);
