@@ -325,8 +325,8 @@ client that:
   [an unset one passes `null` to `CreateProcess`](README.md#windows-process-spawning)
   and the child silently inherits the test host's cwd.
 
-**Prior art to copy rather than reinvent:** the in-house `McpStdioClient` at
-`C:\Source\SixFive7\OutlookAI\McpServer\OutlookAI.McpServer.Tests\T3\McpStdioClient.cs`
+**Prior art to copy rather than reinvent:** an in-house `McpStdioClient` in a
+sibling project's test tree, unpublished and not reachable from this repository
 — 261 lines, verified 2026-08-16, carrying all five properties above. (An earlier
 note in this project put it at 233 lines; it has grown since.) It exists there for
 the same reason it is needed here: to prove the wire protocol rather than the
