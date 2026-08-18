@@ -83,26 +83,32 @@ internal static class SessionToolSurface
     /// <remarks>
     /// The same cap as the server <c>instructions</c>, and the same silence: the
     /// tail of a longer description does not exist and nothing reports it.
-    /// Measured in <b>bytes</b>, because these strings carry <c>—</c> and <c>'</c>
-    /// and a character count would under-report the ones that use them.
-    /// Documented for this surface: see <see cref="Proxy.ClientTruncationBudget"/>
-    /// for the sentence it is quoted from and for what that sentence leaves open.
+    /// Counted in <b>UTF-16 characters</b>. <i>Corrected 2026-08-18 (previously
+    /// <c>DescriptionMaximumBytes</c>, over a UTF-8 byte count, "because these
+    /// strings carry <c>—</c> and <c>'</c> and a character count would
+    /// under-report the ones that use them").</i> That reasoning was sound as
+    /// conservatism and wrong as fact: measured @ Claude Code 2.1.234, a 2,048-
+    /// character description weighing 6,004 bytes arrives whole. See
+    /// <see cref="Proxy.ClientTruncationBudget"/> for the measurement.
     /// </remarks>
-    public const int DescriptionMaximumBytes = Proxy.ClientTruncationBudget.Bytes;
+    public const int DescriptionMaximumCharacters = Proxy.ClientTruncationBudget.Characters;
 
     /// <summary>
     /// What a <c>description</c> <b>inside</b> an <c>inputSchema</c> must fit
     /// inside.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Assumed rather than documented</b> — see
-    /// <see cref="Proxy.ClientTruncationBudget.ParameterDescriptionBytes"/>. It is
-    /// the surface this type is most exposed on: <see cref="SessionDescription"/>
-    /// is injected into every upstream tool's schema, so one string lands
-    /// fifty-nine times and an overflow would be fifty-nine silent truncations
-    /// from one edit.
+    /// ⚠️ <b>A house limit, not a client limit</b> — see
+    /// <see cref="Proxy.ClientTruncationBudget.ParameterDescriptionCharacters"/>:
+    /// measured 2026-08-18, the client truncates these at nothing, 20,000
+    /// characters included. It stays enforced because it floats with a client
+    /// version this project does not control and because this is the surface this
+    /// type is most exposed on: <see cref="SessionDescription"/> is injected into
+    /// every upstream tool's schema, so one string lands fifty-nine times and the
+    /// day a release does start cutting schemas, one edit becomes fifty-nine
+    /// silent truncations.
     /// </remarks>
-    public const int ParameterDescriptionMaximumBytes = Proxy.ClientTruncationBudget.ParameterDescriptionBytes;
+    public const int ParameterDescriptionMaximumCharacters = Proxy.ClientTruncationBudget.ParameterDescriptionCharacters;
 
     /// <summary>The six authored tools, in the order they are offered.</summary>
     public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose, ReinstallBrowser];

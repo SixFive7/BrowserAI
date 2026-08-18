@@ -283,16 +283,24 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task TheInstructionsStringFitsTheClientsSilentTruncationBudget()
     {
-        // In BYTES rather than characters, and that is not pedantry: this string
-        // carries '·' (2 bytes) and '—' (3 bytes), so a character count
-        // under-reports precisely the string that uses them. The client cuts at
-        // 2 KB with nothing reported, so anything past the cut has never been
-        // read by anybody.
-        await Assert.That(ServerInstructions.ByteCount).IsLessThanOrEqualTo(ServerInstructions.MaximumBytes);
+        // In CHARACTERS, because that is what the client counts. Corrected
+        // 2026-08-18 (previously "In BYTES rather than characters, and that is
+        // not pedantry: this string carries '·' (2 bytes) and '—' (3 bytes), so a
+        // character count under-reports precisely the string that uses them").
+        // The conservatism was real and the fact was wrong: measured @ Claude
+        // Code 2.1.234, the cut is at 2,048 UTF-16 characters and a byte count is
+        // never consulted. The client cuts with nothing reported, so anything
+        // past the cut has never been read by anybody.
+        await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
 
         // Non-empty and actually wired: an instructions string the server never
         // sends is the same as not having one.
-        await Assert.That(ServerInstructions.ByteCount).IsGreaterThan(400);
+        await Assert.That(ServerInstructions.CharacterCount).IsGreaterThan(400);
+
+        // The byte count is still computed, and is still the larger of the two.
+        // It is reported rather than gated, so that the figure a wire capture
+        // shows is not a figure nothing in this repository names.
+        await Assert.That(ServerInstructions.ByteCount).IsGreaterThanOrEqualTo(ServerInstructions.CharacterCount);
 
         // ⚠️ Re-measured 2026-08-18 off the published binary's own `initialize`
         // response: **1,261 characters and 1,276 bytes**, leaving 772. The three
@@ -337,11 +345,12 @@ internal sealed class ModelSurfaceTests
         foreach (var (name, tool) in advertised)
         {
             var description = (string?)tool?["description"] ?? string.Empty;
-            var bytes = Encoding.UTF8.GetByteCount(description);
 
-            if (bytes > SessionToolSurface.DescriptionMaximumBytes)
+            if (description.Length > SessionToolSurface.DescriptionMaximumCharacters)
             {
-                oversized.Add($"{name}: {bytes} bytes, over the {SessionToolSurface.DescriptionMaximumBytes} the client silently truncates at");
+                oversized.Add(
+                    $"{name}: {description.Length} characters ({Encoding.UTF8.GetByteCount(description)} bytes), "
+                    + $"over the {SessionToolSurface.DescriptionMaximumCharacters} the client silently truncates at");
             }
         }
 
@@ -380,7 +389,8 @@ internal sealed class ModelSurfaceTests
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
 
         // ⚠️ Re-measured 2026-08-18 off the published binary's own tools/list:
-        // **1,639 bytes of 2,048, leaving 409.**
+        // **1,623 characters of 2,048, leaving 425** (1,639 bytes, which is not
+        // the figure the client counts -- see ClientTruncationBudget).
         //
         // Corrected 2026-08-18 (previously "Measured 2026-08-17, and the first
         // draft DID NOT FIT … the description now stands at 1,991 of 2,048 …
@@ -398,9 +408,7 @@ internal sealed class ModelSurfaceTests
         // whenever the mode table does. Together with
         // EveryToolDescriptionFitsTheSameBudget that is a red build rather than a
         // warning nobody reads.
-        var bytes = Encoding.UTF8.GetByteCount(description);
-
-        await Assert.That(bytes).IsLessThanOrEqualTo(SessionToolSurface.DescriptionMaximumBytes);
+        await Assert.That(description.Length).IsLessThanOrEqualTo(SessionToolSurface.DescriptionMaximumCharacters);
     }
 
     [Test]
@@ -471,17 +479,24 @@ internal sealed class ModelSurfaceTests
     /// discarding text, which is a broken state rather than a tight one.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The per-string reading is an ASSUMPTION — see
-    /// <see cref="ClientTruncationBudget"/>.</b> The documented sentence says
-    /// <i>"at 2KB each"</i> and does not say each <i>what</i>. If the cap is per
-    /// tool — description plus schema plus every parameter description in one
-    /// bucket — the arithmetic here is wrong, and this run's own numbers say what
-    /// that would mean: <c>browserai_init</c>'s whole <c>tools/list</c> entry is
-    /// <b>3,428 bytes</b>, so under that reading it is already truncated while
-    /// every string in it fits. That is why the per-tool totals are reported
-    /// beside the per-string figures rather than asserted on: the experiment that
-    /// settles the reading needs the data, and a test must not pretend to have
-    /// settled it.
+    /// <b>The per-string reading is MEASURED — see
+    /// <see cref="ClientTruncationBudget"/>.</b> <i>Corrected 2026-08-18
+    /// (previously "⚠️ The per-string reading is an ASSUMPTION … the experiment
+    /// that settles the reading needs the data, and a test must not pretend to
+    /// have settled it").</i> The experiment ran on 2026-08-18 against Claude
+    /// Code 2.1.234, reading the <c>tools</c> array the client sends to the
+    /// Messages API: the cap is per string, it is <b>2,048 UTF-16 characters</b>
+    /// rather than bytes, and there is no per-tool and no whole-surface total.
+    /// <c>browserai_init</c>'s whole entry — 3,360 bytes as the client sends it —
+    /// arrives intact, so it was never the casualty the old note feared.
+    /// </para>
+    /// <para>
+    /// <b>The entry totals are still reported and still not asserted</b>, for a
+    /// different reason than before: they are the figure that would matter if a
+    /// client release ever did introduce a per-tool bucket, and a report nobody
+    /// has to re-derive is what makes that re-check cheap. What <i>is</i> asserted
+    /// is the measured predicate — <c>Length &gt; 2048</c>, in characters, on
+    /// each string separately.
     /// </para>
     /// </remarks>
     [Test]
@@ -529,21 +544,20 @@ internal sealed class ModelSurfaceTests
 
         Report(measured, entryTotals);
 
-        // ⚠️ Both counts, failing on whichever is larger. It is not documented
-        // whether the client counts characters or bytes, and the two diverge on
-        // the first em dash: `initialize.instructions` is 1,261 characters and
-        // 1,276 bytes. For UTF-8 the byte count is never below the character
-        // count, so `Largest` is always the byte count -- which makes bytes the
-        // conservative gate and the character count a thing the report shows
-        // rather than a second way to fail. Written as a max anyway, so that a
-        // future encoding change cannot silently make the weaker half the gate.
+        // Both counts measured, gated on CHARACTERS. Corrected 2026-08-18
+        // (previously "Both counts, failing on whichever is larger. It is not
+        // documented whether the client counts characters or bytes"). It is now
+        // measured: the client counts UTF-16 characters and cuts at > 2048. The
+        // two diverge on the first em dash -- `initialize.instructions` is 1,261
+        // characters and 1,276 bytes -- and the byte figure is the one that is
+        // never consulted, so it is printed and not gated.
         var oversized = measured
-            .Where(entry => entry.Largest > BudgetFor(entry.Surface))
-            .OrderByDescending(entry => entry.Largest)
+            .Where(entry => entry.Gated > BudgetFor(entry.Surface))
+            .OrderByDescending(entry => entry.Gated)
             .Select(entry =>
-                $"{entry.Surface} '{entry.Name}' is {entry.Bytes} bytes / {entry.Characters} characters, "
-                + $"{entry.Largest - BudgetFor(entry.Surface)} over the {BudgetFor(entry.Surface)} the client silently truncates at. "
-                + "Everything past the cut is discarded without a word, so it exists in source, reads correctly in review, and never reaches the model.");
+                $"{entry.Surface} '{entry.Name}' is {entry.Characters} characters / {entry.Bytes} bytes, "
+                + $"{entry.Gated - BudgetFor(entry.Surface)} over the {BudgetFor(entry.Surface)} the client silently truncates at. "
+                + "Everything past the cut is replaced by an ellipsis and '[truncated]' before the model sees it, so it exists in source, reads correctly in review, and never arrives.");
 
         await Assert.That(string.Join(Environment.NewLine, oversized)).IsEmpty();
 
@@ -558,7 +572,7 @@ internal sealed class ModelSurfaceTests
         // And every one of them is a real string rather than an absent member
         // counted as zero: an empty description would satisfy the budget for
         // ever.
-        await Assert.That(measured.Count(entry => entry.Largest is 0)).IsEqualTo(0);
+        await Assert.That(measured.Count(entry => entry.Gated is 0)).IsEqualTo(0);
     }
 
     /// <summary>
@@ -581,8 +595,16 @@ internal sealed class ModelSurfaceTests
     /// <param name="Bytes">Its length in UTF-8 bytes.</param>
     private sealed record ModelFacingString(string Surface, string Name, int Characters, int Bytes)
     {
-        /// <summary>The conservative figure: whichever count is larger.</summary>
-        public int Largest => Math.Max(Characters, Bytes);
+        /// <summary>The figure the client actually counts.</summary>
+        /// <remarks>
+        /// <b>Characters.</b> <i>Corrected 2026-08-18 (previously "the
+        /// conservative figure: whichever count is larger", which was always the
+        /// byte count).</i> Measured @ Claude Code 2.1.234: the cut is on
+        /// <see cref="string.Length"/> and a byte count is never consulted, so a
+        /// byte gate fails strings the client delivers whole. Bytes stay in the
+        /// record because the report prints them.
+        /// </remarks>
+        public int Gated => Characters;
 
         /// <summary>Measures one string, treating an absent one as empty.</summary>
         /// <param name="surface">Which surface it belongs to.</param>
@@ -595,17 +617,18 @@ internal sealed class ModelSurfaceTests
 
     /// <summary>The budget one surface is held to.</summary>
     /// <param name="surface">The surface name.</param>
-    /// <returns>The cap in bytes.</returns>
+    /// <returns>The cap in UTF-16 characters.</returns>
     /// <remarks>
-    /// Two of the three are the documented number; the parameter surface is the
-    /// assumed one, and it is a separate constant so the assumption is visible at
-    /// the point it is applied rather than only in prose.
+    /// Two of the three are the client's measured cap; the parameter surface is a
+    /// <b>house limit</b> the client does not impose (20,000 characters measured
+    /// through intact @ 2.1.234), and it stays a separate constant so that the
+    /// difference is visible where it is applied rather than only in prose.
     /// </remarks>
     private static int BudgetFor(string surface) => surface switch
     {
-        "instructions" => ServerInstructions.MaximumBytes,
-        "tool" => SessionToolSurface.DescriptionMaximumBytes,
-        _ => SessionToolSurface.ParameterDescriptionMaximumBytes,
+        "instructions" => ServerInstructions.MaximumCharacters,
+        "tool" => SessionToolSurface.DescriptionMaximumCharacters,
+        _ => SessionToolSurface.ParameterDescriptionMaximumCharacters,
     };
 
     /// <summary>
@@ -614,9 +637,9 @@ internal sealed class ModelSurfaceTests
     /// </summary>
     /// <remarks>
     /// A gate that only speaks when it fails cannot tell anybody they are 40
-    /// bytes from silent truncation. The per-tool entry totals go in the same
-    /// block, unasserted, as the data the per-string-versus-per-tool experiment
-    /// needs.
+    /// characters from silent truncation. The per-tool entry totals go in the
+    /// same block, unasserted, as the figure a future client release introducing
+    /// a per-tool bucket would be judged against.
     /// </remarks>
     /// <param name="measured">Every measured string.</param>
     /// <param name="entryTotals">Each tool's whole serialized <c>tools/list</c> entry.</param>
@@ -627,29 +650,30 @@ internal sealed class ModelSurfaceTests
         var report = new StringBuilder();
 
         _ = report.AppendLine("Model-facing string budget, measured off the published binary's own wire.");
-        _ = report.AppendLine(CultureInfo.InvariantCulture, $"Per-string budget: {ServerInstructions.MaximumBytes} bytes (documented for instructions and tool descriptions; ASSUMED for parameter descriptions).");
+        _ = report.AppendLine(CultureInfo.InvariantCulture, $"Per-string budget: {ServerInstructions.MaximumCharacters} UTF-16 characters, cut at > {ServerInstructions.MaximumCharacters} (measured 2026-08-18 @ Claude Code 2.1.234).");
+        _ = report.AppendLine("The client does NOT cap parameter descriptions at all; that column is a house limit. Bytes are printed and never gated.");
 
         foreach (var surface in new[] { "instructions", "tool", "parameter" })
         {
-            var rows = measured.Where(entry => entry.Surface == surface).OrderByDescending(entry => entry.Largest).ToList();
+            var rows = measured.Where(entry => entry.Surface == surface).OrderByDescending(entry => entry.Gated).ToList();
 
             _ = report.AppendLine();
-            _ = report.AppendLine(CultureInfo.InvariantCulture, $"--- {surface}: {rows.Count} strings, largest {(rows.Count is 0 ? 0 : rows[0].Largest)} bytes ---");
+            _ = report.AppendLine(CultureInfo.InvariantCulture, $"--- {surface}: {rows.Count} strings, largest {(rows.Count is 0 ? 0 : rows[0].Gated)} characters ---");
 
             foreach (var row in rows)
             {
                 _ = report.AppendLine(
                     CultureInfo.InvariantCulture,
-                    $"  {row.Bytes,6} B  {row.Characters,6} c  {row.Largest * 100 / BudgetFor(surface),3}%  {row.Name}");
+                    $"  {row.Bytes,6} B  {row.Characters,6} c  {row.Gated * 100 / BudgetFor(surface),3}%  {row.Name}");
             }
         }
 
         _ = report.AppendLine();
-        _ = report.AppendLine("--- UNASSERTED: each tool's WHOLE tools/list entry, for the per-tool-total reading of \"2KB each\" ---");
+        _ = report.AppendLine("--- UNASSERTED: each tool's WHOLE tools/list entry. Measured 2026-08-18 @ 2.1.234 there is NO per-tool bucket, so these are re-check data rather than a budget ---");
 
         foreach (var (tool, characters, bytes) in entryTotals.OrderByDescending(entry => entry.Bytes))
         {
-            _ = report.AppendLine(CultureInfo.InvariantCulture, $"  {bytes,6} B  {characters,6} c  {(bytes > ServerInstructions.MaximumBytes ? "OVER" : "    ")}  {tool}");
+            _ = report.AppendLine(CultureInfo.InvariantCulture, $"  {bytes,6} B  {characters,6} c  {(bytes > ServerInstructions.MaximumCharacters ? "2KB+" : "    ")}  {tool}");
         }
 
         TestContext.Current?.OutputWriter.WriteLine(report.ToString());

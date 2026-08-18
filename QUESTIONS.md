@@ -16,7 +16,7 @@ should have waited.
 
 ## Open questions
 
-### 1. Are parameter descriptions truncated?
+### 1. Are parameter descriptions truncated? — **ANSWERED 2026-08-18: no**
 
 Claude Code's [MCP documentation](https://code.claude.com/docs/en/mcp) states, verbatim:
 
@@ -32,8 +32,26 @@ that turns out to be uncapped costs a slightly terser description; under-gating
 one that is capped loses text silently, which is the failure this project exists
 to eliminate.
 
-**To settle it:** publish a parameter description just over 2048 bytes and read
-what reaches the model. Nobody has done that.
+**Answered 2026-08-18 @ Claude Code 2.1.234. They are not truncated at all** —
+a parameter description of **20,000 characters** reached the model whole. The
+probe published exactly what the old paragraph below asked for and more, and the
+answer was read off the client's own outbound Messages API request rather than
+off a model's recollection. *Previously: "To settle it: publish a parameter
+description just over 2048 bytes and read what reaches the model. Nobody has done
+that."*
+
+**What changed, and what deliberately did not.** The cap stays enforced, and it
+is now labelled for what it is: a **house limit**, not a client limit, on
+`ClientTruncationBudget.ParameterDescriptionCharacters`. Two reasons, neither of
+them the original one. It floats with a client version this project does not
+control, and it is the surface BrowserAI is most exposed on — one injected
+`session` description lands on fifty-nine upstream tools at once, so the day a
+release does start cutting schemas, one edit becomes fifty-nine silent
+truncations. **What must not survive is citing it as documented**, and the
+constant now says so.
+
+Full measurement:
+[kb](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234).
 
 ### 2. What should CI actually run?
 
@@ -248,7 +266,7 @@ migration cost is one commit and there is no external consumer to break — this
 build has never shipped a caller that parses it. (d) is a defensible hold; (c) is
 the only option that adds surface without adding an action.
 
-### 10. Whether the client's 2 KB cap is per string or per tool
+### 10. Whether the client's 2 KB cap is per string or per tool — **ANSWERED 2026-08-18: per string**
 
 Claude Code's MCP documentation says, verbatim: *"Claude Code truncates tool
 descriptions and server instructions at 2KB each."* **"Each" does not say each
@@ -267,18 +285,40 @@ of the 65 over the line. If that reading is right, `browserai_init` is truncated
 today, mid-schema, and trimming its description would move text from one capped
 bucket into the same capped bucket rather than fixing anything.
 
-**Nobody has checked, and the gate says so** rather than hiding the assumption
-behind a passing test: `ClientTruncationBudget` records it, and
-`ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget`
-reports every tool's entry total unasserted beside the per-string figures.
+**Answered 2026-08-18 @ Claude Code 2.1.234: the cap is PER STRING.** Direction
+(a) was taken and it reported. *Previously: "Nobody has checked, and the gate says
+so rather than hiding the assumption behind a passing test … Recommendation: (a),
+and it is already commissioned."*
 
-**Directions.** (a) **Settle it empirically** — a probe server advertising one
-tool with a description just under 2 KB and a marker sentence at the very end of a
-large schema, asked to repeat the marker. (b) Read Claude Code's own truncation
-code if it is reachable. (c) Assume the worse reading and split `browserai_init`
-into two tools, which reopens the charter's tool-surface decision. (d) Leave it,
-and accept that a truncation here is silent.
+A probe tool whose **whole entry was 4,578 bytes** — a 1,500-character
+description plus four 700-character parameter descriptions, every string under
+the cap — arrived at the model **completely intact**; entries of 17 KB and 20 KB
+did too. So **`browserai_init` is not truncated and never was**, and (c) —
+splitting it in two — was correctly not taken.
 
-**Recommendation: (a), and it is already commissioned.** It is one probe server and
-one conversation, it settles the question for every MCP server this estate ships,
-and (c) is unjustifiable before it is answered.
+**Four things nobody had asked came out of the same run**, and three of them
+matter more than the original question:
+
+- The unit is **UTF-16 characters, never bytes**. A 2,048-character description
+  weighing 6,004 bytes arrived whole. The gate had been in bytes, which is
+  strictly stronger and therefore capable only of false failures, but it was
+  wrong about the world and is now in characters.
+- The predicate is **`> 2048`** exactly — 2,047 intact, 2,048 intact, 2,049 cut.
+- **Parameter descriptions are not truncated at all** (question 1 above).
+- **The cut is visible to the model and invisible to the server**: the client
+  appends the literal `… [truncated]`. Nothing about it reaches the server, which
+  is why the gate has to be a build failure rather than a run-time check — but it
+  also means *"did that arrive whole?"* is a question a model can answer.
+
+**The method is the reusable part**, because it does not depend on a model
+complying: Claude Code honours `ANTHROPIC_BASE_URL`, so pointing it at a local
+recorder with a throwaway `ANTHROPIC_AUTH_TOKEN` yields the `tools` array
+byte-for-byte, at no cost and with no real API call. Recipe:
+[kb](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234).
+
+**What is still open is only the direction of travel.** Every figure above is a
+client-version fact with nothing watching it — row 92 of the
+[re-verification index](kb/re-verification.md) is the only thing that will bring
+it back up, and only when somebody works through that table. A release that
+introduced a per-tool bucket would break `browserai_init` on day one and report
+nothing.

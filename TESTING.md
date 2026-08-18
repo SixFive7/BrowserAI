@@ -482,8 +482,10 @@ the gate, and five things about it are deliberate:
   nothing at all.
 - **Enumerated dynamically**, so a tool upstream adds next year is covered without
   anybody editing the test. Per-surface floors keep that from becoming vacuous.
-- **Characters and UTF-8 bytes, failing on whichever is larger.** It is not
-  documented which the client counts, and the two diverge on the first em dash.
+- **Characters and UTF-8 bytes measured, failing on characters.** *Corrected
+  2026-08-18 (previously "failing on whichever is larger. It is not documented
+  which the client counts").* It is now measured: the client counts UTF-16
+  characters and never bytes. The byte figure is printed and not gated.
 - **Hard at 100%, with no warning tier.** This does not contradict the recorded
   argument against a headroom gate — that argument was against failing *below*
   100%, so that a fourth session mode fails on the six-consumer line rather than
@@ -493,15 +495,18 @@ It prints every length sorted on a **passing** run, to the run output and to
 `.work/description-budget.txt`, because a gate that only speaks when it fails
 cannot tell anybody they are forty bytes from silent truncation.
 
-> ⚠️ **The per-string reading is an assumption and the constant says so.**
-> *"2KB each"* does not say each **what**. The competing reading is per tool —
-> description plus serialized schema plus every parameter description in one
-> bucket — under which `browserai_init`'s whole `tools/list` entry is **3,428
-> bytes** and already truncated today, while every string in it fits. The gate is
-> built on the per-string reading because it is the conservative one to be wrong
-> about; the per-tool totals are **reported and not asserted**, so the experiment
-> commissioned to settle it has its data. See `ClientTruncationBudget` and
-> [QUESTIONS.md](QUESTIONS.md).
+> **The per-string reading is measured, not assumed.** *Corrected 2026-08-18
+> (previously "⚠️ The per-string reading is an assumption and the constant says
+> so … the experiment commissioned to settle it has its data").* The experiment
+> ran @ Claude Code 2.1.234, reading the `tools` array the client sends to the
+> Messages API: **per string, 2,048 UTF-16 characters, cut at `> 2048`**, no
+> per-tool bucket, no whole-surface total, and parameter descriptions not
+> truncated at all. `browserai_init`'s whole entry — 3,360 bytes as the client
+> sends it — arrives intact, so the feared casualty was never one. The per-tool
+> totals stay **reported and not asserted**, now as the figure a future release
+> introducing a per-tool bucket would be judged against. See
+> `ClientTruncationBudget` and
+> [kb](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234).
 
 **Every count a surviving document publishes about this repository is checked
 against a live scan.** `ReVerificationIndexTests` had done this for one sentence

@@ -43,11 +43,14 @@ internal static class ServerInstructions
     /// </summary>
     /// <remarks>
     /// One of the two surfaces <see cref="ClientTruncationBudget"/> quotes the
-    /// documentation for by name. The number lives there so that all three
-    /// model-facing surfaces cannot drift apart, and so the unresolved reading of
-    /// the documentation's <i>"each"</i> is stated once where it can be read.
+    /// documentation for by name, and one of the two it was measured on. The
+    /// number lives there so that all three model-facing surfaces cannot drift
+    /// apart. <i>Corrected 2026-08-18 (previously <c>MaximumBytes</c>, over a
+    /// UTF-8 byte count).</i> The client counts UTF-16 characters and never
+    /// bytes; it delivers this string inside a <c>&lt;system-reminder&gt;</c> in
+    /// the messages array, cut at 2,048 with <c>"… [truncated]"</c> appended.
     /// </remarks>
-    public const int MaximumBytes = ClientTruncationBudget.Bytes;
+    public const int MaximumCharacters = ClientTruncationBudget.Characters;
 
     /// <summary>The instructions sent on <c>initialize</c>.</summary>
     public static string Text { get; } =
@@ -63,6 +66,21 @@ internal static class ServerInstructions
         {SessionToolSurface.Init} refuses a directory that already holds a session and directs you to {SessionToolSurface.Resume}. That is deliberate rather than an obstacle: it turns an accidental collision into a stated intent. {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.Destroy} deletes one, {SessionToolSurface.SetPurpose} rewrites what one says it is for.
         """;
 
-    /// <summary>How many bytes <see cref="Text"/> costs of the budget.</summary>
+    /// <summary>How many characters <see cref="Text"/> costs of the budget.</summary>
+    /// <remarks>
+    /// The gate, because characters are what the client counts. Measured
+    /// 2026-08-18 @ Claude Code 2.1.234 off the wire it actually sends.
+    /// </remarks>
+    public static int CharacterCount { get; } = Text.Length;
+
+    /// <summary>
+    /// How many UTF-8 bytes <see cref="Text"/> costs on the JSON-RPC wire.
+    /// </summary>
+    /// <remarks>
+    /// Reported rather than gated: it is what the string costs to transmit, and
+    /// it is <b>not</b> what the client truncates on — this string carries
+    /// <c>·</c> (2 bytes) and <c>—</c> (3 bytes), so the two figures differ and
+    /// the byte one is the larger and the wrong one.
+    /// </remarks>
     public static int ByteCount { get; } = Encoding.UTF8.GetByteCount(Text);
 }

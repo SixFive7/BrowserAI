@@ -86,7 +86,8 @@ with no error anywhere. The SDK's own test base class pins it explicitly, citing
 anything.
 
 **Server `instructions` and every tool description are truncated silently at
-2 KB.** The tail simply does not exist and nothing reports it.
+2 KB.** The tail simply does not exist and nothing a server can see reports it.
+[What *"2KB each"* means is measured below](#what-2kb-each-means--measured-2026-08-18--claude-code-21234).
 
 > **What BrowserAI actually spends of that, re-measured 2026-08-18 off the
 > shipped binary's own `initialize` response: 1,261 characters and `1,276`
@@ -110,9 +111,94 @@ anything.
 >
 > Re-establish by running
 > `ModelSurfaceTests.TheInstructionsStringFitsTheClientsSilentTruncationBudget`,
-> which measures in **bytes**: the string carries `·` (2 bytes) and `—`
-> (3 bytes), so a character count under-reports precisely the string that uses
-> them. `[FLOATS]` on our own wording rather than on a client version.
+> which measures in **characters**, because that is the unit the client counts.
+> *Corrected 2026-08-18 (previously "which measures in **bytes**: the string
+> carries `·` (2 bytes) and `—` (3 bytes), so a character count under-reports
+> precisely the string that uses them").* The byte figure is still printed and is
+> still the larger of the two; it is simply not the one that is capped — see the
+> measurement below. `[FLOATS]` on our own wording rather than on a client
+> version.
+
+### What *"2KB each"* means — measured 2026-08-18 @ Claude Code 2.1.234
+
+The documented sentence is *"Claude Code truncates tool descriptions and server
+instructions at 2KB each"*, and **"each" does not say each what.** Two readings
+were live: per string, or per whole serialized tool — name, description and the
+entire `inputSchema` in one bucket. This project read it per string and
+[said in the constant that it was an assumption](../../src/BrowserAI/Proxy/ClientTruncationBudget.cs);
+a maintainer of another MCP server had reported trimming a description and fixing
+nothing, which is what the per-tool reading predicts. **It is per string.**
+`[FLOATS]` on a client version this project does not control.
+
+**Method — the client's own outbound request, never a model's recollection.**
+Claude Code honours `ANTHROPIC_BASE_URL`, so it was pointed at a local HTTP
+server on `127.0.0.1` that records the request body and answers with a minimal
+SSE stream; `ANTHROPIC_AUTH_TOKEN` was set to a throwaway string, so no real
+credential and no real API call was involved and the experiment costs nothing.
+A probe MCP stdio server published strings of exact length carrying unique
+end-markers, registered with `claude mcp add --scope user` against a **scratch
+`CLAUDE_CONFIG_DIR`**. The `tools` array in the captured
+`POST /v1/messages?beta=true` body is then byte-for-byte what the model receives,
+so every figure below is read rather than inferred. **Reproduced twice, against
+`sonnet` and `haiku`, identical both times** — the cut is client-side and
+model-independent.
+
+| Question | Answer | The probe that settles it |
+|---|---|---|
+| Per string, or per serialized tool? | **Per string.** There is no per-tool bucket | A tool whose whole entry was **4,578 B** — a 1,500-character description plus four 700-character parameter descriptions, every string under the cap — arrived **intact**. Entries of **17,411 B** and **20,172 B** arrived intact too |
+| Bytes, or characters? | **UTF-16 characters. A byte count is never consulted** | A 2,048-character description weighing **6,004 bytes** of em dashes arrived **whole**, while a 2,600-character ASCII one was cut |
+| Where exactly? | The predicate is **`length > 2048`**, and the cut is to 2,048 | 2,047 intact · 2,048 intact · 2,049 cut, published as a triple in one run |
+| Code units, or code points? | **UTF-16 code units**, and the cut is surrogate-aware | 1,539 code points spread over 3,000 units was cut. Where unit 2,048 would split a surrogate pair the cut backs off to **2,047**, and the delivered string is well-formed |
+| Are `inputSchema.properties[*].description` strings truncated? | **No. Not at all** | A parameter description of **20,000** characters arrived whole, on a tool whose own description was 39 characters |
+| Is there a total budget across `tools/list`? | **No** | **202 tools totalling 348,314 B** of tool entries went in one request (body 392,983 B): nothing dropped, nothing cut, every end-marker present |
+| What does truncation look like? | A hard positional cut with **`… [truncated]`** appended — U+2026, a space, `[truncated]`; 13 characters — so a truncated string arrives at **2,061** | Every cut string in every run ended in exactly that, and the surviving prefix was identical to the published one |
+
+⚠️ **The suffix is visible to the model and invisible to the server.** It is added
+after the JSON-RPC response has left the server, so nothing a server can observe
+reports it — **a server cannot detect its own truncation**, which is why the gate
+is a build failure rather than a run-time check. A *model* can see it, so
+*"did this arrive whole?"* is answerable by asking and unanswerable by logging.
+
+**Server `instructions` are capped the same way and delivered somewhere else than
+the obvious place.** They arrive inside a `<system-reminder>` block in the
+**`messages`** array, under a `## <server-name>` heading alongside every other
+connected server's, rather than in the `system` prompt — cut at 2,048 characters
+with the same suffix. A 2,600-character probe `instructions` string lost
+everything past 2,048.
+
+**What it means for BrowserAI: nothing is truncated, and nothing ever was.**
+Measured against the same capture with the shipped binary registered, the surface
+sends **65 tools totalling 51,149 B** of tool entries and not one of them is cut.
+The largest description is `browserai_init` at **1,623 characters** of 2,048; its
+whole entry is **3,360 B**, which is over 2,048 and irrelevant, because the bucket
+it would have overflowed does not exist. `instructions` is **1,261 characters**.
+*This retires the standing worry that `browserai_init` was silently truncated on
+every session.*
+
+**Re-establish it** in about fifteen minutes, with no cost and no credential:
+
+1. Write a capture server: an HTTP listener on `127.0.0.1` that writes each
+   request body to a file and replies to `/v1/messages` with a minimal
+   `message_start` … `message_stop` SSE sequence, and to `count_tokens` with
+   `{"input_tokens":1}`. Redact `authorization` before writing anything.
+2. Write a probe MCP stdio server — raw JSON-RPC over stdin/stdout answering
+   `initialize`, `tools/list` and `tools/call` — publishing descriptions of exact
+   length whose final token is a unique marker, at sizes straddling 2,048.
+3. `claude mcp add <name> --scope user -- <node> <probe.js>` with
+   `CLAUDE_CONFIG_DIR` pointed at a scratch directory. **Never the operator's
+   own.**
+4. Run `claude -p "Reply with the single word OK."` with
+   `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>` and a throwaway
+   `ANTHROPIC_AUTH_TOKEN`. `ANTHROPIC_API_KEY` does **not** work — the client
+   reports *"Not logged in"* against an unapproved key, and the bearer-token
+   variable is the one that bypasses that.
+5. Read `tools` out of the largest captured body and diff each string against
+   what the probe published.
+
+The scripts as run live in `.work/truncation/` on the machine that ran them and
+are deliberately untracked — they are scratch, not product. The complete recipe,
+written for a project that has never heard of BrowserAI, is in
+`.work/truncation-prompt-for-sibling-project.md`.
 
 **`notifications/tools/list_changed` handling changed, and the charter's citation
 is stale.** *"Claude Code registers no handler"* was accurate at **2.0.65**

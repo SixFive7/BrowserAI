@@ -23,6 +23,32 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The client's *"2KB each"* is per string, and the gate was measuring the wrong
+  unit.** `ClientTruncationBudget` had said for four days that the per-string
+  reading was an **assumption** — the competing reading being one 2 KB bucket per
+  whole serialized tool, under which `browserai_init`'s entry was over the line
+  and silently truncated on every session, and under which trimming a description
+  would have moved text from one capped bucket into the same capped bucket. It is
+  now measured, @ **Claude Code 2.1.234**, by pointing the client at a local
+  recorder through `ANTHROPIC_BASE_URL` and reading the `tools` array it sends to
+  the Messages API — what the model receives, rather than what a model recalls.
+  **Per string, 2,048 UTF-16 characters, cut at `> 2048`.** A probe tool with a
+  4,578-byte entry arrived intact, as did entries of 17 KB and 20 KB; a
+  2,048-character description weighing 6,004 bytes arrived whole, so **bytes are
+  never counted**; there is no whole-surface total either — 202 tools and 348,314
+  bytes of entries went through untouched; and
+  `inputSchema.properties[*].description` is **not truncated at all**, 20,000
+  characters included. The cut appends the literal `… [truncated]`, which the
+  model can see and a server never can. `browserai_init` was never truncated.
+  What changed as a result: `ClientTruncationBudget.Bytes` is now `.Characters`
+  and the gate counts characters — a byte gate can only fail strings the client
+  delivers whole — the parameter cap is relabelled a **house limit** rather than a
+  client limit, and questions 1 and 10 in [`QUESTIONS.md`](QUESTIONS.md) are
+  answered. Recorded with the method in
+  [kb](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234)
+  and re-verification row 92, because every figure in it floats with a client
+  version this project does not control.
+
 - **BrowserAI advertised an MCP capability it does not implement.** The SDK's
   `McpServerImpl` gates `Tools`, `Prompts`, `Resources` and `Completion` on
   configuration, and `ConfigureLogging` on nothing at all — so `initialize`
@@ -87,15 +113,11 @@ has been satisfied in form only.
   `inputSchema`** — the last of which was asserted by nothing, and is where
   BrowserAI's own injected `session` description lands on 59 upstream tools at
   once. Enumerated dynamically, so a tool added next year is covered; measured in
-  characters *and* UTF-8 bytes and failed on whichever is larger; hard at 100%
-  with no warning tier, because under the cut the text simply never reaches the
-  model. Every length is printed sorted on a passing run, to `.work/description-budget.txt`.
-  ⚠️ **The per-string reading of the documentation's *"2KB each"* is an
-  assumption**, recorded on `ClientTruncationBudget` and raised in
-  [`QUESTIONS.md`](QUESTIONS.md): under a per-tool-total reading `browserai_init`'s
-  whole `tools/list` entry is 3,428 bytes on the wire and already truncated. The test
-  every tool's entry total, unasserted, so the experiment that settles it has its
-  data.
+  characters *and* UTF-8 bytes; hard at 100% with no warning tier, because under
+  the cut the text simply never reaches the model. Every length is printed sorted
+  on a passing run, to `.work/description-budget.txt`. **The reading of the
+  documentation's *"2KB each"* has since been measured** — see the entry below —
+  so the gate now fails on characters rather than on whichever count is larger.
 
 - **`RecordedCountTests`, which generalises the one place counting discipline was
   mechanised.** Every count a surviving document publishes about this repository
