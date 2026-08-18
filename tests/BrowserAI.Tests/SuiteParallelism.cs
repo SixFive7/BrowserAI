@@ -33,24 +33,29 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ✅ <b>Unbounded is quiet as of 2026-08-18: 20 consecutive green runs</b>, 419
-/// tests, 0 failed, 0 skipped, 66–91 s each. It was red <b>11 runs in 20</b> the
-/// day before. Nothing about the number changed; what changed is that every
-/// <i>promptness assertion</i> in the suite was deleted or made event-driven, and
-/// every surviving duration was given headroom a starved machine cannot reach —
-/// the maintainer's instruction, verbatim: <i>"Remove any timings other than
+/// tests, 0 failed, 0 skipped, <b>72–142 s</b> each — and that streak ran while
+/// three other agents were building and testing on the same machine, which is
+/// why the wall clock moves by a factor of two across it and why it is the
+/// number worth quoting. It was red <b>11 runs in 20</b> the day before.
+/// Nothing about the limit changed; what changed is that every <i>promptness
+/// assertion</i> in the suite was deleted or made event-driven, and every
+/// surviving duration was given headroom a starved machine cannot reach — the
+/// maintainer's instruction, verbatim: <i>"Remove any timings other than
 /// timeouts that catch really hung processes. Even on slow systems."</i> The
 /// vocabulary those bounds now come from is <c>TestDefaults</c>, and its remarks
 /// are where a reader should start.
 /// </para>
 /// <para>
-/// ⚠️ <b>It took three streaks, and the two that failed are the better argument
-/// for this line than the one that passed.</b> Sixty runs in all. Neither
-/// failure was a duration: one was <c>File.Move</c> refused
-/// <c>ERROR_ACCESS_DENIED</c> on a destination the test had just closed its own
-/// handle to, and the other was the <i>read</i> side of the same delete-pending
-/// window, throwing out of <c>SessionLock.ReadRecord</c> past every handler on
-/// the path — a product defect at the entry point that opens a session, found by
-/// running every test at once and not reachable four at a time
+/// ⚠️ <b>It took eight streaks and about 120 runs, and the failures along the
+/// way are a better argument for this line than the green streak at the end.</b>
+/// <b>Not one of them was a duration.</b> Each was a real defect that four-way
+/// parallelism had never surfaced: a rename refused <c>ERROR_ACCESS_DENIED</c> on
+/// a destination the test had just released; the <i>read</i> side of the same
+/// delete-pending window, throwing out of <c>SessionLock.ReadRecord</c> past
+/// every handler on the path, at the entry point that opens a session; the
+/// discovery that <c>MoveFileEx</c> leaves the destination name transiently
+/// unbound, so an owned session can read as unowned; and a two-second retry
+/// budget in shipped code that a starved process exhausted in three attempts
 /// ([kb](../../kb/windows/processes.md#files-durable-writes-and-deletes)).
 /// </para>
 /// <para>

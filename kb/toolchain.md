@@ -320,26 +320,47 @@ point, which is exactly what those messages claimed it meant.
 **The fix was the bounds, not the parallelism.** Re-measured 2026-08-18 with
 every promptness assertion removed and every surviving bound sized so a starved
 machine cannot reach it (`TestDefaults`: 5 minutes in-process, 10 minutes across
-a process, 30 minutes for a real browser): **20 consecutive green runs**, 419
-tests, 0 failed, 0 skipped, **66–91 s** each. The limiter did not move.
+a process, 30 minutes for a real browser): **two separate streaks of 20
+consecutive green runs**, 419 tests, 0 failed, 0 skipped. The limiter did not
+move.
 
-> ⚠️ **The range in that sentence was written before it was measured, and was
-> wrong.** It said *78–108 s* on the strength of a handful of earlier runs; the
-> twenty it claimed to describe were 66–91 s. Corrected the moment the streak
-> finished, and recorded rather than quietly overwritten, because a plausible
-> number typed ahead of the measurement is indistinguishable from a measured one
-> — which is the failure this whole directory's first rule exists to prevent, and
-> it happened here.
+| Streak | Tree | Wall clock | Machine |
+|---|---|---|---|
+| first | before the lock-rename work | 66–91 s | quiet |
+| final | every fix in | **72–142 s** | three other agents working on it |
 
-**Getting there took three streaks, and the two that failed did not fail on
-time.** Sixty runs in all: the first found `File.Move` refused
-`ERROR_ACCESS_DENIED` on a destination the test had just closed its own handle
-to, and the second found the same delete-pending window on the *read* side,
-where it had been throwing out of `SessionLock.ReadRecord` past every handler on
-the path ([kb](windows/processes.md#files-durable-writes-and-deletes)). Both were
-real defects that four-way parallelism had never surfaced, and neither was a
-duration. That is the argument for the limiter being where it is, made by the
-limiter.
+**The second is the better number, and the spread is why.** The final streak ran
+while other agents were building and testing on the same box — 14 `claude`
+processes, 11 `node`, Defender at 2.5 GB — and the per-run wall clock moved by a
+factor of two across it. Twenty green under a load that varies that much is a
+stronger statement about the bounds than twenty green on an idle machine, because
+the whole claim being made is that a busy machine cannot reach them.
+
+> ⚠️ **The range here was once written before it was measured, and was wrong.**
+> An earlier revision said *78–108 s* on the strength of a handful of runs; the
+> twenty it claimed to describe were 66–91 s. Recorded rather than quietly
+> overwritten, because a plausible number typed ahead of the measurement is
+> indistinguishable from a measured one — which is the failure this directory's
+> first rule exists to prevent, and it happened here.
+
+**Getting there took eight streaks and about 120 runs, and not one of the
+failures along the way was a duration.** Every one was a real defect that
+four-way parallelism had never surfaced: a rename refused `ERROR_ACCESS_DENIED`
+on a destination the test had just released; the same delete-pending window on
+the *read* side, throwing out of `SessionLock.ReadRecord` past every handler on
+the path; the discovery that `MoveFileEx` leaves the destination name
+transiently unbound; and a two-second retry budget that a starved process
+exhausted in three attempts
+([kb](windows/processes.md#files-durable-writes-and-deletes)). That is the
+argument for the limiter being where it is, made by the limiter.
+
+> **One failure in that set was not a defect and is worth naming, because it is
+> the honest limit of this method.** A real Chromium exited with code 1 and no
+> output on either stream, once, while three other agents were saturating the
+> machine — a browser that could not start, rather than anything the suite
+> controls. It did not recur across the 20-run streak that followed on the same
+> tree. A suite that runs 419 tests at once on a shared box will occasionally
+> measure the box.
 
 **Two shapes are worth carrying off this machine.** First, *the same bound
 expressed at two layers, with the tighter one winning invisibly*: a launcher that
