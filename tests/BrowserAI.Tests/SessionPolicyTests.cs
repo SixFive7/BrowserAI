@@ -58,13 +58,24 @@ namespace BrowserAI.Tests;
 /// database are created inside it, and the agent runs as the same Windows user,
 /// so DPAPI decrypts for it. Refusing <c>browser_cookie_list</c> to a caller
 /// holding file tools costs a lookup per call and buys one extra step.
+/// <b>Measured 2026-08-18</b>, from a second process as the same user against a
+/// session this product configured — <c>CryptUnprotectData</c> and AES-256-GCM,
+/// no App-Bound Encryption
+/// ([kb](../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)).
 /// </para>
 /// <para>
 /// <b>What is asserted instead is what is actually true.</b> A call names its
 /// session or it is refused — that is <b>routing</b>, and the concurrency arm
 /// below drives it across sessions being opened and destroyed at the same time.
 /// And <c>browser_annotate</c> is refused on a windowless session because it
-/// would <b>hang</b>, which is a liveness claim and is asserted as one.
+/// would <b>hang</b>, which is a liveness claim and is asserted as one — and
+/// <b>measured on 2026-08-18</b>, three runs against a real headless child: a
+/// visible window took the foreground within 1.2 s every time and the call was
+/// still silent 90 s later
+/// ([kb](../../kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18)).
+/// <b>The measurement is deliberately not an arm of this class</b>: asserting
+/// that a call does not return means spending the budget waiting for it, with a
+/// focus-stealing window on the developer's screen throughout.
 /// </para>
 /// </remarks>
 internal sealed class SessionPolicyTests

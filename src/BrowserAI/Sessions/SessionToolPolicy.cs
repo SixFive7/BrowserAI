@@ -19,7 +19,15 @@ namespace BrowserAI.Sessions;
 /// directory; the browser profile — cookie database included — is created inside
 /// it; the agent runs as the same Windows user, so DPAPI decrypts for it. An
 /// agent holding any file tool reads what the matrix declined to hand back, and
-/// the matrix cost a lookup on every call to make it take one extra step. Prompt
+/// the matrix cost a lookup on every call to make it take one extra step.
+/// <b>Measured 2026-08-18 rather than argued</b>
+/// ([kb](../../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)):
+/// against a session this product configured, a second process running as the
+/// same user recovered the cookie with <c>CryptUnprotectData</c> and AES-256-GCM
+/// and nothing else — no elevation, no service, no admin. App-Bound Encryption,
+/// the one thing that could have made this false, is <b>not</b> in force for the
+/// provisioned build: no <c>app_bound_encrypted_key</c>, and a <c>v10</c> cookie
+/// rather than a <c>v20</c> one. Prompt
 /// injection is real and is not solved here: an injected model smart enough to
 /// want the cookies is smart enough to open the file, and a defeated motivation
 /// is not answered by more execution complexity.
@@ -72,6 +80,21 @@ internal static class SessionToolPolicy
     /// Unattended overnight runs are this product's primary use, and one hung
     /// call takes the whole run with it. Nothing about this protects any secret;
     /// it stops a session deadlocking.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-08-18, three runs, after standing undated for the life of
+    /// the decision it justified</b>
+    /// ([kb](../../../kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18)).
+    /// Against a real child on the config this product generates for
+    /// <c>headless</c>: a <b>visible</b> <c>Chrome_WidgetWin_1</c> at
+    /// <c>100,100,1280x800</c> took the <b>foreground</b> within 1.2 s on every
+    /// run, and the call was still silent 90 s later in the arm nothing
+    /// interrupted. The window is not the session's own browser changing its
+    /// mind — it is a <i>second</i>, non-headless Chromium under a detached
+    /// dashboard daemon, launched headed on an upstream test variable that no
+    /// session configuration reaches — so <c>launchOptions.headless</c> cannot
+    /// prevent it and neither can anything else this proxy sets. The only
+    /// bounded arm is the daemon failing to start, at 15 s.
     /// </para>
     /// <para>
     /// <b>It keys on <see cref="SessionModeDefinition.Headed"/> rather than on a

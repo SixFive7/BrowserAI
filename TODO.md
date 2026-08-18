@@ -107,39 +107,6 @@ findable from more than one direction.
       re-decide the row on evidence rather than leaving a settled position
       resting on a retracted sentence.
 
-- [ ] **The only refusal left in the product may be aimed at nothing.**
-      `SessionToolPolicy.Decide` refuses `browser_annotate` on any mode that did
-      not promise a window, entirely because
-      [kb](kb/playwright/tools-and-artifacts.md) says *"the window appears in
-      headless too"* — a sentence with **no date, no version and no method**,
-      whose two list-neighbours both quote upstream source. A measurement in the
-      same knowledge base points the other way: headless Chromium created 308
-      top-level windows across a suite run and **showed zero**
-      ([kb](kb/windows/detection.md)). Settle it with the rig that already
-      exists: drive the resolved child at `headless: true`, call
-      `browser_annotate` under a hard timeout with the `SetWinEventHook` watcher
-      that measured the 308, and record whether a window is realised and whether
-      the call returns. **Either outcome is worth having** — it either earns the
-      product's last refusal or retires it.
-
-- [ ] **The reason that deleted the whole tool-permission layer is itself
-      unmeasured.** The matrix went on 2026-08-18 because *"the agent runs as the
-      same Windows user, so DPAPI decrypts for it — an agent holding any file
-      tool reads what the matrix declined to return"*. That sentence is now in
-      [`DECISIONS.md`](DECISIONS.md), [`README.md`](README.md),
-      [`ARCHITECTURE.md`](ARCHITECTURE.md), [`TESTING.md`](TESTING.md),
-      [`QUESTIONS.md`](QUESTIONS.md), `SessionToolPolicy.cs`, `SessionMode.cs`,
-      `SessionPolicyTests.cs` and [kb](kb/playwright/tools-and-artifacts.md) —
-      **and the kb entry, where the chain terminates, carries no date, no version
-      and no method.** Six documents citing each other is a circle, not a source.
-      **The specific risk has a name**: Chromium's App-Bound Encryption binds
-      cookie decryption to the browser's own code identity, and whether Chrome
-      for Testing 152 / `chromium-1237` enables it under a custom
-      `--user-data-dir` is exactly the unasked question. Settle it from a second
-      process as the same user: `CryptUnprotectData` the `os_crypt.encrypted_key`
-      out of `Local State` and decrypt one row of `Network\Cookies`. **The
-      removal may well still be right on cost alone. It was not made on cost.**
-
 - [ ] **Headless-with-storage is still refused on a reason the same pass
       declared void.** [`DECISIONS.md`](DECISIONS.md) keeps it out because *"it
       is the one combination granting full credential access with no visible
@@ -157,9 +124,25 @@ findable from more than one direction.
       plus a first-hand pass over [`Interop/`](src/BrowserAI/Interop), the build
       files and [`build/`](build) examined **598 load-bearing justifications**:
       **309 measured here**, **226 cited to a source**, **63 assumed**. Of the
-      63, **13 were settled by measurement and 11 relabelled** in the same pass;
-      the four highest-value remainders have their own items above. The rest,
-      each stated as fact, load-bearing, undated and uncited, and each cheap:
+      63, **13 were settled by measurement and 11 relabelled** in the same pass,
+      **and two more were measured later the same day — 15 settled in all**. The
+      rest, each stated as fact, load-bearing, undated and uncited, and each
+      cheap:
+
+      ***Corrected 2026-08-18 (previously "the four highest-value remainders
+      have their own items above")*** — **two of the four are now measured and
+      their items are deleted**, which is what this file's own rule asks for.
+      `browser_annotate`'s window and its unbounded wait went to
+      [kb](kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18),
+      cited from `SessionToolPolicy.Decide` and covered by re-verification row
+      94; the DPAPI claim that removed the permission layer went to
+      [kb](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18),
+      cited from all six documents that used to cite each other, and covered by
+      row 95. **Both confirmed the decision they had been holding up**, which is
+      the outcome that makes an unmeasured justification easiest to leave
+      standing and is exactly why they were the two worth taking first. The two
+      remainders with items above are the browser-reinstall rename and
+      headless-with-storage.
 
       **In [`kb/`](kb/README.md)** — a measurement store, so an assumed entry
       there is a category violation. The long-path guarantee rests on
@@ -230,14 +213,23 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **53 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **54 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
       the index's own `Area` cells verbatim: Bundling and AOT 13, Child runtime and
-      configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
+      configuration 11, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      9 more are `open` while carrying evidence, so 62 are `open` in total, against
+      9 more are `open` while carrying evidence, so 63 are `open` in total, against
       90 `closed`.
+
+      ***Corrected 2026-08-18 (previously "53 rows that are `open` and carry `—`",
+      with "Child runtime and configuration 10" and "62 are `open` in total")*** —
+      re-counted by the test, not adjusted, and this one grew because
+      **measuring `browser_annotate` found a hazard nobody had written down**:
+      the tool starts a detached, per-user-singleton dashboard daemon and a
+      second browser outside every session directory, and it is *permitted* on
+      the two headed modes. A measurement that settles one question and adds a
+      row is the normal shape here, not a regression.
 
       ***Corrected 2026-08-18 (previously "54 rows that are `open` and carry `—`",
       with "Bundling and AOT 14" and "8 more are `open` while carrying

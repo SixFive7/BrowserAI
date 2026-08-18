@@ -45,7 +45,9 @@ internal enum SessionMode
 /// <see cref="SessionToolPolicy"/> "refuses everything for a mode it has no
 /// policy row for").</b> The permission matrix is gone: it was never a boundary
 /// against the caller, who chooses the session directory and can read the profile
-/// inside it as the same Windows user. The consumer named in its place is the one
+/// inside it as the same Windows user —
+/// [measured 2026-08-18](../../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18),
+/// after the removal rather than before it. The consumer named in its place is the one
 /// that was always doing the real work — <c>BrowserConfiguration.ForSession</c>
 /// turns <see cref="SessionModeDefinition.Headed"/> into upstream's
 /// <c>headless</c> and <see cref="SessionModeDefinition.Storage"/> into the

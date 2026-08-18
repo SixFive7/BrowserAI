@@ -646,6 +646,17 @@ headless mode too, without `WS_VISIBLE`, and is never shown.** So "the full
 false, and a detector that keys on the class rather than on visibility will
 report windows that do not exist on screen. `[FLOATS]`
 
+> **One tool breaks this, and it is not the headless browser changing its mind.**
+> `browser_annotate` on a `headless` session puts a **visible, foreground**
+> `Chrome_WidgetWin_1` at `100,100,1280x800` on the screen within 1.2 s, measured
+> three times on 2026-08-18. The window belongs to a **second** Chromium that
+> upstream's dashboard daemon launches headed unconditionally, with its own
+> profile under `%TEMP%`, so both facts are true at once: a headless browser
+> still shows nothing, and a headless *session* can still be made to show
+> something. The measurement, the process tree and the reason the product
+> refuses the call are in
+> [kb](../playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18).
+
 **Firefox is the same**, 26 windows and none of them visible: 14
 `OleMainThreadWndClass`, 4 `Chrome_MessagePumpWindow`, 2 each of
 `nsAppShell:EventWindowClass`, `IME` and `MozillaHiddenWindowClass`, and 2

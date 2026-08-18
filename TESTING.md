@@ -41,7 +41,9 @@
 >   upstream addition a red build instead of a **security incident**").* The
 >   tool-permission policy was removed: it was never a boundary against the
 >   caller, who chooses the session directory and reads the profile inside it as
->   the same Windows user. The snapshot was doing the change-detection all along
+>   the same Windows user — [measured 2026-08-18](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18),
+>   which is later than the removal and is recorded that way round.
+>   The snapshot was doing the change-detection all along
 >   and does it better — a name-keyed classification never saw a schema change.
 >   See [the upstream-review gate](#the-upstream-review-gate).
 

@@ -23,6 +23,49 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The sweep's two highest-value assumptions, measured — and both decisions
+  they were holding up survive.** They were the worst kind of unmeasured
+  justification: each already justified a decision that had been *taken*, so
+  neither could fail loudly, and confirming them was the only thing that could
+  distinguish a sound decision from a lucky one.
+
+  **`browser_annotate` on a `headless` session does open a window, and does not
+  return.** Three runs against a real child on the config this product generates:
+  a **visible** `Chrome_WidgetWin_1` at `100,100,1280x800` took the
+  **foreground** within 1.2 s every time, and in the control arm the call was
+  still silent 90 s later — the other two returned only in the same 40 ms tick
+  their window disappeared, which is the human path. **So the only refusal left
+  in the product is earned**, and the sentence behind it — undated, uncited and
+  never measured, and contradicted on its face by this repository's own
+  measurement that headless Chromium shows nothing — now carries a date, four
+  versions, a method and a re-verification row. The mechanism is worse than the
+  sentence said: the window belongs to a **second, non-headless Chromium** under
+  a **detached, per-user-singleton** dashboard daemon, launched headed on an
+  upstream *test* environment variable that no session configuration reaches, and
+  writing its profile into `%TEMP%` rather than into any session directory. That
+  is a hazard nobody had written down, and it now has a row.
+
+  **The DPAPI claim that deleted the whole tool-permission layer holds.** The
+  removal rested on *"the agent chooses the session directory, the profile with
+  its cookie database sits inside it, and the agent runs as the same Windows
+  user, so DPAPI decrypts for it"* — repeated across six documents and
+  terminating in a `kb/` line with no date, no version and no method. The unasked
+  question was **App-Bound Encryption**, which since Chrome 127 binds cookie
+  decryption to the browser's own code identity. Measured against a session
+  BrowserAI configured and nothing else: `os_crypt.app_bound_encrypted_key`
+  **absent**, cookie scheme tag **`v10`** and not `v20`, and from a *separate*
+  process as the same user `CryptUnprotectData` with no entropy returned the
+  32-byte key and AES-256-GCM recovered the value. **DPAPI alone — no elevation,
+  no service, no admin.** Stronger than "ABE could not apply here": this machine
+  *has* a registered Chrome elevation service, from the operator's own install,
+  and the provisioned build still produced a DPAPI-only key.
+
+  Both are stamped in [`kb/`](kb/README.md) with how to re-establish them, cited
+  from the code and from all six documents that used to cite each other, and
+  covered by re-verification rows 94 and 95 — each naming what a bump would
+  silently invalidate, because both are facts about upstream that today's suite
+  would stay green through.
+
 - **The justification sweep: 598 load-bearing reasons sorted, 63 assumed, 13
   settled by measurement and 11 relabelled.** Every mechanism in this repository
   protects a claim about *behaviour* — a test fails, a snapshot diffs, an

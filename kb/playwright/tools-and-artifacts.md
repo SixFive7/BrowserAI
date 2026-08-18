@@ -156,7 +156,12 @@ carries IndexedDB, so a "saved" session silently omits it and the tool is
 `[FLOATS]`
 
 **`browser_annotate` opens a dashboard window and blocks until a human finishes
-drawing** — and the window appears in headless too. `[FLOATS]`
+drawing** — and **the window is realised, visible and takes the foreground on a
+`headless` session too**, because the dashboard is a *second* browser that
+upstream launches headed unconditionally. Measured end to end 2026-08-18 against
+a real child; method, timings and the process tree in
+[what `browser_annotate` actually does](#what-browser_annotate-actually-does--measured-2026-08-18).
+`[FLOATS]`
 
 **`config.secrets` is a real key, so `browser_get_config` can disclose one.**
 `--secrets <path>` is on the CLI and `secrets?: Record<string, string>` is in
@@ -178,7 +183,7 @@ decision function about every name in it. `[FLOATS]`
 
 | Mode | Permitted | Refused, and why |
 |---|---:|---|
-| `headless` | **58** | `browser_annotate`, whose window appears even here and then blocks until a human draws in it |
+| `headless` | **58** | `browser_annotate`, whose window appears even here and then blocks until a human draws in it — [measured 2026-08-18](#what-browser_annotate-actually-does--measured-2026-08-18), three runs |
 | `interactive` | **59** | nothing |
 | `persistent` | **59** | nothing |
 
@@ -192,10 +197,13 @@ The `(tool, mode)` permission matrix was removed. **It was never a boundary
 against the caller:** the calling agent chooses the session directory, the profile
 and its cookie database are created inside it, and the agent runs as the same
 Windows user, so DPAPI decrypts for it — an agent holding any file tool reads what
-the matrix declined to return. The one refusal left is **liveness, not security**:
-`browser_annotate` blocks until a human draws, and the dashboard window appears on
-a windowless session too, so an unattended run that called it would hang until it
-was killed.
+the matrix declined to return — **measured 2026-08-18 and not merely argued**, in
+[Chromium's cookie store, and what it takes to read one](../chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18).
+The one refusal left is **liveness, not security**: `browser_annotate` blocks
+until a human draws, and the dashboard window appears on a windowless session
+too, so an unattended run that called it would hang until it was killed — also
+[measured 2026-08-18](#what-browser_annotate-actually-does--measured-2026-08-18),
+after standing undated for the life of the decision it justified.
 
 **The `storage` tools are still absent from a windowless session's child**, and
 that is a different mechanism which did not change: a `headless` or `interactive`
@@ -208,6 +216,99 @@ removal cost a model, and it is recorded here rather than argued away.
 `browser_run_code_unsafe` was never coverable that way in any case: it is in
 `core`, which upstream ors in unconditionally, so **it is reachable from every
 mode** — as it always was from `headless` and `persistent`. `[FLOATS]`
+
+## What `browser_annotate` actually does — measured 2026-08-18
+
+**Measured 2026-08-18 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05 / Chrome for Testing 152.0.7977.8 (`chromium-1237`) /
+Node v24.19.0**, on [the reference machine](../README.md#the-reference-machine),
+with an interactive desktop and the developer's editor holding the foreground.
+Three runs. **This entry exists because the sentence it replaces had no date, no
+version and no method** — it was the sole justification for the only refusal left
+in the product, and one of the two highest-value residues of the 2026-08-18
+justification sweep. It is confirmed on both halves, and the mechanism is worse
+than the sentence said. `[FLOATS]`
+
+**Both halves hold. The refusal is earned.**
+
+| Run | Annotate budget | Window realised? | Foreground taken? | Call returned? |
+|---|---:|---|---|---|
+| 1 | 90 s | yes, +1.2 s | yes, same millisecond | **no — silent for the whole 90 s** |
+| 2 | 45 s | yes, +1.2 s | yes | only at +42.4 s, in the same 40 ms tick its window disappeared |
+| 3 | 60 s | yes, +1.2 s | yes | only at +36.5 s, likewise |
+
+Runs 2 and 3 returned `"### Result\nNo annotations were submitted."`, which is
+what upstream answers when the dashboard goes away without a submission. **Run 1
+is the control that makes the other two readable**: its window stood for the full
+90 s and the call never returned, so there is no self-timeout in this path and
+the two early returns were something closing the window — a human at the
+keyboard, on a machine where the window had just stolen the foreground. **Nothing
+here instrumented *who* closed it**, and it does not matter to the conclusion: the
+call ends when the window ends, and on an unattended run nothing ends the window.
+
+**The window is not the headless browser deciding to show itself.** It is a
+**second, non-headless Chromium**, and the process tree taken while the call was
+blocked says so — 18 descendants, walked by `ParentProcessId` only:
+
+```
+probe node
+└─ node cli.js  (@playwright/mcp, the session's child)
+   ├─ chrome.exe  --headless …  --user-data-dir=<session>\profile     ← the session's own browser
+   ├─ node …\playwright-core\lib\entry\dashboardApp.js --pageId=…      ← the DAEMON, detached
+   │  └─ chrome.exe  (no --headless)  --user-data-dir=%TEMP%\playwright_chromiumdev_profile-…
+   │                                                                   ← the window: 1280x800 at 100,100
+   └─ node …\entry\dashboardApp.js --pageId=… --annotate               ← the CLIENT the handler waits on
+```
+
+The visible window's owning pid is the second `chrome.exe`, its class is
+`Chrome_WidgetWin_1`, its rect is exactly `100,100,1280x800` — which is
+`--window-position=100,100 --window-size=1280,800` from upstream's `launchApp2` —
+and its image is the browser **BrowserAI itself provisioned**, reached because
+`findChromiumChannelBestEffort` resolves the registry `chromium` under the
+`PLAYWRIGHT_BROWSERS_PATH` the child was given. In `launchApp2` the headedness is
+`headless: !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE` — **an upstream test
+variable and nothing else**, so no session-level configuration reaches it and
+`browser.launchOptions.headless` is not consulted on this path at all.
+
+**Three consequences that were not in the sentence, and each is its own fact:**
+
+- **The dashboard daemon is a per-USER singleton on a named pipe**,
+  `\\.\pipe\pw-<sha1(USERNAME)[0..8]>-dashboard-app` from `makeSocketPath`, with
+  `PWTEST_SOCKETS_DIR` the only thing that moves it. Two BrowserAI sessions
+  calling `browser_annotate` at once do not get two dashboards; the second
+  connects to the first's. It is also **not scoped to a session directory**, so
+  it can meet a dashboard a human started outside BrowserAI entirely. `[FLOATS]`
+- **The dashboard's browser writes outside every session directory**, into
+  `%TEMP%\playwright_chromiumdev_profile-*`, and the daemon is spawned
+  `detached: true, stdio: "ignore"` and `unref`'d — so it does not die with the
+  child that started it. It is contained only because it is a **descendant of a
+  process in BrowserAI's job object**; nothing else would collect it. `[FLOATS]`
+- **There is exactly one bounded failure arm.** `runAnnotateClient` gives up
+  connecting to the daemon after **15 s** and exits 1, which the handler turns
+  into `Annotation client exited with code 1`. That arm is reached only when the
+  dashboard fails to start at all; once it starts, the wait is unbounded by
+  construction — `await new Promise(resolve => client.on("exit", …))`. `[FLOATS]`
+
+**How to re-establish.** Write the config BrowserAI generates for a `headless`
+session (`capabilities: ["config","vision","devtools"]`,
+`launchOptions.headless: true`, `channel: "chrome-for-testing"`), start the
+resolved `cli.js` under it with `PLAYWRIGHT_BROWSERS_PATH` pointing at the
+provisioned browsers root, `browser_navigate` to a `data:` URL, then call
+`browser_annotate` **under a hard timeout** while a `SetWinEventHook` watcher on
+`EVENT_OBJECT_CREATE`/`EVENT_OBJECT_SHOW`/`EVENT_SYSTEM_FOREGROUND` plus a 40 ms
+`EnumWindows` poll records what reaches the screen — the same watcher that
+measured [the 308](../windows/detection.md#what-a-suite-run-puts-on-the-screen),
+keyed on `(handle, event)` and never on the handle alone. **Four things the rig
+must do, each learned by needing it:** check `\\.\pipe\pw-*-dashboard-app` is
+absent *before* starting, or the probe drives a dashboard somebody else owns;
+put the whole tree in a **kill-on-close job object**, because when the probe
+exits the intermediate node goes with it and a `ParentProcessId` walk can no
+longer reach the browser underneath — the job collected 18 processes a walk
+found 0 of; take the tree snapshot **while the call is blocked**; and bound the
+call, because it will not bound itself.
+
+⚠️ **A run of this probe puts a focus-stealing window on the operator's screen
+for the whole budget.** That is the finding, not a side effect.
 
 ## Artifacts and output-directory behaviour
 

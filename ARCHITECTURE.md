@@ -200,7 +200,13 @@ deny-by-default fallbacks and the `browser_get_config` secrets guard are gone.
 described as one: the calling agent chooses the session directory, the browser
 profile and its cookie database are created inside it, and the agent runs as the
 same Windows user — so DPAPI decrypts for it and any file tool the agent holds
-reads what the matrix declined to return. Prompt injection is real and is not
+reads what the matrix declined to return. **Measured 2026-08-18**, against a
+session this product configured and from a second process as the same user:
+`CryptUnprotectData` and AES-256-GCM recovered the cookie with no elevation, and
+App-Bound Encryption — the one mechanism that would have made the argument false
+— is not in force for the provisioned Chromium
+([kb](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)).
+Prompt injection is real and is not
 addressed at this layer; a model tricked into wanting the cookies is capable of
 opening the file, and a defeated motivation is not answered by more execution
 complexity. **Change control moved to [the release gate](TESTING.md#the-upstream-review-gate)**,

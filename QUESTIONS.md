@@ -147,7 +147,16 @@ removing the test that produced it.
   containing `"secrets"`. **The reason is that it was never a boundary against
   the caller**, though its own doc comment said it was: the agent chooses the
   session directory, the profile and its cookie database sit inside it, and the
-  agent runs as the same Windows user. Change control moved to the release gate,
+  agent runs as the same Windows user. ⚠️ **That reason was unmeasured when this
+  decision was taken, and was measured on 2026-08-18: it holds.** A second
+  process as the same user recovered a cookie from a session BrowserAI
+  configured using `CryptUnprotectData` and AES-256-GCM alone, and App-Bound
+  Encryption is not in force for the provisioned Chromium
+  ([kb](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)).
+  **Nothing is re-opened by this**; it is recorded because the decision was right
+  and was still taken on an assumption, and the same day's measurement of
+  `browser_annotate` ([kb](kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18))
+  earned the one refusal that survived it. Change control moved to the release gate,
   where four golden snapshots already covered more. What survives is `session`
   staying mandatory — that is *routing* — and one `browser_annotate` refusal
   wherever no window was promised, as a **liveness** guard with no security
