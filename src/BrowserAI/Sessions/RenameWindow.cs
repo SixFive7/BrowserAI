@@ -98,21 +98,43 @@ internal static class RenameWindow
     /// <c>SessionLock.MoveBudget</c> is this same value and reads it from here.
     /// </para>
     /// <para>
-    /// The delete-pending window is one syscall wide — microseconds — so two
-    /// seconds is four orders of magnitude of headroom and a busy machine does
-    /// not reach it. It is bounded rather than open-ended because a
-    /// <b>permanent</b> denial is a different fault and must still be reported:
-    /// a file somebody has opened in a mode that will never permit us is not a
-    /// window, and waiting on it forever would be the silent failure this whole
-    /// repository is against.
+    /// ⚠️ <b>Corrected 2026-08-18 (previously two seconds, itself raised from
+    /// "five attempts over 150 ms" on 2026-08-16 for the same reason).</b> Two
+    /// seconds was reachable, and the failure it produced blamed the wrong thing.
+    /// Measured at <c>SuiteParallelism.Unbounded</c>: <i>"could not be replaced
+    /// after <b>3 attempts over 2.3 s</b>"</i> — a loop whose own sleeps total
+    /// <b>15 ms</b> across those three attempts. The file was not the problem;
+    /// the process did not get scheduled, and the message said <i>"something else
+    /// is holding it open"</i> about a machine that was merely busy. That is a
+    /// promptness assertion wearing a hang detector's name, in shipped code, and
+    /// it is the exact class the 2026-08-18 timing work removed from the suite.
     /// </para>
     /// <para>
-    /// <c>SessionIndex</c> keeps its own, shorter writer budget: 500 ms, measured
-    /// for index entries, and deliberately not merged into this one. It is the
-    /// smaller of the two, so a reader waiting this long already covers it.
+    /// <b>Thirty seconds, and the arithmetic is the justification.</b> The event
+    /// underneath is one syscall wide — microseconds — and the retry loop intends
+    /// to spend milliseconds. Thirty seconds is three orders of magnitude above
+    /// the contention and, more to the point, <b>2,000× the sleep budget the loop
+    /// actually asks for</b>, which is the number that matters when what expires
+    /// it is starvation rather than the file. A slow machine must not reach it.
+    /// </para>
+    /// <para>
+    /// It stays bounded rather than becoming open-ended because a <b>permanent</b>
+    /// denial is a different fault and must still be reported: a file somebody
+    /// has opened in a mode that will never permit us is not a window, and
+    /// waiting on it forever would be the silent failure this whole repository is
+    /// against.
+    /// </para>
+    /// <para>
+    /// <b><c>SessionIndex</c> keeps its own 500 ms and is deliberately not merged
+    /// into this.</b> That is not the same decision made twice: an index entry's
+    /// rename is <b>fail-safe</b> — giving up leaves the entry for the next use to
+    /// re-assert, and the caller never sees it — so a short budget there trades a
+    /// re-assertion for not stalling a session start. This one is <b>fatal</b>:
+    /// exhausting it throws out of a lock rewrite. Different consequences,
+    /// different numbers, and the reason is written at both.
     /// </para>
     /// </remarks>
-    public static TimeSpan Budget { get; } = TimeSpan.FromSeconds(2);
+    public static TimeSpan Budget { get; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
     /// Runs an open that this process is entitled to make, retrying only while

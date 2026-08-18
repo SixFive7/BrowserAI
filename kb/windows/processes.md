@@ -440,6 +440,30 @@ dangerous of the two because null means *not locked*.
 > `SessionLockTests.ARewriteIsNeverObservedTorn`, which probes all five columns
 > above on every null and fails on one with no rewrite in flight.
 
+**A wall-clock retry budget measures the machine, not the file, and the attempt
+count is what tells you which.** Measured 2026-08-18 at
+`SuiteParallelism.Unbounded`, from the writer's side of the same rename:
+*"could not be replaced after **3 attempts over 2.3 s**"* — from a loop whose own
+sleeps total **15 ms** across those three attempts. So 99.3% of that budget went
+somewhere other than the retries: the process was not being scheduled. The file
+was very likely free for most of it.
+
+> **This is the shape to hunt in shipped code, and it had been raised once
+> already for the same reason without the lesson being taken.** The budget had
+> gone from *five attempts over 150 ms* to *two seconds* on 2026-08-16 after
+> exhausting under full-suite load, and then exhausted again at higher
+> parallelism — because the number was chosen against how long the *contention*
+> lasts, when what expires it is how long the *scheduler* makes you wait. A
+> budget for a live-system transient has to be sized against the second of those:
+> the corrected figure is **thirty seconds**, which is 2,000× the sleep the loop
+> actually asks for. `[MACHINE]` for the 3-in-2.3 s observation.
+>
+> **And the message has to say which.** *"Something else is holding it open"* was
+> a claim the code could not support: many attempts over the budget means
+> contention, few attempts over the budget means starvation, and only the attempt
+> count separates them. It is in the message now, with the sentence that reads
+> it.
+
 **A file that has just been renamed into place can still be briefly unopenable.**
 Observed once on 2026-08-16, roughly one run in a dozen: a probe report written
 temp-then-renamed failed `File.ReadAllTextAsync` on the destination with *"the

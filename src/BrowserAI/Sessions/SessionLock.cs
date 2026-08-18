@@ -788,8 +788,19 @@ internal sealed class SessionLock : IDisposable
                 // never retry the case that actually happens.
                 if (clock.Elapsed >= MoveBudget)
                 {
+                    // ⚠️ The attempt count is in the message because it is what
+                    // distinguishes the two reasons this can expire, and the
+                    // message used to assert one of them. MANY attempts means
+                    // something really is holding the file. FEW attempts over the
+                    // whole budget means this process was not being scheduled --
+                    // measured 2026-08-18 as "3 attempts over 2.3 s" against a
+                    // loop that asks for 15 ms of sleep in those three, on a
+                    // machine running the whole test suite at once. Saying
+                    // "something else is holding it open" was wrong in that case,
+                    // and the reader could not tell.
                     throw new IOException(
-                        $"'{lockFile}' could not be replaced after {attempts.ToString(CultureInfo.InvariantCulture)} attempts over {clock.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)}s: {failure.Message} Something else is holding it open.",
+                        $"'{lockFile}' could not be replaced after {attempts.ToString(CultureInfo.InvariantCulture)} attempts over {clock.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)}s: {failure.Message} "
+                        + $"With {attempts.ToString(CultureInfo.InvariantCulture)} attempts in {MoveBudget.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s, either something else is holding it open or this process was starved of a thread; a low attempt count means the latter.",
                         failure);
                 }
 
