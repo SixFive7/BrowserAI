@@ -29,15 +29,6 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 [`docs/reviews/`](docs/reviews/README.md). **These are ranked by consequence, not
 by effort.**
 
-- [ ] **`TreeDelete` follows directory junctions; the primitive it replaced does
-      not.** The post-order walk descends into reparse points and deletes the
-      target's contents. `Directory.Delete(recursive: true)` — the call
-      `BannedSymbols.txt` bans — checks the reparse attribute and removes the link
-      without following. **So the hand-rolled replacement is less safe than the
-      banned call**, on a caller-named path, in a profile tree where junctions are
-      ordinary. Neither `TreeDelete`'s 60 lines of remarks nor the ban message
-      mentions reparse points.
-
 - [ ] **`RevisionPrune` decides on a census whose handles it already closed.**
       `BrowserProcesses.RunningFrom` closes each handle before returning, unlike
       `ScanFor`, whose held handle is the whole point of race R2. The prune holds

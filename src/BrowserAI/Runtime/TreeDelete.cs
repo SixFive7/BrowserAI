@@ -53,6 +53,34 @@ namespace BrowserAI.Runtime;
 /// the one the framework primitive cannot produce.
 /// </para>
 /// <para>
+/// ⚠️ <b>A directory reparse point is removed as a <i>link</i>, and this walk
+/// did not check for one until 2026-08-18.</b>
+/// <c>Directory.EnumerateDirectories</c> returns a junction or a directory
+/// symlink as an ordinary directory, so the walk descended into it and deleted
+/// the <b>target's</b> contents — outside the tree it was asked to remove, on a
+/// path a caller named. <c>browserai_destroy</c> takes that path from the model,
+/// and a browser profile is a tree in which junctions are ordinary: a
+/// <c>Cache</c> moved to another volume, a <c>downloads</c> junction to the real
+/// Downloads folder, a redirected <c>AppData</c> beneath it. One junction and
+/// the destroy emptied the target.
+/// </para>
+/// <para>
+/// <b>So the hand-rolled replacement was <i>less</i> safe than the banned call
+/// in exactly this dimension</b>, which is the shape worth stating out loud:
+/// <c>Directory.Delete(path, recursive: true)</c> checks
+/// <c>FILE_ATTRIBUTE_REPARSE_POINT</c> during its own walk and calls
+/// <c>RemoveDirectory</c> on the link. Neither this file's remarks, nor
+/// <c>Runtime\CLAUDE.md</c>, nor the ban message in
+/// [`build/BannedSymbols.txt`](../../../build/BannedSymbols.txt) mentioned
+/// reparse points at all — the ban justified itself on <i>reporting</i> alone,
+/// so a reader comparing the two would have concluded this routine was a
+/// superset. It is now, and the ban message says which two things it is a
+/// superset of. Found by
+/// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+/// finding 2; <c>TreeDeleteTests</c> settles it with a real junction on every
+/// run.
+/// </para>
+/// <para>
 /// <b>Three callers, three different reasons to meet the failure.</b>
 /// <c>browserai_destroy</c> deletes a directory that has just held a running
 /// browser, and Chromium leaves mapped files behind for a moment after exit —
@@ -94,6 +122,16 @@ internal static class TreeDelete
         ArgumentNullException.ThrowIfNull(directory);
         ArgumentNullException.ThrowIfNull(failures);
 
+        if (IsReparsePoint(directory))
+        {
+            // A junction, a directory symlink or a volume mount point is
+            // removed AS A LINK. Descending into one would delete files that
+            // are not under the tree this call was given, on a path a caller
+            // named -- see the remarks above.
+            RemoveOneDirectory(directory, failures);
+            return;
+        }
+
         foreach (var file in SafeEnumerate(() => Directory.EnumerateFiles(directory)))
         {
             try
@@ -111,10 +149,58 @@ internal static class TreeDelete
             Remove(child, failures);
         }
 
+        // Post-order: a directory cannot be removed while it still holds
+        // entries, so this is the last thing that happens at every level.
+        RemoveOneDirectory(directory, failures);
+    }
+
+    /// <summary>
+    /// Whether a directory is a reparse point — a junction, a directory symlink
+    /// or a volume mount point — and must therefore be unlinked rather than
+    /// walked.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An attribute that cannot be read answers <see langword="true"/>, and
+    /// that is the safe direction.</b> Treating an unreadable directory as a
+    /// link costs one <c>RemoveDirectory</c> that fails if it has contents,
+    /// which lands in the failure list and is reported. Treating a link as an
+    /// ordinary directory costs somebody else's files. A directory whose
+    /// attributes cannot be read cannot be enumerated either, so the answer
+    /// changes nothing for the ordinary case.
+    /// </para>
+    /// <para>
+    /// <b>A volume mount point is unlinked rather than dismounted.</b>
+    /// <c>RemoveDirectory</c> removes the reparse point and leaves an entry in
+    /// the mount manager's database, where the framework primitive calls
+    /// <c>DeleteVolumeMountPoint</c> first. That residue is a stale name in a
+    /// registry key, not data — and it is the only respect in which this routine
+    /// still does less than the call it replaced. Named rather than left to be
+    /// discovered.
+    /// </para>
+    /// </remarks>
+    private static bool IsReparsePoint(string directory)
+    {
         try
         {
-            // Post-order: a directory cannot be removed while it still holds
-            // entries, so this is the last thing that happens at every level.
+            return File.GetAttributes(directory).HasFlag(FileAttributes.ReparsePoint);
+        }
+        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
+        {
+            // Already gone. Not a link, and the delete below will say so.
+            return false;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return true;
+        }
+    }
+
+    /// <summary>Removes one directory, recording it if it will not go.</summary>
+    private static void RemoveOneDirectory(string directory, List<string> failures)
+    {
+        try
+        {
             Directory.Delete(directory);
         }
         catch (DirectoryNotFoundException)

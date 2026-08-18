@@ -55,6 +55,18 @@
 ; correct primitive inside a per-node walk. The suite's five call sites went to
 ; ScratchDirectory.RemoveTree, so there is no exception anywhere.
 ;
+; CORRECTED 2026-08-18: this ban justified itself on REPORTING alone, and that
+; was incomplete in the one direction that matters -- it named what the banned
+; call does worse and nothing it does BETTER, so a reader comparing the two
+; would have concluded the replacement was a superset. It was not. The framework
+; call checks FILE_ATTRIBUTE_REPARSE_POINT while it walks and unlinks a junction
+; rather than descending into it; TreeDelete.Remove did not, and on a
+; caller-named path -- browserai_destroy takes the directory from the model --
+; one junction inside a browser profile emptied the target. Fixed the same day
+; and asserted by TreeDeleteTests with a real junction. The rule for whoever
+; replaces this routine next: a replacement must keep BOTH properties, or the
+; ban is protecting a downgrade.
+;
 ; NEVER the timed Process.WaitForExit overload alone. It returns as soon as the
 ; process is gone and does NOT drain the asynchronous output readers, so stderr
 ; is silently truncated -- a green build that loses the line explaining a
@@ -80,5 +92,5 @@
 M:System.Diagnostics.Process.GetProcessesByName(System.String);Never by image name. Act only on a job object BrowserAI created, or on a pid whose identity was verified against a path BrowserAI owns. This call cannot tell our browser from the user's, and the user has ~40 of them.
 M:System.Diagnostics.Process.GetProcessesByName(System.String,System.String);Never by image name, and never on another machine either. Same rule as the single-argument overload.
 M:System.Diagnostics.Process.Kill(System.Boolean);Never Process.Kill(entireProcessTree: true). It walks parent-child links, which are re-parentable and pid-reusable, and it loses the race against anything that respawns while it walks. Dispose the JobObject instead: KILL_ON_JOB_CLOSE tears the whole job down at once and contains anything spawned mid-teardown.
-M:System.IO.Directory.Delete(System.String,System.Boolean);Never Directory.Delete(recursive: true). It reports ONE failed node where a tree may hold many, and a caller whose answer is 'what survived' then cannot give one. Use Runtime/TreeDelete.Remove, which walks post-order and names every node it could not remove. In the suite, ScratchDirectory.RemoveTree. The single-argument overload is not banned: it is the correct primitive inside that walk.
+M:System.IO.Directory.Delete(System.String,System.Boolean);Never Directory.Delete(recursive: true). It reports ONE failed node where a tree may hold many, and a caller whose answer is 'what survived' then cannot give one. Use Runtime/TreeDelete.Remove, which walks post-order and names every node it could not remove. In the suite, ScratchDirectory.RemoveTree. The single-argument overload is not banned: it is the correct primitive inside that walk. NOTE what this call does BETTER, because until 2026-08-18 the replacement did not do it: it checks FILE_ATTRIBUTE_REPARSE_POINT during its walk and unlinks a junction or directory symlink instead of descending into it and deleting the target's files. TreeDelete.Remove checks it too now, and TreeDeleteTests proves it with a real junction. A future replacement must keep BOTH properties -- the per-node report and the reparse-point check -- or it is a downgrade wearing a house rule.
 M:System.Diagnostics.Process.WaitForExit(System.Int32);Never the timed overload on its own. It returns when the process is gone WITHOUT draining the asynchronous output readers, so stderr is silently truncated and the line explaining a failure is the line you lose. Prefer WaitForExitAsync. If a timeout is genuinely needed, suppress RS0030 with the reason and follow it with a bare WaitForExit() to flush the queue -- ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne fails if that second call is ever deleted.
