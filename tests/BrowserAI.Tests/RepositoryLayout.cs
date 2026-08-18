@@ -18,14 +18,17 @@ internal static class RepositoryLayout
     private const string RootMarker = "Directory.Packages.props";
 
     /// <summary>
-    /// Directory names that never hold this repository's own hand-written files.
+    /// Directory names that never hold this repository's own hand-written files,
+    /// wherever in the tree they appear.
     /// </summary>
     /// <remarks>
     /// <para>
     /// Pruned during the walk rather than filtered after it: <c>payload\</c>
     /// carries an unpacked <c>node_modules</c>, so enumerating first and
     /// discarding second means reading tens of thousands of paths to keep none
-    /// of them.
+    /// of them. <c>payload\</c> earns its place in this list rather than in
+    /// <see cref="NotOursAtTheRoot"/> because there are two of them — the
+    /// unpacked one at the root and the vendored npm tree under <c>build\</c>.
     /// </para>
     /// <para>
     /// <b>Declared above every member that reads it, and that is load-bearing
@@ -37,8 +40,32 @@ internal static class RepositoryLayout
     /// down here rather than left to whoever moves it next.
     /// </para>
     /// </remarks>
-    private static readonly string[] NotOurs =
-        [".git", ".vs", ".work", "payload", "artifacts", "Releases", "TestResults", "bin", "obj", "node_modules"];
+    private static readonly string[] NotOursAnywhere =
+        [".git", ".vs", ".work", "payload", "bin", "obj", "node_modules"];
+
+    /// <summary>
+    /// Build output that exists at the repository root and only there.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Split out of the single list on 2026-08-18, and it was hiding five
+    /// product source files.</b> The prune matched a directory <i>name</i> at
+    /// any depth, case-insensitively — so <c>src\BrowserAI\Artifacts\</c>, which
+    /// is where the artifact router lives, matched the root's <c>artifacts\</c>
+    /// build-output directory and was pruned out of <b>every</b> scan built on
+    /// <see cref="LinkBearingFiles"/>: the link check, the fragment check and
+    /// the SPDX house rule alike. Five files, silently outside three tests.
+    /// </para>
+    /// <para>
+    /// <b>It was found by a new check rather than by review</b> — the fragment
+    /// scan counted 552 where a script counting the same corpus outside the
+    /// suite counted 554, and the two missing entries were both in
+    /// <c>Artifacts\</c>. A prune that removes files reports nothing when it
+    /// removes the wrong ones, which is why the counts are asserted at all.
+    /// </para>
+    /// </remarks>
+    private static readonly string[] NotOursAtTheRoot =
+        ["artifacts", "Releases", "TestResults"];
 
     /// <summary>The repository root directory.</summary>
     public static DirectoryInfo Root { get; } = FindRoot();
@@ -140,7 +167,7 @@ internal static class RepositoryLayout
     /// </remarks>
     public static IReadOnlyList<FileInfo> LinkBearingFiles { get; } =
     [
-        .. Walk(Root)
+        .. Walk(Root, atRoot: true)
             .Where(file => file.Extension is ".cs" or ".ps1" or ".psm1" or ".mjs" or ".js" or ".md")
             .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
@@ -200,10 +227,15 @@ internal static class RepositoryLayout
             .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
 
-    /// <summary>Every file beneath a directory, skipping the trees in <see cref="NotOurs"/>.</summary>
+    /// <summary>
+    /// Every file beneath a directory, skipping the trees in
+    /// <see cref="NotOursAnywhere"/> and, at the root, those in
+    /// <see cref="NotOursAtTheRoot"/>.
+    /// </summary>
     /// <param name="directory">The directory to walk.</param>
+    /// <param name="atRoot">Whether this is the repository root itself.</param>
     /// <returns>The files, in whatever order the file system yields them.</returns>
-    private static IEnumerable<FileInfo> Walk(DirectoryInfo directory)
+    private static IEnumerable<FileInfo> Walk(DirectoryInfo directory, bool atRoot)
     {
         foreach (var file in directory.EnumerateFiles())
         {
@@ -212,12 +244,13 @@ internal static class RepositoryLayout
 
         foreach (var child in directory.EnumerateDirectories())
         {
-            if (NotOurs.Contains(child.Name, StringComparer.OrdinalIgnoreCase))
+            if (NotOursAnywhere.Contains(child.Name, StringComparer.OrdinalIgnoreCase)
+                || (atRoot && NotOursAtTheRoot.Contains(child.Name, StringComparer.OrdinalIgnoreCase)))
             {
                 continue;
             }
 
-            foreach (var file in Walk(child))
+            foreach (var file in Walk(child, atRoot: false))
             {
                 yield return file;
             }
