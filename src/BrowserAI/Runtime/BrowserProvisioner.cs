@@ -23,12 +23,25 @@ internal enum ProvisioningState
     Installed,
 
     /// <summary>
-    /// A download is running, here or in another BrowserAI process. Browser calls
-    /// are refused with
+    /// The tree is being made ready, here or in another BrowserAI process.
+    /// Browser calls are refused with
     /// <see cref="Sessions.SessionErrors.ProvisioningInProgress"/> rather than
     /// blocked.
     /// </summary>
-    Downloading,
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-08-18 (previously <c>Downloading</c>, and the word it
+    /// produced at the caller was <c>downloading</c>).</b> One state covers five
+    /// things — waiting on another process's provisioning mutex, deleting an
+    /// abandoned tree, downloading, extracting, and pruning superseded revisions
+    /// — and only the middle one is a download. The waiting case is the one that
+    /// bit: that process has started nothing, cannot see what the holder is
+    /// doing, and the holder may already be finished. <c>QUESTIONS.md</c> §9
+    /// carries the four directions considered and why a fourth state word for
+    /// the mutex-loser was not one of them: no caller acts differently on it, so
+    /// it would add surface without adding an action. The sentence beside the
+    /// word is what separates the five phases, and it always has.
+    /// </remarks>
+    Provisioning,
 
     /// <summary>The last attempt ended badly, and the reason is in the status.</summary>
     Failed,
@@ -101,7 +114,7 @@ internal sealed record ProvisioningTimers
     /// caps above rather than a slow network — and it is logged at
     /// <see cref="LogLevel.Critical"/> for exactly that reason. A provisioning
     /// task that simply never completes is otherwise invisible: <c>init</c> keeps
-    /// answering "downloading" forever and nothing anywhere says the download
+    /// answering "provisioning" forever and nothing anywhere says the download
     /// died.
     /// </remarks>
     public TimeSpan OuterDeadline { get; init; } = TimeSpan.FromMinutes(60);
@@ -120,7 +133,7 @@ internal sealed record ProvisioningTimers
 /// A caller that waits three minutes inside one tool call has had whatever
 /// timing it was managing corrupted, with nothing to read and no way to decide
 /// whether waiting is worth it. So <see cref="Ensure"/> returns immediately with
-/// <see cref="ProvisioningState.Downloading"/> and every upstream call is
+/// <see cref="ProvisioningState.Provisioning"/> and every upstream call is
 /// refused with <see cref="Sessions.SessionErrors.ProvisioningInProgress"/>,
 /// which names the download size and says the same call will work shortly. The
 /// same child then navigates once the install lands — no restart, because
@@ -216,7 +229,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// different directories and neither can corrupt the other. A name carrying
     /// only the family would serialise them anyway — and worse, the loser would
     /// then sit watching for a marker in <i>its own</i> root that the winner is
-    /// never going to write, so it would report "downloading" until the outer
+    /// never going to write, so it would report "provisioning" until the outer
     /// deadline. Found by the suite, where every rig has a browsers root of its
     /// own.
     /// </para>
@@ -371,7 +384,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
         if (_attempts.TryGetValue(browser, out var attempt) && !attempt.Task.IsCompleted)
         {
-            return Downloading(browser, directory, revision, attempt);
+            return Provisioning(browser, directory, revision, attempt);
         }
 
         if (attempt is { Task.IsCompleted: true } finished && finished.Task.Result is { } result && !result.Succeeded)
@@ -420,7 +433,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
         return attempt.Task.IsCompleted
             ? Peek(browser)
-            : Downloading(browser, directory, revision, attempt);
+            : Provisioning(browser, directory, revision, attempt);
     }
 
     /// <summary>
@@ -440,7 +453,7 @@ internal sealed class BrowserProvisioner : IDisposable
     {
         var status = Ensure(browser);
 
-        if (status.State is not ProvisioningState.Downloading || !_attempts.TryGetValue(browser, out var attempt))
+        if (status.State is not ProvisioningState.Provisioning || !_attempts.TryGetValue(browser, out var attempt))
         {
             return status;
         }
@@ -685,10 +698,34 @@ internal sealed class BrowserProvisioner : IDisposable
         }
     }
 
-    private static ProvisioningStatus Downloading(string browser, string directory, BrowserRevision revision, Attempt attempt) =>
+    /// <summary>
+    /// The one unfinished state, and the sentence that says which of its five
+    /// phases this is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Renamed 2026-08-18 (previously <c>Downloading</c>).</b> The word at
+    /// the caller became <c>provisioning</c>, and the method that produces it
+    /// could not keep naming the one phase out of five that this is not always.
+    /// </para>
+    /// <para>
+    /// <b>Both sentences end with what to do next, and that is not decoration.</b>
+    /// <c>downloading</c> told a model, by itself, that time and bandwidth were
+    /// what it was waiting on. <c>provisioning</c> says only <i>not yet</i>, so
+    /// the sentence has to carry the recovery the word used to imply — otherwise
+    /// the rename would leave the reader worse off, which is the one outcome it
+    /// was not allowed to have.
+    /// </para>
+    /// </remarks>
+    /// <param name="browser">The family.</param>
+    /// <param name="directory">Where the tree is going.</param>
+    /// <param name="revision">The revision being provisioned.</param>
+    /// <param name="attempt">The attempt in flight, and the phase it reached.</param>
+    /// <returns>The status.</returns>
+    private static ProvisioningStatus Provisioning(string browser, string directory, BrowserRevision revision, Attempt attempt) =>
         new(
             browser,
-            ProvisioningState.Downloading,
+            ProvisioningState.Provisioning,
             directory,
             attempt.Phase.IsWaitingForAnotherProcess
 
@@ -698,8 +735,8 @@ internal sealed class BrowserProvisioner : IDisposable
                 // holder is doing -- downloading, extracting, or pruning old
                 // revisions, which walks every process on the machine -- is not
                 // knowable from here, so it is not claimed. See AttemptPhase.
-                ? $"Another BrowserAI process holds the provisioning lock for {browser}; this one is watching for its completion marker into '{directory}' rather than starting a second copy, and has been since {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}."
-                : $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}.");
+                ? $"Another BrowserAI process holds the provisioning lock for {browser}; this one is watching for its completion marker into '{directory}' rather than starting a second copy, and has been since {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until the marker appears and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created."
+                : $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until it lands and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created.");
 
     private BrowsersManifest Manifest() => _manifest ??= BrowsersManifest.Read(_payload);
 
@@ -1105,14 +1142,16 @@ internal sealed class BrowserProvisioner : IDisposable
     /// which, so it must not claim one.
     /// </para>
     /// <para>
-    /// <b>The state WORD is unchanged and that is deliberate rather than an
-    /// oversight.</b> <c>downloading</c> is caller-visible surface: every consumer
-    /// branches on <i>installed</i> / <i>not yet, work is in progress</i> /
-    /// <i>failed</i>, and the loser belongs in the middle bucket exactly as
-    /// before. The word being narrower than the state it names is a real defect,
-    /// and the honest replacement is <c>provisioning</c> — but renaming what a
-    /// model reads is a product-voice decision, so it is recorded in
-    /// <c>QUESTIONS.md</c> and not taken here.
+    /// ⚠️ <b>The state word was renamed on 2026-08-18 (previously
+    /// <c>downloading</c>, described here as "unchanged and deliberate").</b> The
+    /// word being narrower than the state it names was the defect; the honest
+    /// replacement is <c>provisioning</c>, and the maintainer took that decision
+    /// in <c>QUESTIONS.md</c> §9. Nothing about the bucketing moved: every
+    /// consumer still branches on <i>installed</i> / <i>not yet, work is in
+    /// progress</i> / <i>failed</i>, and this loser still belongs in the middle
+    /// one. <b>This class is still the discriminator</b> — the word says only
+    /// <i>not yet</i>, so which of the five phases it is remains a question only
+    /// the sentence answers.
     /// </para>
     /// </remarks>
     private sealed class AttemptPhase

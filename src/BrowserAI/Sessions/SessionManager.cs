@@ -246,7 +246,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         SessionToolLog.CallRefusedWhileProvisioning(_logger, tool, browser, status.State);
 
-        return status.State is ProvisioningState.Downloading
+        return status.State is ProvisioningState.Provisioning
             ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.FirstRunDownloadSize)
             : SessionErrors.BrowserRuntimeDidNotStart(session.Location.FullPath, status.Detail);
     }
@@ -1013,9 +1013,25 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// The word in the result is the state itself — <c>installed</c>,
-    /// <c>downloading</c>, <c>failed</c> — because a caller that has to parse
+    /// <c>provisioning</c>, <c>failed</c> — because a caller that has to parse
     /// English to find out whether a navigation will work is one upstream wording
     /// change away from getting it wrong.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The middle word became <c>provisioning</c> on 2026-08-18 (previously
+    /// <c>downloading</c>).</b> One word covers five phases — waiting on another
+    /// process's provisioning mutex, deleting an abandoned tree, downloading,
+    /// extracting, and pruning superseded revisions — and only one of them is a
+    /// download. The cached-run path reaches the mutex-waiter routinely, so the
+    /// misleading phase was not the rare one. There is no fourth word for it:
+    /// the three buckets a caller acts on are <i>installed</i> / <i>not yet</i> /
+    /// <i>failed</i>, and a mutex-loser belongs in the middle exactly as a
+    /// downloader does. What separates the five is
+    /// <see cref="ProvisioningStatus.Detail"/>, the sentence printed beside the
+    /// word — and both of its unfinished branches were given an explicit "wait
+    /// and call the same tool again" at the same time, because <c>downloading</c>
+    /// implied a recovery that <c>provisioning</c> does not. <c>QUESTIONS.md</c>
+    /// §9 records the decision.
     /// </para>
     /// </remarks>
     /// <param name="browser">The family this session was created for.</param>
@@ -1033,7 +1049,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var word = status.State switch
             {
                 ProvisioningState.Installed => "installed",
-                ProvisioningState.Downloading => "downloading",
+                ProvisioningState.Provisioning => "provisioning",
                 _ => "failed",
             };
 

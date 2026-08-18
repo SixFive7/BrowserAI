@@ -134,8 +134,8 @@ findable from more than one direction.
       the index's own `Area` cells verbatim: Bundling and AOT 14, Child runtime and
       configuration 10, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      9 more are `open` while carrying evidence, so 63 are `open` in total, against
-      88 `closed`. Many will close against tests that now exist; some are upstream
+      8 more are `open` while carrying evidence, so 62 are `open` in total, against
+      89 `closed`. Many will close against tests that now exist; some are upstream
       behaviours that cannot close at all and should say so. **An honest `open` with
       a reason beats a `closed` with a weak one.**
 

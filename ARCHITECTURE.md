@@ -57,7 +57,7 @@ child, with a named list of required keys, so deleting one from the generator
 turns the suite red.
 
 **Provisioning happens on first use and returns immediately.** `init` starts the
-download and answers `browserProvisioning: downloading`; every upstream tool is
+download and answers `browserProvisioning: provisioning`; every upstream tool is
 refused until the marker lands, and the *same* child then navigates with no
 restart. The installer is upstream's own, out of the payload, inside a job,
 watched against three caps — 45 minutes absolute, 10 minutes from the moment the

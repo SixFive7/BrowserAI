@@ -34,6 +34,19 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class ProvisioningTests
 {
+    /// <summary>
+    /// <c>init</c> answers while the install is still running, and the word it
+    /// answers with is <c>provisioning</c>.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The word became <c>provisioning</c> on 2026-08-18 (previously
+    /// <c>downloading</c>).</b> The umbrella covers five phases and only one of
+    /// them is a download; <c>QUESTIONS.md</c> §9 carries the decision. This test
+    /// keeps its name because what it is about is that <c>init</c> did not wait,
+    /// and it now also asserts the recovery, because <c>downloading</c> implied
+    /// one by itself and <c>provisioning</c> does not.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task InitReturnsImmediatelyAndSaysTheBrowserIsDownloading()
     {
@@ -70,7 +83,13 @@ internal sealed class ProvisioningTests
         // the install cannot have completed, so an init that had waited for it
         // could not have returned at all. The state is a word rather than a
         // sentence to parse, and it is the word §A names.
-        await Assert.That(TextOf(answer)).Contains("browserProvisioning: downloading");
+        await Assert.That(TextOf(answer)).Contains("browserProvisioning: provisioning");
+
+        // The download branch of the sentence, which is the other half of what
+        // the rename had to keep: the state word alone no longer tells a model
+        // that waiting is the recovery, so the sentence beside it says so.
+        await Assert.That(TextOf(answer)).Contains("is being downloaded into");
+        await Assert.That(TextOf(answer)).Contains("call the same tool again on the same session");
     }
 
     [Test]
@@ -439,13 +458,22 @@ internal sealed class ProvisioningTests
     /// tests above, so it is neither hypothetical nor rare.
     /// </para>
     /// <para>
-    /// <b>The state WORD is unchanged and this test says so on purpose.</b>
-    /// <c>downloading</c> stays, because every consumer of it branches on
-    /// <i>installed</i> / <i>not yet</i> / <i>failed</i> and the loser belongs in
-    /// the middle exactly as before; the honest word for the state is
-    /// <c>provisioning</c>, and renaming what a model reads is recorded in
-    /// <c>QUESTIONS.md</c> as the maintainer's call rather than taken here. What
-    /// is fixed is the sentence, which was a claim about the world.
+    /// ⚠️ <b>The state word became <c>provisioning</c> on 2026-08-18 (previously
+    /// <c>downloading</c>, and this test's remarks said it was staying).</b> The
+    /// bucketing did not move — every consumer still branches on
+    /// <i>installed</i> / <i>not yet</i> / <i>failed</i>, and this loser still
+    /// belongs in the middle — so what changed is only that the word no longer
+    /// names one of the five phases it covers. <c>QUESTIONS.md</c> §9 carries the
+    /// decision. The sentence remains the discriminator, which is why this test
+    /// still reads it rather than the word.
+    /// </para>
+    /// <para>
+    /// <b>And the sentence now has to carry the recovery, which is the half a
+    /// rename could quietly lose.</b> <c>downloading</c> told a model by itself
+    /// that it was waiting on bytes and should try again later; <c>provisioning</c>
+    /// says only <i>not yet</i>. So both unfinished branches state what to do
+    /// next, and this test asserts it on the branch where <b>nothing at all is
+    /// happening in this process</b> — the one where a reader has least to go on.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -475,7 +503,7 @@ internal sealed class ProvisioningTests
             // a loop rather than asserting on the first answer.
             var started = provisioner.Ensure(SessionManager.SupportedBrowser);
 
-            await Assert.That(started.State).IsEqualTo(ProvisioningState.Downloading);
+            await Assert.That(started.State).IsEqualTo(ProvisioningState.Provisioning);
 
             var patience = Stopwatch.StartNew();
             ProvisioningStatus waiting;
@@ -501,11 +529,16 @@ internal sealed class ProvisioningTests
                 await Task.Delay(TimeSpan.FromMilliseconds(20));
             }
 
-            // The word is unchanged; the sentence no longer claims a download
-            // that this process has not started and cannot see.
-            await Assert.That(waiting.State).IsEqualTo(ProvisioningState.Downloading);
+            // The sentence does not claim a download that this process has not
+            // started and cannot see.
+            await Assert.That(waiting.State).IsEqualTo(ProvisioningState.Provisioning);
             await Assert.That(waiting.Detail).DoesNotContain("is being downloaded");
             await Assert.That(waiting.Detail).Contains("watching for its completion marker");
+
+            // And it says what to do next. Without this the rename from
+            // `downloading` to `provisioning` would leave a model reading the
+            // most opaque of the five phases with a state and no action.
+            await Assert.That(waiting.Detail).Contains("call the same tool again on the same session");
         }
         finally
         {

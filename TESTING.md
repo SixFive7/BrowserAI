@@ -214,7 +214,7 @@ test taking the product's own cross-process path.** BrowserAI serialises install
 on a `Global\` mutex keyed on the browsers root, and a process that does not get
 it *does not download*: it watches for the marker the holder will write. So a
 cached run takes that mutex first, and everything else is unchanged — `init`
-answers at once and reports `downloading`, every browser tool is refused with the
+answers at once and reports `provisioning`, every browser tool is refused with the
 size and a route out, `browserai_list` keeps answering, and the same child
 navigates against a real Chromium once the marker lands, with no restart. The
 seed writes every byte before it writes a single `INSTALLATION_COMPLETE`, which

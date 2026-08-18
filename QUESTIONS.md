@@ -234,7 +234,7 @@ that will now explain itself the first time it recurs.
 
 ## Added 2026-08-18, from the honesty pass
 
-### 9. What the `browserProvisioning` state word should say
+### 9. What the `browserProvisioning` state word should say — **ANSWERED 2026-08-18: `provisioning`**
 
 `init` answers with one of three words — `installed`, `downloading`, `failed` —
 and the word is the surface, deliberately: *"a caller that has to parse English to
@@ -265,6 +265,29 @@ to reason about bandwidth and download time in a state where neither applies. Th
 migration cost is one commit and there is no external consumer to break — this
 build has never shipped a caller that parses it. (d) is a defensible hold; (c) is
 the only option that adds surface without adding an action.
+
+**Answered 2026-08-18: (b).** `init` now answers `installed` / `provisioning` /
+`failed`, and `ProvisioningState.Downloading` is `ProvisioningState.Provisioning`.
+**(c) was declined on its own stated grounds** — no caller acts differently on the
+mutex-loser, so a fourth word would be surface with no action behind it, and the
+sentence beside the word already separates all five phases. Nothing about the
+bucketing moved.
+
+**One thing the directions above did not price, and it is the load-bearing half.**
+`downloading` carried a recovery *inside the word*: a model reading it knows it is
+waiting on bytes and that calling again later is the move. `provisioning` says
+only *not yet*. So both unfinished detail sentences gained an explicit *"Browser
+tools are refused until it lands and BrowserAI's own tools keep working; wait and
+call the same tool again on the same session, which does not have to be
+re-created"*, asserted on the branch where a reader has least to go on
+(`ProvisioningTests.AProcessWaitingOnAnotherOneDoesNotSayItIsDownloading`) and on
+the download branch (`.InitReturnsImmediatelyAndSaysTheBrowserIsDownloading`). A
+rename that leaves a model with a state and no action is not a neutral rename.
+
+**What it cost, against what (b) predicted:** `ARCHITECTURE.md`, `TESTING.md` and
+two test assertions, as forecast — plus the enum member, the status factory, four
+doc comments that asserted the word was staying, and this section. No external
+consumer existed to break.
 
 ### 10. Whether the client's 2 KB cap is per string or per tool — **ANSWERED 2026-08-18: per string**
 

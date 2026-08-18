@@ -75,9 +75,11 @@ has been satisfied in form only.
   process is downloading, extracting, or walking every process on the machine
   inside its revision prune. It rendered *"… is being downloaded into '…'"*
   anyway. The attempt now carries a phase and the sentence says what this process
-  is actually doing. **The state word is unchanged**: `downloading` is still
-  narrower than the state it names, and renaming what a model reads is recorded
-  in [`QUESTIONS.md`](QUESTIONS.md) as a decision rather than taken.
+  is actually doing. **The state word was left alone here** — *and renamed to
+  `provisioning` later the same day; see Changed, below.* This entry stands as
+  written because it is what shipped in this order: the sentence was a claim
+  about the world and was fixed first, the word was a product-voice decision and
+  waited for one.
 
 - **A supported configuration warned on every startup.**
   `warn: velopack: Failed to initialize WindowsVelopackLocator` fired on every
@@ -102,6 +104,25 @@ has been satisfied in form only.
   installer is *"~117 MB"*, which was the installed payload rather than the
   installer: re-measured off the artifact `build/New-Release.ps1` packed for
   `v1.0.0`, it is **53,567,930 bytes — 51.1 MiB**.
+
+### Changed
+
+- **`browserProvisioning` now answers `provisioning` where it answered
+  `downloading`.** One word covers five phases — waiting on another process's
+  provisioning mutex, deleting an abandoned tree, downloading, extracting, and
+  pruning superseded revisions — and **only one of them is a download**. The
+  entry below fixed the *sentence* on 2026-08-18 and left the word, recording it
+  in [`QUESTIONS.md`](QUESTIONS.md) §9 as the maintainer's call; the call is
+  taken, and §9 is answered. Nothing about the bucketing moved: every consumer
+  still branches on *installed* / *not yet* / *failed*, and the mutex-loser still
+  belongs in the middle — which is why **no fourth word was added** for it, since
+  no caller acts differently on the distinction. `ProvisioningState.Downloading`
+  is `ProvisioningState.Provisioning`. **Both unfinished detail sentences gained
+  an explicit *"wait and call the same tool again on the same session"*,** because
+  `downloading` implied that recovery by itself and `provisioning` does not — a
+  rename that leaves the reader with a state and no action is a rename that made
+  things worse. No external consumer parses the word; this build has never
+  shipped one.
 
 ### Added
 

@@ -53,7 +53,7 @@ namespace BrowserAI.Tests;
 /// <description>Cold (CDN) · Cached</description>
 /// </listheader>
 /// <item>
-/// <term><c>init</c> answers at once and reports <c>downloading</c></term>
+/// <term><c>init</c> answers at once and reports <c>provisioning</c></term>
 /// <description>real · real — the cached mode drives the <i>loser</i> of the
 /// machine-wide mutex, which is a production path nothing else covers end to
 /// end</description>
@@ -175,12 +175,12 @@ internal sealed class FirstRunProvisioningTests
         // the note "a 204 MB download is running and init answered anyway; if it
         // had waited, this number would be the download's". The state assertion
         // on the next line says the same thing and says it better: an init that
-        // had waited for the download would report `ready`, not `downloading`, so
+        // had waited for the download would report `ready`, not `provisioning`, so
         // the word IS the proof that it did not wait. Twenty seconds, meanwhile,
         // is a number a starved machine reaches while the product is behaving
         // perfectly -- and this test runs beside 418 others.
         await Assert.That((bool?)init["isError"]).IsNotEqualTo(true);
-        await Assert.That(TextOf(init)).Contains("browserProvisioning: downloading");
+        await Assert.That(TextOf(init)).Contains("browserProvisioning: provisioning");
 
         // A browser-needing call is refused rather than hanging, and the refusal
         // is §H.4 row 6 -- with the size, so a caller can decide what waiting

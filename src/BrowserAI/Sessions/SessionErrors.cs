@@ -171,7 +171,7 @@ internal static class SessionErrors
             + $"Create a session with {SessionToolSurface.Init} in {names} mode if a human will be at the keyboard; the mode is bound at creation and no session can change what it is. To see the page without one, use browser_snapshot or browser_take_screenshot.";
     }
 
-    /// <summary>Row 6 — the browser this session needs is still downloading.</summary>
+    /// <summary>Row 6 — the browser this session needs is still being provisioned.</summary>
     /// <remarks>
     /// <para>
     /// <b>The number is quoted because the wait is the caller's decision.</b> An
