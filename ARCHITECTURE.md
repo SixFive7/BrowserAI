@@ -127,18 +127,44 @@ The largest area, and the one everything else keys on.
 **The session directory is the identity.** One directory holds `lock.json` at its
 root and `profile/`, `output/` and `downloads/` beneath it. `lock.json` is both
 the lock and the record — held `FileAccess.ReadWrite, FileShare.Read`, carrying
-schema version, mode, browser, purpose and its history, created and last-used
-stamps, the BrowserAI build, the resolved path, and a
-`(pid, creationFileTime, clientProcessName)` holder that deliberately outlives its
-holder. There is no central registry, no bearer token, no label and no expiry
-timer; all four were designed and then dropped, because the directory already is
-all of those things.
+the schema version and then mode, browser, purpose, the resolved path, the
+BrowserAI build and a `(pid, creationFileTime, clientProcessName)` holder that
+deliberately outlives its holder. There is no central registry, no bearer token,
+no label and no expiry timer; all four were designed and then dropped, because the
+directory already is all of those things.
+
+**Every field of `lock.json` is an ordered list of timestamped statements —
+schema 2, since 2026-08-18.** The record is append-only rather than a snapshot, so
+it says how a session got here and not only where it is; `created` and `lastUsed`
+are no longer stored because they are exactly the earliest and latest statement,
+and a stored copy could only disagree with what it summarises. **A statement is
+appended only when the value changes**, so mode, browser, directory and build stay
+one statement long for a session that is not moved, copied or run under a new
+build, and each field is capped at 32 statements — trimmed out of the *middle*,
+because `created` is read from the first one and a trim at the front would move a
+session's creation date. **There is no schema-1 converter**: an old file is
+refused with the fix in the message.
+
+**`browserai_resume` no longer refuses a copied directory, and BrowserAI has zero
+confirmation flags.** `acknowledgeCopy` existed because the record was a snapshot
+— taking a copy over overwrote the only evidence that it *was* a copy — and it
+went the day the record stopped being one. A resumed copy appends its path to a
+`directory` history that still carries the original, and the answer hands the model
+that history: where the directory has been, when, and that the recorded purpose
+describes the original. A confirmation whose whole content can be returned as fact
+is a question that did not need asking.
+[`ModelSurfaceTests.NoAuthoredToolAsksTheCallerToConfirmAnything`](tests/BrowserAI.Tests/ModelSurfaceTests.cs)
+keeps the count at zero.
 
 **Our own files reject what they do not recognise.** `LockRecord.Read` is a
-hand-written `Utf8JsonReader` parse that refuses an unknown key at either level, a
-missing key, a schema version it does not know, and a timestamp that is not
-round-trippable ISO 8601 — every refusal naming a recovery and stating that
-repeating the call will fail identically.
+hand-written `Utf8JsonReader` parse that refuses an unknown key at any of the
+three levels, a missing key, an **empty statement list**, a schema version it does
+not know, and a timestamp that is not round-trippable ISO 8601 — every refusal
+naming a recovery and stating that repeating the call will fail identically. **The
+version is checked in a pass of its own, before anything else is parsed**: a
+schema-1 file is well-formed JSON whose keys this build still recognises by name,
+so a version checked last would report it as damage and send a caller to repair a
+file that is not broken.
 
 **Six authored tools, and `session` is mandatory.** `browserai_init`,
 `browserai_resume`, `browserai_list`, `browserai_destroy`,

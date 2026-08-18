@@ -399,7 +399,19 @@ internal sealed class SessionLockTests
             // handed on rather than lost, which is what a resume is for.
             await Assert.That(reclaimed.Message).Contains("reading the customer portal");
             await Assert.That(reclaimed.Acquired!.Record.PurposeHistory.Count).IsEqualTo(2);
-            await Assert.That(reclaimed.Acquired.Record.PurposeHistory[0]).IsEqualTo("reading the customer portal");
+            await Assert.That(reclaimed.Acquired.Record.PurposeHistory[0].Value).IsEqualTo("reading the customer portal");
+
+            // Schema 2: the dead session's purpose is not merely kept, it is
+            // DATED -- and dated before the purpose that replaced it, so a reader
+            // can tell which agent said which.
+            await Assert.That(reclaimed.Acquired.Record.PurposeHistory[0].At)
+                .IsLessThan(reclaimed.Acquired.Record.PurposeHistory[^1].At);
+
+            // And the dead holder is still in the record beside the live one,
+            // which is the statement `Reclaimed` is making.
+            await Assert.That(reclaimed.Acquired.Record.HolderHistory.Count).IsEqualTo(2);
+            await Assert.That(reclaimed.Acquired.Record.HolderHistory[0].Value.ProcessId).IsEqualTo(holderPid);
+            await Assert.That(reclaimed.Acquired.Record.Holder.ProcessId).IsEqualTo(Environment.ProcessId);
         }
         finally
         {

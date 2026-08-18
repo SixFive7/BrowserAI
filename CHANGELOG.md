@@ -107,6 +107,41 @@ has been satisfied in form only.
 
 ### Changed
 
+- **`lock.json` is schema 2: every field is an ordered list of timestamped
+  statements, and `acknowledgeCopy` is gone.** The record was a snapshot with a
+  history bolted onto `purpose` alone; it is now append-only, so a session says
+  **how it got here** and not only where it is. `created` and `lastUsed` are no
+  longer stored — they are exactly the earliest and the latest statement, and a
+  stored copy could only ever disagree with what it summarises. **A statement is
+  appended only when the value changes**, so `mode`, `browser`, `directory` and
+  `browserAiVersion` stay one statement long for a session that is not moved,
+  copied or run under a new build.
+  **Growth is capped at 32 statements per field**, trimmed out of the *middle*:
+  the first statement is never dropped, because `created` is read from it and a
+  trim at the front would silently move a session's creation date. Worst case is
+  ~70 KB, dominated by 32 purposes at their 2,000-character cap — schema 1's
+  `purposeHistory` had no cap at all. **There is no converter and no
+  back-compatibility**: a version-1 file is refused with the fix in the message,
+  and the version is now checked in a pass of its own *before* anything else is
+  parsed, because a schema-1 file is well-formed JSON whose keys this build still
+  recognises by name and a version checked last reported it as damage.
+  **Every refusal the strict parser made still holds** — unknown key at any of the
+  three levels, missing key, unknown schema version, non-round-trippable timestamp
+  — and one is new: an **empty statement list**, which has no current value and
+  would otherwise surface as an index-out-of-range a long way from the file.
+
+  **The payoff is that `browserai_resume` stops refusing a copied directory.**
+  `acknowledgeCopy=true` existed because taking a copy over overwrote the only
+  evidence that it *was* a copy, so the caller had to be made to say it knew. Now
+  the resume appends its path to a `directory` history that still carries the
+  original and **returns that history**: where the directory has been, when, and
+  that the recorded purpose describes the original's work. That is strictly more
+  than the refusal ever conveyed. The `DirectoryIsACopy` row is deleted from the
+  error catalogue rather than orphaned, and **BrowserAI now has zero confirmation
+  flags** — `ModelSurfaceTests.NoAuthoredToolAsksTheCallerToConfirmAnything`
+  keeps it there, with the deleted flag's own name as the matcher's positive
+  control.
+
 - **A contender asks the kernel who holds a session before it queues for the
   right to ask.** Every process that wanted to know who held a directory took
   `LockScopes.PerDirectoryGate` — losers included, whose entire remaining

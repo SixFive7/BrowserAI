@@ -370,15 +370,16 @@ internal sealed record SessionRun
         // capture copied first and the copy was accepted as a move.
         CopyTree(moved, copy);
 
+        // ⚠️ ONE CALL, no flag. `acknowledgeCopy` was deleted on 2026-08-18 with
+        // the refusal it unlocked: under schema 2 the record is an append-only
+        // list of timestamped statements, so resuming a copy does not overwrite
+        // the evidence that it IS one, and the answer hands the model the
+        // directory's whole history instead of demanding a confirmation for it.
+        // The step that used to be `resumeCopyAcknowledged` is gone rather than
+        // renamed, because there is no second call to make.
         answers["resumeCopy"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
         {
             ["directory"] = copy,
-        }).ConfigureAwait(false);
-
-        answers["resumeCopyAcknowledged"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
-        {
-            ["directory"] = copy,
-            ["acknowledgeCopy"] = true,
         }).ConfigureAwait(false);
 
         // A real session directory that this process is not driving: alpha was

@@ -68,7 +68,7 @@ internal sealed class ModelSurfaceTests
             ["directory", "purpose", "mode", "browser", "tracing", "consoleLevel", "debug"],
             ["directory", "purpose", "mode"]),
         (SessionToolSurface.Resume,
-            ["directory", "purpose", "debug", "tracing", "consoleLevel", "acknowledgeCopy"],
+            ["directory", "purpose", "debug", "tracing", "consoleLevel"],
             ["directory"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory"], ["directory"]),
@@ -953,6 +953,82 @@ internal sealed class ModelSurfaceTests
         // arrive unasserted.
         await Assert.That(TheAuthoredSignatures.Select(signature => signature.Tool).Order(StringComparer.Ordinal))
             .IsEquivalentTo(SessionToolSurface.Names.Order(StringComparer.Ordinal).ToArray());
+    }
+
+    /// <summary>
+    /// <b>No tool asks the caller to confirm anything.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>BrowserAI reached zero confirmation flags on 2026-08-18, when
+    /// <c>acknowledgeCopy</c> was deleted</b>, and this is what keeps it there.
+    /// That flag gated <c>browserai_resume</c> on a directory that looked like a
+    /// copy of a session that still existed. It was necessary while
+    /// <c>lock.json</c> was a snapshot — taking the copy over overwrote the only
+    /// evidence that it <i>was</i> a copy — and it stopped being necessary the
+    /// moment the record became an append-only list of timestamped statements,
+    /// because the resume can now hand the model the whole provenance instead.
+    /// </para>
+    /// <para>
+    /// <b>The rule this asserts is a design rule, not a naming rule.</b> A
+    /// confirmation flag is a question whose entire content can be returned as
+    /// fact; a model that has been told what a thing is does not need to be asked
+    /// whether it meant it, and a flag it must guess at is a flag it will pass
+    /// <c>true</c> to. The one thing BrowserAI still refuses outright — a
+    /// reinstall while a browser is running out of the tree — is refused with
+    /// <i>no force option</i> and no argument to add one, which is the same
+    /// principle from the other end.
+    /// </para>
+    /// <para>
+    /// <b>The matcher is proved before it is trusted.</b> A pattern that matches
+    /// nothing is indistinguishable from a genuine absence, so the deleted flag's
+    /// own name is run through it first: a sweep that cannot find the thing it
+    /// was written for has not established that the thing is gone.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoAuthoredToolAsksTheCallerToConfirmAnything()
+    {
+        // The vocabulary a confirmation flag arrives under. Not exhaustive over
+        // English, and it does not need to be: what it has to catch is the next
+        // one somebody adds by analogy with the last one.
+        string[] confirmations = ["acknowledge", "confirm", "force", "iamsure", "reallY", "yesireally", "override"];
+
+        static bool asksForConfirmation(string[] words, string property) =>
+            words.Any(word => property.Contains(word, StringComparison.OrdinalIgnoreCase));
+
+        // The positive control, first. `acknowledgeCopy` is the flag this test
+        // exists because of, and if the matcher cannot see it the emptiness below
+        // proves nothing at all.
+        await Assert.That(asksForConfirmation(confirmations, "acknowledgeCopy")).IsTrue();
+        await Assert.That(asksForConfirmation(confirmations, "directory")).IsFalse();
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var found = new List<string>();
+        var examined = 0;
+
+        foreach (var tool in SessionToolSurface.Names)
+        {
+            foreach (var property in advertised[tool]?["inputSchema"]?["properties"]?.AsObject() ?? [])
+            {
+                examined++;
+
+                if (asksForConfirmation(confirmations, property.Key))
+                {
+                    found.Add($"{tool} takes '{property.Key}'");
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, found)).IsEmpty();
+
+        // And the sweep really looked at something. An enumeration that silently
+        // produced nothing would satisfy the assertion above.
+        await Assert.That(examined).IsGreaterThan(SessionToolSurface.Names.Count);
     }
 
     private static Dictionary<string, JsonObject?> Advertised(string childToolsList)

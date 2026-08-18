@@ -439,21 +439,28 @@ internal static class SessionErrors
         + "This needs SeCreateGlobalPrivilege, which an interactive user has and a low-integrity or AppContainer process does not — there is no reduced-protection mode to fall back to, because a logon-session-scoped lock would report success while allowing a second BrowserAI to open the same browser profile. "
         + "Run BrowserAI as an ordinary interactive user.";
 
-    /// <summary>Row 15 — the directory is a copy of a session that still exists.</summary>
-    /// <remarks>
-    /// A <b>moved</b> directory produces no error at all: the record is repaired
-    /// and the resume proceeds. Only a copy is refused, and only because the
-    /// original still stands.
-    /// </remarks>
-    /// <param name="path">The directory being resumed.</param>
-    /// <param name="recordedPath">Where its record says it lives.</param>
-    /// <param name="mode">The mode the record carries.</param>
-    /// <param name="purpose">The purpose the record carries.</param>
-    /// <returns>The refusal.</returns>
-    public static string DirectoryIsACopy(string path, string recordedPath, string mode, string purpose) =>
-        $"'{path}' records that it lives at '{recordedPath}', and that directory still exists — so this is a COPY of a session rather than a move. Its record says: mode '{mode}'. {Recorded(purpose)} "
-        + "Its ownership record and its purpose describe the original, and the process named in it may still be alive against that directory. Nothing was changed. "
-        + $"Pass acknowledgeCopy=true to take this copy over and rewrite the record, or call {SessionToolSurface.Resume} on '{recordedPath}' instead.";
+    // ⚠️ Row 15 -- DirectoryIsACopy -- was DELETED on 2026-08-18 along with
+    // `acknowledgeCopy`, and deleted rather than left unreferenced because
+    // ErrorCatalogueTests proves every row in this file is reachable from a real
+    // path, so a row nothing can emit is a red build.
+    //
+    // What it said: "'X' records that it lives at 'Y', and that directory still
+    // exists -- so this is a COPY rather than a move. Nothing was changed. Pass
+    // acknowledgeCopy=true to take this copy over and rewrite the record."
+    //
+    // Why it existed and why it stopped: the record was a snapshot, so taking a
+    // copy over OVERWROTE the only evidence that it was a copy -- and a caller
+    // that had been told nothing would then be running against another session's
+    // purpose with nothing on disk to say so. The flag bought a moment of
+    // deliberateness at the cost of a refusal on a directory that is perfectly
+    // usable. Under schema 2 every field of lock.json is an ordered list of
+    // timestamped statements and nothing is overwritten: a resumed copy appends
+    // its own path to a `directory` history that still carries the original, and
+    // the answer hands the model that history. The confirmation was a question
+    // whose entire content could be returned as fact, which is the definition of
+    // a question that did not need asking. BrowserAI now has zero confirmation
+    // flags, and SessionToolTests.NoToolAsksTheCallerToConfirmAnything keeps it
+    // that way.
 
     /// <summary>
     /// Row 16 — a <c>filename</c> that names somewhere outside the session

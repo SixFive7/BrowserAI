@@ -357,7 +357,6 @@ internal sealed class SessionManager : IAsyncDisposable
         var debug = Flag(arguments, "debug") ?? false;
         var tracing = Flag(arguments, "tracing");
         var consoleLevel = ConsoleLevel(arguments);
-        var acknowledgeCopy = Flag(arguments, "acknowledgeCopy") ?? false;
 
         // A profile is browser-specific and a session cannot change what it is,
         // so a caller asking to resume a Firefox directory as Chromium is
@@ -386,17 +385,21 @@ internal sealed class SessionManager : IAsyncDisposable
         // move leaves nothing behind and a copy leaves the original standing, so
         // the recorded path already discriminates and no fingerprint field is
         // needed.
+        //
+        // ⚠️ A COPY IS NO LONGER REFUSED, and `acknowledgeCopy` is gone with the
+        // refusal (2026-08-18). The flag existed because the record was a
+        // snapshot: taking the copy over rewrote the only evidence that it WAS a
+        // copy, so the caller had to be made to say it knew. Under schema 2 the
+        // record is a list of timestamped statements and nothing is overwritten
+        // -- resuming appends `location` to a `directory` history that still
+        // carries the original -- so the answer below hands the model the
+        // provenance instead of demanding a confirmation for it. A confirmation
+        // flag whose whole content can be returned as fact is a question that did
+        // not need asking. BrowserAI now has none.
         if (!SamePath(record.Directory, location))
         {
-            if (Directory.Exists(record.Directory) && !acknowledgeCopy)
-            {
-                return new ToolOutcome(
-                    SessionErrors.DirectoryIsACopy(location.FullPath, record.Directory, record.Mode, record.Purpose),
-                    IsError: true);
-            }
-
             notes.Add(Directory.Exists(record.Directory)
-                ? $"This directory is a COPY of the session at '{record.Directory}', which still exists, and you acknowledged that. Its recorded purpose and history describe the original, not this copy."
+                ? $"This directory is a COPY of the session at '{record.Directory}', which still exists — the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.SetPurpose} to say what this copy is for."
                 : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
 
             // Recorded rather than logged here. The interesting log is the
@@ -742,17 +745,8 @@ internal sealed class SessionManager : IAsyncDisposable
         return lines;
     }
 
-    private static LockRecord Repurpose(LockRecord record, string purpose)
-    {
-        var history = new List<string>(record.PurposeHistory);
-
-        if (history.Count is 0 || !string.Equals(history[^1], purpose, StringComparison.Ordinal))
-        {
-            history.Add(purpose);
-        }
-
-        return record with { Purpose = purpose, PurposeHistory = history, LastUsed = DateTimeOffset.Now };
-    }
+    private static LockRecord Repurpose(LockRecord record, string purpose) =>
+        record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
 
     private async Task<ToolOutcome> OpenAsync(
         SessionPath location,
@@ -962,12 +956,7 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("  child protocol: ").Append(session.Child.NegotiatedProtocolVersion ?? "<none>").Append('\n')
             .Append("  browserProvisioning: ").Append(Provisioning(record.Browser)).Append('\n');
 
-        if (record.PurposeHistory.Count > 1)
-        {
-            _ = text.Append("  purpose recorded by previous sessions, oldest first: ")
-                .Append(string.Join(" / ", record.PurposeHistory.Take(record.PurposeHistory.Count - 1)))
-                .Append('\n');
-        }
+        _ = text.Append(HowItGotHere(record));
 
         // Scoped to the root this session sits under, never machine-wide: an
         // aggregate over everything would pull unrelated projects' sessions into
@@ -1222,6 +1211,73 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private static string Megabytes(long bytes) =>
         ((double)bytes / (1024 * 1024)).ToString("F1", CultureInfo.InvariantCulture) + " MiB";
+
+    /// <summary>
+    /// How this session got here: every field that has been more than one thing,
+    /// oldest statement first.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This block is what replaced <c>acknowledgeCopy</c>.</b> A resumed copy
+    /// used to be refused until the caller passed a flag, because taking it over
+    /// overwrote the only evidence that it was a copy. Under schema 2 nothing is
+    /// overwritten: the <c>directory</c> field still carries the original path
+    /// beside the new one, with the instant each was recorded, so the resume can
+    /// simply <i>tell</i> the model where the directory has been and let it act
+    /// on that. A confirmation flag whose entire content can be returned as fact
+    /// is a question that did not need asking.
+    /// </para>
+    /// <para>
+    /// <b>Only fields that moved are printed.</b> An ordinary session has one
+    /// statement per field and produces nothing here, so this costs a model
+    /// nothing to read until there is something to say.
+    /// </para>
+    /// <para>
+    /// <b>A field at its cap says so.</b> The trim keeps the first statement and
+    /// the most recent <see cref="LockRecord.MaximumStatementsPerField"/> − 1,
+    /// dropping out of the middle — so a full list may be missing statements, and
+    /// the sentence says <i>may</i> because the record cannot tell whether a trim
+    /// has actually happened.
+    /// </para>
+    /// </remarks>
+    /// <param name="record">The record read from <c>lock.json</c>.</param>
+    /// <returns>The block, or an empty string when nothing has changed.</returns>
+    private static string HowItGotHere(LockRecord record)
+    {
+        var fields = new List<string>();
+
+        line(fields, LockJson.Directory, record.DirectoryHistory, static value => $"'{value}'");
+        line(fields, LockJson.Mode, record.ModeHistory, static value => value);
+        line(fields, LockJson.Browser, record.BrowserHistory, static value => value);
+        line(fields, LockJson.Purpose, record.PurposeHistory, static value => value);
+        line(fields, LockJson.BrowserAiVersion, record.BrowserAiVersionHistory, static value => value);
+        line(
+            fields,
+            LockJson.Holder,
+            record.HolderHistory,
+            static holder => $"PID {holder.ProcessId.ToString(CultureInfo.InvariantCulture)}{(holder.ClientProcessName is { } client ? $" started by {client}" : string.Empty)}");
+
+        return fields.Count is 0
+            ? string.Empty
+            : "  how this session got here — every field of lock.json is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
+                + string.Join(string.Empty, fields);
+
+        static void line<T>(List<string> into, string name, IReadOnlyList<Statement<T>> statements, Func<T, string> render)
+        {
+            if (statements.Count < 2)
+            {
+                return;
+            }
+
+            var capped = LockRecord.IsAtTheCap(statements)
+                ? $" (at the {LockRecord.MaximumStatementsPerField.ToString(CultureInfo.InvariantCulture)}-statement cap, so statements between the first and these may have been dropped)"
+                : string.Empty;
+
+            into.Add($"    {name}{capped}: "
+                + string.Join(" → ", statements.Select(statement => $"{Stamp(statement.At)} {render(statement.Value)}"))
+                + "\n");
+        }
+    }
 
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
 

@@ -898,38 +898,51 @@ internal sealed class SessionLock : IDisposable
                 holder.Holder.ProcessId,
                 holder.Holder.ClientProcessName,
                 DateTimeOffset.FromFileTime(holder.Holder.ProcessCreatedFileTime),
-                holder.LastUsed,
+
+                // ⚠️ TakenAt and not LastUsed. Under schema 2 they are different
+                // instants: a `set_purpose` moves LastUsed past the moment the
+                // current holder took the directory, and this sentence says
+                // "took the lock at".
+                holder.TakenAt,
                 holder.Purpose),
             holder: holder,
             holderRunning: true);
 
+    /// <summary>
+    /// The next record: the previous one with a statement appended to every
+    /// field whose value has moved.
+    /// </summary>
+    /// <remarks>
+    /// <b>Nothing is overwritten and nothing is invented.</b> A field whose value
+    /// has not changed keeps the list it had, so a session that is opened a
+    /// hundred times still reports one <c>mode</c> statement and one
+    /// <c>browser</c> statement — while <c>directory</c> gains one the moment the
+    /// tree is moved or copied, which is what lets <c>resume</c> hand a model the
+    /// provenance instead of demanding an acknowledgement for it.
+    /// </remarks>
+    /// <param name="location">Where the record is being written.</param>
+    /// <param name="request">Mode, browser and purpose as the caller asked for them.</param>
+    /// <param name="previous">The record found on disk, or <see langword="null"/> for a directory that has never been locked.</param>
+    /// <param name="now">The instant every statement written by this call carries.</param>
+    /// <returns>The record to write.</returns>
     private static LockRecord Compose(SessionPath location, SessionLockRequest request, LockRecord? previous, DateTimeOffset now)
     {
-        var purpose = LockRecord.SanitisePurpose(request.Purpose);
-        var history = new List<string>(previous?.PurposeHistory ?? []);
-
-        if (history.Count is 0 || !string.Equals(history[^1], purpose, StringComparison.Ordinal))
+        var holder = new LockHolder
         {
-            history.Add(purpose);
-        }
+            ProcessId = Environment.ProcessId,
+            ProcessCreatedFileTime = ProcessLiveness.CreationTimeOfThisProcess(),
+            ClientProcessName = ProcessLiveness.ClientProcessName(),
+        };
 
         return new LockRecord
         {
             SchemaVersion = LockRecord.CurrentSchemaVersion,
-            Directory = location.FullPath,
-            Mode = request.Mode,
-            Browser = request.Browser,
-            Purpose = purpose,
-            PurposeHistory = history,
-            Created = previous?.Created ?? now,
-            LastUsed = now,
-            BrowserAiVersion = BuildVersion.Current,
-            Holder = new LockHolder
-            {
-                ProcessId = Environment.ProcessId,
-                ProcessCreatedFileTime = ProcessLiveness.CreationTimeOfThisProcess(),
-                ClientProcessName = ProcessLiveness.ClientProcessName(),
-            },
+            DirectoryHistory = LockRecord.Append(previous?.DirectoryHistory, location.FullPath, now),
+            ModeHistory = LockRecord.Append(previous?.ModeHistory, request.Mode, now),
+            BrowserHistory = LockRecord.Append(previous?.BrowserHistory, request.Browser, now),
+            PurposeHistory = LockRecord.Append(previous?.PurposeHistory, LockRecord.SanitisePurpose(request.Purpose), now),
+            BrowserAiVersionHistory = LockRecord.Append(previous?.BrowserAiVersionHistory, BuildVersion.Current, now),
+            HolderHistory = LockRecord.Append(previous?.HolderHistory, holder, now),
         };
     }
 

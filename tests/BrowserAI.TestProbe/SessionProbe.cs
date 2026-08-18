@@ -523,10 +523,19 @@ internal static class SessionProbe
                 for (var i = 0; i < rewrites; i++)
                 {
                     var round = i;
+
+                    // Schema 2: the purpose is a list of timestamped statements
+                    // and `lastUsed` is derived from them, so a rewrite appends
+                    // rather than assigning two fields. The value differs on
+                    // every round on purpose -- Append is a no-op when it does
+                    // not, and a probe that rewrote the same purpose a hundred
+                    // times would produce no renames for the reader to race.
                     held.Rewrite(current => current with
                     {
-                        LastUsed = DateTimeOffset.Now,
-                        Purpose = $"rewrite {round.ToString(CultureInfo.InvariantCulture)}",
+                        PurposeHistory = LockRecord.Append(
+                            current.PurposeHistory,
+                            $"rewrite {round.ToString(CultureInfo.InvariantCulture)}",
+                            DateTimeOffset.Now),
                     });
 
                     completed++;

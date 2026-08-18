@@ -271,7 +271,7 @@ internal static class SessionToolSurface
             "Take over a directory that is already a BrowserAI session.",
             "Reopens a session that exists, and replays what it was: its recorded mode, browser, purpose and history. Mode and browser are NOT arguments — they were bound when the session was created and a profile on disk belongs to its browser — and passing either is refused. "
             + "A session is resumable forever; there is no expiry, so a directory that exists can always be resumed. "
-            + "If the directory was moved or renamed, its record is repaired and you are told. If it looks like a COPY of a session that still exists somewhere else, this refuses, because a copy carries another session's history and ownership record; pass acknowledgeCopy=true to take it over deliberately.",
+            + "This never refuses a directory for what it is. If the session was moved or renamed, its record is repaired and you are told. If it is a COPY of a session that still exists somewhere else, it resumes and tells you that too — every field of the record is an ordered list of timestamped statements, so the answer shows you where the directory has been and that the recorded purpose describes the original. Read that before acting on the purpose, and set a new one.",
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of an existing session directory."),
@@ -279,7 +279,6 @@ internal static class SessionToolSurface
                 ["debug"] = Property("boolean", "Raise this session's own log level for its life. Accepted here as well as on init, because the interesting case is almost always a session that is already running badly. Defaults to false."),
                 ["tracing"] = Property("boolean", "Record this run of the session into its output directory. Defaults to false."),
                 ["consoleLevel"] = Enumerated($"Which console messages browser tools return. Defaults to '{BrowserConfiguration.DefaultConsoleLevel}'.", BrowserConfiguration.ConsoleLevels),
-                ["acknowledgeCopy"] = Property("boolean", "Take over a directory that appears to be a copy of a session that still exists. Defaults to false, which refuses. A directory that was MOVED needs no acknowledgement — a move is repaired without asking."),
             },
             ["directory"]);
 

@@ -180,18 +180,12 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(TextOf(withBrowser)).Contains("the profile on disk belongs to it");
         Record(nameof(SessionErrors.ArgumentNotAcceptedOnResume));
 
-        // Row 15 — a copy of a session that still exists.
-        var copy = Path.Combine(sessions.Root, "copy");
-        Directory.CreateDirectory(copy);
-        File.Copy(Path.Combine(original, SessionLayout.LockFileName), Path.Combine(copy, SessionLayout.LockFileName));
-
-        var copied = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = copy });
-
-        await Assert.That((bool?)copied["isError"]).IsTrue();
-        Match(
-            TextOf(copied),
-            nameof(SessionErrors.DirectoryIsACopy),
-            SessionErrors.DirectoryIsACopy(copy, original, record.Mode, record.Purpose));
+        // ⚠️ Row 15 -- DirectoryIsACopy -- was deleted on 2026-08-18 with
+        // `acknowledgeCopy`, so its provocation is deleted too rather than left
+        // to rot: this test's whole job is that every row in the catalogue is
+        // reachable from a real path, and a provocation for a row that no longer
+        // exists would not compile. A resumed copy is now answered rather than
+        // refused, and SessionToolTests owns that assertion.
     }
 
     [Test]
@@ -709,16 +703,20 @@ internal sealed partial class ErrorCatalogueTests
         // And the count, so a row deleted rather than triggered does not make
         // this pass by shrinking the question.
         //
-        // ⚠️ **Corrected 2026-08-18 to 22 (previously "24 since build-order
-        // step 17, which added §H.4's row 11 — the Firefox profile dialog").**
-        // Three rows went with the tool-permission matrix — `ModeRefusal`,
-        // `UnclassifiedTool` and `ConfigurationWouldDiscloseSecrets` — and one
-        // arrived in their place, `AnnotationWouldHangAWindowlessSession`. They
-        // were **deleted rather than orphaned**: this census fails on a row
-        // nobody emits, so a refusal left in the catalogue after the code that
-        // produced it went would have been a red build, which is the mechanism
-        // working.
-        await Assert.That(rows.Count).IsEqualTo(22);
+        // ⚠️ **Corrected 2026-08-18 to 21 (previously 22, and "24 since
+        // build-order step 17" before that).** Three rows went with the
+        // tool-permission matrix — `ModeRefusal`, `UnclassifiedTool` and
+        // `ConfigurationWouldDiscloseSecrets` — and one arrived in their place,
+        // `AnnotationWouldHangAWindowlessSession`, which took it to 22. The
+        // twenty-second to go was `DirectoryIsACopy`, deleted with
+        // `acknowledgeCopy` when `lock.json` became an append-only list of
+        // timestamped statements: a resumed copy is now told what it is instead
+        // of being refused until it says that it knows.
+        //
+        // Every one of them was **deleted rather than orphaned**, and this census
+        // is why: it fails on a row nobody emits, so a refusal left in the
+        // catalogue after the code that produced it went is a red build.
+        await Assert.That(rows.Count).IsEqualTo(21);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

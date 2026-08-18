@@ -88,14 +88,33 @@ internal sealed class SessionToolTests
         await Assert.That(text).Contains(SessionToolSurface.Resume);
     }
 
+    /// <summary>
+    /// A moved session resumes with a repaired record; a copied one resumes and
+    /// is <b>told what it is</b>.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-08-18 (previously
+    /// <c>AMovedSessionResumesWithARepairedRecordAndACopiedOneIsRefused</c>).</b>
+    /// The copy is no longer refused and <c>acknowledgeCopy</c> is gone. The
+    /// refusal existed because the record was a snapshot: taking a copy over
+    /// overwrote the only evidence that it was a copy, so a caller had to be made
+    /// to say it knew. Schema 2 made the record an append-only list of
+    /// timestamped statements, so the original path is still there beside the new
+    /// one and the resume can simply say so. <b>What this test now has to prove is
+    /// that it does</b> — that the answer carries the provenance, not merely that
+    /// it succeeded, because a resume that silently accepted a copy would also
+    /// pass an assertion on the outcome alone.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AMovedSessionResumesWithARepairedRecordAndACopiedOneIsRefused()
+    public async Task AMovedSessionResumesWithARepairedRecordAndACopiedOneIsToldWhatItIs()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 
         var moved = Path.Combine(run.Root, "gamma-moved");
+        var copy = Path.Combine(run.Root, "gamma-copy");
         var gamma = Path.Combine(run.Root, "gamma");
 
         await Assert.That(run.IsError("resumeMoved")).IsFalse();
@@ -111,16 +130,45 @@ internal sealed class SessionToolTests
         // caller cannot see and an operator needs.
         await Assert.That(run.MovedSessionLog).Contains("Session directory moved");
 
-        // The copy: refused, because it carries an ownership record and a
-        // history describing the original, which still exists.
-        await Assert.That(run.IsError("resumeCopy")).IsTrue();
-        await Assert.That(run.Text("resumeCopy")).Contains("COPY");
-        await Assert.That(run.Text("resumeCopy")).Contains(moved);
-        await Assert.That(run.Text("resumeCopy")).Contains("acknowledgeCopy");
+        // The copy: resumed, in one call, with no flag.
+        var copied = run.Text("resumeCopy");
 
-        // Acknowledged, it proceeds -- and says what was acknowledged.
-        await Assert.That(run.IsError("resumeCopyAcknowledged")).IsFalse();
-        await Assert.That(run.Text("resumeCopyAcknowledged")).Contains("COPY");
+        await Assert.That(run.IsError("resumeCopy")).IsFalse();
+        await Assert.That(copied).Contains("COPY");
+        await Assert.That(copied).Contains(moved);
+
+        // And nothing anywhere asks for the flag that used to gate this.
+        await Assert.That(copied).DoesNotContain("acknowledgeCopy");
+
+        // ⚠️ THE PAYOFF, AND THE HALF A SUCCESSFUL RESUME ALONE WOULD NOT PROVE.
+        // The answer carries the directory's own history -- both paths, each with
+        // the instant it was recorded -- which is what tells the model it is a
+        // copy, what the original was, and that the recorded purpose describes
+        // other work. Without it this would be a refusal quietly replaced by
+        // silence.
+        await Assert.That(copied).Contains("how this session got here");
+        await Assert.That(copied).Contains("recorded purpose and history describe the ORIGINAL");
+
+        // The history is in the record too, ordered, and it is the WHOLE lineage:
+        // this directory was created as gamma, moved to gamma-moved and copied to
+        // gamma-copy, and every one of those is a dated statement.
+        var copiedRecord = SessionLock.ReadRecord(SessionPath.Resolve(copy));
+
+        await Assert.That(copiedRecord!.DirectoryHistory.Select(statement => statement.Value).ToArray())
+            .IsEquivalentTo([gamma, moved, copy]);
+
+        await Assert.That(copiedRecord.DirectoryHistory[0].At).IsLessThan(copiedRecord.DirectoryHistory[^1].At);
+
+        // Created is read from the first statement, so it is the moment the
+        // ORIGINAL was made rather than the moment this copy was resumed. A trim
+        // policy that dropped the front would have moved it silently.
+        await Assert.That(copiedRecord.Created).IsEqualTo(copiedRecord.DirectoryHistory[0].At);
+
+        // The original is untouched by the copy having been resumed -- two
+        // separate sessions now, which is the sentence the answer prints.
+        var original = SessionLock.ReadRecord(SessionPath.Resolve(moved));
+
+        await Assert.That(original!.Directory).IsEqualTo(moved);
     }
 
     [Test]
@@ -238,7 +286,12 @@ internal sealed class SessionToolTests
         var record = SessionLock.ReadRecord(SessionPath.Resolve(Path.Combine(run.Root, "alpha")));
 
         await Assert.That(record?.Purpose).IsEqualTo("a purpose set after the fact");
-        await Assert.That(record?.PurposeHistory.Contains("the first session's purpose")).IsTrue();
+        await Assert.That(record!.PurposeHistory.Any(statement => statement.Value == "the first session's purpose")).IsTrue();
+
+        // Schema 2: the old purpose is not merely present, it is DATED, and it
+        // is dated earlier than the one that replaced it. A history whose order
+        // was not asserted would pass against a list in any order at all.
+        await Assert.That(record.PurposeHistory[0].At).IsLessThan(record.PurposeHistory[^1].At);
     }
 
     [Test]
