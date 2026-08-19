@@ -213,6 +213,25 @@ has been satisfied in form only.
 
 ### Fixed
 
+- ⚠️ **Not fixed, and recorded loudly: two BrowserAI processes appended holder
+  statements to one `lock.json`, in CI, on 2026-08-19.** This is the interleaving
+  the 2026-08-18 adversarial review predicted from reading and which nothing had
+  ever produced. Run 32203064556 attempt 1, 16 contenders on a 4-core hosted
+  runner: 2652 acquired and wrote its record, 696 reclaimed the same directory
+  **61 ms later**, and 2652 returned `Unreadable` with the sentence *"the
+  directory was not taken and nothing was changed"* — while the record on disk
+  carried its holder statement and its purpose. It did not reproduce in six
+  consecutive local full runs and a CI re-run of the same commit was green.
+  **The fix is already specified in [`TODO.md`](TODO.md) and is deliberately not
+  being made in this pass**, because it restructures the refusal on the
+  most-exercised path in the product. A second, separable and cheaper defect is
+  visible in the same evidence: `SessionLock.TryAcquire` puts the durable write
+  and the reopen in one `catch`, so a failure *after* a successful write claims
+  nothing changed. Both halves have a [hazard row](HAZARDS.md#hazard-index).
+  `SessionLockTests.UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho`
+  caught it, and it was diagnosable only because a whole-set dossier was added to
+  that test on 2026-08-18 for exactly this occasion.
+
 - **A probe wrote its report in place, so `File.Exists` was a readiness signal
   that became true in the middle of the write.** Found on 2026-08-19 by running
   the whole suite three times in a row to prove it green: one run failed with

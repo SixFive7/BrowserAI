@@ -51,12 +51,34 @@ findable from more than one direction.
       as something else** — the second restructures the refusal on the
       most-exercised path in the product.
 
-- [ ] **The probe-before-gate redesign, attacked before it was built.** It is a
-      sound *ownership* test and an unsound *freedom* test: with the gate skipped
-      on the free path, both contenders probe, A wins the rename, and B's retry
-      loop hands B the name the instant anything closes A's handle — A then holds
-      a valid handle to a nameless file. **Adopt the probe as a fast refusal in
-      front of an unchanged `TryAcquire`, never as a replacement for the gate.**
+- [ ] **The probe-before-gate redesign, attacked before it was built — and
+      observed in the wild on 2026-08-19.** It is a sound *ownership* test and an
+      unsound *freedom* test: with the gate skipped on the free path, both
+      contenders probe, A wins the rename, and B's retry loop hands B the name
+      the instant anything closes A's handle — A then holds a valid handle to a
+      nameless file. **Adopt the probe as a fast refusal in front of an unchanged
+      `TryAcquire`, never as a replacement for the gate.**
+
+      ⚠️ **It is no longer a prediction.** CI run 32203064556, attempt 1, on a
+      4-core hosted runner: `SessionLockTests.UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho`
+      raced 16 contenders and **two of them wrote holder statements into one
+      `lock.json`** — 2652 at `00:59:31.9527062`, then 696 at `00:59:32.0137633`,
+      61 ms later, with `purpose` and `holder` each carrying both. The decisive
+      dossier lines are `pid 696 … outcome=Reclaimed taken=true holderPid=2652`
+      and `pid 2652 … outcome=Unreadable taken=false`. It did not reproduce in
+      six consecutive local full runs, and a CI re-run of the same commit was
+      green. **The dossier is why this is diagnosable at all**: it was added to
+      that test on 2026-08-18 for exactly this occasion, and the first failure it
+      ever caught was a different shape from the one it was written for.
+
+      **A second, separable defect is visible in the same evidence, and it is
+      cheaper:** `SessionLock.TryAcquire` puts `WriteDurably` and the reopen in
+      one `catch`, so a failure **after** a successful write returns
+      `Unreadable` saying *"the directory was not taken and nothing was
+      changed"* — which is false, because the record on disk already carries this
+      process's holder statement. Split them, so the post-write arm says what
+      actually happened. It has a [hazard row](HAZARDS.md#hazard-index) naming
+      both halves.
 
 - [ ] **Watch [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
       and act on what upstream decides.** The report: `"launchOptions":
