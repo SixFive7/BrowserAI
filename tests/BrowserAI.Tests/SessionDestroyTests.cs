@@ -284,6 +284,156 @@ internal sealed class SessionDestroyTests
         await Assert.That(string.Join(Environment.NewLine, afterRelease)).IsEmpty();
     }
 
+    /// <summary>
+    /// A destroy that could not remove more items than it will name says that
+    /// the list was cut.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The defect this holds shut, found 2026-08-19.</b> The answer carried
+    /// a complete tally and a listing capped at
+    /// <see cref="SessionManager.SurvivorsNamed"/>, and <b>nothing in the text
+    /// said it had been cut</b>. At 25 survivors a reader saw the number 25 and
+    /// twenty lines; the only evidence of the other five was a subtraction nobody
+    /// was asked to do, and this answer is written for a model, which will read
+    /// twenty lines under a heading as the whole list. The cap itself is right
+    /// and is unchanged — a thousand-line answer is not an improvement.
+    /// </para>
+    /// <para>
+    /// <b>Deterministic, by the same means as its neighbour above:</b> one more
+    /// handle than the cap allows, each held <c>FileShare.None</c> for the whole
+    /// call, so the walk cannot unlink any of them. No browser and no slow
+    /// machine. The session directory itself is a survivor too, which is why the
+    /// tally lands comfortably past the cap rather than exactly on it.
+    /// </para>
+    /// <para>
+    /// <b>The truncation note is read from the product</b>, through
+    /// <see cref="SessionManager.TruncationNote"/> and
+    /// <see cref="DestroyAnswer"/>, rather than re-typed here — a test holding
+    /// its own copy of a sentence stops recognising the arm the day somebody
+    /// rewords it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADestroyThatNamesFewerSurvivorsThanItCountsSaysTheListWasCut()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "destroyed-with-more-survivors-than-it-names");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "destroyed while this test holds more files open than the answer will name",
+            ["mode"] = "headless",
+        });
+
+        var held = new List<FileStream>();
+
+        try
+        {
+            for (var index = 0; index <= SessionManager.SurvivorsNamed; index++)
+            {
+                var path = Path.Combine(directory, $"held-{index.ToString("D3", CultureInfo.InvariantCulture)}.bin");
+                var handle = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+
+                held.Add(handle);
+                await handle.WriteAsync("held open for the whole of the destroy"u8.ToArray());
+                await handle.FlushAsync();
+            }
+
+            var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = directory,
+            });
+
+            var answer = TextOf(destroyed);
+
+            // The whole contract first, which now includes the note in both
+            // directions.
+            await DestroyAnswer.AccountsForWhatItLeftAsync(answer, directory);
+
+            var survivors = DestroyAnswer.SurvivorsNamedIn(answer);
+
+            await Assert.That(survivors is not null).IsTrue().Because(answer);
+
+            // ⚠️ THE PREDICATE BEFORE THE NUMBER: items the walk could not
+            // remove, which is the held files plus the directory above them.
+            // Asserted as "more than the cap" rather than as an exact figure --
+            // a temp file or a log beside them would change the tally and change
+            // nothing about the property under test.
+            await Assert.That(survivors!.Value.Stated).IsGreaterThan(SessionManager.SurvivorsNamed).Because(answer);
+            await Assert.That(survivors.Value.Listed.Count).IsEqualTo(SessionManager.SurvivorsNamed).Because(answer);
+
+            await Assert.That(answer).Contains(SessionManager.TruncationNote(survivors.Value.Stated));
+        }
+        finally
+        {
+            foreach (var handle in held)
+            {
+                await handle.DisposeAsync();
+            }
+        }
+
+        var afterRelease = ScratchDirectory.RemoveTree(directory);
+
+        await Assert.That(string.Join(Environment.NewLine, afterRelease)).IsEmpty();
+    }
+
+    /// <summary>
+    /// The listing routine names everything up to the cap and says nothing about
+    /// truncation until there is truncation to report.
+    /// </summary>
+    /// <remarks>
+    /// <b>The boundary, asserted directly, because the three call sites cannot
+    /// all reach it.</b> <see cref="SessionManager.Listing"/> also builds the
+    /// reinstall's survivor list and the reinstall refusal's session list, and
+    /// provoking twenty-one locked files inside a browser tree or twenty-one live
+    /// sessions to make those arms reachable would cost minutes per assertion for
+    /// a property that is a function of a list and an <c>int</c>. The end-to-end
+    /// arm above proves the routine is wired to the answer; this proves the
+    /// routine.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheListingSaysNothingAboutTruncationUntilItTruncates()
+    {
+        var cap = SessionManager.SurvivorsNamed;
+
+        // Exactly at the cap: everything named, and nothing claimed about items
+        // that do not exist. An off-by-one that noted a truncation here would
+        // tell a caller to go looking for a twenty-first survivor.
+        var complete = SessionManager.Listing(Items(cap));
+
+        await Assert.That(complete.Split('\n').Length).IsEqualTo(cap);
+        await Assert.That(complete).DoesNotContain("Only the first");
+
+        // Empty, which is the reinstall refusal's shape when the index names no
+        // live session of the family.
+        await Assert.That(SessionManager.Listing([])).IsEmpty();
+
+        // One past it, which is the smallest cut there is.
+        var cut = SessionManager.Listing(Items(cap + 1));
+
+        await Assert.That(cut.Split('\n').Length).IsEqualTo(cap + 1);
+        await Assert.That(cut).EndsWith(SessionManager.TruncationNote(cap + 1));
+        await Assert.That(cut).Contains("1 more are not named here");
+        await Assert.That(cut).DoesNotContain($"item-{cap.ToString("D3", CultureInfo.InvariantCulture)}");
+
+        // And well past it, so the note does arithmetic rather than repeating a
+        // constant.
+        await Assert.That(SessionManager.Listing(Items(cap + 5))).EndsWith(SessionManager.TruncationNote(cap + 5));
+        await Assert.That(SessionManager.TruncationNote(cap + 5)).Contains("5 more are not named here");
+    }
+
+    /// <summary>Indented lines shaped like the ones <c>TreeDelete</c> produces.</summary>
+    /// <param name="count">How many.</param>
+    /// <returns>The lines.</returns>
+    private static string[] Items(int count) =>
+        [.. Enumerable.Range(0, count).Select(index => $"  item-{index.ToString("D3", CultureInfo.InvariantCulture)}")];
+
     private static string TextOf(JsonObject answer) =>
         string.Join(
             "\n",

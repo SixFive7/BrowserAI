@@ -28,11 +28,11 @@ namespace BrowserAI.Tests.Harness;
 /// rather than a reader.
 /// </para>
 /// <para>
-/// <b>The heading and the cap are read from <see cref="SessionManager"/> rather
-/// than re-typed.</b> A test carrying its own copy of the product's prose stops
-/// recognising the arm the day somebody rewords it — and then passes, by never
-/// reaching the assertions underneath, which is the green-when-broken failure
-/// this suite exists to eliminate.
+/// <b>The heading, the cap and the truncation note are read from
+/// <see cref="SessionManager"/> rather than re-typed.</b> A test carrying its own
+/// copy of the product's prose stops recognising the arm the day somebody rewords
+/// it — and then passes, by never reaching the assertions underneath, which is
+/// the green-when-broken failure this suite exists to eliminate.
 /// </para>
 /// </remarks>
 internal static class DestroyAnswer
@@ -92,6 +92,18 @@ internal static class DestroyAnswer
             await Assert.That(named.Stated).IsGreaterThan(0).Because(answer);
             await Assert.That(named.Listed.Count)
                 .IsEqualTo(Math.Min(named.Stated, SessionManager.SurvivorsNamed))
+                .Because(answer);
+
+            // ⚠️ AND IT SAYS SO WHEN IT CUT THE LIST. Added 2026-08-19: the two
+            // assertions above were satisfied by an answer that stated 25 and
+            // printed twenty lines with nothing anywhere saying the list had been
+            // cut, which is a complete list to any reader who does not do the
+            // arithmetic -- and this answer is written for a model. Asserted in
+            // both directions, because a note printed on an uncut list is the
+            // same defect wearing the other sign: it would tell a caller that
+            // items exist which do not.
+            await Assert.That(answer.Contains(SessionManager.TruncationNote(named.Stated), StringComparison.Ordinal))
+                .IsEqualTo(named.Stated > SessionManager.SurvivorsNamed)
                 .Because(answer);
 
             var elsewhere = named.Listed.Where(line => !line.StartsWith(session, StringComparison.OrdinalIgnoreCase));

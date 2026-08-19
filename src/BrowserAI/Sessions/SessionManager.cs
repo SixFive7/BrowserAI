@@ -124,11 +124,71 @@ internal sealed class SessionManager : IAsyncDisposable
     /// How many survivors the answer lists by name before it stops.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// A cap on the <i>listing</i> and never on the <i>count</i>: the number in
     /// <see cref="SurvivorsHeading"/>'s sentence is always the whole tally, so a
     /// caller can tell a truncated list from a complete one by comparing the two.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And since 2026-08-19 the answer says which of the two it is, rather
+    /// than leaving the comparison to be noticed.</b> Previously the tally and
+    /// the listing were both there and <b>nothing anywhere said the list had been
+    /// cut</b>: at 25 survivors a reader saw the number 25 and twenty lines, and
+    /// the only evidence of the other five was arithmetic nobody was asked to do.
+    /// A model reading twenty lines under a heading has been given a complete
+    /// list unless the text says otherwise, and this one is written for a model.
+    /// See <see cref="Listing"/>.
+    /// </para>
     /// </remarks>
     public const int SurvivorsNamed = 20;
+
+    /// <summary>
+    /// One line per item up to <see cref="SurvivorsNamed"/>, and a sentence
+    /// saying so when the cap cut the list.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One routine for all three capped listings in this file</b> — the
+    /// survivors of a destroy, the survivors of a reinstall's delete, and the
+    /// sessions a reinstall refusal names. All three used to take
+    /// <c>Take(20)</c> inline against a tally printed above them, and all three
+    /// were silent about the cut; a fix applied to one of them would have left
+    /// the same defect standing twice.
+    /// </para>
+    /// <para>
+    /// <b>The note is deliberately not indented.</b> Every line
+    /// <c>TreeDelete</c> names is indented by two spaces, and that indent is what
+    /// a reader — and <c>DestroyAnswer</c> in the suite — uses to find where the
+    /// listing ends. A note that lined up with the items would be read as one.
+    /// </para>
+    /// </remarks>
+    /// <param name="items">Everything there is to name, in the order it should be named.</param>
+    /// <returns>The listing, with a truncation note when there is one to make.</returns>
+    internal static string Listing(IReadOnlyList<string> items)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        var listing = string.Join("\n", items.Take(SurvivorsNamed));
+
+        return items.Count <= SurvivorsNamed ? listing : $"{listing}\n{TruncationNote(items.Count)}";
+    }
+
+    /// <summary>
+    /// The sentence a cut listing ends with, written once so that a test can
+    /// require it rather than re-type it.
+    /// </summary>
+    /// <remarks>
+    /// <b>It restates the tally rather than only the remainder.</b> The number
+    /// above the listing and the number of lines under it are what a reader is
+    /// being asked to reconcile, so the sentence that explains the gap names both
+    /// sides of it and does the subtraction itself.
+    /// </remarks>
+    /// <param name="total">The whole tally, which is always larger than the cap when this is used.</param>
+    /// <returns>The note.</returns>
+    internal static string TruncationNote(int total) =>
+        $"Only the first {SurvivorsNamed.ToString(CultureInfo.InvariantCulture)} are listed; the "
+        + $"{total.ToString(CultureInfo.InvariantCulture)} above is the whole tally, so "
+        + $"{(total - SurvivorsNamed).ToString(CultureInfo.InvariantCulture)} more are not named here.";
 
     private readonly ConcurrentDictionary<string, LiveSession> _live = new(StringComparer.Ordinal);
     private readonly SessionEnvironment _environment;
@@ -593,7 +653,7 @@ internal sealed class SessionManager : IAsyncDisposable
             ? new ToolOutcome(summary, IsError: false)
             : new ToolOutcome(
                 $"{summary}\n\nBUT {failures.Count.ToString(CultureInfo.InvariantCulture)} {SurvivorsHeading}\n"
-                + string.Join("\n", failures.Take(SurvivorsNamed))
+                + Listing(failures)
                 + "\nThe session's record is gone, so the directory is no longer a session; delete what is left once whatever holds it has exited.",
                 IsError: false);
     }
@@ -758,7 +818,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 return new ToolOutcome(
                     $"{SessionToolSurface.ReinstallBrowser} was not run: {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) are running from '{directory}', and these {browser} sessions are open on this machine:\n"
-                    + string.Join("\n", claimants.Take(20))
+                    + Listing(claimants)
                     + "\nNothing was changed and nothing was terminated. There is deliberately no force option — forcing here means killing browsers other agents are driving. Close those sessions, or wait, and call this tool again.",
                     IsError: true);
             }
@@ -793,7 +853,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             return new ToolOutcome(
                 $"'{outcome.Directory}' was only partly removed, so nothing was downloaded on top of it and the browser install is now incomplete. {outcome.Failures.Count.ToString(CultureInfo.InvariantCulture)} item(s) survived:\n"
-                + string.Join("\n", outcome.Failures.Take(20))
+                + Listing(outcome.Failures)
                 + $"\nSomething still has those files open. Once it has exited, call {SessionToolSurface.ReinstallBrowser} again — it will delete what is left and download a complete tree.",
                 IsError: true);
         }
