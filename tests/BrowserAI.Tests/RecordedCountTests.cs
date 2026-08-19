@@ -163,10 +163,24 @@ internal sealed partial class RecordedCountTests
         await Assert.That(string.Join(Environment.NewLine, disagreements)).IsEmpty();
 
         // Not vacuous: a parser that stopped matching rows would make every
-        // count above zero and every comparison trivially satisfiable once the
+        // count zero and every comparison trivially satisfiable once the
         // sentence was edited to say zero.
-        await Assert.That(published.Count).IsGreaterThan(4);
-        await Assert.That(unadjudicated.Count).IsGreaterThan(20);
+        //
+        // ⚠️ Corrected 2026-08-19 (previously `published.Count > 4` and
+        // `unadjudicated.Count > 20`). Both were floors placed under the very
+        // thing they were watching be counted DOWN: adjudicating the
+        // unadjudicated backlog empties one category at a time and drives that
+        // count towards zero, so the original pair would have gone red on the
+        // third category -- a test failing because the work it watches got done,
+        // which is worse than no guard because the fix looks like weakening it.
+        // What they were really protecting against is a parser that has stopped
+        // finding rows, and that is what is asserted now: the corpus is still a
+        // corpus, every row still lands in exactly one of the two states, and
+        // both states are populated. None of the three can be satisfied by an
+        // empty read, and none of them moves when a row is adjudicated.
+        await Assert.That(rows.Count).IsGreaterThan(130);
+        await Assert.That(rows.Count(row => row.State is HazardIndex.Open) + rows.Count(row => row.State is HazardIndex.Closed)).IsEqualTo(rows.Count);
+        await Assert.That(rows.Count(row => row.State is HazardIndex.Closed)).IsGreaterThan(50);
     }
 
     [Test]

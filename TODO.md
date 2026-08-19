@@ -218,14 +218,28 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **30 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **21 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
-      the index's own `Area` cells verbatim: Process and OS (Windows) 9,
+      the index's own `Area` cells verbatim:
       Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      23 more are `open` while carrying evidence, so 53 are `open` in total, against
-      105 `closed`.
+      28 more are `open` while carrying evidence, so 49 are `open` in total, against
+      109 `closed`.
+
+      ***Corrected 2026-08-19, later the same day again (previously "30 rows …
+      Process and OS (Windows) 9 … 23 more are `open` while carrying evidence,
+      so 53 are `open` in total, against 105 `closed`")*** — re-counted by the
+      test, not adjusted. **Process and OS (Windows) is done**: 9 rows, now 4
+      `closed` and 5 `open` with a reason. ⚠️ **The check that guards this
+      paragraph had to be corrected in the same commit**, and the reason is worth
+      keeping: its two non-vacuity floors were `published.Count > 4` and
+      `unadjudicated.Count > 20`, both placed under the number they were
+      watching be counted *down*, so finishing a third category would have turned
+      the test red **because the work got done**. They are now floors under the
+      corpus instead — the table still parses, every row still lands in exactly
+      one of the two states, and both states are populated — none of which moves
+      when a row is adjudicated.
 
       ***Corrected 2026-08-19, later the same day (previously "42 rows … Child
       runtime and configuration 12 … 18 more are `open` while carrying evidence,
