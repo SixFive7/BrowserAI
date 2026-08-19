@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using BrowserAI.Runtime;
 
 namespace BrowserAI.Tests.Harness;
@@ -61,6 +62,53 @@ internal sealed class ScratchDirectory : IDisposable
         TreeDelete.Remove(path, survivors);
 
         return survivors;
+    }
+
+    /// <summary>
+    /// Removes a tree once whatever is holding it has let go, and answers with
+    /// what still would not go after <paramref name="patience"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Bounded and retried on the <i>whole</i> tree rather than per file,
+    /// because a terminated process is signalled before the kernel has torn its
+    /// handles down:</b> <c>TerminateProcess</c> returning is not proof that a
+    /// mapped file has been released, and neither is a browser vanishing from
+    /// the process table. What a caller measures with this is whether a tree
+    /// becomes deletable <i>at all</i> — a handle on its way out against a leak
+    /// nothing will ever release — and never how fast.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One routine and not three.</b> It was three: two private copies in
+    /// <c>BrowserContainmentTests</c> and <c>BrowserIdleTimerTests</c>, and a
+    /// third about to be typed into <c>FirefoxSessionTests</c> — which is the
+    /// shape <see cref="TreeDelete"/>'s own remarks name as how two callers end
+    /// up with one behaviour and the third with another, with nothing reporting
+    /// the difference. <paramref name="patience"/> stays a parameter rather than
+    /// becoming a constant here: it is a hang detector belonging to the caller's
+    /// scenario, and nothing may assert on it.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The directory to remove. One that does not exist is not a failure.</param>
+    /// <param name="patience">How long a hold is waited out before it is reported as a survivor.</param>
+    /// <returns>Every node that would still not go, one line each.</returns>
+    public static async Task<IReadOnlyList<string>> RemoveTreeWhenReleasedAsync(string path, TimeSpan patience)
+    {
+        var survivors = new List<string>();
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            survivors.Clear();
+            TreeDelete.Remove(path, survivors);
+
+            if (survivors.Count is 0 || waited.Elapsed > patience)
+            {
+                return survivors;
+            }
+
+            await Task.Delay(200).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />

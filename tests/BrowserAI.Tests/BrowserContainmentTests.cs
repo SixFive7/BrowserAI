@@ -299,8 +299,7 @@ internal sealed class BrowserContainmentTests
         // observable difference between "reported dead" and "nothing is left".
         // §E's own routine does the deleting, so this also exercises the
         // per-node try/catch rather than a second implementation.
-        var failures = new List<string>();
-        await DeleteWhenReleasedAsync(profile, failures, TeardownPatience);
+        var failures = await ScratchDirectory.RemoveTreeWhenReleasedAsync(profile, TeardownPatience);
 
         await Assert.That(string.Join(Environment.NewLine, failures)).IsEmpty();
         await Assert.That(Directory.Exists(profile)).IsFalse();
@@ -486,35 +485,6 @@ internal sealed class BrowserContainmentTests
                   "console": { "level": "info" }
                 }
                 """);
-    }
-
-    /// <summary>
-    /// Deletes a profile once whatever held it has let go, and reports what would
-    /// not go.
-    /// </summary>
-    /// <remarks>
-    /// Bounded and retried on the <b>whole</b> tree rather than per file, because
-    /// a terminated process is signalled before the kernel has torn its handles
-    /// down: <c>TerminateProcess</c> returning is not proof that a mapped file has
-    /// been released. What is being measured is whether the profile becomes
-    /// deletable at all, not how fast.
-    /// </remarks>
-    private static async Task DeleteWhenReleasedAsync(string directory, List<string> failures, TimeSpan patience)
-    {
-        var waited = Stopwatch.StartNew();
-
-        while (true)
-        {
-            failures.Clear();
-            TreeDelete.Remove(directory, failures);
-
-            if (failures.Count is 0 || waited.Elapsed > patience)
-            {
-                return;
-            }
-
-            await Task.Delay(200);
-        }
     }
 
     private static async Task<List<int>> WaitForNoneAliveAsync(List<(int ProcessId, long CreatedFileTime)> recorded, TimeSpan patience)

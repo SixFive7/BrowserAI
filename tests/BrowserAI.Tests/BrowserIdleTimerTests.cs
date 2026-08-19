@@ -588,8 +588,9 @@ internal sealed partial class BrowserIdleTimerTests
         // table but still holds a mapped file leaves a profile Windows refuses
         // to remove, and that is the difference between "reported dead" and
         // "nothing is left".
-        var failures = new List<string>();
-        await DeleteWhenReleasedAsync(Path.Combine(session, SessionLayout.ProfileFolderName), failures);
+        var failures = await ScratchDirectory.RemoveTreeWhenReleasedAsync(
+            Path.Combine(session, SessionLayout.ProfileFolderName),
+            TeardownPatience);
 
         await Assert.That(string.Join(Environment.NewLine, failures)).IsEmpty();
     }
@@ -853,21 +854,4 @@ internal sealed partial class BrowserIdleTimerTests
     [System.Text.RegularExpressions.GeneratedRegex(@"Clock\s*=[^=]")]
     private static partial System.Text.RegularExpressions.Regex ClockAssignment();
 
-    private static async Task DeleteWhenReleasedAsync(string directory, List<string> failures)
-    {
-        var waited = Stopwatch.StartNew();
-
-        while (true)
-        {
-            failures.Clear();
-            BrowserAI.Runtime.TreeDelete.Remove(directory, failures);
-
-            if (failures.Count is 0 || waited.Elapsed > TeardownPatience)
-            {
-                return;
-            }
-
-            await Task.Delay(200);
-        }
-    }
 }
