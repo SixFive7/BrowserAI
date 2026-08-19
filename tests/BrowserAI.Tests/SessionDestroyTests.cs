@@ -18,9 +18,12 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>The second arm exists because a fast machine never reaches it.</b>
-/// Destroy returns <c>isError: false</c> in two shapes — everything went, or a
-/// tally and a list of what would not — and on a developer machine the first
-/// shape is the only one anybody ever sees. <c>FirefoxSessionTests</c> asserted
+/// Destroy answers in two shapes — everything went, or a tally and a list of what
+/// would not — and on a developer machine the first shape is the only one anybody
+/// ever sees. <b>Since 2026-08-19 they carry different <c>isError</c> flags</b>
+/// (<i>previously both were <c>isError: false</c></i>), which makes the shape a
+/// fast machine never reaches also the one whose result code nothing local could
+/// have observed. <c>FirefoxSessionTests</c> asserted
 /// the tree was simply gone, passed nine local runs and failed three consecutive
 /// CI runs on a four-core runner, where Firefox was still mapping its profile
 /// when the answer was composed. <see cref="DestroyAnswer"/> now carries the
@@ -208,13 +211,20 @@ internal sealed class SessionDestroyTests
     /// for.
     /// </para>
     /// <para>
-    /// ⚠️ <b><c>isError</c> stays <see langword="false"/>, and that is the
-    /// decision being asserted rather than an accident of the code.</b> A destroy
-    /// that removed a nine-thousand-file profile and could not remove eleven
-    /// locked files has done what it was asked; failing the call would throw away
-    /// the report of the nine thousand and tell the model to retry something that
-    /// mostly worked. What makes that safe is the <i>naming</i> — and a naming
-    /// nobody checks is how <c>isError: false</c> becomes a lie.
+    /// ⚠️ <b><c>isError</c> is <see langword="true"/>, changed 2026-08-19, and
+    /// that is the decision being asserted rather than an accident of the
+    /// code.</b> <i>Previously it stayed <see langword="false"/>, defended as: a
+    /// destroy that removed a nine-thousand-file profile and could not remove
+    /// eleven locked files has done what it was asked, and failing the call
+    /// would throw away the report of the nine thousand and tell the model to
+    /// retry something that mostly worked.</i> The maintainer took the other
+    /// side (<c>QUESTIONS.md</c> §11): a call that did not entirely do the thing
+    /// it is named for must not be indistinguishable, to a model scanning result
+    /// shapes, from one that did. <b>The retry the old defence predicted is
+    /// answered by the text rather than by the flag</b> — the arm now says the
+    /// session is already destroyed, says not to call the tool again, and says
+    /// what to do instead, which is what the assertions below hold it to. A
+    /// naming nobody checks is still how either flag becomes a lie.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -246,14 +256,25 @@ internal sealed class SessionDestroyTests
                 ["directory"] = directory,
             });
 
-            // Success-shaped on purpose: see the remarks.
-            await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
+            // Error-shaped on purpose: see the remarks.
+            await Assert.That((bool?)destroyed["isError"]).IsTrue();
 
             var answer = TextOf(destroyed);
 
             // The whole contract, through the same routine FirefoxSessionTests
             // uses against a real Firefox.
-            await DestroyAnswer.AccountsForWhatItLeftAsync(answer, directory);
+            await DestroyAnswer.AccountsForWhatItLeftAsync(answer, (bool?)destroyed["isError"], directory);
+
+            // ⚠️ AND THE ERROR CARRIES THE THREE THINGS THAT MAKE IT ACTIONABLE,
+            // which is the refinement the decision rests on rather than a
+            // restatement of the prose. An error that only said "N items could
+            // not be removed" would invite exactly the retry the objection
+            // predicted -- and that retry finds no session and is refused, which
+            // is a worse answer than the truthful one this arm used to give.
+            // Asserted on the product's own tool name, so a rename moves both.
+            await Assert.That(answer).Contains("IS destroyed").Because(answer);
+            await Assert.That(answer).Contains($"Do NOT call {SessionToolSurface.Destroy}").Because(answer);
+            await Assert.That(answer).Contains("wait for whatever still holds those files to exit").Because(answer);
 
             // ⚠️ AND THE SURVIVOR IT NAMED IS THE ONE THAT SURVIVED. Every
             // assertion above is satisfied by an answer that names some other
@@ -277,8 +298,9 @@ internal sealed class SessionDestroyTests
             await Assert.That(File.Exists(held)).IsTrue();
         }
 
-        // Released, and now the advice the answer gave -- "delete what is left
-        // once whatever holds it has exited" -- is a thing that actually works.
+        // Released, and now the advice the answer gave -- "wait for whatever
+        // still holds those files to exit and then delete them yourself" -- is a
+        // thing that actually works.
         var afterRelease = ScratchDirectory.RemoveTree(directory);
 
         await Assert.That(string.Join(Environment.NewLine, afterRelease)).IsEmpty();
@@ -352,8 +374,8 @@ internal sealed class SessionDestroyTests
             var answer = TextOf(destroyed);
 
             // The whole contract first, which now includes the note in both
-            // directions.
-            await DestroyAnswer.AccountsForWhatItLeftAsync(answer, directory);
+            // directions and the isError flag in both directions.
+            await DestroyAnswer.AccountsForWhatItLeftAsync(answer, (bool?)destroyed["isError"], directory);
 
             var survivors = DestroyAnswer.SurvivorsNamedIn(answer);
 

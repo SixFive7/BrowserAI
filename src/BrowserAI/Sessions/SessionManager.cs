@@ -672,13 +672,37 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"\n\n⚠️ The roll-up at '{Path.Combine(parent, ArtifactRouter.RollUpFileName)}' could not be rewritten, so it still lists this session. Nothing else depends on it: browserai_list reads BrowserAI's own index.";
         }
 
+        // ⚠️ THE SURVIVOR ARM IS `IsError: true`, CHANGED 2026-08-19 (previously
+        // `IsError: false`, defended as "a destroy that removed a
+        // nine-thousand-file profile and could not remove eleven locked files
+        // has done what it was asked"). That defence still stands and is not
+        // what moved: the maintainer's call is that a call which did not
+        // entirely do the thing it is named for must not be indistinguishable,
+        // to a model scanning result shapes, from one that did.
+        //
+        // The objection this was taken over is recorded in QUESTIONS.md §11 —
+        // an error invites a retry, and a retry finds no session and refuses,
+        // which is a worse message than the truthful one. The refinement that
+        // answers it is the text below: it says the session IS destroyed, says
+        // in as many words not to call this tool again, and says what to do
+        // instead. A model that reads it cannot reach the retry the objection
+        // predicted.
+        //
+        // INLINE RATHER THAN IN `SessionErrors`, deliberately, and the
+        // directory's own CLAUDE.md is why the question comes up: refusals live
+        // in the catalogue. This is not a refusal. Nothing was declined, the
+        // work was done, and what is returned is a report composed out of the
+        // summary, the tally and the listing -- three things a catalogue row
+        // cannot hold.
         return failures.Count is 0
             ? new ToolOutcome(summary, IsError: false)
             : new ToolOutcome(
                 $"{summary}\n\nBUT {failures.Count.ToString(CultureInfo.InvariantCulture)} {SurvivorsHeading}\n"
                 + Listing(failures)
-                + "\nThe session's record is gone, so the directory is no longer a session; delete what is left once whatever holds it has exited.",
-                IsError: false);
+                + "\n\nThe session itself IS destroyed: its record is gone and BrowserAI's index has forgotten it, so what is listed above is residue on disk rather than a session."
+                + $"\nDo NOT call {SessionToolSurface.Destroy} on '{location.FullPath}' again — there is no session there for it to destroy, and it will refuse."
+                + "\nWhat is left is outside BrowserAI: wait for whatever still holds those files to exit and then delete them yourself, or leave them. Nothing in BrowserAI reads them again.",
+                IsError: true);
     }
 
     private ToolOutcome SetPurpose(JsonObject? arguments)

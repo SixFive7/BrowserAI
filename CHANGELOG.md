@@ -101,6 +101,53 @@ has been satisfied in form only.
 
 ### Changed
 
+- **`browserai_destroy` now returns `isError: true` when it could not remove
+  everything, and the error carries the whole report.** Previously both arms
+  returned `isError: false`: a call that removed a nine-thousand-file profile and
+  could not remove eleven locked files looked, to a model scanning result shapes,
+  exactly like one that removed the lot. **The maintainer's call, taken over the
+  recommendation to leave it and over the stated objection that an error invites a
+  retry** — and the refinement that answers the objection is in the text. After
+  the tally and the listing, the arm now says the session **is** destroyed (its
+  record gone, the index having forgotten it, what is listed being residue on
+  disk), says **not** to call `browserai_destroy` again because there is no
+  session left for it to destroy and it will refuse, and says what to do instead:
+  wait for whatever holds those files to exit and delete them, or leave them.
+  The summary, the count, the listing and the truncation notice are unchanged, and
+  the roll-up warning arm is untouched. `QUESTIONS.md` §11 carries the decision,
+  the objection and how to reverse it.
+
+  **Every destroy assertion in the suite was re-read rather than only the ones
+  that went red**, which is what found the one that could only fail on a slow
+  machine: `FirefoxSessionTests` still carried a bare `isError` assertion beside
+  the contract check, and against Firefox on a four-core runner that is an
+  assertion about how fast a browser lets go of its profile. The flag is now part
+  of `DestroyAnswer.AccountsForWhatItLeftAsync`, asserted **in both directions**
+  — a survivor arm reporting success and a clean destroy reporting failure are
+  equally red — so no test holds destroy to a promise of its own.
+
+- **CI declares which capabilities it expects to be absent, and an undeclared
+  absence is a red build.** The capability gate made a degraded run *loud*; it
+  never made one *noticed*. CI has run with `packed release` and `client CLI`
+  ABSENT since the day it existed, so a provisioning step that started failing
+  soft would have produced a green run, one more `ABSENT` line in a block nobody
+  diffs, and a set of tests that skipped instead of running — the founding failure
+  shape of this project, one layer above the gate written to remove it.
+  `BROWSERAI_EXPECTED_ABSENT` on the workflow's test step is the declaration;
+  `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared`
+  fails on an absence it does not name **and** on a name in it that is `PRESENT`,
+  because a declaration wider than the truth is standing permission for that
+  capability to disappear later. An unset variable declares nothing, so a
+  developer machine behaves exactly as before and a clean clone still runs.
+  `.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` reads `build.yml` itself,
+  scoped to the step that runs the suite, so deleting the line is a red build
+  rather than a silent switch-off — and
+  `.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent` exercises every
+  branch in-process, so the mechanism does not first run on the build that needs
+  it. Five faults were planted and all five went red: an undeclared absence, an
+  over-broad declaration, a typo in the declaration, the declaration deleted from
+  the workflow, and a typo committed to the workflow.
+
 - **A recorded hazard was measured and turned out not to be one: two family
   installers cannot extract into one shared component directory, because
   upstream serialises every install on a lock BrowserAI never knew about.**

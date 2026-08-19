@@ -75,9 +75,9 @@ internal sealed class FirefoxSessionTests
     /// promises, and until 2026-08-19 it asserted something stronger that the
     /// product has never promised.</b> It required
     /// <c>Directory.Exists(session)</c> to be <see langword="false"/>. Destroy's
-    /// survivor arm returns <c>isError: false</c> with <i>"BUT N item(s) could
-    /// not be removed"</i>, because Windows will not unlink a file a browser is
-    /// still mapping and the release lags the process by however long the kernel
+    /// survivor arm answers <i>"BUT N item(s) could not be removed"</i> and names
+    /// them, because Windows will not unlink a file a browser is still mapping
+    /// and the release lags the process by however long the kernel
     /// takes — so a legitimate outcome failed the test. It passed nine local
     /// runs and failed three consecutive CI runs on a four-core runner, against
     /// Firefox, the family slowest to let go of its profile. <b>The assertion was
@@ -213,15 +213,20 @@ internal sealed class FirefoxSessionTests
             ["directory"] = session,
         });
 
-        await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
-
-        // ⚠️ THE ANSWER AND THE DISK MUST AGREE — IN BOTH DIRECTIONS, and see
-        // `DestroyAnswer` for why this is not `Directory.Exists` is false. The
-        // contract lives there rather than here so that this test and the
-        // deterministic survivor in `SessionDestroyTests` cannot hold destroy to
-        // two different promises — and so that the arm a fast machine never
+        // ⚠️ THE ANSWER, THE FLAG AND THE DISK MUST AGREE — IN BOTH DIRECTIONS,
+        // and see `DestroyAnswer` for why this is not `Directory.Exists` is
+        // false. The contract lives there rather than here so that this test and
+        // the deterministic survivor in `SessionDestroyTests` cannot hold destroy
+        // to two different promises — and so that the arm a fast machine never
         // reaches is exercised on every run by one that does.
-        await DestroyAnswer.AccountsForWhatItLeftAsync(TextOf(destroyed), session);
+        //
+        // ⚠️ There is deliberately NO bare `isError` assertion beside this call
+        // any more. Until 2026-08-19 this line required `isError` not to be true,
+        // which against Firefox on a four-core runner asserts that the browser
+        // let go of its profile in time — the same wrong-because-stronger
+        // assertion, one layer along, that the remarks above are about. The flag
+        // is now checked against what the answer itself says.
+        await DestroyAnswer.AccountsForWhatItLeftAsync(TextOf(destroyed), (bool?)destroyed["isError"], session);
 
         // ⚠️ AND WHAT SURVIVED WAS A HANDLE ON ITS WAY OUT, NOT A LEAK. This is
         // the half the assertion above cannot make: destroy naming a survivor

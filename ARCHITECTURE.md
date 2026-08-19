@@ -513,3 +513,14 @@ and every test that took a degraded path. `BROWSERAI_RELEASE_RUN=1` turns every
 such skip into a failure. This exists because the four numbers in a run summary
 were once character-identical between a run that launched a real browser and one
 that could not.
+
+**And since 2026-08-19 a controlled environment declares *which* it expects to
+lack**, because *loud* is not *noticed*. The gate above made an absence visible;
+nothing pinned the set, so a fifth capability going absent in CI read exactly like
+the four that are absent by design — green run, one more `ABSENT` line, a handful
+of tests skipping instead of running. `BROWSERAI_EXPECTED_ABSENT` on the
+workflow's test step names what CI expects to lack, and an absence it does not
+name fails the build — as does a name in it that turns out to be `PRESENT`, since
+a declaration wider than the truth is standing permission for that capability to
+disappear later. An unset variable declares nothing, so a developer machine, whose
+provisioned set is a fact about somebody's disk, behaves exactly as before.

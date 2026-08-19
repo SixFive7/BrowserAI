@@ -38,8 +38,16 @@ internal sealed class SessionToolTests
         await Assert.That(run.IsError("init")).IsFalse();
         await Assert.That(run.IsError("resumeMoved")).IsFalse();
         await Assert.That(run.IsError("list")).IsFalse();
-        await Assert.That(run.IsError("destroyBeta")).IsFalse();
         await Assert.That(run.IsError("setPurpose")).IsFalse();
+
+        // ⚠️ The fourth answered too, and its answer is the survivor arm, which
+        // has been `isError: true` since 2026-08-19. Changed here rather than
+        // dropped: `IsError(...).IsFalse()` was this test's whole evidence that
+        // `browserai_destroy` answers at all, so the evidence moved to the text
+        // — a destroy that REFUSED would never compose the summary line, and a
+        // destroy that failed outright would not carry a tally.
+        await Assert.That(run.IsError("destroyBeta")).IsTrue();
+        await Assert.That(run.Text("destroyBeta")).Contains("Destroyed the 'headless' session at ");
 
         // The sixth, whose ANSWER is a refusal — which is the tool working
         // rather than failing. It was called while a real Chromium was running
@@ -239,12 +247,20 @@ internal sealed class SessionToolTests
         await Assert.That(Directory.Exists(documents)).IsTrue();
 
         // The destroy that met a file held open: it still completed, it still
-        // removed the record, and it named what it could not remove.
-        await Assert.That(run.IsError("destroyBeta")).IsFalse();
+        // removed the record, and it named what it could not remove. ⚠️ It now
+        // reports `isError: true` while doing all three (changed 2026-08-19,
+        // previously `IsFalse()`), which is why the three assertions under it
+        // matter more rather than less: an error whose text did not carry the
+        // report would be a call a model could only retry.
+        await Assert.That(run.IsError("destroyBeta")).IsTrue();
         await Assert.That(run.Text("destroyBeta")).Contains("held.txt");
         await Assert.That(run.Text("destroyBeta")).Contains("could not be removed");
         await Assert.That(run.DestroyedLockFileIsGone).IsTrue();
         await Assert.That(run.HeldFileSurvivedTheDestroy).IsTrue();
+
+        // And it tells the model not to do the one thing an error invites,
+        // which is the refinement the decision to fail this call rests on.
+        await Assert.That(run.Text("destroyBeta")).Contains($"Do NOT call {SessionToolSurface.Destroy}");
     }
 
     [Test]

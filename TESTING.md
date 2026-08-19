@@ -729,6 +729,21 @@ Two things a reader should know before treating a red build as a defect:
   present. If that ever needs proving on a runner, the answer is to install the
   missing capabilities there and set `BROWSERAI_RELEASE_RUN=1`, never to soften
   the skip.
+
+  ⚠️ **And which two are absent is now declared rather than described, since
+  2026-08-19.** The paragraph above was the only place that said *the packed
+  release and an installed MCP client* — prose, checked by nobody, so a **third**
+  capability going absent on a runner would have read exactly like those two:
+  green run, one more `ABSENT` line, more tests skipping. `build.yml`'s test step
+  sets `BROWSERAI_EXPECTED_ABSENT: PackagedRelease,ClientCommandLine`, and
+  `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared`
+  fails the build on any absence that declaration does not name — **and** on any
+  name in it that turns out to be `PRESENT`, because a declaration wider than the
+  truth is standing permission for that capability to disappear later. An unset
+  variable declares nothing, which is what a developer machine does and why a
+  clean clone still runs. **Do not add a capability to that list to make a red
+  build green:** a name there is a promise that nobody minds it being gone, and
+  the count in the paragraph above moves with it.
 - **A red `UpstreamReviewTests` means upstream moved and nobody reviewed it.**
   That is [the marker gate](#the-upstream-review-gate) working, not a stale file.
   Lock-file drift is reported into the job summary and never fails the build,

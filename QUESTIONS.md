@@ -356,3 +356,65 @@ client-version fact with nothing watching it — row 92 of the
 it back up, and only when somebody works through that table. A release that
 introduced a per-tool bucket would break `browserai_init` on day one and report
 nothing.
+
+## Added 2026-08-19, from the maintainer
+
+### 11. Whether `browserai_destroy` should fail when survivors remain — **ANSWERED 2026-08-19: yes. His call, over my recommendation and over my stated objection**
+
+**The primer, for whoever reads this without the investigation.** `browserai_destroy`
+deletes a session directory. Windows will not unlink a file a browser is still
+mapping, and the release lags the process by however long the kernel takes, so the
+tool has always had two answers: everything went, or *"BUT N item(s) could not be
+removed"* followed by the list. Until today **both were `isError: false`**. The
+question is what the second one should be.
+
+**What I recommended, and it was not this.** Leave it at `isError: false`. A
+destroy that removed a nine-thousand-file profile and could not remove eleven
+locked files has done what it was asked; the session record is gone, the index has
+forgotten it, and what is left is residue. Failing the call throws the report of
+the nine thousand into a channel a model reads as *this did not work*.
+
+**My objection, stated plainly at the time: an error invites a retry, and the
+retry is worse than the truth.** A model that reads `isError: true` calls the tool
+again. There is no session at that directory any more, so `browserai_destroy`
+refuses — *"has no `lock.json`, so it is not a BrowserAI session"* — and the model
+now has a refusal that reads like the directory was never BrowserAI's at all.
+That is a worse final state than the honest partial success it replaced.
+
+**The decision: `isError: true`, with a refinement that answers the objection.**
+Put the details in the error so the model can adjust. The survivor arm now says,
+after the tally and the listing:
+
+- the session **is** destroyed — its record is gone and the index has forgotten
+  it, so what is listed is residue on disk rather than a session;
+- **do not call `browserai_destroy` again** — there is no session there for it to
+  destroy, and it will refuse;
+- what to do instead — wait for whatever still holds those files to exit and then
+  delete them, or leave them, because nothing in BrowserAI reads them again.
+
+**Why that answers the objection rather than merely softening it.** The objection
+was never *an error is inaccurate*; a call that did not entirely do the thing it
+is named for is not a success, and a model scanning result shapes should be able
+to tell it from one that did. The objection was that the error's **only**
+actionable reading is *retry*. Naming the one action that will not work, and the
+one that will, removes that reading — so the failure mode the objection predicted
+needs a model to act against an instruction rather than to follow the default. The
+report the old defence wanted to protect is still there in full: the summary, the
+tally, the listing and the truncation notice are unchanged, and the roll-up
+warning arm is untouched.
+
+**What implements it.** `SessionManager.DestroyAsync`'s survivor arm. Held by
+`SessionDestroyTests.ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany`,
+which asserts the flag and each of the three sentences, and by
+`DestroyAnswer.AccountsForWhatItLeftAsync`, which asserts that `isError` agrees
+with the answer's own text in **both** directions — so a survivor arm reporting
+success and a clean destroy reporting failure are equally red.
+`SessionToolTests.DestroyRefusesDocumentsAndSurvivesAFileItCannotRemove` holds the
+same thing through the published binary.
+
+**How to reverse it.** One `IsError:` argument in `SessionManager.DestroyAsync`,
+and the assertions that pin it: two in `SessionDestroyTests`, two in
+`SessionToolTests`, one in `DestroyAnswer`. The three sentences would stay useful
+either way. Nothing else in the product branches on it, and `FirefoxSessionTests`
+no longer asserts the flag directly at all — it goes through `DestroyAnswer`,
+which reads the contract rather than a literal.

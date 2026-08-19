@@ -14,10 +14,22 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// ⚠️ <b>It does not promise the tree is gone.</b> Windows will not unlink a file
 /// a browser is still mapping, and the release lags the process by however long
-/// the kernel takes — so <c>destroy</c> returns <c>isError: false</c> in two
-/// shapes: everything went, or <i>"BUT N item(s) could not be removed"</i>
-/// followed by the list. <b>What it promises is that the answer and the disk
-/// agree</b>, and that is the property this type asserts.
+/// the kernel takes — so <c>destroy</c> answers in two shapes: everything went,
+/// or <i>"BUT N item(s) could not be removed"</i> followed by the list.
+/// <b>What it promises is that the answer and the disk agree</b>, and that is the
+/// property this type asserts.
+/// </para>
+/// <para>
+/// ⚠️ <b>And since 2026-08-19 the second shape is <c>isError: true</c></b>
+/// (<i>previously both shapes were <c>isError: false</c></i>). The maintainer's
+/// call, recorded in <c>QUESTIONS.md</c> §11 and taken over a recommendation to
+/// leave it alone: a call that did not entirely do the thing it is named for
+/// must not be indistinguishable, to a model scanning result shapes, from one
+/// that did. <b>So the flag is part of the contract and is asserted here in both
+/// directions</b> — a survivor arm that reports success is a failure, and so is a
+/// clean destroy that reports an error. Held in one place for the same reason the
+/// heading is: two tests holding one tool to two promises is how the arm CI
+/// reaches and a developer machine does not stopped being checked at all.
 /// </para>
 /// <para>
 /// <b>Written 2026-08-19, after <c>FirefoxSessionTests</c> asserted
@@ -56,8 +68,9 @@ internal static class DestroyAnswer
     /// the tree standing and said nothing fails — that is the property that
     /// matters, and the only one the old <c>Directory.Exists</c> assertion could
     /// see. So does one that <i>reported</i> survivors it does not have, one
-    /// whose survivor list is a tally with nothing named under it, and one that
-    /// names a path outside the directory it was aimed at.
+    /// whose survivor list is a tally with nothing named under it, one that
+    /// names a path outside the directory it was aimed at, and — since
+    /// 2026-08-19 — one whose <c>isError</c> disagrees with its own text.
     /// </para>
     /// <para>
     /// <b>What it deliberately does not assert is that the tree becomes
@@ -67,9 +80,10 @@ internal static class DestroyAnswer
     /// </para>
     /// </remarks>
     /// <param name="answer">The whole text of the answer.</param>
+    /// <param name="isError">The answer's <c>isError</c>, as it came off the wire.</param>
     /// <param name="session">The session directory the call was given.</param>
     /// <returns>The assertion task.</returns>
-    public static async Task AccountsForWhatItLeftAsync(string answer, string session)
+    public static async Task AccountsForWhatItLeftAsync(string answer, bool? isError, string session)
     {
         ArgumentNullException.ThrowIfNull(answer);
         ArgumentNullException.ThrowIfNull(session);
@@ -81,6 +95,15 @@ internal static class DestroyAnswer
             .IsEqualTo(leftBehind)
             .Because(
                 $"'{SessionToolSurface.Destroy}' must account for what it left behind: '{session}' {(leftBehind ? "still exists" : "is gone")} and the answer {(survivors is null ? "named no survivors" : "named survivors")}.\n\n{answer}");
+
+        // ⚠️ AND THE FLAG AGREES WITH THE TEXT, in both directions. See the
+        // type's remarks: since 2026-08-19 the survivor arm is `isError: true`,
+        // so an answer that names survivors and reports success is as wrong as
+        // one that removed everything and reported a failure.
+        await Assert.That(isError is true)
+            .IsEqualTo(survivors is not null)
+            .Because(
+                $"'{SessionToolSurface.Destroy}' returned isError: {(isError is true ? "true" : "false")} for an answer that {(survivors is null ? "named no survivors" : "named survivors")}.\n\n{answer}");
 
         if (survivors is { } named)
         {
@@ -112,9 +135,11 @@ internal static class DestroyAnswer
         }
 
         // Both arms promise this and only one of them says it out loud: the
-        // survivor arm's own sentence is "The session's record is gone, so the
-        // directory is no longer a session". A lock.json that outlived the answer
-        // saying so leaves a directory the next resume would take.
+        // survivor arm's own sentence is "The session itself IS destroyed: its
+        // record is gone and BrowserAI's index has forgotten it". A lock.json
+        // that outlived the answer saying so leaves a directory the next resume
+        // would take -- and since that arm is now an error, it would also leave
+        // a model an error to act on with the session still standing.
         await Assert.That(File.Exists(Path.Combine(session, SessionLayout.LockFileName)))
             .IsFalse()
             .Because($"'{SessionToolSurface.Destroy}' says the record is gone.\n\n{answer}");

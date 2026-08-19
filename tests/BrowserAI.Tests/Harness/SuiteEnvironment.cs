@@ -114,6 +114,50 @@ internal static class SuiteEnvironment
     /// <summary>The variable a release run sets, turning every skip into a failure.</summary>
     public const string ReleaseRunVariable = "BROWSERAI_RELEASE_RUN";
 
+    /// <summary>
+    /// The variable a controlled environment sets to declare which capabilities
+    /// it expects to be absent. An absence it did not declare is a red build.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>What this closes, and why the policy above could not.</b>
+    /// <see cref="Decide"/> pins what a guard must <i>do</i> about an absent
+    /// capability, and <see cref="SuiteCoverageTests.NothingThisRunLacksIsHalfInstalled"/>
+    /// pins that nothing is half-installed — but <b>nothing pinned WHICH
+    /// capabilities are expected to be absent</b>. So a fifth quietly going
+    /// absent in CI reads exactly like the four that are absent by design: the
+    /// run stays green, the block says ABSENT, and the tests that needed it skip
+    /// loudly into a log nobody reads line by line. That is this repository's
+    /// founding failure shape — a degraded run indistinguishable from a real one
+    /// — surviving one layer above the gate written to remove it.
+    /// </para>
+    /// <para>
+    /// <b>The set is only knowable in a controlled environment, so the
+    /// environment declares it.</b> A developer machine declares nothing and
+    /// behaves exactly as it did before this existed: what is provisioned there
+    /// is whatever that developer happens to have, and a suite that asserted a
+    /// set would be asserting a fact about somebody's disk. CI knows, because CI
+    /// builds the machine it runs on — so [`build.yml`](../../../.github/workflows/build.yml)
+    /// names the two it expects, and its own header comment stops being a claim
+    /// nothing checks.
+    /// </para>
+    /// <para>
+    /// <b><c>none</c> is a value rather than an omission, and that is
+    /// load-bearing twice.</b> Windows cannot carry an empty environment variable
+    /// — <c>$env:X = ''</c> removes it — so <i>"declared, and nothing is expected
+    /// absent"</i> is inexpressible as an empty string and would collapse into
+    /// <i>"not declared"</i>, which is the one value that switches the pin off.
+    /// It is also what let the fault be planted end to end rather than only in
+    /// the pure function: with everything present locally, <c>none</c> is the
+    /// declaration a real run can be made red against by making one capability
+    /// absent.
+    /// </para>
+    /// </remarks>
+    public const string ExpectedAbsentVariable = "BROWSERAI_EXPECTED_ABSENT";
+
+    /// <summary>The declaration that says nothing is expected to be absent.</summary>
+    public const string NothingExpectedAbsent = "none";
+
     /// <summary>The variable that names the packed <c>.nupkg</c> to read notices out of.</summary>
     public const string ReleasePackageVariable = "BROWSERAI_RELEASE_PACKAGE";
 
@@ -295,6 +339,22 @@ internal static class SuiteEnvironment
             .Append(IsReleaseRun ? " is set, so a missing capability is a failure" : "=1 turns every skip below into a failure")
             .Append('\n');
 
+        // WHAT THIS RUN'S ENVIRONMENT SAID IT WOULD LACK, printed beside what it
+        // actually lacked so the two can be read together. A block that reported
+        // ABSENT and said nothing about whether that absence was expected is the
+        // state this row was added to end: four ABSENT rows in CI look identical
+        // whether four were meant to be absent or five went and one was noticed
+        // by nobody.
+        _ = report.Append("  ")
+            .Append("expected absent".PadRight(20))
+            .Append(ExpectedAbsentDeclaration is null ? "not declared" : ExpectedAbsentDeclaration)
+            .Append("   ")
+            .Append(ExpectedAbsentVariable)
+            .Append(ExpectedAbsentDeclaration is null
+                ? " is unset, so nothing here pins WHICH capabilities may be absent"
+                : " is set, so an absence it does not name is a failing test")
+            .Append('\n');
+
         // ⚠️ Where the first-run test's 203.8 MB came from, and it is a row here
         // rather than a capability because it is not one: Chromium is provisioned
         // either way and every capability above reads PRESENT either way. What
@@ -356,6 +416,147 @@ internal static class SuiteEnvironment
         CapabilityState.Partial => CapabilityVerdict.Fail,
         _ => isReleaseRun ? CapabilityVerdict.Fail : CapabilityVerdict.Skip,
     };
+
+    /// <summary>
+    /// What this run's environment declared it expects to be absent, or
+    /// <see langword="null"/> when it declared nothing.
+    /// </summary>
+    /// <remarks>
+    /// Read once, like <see cref="IsReleaseRun"/>, so that the whole run
+    /// reconciles against one declaration rather than against whatever the
+    /// environment block said at the moment each test asked.
+    /// </remarks>
+    public static string? ExpectedAbsentDeclaration { get; } =
+        Environment.GetEnvironmentVariable(ExpectedAbsentVariable);
+
+    /// <summary>
+    /// Reconciles a declaration of what should be absent against what actually
+    /// is, as a pure function of the two, and names every disagreement.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Pure, for <see cref="Decide"/>'s reason exactly.</b> The declaration
+    /// only exists in CI, so an assertion written only against the live
+    /// environment would be a mechanism a developer machine can never exercise
+    /// and CI would meet for the first time at the moment it mattered. Every
+    /// branch below is reachable in-process from
+    /// <see cref="SuiteCoverageTests.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent"/>,
+    /// and the live arm is the same function applied to the real environment.
+    /// </para>
+    /// <para>
+    /// <b>Exact in both directions, not just <i>undeclared absence is red</i>.</b>
+    /// A declaration naming a capability that is in fact present is a lie that
+    /// weakens the pin silently: it is standing permission for that capability to
+    /// go absent later and nothing would say so — which is the whole defect this
+    /// closes, re-introduced through the file that closes it. So an over-broad
+    /// declaration is a failure too, and the cost is that installing something on
+    /// the runner means editing the declaration in the same commit. That is the
+    /// intended cost.
+    /// </para>
+    /// <para>
+    /// <b>A name that is not a capability is a failure rather than an ignored
+    /// token.</b> A typo would otherwise silently shrink the declared set, which
+    /// fails in the safe direction today and in the unsafe direction the moment
+    /// somebody widens it — and a check that quietly discards its own input is
+    /// how a positive control gets lost. Matched against
+    /// <see cref="Enum.GetNames{TEnum}()"/> rather than through
+    /// <see cref="Enum.TryParse{TEnum}(string, bool, out TEnum)"/>, because that
+    /// parses <c>"1"</c> into a capability and a declaration of <c>1</c> means
+    /// nothing to anybody.
+    /// </para>
+    /// </remarks>
+    /// <param name="declaration">The environment's declaration, or <see langword="null"/> when it made none.</param>
+    /// <param name="absent">The capabilities this run does not have.</param>
+    /// <returns>One line per disagreement, empty when the two agree or nothing was declared.</returns>
+    public static IReadOnlyList<string> ReconcileDeclaredAbsence(string? declaration, IEnumerable<SuiteCapability> absent)
+    {
+        ArgumentNullException.ThrowIfNull(absent);
+
+        // Nothing declared: a developer machine, whose provisioned set is a fact
+        // about somebody's disk rather than about this repository. Exactly the
+        // behaviour that existed before this function did.
+        if (declaration is null)
+        {
+            return [];
+        }
+
+        var (declared, problems) = ReadDeclaration(declaration);
+        var missing = new List<string>(problems);
+        var actually = absent.ToList();
+
+        missing.AddRange(actually
+            .Where(capability => !declared.Contains(capability))
+            .Select(capability =>
+                $"'{Title(capability)}' ({capability}) is ABSENT and this run's environment did not declare that it would be. "
+                + $"{WitnessFor(capability)}. Either the machine lost a capability it used to have — which is what this check exists to catch — or {ExpectedAbsentVariable} needs it added. {RemedyFor(capability)}"));
+
+        missing.AddRange(declared
+            .Where(capability => !actually.Contains(capability))
+            .Select(capability =>
+                $"{ExpectedAbsentVariable} declares '{Title(capability)}' ({capability}) absent and it is PRESENT. "
+                + "A declaration wider than the truth is standing permission for that capability to disappear unnoticed, so it is a failure rather than a courtesy: remove it from the declaration."));
+
+        return missing;
+    }
+
+    /// <summary>
+    /// The capabilities a declaration names, and everything wrong with the way
+    /// it named them.
+    /// </summary>
+    /// <remarks>
+    /// <b>Split out of <see cref="ReconcileDeclaredAbsence"/> so that the
+    /// workflow file's declaration and this run's are read by one
+    /// implementation.</b>
+    /// <see cref="SuiteCoverageTests.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent"/>
+    /// asks whether the string committed in <c>build.yml</c> is a well-formed
+    /// declaration, and the live arm asks whether this run's matches the disk;
+    /// a second copy of <i>what counts as a name</i> would eventually answer the
+    /// two differently.
+    /// </remarks>
+    /// <param name="declaration">The declaration, which must not be <see langword="null"/>.</param>
+    /// <returns>What it names, and one line per thing wrong with it.</returns>
+    public static (IReadOnlyList<SuiteCapability> Declared, IReadOnlyList<string> Problems) ReadDeclaration(string declaration)
+    {
+        ArgumentNullException.ThrowIfNull(declaration);
+
+        var problems = new List<string>();
+        var declared = new List<SuiteCapability>();
+        var names = Enum.GetNames<SuiteCapability>();
+        var tokens = declaration.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        if (tokens.Length is 0)
+        {
+            problems.Add(
+                $"{ExpectedAbsentVariable} is set to '{declaration}', which names nothing and is not '{NothingExpectedAbsent}'. "
+                + $"An empty declaration is an accident rather than a statement: write '{NothingExpectedAbsent}' to declare that every capability is expected to be present, or unset the variable to declare nothing at all.");
+
+            return (declared, problems);
+        }
+
+        if (tokens.Length is 1 && tokens[0].Equals(NothingExpectedAbsent, StringComparison.OrdinalIgnoreCase))
+        {
+            return (declared, problems);
+        }
+
+        foreach (var token in tokens)
+        {
+            // Against the NAMES rather than through Enum.TryParse, which parses
+            // "1" into a capability -- and a declaration of `1` means nothing to
+            // anybody reading the workflow file it would be written in.
+            var match = Array.Find(names, name => name.Equals(token, StringComparison.OrdinalIgnoreCase));
+
+            if (match is null)
+            {
+                problems.Add(
+                    $"{ExpectedAbsentVariable} names '{token}', which is not a capability. The capabilities are: {string.Join(", ", names)}.");
+                continue;
+            }
+
+            declared.Add(Enum.Parse<SuiteCapability>(match));
+        }
+
+        return (declared, problems);
+    }
 
     /// <summary>What a capability's artefacts look like on disk.</summary>
     /// <param name="capability">The capability.</param>

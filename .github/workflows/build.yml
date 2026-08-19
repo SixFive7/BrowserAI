@@ -34,6 +34,19 @@
 # an absent capability from a skip into a failure, and it belongs to the release
 # gate that build/New-Release.ps1 drives. The suite prints a coverage block naming
 # every capability and its state, and this job puts that block in the job summary.
+#
+# ⚠️ AND THE PARAGRAPH ABOVE IS NOW ENFORCED RATHER THAN CLAIMED. Until 2026-08-19
+# it was prose: nothing anywhere pinned WHICH capabilities this job expects to
+# lack, so a fifth quietly going absent -- a provisioning step that started failing
+# soft, a runner image that dropped something -- looked exactly like the two that
+# are absent by design. Green run, one more ABSENT line in a block nobody diffs.
+# BROWSERAI_EXPECTED_ABSENT on the test step below is that declaration, and
+# SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared fails
+# the build on any absence it does not name -- and on any name in it that turns out
+# to be present, so the declaration cannot rot into standing permission. It is set
+# HERE and nowhere else: a developer machine declares nothing and behaves exactly
+# as it did before, because what is provisioned on somebody's laptop is a fact
+# about their disk rather than about this repository.
 
 name: build
 
@@ -171,6 +184,18 @@ jobs:
         # by assembly attribute and that is a RACE DETECTOR as much as a speed
         # choice -- SuiteParallelism.cs carries the maintainer's ruling verbatim.
         # DO NOT cap it here to make a red run green.
+        env:
+          # WHAT THIS JOB EXPECTS TO LACK, declared rather than described. See the
+          # header. Comma-separated SuiteCapability names; the literal `none`
+          # declares that everything is expected PRESENT, and an unset variable
+          # declares nothing at all, which is what a developer machine does.
+          #
+          # ⚠️ Adding to this list WIDENS what may silently be missing. Do not add
+          # a capability to make a red build green: a name here is a promise that
+          # nobody minds that capability being gone, and the two below are the two
+          # this project has decided not to build on a hosted runner -- a Velopack
+          # pack, and a real MCP client installed on the machine.
+          BROWSERAI_EXPECTED_ABSENT: PackagedRelease,ClientCommandLine
         run: dotnet test
 
       - name: Put the coverage block in the job summary
