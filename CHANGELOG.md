@@ -286,6 +286,16 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The charter said there is no CI, and there has been since 2026-08-18.**
+  `DECISIONS.md`'s *Automated checks* row read *"None. No CI, no scheduled job,
+  no git hook"* while `build.yml` was running the whole suite on every push. The
+  fact is corrected and the decision is not: what the row argued is now true of
+  the **release checklist** alone, and what is left open is narrower — whether
+  the release-phase checks CI deliberately does not run (the packed release, the
+  real client, `BROWSERAI_RELEASE_RUN=1`) should move into automation too. The
+  `TODO.md` item that was waiting on *"a real cadence rather than a guess"* says
+  so as well; half its premise had expired without it noticing.
+
 - **The browser-reinstall row rests on a measurement of Chromium rather than on
   a retracted sentence about Windows.** The row had closed *download alongside
   and swap* on *"Windows will not rename a directory holding open executables"*;

@@ -232,7 +232,18 @@ findable from more than one direction.
       suite's shape and the release cadence are predicted rather than observed —
       many commits without re-running everything, and no hosted CI. **Re-open it
       against the finished product and a real cadence, not against a guess about
-      them.** The condition that ends the arrangement is already named in
+      them.**
+
+      ⚠️ ***Half the premise expired on 2026-08-18, and this item did not notice.***
+      **There is hosted CI**: [`build.yml`](.github/workflows/build.yml) runs the
+      whole suite, `SaturationTests` included, on every push and every pull
+      request. So *"nothing makes it fire"* is now true of the **release
+      checklist** and false of the **suite** — which is most of what the original
+      trade was buying. What is left to decide is narrower and sharper than the
+      sentence above: whether the release-phase checks that CI deliberately does
+      not run — the packed release, the real client, `BROWSERAI_RELEASE_RUN=1` —
+      should move into automation too, and if so onto what trigger. **Nothing
+      here is a task; the whole remainder is the decision.** The condition that ends the arrangement is already named in
       [the release gate](RELEASING.md#the-release-gate): the day a second person
       can cut a release, the assumption breaks and the gate has to move into
       automation.
