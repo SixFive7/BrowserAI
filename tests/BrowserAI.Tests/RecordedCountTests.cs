@@ -81,15 +81,39 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed partial class RecordedCountTests
 {
+    /// <summary>
+    /// The tally the hazard index publishes about itself is what the index
+    /// holds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-19 (previously
+    /// <c>TheHazardTallyInTodoIsWhatTheIndexHolds</c>, reading the same sentence
+    /// out of <c>TODO.md</c>).</b> It was written there because the number was a
+    /// <i>backlog</i> — 55 rows that were <c>open</c> and carried <c>—</c>,
+    /// nobody having adjudicated them either way — and a backlog is work not yet
+    /// done, which is what that file is for. The backlog was cleared on
+    /// 2026-08-19 and the item deleted, and the sentence had to go somewhere or
+    /// the check went with it.
+    /// </para>
+    /// <para>
+    /// <b>At zero it is a stronger mechanism than it was as a backlog</b>, which
+    /// is why it moved rather than being deleted. Counting down, it said
+    /// <i>somebody should decide these</i>. At zero it says <b>a row that
+    /// arrives <c>open</c> with <c>—</c> fails the build</b>, so a hazard has to
+    /// be adjudicated when it is written down instead of accumulating for a
+    /// later pass.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheHazardTallyInTodoIsWhatTheIndexHolds()
+    public async Task TheHazardTallyIsWhatTheIndexHolds()
     {
-        var todo = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "TODO.md"));
+        var index = await File.ReadAllTextAsync(HazardIndex.Path);
 
-        // Whitespace is normalised because the sentence is wrapped across five
-        // lines of an indented list item, and a reflow must not be able to
-        // unhook the check that a reword deliberately does.
-        var recorded = HazardTally().Match(Whitespace().Replace(todo, " "));
+        // Whitespace is normalised because the sentence wraps, and a reflow must
+        // not be able to unhook the check that a reword deliberately does.
+        var recorded = HazardTally().Match(Whitespace().Replace(index, " "));
 
         await Assert.That(recorded.Success).IsTrue();
 
@@ -135,11 +159,11 @@ internal sealed partial class RecordedCountTests
         {
             if (!published.TryGetValue(area, out var stated))
             {
-                disagreements.Add($"TODO.md's breakdown does not mention '{area}', which the index holds {count} of");
+                disagreements.Add($"HAZARDS.md's breakdown does not mention '{area}', which the index holds {count} of");
             }
             else if (stated != count)
             {
-                disagreements.Add($"TODO.md says '{area} {stated}'; the index holds {count}");
+                disagreements.Add($"HAZARDS.md says '{area} {stated}'; the index holds {count}");
             }
         }
 
@@ -147,7 +171,7 @@ internal sealed partial class RecordedCountTests
         {
             if (!byArea.ContainsKey(area))
             {
-                disagreements.Add($"TODO.md says '{area} {stated}', and the index has no unadjudicated row in an area of that name");
+                disagreements.Add($"HAZARDS.md says '{area} {stated}', and the index has no unadjudicated row in an area of that name");
             }
         }
 
@@ -157,7 +181,7 @@ internal sealed partial class RecordedCountTests
         if (published.Values.Sum() != unadjudicated.Count)
         {
             disagreements.Add(
-                $"TODO.md's categories sum to {published.Values.Sum()} and its total says {unadjudicated.Count}; the index holds {unadjudicated.Count}");
+                $"HAZARDS.md's categories sum to {published.Values.Sum()} and its total says {unadjudicated.Count}; the index holds {unadjudicated.Count}");
         }
 
         await Assert.That(string.Join(Environment.NewLine, disagreements)).IsEmpty();
@@ -275,16 +299,28 @@ internal sealed partial class RecordedCountTests
 
         if (stated != live)
         {
-            disagreements.Add($"TODO.md says {stated} {predicate}; the index holds {live}");
+            disagreements.Add($"HAZARDS.md says {stated} {predicate}; the index holds {live}");
         }
     }
 
     /// <summary>
-    /// The tally sentence in <c>TODO.md</c>, which is the anchor for four totals
-    /// and a per-category breakdown.
+    /// The tally sentence the hazard index publishes about itself, which is the
+    /// anchor for four totals and a per-category breakdown.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-19 (previously <c>rows of the</c> followed by a
+    /// Markdown link to the hazard index, matched against <c>TODO.md</c>).</b>
+    /// The sentence moved into the file it describes when the backlog it
+    /// counted reached zero, so that link became a self-link and the wording
+    /// went with it. Nothing else about the shape changed: four named totals and
+    /// a category clause with no full stop in it. The superseded text is
+    /// paraphrased rather than quoted here for one reason —
+    /// <c>DocumentationLinkTests</c> reads every relative link in every
+    /// <c>.cs</c> file, and a quoted one resolves against this directory rather
+    /// than against the repository root, so quoting it verbatim fails that gate.
+    /// </remarks>
     [GeneratedRegex(
-        @"\*\*(?<unadjudicated>\d+) rows of the \[hazard index\]\(HAZARDS\.md\) are `open` and carry `—` for evidence\.\*\*" +
+        @"\*\*(?<unadjudicated>\d+) rows of this index are `open` and carry `—` for evidence\.\*\*" +
         @".*?By category, using the index's own `Area` cells verbatim: (?<categories>[^.]+)\." +
         @" (?<withEvidence>\d+) more are `open` while carrying evidence, so (?<open>\d+) are `open` in total, against (?<closed>\d+) `closed`\.")]
     private static partial Regex HazardTally();

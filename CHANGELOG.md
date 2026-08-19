@@ -66,6 +66,44 @@ has been satisfied in form only.
 
 ### Changed
 
+- **Every row of the [hazard index](HAZARDS.md) is now adjudicated, and the
+  count of the ones that are not is asserted on every build at zero.** 55 rows
+  read `open` with `—` for evidence — rows nobody had decided either way, carried
+  since before `v1.0.0`. Adjudicating is not closing: **29 gained a named
+  mechanism and closed, 26 gained a stated reason and stayed open**, and eight of
+  those twenty-six say in as many words that they can never close, because what
+  they describe is an upstream behaviour, a platform property or a deliberate
+  trade. Nothing was closed that could not name what goes red if the hazard
+  returns.
+
+  **The tally moved from [`TODO.md`](TODO.md) into the index itself**, because
+  the item that carried it was work-not-yet-done and the work is done — and
+  because **at zero the sentence is a stronger mechanism than the backlog it
+  replaced**. Counting down it said *somebody should decide these*; at zero it
+  says **a row that arrives `open` with `—` fails the build**, so a hazard has to
+  be adjudicated when it is written down rather than accumulated for a later
+  pass. `RecordedCountTests.TheHazardTallyIsWhatTheIndexHolds` reads the sentence
+  as its anchor and re-counts through the same `HazardIndex` parser
+  `HazardIndexTests` uses.
+
+  ⚠️ **Two of the findings are worth more than the rows they came from.** The
+  `ContentBlock` converter *throwing* on an unknown content type had been closed
+  by the product for three days and nobody had read the row: its two neighbours
+  closed on 2026-08-16 on one sentence, and
+  `LosslessPassthroughTests.AnUnknownContentTypeSurvivesTheTrip` is a test
+  written for exactly this row. And *screenshots are not byte-stable* — the claim
+  the whole canned-blob testing practice rests on — **has never been measured**,
+  which is why that row stayed open.
+
+  **`RecordedCountTests`' own non-vacuity guards had to be corrected in the same
+  pass**, and it is the transferable half: `published.Count > 4` and
+  `unadjudicated.Count > 20` were floors placed under the very number they were
+  watching be counted *down*, so finishing a third category would have turned the
+  test red **because the work got done** — and the obvious fix then looks like
+  weakening an assertion. They are floors under the corpus now: the table still
+  parses, every row lands in exactly one of the two states, and both states are
+  populated. None of the three moves when a row is adjudicated.
+
 - **`browserai_reinstall_browser` now takes one required argument, naming the
   family.** ⚠️ *Previously it took none, "because there is nothing to name: the
   install is shared by every session on this machine."* **The stated reason

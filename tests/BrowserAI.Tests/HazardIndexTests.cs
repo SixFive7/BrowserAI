@@ -17,9 +17,11 @@ namespace BrowserAI.Tests;
 /// longest-lived document in the repository — 137 rows on that day, 76 of them
 /// <c>closed</c>, each closure resting on evidence nobody checked. (Those two
 /// figures are a measurement of 2026-08-17 and are deliberately left at it; the
-/// live tally is checked against the sentence in <c>TODO.md</c> by
-/// <c>RecordedCountTests</c>, which is where a number about this table belongs
-/// now that one is asserted.) The rule it
+/// live tally is checked against the sentence <c>HAZARDS.md</c> publishes about
+/// itself by <c>RecordedCountTests</c> — <i>corrected 2026-08-19, previously
+/// "the sentence in <c>TODO.md</c>"</i>, which is where it lived while it was a
+/// backlog of unadjudicated rows rather than an assertion that there are none.)
+/// The rule it
 /// states about itself is the rule enforced here, borrowed from the
 /// re-verification index: <b>naming a test that does not exist is worse than
 /// leaving a row open, because it reads as covered.</b>
