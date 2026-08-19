@@ -286,6 +286,38 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The two ungated `lock.json` readers that ACTED on an absence rather than
+  reporting it are closed, one pass each.** An adversarial review enumerated
+  thirteen readers that take no lock; eleven fail safe. The other two both read
+  the instant in which `lock.json`'s *name is unbound* while another process
+  renames a new record over it.
+
+  **`SessionIndex` deleted a live session's index entry.** A `null` record was
+  `NotASession`, which `IsRemovable` includes, so a sweep dropped a session that
+  was doing nothing worse than setting its own purpose — and nothing re-asserts
+  an entry, so it stayed invisible to `browserai_list` for the rest of its life.
+  `SessionIndex.Absent` now looks for the durable write's own temp file beside
+  the gap and answers `RecordInFlight`, which is not removable. **The signal is
+  positive rather than a timing guess:** the temp is created before the rename
+  and deleted after it lands, so it is on disk for the whole window. It cannot
+  fail dangerously — a temp left by a dead writer keeps an entry one sweep
+  longer.
+
+  **`browserai_init` could rebind a closed session's browser family.**
+  `SessionManager.Existing` read `null` as *free, proceed*, and the reclaim
+  downstream takes `mode` and `browser` from the request — so an `init` landing
+  in the window bound a Firefox session's record to Chromium over the profile on
+  disk. `SessionLockRequest.RefuseAnExistingRecord` now asks the same question
+  inside `TakeOrReport`, where the record has already been read under the gate
+  and a peer replacing one is holding that gate.
+
+  **The ungated look deliberately stays**, which is where this and the hazard
+  row's prescribed remedy part company: it is what gives `init` the *same*
+  refusal for a lost session, a neatly closed one and one this very process has
+  open. Moving it inside would let the pre-gate probe answer first for a live
+  session with a shorter sentence about who holds the file — a regression
+  `InitAsync`'s own comment records having been made once and reverted.
+
 - **Two BrowserAI processes wrote holder statements into one `lock.json`, and
   what let them was a peer's *probe* — the handle it holds while it looks.** The
   probe opens `lock.json` `FileAccess.ReadWrite` in front of the per-directory

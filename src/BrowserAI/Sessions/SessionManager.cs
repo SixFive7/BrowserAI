@@ -430,6 +430,19 @@ internal sealed class SessionManager : IAsyncDisposable
         // version special-cased "already open in this process" and answered
         // first with a shorter message, which hid the informative one behind an
         // accident of who happened to hold the directory.
+        //
+        // ⚠️ AND IT IS NOT THE ONLY ASK, since 2026-08-19. This one is UNGATED --
+        // it reads lock.json with no lock held -- so it can land in the instant
+        // in which the name is unbound while a peer replaces the record, read
+        // null as "free, proceed", and reach a reclaim that rebinds the
+        // session's browser family. `RefuseAnExistingRecord` below asks the same
+        // question under the per-directory gate, where the record has already
+        // been read and a peer replacing one is holding the gate. This look
+        // stays because it is what produces the ONE answer described above:
+        // moving it inside would let the pre-gate probe answer first for a live
+        // session, with a shorter sentence about who holds the file, which is
+        // the regression the paragraph above records having already been made
+        // once.
         if (Existing(location) is { } existing)
         {
             return new ToolOutcome(existing, IsError: true);
@@ -453,7 +466,17 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return await OpenAsync(
             location,
-            new SessionLockRequest { Mode = mode.Name, Browser = browser, Purpose = purpose },
+            new SessionLockRequest
+            {
+                Mode = mode.Name,
+                Browser = browser,
+                Purpose = purpose,
+
+                // `init` means MAKE a session here. A directory that already
+                // carries a record has to be resumed instead, and this is the
+                // half of that refusal the ungated look above cannot guarantee.
+                RefuseAnExistingRecord = true,
+            },
             mode,
             tracing,
             consoleLevel,

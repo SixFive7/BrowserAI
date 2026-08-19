@@ -159,6 +159,78 @@ internal sealed class SessionIndexTests
         await Assert.That(Directory.Exists(path.FullPath)).IsTrue();
     }
 
+    /// <summary>
+    /// A session whose record is being renamed into place is kept, not swept —
+    /// the one ungated reader in the product that ACTED on an absence.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The absence is real and is nobody's fault.</b> A record arrives by
+    /// <c>MoveFileEx</c> with <c>MOVEFILE_REPLACE_EXISTING</c>; a rename over a
+    /// file with an open handle is refused, so the writer sits in its retry
+    /// loop, and between the pending delete completing and the next attempt
+    /// landing the name <c>lock.json</c> does not resolve. Measured 2026-08-18
+    /// and recorded in the [hazard index](../../HAZARDS.md#hazard-index).
+    /// <c>SessionIndex</c> read that instant as <i>never was a session</i>, which
+    /// is a **removable** state, and dropped a live session out of the only
+    /// inventory there is.
+    /// </para>
+    /// <para>
+    /// <b>The window is not raced for here, and it does not need to be.</b> What
+    /// the window produces on disk is exactly this: a directory with no
+    /// <c>lock.json</c> and a <c>lock.json.new-…</c> beside it. Composing that
+    /// state directly tests the discriminator rather than the scheduler, and the
+    /// name comes from <c>SessionLayout.NewLockFileName</c> — the same helper the
+    /// durable write uses, so a rename of the convention cannot leave this test
+    /// passing against a pattern nothing produces.
+    /// </para>
+    /// <para>
+    /// <b>The second arm is what stops the fix being "never sweep anything".</b>
+    /// With no temp file beside it the same directory is still swept, which is
+    /// the behaviour the test above this one asserts and this one re-asserts
+    /// from the other side.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnEntryWhoseRecordIsMidRenameIsKeptAndTheSameEntryWithoutOneIsSwept()
+    {
+        using var scratch = ScratchDirectory.Create("index-in-flight");
+        var (index, path) = NewIndex(scratch, "session");
+
+        var lease = SessionLock.TryAcquire(path, Request("rewriting its own record"), NullLogger.Instance);
+        index.Record(path);
+        lease.Acquired!.Dispose();
+
+        // Exactly what the window leaves on disk: the name unbound, the durable
+        // write's temp file beside it.
+        var temp = Path.Combine(path.FullPath, SessionLayout.NewLockFileName());
+        File.Move(path.LockFile, temp);
+
+        var followed = index.Follow();
+
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.RecordInFlight);
+        await Assert.That(followed[0].IsRemovable).IsFalse();
+        await Assert.That(followed[0].Problem).Contains(Path.GetFileName(temp));
+
+        var kept = index.Sweep();
+
+        await Assert.That(kept.Removed.Count).IsEqualTo(0);
+        await Assert.That(kept.Kept.Count).IsEqualTo(1);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(1);
+
+        // The other arm. The rewrite never lands and the temp file goes; the
+        // directory is then genuinely recordless and the entry is re-assertable,
+        // so the sweep takes it.
+        File.Delete(temp);
+
+        var swept = index.Sweep();
+
+        await Assert.That(swept.Removed.Count).IsEqualTo(1);
+        await Assert.That(swept.Removed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
+        await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
+    }
+
     [Test]
     public async Task AnEntryPointingAtAPersonalChromeProfileIsFollowedAndProducesNoAction()
     {

@@ -1216,6 +1216,88 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
+    /// A request that refuses an existing record is answered <b>under the
+    /// gate</b>, changing nothing — and the same directory is still reclaimed by
+    /// a request that does not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why the question is asked twice.</b> `browserai_init`'s own look at
+    /// <c>lock.json</c> is ungated, which it has to be — it runs before the
+    /// directory is created — so it can land in the instant in which the name is
+    /// unbound while a peer replaces the record, read <see langword="null"/> as
+    /// <i>free, proceed</i>, and reach the reclaim below. The reclaim appends a
+    /// <c>mode</c> and a <c>browser</c> statement, so what the window costs is a
+    /// Firefox session's record gaining a `chromium` statement, or the reverse.
+    /// Under the gate the record has already been read and a peer replacing one
+    /// is holding this gate, so the same question cannot be asked at the wrong
+    /// instant.
+    /// </para>
+    /// <para>
+    /// <b>Both arms, because a refusal that refuses everything is not a fix.</b>
+    /// `resume`, `destroy` and `set_purpose` all take a directory that already
+    /// has a record and must keep doing so; only `init` sets the flag.
+    /// </para>
+    /// <para>
+    /// <b>And the record is read back.</b> "Nothing was taken" is the cheap half;
+    /// the half that matters is that nothing was <i>written</i>, because the
+    /// defect this closes is a rebinding rather than a bad acquisition.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARequestThatRefusesAnExistingRecordIsAnsweredUnderTheGateAndChangesNothing()
+    {
+        using var scratch = ScratchDirectory.Create("session-already");
+        var (_, path) = NewSession(scratch, "already");
+
+        var first = SessionLock.TryAcquire(
+            path,
+            new SessionLockRequest { Mode = "headless", Browser = "firefox", Purpose = "the session that is already here" },
+            NullLogger.Instance);
+
+        first.Acquired!.Dispose();
+
+        var before = await File.ReadAllTextAsync(path.LockFile);
+
+        var refused = SessionLock.TryAcquire(
+            path,
+            new SessionLockRequest { Mode = "headed", Browser = "chromium", Purpose = "an init that should have been a resume", RefuseAnExistingRecord = true },
+            NullLogger.Instance);
+
+        try
+        {
+            await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.AlreadyASession);
+            await Assert.That(refused.Taken).IsFalse();
+            await Assert.That(refused.Holder!.Browser).IsEqualTo("firefox");
+            await Assert.That(refused.Message).Contains("the session that is already here");
+        }
+        finally
+        {
+            refused.Acquired?.Dispose();
+        }
+
+        // Byte for byte. A refusal that appended a `browser` statement would
+        // have rebound a Firefox session to Chromium and still passed every
+        // assertion above.
+        await Assert.That(await File.ReadAllTextAsync(path.LockFile)).IsEqualTo(before);
+
+        // The other arm: without the flag the same directory is reclaimed, which
+        // is what `resume`, `destroy` and `set_purpose` all depend on.
+        var reclaimed = SessionLock.TryAcquire(path, Request("a resume"), NullLogger.Instance);
+
+        try
+        {
+            await Assert.That(reclaimed.Outcome).IsEqualTo(SessionLockOutcome.Reclaimed);
+            await Assert.That(reclaimed.Taken).IsTrue();
+        }
+        finally
+        {
+            reclaimed.Acquired?.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Every open this class takes after its own write waits a transient handle
     /// out, and every open that is an ownership test does not.
     /// </summary>

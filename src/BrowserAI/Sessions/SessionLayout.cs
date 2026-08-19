@@ -46,6 +46,26 @@ internal static class SessionLayout
     /// <summary>Ours. The lock and the record, and the only file at the root.</summary>
     public const string LockFileName = "lock.json";
 
+    /// <summary>
+    /// What a record being written durably is called before it is renamed over
+    /// <see cref="LockFileName"/> — and therefore what its presence beside an
+    /// absent <c>lock.json</c> means.
+    /// </summary>
+    /// <remarks>
+    /// <b>Written once because two components read it for opposite reasons.</b>
+    /// <c>SessionLock.WriteDurably</c> composes the name; <c>SessionIndex</c>
+    /// matches it to tell <i>this directory is not a session</i> from <i>a
+    /// rewrite is in flight right now</i>, which is the difference between
+    /// dropping an entry and keeping it. A pattern that drifted from the name
+    /// would make the second reader silently see nothing, which is the
+    /// pre-2026-08-19 behaviour restored.
+    /// </remarks>
+    public const string NewLockFilePattern = $"{LockFileName}.new-*";
+
+    /// <summary>The name a durable write gives its temp file.</summary>
+    /// <returns>A fresh name matching <see cref="NewLockFilePattern"/>.</returns>
+    public static string NewLockFileName() => $"{LockFileName}.new-{Guid.NewGuid():N}";
+
     /// <summary>The browser's <c>--user-data-dir</c>.</summary>
     public const string ProfileFolderName = "profile";
 

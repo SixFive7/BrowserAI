@@ -435,7 +435,8 @@ dangerous of the two because null means *not locked*.
 > which is where the danger was expected, and generalised to *every* ungated
 > reader without enumerating them. An [adversarial
 > review](../../docs/reviews/2026-08-18-adversarial-locking.md) enumerated all
-> thirteen. **Eleven fail safe. Two act on the absence:**
+> thirteen. **Eleven fail safe. Two acted on the absence, and both were closed
+> on 2026-08-19 — one each, neither in a pass with anything else in it:**
 >
 > - **`SessionIndex.Locate`** → a `null` record becomes `NotASession` →
 >   `SessionIndexEntry.IsRemovable` → `Sweep` **deletes the index entry for a live
@@ -446,14 +447,27 @@ dangerous of the two because null means *not locked*.
 >   `browserai_list` and to `LiveSessions()` for the rest of its life. Nothing
 >   downstream treats an index entry as authority, so the outcome is a wrong
 >   *report* rather than a wrong destructive action, which is what keeps it out of
->   the first class.
+>   the first class. ✅ **Closed 2026-08-19 by the discriminator this article
+>   names below**: `SessionIndex.Absent` looks for
+>   `SessionLayout.NewLockFilePattern` beside the gap and answers
+>   `SessionIndexEntryState.RecordInFlight`, which is not removable. The coupling
+>   the paragraph below worried about was avoided by putting the name in
+>   `SessionLayout` rather than reaching for it from `RenameWindow`: one helper
+>   composes it, both readers match it.
 > - **`SessionManager.Existing`**, `init`'s existence guard → `null` means *"the
 >   directory is free, proceed"*. The gated `TryAcquire` downstream stops it
 >   becoming two owners; what gets through is a **stale-locked** directory being
 >   rebound, because `Compose` takes `Mode` and `Browser` from the request. So
 >   `init` can silently re-bind a closed session's browser family over a profile
 >   on disk belonging to the other one — the exact thing `resume` refuses
->   explicitly.
+>   explicitly. ✅ **Closed 2026-08-19, and not the way the hazard row predicted.**
+>   `SessionLockRequest.RefuseAnExistingRecord` makes `TakeOrReport` answer
+>   `AlreadyASession` from the record it has already read under the gate;
+>   `SessionManager.Existing` **stays** where it is, because it is what gives
+>   `init` one answer for a lost session, a closed one and one this process holds
+>   — moving it would let the pre-gate probe answer first with a shorter sentence,
+>   which is a regression the code records having already made once. The rebinding
+>   needed the reclaim, and `init` no longer has a path to one.
 >
 > **What still holds, and is the reason the original judgement was nearly
 > right.** A denial was an unhandled exception escaping `TryAcquire`; an absence
@@ -473,6 +487,11 @@ dangerous of the two because null means *not locked*.
 > sessions would pay the full budget ten times over. The cheap discriminator is
 > the writer's own temp file — which is what the test uses — but reaching for it
 > from `RenameWindow` couples it to two different temp-naming conventions.
+> ⚠️ **Corrected 2026-08-19 (previously this paragraph ended there, as the reason
+> the gap was left).** Neither closure paid that cost: one asks a *directory
+> listing* for a pattern `SessionLayout` owns, and the other asks nothing extra at
+> all, because the record was already read under the gate. **The reasoning that
+> made this look expensive was about waiting, and neither answer waits.**
 >
 > `[STABLE]` for the unbound window and the sequence; `[MACHINE]` for the
 > frequency, three occurrences in thirty-six full-suite runs, all from the one

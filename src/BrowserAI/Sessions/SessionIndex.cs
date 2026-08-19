@@ -435,15 +435,7 @@ internal sealed class SessionIndex
             var record = SessionLock.ReadRecord(session);
 
             return record is null
-                ? new SessionIndexEntry
-                {
-                    Key = key,
-                    EntryFile = file,
-                    Pointer = pointer,
-                    Session = session,
-                    State = SessionIndexEntryState.NotASession,
-                    Problem = $"'{session.FullPath}' exists but has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session",
-                }
+                ? Absent(file, key, pointer, session)
                 : new SessionIndexEntry
                 {
                     Key = key,
@@ -469,6 +461,96 @@ internal sealed class SessionIndex
                 Problem = failure.Message,
             };
         }
+    }
+
+    /// <summary>
+    /// What an absent <c>lock.json</c> means, which is two different things and
+    /// only one of them is safe to act on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the ungated reader that ACTED on an absence, and it is the
+    /// only one in the product that reached a destructive act.</b> Added
+    /// 2026-08-19, from
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md).
+    /// <c>SessionLock.ReadRecord</c> takes no gate — it cannot, because the whole
+    /// point of the index is to describe sessions nobody is holding — so it can
+    /// land in the instant in which <c>lock.json</c>'s <b>name is unbound</b>
+    /// while another process replaces the record
+    /// ([hazard index](../../../HAZARDS.md#hazard-index): a rename over a file
+    /// with an open handle is refused, the writer retries, and the name is free
+    /// between the pending delete completing and the next attempt landing).
+    /// Read as <c>NotASession</c> that is <b>removable</b>, so a sweep dropped
+    /// the index entry of a live session that was doing nothing worse than
+    /// setting its own purpose.
+    /// </para>
+    /// <para>
+    /// <b>The temp file is the discriminator, and it is a positive signal rather
+    /// than a timing guess.</b> A durable write creates
+    /// <see cref="SessionLayout.NewLockFilePattern"/> in the same directory
+    /// <i>before</i> it renames anything and deletes it only after the rename
+    /// has landed, so for the whole of the window in which the name can be
+    /// unbound the temp file is on disk. Present means a rewrite is in flight
+    /// and the entry is kept; absent means the directory really has no record,
+    /// which is a personal browser profile or a destroyed session and is
+    /// re-assertable.
+    /// </para>
+    /// <para>
+    /// <b>It cannot be wrong in the dangerous direction, and it can be wrong in
+    /// the safe one.</b> A temp file left behind by a process that died mid-write
+    /// keeps an entry that could have been dropped — a stale line in an
+    /// inventory, which the next sweep removes once the litter sweep has taken
+    /// the temp file. There is no reading in which a live session's entry is
+    /// dropped while its own writer is still holding the file.
+    /// </para>
+    /// </remarks>
+    /// <param name="file">The entry file.</param>
+    /// <param name="key">The entry's key.</param>
+    /// <param name="pointer">What the entry holds.</param>
+    /// <param name="session">The directory it names.</param>
+    /// <returns>The entry, in whichever of the two states applies.</returns>
+    private static SessionIndexEntry Absent(string file, string key, string pointer, SessionPath session)
+    {
+        string[] inFlight;
+
+        try
+        {
+            inFlight = Directory.GetFiles(session.FullPath, SessionLayout.NewLockFilePattern);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            // The directory that existed a moment ago cannot be listed now.
+            // Keeping the entry is the safe answer to every reason for that.
+            return new SessionIndexEntry
+            {
+                Key = key,
+                EntryFile = file,
+                Pointer = pointer,
+                Session = session,
+                State = SessionIndexEntryState.RecordInFlight,
+                Problem = $"'{session.FullPath}' has no '{SessionLayout.LockFileName}' and could not be listed to find out why ({failure.Message})",
+            };
+        }
+
+        return inFlight.Length is 0
+            ? new SessionIndexEntry
+            {
+                Key = key,
+                EntryFile = file,
+                Pointer = pointer,
+                Session = session,
+                State = SessionIndexEntryState.NotASession,
+                Problem = $"'{session.FullPath}' exists but has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session",
+            }
+            : new SessionIndexEntry
+            {
+                Key = key,
+                EntryFile = file,
+                Pointer = pointer,
+                Session = session,
+                State = SessionIndexEntryState.RecordInFlight,
+                Problem = $"'{session.FullPath}' holds no '{SessionLayout.LockFileName}' at this instant and '{Path.GetFileName(inFlight[0])}' is beside it, so another BrowserAI is replacing the record right now",
+            };
     }
 
     private static SessionIndexEntry Unusable(string file, string key, string pointer, string why) =>
@@ -591,6 +673,14 @@ internal enum SessionIndexEntryState
     /// </summary>
     NotASession,
 
+    /// <summary>
+    /// The directory exists, has no <c>lock.json</c> <b>at this instant</b>, and
+    /// carries a <c>lock.json.new-…</c> beside the gap — so another BrowserAI is
+    /// replacing the record right now. <b>Kept</b>: a session mid-rewrite is the
+    /// opposite of a session that never was.
+    /// </summary>
+    RecordInFlight,
+
     /// <summary>The directory is gone, on a volume that is present.</summary>
     DirectoryMissing,
 
@@ -643,6 +733,15 @@ internal sealed record SessionIndexEntry
     /// is exactly the three states below: a directory that is gone, one that was
     /// never a session, and a pointer that leads nowhere. Every other state
     /// names a directory that exists and cannot restore its own entry.
+    /// <para>
+    /// ⚠️ <b><see cref="SessionIndexEntryState.RecordInFlight"/> is deliberately
+    /// not in the list, and separating it out of
+    /// <see cref="SessionIndexEntryState.NotASession"/> is what made the list
+    /// safe.</b> An absent <c>lock.json</c> was one state, so the instant in
+    /// which a live session's record is being renamed into place read as *never
+    /// was a session* and the entry was dropped. See <c>SessionIndex.Absent</c>
+    /// for the discriminator and why it cannot fail dangerously.
+    /// </para>
     /// </remarks>
     public bool IsRemovable => State
         is SessionIndexEntryState.DirectoryMissing

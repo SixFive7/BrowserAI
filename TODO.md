@@ -37,20 +37,6 @@ found and this pass did **not** do; the bounded ones also have rows in the
 [hazard index](HAZARDS.md#hazard-index), because a thing that is open needs to be
 findable from more than one direction.
 
-- [ ] **Two of thirteen ungated `lock.json` readers ACT on an absence rather than
-      reporting it.** `SessionIndex.Locate` → `IsRemovable` → `Sweep` **deletes
-      the index entry** for a live session; `SessionManager.Existing` reads null
-      as *"free, proceed"* and can rebind a stale-locked session's browser
-      family. **The kb claim they falsified is corrected** — `kb/windows/processes.md`
-      said *"every ungated one fails in the safe direction"* and now enumerates
-      all thirteen — and each reader has a [hazard row](HAZARDS.md#hazard-index)
-      naming what would close it. What is left here is the code: make
-      `NotASession` non-removable while a `lock.json.new-<guid>` temp is on disk,
-      and move `Existing`'s check inside `TakeOrReport` where the record is
-      already read under the gate. **Neither is a change to make in the same pass
-      as something else** — the second restructures the refusal on the
-      most-exercised path in the product.
-
 - [ ] **The browser-reinstall row was settled on an impossibility that is not
       one.** [`DECISIONS.md`](DECISIONS.md) closed *download alongside and swap*
       with *"Windows will not rename a directory holding open executables"*.

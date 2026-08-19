@@ -817,6 +817,35 @@ internal sealed class SessionLock : IDisposable
                     SessionErrors.LockFileCannotBeOpened(location.FullPath, location.LockFile, failure.Message, MoveBudget));
             }
 
+            // ⚠️ ASKED HERE BECAUSE THE RECORD IS ALREADY READ AND THE GATE IS
+            // ALREADY HELD, added 2026-08-19. `init`'s pre-gate look is ungated
+            // by construction and can land in the instant in which lock.json's
+            // NAME IS UNBOUND while a peer replaces the record -- it then reads
+            // null as "free, proceed" and reaches the reclaim below, which
+            // appends a mode and a browser statement and rebinds the session's
+            // family. The same question here costs one comparison and cannot be
+            // asked at the wrong instant, because a peer replacing a record
+            // holds this gate to do it.
+            //
+            // Nothing is written and nothing is taken: the handle opened above
+            // is dropped by the finally, which is the same shape the unreadable
+            // arm uses and for the same reason -- a refusal that changed the
+            // record would destroy the evidence the caller is being sent to look
+            // at.
+            if (previous is not null && request.RefuseAnExistingRecord)
+            {
+                return new SessionLockResult(
+                    SessionLockOutcome.AlreadyASession,
+                    SessionErrors.SessionAlreadyExists(
+                        location.FullPath,
+                        previous.Mode,
+                        previous.Browser,
+                        previous.Created,
+                        previous.LastUsed,
+                        previous.Purpose),
+                    holder: previous);
+            }
+
             var previousRunning = previous is not null
                 && ProcessLiveness.IsAlive(previous.Holder.ProcessId, previous.Holder.ProcessCreatedFileTime);
 
@@ -1156,7 +1185,7 @@ internal sealed class SessionLock : IDisposable
 
         // The temp file must be in the target's own directory: a rename is only
         // atomic within one volume, and only cheap within one directory.
-        var temp = Path.Combine(directory, $"{SessionLayout.LockFileName}.new-{Guid.NewGuid():N}");
+        var temp = Path.Combine(directory, SessionLayout.NewLockFileName());
 
         try
         {
@@ -1281,6 +1310,42 @@ internal sealed record SessionLockRequest
 
     /// <summary>Free text from the calling model, capped and de-controlled on the way in.</summary>
     public required string Purpose { get; init; }
+
+    /// <summary>
+    /// Whether finding a record already on disk is a <b>refusal</b> rather than
+    /// something to reclaim. <see langword="false"/> unless the caller says
+    /// otherwise, because reclaiming is what every other path wants.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Set by <c>browserai_init</c> and nothing else.</b> `init` means
+    /// <i>make a session here</i>, and a directory that already carries a record
+    /// has to be `resume`d instead — otherwise the second call silently rebinds
+    /// the session's mode and browser family, appending a `chromium` statement
+    /// to a Firefox profile's history or the reverse.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is asked UNDER THE GATE because the ungated ask can miss.</b>
+    /// `init`'s own pre-gate look — `SessionManager.Existing` — reads
+    /// `lock.json` with no lock held, so it can land in the instant in which the
+    /// name is unbound while a peer replaces the record, read <see langword="null"/>
+    /// as <i>free, proceed</i>, and reach a reclaim. Under the gate the record
+    /// has already been read for the reclaim path, so the same question costs
+    /// nothing and cannot be asked at the wrong instant. Added 2026-08-19, from
+    /// the adversarial review's enumeration of ungated readers that ACT on an
+    /// absence.
+    /// </para>
+    /// <para>
+    /// <b>The pre-gate look deliberately stays.</b> It is what gives `init` one
+    /// answer for a lost session, a neatly closed one and one this very process
+    /// has open — <c>SessionErrors.SessionAlreadyExists</c>, naming the purpose,
+    /// the mode and the date. Deleting it would let <c>SessionLock.ProbeForHolder</c>
+    /// answer first for a live session with a shorter sentence about who holds
+    /// the file, which is the regression <c>SessionManager.InitAsync</c>'s own
+    /// comment records having already been made once.
+    /// </para>
+    /// </remarks>
+    public bool RefuseAnExistingRecord { get; init; }
 }
 
 /// <summary>How an attempt on a session directory ended.</summary>
@@ -1294,6 +1359,12 @@ internal enum SessionLockOutcome
 
     /// <summary>Somebody else holds it right now. The message names who.</summary>
     Held,
+
+    /// <summary>
+    /// A record was already on disk and the request said that is a refusal.
+    /// Nothing was taken and nothing was written.
+    /// </summary>
+    AlreadyASession,
 
     /// <summary>Somebody else is inside create-or-take and did not come out.</summary>
     Busy,
