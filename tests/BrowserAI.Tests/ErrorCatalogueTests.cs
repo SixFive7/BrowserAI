@@ -599,14 +599,71 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
+        // ⚠️ Matched on the row's INVARIANT HALF since 2026-08-19, and the
+        // variable half is asserted separately. The row became a progress report,
+        // so recomposing it here would need this test to know the elapsed time and
+        // the observed rate of the run it is asserting on -- which is a
+        // measurement of the machine, not of the product. What is recomposed is
+        // everything the row says regardless of progress; what is checked
+        // separately is that a progress clause was rendered at all.
+        var text = TextOf(refused);
+
         Match(
-            TextOf(refused),
+            text,
             nameof(SessionErrors.ProvisioningInProgress),
             SessionErrors.ProvisioningInProgress(
                 "browser_navigate",
                 SessionManager.DefaultBrowser,
                 Path.Combine(sessions.Environment.Paths.BrowsersDirectory, RigSessionEnvironment.ChromiumDirectoryName),
-                BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser)));
+                BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser))
+                .Split("Nothing has been sampled yet")[0]);
+
+        // The half a recomposition cannot cover: either a sample had been taken
+        // by the time this call landed, or it had not, and both spellings are the
+        // row rather than an absence of one.
+        await Assert.That(text.Contains("Progress:", StringComparison.Ordinal) || text.Contains("Nothing has been sampled yet", StringComparison.Ordinal))
+            .IsTrue()
+            .Because(text);
+    }
+
+    /// <summary>
+    /// The maintenance row is emitted by an <c>init</c> that meets a reinstall
+    /// holding this machine's browsers root.
+    /// </summary>
+    /// <remarks>
+    /// <b>The claim is taken exactly as the product takes it</b>, so the condition
+    /// is the real one: a second BrowserAI mid-reinstall is indistinguishable from
+    /// this, because it is the same file opened the same way.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheMaintenanceRowIsEmittedByAnInitThatMeetsARunningReinstall()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var root = sessions.Environment.Paths.BrowsersDirectory;
+
+        using var claim = MaintenanceLock.TryTake(root, ProvisionedBrowsers.Chromium);
+
+        await Assert.That(claim).IsNotNull();
+
+        var refused = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "refused-while-the-browsers-are-replaced"),
+            ["purpose"] = "a session that must not start during a reinstall",
+            ["mode"] = "headless",
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        Match(
+            TextOf(refused),
+            nameof(SessionErrors.BrowsersAreBeingReinstalled),
+            SessionErrors.BrowsersAreBeingReinstalled(
+                SessionToolSurface.Init,
+                root,
+                MaintenanceLock.Probe(root)!));
     }
 
     [Test]
@@ -867,10 +924,19 @@ internal sealed partial class ErrorCatalogueTests
         // which is the standing limit of this test and is worth saying beside its
         // own number.
         //
+        // ⚠️ **Corrected 2026-08-19 to 25 (previously 24).**
+        // `BrowsersAreBeingReinstalled` arrived with the reinstall maintenance
+        // lock, and it is the first row here that ONE condition produces for
+        // THREE tools -- `browserai_init`, `browserai_resume` and
+        // `browserai_reinstall_browser` all meet it and all recover the same way.
+        // Written as one row on purpose: three would be three sentences to keep
+        // in step about one state, and the census would then require three
+        // provocations of the same condition to prove the same thing.
+        //
         // Every one of them was **deleted rather than orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
-        await Assert.That(rows.Count).IsEqualTo(24);
+        await Assert.That(rows.Count).IsEqualTo(25);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

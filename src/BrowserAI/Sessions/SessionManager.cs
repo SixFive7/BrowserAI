@@ -360,7 +360,7 @@ internal sealed class SessionManager : IAsyncDisposable
         SessionToolLog.CallRefusedWhileProvisioning(_logger, tool, browser, status.State);
 
         return status.State is ProvisioningState.Provisioning
-            ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.DownloadSizeFor(browser))
+            ? SessionErrors.ProvisioningInProgress(tool, browser, status.Directory, BrowserProvisioner.DownloadSizeFor(browser), status.Progress)
             : SessionErrors.BrowserRuntimeDidNotStart(session.Location.FullPath, status.Detail);
     }
 
@@ -413,6 +413,11 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private async Task<ToolOutcome> InitAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
+        if (MaintenanceRefusal(SessionToolSurface.Init) is { } maintenance)
+        {
+            return maintenance;
+        }
+
         var location = ResolveToOpen(Required(arguments, "directory"), "directory");
         var purpose = Required(arguments, "purpose");
         var mode = Mode(arguments);
@@ -488,6 +493,11 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private async Task<ToolOutcome> ResumeAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
+        if (MaintenanceRefusal(SessionToolSurface.Resume) is { } maintenance)
+        {
+            return maintenance;
+        }
+
         var location = ResolveToOpen(Required(arguments, "directory"), "directory");
         var appended = Optional(arguments, "purpose");
         var debug = Flag(arguments, "debug") ?? false;
@@ -813,11 +823,26 @@ internal sealed class SessionManager : IAsyncDisposable
     /// with no browser installed is unavoidable and is stated.
     /// </para>
     /// <para>
-    /// <b>The check here answers "is anything RUNNING FROM the tree", and that is
-    /// half the question.</b> A session that opened a browser between the check
-    /// and the delete makes the delete fail on an open executable, and the
-    /// outcome reports exactly which files survived — so <i>that</i> race
-    /// produces a refusal with evidence rather than a corrupted tree.
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "The check here answers 'is
+    /// anything RUNNING FROM the tree', and that is half the question … a session
+    /// that opened a browser between the check and the delete makes the delete
+    /// fail on an open executable, so THAT race produces a refusal with evidence
+    /// rather than a corrupted tree").</b> The second half was too generous. A
+    /// browser opened in that window fails the delete <i>on Windows</i>, which is
+    /// true and is not the whole race: the peer's session is <b>created</b> in
+    /// that window too, and a session whose tree was deleted from under it is not
+    /// a failed delete, it is a live session pointing at nothing. The answer is
+    /// the machine-wide claim this method now takes first — see
+    /// <see cref="MaintenanceLock"/> — which stops the peer's <c>init</c> rather
+    /// than losing a race with it.
+    /// </para>
+    /// <para>
+    /// <b>And the session gate is now unconditional.</b> It used to be asked only
+    /// when a process was already running out of the tree, so a session that was
+    /// open with its browser not currently launched let the delete through. The
+    /// maintainer's decision of 2026-08-19: <i>"No reinstall if there is any
+    /// session running system wide. Including any reinstall sessions."</i> See
+    /// <see cref="OpenSessionRefusal"/>.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously "No extra lock is taken around the
@@ -840,9 +865,111 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var target = Browser(arguments, "browser", fallback: null, ProvisionedBrowsers.ReinstallTargets);
 
+        // ⚠️ FIRST, AND HELD FOR THE WHOLE CALL. Everything below -- the session
+        // census, the process census, the recursive delete and the download --
+        // happens inside this claim, so a peer's `browserai_init` cannot launch a
+        // browser into a tree this call is part way through deleting. The
+        // ordering is the deadlock argument: this is the OUTERMOST lock and the
+        // provisioning mutexes are taken under it, never the other way round.
+        // See MaintenanceLock's remarks.
+        using var maintenance = MaintenanceLock.TryTake(_environment.Paths.BrowsersDirectory, target);
+
+        if (maintenance is null)
+        {
+            // Mutual against itself, and the maintainer said so explicitly:
+            // "Including any reinstall sessions."
+            return new ToolOutcome(
+                SessionErrors.BrowsersAreBeingReinstalled(
+                    SessionToolSurface.ReinstallBrowser,
+                    _environment.Paths.BrowsersDirectory,
+                    MaintenanceLock.Probe(_environment.Paths.BrowsersDirectory) ?? "the claim could not be taken and its holder did not say who it is"),
+                IsError: true);
+        }
+
         return ProvisionedBrowsers.IsShared(target)
             ? await ReinstallSharedAsync(cancellationToken).ConfigureAwait(false)
             : await ReinstallFamilyAsync(target, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The refusal a session tool earns while a reinstall holds this machine's
+    /// browsers root, or <see langword="null"/> when none does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A probe and never an acquire</b>, for the reason
+    /// <see cref="MaintenanceLock.Probe"/> gives: an <c>init</c> that took the
+    /// claim for a microsecond would make a racing reinstall report that another
+    /// reinstall was running.
+    /// </para>
+    /// <para>
+    /// <b>It is the FIRST thing <c>init</c> and <c>resume</c> do</b>, before the
+    /// directory is resolved or the guard runs, because everything after it either
+    /// creates something or reports on something that is about to be created.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool being refused.</param>
+    /// <returns>The refusal, or <see langword="null"/>.</returns>
+    private ToolOutcome? MaintenanceRefusal(string tool) =>
+        MaintenanceLock.Probe(_environment.Paths.BrowsersDirectory) is { } holder
+            ? new ToolOutcome(
+                SessionErrors.BrowsersAreBeingReinstalled(tool, _environment.Paths.BrowsersDirectory, holder),
+                IsError: true)
+            : null;
+
+    /// <summary>
+    /// The refusal a reinstall earns while sessions are open, or
+    /// <see langword="null"/> when none are.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Asked UNCONDITIONALLY since 2026-08-19 (previously the family path
+    /// asked it only when a process was already running out of the tree).</b> The
+    /// maintainer's decision, verbatim: <i>"No reinstall if there is any session
+    /// running system wide."</i> The old gate had a real gap — a session open with
+    /// its browser not currently launched answered <i>nothing is running</i>, and
+    /// the browser it is about to launch lands in a tree being deleted. The
+    /// <c>shared</c> path already asked it this way, [for a reason of its
+    /// own](#), and the two paths now differ only in <i>which</i> sessions count.
+    /// </para>
+    /// <para>
+    /// <b>The family filter survives, and that is deliberate rather than an
+    /// oversight against the word "system wide".</b> Only a session of the family
+    /// being reinstalled can hold an executable out of that family's tree, so
+    /// listing a live Chromium session beside a blocked Firefox reinstall would
+    /// tell the caller to close the wrong browser — which is the reasoning
+    /// <see cref="LiveSessions"/> was given on 2026-08-19 and nothing here
+    /// overturns it. <c>shared</c> passes <see langword="null"/> and counts every
+    /// family, because <c>ffmpeg</c> and <c>winldd</c> belong to both.
+    /// </para>
+    /// <para>
+    /// <b>It runs INSIDE the maintenance claim, and the order is what makes the
+    /// sentence true.</b> The claim is taken first, so by the time these sessions
+    /// are counted no new one can start — which is why the refusal can say "no new
+    /// session can start while this call is deciding" as a fact rather than as a
+    /// hope. There is deliberately no drain: a reinstall that finds sessions open
+    /// releases the claim and refuses, rather than holding it until a human closes
+    /// a browser they may never close.
+    /// </para>
+    /// </remarks>
+    /// <param name="browser">The family, or <see langword="null"/> for every family.</param>
+    /// <param name="why">The clause explaining why this target is gated the way it is.</param>
+    /// <returns>The refusal, or <see langword="null"/>.</returns>
+    private ToolOutcome? OpenSessionRefusal(string? browser, string why)
+    {
+        var claimants = LiveSessions(browser);
+
+        if (claimants.Count is 0)
+        {
+            return null;
+        }
+
+        return new ToolOutcome(
+            $"{SessionToolSurface.ReinstallBrowser} was not run: it holds this machine's browsers root while it runs, so no new session can start meanwhile — and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are still running:\n"
+            + Listing(claimants)
+            + $"\n{why} Nothing was changed, nothing was terminated, and the claim on the browsers root has been released — this call did not wait for those sessions and never will, because waiting on a browser a human may not close is not a thing a tool call may do. "
+            + $"Close them, or wait for them to end, and call {SessionToolSurface.ReinstallBrowser} again. There is deliberately no force option — forcing here means killing browsers other agents are driving.",
+            IsError: true);
     }
 
     /// <summary>
@@ -880,6 +1007,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// repair it</i> is the failure this whole value was added to fix.
     /// </para>
     /// <para>
+    /// ⚠️ <b>The family path caught up on 2026-08-19 and the gap between them
+    /// narrowed to one thing: WHICH sessions count.</b> Both now refuse on an
+    /// open session unconditionally; this one counts every family and a family
+    /// reinstall counts its own. What was described above as "stricter" is now
+    /// only <i>wider</i>.
+    /// </para>
+    /// <para>
     /// <b>Still no force flag</b>, for the same reason the family path has none.
     /// </para>
     /// </remarks>
@@ -890,6 +1024,15 @@ internal sealed class SessionManager : IAsyncDisposable
         var directories = _environment.Provisioner.SharedComponentDirectories();
         var named = string.Join("' and '", directories);
         var running = new List<RunningImage>();
+
+        // The gate, and the family path's is narrower on purpose -- see the
+        // remarks. `null` is every family rather than none.
+        if (OpenSessionRefusal(
+            browser: null,
+            $"'{ProvisionedBrowsers.Shared}' is {string.Join(" and ", ProvisionedBrowsers.SharedComponents)}, which BOTH browser families use, so every session blocks this one whatever family it is — a browser starts {ProvisionedBrowsers.SharedInstallTarget} only at the moment it records, so nothing running out of '{named}' right now is not the same statement as nothing being about to.") is { } open)
+        {
+            return open;
+        }
 
         foreach (var directory in directories)
         {
@@ -904,20 +1047,6 @@ internal sealed class SessionManager : IAsyncDisposable
                     + "It refuses rather than guessing, because deleting a tree that something is running from leaves a directory that is neither the old install nor the new one.",
                     IsError: true);
             }
-        }
-
-        // The gate, and the family path's is narrower on purpose -- see the
-        // remarks. `null` is every family rather than none.
-        var claimants = LiveSessions(browser: null);
-
-        if (claimants.Count is not 0)
-        {
-            return new ToolOutcome(
-                $"{SessionToolSurface.ReinstallBrowser} was not run: '{ProvisionedBrowsers.Shared}' is {string.Join(" and ", ProvisionedBrowsers.SharedComponents)}, which BOTH browser families use, and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are open on this machine:\n"
-                + Listing(claimants)
-                + $"\nEvery session blocks this one, whatever family it is, and that is stricter than a family reinstall on purpose: a browser starts {ProvisionedBrowsers.SharedInstallTarget} only at the moment it records, so nothing running out of '{named}' right now is not the same statement as nothing being about to. "
-                + "Nothing was changed and nothing was terminated. There is deliberately no force option — forcing here means killing browsers other agents are driving. Close those sessions, or wait, and call this tool again.",
-                IsError: true);
         }
 
         if (running.Count is not 0)
@@ -941,6 +1070,18 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var directory = _environment.Provisioner.DirectoryFor(browser);
 
+        // ⚠️ ASKED FIRST AND ASKED UNCONDITIONALLY since 2026-08-19. It used to
+        // be inside `if (running.Count is not 0)`, which made an open session
+        // harmless whenever its browser happened not to be launched at that
+        // instant -- and a session that is open is a session about to launch one
+        // into the tree this call is about to delete.
+        if (OpenSessionRefusal(
+            browser,
+            $"Only a {browser} session can hold an executable out of '{directory}', so sessions of the other family are not listed and do not block this.") is { } open)
+        {
+            return open;
+        }
+
         // Every process running an executable out of the tree about to be
         // deleted, found by full image path and never by image name.
         IReadOnlyList<RunningImage> running;
@@ -959,19 +1100,9 @@ internal sealed class SessionManager : IAsyncDisposable
 
         if (running.Count is not 0)
         {
-            var claimants = LiveSessions(browser);
-
-            if (claimants.Count is not 0)
-            {
-                return new ToolOutcome(
-                    $"{SessionToolSurface.ReinstallBrowser} was not run: {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) are running from '{directory}', and these {browser} sessions are open on this machine:\n"
-                    + Listing(claimants)
-                    + "\nNothing was changed and nothing was terminated. There is deliberately no force option — forcing here means killing browsers other agents are driving. Close those sessions, or wait, and call this tool again.",
-                    IsError: true);
-            }
-
-            // Live browsers, and no session anywhere accounts for them. §H.4
-            // row 13: reported, never terminated.
+            // Live browsers, and no session anywhere accounts for them -- the
+            // gate above already answered the case where one does. §H.4 row 13:
+            // reported, never terminated.
             return new ToolOutcome(
                 SessionErrors.UnattributableBrowserRunning(
                     SessionToolSurface.ReinstallBrowser,

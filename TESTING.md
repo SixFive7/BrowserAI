@@ -215,6 +215,32 @@ generated and that the installed version moved**. Delta granularity is the reaso
 Velopack was chosen at all ([kb](kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed)),
 and nothing in-house had ever proved `vpk` produces one before 2026-08-16.
 
+## Provisioning caps: what a duration test may assert here
+
+**Two of the suite's arms drive a cap that is measured in wall-clock time, and
+both are written as a RATIO rather than as a duration** —
+[the house rule](#every-duration-is-a-hang-detector-or-it-is-a-defect) is why.
+
+- `ProvisioningTests.TheStallCapStopsADownloadThatNeverProgresses` drives a
+  double that writes **nothing at all**, so the cap fires on a state rather than
+  on a race: no amount of scheduling delay can make an installer that never
+  touches the disk look like one that is working.
+- `.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes` is the other half,
+  and it is the arm that is red against a total-time ceiling. Sixty writes 25 ms
+  apart against a one-second cap: the **total** is about 1.5× the cap and the
+  largest **gap** is about a fortieth of it, so everything can stretch by a factor
+  of thirty before the two meet — and a stretch moves both numbers together.
+
+⚠️ **The double for the second one runs on a `LongRunning` thread and not on the
+pool, and that is a correctness requirement.** The product's watcher polls from a
+thread of its own and never starves; a double that ticked from the pool would
+starve at unbounded parallelism while the watcher did not, so its gaps would
+stretch and the watcher's would not — and the cap would fire on the scheduler
+rather than on the behaviour under test. **Observed exactly that way on
+2026-08-19: green alone, red in a full run.** The real installer is a separate OS
+process and is never pool-bound either, so this is the double being as
+schedulable as the thing it replaces rather than being given an advantage.
+
 ## The first-run download runs at most once an hour
 
 **Settled 2026-08-17, on the maintainer's instruction:** *"Add a cache of sorts

@@ -249,17 +249,104 @@ internal static class SessionErrors
     /// <c>init</c> would have corrupted whatever timing the caller was managing
     /// and told it nothing.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>It became a PROGRESS REPORT on 2026-08-19, at the maintainer's
+    /// decision (previously the size, the destination and "wait about ten
+    /// seconds").</b> A size is what a caller needs on the <i>first</i> refusal
+    /// and nothing at all on the fourth: "wait about ten seconds" said the same
+    /// thing at 8 s in and at 25 minutes in, so a model had no way to tell a
+    /// download that was working from one that was not, and its only recourse was
+    /// to keep calling. What it now reads is measured — bytes written, elapsed,
+    /// and the rate those two give — which is the same sample the stall detector
+    /// judges the install on, so the sentence and the cap can never disagree.
+    /// </para>
+    /// <para>
+    /// <b>There is no protocol alternative and that is measured, not assumed.</b>
+    /// <c>@playwright/mcp</c> emits no <c>notifications/progress</c> at all
+    /// ([kb](../../../kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames),
+    /// re-verification row 104), so there is nothing to relay and this refusal is
+    /// the whole mechanism.
+    /// </para>
     /// </remarks>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="browser">What is being downloaded, with its revision.</param>
     /// <param name="directory">Where it is going.</param>
     /// <param name="megabytes">How large the download is, as measured from the CDN.</param>
+    /// <param name="progress">What has been written so far, or <see langword="null"/> before the first poll.</param>
     /// <returns>The refusal.</returns>
-    public static string ProvisioningInProgress(string tool, string browser, string directory, string megabytes) =>
+    public static string ProvisioningInProgress(
+        string tool,
+        string browser,
+        string directory,
+        string megabytes,
+        ProvisioningProgress? progress = null) =>
         $"'{tool}' needs a browser, and this is the first use of {browser} on this machine. The download has started ({megabytes}) into '{directory}' and BrowserAI did not wait for it — nothing was changed and no browser was launched. "
-        + "Wait about ten seconds and call the same tool again on the same session: the session and its child are already running, so nothing has to be re-created and there is nothing to restart. "
-        + $"Every browser tool is refused until it lands, including 'browser_get_config' — it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.SetPurpose} all work meanwhile. "
-        + "A slow link makes this minutes rather than seconds; the size above is what it depends on.";
+        + $"{Progress(progress, megabytes)} "
+        + "Nothing has to change to recover: call the same tool again on the same session, because the session and its child are already running, so nothing has to be re-created and there is nothing to restart. "
+        + $"Every browser tool is refused until it lands, including 'browser_get_config' — it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.SetPurpose} all work meanwhile.";
+
+    /// <summary>
+    /// The progress clause, which is the whole of what a caller has to decide on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A percentage is quoted for the download and withheld for the
+    /// extraction, and the asymmetry is honest rather than lazy.</b> The measured
+    /// total is a <i>download</i> figure — the sum of three archives'
+    /// <c>content-length</c> — while the extracted tree is more than twice that
+    /// (203.8 MB down against 430.5 MiB on disk for chromium), so a percentage
+    /// against it would pass 100% and come back down while nothing was wrong. The
+    /// phase boundary is observable, so the sentence changes with it.
+    /// </para>
+    /// <para>
+    /// <b>The estimate is stated as arithmetic on the two numbers above it</b>,
+    /// because it is one: bytes remaining divided by the rate observed so far. It
+    /// is quoted because it is the decision the caller is actually taking, and it
+    /// is labelled so nobody reads it as a promise.
+    /// </para>
+    /// </remarks>
+    /// <param name="progress">The sample, or <see langword="null"/>.</param>
+    /// <param name="megabytes">The measured download size, for the sentence with no sample.</param>
+    /// <returns>One sentence.</returns>
+    private static string Progress(ProvisioningProgress? progress, string megabytes)
+    {
+        if (progress is not { } sample || sample.Elapsed <= TimeSpan.Zero)
+        {
+            return $"Nothing has been sampled yet, so there is no progress to report; the download is {megabytes}.";
+        }
+
+        var written = BrowserProvisioner.Megabytes(sample.Written);
+        var elapsed = Elapsed(sample.Elapsed);
+
+        if (sample.Extracting)
+        {
+            return $"Progress: the download has landed and it is now unzipping; {written} written under the browsers root in {elapsed}. Extraction is local and takes seconds rather than minutes.";
+        }
+
+        var rate = sample.Written * 8d / sample.Elapsed.TotalSeconds / 1_000_000d;
+        var observed = $"{rate.ToString("F2", CultureInfo.InvariantCulture)} Mbps observed";
+
+        if (sample.DownloadBytes <= 0)
+        {
+            return $"Progress: {written} downloaded in {elapsed}, {observed}. Nobody has measured what this browser's whole download weighs, so there is no percentage to give.";
+        }
+
+        var percent = Math.Min(100, sample.Written * 100d / sample.DownloadBytes);
+        var remaining = Math.Max(0, sample.DownloadBytes - sample.Written);
+        var estimate = rate > 0
+            ? $"; at that rate the remaining {BrowserProvisioner.Megabytes(remaining)} is about {Elapsed(TimeSpan.FromSeconds(remaining * 8d / (rate * 1_000_000d)))}, which is arithmetic on the two figures above rather than a promise"
+            : string.Empty;
+
+        return $"Progress: {written} of {megabytes} downloaded ({percent.ToString("F0", CultureInfo.InvariantCulture)}%) in {elapsed}, {observed}{estimate}.";
+    }
+
+    /// <summary>A duration a model can read at a glance.</summary>
+    /// <param name="span">The duration.</param>
+    /// <returns>Seconds under a minute, minutes and seconds above it.</returns>
+    private static string Elapsed(TimeSpan span) =>
+        span < TimeSpan.FromMinutes(1)
+            ? $"{span.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)} s"
+            : $"{((int)span.TotalMinutes).ToString(CultureInfo.InvariantCulture)} m {span.Seconds.ToString(CultureInfo.InvariantCulture)} s";
 
     /// <summary>
     /// Row 13 — something is running out of BrowserAI's own browser tree that no
@@ -346,6 +433,45 @@ internal static class SessionErrors
             + "Most of these are not strays: a browser tree publishes its profile path from one process only — the one that owns the singleton window — so the helper processes of a browser that is fully accounted for appear here as well. "
             + $"What is worth looking at is a pid that is still listed on the next pass with no session open. Use {SessionToolSurface.List} to see which sessions exist, and close the one that owns it.";
     }
+
+    /// <summary>
+    /// Row 25 — a <c>browserai_reinstall_browser</c> holds this machine's
+    /// browsers root, so nothing may start a session against it and nothing may
+    /// start a second reinstall.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One row, three callers, and that is the point of it being one.</b>
+    /// <c>browserai_init</c>, <c>browserai_resume</c> and
+    /// <c>browserai_reinstall_browser</c> all meet the same state — somebody is
+    /// replacing the browsers — and the recovery is the same for all three. Three
+    /// rows would be three sentences to keep in step about one condition.
+    /// </para>
+    /// <para>
+    /// <b>It is an error rather than a wait, on the same reasoning as
+    /// <c>browserai_destroy</c>'s survivors:</b> the call did not do what was
+    /// asked. A block would put an <c>init</c> behind a 203.8 MB download with
+    /// nothing to read, which is the thing the whole provisioning design exists
+    /// to avoid.
+    /// </para>
+    /// <para>
+    /// <b>The mutual case is the maintainer's, verbatim</b> — <i>"No reinstall if
+    /// there is any session running system wide. Including any reinstall
+    /// sessions."</i> Two reinstalls over one root would delete the tree the
+    /// other is extracting into, which is the corruption the provisioning mutex
+    /// already prevents between an installer and an installer and could not
+    /// prevent between a <b>delete</b> and an installer.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="browsersDirectory">The browsers root being replaced.</param>
+    /// <param name="holder">What the holder wrote about itself.</param>
+    /// <returns>The refusal.</returns>
+    public static string BrowsersAreBeingReinstalled(string tool, string browsersDirectory, string holder) =>
+        $"'{tool}' was not run and nothing was changed: BrowserAI is replacing the browsers under '{browsersDirectory}' on this machine right now, and no session can start and no second reinstall can begin until that finishes. "
+        + $"The claim says: {holder}. "
+        + "It deletes a browser tree and downloads it again, so a session started meanwhile would launch out of a directory that is being removed. "
+        + $"Nothing was terminated and there is deliberately no force option. Call the same tool again once it lands — a browser download is minutes rather than seconds, and {SessionToolSurface.List} answers throughout.";
 
     /// <summary>Row 7 — the directory was locked and the browser runtime did not start.</summary>
     /// <param name="path">The session directory.</param>

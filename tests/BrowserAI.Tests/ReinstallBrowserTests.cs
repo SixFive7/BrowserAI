@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json.Nodes;
+using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -43,6 +44,12 @@ internal sealed class ReinstallBrowserTests
         var installs = 0;
 
         await using var sessions = RigSessionEnvironment.Create(
+            // ⚠️ No default session since 2026-08-19, and that is the tool's own
+            // new gate rather than a test convenience: a reinstall now refuses
+            // while ANY session of that family is open, whether or not a browser
+            // is currently running out of the tree. The rig opens one, so with it
+            // this arm would measure the refusal instead of the delete.
+            opensDefaultSession: false,
             installer: (_, root) =>
             {
                 Interlocked.Increment(ref installs);
@@ -145,6 +152,11 @@ internal sealed class ReinstallBrowserTests
         var installs = 0;
 
         await using var sessions = RigSessionEnvironment.Create(
+            // No default session, for the reason in
+            // `ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning`: an open
+            // session of this family now refuses the call outright, and this arm
+            // is about what happens to the DELETE.
+            opensDefaultSession: false,
             installer: (_, root) =>
             {
                 Interlocked.Increment(ref installs);
@@ -244,7 +256,7 @@ internal sealed class ReinstallBrowserTests
             RepositoryPayload.Layout,
             root,
             log,
-            new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20), OuterDeadline = TestDefaults.ProcessHang })
+            new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20), StallCap = TestDefaults.ProcessHang })
         {
             StartInstaller = (_, installRoot) =>
             {
@@ -272,6 +284,172 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(outcome.Status.State).IsEqualTo(ProvisioningState.Failed);
         await Assert.That(outcome.Status.Detail).Contains("nothing was deleted");
         await Assert.That(outcome.Status.Detail).Contains(SessionManager.DefaultBrowser);
+    }
+
+    /// <summary>
+    /// An open session refuses a reinstall by itself, with no browser running
+    /// out of the tree at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the arm that is red against the gate this tool shipped with.</b>
+    /// Until 2026-08-19 the family path asked <i>are there open sessions</i> only
+    /// <b>inside</b> <c>if (running.Count is not 0)</c>, so a session whose
+    /// browser was not launched at that instant let the delete through — and the
+    /// browser it is about to launch lands in a tree being removed. The
+    /// maintainer's decision, verbatim: <i>"No reinstall if there is any session
+    /// running system wide."</i>
+    /// </para>
+    /// <para>
+    /// <b>Nothing is planted, and that is the whole condition.</b> The rig's
+    /// children are doubles over a pipe, so no process anywhere is running out of
+    /// the chromium tree; the only thing standing between this call and a delete
+    /// is the session.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ItRefusesWhileASessionIsOpenEvenWithNothingRunningFromTheTree()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var session = Path.Combine(sessions.Root, "open-but-not-launched");
+
+        var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "open, with no browser process of its own",
+            ["mode"] = "headless",
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
+
+        // The control: nothing is running out of the tree, so the OLD gate would
+        // have deleted it.
+        await Assert.That(BrowserProcesses.RunningFrom(sessions.ChromiumDirectory)).IsEmpty();
+
+        var refused = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
+        var text = TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue().Because(text);
+        await Assert.That(text).Contains(session);
+
+        // It says the thing the lock made true, which is what the refusal is FOR:
+        // no new session can start while this call is deciding.
+        await Assert.That(text).Contains("no new session can start meanwhile");
+        await Assert.That(text).Contains("did not wait for those sessions and never will");
+    }
+
+    /// <summary>
+    /// A reinstall is mutual against itself: the second one is refused while the
+    /// first holds the browsers root.
+    /// </summary>
+    /// <remarks>
+    /// <b>The maintainer asked for this in the same breath as the rest</b> —
+    /// <i>"Including any reinstall sessions."</i> Two of them over one root would
+    /// have the second's recursive delete land inside the first's extraction,
+    /// which is precisely the corruption the provisioning mutex prevents between
+    /// two installers and cannot prevent between a delete and an installer. The
+    /// claim is taken here exactly as the product takes it, so this is the same
+    /// object rather than a stand-in.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASecondReinstallIsRefusedWhileOneHoldsTheBrowsersRoot()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        using var claim = MaintenanceLock.TryTake(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+
+        await Assert.That(claim).IsNotNull();
+
+        var refused = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium);
+        var text = TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue().Because(text);
+        await Assert.That(text).Contains("no second reinstall can begin");
+
+        // It names the holder rather than saying "busy": the claim carries the
+        // pid and its start time, which is this repository's rule for naming a
+        // process at all.
+        await Assert.That(text).Contains($"is reinstalling '{ProvisionedBrowsers.Chromium}'");
+
+        // And the tree is untouched, which is what "nothing was changed" means.
+        await Assert.That(File.Exists(Path.Combine(sessions.ChromiumDirectory, BrowsersManifest.InstallationCompleteMarker))).IsTrue();
+    }
+
+    /// <summary>
+    /// <c>browserai_init</c> and <c>browserai_resume</c> are both refused while a
+    /// reinstall holds the browsers root.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the half the running-process census could never do.</b> A
+    /// reinstall establishes that nothing is running out of the tree and then
+    /// deletes it; a peer's <c>init</c> in that window launches a browser into a
+    /// directory that is disappearing, and the census was right when it was
+    /// asked. Only a claim held across the whole operation closes it.
+    /// </para>
+    /// <para>
+    /// <b><c>resume</c> is asserted as well as <c>init</c>, and it is the one
+    /// that would be forgotten.</b> It opens a browser into an existing profile
+    /// under the same tree, so it is exactly as unsafe and reaches the browser by
+    /// a different method.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task InitAndResumeAreBothRefusedWhileAReinstallHoldsTheBrowsersRoot()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var session = Path.Combine(sessions.Root, "created-before-the-reinstall");
+
+        var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "a session that exists so resume has something to name",
+            ["mode"] = "headless",
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = session });
+
+        // Re-created on disk without this process driving it, so `resume` has a
+        // record to reopen rather than a session it already holds.
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "a session that exists so resume has something to name",
+            ["mode"] = "headless",
+        });
+
+        using var claim = MaintenanceLock.TryTake(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+
+        await Assert.That(claim).IsNotNull();
+
+        var refusedInit = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "must-not-be-created"),
+            ["purpose"] = "a session that must not start while the browsers are being replaced",
+            ["mode"] = "headless",
+        }));
+
+        var refusedResume = TextOf(await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = session }));
+
+        foreach (var text in new[] { refusedInit, refusedResume })
+        {
+            await Assert.That(text).Contains("BrowserAI is replacing the browsers under");
+            await Assert.That(text).Contains("no session can start");
+        }
+
+        // ⚠️ Refused BEFORE anything was created, which is the property that
+        // makes this a lock rather than a message: a directory made and then
+        // abandoned is a session record nobody owns.
+        await Assert.That(Directory.Exists(Path.Combine(sessions.Root, "must-not-be-created"))).IsFalse();
     }
 
     /// <summary>

@@ -45,7 +45,7 @@ assumed and nothing on `PATH` is used.
 | Running all of that on a machine nobody owns | `.github/workflows/build.yml` — payload, both browsers, the AOT publish and the whole suite, on every push and pull request |
 | Finding the payload at run time | `src/BrowserAI/Runtime/PayloadLayout.cs` |
 | Composing the child's configuration and command line | `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
-| First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, ProvisioningRemediation, RevisionPrune, TreeDelete}.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
+| First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune, TreeDelete}.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
 
 **The configuration is generated, never hand-held.** `BrowserConfiguration` writes
 `browserName`, an explicit `chrome-for-testing` channel, `headless` from the mode,
@@ -60,10 +60,33 @@ turns the suite red.
 download and answers `browserProvisioning: provisioning`; every upstream tool is
 refused until the marker lands, and the *same* child then navigates with no
 restart. The installer is upstream's own, out of the payload, inside a job,
-watched against three caps — 45 minutes absolute, 10 minutes from the moment the
-browser's directory appears, 60 minutes as a crash tripwire — with upstream's own
-30-second socket stall left alone. One install per machine rather than per
-process, through a `Global\` mutex keyed on the browsers root **and** the family.
+watched against **two** caps — ten minutes with **no progress at all**, and ten
+minutes from the moment the browser's directory appears — with upstream's own
+30-second socket stall left alone. *Corrected 2026-08-19 (previously "three caps
+— 45 minutes absolute, 10 minutes from the moment the browser's directory
+appears, 60 minutes as a crash tripwire").* **A total-time ceiling can only fire
+on a link that is working**: 203,824,344 B in 2,700 s is 0.60 Mbps, so the old
+cap stopped a slow-but-moving download and never a dead one, which upstream's own
+socket timeout catches twenty times sooner. Progress is now **bytes on disk under
+the browsers root**, and it is one number only because BrowserAI points the
+installer's `TEMP` at `<browsers root>\.downloads` — upstream downloads into
+`os.tmpdir()`, so without that the root does not grow at all until the unzip
+starts ([kb](kb/playwright/provisioning-and-timings.md#what-grows-on-disk-while-an-install-runs-and-when--2026-08-19)).
+**Ten minutes is set by upstream's own `__dirlock`**, which legitimately writes
+nothing for up to 470 s before giving up by itself. The crash tripwire went with
+the absolute cap and its job is now done by the same stall detector, which the
+*waiting* process runs against the same bytes. One install per machine rather
+than per process, through a `Global\` mutex keyed on the browsers root **and**
+the family.
+
+**The refusal a browser call meets while that runs is a progress report.** Bytes
+written by this attempt against the measured download total, elapsed, the rate
+those two give, and the remaining time that is arithmetic on them — because
+`@playwright/mcp` emits no progress notifications at all
+([kb](kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames)),
+so the refusal is the whole mechanism. *Changed 2026-08-19 (previously the size,
+the destination and "wait about ten seconds", which said the same thing at 8 s in
+and at 25 minutes in).*
 `INSTALLATION_COMPLETE` is the completeness check upstream never makes at launch;
 a run that exits 0 without it is a failure whose partial tree is removed.
 
@@ -185,11 +208,35 @@ by neither family's reinstall, so a corrupted `ffmpeg` had no route to repair
 through this server. *Added 2026-08-19.* The two lists are deliberately separate
 and `FirefoxSessionTests.TheAdvertisedSurfaceOffersBothFamiliesAndMakesReinstallNameOne`
 asserts they differ, because a session's browser is a thing that renders web
-pages. **`shared`'s refusal is stricter than a family's**: it refuses while
-**any** session is open, of either family, where a family reinstall refuses only
-on a process running out of that tree — `ffmpeg-win64.exe` exists only while a
+pages. **`shared`'s refusal is wider than a family's**: it refuses while
+**any** session is open, of either family, where a family reinstall counts only
+sessions of the family it is replacing — `ffmpeg-win64.exe` exists only while a
 recording runs, so *nothing is using it* and *nothing is about to* are different
 statements there and the same statement for a browser.
+
+**A reinstall takes a machine-wide claim on the browsers root and holds it for
+the whole call**, and `browserai_init` and `browserai_resume` are refused while it
+is held. *Added 2026-08-19.* The running-process census could never close this:
+a reinstall establishes that nothing is running out of the tree and then deletes
+it, and a peer's `init` in that window launches a browser into a directory that is
+disappearing — the census was right when it was asked. The claim is
+`<browsers root>\reinstall.lock`, held open `FileShare.Read` by
+`Runtime/MaintenanceLock.cs`; **a file rather than a named mutex** because the
+claim spans a 203.8 MB download inside an `async` method and a named mutex is
+owned by the thread that waited on it, and **not a named semaphore** because a
+semaphore's count is not restored when its holder dies, so one crashed reinstall
+would refuse every `init` on the machine until a reboot. Windows closes a file
+handle however the process ends.
+
+**It is mutual against itself, and it does not drain.** A second reinstall is
+refused for the same reason a session is. And a reinstall that takes the claim and
+*then* finds sessions open releases it and refuses immediately, naming how many —
+it never waits for them, because waiting on a browser a human may not close is the
+shape this product spent a week removing. **The lock order is fixed and has no
+cycle**: the claim is outermost and the per-family provisioning mutexes are taken
+under it, never the other way round; `init` and `resume` only *probe* the claim
+and never acquire it; and every acquisition on both sides is non-blocking, so even
+an inverted order would produce a refusal rather than a hang.
 
 **One table drives six consumers.** `SessionMode` is the table; the server
 `instructions`, `init`'s description, `resume`'s result, the refusal text, the

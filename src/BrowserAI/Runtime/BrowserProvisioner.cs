@@ -55,7 +55,60 @@ internal enum ProvisioningState
 /// One sentence a person or a model can act on. Never <see langword="null"/>,
 /// because a state with no reason is the shape this project exists to remove.
 /// </param>
-internal sealed record ProvisioningStatus(string Browser, ProvisioningState State, string Directory, string Detail);
+internal sealed record ProvisioningStatus(string Browser, ProvisioningState State, string Directory, string Detail)
+{
+    /// <summary>
+    /// What the browsers root weighs right now against what this family's
+    /// download costs, or <see langword="null"/> when nothing is in flight.
+    /// </summary>
+    /// <remarks>
+    /// <b>Carried on the status rather than folded into <see cref="Detail"/>,
+    /// because two different sentences render it</b> — the provisioner's own
+    /// state line and <c>SessionErrors.ProvisioningInProgress</c>, which is what
+    /// a model reads. A pre-rendered string would make the second one quote the
+    /// first one's phrasing forever.
+    /// </remarks>
+    public ProvisioningProgress? Progress { get; init; }
+}
+
+/// <summary>
+/// How far a provisioning run has got, measured rather than reported by
+/// upstream.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>There is no upstream progress to relay, and that is measured.</b>
+/// <c>@playwright/mcp</c> emits no <c>notifications/progress</c> at all — every
+/// occurrence in the shipped payload is the MCP SDK's own schema or capability
+/// arm ([kb](../../../kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames),
+/// re-verification row 104). And the installer's own percentage lines are
+/// switched off by the <c>--no-progress</c> flag BrowserAI passes, which sets
+/// <c>PLAYWRIGHT_DOWNLOAD_NO_PROGRESS</c> and makes
+/// <c>downloadFile</c>'s <c>reportProgress</c> false. So bytes on disk are not
+/// the convenient signal, they are <b>the only</b> signal.
+/// </para>
+/// <para>
+/// <b>The underlying figure is the whole browsers root, and it is not
+/// monotonic.</b> It climbs through the download, climbs again through the
+/// extraction, and drops once when upstream unlinks the archive it has finished
+/// with. That is fine for both consumers: a stall detector asks whether the
+/// number <i>changed</i>, and a progress report quotes it against a phase.
+/// </para>
+/// </remarks>
+/// <param name="Written">
+/// What THIS attempt has added under the browsers root, as of the last poll.
+/// <para>
+/// <b>Net of a baseline taken at the first poll, and the baseline is what makes
+/// the figure true on a second install.</b> A machine that already has Chromium
+/// holds 451 MB under that root before a Firefox download writes its first byte;
+/// reported raw, the refusal would tell a caller that a 127.2 MB download was
+/// 354% complete.
+/// </para>
+/// </param>
+/// <param name="DownloadBytes">What this family's download costs in total, or 0 when nobody has measured it.</param>
+/// <param name="Elapsed">How long this attempt has been running.</param>
+/// <param name="Extracting">Whether the revision directory has appeared, which is the download-to-disk boundary.</param>
+internal sealed record ProvisioningProgress(long Written, long DownloadBytes, TimeSpan Elapsed, bool Extracting);
 
 /// <summary>
 /// The four clocks first-run provisioning runs against, gathered so a test can
@@ -77,39 +130,59 @@ internal sealed record ProvisioningStatus(string Browser, ProvisioningState Stat
 internal sealed record ProvisioningTimers
 {
     /// <summary>
-    /// How long the installer child may run before its job is closed.
+    /// How long provisioning may make <b>no progress at all</b> before its job
+    /// is closed.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-19 (previously "45 minutes is <b>27 minutes of
-    /// headroom over the 1 Mbps arithmetic</b> for a 203.8 MB download").</b>
-    /// <b>27 minutes IS the download</b>, not the headroom: 203,824,344 B is
-    /// 1,630,594,752 bits, which at 1 Mbps is 1,630.6 s — <b>27.2 minutes</b>.
-    /// So the headroom over that arithmetic is <b>17.8 minutes</b>, and the
-    /// sentence had transposed the two halves of its own sum. The Firefox
-    /// clause below is the same arithmetic labelled correctly, which is what
-    /// made the transposition visible.
+    /// ⚠️ <b>Replaced the 45-minute <c>AbsoluteCap</c> on 2026-08-19, at the
+    /// maintainer's decision (previously "how long the installer child may run
+    /// before its job is closed", a ceiling on the <i>total</i>).</b> A total cap
+    /// can only ever fire on a link that is working — the arithmetic was
+    /// 1,630,594,752 bits in 2,700 s, so it stopped any link sustaining less than
+    /// <b>~0.60 Mbps</b> and stopped nothing else, because a link that has died
+    /// is caught by upstream's own per-socket timeout twenty times sooner. It
+    /// punished the one case it could reach.
     /// </para>
     /// <para>
-    /// <b>The cap is unchanged at 45 minutes and that is deliberate.</b> 45 is
-    /// not a number anybody reaches by adding 27 minutes of slack to a 27.2
-    /// minute download — that would be ~54 — and no slack target is stated
-    /// anywhere in this repository. It is a round cap chosen comfortably above
-    /// the arithmetic, and the correction is to the sentence rather than to the
-    /// figure.
+    /// <b>Progress is bytes on disk under the browsers root, and that is one
+    /// number only because the download target was moved under it</b> — see
+    /// <see cref="BrowserProvisioner.DownloadDirectoryName"/>. Measured
+    /// 2026-08-19 against the assembled payload, sampling every 250 ms
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#what-grows-on-disk-while-an-install-runs-and-when--2026-08-19)):
+    /// the archive grows in the download directory from 47,892 B to
+    /// 202,283,919 B, then the revision directory grows from 15,971,824 B to
+    /// 447,613,878 B, then the archive is unlinked. <b>Every one of the 41
+    /// samples in that run differed from the one before it</b>, and Firefox's 27
+    /// behaved identically.
     /// </para>
     /// <para>
-    /// <b>What the cap actually guarantees, stated as a threshold rather than
-    /// as "never".</b> 1,630,594,752 bits in 2,700 s is <b>603,924 bit/s</b>, so
-    /// this cap fires on any link that sustains less than <b>~0.60 Mbps</b> for
-    /// the whole download. That is what "it never fires on a slow link" means
-    /// here, and a cap that fires on a legitimate case teaches callers to retry
-    /// into it. <b>One cap for both families, sized on the larger:</b> Firefox's
-    /// 127.2 MB is 16 m 58 s at 1 Mbps, so a cap that is generous for Chromium
-    /// cannot be tight for Firefox.
+    /// <b>Ten minutes, and the number is set by upstream's own lock rather than
+    /// by taste.</b> <c>registry.install()</c> waits on
+    /// <c>&lt;browsers root&gt;\__dirlock</c> <i>before</i> it writes anything at
+    /// all, and measurement C of 2026-08-19 timed that wait at <b>470 s</b>
+    /// before upstream gives up by itself with <c>ELOCKED</c>. So a healthy
+    /// install queued behind another legitimately writes nothing for up to
+    /// 7 m 50 s, and any cap at or under that kills the queued one. Ten minutes
+    /// clears it by 130 s.
+    /// </para>
+    /// <para>
+    /// <b>It is deliberately ten times
+    /// <see cref="Updates.UpdateService.StallBudget"/>, which is 60 s "twice
+    /// upstream's <c>NET_DEFAULT_TIMEOUT</c>".</b> That reasoning is right there
+    /// and wrong here: a Velopack download has no directory lock in front of it,
+    /// so the only thing a stall can mean is a dead socket. Here a stall can also
+    /// mean <i>correctly waiting for another installer</i>, and 60 s would turn
+    /// the commonest healthy case on a two-family machine into a failure.
+    /// </para>
+    /// <para>
+    /// <b>What it now permits, stated as a threshold.</b> Anything that moves one
+    /// byte every ten minutes survives; nothing else does. That is not a slow
+    /// link, it is a dead one — and unlike the old cap, it holds for a 400 MB
+    /// download on a 0.1 Mbps line, which would legitimately take nine hours.
     /// </para>
     /// </remarks>
-    public TimeSpan AbsoluteCap { get; init; } = TimeSpan.FromMinutes(45);
+    public TimeSpan StallCap { get; init; } = TimeSpan.FromMinutes(10);
 
     /// <summary>
     /// How long everything after the browser's own directory first appears may
@@ -125,23 +198,15 @@ internal sealed record ProvisioningTimers
     /// <c>winldd</c> which Windows pulls in with it) — measured 2026-08-16 at
     /// 1.5 s of the 12 s total, so ten minutes is three orders of magnitude of
     /// headroom rather than a guess.
+    /// <para>
+    /// <b>It is a total and it stays a total, unlike
+    /// <see cref="StallCap"/>.</b> The reason the argument against a total cap
+    /// does not apply here is that this phase is not on the network: it is a
+    /// local unzip of a file that has already arrived, so there is no
+    /// slow-but-working case for it to punish.
+    /// </para>
     /// </remarks>
     public TimeSpan ExtractionCap { get; init; } = TimeSpan.FromMinutes(10);
-
-    /// <summary>
-    /// The crash tripwire on the whole attempt, including the wait on another
-    /// process that is doing the install.
-    /// </summary>
-    /// <remarks>
-    /// <b>It should never fire, and that is the point.</b> The absolute cap is
-    /// 45 minutes and this is 60, so anything that reaches it is a bug in the
-    /// caps above rather than a slow network — and it is logged at
-    /// <see cref="LogLevel.Critical"/> for exactly that reason. A provisioning
-    /// task that simply never completes is otherwise invisible: <c>init</c> keeps
-    /// answering "provisioning" forever and nothing anywhere says the download
-    /// died.
-    /// </remarks>
-    public TimeSpan OuterDeadline { get; init; } = TimeSpan.FromMinutes(60);
 
     /// <summary>How often the phase watcher looks.</summary>
     public TimeSpan Poll { get; init; } = TimeSpan.FromSeconds(1);
@@ -321,23 +386,98 @@ internal sealed class BrowserProvisioner : IDisposable
     /// repository exists to catch.
     /// </para>
     /// <para>
-    /// Strings rather than numbers because the only thing done with one is
-    /// putting it in a sentence, and a byte count formatted at the call site is
-    /// a second place for it to drift. <b>Keyed on
-    /// <see cref="ProvisionedBrowsers.Families"/>, and
-    /// <c>ProvisioningTests.EveryProvisionedFamilyHasAMeasuredDownloadSize</c>
-    /// fails the build for a family with no figure</b> — a third family added
-    /// with no measurement cannot reach a caller wearing another one's number.
+    /// ⚠️ <b>Derived from <see cref="FirstRunDownloadBytes"/> since 2026-08-19
+    /// (previously two hand-written strings, defended as "strings rather than
+    /// numbers because the only thing done with one is putting it in a sentence,
+    /// and a byte count formatted at the call site is a second place for it to
+    /// drift").</b> That stopped being true the moment the refusal became a
+    /// <i>progress</i> report: a percentage needs the number, so the number is in
+    /// the code either way, and hand-writing the string beside it is exactly the
+    /// second place the old sentence was worried about. One figure now, formatted
+    /// once. <c>ProvisioningTests.EveryProvisionedFamilyHasAMeasuredDownloadSize</c>
+    /// still fails the build for a family with no figure, and
+    /// <c>.TheQuotedDownloadSizeIsTheMeasuredByteCountFormatted</c> holds the two
+    /// halves together.
+    /// </para>
+    /// <para>
+    /// <b>Keyed on <see cref="ProvisionedBrowsers.Families"/>.</b>
     /// [kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
     /// carries both figures and how to re-establish them.
     /// </para>
     /// </remarks>
-    public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    /// <summary>
+    /// How many bytes each family's first-run download moves, exactly.
+    /// </summary>
+    /// <remarks>
+    /// <b>The sum of the exact <c>content-length</c> of the three archives that
+    /// family's install fetches</b>, which is the same predicate
+    /// <see cref="FirstRunDownloadSizes"/> has always quoted — one family into an
+    /// empty root. It is a <c>long</c> rather than a string because the
+    /// provisioning refusal reports bytes so far <i>against</i> it.
+    /// </remarks>
+    public static IReadOnlyDictionary<string, long> FirstRunDownloadBytes { get; } =
+        new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase)
         {
-            [ProvisionedBrowsers.Chromium] = "203.8 MB",
-            [ProvisionedBrowsers.Firefox] = "127.2 MB",
+            [ProvisionedBrowsers.Chromium] = 203_824_344,
+            [ProvisionedBrowsers.Firefox] = 127_247_129,
         };
+
+    public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =
+        FirstRunDownloadBytes.ToDictionary(
+            entry => entry.Key,
+            entry => Megabytes(entry.Value),
+            StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The directory inside the browsers root that the installer downloads
+    /// into.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-08-19 so that "is provisioning making progress" is one
+    /// question about one directory.</b> Upstream downloads into
+    /// <c>os.tmpdir()\playwright-download-XXXXXX\</c> and only creates
+    /// <c>&lt;browsers root&gt;\&lt;browser&gt;-&lt;rev&gt;\</c> when it starts
+    /// unzipping — so for the whole of the download phase, which is the phase
+    /// that takes the time, <b>nothing under the browsers root grows at all</b>.
+    /// A stall detector reading the root alone would kill every install on a slow
+    /// link, which is the defect the stall detector was written to remove.
+    /// </para>
+    /// <para>
+    /// <b>The alternative was to scan <c>%TEMP%</c> for
+    /// <c>playwright-download-*</c>, and it is measurably wrong.</b> On this
+    /// machine on 2026-08-19 that scan found a <c>playwright-download-PRU23e</c>
+    /// abandoned on 2026-08-16 holding 128,684 B — an unrelated installer's
+    /// residue, counted as our progress. A directory BrowserAI names, empties
+    /// before each run and owns cannot be polluted that way.
+    /// </para>
+    /// <para>
+    /// <b>One subdirectory per family under it</b>, because the provisioning
+    /// mutex is keyed on the family and two of them install at once by design;
+    /// each run empties only its own. <b>It is redirected by setting
+    /// <c>TEMP</c> and <c>TMP</c> for the installer child</b>, which is what
+    /// Node's <c>os.tmpdir()</c> reads on Windows. Proven rather than assumed: the 2026-08-19 measurement ran the
+    /// real installer with both set and produced a byte-identical tree —
+    /// 451,389,780 B for chromium, matching
+    /// [the figure taken with the default temp](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
+    /// exactly.
+    /// </para>
+    /// <para>
+    /// <b>The name is dot-prefixed and that is not decoration.</b>
+    /// <see cref="RevisionPrune"/> walks this root and removes anything whose
+    /// name starts with a manifest <c>DirectoryPrefix</c>; a download directory
+    /// named <c>chromium-tmp</c> would be deleted out from under the installer
+    /// writing into it.
+    /// </para>
+    /// <para>
+    /// <b>Same volume as the extraction, which is a small improvement it is worth
+    /// naming.</b> <c>SessionManager.RequiredFreeBytes</c> is sized on archive
+    /// and tree coexisting; before this the archive could be on a different
+    /// volume from the tree, so that figure was checked against a volume only
+    /// half the work landed on.
+    /// </para>
+    /// </remarks>
+    public const string DownloadDirectoryName = ".downloads";
 
     /// <summary>
     /// How large one family's first-run download is, as a sentence fragment.
@@ -722,9 +862,14 @@ internal sealed class BrowserProvisioner : IDisposable
     /// fails the install outright with its own <c>ELOCKED</c> message. Nothing in
     /// this file is sized against that budget, and nothing needs to be — a wait
     /// happens before the browser's directory appears, so
-    /// <see cref="ProvisioningTimers.ExtractionCap"/> has not started and only
-    /// the 45-minute <see cref="ProvisioningTimers.AbsoluteCap"/> covers it. The
-    /// hazard index carries the row.
+    /// <see cref="ProvisioningTimers.ExtractionCap"/> has not started.
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "and only the 45-minute
+    /// <c>AbsoluteCap</c> covers it").</b> That cap is gone, and its replacement
+    /// is sized <b>on this very number</b>:
+    /// <see cref="ProvisioningTimers.StallCap"/> is ten minutes precisely because
+    /// upstream's 470 s <c>__dirlock</c> wait writes nothing at all, so a shorter
+    /// stall cap would kill the queued install this paragraph says is healthy.
+    /// The hazard index carries the row.
     /// </para>
     /// <para>
     /// <b>None of that makes the three mutexes unnecessary here</b>, and this is
@@ -925,7 +1070,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
         var revision = Manifest().For(ProvisionedBrowsers.SharedInstallTarget);
         var target = Path.Combine(BrowsersDirectory, revision.DirectoryName);
-        var result = RunInstaller(ProvisionedBrowsers.SharedInstallTarget, revision, target, Stopwatch.StartNew());
+        var result = RunInstaller(ProvisionedBrowsers.SharedInstallTarget, revision, target, Stopwatch.StartNew(), new AttemptPhase());
 
         // Every component's own marker, not the installer's exit code and not the
         // one directory RunInstaller was pointed at. A second component that
@@ -1029,6 +1174,51 @@ internal sealed class BrowserProvisioner : IDisposable
     }
 
     /// <summary>
+    /// Every byte under the browsers root, which is the one number both the
+    /// stall detector and the progress report read.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It tolerates a tree changing underneath it rather than throwing, and
+    /// that is required rather than defensive.</b> The thing being weighed is
+    /// being written and deleted by another process while this enumeration runs —
+    /// upstream unlinks the whole download directory the instant it has finished
+    /// extracting — so <c>IgnoreInaccessible</c> and a swallowed failure are the
+    /// only shapes in which a sampler can exist at all.
+    /// </para>
+    /// <para>
+    /// <b>An unreadable root answers with the caller's previous figure</b>, so
+    /// the stall clock keeps running rather than being reset by a failure. A root
+    /// nobody can weigh is not progress.
+    /// </para>
+    /// </remarks>
+    /// <param name="root">The browsers root.</param>
+    /// <param name="previous">What the last successful sample said.</param>
+    /// <returns>The byte total.</returns>
+    private static long ObservedBytes(string root, long previous)
+    {
+        try
+        {
+            var options = new EnumerationOptions
+            {
+                RecurseSubdirectories = true,
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.ReparsePoint,
+            };
+
+            return new DirectoryInfo(root).Exists
+                ? new DirectoryInfo(root).EnumerateFiles("*", options).Sum(file => file.Length)
+                : 0;
+        }
+#pragma warning disable CA1031 // A sampler that can fail the install it is measuring is worse than one that reports no news; every failure shape means the same thing here.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return previous;
+        }
+    }
+
+    /// <summary>
     /// The one unfinished state, and the sentence that says which of its five
     /// phases this is.
     /// </summary>
@@ -1053,6 +1243,14 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <param name="attempt">The attempt in flight, and the phase it reached.</param>
     /// <returns>The status.</returns>
     private static ProvisioningStatus Provisioning(string browser, string directory, BrowserRevision revision, Attempt attempt) =>
+        Provisioning(browser, directory, revision, attempt, DownloadBytesFor(browser));
+
+    private static ProvisioningStatus Provisioning(
+        string browser,
+        string directory,
+        BrowserRevision revision,
+        Attempt attempt,
+        long downloadBytes) =>
         new(
             browser,
             ProvisioningState.Provisioning,
@@ -1066,7 +1264,29 @@ internal sealed class BrowserProvisioner : IDisposable
                 // revisions, which walks every process on the machine -- is not
                 // knowable from here, so it is not claimed. See AttemptPhase.
                 ? $"Another BrowserAI process holds the provisioning lock for {browser}; this one is watching for its completion marker into '{directory}' rather than starting a second copy, and has been since {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until the marker appears and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created."
-                : $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until it lands and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created.");
+                : $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until it lands and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created.")
+        {
+            Progress = attempt.Phase.Reading(downloadBytes),
+        };
+
+    /// <summary>
+    /// What one family's whole first-run download weighs, or <c>0</c> when
+    /// nobody has measured it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Zero rather than a guess, and the renderer branches on it.</b> A family
+    /// added without a measurement gets a progress report that quotes bytes and
+    /// elapsed time and no percentage, which is the same rule
+    /// <see cref="DownloadSizeFor"/> already follows for the sentence.
+    /// </remarks>
+    /// <param name="browser">The family, as upstream names it.</param>
+    /// <returns>The measured byte count, or <c>0</c>.</returns>
+    public static long DownloadBytesFor(string browser)
+    {
+        ArgumentNullException.ThrowIfNull(browser);
+
+        return FirstRunDownloadBytes.TryGetValue(browser, out var bytes) ? bytes : 0;
+    }
 
     private BrowsersManifest Manifest() => _manifest ??= BrowsersManifest.Read(_payload);
 
@@ -1168,7 +1388,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
                 try
                 {
-                    var (finished, taken) = WaitForAnotherProcess(browser, directory, mutex, deadline);
+                    var (finished, taken) = WaitForAnotherProcess(browser, directory, mutex, deadline, phase);
 
                     if (finished is not null)
                     {
@@ -1218,7 +1438,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 // 203.8 MB on top of a complete tree is the cost of not looking.
                 var result = IsComplete(directory)
                     ? new ProvisioningResult(true, $"{revision.Description} was already installed at '{directory}'.")
-                    : RunInstaller(browser, revision, directory, deadline);
+                    : RunInstaller(browser, revision, directory, deadline, phase);
 
                 if (result.Succeeded)
                 {
@@ -1258,9 +1478,9 @@ internal sealed class BrowserProvisioner : IDisposable
     /// holder keeps the mutex through <see cref="Prune"/>, which walks every
     /// process on the machine and is slow exactly when the machine is busy. A
     /// caller that had just <b>deleted</b> the tree then waited for a marker
-    /// nobody was going to write, for the full
-    /// <see cref="ProvisioningTimers.OuterDeadline"/> of <b>sixty minutes</b>,
-    /// with no browser installed the whole time.
+    /// nobody was going to write, for the full outer deadline of <b>sixty
+    /// minutes</b> — the timer this method no longer has — with no browser
+    /// installed the whole time.
     /// </para>
     /// <para>
     /// <b>Found 2026-08-17 by running the suite with every test at once</b> -
@@ -1280,21 +1500,50 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <i>without</i> leaving a complete tree, which is precisely the case that
     /// used to hang.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The waiter's own tripwire became the SAME stall detector on
+    /// 2026-08-19 (previously <c>OuterDeadline</c>, sixty minutes of wall clock,
+    /// justified as "the absolute cap is 45 minutes and this is 60, so anything
+    /// that reaches it is a bug in the caps above").</b> That justification was
+    /// arithmetic against a number that no longer exists: with the installer
+    /// capped on <i>stalling</i> rather than on total time, a holder on a
+    /// 0.3 Mbps link legitimately runs for over an hour, and a sixty-minute
+    /// tripwire here would report <i>"has not finished"</i> about a download that
+    /// is working. The fourth timer went with it — <see cref="ProvisioningTimers"/>
+    /// carries three now, not four.
+    /// </para>
+    /// <para>
+    /// <b>The waiter can measure the holder, which is what makes one cap enough.</b>
+    /// Both processes write into the same browsers root and the download target
+    /// is inside it (<see cref="DownloadDirectoryName"/>), so the holder's
+    /// progress is visible from here as bytes. A holder that died leaves the
+    /// mutex abandoned and is overtaken on the line above without any timer at
+    /// all; a holder that is alive and frozen is exactly a stall, and it is
+    /// caught by the same number and the same measurement the installer uses on
+    /// itself.
+    /// </para>
     /// </remarks>
     /// <param name="browser">The family.</param>
     /// <param name="directory">The revision directory a complete install marks.</param>
     /// <param name="mutex">The provisioning mutex, not held by this thread.</param>
-    /// <param name="deadline">The clock the outer tripwire reads.</param>
+    /// <param name="deadline">The clock this attempt has been running against.</param>
+    /// <param name="phase">Where the sample is published for a caller to read.</param>
     /// <returns>
-    /// Either a finished result - the other process installed it, or the
-    /// tripwire fired - or no result and the acquisition this thread now holds.
+    /// Either a finished result - the other process installed it, or the stall
+    /// cap fired - or no result and the acquisition this thread now holds.
     /// </returns>
     private (ProvisioningResult? Finished, MutexAcquisition Acquisition) WaitForAnotherProcess(
         string browser,
         string directory,
         MachineMutex mutex,
-        Stopwatch deadline)
+        Stopwatch deadline,
+        AttemptPhase phase)
     {
+        var bytes = ObservedBytes(BrowsersDirectory, 0);
+        var lastChange = deadline.Elapsed;
+
+        phase.Observed(bytes, deadline.Elapsed, extracting: false);
+
         while (true)
         {
             if (IsComplete(directory))
@@ -1315,17 +1564,28 @@ internal sealed class BrowserProvisioner : IDisposable
                 return (null, acquisition);
             }
 
-            if (deadline.Elapsed > _timers.OuterDeadline)
+            var sample = ObservedBytes(BrowsersDirectory, bytes);
+
+            if (sample != bytes)
             {
-                // The tripwire. It should be unreachable -- the installing
-                // process caps itself 15 minutes earlier -- so reaching it means
-                // that process died without releasing, or the caps are wrong.
-                ProvisioningLog.OuterDeadlineReached(_logger, browser, (int)deadline.Elapsed.TotalMinutes);
+                bytes = sample;
+                lastChange = deadline.Elapsed;
+            }
+
+            phase.Observed(bytes, deadline.Elapsed, Directory.Exists(directory));
+
+            if (deadline.Elapsed - lastChange > _timers.StallCap)
+            {
+                // The holder is alive -- it still owns the mutex -- and has
+                // written nothing for the whole cap. Nothing here can stop it:
+                // it belongs to another process and this one has no job object
+                // over it, so what is reported is that waiting has stopped.
+                ProvisioningLog.HolderStalled(_logger, browser, (int)_timers.StallCap.TotalMinutes);
 
                 return (
                     new ProvisioningResult(
                         false,
-                        $"Another process has been provisioning {browser} for more than {_timers.OuterDeadline.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture)} minutes and has not finished. Nothing was downloaded here."),
+                        $"Another BrowserAI process still holds the provisioning lock for {browser} and has written nothing at all under '{BrowsersDirectory}' for {Minutes(_timers.StallCap)} minutes; the root has weighed {Bytes(bytes)} since {Seconds(lastChange)} s in, out of {Seconds(deadline.Elapsed)} s of waiting. Nothing was downloaded here, and nothing was stopped -- that install belongs to another process. Close it, or wait for it, and call the same tool again."),
                     MutexAcquisition.NotAcquired);
             }
 
@@ -1340,7 +1600,7 @@ internal sealed class BrowserProvisioner : IDisposable
         }
     }
 
-    private ProvisioningResult RunInstaller(string browser, BrowserRevision revision, string directory, Stopwatch deadline)
+    private ProvisioningResult RunInstaller(string browser, BrowserRevision revision, string directory, Stopwatch deadline, AttemptPhase phase)
     {
         _ = Directory.CreateDirectory(BrowsersDirectory);
 
@@ -1348,7 +1608,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
         using var run = StartInstaller(browser, BrowsersDirectory);
 
-        var failure = Watch(run, browser, directory, deadline);
+        var failure = Watch(run, browser, directory, deadline, phase);
 
         if (failure is not null)
         {
@@ -1391,13 +1651,37 @@ internal sealed class BrowserProvisioner : IDisposable
     }
 
     /// <summary>
-    /// Watches one installer run against the three caps, and answers with the
-    /// cap that fired.
+    /// Watches one installer run against the two caps, and answers with the cap
+    /// that fired.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The first cap became a <b>stall</b> detector on 2026-08-19
+    /// (previously a 45-minute ceiling on the total).</b> The reasoning is on
+    /// <see cref="ProvisioningTimers.StallCap"/>; what changed here is that the
+    /// loop now takes a measurement rather than only reading a clock, and the
+    /// measurement is the same one <see cref="ProvisioningProgress"/> publishes.
+    /// </para>
+    /// <para>
+    /// <b>One sample serves both, and that is deliberate.</b> A stall detector
+    /// reading one number and a progress report reading another is two answers
+    /// to one question, and the day they disagree the refusal would say a
+    /// download was moving while the watcher killed it for not moving.
+    /// </para>
+    /// </remarks>
+    /// <param name="run">The installer.</param>
+    /// <param name="browser">The family.</param>
+    /// <param name="directory">The revision directory whose appearance is the phase boundary.</param>
+    /// <param name="deadline">The clock this attempt has been running against.</param>
+    /// <param name="phase">Where the sample is published for a caller to read.</param>
     /// <returns><see langword="null"/> when the installer exited on its own.</returns>
-    private string? Watch(IInstallerRun run, string browser, string directory, Stopwatch deadline)
+    private string? Watch(IInstallerRun run, string browser, string directory, Stopwatch deadline, AttemptPhase phase)
     {
         var extraction = default(TimeSpan?);
+        var bytes = ObservedBytes(BrowsersDirectory, 0);
+        var lastChange = deadline.Elapsed;
+
+        phase.Observed(bytes, deadline.Elapsed, extracting: false);
 
         while (!run.HasExited)
         {
@@ -1407,19 +1691,33 @@ internal sealed class BrowserProvisioner : IDisposable
             }
 
             // The phase boundary, and it is observable rather than inferred:
-            // upstream downloads into a temp directory and creates this one only
-            // when it starts unzipping.
+            // upstream downloads into the directory named by DownloadDirectoryName
+            // and creates this one only when it starts unzipping.
             if (extraction is null && Directory.Exists(directory))
             {
                 extraction = deadline.Elapsed;
                 ProvisioningLog.Extracting(_logger, browser, (int)deadline.Elapsed.TotalSeconds);
             }
 
-            if (deadline.Elapsed > _timers.AbsoluteCap)
-            {
-                ProvisioningLog.CapReached(_logger, browser, "absolute", (int)_timers.AbsoluteCap.TotalMinutes);
+            var sample = ObservedBytes(BrowsersDirectory, bytes);
 
-                return $"The download of {browser} passed the {Minutes(_timers.AbsoluteCap)}-minute cap and was stopped. Nothing usable was left on disk.";
+            if (sample != bytes)
+            {
+                // ANY change, in either direction. Upstream unlinks the archive
+                // once it has extracted it, so a shrinking root is a working
+                // installer and a total that has not moved at all is the only
+                // thing a stall can honestly be read off.
+                bytes = sample;
+                lastChange = deadline.Elapsed;
+            }
+
+            phase.Observed(bytes, deadline.Elapsed, extraction is not null);
+
+            if (deadline.Elapsed - lastChange > _timers.StallCap)
+            {
+                ProvisioningLog.CapReached(_logger, browser, "stall", (int)_timers.StallCap.TotalMinutes);
+
+                return $"Provisioning {browser} wrote nothing at all under '{BrowsersDirectory}' for {Minutes(_timers.StallCap)} minutes and was stopped; the root has weighed {Bytes(bytes)} since {Seconds(lastChange)} s in, out of {Seconds(deadline.Elapsed)} s elapsed. Nothing usable was left on disk.";
             }
 
             if (extraction is { } began && deadline.Elapsed - began > _timers.ExtractionCap)
@@ -1434,6 +1732,18 @@ internal sealed class BrowserProvisioner : IDisposable
 
         return null;
     }
+
+    /// <summary>A byte count in the unit the download figures are quoted in.</summary>
+    /// <param name="bytes">The count.</param>
+    /// <returns>The figure, decimal MB to one place.</returns>
+    internal static string Megabytes(long bytes) =>
+        $"{(bytes / 1_000_000d).ToString("F1", CultureInfo.InvariantCulture)} MB";
+
+    private static string Bytes(long bytes) =>
+        $"{Megabytes(bytes)} ({bytes.ToString("N0", CultureInfo.InvariantCulture)} B)";
+
+    private static string Seconds(TimeSpan span) =>
+        span.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture);
 
     private static string Minutes(TimeSpan span) =>
         span.TotalMinutes.ToString(span.TotalMinutes < 1 ? "F2" : "F0", CultureInfo.InvariantCulture);
@@ -1488,8 +1798,67 @@ internal sealed class BrowserProvisioner : IDisposable
     {
         private int _waitingForAnotherProcess;
 
+        private long _written;
+        private long _elapsedTicks;
+        private int _extracting;
+        private long _baseline = -1;
+
         /// <summary>Whether this attempt is waiting out another process rather than installing.</summary>
         public bool IsWaitingForAnotherProcess => Volatile.Read(ref _waitingForAnotherProcess) is not 0;
+
+        /// <summary>
+        /// The last sample the watching thread took, as a value a caller-facing
+        /// sentence can quote.
+        /// </summary>
+        /// <remarks>
+        /// <b>Three interlocked reads rather than one lock, and they can be
+        /// microseconds apart.</b> That is acceptable and it is worth saying why:
+        /// the three come from one poll a second, so the worst skew is a byte
+        /// count from one second paired with an elapsed time from the next. A
+        /// lock here would serialise every caller against a sampler that runs
+        /// while a 203.8 MB download is in flight, to remove an error smaller
+        /// than the poll interval.
+        /// </remarks>
+        /// <param name="downloadBytes">What the family's whole download weighs.</param>
+        /// <returns>The reading, or <see langword="null"/> before the first poll.</returns>
+        public ProvisioningProgress? Reading(long downloadBytes)
+        {
+            var elapsed = Volatile.Read(ref _elapsedTicks);
+
+            return elapsed is 0
+                ? null
+                : new ProvisioningProgress(
+                    Volatile.Read(ref _written),
+                    downloadBytes,
+                    TimeSpan.FromTicks(elapsed),
+                    Volatile.Read(ref _extracting) is not 0);
+        }
+
+        /// <summary>Records one poll of the browsers root.</summary>
+        /// <param name="bytes">What it weighed.</param>
+        /// <param name="elapsed">How long the attempt has been running.</param>
+        /// <param name="extracting">Whether the revision directory has appeared.</param>
+        public void Observed(long bytes, TimeSpan elapsed, bool extracting)
+        {
+            if (Volatile.Read(ref _baseline) < 0)
+            {
+                // The first poll is the baseline, and it is taken from the same
+                // sampler rather than from a second measurement: what this
+                // attempt has written is what has appeared SINCE it started, and
+                // on a machine that already holds the other family the root is
+                // not empty.
+                Volatile.Write(ref _baseline, bytes);
+            }
+
+            Volatile.Write(ref _written, Math.Max(0, bytes - Volatile.Read(ref _baseline)));
+            Volatile.Write(ref _extracting, extracting ? 1 : 0);
+
+            // Last, because it is the field that makes a reading valid: a caller
+            // that saw a non-zero elapsed time has already seen the other two.
+            // Never zero, so the very first poll of a run that has taken no
+            // measurable time still publishes.
+            Volatile.Write(ref _elapsedTicks, Math.Max(1, elapsed.Ticks));
+        }
 
         /// <summary>Records that the machine-wide mutex went to somebody else.</summary>
         public void EnterWait() => Volatile.Write(ref _waitingForAnotherProcess, 1);
@@ -1556,7 +1925,10 @@ internal sealed class NodeInstallerRun : IInstallerRun
     public NodeInstallerRun(PayloadLayout payload, string browser, string browsersDirectory)
     {
         ArgumentNullException.ThrowIfNull(payload);
+        ArgumentNullException.ThrowIfNull(browsersDirectory);
         payload.Verify();
+
+        var downloads = DownloadDirectory(browsersDirectory, browser);
 
         _job = JobObject.CreateKillOnClose();
 
@@ -1595,7 +1967,25 @@ internal sealed class NodeInstallerRun : IInstallerRun
                 // 202 MB half. The strip is still right; the sentence claimed
                 // more than the measurement. §A carried this correction from
                 // 2026-08-16 and it was never swept into the shipped comments.
-                ChildEnvironment.Build([new KeyValuePair<string, string>(ChildLaunch.BrowsersPathVariable, browsersDirectory)]));
+                ChildEnvironment.Build(
+                [
+                    new KeyValuePair<string, string>(ChildLaunch.BrowsersPathVariable, browsersDirectory),
+
+                    // ⚠️ Added 2026-08-19, and it is what makes provisioning
+                    // MEASURABLE. Upstream downloads into
+                    // `os.tmpdir()\playwright-download-XXXXXX\`, which on
+                    // Windows is whatever TEMP says -- so for the whole of the
+                    // download phase nothing under the browsers root grows, and
+                    // a stall detector reading the root would kill every install
+                    // on a slow link. Pointed here, the archive and the extracted
+                    // tree are one number under one directory BrowserAI owns.
+                    //
+                    // Both names, because Node reads TEMP first and TMP second
+                    // and an inherited TMP would otherwise win on a machine where
+                    // only TMP is set.
+                    new KeyValuePair<string, string>("TEMP", downloads),
+                    new KeyValuePair<string, string>("TMP", downloads),
+                ]));
         }
         catch
         {
@@ -1605,6 +1995,54 @@ internal sealed class NodeInstallerRun : IInstallerRun
 
         Pump(_process.StandardOutput);
         Pump(_process.StandardError);
+    }
+
+    /// <summary>
+    /// Empties and re-creates the directory this install downloads into.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Emptied first, and that is not tidiness.</b> Upstream removes its own
+    /// <c>playwright-download-XXXXXX</c> in a <c>finally</c>, which does not run
+    /// when BrowserAI closes the job on a cap — so without this, a stopped
+    /// install leaves a partial archive of up to 202 MB behind and the next run's
+    /// byte count starts from somebody else's residue. Measured on this machine
+    /// 2026-08-19: the user's own <c>%TEMP%</c> held a
+    /// <c>playwright-download-PRU23e</c> abandoned three days earlier, with
+    /// 128,684 B still in it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>PER FAMILY, and that is what makes emptying it safe.</b> The
+    /// provisioning mutex is keyed on the family, so a chromium install and a
+    /// firefox install run at once by design — and this constructor runs
+    /// <i>before</i> the child starts, which is before upstream's
+    /// <c>__dirlock</c> is taken, so a shared directory would have the second
+    /// installer delete the first one's archive mid-download. On Windows that
+    /// delete would in fact fail on the open handle and the archive would
+    /// survive; relying on that is relying on a sharing rule instead of on a
+    /// design. Two directories cannot collide at all.
+    /// </para>
+    /// <para>
+    /// <b>Through <c>TreeDelete</c>, like every other tree delete in this
+    /// product</b>, and its failures are deliberately ignored: a residue that
+    /// will not go is a byte count that starts high, not a reason to refuse an
+    /// install.
+    /// </para>
+    /// </remarks>
+    /// <param name="browsersDirectory">The absolute browsers root.</param>
+    /// <param name="browser">The family being installed, which is this run's own subdirectory.</param>
+    /// <returns>The absolute download directory.</returns>
+    private static string DownloadDirectory(string browsersDirectory, string browser)
+    {
+        var downloads = Path.Combine(
+            browsersDirectory,
+            BrowserProvisioner.DownloadDirectoryName,
+            Path.GetFileName(browser));
+
+        TreeDelete.Remove(downloads, []);
+        _ = Directory.CreateDirectory(downloads);
+
+        return downloads;
     }
 
     /// <inheritdoc />
@@ -1806,15 +2244,27 @@ internal static partial class ProvisioningLog
         Message = "Another BrowserAI process is already provisioning {Browser}; watching for its marker rather than downloading a second copy.")]
     public static partial void AnotherProcessIsInstalling(ILogger logger, string browser);
 
-    /// <summary>The crash tripwire fired.</summary>
+    /// <summary>
+    /// The process holding the provisioning mutex is alive and has written
+    /// nothing for a whole stall cap.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Replaced <c>OuterDeadlineReached</c> on 2026-08-19, at the same
+    /// event id.</b> That record said <i>"this is past every cap, so it is a
+    /// defect rather than a slow link"</i>, which was true while an installer
+    /// capped itself on total time and is not true now: there is no total any
+    /// more, so the only thing reaching this line proves is that the holder has
+    /// stopped writing. <c>Critical</c> is kept — it still means an install
+    /// nobody is going to finish.
+    /// </remarks>
     /// <param name="logger">Where it goes.</param>
     /// <param name="browser">The family.</param>
-    /// <param name="minutes">How long it waited.</param>
+    /// <param name="minutes">The stall cap that expired.</param>
     [LoggerMessage(
         EventId = 67,
         Level = LogLevel.Critical,
-        Message = "Provisioning {Browser} has not completed after {Minutes} minutes. This is past every cap, so it is a defect rather than a slow link.")]
-    public static partial void OuterDeadlineReached(ILogger logger, string browser, int minutes);
+        Message = "The process provisioning {Browser} still holds the mutex and has written nothing under the browsers root for {Minutes} minutes. This process stopped waiting; it cannot stop that install, which belongs to another process.")]
+    public static partial void HolderStalled(ILogger logger, string browser, int minutes);
 
     /// <summary>The previous holder of the provisioning mutex died mid-install.</summary>
     /// <param name="logger">Where it goes.</param>

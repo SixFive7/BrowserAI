@@ -229,10 +229,10 @@ internal sealed class ProvisioningTests
     }
 
     [Test]
-    public async Task TheAbsoluteCapStopsADownloadThatNeverProgresses()
+    public async Task TheStallCapStopsADownloadThatNeverProgresses()
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
-        using var scratch = ScratchDirectory.Create("provision-absolute-cap");
+        using var scratch = ScratchDirectory.Create("provision-stall-cap");
 
         var root = Path.Combine(scratch.Path, "browsers");
         FakeInstaller? started = null;
@@ -243,7 +243,7 @@ internal sealed class ProvisioningTests
             log,
             new ProvisioningTimers
             {
-                AbsoluteCap = TimeSpan.FromMilliseconds(200),
+                StallCap = TimeSpan.FromMilliseconds(200),
                 Poll = TimeSpan.FromMilliseconds(20),
             })
         {
@@ -253,13 +253,132 @@ internal sealed class ProvisioningTests
         var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
-        await Assert.That(status.Detail).Contains("cap");
+
+        // It says what it measured rather than how long it waited: the old
+        // absolute cap could only report elapsed time, which was the same
+        // sentence for a link that was working and one that had died.
+        await Assert.That(status.Detail).Contains("wrote nothing at all under");
 
         // The installer was STOPPED rather than merely abandoned. A watcher that
         // gave up without closing the job would leave a 200 MB download running
         // with nobody left to receive it — which is the exact shape a cap exists
         // to prevent, and it is invisible in the status.
         await Assert.That(started!.WasStopped).IsTrue();
+    }
+
+    /// <summary>
+    /// A slow install that keeps writing outlives a cap many times shorter than
+    /// its own total.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the arm that is red against a total-time ceiling, and it is
+    /// the whole reason the cap changed.</b> The old <c>AbsoluteCap</c> stopped
+    /// an install that had taken longer than the cap, whatever it was doing, so
+    /// it fired on exactly one case — a link that was slow and working. Here the
+    /// install takes at least fifteen poll intervals against a cap of four, and
+    /// it must finish.
+    /// </para>
+    /// <para>
+    /// <b>The steps are asserted to have happened</b>, because an installer that
+    /// finished instantly would also pass a test that only checked the outcome —
+    /// and would be measuring nothing at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes()
+    {
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("provision-slow-but-working");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+        FakeInstaller? started = null;
+
+        using var provisioner = new BrowserProvisioner(
+            RepositoryPayload.Layout,
+            root,
+            log,
+            new ProvisioningTimers
+            {
+                // ⚠️ A RATIO, not a duration, and that is what makes it safe at
+                // unbounded suite parallelism. Sixty writes 25 ms apart is a
+                // total of about 1.5 s against a cap of 1 s, so a cap that
+                // measured TOTAL time fires two thirds of the way through and
+                // this arm is red -- while the largest gap a stall detector sees
+                // is one write, about 25 ms. Everything on this machine can
+                // stretch by a factor of thirty before the two meet, and a
+                // stretch moves both numbers together.
+                StallCap = TimeSpan.FromSeconds(1),
+                ExtractionCap = TimeSpan.FromMinutes(10),
+                Poll = TimeSpan.FromMilliseconds(20),
+            })
+        {
+            StartInstaller = (_, _) => started = FakeInstaller.CreepingForward(directory, TimeSpan.FromMilliseconds(25), steps: 60),
+        };
+
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
+
+        await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
+        await Assert.That(started!.WasStopped).IsFalse();
+
+        // Every step really did land, so the run really was longer than the cap.
+        await Assert.That(started.StepsWritten).IsEqualTo(60);
+    }
+
+    /// <summary>
+    /// The refusal a browser call meets while provisioning runs is a progress
+    /// report.
+    /// </summary>
+    /// <remarks>
+    /// <b>Asserted against a sample the test can predict, which is why the
+    /// installer writes a known number of bytes and then holds.</b> Elapsed time
+    /// and the rate derived from it are not predictable in a suite, so what is
+    /// asserted is the byte figure, the total it is quoted against, and that a
+    /// rate was given at all — the three things the maintainer asked for. A test
+    /// that asserted the rate would be asserting the speed of the machine.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRefusalWhileProvisioningReportsBytesAgainstTheMeasuredTotal()
+    {
+        var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = RigSessionEnvironment.Create(
+            installer: (browser, root) => FakeInstaller.WritingThenWaiting(
+                Path.Combine(root, BrowserProvisioner.DownloadDirectoryName, browser, "chrome-win64.zip"),
+                bytes: 4_096,
+                held.Task),
+            timers: new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20) });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+        var directory = Path.Combine(sessions.Root, "reads-a-progress-report");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, Init(sessions, "reads-a-progress-report"));
+
+        // The watcher polls every 20 ms and the sentence is composed from its
+        // last sample, so this waits for a sample to exist rather than for a
+        // duration.
+        var text = await Eventually(
+            async () => TextOf(await CallAsync(rig, "browser_navigate", Navigate(directory))),
+            said => said.Contains("Progress:", StringComparison.Ordinal));
+
+        try
+        {
+            // Bytes written by THIS attempt, against the measured download total,
+            // as a percentage, with elapsed and a rate.
+            await Assert.That(text).Contains("0.0 MB of 203.8 MB downloaded (0%)");
+            await Assert.That(text).Contains("Mbps observed");
+
+            // And the old sentence is gone: it said the same thing at 8 s and at
+            // 25 minutes, which is what made it useless on the fourth call.
+            await Assert.That(text).DoesNotContain("Wait about ten seconds");
+        }
+        finally
+        {
+            held.SetResult();
+        }
     }
 
     [Test]
@@ -279,9 +398,9 @@ internal sealed class ProvisioningTests
             new ProvisioningTimers
             {
                 // Deliberately far apart: an extraction cap that only fired
-                // because the absolute one did would pass this test while
+                // because the stall one did would pass this test while
                 // measuring nothing.
-                AbsoluteCap = TimeSpan.FromMinutes(45),
+                StallCap = TimeSpan.FromMinutes(45),
                 ExtractionCap = TimeSpan.FromMilliseconds(200),
                 Poll = TimeSpan.FromMilliseconds(20),
             })
@@ -360,7 +479,7 @@ internal sealed class ProvisioningTests
     /// process on the machine, so there is a real window in which the holder is
     /// finished and no marker will ever appear. A caller that had just deleted
     /// the tree — which is exactly what <c>browserai_reinstall_browser</c>
-    /// does — then sat in <see cref="ProvisioningTimers.OuterDeadline"/> with no
+    /// does — then sat in the outer deadline this design no longer has, with no
     /// browser installed.
     /// </para>
     /// <para>
@@ -772,8 +891,46 @@ internal sealed class ProvisioningTests
     private static ProvisioningTimers Quick() => new()
     {
         Poll = TimeSpan.FromMilliseconds(20),
-        OuterDeadline = TestDefaults.ProcessHang,
+
+        // ⚠️ `StallCap` since 2026-08-19 (previously `OuterDeadline`, which is
+        // gone). It is doing the same job here as before: nothing in these arms
+        // asserts that it fires, so its only role is to stop a wedged provisioner
+        // hanging the run.
+        StallCap = TestDefaults.ProcessHang,
     };
+
+    /// <summary>
+    /// Calls something until its answer satisfies a predicate, or the hang
+    /// detector expires.
+    /// </summary>
+    /// <remarks>
+    /// <b>A gate rather than a duration.</b> The sentence under test is composed
+    /// from the watcher's last sample, and the watcher runs on a thread of its
+    /// own — so "sleep and then assert" would be asserting the scheduler at
+    /// unbounded suite parallelism. What this waits for is the condition.
+    /// </remarks>
+    /// <param name="call">What to call.</param>
+    /// <param name="until">What the answer has to satisfy.</param>
+    /// <returns>The first answer that satisfied it.</returns>
+    private static async Task<string> Eventually(Func<Task<string>> call, Func<string, bool> until)
+    {
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var last = string.Empty;
+
+        while (clock.Elapsed < TestDefaults.ProcessHang)
+        {
+            last = await call();
+
+            if (until(last))
+            {
+                return last;
+            }
+
+            await Task.Delay(20);
+        }
+
+        throw new InvalidOperationException($"No answer satisfied the condition inside {TestDefaults.ProcessHang}. The last one was: {last}");
+    }
 
     private static JsonObject Init(RigSessionEnvironment sessions, string name) => new()
     {

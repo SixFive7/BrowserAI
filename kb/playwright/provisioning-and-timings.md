@@ -458,6 +458,79 @@ its output *is* a copy of `node.exe` plus the blob. `vercel/pkg` was archived
 **2024-01-13**. Bun and Deno both carry open issues on the Playwright
 browser-launch path. `[FLOATS]`
 
+### What grows on disk while an install runs, and when — 2026-08-19
+
+**The download does not touch the browsers root at all, and the extraction is the
+only thing that does.** Measured 2026-08-19 against this repository's assembled
+payload at `@playwright/mcp` 0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05,
+by sampling both directories every 250 ms across a real
+`install-browser <family> --no-shell --no-progress` into an empty root:
+
+| Phase | Chromium (41 samples, 10,834 ms) | Firefox (27 samples, 6,918 ms) |
+|---|---|---|
+| Download directory created | t+581 ms | t+529 ms |
+| Archive grows | 47,892 B → **202,283,919 B**, t+1,113 → t+6,164 ms | 13,859,716 B → **125,706,704 B**, t+1,061 → t+3,184 ms |
+| Revision directory appears (extraction starts) | t+6,427 ms | t+3,450 ms |
+| Revision directory grows | 15,971,824 B → 447,613,878 B | 12,748,084 B → 352,898,131 B |
+| Archive unlinked | t+9,653 ms | t+5,570 ms |
+| `ffmpeg` and `winldd` follow | root 451,131,220 → **451,389,780 B** | root 356,415,473 → **356,674,033 B** |
+
+**Every single sample differed from the one before it**, in both phases and in
+both families. That is what makes a *stall* detector on bytes-on-disk viable
+where a total-time cap was not: the signal has a 250 ms granularity on a
+~300 Mbps link, and the only thing that can hold it still is a link that has
+stopped.
+
+**The two archive figures are exactly the `content-length` values
+[recorded above](#first-run-provisioning)** — 202,283,919 B and 125,706,704 B —
+so the on-disk sample and the CDN figure are the same number reached two ways.
+The root totals land on the recorded ones once `.links` is accounted for:
+Chromium's 451,389,780 B is exact, and Firefox's 356,674,033 B is 26 B under the
+recorded 356,674,059 B because **`.links` is path-dependent** and was 69 B in
+this run against 95 B in the run that produced the recorded figure — which is the
+thing [the Firefox section](#firefox-measured-the-same-way--2026-08-19) already
+warns about.
+
+**Upstream downloads into `os.tmpdir()`, not into the browsers root.**
+`downloadBrowserWithProgressBar` does
+`mkdtemp(path.join(os.tmpdir(), "playwright-download-"))` and writes
+`playwright-download-<name>-<platform>-<revision>.zip` into it, then
+`removeFolders([uniqueTempDir])` in a `finally`. So on Windows the location is
+whatever `TEMP` says, and **BrowserAI sets `TEMP` and `TMP` for the installer
+child** to `<browsers root>\.downloads\<family>` —
+`BrowserProvisioner.DownloadDirectoryName` plus the family, one subdirectory each
+because the provisioning mutex is keyed on the family and two installs run at once
+by design — which is what makes one recursive weigh of the browsers root cover
+both phases.
+Proven rather than assumed: the redirected chromium run above produced
+451,389,780 B, byte-identical to the run with the default temp.
+
+**Scanning `%TEMP%` instead would have been wrong, and it was measurably wrong on
+this machine.** The default-temp run started with `tempdl = 128,684 B` and
+`dirs = 2` before it had downloaded anything: a `playwright-download-PRU23e`
+abandoned on 2026-08-16 was still there, holding a stale `winldd-win64.zip`.
+Upstream's `finally` does not run when a killed installer is killed, and
+BrowserAI closes the installer's job on a cap — so its own residue would
+accumulate there too.
+
+**There is no other progress signal, and that is the second half of the
+measurement.** `--no-progress` sets `PLAYWRIGHT_DOWNLOAD_NO_PROGRESS=1`, which
+makes `downloadFile`'s `reportProgress` false, so the parent's
+`getBasicDownloadProgress()` never prints a percentage line: the installer's
+whole stdout for a chromium install is **six lines**, one `Downloading …` and one
+`… downloaded to …` per archive. And `@playwright/mcp` emits no MCP progress
+notifications at all ([kb](../mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames)).
+
+**Re-establish** by sampling `PLAYWRIGHT_BROWSERS_PATH` and the temp directory
+recursively every 250 ms across `node.exe cli.js install-browser <family>
+--no-shell --no-progress` into an empty root, once with `TEMP` redirected and
+once without. **The control is the redirected/default pair** — a single run
+cannot tell "the redirect works" from "the download happened to land here". What
+would falsify it is upstream downloading straight into the registry directory, or
+`extractZip` starting to stream rather than writing whole files, either of which
+would change *which* directory grows but not *that* one does. `[FLOATS]`
+`[MACHINE]`
+
 ## What the first-run download costs the suite
 
 **Measured 2026-08-17, eight full-suite runs, from TUnit's own per-test report.**
