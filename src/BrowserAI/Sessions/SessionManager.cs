@@ -92,6 +92,44 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     public const string DefaultBrowser = ProvisionedBrowsers.Chromium;
 
+    /// <summary>
+    /// The sentence <c>browserai_destroy</c> says when it removed the session's
+    /// record but could not remove everything under it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A constant because the promise it carries is the one a test has to
+    /// hold destroy to, and prose copied into an assertion drifts silently in
+    /// the direction that passes.</b> <c>browserai_destroy</c> does not promise
+    /// the tree is gone — Windows will not unlink a file a browser is still
+    /// mapping, and the release lags the process by however long the kernel
+    /// takes — it promises that <b>what survived is named</b>. A test that
+    /// re-typed this heading and then watched it be reworded would stop
+    /// recognising the survivor arm, and would go green by never reaching the
+    /// assertions that matter.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Extracted 2026-08-19, after <c>FirefoxSessionTests</c> asserted the
+    /// stronger property instead.</b> That test required the directory to be
+    /// gone, which is a guarantee this tool has never made: it passed nine local
+    /// runs and failed three consecutive CI runs on a four-core runner, where
+    /// Firefox — the family slowest to release its profile — was still holding
+    /// mapped files when the answer was composed. The assertion was not merely
+    /// strict, it was wrong, and the honest version of it needs this string.
+    /// </para>
+    /// </remarks>
+    public const string SurvivorsHeading = "item(s) could not be removed, because something still has them open:";
+
+    /// <summary>
+    /// How many survivors the answer lists by name before it stops.
+    /// </summary>
+    /// <remarks>
+    /// A cap on the <i>listing</i> and never on the <i>count</i>: the number in
+    /// <see cref="SurvivorsHeading"/>'s sentence is always the whole tally, so a
+    /// caller can tell a truncated list from a complete one by comparing the two.
+    /// </remarks>
+    public const int SurvivorsNamed = 20;
+
     private readonly ConcurrentDictionary<string, LiveSession> _live = new(StringComparer.Ordinal);
     private readonly SessionEnvironment _environment;
     private readonly SessionIndex _index;
@@ -554,8 +592,8 @@ internal sealed class SessionManager : IAsyncDisposable
         return failures.Count is 0
             ? new ToolOutcome(summary, IsError: false)
             : new ToolOutcome(
-                $"{summary}\n\nBUT {failures.Count.ToString(CultureInfo.InvariantCulture)} item(s) could not be removed, because something still has them open:\n"
-                + string.Join("\n", failures.Take(20))
+                $"{summary}\n\nBUT {failures.Count.ToString(CultureInfo.InvariantCulture)} {SurvivorsHeading}\n"
+                + string.Join("\n", failures.Take(SurvivorsNamed))
                 + "\nThe session's record is gone, so the directory is no longer a session; delete what is left once whatever holds it has exited.",
                 IsError: false);
     }

@@ -11,10 +11,24 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// <c>browserai_destroy</c>'s one invariant that no end state can show: the
-/// directory stays <b>owned</b> for as long as any of it is still on disk.
+/// <c>browserai_destroy</c>'s two contracts: the directory stays <b>owned</b>
+/// for as long as any of it is still on disk, and whatever it could not remove
+/// is <b>named</b>.
 /// </summary>
 /// <remarks>
+/// <para>
+/// ⚠️ <b>The second arm exists because a fast machine never reaches it.</b>
+/// Destroy returns <c>isError: false</c> in two shapes — everything went, or a
+/// tally and a list of what would not — and on a developer machine the first
+/// shape is the only one anybody ever sees. <c>FirefoxSessionTests</c> asserted
+/// the tree was simply gone, passed nine local runs and failed three consecutive
+/// CI runs on a four-core runner, where Firefox was still mapping its profile
+/// when the answer was composed. <see cref="DestroyAnswer"/> now carries the
+/// contract for both tests, and <see cref="ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany"/>
+/// provokes the survivor arm deterministically — with a handle this test holds
+/// itself, needing no browser and no slow machine — so the arm CI takes is
+/// exercised on every run rather than only on the runs that fail.
+/// </para>
 /// <para>
 /// <b>Why this is not asserted on the outcome.</b> A destroy that released the
 /// lock first and a destroy that held it to the end leave byte-identical trees —
@@ -178,6 +192,104 @@ internal sealed class SessionDestroyTests
         held?.Dispose();
         await Assert.That(refusal).IsNull();
     }
+
+    /// <summary>
+    /// A destroy that could not remove everything says so, says how many, and
+    /// names them — and still reports success.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The survivor is a handle this test holds, which is what makes the arm
+    /// deterministic.</b> No browser, no timing, no slow machine: a file opened
+    /// <c>FileShare.None</c> cannot be unlinked, so the walk records it and
+    /// records the directory above it that therefore cannot go either. Against a
+    /// real browser the same arm is reached by the kernel lagging behind a
+    /// process that has already exited, which is not something a test can ask
+    /// for.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b><c>isError</c> stays <see langword="false"/>, and that is the
+    /// decision being asserted rather than an accident of the code.</b> A destroy
+    /// that removed a nine-thousand-file profile and could not remove eleven
+    /// locked files has done what it was asked; failing the call would throw away
+    /// the report of the nine thousand and tell the model to retry something that
+    /// mostly worked. What makes that safe is the <i>naming</i> — and a naming
+    /// nobody checks is how <c>isError: false</c> becomes a lie.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "destroyed-while-something-holds-a-file");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "destroyed while this test holds one of its files open",
+            ["mode"] = "headless",
+        });
+
+        var held = Path.Combine(directory, "something-still-has-this-open.bin");
+        JsonObject destroyed;
+
+        await using (var handle = new FileStream(held, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            await handle.WriteAsync("held open for the whole of the destroy"u8.ToArray());
+            await handle.FlushAsync();
+
+            destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject
+            {
+                ["directory"] = directory,
+            });
+
+            // Success-shaped on purpose: see the remarks.
+            await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
+
+            var answer = TextOf(destroyed);
+
+            // The whole contract, through the same routine FirefoxSessionTests
+            // uses against a real Firefox.
+            await DestroyAnswer.AccountsForWhatItLeftAsync(answer, directory);
+
+            // ⚠️ AND THE SURVIVOR IT NAMED IS THE ONE THAT SURVIVED. Every
+            // assertion above is satisfied by an answer that names some other
+            // node under the session, and "N item(s) could not be removed" is
+            // only actionable if the N are the right ones.
+            var listed = DestroyAnswer.SurvivorsNamedIn(answer)?.Listed ?? [];
+
+            await Assert.That(listed.Any(line => line.StartsWith(held, StringComparison.OrdinalIgnoreCase)))
+                .IsTrue()
+                .Because(answer);
+
+            // And the directory above it, which the post-order walk reaches last
+            // and reports as `<path>\: <why>` — the trailing separator is how a
+            // directory that would not go is told apart from a file of the same
+            // name. A caller told only about the file would not know the session
+            // directory itself is still there.
+            await Assert.That(listed.Any(line => line.StartsWith($"{directory}{Path.DirectorySeparatorChar}:", StringComparison.OrdinalIgnoreCase)))
+                .IsTrue()
+                .Because(answer);
+
+            await Assert.That(File.Exists(held)).IsTrue();
+        }
+
+        // Released, and now the advice the answer gave -- "delete what is left
+        // once whatever holds it has exited" -- is a thing that actually works.
+        var afterRelease = ScratchDirectory.RemoveTree(directory);
+
+        await Assert.That(string.Join(Environment.NewLine, afterRelease)).IsEmpty();
+    }
+
+    private static string TextOf(JsonObject answer) =>
+        string.Join(
+            "\n",
+            (answer["content"]?.AsArray() ?? [])
+                .Where(block => (string?)block!["type"] == "text")
+                .Select(block => (string?)block!["text"] ?? string.Empty));
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
         await rig.Client.RoundTripAsync("tools/call", new JsonObject

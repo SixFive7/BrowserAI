@@ -55,9 +55,61 @@ internal sealed class FirefoxSessionTests
     private static readonly byte[] PngSignature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
     /// <summary>
+    /// How long a profile Firefox has finished with gets to become deletable.
+    /// </summary>
+    /// <remarks>
+    /// <b>A hang detector, and nothing asserts on it.</b> The same value the two
+    /// other real-browser teardowns use, for the same reason: what is being
+    /// measured is whether the tree becomes deletable <i>at all</i>, and a slow
+    /// machine may take as long as it likes to get there.
+    /// </remarks>
+    private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
+
+    /// <summary>
     /// The front door, end to end, against a real Firefox: create, navigate,
     /// take an artifact, destroy.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The destroy arm asserts what <c>browserai_destroy</c> actually
+    /// promises, and until 2026-08-19 it asserted something stronger that the
+    /// product has never promised.</b> It required
+    /// <c>Directory.Exists(session)</c> to be <see langword="false"/>. Destroy's
+    /// survivor arm returns <c>isError: false</c> with <i>"BUT N item(s) could
+    /// not be removed"</i>, because Windows will not unlink a file a browser is
+    /// still mapping and the release lags the process by however long the kernel
+    /// takes — so a legitimate outcome failed the test. It passed nine local
+    /// runs and failed three consecutive CI runs on a four-core runner, against
+    /// Firefox, the family slowest to let go of its profile. <b>The assertion was
+    /// wrong rather than merely strict</b>, and a wrong assertion that only fires
+    /// on a slower machine is the worst-shaped one there is: it reads as
+    /// flakiness and gets a retry rather than a reader.
+    /// </para>
+    /// <para>
+    /// <b>What replaced it is stronger, not weaker, and in four ways the old one
+    /// could not catch.</b> The answer and the disk must <i>agree</i>: a destroy
+    /// that leaves the tree standing and says nothing fails, exactly as before —
+    /// but so does one that <i>reports</i> survivors it does not have, one whose
+    /// survivor list is a count with nothing named under it, and one that names
+    /// a path outside the directory it was given. The old assertion was blind to
+    /// all four, because a gone directory satisfied it whatever the answer said.
+    /// Then the two claims that answer makes are checked against the disk it
+    /// made them about: the record really is gone, and what survived really was
+    /// a handle on its way out rather than a leak nothing will ever release.
+    /// </para>
+    /// <para>
+    /// <b>Deliberately not the sibling tests' shape.</b>
+    /// <c>BrowserContainmentTests</c> and <c>BrowserIdleTimerTests</c> tear a
+    /// real browser tree down with
+    /// <see cref="ScratchDirectory.RemoveTreeWhenReleasedAsync"/> and assert the
+    /// tree becomes deletable — a property of the browser's teardown, which is
+    /// what those two tests are about. Used <i>instead</i> of the agreement check
+    /// here it would be a weakening: the test's own delete loop would remove the
+    /// tree, so a <c>browserai_destroy</c> that did nothing whatsoever and
+    /// reported success would pass. It is used <b>as well</b>, for the one
+    /// property it does hold to.
+    /// </para>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy()
@@ -162,7 +214,24 @@ internal sealed class FirefoxSessionTests
         });
 
         await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
-        await Assert.That(Directory.Exists(session)).IsFalse();
+
+        // ⚠️ THE ANSWER AND THE DISK MUST AGREE — IN BOTH DIRECTIONS, and see
+        // `DestroyAnswer` for why this is not `Directory.Exists` is false. The
+        // contract lives there rather than here so that this test and the
+        // deterministic survivor in `SessionDestroyTests` cannot hold destroy to
+        // two different promises — and so that the arm a fast machine never
+        // reaches is exercised on every run by one that does.
+        await DestroyAnswer.AccountsForWhatItLeftAsync(TextOf(destroyed), session);
+
+        // ⚠️ AND WHAT SURVIVED WAS A HANDLE ON ITS WAY OUT, NOT A LEAK. This is
+        // the half the assertion above cannot make: destroy naming a survivor
+        // honestly is correct, and a survivor nothing will ever release is a
+        // session directory that stays on the caller's disk forever. The bound
+        // is a hang detector -- the ordinary case returns on the first pass with
+        // nothing to delete.
+        var neverReleased = await ScratchDirectory.RemoveTreeWhenReleasedAsync(session, TeardownPatience);
+
+        await Assert.That(string.Join(Environment.NewLine, neverReleased)).IsEmpty();
     }
 
     /// <summary>
