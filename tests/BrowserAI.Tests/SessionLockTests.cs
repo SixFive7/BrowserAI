@@ -3,6 +3,8 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
@@ -1012,6 +1014,104 @@ internal sealed class SessionLockTests
         await Assert.That(Directory.GetFiles(path.FullPath).Length).IsEqualTo(1);
     }
 
+    /// <summary>
+    /// A record that landed and could not then be re-opened is reported as
+    /// written, and a write that never landed is still reported as nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Both arms in one test because the defect was that they were one
+    /// arm.</b> Until 2026-08-19 <c>WriteDurably</c> and the re-open shared a
+    /// single <c>catch</c>, so a failure <i>after</i> the rename answered
+    /// <i>"the directory was not taken and nothing was changed"</i> — about a
+    /// machine where <c>lock.json</c> had just been replaced with a record
+    /// naming this process as the holder. Asserting the honest sentence without
+    /// also asserting that the other arm still says <i>nothing was changed</i>
+    /// would let the fix be "stop claiming that anywhere", which is not a fix.
+    /// </para>
+    /// <para>
+    /// <b>The seam is an ACL, and it is the one right the two operations do not
+    /// share.</b> <c>WriteDurably</c> creates its temp file <c>FileAccess.Write</c>
+    /// and renames it into place; neither needs <c>FILE_READ_DATA</c>. The
+    /// re-open asks for <c>FileAccess.ReadWrite</c> and does. So an inheritable
+    /// <b>deny</b> of <c>ReadData</c> on the session directory lets the record be
+    /// written and refuses the handle over it, deterministically and with no
+    /// fault injection in the product. The control arm denies <c>CreateFiles</c>
+    /// on the directory itself instead, which stops the temp file ever existing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This test costs <see cref="RenameWindow.Budget"/> — thirty seconds —
+    /// and that is coverage rather than waste.</b> The denied open runs through
+    /// <c>RenameWindow.WaitOut</c>, which exists to wait out a rename in flight;
+    /// a permanent denial is a different fault and must still be <i>reported</i>
+    /// rather than waited on forever. This is the only test in the suite that
+    /// reaches the end of that budget, so it is also the only one that proves the
+    /// wait is bounded at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWriteThatLandedSaysSoAndOnlyAWriteThatDidNotSaysNothingChanged()
+    {
+        using var scratch = ScratchDirectory.Create("session-write-landed");
+        var (_, landed) = NewSession(scratch, "reopen-refused");
+
+        var denial = Deny(landed.FullPath, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly);
+        SessionLockResult refused;
+
+        try
+        {
+            refused = SessionLock.TryAcquire(landed, Request("the record lands and the re-open is refused"), NullLogger.Instance);
+        }
+        finally
+        {
+            // Before anything reads the file, and before the scratch teardown
+            // has to delete a tree it cannot enumerate.
+            Undeny(landed.FullPath, denial);
+        }
+
+        refused.Acquired?.Dispose();
+
+        await Assert.That(refused.Taken).IsFalse();
+        await Assert.That(refused.Message.Contains("nothing was changed", StringComparison.OrdinalIgnoreCase))
+            .IsFalse()
+            .Because(refused.Message);
+
+        await Assert.That(refused.Message).Contains("the record WAS written");
+
+        // ⚠️ THE HALF THAT MAKES THE SENTENCE A CLAIM RATHER THAN A PHRASING.
+        // The answer says the record was written and names this process as its
+        // holder, so the file is read back and asked both questions. An answer
+        // that merely stopped saying "nothing was changed" would pass every
+        // assertion above and prove nothing about the disk.
+        var written = SessionLock.ReadRecord(landed);
+
+        await Assert.That(written).IsNotNull();
+        await Assert.That(written!.Holder.ProcessId).IsEqualTo(Environment.ProcessId);
+
+        // The other arm, and it is the reason this is one test. A write that
+        // never landed leaves no record, and still says so.
+        var (_, never) = NewSession(scratch, "write-refused");
+
+        var block = Deny(never.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None);
+        SessionLockResult unwritten;
+
+        try
+        {
+            unwritten = SessionLock.TryAcquire(never, Request("the write never lands"), NullLogger.Instance);
+        }
+        finally
+        {
+            Undeny(never.FullPath, block);
+        }
+
+        unwritten.Acquired?.Dispose();
+
+        await Assert.That(unwritten.Taken).IsFalse();
+        await Assert.That(unwritten.Message).Contains("nothing was changed");
+        await Assert.That(File.Exists(never.LockFile)).IsFalse();
+    }
+
     [Test]
     public async Task EveryLogRecordWrittenWhileTheLockIsHeldCarriesTheSession()
     {
@@ -1117,6 +1217,44 @@ internal sealed class SessionLockTests
 
     private static SessionLockRequest Request(string purpose) =>
         new() { Mode = "headless", Browser = "chromium", Purpose = purpose };
+
+    /// <summary>
+    /// Denies the current user one right on a session directory, so that a
+    /// failure the product must report can be provoked without a seam in it.
+    /// </summary>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="right">The one right to deny.</param>
+    /// <param name="inheritance">Whether the denial reaches files created inside.</param>
+    /// <param name="propagation">Whether it applies to the directory itself.</param>
+    /// <returns>The rule, to hand back to <see cref="Undeny"/>.</returns>
+    private static FileSystemAccessRule Deny(
+        string directory,
+        FileSystemRights right,
+        InheritanceFlags inheritance,
+        PropagationFlags propagation)
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var info = new DirectoryInfo(directory);
+        var security = info.GetAccessControl();
+        var rule = new FileSystemAccessRule(identity.User!, right, inheritance, propagation, AccessControlType.Deny);
+
+        security.AddAccessRule(rule);
+        info.SetAccessControl(security);
+
+        return rule;
+    }
+
+    /// <summary>Takes a denial back off, so the scratch teardown can do its job.</summary>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="rule">Whatever <see cref="Deny"/> returned.</param>
+    private static void Undeny(string directory, FileSystemAccessRule rule)
+    {
+        var info = new DirectoryInfo(directory);
+        var security = info.GetAccessControl();
+
+        _ = security.RemoveAccessRule(rule);
+        info.SetAccessControl(security);
+    }
 
     private static (string Directory, SessionPath Path) NewSession(ScratchDirectory scratch, string name)
     {

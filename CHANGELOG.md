@@ -213,6 +213,26 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **A durable write that landed and could not be re-opened said *nothing was
+  changed*, which was false at the moment it was said.**
+  `SessionLock.TryAcquire` closes its handle on `lock.json`, renames a
+  fully-formed record over the name and re-opens it — and the write and the
+  re-open shared one `catch`. So a failure on the second one answered *"the
+  directory was not taken and nothing was changed"* about a machine where
+  `lock.json` had just been replaced with a record naming this process as the
+  holder. A caller acting on that sentence reads the reclaim it meets on its next
+  call as somebody else's crashed session rather than as its own last attempt.
+  Now one `catch` per operation: a write that never landed still says nothing was
+  changed, and one that did says the record **was** written, who it names, that
+  nothing holds the directory, and what the next call will therefore report. **It
+  deliberately does not try to undo the write** — restoring the previous record
+  means a second write along the path that just refused us, and the answer would
+  then have to describe a rollback that half happened. `SessionLockTests.AWriteThatLandedSaysSoAndOnlyAWriteThatDidNotSaysNothingChanged`
+  holds both arms and provokes each with an ACL denying exactly one right, rather
+  than with a fault-injection seam in shipped locking code. This is the second,
+  separable half of the interleaving recorded below; **the window itself is
+  untouched and still open.**
+
 - ⚠️ **Not fixed, and recorded loudly: two BrowserAI processes appended holder
   statements to one `lock.json`, in CI, on 2026-08-19.** This is the interleaving
   the 2026-08-18 adversarial review predicted from reading and which nothing had
@@ -224,10 +244,13 @@ has been satisfied in form only.
   consecutive local full runs and a CI re-run of the same commit was green.
   **The fix is already specified in [`TODO.md`](TODO.md) and is deliberately not
   being made in this pass**, because it restructures the refusal on the
-  most-exercised path in the product. A second, separable and cheaper defect is
-  visible in the same evidence: `SessionLock.TryAcquire` puts the durable write
-  and the reopen in one `catch`, so a failure *after* a successful write claims
-  nothing changed. Both halves have a [hazard row](HAZARDS.md#hazard-index).
+  most-exercised path in the product. A second, separable and cheaper defect was
+  visible in the same evidence: `SessionLock.TryAcquire` put the durable write
+  and the reopen in one `catch`, so a failure *after* a successful write claimed
+  nothing changed. ⚠️ *Corrected 2026-08-19 (previously "A second, separable and
+  cheaper defect **is** visible …" with no fix): that half **is now fixed** — see
+  the entry below — and only the window itself is still open.* Both halves have
+  a [hazard row](HAZARDS.md#hazard-index).
   `SessionLockTests.UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho`
   caught it, and it was diagnosable only because a whole-set dossier was added to
   that test on 2026-08-18 for exactly this occasion.

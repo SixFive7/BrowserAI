@@ -775,7 +775,6 @@ internal sealed class SessionLock : IDisposable
             try
             {
                 WriteDurably(location.LockFile, record);
-                held = OpenHeld(location.LockFile);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -784,6 +783,40 @@ internal sealed class SessionLock : IDisposable
                 return new SessionLockResult(
                     SessionLockOutcome.Unreadable,
                     $"BrowserAI could not write '{location.LockFile}' ({failure.Message}), so the directory was not taken and nothing was changed. Check that the volume has space and that the directory is writable.");
+            }
+
+            // ⚠️ A SECOND CATCH RATHER THAN A SECOND STATEMENT IN THE FIRST ONE,
+            // AND THE REASON IS THE SENTENCE ABOVE. Corrected 2026-08-19
+            // (previously `WriteDurably` and this open shared one catch, which
+            // answered "nothing was changed" to both). The write is a rename of
+            // a fully-formed record over the name: once it returns, lock.json
+            // HAS been replaced and it names this process as the holder. A
+            // failure here is therefore the one case where "nothing was changed"
+            // is false at the moment it is said -- and a caller acting on it
+            // reads the reclaim it meets on the next call as somebody else's
+            // crashed session rather than as its own last attempt.
+            //
+            // It does not try to undo the write, deliberately. Restoring
+            // `previous` means a second WriteDurably along the path that just
+            // refused us, and deleting the record when there was no previous one
+            // means a delete on the same path; either can fail in turn, and the
+            // answer would then have to describe a rollback that half happened.
+            // Naming the state exactly is cheaper and cannot make it worse: the
+            // record is stale by construction, nothing holds the directory, and
+            // the reclaim path already handles a record whose holder is alive.
+            try
+            {
+                held = OpenHeld(location.LockFile);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                SessionLog.CouldNotWriteLockFile(logger, location.LockFile, failure);
+
+                return new SessionLockResult(
+                    SessionLockOutcome.Unreadable,
+                    $"BrowserAI replaced '{location.LockFile}' and could not then re-open it ({failure.Message}), so the directory was NOT taken -- but the record WAS written, and it now names this process as the holder. "
+                    + $"Nothing holds '{location.FullPath}': call again, and the acquisition will report reclaiming it from a process that is still running, which is this one. "
+                    + "If the call fails the same way, something on this machine is denying access to that file rather than holding it.");
             }
 
             // CA2000 is disabled for this one statement and nothing else. The
