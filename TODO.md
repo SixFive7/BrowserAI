@@ -218,14 +218,27 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **14 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **7 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
       the index's own `Area` cells verbatim:
-      Protocol and SDK 7,
       Packaging and updates 4, Handle routing and instance lifetime 3.
-      32 more are `open` while carrying evidence, so 46 are `open` in total, against
-      112 `closed`.
+      34 more are `open` while carrying evidence, so 41 are `open` in total, against
+      117 `closed`.
+
+      ***Corrected 2026-08-19, fifth of the pass (previously "14 rows … Protocol
+      and SDK 7 … 32 more are `open` while carrying evidence, so 46 are `open` in
+      total, against 112 `closed`")*** — re-counted by the test, not adjusted.
+      **Protocol and SDK is done**: 7 rows, now 5 `closed` and 2 `open` with a
+      reason. ⚠️ **One of the five had been closed by the product for three days
+      and nobody had read the row.** The `ContentBlock` converter *throwing* on
+      an unknown content type sat `open` with `—` while its two neighbours —
+      the same converter *dropping* unknown properties and unknown types —
+      closed on 2026-08-16 on the same sentence, and
+      `LosslessPassthroughTests.AnUnknownContentTypeSurvivesTheTrip` is a test
+      written for it. **The gap was in the reading, not in the product**, which
+      is the argument for adjudicating a whole table rather than the rows a
+      change happens to touch.
 
       ***Corrected 2026-08-19, fourth of the pass (previously "21 rows … Tooling
       and CI 7 … 28 more are `open` while carrying evidence, so 49 are `open` in
