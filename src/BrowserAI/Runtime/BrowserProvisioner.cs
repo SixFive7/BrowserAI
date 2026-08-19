@@ -80,12 +80,34 @@ internal sealed record ProvisioningTimers
     /// How long the installer child may run before its job is closed.
     /// </summary>
     /// <remarks>
-    /// 45 minutes is <b>27 minutes of headroom over the 1 Mbps arithmetic</b>
-    /// for a 203.8 MB download, so it never fires on a slow link — which is what
-    /// a cap has to be, because a cap that fires on a legitimate case teaches
-    /// callers to retry into it. <b>One cap for both families, sized on the
-    /// larger:</b> Firefox's 127.2 MB is 16 m 58 s at 1 Mbps, so a cap that is
-    /// generous for Chromium cannot be tight for Firefox.
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "45 minutes is <b>27 minutes of
+    /// headroom over the 1 Mbps arithmetic</b> for a 203.8 MB download").</b>
+    /// <b>27 minutes IS the download</b>, not the headroom: 203,824,344 B is
+    /// 1,630,594,752 bits, which at 1 Mbps is 1,630.6 s — <b>27.2 minutes</b>.
+    /// So the headroom over that arithmetic is <b>17.8 minutes</b>, and the
+    /// sentence had transposed the two halves of its own sum. The Firefox
+    /// clause below is the same arithmetic labelled correctly, which is what
+    /// made the transposition visible.
+    /// </para>
+    /// <para>
+    /// <b>The cap is unchanged at 45 minutes and that is deliberate.</b> 45 is
+    /// not a number anybody reaches by adding 27 minutes of slack to a 27.2
+    /// minute download — that would be ~54 — and no slack target is stated
+    /// anywhere in this repository. It is a round cap chosen comfortably above
+    /// the arithmetic, and the correction is to the sentence rather than to the
+    /// figure.
+    /// </para>
+    /// <para>
+    /// <b>What the cap actually guarantees, stated as a threshold rather than
+    /// as "never".</b> 1,630,594,752 bits in 2,700 s is <b>603,924 bit/s</b>, so
+    /// this cap fires on any link that sustains less than <b>~0.60 Mbps</b> for
+    /// the whole download. That is what "it never fires on a slow link" means
+    /// here, and a cap that fires on a legitimate case teaches callers to retry
+    /// into it. <b>One cap for both families, sized on the larger:</b> Firefox's
+    /// 127.2 MB is 16 m 58 s at 1 Mbps, so a cap that is generous for Chromium
+    /// cannot be tight for Firefox.
+    /// </para>
     /// </remarks>
     public TimeSpan AbsoluteCap { get; init; } = TimeSpan.FromMinutes(45);
 
