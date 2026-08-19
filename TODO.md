@@ -71,14 +71,19 @@ findable from more than one direction.
       that test on 2026-08-18 for exactly this occasion, and the first failure it
       ever caught was a different shape from the one it was written for.
 
-      **A second, separable defect is visible in the same evidence, and it is
-      cheaper:** `SessionLock.TryAcquire` puts `WriteDurably` and the reopen in
-      one `catch`, so a failure **after** a successful write returns
+      ✅ **A second, separable defect was visible in the same evidence, and it
+      is done — 2026-08-19.** `SessionLock.TryAcquire` put `WriteDurably` and the
+      reopen in one `catch`, so a failure **after** a successful write returned
       `Unreadable` saying *"the directory was not taken and nothing was
-      changed"* — which is false, because the record on disk already carries this
-      process's holder statement. Split them, so the post-write arm says what
-      actually happened. It has a [hazard row](HAZARDS.md#hazard-index) naming
-      both halves.
+      changed"* — false, because the record on disk already carried this
+      process's holder statement. There is now one `catch` per operation: the
+      write arm is unchanged word for word, and the post-write arm says the
+      record **was** written, who it names, that nothing holds the directory, and
+      that the next call will therefore report a reclaim from a live process
+      which is this one. `SessionLockTests.AWriteThatLandedSaysSoAndOnlyAWriteThatDidNotSaysNothingChanged`
+      holds both arms. **The item above is untouched and stays open** — that was
+      the point of separating them, and the [hazard row](HAZARDS.md#hazard-index)
+      naming both halves says which half closed.
 
 - [ ] **Watch [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
       and act on what upstream decides.** The report: `"launchOptions":
