@@ -82,18 +82,47 @@ namespace BrowserAI.Sessions;
 /// treats that as <i>no answer</i> and lets the gate settle it.
 /// </description>
 /// </item>
+/// <item>
+/// <term><b>Entitled, and the only possible owner</b> —
+/// <c>SessionLock.ReopenHeld</c>, at its three call sites</term>
+/// <description>
+/// It holds the per-directory gate <i>and</i> the record on disk is one it has
+/// just written or is recovering, so no other process can be the owner: becoming
+/// one means passing through <c>SessionLock.TakeOrReport</c>, which needs the
+/// gate this caller is holding. A refusal is therefore an <b>ungated transient
+/// handle</b>, not an owner, and it is waited out —
+/// <see cref="WaitOutWhereNoOwnerIsPossible"/>. <b>The precondition is the whole
+/// licence</b>: route an open that has not established it through here and a
+/// live owner gets waited out for thirty seconds and then reported as a
+/// transient.
+/// </description>
+/// </item>
 /// </list>
 /// <para>
-/// <b>Only <see cref="UnauthorizedAccessException"/>, never
-/// <see cref="IOException"/>.</b> The writers catch both because a rename may
-/// meet either; a reader may not. A sharing violation on one of these opens
-/// means the holder opened the file in a mode that excludes us, which is a real
-/// answer the acquire path turns into <c>Contended</c> — and waiting it out
-/// would be waiting for a live owner to go away.
+/// ⚠️ <b><see cref="UnauthorizedAccessException"/> for an entitled reader,
+/// and a sharing violation only where no owner is possible. Corrected
+/// 2026-08-19 (previously "Only <see cref="UnauthorizedAccessException"/>, never
+/// <see cref="IOException"/> … a sharing violation on one of these opens means
+/// the holder opened the file in a mode that excludes us").</b> That reading is
+/// right for the two rows above it and wrong for the third, and the difference
+/// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>lock.json</c>
+/// <c>FileAccess.ReadWrite</c> without the gate, so its handle — microseconds
+/// wide — refuses a gate holder's own re-open, which then reported a record it
+/// had genuinely written as one it could not take. <b>The probe cannot be made
+/// not to do that</b>, and the proof is one line of sharing arithmetic: to be
+/// refused by a holder's <c>FileShare.Read</c> a probe must ask for access
+/// outside <c>Read</c>, and a handle whose granted access is outside
+/// <c>Read</c> is exactly what an open sharing only <c>Read</c> is refused by.
+/// Detecting an owner and blocking one are the same capability. So the fix is
+/// on this side, and it is bounded by the precondition rather than by a guess
+/// about how long a probe lives.
 /// </para>
 /// </remarks>
 internal static class RenameWindow
 {
+    private const int ErrorSharingViolation = 32;
+    private const int ErrorLockViolation = 33;
+
     /// <summary>
     /// How long an entitled reader waits out a rename that is replacing the file
     /// it is opening.
@@ -156,7 +185,74 @@ internal static class RenameWindow
     /// <exception cref="UnauthorizedAccessException">
     /// The denial outlasted <see cref="Budget"/>, so it is not a window.
     /// </exception>
-    public static T WaitOut<T>(Func<T> open)
+    public static T WaitOut<T>(Func<T> open) => WaitOut(open, aSharingViolationToo: false);
+
+    /// <summary>
+    /// Runs an open by the <b>only process that can own the file</b>, waiting out
+    /// a transient handle as well as a rename in flight.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The caller must have established the precondition, and there are
+    /// exactly three places that can.</b> Each holds
+    /// <c>LockScopes.PerDirectoryGate</c> and is re-opening a record it has just
+    /// written itself or is taking back after its own write failed —
+    /// <c>SessionLock.TakeOrReport</c> after <c>WriteDurably</c>,
+    /// <c>SessionLock.Rewrite</c> after the same, and <c>SessionLock.Reclaim</c>
+    /// recovering from a rewrite that threw. Ownership is only ever granted
+    /// under that gate, so while it is held no second owner can appear and the
+    /// first one would have been met at the gated open before the write.
+    /// </para>
+    /// <para>
+    /// <b>What is being waited out is therefore a handle rather than an
+    /// owner.</b> <c>SessionLock.ProbeForHolder</c> is the one opener in the
+    /// product that asks for write access without the gate; it holds the file
+    /// for the length of one <c>FileStream</c> construction and disposal, and
+    /// inside that instant a gate holder's re-open is refused
+    /// <c>ERROR_SHARING_VIOLATION</c>. Observed in CI on 2026-08-19, run
+    /// 32203064556 attempt 1: two contenders wrote holder statements into one
+    /// <c>lock.json</c> 61 ms apart because the first one's re-open was refused
+    /// and it gave up on the directory it had already written itself into.
+    /// </para>
+    /// <para>
+    /// <b>Still bounded, and by the same <see cref="Budget"/>.</b> A handle that
+    /// outlasts thirty seconds is not a probe passing through — it is something
+    /// on the machine holding the file, which is a different fault and must be
+    /// reported rather than waited on. <c>LockScopes.PerDirectoryGate</c> is
+    /// larger than this budget and <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c>
+    /// fails the build if that ordering is ever inverted, so peers queued at the
+    /// gate outlast the longest wait taken inside it.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="T">What the open produces.</typeparam>
+    /// <param name="open">The open, called again while the refusal can still clear.</param>
+    /// <returns>Whatever <paramref name="open"/> returned.</returns>
+    /// <exception cref="UnauthorizedAccessException">The denial outlasted <see cref="Budget"/>.</exception>
+    /// <exception cref="IOException">The sharing violation outlasted <see cref="Budget"/>.</exception>
+    public static T WaitOutWhereNoOwnerIsPossible<T>(Func<T> open) => WaitOut(open, aSharingViolationToo: true);
+
+    /// <summary>
+    /// Whether a failed open was refused because somebody else has the file
+    /// open in a mode that excludes this one.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two codes, because Windows uses both for the same event.</b>
+    /// <c>ERROR_SHARING_VIOLATION</c> is the ordinary refusal;
+    /// <c>ERROR_LOCK_VIOLATION</c> arrives for a byte-range lock over the same
+    /// region, and a handler for one alone misses the other. It lives here
+    /// rather than in <c>SessionLock</c> because it is a fact about what an open
+    /// refusal means, which is this type's whole subject.
+    /// </remarks>
+    /// <param name="failure">The refusal.</param>
+    /// <returns><see langword="true"/> when the refusal is a sharing violation.</returns>
+    public static bool IsSharingViolation(IOException failure)
+    {
+        ArgumentNullException.ThrowIfNull(failure);
+
+        return (failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation;
+    }
+
+    private static T WaitOut<T>(Func<T> open, bool aSharingViolationToo)
     {
         ArgumentNullException.ThrowIfNull(open);
 
@@ -170,6 +266,11 @@ internal static class RenameWindow
                 return open();
             }
             catch (UnauthorizedAccessException) when (clock.Elapsed < Budget)
+            {
+                Thread.Sleep(delay);
+                delay = Math.Min(delay * 2, 100);
+            }
+            catch (IOException failure) when (aSharingViolationToo && IsSharingViolation(failure) && clock.Elapsed < Budget)
             {
                 Thread.Sleep(delay);
                 delay = Math.Min(delay * 2, 100);

@@ -1108,6 +1108,177 @@ internal sealed class SessionLockTests
         await Assert.That(File.Exists(never.LockFile)).IsFalse();
     }
 
+    /// <summary>
+    /// A peer's pre-gate probe holds <c>lock.json</c> for an instant, and that
+    /// instant must not take the directory away from the process that just wrote
+    /// its own record into it — while a handle that never goes away is still
+    /// reported rather than waited on forever.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the interleaving CI produced on 2026-08-19</b>, run
+    /// 32203064556 attempt 1: sixteen contenders, two holder statements in one
+    /// <c>lock.json</c> 61 ms apart, the first writer answering
+    /// <c>Unreadable</c> about a record it had genuinely written. The mechanism
+    /// is one handle: <c>SessionLock.ProbeForHolder</c> opens the file
+    /// <c>FileAccess.ReadWrite</c> in front of the gate, and an open sharing only
+    /// <c>Read</c> is refused while it lives.
+    /// </para>
+    /// <para>
+    /// <b>Why the transient is planted by hand rather than raced for.</b> The
+    /// window is between <c>File.Move</c> returning and the re-open, which is a
+    /// few microseconds of managed code — a peer can only land in it by winning a
+    /// photo finish, which is exactly why CI needed twenty runs to show it once
+    /// and six consecutive local runs showed it none. So the handle is opened in
+    /// the mode the probe opens it in, the product's own re-open is called
+    /// against it, and the race is removed from the test rather than from the
+    /// property.
+    /// </para>
+    /// <para>
+    /// <b>Two arms, and the second is what keeps the first from being a hang.</b>
+    /// A handle that goes away is waited out; a handle that does not is reported
+    /// at <see cref="RenameWindow.Budget"/>. Without the second, "wait it out"
+    /// could become "wait forever" and every assertion in the first arm would
+    /// still pass. ⚠️ <b>The second arm therefore costs thirty seconds</b>, which
+    /// is the third test in this suite to spend that budget deliberately.
+    /// </para>
+    /// <para>
+    /// <b>No clock is asserted on.</b> The first arm watches the call
+    /// <i>fail to return</i> for <see cref="StillBlocked"/> — a bound a slow
+    /// machine can only make pass — and then releases the handle and requires the
+    /// call to complete. The second arm asserts an exception, not a duration.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATransientHandleIsWaitedOutByTheReopenAndAPermanentOneIsStillReported()
+    {
+        using var scratch = ScratchDirectory.Create("session-transient");
+        var (_, path) = NewSession(scratch, "transient");
+
+        // A real record, written by the product, then released -- so the file on
+        // disk is exactly what a re-open meets.
+        SessionLock.TryAcquire(path, Request("the record the re-open is for"), NullLogger.Instance).Acquired!.Dispose();
+
+        // ProbeForHolder's open, mode for mode: ReadWrite access so a holder
+        // refuses it, ReadWrite | Delete sharing so it does not refuse a
+        // concurrent rename. The granted ReadWrite is what refuses a holder's
+        // FileShare.Read open, and no share mode can take that away -- which is
+        // the arithmetic that says this cannot be fixed on the probe's side.
+        var transient = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+
+        try
+        {
+            // The mechanism, asserted before the behaviour that absorbs it: while
+            // that handle lives, the holder's own open really is refused.
+            _ = Assert.Throws<IOException>(() =>
+            {
+                using var holder = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+            });
+
+            var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            var reopen = Task.Run(() =>
+            {
+                entered.SetResult();
+                return SessionLock.ReopenHeld(path.LockFile);
+            });
+
+            await entered.Task;
+
+            var blocked = await Task.WhenAny(reopen, Task.Delay(StillBlocked));
+
+            await Assert.That(blocked).IsNotEqualTo((Task)reopen).Because(
+                "the re-open taken after this process's own write must wait a transient handle out rather than answer it: "
+                + "under the per-directory gate nothing else can own the file, so a sharing violation is a peer looking, "
+                + "and answering it hands the directory to whichever contender arrives next");
+
+            // Released, and the wait clears -- which is the whole property. It is
+            // released here rather than on a timer so that nothing in this test
+            // depends on how long a machine takes.
+            await transient.DisposeAsync();
+
+            using var held = await reopen.WaitAsync(TestDefaults.InProcessHang);
+            await Assert.That(held.CanWrite).IsTrue();
+        }
+        finally
+        {
+            await transient.DisposeAsync();
+        }
+
+        // The other arm. A handle nothing releases is not a peer passing over the
+        // file, and the wait is bounded so that it is still reported.
+        using var permanent = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+
+        var reported = Assert.Throws<IOException>(() => SessionLock.ReopenHeld(path.LockFile).Dispose());
+
+        await Assert.That(RenameWindow.IsSharingViolation(reported!)).IsTrue().Because(reported!.Message);
+    }
+
+    /// <summary>
+    /// Every open this class takes after its own write waits a transient handle
+    /// out, and every open that is an ownership test does not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An invariant, because the interleaving cannot be reproduced.</b> The
+    /// behaviour of the tolerant open is measured by the test above; what nothing
+    /// else can hold is <i>which</i> opens use it, because reaching the post-write
+    /// re-open with a peer's handle really open needs a photo finish this suite
+    /// will not reliably win. So this reads the file as text, which is what
+    /// <c>ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne</c> does for
+    /// the same class of pairing.
+    /// </para>
+    /// <para>
+    /// <b>Getting it backwards in either direction is a defect.</b> An ownership
+    /// test routed through <c>ReopenHeld</c> waits a <i>live owner</i> out for
+    /// thirty seconds and then reports it as a transient — the mechanism
+    /// inverted, which is the failure
+    /// <see cref="RenameWindow"/>'s own table exists to prevent. A post-write
+    /// re-open routed through <c>OpenHeld</c> is the CI failure of 2026-08-19,
+    /// restored.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheOpensThatFollowThisClassesOwnWriteAreTheOnlyOnesThatWaitOutAHandle()
+    {
+        var source = await File.ReadAllTextAsync(Path.Combine(
+            RepositoryLayout.Root.FullName, "src", "BrowserAI", "Sessions", "SessionLock.cs"));
+
+        // Call sites only. `ReopenHeld(` does not contain `OpenHeld(` -- the O is
+        // capital in one and lower in the other -- so the two never cross-count,
+        // and a `<see cref="OpenHeld"/>` in a doc comment carries no parenthesis.
+        var ownershipTests = CallSites(source, "OpenHeld(", "FileStream OpenHeld(");
+        var reopens = CallSites(source, "ReopenHeld(", "FileStream ReopenHeld(");
+
+        // TakeOrReport's open before the write, and TryHoldUnowned's. Both may
+        // meet a real owner, so both must answer rather than wait.
+        await Assert.That(ownershipTests.Count).IsEqualTo(2)
+            .Because(string.Join(" | ", ownershipTests.Select(at => LineAt(source, at))));
+
+        // TakeOrReport after WriteDurably, Rewrite after WriteDurably, and
+        // Reclaim taking the name back after a rewrite that threw.
+        await Assert.That(reopens.Count).IsEqualTo(3)
+            .Because(string.Join(" | ", reopens.Select(at => LineAt(source, at))));
+
+        // And the pairing an accurate count still would not catch: every write
+        // this class performs is followed by the tolerant open and never by the
+        // other one.
+        foreach (var write in CallSites(source, "WriteDurably(", "void WriteDurably("))
+        {
+            var tolerant = reopens.FirstOrDefault(at => at > write, -1);
+            var intolerant = ownershipTests.FirstOrDefault(at => at > write, -1);
+
+            await Assert.That(tolerant).IsNotEqualTo(-1)
+                .Because($"'{LineAt(source, write)}' is followed by no re-open at all");
+
+            await Assert.That(intolerant is -1 || tolerant < intolerant).IsTrue().Because(
+                "an open that follows this class's own write cannot meet an owner, so it must not read a sharing violation as one — "
+                + $"'{LineAt(source, write)}' is followed by '{LineAt(source, intolerant)}' first");
+        }
+    }
+
     [Test]
     public async Task EveryLogRecordWrittenWhileTheLockIsHeldCarriesTheSession()
     {
@@ -1205,6 +1376,48 @@ internal sealed class SessionLockTests
         _ = lines.AppendLine().Append(CultureInfo.InvariantCulture, $"The host, with the winner still holding, reads: {StateOfTheLockFile(path.LockFile).Description}");
 
         return lines.ToString();
+    }
+
+    /// <summary>
+    /// Where <paramref name="call"/> is <b>called</b> in a source file, never
+    /// where it is declared.
+    /// </summary>
+    /// <param name="source">The file, as text.</param>
+    /// <param name="call">The call, with its opening parenthesis.</param>
+    /// <param name="declaration">The tail of the declaration, so it can be excluded.</param>
+    /// <returns>The offset of every call site, in file order.</returns>
+    private static List<int> CallSites(string source, string call, string declaration)
+    {
+        var sites = new List<int>();
+
+        for (var at = source.IndexOf(call, StringComparison.Ordinal); at >= 0; at = source.IndexOf(call, at + 1, StringComparison.Ordinal))
+        {
+            var from = at - (declaration.Length - call.Length);
+
+            if (from < 0 || !source.AsSpan(from, declaration.Length).SequenceEqual(declaration))
+            {
+                sites.Add(at);
+            }
+        }
+
+        return sites;
+    }
+
+    /// <summary>The trimmed line an offset falls on, for a failure message.</summary>
+    /// <param name="source">The file, as text.</param>
+    /// <param name="at">The offset, or <c>-1</c> for nothing.</param>
+    /// <returns>The line.</returns>
+    private static string LineAt(string source, int at)
+    {
+        if (at < 0)
+        {
+            return "nothing";
+        }
+
+        var start = source.LastIndexOf('\n', at) + 1;
+        var end = source.IndexOf('\n', at);
+
+        return source[start..(end < 0 ? source.Length : end)].Trim();
     }
 
     private static bool IsProductCode(FileInfo file) =>

@@ -286,6 +286,39 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **Two BrowserAI processes wrote holder statements into one `lock.json`, and
+  what let them was a peer's *probe* — the handle it holds while it looks.** The
+  probe opens `lock.json` `FileAccess.ReadWrite` in front of the per-directory
+  gate, which is what makes it a sound ownership test; the same access is what an
+  open sharing only `Read` is refused by. So a contender passing over the file in
+  the microseconds between a writer's rename and that writer's own re-open
+  refused the re-open, and the writer gave up a directory whose record already
+  named it. Observed in CI on 2026-08-19, run 32203064556 attempt 1, on a 4-core
+  hosted runner: `Reclaimed taken=true holderPid=2652` from one contender and
+  `Unreadable taken=false` from 2652 itself, 61 ms apart, with `holder` and
+  `purpose` each carrying two statements.
+
+  **It is fixed on the gated side because it provably cannot be fixed on the
+  probe's.** To be refused by a holder a probe must ask for access outside
+  `Read`, and a handle whose granted access is outside `Read` is exactly what an
+  open sharing only `Read` is refused by — *detecting an owner and blocking one
+  are the same capability*. `SessionLock.ReopenHeld` now takes the three opens
+  that follow this class's own write (`TakeOrReport` after `WriteDurably`,
+  `Rewrite` after the same, and `Reclaim` after a rewrite that threw) through
+  `RenameWindow.WaitOutWhereNoOwnerIsPossible`, which waits a sharing violation
+  out as well as a delete-pending destination. **The licence is a precondition,
+  not a guess:** each of the three holds the gate and has just written a record
+  naming itself, and becoming an owner means passing through `TakeOrReport`,
+  which needs that gate. Still bounded at `RenameWindow.Budget` — a handle that
+  outlasts thirty seconds is a different fault and is still reported.
+
+  **The two ownership tests are deliberately unchanged**, and one of them meets
+  the same handle: `TakeOrReport`'s open *before* the write can be facing a real
+  owner, so it may not wait, and a peer's probe there still reads as `Contended`.
+  That is narrower — a wrong sentence rather than a wrong owner, correct again on
+  the next call — and it is now a row of its own in the
+  [hazard index](HAZARDS.md#hazard-index) rather than an unstated residue.
+
 - **The suite was red from Git Bash and green from PowerShell, on the same
   commit, and now the wrong comparison is red in both.** Two assertions in
   `SessionDirectoryGuardTests` compared a path composed in the test host against

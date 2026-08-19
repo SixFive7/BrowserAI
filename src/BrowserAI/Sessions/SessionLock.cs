@@ -59,9 +59,20 @@ namespace BrowserAI.Sessions;
 /// resolution has to be close → rename → re-open, performed <b>entirely inside
 /// the per-directory mutex</b>. That is exactly what the mutex is for: every
 /// BrowserAI takes it before create-or-take, so the instants in which nobody
-/// holds the name are instants in which nobody else can look. See
+/// holds the name are instants in which nobody else can <i>take</i> it. See
 /// <c>SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen</c>,
 /// which walks all three share modes on every run.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-19 (previously "instants in which nobody else can
+/// look").</b> A peer can look, and does: <see cref="ProbeForHolder"/> runs in
+/// front of the gate by design, so it opens <c>lock.json</c> inside that gap and
+/// its handle — held for one <c>FileStream</c> construction — refuses the gate
+/// holder's own re-open. <b>Nobody else can take it, which is the property the
+/// gate was for; nobody else can look was never true and the design never needed
+/// it.</b> The re-open therefore goes through <see cref="ReopenHeld"/>, which
+/// waits a transient handle out because under the gate no owner can be behind
+/// it.
 /// </para>
 /// <para>
 /// <b>The error code is load-bearing, not trivia.</b> <c>ERROR_ACCESS_DENIED</c>
@@ -95,9 +106,6 @@ internal sealed class SessionLock : IDisposable
     /// </para>
     /// </remarks>
     private static readonly TimeSpan MoveBudget = RenameWindow.Budget;
-
-    private const int ErrorSharingViolation = 32;
-    private const int ErrorLockViolation = 33;
 
     private readonly MachineMutex _gate;
     private readonly IDisposable? _logScope;
@@ -297,7 +305,7 @@ internal sealed class SessionLock : IDisposable
             try
             {
                 WriteDurably(Location.LockFile, next);
-                _held = OpenHeld(Location.LockFile);
+                _held = ReopenHeld(Location.LockFile);
                 Record = next;
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -322,7 +330,7 @@ internal sealed class SessionLock : IDisposable
     {
         try
         {
-            return OpenHeld(lockFile);
+            return ReopenHeld(lockFile);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -510,7 +518,7 @@ internal sealed class SessionLock : IDisposable
                 {
                     return $"'{location.FullPath}' holds no '{SessionLayout.LockFileName}', so it is not a BrowserAI session";
                 }
-                catch (IOException failure) when (IsSharingViolation(failure))
+                catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
                 {
                     return $"'{location.FullPath}' is held by a live session";
                 }
@@ -671,6 +679,25 @@ internal sealed class SessionLock : IDisposable
     /// <c>ReadWrite</c> is refused by a holder's <c>FileShare.Read</c>, which is
     /// the sharing violation being read as ownership.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>AND THE HANDLE IT HOLDS FOR THAT INSTANT REFUSES A GATE HOLDER'S
+    /// OWN RE-OPEN. Observed 2026-08-19, CI run 32203064556 attempt 1.</b> Widen
+    /// the share mode all you like: the <i>granted access</i> is what a
+    /// <c>FileShare.Read</c> open is refused by, and the granted access has to be
+    /// <c>ReadWrite</c> or this method cannot detect an owner at all.
+    /// <b>Detecting an owner and blocking one are the same capability</b>, so
+    /// this cannot be fixed here and is not attempted here. It is absorbed on the
+    /// other side, by <see cref="ReopenHeld"/>, at the three opens that hold the
+    /// gate and therefore cannot meet an owner. What that leaves standing is
+    /// narrower and is written down rather than fixed: an ownership test that
+    /// meets this handle — <see cref="OpenHeld"/> at <see cref="TakeOrReport"/>'s
+    /// first open — still reads it as <c>Contended</c>, which names a holder out
+    /// of a record that may be stale. It is in the
+    /// [hazard index](../../../HAZARDS.md#hazard-index), and it cannot be
+    /// discriminated from a real owner by anything cheaper than waiting, because
+    /// <see cref="TryHoldUnowned"/> holds a directory whose record names somebody
+    /// else entirely.
+    /// </para>
     /// </remarks>
     /// <param name="location">The canonicalised session directory.</param>
     /// <param name="logger">Where the refusal is recorded.</param>
@@ -693,7 +720,7 @@ internal sealed class SessionLock : IDisposable
             // same statement as "it is free", and it is not acted on here.
             return null;
         }
-        catch (IOException failure) when (IsSharingViolation(failure))
+        catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
         {
             // The one answer this method is allowed to give.
         }
@@ -749,7 +776,7 @@ internal sealed class SessionLock : IDisposable
                 // Free, and never locked. Nothing to reclaim, nothing to report.
                 previous = null;
             }
-            catch (IOException failure) when (IsSharingViolation(failure))
+            catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
             {
                 return Contended(location, logger);
             }
@@ -832,9 +859,18 @@ internal sealed class SessionLock : IDisposable
             // Naming the state exactly is cheaper and cannot make it worse: the
             // record is stale by construction, nothing holds the directory, and
             // the reclaim path already handles a record whose holder is alive.
+            //
+            // ⚠️ ReopenHeld AND NOT OpenHeld, ADDED 2026-08-19, AND THIS LINE IS
+            // THE ONE THE CI FAILURE WAS ABOUT. The record is on disk naming this
+            // process and the gate is held, so nothing can be the owner here --
+            // becoming one means passing through this method, which needs the
+            // gate. A refusal is therefore an ungated transient handle, and the
+            // product has exactly one ungated opener that asks for write access:
+            // ProbeForHolder, whose handle lives for the length of one
+            // FileStream construction. Believing it cost run 32203064556 a lock.
             try
             {
-                held = OpenHeld(location.LockFile);
+                held = ReopenHeld(location.LockFile);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -844,7 +880,7 @@ internal sealed class SessionLock : IDisposable
                     SessionLockOutcome.Unreadable,
                     $"BrowserAI replaced '{location.LockFile}' and could not then re-open it ({failure.Message}), so the directory was NOT taken -- but the record WAS written, and it now names this process as the holder. "
                     + $"Nothing holds '{location.FullPath}': call again, and the acquisition will report reclaiming it from a process that is still running, which is this one. "
-                    + "If the call fails the same way, something on this machine is denying access to that file rather than holding it.");
+                    + $"A peer that merely looked at the file is already waited out for {MoveBudget.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s before this is said, so if the call fails the same way, something on this machine is denying that file or holding it open for longer than that.");
             }
 
             // CA2000 is disabled for this one statement and nothing else. The
@@ -1010,15 +1046,25 @@ internal sealed class SessionLock : IDisposable
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Opens <c>lock.json</c> the way a holder holds it: read-write, sharing
-    /// only reads, so any other BrowserAI trying to take the same directory
-    /// meets a sharing violation.
+    /// Opens <c>lock.json</c> the way a holder holds it, <b>as an ownership
+    /// test</b>: read-write, sharing only reads, so any other BrowserAI trying to
+    /// take the same directory meets a sharing violation — and so does this,
+    /// which is the answer rather than a condition to wait out.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Through <see cref="RenameWindow"/>, added 2026-08-18, and every one
-    /// of the four call sites needs it.</b> Two of them open the file straight
-    /// after this class has renamed a new record over it, and the other two open
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "every one of the four call sites
+    /// needs it … two of them open the file straight after this class has
+    /// renamed a new record over it").</b> There are two call sites now, not
+    /// four, and both are ownership tests: <see cref="TakeOrReport"/>'s open
+    /// before the write and <see cref="TryHoldUnowned"/>'s. The three that open
+    /// straight after this class's own rename moved to
+    /// <see cref="ReopenHeld"/>, which waits out a sharing violation as well —
+    /// they cannot meet an owner, and what they were meeting instead was a
+    /// peer's pre-gate probe.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Through <see cref="RenameWindow"/>, added 2026-08-18.</b> These open
     /// a file another process may be renaming right now — and a delete-pending
     /// destination refuses an open with <c>ACCESS_DENIED</c>, which
     /// <see cref="TakeOrReport"/> did not catch: it handled the sharing
@@ -1044,11 +1090,49 @@ internal sealed class SessionLock : IDisposable
     /// <param name="lockFile">The lock file.</param>
     /// <returns>The held handle.</returns>
     private static FileStream OpenHeld(string lockFile) =>
-        RenameWindow.WaitOut(() =>
-            new FileStream(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1));
+        RenameWindow.WaitOut(() => Hold(lockFile));
 
-    private static bool IsSharingViolation(IOException failure) =>
-        (failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation;
+    /// <summary>
+    /// The same open, taken by the one process that can own the file, so a
+    /// sharing violation is waited out rather than believed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THE DIFFERENCE FROM <see cref="OpenHeld"/> IS THE PRECONDITION, NOT
+    /// THE OPEN.</b> Both produce a holder's handle and the two
+    /// <c>FileStream</c> arguments are one method so they cannot drift. What
+    /// separates them is who may call: this needs
+    /// <c>LockScopes.PerDirectoryGate</c> held <b>and</b> a record on disk this
+    /// process has just written or is taking back after its own write failed.
+    /// Under that precondition no second owner can exist, so a refusal is an
+    /// ungated transient handle — see <see cref="RenameWindow"/>'s table, third
+    /// row, for the sharing arithmetic that says the probe cannot be made not to
+    /// produce one.
+    /// </para>
+    /// <para>
+    /// <b>Added 2026-08-19, after the interleaving stopped being a prediction.</b>
+    /// CI run 32203064556 attempt 1: contender 2652 wrote its record, was
+    /// refused on this open by a peer's pre-gate probe, and answered that it had
+    /// not taken the directory; contender 696 reclaimed the same directory 61 ms
+    /// later, and <c>lock.json</c> carried two processes' holder statements. The
+    /// three call sites are the two post-write re-opens and
+    /// <see cref="Reclaim"/>; <c>SessionLockTests.TheOpensThatFollowThisClassesOwnWriteAreTheOnlyOnesThatWaitOutAHandle</c>
+    /// fails the build if a fourth appears or one of the three moves back.
+    /// </para>
+    /// </remarks>
+    /// <param name="lockFile">The lock file.</param>
+    /// <returns>The held handle.</returns>
+    internal static FileStream ReopenHeld(string lockFile) =>
+        RenameWindow.WaitOutWhereNoOwnerIsPossible(() => Hold(lockFile));
+
+    /// <summary>
+    /// The holder's open itself, written once so the two callers cannot come to
+    /// hold the file in different modes.
+    /// </summary>
+    /// <param name="lockFile">The lock file.</param>
+    /// <returns>The handle.</returns>
+    private static FileStream Hold(string lockFile) =>
+        new(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
 
     private static LockRecord? Parse(FileStream stream, string path)
     {
