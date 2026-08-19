@@ -393,3 +393,19 @@ It matters because the long-path guarantee is otherwise unfalsifiable: session
 directories are caller-chosen and unbounded, and a manifest that silently failed
 to embed would present as a path failure deep inside a browser profile tree.
 `[FLOATS]`
+
+⚠️ **The manifest is only half of what Windows requires, and the other half was
+asserted nowhere in this repository until 2026-08-19.** `longPathAware` in the
+manifest is necessary and **not sufficient**: Win32 honours it only when
+`HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled` is also
+`1`, which is a **machine setting an administrator sets and a default install
+leaves at `0`**. So every long-path measurement recorded anywhere here is
+conditional on a value nobody had written down. Read 2026-08-19 on the reference
+machine, Windows 10.0.26200: **`LongPathsEnabled` = `1` (`REG_DWORD`)**. `[MACHINE]`,
+and the most consequential `[MACHINE]` stamp in this file — a reader reproducing
+any long-path behaviour on a machine where it is `0` will get the opposite answer
+from a correctly-built binary. **What this does not tell you** is what BrowserAI
+does on such a machine: nothing here has run against `LongPathsEnabled = 0`, and
+the product makes no check and produces no diagnostic that would name it.
+Re-establish with `Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem
+-Name LongPathsEnabled`.

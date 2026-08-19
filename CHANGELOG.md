@@ -286,6 +286,44 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The browser-reinstall row rests on a measurement of Chromium rather than on
+  a retracted sentence about Windows.** The row had closed *download alongside
+  and swap* on *"Windows will not rename a directory holding open executables"*;
+  that was measured false on 2026-08-18 and retracted, leaving the refusal
+  standing on the admission that **nothing had measured what Chromium then
+  does**. It has now. Against a live headless Chromium 152.0.7977.8 running as
+  ten processes with its own working directory deliberately elsewhere,
+  `Directory.Move` of `chrome-win64` was refused with a **sharing violation** and
+  of `chromium-1237` with **`ERROR_ACCESS_DENIED`** — and **both succeeded in the
+  same script seconds later with the browser killed first**, which is the control
+  that makes the two refusals Chromium's rather than the tree's. So the 2026-08-18
+  retraction was right that Windows has no such general rule and **too broad in
+  the other direction**. Nothing is relaxed; the position is now evidence.
+  ([kb](kb/windows/processes.md#the-win32-interop-surface), re-verification row
+  103.) The mechanism is `[UNVERIFIED]` — the two refusals carry different Win32
+  errors, so they are not the same cause — and Firefox was not tested.
+
+- **`@playwright/mcp` emits no progress notifications at all**, which settles the
+  first of the two things the relayed-ordering decision was waiting on. All four
+  occurrences of `notifications/progress` in the shipped payload are the MCP
+  SDK's own schema and capability arms; `sendNotification` appears once, as the
+  capability handed *to* a tool handler, and nothing in `@playwright/mcp` or
+  `playwright-core`'s MCP layer calls it. Measured with a positive control, so a
+  zero is an absence rather than a failed search. **The SDK's fire-and-forget
+  reordering is therefore real and unreachable through this product's own child**,
+  and the transport decorator that would fix it would be a component built for a
+  notification nobody sends. Re-verification row 104 is what re-opens it.
+
+- **`LongPathsEnabled` is recorded where the long-path guarantee is claimed.**
+  `longPathAware` in the manifest is necessary and not sufficient — Win32 honours
+  it only when the machine-wide registry value is also `1`, and a default install
+  leaves it `0` — so every long-path measurement in `kb/` was conditional on a
+  value nobody had written down. Read off the reference machine as `1`
+  (`REG_DWORD`) on Windows 10.0.26200 and stamped `[MACHINE]`, with the half that
+  is still unknown named rather than implied: nothing has run against
+  `LongPathsEnabled = 0`, and the product neither checks it nor emits a
+  diagnostic that would name it.
+
 - **`CreateProcessW`'s two buffers are declared as spans rather than as one
   `char`.** `ref char lpCommandLine`, called as `ref commandLine[0]`, was weaker
   than Microsoft's own Win32 metadata for the same call in three ways at once: no

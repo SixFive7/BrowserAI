@@ -37,22 +37,6 @@ found and this pass did **not** do; the bounded ones also have rows in the
 [hazard index](HAZARDS.md#hazard-index), because a thing that is open needs to be
 findable from more than one direction.
 
-- [ ] **The browser-reinstall row was settled on an impossibility that is not
-      one.** [`DECISIONS.md`](DECISIONS.md) closed *download alongside and swap*
-      with *"Windows will not rename a directory holding open executables"*.
-      **Measured 2026-08-18 and it is false**: with a live process's working
-      directory deliberately elsewhere, `Directory.Move` of the running image's
-      parent and grandparent both succeeded, and so did renaming the running
-      `.exe`; only *deleting* it was refused
-      ([kb](kb/windows/processes.md#the-win32-interop-surface)). **This is the
-      one case the justification sweep found where the reason was wrong AND the
-      rule it justified rests on the wrong ground.** The refusal is deliberately
-      left standing — a browser whose tree is renamed underneath it holds open
-      handles into a path that no longer has that name, and **nothing has
-      measured what Chromium then does**. Two things are owed: measure that, then
-      re-decide the row on evidence rather than leaving a settled position
-      resting on a retracted sentence.
-
 - [ ] **Headless-with-storage is still refused on a reason the same pass
       declared void.** [`DECISIONS.md`](DECISIONS.md) keeps it out because *"it
       is the one combination granting full credential access with no visible
@@ -64,8 +48,15 @@ findable from more than one direction.
       it does not and the removal needs re-opening. Nothing to measure — this is
       a consistency decision that is owed either way.
 
-- [ ] **The justification sweep's residue: 24 assumed justifications named and
-      not settled.** The sweep ran 2026-08-18; what it *settled* is in `git log`
+- [ ] **The justification sweep's residue: 28 assumed justifications named and
+      not settled.** ⚠️ ***The predicate is one per italicised or named claim in
+      the three lists below, counted 2026-08-19 after the ones settled since.***
+      *The item said **24** when it was written on 2026-08-18 and did not state
+      what it was counting, so this is a **different question over the same
+      list** rather than a correction of it — which is the trap this repository
+      has already fallen into once and now has a rule against. The list is the
+      artefact; the number is derived from it and must be re-derived, never
+      decremented.* The sweep ran 2026-08-18; what it *settled* is in `git log`
       rather than here, and what it did not is below. Three read-only inventories
       plus a first-hand pass over [`Interop/`](src/BrowserAI/Interop), the build
       files and [`build/`](build) examined **598 load-bearing justifications**:
@@ -91,12 +82,16 @@ findable from more than one direction.
       remainders with items above are the browser-reinstall rename and
       headless-with-storage.
 
+      ***A third is done, 2026-08-19.*** `LongPathsEnabled` is now recorded where
+      the long-path guarantee is claimed — read off the reference machine as `1`
+      (`REG_DWORD`) on Windows 10.0.26200 and stamped `[MACHINE]`
+      ([kb](kb/toolchain.md#what-a-nativeaot-publish-emits)) — with the half that
+      is still unknown named rather than implied: **nothing has run against
+      `LongPathsEnabled = 0`**, and the product makes no check and emits no
+      diagnostic that would name it.
+
       **In [`kb/`](kb/README.md)** — a measurement store, so an assumed entry
-      there is a category violation. The long-path guarantee rests on
-      `app.manifest` alone and **nothing in the tree mentions `LongPathsEnabled`**,
-      the registry value Windows also requires; it is `1` on this machine, so
-      every long-path measurement here is conditional on a value nobody recorded.
-      *"The damage is a lost session rather than corruption"* is why nothing
+      there is a category violation. *"The damage is a lost session rather than corruption"* is why nothing
       defends against Velopack's `force_stop_package`, while another article
       asserts concurrent profile writers cause *"silent corruption"* — neither
       was run. *"The 156 denials do not matter"* infers the denied set is all
@@ -214,9 +209,22 @@ findable from more than one direction.
       It cannot be fixed from a notification handler — the reordering has already
       happened by the time one runs — so a fix means the `IClientTransport`
       decorator [deviation 7](STACK.md#nine-places-where-the-sdk-must-be-deviated-from)
-      describes, which sees messages in wire order. Settle two things first:
-      whether `@playwright/mcp` emits progress at all (not measured), and whether a
-      caller rendering a jumping progress value is a defect worth a component.
+      describes, which sees messages in wire order.
+
+      ✅ **The first of the two things is settled, 2026-08-19: it emits none.**
+      All four occurrences of `notifications/progress` in the shipped payload are
+      the MCP SDK's own schema and capability arms; `sendNotification` appears
+      once, as the capability handed *to* a tool handler, and nothing in
+      `@playwright/mcp` or `playwright-core`'s MCP layer calls it
+      ([kb](kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames),
+      re-verification row 104, with a positive control). **So the defect is real
+      and unreachable through this product's child**, and the decorator would be
+      a component built for a notification nobody sends.
+
+      ⚠️ **What is left is a decision and only a decision**, and it is now a
+      cheaper one: whether to build ahead of the bump that makes this reachable,
+      or to let row 104 be the thing that re-opens it. Nothing further to
+      measure.
 
 - [ ] **Review the *no automated checks* decision once the product is finished.**
       The [release checklist](RELEASING.md) is the only gate that exists; it works

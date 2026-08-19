@@ -902,11 +902,39 @@ rename-aside-then-replace is the ordinary Windows update pattern. **This
 falsified a settled design row**: `browserai_reinstall_browser` closed the
 download-alongside-and-swap option on *"Windows will not rename a directory
 holding open executables"*, which is not so
-([DECISIONS](../../DECISIONS.md)). The refusal it justified is left standing —
-what a browser does when its tree is renamed underneath it has **not** been
-measured — but the option is open rather than impossible. `[STABLE]`.
+([DECISIONS](../../DECISIONS.md)). `[STABLE]`.
 Re-establish by starting any long-running exe from a nested directory with its
 cwd elsewhere, then renaming the parent, the grandparent and the image.
+
+⚠️ **And it does not generalise to Chromium, which is the case the design row is
+actually about. Measured 2026-08-19** *(previously this paragraph ended "what a
+browser does when its tree is renamed underneath it has **not** been measured —
+but the option is open rather than impossible", and it is the second half of that
+sentence that turns out to be too broad)*. A live headless Chromium 152.0.7977.8
+from `chromium-1237`, started with its own current directory deliberately in the
+repository root and running as **ten processes**:
+
+| Operation, while that Chromium is live | Outcome |
+|---|---|
+| `Directory.Move` of `chrome-win64` — the directory holding `chrome.exe` | **refused**, `IOException`, *"being used by another process"* (sharing violation) |
+| `Directory.Move` of `chromium-1237` — the revision directory above it | **refused**, `IOException`, *"Access to the path … is denied"* |
+| the same two renames, browser killed first | **both succeeded** |
+
+**The control is the load-bearing half**: with the browser gone both renames
+succeed in the same script, in the same second, so the refusal is Chromium's and
+not an ambient condition on the tree. **What it means for the design option:**
+swapping a browser tree *under a live browser* is not available, which is what
+`browserai_reinstall_browser`'s refusal already assumes; swapping one while
+nothing is running works, and that is the only state the tool acts in anyway.
+**The mechanism is `[UNVERIFIED]`** — a directory cannot be renamed while a
+process has it as a current directory or while anything holds a handle to it
+without `FILE_SHARE_DELETE`, and which of those Chromium is doing was not
+established; the two refusals carry *different* Win32 errors, which says they are
+not the same cause. Measured for Chromium only; Firefox was not tested.
+`[MACHINE]` for the process count, `[FLOATS]` for the browser revision.
+Re-establish with `.work/rename-under-chromium.ps1`'s shape: start the
+provisioned `chrome.exe` headless with a scratch `--user-data-dir`, try both
+renames, then kill it and try both again as the control.
 
 **Windows does not reuse a pid while any handle to that process is open, and
 the control shows reuse is otherwise quick.** Measured 2026-08-18 on Windows

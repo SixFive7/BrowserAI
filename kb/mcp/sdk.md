@@ -543,6 +543,28 @@ Re-establish by running
 with logging at `Trace` and reading the order of the two `sending message` lines.
 `[FLOATS]`
 
+**And the child this proxy actually carries emits no progress notifications at
+all, so nothing today can observe that reordering.** Measured 2026-08-19 by
+reading the shipped bundle rather than by inference: across the whole payload
+tree, `notifications/progress` appears **four times and all four are the MCP
+SDK's own** — the `RequestMetaSchema` doc comment, `ProgressNotificationSchema`,
+and two `assertNotificationCapability`/`assertRequestHandlerCapability` switch
+arms that do nothing. `sendNotification` appears **once**, as the capability
+handed *to* a tool handler in the request extra, and nothing in
+`@playwright/mcp`'s `index.js`/`cli.js` or in `playwright-core/lib/tools` or
+`coreBundle.js` calls it. Every `progressToken` use is the SDK's **client-side**
+plumbing — `_onprogress`, `_taskProgressTokens` — which is the direction a proxy
+does not travel. **Positive control:** the same search finds `sendNotification`
+and `tools/list` in that file, so a zero for the call site is an absence rather
+than a failed search. `@playwright/mcp` 0.0.79, `playwright-core`
+1.63.0-alpha-2026-08-05. **What this settles:** the ordering defect above is real
+in the SDK and unreachable through this product's own child, so the
+`IClientTransport` decorator that would fix it would be a component built for a
+notification nobody sends. `[FLOATS]` — an upstream tool that starts reporting
+progress makes it reachable in one bump, with no schema change and nothing the
+golden snapshot can see. Re-establish by searching the resolved payload for
+`notifications/progress` and for `sendNotification` call sites.
+
 **A child's JSON-RPC error and its `data` both survive, and the prefix can be
 avoided rather than stripped.** Re-confirming [the step-8
 measurement](#error-shape-and-teardown-seen-from-an-in-process-harness) from the other
