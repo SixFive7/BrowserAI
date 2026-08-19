@@ -90,10 +90,22 @@ internal static class BrowserConfiguration
     /// tool list must be built from.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The MCP spec forbids the tool set varying per connection, and SEP-2567
     /// removed protocol-level sessions outright, so <c>init</c> cannot shrink the
-    /// list. There is one static list and it has to be the union; a call that its
-    /// session's mode does not permit is refused at call time instead.
+    /// list. There is one static list and it has to be the union.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "; a call that its session's mode
+    /// does not permit is refused at call time instead").</b> <b>No such refusal
+    /// exists.</b> The <c>(tool, mode)</c> permission matrix was removed on
+    /// 2026-08-18, and what replaced it is narrower and better: a mode without
+    /// <see cref="StorageCapability"/> has no cookie tools <b>in its child at
+    /// all</b>, so naming one reaches upstream and upstream answers that it does
+    /// not know the tool. Nothing in BrowserAI intercepts it. The sentence
+    /// survived the removal by describing a fallback that had gone, which is
+    /// exactly the shape a reader would act on and find missing.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<string> UnionCapabilities { get; } = [.. BaseCapabilities, StorageCapability];
 

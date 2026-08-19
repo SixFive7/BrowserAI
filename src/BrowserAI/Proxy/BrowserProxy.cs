@@ -370,11 +370,22 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// Answers <c>tools/list</c> from the run's own child, rewritten.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>One static list, and it has to be the union.</b> The MCP spec forbids
     /// the tool set varying per connection and SEP-2567 removed protocol-level
     /// sessions outright, so <c>init</c> cannot shrink it. The run's own child is
-    /// started with every capability any mode can have, and a call its session's
-    /// mode does not permit is refused at call time instead.
+    /// started with every capability any mode can have.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-19 (previously ", and a call its session's mode
+    /// does not permit is refused at call time instead").</b> Nothing refuses it:
+    /// the <c>(tool, mode)</c> matrix went on 2026-08-18 and the enforcement that
+    /// replaced it is the <i>child's own capability set</i> — a session without
+    /// <c>storage</c> has no cookie tools in its process, so the call is forwarded
+    /// and upstream answers that the tool does not exist. The one refusal this
+    /// proxy still makes by name is <c>browser_annotate</c>, and that is liveness
+    /// rather than permission.
+    /// </para>
     /// </remarks>
     private async Task AnswerToolsListAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
     {

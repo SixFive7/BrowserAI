@@ -23,6 +23,153 @@ has been satisfied in form only.
 
 ### Added
 
+- **A reinstall now takes the machine's browsers root for the whole call, and
+  `browserai_init` and `browserai_resume` are refused while it holds it.**
+  `browserai_reinstall_browser` already refused while sessions were open, and two
+  agents on one machine could still race past it: the reinstall establishes that
+  nothing is running out of the tree, and the other one's `init` launches a
+  browser into that tree while the recursive delete is part way through it. The
+  census was *right* when it was asked, which is why nothing caught this.
+
+  **The claim is a lock file at `<browsers root>\reinstall.lock`, held open
+  `FileShare.Read` for the whole operation.** A file rather than a named mutex
+  because the claim spans a 203.8 MB download inside an `async` method and a named
+  mutex is owned by the thread that waited on it; **and not a named semaphore**,
+  which does span threads, because a semaphore's count is not restored when its
+  holder dies — one crashed reinstall would then refuse every `init` on the
+  machine until a reboot. Windows closes a file handle however the process ends,
+  which is the crash recovery this needs and cannot write itself. Held-ness is a
+  sharing violation and never the file's existence, exactly as `lock.json` works.
+
+  **It is mutual against itself** — a second reinstall is refused for the same
+  reason a session is, which the maintainer asked for in the same breath:
+  *"Including any reinstall sessions."* **And it does not drain.** A reinstall
+  that takes the claim and then finds sessions open releases it and refuses
+  immediately, naming how many are running; it never holds the machine waiting for
+  a browser a human may never close.
+
+  **The lock order is fixed and has no cycle.** The claim is outermost and the
+  per-family provisioning mutexes are taken under it, never the other way round;
+  `init` and `resume` only *probe* it and never acquire it, so they can never take
+  it from a racing reinstall; and every acquisition on both sides is non-blocking,
+  so even an inverted order would produce a refusal rather than a hang.
+
+- **The family reinstall's session gate is now unconditional.** It used to be
+  asked only *inside* `if (running.Count is not 0)`, so a session that was open
+  with its browser not currently launched let the delete through — and the browser
+  it is about to launch lands in a tree being removed. The maintainer's decision,
+  verbatim: *"No reinstall if there is any session running system wide."* The
+  family filter survives: only a session of the family being reinstalled can hold
+  an executable out of that family's tree, so a live Chromium session still does
+  not block a Firefox reinstall. `shared` counts every family, as it already did.
+
+### Changed
+
+- **Provisioning is stopped when it stops making progress, not when it has taken
+  too long.** `ProvisioningTimers.AbsoluteCap` — 45 minutes on the whole install —
+  is replaced by `StallCap`, ten minutes with **nothing written at all**. A total
+  cap can only ever fire on a link that is slow and *working*: 203,824,344 B in
+  2,700 s is 0.60 Mbps, and a link that has died is caught by upstream's own
+  30-second socket timeout twenty times sooner. It punished the one case it could
+  reach. The 60-minute crash tripwire went with it — with no total there is no
+  number a tripwire could be "outside" — and the *waiting* process now runs the
+  same stall detector against the same bytes, so a holder on a slow link is no
+  longer reported as stuck at sixty minutes.
+
+  **Progress is bytes on disk under the browsers root, and it is one number only
+  because the download target moved under it.** Measured 2026-08-19, sampling
+  every 250 ms across real installs: upstream downloads into
+  `os.tmpdir()\playwright-download-XXXXXX\` and creates the revision directory
+  only when it starts unzipping, so **nothing under the browsers root grows for
+  the whole download** — a detector reading the root alone would kill every
+  install on a slow link. BrowserAI now sets `TEMP` and `TMP` for the installer
+  child to `<browsers root>\.downloads`. **Every one of the 41 chromium and 27
+  firefox samples differed from the one before it**, in both phases.
+
+  **Ten minutes is set by upstream's own lock rather than by taste.**
+  `registry.install()` waits on `<root>\__dirlock` *before* it writes anything,
+  and that wait was measured at **470 s** before upstream gives up by itself — so
+  any cap at or under 7 m 50 s kills a healthy install that is correctly queueing
+  behind another. It is deliberately ten times `UpdateService.StallBudget`, whose
+  60 s is right there and wrong here: a Velopack download has no directory lock in
+  front of it.
+
+  **Scanning `%TEMP%` instead was considered and is measurably wrong**: on this
+  machine that scan found a `playwright-download-PRU23e` abandoned three days
+  earlier holding 128,684 B of somebody else's archive, counted as our progress.
+
+- **The refusal a browser call meets while provisioning runs is a progress
+  report.** Bytes written by this attempt against the measured download total, the
+  percentage, elapsed, the observed rate, and what the remaining bytes come to at
+  that rate — labelled as arithmetic rather than as a promise. The old sentence
+  quoted the size and said *"wait about ten seconds"*, which read identically at
+  8 s in and at 25 minutes in, so a model had no way to tell a download that was
+  working from one that was not and its only recourse was to keep calling.
+  `@playwright/mcp` emits no progress notifications at all, so this refusal is the
+  whole mechanism and no protocol work exists to do. `FirstRunDownloadSizes` is now
+  derived from a byte count rather than hand-written beside one.
+
+### Fixed
+
+- **The mode table claimed a persistence property the code has never had.**
+  `README.md`'s third column read *"Stored credentials — No / No / Yes"* and
+  `SessionMode.cs` described `interactive` as *"a human can type a password this
+  session will not keep"*. **All three modes persist.** `BrowserConfiguration.
+  ForSession` writes `browser.userDataDir` as `<session>\profile` in every mode
+  and never writes upstream's `isolated` key, so cookies and `localStorage`
+  survive a `browserai_resume` in a `headless` session exactly as they do in a
+  `persistent` one. `storage` is a **tool filter, not a persistence switch** — it
+  decides whether the 17 cookie, `localStorage` and `storageState` tools exist in
+  that session's child at all. The correction points the safe way: a caller who
+  believed a mode discarded credentials would leave a signed-in profile behind
+  thinking it had not.
+
+- **Two doc comments claimed a refusal that has not existed since 2026-08-18.**
+  `BrowserConfiguration.UnionCapabilities` and `BrowserProxy.AnswerToolsListAsync`
+  both ended *"a call that its session's mode does not permit is refused at call
+  time instead"*. The `(tool, mode)` matrix was removed; what replaced it is the
+  child's own capability set, so such a call is **forwarded** and upstream answers
+  that the tool does not exist. Both sentences survived the removal by describing
+  a fallback that had gone.
+
+### Added
+
+- **`--storage-state` together with `--user-data-dir` is a silent no-op** — exit
+  0, empty stderr, no state applied. `storageState` is the **only** one of
+  `BrowserNewContextParams`' 32 keys absent from
+  `BrowserTypeLaunchPersistentContextParams`' 49; `tObject` iterates the declared
+  schema and drops undeclared keys without error; and `createPersistentBrowser`
+  spreads `...contextOptions` straight through, so it looks accepted at every
+  visible layer. BrowserAI is on the persistent side by construction and writes no
+  `storageState`; the entry is for the next reader who reaches for it to seed a
+  signed-in session.
+
+- **`--caps` accepts any word at all.** `--caps bogus` exits 0 with no
+  diagnostic, because the option is parsed by `commaSeparatedList` where
+  `--codegen`, `--console-level` and `--image-responses` all use `enumParser`. It
+  is also why `--caps storage` works although the help documents only `vision`,
+  `pdf` and `devtools`.
+
+- **Two browsers on one profile directory: Chromium refuses in 5,036 ms naming
+  the cause, Firefox hangs for 180,402 ms with an error that never mentions the
+  profile.** Upstream's `isProfileLocked` probes `<userDataDir>\lockfile` —
+  Chromium's name — while Firefox uses `parent.lock`, so the guard never fires and
+  Firefox's own lock blocks the juggler handshake until the launch timeout. The
+  5,036 ms is `isProfileLocked5Times`' own five one-second retries succeeding.
+  **BrowserAI's own path is covered** by `ChildLaunch.Create`'s `parent.lock`
+  preflight, which runs before the config is written and before anything spawns;
+  upstream's bug is recorded rather than worked around.
+
+- **The user agent is settable from the config on both families and
+  `navigator.webdriver` is not, on Firefox.** Research for a decision the
+  maintainer has not taken: `browser.contextOptions.userAgent` turns Chromium's
+  `HeadlessChrome/152.0.0.0` into `Chrome/152.0.0.0` and replaces Firefox's UA
+  outright, with no Playwright driving and no init script. Firefox's
+  `navigator.webdriver` stays `true` under `dom.webdriver.enabled: false`, while
+  `general.useragent.override` through the same `firefoxUserPrefs` object *does*
+  take effect — which is the control that makes the negative mean something.
+  **Nothing was implemented.**
+
 - **Firefox is owed Chromium's rename measurement, and now has it — plus the two
   shared trees and the browsers root, which nobody had asked about at all.** The
   browser-tree rename refusal behind `browserai_reinstall_browser` was measured

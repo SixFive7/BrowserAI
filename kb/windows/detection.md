@@ -587,6 +587,51 @@ found — which is why BrowserAI ships full Chromium in every mode. `[FLOATS]`
 - Playwright's `isProfileLocked` checks only Chromium's `lockfile`, never
   Firefox's `parent.lock`.
 
+**What that gap costs, measured 2026-08-19: Chromium refuses in 5,036 ms naming
+the cause; Firefox hangs for 180,402 ms with an error that never mentions the
+profile.** Two browsers pointed at one profile directory, one family at a time:
+
+| Family | Elapsed | What came back |
+|---|--:|---|
+| Chromium | **5,036 ms** | `Browser is already in use for <dir>, use --isolated to run multiple instances of the same browser` — the cause, the directory, and the flag that avoids it |
+| Firefox | **180,402 ms** | Playwright's launch timeout. **The profile is not mentioned anywhere in it** |
+
+**The 5,036 ms is upstream's own retry loop and it lines up exactly.**
+`isProfileLocked5Times` calls `isProfileLocked` and sleeps 1,000 ms between
+attempts, five times, before it gives up — so five seconds is the *refusal*
+succeeding, not a slow failure. And `isProfileLocked` opens
+`path.join(userDataDir, "lockfile")` on win32, which is **Chromium's** lock file
+name; Firefox's is `parent.lock`. The guard therefore never fires for Firefox, the
+launch proceeds, and Firefox's own lock blocks the juggler handshake until
+Playwright's three-minute launch timeout expires.
+
+**This became reachable when this product started offering Firefox**, on
+2026-08-19. [Re-verification row 22](../re-verification.md) covers the Chromium
+half only, and the Firefox half is what the numbers above add.
+
+**BrowserAI's own path is covered, and it is covered by construction rather than
+by ordering.** `Runtime/ChildLaunch.Create` is the one route to a child, and it
+calls `FirefoxProfileLockedException.For(config)` **before** it writes the config
+and long before anything spawns; that inspects `parent.lock` with a write-open and
+refuses on the sharing violation, naming the holder through the Restart Manager.
+So a BrowserAI-launched Firefox never reaches upstream's `isProfileLocked` with a
+held profile. Two things are worth saying beside that: the session lock already
+makes the collision unreachable by *ordering*, and the preflight exists precisely
+because coverage by ordering is a guarantee no test states and no refactor
+notices losing; and the preflight reads the **live handle**, never the file's
+existence, because Firefox never deletes `parent.lock`.
+
+**Do not fix upstream's bug.** The check would have to know both names and both
+lock semantics, and the product does not need it: what it needs is the refusal it
+already has. Recorded here so that a reader meeting a three-minute silence knows
+what it is.
+
+**Re-establish** by launching the provisioned browser twice against one profile
+directory, one family at a time, under a hard timeout, and timing both. **The
+control is the Chromium arm** — without it, a Firefox launch that takes three
+minutes cannot be told from a slow machine. Read `isProfileLocked` out of the
+resolved `coreBundle.js` for the file name it probes. `[FLOATS]`
+
 **Measured 2026-08-14: the full build refuses a second instance; the shell never
 notices one.** Two full `chrome.exe` instances against one profile directory —
 the second is refused with **`Browser is already in use for <dir>`**. Two

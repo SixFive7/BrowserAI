@@ -61,6 +61,83 @@ contradicting upstream intent — and it means the default posture is unsandboxe
 > re-verification row rather than a defect. The half that does invert is the
 > config-file key, which starts working; nothing in this product sets it.
 
+**`--storage-state` together with `--user-data-dir` is a silent no-op** — exit 0,
+empty stderr, no state applied, and nothing anywhere says the option was dropped.
+Recorded 2026-08-19 at `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05, from
+[the auth-transfer review](../../docs/reviews/2026-08-19-auth-transfer-and-session-modes.md#why-the-config-route-fails-silently),
+which met it while asking whether a human's login can be handed to an unattended
+run. The key counts below were re-established here on the same day.
+
+The mechanism is three things stacked, and each of them looks correct on its own:
+
+1. **`storageState` is the only key that exists on one side of the divide.**
+   `scheme.BrowserNewContextParams` declares **32** keys and
+   `scheme.BrowserTypeLaunchPersistentContextParams` declares **49**, and
+   `storageState` is the *single* member of the first that is absent from the
+   second. Re-counted 2026-08-19 out of the assembled bundle: the difference the
+   other way is 18 keys — `userDataDir`, `channel`, `headless`, `args`, `env`,
+   `firefoxUserPrefs` and the rest of the launch surface.
+2. **`tObject` drops what it does not declare, without an error.** Its body
+   iterates `Object.entries(schema)` and reads `arg[key]` for each — it never
+   walks the *argument's* keys at all (except `__testHook*`, and only
+   `isUnderTest()`). So an undeclared key is not rejected, it is simply never
+   copied into the validated result.
+3. **`createPersistentBrowser` spreads `...config.browser.contextOptions`
+   straight into `launchOptions`**, so a `storageState` written into
+   `contextOptions` reaches `launchPersistentContext` looking entirely accepted,
+   and is dropped at the validator two frames later.
+
+**So it is accepted at every visible layer**: the CLI parses it, the config
+merges it, the launch call receives it, and the browser never sees it. A
+persistent context has a profile on disk and that profile is the state, which is
+presumably why upstream's own help says *"path to the storage state file for
+isolated sessions"* — but nothing enforces the word *isolated*, and no diagnostic
+is produced when it is ignored.
+
+**BrowserAI is unaffected and would be affected the moment it stopped being.**
+It writes `browser.userDataDir` for every session and writes no `storageState`
+anywhere, so it is on the persistent side by construction. What this entry is for
+is the next reader who reaches for `--storage-state` to seed a signed-in session:
+it will look like it worked.
+
+**Re-establish** by counting the keys in the two `tObject({…})` blocks in
+`playwright-core/lib/coreBundle.js` and diffing them, then reading `tObject`'s own
+body. **The control is the reverse difference** — a diff that comes back with
+`storageState` alone in one direction and 18 keys in the other is a real
+comparison; one that comes back empty both ways means the blocks were not found.
+`[FLOATS]`
+
+**`--caps` takes any word at all: `--caps bogus` is accepted, exit 0, no
+diagnostic.** Recorded 2026-08-19 at the same versions. Upstream parses it with
+`commaSeparatedList`, whose whole body is
+`value.split(",").map(v => v.trim())` — no enum, no membership check, nothing.
+The neighbouring options show that this is an omission rather than a style:
+`--codegen`, `--console-level` and `--image-responses` are all declared with
+`enumParser.bind(null, "<flag>", [ … ])` and reject an unknown value loudly.
+
+**It is also why `--caps storage` works although the help documents only three
+values.** `--caps <caps>` is described as *"comma-separated list of additional
+capabilities to enable, possible values: vision, pdf, devtools"*, and
+[`upstream-snapshots/cli-help.txt`](../../upstream-snapshots/cli-help.txt) carries
+that sentence verbatim — but the value is only ever compared against the
+capability names the tool filter uses, and `storage` is one of them. The help
+string and the accepted set are maintained separately and have drifted.
+
+**BrowserAI does not pass `--caps` at all** and
+`ChildLaunch` says why in place: the flag *replaces* the config file's capability
+list rather than merging with it, so passing it would silently wipe what the
+generator just wrote. The value of this entry is the pair of directions it fails
+in — an unknown capability is accepted and does nothing, and a real one is
+undocumented — so neither the help nor a green exit code is evidence about what a
+capability list actually contains.
+
+**Re-establish** by reading the `--caps` declaration in the bundle's
+`decorateMCPCommand` chain and comparing its parser with `--codegen`'s, and by
+reading `commaSeparatedList`'s body. **The control is `--codegen bogus`**, which
+must fail: without it, a `--caps bogus` that exits 0 cannot be told from a probe
+that never reached the parser. `[FLOATS]`
+
 **`loadConfig` is a bare `JSON.parse` with no schema validation**, so a renamed
 or removed key is silently ignored. `--output-mode` was a no-op for its entire
 life — a hardcoded literal in 0.0.78's bundle, never read from config — and was

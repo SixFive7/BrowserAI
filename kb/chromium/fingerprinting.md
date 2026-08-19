@@ -104,3 +104,73 @@ literature's switch-detection surface is `--enable-automation`, `--headless` and
 induced (deliberately); headful was not tested (hard constraint, though nothing
 renderer-side depends on the switch); one Chromium version; and no real
 bot-detection service was exercised (local-only constraint).
+
+## The user agent and `navigator.webdriver`, through the config alone — measured 2026-08-19
+
+**Asked because the maintainer asked it:** can the user agent and
+`navigator.webdriver` be set to a normal browser's values *through the generated
+child config*, with no Playwright driving and no init script? Measured by
+driving the payload's own `cli.js` over stdio with a hand-written config and
+reading both values back through `browser_evaluate`, at `@playwright/mcp` 0.0.79
+/ `playwright-core` 1.63.0-alpha-2026-08-05, Chromium 152.0.7977.8
+(`chromium-1237`) and Firefox 153.0 (`firefox-1539`), headless:
+
+| Arm | `navigator.userAgent` | `navigator.webdriver` |
+|---|---|---|
+| chromium, nothing set | `… HeadlessChrome/152.0.0.0 Safari/537.36` | `false` |
+| chromium, `browser.contextOptions.userAgent` set | `… Chrome/152.0.0.0 Safari/537.36` — **the value we asked for** | `false` |
+| firefox, nothing set | `… rv:153.0) Gecko/20100101 Firefox/153.0` | **`true`** |
+| firefox, `browser.contextOptions.userAgent` set to a distinct string | `BrowserAI-probe/1.0 distinct-context-option` — **the value we asked for** | **`true`** |
+| firefox, `firefoxUserPrefs["dom.webdriver.enabled"] = false` | unchanged | **`true`** — the pref does nothing |
+| firefox, `firefoxUserPrefs["general.useragent.override"]` set — **the control** | `BrowserAI-probe/1.0 distinct-pref` | `true` |
+
+**Three findings, and the control is what makes the third one mean anything.**
+
+1. **`browser.contextOptions.userAgent` works, for both families.** It is a
+   plain config key: `configFromCLIOptions` maps `--user-agent` onto the same
+   key, `userAgent` is declared in **both**
+   `BrowserNewContextParams` and `BrowserTypeLaunchPersistentContextParams`, and
+   `createPersistentBrowser` spreads `contextOptions` into the launch — so unlike
+   [`storageState`](../playwright/configuration.md#silent-config-failures) it is
+   not dropped on the persistent path.
+2. **Chromium's user agent is the only thing headedness changes here**, and the
+   difference is the one token `HeadlessChrome` against `Chrome`. Firefox's is
+   byte-identical across headedness, so Firefox needs no override for this.
+3. **`navigator.webdriver` is not reachable from the config on Firefox.**
+   `dom.webdriver.enabled: false` left it `true`. **The control is the row above
+   it**: `general.useragent.override` set through the *same* `firefoxUserPrefs`
+   object *did* take effect, so the prefs channel demonstrably reaches Firefox
+   and this particular pref does not govern the flag in Playwright's build.
+   Turning it off would need an init script, which is outside what a config can
+   do.
+
+**The staleness trap, stated because it is the reason not to do the obvious
+thing.** A hardcoded UA goes stale the moment `browsers.json` moves, and it moves
+with every `@playwright/mcp` bump — and it fails **silently and in the wrong
+direction**: a server would see `Chrome/152.0.0.0` from a browser that is
+actually 154, which is a *worse* signal than an honest `HeadlessChrome`. Two
+derivations avoid it and neither is free:
+
+- **From the payload.** `browsers.json` carries `browserVersion` beside the
+  revision — `152.0.7977.8` here — and the measured UA reports
+  `Chrome/152.0.0.0`, i.e. the major followed by `.0.0.0`. So the string is
+  composable with no launch. What it pins is the *shape* of Chrome's reduced UA
+  (`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
+  Gecko) Chrome/<major>.0.0.0 Safari/537.36`), which is one revision's worth of
+  evidence and an assumption about a policy this repository has not measured.
+- **From the browser.** Read the headless UA the browser itself produces and
+  replace the token `HeadlessChrome` with `Chrome`. Every version number then
+  comes from the browser and nothing can go stale — but the value is only
+  available *after* a launch, and `contextOptions.userAgent` is applied at launch,
+  so it needs either a probe launch per revision or a cached value beside the
+  browsers root.
+
+**Nothing is implemented.** This entry is the research; the decision is the
+maintainer's, and the wider parity measurement it belongs to is the open item in
+[`../../TODO.md`](../../TODO.md). `[FLOATS]`
+
+**Re-establish** by driving `cli.js` with a config carrying each arm and
+evaluating `JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })`.
+**Keep the `general.useragent.override` arm** — without a pref that is known to
+work, a `dom.webdriver.enabled` that changes nothing cannot be told from a prefs
+channel that was never wired up.

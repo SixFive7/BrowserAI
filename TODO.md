@@ -19,6 +19,61 @@ about an external source needs the date and version it was true at.
 
 ---
 
+## Fingerprinting
+
+- [ ] **Measure fingerprint parity against a normal user browser.** The
+      maintainer's requirement, verbatim: *"I would like the web servers to not
+      see the difference."* Nobody has established what the difference currently
+      is, so there is nothing yet to decide about — this item is the measurement,
+      not the fix.
+
+      **What is already measured**, 2026-08-19, and it is a narrow slice:
+      Chromium's user agent differs by headedness —
+      `Chrome/152.0.0.0` headed against `HeadlessChrome/152.0.0.0` headless —
+      while `navigator.webdriver` is `false` in both; Firefox's user agent is
+      **byte-identical** across headedness and `navigator.webdriver` is `true` in
+      both. So the two families fail parity in opposite places, and neither is
+      covered by fixing the other.
+
+      **What is NOT measured and belongs in this item.** Each of these is a
+      channel a server can read, and none of them has been looked at even once:
+
+      - **TLS, and JA3/JA4 in particular.** The ClientHello a Playwright-launched
+        browser sends, against the one the same build sends when a human starts
+        it. This is the channel a user-agent string cannot influence at all.
+      - **The automation command-line flags.** Playwright launches with a large
+        argv of its own; what matters is which of those flags are *observable
+        from the page* — through feature detection, through an absent or present
+        API, or through behaviour — rather than the argv itself.
+      - **Screen and window metrics.** `screen.*`, `window.outer*`, the
+        device pixel ratio, and what a headless browser reports for a screen it
+        does not have.
+      - **Canvas, WebGL and font fingerprints.** Whether the provisioned build's
+        rendering path produces the same hashes as an installed browser on the
+        same machine, headed and headless.
+      - **Absent extensions.** A normal profile has some; a provisioned one has
+        none, and upstream additionally launches with `--disable-extensions`.
+      - **Empty history and a fresh profile.** Zero visited links, no
+        autofill, no service workers, and a `localStorage` a site has never
+        written to. **BrowserAI's profiles do persist** across a resume — that
+        was corrected on 2026-08-19 — so this is a *first-run* difference rather
+        than a permanent one, and its shape over a session's life is part of the
+        measurement.
+
+      **How to do it:** run one page against a real installed browser and against
+      each of BrowserAI's four combinations (two families × headed and headless)
+      on the same machine, capture every channel above, and diff. **The control is
+      the installed browser** — a difference between two BrowserAI configurations
+      says nothing about what a server sees. Results go in
+      [`kb/chromium/fingerprinting.md`](kb/chromium/fingerprinting.md), which
+      already holds the call-site inventory and the 486-field differ result and is
+      where the rest of this belongs.
+
+      **Decide nothing until it is measured.** The low-hanging half — whether the
+      user agent and `navigator.webdriver` can be set through the generated child
+      config — was researched separately on 2026-08-19 and is a question for the
+      maintainer rather than an item here.
+
 ## Adversarial review, 2026-08-18 — what is left of it
 
 Two adversarial readers were asked to **break** the design by reasoning rather

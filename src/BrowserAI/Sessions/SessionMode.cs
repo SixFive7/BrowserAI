@@ -16,13 +16,13 @@ namespace BrowserAI.Sessions;
 /// </remarks>
 internal enum SessionMode
 {
-    /// <summary>No window, no stored credentials. The workhorse.</summary>
+    /// <summary>No window, and no cookie or storage tools. The workhorse.</summary>
     Headless,
 
-    /// <summary>A window, no stored credentials. A human may type a password the agent must never capture.</summary>
+    /// <summary>A window, and no cookie or storage tools. A human can sign in and the agent cannot read the cookie jar through this server.</summary>
     Interactive,
 
-    /// <summary>A window and a persistent profile. Logged-in agent work.</summary>
+    /// <summary>A window and the cookie and storage tools. Logged-in agent work.</summary>
     Persistent,
 }
 
@@ -63,6 +63,29 @@ internal enum SessionMode
 /// decision taken on its own merits rather than a side effect of making three
 /// switches orthogonal.
 /// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-19: a mode is a window and a TOOL FILTER, not a
+/// window and a persistence switch.</b> Every sentence in this file used to say
+/// "no stored credentials" for two of the three modes, and the code has never
+/// done that: <see cref="Runtime.BrowserConfiguration.ForSession"/> sets
+/// <c>browser.userDataDir</c> to <c>&lt;session&gt;\profile</c> in all three and
+/// never sets upstream's <c>isolated</c>, so all three keep cookies and
+/// <c>localStorage</c> for as long as the session directory exists. What
+/// <see cref="SessionModeDefinition.Storage"/> decides is whether the session's
+/// child is started with upstream's <c>storage</c> capability — that is, whether
+/// the 17 cookie, <c>localStorage</c> and <c>storageState</c> tools exist in that
+/// process at all. <b>The distinction is not academic and it points the safe
+/// way</b>: a caller reading "this session will not keep the password" would have
+/// left a signed-in profile on disk believing it had not, and the session
+/// directory is where <c>browserai_destroy</c> exists to be pointed. The removal
+/// of the <c>(tool, mode)</c> matrix on 2026-08-18 already established that this
+/// is not a boundary against the caller, who owns the directory
+/// ([kb](../../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18));
+/// what it is, is a boundary against the <i>model in the loop</i> asking this
+/// server for the jar. Found by
+/// [the auth-transfer review](../../../docs/reviews/2026-08-19-auth-transfer-and-session-modes.md#three-corrections-to-what-this-repository-says-about-itself),
+/// which measured it while asking a different question.
+/// </para>
 /// </remarks>
 internal static class SessionModes
 {
@@ -74,19 +97,19 @@ internal static class SessionModes
             "headless",
             Headed: false,
             Storage: false,
-            "no window and no stored credentials; the default choice for automation nobody is watching"),
+            "no window, and no cookie or storage tools; the default choice for automation nobody is watching"),
         new(
             SessionMode.Interactive,
             "interactive",
             Headed: true,
             Storage: false,
-            "a visible window and no stored credentials, so a human can type a password this session will not keep"),
+            "a visible window, and no cookie or storage tools, so a human can sign in and this server will not hand the cookie jar back"),
         new(
             SessionMode.Persistent,
             "persistent",
             Headed: true,
             Storage: true,
-            "a visible window and a profile that keeps cookies and logins between runs"),
+            "a visible window, plus the cookie and storage tools for reading and replaying what the profile holds"),
     ];
 
     /// <summary>The mode names, comma separated, for a refusal or a description.</summary>
@@ -103,9 +126,12 @@ internal static class SessionModes
     /// <i>refuses</i>).</b> There is no permission matrix left to summarise: it
     /// was removed because it was never a boundary against the caller, who owns
     /// the session directory and therefore the profile inside it. What a mode
-    /// <b>is</b> — a window or none, a profile that persists or one that does
-    /// not — is the whole of what a model needs to choose on, and it is what
+    /// <b>is</b> — a window or none, and the cookie and storage tools or not — is
+    /// the whole of what a model needs to choose on, and it is what
     /// <see cref="SessionModeDefinition.Grants"/> already said.
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "a profile that persists or one
+    /// that does not").</b> All three profiles persist; see this type's own
+    /// remarks.
     /// </remarks>
     public static string Table { get; } = string.Join(
         " ",
@@ -148,7 +174,23 @@ internal static class SessionModes
 /// <param name="Mode">The mode itself.</param>
 /// <param name="Name">Its name on the wire and in <c>lock.json</c>.</param>
 /// <param name="Headed">Whether a browser window appears.</param>
-/// <param name="Storage">Whether the profile keeps cookies and logins between runs.</param>
+/// <param name="Storage">
+/// Whether this session's child is launched with upstream's <c>storage</c>
+/// capability, which is what puts the 17 cookie, <c>localStorage</c> and
+/// <c>storageState</c> tools in it.
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-19 (previously "Whether the profile keeps cookies and
+/// logins between runs").</b> It never decided that.
+/// <see cref="Runtime.BrowserConfiguration.ForSession"/> writes
+/// <c>browser.userDataDir</c> as <c>&lt;session&gt;\profile</c> in <b>all
+/// three</b> modes and never writes upstream's <c>isolated</c> key at all, so
+/// every mode already persists cookies and <c>localStorage</c> across a
+/// <c>browserai_resume</c> — a <c>headless</c> session that signs in is still
+/// signed in tomorrow. This flag is a <b>tool filter</b>, and the difference is
+/// what a caller is told: <i>the agent cannot ask this server for the cookie
+/// jar</i> is true, and <i>the session will not keep the password</i> was not.
+/// </para>
+/// </param>
 /// <param name="Grants">What it gives the caller, in one clause, for a model to choose on.</param>
 internal sealed record SessionModeDefinition(
     SessionMode Mode,
