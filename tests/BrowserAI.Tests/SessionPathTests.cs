@@ -80,7 +80,11 @@ internal sealed class SessionPathTests
 
         var report = await ProbeReport.ReadAsync(Path.Combine(scratch.Path, "relative.json"), TestDefaults.ProcessHang);
 
-        await Assert.That((string?)report["workingDirectory"]).IsEqualTo(scratch.Path);
+        // Case-insensitive: the child reported its own Environment.CurrentDirectory,
+        // which comes back through GetCurrentDirectoryW, while `scratch.Path` is
+        // composed in this process from a root carrying whatever drive-letter
+        // case the invoking shell handed the test host. See DriveLetterCase.
+        await Assert.That((string?)report["workingDirectory"]).IsEqualTo(scratch.Path, StringComparison.OrdinalIgnoreCase);
         await Assert.That((string?)report["mutexName"]).IsEqualTo(absolute.MutexName);
         await Assert.That((string?)report["indexKey"]).IsEqualTo(absolute.IndexKey);
         await Assert.That((string?)report["key"]).IsEqualTo(absolute.Key);

@@ -34,6 +34,21 @@ namespace BrowserAI.Tests;
 /// <c>TheNetworkRefusalDoesNotComeFromTheCallThatOpensThings</c> says what its
 /// substitute can and cannot establish.
 /// </para>
+/// <para>
+/// ⚠️⚠️ <b>EVERY TEST BELOW THAT COMPOSES A PATH RUNS TWICE, ONCE PER
+/// <see cref="DriveLetterCase"/>, AND THAT IS THE MECHANISM RATHER THAN
+/// THOROUGHNESS.</b> Two of these tests were red from Git Bash and green from
+/// PowerShell on the same commit, because the accepted spelling in a refusal is
+/// read back from the filesystem — which always says <c>C:</c> — while the
+/// expected string was composed from a root carrying whatever casing the
+/// invoking shell handed the test host. <c>Sessions\CLAUDE.md</c> predicted this
+/// exact defect and recorded that <i>nothing asserted it</i>; this is what now
+/// does. The <see cref="DriveLetterCase.Lower"/> arm composes a spelling no
+/// Windows API ever returns, so a comparison that is not case-insensitive fails
+/// on <b>every</b> machine and in <b>every</b> shell — CI included, which runs
+/// <c>pwsh</c> and could otherwise never see it. Added 2026-08-19, after the
+/// second recurrence.
+/// </para>
 /// </remarks>
 internal sealed class SessionDirectoryGuardTests
 {
@@ -79,7 +94,9 @@ internal sealed class SessionDirectoryGuardTests
     }
 
     [Test]
-    public async Task AMappedDriveLetterIsRefusedAsANetworkPathThoughItIsSpelledLocally()
+    [Arguments(DriveLetterCase.Upper)]
+    [Arguments(DriveLetterCase.Lower)]
+    public async Task AMappedDriveLetterIsRefusedAsANetworkPathThoughItIsSpelledLocally(DriveLetterCase casing)
     {
         // THE WHOLE POINT OF THE PAIR ABOVE AND BELOW. `Z:\work` passes every
         // string test there is -- it is a rooted local drive-letter path by
@@ -104,7 +121,7 @@ internal sealed class SessionDirectoryGuardTests
         // accepted.
         using var scratch = ScratchDirectory.Create("guard-local-control");
 
-        await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(Path.Combine(scratch.Path, "session")))).IsNull();
+        await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(Path.Combine(casing.Spell(scratch.Path), "session")))).IsNull();
     }
 
     [Test]
@@ -152,13 +169,15 @@ internal sealed class SessionDirectoryGuardTests
     }
 
     [Test]
-    public async Task EveryAliasPathGetFullPathLeavesAloneIsRefusedWithTheAcceptedSpelling()
+    [Arguments(DriveLetterCase.Upper)]
+    [Arguments(DriveLetterCase.Lower)]
+    public async Task EveryAliasPathGetFullPathLeavesAloneIsRefusedWithTheAcceptedSpelling(DriveLetterCase casing)
     {
         using var scratch = ScratchDirectory.Create("guard-aliases");
 
         // A name with a space in it, so this volume's 8.3 generator has
         // something to shorten.
-        var real = Path.Combine(scratch.Path, "a real session directory");
+        var real = Path.Combine(casing.Spell(scratch.Path), "a real session directory");
         _ = Directory.CreateDirectory(real);
 
         var canonical = SessionPath.Resolve(real).FullPath;
@@ -171,7 +190,7 @@ internal sealed class SessionDirectoryGuardTests
 
         // 2. A junction. mklink /J needs no privilege and no Developer Mode,
         //    where Directory.CreateSymbolicLink needs SeCreateSymbolicLink.
-        var link = Path.Combine(scratch.Path, "junction");
+        var link = Path.Combine(casing.Spell(scratch.Path), "junction");
         await PathAliases.JunctionAsync(link, real);
         await RefusedAsAnAlias(link, canonical);
 
@@ -183,12 +202,19 @@ internal sealed class SessionDirectoryGuardTests
         var refusal = SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(substituted.PathTo("page.png")));
 
         await Assert.That(refusal).IsNotNull();
-        await Assert.That(refusal!).Contains($"directory='{Path.Combine(real, "page.png")}'");
-        await Assert.That(refusal).Contains($"drive '{substituted.Letter}' is a 'subst' standing in for '{real}'");
+
+        // Case-insensitive for the reason recorded in full at RefusedAsAnAlias:
+        // the accepted spelling here comes back through QueryDosDeviceW rather
+        // than from this process, so the two sides reach the comparison by
+        // different routes and only one of them carries the shell's casing.
+        await Assert.That(refusal!).Contains($"directory='{Path.Combine(real, "page.png")}'", StringComparison.OrdinalIgnoreCase);
+        await Assert.That(refusal).Contains($"drive '{substituted.Letter}' is a 'subst' standing in for '{real}'", StringComparison.OrdinalIgnoreCase);
     }
 
     [Test]
-    public async Task An83SpellingNeverReachesASecondIdentityOnEitherKindOfVolume()
+    [Arguments(DriveLetterCase.Upper)]
+    [Arguments(DriveLetterCase.Lower)]
+    public async Task An83SpellingNeverReachesASecondIdentityOnEitherKindOfVolume(DriveLetterCase casing)
     {
         // ⚠️ **Measured 2026-08-19 on .NET 10, and it corrects the review this
         // work came from.** Finding A4 lists 8.3 short names among the things
@@ -217,11 +243,18 @@ internal sealed class SessionDirectoryGuardTests
         // emptier one for ever.
         using var scratch = ScratchDirectory.Create("guard-short-name");
 
-        var real = Path.Combine(scratch.Path, "a real session directory");
+        var real = Path.Combine(casing.Spell(scratch.Path), "a real session directory");
         _ = Directory.CreateDirectory(real);
 
         var shortName = PathAliases.ShortNameOf(real);
-        var volumeGeneratesShortNames = !string.Equals(shortName, real, StringComparison.Ordinal);
+
+        // Case-insensitive, and here it decides which BRANCH runs rather than
+        // whether an assertion passes: GetShortPathNameW answers with the
+        // filesystem's own spelling, so an ordinal compare against a path
+        // composed in this process could read "unchanged" as "shortened" and
+        // send this test down the arm that then asserts a tilde. See
+        // DriveLetterCase and RefusedAsAnAlias.
+        var volumeGeneratesShortNames = !string.Equals(shortName, real, StringComparison.OrdinalIgnoreCase);
 
         if (TestContext.Current?.OutputWriter is { } report)
         {
@@ -241,7 +274,8 @@ internal sealed class SessionDirectoryGuardTests
             // that does not exist yet is expanded too, tail preserved.
             var notYetThere = Path.Combine(shortName, "not", "created", "yet");
 
-            await Assert.That(SessionPath.Resolve(notYetThere).FullPath).IsEqualTo(Path.Combine(real, "not", "created", "yet"));
+            await Assert.That(SessionPath.Resolve(notYetThere).FullPath)
+                .IsEqualTo(Path.Combine(real, "not", "created", "yet"), StringComparison.OrdinalIgnoreCase);
             await Assert.That(SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(notYetThere))).IsNull();
 
             return;
@@ -251,23 +285,25 @@ internal sealed class SessionDirectoryGuardTests
         // asserted as a whole-string identity rather than as "it did not
         // contain a tilde", because a partially shortened path is the case a
         // tilde test would let through.
-        await Assert.That(shortName).IsEqualTo(real);
+        await Assert.That(shortName).IsEqualTo(real, StringComparison.OrdinalIgnoreCase);
 
         // The backstop, on the same directory: whatever spelling reaches the
         // guard, a path the filesystem calls something else is refused with the
         // name it does call it. This is what would catch an 8.3 spelling on a
         // volume that had them and a .NET that had stopped expanding them.
-        var link = Path.Combine(scratch.Path, "short-name-backstop");
+        var link = Path.Combine(casing.Spell(scratch.Path), "short-name-backstop");
         await PathAliases.JunctionAsync(link, real);
 
         var refusal = SessionDirectoryGuard.Refuse("directory", SessionPath.Resolve(link));
 
         await Assert.That(refusal).IsNotNull();
-        await Assert.That(refusal!).Contains($"directory='{real}'");
+        await Assert.That(refusal!).Contains($"directory='{real}'", StringComparison.OrdinalIgnoreCase);
     }
 
     [Test]
-    public async Task NoSpellingOfOneDirectoryIsEverAdmittedUnderASecondIdentity()
+    [Arguments(DriveLetterCase.Upper)]
+    [Arguments(DriveLetterCase.Lower)]
+    public async Task NoSpellingOfOneDirectoryIsEverAdmittedUnderASecondIdentity(DriveLetterCase casing)
     {
         // THE INVARIANT THE TWO ARMS ABOVE ARE HALVES OF, asserted over every
         // alias this machine can build. Whether a spelling is canonicalised into
@@ -277,7 +313,7 @@ internal sealed class SessionDirectoryGuardTests
         // mutexes over one lock.json and the whole point of the exercise.
         using var scratch = ScratchDirectory.Create("guard-invariant");
 
-        var real = Path.Combine(scratch.Path, "one real session directory");
+        var real = Path.Combine(casing.Spell(scratch.Path), "one real session directory");
 
         // The session is a LEAF beneath the aliased directory rather than the
         // aliased directory itself, so that every form below -- including the
@@ -286,7 +322,7 @@ internal sealed class SessionDirectoryGuardTests
         var session = Path.Combine(real, "the session");
         _ = Directory.CreateDirectory(session);
 
-        var link = Path.Combine(scratch.Path, "invariant-junction");
+        var link = Path.Combine(casing.Spell(scratch.Path), "invariant-junction");
         await PathAliases.JunctionAsync(link, real);
 
         using var substituted = DosDeviceAlias.Substituting(real);
@@ -314,7 +350,9 @@ internal sealed class SessionDirectoryGuardTests
     }
 
     [Test]
-    public async Task ADirectoryThatDoesNotExistYetIsJudgedByTheDeepestAncestorThatDoes()
+    [Arguments(DriveLetterCase.Upper)]
+    [Arguments(DriveLetterCase.Lower)]
+    public async Task ADirectoryThatDoesNotExistYetIsJudgedByTheDeepestAncestorThatDoes(DriveLetterCase casing)
     {
         // `init` names a directory nothing has created, which is the ordinary
         // case and the one a naive final-name check gets wrong: it cannot open
@@ -322,10 +360,10 @@ internal sealed class SessionDirectoryGuardTests
         // aliasing parent through.
         using var scratch = ScratchDirectory.Create("guard-not-yet-there");
 
-        var real = Path.Combine(scratch.Path, "parent");
+        var real = Path.Combine(casing.Spell(scratch.Path), "parent");
         _ = Directory.CreateDirectory(real);
 
-        var link = Path.Combine(scratch.Path, "parent-link");
+        var link = Path.Combine(casing.Spell(scratch.Path), "parent-link");
         await PathAliases.JunctionAsync(link, real);
 
         // Three levels of directory that do not exist, under a junction.
@@ -336,8 +374,10 @@ internal sealed class SessionDirectoryGuardTests
 
         // The accepted spelling carries the tail back, so the next call is the
         // one the caller meant rather than the ancestor the guard happened to
-        // resolve.
-        await Assert.That(refusal!).Contains($"directory='{Path.Combine(real, "not", "created", "yet")}'");
+        // resolve. Case-insensitive: see RefusedAsAnAlias.
+        await Assert.That(refusal!).Contains(
+            $"directory='{Path.Combine(real, "not", "created", "yet")}'",
+            StringComparison.OrdinalIgnoreCase);
 
         // The positive control for the walk itself: the same three missing
         // levels under an unaliased parent are accepted, so the assertion above
@@ -346,7 +386,9 @@ internal sealed class SessionDirectoryGuardTests
     }
 
     [Test]
-    public async Task CaseAndTrailingSeparatorsAreNotAliasesBecauseTheyAreOneSessionByDesign()
+    [Arguments(DriveLetterCase.Upper)]
+    [Arguments(DriveLetterCase.Lower)]
+    public async Task CaseAndTrailingSeparatorsAreNotAliasesBecauseTheyAreOneSessionByDesign(DriveLetterCase casing)
     {
         // The guard sits in front of the identity chain and must not contradict
         // it. SessionPathTests asserts that a case change and a trailing
@@ -354,7 +396,8 @@ internal sealed class SessionDirectoryGuardTests
         // assertion unreachable through the tools.
         using var scratch = ScratchDirectory.Create("guard-case");
 
-        var directory = Path.Combine(scratch.Path, "Mixed Case Session");
+        var root = casing.Spell(scratch.Path);
+        var directory = Path.Combine(root, "Mixed Case Session");
         _ = Directory.CreateDirectory(directory);
 
         string[] spellings =
@@ -362,8 +405,8 @@ internal sealed class SessionDirectoryGuardTests
             directory,
             directory + Path.DirectorySeparatorChar,
             directory.ToUpperInvariant(),
-            Path.Combine(scratch.Path, "mixed case session"),
-            Path.Combine(scratch.Path, "elsewhere", "..", "Mixed Case Session"),
+            Path.Combine(root, "mixed case session"),
+            Path.Combine(root, "elsewhere", "..", "Mixed Case Session"),
         ];
 
         foreach (var spelling in spellings)
@@ -381,6 +424,16 @@ internal sealed class SessionDirectoryGuardTests
         // The accepted spelling, in the form the caller pastes back. This is the
         // half that makes the refusal recoverable in one turn, so it is asserted
         // as the literal argument rather than as a substring somewhere.
-        await Assert.That(refusal!).Contains($"directory='{accepted}'");
+        //
+        // ⚠️ CASE-INSENSITIVE, AND THAT IS THE CORRECT COMPARISON RATHER THAN A
+        // LOOSENING — the third time this repository has had to say so, after
+        // ErrorCatalogueTests and StraySweepTests on 2026-08-17. `accepted` is
+        // composed in this process from a root carrying whatever drive-letter
+        // case the invoking shell handed the test host; the spelling inside the
+        // refusal was read back through GetFinalPathNameByHandleW, which always
+        // reports it upper-case. Compared ordinally the same directory fails to
+        // match itself from Git Bash and matches from PowerShell, which makes
+        // the assertion a property of the caller. See DriveLetterCase.
+        await Assert.That(refusal!).Contains($"directory='{accepted}'", StringComparison.OrdinalIgnoreCase);
     }
 }

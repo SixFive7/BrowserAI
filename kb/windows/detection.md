@@ -479,6 +479,49 @@ Measured over 200 calls on a local volume, `CreateFileW` with no access and
 prefix and a `subst`ed letter all came back as the same `\\?\C:\…` true path.
 `[MACHINE]` for the figure, `[STABLE]` for the resolution behaviour.
 
+## Windows re-spells a path's drive letter; a process never re-spells its own
+
+Measured 2026-08-19 on this machine, .NET 10 / Windows 11 26200. `[STABLE]` for
+the API behaviour, `[MACHINE]` for the run.
+
+**Every Windows API that hands a path back answers with the mount manager's
+canonical DOS name, whose drive letter is upper-case** —
+`GetFinalPathNameByHandleW`, `QueryFullProcessImageNameW`, `GetShortPathNameW`
+and `QueryDosDeviceW` alike. Nothing re-spells a path a process composed for
+itself: `Path.GetFullPath` collapses `.` and `..` and expands an 8.3 component
+through the filesystem, and leaves the drive letter exactly as it was handed in.
+
+So the casing of every path a process composes is inherited from **whatever
+started it**, and stays that way for the life of the process:
+
+| Test host invoked from | `AppContext.BaseDirectory` |
+|---|---|
+| PowerShell / `pwsh` | `C:\Source\…` |
+| Git Bash | `c:\Source\…` |
+
+**Which makes an ordinal comparison between a composed path and an OS-read one a
+property of the caller's shell rather than of the product.** Reproduced at
+`cc45900` by running the same tree twice with nothing changed but the shell:
+
+| Shell | `dotnet test` |
+|---|---|
+| PowerShell | total 484, **0 failed** |
+| Git Bash | total 484, **2 failed** — both in `SessionDirectoryGuardTests`, both `Expected to contain "directory='c:\…'"` against a refusal that named `C:\…` |
+
+**To re-establish it:** run `dotnet test` from each shell on one commit. The
+cheap version is `[System.IO.Path]::GetFullPath('c:\windows')` beside
+`(Get-Item 'c:\windows').FullName` in the same session.
+
+⚠️ **CI cannot see this, and structurally never will.** Every step in
+`build.yml` runs under `pwsh`, so the build picks the casing that happens to
+agree and bakes it in — which is why this has been reported twice from a machine
+and never once from a build. What puts it in front of CI is `DriveLetterCase`,
+over which six of `SessionDirectoryGuardTests`' arms are parameterised: its
+`Lower` value composes a spelling no Windows API ever returns, so the wrong
+comparison goes red everywhere rather than somewhere. Proof it does not need a
+shell: the planted arm failed *from PowerShell*, with the identical two failures
+Git Bash had produced.
+
 ## Process image path — the fully documented detection path
 
 Measured 2026-08-15 with a PowerShell harness that is not in this repository; the

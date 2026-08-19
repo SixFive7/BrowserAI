@@ -248,6 +248,38 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The suite was red from Git Bash and green from PowerShell, on the same
+  commit, and now the wrong comparison is red in both.** Two assertions in
+  `SessionDirectoryGuardTests` compared a path composed in the test host against
+  the accepted spelling inside a refusal, which comes back through
+  `GetFinalPathNameByHandleW` — and Windows always answers with an **upper-case**
+  drive letter while a process keeps whatever casing its shell gave it
+  (`C:\…` from `pwsh`, `c:\…` from Git Bash). Measured at `cc45900`: total 484,
+  **2 failed from Git Bash and 0 from PowerShell**. `Sessions\CLAUDE.md`
+  predicted this exact defect and recorded that nothing asserted it; that is no
+  longer true.
+
+  **Eleven sites carried the shape, and all eleven were test assertions** — eight
+  in `SessionDirectoryGuardTests`, one each in `HeadlessBinaryTests`,
+  `StraySweepTests` and `SessionPathTests`, against paths read back through
+  `GetFinalPathNameByHandleW`, `QueryFullProcessImageNameW`, `GetShortPathNameW`,
+  `QueryDosDeviceW` and `GetCurrentDirectoryW`. Product code had none: every path
+  comparison in `src\` upper-cases both sides or asks for `OrdinalIgnoreCase`,
+  and the one deliberate ordinal path comparison is `ArtifactRouting.PrefixOf`,
+  which separates names the product generated from names a caller chose. One of
+  the eleven was choosing a *branch* rather than passing an assertion:
+  `An83Spelling…` decided whether this volume generates short names by comparing
+  `GetShortPathNameW`'s answer ordinally, so a re-spelled drive letter would have
+  sent it down the arm that then asserts a tilde.
+
+  **The mechanism is `DriveLetterCase`**, over which six of that class's tests are
+  parameterised: the `Lower` arm composes a spelling **no Windows API ever
+  returns**, so a comparison that is not case-insensitive fails on every machine
+  and in every shell. It was planted and watched red *from PowerShell*,
+  reproducing the two Git Bash failures exactly. ⚠️ **CI runs `pwsh` end to end
+  and therefore cannot see the shell-dependent form of this at all** — which is
+  why it has been reported twice from a machine and never once from a build.
+
 - **A durable write that landed and could not be re-opened said *nothing was
   changed*, which was false at the moment it was said.**
   `SessionLock.TryAcquire` closes its handle on `lock.json`, renames a

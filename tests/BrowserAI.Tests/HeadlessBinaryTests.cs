@@ -44,7 +44,12 @@ internal sealed class HeadlessBinaryTests
         // The exact executable, from the revision the resolved payload's own
         // browsers.json names. Not "somewhere under our root", because a
         // stale revision left behind by an earlier bump would also be under it.
-        await Assert.That(browser.ImagePath).IsEqualTo(BrowserAiPaths.ExpectedChromiumExecutable);
+        //
+        // Case-insensitive, which is the correct comparison for a Windows path
+        // and not a loosening: `ImagePath` was read back through
+        // QueryFullProcessImageNameW and the expected string is composed here.
+        // See DriveLetterCase.
+        await Assert.That(browser.ImagePath).IsEqualTo(BrowserAiPaths.ExpectedChromiumExecutable, StringComparison.OrdinalIgnoreCase);
 
         // Headless, so the selector really was exercised on the branch that
         // would otherwise have asked for the shell.

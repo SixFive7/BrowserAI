@@ -862,9 +862,16 @@ internal sealed class StraySweepTests
 
         // Every candidate is running one of exactly two strings. Nothing else
         // on the machine can be one, whatever it is called.
+        //
+        // ⚠️ Matched case-insensitively, which is the comparison the scan itself
+        // makes (BrowserProcesses.ScanFor keys an OrdinalIgnoreCase set) and the
+        // correct one for a Windows path. `ours` is composed in this process;
+        // `ImagePath` was read back through QueryFullProcessImageNameW, which
+        // reports the drive letter upper-case whatever this host was launched
+        // from. See DriveLetterCase.
         foreach (var candidate in scan.Candidates)
         {
-            await Assert.That(ours).Contains(candidate.ImagePath);
+            await Assert.That(ours).Contains(candidate.ImagePath, StringComparer.OrdinalIgnoreCase);
         }
 
         await Assert.That(candidates).DoesNotContain(planted.Id);
