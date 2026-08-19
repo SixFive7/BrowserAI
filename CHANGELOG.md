@@ -284,6 +284,39 @@ has been satisfied in form only.
   place; its conclusion is untouched, because it needed one unresolved alias and
   has three.
 
+### Changed
+
+- **`CreateProcessW`'s two buffers are declared as spans rather than as one
+  `char`.** `ref char lpCommandLine`, called as `ref commandLine[0]`, was weaker
+  than Microsoft's own Win32 metadata for the same call in three ways at once: no
+  length, an empty buffer that became an `IndexOutOfRangeException` at the indexer
+  rather than the `null` the API accepts, and nothing saying which of the two
+  buffers Windows writes back into. It is now `Span<char>` for the command line
+  and `ReadOnlySpan<char>` for the environment — pinned, not copied, so the
+  mutation still lands in our array. **Nothing was known to be wrong with the old
+  shape and nothing changed at the call site**; it was a signature that presents
+  as a plausible wrong answer rather than as an error. The invariants it silently
+  relied on are now asserted: `InteropLayoutTests.TheTwoBuffersHandedToCreateProcessAreTerminatedAndNeverEmpty`
+  is red if either buffer stops being NUL-terminated or becomes empty — and the
+  empty environment block is the one that matters, because it would reach Windows
+  as `null` and mean *inherit the parent's environment*, silently.
+
+- **`.gitignore`: the three owed items, and one of them was a claim that was not
+  true.** The upstream `VisualStudio.gitignore` half was re-fetched and compared
+  against upstream HEAD (blob `d5a18de`, unmoved since 2026-04-17) — it has not
+  changed. But the marker comment invited a **wholesale paste**, and this half is
+  *not* verbatim: `artifacts/` and `.artifacts/` are root-anchored here, because
+  unanchored they matched `src/BrowserAI/Artifacts/` on case-insensitive Windows
+  and made five product source files invisible to git. The refresh procedure now
+  says paste, re-apply, run the suite —
+  `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` makes forgetting a red
+  build, and the comment stops the next person rediscovering why. `.vscode/mcp.json`
+  is re-admitted below the marker, since
+  [github/gitignore#4735](https://github.com/github/gitignore/pull/4735) is still
+  open; for a project that **is** an MCP server, a workspace registration used for
+  testing was silently untracked. `/staging/` was already settled and deleted on
+  2026-08-16, with the reason recorded in the file — the `TODO.md` item was stale.
+
 ### Fixed
 
 - **The reclaim pass had a bullet with no input for three days, and it read as

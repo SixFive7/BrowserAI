@@ -440,8 +440,25 @@ FodyWeavers.xsd
 ###############################################################################
 # BrowserAI
 #
-# Everything above this line is github/gitignore's VisualStudio.gitignore,
-# verbatim as of 2026-04-17, so the upstream half can be refreshed wholesale.
+# Everything above this line is github/gitignore's VisualStudio.gitignore as of
+# 2026-04-17 -- re-fetched and compared 2026-08-19 against upstream HEAD
+# (VisualStudio.gitignore blob d5a18de, last touched by commit 61268c1e on
+# 2026-04-17), which has not moved since.
+#
+# !! IT IS NOT VERBATIM, AND THE ONE DEVIATION IS LOAD-BEARING. Corrected
+# 2026-08-19 (previously "verbatim as of 2026-04-17, so the upstream half can be
+# refreshed wholesale"). Upstream's `artifacts/` and `.artifacts/` are
+# ROOT-ANCHORED here, with the reason beside them at the line itself. Refreshing
+# this half wholesale, which is exactly what that sentence invited, silently
+# reverts that -- and unanchored, `artifacts/` matched `src/BrowserAI/Artifacts/`
+# on case-insensitive Windows and made five product source files invisible to git
+# while the build, the suite and `git status --porcelain` all read green.
+#
+# So the refresh procedure is: paste, then RE-APPLY the anchoring, then run the
+# suite. `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` is what makes
+# forgetting a red build rather than a silent loss; this comment is what stops
+# the next person having to rediscover why it went red.
+#
 # Everything below is project-specific.
 #
 # Patterns here are anchored with a leading slash wherever a bare directory
@@ -449,6 +466,19 @@ FodyWeavers.xsd
 # Windows, so an unanchored `node/` or `mcp/` would also swallow `Node/` and
 # `Mcp/` anywhere in the tree.
 ###############################################################################
+
+# --- Workspace MCP registration ----------------------------------------------
+# `.vscode/*` above ignores everything the upstream half does not re-admit, and
+# `mcp.json` is not on its list. For a project that IS an MCP server, a workspace
+# registration used for testing would therefore be silently untracked -- the
+# failure mode this file's own header is about.
+#
+# Upstream proposes fixing it: github/gitignore#4735, open since 2025-09-23, last
+# touched 2025-07-24, still unmerged when checked 2026-08-19. Re-admitted here in
+# the meantime, below the marker, so a wholesale refresh of the upstream half
+# cannot drop it. If that PR merges, this line becomes redundant rather than
+# wrong, and the upstream half's own negation takes over.
+!.vscode/mcp.json
 
 # --- Bundled payload ---------------------------------------------------------
 # The installer payload (node.exe ~88 MB + the @playwright/mcp JS tree ~18 MB +

@@ -158,15 +158,6 @@ findable from more than one direction.
       lower one**. Two of the three found exactly that whenever they did follow a
       chain to its end.
 
-- [ ] **`JobLauncher` declares `ref char lpCommandLine` where Microsoft's own
-      Win32 metadata generates `ref Span<char>`.**
-      [`JobLauncher.cs`](src/BrowserAI/Interop/JobLauncher.cs) passes
-      `ref commandLine[0]` — **no length, no terminator check**, and no write-back
-      of the mutation `CreateProcessW` is documented to make. Nothing is known to
-      be wrong with it and the whole suite runs over it, but it is a weaker
-      signature than the vendor's for the same call, and that is the kind of
-      difference that presents as a plausible wrong answer rather than as an error.
-
 - [ ] **Answer the CsWin32 metadata licence question before any move into
       `src/`.** The generator is MIT; **the metadata it generates from is not.**
       `Microsoft.Windows.SDK.Win32Metadata` and `WDK.Win32Metadata` ship under
@@ -226,18 +217,6 @@ findable from more than one direction.
       describes, which sees messages in wire order. Settle two things first:
       whether `@playwright/mcp` emits progress at all (not measured), and whether a
       caller rendering a jumping progress value is a defect worth a component.
-
-- [ ] **Three `.gitignore` items are owed.** *(a)* Re-fetch the upstream
-      `VisualStudio.gitignore` half wholesale and replace it in one paste — never
-      merge it by hand; everything below the marker comment is ours. *(b)* Settle
-      `.vscode/mcp.json`, which the template's `.vscode/*` rule ignores: for a
-      project that **is** an MCP server, a workspace registration used for testing
-      would be silently untracked. Upstream
-      [github/gitignore#4735](https://github.com/github/gitignore/pull/4735)
-      proposes fixing it and has been open since 2025-09-23; if it has not merged,
-      add `!.vscode/mcp.json` below the marker. *(c)* `/staging/` and `/.staging/`
-      were inferred from a predicted install layout and nothing emits them — keep
-      them deliberately or delete them, but not by accident.
 
 - [ ] **Review the *no automated checks* decision once the product is finished.**
       The [release checklist](RELEASING.md) is the only gate that exists; it works

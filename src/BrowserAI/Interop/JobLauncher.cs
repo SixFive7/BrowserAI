@@ -35,6 +35,28 @@ namespace BrowserAI.Interop;
 /// shape that is correct in both directions.
 /// </para>
 /// <para>
+/// ⚠️ <b>And the declaration says <i>buffer</i> rather than <i>one char</i>
+/// since 2026-08-19 (previously <c>ref char lpCommandLine</c> and
+/// <c>ref char lpEnvironment</c>, called as <c>ref commandLine[0]</c>).</b>
+/// Microsoft's own Win32 metadata generates a span for this parameter, and
+/// <c>ref char</c> was weaker than the vendor's in three ways at once: it
+/// carried no length, it made an empty buffer an
+/// <see cref="IndexOutOfRangeException"/> at the indexer rather than a
+/// <see langword="null"/> the API accepts, and it said nothing about which of
+/// the two buffers Windows writes back into. <c>Span&lt;char&gt;</c> for the
+/// command line and <c>ReadOnlySpan&lt;char&gt;</c> for the environment now say
+/// exactly that: the first is mutated in place — <b>which is our array, because
+/// the span is pinned rather than copied</b> — and the second is not.
+/// <b>Nothing was known to be wrong with the old shape and nothing changed at
+/// the call</b>; it was a signature that presents as a plausible wrong answer
+/// rather than as an error, which is the class this repository spends the most
+/// on. The invariants the old form relied on and never stated are now stated
+/// and asserted: <c>BuildCommandLine</c> and <c>BuildEnvironmentBlock</c> both
+/// return a NUL-terminated, never-empty buffer, and
+/// <c>InteropLayoutTests.TheTwoBuffersHandedToCreateProcessAreTerminatedAndNeverEmpty</c>
+/// is red if either stops.
+/// </para>
+/// <para>
 /// <b>Redirection forces <c>bInheritHandles=TRUE</c></b>, which is precisely why
 /// <see cref="JobObject"/> is so careful about its own handle: with these three
 /// pipes in play, an inheritable job handle would be duplicated into the child
@@ -121,12 +143,12 @@ internal static partial class JobLauncher
             // the SDK's shell-wrapping transport.
             if (!CreateProcessW(
                     command,
-                    ref commandLine[0],
+                    commandLine,
                     nint.Zero,
                     nint.Zero,
                     bInheritHandles: true,
                     ExtendedStartupInfoPresent | CreateUnicodeEnvironment | CreateNoWindow,
-                    ref environmentBlock[0],
+                    environmentBlock,
                     workingDirectory,
                     ref startupInfo,
                     out var information))
@@ -164,7 +186,16 @@ internal static partial class JobLauncher
     /// Quotes an argument list the way <c>CommandLineToArgvW</c> unquotes it,
     /// into a buffer <c>CreateProcessW</c> is allowed to write into.
     /// </summary>
-    private static char[] BuildCommandLine(string command, IReadOnlyList<string> arguments)
+    /// <remarks>
+    /// <b>Internal so the two invariants the span signature rests on can be
+    /// asserted rather than read.</b> The buffer is never empty and its last
+    /// character is NUL — both true by construction here, and neither stated
+    /// anywhere until the declaration stopped carrying a length.
+    /// </remarks>
+    /// <param name="command">The executable, which becomes argv[0].</param>
+    /// <param name="arguments">The arguments, quoted here.</param>
+    /// <returns>A NUL-terminated buffer Windows may write into.</returns>
+    internal static char[] BuildCommandLine(string command, IReadOnlyList<string> arguments)
     {
         var builder = new StringBuilder();
         AppendArgument(builder, command);
@@ -226,7 +257,16 @@ internal static partial class JobLauncher
     /// Builds the <c>name=value\0…\0\0</c> block <c>CREATE_UNICODE_ENVIRONMENT</c>
     /// expects, sorted the way Windows expects to find it.
     /// </summary>
-    private static char[] BuildEnvironmentBlock(IReadOnlyDictionary<string, string> environment)
+    /// <remarks>
+    /// <b>Internal for the same reason as <see cref="BuildCommandLine"/>:</b>
+    /// an empty environment still produces one NUL, so the block is never a
+    /// zero-length buffer — which would reach Windows as <see langword="null"/>
+    /// and mean <i>inherit the parent's environment</i>, the opposite of what an
+    /// explicitly empty environment asks for.
+    /// </remarks>
+    /// <param name="environment">The child's whole environment.</param>
+    /// <returns>A double-NUL-terminated buffer Windows only reads.</returns>
+    internal static char[] BuildEnvironmentBlock(IReadOnlyDictionary<string, string> environment)
     {
         var builder = new StringBuilder();
 
@@ -548,12 +588,12 @@ internal static partial class JobLauncher
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CreateProcessW(
         string? lpApplicationName,
-        ref char lpCommandLine,
+        Span<char> lpCommandLine,
         nint lpProcessAttributes,
         nint lpThreadAttributes,
         [MarshalAs(UnmanagedType.Bool)] bool bInheritHandles,
         uint dwCreationFlags,
-        ref char lpEnvironment,
+        ReadOnlySpan<char> lpEnvironment,
         string? lpCurrentDirectory,
         ref StartupInfoEx lpStartupInfo,
         out ProcessInformation lpProcessInformation);

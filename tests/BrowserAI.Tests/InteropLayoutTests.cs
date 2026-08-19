@@ -108,6 +108,64 @@ internal sealed class InteropLayoutTests
     }
 
     /// <summary>
+    /// Both buffers handed to <c>CreateProcessW</c> are NUL-terminated and
+    /// never empty — the two invariants the span declaration rests on and the
+    /// <c>ref char</c> one silently assumed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The oracle cannot check this and deliberately never will.</b>
+    /// [`NativeMethods.txt`](NativeMethods.txt) admits structs only, because a
+    /// generated P/Invoke would be a second way to call Windows sitting in the
+    /// test assembly. So the signature is compared against Microsoft's by
+    /// reading, and what is asserted here is the thing a weaker signature made
+    /// invisible: the length the parameter no longer carries.
+    /// </para>
+    /// <para>
+    /// <b>The empty case is the one that matters, and the two buffers fail it
+    /// differently.</b> An empty command line would have thrown
+    /// <see cref="IndexOutOfRangeException"/> at <c>ref commandLine[0]</c>; an
+    /// empty environment block reaches Windows as <see langword="null"/>, which
+    /// means <i>inherit the parent's environment</i> — the exact opposite of what
+    /// an explicitly empty environment asks for, and a silent one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheTwoBuffersHandedToCreateProcessAreTerminatedAndNeverEmpty()
+    {
+        var commandLine = JobLauncher.BuildCommandLine(@"C:\Program Files\node\node.exe", ["--a b", string.Empty, "\"q\""]);
+
+        await Assert.That(commandLine.Length).IsGreaterThan(0);
+        await Assert.That(commandLine[^1]).IsEqualTo('\0');
+
+        // Exactly one NUL, at the end: an interior one would truncate the
+        // command line where CommandLineToArgvW reads it.
+        await Assert.That(commandLine.Count(character => character is '\0')).IsEqualTo(1);
+
+        var populated = JobLauncher.BuildEnvironmentBlock(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["PATH"] = @"C:\Windows",
+            ["BROWSERAI"] = "1",
+        });
+
+        await Assert.That(populated.Length).IsGreaterThan(0);
+        await Assert.That(populated[^1]).IsEqualTo('\0');
+        await Assert.That(populated[^2]).IsEqualTo('\0');
+
+        // Sorted case-insensitively, which is what Windows expects to find.
+        await Assert.That(new string(populated)).StartsWith("BROWSERAI=1\0PATH=", StringComparison.Ordinal);
+
+        // ⚠️ The one that would reach Windows as null. An explicitly empty
+        // environment must still be a block, or the child silently inherits
+        // this process's own.
+        var empty = JobLauncher.BuildEnvironmentBlock(new Dictionary<string, string>(StringComparer.Ordinal));
+
+        await Assert.That(empty.Length).IsEqualTo(1);
+        await Assert.That(empty[0]).IsEqualTo('\0');
+    }
+
+    /// <summary>
     /// Each hand-written struct is exactly the size Microsoft's metadata says.
     /// </summary>
     /// <remarks>
