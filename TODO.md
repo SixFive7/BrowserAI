@@ -158,26 +158,6 @@ findable from more than one direction.
       lower one**. Two of the three found exactly that whenever they did follow a
       chain to its end.
 
-- [ ] **The failed-rewrite recovery of `lock.json` has no test.** A failed rewrite
-      must not also release the lock: the handle is dropped before the
-      replacement, so an exception on the way through leaves the session silently
-      unowned. **It shipped broken once**, which is the shape that earns a
-      regression test. What is missing is a seam — the rename is
-      [`SessionLock`](src/BrowserAI/Sessions/SessionLock.cs)'s own and nothing can
-      make it fail on demand, so provoking it needs either an injectable file
-      operation or a probe process holding the replacement path at the right
-      moment. **Prefer the probe if the alternative puts a test-only interface on
-      the product's hot path.**
-
-- [ ] **No spawn record is persisted across runs, so the suite's reclaim pass
-      cannot finish its job.** [Testing](TESTING.md) asks that anything the
-      previous run recorded is terminated by `(pid, creationFileTime)` from its own
-      spawn record, and nothing writes one — so a run killed mid-test leaves a
-      process the next run cannot identify, only a directory it cannot delete. The
-      other three bullets are built and the pass is itself a test now, which is
-      what makes this gap visible: the survivors are **named** rather than silently
-      skipped.
-
 - [ ] **`JobLauncher` declares `ref char lpCommandLine` where Microsoft's own
       Win32 metadata generates `ref Span<char>`.**
       [`JobLauncher.cs`](src/BrowserAI/Interop/JobLauncher.cs) passes

@@ -46,6 +46,19 @@ internal static class ScratchRoot
     /// </remarks>
     public static List<string> LastPassSurvivors { get; } = [];
 
+    /// <summary>
+    /// Every line the spawn-record half of the pass produced — terminated,
+    /// skipped, or could not be terminated.
+    /// </summary>
+    /// <remarks>
+    /// <b>Separate from <see cref="LastPassSurvivors"/> because most of it is
+    /// the healthy state.</b> A machine that has never crashed a run produces a
+    /// file of pids that all read <i>not that process any more</i>, and that is
+    /// the pass confirming there is nothing to do rather than a finding. Only a
+    /// process it could not end is a survivor.
+    /// </remarks>
+    public static List<string> LastPassReport { get; } = [];
+
     /// <summary>Whether the reclaim pass has run in this process.</summary>
     public static bool HasReclaimed
     {
@@ -72,6 +85,20 @@ internal static class ScratchRoot
                 if (!_reclaimed)
                 {
                     _ = Directory.CreateDirectory(path);
+
+                    // FIRST, and before the tree: a process the previous run
+                    // left running is what holds the files the delete below
+                    // cannot take, so reclaiming in the other order reports a
+                    // locked file where the cause is a live process.
+                    //
+                    // Only what it COULD NOT terminate joins the survivors. A
+                    // leftover this pass ended is the pass working, and putting
+                    // it in a list something asserts is empty would fail the run
+                    // that cleaned up rather than the run that leaked.
+                    LastPassReport.AddRange(SpawnRecord.Reclaim(SpawnRecord.Path));
+                    LastPassSurvivors.AddRange(LastPassReport
+                        .Where(line => line.StartsWith("could not terminate ", StringComparison.Ordinal)));
+
                     Reclaim(path);
                     ReclaimStrayIndexEntries(path);
                     ReclaimTheSweepMutex();

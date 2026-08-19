@@ -62,6 +62,11 @@ internal sealed class JobObjectScope : IDisposable
         var process = JobLauncher.Start(_job, command, arguments, workingDirectory, ChildEnvironment.Build());
         _started.Add(process);
 
+        // Written where the NEXT run can read it. The job object above is what
+        // contains this process while this run is alive; the record is what
+        // names it if this run is killed and the job dies with it.
+        SpawnRecord.Add(process.Id);
+
         // ⚠️ Drained because an undrained pipe stops the child once its buffer
         // fills -- which presents as "the launcher never finished" rather than
         // as a full pipe -- and KEPT because a discarded one is worse.

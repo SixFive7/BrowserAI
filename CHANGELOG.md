@@ -286,6 +286,34 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The reclaim pass had a bullet with no input for three days, and it read as
+  though it worked.** The suite's own specification asks that *anything the
+  previous run recorded is terminated by `(pid, creationFileTime)` from its own
+  spawn record*. Nothing wrote a record. So a run killed mid-test left a process
+  the next run could not identify — only a directory it could not delete, which
+  surfaced as a locked file and named the wrong cause. `SpawnRecord` writes
+  `.work\spawn-record.txt` from the two places the harness starts processes, and
+  the pass reads it **before** it touches the tree, because a live process is
+  what holds the files a delete cannot take. Identity is checked again before
+  anything is acted on, and the regression test's middle case is the test host's
+  own pid with a deliberately wrong creation time — a reclaim that matched on the
+  number alone would end the run rather than fail it.
+
+- **The failed-rewrite recovery of `lock.json` has a test.** A rewrite drops the
+  handle before the replacement, because Windows will not rename over a file this
+  process holds — so an exception in between left the session *silently unowned*
+  while the caller was told only that a write had failed. It shipped that way
+  once. The seam turned out to be neither of the two `TODO.md` predicted: not an
+  injectable file operation and not a probe process holding the replacement path,
+  but an **ACL** — denying `CreateFiles` on the session directory stops
+  `WriteDurably`'s temp file ever existing, so the rewrite fails before any
+  rename, deterministically, with nothing injected. Ownership is then asserted
+  from the kernel rather than from the object under test: a stranger's
+  write-access open of `lock.json` is refused while, and only while, a handle is
+  really there. The second arm denies read as well, so the recovery fails too,
+  and requires the answer to say the session no longer holds its directory rather
+  than hand back something that reports ownership it does not have.
+
 - **The two ungated `lock.json` readers that ACTED on an absence rather than
   reporting it are closed, one pass each.** An adversarial review enumerated
   thirteen readers that take no lock; eleven fail safe. The other two both read

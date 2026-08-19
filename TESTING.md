@@ -175,6 +175,19 @@ The reclaim pass runs before anything else and is idempotent:
   creationFileTime)`** from its own spawn record — never by image name, which is
   the rule `NeverByImageNameTests` enforces and which applies to test code with no
   exception. A PID whose creation time no longer matches is skipped, not killed.
+  `SpawnRecord` is the record: `.work\spawn-record.txt`, one line per process the
+  harness starts, appended by `JobObjectScope.Launch` and `ProbeProcess`, read and
+  emptied by the pass before it touches the tree — a live process is what holds
+  the files a delete cannot take, so the other order reports a locked file and
+  names the wrong cause. ⚠️ *Written 2026-08-19; before that **nothing wrote a
+  record**, so this bullet had no input and the pass quietly did nothing while
+  reading as though it did.* It terminates the process it named rather than a
+  tree, because `Process.Kill(entireProcessTree: true)` is banned repository-wide;
+  a grandchild is the job object's business.
+  `ProcessLogTests.TheSpawnRecordEndsAPreviousRunsProcessAndSkipsARecycledPid`
+  drives all three cases, and the middle one is **this test host's own pid with a
+  deliberately wrong creation time** — a reclaim that regressed to matching on the
+  number alone would end the run rather than fail it.
 - **The scratch root is deleted with the routine that survives a locked file**
   (`TreeDelete`), because the common leftover is a session directory a browser
   has not finished letting go of, and a delete that fails whole here fails the run

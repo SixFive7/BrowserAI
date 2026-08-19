@@ -1109,6 +1109,114 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
+    /// A rewrite that fails takes the name back before it lets the failure out,
+    /// so the session still owns its directory — and a recovery that also fails
+    /// says the ownership is gone rather than pretending it is not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It shipped broken once, which is what earns this a regression test.</b>
+    /// <c>Rewrite</c> drops the handle before the replacement, because Windows
+    /// will not rename over a file this process is holding — so an exception
+    /// anywhere between the drop and the re-open left the session <i>silently
+    /// unowned</i> while the caller was told only that a write had failed. The
+    /// directory was then free for any peer to reclaim, and the object went on
+    /// reporting that it held it.
+    /// </para>
+    /// <para>
+    /// <b>The seam is an ACL rather than a probe process, and that is a
+    /// correction to what this test was expected to need.</b> <c>TODO.md</c>
+    /// asked for *an injectable file operation or a probe process holding the
+    /// replacement path at the right moment*, preferring the probe because the
+    /// alternative puts a test-only interface on the product's hot path.
+    /// <see cref="DirectoryDenial"/> — which did not exist when that was written —
+    /// is neither: denying <c>CreateFiles</c> on the session directory stops
+    /// <c>WriteDurably</c>'s temp file ever being created, so the rewrite fails
+    /// **deterministically**, before any rename, with nothing injected and no
+    /// second process to schedule.
+    /// </para>
+    /// <para>
+    /// <b>Ownership is asserted from the kernel, not from the object.</b> Asking
+    /// the lock whether it still holds the directory would be asking the thing
+    /// under test; a stranger's <c>FileAccess.ReadWrite</c> open of
+    /// <c>lock.json</c> is refused while — and only while — a handle is really
+    /// there, so it is the same test a competing BrowserAI performs.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARewriteThatFailsKeepsTheDirectoryAndOneThatCannotTakeItBackSaysSo()
+    {
+        using var scratch = ScratchDirectory.Create("session-rewrite-failed");
+        var (_, path) = NewSession(scratch, "rewrite-failed");
+
+        var taken = SessionLock.TryAcquire(path, Request("about to fail a rewrite"), NullLogger.Instance);
+        var held = taken.Acquired!;
+
+        try
+        {
+            // Read the way a reader has to while a holder has the file open for
+            // WRITE: FileShare.Read alone is refused outright, which would turn
+            // "somebody owns this" into "this file cannot be read".
+            var before = ReadBesideTheHolder(path.LockFile);
+
+            using (DirectoryDenial.Apply(path.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
+            {
+                _ = Assert.Throws<UnauthorizedAccessException>(() => held.Rewrite(record => Repurposed(record, "the rewrite that cannot land")));
+            }
+
+            // THE PROPERTY. The failure came out, and the directory did not go
+            // with it: a stranger's write-access open is still refused, which is
+            // exactly what a competing BrowserAI's TryAcquire performs.
+            _ = Assert.Throws<IOException>(() =>
+            {
+                using var stranger = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+            });
+
+            // And nothing was half-written: the record is the one that was there
+            // before the attempt, and the object still reports it.
+            await Assert.That(ReadBesideTheHolder(path.LockFile)).IsEqualTo(before);
+            await Assert.That(held.Record.Purpose).IsEqualTo("about to fail a rewrite");
+        }
+        finally
+        {
+            held.Dispose();
+        }
+
+        // The other arm, and it is the state this object cannot represent: the
+        // replacement failed AND the name could not be taken back. Both denials
+        // at once -- CreateFiles on the directory stops the temp file, ReadData
+        // on the files inside refuses the re-open -- and the answer has to say
+        // the session no longer holds its directory rather than hand back
+        // something that reports ownership it does not have.
+        var (_, lost) = NewSession(scratch, "rewrite-lost");
+        var second = SessionLock.TryAcquire(lost, Request("about to lose its directory"), NullLogger.Instance);
+        var losing = second.Acquired!;
+
+        try
+        {
+            IOException? reported;
+
+            using (DirectoryDenial.Apply(lost.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
+            using (DirectoryDenial.Apply(lost.FullPath, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly))
+            {
+                // ⚠️ This arm costs RenameWindow.Budget -- thirty seconds -- and
+                // that is the coverage: the recovery open runs through the same
+                // bounded wait as every other entitled open, so a permanent
+                // denial has to be reported rather than waited on forever.
+                reported = Assert.Throws<IOException>(() => losing.Rewrite(record => Repurposed(record, "the rewrite that loses the lock")));
+            }
+
+            await Assert.That(reported!.Message).Contains("could not be re-opened afterwards");
+            await Assert.That(reported.Message).Contains("no longer holds its directory");
+        }
+        finally
+        {
+            losing.Dispose();
+        }
+    }
+
+    /// <summary>
     /// A peer's pre-gate probe holds <c>lock.json</c> for an instant, and that
     /// instant must not take the directory away from the process that just wrote
     /// its own record into it — while a handle that never goes away is still
@@ -1505,6 +1613,27 @@ internal sealed class SessionLockTests
     private static bool IsProductCode(FileInfo file) =>
         file.Extension is ".cs"
         && file.FullName.Contains($"{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Reads a lock file while its holder still has it open, which needs the
+    /// holder's own write access shared back.
+    /// </summary>
+    /// <param name="lockFile">The lock file.</param>
+    /// <returns>Its bytes, as text.</returns>
+    private static string ReadBesideTheHolder(string lockFile)
+    {
+        using var stream = new FileStream(lockFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+        using var reader = new StreamReader(stream);
+
+        return reader.ReadToEnd();
+    }
+
+    /// <summary>The rewrite `browserai_set_purpose` performs, composed the same way.</summary>
+    /// <param name="record">The record on disk.</param>
+    /// <param name="purpose">The purpose to append.</param>
+    /// <returns>The record the rewrite would write.</returns>
+    private static LockRecord Repurposed(LockRecord record, string purpose) =>
+        record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
 
     private static SessionLockRequest Request(string purpose) =>
         new() { Mode = "headless", Browser = "chromium", Purpose = purpose };

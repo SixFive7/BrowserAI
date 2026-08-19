@@ -135,6 +135,96 @@ internal sealed partial class ProcessLogTests
         await Assert.That(File.Exists(Path.Combine(mine.Path, "written-after-the-pass.txt"))).IsTrue();
     }
 
+    /// <summary>
+    /// The spawn record ends a process a previous run left running, and refuses
+    /// to touch a pid whose creation time has moved.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the bullet of the reclaim pass that had no input.</b>
+    /// [Testing](../../TESTING.md#testing-a-hard-requirement-and-the-release-gate) asks that <i>anything
+    /// the previous run recorded is terminated by <c>(pid,
+    /// creationFileTime)</c> from its own spawn record</i>; nothing wrote a
+    /// record until 2026-08-19, so a run killed mid-test left a process the next
+    /// run could not identify — only a directory it could not delete, reported
+    /// as a locked file rather than as a live process.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The second line of the record is this test host's own pid with a
+    /// creation time that is deliberately wrong, and that is the assertion the
+    /// whole mechanism turns on.</b> A pid Windows has recycled belongs to
+    /// something else — plausibly the developer's editor — so a reclaim that
+    /// acted on the number alone would end it. If this code ever regressed to
+    /// matching on pid, the run would die here rather than fail here, which is
+    /// the loudest possible form of red.
+    /// </para>
+    /// <para>
+    /// <b>The record it reads is the test's own file, not the suite's.</b> The
+    /// real one has already been consumed by the pass that ran before any test
+    /// did, and a test that rewrote it would be arranging state for whatever
+    /// runs next.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSpawnRecordEndsAPreviousRunsProcessAndSkipsARecycledPid()
+    {
+        using var scratch = ScratchDirectory.Create("spawn-record");
+        var record = Path.Combine(scratch.Path, "spawn-record.txt");
+        var probe = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+        var session = Directory.CreateDirectory(Path.Combine(scratch.Path, "held")).FullName;
+        var ready = Path.Combine(scratch.Path, "gate.json");
+
+        // Contained as well as recorded: if an assertion below throws, the job
+        // takes the probe with it rather than leaving the thing this test is
+        // about to prove can be cleaned up.
+        using (var scope = new JobObjectScope())
+        {
+            var started = scope.Launch(probe, AppContext.BaseDirectory, "session-hold-gate", session, ready);
+            _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
+
+            var created = ProcessIdentity.CreationTimeOf(started.Id);
+            var mine = ProcessIdentity.CreationTimeOf(Environment.ProcessId);
+
+            await Assert.That(ProcessIdentity.IsAlive(started.Id, created)).IsTrue();
+
+            await File.WriteAllLinesAsync(record,
+            [
+                $"{started.Id} {created}",
+
+                // The pid is real and running; the creation time is not its own.
+                // Nothing may happen to it.
+                $"{Environment.ProcessId} {mine + 1}",
+
+                // A pid that named a process once and does not now.
+                $"{int.MaxValue - 1} {created}",
+            ]);
+
+            var report = SpawnRecord.Reclaim(record);
+
+            await Assert.That(report.Count).IsEqualTo(3).Because(string.Join(" | ", report));
+            await Assert.That(report.Count(line => line.StartsWith("terminated ", StringComparison.Ordinal))).IsEqualTo(1)
+                .Because(string.Join(" | ", report));
+            await Assert.That(report.Count(line => line.StartsWith("skipped ", StringComparison.Ordinal))).IsEqualTo(2)
+                .Because(string.Join(" | ", report));
+
+            // The recorded process is gone, and the one whose identity did not
+            // match is not — which is this process, still executing.
+            await Assert.That(ProcessIdentity.IsAlive(started.Id, created)).IsFalse();
+            await Assert.That(ProcessIdentity.IsAlive(Environment.ProcessId, mine)).IsTrue();
+
+            // Emptied, so a second reclaim of the same file is a no-op rather
+            // than a second pass over pids that now belong to somebody else.
+            await Assert.That(await File.ReadAllTextAsync(record)).IsEmpty();
+            await Assert.That(SpawnRecord.Reclaim(record).Count).IsEqualTo(0);
+        }
+
+        // And the live suite really does write one, which is the half a
+        // test-owned file cannot show: every process this run has launched went
+        // through the same call.
+        await Assert.That(SpawnRecord.Path).EndsWith("spawn-record.txt");
+    }
+
     [Test]
     public async Task ALogDirectoryOnAShareIsRefusedOutrightRatherThanWrittenTo()
     {

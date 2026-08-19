@@ -64,6 +64,11 @@ internal static class ProbeProcess
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException($"Could not start '{ExecutablePath}'.");
 
+        // This one is started OUTSIDE a job object -- it is awaited to exit
+        // rather than contained -- so the spawn record is the only thing that
+        // can name it if this run is killed while it is running.
+        SpawnRecord.Add(process.Id);
+
         var stdout = process.StandardOutput.ReadToEndAsync();
         var stderr = process.StandardError.ReadToEndAsync();
 

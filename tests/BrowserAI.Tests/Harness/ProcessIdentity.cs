@@ -124,6 +124,36 @@ internal static partial class ProcessIdentity
         }
     }
 
+    /// <summary>
+    /// Waits for a terminated process to actually be gone, on its handle rather
+    /// than on a poll.
+    /// </summary>
+    /// <remarks>
+    /// <b><c>TerminateProcess</c> only asks.</b> It returns as soon as the
+    /// request is queued, so a caller that reads liveness on the next line reads
+    /// <i>alive</i> about a process that is on its way out — and a reclaim whose
+    /// next step deletes the tree that process is holding then blames a locked
+    /// file. The bound is a hang detector: a process that will not die inside it
+    /// is not going to.
+    /// </remarks>
+    /// <param name="processId">The pid recorded at spawn.</param>
+    /// <param name="createdFileTime">Its creation time, recorded at the same moment.</param>
+    /// <param name="patience">How long to wait before answering that it is still there.</param>
+    /// <returns><see langword="true"/> when it is gone, or was never that process.</returns>
+    public static bool WaitUntilGone(int processId, long createdFileTime, TimeSpan patience)
+    {
+        using var handle = OpenProcess(Synchronize | ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId);
+
+        if (handle.IsInvalid
+            || !GetProcessTimes(handle, out var creation, out _, out _, out _)
+            || creation != createdFileTime)
+        {
+            return true;
+        }
+
+        return WaitForSingleObject(handle, (uint)patience.TotalMilliseconds) is WaitObject0;
+    }
+
     /// <summary>The creation time of a live process, for recording alongside its pid.</summary>
     /// <param name="processId">A live process.</param>
     /// <returns>Its creation time as a Windows FILETIME.</returns>
