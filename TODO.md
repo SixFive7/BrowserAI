@@ -218,14 +218,27 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **21 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **14 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
       the index's own `Area` cells verbatim:
-      Protocol and SDK 7, Tooling and
-      CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      28 more are `open` while carrying evidence, so 49 are `open` in total, against
-      109 `closed`.
+      Protocol and SDK 7,
+      Packaging and updates 4, Handle routing and instance lifetime 3.
+      32 more are `open` while carrying evidence, so 46 are `open` in total, against
+      112 `closed`.
+
+      ***Corrected 2026-08-19, fourth of the pass (previously "21 rows … Tooling
+      and CI 7 … 28 more are `open` while carrying evidence, so 49 are `open` in
+      total, against 109 `closed`")*** — re-counted by the test, not adjusted.
+      **Tooling and CI is done**: 7 rows, now 3 `closed` and 4 `open` with a
+      reason. The *code under test tests itself* row closed against
+      `RawStdioClient`, which did not exist when the row was written and is the
+      independent third party it asks for; the other two closed against the
+      registration tests and the coverage gate. ⚠️ **One of the four found
+      something worth more than the row:** *screenshots are not byte-stable* has
+      never been measured — it is one of the justification sweep's own assumed
+      entries — so the practice it prescribes is being followed for a reason
+      nobody has checked.
 
       ***Corrected 2026-08-19, later the same day again (previously "30 rows …
       Process and OS (Windows) 9 … 23 more are `open` while carrying evidence,
