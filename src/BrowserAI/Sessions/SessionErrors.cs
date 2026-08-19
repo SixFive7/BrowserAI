@@ -500,6 +500,45 @@ internal static class SessionErrors
         + "This needs SeCreateGlobalPrivilege, which an interactive user has and a low-integrity or AppContainer process does not — there is no reduced-protection mode to fall back to, because a logon-session-scoped lock would report success while allowing a second BrowserAI to open the same browser profile. "
         + "Run BrowserAI as an ordinary interactive user.";
 
+    /// <summary>
+    /// <c>lock.json</c> is there and this process cannot open it, and no other
+    /// process is holding it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-19, because until then this case was an exception
+    /// rather than a refusal.</b> <c>SessionLock.TakeOrReport</c>'s first open —
+    /// the read of the previous record, under the per-directory gate — caught a
+    /// missing file, a sharing violation and an unparseable record, and nothing
+    /// else. A permanent ACL denial arrives as
+    /// <see cref="UnauthorizedAccessException"/>, which is not an
+    /// <see cref="IOException"/> and matched none of the three, so it
+    /// <b>propagated out of the product's primary session-opening entry
+    /// point</b> — after <c>RenameWindow</c> had spent its whole budget waiting
+    /// for a rename that was never in flight. <c>OpenHeld</c>'s own remarks
+    /// already recorded that a UAE had escaped <c>TryAcquire</c> once; the wait
+    /// narrowed the transient window and never closed the permanent one.
+    /// </para>
+    /// <para>
+    /// <b>It says what it is not, and that is the load-bearing half.</b> A
+    /// process holding the file is refused as a sharing violation and is reported
+    /// by name through <see cref="LockHeld"/>, so a model that reads <i>could not
+    /// open</i> and concludes <i>somebody else has it, I will wait</i> has been
+    /// told the wrong thing and will retry into it forever. This is the arm where
+    /// waiting is the one thing that cannot help.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The session directory.</param>
+    /// <param name="lockFile">The lock file that could not be opened.</param>
+    /// <param name="why">What the filesystem said.</param>
+    /// <param name="waited">How long the rename window was waited out before giving up.</param>
+    /// <returns>The refusal.</returns>
+    public static string LockFileCannotBeOpened(string path, string lockFile, string why, TimeSpan waited) =>
+        $"'{lockFile}' exists and BrowserAI could not open it ({why}), so '{path}' was not taken and nothing was changed. "
+        + $"This is NOT another process holding the session: a holder is refused as a sharing violation and is reported by name, and BrowserAI already waited {waited.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)} seconds in case a record was being replaced. Waiting longer cannot help. "
+        + "The likeliest cause is permissions — a DENY entry on that file or on a directory above it, which is inherited and can be invisible from the file itself — and antivirus, backup and file-sync software produce the same refusal while they hold a file open in a way Windows does not report as sharing. "
+        + $"Recovery: check who may read that path, or move this session to a directory this user owns. If the file is expendable, deleting it makes the directory a NEW session rather than a broken one — {SessionToolSurface.Init} then works on it, and the profile, output and downloads beside it are untouched. Repeating the call that just failed will fail identically.";
+
     // ⚠️ Row 15 -- DirectoryIsACopy -- was DELETED on 2026-08-18 along with
     // `acknowledgeCopy`, and deleted rather than left unreferenced because
     // ErrorCatalogueTests proves every row in this file is reachable from a real

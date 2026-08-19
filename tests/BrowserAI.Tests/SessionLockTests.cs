@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.AccessControl;
-using System.Security.Principal;
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
@@ -1038,15 +1037,22 @@ internal sealed class SessionLockTests
     /// written and refuses the handle over it, deterministically and with no
     /// fault injection in the product. The control arm denies <c>CreateFiles</c>
     /// on the directory itself instead, which stops the temp file ever existing.
+    /// <i>The seam itself moved to <see cref="DirectoryDenial"/> on 2026-08-19,
+    /// when a second test needed it.</i>
     /// </para>
     /// <para>
     /// ⚠️ <b>This test costs <see cref="RenameWindow.Budget"/> — thirty seconds —
     /// and that is coverage rather than waste.</b> The denied open runs through
     /// <c>RenameWindow.WaitOut</c>, which exists to wait out a rename in flight;
     /// a permanent denial is a different fault and must still be <i>reported</i>
-    /// rather than waited on forever. This is the only test in the suite that
-    /// reaches the end of that budget, so it is also the only one that proves the
-    /// wait is bounded at all.
+    /// rather than waited on forever. <i>Corrected 2026-08-19 (previously "This
+    /// is the only test in the suite that reaches the end of that budget, so it
+    /// is also the only one that proves the wait is bounded at all")</i> — there
+    /// are two now. <c>ErrorCatalogueTests.TheLockRowsAreEmittedByRealLockConditions</c>
+    /// denies the same right over a <c>lock.json</c> that already exists, which
+    /// reaches the <b>first</b> open in <c>TakeOrReport</c> rather than the
+    /// re-open this test reaches, and that open had no arm for it at all until
+    /// the same day.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1056,18 +1062,13 @@ internal sealed class SessionLockTests
         using var scratch = ScratchDirectory.Create("session-write-landed");
         var (_, landed) = NewSession(scratch, "reopen-refused");
 
-        var denial = Deny(landed.FullPath, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly);
         SessionLockResult refused;
 
-        try
+        // Disposed before anything reads the file, and before the scratch
+        // teardown has to delete a tree it cannot enumerate.
+        using (DirectoryDenial.Apply(landed.FullPath, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly))
         {
             refused = SessionLock.TryAcquire(landed, Request("the record lands and the re-open is refused"), NullLogger.Instance);
-        }
-        finally
-        {
-            // Before anything reads the file, and before the scratch teardown
-            // has to delete a tree it cannot enumerate.
-            Undeny(landed.FullPath, denial);
         }
 
         refused.Acquired?.Dispose();
@@ -1093,16 +1094,11 @@ internal sealed class SessionLockTests
         // never landed leaves no record, and still says so.
         var (_, never) = NewSession(scratch, "write-refused");
 
-        var block = Deny(never.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None);
         SessionLockResult unwritten;
 
-        try
+        using (DirectoryDenial.Apply(never.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
         {
             unwritten = SessionLock.TryAcquire(never, Request("the write never lands"), NullLogger.Instance);
-        }
-        finally
-        {
-            Undeny(never.FullPath, block);
         }
 
         unwritten.Acquired?.Dispose();
@@ -1217,44 +1213,6 @@ internal sealed class SessionLockTests
 
     private static SessionLockRequest Request(string purpose) =>
         new() { Mode = "headless", Browser = "chromium", Purpose = purpose };
-
-    /// <summary>
-    /// Denies the current user one right on a session directory, so that a
-    /// failure the product must report can be provoked without a seam in it.
-    /// </summary>
-    /// <param name="directory">The session directory.</param>
-    /// <param name="right">The one right to deny.</param>
-    /// <param name="inheritance">Whether the denial reaches files created inside.</param>
-    /// <param name="propagation">Whether it applies to the directory itself.</param>
-    /// <returns>The rule, to hand back to <see cref="Undeny"/>.</returns>
-    private static FileSystemAccessRule Deny(
-        string directory,
-        FileSystemRights right,
-        InheritanceFlags inheritance,
-        PropagationFlags propagation)
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        var info = new DirectoryInfo(directory);
-        var security = info.GetAccessControl();
-        var rule = new FileSystemAccessRule(identity.User!, right, inheritance, propagation, AccessControlType.Deny);
-
-        security.AddAccessRule(rule);
-        info.SetAccessControl(security);
-
-        return rule;
-    }
-
-    /// <summary>Takes a denial back off, so the scratch teardown can do its job.</summary>
-    /// <param name="directory">The session directory.</param>
-    /// <param name="rule">Whatever <see cref="Deny"/> returned.</param>
-    private static void Undeny(string directory, FileSystemAccessRule rule)
-    {
-        var info = new DirectoryInfo(directory);
-        var security = info.GetAccessControl();
-
-        _ = security.RemoveAccessRule(rule);
-        info.SetAccessControl(security);
-    }
 
     private static (string Directory, SessionPath Path) NewSession(ScratchDirectory scratch, string name)
     {

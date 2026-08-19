@@ -761,6 +761,34 @@ internal sealed class SessionLock : IDisposable
                 SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
                 return new SessionLockResult(SessionLockOutcome.Unreadable, failure.Message);
             }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                // ⚠️ THE ARM THAT USED TO BE MISSING, added 2026-08-19. The three
+                // catches above are a missing file, a sharing violation and an
+                // unparseable record; an `UnauthorizedAccessException` is not an
+                // `IOException` and is none of them, so a permanently denied
+                // `lock.json` PROPAGATED OUT OF `TryAcquire` -- the product's
+                // primary session-opening entry point -- after `RenameWindow` had
+                // spent its whole budget waiting out a rename that was never in
+                // flight. `OpenHeld`'s remarks recorded that this had already
+                // happened once and that the wait was the answer; the wait
+                // narrows the transient window and does nothing about a
+                // permanent denial, which is the case that reaches here.
+                //
+                // The catch is deliberately wider than the exception that
+                // motivated it. Every other `IOException` shape -- a
+                // `DirectoryNotFoundException` from a directory removed between
+                // the gate and this line, a device error, a name that stopped
+                // resolving -- is the same kind of event to the caller: the
+                // record could not be read and the directory was not taken. An
+                // arm keyed only on the one exception somebody hit is how this
+                // gap was made in the first place.
+                SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
+
+                return new SessionLockResult(
+                    SessionLockOutcome.Unreadable,
+                    SessionErrors.LockFileCannotBeOpened(location.FullPath, location.LockFile, failure.Message, MoveBudget));
+            }
 
             var previousRunning = previous is not null
                 && ProcessLiveness.IsAlive(previous.Holder.ProcessId, previous.Holder.ProcessCreatedFileTime);
@@ -987,16 +1015,31 @@ internal sealed class SessionLock : IDisposable
     /// meets a sharing violation.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// ⚠️ <b>Through <see cref="RenameWindow"/>, added 2026-08-18, and every one
     /// of the four call sites needs it.</b> Two of them open the file straight
     /// after this class has renamed a new record over it, and the other two open
     /// a file another process may be renaming right now — and a delete-pending
     /// destination refuses an open with <c>ACCESS_DENIED</c>, which
-    /// <see cref="TakeOrReport"/> does not catch: it handles the sharing
+    /// <see cref="TakeOrReport"/> did not catch: it handled the sharing
     /// violation (which means <i>owned</i>, and must not be waited out) and a
     /// <c>LockFileException</c>, so an <see cref="UnauthorizedAccessException"/>
     /// propagated out of <c>TryAcquire</c> — the product's primary entry point
     /// for opening a session.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "which <c>TakeOrReport</c> does not
+    /// catch", in the present tense, a year after the wait was added).</b> It now
+    /// does: there is a fourth arm on that first open, over
+    /// <c>IOException or UnauthorizedAccessException</c>, answering
+    /// <see cref="SessionErrors.LockFileCannotBeOpened"/>. <b>The wait and the
+    /// catch are answers to two different faults and the repository had been
+    /// treating them as one.</b> This wait exists for a rename that IS in flight
+    /// and will end; a denial that is permanent — an ACL, an antivirus hold —
+    /// consumes the whole budget and then still has to be reported, and until
+    /// 2026-08-19 it was reported by throwing. The sentence above described the
+    /// gap correctly and read as though the wait had closed it.
+    /// </para>
     /// </remarks>
     /// <param name="lockFile">The lock file.</param>
     /// <returns>The held handle.</returns>

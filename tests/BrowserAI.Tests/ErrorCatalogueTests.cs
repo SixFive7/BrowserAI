@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Reflection;
+using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
@@ -356,6 +357,51 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(reclaimed.Message).Contains("Reclaiming it");
         Record(nameof(SessionErrors.LockReclaimed));
         reclaimed.Acquired!.Dispose();
+
+        // The row added 2026-08-19 — `lock.json` is there, nobody is holding it,
+        // and this process cannot open it. THIS ARM USED TO THROW. The first open
+        // in `TakeOrReport` — the read of the previous record, under the gate —
+        // caught a missing file, a sharing violation and an unparseable record,
+        // and an `UnauthorizedAccessException` is none of the three, so a
+        // permanently denied lock file propagated out of `TryAcquire` after
+        // `RenameWindow` had spent its whole budget waiting for a rename that was
+        // never in flight.
+        //
+        // The seam is the ACL `SessionLockTests` invented for the write-landed
+        // pair, moved to `DirectoryDenial` so there is one of it: deny `ReadData`
+        // on the objects inside the directory, which refuses every open that
+        // reads and leaves the directory itself listable. The record written by
+        // the reclaim above is what makes this reach the FIRST open rather than
+        // the re-open after a write.
+        SessionLockResult denied;
+
+        using (DirectoryDenial.Apply(directory, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly))
+        {
+            denied = SessionLock.TryAcquire(location, request, logger);
+        }
+
+        denied.Acquired?.Dispose();
+
+        await Assert.That(denied.Taken).IsFalse();
+        await Assert.That(denied.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
+
+        // ⚠️ IT SAYS WHAT IT IS NOT. A model told only "could not open" concludes
+        // that somebody else has the session and waits, which is the one action
+        // that cannot help here — a real holder is refused as a sharing violation
+        // and reported by name through `LockHeld`, two arms above.
+        await Assert.That(denied.Message).Contains(location.LockFile);
+        await Assert.That(denied.Message).Contains("NOT another process holding the session");
+        await Assert.That(denied.Message).Contains("Waiting longer cannot help.");
+        await Assert.That(denied.Message).Contains("Recovery:");
+        Record(nameof(SessionErrors.LockFileCannotBeOpened));
+
+        // And nothing was changed: the refusal is about a read, so the record the
+        // reclaim wrote is still the record on disk. An arm that had overwritten
+        // it would satisfy every assertion above.
+        var untouched = SessionLock.ReadRecord(location);
+
+        await Assert.That(untouched).IsNotNull();
+        await Assert.That(untouched!.Purpose).IsEqualTo(request.Purpose);
 
         // Row 14 — the machine-wide lock cannot be created. Triggered by taking
         // the name with a DIFFERENT kind of kernel object, which is one of the
@@ -812,10 +858,19 @@ internal sealed partial class ErrorCatalogueTests
         // in review as a restriction that had shipped, while every caller kept
         // the old behaviour.
         //
+        // ⚠️ **Corrected 2026-08-19 to 24 (previously 23).** `LockFileCannotBeOpened`
+        // arrived, and it is the first row here written for a condition that was
+        // ALREADY REACHABLE and was answered by an exception rather than by a
+        // refusal: a permanently denied `lock.json` propagated out of
+        // `SessionLock.TryAcquire`. The census could never have found it -- a
+        // missing row is invisible to a check that reads the rows that exist --
+        // which is the standing limit of this test and is worth saying beside its
+        // own number.
+        //
         // Every one of them was **deleted rather than orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
-        await Assert.That(rows.Count).IsEqualTo(23);
+        await Assert.That(rows.Count).IsEqualTo(24);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>
