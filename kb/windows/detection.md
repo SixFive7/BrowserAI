@@ -741,9 +741,23 @@ session 0 and **sees no message windows at all** — it would sweep, find nothin
 and report success forever. Any sweeper must run in the user's interactive
 session. `[STABLE]`
 
-**Windows will not rename a directory holding open executables**, and a live
-browser holds `chrome.exe`. Download-alongside-and-swap is therefore not
-available for a browser reinstall. `[STABLE]`
+⚠️ **A live browser will not let its own tree be renamed — but Windows has no
+such general rule, and this entry asserted one for eight days.** Corrected
+2026-08-19 *(previously "**Windows will not rename a directory holding open
+executables**, and a live browser holds `chrome.exe`. Download-alongside-and-swap
+is therefore not available for a browser reinstall. `[STABLE]`" — cited to an
+article about mutex naming that does not discuss renames at all)*. The general
+claim is **false**: a running executable can be renamed, and so can its parent and
+its grandparent; only deleting the image is refused. The **conclusion** survives
+anyway, for a reason the entry never gave, and it is now measured for both
+provisioned families rather than assumed for either — a live Chromium **and** a
+live Firefox each refuse both renames of their own tree and of the browsers root,
+and every one of those renames succeeds the moment the browser is gone
+([kb](processes.md#the-same-measurement-for-firefox-and-for-what-both-families-share--2026-08-19)).
+The two halves have to be carried together: a reader who has only the general rule
+will reach for download-alongside-and-swap, and a reader who has only the browser
+result will believe Windows forbids something it permits. `[STABLE]` for the
+browser refusals; `[UNVERIFIED]` for why.
 
 ## What a suite run puts on the screen
 

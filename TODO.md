@@ -158,34 +158,30 @@ findable from more than one direction.
       `Microsoft.Windows.SDK.Win32Metadata` and `WDK.Win32Metadata` ship under
       Windows SDK licence terms and `SDK.Win32Docs` under
       `aka.ms/WinSDKLicenseURL` — all three carrying **no SPDX licence expression
-      at all** on nuget.org, checked 2026-08-17. Generated code, doc comments
-      included, compiles into whatever references it. Today it is referenced from
-      the test project only, `PrivateAssets="all"`, as a struct-layout oracle, and
-      nothing it produces ships — which **sidesteps the question rather than
-      answering it**. Whether those terms create a notices obligation for *shipped*
-      generated code is not assessed and **must not be asserted either way** until
-      it is.
+      at all** on nuget.org, checked 2026-08-17 and **re-verified 2026-08-19**.
+      Generated code, doc comments included, compiles into whatever references it.
+      Today it is referenced from the test project only, `PrivateAssets="all"`, as
+      a struct-layout oracle, and nothing it produces ships — which **sidesteps the
+      question rather than answering it**. Whether those terms create a notices
+      obligation for *shipped* generated code is not assessed and **must not be
+      asserted either way** until it is.
+
+      ⚠️ **Half of this is done as of 2026-08-19, and the half that is left is not
+      ours to do.** The terms have been fetched, quoted verbatim with their URLs and
+      fetch date, and turned into five ordered questions — [QUESTIONS.md
+      §12](QUESTIONS.md#12-the-cswin32-metadata-licence--the-text-gathered-2026-08-19-and-the-question-it-leaves-for-a-lawyer). What that gathering found and this bullet did not
+      know: the two metadata packages ship the **same byte-identical** Windows 10
+      SDK EULA (`EULAID:WIN10SDK.RTM.AUG_2018_en-US`), while `win32metadata`'s own
+      `README.md` says `Windows.Win32.winmd` — the only file CsWin32 reads — is
+      **MIT**. The package's declaration and the repository's declaration disagree
+      about the same file, and that disagreement is now the first question rather
+      than an unknown. **This item stays open**, because what remains is a legal
+      reading and nobody here may supply one.
 
       A second cost, recorded because it is real: CsWin32 pins three **prerelease**
       transitive packages, the only prerelease versions anywhere in the repository.
       They are build-time only, so the *GA is a hard floor* rule is not violated in
       the artifact.
-
-- [ ] **Widen the invisible-source check beyond `*.cs`, or decide not to.**
-      `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` lists every `.cs`
-      under `src/` and `tests/` against `git ls-files`. It exists because an
-      unanchored `artifacts/` rule from the upstream template matched a real
-      product directory on case-insensitive Windows and **five source files were
-      ignored while the build, the suite and `git status --porcelain` all read
-      green.** **Nineteen unanchored directory rules remain** in the upstream half
-      of `.gitignore` — `[Ll]og/`, `[Oo]ut/`, `[Rr]elease/`, `[Oo]bj/`,
-      `Generated Files/` and the rest — so a source folder named `Logs\`, `Out\` or
-      `Release\` would be swallowed the same way, and a folder holding only data
-      would not be caught at all. Either widen the check to *any* file under `src/`
-      or `tests/` that git ignores and that is not under `obj\` or `bin\` — the
-      query returns nothing today, so it lands green — or decide the `.cs` scope is
-      enough because a source folder containing no source is not a source folder.
-      **Decide it rather than leaving it implied.**
 
 - [ ] **Make the marker entry adjudicate what moved — at the first real bump, not
       before.** [The gate](TESTING.md#what-the-marker-records) requires each

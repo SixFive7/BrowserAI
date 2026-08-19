@@ -23,6 +23,52 @@ has been satisfied in form only.
 
 ### Added
 
+- **Firefox is owed Chromium's rename measurement, and now has it — plus the two
+  shared trees and the browsers root, which nobody had asked about at all.** The
+  browser-tree rename refusal behind `browserai_reinstall_browser` was measured
+  against **Chromium only**, and the entry said so. Measured 2026-08-19 the same
+  way: a live headless **Firefox 153.0** (playwright firefox v1539) refuses
+  `Directory.Move` of `firefox` with a sharing violation and of `firefox-1539`
+  with `ERROR_ACCESS_DENIED`, and both succeed the second the browser is gone —
+  **identical to Chromium, error for error and in the same order**, over two runs.
+  **So there is no product finding and nothing changed**: the refusal was already
+  family-agnostic, and it now rests on a measurement of both families rather than
+  a generalisation from one. The Chromium arm was re-run first and reproduced
+  exactly, so the record is reproducible from what was written rather than only
+  from the day it was taken.
+
+  **What was new is at the edges.** `ffmpeg-1011` and `winldd-1007` rename
+  **freely** while a browser of either family is live — neither is running, since
+  `ffmpeg-win64.exe` exists only during a recording — while the **browsers root
+  itself** is refused under both families, with the same error as the revision
+  directory. That is *further up* than the 2026-08-18 running-executable
+  measurement predicts, where a running image's grandparent moved without
+  complaint, so whatever a browser holds is not just the directory its image sits
+  in. Recorded rather than acted on, and explicitly not a licence to narrow
+  `shared`'s wider refusal. **And Playwright's Firefox brings no Remote Agent up**
+  — `--remote-debugging-port` never answers, because Playwright drives it over the
+  juggler pipe — so the Firefox arm proves liveness by content-process tree where
+  Chromium's uses DevTools, which is a weaker signal and is written down as one
+  ([kb](kb/windows/processes.md#the-same-measurement-for-firefox-and-for-what-both-families-share--2026-08-19),
+  re-verification row 103).
+
+- **The CsWin32 metadata licence terms are in the repository, quoted verbatim, and
+  the question is now a legal one rather than a research task.** The
+  [`TODO.md`](TODO.md) item had stood on *"whether those terms create a notices
+  obligation for shipped generated code is not assessed and must not be asserted
+  either way"* — with nobody having read the terms. They are now in
+  [QUESTIONS.md §12](QUESTIONS.md#12-the-cswin32-metadata-licence--the-text-gathered-2026-08-19-and-the-question-it-leaves-for-a-lawyer):
+  the four packages and their resolved versions, how each declares its licence, the
+  operative clauses quoted with URLs and the date fetched, what the text does and
+  does not say about generated code, and five ordered questions for a lawyer.
+  **The finding that was not expected:** the two metadata packages ship the same
+  **byte-identical** Windows 10 SDK EULA (`EULAID:WIN10SDK.RTM.AUG_2018_en-US`,
+  SHA-256 `0e97876e…`), while `win32metadata`'s own `README.md` says
+  `Windows.Win32.winmd` — the only file the generator reads — is **MIT**. Two
+  current Microsoft statements about one file, and they disagree. **No conclusion
+  is drawn and none may be**: the exposure is still zero because CsWin32 is
+  test-only at `PrivateAssets="all"` and nothing it emits ships.
+
 - **`browserai_reinstall_browser` gained a third value, `shared`, and it is the
   only route to repairing `ffmpeg`.** `ffmpeg` and `winldd` are downloaded into
   the browsers root by **both** families, each carries its own
@@ -99,7 +145,60 @@ has been satisfied in form only.
   came up was Firefox, because every other assertion in it is satisfied just as
   happily by a Chromium.
 
+### Removed
+
+- **`BuildConfigurationTests.NoSourceFileIsInvisibleToGit` is deleted, deliberately,
+  and this entry exists so nobody re-adds it believing it was an oversight.** It
+  listed every `.cs` under `src/` and `tests/` and asserted each appeared in
+  `git ls-files`. It existed because of a real loss: the .NET template's unanchored
+  `artifacts/` rule matched `src/BrowserAI/Artifacts/` on case-insensitive Windows,
+  and **five product source files were ignored while the build, the suite and
+  `git status --porcelain` all read green**. **The maintainer's call, over a
+  recommendation to widen it past `*.cs` rather than remove it** — *"I do not think
+  we need this test at all."* Gone with it: `TrackedFilesAsync`, the harness that
+  shelled out to git and served nothing else.
+
+  **What is now unenforced, said plainly rather than left to be found.** Nothing
+  compares the files on disk against what git can see, so a source file swallowed
+  by an ignore rule is invisible again exactly as it was on 2026-08-15, and every
+  surface signal reads healthy while it is — an ignored file is not untracked, so a
+  clean `git status` is what a swallowed file *produces*. **64 unanchored directory
+  rules remain** in the upstream half of `.gitignore`; the predicate is *a line
+  above the BrowserAI marker that ends in `/`, does not begin with `/` and is not a
+  negation*, re-counted 2026-08-19, with `/artifacts/` and `/.artifacts/` the only
+  two anchored ones as the positive control. ⚠️ *Previously published as "nineteen"
+  with no predicate written down, and no predicate reproduces nineteen — the figure
+  is replaced rather than corrected.* Both `.gitignore` comments that named the test
+  now record the deletion and what it costs, and the upstream-refresh procedure ends
+  in **run `git check-ignore -v` by hand** where it used to end in *run the suite*.
+  Reasoning and reversal in
+  [QUESTIONS.md judgement call E](QUESTIONS.md#e-nosourcefileisinvisibletogit-was-deleted-and-this-is-not-the-entry-you-think-it-is).
+
 ### Changed
+
+- **`QUESTIONS.md` had gone stale, and it is the document the maintainer reviews
+  from — so staleness there costs more than anywhere else.** Two entries were found
+  wrong **by accident**, which is the only reason the rest were read. Swept entry by
+  entry on 2026-08-19: **sixteen checked — nine numbered, five lettered, and the
+  block of settled bullets — and six were wrong.** Each corrected in place with a
+  `previously` clause; nothing deleted for being merely settled.
+
+  **Item 6** said the per-directory gate is **60 seconds**; it is **120**, raised on
+  2026-08-18 because the property that has to hold is the gate against the **sum**
+  of the waits taken inside it, not the largest. **Item 7** said the deeper
+  probe-before-gate fix *"was NOT taken"*; it was, the next day, and the entry's
+  framing was wrong as well as its verdict — the probe already existed as a fast
+  refusal in front of the gate, and the mechanism was not the TOCTOU window the
+  entry predicted. A contender cannot **take** a directory inside the writer's
+  rename-reopen gap, because taking one needs the gate the writer is holding; it can
+  **look**, and `ProbeForHolder`'s `FileAccess.ReadWrite` handle is refused by a
+  holder sharing only `Read`. Detecting an owner and blocking one are the same
+  capability, so it is absorbed on the gated side instead. **Item 2** said *"there is
+  no CI today"* — there had been for a day. **Judgement call A** said closing the
+  `#anchor` gap was *"on the queue"* — it closed on 2026-08-18. **Judgement calls C
+  and D** still described a known-intermittent suite and a contingency for missing 20
+  consecutive green; the suite reached 20 of 20 at `Unbounded` on 2026-08-18 and the
+  contingency never fired.
 
 - **`browserai_destroy` now returns `isError: true` when it could not remove
   everything, and the error carries the whole report.** Previously both arms

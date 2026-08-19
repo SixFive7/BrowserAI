@@ -135,11 +135,21 @@
       generator is MIT, but the metadata packages it reads are not.
       Microsoft.Windows.SDK.Win32Metadata and WDK.Win32Metadata ship under
       Windows SDK licence terms and SDK.Win32Docs under aka.ms/WinSDKLicenseURL
-      (checked on nuget.org 2026-08-17: all three carry no SPDX licence
-      expression at all). Generated code, doc comments included, compiles into
-      whatever references it. Test-only use sidesteps that question rather than
-      answering it, and the question is NOT answered anywhere in this
-      repository.
+      (checked on nuget.org 2026-08-17, re-verified 2026-08-19: all three carry
+      no SPDX licence expression at all). Generated code, doc comments included,
+      compiles into whatever references it. Test-only use sidesteps that question
+      rather than answering it.
+
+      The terms themselves are now in the repository, quoted verbatim with their
+      URLs and the date they were fetched, in QUESTIONS.md section 12, along
+      with the five questions they leave open and the fact that surfaced while
+      gathering them: win32metadata's own README says Windows.Win32.winmd, the
+      only file the generator reads, is MIT, while the package that delivers it
+      declares the Windows 10 SDK EULA over the whole package and requires
+      licence acceptance. Corrected 2026-08-19 (previously "and the question is
+      NOT answered anywhere in this repository"). THE LEGAL QUESTION IS STILL NOT
+      ANSWERED AND MUST NOT BE ASSERTED EITHER WAY. What changed is that it is
+      now a question for a lawyer rather than a research task.
     -->
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="*" />
   </ItemGroup>

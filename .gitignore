@@ -91,9 +91,23 @@ project.fragment.lock.json
 # on case-insensitive Windows it matched `src/BrowserAI/Artifacts/`, so five
 # product source files were invisible to git while every other signal read
 # healthy. Caught 2026-08-16, at build-order step 14, by `git check-ignore`
-# rather than by anything the build does; it is now
+# rather than by anything the build does.
+#
+# !! THIS COMMENT IS NOW THE ONLY THING GUARDING IT, AND A COMMENT IS NOT A
+# MECHANISM. Corrected 2026-08-19 (previously "it is now
 # `BuildConfigurationTests.NoSourceFileIsInvisibleToGit`, because a comment is
-# not a mechanism.
+# not a mechanism"). That test was DELETED on 2026-08-19, deliberately, by the
+# maintainer -- not lost in a refactor and not an oversight. The reasoning is in
+# QUESTIONS.md, judgement call E. What went with it: nothing now compares the
+# `.cs` files on disk under `src/` and `tests/` against `git ls-files`, so a
+# source file swallowed by an ignore rule is invisible again, exactly as it was
+# on 2026-08-15, and `git status --porcelain` still reports clean because an
+# ignored file is not untracked. 64 unanchored directory rules remain in the
+# upstream half above -- the predicate is "a line above the BrowserAI marker
+# that ends in `/`, does not begin with `/` and is not a negation", re-counted
+# 2026-08-19; only these two are anchored. `[Ll]og/`, `[Oo]ut/`, `[Rr]elease/`
+# and `[Oo]bj/` are the ones a .NET source folder could realistically collide
+# with on case-insensitive Windows.
 /artifacts/
 /.artifacts/
 
@@ -454,10 +468,14 @@ FodyWeavers.xsd
 # on case-insensitive Windows and made five product source files invisible to git
 # while the build, the suite and `git status --porcelain` all read green.
 #
-# So the refresh procedure is: paste, then RE-APPLY the anchoring, then run the
-# suite. `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` is what makes
-# forgetting a red build rather than a silent loss; this comment is what stops
-# the next person having to rediscover why it went red.
+# So the refresh procedure is: paste, then RE-APPLY the anchoring, then run
+# `git check-ignore -v` over `src/` and `tests/` BY HAND. Corrected 2026-08-19
+# (previously "then run the suite.
+# `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` is what makes forgetting
+# a red build rather than a silent loss"). That test was deleted on 2026-08-19 --
+# the maintainer's decision, recorded as judgement call E in QUESTIONS.md -- so
+# forgetting the re-anchor is a silent loss again and the suite will stay green
+# through it. This comment is all there is.
 #
 # Everything below is project-specific.
 #

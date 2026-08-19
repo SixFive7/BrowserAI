@@ -926,15 +926,100 @@ not an ambient condition on the tree. **What it means for the design option:**
 swapping a browser tree *under a live browser* is not available, which is what
 `browserai_reinstall_browser`'s refusal already assumes; swapping one while
 nothing is running works, and that is the only state the tool acts in anyway.
-**The mechanism is `[UNVERIFIED]`** — a directory cannot be renamed while a
-process has it as a current directory or while anything holds a handle to it
-without `FILE_SHARE_DELETE`, and which of those Chromium is doing was not
-established; the two refusals carry *different* Win32 errors, which says they are
-not the same cause. Measured for Chromium only; Firefox was not tested.
 `[MACHINE]` for the process count, `[FLOATS]` for the browser revision.
 Re-establish with `.work/rename-under-chromium.ps1`'s shape: start the
 provisioned `chrome.exe` headless with a scratch `--user-data-dir`, try both
-renames, then kill it and try both again as the control.
+renames, then kill it and try both again as the control. **Re-run 2026-08-19 and
+reproduced exactly** — ten processes, both refusals, both controls — so the entry
+above is reproducible from what is written rather than only from the day it was
+taken.
+
+### The same measurement for Firefox, and for what both families share — 2026-08-19
+
+⚠️ **Corrected 2026-08-19 (previously this entry ended "Measured for Chromium
+only; Firefox was not tested").** It has been, the same way and on the same day,
+and so have the two shared component trees and the browsers root itself, because
+*"a live browser holds its tree"* is a claim about a product that provisions two
+families and four directories, not about one of them.
+
+**Firefox matches Chromium exactly, refusal for refusal and error for error.**
+Measured 2026-08-19 on Windows **10.0.26200**, .NET 10, against a live headless
+Firefox **153.0** (playwright firefox **v1539**, BuildID 20260723193615) started
+from `firefox-1539\firefox\firefox.exe` with its own current directory
+deliberately in the repository root, so [the separate cwd
+rule](#files-durable-writes-and-deletes) could not be the cause. Two independent
+runs, at five and seven processes:
+
+| Operation, while that Firefox is live | Outcome |
+|---|---|
+| `Directory.Move` of `firefox` — the directory holding `firefox.exe` | **refused**, `IOException`, *"being used by another process"* (sharing violation) |
+| `Directory.Move` of `firefox-1539` — the revision directory above it | **refused**, `IOException`, *"Access to the path … is denied"* |
+| the same two renames, browser killed first | **both succeeded** |
+
+Same two operations, same two *different* Win32 errors, in the same order, and
+the same control. **So there is no product finding here and nothing to change:**
+the family-agnostic refusal in `browserai_reinstall_browser` was already the right
+shape for both families, and it now rests on a measurement of both rather than on
+a generalisation from one.
+
+**Note the asymmetric layouts, because a re-run has to get them right.** Chromium
+is `chromium-<rev>\chrome-win64\chrome.exe`; Firefox is
+`firefox-<rev>\firefox\firefox.exe`. *The directory holding the executable* is
+`chrome-win64` for one and `firefox` for the other, and it is the inner directory
+that takes the sharing violation in both.
+
+**The liveness signal is not the same for the two, and the Firefox one is
+weaker.** Chromium's arm proves the browser is up over its DevTools HTTP endpoint —
+`/json/version`, plus creating a new target. **Playwright's Firefox build never
+brings a Remote Agent up**: `--remote-debugging-port 9413` was passed and
+`http://127.0.0.1:9413/json/version` never answered across 150 attempts over 30 s,
+while the browser was demonstrably alive the whole time. Playwright drives its
+Firefox over the **juggler** pipe rather than CDP, so there is no HTTP endpoint to
+ask. The Firefox arm therefore proves liveness by process tree — the parent plus
+its content and GPU children, four to six of them — which is a real browser but is
+not a protocol handshake. `[STABLE]` for the refusals; the absent remote agent is
+`[FLOATS]` against the Playwright Firefox build.
+
+**The shared components behave in the opposite way, and that is the new fact.**
+Measured 2026-08-19 with a live browser of each family in turn:
+
+| Operation, while a browser of that family is live | Chromium live | Firefox live |
+|---|---|---|
+| `Directory.Move` of `ffmpeg-1011` | **succeeded** | **succeeded** |
+| `Directory.Move` of `winldd-1007` | **succeeded** | **succeeded** |
+| `Directory.Move` of the browsers **root** itself | **refused**, *"Access to the path … is denied"* | **refused**, *"Access to the path … is denied"* |
+
+**Neither shared tree is held by a running browser**, because neither is running:
+`ffmpeg-win64.exe` exists only while a recording is in flight and `winldd` is an
+install-time dependency validator. So a shared-component swap under a live browser
+is available where a browser-tree swap is not — which is a genuine asymmetry in
+what the reinstall tool *could* do, and is recorded rather than acted on. **It does
+not license widening `shared`'s refusal**, which is deliberately wider than a
+family's for a different reason: *a process is running from this tree* and *a
+session is using it* are the same question for a browser and are not for `ffmpeg`
+([DECISIONS](../../DECISIONS.md#open-design-decisions)).
+
+**The mechanism is still `[UNVERIFIED]`, and this run made it stranger rather than
+clearer.** A directory cannot be renamed while a process has it as a current
+directory, or while anything holds a handle to it without `FILE_SHARE_DELETE`;
+which of those the browsers are doing is still not established, and the two
+refusals carrying *different* Win32 errors still says they are not the same cause.
+**What is new is that the refusal reaches further up than the plain-executable
+measurement predicts.** That one found `Directory.Move` of a running image's
+**grandparent** succeeded; here the grandparent of the executable's directory —
+the browsers root — is refused for both families, and refused with the *same*
+error as the revision directory. So whatever a browser holds, it is not just the
+directory its image sits in, and the general rule for a running `.exe` does not
+describe it at any level.
+
+Re-establish with `.work/rename-under-firefox.ps1` and
+`.work/rename-shared-components.ps1`, which are the Chromium script's shape with
+the paths and the liveness check changed. **Both restore what they renamed in a
+`finally`, and both re-assert the executables are present at the end** — they
+rename the *shared* provisioned browsers root that every browser-touching test on
+the machine reads, so a script that dies half-way breaks the suite rather than
+failing its own assertion. That is also why none of this is automated: see
+re-verification row 103.
 
 **Windows does not reuse a pid while any handle to that process is open, and
 the control shows reuse is otherwise quick.** Measured 2026-08-18 on Windows
