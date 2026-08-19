@@ -177,7 +177,19 @@ with no default and no fallback, and an optional `browser` defaulting to
 and **refuses them as arguments**, because a profile is browser-specific.
 `browserai_reinstall_browser` takes a **required** `browser` and nothing else —
 *changed 2026-08-19 (previously no arguments, "because there is nothing to
-name")*, which stopped being true the day a second family could be on disk.
+name")*, which stopped being true the day a second family could be on disk. Its
+accepted values are `ProvisionedBrowsers.ReinstallTargets`, a **superset** of the
+families `init` offers: it also takes `shared`, which is `ffmpeg` and `winldd` —
+downloaded by both families into one root, each with its own marker, and touched
+by neither family's reinstall, so a corrupted `ffmpeg` had no route to repair
+through this server. *Added 2026-08-19.* The two lists are deliberately separate
+and `FirefoxSessionTests.TheAdvertisedSurfaceOffersBothFamiliesAndMakesReinstallNameOne`
+asserts they differ, because a session's browser is a thing that renders web
+pages. **`shared`'s refusal is stricter than a family's**: it refuses while
+**any** session is open, of either family, where a family reinstall refuses only
+on a process running out of that tree — `ffmpeg-win64.exe` exists only while a
+recording runs, so *nothing is using it* and *nothing is about to* are different
+statements there and the same statement for a browser.
 
 **One table drives six consumers.** `SessionMode` is the table; the server
 `instructions`, `init`'s description, `resume`'s result, the refusal text, the

@@ -42,6 +42,80 @@ internal static class ProvisionedBrowsers
     /// <summary>The two families BrowserAI provisions, as upstream names them.</summary>
     public static IReadOnlyList<string> Families { get; } = [Chromium, Firefox];
 
+    /// <summary>
+    /// The reinstall target that means <b>the components both families share</b>
+    /// rather than a browser.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Not a family, and deliberately not in <see cref="Families"/>.</b> It has
+    /// no executable the stray sweep would look for, no session can be opened
+    /// against it, and <c>browserai_init</c> must never offer it — a session's
+    /// <c>browser</c> is a thing that renders web pages. What it is, is a third
+    /// value for <c>browserai_reinstall_browser</c>'s required argument.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-19, for a repair that had no route through the
+    /// product's own surface.</b> <c>ffmpeg</c> and <c>winldd</c> are downloaded
+    /// into the same browsers root by <i>both</i> families, each carries its own
+    /// <c>INSTALLATION_COMPLETE</c>, and a family reinstall deletes only that
+    /// family's revision directory — so a corrupted <c>ffmpeg</c> was permanent,
+    /// and <c>ffmpeg</c> is what the <c>video</c> artifact type needs. Measured
+    /// 2026-08-19: a Firefox install beside a complete <c>ffmpeg</c> and
+    /// <c>winldd</c> downloads only the browser archive, because the marker
+    /// short-circuits each component's check without validating anything.
+    /// </para>
+    /// </remarks>
+    public const string Shared = "shared";
+
+    /// <summary>
+    /// The manifest entries <see cref="Shared"/> covers, in the order they are
+    /// deleted and reported.
+    /// </summary>
+    /// <remarks>
+    /// <b>Names, not revisions.</b> The revision and therefore the directory come
+    /// from the payload's own <c>browsers.json</c> through
+    /// <c>BrowsersManifest.For</c>, exactly as a family's does; what is spelled
+    /// here is only which entries in that manifest are shared, which is a fact
+    /// about upstream's installer rather than about any particular release.
+    /// </remarks>
+    public static IReadOnlyList<string> SharedComponents { get; } = ["ffmpeg", "winldd"];
+
+    /// <summary>
+    /// The one name handed to <c>install-browser</c> to rebuild every entry in
+    /// <see cref="SharedComponents"/>.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Measured, not assumed — 2026-08-19 against the resolved payload.</b>
+    /// <c>install-browser ffmpeg</c> into an empty root downloaded
+    /// <c>ffmpeg-1011</c> <b>and</b> <c>winldd-1007</c>, each with its own
+    /// <c>INSTALLATION_COMPLETE</c>; re-run with only <c>winldd-1007</c> deleted,
+    /// it downloaded <c>winldd</c> alone and left the complete <c>ffmpeg</c>
+    /// untouched. So one invocation rebuilds whichever of the two is missing, and
+    /// asking for both by name would be a second download of whatever was already
+    /// there. <b>The completeness check is still per component</b> — one command
+    /// is an efficiency, and the marker each component writes is the evidence.
+    /// </remarks>
+    public const string SharedInstallTarget = "ffmpeg";
+
+    /// <summary>
+    /// Everything <c>browserai_reinstall_browser</c>'s required argument accepts:
+    /// the two families, then the shared components.
+    /// </summary>
+    /// <remarks>
+    /// A superset of <see cref="Families"/> and never the same list.
+    /// <c>browserai_init</c>'s <c>browser</c> reads <see cref="Families"/>, and
+    /// the day the two lists become one is the day a caller can ask for a session
+    /// driven by a codec.
+    /// </remarks>
+    public static IReadOnlyList<string> ReinstallTargets { get; } = [.. Families, Shared];
+
+    /// <summary>Whether a reinstall target names the shared components rather than a family.</summary>
+    /// <param name="target">The value the caller gave.</param>
+    /// <returns>Whether it is <see cref="Shared"/>.</returns>
+    public static bool IsShared(string? target) =>
+        string.Equals(target, Shared, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>Where a family's executable sits inside its revision directory.</summary>
     /// <param name="family">The family, as upstream names it.</param>
     /// <returns>The relative path, or <see langword="null"/> for a family this build does not provision.</returns>

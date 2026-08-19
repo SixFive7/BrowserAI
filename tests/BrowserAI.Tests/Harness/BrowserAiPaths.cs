@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using BrowserAI.Hosting;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -124,6 +125,23 @@ internal static class BrowserAiPaths
     /// and is a permanent no-op for Chromium.
     /// </remarks>
     public static string FirefoxExecutable { get; } = Path.Combine(FirefoxDirectory, "firefox", "firefox.exe");
+
+    /// <summary>
+    /// Where each shared component's tree lands under a browsers root, in the
+    /// product's own order.
+    /// </summary>
+    /// <remarks>
+    /// <b>Spelled from the committed snapshot, exactly as every other directory
+    /// here is</b>, so a revision bump moves it. Needed by a test whose installer
+    /// double is constructed <i>before</i> the rig exists and therefore cannot
+    /// ask the rig's provisioner for the same answer;
+    /// <c>BrowserProvisioner.SharedComponentDirectories</c> is the product's own
+    /// route and is what the assertions read.
+    /// </remarks>
+    /// <param name="browsersRoot">The browsers root, absolute.</param>
+    /// <returns>The absolute directories.</returns>
+    public static IReadOnlyList<string> SharedComponentDirectoriesIn(string browsersRoot) =>
+        [.. ProvisionedBrowsers.SharedComponents.Select(component => Path.Combine(browsersRoot, $"{component}-{RevisionOf(component)}"))];
 
     private static string RevisionOf(string browser)
     {

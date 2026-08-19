@@ -366,6 +366,255 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(description).Contains("no default");
     }
 
+    /// <summary>
+    /// <c>shared</c> deletes every shared component's tree and downloads them
+    /// all again, and it is the only value that can.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The gap this closes, added 2026-08-19.</b> <c>ffmpeg</c> and
+    /// <c>winldd</c> are downloaded into the browsers root by <b>both</b>
+    /// families, each carries its own <c>INSTALLATION_COMPLETE</c>, and a family
+    /// reinstall deletes only that family's revision directory — so a corrupted
+    /// <c>ffmpeg</c>, which is what the <c>video</c> artifact type needs, was
+    /// permanent through this server's own surface.
+    /// </para>
+    /// <para>
+    /// <b>Both directions, because the interesting half is what it does NOT
+    /// touch.</b> A family reinstall must still leave the shared trees alone, and
+    /// a shared reinstall must leave the family trees alone — an implementation
+    /// that deleted the browsers root would satisfy any assertion about the
+    /// component that came back.
+    /// </para>
+    /// <para>
+    /// <b>No default session, because that is the refusal this target has</b> —
+    /// see <see cref="ASharedReinstallIsBlockedByASessionOfEitherFamily"/>. The
+    /// rig opens one, and it would block this.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSharedTargetRemovesAndRebuildsEveryComponentBothFamiliesUse()
+    {
+        var asked = new List<string>();
+
+        await using var sessions = RigSessionEnvironment.Create(
+            opensDefaultSession: false,
+            installer: (browser, root) =>
+            {
+                lock (asked)
+                {
+                    asked.Add(browser);
+                }
+
+                // The double stands in for `install-browser ffmpeg`, which was
+                // measured on 2026-08-19 to lay down BOTH components -- so it
+                // writes both markers, or the product's per-component
+                // completeness check would be asserted against a fake that is
+                // less capable than the thing it replaces.
+                //
+                // Built from the browsers root the product hands it, rather than
+                // from the rig: this lambda is constructed before the rig exists.
+                return FakeInstaller.SucceedingForAll(BrowserAiPaths.SharedComponentDirectoriesIn(root), TimeSpan.Zero);
+            },
+            timers: new ProvisioningTimers { Poll = TimeSpan.FromMilliseconds(20) });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
+
+        var shared = SharedDirectoriesIn(sessions);
+        var stale = new List<string>();
+
+        foreach (var directory in shared)
+        {
+            var file = Path.Combine(directory, "corrupt-and-marked-complete.bin");
+            _ = Directory.CreateDirectory(directory);
+            await File.WriteAllTextAsync(file, new string('x', 4096));
+            InstallationMarker.Write(directory);
+            stale.Add(file);
+        }
+
+        // A complete chromium tree beside them, which this call must not touch.
+        _ = Directory.CreateDirectory(sessions.ChromiumDirectory);
+        var family = Path.Combine(sessions.ChromiumDirectory, "the-browser-that-was-fine.bin");
+        await File.WriteAllTextAsync(family, "untouched");
+        InstallationMarker.Write(sessions.ChromiumDirectory);
+
+        var answer = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, new JsonObject { ["browser"] = ProvisionedBrowsers.Shared });
+        var text = TextOf(answer);
+
+        await Assert.That((bool?)answer["isError"]).IsNotEqualTo(true).Because(text);
+        await Assert.That(text).Contains("Re-provisioned shared");
+
+        // ⚠️ EVERY component, and the marker as well as the directory. The
+        // marker is the only evidence a tree is complete rather than merely
+        // present, and it is the thing upstream short-circuits on for thirty
+        // days, so a rebuild that left one unmarked would be the exact state
+        // this tool exists to repair.
+        foreach (var (directory, file) in shared.Zip(stale))
+        {
+            await Assert.That(File.Exists(file)).IsFalse().Because($"{file}\n\n{text}");
+            await Assert.That(File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker))).IsTrue().Because(text);
+            await Assert.That(text).Contains(directory);
+        }
+
+        // One invocation for both, named for the component that brings the other
+        // with it. Measured, not assumed -- see ProvisionedBrowsers.SharedInstallTarget.
+        string invoked;
+
+        lock (asked)
+        {
+            invoked = string.Join(", ", asked);
+        }
+
+        await Assert.That(invoked).IsEqualTo(ProvisionedBrowsers.SharedInstallTarget);
+
+        // And the browser beside them is untouched, which is the half an
+        // over-broad delete would fail.
+        await Assert.That(File.Exists(family)).IsTrue();
+    }
+
+    /// <summary>
+    /// A shared reinstall is refused while any session is open, whichever family
+    /// it is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THIS IS THE DECISION, AND IT IS STRICTER THAN THE FAMILY PATH ON
+    /// PURPOSE.</b> A family reinstall is gated on a process running out of that
+    /// tree, and for a family that is the same question as <i>a session is
+    /// driving this browser</i>: <c>chrome.exe</c> lives for the session's life
+    /// and holds its own image open. For the shared components the two questions
+    /// come apart — <c>ffmpeg-win64.exe</c> exists only while a recording runs —
+    /// so a process-only gate answers <i>nothing is using it</i> on a machine
+    /// full of live sessions, any of which starts the codec the instant a
+    /// <c>video</c> artifact is asked for.
+    /// </para>
+    /// <para>
+    /// <b>The session here is Firefox and the components are shared, which is
+    /// what makes this arm the decision rather than a restatement.</b> A Firefox
+    /// session does <b>not</b> block a Chromium reinstall — the arm below asserts
+    /// that too, so this cannot be satisfied by a filter that simply stopped
+    /// filtering.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASharedReinstallIsBlockedByASessionOfEitherFamily()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // Seeded complete so opening a firefox session does not start a download
+        // this rig has no installer for.
+        InstallationMarker.Write(Path.Combine(sessions.Environment.Paths.BrowsersDirectory, $"firefox-{BrowserAiPaths.FirefoxRevision}"));
+
+        var session = Path.Combine(sessions.Root, "a-firefox-session-that-could-record");
+
+        var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "open on the other family while the shared components are asked for",
+            ["mode"] = "headless",
+            ["browser"] = ProvisionedBrowsers.Firefox,
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
+
+        var refused = await CallAsync(rig, SessionToolSurface.ReinstallBrowser, new JsonObject { ["browser"] = ProvisionedBrowsers.Shared });
+        var text = TextOf(refused);
+
+        await Assert.That((bool?)refused["isError"]).IsTrue().Because(text);
+        await Assert.That(text).Contains(session);
+        await Assert.That(text).Contains("BOTH browser families use");
+        await Assert.That(text).Contains("no force option");
+
+        // ⚠️ AND IT SAYS WHY A SESSION THAT IS NOT RUNNING THE CODEC BLOCKS IT.
+        // Without that sentence the refusal reads as a bug to whoever meets it:
+        // nothing is running out of those trees, and the tool refused anyway.
+        await Assert.That(text).Contains("only at the moment it records");
+
+        // The shared trees are untouched, which is what "nothing was changed"
+        // has to mean.
+        foreach (var directory in SharedDirectoriesIn(sessions))
+        {
+            await Assert.That(Directory.Exists(directory)).IsFalse().Because(text);
+        }
+
+        // The control, and it is the half that stops this passing against a
+        // filter that gave up: the same Firefox session does NOT block a
+        // chromium reinstall, because nothing is running out of the chromium
+        // tree. The rig has no installer, so this is asserted on the refusal not
+        // being the session one rather than on the reinstall completing.
+        var chromium = TextOf(await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium));
+
+        await Assert.That(chromium.Contains(session, StringComparison.OrdinalIgnoreCase))
+            .IsFalse()
+            .Because(chromium);
+    }
+
+    /// <summary>
+    /// <c>shared</c> is offered by the reinstall tool and refused by
+    /// <c>browserai_init</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The two accepted sets are different and the difference is the point.</b>
+    /// A session's <c>browser</c> is a thing that renders web pages; until
+    /// 2026-08-19 both tools read one list, so widening the reinstall would have
+    /// widened <c>init</c> in the same edit and nothing would have failed. What
+    /// would then exist is a session bound for its whole life to a codec.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task SharedIsAReinstallTargetAndIsNotABrowserASessionCanBeOpenedAgainst()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var tools = (await rig.Client.RoundTripAsync("tools/list"))["tools"]!.AsArray();
+
+        var reinstall = tools.Single(entry => (string?)entry!["name"] == SessionToolSurface.ReinstallBrowser)!;
+        var init = tools.Single(entry => (string?)entry!["name"] == SessionToolSurface.Init)!;
+
+        var offered = reinstall["inputSchema"]!["properties"]!["browser"]!["enum"]!.AsArray().Select(entry => (string)entry!).ToList();
+        var sessionBrowsers = init["inputSchema"]!["properties"]!["browser"]!["enum"]!.AsArray().Select(entry => (string)entry!).ToList();
+
+        await Assert.That(string.Join(", ", offered)).IsEqualTo(string.Join(", ", ProvisionedBrowsers.ReinstallTargets));
+        await Assert.That(string.Join(", ", sessionBrowsers)).IsEqualTo(string.Join(", ", ProvisionedBrowsers.Families));
+        await Assert.That(offered).Contains(ProvisionedBrowsers.Shared);
+        await Assert.That(sessionBrowsers).DoesNotContain(ProvisionedBrowsers.Shared);
+
+        // The description says what it is, because "shared" is the one value a
+        // model cannot guess the meaning of from the argument's name.
+        var description = (string)reinstall["description"]!;
+
+        foreach (var component in ProvisionedBrowsers.SharedComponents)
+        {
+            await Assert.That(description).Contains(component);
+        }
+
+        // And the schema is refused rather than merely undocumented: an init
+        // naming it must fail, and the refusal must list what is accepted.
+        var refused = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "a-session-driven-by-a-codec"),
+            ["purpose"] = "names something that is not a browser",
+            ["mode"] = "headless",
+            ["browser"] = ProvisionedBrowsers.Shared,
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(TextOf(refused)).Contains(ProvisionedBrowsers.Chromium);
+        await Assert.That(TextOf(refused)).Contains("Nothing was changed");
+    }
+
+    /// <summary>Where this rig's shared component trees are, or would be.</summary>
+    /// <param name="sessions">The rig.</param>
+    /// <returns>The absolute directories, in the product's own order.</returns>
+    private static IReadOnlyList<string> SharedDirectoriesIn(RigSessionEnvironment sessions) =>
+        sessions.Environment.Provisioner.SharedComponentDirectories();
+
     [Test]
     public async Task EveryAuthoredToolIsAnsweredAndAnUnknownOneIsRefused()
     {

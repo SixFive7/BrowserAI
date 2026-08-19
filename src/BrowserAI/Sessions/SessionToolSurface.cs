@@ -78,6 +78,18 @@ internal static class SessionToolSurface
     /// <c>SessionManager.ReinstallBrowserAsync</c>'s remarks. Still no session
     /// argument and still no force flag: this one has no session at all, which
     /// is a different thing from a default.
+    /// <para>
+    /// ⚠️ <b>And the argument gained a third value, <c>shared</c>, on
+    /// 2026-08-19</b> — see <see cref="ProvisionedBrowsers.Shared"/>. It is not a
+    /// family: <c>ffmpeg</c> and <c>winldd</c> are downloaded by both families
+    /// into the same root, each with its own <c>INSTALLATION_COMPLETE</c>, and no
+    /// family reinstall touches them, so a corrupted <c>ffmpeg</c> — which the
+    /// <c>video</c> artifact type needs — had no route to repair through this
+    /// server at all. <b>Explicitly rejected:</b> having a family reinstall also
+    /// verify and repair the shared components. That is the repair tool that can
+    /// break something working, which is the whole reason the argument is
+    /// required.
+    /// </para>
     /// </remarks>
     public const string ReinstallBrowser = "browserai_reinstall_browser";
 
@@ -329,14 +341,21 @@ internal static class SessionToolSurface
         yield return Tool(
             ReinstallBrowser,
             "Delete one of BrowserAI's shared browser installs and download it again.",
-            "Removes the browser tree BrowserAI provisioned for the family you name and downloads the exact revision this build pins, into BrowserAI's own directory. "
+            "Removes the tree BrowserAI provisioned for the thing you name and downloads the exact revision this build pins, into BrowserAI's own directory. "
             + $"'browser' is REQUIRED and there is no default: BrowserAI provisions {string.Join(" and ", ProvisionedBrowsers.Families)} into separate trees, and a default would delete and re-download a healthy one while the broken one stayed broken and the answer said it had been reinstalled. "
-            + "It REFUSES while any session on this machine has a browser of THAT family open, and names what is running instead — there is deliberately no force option, because forcing here means terminating browsers other agents are driving, and Windows will not delete a directory whose executables are open in any case. A session on the other family does not block it. "
-            + "Use it for a browser that is installed and broken: an install that completed once is never re-downloaded on its own, because the marker written at the end short-circuits every later check without validating anything, so a single quarantined or corrupted file stays broken forever. "
+            + $"'{ProvisionedBrowsers.Shared}' is not a browser: it is {string.Join(" and ", ProvisionedBrowsers.SharedComponents)}, which BOTH families download into the same place and neither family's reinstall touches. Name it when video recording fails or a browser reports a missing dependency — those two are what the 'video' artifact type needs, and until this value existed a corrupted one could not be repaired through this server at all. "
+            + "It REFUSES while a browser of the family you named is running, and names the sessions that are open instead. "
+            + $"'{ProvisionedBrowsers.Shared}' is stricter and refuses while ANY session is open, of EITHER family: both families use these components, and a browser only starts the codec at the moment it records, so 'nothing is using it right now' is not the same statement as 'nothing is about to'. "
+            + "There is deliberately no force option, because forcing here means terminating browsers other agents are driving. "
+            + "Use it for something that is installed and broken: an install that completed once is never re-downloaded on its own, because the marker written at the end short-circuits every later check without validating anything, so a single quarantined or corrupted file stays broken forever. "
             + "For a browser that was simply never downloaded, call browserai_init instead — it starts the download and returns immediately. This one waits for the download to finish, so it takes as long as the download does.",
             new JsonObject
             {
-                ["browser"] = Enumerated($"Which family to delete and download again. The two trees are independent, so name the one that is broken — the other is untouched. Download sizes: {string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}.", ProvisionedBrowsers.Families),
+                ["browser"] = Enumerated(
+                    $"What to delete and download again. The trees are independent, so name the one that is broken — the others are untouched. "
+                    + $"Download sizes: {string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}. "
+                    + $"'{ProvisionedBrowsers.Shared}' is {string.Join(" and ", ProvisionedBrowsers.SharedComponents)} together, a few megabytes, and is the only way to repair them.",
+                    ProvisionedBrowsers.ReinstallTargets),
             },
             ["browser"]);
     }

@@ -255,6 +255,32 @@ the files, and `HEAD`ing the three URLs under
 `https://cdn.playwright.dev/dbazure/download/playwright/builds/{firefox/1539,ffmpeg/1011,winldd/1007}/`.
 The revisions come from the payload's own `browsers.json`; never type one.
 
+### One `install-browser ffmpeg` rebuilds both shared components — 2026-08-19
+
+**`install-browser ffmpeg` downloads `ffmpeg` and `winldd` together, and
+re-downloads whichever of the two is missing.** Measured 2026-08-19 at
+`@playwright/mcp` 0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05, against
+this repository's assembled payload:
+
+| Run | Root before | What it printed | Root after |
+|---|---|---|---|
+| 1 | empty | `Downloading FFmpeg … 1011`, then `Downloading Winldd … 1007` | `ffmpeg-1011` and `winldd-1007`, each with its own `INSTALLATION_COMPLETE` |
+| 2 | `winldd-1007` deleted, `ffmpeg-1011` complete | `Downloading Winldd … 1007` only | both complete again, `ffmpeg-1011` untouched |
+
+**This is why `browserai_reinstall_browser`'s `shared` target passes one name and
+still checks two markers.** Asking for both by name would re-download whatever
+was already there; trusting the one command's exit code would trust upstream's
+grouping, which is the thing that can move. `ProvisionedBrowsers.SharedInstallTarget`
+carries the citation, and `BrowserProvisioner.RebuildShared` verifies each
+component's own marker after the run. `[FLOATS]`
+
+**Re-establish** with `node.exe cli.js install-browser ffmpeg --no-shell
+--no-progress` into an empty `PLAYWRIGHT_BROWSERS_PATH`, then delete
+`winldd-<rev>` and run it again. **What would falsify it is upstream regrouping
+the two, and it fails in the safe direction here** — the per-component marker
+check turns a `winldd` that stopped arriving into a reported failure rather than
+into a tree marked complete.
+
 **⚠️ Chrome for Testing has exactly one mirror, so the retry rotation does not
 help it.** Read 2026-08-16 out of `playwright-core/lib/coreBundle.js`: `cftUrl`
 returns `{ path: "builds/cft/${browserVersion}/win64/chrome-win64.zip", mirrors:

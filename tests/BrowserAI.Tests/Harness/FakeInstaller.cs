@@ -74,6 +74,25 @@ internal sealed class FakeInstaller : IInstallerRun
         Scripted(directory, after, createDirectory: true, writeMarker: true, exitCode: 0, "Downloading a browser\nDone");
 
     /// <summary>
+    /// An installer that lays down <b>several</b> complete trees, which is what
+    /// one <c>install-browser ffmpeg</c> really does.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A double must not be less capable than the thing it replaces.</b>
+    /// Measured 2026-08-19 against the resolved payload: one
+    /// <c>install-browser ffmpeg</c> into an empty root produced
+    /// <c>ffmpeg-1011</c> and <c>winldd-1007</c>, each with its own
+    /// <c>INSTALLATION_COMPLETE</c>. A double that wrote one marker would make
+    /// the product's per-component completeness check fail against a fake rather
+    /// than against a fault.
+    /// </remarks>
+    /// <param name="directories">Every directory it creates and marks.</param>
+    /// <param name="after">How long the whole thing takes.</param>
+    /// <returns>The run.</returns>
+    public static FakeInstaller SucceedingForAll(IReadOnlyList<string> directories, TimeSpan after) =>
+        Scripted(directories, after, createDirectory: true, writeMarker: true, exitCode: 0, "Downloading a browser\nDone");
+
+    /// <summary>
     /// An installer that finishes only when the test says so.
     /// </summary>
     /// <remarks>
@@ -175,6 +194,17 @@ internal sealed class FakeInstaller : IInstallerRun
         int exitCode,
         string said,
         bool thenHang = false,
+        Task? release = null) =>
+        Scripted(directory is null ? [] : [directory], after, createDirectory, writeMarker, exitCode, said, thenHang, release);
+
+    private static FakeInstaller Scripted(
+        IReadOnlyList<string> directories,
+        TimeSpan after,
+        bool createDirectory,
+        bool writeMarker,
+        int exitCode,
+        string said,
+        bool thenHang = false,
         Task? release = null)
     {
         _ = Interlocked.Increment(ref _starts);
@@ -195,9 +225,12 @@ internal sealed class FakeInstaller : IInstallerRun
                     await release.WaitAsync(installer._stopped.Token).ConfigureAwait(false);
                 }
 
-                if (createDirectory && directory is not null)
+                if (createDirectory)
                 {
-                    PlantPartialTree(directory);
+                    foreach (var directory in directories)
+                    {
+                        PlantPartialTree(directory);
+                    }
                 }
 
                 if (thenHang)
@@ -205,13 +238,16 @@ internal sealed class FakeInstaller : IInstallerRun
                     await Task.Delay(Timeout.InfiniteTimeSpan, installer._stopped.Token).ConfigureAwait(false);
                 }
 
-                if (writeMarker && directory is not null)
+                if (writeMarker)
                 {
                     // Last, exactly as upstream writes it: the whole reason an
                     // interrupted install self-heals.
                     // Shared, because a test may be writing the same empty file
                     // at the same instant -- see InstallationMarker's remarks.
-                    InstallationMarker.Write(directory);
+                    foreach (var directory in directories)
+                    {
+                        InstallationMarker.Write(directory);
+                    }
                 }
 
                 installer.Output = said;

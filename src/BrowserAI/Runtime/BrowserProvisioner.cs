@@ -658,6 +658,70 @@ internal sealed class BrowserProvisioner : IDisposable
         return new ReinstallOutcome(browser, directory, Deleted: true, removedBytes, failures, status);
     }
 
+    /// <summary>
+    /// Where each shared component's tree is, or would be — in
+    /// <see cref="ProvisionedBrowsers.SharedComponents"/>' order.
+    /// </summary>
+    /// <remarks>
+    /// Read through the manifest exactly as a family's directory is, so a
+    /// revision bump moves these without anybody editing anything, and a payload
+    /// whose <c>browsers.json</c> stops naming one of them throws a sentence
+    /// listing what it does name rather than composing a path to nowhere.
+    /// </remarks>
+    /// <returns>The absolute directories.</returns>
+    public IReadOnlyList<string> SharedComponentDirectories() =>
+        [.. ProvisionedBrowsers.SharedComponents.Select(component => Path.Combine(BrowsersDirectory, Manifest().For(component).DirectoryName))];
+
+    /// <summary>
+    /// Deletes every shared component's tree and downloads them again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The whole operation is on one thread and holds three mutexes, which is
+    /// the difference from <see cref="ReinstallAsync"/>.</b> That method releases
+    /// the family's mutex before the install, because the install it triggers
+    /// would otherwise queue behind it. This one cannot: the installer it runs
+    /// writes into the same two directories that <b>both</b> families' installers
+    /// write into, so letting go between the delete and the download would put
+    /// this process's extraction and a family install's extraction into one tree
+    /// — which is exactly the "neither install, and upstream marks it complete"
+    /// corruption the provisioning mutex exists to prevent. The delete and the
+    /// install therefore happen inside one hold, and nothing is awaited while it
+    /// is held.
+    /// </para>
+    /// <para>
+    /// <b>Three mutexes, in a fixed order, none of them waiting.</b> Both
+    /// families' names plus <see cref="ProvisionedBrowsers.Shared"/>'s own: a
+    /// chromium or a firefox install in flight is also an <c>ffmpeg</c> install
+    /// in flight, and only that family's mutex says so. Zero timeout on all three
+    /// means this cannot deadlock against a peer taking them in another order —
+    /// it fails, releases what it has, and reports that an install is running.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A pre-existing hazard this makes visible rather than creates.</b>
+    /// Chromium's installer and Firefox's installer both lay down <c>ffmpeg</c>
+    /// and <c>winldd</c> and are guarded by <i>different</i> mutexes, so two
+    /// family installs racing into one shared component directory is reachable in
+    /// the shipped product and is not addressed here. What is addressed is that
+    /// the operation which exists to repair those trees cannot itself become the
+    /// third writer.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>What was removed, what would not go, and where the components stand.</returns>
+    public async Task<ReinstallOutcome> ReinstallSharedAsync(CancellationToken cancellationToken = default)
+    {
+        var directories = SharedComponentDirectories();
+
+        return await Task.Factory.StartNew(
+            () => ReinstallShared(directories),
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default)
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -725,6 +789,155 @@ internal sealed class BrowserProvisioner : IDisposable
             mutex.Release();
         }
     }
+
+    /// <summary>
+    /// The whole of <see cref="ReinstallSharedAsync"/>, on the thread that took
+    /// the mutexes.
+    /// </summary>
+    /// <param name="directories">Every shared component's tree, absolute.</param>
+    /// <returns>The outcome.</returns>
+    private ReinstallOutcome ReinstallShared(IReadOnlyList<string> directories)
+    {
+        // Two lists deliberately. `created` is what has to be disposed and
+        // `acquired` is what has to be RELEASED first, and they differ by exactly
+        // one object on the refusal path -- the mutex that was opened and not
+        // taken. Releasing one this thread does not own throws, and dropping a
+        // handle on one it does own leaves ownership to be resolved by the next
+        // waiter as an abandonment, which is a warning somebody then has to
+        // explain.
+        var created = new List<MachineMutex>();
+        var acquired = new List<MachineMutex>();
+
+        try
+        {
+            foreach (var name in ProvisionedBrowsers.Families.Append(ProvisionedBrowsers.Shared))
+            {
+                var mutex = MachineMutex.Create(MutexNameFor(BrowsersDirectory, name));
+                created.Add(mutex);
+
+                // An abandoned acquisition IS an acquisition, exactly as the
+                // family path reads it: refusing here would let one crashed
+                // installer disable shared repairs until the machine is rebooted.
+                if (mutex.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
+                {
+                    ProvisioningLog.ReinstallDeferred(_logger, name, string.Join(", ", directories));
+
+                    return Unchanged(
+                        directories,
+                        $"Another BrowserAI process is provisioning {name} right now, and a {name} install also writes the shared components — so nothing was deleted and nothing was downloaded. "
+                        + "Deleting a tree an installer is extracting into produces a directory that is neither the old install nor the new one, and upstream then marks it complete. Wait for that download to finish and call this again.");
+                }
+
+                acquired.Add(mutex);
+            }
+
+            return RebuildShared(directories);
+        }
+        finally
+        {
+            for (var index = acquired.Count - 1; index >= 0; index--)
+            {
+                acquired[index].Release();
+            }
+
+            for (var index = created.Count - 1; index >= 0; index--)
+            {
+                created[index].Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The destructive half and the install, with every mutex held by this
+    /// thread.
+    /// </summary>
+    /// <remarks>
+    /// <b>One installer invocation for both components, and the completeness
+    /// check is still per component.</b> Measured 2026-08-19:
+    /// <c>install-browser ffmpeg</c> rebuilds whichever of the two is missing,
+    /// because each carries its own marker. So the install is one command and the
+    /// verdict is two <c>File.Exists</c> — a run that exits 0 having left one of
+    /// them unmarked is the shape that produces <c>spawn EFTYPE</c> later, and it
+    /// is reported here rather than discovered then.
+    /// </remarks>
+    /// <param name="directories">Every shared component's tree, absolute.</param>
+    /// <returns>The outcome.</returns>
+    private ReinstallOutcome RebuildShared(IReadOnlyList<string> directories)
+    {
+        var sizes = directories.Select(SizeOf).ToList();
+        var removedBytes = sizes.Contains(-1) ? -1 : sizes.Sum();
+        var failures = new List<string>();
+
+        foreach (var directory in directories)
+        {
+            ProvisioningLog.Reinstalling(_logger, ProvisionedBrowsers.Shared, directory);
+            TreeDelete.Remove(directory, failures);
+        }
+
+        if (failures.Count is not 0)
+        {
+            return new ReinstallOutcome(
+                ProvisionedBrowsers.Shared,
+                directories[0],
+                Deleted: true,
+                removedBytes,
+                failures,
+                new ProvisioningStatus(
+                    ProvisionedBrowsers.Shared,
+                    ProvisioningState.Failed,
+                    directories[0],
+                    "The shared components were not fully removed, so nothing was re-downloaded on top of them."))
+            {
+                Directories = directories,
+            };
+        }
+
+        var revision = Manifest().For(ProvisionedBrowsers.SharedInstallTarget);
+        var target = Path.Combine(BrowsersDirectory, revision.DirectoryName);
+        var result = RunInstaller(ProvisionedBrowsers.SharedInstallTarget, revision, target, Stopwatch.StartNew());
+
+        // Every component's own marker, not the installer's exit code and not the
+        // one directory RunInstaller was pointed at. A second component that
+        // silently did not arrive is exactly the state this tool exists to
+        // repair, and shipping it back as success would make the answer the
+        // defect.
+        var incomplete = directories.Where(directory => !IsComplete(directory)).ToList();
+
+        var status = result.Succeeded && incomplete.Count is 0
+            ? new ProvisioningStatus(
+                ProvisionedBrowsers.Shared,
+                ProvisioningState.Installed,
+                target,
+                $"The shared components ({string.Join(", ", ProvisionedBrowsers.SharedComponents)}) were downloaded again into '{BrowsersDirectory}'. {result.Detail}")
+            : new ProvisioningStatus(
+                ProvisionedBrowsers.Shared,
+                ProvisioningState.Failed,
+                target,
+                incomplete.Count is 0
+                    ? result.Detail
+                    : $"{result.Detail} These are still incomplete and carry no '{BrowsersManifest.InstallationCompleteMarker}': {string.Join(", ", incomplete)}.");
+
+        return new ReinstallOutcome(ProvisionedBrowsers.Shared, target, Deleted: true, removedBytes, failures, status)
+        {
+            Directories = directories,
+        };
+    }
+
+    /// <summary>An outcome that changed nothing, for the shared path.</summary>
+    /// <param name="directories">The trees that were left alone.</param>
+    /// <param name="detail">Why.</param>
+    /// <returns>The outcome.</returns>
+    private static ReinstallOutcome Unchanged(IReadOnlyList<string> directories, string detail) =>
+        new(
+            ProvisionedBrowsers.Shared,
+            directories[0],
+            Deleted: false,
+            RemovedBytes: 0,
+            Failures: [],
+            new ProvisioningStatus(ProvisionedBrowsers.Shared, ProvisioningState.Failed, directories[0], detail))
+        {
+            Directories = directories,
+        };
 
     private static bool IsComplete(string directory) =>
         File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker));
@@ -1459,7 +1672,28 @@ internal sealed record ReinstallOutcome(
     bool Deleted,
     long RemovedBytes,
     IReadOnlyList<string> Failures,
-    ProvisioningStatus Status);
+    ProvisioningStatus Status)
+{
+    /// <summary>
+    /// Every tree this call removed and re-created, which is one for a family and
+    /// two for <see cref="ProvisionedBrowsers.Shared"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Defaulted to <see cref="Directory"/> so the family path is unchanged.</b>
+    /// Added 2026-08-19 with the shared target, and added as a list rather than by
+    /// making <c>Directory</c> a joined string: <c>Directory</c> is what the
+    /// provisioning log records and what a status carries, and a log line naming
+    /// two paths at once is not a path.
+    /// </remarks>
+    public IReadOnlyList<string> Directories { get; init; } = [Directory];
+
+    /// <summary>Those trees as a sentence names them, between the caller's own quotes.</summary>
+    /// <remarks>
+    /// Renders identically to <see cref="Directory"/> for one tree, which is why
+    /// every message could move to it without the family answers changing a byte.
+    /// </remarks>
+    public string Named => string.Join("' and '", Directories);
+}
 
 /// <summary>Source-generated log messages for provisioning.</summary>
 /// <remarks>Event ids start at 60, after <see cref="Sessions.SessionToolLog"/>'s 40s.</remarks>

@@ -19,9 +19,9 @@ time an upstream version moves.
 ## What it covers, and what it does not
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **207**
-`[FLOATS]` markers stand across the articles against the **99** numbered rows
-below (108 lines, counting 2a, 2b, 4a, 4b, 4c, 16a, 26a, 38a and 63a),
+table is how that happens. **It does not yet cover all of them**: **208**
+`[FLOATS]` markers stand across the articles against the **100** numbered rows
+below (109 lines, counting 2a, 2b, 4a, 4b, 4c, 16a, 26a, 38a and 63a),
 because one row often stands for a cluster of related entries and because rows
 have simply been missed. Read a missing row as a gap in this table, never as
 permission to skip the fact.
@@ -61,6 +61,13 @@ permission to skip the fact.
 > is a re-count of the same facts after a file boundary changed, which is the
 > only kind of edit this sentence ever takes without a measurement behind it.
 >
+> `Corrected 2026-08-19 (previously "**207** … against the **99** numbered rows
+> below (108 lines")` — **one new marker and one new row**, from the day
+> `browserai_reinstall_browser` gained its `shared` value: one
+> `install-browser ffmpeg` is measured to rebuild both shared components, which
+> is the grouping that target is built on (row 100). The per-article table below
+> moved with it, and moved by being re-derived rather than incremented.
+
 > `Corrected 2026-08-19 (previously "**206** … against the **98** numbered rows
 > below (107 lines")` — **one new marker and one new row**, both from the day
 > `browserai_init` began accepting `browser: "firefox"`: the advertised tool
@@ -113,10 +120,10 @@ articles are thin is the difference between an admission and a usable one.
 **Two predicates, quoted before their numbers.** **Markers** is occurrences of
 the token `[FLOATS]` in that article file — the same count, the same corpus and
 the same token-not-meaning caveat as the anchor sentence above, so the column
-sums to the **207** that sentence publishes. **Rows** is numbered rows of the
+sums to the **208** that sentence publishes. **Rows** is numbered rows of the
 table below whose cells carry a relative `kb` link to that article; a row citing
 two articles counts once for each, so this column is not a tally and does not sum
-to 108.
+to 109.
 
 ⚠️ **Re-counted 2026-08-19 and asserted from that day** — *previously "Counted
 2026-08-17"*, and **19 of its 28 numbers had drifted** by then: 9 of the 14
@@ -132,7 +139,7 @@ new one cannot escape the map by being forgotten.
 | Article | Markers | Rows | Read this as |
 |---|--:|--:|---|
 | [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 39 | 11 | **Thin, and the thinnest here.** The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each |
-| [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | 24 | 10 | **Thin**, and partly on purpose: row 21 is one row over every size and timing, because a suite that re-measured them would provision on every run |
+| [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | 25 | 11 | **Thin**, and partly on purpose: row 21 is one row over every size and timing, because a suite that re-measured them would provision on every run |
 | [`mcp/sdk.md`](mcp/sdk.md) | 23 | 16 | Covered. Two entries carry **no row deliberately** — see the rule below |
 | [`windows/detection.md`](windows/detection.md) | 23 | 13 | Partly. The lock-file and Restart Manager entries have rows; the enumeration hazards and the canonicalisation table ride inside row 4's cluster |
 | [`playwright/configuration.md`](playwright/configuration.md) | 16 | 17 | Covered, and then some: several rows split one entry into two separate checks |
@@ -308,6 +315,7 @@ decision:
 | 97 | **A mapped network drive letter costs the full network stall — 22,210 ms for one `File.Exists` through `T:` against a dead hostname — while `GetDriveTypeW` answers `DRIVE_REMOTE` for it in 0.9 ms and `QueryDosDeviceW` in 0.0103–0.0212 ms, neither touching the network** ([kb](windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)) | .NET or SMB changes the timeout, in either direction — or, far worse, `GetDriveTypeW` starts round-tripping to the redirector. **The ordering of `SessionDirectoryGuard` rests entirely on the second half**: the network question is answered before any filesystem call precisely because these two calls read the object manager, and a `GetDriveTypeW` that blocked would put the 22 seconds *inside the guard that exists to prevent it*, on the startup path, for every caller. It would fail **silently** — the refusal would still be correct, just twenty-two seconds late | Define a raw DOS device against `\Device\LanmanRedirector\;X:0000000000012345\<a hostname that does not resolve>\share`, then time `File.Exists` through the letter and `GetDriveTypeW`/`QueryDosDeviceW` on it. **Use a hostname, never an unroutable address** — the address case fails at whatever layer answers first and measured 21,037 ms on 2026-08-14 and 12.8 ms on 2026-08-19 on the same machine. **And measure once**: negative DNS caching brought the second lookup back in 17.7 ms | `SessionDirectoryGuardTests.TheNetworkRefusalDoesNotComeFromTheCallThatOpensThings` builds a real redirector alias and proves the refusal came from the object-manager branch, because the opening call returns null there. **The ORDERING is not automated and cannot honestly be**: elapsed time is the only witness to it, and no hang detector with headroom a 419-test run cannot reach is also tight enough to catch one 22-second stall. The 22-second figure itself is *manual* and this row is how it gets re-asked |
 | 98 | **`Path.GetFullPath` expands 8.3 short names on .NET 10** — in full for an existing path, and prefix-only-with-the-tail-preserved for one that does not exist yet — while leaving `\\?\`, `\\.\`, junctions, `subst` and mapped drives untouched ([kb](windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)) | A BCL change to `PathHelper.Normalize`'s `~` expansion. **It fails in the safe direction and still needs re-checking**: if expansion stopped, an 8.3 spelling would reach `SessionDirectoryGuard`, whose final-name test refuses it — so the product stays correct and one *test* becomes a lie, because `An83ShortNameIsCanonicalisedBeforeTheGuardEverSeesIt` asserts the equality rather than the refusal. This row also **corrects [review A4](../docs/reviews/2026-08-18-adversarial-locking.md)**, which lists 8.3 among the aliases `GetFullPath` does not resolve | `GetShortPathNameW` on a directory whose name contains a space, then `Path.GetFullPath` on the result — and again with `\not\created\yet` appended, which is the half that matters for `init` | `SessionDirectoryGuardTests.An83SpellingNeverReachesASecondIdentityOnEitherKindOfVolume`. **It has two branches, because 8.3 generation is per-volume and CI's volume has it off** — measured 2026-08-19: this machine's system volume shortens, its other three do not, and neither does the volume the GitHub Windows runner checks out onto. On a volume with short names it asserts the equality above; on one without, it asserts the long path came back unchanged and then asserts the backstop that would catch a short name if one ever arrived unexpanded. Neither branch is a skip, and which one ran is printed. **So a green CI run does not re-verify this row** — only a run on a volume with 8.3 generation on does |
 | 99 | **The advertised tool surface does not depend on `browserName`** — `chromium` and `firefox` children of the same payload answered identical `tools/list` responses at both of BrowserAI's capability sets: 42 and 59 tools, same names, same order, byte-identical schemas ([kb](playwright/tools-and-artifacts.md#does-the-surface-differ-by-browser-family--measured-2026-08-19)) | Upstream gives `filteredTools` a browser predicate, or gates a tool on the family the way it already gates on capability. **It would fail silently and in the direction nothing here can see:** BrowserAI builds its one static tool list from a single Chromium-configured surface child, and the MCP spec forbids the set varying per connection — so a family-gated tool would be advertised to Firefox sessions whose child does not have it, and the failure would surface as a `tools/call` error a model reads as its own mistake. Every tool-surface count in this repository is a claim about both families and would quietly become a claim about one | Give [`build/upstream-snapshots.mjs`](../build/upstream-snapshots.mjs)'s `session()` helper a config with `browser.browserName: "firefox"` and `firefoxUserPrefs` in place of `channel` — upstream's `validateBrowserConfig` drops a channel for a non-chromium family — and diff its `tools/list` against the one that helper already takes. No browser is launched to answer `tools/list`, so this needs the payload and not a provisioned Firefox | — *manual*. The golden snapshot is generated from one browser-less configuration and cannot see this axis at all; adding a second family to it would double every snapshot for a difference that is measured to be zero, which is a cost to pay when something moves rather than now |
+| 100 | **One `install-browser ffmpeg` downloads BOTH shared components and re-downloads whichever is missing** — measured twice on 2026-08-19: into an empty root it produced `ffmpeg-1011` and `winldd-1007`, each with its own `INSTALLATION_COMPLETE`; re-run with only `winldd-1007` deleted it fetched `winldd` alone and left the complete `ffmpeg` untouched ([kb](playwright/provisioning-and-timings.md#one-install-browser-ffmpeg-rebuilds-both-shared-components--2026-08-19)) | Upstream regroups the two — gives `winldd` its own top-level install, makes it conditional on something, or stops pulling it in with `ffmpeg`. This is the grouping `browserai_reinstall_browser`'s `shared` target is built on: it passes ONE name to rebuild TWO trees | Run `install-browser ffmpeg --no-shell --no-progress` into an empty `PLAYWRIGHT_BROWSERS_PATH`, then delete `winldd-<rev>` and run it again. Both runs must leave both markers | `ReinstallBrowserTests.TheSharedTargetRemovesAndRebuildsEveryComponentBothFamiliesUse` · **and the product itself, which is the stronger half**: the rebuild checks each component's own marker after the run rather than the installer's exit code, so a component that stopped arriving is a reported failure and not a tree marked complete. The suite arm runs against a double and proves the wiring; the grouping itself is what this row re-asks |
 
 Add a row whenever a new `[FLOATS]` entry lands, unless the entry qualifies for
 [the one exemption](#a-floats-entry-with-no-row-the-one-rule) and says in place

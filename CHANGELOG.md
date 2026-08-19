@@ -23,6 +23,41 @@ has been satisfied in form only.
 
 ### Added
 
+- **`browserai_reinstall_browser` gained a third value, `shared`, and it is the
+  only route to repairing `ffmpeg`.** `ffmpeg` and `winldd` are downloaded into
+  the browsers root by **both** families, each carries its own
+  `INSTALLATION_COMPLETE`, and a family reinstall deletes only that family's
+  revision directory — so a corrupted `ffmpeg`, which the `video` artifact type
+  needs, was **permanent through the product's own surface**. `shared` deletes
+  both trees and runs one `install-browser ffmpeg`, measured 2026-08-19 to
+  rebuild whichever of the two is missing because each carries its own marker
+  ([kb](kb/playwright/provisioning-and-timings.md#one-install-browser-ffmpeg-rebuilds-both-shared-components--2026-08-19),
+  re-verification row 100). The completeness check stays **per component**: a run
+  that exits 0 having left one unmarked is reported here rather than met later as
+  `spawn EFTYPE`.
+
+  **Its refusal is deliberately stricter than a family's, and that is the
+  decision.** A family reinstall is gated on a process running out of that tree,
+  and for a family that is the same question as *a session is driving this
+  browser* — `chrome.exe` lives for the session's life and holds its own image
+  open. For the shared components the two come apart: `ffmpeg-win64.exe` exists
+  only while a recording runs, so a process-only gate answers *nothing is using
+  it* on a machine full of live sessions and the tree is then deleted under the
+  next one to record. So `shared` refuses while **any** session is open, of
+  **either** family, and still reports a process out of either tree that no
+  session accounts for. A refusal saying *close your sessions* is recoverable in
+  a turn; a shared tree corrupted by the operation that exists to repair it is
+  not.
+
+  **`shared` is not a browser and `browserai_init` still refuses it** — the two
+  accepted sets are now different lists, and
+  `FirefoxSessionTests.TheAdvertisedSurfaceOffersBothFamiliesAndMakesReinstallNameOne`
+  asserts they differ, because reading one list for both is what would have bound
+  a session for life to a codec. **Explicitly rejected:** having a family
+  reinstall also verify and repair the shared components — that re-introduces a
+  repair tool which can break something working, which is why the argument is
+  required at all. Still no force flag.
+
 - **Firefox is a browser you can ask for.** `browserai_init` accepts
   `browser: "firefox"` beside `chromium`, which stays the default. Everything
   below the front door was already family-parameterised — provisioning, the

@@ -416,7 +416,7 @@ internal sealed class SessionManager : IAsyncDisposable
         var location = ResolveToOpen(Required(arguments, "directory"), "directory");
         var purpose = Required(arguments, "purpose");
         var mode = Mode(arguments);
-        var browser = Browser(arguments, "browser", DefaultBrowser);
+        var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
         var tracing = Flag(arguments, "tracing") ?? false;
         var consoleLevel = ConsoleLevel(arguments);
         var debug = Flag(arguments, "debug") ?? false;
@@ -791,7 +791,107 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     private async Task<ToolOutcome> ReinstallBrowserAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
-        var browser = Browser(arguments, "browser", fallback: null);
+        var target = Browser(arguments, "browser", fallback: null, ProvisionedBrowsers.ReinstallTargets);
+
+        return ProvisionedBrowsers.IsShared(target)
+            ? await ReinstallSharedAsync(cancellationToken).ConfigureAwait(false)
+            : await ReinstallFamilyAsync(target, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// <c>browserai_reinstall_browser</c> against <c>ffmpeg</c> and
+    /// <c>winldd</c>, which both families use.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THE REFUSAL IS DELIBERATELY WIDER THAN THE FAMILY PATH'S, AND THIS
+    /// IS THE DECISION.</b> A family reinstall is gated on <i>a process running
+    /// out of that tree</i>, and for a family that question and <i>a session is
+    /// driving this browser</i> are the same question: <c>chrome.exe</c> lives
+    /// for the session's life and holds its own image open, so the gate reads as
+    /// "somebody is using this" and Windows refuses to unlink an open image as a
+    /// second line of defence.
+    /// </para>
+    /// <para>
+    /// <b>For the shared components the two questions come apart.</b>
+    /// <c>ffmpeg-win64.exe</c> exists only while a recording is running and
+    /// <c>PrintDeps.exe</c> only during dependency validation at launch — so a
+    /// process-only gate answers <i>nothing is using it</i> on a machine with ten
+    /// live sessions, any of which starts the codec the instant a
+    /// <c>video</c> artifact is asked for, and the tree is then being deleted
+    /// underneath it. The consequence is not symmetric either: deleting a family
+    /// tree under a live browser is refused by the filesystem, and deleting
+    /// <c>ffmpeg-&lt;rev&gt;</c> while nothing happens to be running out of it
+    /// succeeds.
+    /// </para>
+    /// <para>
+    /// <b>So this refuses while ANY session is open, of EITHER family</b>, and
+    /// still reports a process running out of either tree that no session
+    /// accounts for. The direction of the trade is chosen on what each mistake
+    /// costs: a refusal that says <i>close your sessions</i> is recoverable in a
+    /// turn, and a shared tree corrupted <i>by the operation that exists to
+    /// repair it</i> is the failure this whole value was added to fix.
+    /// </para>
+    /// <para>
+    /// <b>Still no force flag</b>, for the same reason the family path has none.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>What to tell the caller.</returns>
+    private async Task<ToolOutcome> ReinstallSharedAsync(CancellationToken cancellationToken)
+    {
+        var directories = _environment.Provisioner.SharedComponentDirectories();
+        var named = string.Join("' and '", directories);
+        var running = new List<RunningImage>();
+
+        foreach (var directory in directories)
+        {
+            try
+            {
+                running.AddRange(BrowserProcesses.RunningFrom(directory));
+            }
+            catch (Win32Exception failure)
+            {
+                return new ToolOutcome(
+                    $"{SessionToolSurface.ReinstallBrowser} was not run: BrowserAI could not enumerate processes to check whether anything is still using '{directory}' ({failure.Message}). Nothing was changed. "
+                    + "It refuses rather than guessing, because deleting a tree that something is running from leaves a directory that is neither the old install nor the new one.",
+                    IsError: true);
+            }
+        }
+
+        // The gate, and the family path's is narrower on purpose -- see the
+        // remarks. `null` is every family rather than none.
+        var claimants = LiveSessions(browser: null);
+
+        if (claimants.Count is not 0)
+        {
+            return new ToolOutcome(
+                $"{SessionToolSurface.ReinstallBrowser} was not run: '{ProvisionedBrowsers.Shared}' is {string.Join(" and ", ProvisionedBrowsers.SharedComponents)}, which BOTH browser families use, and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are open on this machine:\n"
+                + Listing(claimants)
+                + $"\nEvery session blocks this one, whatever family it is, and that is stricter than a family reinstall on purpose: a browser starts {ProvisionedBrowsers.SharedInstallTarget} only at the moment it records, so nothing running out of '{named}' right now is not the same statement as nothing being about to. "
+                + "Nothing was changed and nothing was terminated. There is deliberately no force option — forcing here means killing browsers other agents are driving. Close those sessions, or wait, and call this tool again.",
+                IsError: true);
+        }
+
+        if (running.Count is not 0)
+        {
+            // Live processes out of a shared tree that no session accounts for.
+            // Reported by full path, never terminated.
+            return new ToolOutcome(
+                SessionErrors.UnattributableBrowserRunning(
+                    SessionToolSurface.ReinstallBrowser,
+                    named,
+                    [.. running.Select(entry => (entry.ProcessId, entry.ImagePath))]),
+                IsError: true);
+        }
+
+        var outcome = await _environment.Provisioner.ReinstallSharedAsync(cancellationToken).ConfigureAwait(false);
+
+        return AnswerFor(ProvisionedBrowsers.Shared, outcome);
+    }
+
+    private async Task<ToolOutcome> ReinstallFamilyAsync(string browser, CancellationToken cancellationToken)
+    {
         var directory = _environment.Provisioner.DirectoryFor(browser);
 
         // Every process running an executable out of the tree about to be
@@ -835,6 +935,18 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var outcome = await _environment.Provisioner.ReinstallAsync(browser, cancellationToken).ConfigureAwait(false);
 
+        return AnswerFor(browser, outcome);
+    }
+
+    /// <summary>
+    /// The answer both reinstall paths compose, which is the same sentence set
+    /// over one tree or two.
+    /// </summary>
+    /// <param name="target">What the caller named.</param>
+    /// <param name="outcome">What happened.</param>
+    /// <returns>What to tell the caller.</returns>
+    private static ToolOutcome AnswerFor(string target, ReinstallOutcome outcome)
+    {
         if (!outcome.Deleted)
         {
             // Nothing happened, and the answer says only that. Every sentence
@@ -852,7 +964,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (outcome.Failures.Count is not 0)
         {
             return new ToolOutcome(
-                $"'{outcome.Directory}' was only partly removed, so nothing was downloaded on top of it and the browser install is now incomplete. {outcome.Failures.Count.ToString(CultureInfo.InvariantCulture)} item(s) survived:\n"
+                $"'{outcome.Named}' was only partly removed, so nothing was downloaded on top of it and the {target} install is now incomplete. {outcome.Failures.Count.ToString(CultureInfo.InvariantCulture)} item(s) survived:\n"
                 + Listing(outcome.Failures)
                 + $"\nSomething still has those files open. Once it has exited, call {SessionToolSurface.ReinstallBrowser} again — it will delete what is left and download a complete tree.",
                 IsError: true);
@@ -860,10 +972,10 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return outcome.Status.State is ProvisioningState.Installed
             ? new ToolOutcome(
-                $"Re-provisioned {browser}. '{outcome.Directory}' was deleted ({removed}) and downloaded again. {outcome.Status.Detail}",
+                $"Re-provisioned {target}. '{outcome.Named}' was deleted ({removed}) and downloaded again. {outcome.Status.Detail}",
                 IsError: false)
             : new ToolOutcome(
-                $"'{outcome.Directory}' was deleted ({removed}) and the download that should have replaced it did not complete, so there is no browser installed now. {outcome.Status.Detail} "
+                $"'{outcome.Named}' was deleted ({removed}) and the download that should have replaced it did not complete, so there is no {target} installed now. {outcome.Status.Detail} "
                 + $"Call {SessionToolSurface.ReinstallBrowser} again once the cause is fixed; {SessionToolSurface.Init} also starts a download and returns immediately.",
                 IsError: true);
     }
@@ -892,9 +1004,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// its own cause.
     /// </para>
     /// </remarks>
-    /// <param name="browser">The family to report, as upstream names it.</param>
+    /// <param name="browser">The family to report, as upstream names it, or <see langword="null"/> for every family.</param>
     /// <returns>One line per live session of that family.</returns>
-    private List<string> LiveSessions(string browser)
+    private List<string> LiveSessions(string? browser)
     {
         var lines = new List<string>();
 
@@ -929,14 +1041,25 @@ internal sealed class SessionManager : IAsyncDisposable
 
     /// <summary>Whether a recorded family is the one being asked about.</summary>
     /// <remarks>
+    /// <para>
     /// An unreadable or unrecognised recorded family answers <see langword="true"/>
     /// deliberately: see <see cref="LiveSessions"/>' remarks.
+    /// </para>
+    /// <para>
+    /// <b><see langword="null"/> is every family, added 2026-08-19 with the
+    /// <c>shared</c> reinstall target.</b> Its refusal is gated on every session
+    /// on the machine rather than on one family's, because <c>ffmpeg</c> and
+    /// <c>winldd</c> belong to both — the reasoning is at
+    /// <see cref="ReinstallSharedAsync"/>. Expressed as an absent question rather
+    /// than as a second method, so the one filter stays the one filter.
+    /// </para>
     /// </remarks>
     /// <param name="recorded">What the session's record says, which may be anything.</param>
-    /// <param name="asked">The canonical family being reinstalled.</param>
+    /// <param name="asked">The canonical family being reinstalled, or <see langword="null"/> for all of them.</param>
     /// <returns>Whether the session belongs in the answer.</returns>
-    private static bool Family(string? recorded, string asked) =>
-        string.IsNullOrWhiteSpace(recorded)
+    private static bool Family(string? recorded, string? asked) =>
+        asked is null
+        || string.IsNullOrWhiteSpace(recorded)
         || string.Equals(recorded, asked, StringComparison.OrdinalIgnoreCase)
         || !ProvisionedBrowsers.Families.Contains(recorded, StringComparer.OrdinalIgnoreCase);
 
@@ -1603,32 +1726,46 @@ internal sealed class SessionManager : IAsyncDisposable
     /// The family a call named, normalised to the spelling upstream uses.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Normalised rather than echoed, because the answer is written to
     /// <c>lock.json</c> and read back forever.</b> The comparison is
     /// case-insensitive so <c>"Firefox"</c> is accepted, and what is stored is
     /// the canonical member of <see cref="ProvisionedBrowsers.Families"/> — the
     /// same string <c>browsers.json</c> keys on, the config generator writes as
     /// <c>browserName</c>, and the provisioner mutex hashes.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The accepted set is a parameter since 2026-08-19, and the two
+    /// callers pass different sets on purpose.</b> <c>browserai_init</c> passes
+    /// <see cref="ProvisionedBrowsers.Families"/>, because a session's browser is
+    /// a thing that renders web pages; <c>browserai_reinstall_browser</c> passes
+    /// <see cref="ProvisionedBrowsers.ReinstallTargets"/>, which adds
+    /// <c>shared</c>. Before that this method read <c>Families</c> directly, so
+    /// widening the reinstall would have widened <c>init</c> in the same edit and
+    /// nothing would have failed — a session could then have been opened against
+    /// a codec.
+    /// </para>
     /// </remarks>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="name">The parameter to read, which differs between the two callers.</param>
     /// <param name="fallback">What an absent argument means, or <see langword="null"/> to require one.</param>
-    /// <returns>The canonical family name.</returns>
-    private static string Browser(JsonObject? arguments, string name, string? fallback)
+    /// <param name="accepted">What this caller accepts, which is also what the refusal lists.</param>
+    /// <returns>The canonical name, spelled the way this build spells it.</returns>
+    private static string Browser(JsonObject? arguments, string name, string? fallback, IReadOnlyList<string> accepted)
     {
         var asked = (fallback is null ? Required(arguments, name) : Optional(arguments, name)) ?? fallback;
 
-        foreach (var family in ProvisionedBrowsers.Families)
+        foreach (var value in accepted)
         {
-            if (string.Equals(asked, family, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(asked, value, StringComparison.OrdinalIgnoreCase))
             {
-                return family;
+                return value;
             }
         }
 
         throw new SessionToolException(
-            $"'{asked}' is not a browser family BrowserAI provisions. The {ProvisionedBrowsers.Families.Count.ToString(CultureInfo.InvariantCulture)} are: "
-            + $"{string.Join(", ", ProvisionedBrowsers.Families)}. Nothing was changed.");
+            $"'{asked}' is not something this build provisions. The {accepted.Count.ToString(CultureInfo.InvariantCulture)} accepted values are: "
+            + $"{string.Join(", ", accepted)}. Nothing was changed.");
     }
 
     private static string ConsoleLevel(JsonObject? arguments)
