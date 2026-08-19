@@ -39,6 +39,27 @@ contradicting upstream intent — and it means the default posture is unsandboxe
 > is unreachable on the MCP path. That also predicts the fix precisely: any
 > future config key upstream reads *after* the CLI merge would work, and this one
 > never can. `[FLOATS]`
+>
+> ⚠️ **Fixed upstream 2026-08-17, and not yet in a version this build
+> resolves.** [microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)
+> — *fix(mcp): do not clobber chromiumSandbox from the config file* — deletes the
+> normaliser named above outright (`options.sandbox = options.sandbox === true ?
+> undefined : false`, four lines, zero additions) and adds two tests citing
+> [playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716),
+> which was closed `COMPLETED` by the merge. **Everything measured above still
+> describes the shipped tree**: `@playwright/mcp` 0.0.79 pins `playwright-core`
+> 1.63.0-alpha-2026-08-05, and both predate the merge — re-resolved and confirmed
+> unmoved on 2026-08-19.
+>
+> **What changes when it arrives, and it is a mechanism change rather than an
+> outcome change on Windows.** `--sandbox` used to work by mapping to
+> `undefined` and falling through to `validateBrowserConfig`'s non-Linux
+> `chromiumSandbox = true`; after the fix commander leaves the flag `undefined`
+> when it is absent and `true` when it is passed, so `configFromCLIOptions` sets
+> the key **explicitly**. BrowserAI passes `--sandbox` on the command line and is
+> therefore sandboxed on both sides of the change — which is why this is a
+> re-verification row rather than a defect. The half that does invert is the
+> config-file key, which starts working; nothing in this product sets it.
 
 **`loadConfig` is a bare `JSON.parse` with no schema validation**, so a renamed
 or removed key is silently ignored. `--output-mode` was a no-op for its entire

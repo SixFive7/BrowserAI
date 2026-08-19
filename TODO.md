@@ -51,34 +51,6 @@ findable from more than one direction.
       as something else** — the second restructures the refusal on the
       most-exercised path in the product.
 
-- [ ] **Watch [microsoft/playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
-      and act on what upstream decides.** The report: `"launchOptions":
-      { "chromiumSandbox": true }` in a config file is parsed, validated and then
-      **discarded** — only the `--sandbox` CLI flag enables the sandbox, so a
-      configuration setting that key believes it has a sandbox and does not, with
-      no warning and no difference in any health signal. Measured at
-      `@playwright/mcp` 0.0.79. BrowserAI is not exposed: it passes `--sandbox` on
-      the command line, and `SandboxFlagTests` asserts the flag reaches every node
-      child.
-
-      **All three outcomes need something.** *Fixed* — the key changes meaning
-      between two versions BrowserAI floats across, so the
-      [re-verification index](kb/re-verification.md) needs a row; it is exactly
-      what [the golden snapshot cannot
-      see](TESTING.md#the-upstream-review-gate), because the tool surface and the
-      config schema both hold still while the behaviour behind one key inverts.
-      *Declined* — the dead arm of upstream's validation is then by design, which
-      belongs in [kb](kb/playwright/configuration.md) as a settled position rather
-      than sitting here as a defect. **A declined report with a reason is worth as
-      much as a fix, and it is the half nobody writes down.** *No response*, the
-      likeliest — choose between letting it sit and fixing it forward with a PR,
-      but **do not work around it**: BrowserAI is already immune, so a workaround
-      is risk for no benefit.
-
-      Check with `gh issue view 1716 --repo microsoft/playwright-mcp --comments`
-      at [the daily drift check](CLAUDE.md#the-daily-drift-check). A bump that
-      closes this issue and one that ignores it look identical from the registry.
-
 - [ ] **The browser-reinstall row was settled on an impossibility that is not
       one.** [`DECISIONS.md`](DECISIONS.md) closed *download alongside and swap*
       with *"Windows will not rename a directory holding open executables"*.
