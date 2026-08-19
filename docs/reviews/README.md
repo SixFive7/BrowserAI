@@ -17,6 +17,7 @@ lives only here is a finding nobody will act on.
 | `2026-08-18-adversarial-processes.md` | Adversarial review of process supervision, containment and attribution. Fourteen findings, four Tier-1 |
 | `2026-08-18-truncation-findings.md` | What Claude Code's *"2KB each"* actually means, measured off the client's own outbound API request |
 | `2026-08-18-truncation-prompt-for-sibling-project.md` | The same, written self-contained for another MCP server's maintainer. Includes the full re-run recipe |
+| `2026-08-19-auth-transfer-and-session-modes.md` | Can a human's interactive login be handed to an unattended headless run? Measured yes, on one route of three — and copying the profile directory is **not** it. Also three claims this repository makes about its own modes that the code does not make |
 
 **Both adversarial reviews state what they tried to break and could not**, which
 is the half that makes the rest trustworthy. A review that reports only findings
