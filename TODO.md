@@ -218,21 +218,30 @@ findable from more than one direction.
       moment. **Prefer the probe if the alternative puts a test-only interface on
       the product's hot path.**
 
-- [ ] **42 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
+- [ ] **30 rows of the [hazard index](HAZARDS.md) are `open` and carry `—` for evidence.**
       The file's rule is that a row marked `closed` with `—` is not closed; this
       is the converse — rows nobody has adjudicated either way. By category, using
-      the index's own `Area` cells verbatim: Child runtime and
-      configuration 12, Process and OS (Windows) 9, Protocol and SDK 7, Tooling and
+      the index's own `Area` cells verbatim: Process and OS (Windows) 9,
+      Protocol and SDK 7, Tooling and
       CI 7, Packaging and updates 4, Handle routing and instance lifetime 3.
-      18 more are `open` while carrying evidence, so 60 are `open` in total, against
-      98 `closed`.
+      23 more are `open` while carrying evidence, so 53 are `open` in total, against
+      105 `closed`.
+
+      ***Corrected 2026-08-19, later the same day (previously "42 rows … Child
+      runtime and configuration 12 … 18 more are `open` while carrying evidence,
+      so 60 are `open` in total, against 98 `closed`")*** — re-counted by the
+      test, not adjusted. **Child runtime and configuration is done**: 12 rows,
+      now 8 `closed` naming a mechanism and 4 `open` naming a reason. The
+      allowlist closed three of them at once — the environment is deny-by-default,
+      so the `PLAYWRIGHT_MCP_*` override, `INIT_CWD` and the output-size eviction
+      are all refused by the same property rather than by three checks.
 
       ***Corrected 2026-08-19 (previously "55 rows … Bundling and AOT 13 …
       12 more are `open` while carrying evidence, so 67 are `open` in total,
       against 91 `closed`")*** — re-counted by the test, not adjusted. **The
       adjudication pass has started and Bundling and AOT is done**: 13 rows
       that were `open` with `—`, now 7 `closed` naming a mechanism and 6 `open`
-      naming a reason. **The category is gone from the breakdown rather than
+      naming a reason. **A finished category leaves the breakdown rather than
       showing zero**, which is what the predicate does when a category empties —
       it counts rows that are `open` **and** carry `—`, and an area with none
       left has no row to count. Nothing was closed that could not name what
