@@ -60,7 +60,7 @@ internal sealed partial class ReVerificationIndexTests
     {
         var offenders = new List<string>();
 
-        foreach (var (number, automatedBy) in Rows())
+        foreach (var (number, automatedBy, _) in Rows())
         {
             if (automatedBy.Contains("manual", StringComparison.OrdinalIgnoreCase))
             {
@@ -138,8 +138,30 @@ internal sealed partial class ReVerificationIndexTests
 
     private static Match RecordedCounts() => RecordedCountsPattern().Match(File.ReadAllText(IndexPath));
 
-    private static int MarkersAcrossTheArticles() =>
-        ArticleFiles().Sum(file => Floats().Count(File.ReadAllText(file)));
+    /// <summary>
+    /// Every <c>[FLOATS]</c> marker in the corpus, which is what the anchor
+    /// sentence's first number is checked against.
+    /// </summary>
+    /// <remarks>
+    /// <b>Internal since 2026-08-19, so the per-article column in that file's
+    /// "Where the holes are" table can be required to sum to it.</b> A
+    /// breakdown that agrees with nothing is how that table drifted 19 of its 28
+    /// numbers while the total beside it stayed asserted and correct.
+    /// </remarks>
+    /// <returns>The count across every article.</returns>
+    internal static int MarkersAcrossTheArticles() =>
+        ArticleFiles().Sum(MarkersIn);
+
+    /// <summary>One article's <c>[FLOATS]</c> markers.</summary>
+    /// <remarks>
+    /// <b>The corpus-wide count is the sum of this, rather than a second scan.</b>
+    /// Two implementations of "what is a marker" are two answers waiting to
+    /// disagree, and this file already carries the note about a count that swept
+    /// the wrong corpus and was wrong by five.
+    /// </remarks>
+    /// <param name="file">The article, absolute.</param>
+    /// <returns>How many markers it carries.</returns>
+    internal static int MarkersIn(string file) => Floats().Count(File.ReadAllText(file));
 
     /// <summary>Every knowledge-base article: the Markdown under <c>kb/</c> that stamps facts.</summary>
     /// <remarks>
@@ -160,10 +182,23 @@ internal sealed partial class ReVerificationIndexTests
                 .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 .Any(segment => IgnoredDirectories.Contains(segment, StringComparer.OrdinalIgnoreCase)));
 
-    /// <summary>Every numbered row of the index, with its <c>Automated by</c> cell.</summary>
-    private static List<(string Number, string AutomatedBy)> Rows()
+    /// <summary>
+    /// Every numbered row of the index: its number, its <c>Automated by</c>
+    /// cell, and everything it says.
+    /// </summary>
+    /// <remarks>
+    /// <b>Internal since 2026-08-19, so "what counts as a row" has one
+    /// definition.</b> The "Where the holes are" table publishes a per-article
+    /// row count, and a second parser for the same table would be free to
+    /// disagree with this one — which is exactly how that table came to be
+    /// wrong. <c>Content</c> is the four content cells joined, so a citation is
+    /// counted wherever in the row it was written rather than only in
+    /// <c>Fact</c>.
+    /// </remarks>
+    /// <returns>The rows, in file order.</returns>
+    internal static List<(string Number, string AutomatedBy, string Content)> Rows()
     {
-        var rows = new List<(string, string)>();
+        var rows = new List<(string, string, string)>();
 
         foreach (var line in File.ReadAllLines(IndexPath))
         {
@@ -184,7 +219,7 @@ internal sealed partial class ReVerificationIndexTests
             var number = cells[1].Trim();
             if (RowNumber().IsMatch(number))
             {
-                rows.Add((number, cells[5].Trim()));
+                rows.Add((number, cells[5].Trim(), string.Join(" ", cells[2..6])));
             }
         }
 

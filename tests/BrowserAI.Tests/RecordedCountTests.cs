@@ -252,6 +252,131 @@ internal sealed partial class RecordedCountTests
         await Assert.That(ReVerificationIndexTests.ArticleFiles().Count()).IsGreaterThan(10);
     }
 
+    /// <summary>
+    /// The per-article breakdown in the re-verification index's "Where the holes
+    /// are" table is what the articles and the rows hold.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-08-19, and it was already wrong.</b> The table was stamped
+    /// <i>Counted 2026-08-17</i> and published 28 numbers; <b>19 of them had
+    /// drifted</b> — 9 of the 14 marker counts and 10 of the 14 row counts —
+    /// while the three totals in the anchor sentence a few lines above it stayed
+    /// asserted and correct the whole time. It drifted in <b>both</b> directions
+    /// (<c>tools-and-artifacts.md</c> said 30 against 39,
+    /// <c>windows/processes.md</c> said 17 against 7), which is why "it will
+    /// only ever undercount" was not available as a defence.
+    /// </para>
+    /// <para>
+    /// <b>Three assertions, and the second and third are what make the first
+    /// worth having.</b> Cell by cell, both columns. Then the marker column must
+    /// <b>sum to</b> the corpus-wide total the anchor sentence publishes — the
+    /// check the earlier defect walked straight past, because a breakdown
+    /// answerable to nothing can be individually plausible and collectively
+    /// impossible. Then the table must name <b>every</b> article in the corpus,
+    /// because a map of the holes that silently omits a file is not a map: one
+    /// article was in fact missing from it.
+    /// </para>
+    /// <para>
+    /// <b>Both predicates come from <c>ReVerificationIndexTests</c> and are not
+    /// re-implemented here</b>, per this class's first rule.
+    /// <c>MarkersIn</c> is the same token count, over the same corpus, that
+    /// produces the total; <c>Rows</c> is the same row parser the
+    /// <c>Automated by</c> gate reads. A row is counted for an article when any
+    /// of its cells links to it, so a row citing two articles counts once for
+    /// each and the column deliberately does not sum to the row count.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHolesTableIsWhatTheArticlesAndTheRowsHold()
+    {
+        var index = Path.Combine(RepositoryLayout.Root.FullName, "kb", "re-verification.md");
+        var articles = Path.Combine(RepositoryLayout.Root.FullName, "kb");
+        var published = new List<(string Article, int Markers, int Rows)>();
+
+        foreach (var line in await File.ReadAllLinesAsync(index))
+        {
+            // Six cells, against the numbered table's seven: an empty before the
+            // first pipe and after the last, with Article, Markers, Rows and the
+            // prose between them. The article cell is a link, which is what
+            // separates this table from any other four-column one.
+            var cells = line.Split('|', StringSplitOptions.None);
+
+            if (cells.Length is not 6 || HolesRow().Match(cells[1].Trim()) is not { Success: true } article)
+            {
+                continue;
+            }
+
+            published.Add((
+                article.Groups["article"].Value,
+                int.Parse(cells[2].Trim(), CultureInfo.InvariantCulture),
+                int.Parse(cells[3].Trim(), CultureInfo.InvariantCulture)));
+        }
+
+        var rows = ReVerificationIndexTests.Rows();
+        var disagreements = new List<string>();
+
+        foreach (var (article, markers, cited) in published)
+        {
+            var file = Path.Combine(articles, article.Replace('/', Path.DirectorySeparatorChar));
+
+            if (!File.Exists(file))
+            {
+                disagreements.Add($"the holes table names '{article}', which is not a file under kb/");
+                continue;
+            }
+
+            var live = ReVerificationIndexTests.MarkersIn(file);
+
+            if (markers != live)
+            {
+                disagreements.Add($"the holes table says {markers} [FLOATS] markers in '{article}'; the article carries {live}");
+            }
+
+            var citing = rows.Count(row => Cites(row.Content, article));
+
+            if (cited != citing)
+            {
+                disagreements.Add($"the holes table says {cited} numbered rows cite '{article}'; {citing} of them link to it");
+            }
+        }
+
+        // The corpus, against the map. Reading the article set off the same
+        // helper the counts come from, so an article added under kb/ is a red
+        // build rather than a row nobody wrote.
+        var corpus = ReVerificationIndexTests.ArticleFiles()
+            .Select(file => Path.GetRelativePath(articles, file).Replace(Path.DirectorySeparatorChar, '/'))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        disagreements.AddRange(corpus
+            .Where(article => !published.Any(entry => string.Equals(entry.Article, article, StringComparison.OrdinalIgnoreCase)))
+            .Order(StringComparer.Ordinal)
+            .Select(article => $"'{article}' is an article and the holes table does not list it"));
+
+        disagreements.AddRange(published
+            .Where(entry => !corpus.Contains(entry.Article))
+            .Select(entry => $"the holes table lists '{entry.Article}', which is not in the article corpus"));
+
+        // The sum, asserted separately from the parts, against the number the
+        // anchor sentence already answers for. A breakdown nobody adds up is the
+        // shape that produced this defect.
+        if (published.Sum(entry => entry.Markers) != ReVerificationIndexTests.MarkersAcrossTheArticles())
+        {
+            disagreements.Add(
+                $"the holes table's marker column sums to {published.Sum(entry => entry.Markers)} and the corpus holds "
+                + $"{ReVerificationIndexTests.MarkersAcrossTheArticles().ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, disagreements)).IsEmpty();
+
+        // Not vacuous. A parser that stopped matching the table would publish
+        // nothing, agree with everything, and sum to a zero that the corpus check
+        // above would then have to catch on its own.
+        await Assert.That(published.Count).IsGreaterThan(10);
+        await Assert.That(published.Count(entry => entry.Rows > 0)).IsGreaterThan(10);
+    }
+
     [Test]
     public async Task TheToolSurfaceNumbersInDecisionsAreWhatTheSnapshotHolds()
     {
@@ -286,6 +411,23 @@ internal sealed partial class RecordedCountTests
         await Assert.That(everything).IsGreaterThanOrEqualTo(union);
         await Assert.That(union).IsGreaterThan(withoutStorage);
     }
+
+    /// <summary>
+    /// Whether one numbered row of the index links to one article.
+    /// </summary>
+    /// <remarks>
+    /// The links are relative to <c>kb/</c>, so the article's own relative path
+    /// is what appears inside the brackets, optionally followed by a
+    /// <c>#anchor</c>. Matched as <c>(path)</c> or <c>(path#…)</c> rather than by
+    /// containment, because <c>mcp/sdk.md</c> is a substring of nothing here
+    /// today and would be the day somebody adds <c>mcp/sdk.md.old</c>.
+    /// </remarks>
+    /// <param name="row">Everything the row says.</param>
+    /// <param name="article">The article's path relative to <c>kb/</c>.</param>
+    /// <returns>Whether the row cites it.</returns>
+    private static bool Cites(string row, string article) =>
+        row.Contains($"({article})", StringComparison.Ordinal)
+        || row.Contains($"({article}#", StringComparison.Ordinal);
 
     /// <summary>Compares one named group against a live count.</summary>
     /// <param name="disagreements">Where a mismatch is recorded.</param>
@@ -344,6 +486,13 @@ internal sealed partial class RecordedCountTests
     /// <summary>The storage-only tool count, as <c>DECISIONS.md</c> states it.</summary>
     [GeneratedRegex(@"those (?<tools>\d+) tools do not exist in that process")]
     private static partial Regex StorageToolCount();
+
+    /// <summary>
+    /// The <c>Article</c> cell of a "Where the holes are" row: a backticked path
+    /// inside a Markdown link to the same path.
+    /// </summary>
+    [GeneratedRegex(@"^\[`(?<article>[^`]+)`\]\(\k<article>\)$")]
+    private static partial Regex HolesRow();
 
     [GeneratedRegex(@"\[STALE\]")]
     private static partial Regex Stale();

@@ -109,28 +109,49 @@ permission to skip the fact.
 
 The paragraph above admits the table does not cover every marker. Naming *which*
 articles are thin is the difference between an admission and a usable one.
-Counted 2026-08-17 — markers each article carries, against rows that cite it:
+
+**Two predicates, quoted before their numbers.** **Markers** is occurrences of
+the token `[FLOATS]` in that article file — the same count, the same corpus and
+the same token-not-meaning caveat as the anchor sentence above, so the column
+sums to the **207** that sentence publishes. **Rows** is numbered rows of the
+table below whose cells carry a relative `kb` link to that article; a row citing
+two articles counts once for each, so this column is not a tally and does not sum
+to 108.
+
+⚠️ **Re-counted 2026-08-19 and asserted from that day** — *previously "Counted
+2026-08-17"*, and **19 of its 28 numbers had drifted** by then: 9 of the 14
+markers and 10 of the 14 rows, the widest being `tools-and-artifacts.md` at 30
+against 39 and `windows/processes.md` at 17 against 7 — one stale in each
+direction, which is what makes a hand-maintained count worse than none. A
+fifteenth article, [`not-established.md`](not-established.md), was missing from
+the table altogether. Nothing here was adjusted: every figure below is what
+`RecordedCountTests.TheHolesTableIsWhatTheArticlesAndTheRowsHold` re-derives, and
+that test also requires the table to name **every** article in the corpus, so a
+new one cannot escape the map by being forgotten.
 
 | Article | Markers | Rows | Read this as |
 |---|--:|--:|---|
+| [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 39 | 11 | **Thin, and the thinnest here.** The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each |
+| [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | 24 | 10 | **Thin**, and partly on purpose: row 21 is one row over every size and timing, because a suite that re-measured them would provision on every run |
+| [`mcp/sdk.md`](mcp/sdk.md) | 23 | 16 | Covered. Two entries carry **no row deliberately** — see the rule below |
+| [`windows/detection.md`](windows/detection.md) | 23 | 13 | Partly. The lock-file and Restart Manager entries have rows; the enumeration hazards and the canonicalisation table ride inside row 4's cluster |
 | [`playwright/configuration.md`](playwright/configuration.md) | 16 | 17 | Covered, and then some: several rows split one entry into two separate checks |
-| [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 30 | 8 | **Thin.** The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each |
-| [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | 23 | 6 | **Thin**, and partly on purpose: row 21 is one row over every size and timing, because a suite that re-measured them would provision on every run |
-| [`mcp/sdk.md`](mcp/sdk.md) | 22 | 13 | Covered. Two entries carry **no row deliberately** — see the rule below |
-| [`windows/detection.md`](windows/detection.md) | 20 | 8 | Partly. The lock-file and Restart Manager entries have rows; the enumeration hazards and the canonicalisation table ride inside row 4's cluster |
-| [`windows/processes.md`](windows/processes.md) | 17 | 8 | Covered for the BCL entries. Most of this article is `[STABLE]` Win32 and out of this table's scope by construction |
-| [`windows/job-objects.md`](windows/job-objects.md) | 15 | 5 | Covered — rows 2, 2a, 2b and 5 carry the containment cluster |
-| [`packaging/velopack.md`](packaging/velopack.md) | 14 | 6 | Partly. The nine landmines are one row between them |
-| [`toolchain.md`](toolchain.md) | 12 | 8 | Covered |
+| [`packaging/velopack.md`](packaging/velopack.md) | 14 | 7 | Partly. The nine landmines are one row between them |
+| [`toolchain.md`](toolchain.md) | 14 | 9 | Covered |
+| [`windows/job-objects.md`](windows/job-objects.md) | 11 | 5 | Covered — rows 2, 2a, 2b and 5 carry the containment cluster |
 | [`chromium/resurrection.md`](chromium/resurrection.md) | 10 | 2 | **Thin.** Rows 1 and 9 carry the whole article |
-| [`mcp/protocol.md`](mcp/protocol.md) | 8 | 4 | Covered |
+| [`mcp/protocol.md`](mcp/protocol.md) | 9 | 8 | Covered |
 | [`chromium/fingerprinting.md`](chromium/fingerprinting.md) | 7 | 1 | **Thin.** Row 6 is the call-site inventory; the 486-field differ result, the baseline-exposure list and the renderer-propagation finding have nothing |
-| [`packaging/dependencies.md`](packaging/dependencies.md) | 5 | 3 | Covered |
-| [`chromium/profiles.md`](chromium/profiles.md) | 3 | 1 | Thin |
+| [`windows/processes.md`](windows/processes.md) | 7 | 7 | Covered for the BCL entries. Most of this article is `[STABLE]` Win32 and out of this table's scope by construction |
+| [`chromium/profiles.md`](chromium/profiles.md) | 5 | 2 | Thin |
+| [`packaging/dependencies.md`](packaging/dependencies.md) | 5 | 2 | Covered |
+| [`not-established.md`](not-established.md) | 0 | 0 | **Zero is correct and is not a hole.** This page is the register of what was *not* measured; it stamps no fact, so it has nothing to re-verify. It is listed because a table that silently omits an article cannot be read as a map of the corpus |
 
-Those per-article numbers are a map of the holes, not a second tally to
-maintain, and they will drift. Only the three in the anchor sentence above are
-asserted by a test.
+Those per-article numbers are a map of the holes rather than a second tally to
+maintain — but they are no longer maintained by hand, which is what changed on
+2026-08-19. A number nobody re-derives is indistinguishable from a measured one,
+and this table had been stamped *Counted* while more than two thirds of it was
+wrong.
 
 ## A `[FLOATS]` entry with no row: the one rule
 
