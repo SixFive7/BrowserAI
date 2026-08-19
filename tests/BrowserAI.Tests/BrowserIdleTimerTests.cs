@@ -639,12 +639,17 @@ internal sealed partial class BrowserIdleTimerTests
 
         var wrapperCreated = ProcessIdentity.CreationTimeOf(wrapper.Id);
 
-        await WaitUntilAsync(
-            () => File.Exists(reportPath),
-            TestDefaults.ProcessHang,
-            $"the wrapper never reported. Scratch tree: {scratch.Path}");
-
-        var report = (JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(reportPath))!;
+        // ⚠️ Read through ProbeReport rather than File.Exists plus
+        // File.ReadAllTextAsync, corrected 2026-08-19 after a full-suite run
+        // failed here. `File.Exists` is true the instant the NAME appears, which
+        // is before the writer has finished with it: the read was refused as a
+        // sharing violation once in three consecutive runs, and a read arriving
+        // one instant later would have parsed a truncated report and failed on
+        // an assertion about the product instead. ProbeReport exists for exactly
+        // this, opens FileShare.ReadWrite | FileShare.Delete, and reports a
+        // timeout as a timeout; the probe now publishes by rename as the other
+        // two already did.
+        var report = (JsonObject)await ProbeReport.ReadAsync(reportPath, TestDefaults.ProcessHang);
 
         // Handed to this process by the wrapper, and this process's to close.
         var standardInput = (nint)(long)report["standardInputHandle"]!;

@@ -213,6 +213,22 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **A probe wrote its report in place, so `File.Exists` was a readiness signal
+  that became true in the middle of the write.** Found on 2026-08-19 by running
+  the whole suite three times in a row to prove it green: one run failed with
+  *"the process cannot access the file … because it is being used by another
+  process"*, and the failure named
+  `BrowserIdleTimerTests.KillingTheClientTearsTheSessionDownWithoutWaitingForEof`
+  rather than the harness. ⚠️ **The sharing violation was the lucky half** — a
+  reader arriving one instant later would have parsed a truncated report and
+  failed on an assertion about the product. `ClientProbe` now writes a
+  `.writing` sibling and publishes it with a retried rename, which is the
+  convention this project's other two probes already followed and documented,
+  and the test reads through `ProbeReport.ReadAsync`, which exists for exactly
+  this. It was the last unguarded reader — `ProbeChild` and
+  `SdkStdioClientTransportTests` already caught both failures and retried. The
+  hazard has a row of its own, closed by the same commit.
+
 - **A screenshot comes back inline again, and the defect was ours.** Upstream
   answers `browser_take_screenshot` with an `image` content block as well as a
   file, guarded by `if (!params.filename)` — and BrowserAI's artifact routing

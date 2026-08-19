@@ -144,7 +144,7 @@ internal static partial class ClientProbe
             ["jobHandle"] = Duplicate(job.Handle.DangerousGetHandle(), testProcessId),
         };
 
-        File.WriteAllText(reportPath, report.ToJsonString(), new UTF8Encoding(false));
+        Write(reportPath, report);
 
         // Killed from outside, which is the event under test. Nothing below this
         // line runs, deliberately: a probe that shut anything down cleanly would
@@ -152,6 +152,74 @@ internal static partial class ClientProbe
         Thread.Sleep(Timeout.Infinite);
         return 0;
     }
+
+    /// <summary>
+    /// Writes the report so it appears complete or not at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-19, after a full-suite run failed on it.</b> This
+    /// probe wrote the report in place with <c>File.WriteAllText</c>, which
+    /// creates the file, holds it <c>FileAccess.Write</c> while it writes, and
+    /// leaves it existing-but-incomplete for as long as that takes. The host was
+    /// waiting on <c>File.Exists</c>, so it read at the first instant the name
+    /// appeared and was refused with <i>"the process cannot access the file …
+    /// because it is being used by another process"</i> — one occurrence in three
+    /// consecutive full runs, and the failure named
+    /// <c>KillingTheClientTearsTheSessionDownWithoutWaitingForEof</c> rather than
+    /// the harness.
+    /// </para>
+    /// <para>
+    /// <b>The sharing violation was the lucky half.</b> A reader that arrived one
+    /// instant later would have got a partly-written JSON document, and a
+    /// truncated report is a test failing on an assertion about the product. The
+    /// two other probes in this project already write temp-and-rename for exactly
+    /// this reason and say so; this one did not, and
+    /// <c>BrowserAI.Tests.Harness.ProbeReport</c>'s own summary — <i>"the probe
+    /// renames its report into place"</i> — was therefore false of one caller.
+    /// </para>
+    /// <para>
+    /// <b>The rename is retried inside a bound.</b> A file this process has just
+    /// closed is briefly held by something outside this repository, and
+    /// <c>MOVEFILE_REPLACE_EXISTING</c> wants DELETE on the destination, so an
+    /// unretried rename fails <c>ACCESS_DENIED</c> and kills the probe — the host
+    /// then reports <i>the probe never wrote its report</i>, which is true and
+    /// names the wrong cause.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">Where the host is looking.</param>
+    /// <param name="report">What to write.</param>
+    private static void Write(string path, JsonObject report)
+    {
+        var temp = $"{path}.writing";
+
+        File.WriteAllText(temp, report.ToJsonString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+
+        while (true)
+        {
+            try
+            {
+                File.Move(temp, path, overwrite: true);
+                return;
+            }
+            catch (Exception failure) when (failure is UnauthorizedAccessException or IOException)
+            {
+                if (waited.Elapsed > PublishPatience)
+                {
+                    throw new InvalidOperationException(
+                        $"'{path}' could not be replaced by a rename within {PublishPatience}. Something outside this repository is holding it.",
+                        failure);
+                }
+
+                Thread.Sleep(10);
+            }
+        }
+    }
+
+    /// <summary>How long the rename above may be refused before it is a failure.</summary>
+    private static readonly TimeSpan PublishPatience = TimeSpan.FromSeconds(10);
 
     private static nint StandardInputHandleOf(LaunchedProcess process) =>
         process.StandardInput is FileStream file
