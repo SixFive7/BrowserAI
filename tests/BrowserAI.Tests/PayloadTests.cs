@@ -200,6 +200,75 @@ internal sealed class PayloadTests
         await Assert.That(Directory.Exists(BrowserAiPaths.HeadlessShellDirectory)).IsFalse();
     }
 
+    [Test]
+    public async Task UpstreamStillSerialisesEveryInstallOnOneLockOverTheWholeBrowsersRoot()
+    {
+        // ⚠️ THIS IS THE MECHANISM A CORRECTED COMMENT NOW RESTS ON, and it is
+        // upstream's property rather than ours, so a `playwright-core` bump can
+        // take it away without a word.
+        //
+        // BrowserAI's provisioning mutex is keyed on (browsers root, FAMILY)
+        // -- `BrowserProvisioner.MutexNameFor` -- so a chromium install and a
+        // firefox install run concurrently by design, and BOTH lay down
+        // `ffmpeg` and `winldd` in the one browsers root. Two extractions into
+        // one tree is the corruption the provisioning mutex exists to prevent,
+        // and nothing on OUR side prevents this particular pair.
+        //
+        // Upstream does. `registry.install()` takes a proper-lockfile directory
+        // lock at `<PLAYWRIGHT_BROWSERS_PATH>\__dirlock` before it touches any
+        // executable and holds it for the whole install, so every install on
+        // this machine against this root serialises. Measured 2026-08-19 three
+        // ways -- kb/playwright/provisioning-and-timings.md -- and the
+        // measurement is the evidence; this test is what notices if the
+        // mechanism is removed.
+        //
+        // Read out of the ASSEMBLED payload, which is the code that actually
+        // runs, rather than out of a package the build might resolve
+        // differently. Source order rather than execution order is what an
+        // assertion over text can establish, and for this straight-line
+        // function they are the same thing.
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        var bundle = await File.ReadAllTextAsync(Path.Combine(
+            RepositoryPayload.Layout.Root,
+            "mcp",
+            "node_modules",
+            "playwright-core",
+            "lib",
+            "coreBundle.js"));
+
+        // Each of the four is unique in the bundle, so an index is an identity
+        // and not a first match. A rename upstream fails here loudly, which is
+        // the point: the alternative is this scan finding nothing and saying so
+        // by passing.
+        var install = bundle.IndexOf("async install(executablesToInstall", StringComparison.Ordinal);
+        var lockfileName = bundle.IndexOf("\"__dirlock\"", StringComparison.Ordinal);
+        var acquire = bundle.IndexOf("await lock(registryDirectory", StringComparison.Ordinal);
+        var perExecutable = bundle.IndexOf("executable._install(", StringComparison.Ordinal);
+        var release = bundle.IndexOf("releaseLock()", StringComparison.Ordinal);
+
+        await Assert.That(install).IsGreaterThanOrEqualTo(0);
+        await Assert.That(lockfileName).IsGreaterThanOrEqualTo(0);
+        await Assert.That(acquire).IsGreaterThanOrEqualTo(0);
+        await Assert.That(perExecutable).IsGreaterThanOrEqualTo(0);
+        await Assert.That(release).IsGreaterThanOrEqualTo(0);
+
+        // The lock is named and taken inside `install`, before the loop that
+        // installs each executable, and released after it. That ordering is the
+        // whole guarantee: a lock taken per executable, or after the first
+        // download, would leave exactly the window this closes.
+        await Assert.That(lockfileName).IsGreaterThan(install);
+        await Assert.That(acquire).IsGreaterThan(lockfileName);
+        await Assert.That(perExecutable).IsGreaterThan(acquire);
+        await Assert.That(release).IsGreaterThan(perExecutable);
+
+        // And the lock covers the root BOTH families are pointed at. Without
+        // this, a per-package lock directory would satisfy everything above and
+        // serialise nothing that matters to us.
+        await Assert.That(bundle).Contains("registryDirectory = ", StringComparison.Ordinal);
+        await Assert.That(bundle).Contains("getFromENV(\"PLAYWRIGHT_BROWSERS_PATH\")", StringComparison.Ordinal);
+    }
+
     private static async Task<(int ExitCode, string Output)> RunAsync(string executable, string arguments)
     {
         using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo

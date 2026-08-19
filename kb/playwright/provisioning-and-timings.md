@@ -281,6 +281,65 @@ the two, and it fails in the safe direction here** — the per-component marker
 check turns a `winldd` that stopped arriving into a reported failure rather than
 into a tree marked complete.
 
+### Two installers cannot extract into one root — upstream's `__dirlock` — 2026-08-19
+
+**Every `registry.install()` on a machine takes a `proper-lockfile` directory
+lock at `<PLAYWRIGHT_BROWSERS_PATH>\__dirlock`, before it touches any executable
+and for the whole install.** Read out of this repository's assembled payload at
+`@playwright/mcp` 0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05:
+`install-browser <x>` is `install <x>`, which is `installBrowsers` →
+`registry.install(executables)`, whose body is `mkdir(registryDirectory)` →
+`lock(registryDirectory, { lockfilePath: <root>\__dirlock, retries: { retries:
+20, factor: 1.27579 } })` → the per-executable loop → `releaseLock()`. The lock
+covers `registryDirectory`, which **is** `PLAYWRIGHT_BROWSERS_PATH`.
+
+**This matters here because BrowserAI's own provisioning mutex is keyed on the
+family** (`BrowserProvisioner.MutexNameFor` hashes `root|browser`), so a chromium
+install and a firefox install run concurrently by design — and **both** lay down
+`ffmpeg` and `winldd` in the one root. Nothing on this side serialises that pair.
+Upstream does.
+
+Measured five ways, all on 2026-08-19 against the assembled payload:
+
+| | What was done | What happened |
+|---|---|---|
+| **A** | `__dirlock` created and its mtime kept fresh by a probe; `install-browser ffmpeg` started against that root | **Nothing at all for 30 s** — no directory, no download, not one line of output — and the process stayed alive. It completed **8 s after** the probe removed the lock. The wait is therefore *before* any work, not during it |
+| **B** | `install-browser chromium` and `install-browser firefox` started **8 ms apart** into one empty root | Clean serialisation. `__dirlock` held continuously from t+3.1 s; chromium exited 0 at t+10.2 s having downloaded chromium, `ffmpeg` **and** `winldd`; firefox then took the lock, downloaded **only** `firefox-win64.zip` because the two shared markers were already there, and exited 0 at t+17.8 s. Final root: `chromium-1237`, `firefox-1539`, `ffmpeg-1011`, `winldd-1007`, **all four with `INSTALLATION_COMPLETE`**, no `__dirlock` left behind |
+| **C** | the same lock held fresh **for as long as the installer would wait** | Gave up at **470 s — 7 min 50 s** — exited **1**, and wrote **nothing at all** into the root. The message is upstream's own boxed `An active lockfile is found at: <path>` with `wait a few minutes if other Playwright is installing browsers in parallel` and the `rm -R <path>` escape |
+| **D** | three `install-browser ffmpeg` started together into one empty root, **three rounds** — a race into the shared component directories themselves | 3/3 exit 0 every round, both trees complete and byte-identical every round (`ffmpeg-1011` 3,517,342 B, `winldd-1007` 258,560 B), no `ELOCKED`, no residue |
+| **E** | `__dirlock` created and then **never refreshed**, which is the state a killed installer leaves — BrowserAI closes the installer's job on a cap or on `Dispose` | Reclaimed as stale and the install completed **in 13 s total**, against ~10 s for the same install with no lock present. An abandoned lock costs the next installer the staleness window and nothing else |
+
+**So the corruption is upstream's to prevent and upstream prevents it.**
+*Corrected 2026-08-19: `ReinstallSharedAsync`'s remarks previously called two
+family installs racing into one shared component directory "reachable in the
+shipped product". The concurrency is reachable; the race is not.*
+
+**What is real is a wait, and it belongs to the waiter — measurement C.** 20
+attempts at a 1.27579 factor comes out at **470 s**, after which upstream fails
+the install outright rather than queueing further. **A first-run chromium
+download can outlast that**: 203.8 MB in 470 s is 3.5 Mbps, and
+`ProvisioningTimers.AbsoluteCap` is deliberately sized for links down to
+0.60 Mbps — so on any link slower than ~3.5 Mbps, a firefox install started
+beside a chromium install fails with `ELOCKED` instead of waiting for it.
+
+**It fails loudly, writes nothing, and the next attempt succeeds.** BrowserAI's
+own caps do not fire and do not need adjusting: the wait happens before the
+browser's directory appears, so `ProvisioningTimers.ExtractionCap` has not
+started and only the 45-minute `AbsoluteCap` covers it — and 470 s is inside it.
+What the caller sees is upstream's box, which names the path and says to wait a
+few minutes. `[FLOATS]`
+
+**Re-establish** measurement A: `mkdir <root>\__dirlock`, keep touching it faster
+than `proper-lockfile`'s 10 s staleness window, run `install-browser ffmpeg
+--no-shell --no-progress` against that root, and check the root stays empty.
+**The refresh is the control** — without it the lock goes stale in ten seconds and
+the installer proceeds, which measurement E is. What would falsify all of this is
+upstream dropping the lockfile, moving it inside the per-executable loop, or
+scoping it to something narrower than the root;
+`PayloadTests.UpstreamStillSerialisesEveryInstallOnOneLockOverTheWholeBrowsersRoot`
+reads the four anchors out of the assembled bundle and asserts their order, so a
+removal is a red build rather than a rediscovery.
+
 **⚠️ Chrome for Testing has exactly one mirror, so the retry rotation does not
 help it.** Read 2026-08-16 out of `playwright-core/lib/coreBundle.js`: `cftUrl`
 returns `{ path: "builds/cft/${browserVersion}/win64/chrome-win64.zip", mirrors:

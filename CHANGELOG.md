@@ -101,6 +101,44 @@ has been satisfied in form only.
 
 ### Changed
 
+- **A recorded hazard was measured and turned out not to be one: two family
+  installers cannot extract into one shared component directory, because
+  upstream serialises every install on a lock BrowserAI never knew about.**
+  `ReinstallSharedAsync`'s remarks called the race *"reachable in the shipped
+  product"*. The **concurrency** is reachable — `BrowserProvisioner.MutexNameFor`
+  hashes the browsers root **and the family**, so a chromium install and a
+  firefox install run at once by design, and both lay down `ffmpeg` and `winldd`
+  in the one root. The **race** is not: `registry.install()` takes a
+  `proper-lockfile` directory lock at `<PLAYWRIGHT_BROWSERS_PATH>\__dirlock`
+  before it touches any executable and holds it for the whole install.
+
+  **Measured five ways on 2026-08-19** rather than reasoned from the source:
+  chromium and firefox started **8 ms apart** into an empty root finished with
+  four trees, every one carrying `INSTALLATION_COMPLETE` and no lock left behind;
+  three concurrent `install-browser ffmpeg` runs over three rounds came back 3/3
+  green and byte-identical; a held lock stopped an installer **dead for 30 s** —
+  no directory, no download, no output — and it completed 8 s after the release;
+  an abandoned lock, which is what a killed installer leaves, was reclaimed as
+  stale at no measurable cost.
+
+  **What is real is a wait, and it is now written down as one.** The retry budget
+  is **470 s**, after which upstream fails the install outright with its own
+  `ELOCKED` box, having written nothing. 203.8 MB in 470 s is 3.5 Mbps, so on a
+  slower link a firefox install started beside a chromium one **fails rather than
+  queues** — loudly, recoverably, and inside the 45-minute `AbsoluteCap`, because
+  the wait happens before the browser's directory appears and `ExtractionCap` has
+  not started. The remarks are corrected in place with what they previously said,
+  the hazard index carries the row, and
+  `PayloadTests.UpstreamStillSerialisesEveryInstallOnOneLockOverTheWholeBrowsersRoot`
+  reads the four anchors out of the assembled bundle and asserts their order — so
+  a `playwright-core` bump that drops the lock or moves it inside the
+  per-executable loop is a red build rather than a rediscovery.
+
+  **The three mutexes that method holds are still load-bearing**, for a reason
+  upstream's lock cannot cover: it serialises *installs* against each other and
+  knows nothing about the recursive **delete** performed first, which takes no
+  `__dirlock` and never could.
+
 - **Every row of the [hazard index](HAZARDS.md) is now adjudicated, and the
   count of the ones that are not is asserted on every build at zero.** 55 rows
   read `open` with `—` for evidence — rows nobody had decided either way, carried

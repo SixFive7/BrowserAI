@@ -698,13 +698,44 @@ internal sealed class BrowserProvisioner : IDisposable
     /// it fails, releases what it has, and reports that an install is running.
     /// </para>
     /// <para>
-    /// ⚠️ <b>A pre-existing hazard this makes visible rather than creates.</b>
-    /// Chromium's installer and Firefox's installer both lay down <c>ffmpeg</c>
-    /// and <c>winldd</c> and are guarded by <i>different</i> mutexes, so two
-    /// family installs racing into one shared component directory is reachable in
-    /// the shipped product and is not addressed here. What is addressed is that
-    /// the operation which exists to repair those trees cannot itself become the
-    /// third writer.
+    /// ⚠️ <b>Corrected 2026-08-19 (previously "A pre-existing hazard this makes
+    /// visible rather than creates … two family installs racing into one shared
+    /// component directory is reachable in the shipped product and is not
+    /// addressed here").</b> The <i>reachability</i> half was right and the
+    /// <i>hazard</i> half was not, and the difference was never measured before
+    /// it was written down. Chromium's installer and Firefox's installer do both
+    /// lay down <c>ffmpeg</c> and <c>winldd</c>, and
+    /// <see cref="MutexNameFor(string, string)"/> keys on the family, so BrowserAI
+    /// really does allow the two to run at once. <b>They cannot extract
+    /// concurrently, because upstream serialises them.</b>
+    /// <c>registry.install()</c> takes a <c>proper-lockfile</c> directory lock at
+    /// <c>&lt;PLAYWRIGHT_BROWSERS_PATH&gt;\__dirlock</c> <i>before</i> it touches
+    /// any executable and holds it for the whole install, so every install on
+    /// this machine against this root queues — measured 2026-08-19 four ways
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md), re-verification
+    /// row 101), including both families started 8 ms apart into one empty root
+    /// and finishing with four complete trees.
+    /// </para>
+    /// <para>
+    /// <b>What is real is a wait, not a corruption</b>, and it belongs to the
+    /// <i>waiter</i>: upstream retries the lock for a bounded budget and then
+    /// fails the install outright with its own <c>ELOCKED</c> message. Nothing in
+    /// this file is sized against that budget, and nothing needs to be — a wait
+    /// happens before the browser's directory appears, so
+    /// <see cref="ProvisioningTimers.ExtractionCap"/> has not started and only
+    /// the 45-minute <see cref="ProvisioningTimers.AbsoluteCap"/> covers it. The
+    /// hazard index carries the row.
+    /// </para>
+    /// <para>
+    /// <b>None of that makes the three mutexes unnecessary here</b>, and this is
+    /// exactly the part upstream's lock does not do. Upstream serialises
+    /// <i>installs</i> against each other; it knows nothing about the
+    /// <b>delete</b> this method performs first, which takes no <c>__dirlock</c>
+    /// and never could — it is not an install. Without the hold, this thread's
+    /// recursive delete lands inside a family install's extraction and removes
+    /// files out from under it, and upstream's marker is written by a run that
+    /// completed over a tree somebody else was emptying. That is ours to close,
+    /// and the hold across delete <i>and</i> install is what closes it.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken">The caller's token.</param>
