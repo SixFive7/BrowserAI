@@ -11,6 +11,31 @@ All `[FLOATS]`, all read from the shipped
 
 ## Silent config failures
 
+**`contextOptions.permissions: ["clipboard-read"]` is fatal to Firefox and fine
+on Chromium.** A Firefox context created with it fails at
+`async initializeServer` with `Unknown permission: clipboard-read`, and the
+browser exits — so a config that names it for both families does not degrade a
+Firefox session, it makes **every** Firefox session unusable, on the first
+browser call. Chromium takes it and grants it. It is the second key after
+`channel` whose correct value is *absent for one family*, and the first whose
+wrong value is a hard failure rather than an opinion that never arrives.
+
+> `Measured 2026-08-20 @ @playwright/mcp 0.0.79 / playwright-core
+> 1.63.0-alpha-2026-08-05, firefox-1539.` Found by writing the key for both
+> families and watching `FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy`
+> go red on a real front-door navigation — the error text above is upstream's
+> own, out of the `### Error` block the call returned. **Re-establish** by
+> generating a session config with `permissions` set, for each family in turn,
+> and driving one `browser_navigate` through the published binary. **The control
+> is the Chromium arm**: a Firefox launch that fails cannot be told from a
+> Firefox that is broken for some other reason without a Chromium launch that
+> succeeds on the identical key. `ConfigRoundTripTests` reads the key back out
+> of a live Chromium and `RequiredSessionOpinions` requires it for Chromium
+> only, so the *presence* is a red build; that Firefox still rejects it is
+> **manual**, because asserting it would mean a test whose success is a browser
+> failing to start. `[FLOATS]`
+
+
 **`chromiumSandbox: true` in a config file is discarded.** With it set
 explicitly, the browser and every child still ran `--no-sandbox`. Only the CLI
 `--sandbox` flag enabled it. `validateBrowserConfig` *intends*

@@ -84,10 +84,10 @@ internal sealed class ModelSurfaceTests
     private static readonly (string Tool, string[] Properties, string[] Required)[] TheAuthoredSignatures =
     [
         (SessionToolSurface.Init,
-            ["directory", "purpose", "headed", "browser", "tracing", "consoleLevel", "debug"],
+            ["directory", "purpose", "headed", "browser", "tracing", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors", "debug"],
             ["directory", "purpose"]),
         (SessionToolSurface.Resume,
-            ["directory", "purpose", "why", "headed", "debug", "tracing", "consoleLevel"],
+            ["directory", "purpose", "why", "headed", "debug", "tracing", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors"],
             ["directory", "why"]),
         (SessionToolSurface.CatchUp, ["session"], ["session"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
@@ -366,7 +366,7 @@ internal sealed class ModelSurfaceTests
             headed,
             SessionManager.DefaultBrowser,
             tracing: false,
-            BrowserConfiguration.DefaultConsoleLevel)
+            RunOptions.Default)
         .Opinions.Single(opinion => opinion.Path == "capabilities").Value.ToJsonString();
 
     [Test]

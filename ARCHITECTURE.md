@@ -49,7 +49,37 @@ assumed and nothing on `PATH` is used.
 **The configuration is generated, never hand-held.** `BrowserConfiguration` writes
 `browserName`, an explicit `chrome-for-testing` channel, `headless` from the
 call's own `headed` argument, `userDataDir`, `downloadsPath`, `outputDir`,
-`capabilities`, `saveSession` and `console.level`. `--sandbox` goes on the **command line** and never in the config
+`capabilities`, `saveSession`, `console.level`, `codegen`, `snapshot.boxes` and a
+`contextOptions` block — `viewport`, `locale`, `timezoneId`,
+`ignoreHTTPSErrors`, `permissions`, and `recordHar` with `serviceWorkers` when a
+run asked for network capture.
+
+**Everything in that block is per-run and none of it is recorded.** `RunOptions`
+is what a caller gave one launch; `browserai_init` and `browserai_resume` read it
+the same way, so a session created at one viewport is resumed at another without
+being destroyed first. **Four opinions are hard-coded and are deliberately not
+arguments**: `console.level` is `debug` always — `error`→`debug` costs **+1
+character** on a navigation response, because the events line is a *pointer*
+rather than the text, and `browser_console_messages` already takes a read level
+that can be lowered at the moment of asking; `codegen` is `none`, which strips a
+`### Ran Playwright code` block from every response for a feature this product
+does not have; `snapshot.boxes` is `true`, whose cost is deferred behind a link
+and which the `vision` capability's six coordinate tools are unusable without;
+and `permissions` is `["clipboard-read"]` — ⚠️ **for Chromium only**, because
+Firefox fails at `initializeServer` with `Unknown permission: clipboard-read` and
+the browser exits, [measured
+2026-08-20](kb/playwright/configuration.md#silent-config-failures). That is the
+second key after `channel` whose correct value is *absent for one family*, and
+the first whose wrong value is fatal rather than an opinion that never arrives.
+
+**`serviceWorkers: "block"` ships with `recordHar` or not at all.** A request
+served out of a worker's cache never reaches the network layer the archive is
+written from, so without it the capture is silently incomplete — in the direction
+that matters, because a worker serves the repeat requests. **Each launch gets its
+own timestamped archive name** under `output\network\`: `recordHar` truncates
+whatever path it is given at every context creation, and the config is
+regenerated per launch, so the overwrite-on-resume is avoidable rather than
+documentable. `--sandbox` goes on the **command line** and never in the config
 file, because only the command line reaches the browser.
 `ConfigRoundTripTests` reads every one of those leaves back out of the running
 child, with a named list of required keys, so deleting one from the generator

@@ -447,7 +447,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
             var headed = Flag(arguments, "headed") ?? false;
             var tracing = Flag(arguments, "tracing") ?? false;
-            var consoleLevel = ConsoleLevel(arguments);
+            var run = Run(arguments);
             var debug = Flag(arguments, "debug") ?? false;
 
             // Being made to say "resume" is the point: it converts an accidental
@@ -520,7 +520,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 },
                 headed,
                 tracing,
-                consoleLevel,
+                run,
                 debug,
                 createdHere: true,
                 notes: [],
@@ -556,7 +556,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var debug = Flag(arguments, "debug") ?? false;
             var headed = Flag(arguments, "headed") ?? false;
             var tracing = Flag(arguments, "tracing");
-            var consoleLevel = ConsoleLevel(arguments);
+            var run = Run(arguments);
 
             // A profile is browser-specific and a session cannot change what it is,
             // so a caller asking to resume a Firefox directory as Chromium is
@@ -633,7 +633,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 },
                 headed,
                 tracing ?? false,
-                consoleLevel,
+                run,
                 debug,
                 createdHere: false,
                 notes,
@@ -1624,7 +1624,7 @@ internal sealed class SessionManager : IAsyncDisposable
         SessionLockRequest request,
         bool headed,
         bool tracing,
-        string consoleLevel,
+        RunOptions run,
         bool debug,
         bool createdHere,
         IReadOnlyList<string> notes,
@@ -1672,7 +1672,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // The family comes from the session's own record rather than from a
             // constant: `resume` reads it out of browserai.json, and a profile
             // belongs to the browser that made it.
-            var config = BrowserConfiguration.ForSession(location, headed, request.Browser, tracing, consoleLevel);
+            var config = BrowserConfiguration.ForSession(location, headed, request.Browser, tracing, run);
             var configFile = Path.Combine(
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
@@ -1838,8 +1838,18 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append(" — pass a plain 'filename' such as login.png on any tool that takes one; BrowserAI files it by kind under output\\ and tells you the full path.\n")
             .Append("  purpose: ").Append(record.Purpose).Append('\n')
             .Append("  created: ").Append(Stamp(record.Created)).Append("   last used: ").Append(Stamp(record.LastUsed)).Append('\n')
+            .Append("  viewport: ").Append(session.Config.Opinions.FirstOrDefault(opinion => opinion.Path == "browser.contextOptions.viewport.width")?.Value.ToString() ?? "?")
+            .Append('x').Append(session.Config.Opinions.FirstOrDefault(opinion => opinion.Path == "browser.contextOptions.viewport.height")?.Value.ToString() ?? "?")
+            .Append(" — a screenshot arrives at this size unscaled, so it is what one costs you\n")
             .Append("  child protocol: ").Append(session.Child.NegotiatedProtocolVersion ?? "<none>").Append('\n')
             .Append("  browserProvisioning: ").Append(Provisioning(record.Browser)).Append('\n');
+
+        if (session.Config.HarPath is { } har)
+        {
+            _ = text
+                .Append("  ⚠️ NETWORK CAPTURE IS ON for this run: '").Append(har)
+                .Append("'. Every request and response, headers included, is being written there in clear text — every bearer token and session cookie that crosses the wire. Service workers are BLOCKED while it is on, so the site may behave differently from an ordinary run. Delete the file when you are done with it.\n");
+        }
 
         _ = text.Append(HowItGotHere(record));
 
@@ -2341,14 +2351,59 @@ internal sealed class SessionManager : IAsyncDisposable
             + $"{string.Join(", ", accepted)}. Nothing was changed.");
     }
 
-    private static string ConsoleLevel(JsonObject? arguments)
+    /// <summary>
+    /// The per-run arguments one <c>init</c> or <c>resume</c> call gave.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Read the same way on both calls, deliberately.</b> None of these is
+    /// written to the record, so there is nothing to read back and nothing a
+    /// resume could contradict: a session created at one viewport is resumed at
+    /// another without being destroyed first.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b><c>consoleLevel</c> was here until 2026-08-20 and is gone.</b> The
+    /// console level is <c>debug</c> always: measured, <c>error</c> to
+    /// <c>debug</c> costs +1 character on a navigation response and +5
+    /// otherwise, because the events line is a pointer rather than the message
+    /// text — and <c>browser_console_messages</c> already takes its own read
+    /// level, which can be lowered at the moment of asking where a capture level
+    /// chosen at <c>init</c> cannot be raised retroactively.
+    /// </para>
+    /// </remarks>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>What this launch was asked for.</returns>
+    private static RunOptions Run(JsonObject? arguments) => new()
     {
-        var level = Optional(arguments, "consoleLevel") ?? BrowserConfiguration.DefaultConsoleLevel;
+        Viewport = Viewport(arguments),
+        Locale = Optional(arguments, "locale") ?? BrowserConfiguration.HostLocale,
+        TimeZone = Optional(arguments, "timezone") ?? BrowserConfiguration.HostTimeZone,
+        IgnoreHttpsErrors = Flag(arguments, "ignoreHTTPSErrors") ?? false,
+        CaptureNetwork = Flag(arguments, "captureNetwork") ?? false,
+    };
 
-        return BrowserConfiguration.ConsoleLevels.Contains(level, StringComparer.Ordinal)
-            ? level
+    /// <summary>The viewport a call named, or the default.</summary>
+    /// <remarks>
+    /// <b>Refused rather than clamped.</b> A caller that wrote <c>1920</c> meant
+    /// something, and a server that silently substituted 1920×1080 for it would
+    /// answer every later question about the page at a size the caller never
+    /// chose. The refusal names the form and the bounds.
+    /// </remarks>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>The size.</returns>
+    private static ViewportSize Viewport(JsonObject? arguments)
+    {
+        if (Optional(arguments, "viewport") is not { } asked)
+        {
+            return BrowserConfiguration.DefaultViewport;
+        }
+
+        return ViewportSize.TryParse(asked, out var size)
+            ? size
             : throw new SessionToolException(
-                $"'consoleLevel' must be one of {string.Join(", ", BrowserConfiguration.ConsoleLevels)}, and '{level}' is not. Note that the default, '{BrowserConfiguration.DefaultConsoleLevel}', silently drops debug messages.");
+                $"'viewport' = '{asked}' is not a size BrowserAI accepts. Write it as WIDTHxHEIGHT in CSS pixels — '{BrowserConfiguration.DefaultViewport}' is the default — with each side between "
+                + $"{ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)}. "
+                + "Nothing was created and nothing was changed. It is refused rather than rounded to the nearest thing that works, because a size you did not choose is one every later screenshot is silently taken at.");
     }
 }
 

@@ -476,7 +476,7 @@ internal sealed class FakeChildHarnessTests
             real.DefaultSessionHeaded,
             SessionManager.DefaultBrowser,
             tracing: false,
-            BrowserConfiguration.DefaultConsoleLevel);
+            RunOptions.Default);
 
         await Assert.That(generated.Opinions
             .Single(opinion => opinion.Path == "browser.launchOptions.headless")

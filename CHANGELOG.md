@@ -23,6 +23,16 @@ has been satisfied in form only.
 
 ### Removed
 
+- **`consoleLevel`, and the four-level choice behind it.** The console level is
+  now `debug` **always**, with no argument. Measured: `error`→`debug` costs **+1
+  character** on a navigation response and **+5** otherwise, because the events
+  line in a tool response is a *pointer* — `path#L1-L20` — and never the message
+  text, so the whole cost of the most verbose setting is the width of a larger
+  line number. And the read-level knob already exists one layer up:
+  `browser_console_messages` takes its own level, so a caller that wants only
+  errors asks for only errors **at the moment it asks** — where a capture level
+  chosen hours earlier at `init` cannot be raised retroactively.
+
 - **Session modes.** `headless`, `interactive` and `persistent` are gone, and so
   is the `mode` argument on `browserai_init` and the refusal `browserai_resume`
   made when it was given one. **A mode was two things** — whether a window
@@ -112,6 +122,63 @@ has been satisfied in form only.
   is part of the CI item.
 
 ### Added
+
+- **Six per-run arguments, and four opinions that stopped being arguments.**
+  `viewport`, `locale`, `timezone`, `ignoreHTTPSErrors` and `captureNetwork`
+  join `headed`, `tracing` and `debug` on both `browserai_init` and
+  `browserai_resume`; every one of them is regenerated at each child launch and
+  written to nothing, so a session created headless at one viewport is resumed
+  headed at another without being destroyed first.
+
+  **`viewport` defaults to 1920×1080, and the number that decided it is the
+  token cost of a screenshot.** Measured end to end through BrowserAI: 1920×1080
+  arrives as **2,691 visual tokens**, 1280×720 as 1,196, and 2560×1440 as
+  **4,784 — exactly the per-image cap, with zero headroom**. What is set is what
+  the model receives: BrowserAI's image handling diverges before upstream's
+  `scaleImageToFitMessage`, so nothing downscales it on the way back. A value
+  that does not parse or is out of bounds is **refused rather than rounded**,
+  because a size a caller did not choose is one every later screenshot is
+  silently taken at.
+
+  **`locale` and `timezone` are read from the host machine** rather than
+  hard-coded. Upstream leaves them unset, which gives the browser's own `en-US`
+  whatever the machine is — so a site that localises by `Accept-Language` shows
+  an agent something a person at the same desk would never see. Windows's own
+  time-zone identifier is converted to IANA, which is what Playwright accepts;
+  where that conversion is unavailable the key is **omitted rather than
+  guessed**, because a Windows identifier fails the launch rather than degrading.
+
+  **`captureNetwork` writes an HTTP Archive, and sets `serviceWorkers: "block"`
+  with it.** The block is not optional: a request served out of a worker's cache
+  never reaches the network layer the archive is written from, so without it the
+  capture is **silently incomplete** — in the direction that matters, because a
+  worker serves the repeat requests. The description carries three things a
+  caller has to know before turning it on: it **changes what the site does**, it
+  takes effect at the **next browser launch** and is never retroactive, and the
+  file is a **plaintext credential dump**. **Each launch gets its own timestamped
+  filename** under `output\network\`: `recordHar` truncates whatever path it is
+  given at every context creation, and the config is regenerated per launch, so
+  the overwrite-on-resume is avoidable rather than documentable. The answer
+  `browserai_init` returns names the file and says both things.
+
+  ⚠️ **`permissions: ["clipboard-read"]` is hard-coded, and for Chromium only.**
+  `clipboard-write` is already granted without asking, so naming it would be an
+  opinion with no effect. **Firefox does not know the permission at all**: a
+  context created with it fails at `initializeServer` with `Unknown permission:
+  clipboard-read` and the browser exits, so writing it for both families makes
+  every Firefox session **unusable** rather than degraded. Measured 2026-08-20
+  against the provisioned `firefox-1539` — by writing it for both families and
+  watching a real front-door navigation go red —
+  [recorded in kb](kb/playwright/configuration.md#silent-config-failures) with a
+  re-verification row. It is family-scoped exactly as `channel` is.
+
+  **`codegen: "none"` and `snapshot.boxes: true` are hard-coded with no
+  argument.** `codegen` strips a `### Ran Playwright code` block from every
+  response, for a feature this product does not have and no reader exists for.
+  `snapshot.boxes` costs nothing until something reads the snapshot — a response
+  carries a link rather than the text — and every session is granted the `vision`
+  capability, whose six `browser_mouse_*_xy` tools take viewport coordinates a
+  snapshot without boxes gives a model no way to compute.
 
 - **`browserai_catch_up`, the seventh authored tool.** It answers *what were we
   doing here, and what is here now* for one session, from **two sources that

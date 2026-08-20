@@ -151,7 +151,7 @@ internal sealed class ArtifactRoutingTests
             headed: false,
             SessionManager.DefaultBrowser,
             tracing: false,
-            BrowserAI.Runtime.BrowserConfiguration.DefaultConsoleLevel);
+            BrowserAI.Runtime.RunOptions.Default);
 
         await Assert.That(config.Opinions.Any(opinion => opinion.Path.Contains("outputMaxSize", StringComparison.OrdinalIgnoreCase))).IsFalse();
         await Assert.That(System.Text.Encoding.UTF8.GetString(config.Json)).DoesNotContain("outputMaxSize");

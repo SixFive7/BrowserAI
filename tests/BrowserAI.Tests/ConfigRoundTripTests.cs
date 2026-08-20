@@ -86,7 +86,7 @@ internal sealed class ConfigRoundTripTests
                 headed: false,
                 browser,
                 tracing: true,
-                "debug");
+                RunOptions.Default);
 
             var written = config.Opinions
                 .Select(opinion => opinion.Path)
@@ -176,7 +176,7 @@ internal sealed class ConfigRoundTripTests
                     headed,
                     browser,
                     tracing: false,
-                    BrowserConfiguration.DefaultConsoleLevel);
+                    RunOptions.Default);
 
                 check($"{browser}/headed={headed}", config);
             }
@@ -240,7 +240,7 @@ internal sealed class ConfigRoundTripTests
             headed: false,
             SessionManager.DefaultBrowser,
             tracing: false,
-            BrowserConfiguration.DefaultConsoleLevel);
+            RunOptions.Default);
 
     /// <summary>The child's own merged config, as <c>browser_get_config</c> reported it.</summary>
     /// <remarks>

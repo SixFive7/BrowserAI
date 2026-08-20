@@ -278,7 +278,6 @@ internal sealed class StandardErrorClassifierTests
                 DownloadsDirectory = Path.Combine(work, SessionLayout.DownloadsFolderName),
                 Capabilities = BrowserConfiguration.GrantedCapabilities,
                 SaveSession = saveSession,
-                ConsoleLevel = BrowserConfiguration.DefaultConsoleLevel,
             }),
             name: "playwright-mcp[stderr]");
     }

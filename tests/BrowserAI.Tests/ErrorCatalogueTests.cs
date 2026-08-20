@@ -811,7 +811,7 @@ internal sealed partial class ErrorCatalogueTests
             headed: false,
             ProvisionedBrowsers.Firefox,
             tracing: false,
-            BrowserConfiguration.DefaultConsoleLevel);
+            RunOptions.Default);
 
         var ready = Path.Combine(scratch.Path, "holder.json");
         var holder = scope.Launch(
@@ -848,7 +848,7 @@ internal sealed partial class ErrorCatalogueTests
             headed: false,
             ProvisionedBrowsers.Firefox,
             tracing: false,
-            BrowserConfiguration.DefaultConsoleLevel));
+            RunOptions.Default));
 
         await Assert.That(opaque).IsNotNull();
         await Assert.That(opaque!.Message).Contains("could not be checked for a lock");
