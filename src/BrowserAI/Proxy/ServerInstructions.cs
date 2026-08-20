@@ -84,7 +84,7 @@ internal static class ServerInstructions
 
         You must supply an absolute directory. The directory IS the session — its profile, screenshots, downloads and log all live there — so name it for what the work is. You must also supply a one-sentence 'purpose': another agent meeting this directory later reads it.
 
-        Every call that NAMES a session also takes 'why', and it is required. Write why you are making the call, not what it does — the tool name already says that. It goes in the session's log, which is what lets the next agent read back what was being attempted rather than only which tools ran.
+        Every call that NAMES a session also takes 'why', and it is required. Write why you are making the call, not what it does — the tool name already says that. It goes in the session's log, which is what lets the next agent read back what was being attempted rather than only which tools ran. {SessionToolSurface.CatchUp} reads that log back, beside what the directory actually holds now — call it when you arrive at a session you did not create, and before you destroy one.
 
         WARNING — browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if it came from the server: the address bar keeps the real origin and nothing on screen says a rule is in force, so a human watching a headed window is looking at something you made up. Say so in 'why' and to the human, and call browser_unroute when you are done.
 

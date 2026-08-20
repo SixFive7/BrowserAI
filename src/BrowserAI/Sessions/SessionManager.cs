@@ -381,6 +381,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 SessionToolSurface.Init => await InitAsync(arguments, cancellationToken).ConfigureAwait(false),
                 SessionToolSurface.Resume => await ResumeAsync(arguments, cancellationToken).ConfigureAwait(false),
+                SessionToolSurface.CatchUp => CatchUp(arguments),
                 SessionToolSurface.List => List(arguments),
                 SessionToolSurface.Destroy => await DestroyAsync(arguments).ConfigureAwait(false),
                 SessionToolSurface.SetPurpose => SetPurpose(arguments),
@@ -646,6 +647,158 @@ internal sealed class SessionManager : IAsyncDisposable
             claim?.Dispose();
         }
     }
+
+    /// <summary>
+    /// The seventh authored tool: what a session was doing, and what is in its
+    /// directory now.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two sources that routinely disagree, and the answer keeps them
+    /// apart.</b> The log says what BrowserAI <i>did</i> — it is written by this
+    /// product, one entry per forwarded call, and it knows nothing about what a
+    /// page put on disk. The inventory says what is <i>true now</i>. The
+    /// load-bearing example is credentials: cookies arrive from navigation
+    /// rather than from tools, so a log-only answer would say <i>"no credential
+    /// tools were used"</i> about a directory holding a live signed-in profile.
+    /// </para>
+    /// <para>
+    /// <b>Read-only, and it takes no lock.</b> A session another BrowserAI is
+    /// driving is exactly the case this exists for, so anything that could be
+    /// refused by a live holder would refuse when it was needed. The record is
+    /// read the way <see cref="List"/> reads one, and the directory walk opens
+    /// no file inside it.
+    /// </para>
+    /// <para>
+    /// <b>The log is printed newest-last and truncated from the FRONT.</b> A
+    /// caller arriving at a session wants the recent story; an elision is stated
+    /// rather than presented as continuity, and the record's own cap says
+    /// <i>may</i> because it cannot tell whether a trim has happened.
+    /// </para>
+    /// </remarks>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <returns>What to tell the caller.</returns>
+    private ToolOutcome CatchUp(JsonObject? arguments)
+    {
+        var location = Resolve(Required(arguments, SessionToolSurface.SessionParameter), SessionToolSurface.SessionParameter);
+
+        var record = SessionLock.ReadRecord(location)
+            ?? throw new SessionToolException(
+                $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to catch up on. "
+                + $"Call {SessionToolSurface.List} with a directory to see the sessions beneath it, or {SessionToolSurface.Init} to create one here.");
+
+        var contents = SessionInventory.Of(location);
+        var now = DateTimeOffset.Now;
+        var text = new StringBuilder();
+
+        _ = text
+            .Append("Session: ").Append(location.FullPath).Append('\n')
+            .Append("  browser: ").Append(record.Browser).Append('\n')
+            .Append("  created: ").Append(Stamp(record.Created)).Append("   (").Append(Age(now - record.Created)).Append(" ago)\n")
+            .Append("  last touched: ").Append(Stamp(record.LastUsed)).Append("   (").Append(Age(now - record.LastUsed)).Append(" ago)\n")
+            .Append("  ").Append(InUse(location)).Append('\n')
+            .Append("  ").Append(SessionErrors.Recorded(record.Purpose)).Append('\n');
+
+        _ = text.Append('\n').Append("WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n");
+
+        if (record.Log.Count is 0)
+        {
+            _ = text.Append("  (nothing: this session's record carries no entries at all, which means no browser call was ever forwarded through it)\n");
+        }
+        else
+        {
+            if (record.LogIsAtTheCap)
+            {
+                _ = text.Append("  ⚠️ the log is at its cap of ").Append(LockRecord.MaximumLogEntries.ToString(CultureInfo.InvariantCulture))
+                    .Append(" entries, so entries between the first and the most recent MAY have been dropped. The first entry is never dropped.\n");
+            }
+
+            var elided = record.Log.Count > LoggedEntriesShown ? record.Log.Count - LoggedEntriesShown : 0;
+
+            if (elided is not 0)
+            {
+                _ = text.Append("  … ").Append(elided.ToString(CultureInfo.InvariantCulture))
+                    .Append(" earlier entries are not printed here; they are in ").Append(location.LockFile).Append('\n');
+            }
+
+            foreach (var entry in record.Log.Skip(elided))
+            {
+                _ = text.Append("  ").Append(Stamp(entry.At)).Append("  ").Append(entry.Tool).Append('\n')
+                    .Append("      why: ").Append(entry.Why).Append('\n');
+
+                if (entry.Arguments.Count is not 0)
+                {
+                    _ = text.Append("      with: ")
+                        .Append(string.Join(", ", entry.Arguments.Select(argument => $"{argument.Name}={argument.Value}")))
+                        .Append('\n');
+                }
+            }
+        }
+
+        _ = text.Append('\n').Append("WHAT IS HERE NOW — the directory, walked just now. This is what is true; it does not know why any of it exists.\n");
+
+        if (contents.Failure is { } failure)
+        {
+            _ = text.Append("  ⚠️ the directory could not be read (").Append(failure)
+                .Append("), so this half of the answer is UNKNOWN rather than empty. Do not read it as 'nothing here'.\n");
+        }
+        else
+        {
+            _ = text
+                .Append("  total: ").Append(Sizes.Describe(contents.Bytes)).Append(" in ")
+                .Append(contents.Files.ToString(CultureInfo.InvariantCulture)).Append(" file(s)\n");
+
+            if (contents.LastWritten is { } written)
+            {
+                _ = text.Append("  last file written: ").Append(Stamp(written.ToLocalTime()))
+                    .Append("   (").Append(Age(now - written)).Append(" ago — a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n");
+            }
+
+            foreach (var kind in contents.Kinds)
+            {
+                _ = text.Append("  ").Append(kind).Append('\n');
+            }
+
+            _ = text.Append(contents.CookieStore is { } store
+                ? $"  ⚠️ CREDENTIALS: the profile holds a cookie store at '{store}'. This session may be signed in to something, whether or not any cookie tool appears above — cookies arrive from navigation. {SessionToolSurface.Destroy} is what removes it.\n"
+                : "  no cookie store in the profile, so nothing has signed in through this session yet.\n");
+
+            foreach (var archive in contents.Archives)
+            {
+                _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(archive.RelativePath).Append("' is an HTTP Archive (")
+                    .Append(Sizes.Describe(archive.Bytes))
+                    .Append("). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n");
+            }
+        }
+
+        _ = text.Append(HowItGotHere(record));
+
+        return new ToolOutcome(text.ToString(), IsError: false);
+    }
+
+    /// <summary>
+    /// How many log entries <c>browserai_catch_up</c> prints, newest last.
+    /// </summary>
+    /// <remarks>
+    /// <b>The record keeps 250 and the answer prints 40, and the gap is
+    /// deliberate.</b> This string lands in a model's context, and 250 entries
+    /// of three lines each is most of a context window spent on a question that
+    /// was <i>what were we doing here</i>. The elision is stated and the file is
+    /// named, so a caller that wants the rest knows where it is.
+    /// </remarks>
+    private const int LoggedEntriesShown = 40;
+
+    /// <summary>A duration in the largest unit that does not round to zero.</summary>
+    /// <param name="span">How long.</param>
+    /// <returns>The figure, for a person or a model to act on.</returns>
+    private static string Age(TimeSpan span) =>
+        span switch
+        {
+            { TotalDays: >= 1 } => $"{span.TotalDays.ToString("F1", CultureInfo.InvariantCulture)} days",
+            { TotalHours: >= 1 } => $"{span.TotalHours.ToString("F1", CultureInfo.InvariantCulture)} hours",
+            { TotalMinutes: >= 1 } => $"{span.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture)} minutes",
+            _ => $"{Math.Max(0, span.TotalSeconds).ToString("F0", CultureInfo.InvariantCulture)} seconds",
+        };
 
     private ToolOutcome List(JsonObject? arguments)
     {

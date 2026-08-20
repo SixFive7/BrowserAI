@@ -7,7 +7,7 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The six authored session tools, round-tripped through the raw-protocol
+/// The seven authored session tools, round-tripped through the raw-protocol
 /// client against the published binary.
 /// </summary>
 /// <remarks>
@@ -26,8 +26,20 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class SessionToolTests
 {
+    /// <summary>
+    /// Every authored tool is advertised and every one of them answers, through
+    /// the published binary.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-08-20 from <c>AllSixAuthoredToolsAreAdvertisedAndAnswer</c></b>,
+    /// when <c>browserai_catch_up</c> made it seven. The count is asserted from
+    /// <c>SessionToolSurface.Names</c> rather than typed, so an eighth tool that
+    /// nothing round-trips is a red build rather than a name that quietly stops
+    /// meaning what it says.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AllSixAuthoredToolsAreAdvertisedAndAnswer()
+    public async Task EveryAuthoredToolIsAdvertisedAndAnswers()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
@@ -37,6 +49,7 @@ internal sealed class SessionToolTests
         // round trip through the published binary in the capture above.
         await Assert.That(run.IsError("init")).IsFalse();
         await Assert.That(run.IsError("resumeMoved")).IsFalse();
+        await Assert.That(run.IsError("catchUp")).IsFalse();
         await Assert.That(run.IsError("list")).IsFalse();
         await Assert.That(run.IsError("setPurpose")).IsFalse();
 
@@ -65,6 +78,11 @@ internal sealed class SessionToolTests
         // init's result carries the resolved absolute paths and the browser,
         // which is what lets an agent say where a screenshot went instead of
         // guessing. *(The mode line went on 2026-08-20 with session modes.)*
+        // ⚠️ THE COUNT, DERIVED. Seven tools, seven round trips above and below;
+        // an eighth added to the surface with nothing driving it is a gap this
+        // file exists to close, and a name that says "six" cannot report one.
+        await Assert.That(SessionToolSurface.Names.Count).IsEqualTo(7);
+
         var text = run.Text("init");
 
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.ProfileFolderName));

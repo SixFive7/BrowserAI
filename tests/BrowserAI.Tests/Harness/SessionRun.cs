@@ -170,6 +170,14 @@ internal sealed record SessionRun
                 ["purpose"] = "a purpose set after the fact",
             }).ConfigureAwait(false);
 
+            // ⚠️ The seventh authored tool, called on a session this process is
+            // driving -- which is the arm that proves it takes no lock, because
+            // anything that did would be refused by the holder above.
+            answers["catchUp"] = await CallAsync(client, SessionToolSurface.CatchUp, new JsonObject
+            {
+                [SessionToolSurface.SessionParameter] = alpha,
+            }).ConfigureAwait(false);
+
             answers["list"] = await CallAsync(client, SessionToolSurface.List, new JsonObject
             {
                 ["directory"] = root,

@@ -64,6 +64,30 @@ internal static class SessionToolSurface
     public const string SetPurpose = "browserai_set_purpose";
 
     /// <summary>
+    /// Answers <i>what were we doing here, and what is here now</i> for one
+    /// session, from two sources that routinely disagree.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It names a session and takes no <c>why</c>, which is the one
+    /// exception to the rule the other session-scoped tools follow.</b> Two
+    /// reasons, and the second is decisive. <b>A tool whose whole purpose is to
+    /// tell you what happened must not itself become the most recent thing that
+    /// happened</b> — a log whose tail is three agents reading it has buried the
+    /// answer it was asked for. And <b>writing an entry means taking the
+    /// per-directory gate</b>, which a session another live BrowserAI is driving
+    /// would refuse; that is precisely the case this tool exists for, so a
+    /// version that wrote could not answer the question it was built to answer.
+    /// </para>
+    /// <para>
+    /// <b>It is read-only and takes no lock at all.</b> The record is read the
+    /// way <c>browserai_list</c> reads one, and the directory is walked without
+    /// opening a file inside it.
+    /// </para>
+    /// </remarks>
+    public const string CatchUp = "browserai_catch_up";
+
+    /// <summary>
     /// Deletes one shared browser tree and downloads it again. The one authored
     /// tool that is machine-scoped rather than session-scoped.
     /// </summary>
@@ -215,8 +239,8 @@ internal static class SessionToolSurface
         "browser_verify_value",
     ];
 
-    /// <summary>The six authored tools, in the order they are offered.</summary>
-    public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose, ReinstallBrowser];
+    /// <summary>The seven authored tools, in the order they are offered.</summary>
+    public static IReadOnlyList<string> Names { get; } = [Init, Resume, CatchUp, List, Destroy, SetPurpose, ReinstallBrowser];
 
     /// <summary>Whether a tool name belongs to BrowserAI rather than to the child.</summary>
     /// <param name="name">The tool name from a <c>tools/call</c>.</param>
@@ -418,6 +442,20 @@ internal static class SessionToolSurface
                 ["consoleLevel"] = Enumerated($"Which console messages browser tools return. Defaults to '{BrowserConfiguration.DefaultConsoleLevel}'.", BrowserConfiguration.ConsoleLevels),
             },
             ["directory", WhyParameter]);
+
+        yield return Tool(
+            CatchUp,
+            "Read back what a session was doing, and what is in its directory now.",
+            $"Answers two questions about one session that no other tool answers together: WHAT WAS BEING DONE HERE, from the session's own ordered log — every browser call, every purpose change, in the order they happened, with what the caller said each was for — and WHAT IS HERE NOW, from walking the directory: its age, when it was last touched, its size, and a breakdown by artifact kind. "
+            + $"CALL IT IN TWO SITUATIONS. First, when you arrive at a session you did not create — after {Resume}, or any time you are handed a directory another agent was driving — because the recorded 'purpose' says what it was FOR and this says what was actually DONE. Second, BEFORE {Destroy}, because the size and the breakdown are the only things that tell you what you are about to delete. "
+            + "THE TWO SOURCES ROUTINELY DISAGREE, AND THAT IS THE POINT. The log says what BrowserAI did; the directory says what is true. Cookies arrive from NAVIGATION rather than from tools, so a session whose log shows no cookie call at all can hold a live signed-in profile — this reports the profile's cookie store when there is one, and a log-only answer would have told you the opposite. "
+            + "It also names any HTTP Archive (.har) it finds, because a HAR is a plaintext record of every request and response including headers — every bearer token and session cookie that crossed the wire, in clear text, in a file. "
+            + "This is READ-ONLY: it takes no lock, changes nothing, and works on a session another BrowserAI is driving right now. It takes no 'why' for the same reason — a tool that told you what happened by adding to what happened would bury its own answer.",
+            new JsonObject
+            {
+                [SessionParameter] = Property("string", "Absolute path of the session directory to read. It need not be a session this BrowserAI opened, and it need not be closed."),
+            },
+            [SessionParameter]);
 
         yield return Tool(
             List,

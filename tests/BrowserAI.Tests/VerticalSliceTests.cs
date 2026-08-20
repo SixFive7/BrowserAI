@@ -67,7 +67,7 @@ internal sealed class VerticalSliceTests
         // prompt-cache hit rates, and a set comparison would pass a proxy that
         // shuffled the list.
         //
-        // The six authored tools come first; upstream's follow, and it is the
+        // The seven authored tools come first; upstream's follow, and it is the
         // WHOLE exposable surface — 69 rather than the default 24 — because the
         // run's own child is started with every capability upstream declares.
         // The spec forbids the tool set varying per connection, so one static

@@ -113,6 +113,35 @@ has been satisfied in form only.
 
 ### Added
 
+- **`browserai_catch_up`, the seventh authored tool.** It answers *what were we
+  doing here, and what is here now* for one session, from **two sources that
+  routinely disagree** — which is the whole point rather than a caveat. The
+  **log** says what BrowserAI *did*: every browser call and every purpose change,
+  in order, with what the caller said each was for. The **directory** says what is
+  *true now*: age, when it was last touched, total size, and a breakdown by
+  artifact kind.
+
+  **The disagreement that matters is credentials.** Cookies arrive from
+  *navigation* rather than from tools, so a session whose log shows no
+  `browser_cookie_*` call at all can hold a live signed-in profile — a log-only
+  answer would say *"no credential tools were used"* about exactly that
+  directory. It reports the profile's cookie store when there is one, and names
+  any **HTTP Archive** it finds: a HAR records every request and response
+  including headers, so every bearer token and session cookie that crossed the
+  wire is in it in clear text.
+
+  **Its description says when to call it**: on arriving at a session someone else
+  was driving, and before destroying one — because the size and the breakdown are
+  the only things that say what is about to be deleted.
+
+  ⚠️ **It is the one session-scoped tool with no `why`**, and that is deliberate
+  twice over: a tool whose whole purpose is to tell you what happened must not
+  itself become the most recent thing that happened, and writing an entry would
+  mean taking the per-directory gate — which a session another live BrowserAI is
+  driving would refuse, and that is precisely the case it exists for. It is
+  **read-only and takes no lock at all**, asserted byte-for-byte against a record
+  a live session is holding.
+
 - **One time-ordered log, inside `browserai.json`.** `browserai_init`'s
   `purpose`, every purpose change on `browserai_resume`, every explicit
   `browserai_set_purpose` and every browser call the session forwarded are

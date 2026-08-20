@@ -191,9 +191,9 @@ schema-1 file is well-formed JSON whose keys this build still recognises by name
 so a version checked last would report it as damage and send a caller to repair a
 file that is not broken.
 
-**Six authored tools, and `session` and `why` are both mandatory.**
-`browserai_init`, `browserai_resume`, `browserai_list`, `browserai_destroy`,
-`browserai_set_purpose` and `browserai_reinstall_browser`. **Two** parameters are
+**Seven authored tools, and `session` and `why` are both mandatory.**
+`browserai_init`, `browserai_resume`, `browserai_catch_up`, `browserai_list`,
+`browserai_destroy`, `browserai_set_purpose` and `browserai_reinstall_browser`. **Two** parameters are
 injected into every upstream tool's raw `inputSchema`, appended in that order so
 upstream's own properties keep their positions; a call naming no session is
 refused rather than reaching the run's own child, and a call naming a session
@@ -208,7 +208,26 @@ browser tool, plus `browserai_resume`, `browserai_destroy` and
 `browserai_reinstall_browser`, which is machine-scoped: neither has a session
 record to write into. Not `browserai_init`, which asks for `purpose` instead —
 two mandatory free-text fields on one call gets one thoughtful answer and one
-restatement.
+restatement. **And not `browserai_catch_up`, which names a session and is the one
+exception**: a tool whose whole purpose is to tell you what happened must not
+itself become the most recent thing that happened, and writing an entry would
+mean taking the per-directory gate — which a session another live BrowserAI is
+driving would refuse, and that is the case it exists for. `ModelSurfaceTests`
+carries a row for it, so adding a `why` later is a red build rather than a silent
+widening.
+
+**`browserai_catch_up` reads the log back against the directory, and the two
+routinely disagree.** `SessionInventory` walks the tree — total size, a breakdown
+by folder, the last file written, any `.har`, and whether the profile holds a
+cookie store — and the answer prints it beside the log under two headings so a
+reader knows which source each fact came from. **The disagreement that matters is
+credentials**: cookies arrive from *navigation* rather than from tools, so a
+log-only answer would report *"no credential tools were used"* about a directory
+holding a live signed-in profile. It is **read-only and takes no lock**: the
+record is read the way `browserai_list` reads one and the walk opens no file
+inside the directory, so a session another BrowserAI is driving answers normally.
+Nothing here reads a cookie database — the answer a caller acts on is *this may
+hold credentials*, which the file's existence settles.
 
 **`purpose` is durable and `why` is disposable, and the schemas have to make that
 unmistakable.** A `purpose` is the session's standing description — what

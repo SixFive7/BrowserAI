@@ -42,6 +42,16 @@ internal sealed class ModelSurfaceTests
     /// </summary>
     /// <remarks>
     /// <para>
+    /// ⚠️ <b><c>browserai_catch_up</c> arrived 2026-08-20 and it is the one
+    /// session-scoped tool with no <c>why</c>.</b> That is deliberate twice
+    /// over: a tool whose whole purpose is to tell you what happened must not
+    /// itself become the most recent thing that happened, and writing an entry
+    /// would mean taking the per-directory gate, which a session another live
+    /// BrowserAI is driving would refuse — which is the case it exists for. The
+    /// row is here so that a future <c>why</c> added to it is a red build rather
+    /// than a silent widening.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>Changed 2026-08-20: <c>mode</c> is gone from <c>init</c> and
     /// <c>headed</c> is on both.</b> Session modes were deleted, every
     /// capability is granted to every session, and headedness became a per-run
@@ -79,6 +89,7 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.Resume,
             ["directory", "purpose", "why", "headed", "debug", "tracing", "consoleLevel"],
             ["directory", "why"]),
+        (SessionToolSurface.CatchUp, ["session"], ["session"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory", "why"], ["directory", "why"]),
         (SessionToolSurface.SetPurpose, ["session", "purpose", "why"], ["session", "purpose", "why"]),
