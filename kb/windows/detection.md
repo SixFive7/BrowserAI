@@ -1176,3 +1176,184 @@ comparing, the second by timing a cold `Win32_OperatingSystem` query. `[MACHINE]
 and **carried rather than re-measured** for the 10.4 ms / 0.12 ms figures: they
 were taken in that unpublished library on 2026-08-14 and not re-run here, so read
 them as an order of magnitude and not as this project's own numbers.
+
+## The pre-gate probe as a liveness report — measured 2026-08-20
+
+`SessionLock.ProbeLiveness` is the open the per-directory gate's short-circuit
+already performed, given a name and three answers. It became a reporting call as
+well as a decision on 2026-08-20, when `browserai_list` started saying whether
+each session it lists is being driven, so what it **costs per entry** stopped
+being an implementation detail.
+
+The open is `FileMode.Open`, `FileAccess.ReadWrite`,
+`FileShare.ReadWrite | FileShare.Delete`, `bufferSize: 1` — one `CreateFile` and
+one `CloseHandle`, no directory walk, no process handle and no mutex.
+
+| Arm | Warm, 2,000 iterations, 3 runs | What it is |
+|---|---:|---|
+| `lock.json` free | **0.0342 · 0.0351 · 0.0359 ms** | the open succeeds and the handle is closed |
+| `lock.json` held | **0.0481 · 0.0490 · 0.0493 ms** | a sharing violation, so a **managed exception** rather than a return |
+| first probe in a process | 0.85 · 0.95 · 6.32 ms | one-time initialisation; the 6.32 ms run is the one that also JIT-compiled |
+
+**The held arm costs about 40% more than the free arm, and that is the
+exception rather than the filesystem.** The syscall is the same one; what differs
+is `FileStream` raising and this code catching.
+
+**Against the walk the same loop already performs.** `SessionLayout.SizeOnDisk`
+is a recursive `EnumerateFiles` with a `Sum`, and `browserai_list` calls it once
+per entry. Measured the same day over a provisioned Chromium tree — **310 files,
+447,613,809 bytes** — it took **2.3 ms cold and 0.6–0.7 ms warm**. So the probe
+is about **a seventeenth** of the cheapest walk available to measure, and a
+session whose profile has actually been used holds far more than 310 files.
+Adding a probe per entry therefore cannot make a listing pathological: the
+listing's cost was already the walk. `[MACHINE]`
+
+> **Reproduce, and keep the sanity check.** Time the open above in a loop against
+> a real `lock.json`, once with nothing holding it and once with a second handle
+> open `FileAccess.ReadWrite, FileShare.Read` — and **assert that the second arm
+> really is a sharing violation**, `(HResult & 0xFFFF) is 32 or 33`, before
+> believing its number. Without that assertion an open that quietly succeeded
+> would be timed as the held arm and would report the free arm's cost under the
+> wrong name.
+
+## Two users and one install root — what spans users and what does not — measured 2026-08-20
+
+`%LocalAppData%` separates users. `BROWSERAI_ROOT` and the installer's
+install-to flag both defeat that, and two users then share one browsers
+directory, one session index and one live-marker directory. This section is what
+could be established about that arrangement on this machine, and — first,
+because it bounds everything after it — what could not.
+
+### What could not be measured, and why
+
+**No second user account could be created.** The token this was measured from is
+a *filtered* administrator token: `whoami /groups` reports
+`BUILTIN\Administrators` as **"Group used for deny only"**, `New-LocalUser`
+returns `AccessDeniedException`, and every other local account on the machine
+(`Administrator`, `DefaultAccount`, `Guest`, `WDAGUtilityAccount`) is disabled.
+
+**No second logon session could be created either.** `query user` reports
+exactly one — console, id 1 — and a loopback network logon
+(`New-PSSession -ComputerName localhost`, which would produce a *different*
+logon-session SID for the same user) fails Negotiate with `0x8009030e`.
+
+**So nothing below was measured across two real users.** What was measured is
+the security descriptor each object is created with, a positive control proving
+that dump would show a broader ACE if one existed, and what a token holding **no
+ACE** on such an object actually gets back. That last one is the same code path a
+second user would take, with the only variable set the same way — it is not the
+same sentence as *a second user was refused*, and it is not written as if it
+were.
+
+### 1. A `Global\` object needs no `SeCreateGlobalPrivilege` here
+
+The whole privilege list of this token is `SeShutdownPrivilege`,
+`SeChangeNotifyPrivilege`, `SeUndockPrivilege`,
+`SeIncreaseWorkingSetPrivilege` and `SeTimeZonePrivilege`.
+**`SeCreateGlobalPrivilege` is absent**, and
+`new Mutex(false, "Global\\…", out created)` from session 1, non-elevated, still
+returned `createdNew=True`. So the machine-wide namespace is reachable by an
+ordinary interactive user and the name resolves in one place for every logon
+session — which is the premise `LockScopes`' refusal to fall back to `Local\`
+rests on. `[MACHINE]`: a domain policy can grant or remove that privilege
+elsewhere.
+
+### 2. The DACL the kernel puts on it names three SIDs and no group
+
+Read off the created handle:
+
+```
+D:(A;;0x1f0001;;;SY)(A;;0x120001;;;S-1-5-5-0-260717)(A;;0x1f0001;;;S-1-5-21-…-1001)
+```
+
+LOCAL SYSTEM full (`0x1F0001` is `MUTEX_ALL_ACCESS`); **the creating logon
+session**, `S-1-5-5-X-Y`, with `SYNCHRONIZE | READ_CONTROL | MUTANT_QUERY_STATE`;
+and **the creating user** full. There is no ACE for `Everyone`,
+`Authenticated Users`, `BUILTIN\Users` or `BUILTIN\Administrators`.
+
+> **The positive control, because an absence found by reading is not an
+> absence.** The same dump of a mutex created with an explicit `Everyone` ACE
+> reads `D:(A;;0x100000;;;WD)`. A group ACE would therefore have been visible;
+> there is not one. `[STABLE]` for the mechanism — this is the token's default
+> DACL — and `[MACHINE]` for the exact SIDs.
+
+### 3. A token with no ACE is refused at the constructor the product uses
+
+Measured by creating a `Global\` mutex whose DACL grants only `SY`, then opening
+that same name from the same process:
+
+| Call | Result |
+|---|---|
+| `new Mutex(false, name, out created)` | `UnauthorizedAccessException` — *"Access to the path 'Global\\…' is denied."* |
+| `Mutex.OpenExisting(name)` | the same |
+
+That is exactly `MachineMutex.Create`'s documented
+`UnauthorizedAccessException` arm — *"an object of that name exists and this
+token cannot open it"* — reached for real rather than reasoned about. `[STABLE]`
+
+### 4. The file half spans users under a shared root; the default root's does not
+
+SDDLs measured the same day. `BU` is `BUILTIN\Users`, `AU` is
+`Authenticated Users`, `BA` is `BUILTIN\Administrators`.
+
+| Object | DACL | What a second *standard* user could do |
+|---|---|---|
+| `%LocalAppData%\BrowserAI\live\` | `(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;<user>)` | **nothing** — no `BU`, `AU` or `WD` ACE |
+| a `.live` marker inside it | `(A;ID;FA;;;SY)(A;ID;FA;;;BA)(A;ID;FA;;;<user>)` | **nothing** |
+| `<browsers>\reinstall.lock` | the same three | **nothing** |
+| a directory created at `C:\…`, the install-to shape | `(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;BU)(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)` | list it and add to it |
+| a `.live` marker created inside **that** | `(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;BU)(A;ID;0x1301bf;;;AU)` | **read it, open it for write, and delete it** |
+
+`0x1200A9` is `FILE_GENERIC_READ | FILE_GENERIC_EXECUTE`. `0x1301BF` carries
+`DELETE`, `FILE_READ_DATA` and `FILE_WRITE_DATA`, and it reaches new files
+through the inherit-only `SDGXGWGR` ACE that the volume root's own DACL
+propagates. `[MACHINE]` for the SDDLs; `[STABLE]` for the inheritance rule.
+
+### 5. The consequence, and it is asymmetric
+
+**A file lock is enforced by the kernel against handles and is indifferent to
+which token opened them.** So under a shared root `lock.json`, `reinstall.lock`
+and every `.live` marker stay honestly held-or-free across users, a second user
+can probe them, and the held-ness rule keeps working: a marker another user
+holds answers *sharing violation* and is left alone, and one that cannot be
+opened at all answers *undetermined* and is also left alone. **The marker
+reclaim is therefore safe across users by construction** — it acts only on
+`Free`, and neither cross-user case can produce that answer.
+
+**The mutexes that serialise the work around those files are not.** Whichever
+user creates a `Global\` name first owns its DACL, and by section 3 the other
+user's `MachineMutex.Create` is refused. Every consumer then takes its own
+degraded path:
+
+| Consumer | What it does when the mutex is refused | Does a caller hear? |
+|---|---|---|
+| `LiveInstances.Join` | returns `null` — **this process announces nothing** | no, a log line |
+| `LiveInstances.ReclaimStaleMarkers` | `NoLock`, nothing touched | no, a log line |
+| `StraySweep.Run` | `NoLock`, nothing swept | no, a log line |
+| `SessionLock.TryAcquire` | `Refused`, carrying `SessionErrors.NoMachineWideLock` | **yes** |
+
+**The first row is the dangerous one and it is the whole finding.** A process
+that cannot join creates no marker, so it is invisible to the other user's
+census; that census answers *Alone*, and an apply runs `force_stop_package`,
+which kills every process under the install root — including the other user's
+BrowserAI and its browsers. A shared root therefore re-opens precisely the
+failure the live-marker set exists to prevent, and it does so silently, because
+three of those four rows never reach a caller.
+
+### 6. What is still not established
+
+- **Whether a real second user's token is refused.** Section 3 measured a token
+  with no ACE, which is the same condition arrived at a different way. It is not
+  the same claim and must not be quoted as one.
+- **Whether the logon-session ACE ever decides anything on its own.** Same user,
+  different logon session, was not reachable — and the user-SID ACE would grant
+  access in that case regardless, so that ACE's practical effect is untested.
+- **Two administrators, one elevated.** `BA` has `FA` on the default
+  `%LocalAppData%` tree, so an elevated peer could read another user's markers
+  and lock files. Nothing here measured what that does to any of the four
+  consumers above.
+- **What the installer's install-to flag actually produces.** The volume-root row
+  in section 4 is a directory created by this token, not by the installer, and an
+  installer running elevated can set a different DACL.
+- **Session 0 and services.** Every measurement here is from an interactive
+  session-1 token.

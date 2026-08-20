@@ -707,27 +707,16 @@ internal sealed class SessionLock : IDisposable
     /// </returns>
     private static SessionLockResult? ProbeForHolder(SessionPath location, ILogger logger)
     {
-        try
+        // ⚠️ ONE OPENER, TWO CALLERS. `ProbeLiveness` is this method's own open,
+        // extracted 2026-08-20 when `browserai_list` needed the same question
+        // answered for a session it has no intention of taking. Extracted rather
+        // than copied, because a second spelling of "held is a sharing violation
+        // and nothing else is free" is exactly how two components come to
+        // disagree about one file while both report success.
+        if (ProbeLiveness(location).State is not SessionLiveness.Held)
         {
-            using var probe = new FileStream(
-                location.LockFile,
-                FileMode.Open,
-                FileAccess.ReadWrite,
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
-
-            // Opened, so nobody holds it as an owner right now. That is not the
-            // same statement as "it is free", and it is not acted on here.
-            return null;
-        }
-        catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
-        {
-            // The one answer this method is allowed to give.
-        }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-        {
-            // Absent, mid-rename, or denied outright -- and this caller cannot
-            // tell those apart. The gate can.
+            // Opened, absent, mid-rename or denied outright -- and this caller
+            // cannot tell those apart, nor act on any of them. The gate can.
             return null;
         }
 
@@ -751,6 +740,110 @@ internal sealed class SessionLock : IDisposable
 
         SessionLog.Contended(logger, location.FullPath, holder.Holder.ProcessId);
         return HeldBy(location, holder);
+    }
+
+    /// <summary>
+    /// Whether anything holds a session's <c>lock.json</c> at the instant of the
+    /// look — <b>held, not held, or neither</b> — without taking anything and
+    /// without opening a process handle.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-08-20 for <c>browserai_list</c>, which reported mode,
+    /// browser, purpose, dates and size and said nothing at all about whether a
+    /// session was being driven.</b> A caller could not tell an abandoned
+    /// session from one another agent is inside — which matters most in the one
+    /// moment before <c>browserai_destroy</c>. The alternative was the
+    /// process-liveness check, and this beats it on both counts: it needs no
+    /// process handle, so a token that may not open the peer cannot defeat it,
+    /// and it asks about the resource rather than about a pid that may have been
+    /// recycled.
+    /// </para>
+    /// <para>
+    /// <b>The three answers are not symmetrical, and the asymmetry is this
+    /// namespace's standing rule.</b> A sharing violation may be read as
+    /// <see cref="SessionLiveness.Held"/>; <b>nothing else may be read as
+    /// free</b>. An absent record, a mid-rename window, a denied open and a
+    /// device error are all <see cref="SessionLiveness.Undetermined"/> and carry
+    /// a reason — collapsing any of them into <i>free</i> would hand a caller a
+    /// confident wrong answer in the direction that costs a session.
+    /// <see cref="SessionLiveness.NotHeld"/> is the weakest of the three and
+    /// says so in its own summary: it is a snapshot, not a claim on the
+    /// directory, and it is why <see cref="ProbeForHolder"/> still falls through
+    /// to the gate on it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THIS OPEN CANNOT BE MADE HARMLESS, AND A CALLER THAT RUNS IT OVER A
+    /// WHOLE TREE IS WIDENING SOMETHING THAT WAS ALREADY WRITTEN DOWN.</b> To be
+    /// refused by a holder's <c>FileShare.Read</c> the probe must ask for access
+    /// outside <c>Read</c>; a handle whose granted access is outside <c>Read</c>
+    /// is exactly what an open sharing only <c>Read</c> is refused by. Detecting
+    /// an owner and blocking one are the same capability, so no share mode
+    /// dissolves it — see this method's own remarks on <see cref="ProbeForHolder"/>
+    /// and CI run 32203064556 attempt 1. What that leaves is a peer's
+    /// <see cref="OpenHeld"/> meeting this handle for the instant it lives and
+    /// reading it as <c>Contended</c>: a wrong <i>sentence</i>, never a wrong
+    /// owner, and it is in the [hazard index](../../../HAZARDS.md#hazard-index).
+    /// <b>What a caller must not do is report that sentence onward.</b>
+    /// <c>SessionManager.List</c> names no holder from this answer for exactly
+    /// that reason — the record on disk may name a previous one — and it does not
+    /// probe a session this process is already driving, because it knows that
+    /// one without asking the kernel.
+    /// </para>
+    /// <para>
+    /// <b>Cost: one <c>CreateFile</c> and one <c>CloseHandle</c> per call</b>,
+    /// with no directory walk, no process open and no mutex. Measured
+    /// 2026-08-20 over 2,000 iterations, 3 runs: <b>0.035 ms</b> when the file
+    /// is free and <b>0.049 ms</b> when it is held — the held arm costs more
+    /// because it is a managed exception rather than a return
+    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)).
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The canonicalised session directory.</param>
+    /// <returns>The state, and a reason whenever it is not settled.</returns>
+    public static SessionLivenessAnswer ProbeLiveness(SessionPath location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        try
+        {
+            using var probe = new FileStream(
+                location.LockFile,
+                FileMode.Open,
+                FileAccess.ReadWrite,
+
+                // Wider than a holder's on purpose: this handle lets go
+                // immediately, and one without Delete would refuse a concurrent
+                // holder's rename for as long as it lived. The ACCESS is what
+                // makes the test work and it is ReadWrite, which is what a
+                // holder's FileShare.Read refuses.
+                FileShare.ReadWrite | FileShare.Delete,
+                bufferSize: 1);
+
+            return new SessionLivenessAnswer(SessionLiveness.NotHeld, null);
+        }
+        catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
+        {
+            // The kernel's own answer to "does somebody own this", and the one
+            // answer this method is allowed to give positively.
+            return new SessionLivenessAnswer(SessionLiveness.Held, null);
+        }
+        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
+        {
+            // ⚠️ NOT read as free. `lock.json`'s NAME IS UNBOUND for an instant
+            // while a peer replaces the record, and a directory whose record is
+            // being replaced is owned by whoever is replacing it. An absence is
+            // therefore a window this caller cannot see the inside of.
+            return new SessionLivenessAnswer(
+                SessionLiveness.Undetermined,
+                $"'{location.LockFile}' was not there when this looked, which is a record being replaced as often as it is a session that has gone.");
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return new SessionLivenessAnswer(
+                SessionLiveness.Undetermined,
+                $"'{location.LockFile}' could not be opened, and the failure was not a sharing violation ({failure.Message}).");
+        }
     }
 
     private static SessionLockResult TakeOrReport(
@@ -1347,6 +1440,60 @@ internal sealed record SessionLockRequest
     /// </remarks>
     public bool RefuseAnExistingRecord { get; init; }
 }
+
+/// <summary>
+/// Whether a session directory is being driven right now, as
+/// <see cref="SessionLock.ProbeLiveness"/> answers it.
+/// </summary>
+/// <remarks>
+/// <b>Three values because a report and a decision need different things.</b>
+/// The pre-gate probe already produced all three internally and threw two of
+/// them away, because its only caller could act on one. A reader —
+/// <c>browserai_list</c> — has the opposite problem: the value it must never
+/// print is a confident <i>free</i> that was really <i>could not tell</i>.
+/// </remarks>
+internal enum SessionLiveness
+{
+    /// <summary>
+    /// Nothing held it at the instant of the look.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A snapshot and never a claim.</b> It says an open succeeded once;
+    /// it does not say the directory is free, and nothing may take a directory
+    /// on the strength of it — <see cref="SessionLock.TryAcquire"/> still settles
+    /// that under the per-directory gate.
+    /// </remarks>
+    NotHeld,
+
+    /// <summary>
+    /// A live process holds it: the kernel refused an open a holder's
+    /// <c>FileShare.Read</c> denies.
+    /// </summary>
+    /// <remarks>
+    /// <b>It says <i>something</i> holds the file, never <i>who</i>.</b> The
+    /// record on disk can name a previous holder, so a caller that turns this
+    /// into "held by PID n" is publishing a sentence the probe cannot support.
+    /// </remarks>
+    Held,
+
+    /// <summary>
+    /// Neither could be established, and
+    /// <see cref="SessionLivenessAnswer.Why"/> says what stopped it.
+    /// </summary>
+    Undetermined,
+}
+
+/// <summary>
+/// What <see cref="SessionLock.ProbeLiveness"/> found, and why when it found
+/// nothing.
+/// </summary>
+/// <param name="State">Which of the three.</param>
+/// <param name="Why">
+/// The path and the failure a diagnosis starts from. Never <see langword="null"/>
+/// for <see cref="SessionLiveness.Undetermined"/>, and always
+/// <see langword="null"/> for the other two.
+/// </param>
+internal readonly record struct SessionLivenessAnswer(SessionLiveness State, string? Why);
 
 /// <summary>How an attempt on a session directory ended.</summary>
 internal enum SessionLockOutcome

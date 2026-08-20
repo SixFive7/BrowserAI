@@ -185,6 +185,16 @@ internal static class Program
         // start; it costs this process the ability to update and nothing else.
         using var live = LiveInstances.Join(paths, updateLogger);
 
+        // ⚠️ AFTER THE JOIN AND ON ITS OWN THREAD, added 2026-08-20. Reclaim ran
+        // only inside the updater's "am I alone?" path until then -- which fires
+        // only after an update has been FOUND and DOWNLOADED, and had therefore
+        // never once run on the machine this product is developed on: 755 unheld
+        // markers in two days. It takes the same per-root mutex the join above
+        // does, at ZERO timeout, so one process reclaims and every other pays an
+        // acquire and leaves. Startup never waits for it, and the marker this
+        // process just created is safe by construction because it is HELD.
+        LiveInstances.StartReclaimInBackground(paths, updateLogger);
+
         // One run, one directory. It holds this run's own child — the one that
         // answers `tools/list` before any session exists — together with its
         // profile and the config generated for every session this run opens.
@@ -375,7 +385,11 @@ internal static class Program
             // attributed through a session's own profile lock. Named as a subset
             // of the images above rather than as a second detection rule: what
             // counts as ours is still one full-image-path match.
-            ProvisionedBrowsers.ExecutablesFor(ProvisionedBrowsers.Firefox, paths.BrowsersDirectory, manifest));
+            ProvisionedBrowsers.ExecutablesFor(ProvisionedBrowsers.Firefox, paths.BrowsersDirectory, manifest),
+
+            // And the live-marker reclaim rides the same pass, for the mutex
+            // discipline this one already has.
+            paths);
     }
 
     /// <summary>Runs one sweep and exits, for <see cref="SweepArgument"/>.</summary>

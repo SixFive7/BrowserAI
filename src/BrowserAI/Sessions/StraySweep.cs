@@ -4,8 +4,10 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
+using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Sessions;
@@ -57,6 +59,7 @@ internal sealed class StraySweep
     private readonly IReadOnlyList<string> _images;
     private readonly HashSet<string> _profileLockImages;
     private readonly SessionIndex? _index;
+    private readonly IAppPaths? _paths;
     private readonly ILogger _logger;
 
     /// <summary>Creates a sweep over one set of browser executables.</summary>
@@ -73,11 +76,21 @@ internal sealed class StraySweep
     /// <see cref="Runtime.ProvisionedBrowsers.ExecutablesFor"/>. Empty means the
     /// second path is not attempted, which costs attribution and never safety.
     /// </param>
+    /// <param name="paths">
+    /// The app-paths seam, or <see langword="null"/> to skip the live-marker
+    /// reclaim. Its only use here is
+    /// <see cref="Updates.LiveInstances.ReclaimStaleMarkers"/>, which is added to
+    /// this pass rather than given a sweeper of its own because this one is
+    /// already machine-wide, already mutex-serialised and already skips instantly
+    /// when a peer holds the gate — the three properties a marker reclaim needs
+    /// and the reason not to invent a second discipline for it.
+    /// </param>
     public StraySweep(
         IReadOnlyList<string> browserImages,
         SessionIndex? index,
         ILogger logger,
-        IReadOnlyCollection<string>? profileLockImages = null)
+        IReadOnlyCollection<string>? profileLockImages = null,
+        IAppPaths? paths = null)
     {
         ArgumentNullException.ThrowIfNull(browserImages);
         ArgumentNullException.ThrowIfNull(logger);
@@ -85,6 +98,7 @@ internal sealed class StraySweep
         _images = browserImages;
         _profileLockImages = new HashSet<string>(profileLockImages ?? [], StringComparer.OrdinalIgnoreCase);
         _index = index;
+        _paths = paths;
         _logger = logger;
     }
 
@@ -328,6 +342,13 @@ internal sealed class StraySweep
             AttributedByProfileLock = byProfileLock,
             Unattributable = [.. unattributable.Select(candidate => (candidate.ProcessId, candidate.ImagePath))],
             Index = _index?.Sweep(),
+
+            // Last, and inside the sweep gate this pass already holds. It takes
+            // the live set's OWN gate as well -- at zero timeout -- because the
+            // two scopes protect different things: this one stops ninety-six
+            // BrowserAIs sweeping the machine at once, that one stops a walk
+            // racing a peer's join. Neither substitutes for the other.
+            LiveMarkers = _paths is null ? null : LiveInstances.ReclaimStaleMarkers(_paths, _logger),
         };
     }
 
@@ -687,11 +708,21 @@ internal sealed record StraySweepResult
     /// <summary>What the index self-clean did, when one ran.</summary>
     public SessionIndexSweep? Index { get; init; }
 
+    /// <summary>
+    /// What the live-marker reclaim did, when one ran.
+    /// </summary>
+    /// <remarks>
+    /// <see langword="null"/> when the sweep was built without an
+    /// <see cref="Hosting.IAppPaths"/>, which is a sweep that had no marker
+    /// directory to be told about rather than one that declined to look.
+    /// </remarks>
+    public LiveMarkerReclaim? LiveMarkers { get; init; }
+
     /// <summary>One line for the log.</summary>
     public string Summary =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"outcome={Outcome} elapsed={Elapsed.TotalMilliseconds:F1}ms processes={ProcessesEnumerated}/{ProcessesOpened} candidates={Candidates} windows={WindowsWalked} titled={TitledWindows} restarts={WalkRestarts} truncated={WalkTruncated} terminated={Terminated.Count} spared={Spared.Count} byProfileLock={AttributedByProfileLock} unattributable={Unattributable.Count} rejectedTitles={RejectedTitles.Count} indexRemoved={Index?.Removed.Count ?? 0} abandonedGate={GateWasAbandoned}");
+            $"outcome={Outcome} elapsed={Elapsed.TotalMilliseconds:F1}ms processes={ProcessesEnumerated}/{ProcessesOpened} candidates={Candidates} windows={WindowsWalked} titled={TitledWindows} restarts={WalkRestarts} truncated={WalkTruncated} terminated={Terminated.Count} spared={Spared.Count} byProfileLock={AttributedByProfileLock} unattributable={Unattributable.Count} rejectedTitles={RejectedTitles.Count} indexRemoved={Index?.Removed.Count ?? 0} liveMarkers=[{LiveMarkers?.Summary ?? "-"}] abandonedGate={GateWasAbandoned}");
 }
 
 /// <summary>Source-generated log messages for the stray sweep.</summary>

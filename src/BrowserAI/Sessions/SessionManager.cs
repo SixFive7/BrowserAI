@@ -592,6 +592,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"{session.FullPath}\n"
                 + $"  mode: {record.Mode}   browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
                 + $"  created: {Stamp(record.Created)}   last used: {Stamp(record.LastUsed)}\n"
+                + $"  {InUse(session)}\n"
                 + $"  {SessionErrors.Recorded(record.Purpose)}");
         }
 
@@ -602,6 +603,94 @@ internal sealed class SessionManager : IAsyncDisposable
             : new ToolOutcome(
                 $"{found.ToString(CultureInfo.InvariantCulture)} session(s) under '{root}':\n\n" + string.Join("\n\n", lines),
                 IsError: false);
+    }
+
+    /// <summary>
+    /// The one line <c>browserai_list</c> prints about whether a session is
+    /// being driven right now.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-08-20. Until then the listing reported mode, browser,
+    /// purpose, dates and size and performed no liveness check at all</b>, so a
+    /// caller could not tell an abandoned session from one another agent was
+    /// inside — which is the distinction that matters most in the turn before
+    /// <c>browserai_destroy</c>.
+    /// </para>
+    /// <para>
+    /// <b>Through the pre-gate probe and never the process-liveness check.</b>
+    /// <see cref="SessionLock.ProbeLiveness"/> asks the kernel about the file; the
+    /// process check asks for a handle on a peer, which a token may not be able
+    /// to open and which names a pid Windows may already have reused.
+    /// </para>
+    /// <para>
+    /// <b>Three answers, and the third one is the reason this is not a
+    /// <see langword="bool"/>.</b> An unreadable <c>lock.json</c> is not a free
+    /// session; it is an unanswered question, and printing it as free is the one
+    /// direction that costs a caller a session it was about to destroy.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE HOLDER IS DELIBERATELY NOT NAMED, AND THAT IS THE TRAP THIS
+    /// METHOD IS BUILT AROUND.</b> A sharing violation says the file is held; it
+    /// does not say by whom, and the record inside can describe a previous
+    /// holder. That exact gap produced a wrong <i>sentence</i> — never a wrong
+    /// owner — on 2026-08-19, and it is [a hazard row](../../../HAZARDS.md#hazard-index).
+    /// Turning this answer into <i>"held by PID n"</i> would publish that
+    /// sentence to a model on every listing rather than once in a refusal, so
+    /// what is printed is the fact the probe can support and a note saying which
+    /// fact it is not.
+    /// </para>
+    /// <para>
+    /// <b>A session this process is already driving is answered without asking
+    /// the kernel.</b> That is more accurate — it says <i>which</i> BrowserAI —
+    /// and it removes the whole self-probing half of the cost and of the
+    /// handle-collision exposure above.
+    /// </para>
+    /// <para>
+    /// <b>Cost: one extra <c>CreateFile</c>/<c>CloseHandle</c> per listed entry,
+    /// and nothing else.</b> No process handle, no mutex, no second directory
+    /// walk. Measured 2026-08-20 at <b>0.035 ms</b> free and <b>0.049 ms</b>
+    /// held
+    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)),
+    /// against <b>0.6–2.3 ms</b> for the <see cref="SessionLayout.SizeOnDisk"/>
+    /// recursive enumeration this same loop already performs for every entry —
+    /// measured on the same day over a 310-file tree, and a session whose
+    /// profile has been used is far larger than that. <b>It is a seventeenth of
+    /// a cost the listing already pays, on the smallest tree available to
+    /// measure.</b>
+    /// </para>
+    /// <para>
+    /// <b>A drive-root listing cannot become pathological on this account</b>:
+    /// the loop is over the session <i>index</i> — one file per session
+    /// BrowserAI has ever been told about — and the <c>directory</c> argument
+    /// <i>filters</i> that list rather than causing a walk of it. Pointing this
+    /// tool at <c>C:\</c> therefore adds one file open per known session and
+    /// never one per file on the volume, and the entries it adds them for are
+    /// exactly the entries it was already going to weigh.
+    /// </para>
+    /// </remarks>
+    /// <param name="session">The canonicalised session directory.</param>
+    /// <returns>The line, framed so a model can act on it.</returns>
+    private string InUse(SessionPath session)
+    {
+        if (_live.ContainsKey(session.Key))
+        {
+            return "in use: YES — this BrowserAI process is driving it right now.";
+        }
+
+        var answer = SessionLock.ProbeLiveness(session);
+
+        return answer.State switch
+        {
+            SessionLiveness.Held =>
+                $"in use: YES — something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the record inside it can still name a previous holder, so this does not say which process.",
+
+            SessionLiveness.NotHeld =>
+                $"in use: no — nothing held '{session.LockFile}' at the instant this listing looked. It is a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
+
+            _ =>
+                $"in use: UNKNOWN — {answer.Why} Treat it as possibly in use; this is not the same answer as 'no'.",
+        };
     }
 
     private async Task<ToolOutcome> DestroyAsync(JsonObject? arguments)

@@ -878,3 +878,73 @@ code will ever ship. The entry does not stay open — it becomes moot, which clo
 it without answering it. See the note under the heading above; the recommendation
 is kept verbatim because it is what was recommended and the decision went further
 than it did.
+
+---
+
+## Added 2026-08-20, from the shared-root measurement
+
+### 12. What BrowserAI should do when two users share one install root — **OPEN, and the measurement you asked for is below**
+
+**The primer, for whoever reads this without the investigation.**
+`%LocalAppData%` gives every Windows user their own BrowserAI state — browsers,
+session index, logs, and the `live\` directory each running process announces
+itself in. **Two things defeat that**: the `BROWSERAI_ROOT` environment variable
+and the installer's install-to flag. Point either at a shared location and two
+users share one browsers directory, one index and one marker directory. Nothing
+in the tree recorded what happens then. This entry is the measurement; the
+decision is yours and **nothing has been implemented on the strength of it**.
+
+**What was measured, in full, is
+[in the knowledge base](kb/windows/detection.md#two-users-and-one-install-root--what-spans-users-and-what-does-not--measured-2026-08-20).**
+The short form:
+
+- **The file locks span users.** A share mode is enforced by the kernel against
+  handles and is indifferent to which token opened them, so `lock.json`,
+  `reinstall.lock` and every `.live` marker stay honestly held-or-free across
+  users. Under a shared root at a volume root, a second user can additionally
+  enumerate, read, write and **delete** them — `Authenticated Users` inherits
+  `0x1301BF`, which carries `DELETE`. The marker reclaim is nonetheless safe
+  there by construction: it acts only on *not held*, and a cross-user marker
+  answers either *sharing violation* or *could not open*.
+- **The `Global\` mutexes do not span users.** The DACL the kernel puts on one
+  names LOCAL SYSTEM, the creating **logon session** and the creating **user**,
+  and no group at all. Whichever user creates a name first owns it; the other's
+  `MachineMutex.Create` is refused.
+- **The consequence is silent, and it is the finding.** A process that cannot
+  take the gate cannot join the live set, so it creates no marker and is
+  **invisible** to the other user's census. That census then answers *Alone*, and
+  an apply runs `force_stop_package`, which kills every process under the install
+  root — the other user's BrowserAI and its browsers included. Three of the four
+  consumers degrade to a log line; only `SessionLock.TryAcquire` reaches a caller.
+
+⚠️ **What could not be measured, said plainly, because it bounds the answer.** No
+second user account and no second logon session could be created on this machine:
+the token is a filtered administrator token, `New-LocalUser` is denied, every
+other local account is disabled, and a loopback network logon fails Negotiate. So
+**the cross-user refusal is inferred** from a token holding no ACE on such an
+object — the same code path with the same variable set the same way — and not
+observed between two users. Section 6 of the article lists the rest of what is
+still open, including what an elevated administrator peer can reach and what the
+installer's own flag actually writes.
+
+**Five directions.**
+
+| # | Direction | What it costs | What it buys |
+|---|---|---|---|
+| **A** | **Refuse a shared root at startup** — detect that the marker directory's DACL grants a group, or that the root is outside `%LocalAppData%`, and refuse to serve | A configuration somebody deliberately chose stops working, and the detection is a heuristic: *outside `%LocalAppData%`* is not the same predicate as *shared*, and a single-user install at `D:\Tools\BrowserAI` would be refused for nothing | The dangerous case cannot arise. This is your own stated follow-up |
+| **B** | **Refuse only the update apply, and keep serving** — treat a root this process could not take the gate for as permanently *not alone* | Nothing, and it is a two-line change: `LiveInstances.Join` already returns `null`, and `UpdateService` already treats a null as *do not apply* | Removes exactly the failure measured — the apply that kills a peer — and leaves every other shared-root behaviour alone. **It is already the behaviour**; what is missing is that nobody is told |
+| **C** | **Say so, loudly, and change no behaviour** — a startup warning naming the root, the mutex and what is degraded | A log line nobody reads. It does not stop anything | Cheapest honest option, and the one that makes the arrangement diagnosable instead of invisible. Composable with every other row |
+| **D** | **Give the objects a DACL that spans users** — create the mutexes with an explicit `Authenticated Users` ACE | A real security decision: any authenticated user could then hold a gate that stalls another user's session opening, and it is a denial-of-service surface that does not exist today. Needs `MutexAcl.Create` and a security descriptor in `MachineMutex` | Makes the arrangement actually work rather than merely fail loudly |
+| **E** | **Key the marker set on the user as well as the root** — one `live\<sid>\` subdirectory per user | Two users then genuinely cannot see each other, so an apply by one still kills the other's processes. **This is worse than doing nothing** and is listed because it is the obvious-looking fix | Nothing. Named so it is not proposed later |
+
+**Recommendation: C now, B stated explicitly, and A only if you want the
+configuration closed rather than diagnosed.** B is what the product already does
+and it closes the measured failure, so the gap is not behaviour — it is that
+three of the four consumers fail into a log file and nothing tells the operator
+the census has stopped meaning anything. C is what turns that from invisible into
+diagnosable, and it costs one startup line. **A is a real option and it is yours
+alone**, because it takes away a configuration somebody chose on purpose, and
+because the predicate that detects *shared* honestly — reading the marker
+directory's DACL for a group ACE — is a different and larger change than
+comparing the root against `%LocalAppData%`. **D needs a security conversation
+before it needs code.** E is a trap.

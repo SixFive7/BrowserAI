@@ -143,7 +143,7 @@ The largest area, and the one everything else keys on.
 | The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionMode, SessionToolSurface, SessionToolPolicy, SessionManager, SessionEnvironment, LiveSession}.cs` |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
-| Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs` |
+| Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
 **The session directory is the identity.** One directory holds `lock.json` at its
@@ -344,6 +344,20 @@ serialiser and two processes end up owning one directory — the failure
 [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md) found in
 the version that replaced the gate rather than fronting it.
 
+**That same open has a second caller since 2026-08-20, and it reports rather than
+decides.** `SessionLock.ProbeLiveness` is the one opener; `ProbeForHolder` is a
+decision built on it and `browserai_list` is a **report** built on it, so the rule
+*a sharing violation may be read as owned and nothing else may be read as free*
+is stated once and cannot come apart. The listing prints **in use: YES / no /
+UNKNOWN** per entry and **never names the holder**, because a sharing violation
+says the file is held and not by whom — the record inside can describe a previous
+one. It costs one `CreateFile`/`CloseHandle` per entry, measured at 0.035 ms free
+and 0.049 ms held against 0.6–2.3 ms for the size walk the same loop already
+performs
+([kb](kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)),
+and a session this process is already driving is answered from its own live-session
+map without asking the kernel at all.
+
 **Writes are durable and atomic.** `WriteThrough` + `Flush(flushToDisk: true)` +
 `File.Move(overwrite: true)`, with the temp file in the target's own directory.
 A rename cannot replace a file whose handle is open under any share mode, so
@@ -498,6 +512,24 @@ canonicalisation sessions use; the installer kills every process under the insta
 root after each hook returns, so an apply that cannot prove solitude must not
 happen. Then `Update.exe apply --silent --norestart --waitPid <ownPid>` and an
 ordinary shutdown — never `Environment.Exit`.
+
+**The census is three-valued and the updater collapses it, which is the point.**
+`LiveInstances.Census` answers `Alone`, `NotAlone(n)` or `Undetermined(why)`, and
+the third one carries the path, mutex name or exception that stopped it, so a
+tool that *repairs* on the strength of it has something to act on. `AmIAlone` is
+one expression over that with exactly one `true` arm, and `UpdateService` still
+calls only `AmIAlone` — so an undetermined census is treated precisely as *not
+alone* was and is: stage, do not apply.
+
+**A marker is stale only when it is not held, and the reclaim runs where it will
+actually happen.** Until 2026-08-20 the only code that removed a dead marker was
+the census itself, reached only after an update had been found *and* downloaded;
+755 unheld files had accumulated in two days. `ReclaimStaleMarkers` now takes the
+same per-root gate at **zero timeout** — one process reclaims, the rest move on —
+and runs from the stray sweep and from startup on a background thread. It is
+deliberately *not* inside `Join`'s hold: that hold is on the startup path with
+every process on the machine queueing behind it, and a join that times out makes
+this process invisible to a peer's census.
 
 **Three download timers, off the message loop:** 30 minutes absolute, a 60-second
 stall reset on every progress callback, and a 45-minute tripwire deliberately

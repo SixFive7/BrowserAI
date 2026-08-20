@@ -9,6 +9,138 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Updates;
 
 /// <summary>
+/// What a census of the live set established. <b>Three-valued, because the
+/// third value is a different fact from the second.</b>
+/// </summary>
+/// <remarks>
+/// ⚠️ <b>Widened 2026-08-20 (previously a <see langword="bool"/>, whose
+/// <see langword="false"/> meant <i>not alone</i> and <i>could not tell</i> at
+/// once).</b> That conflation was written for the updater, where both answers
+/// mean <i>do not apply</i> and the safe direction is the same one — see
+/// <see cref="LiveInstances.AmIAlone"/>, which still collapses them and is the
+/// guarantee that the updater did not move. For anything that <i>repairs</i>
+/// rather than refrains, the two are opposites: a refusal built on
+/// <see cref="Undetermined"/> is permanent and has nothing to act on, and it
+/// reads on a log line exactly like a refusal built on a peer that is genuinely
+/// there.
+/// </remarks>
+internal enum Liveness
+{
+    /// <summary>Nothing else is running out of this install root.</summary>
+    Alone,
+
+    /// <summary>
+    /// At least <see cref="LivenessAnswer.Others"/> other processes are, each
+    /// proven by a marker file the kernel refused to hand over.
+    /// </summary>
+    /// <remarks>
+    /// <b>At least, never exactly.</b> A marker whose held-ness could not be
+    /// established does not reduce a count that is already positive — it is
+    /// reported in <see cref="LivenessAnswer.Why"/> instead — because a definite
+    /// <i>somebody is there</i> is more use to every caller than an uncertainty
+    /// that would erase it.
+    /// </remarks>
+    NotAlone,
+
+    /// <summary>
+    /// The question was not settled. <see cref="LivenessAnswer.Why"/> says what
+    /// stopped it, and saying so is the whole point of this value existing.
+    /// </summary>
+    Undetermined,
+}
+
+/// <summary>The census answer, and the reason when there is not one.</summary>
+internal sealed record LivenessAnswer
+{
+    /// <summary>Nothing else is alive, and that was established rather than assumed.</summary>
+    public static readonly LivenessAnswer IsAlone = new() { State = Liveness.Alone };
+
+    /// <summary>Which of the three.</summary>
+    public required Liveness State { get; init; }
+
+    /// <summary>
+    /// How many other live instances were counted. Meaningful only for
+    /// <see cref="Liveness.NotAlone"/>, and a lower bound even then.
+    /// </summary>
+    public int Others { get; init; }
+
+    /// <summary>
+    /// Why the answer could not be settled — a path, a mutex name, an
+    /// exception's own message. Never <see langword="null"/> for
+    /// <see cref="Liveness.Undetermined"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the load-bearing half of the widening.</b> A tool that refuses
+    /// on <see cref="Liveness.Undetermined"/> can only be diagnosed if the
+    /// refusal names the thing that could not be read; without it the caller is
+    /// left with a permanent no and nowhere to look.
+    /// </remarks>
+    public string? Why { get; init; }
+
+    /// <summary>Somebody else is there, and this many were counted.</summary>
+    /// <param name="others">How many markers were proven held by another process.</param>
+    /// <returns>The answer.</returns>
+    public static LivenessAnswer NotAlone(int others) =>
+        new() { State = Liveness.NotAlone, Others = others };
+
+    /// <summary>The question could not be settled, and this is what stopped it.</summary>
+    /// <param name="why">The path, name or message a diagnosis starts from.</param>
+    /// <returns>The answer.</returns>
+    public static LivenessAnswer Undetermined(string why) =>
+        new() { State = Liveness.Undetermined, Why = why };
+}
+
+/// <summary>How a reclaim pass over the live-marker directory ended.</summary>
+internal enum LiveMarkerReclaimOutcome
+{
+    /// <summary>It ran, and the counts say what it found.</summary>
+    Ran,
+
+    /// <summary>
+    /// Another process holds the gate and is doing the same work. Not a missed
+    /// reclaim.
+    /// </summary>
+    Skipped,
+
+    /// <summary>The machine-wide gate could not be created, so nothing was touched.</summary>
+    NoLock,
+
+    /// <summary>The directory could not be read. Nothing was removed.</summary>
+    Failed,
+}
+
+/// <summary>What one reclaim pass found and what it removed.</summary>
+internal sealed record LiveMarkerReclaim
+{
+    /// <summary>How the pass ended.</summary>
+    public required LiveMarkerReclaimOutcome Outcome { get; init; }
+
+    /// <summary>Markers proven <b>not held</b> and removed.</summary>
+    public int Reclaimed { get; init; }
+
+    /// <summary>Markers proven held, and therefore left exactly where they were.</summary>
+    public int Held { get; init; }
+
+    /// <summary>
+    /// Markers this pass could not settle — unopenable for a reason other than
+    /// sharing, or free and undeletable. <b>None of them were touched.</b>
+    /// </summary>
+    public int Undetermined { get; init; }
+
+    /// <summary>Whether the gate was found abandoned by a dead holder (race R3).</summary>
+    public bool GateWasAbandoned { get; init; }
+
+    /// <summary>The first reason anything was left alone, for the log line.</summary>
+    public string? Why { get; init; }
+
+    /// <summary>One line for the log.</summary>
+    public string Summary =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"outcome={Outcome} reclaimed={Reclaimed} held={Held} undetermined={Undetermined} abandonedGate={GateWasAbandoned} why={Why ?? "-"}");
+}
+
+/// <summary>
 /// Every BrowserAI running out of one install root, counted by the only signal
 /// that cannot lie: an open file handle the OS releases on death.
 /// </summary>
@@ -48,6 +180,17 @@ namespace BrowserAI.Updates;
 /// runs on a background thread from the moment the process starts, which is
 /// inside exactly that window.
 /// </para>
+/// <para>
+/// ⚠️ <b>Reclaim used to happen only here, and that was measured to be nowhere.</b>
+/// Until 2026-08-20 the only code that removed a marker whose holder had died
+/// was <see cref="Census"/>, which <see cref="UpdateService"/> reaches
+/// <i>after</i> an update has been found <b>and</b> downloaded. That had never
+/// once happened on the machine this product is developed on, and
+/// <b>755 unheld markers</b> had accumulated in two days. Reclaim is now a
+/// routine of its own — <see cref="ReclaimStaleMarkers"/> — run from the stray
+/// sweep and from startup, and <see cref="Census"/> keeps doing it as well
+/// because a census that walked past a dead marker would count it.
+/// </para>
 /// </remarks>
 internal sealed class LiveInstances : IDisposable
 {
@@ -66,6 +209,19 @@ internal sealed class LiveInstances : IDisposable
         _mutexName = mutexName;
         _held = held;
         _logger = logger;
+    }
+
+    /// <summary>Whether a marker file is held, free, or neither answer.</summary>
+    private enum MarkerState
+    {
+        /// <summary>A live process holds it. It is another instance and it is never touched.</summary>
+        Held,
+
+        /// <summary>Nothing holds it. Whoever wrote it is gone.</summary>
+        Free,
+
+        /// <summary>Neither could be established. Left alone, and reported.</summary>
+        Unknown,
     }
 
     /// <summary>This process's own marker file.</summary>
@@ -112,6 +268,16 @@ internal sealed class LiveInstances : IDisposable
 
                 // Same open as SessionLock's: deny write to everyone else, allow
                 // read, so a census can see the name and cannot take it.
+                //
+                // ⚠️ NOTHING IS RECLAIMED HERE, AND THAT IS A DECISION. This
+                // hold is on the startup path and every process on the machine
+                // queues behind it; walking 755 markers inside it would put the
+                // enumeration into a five-second-gated critical section that a
+                // hundred starting processes contend for, and a join that times
+                // out makes this process INVISIBLE to a peer's census -- which
+                // is the one failure this whole file exists to prevent. The
+                // startup reclaim is a separate, zero-timeout, background pass:
+                // see ReclaimStaleMarkers and StartReclaimInBackground.
                 var held = new FileStream(file, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
 
                 return new LiveInstances(directory, file, mutexName, held, logger);
@@ -132,22 +298,45 @@ internal sealed class LiveInstances : IDisposable
 
     /// <summary>
     /// Whether this process is the only BrowserAI running out of this install
-    /// root.
+    /// root — <b>or that the question could not be settled, and why</b>.
     /// </summary>
     /// <remarks>
-    /// <b>Every uncertainty answers <see langword="false"/>.</b> A marker that
+    /// <para>
+    /// <b>Three answers, and the third one carries a sentence.</b> A marker that
     /// cannot be opened for a reason other than sharing, a directory that cannot
-    /// be enumerated, a mutex that cannot be taken — all of them mean <i>do not
-    /// apply</i>, because the cost of being wrong in that direction is a delayed
-    /// update and the cost of being wrong in the other is every other agent's
-    /// session.
+    /// be enumerated, a gate that expired, a process that has already left the
+    /// live set — none of those is <i>somebody else is running</i>, and none of
+    /// them is <i>nobody is</i>. They are <see cref="Liveness.Undetermined"/>,
+    /// and <see cref="LivenessAnswer.Why"/> names the path or the failure so that
+    /// a refusal built on one can be diagnosed instead of merely repeated.
+    /// </para>
+    /// <para>
+    /// <b>A positive count wins over an uncertainty.</b> Two markers proven held
+    /// and one unreadable is <see cref="Liveness.NotAlone"/> with
+    /// <c>Others = 2</c> — <i>at least two</i> — rather than
+    /// <see cref="Liveness.Undetermined"/>. Erasing a fact that was established
+    /// because a different one was not is a strictly worse answer for every
+    /// caller.
+    /// </para>
+    /// <para>
+    /// <b>It reclaims as it counts, under the gate it is already holding.</b> A
+    /// marker proven free is removed here as well as by
+    /// <see cref="ReclaimStaleMarkers"/>, because a census that walked past one
+    /// would have to count it as something, and there is no honest value for it.
+    /// A free marker that will not delete is <b>not</b> counted as another
+    /// instance and does not make the answer undetermined — it never was one —
+    /// which is what keeps this reclaim from changing the verdict.
+    /// </para>
     /// </remarks>
-    /// <returns><see langword="true"/> only when nothing else is alive.</returns>
-    public bool AmIAlone()
+    /// <returns>Alone, not alone with a lower bound, or undetermined with a reason.</returns>
+    public LivenessAnswer Census()
     {
         if (_held is null)
         {
-            return false;
+            // Not "alone" and not "not alone": this process is no longer a
+            // member of the set it is asking about, so it cannot speak for it.
+            return LivenessAnswer.Undetermined(
+                $"this process has left the live set under '{_directory}' — its own marker '{OwnFile}' was released — so a census taken now would not include it.");
         }
 
         try
@@ -156,52 +345,274 @@ internal sealed class LiveInstances : IDisposable
 
             if (gate.Acquire(LockScopes.LiveInstanceGate) is MutexAcquisition.NotAcquired)
             {
-                return false;
+                return LivenessAnswer.Undetermined(
+                    string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"the live-instance gate '{_mutexName}' was still held after {LockScopes.LiveInstanceGate.TotalSeconds:F0}s, so the set under '{_directory}' was never read."));
             }
 
             try
             {
-                var others = 0;
+                var pass = Walk(_directory, OwnFile);
 
-                foreach (var candidate in Directory.EnumerateFiles(_directory, "*.live"))
+                if (pass.Held is not 0)
                 {
-                    if (string.Equals(candidate, OwnFile, StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    if (IsHeld(candidate))
-                    {
-                        others++;
-                        continue;
-                    }
-
-                    // Not held: whoever wrote it is gone. Reclaim it here rather
-                    // than leaving a growing pile that makes every later census
-                    // slower, and delete it under the same mutex that guards a
-                    // join so a starting process cannot lose its own file.
-                    TryDelete(candidate);
+                    UpdateLog.NotAlone(_logger, pass.Held);
+                    return LivenessAnswer.NotAlone(pass.Held);
                 }
 
-                if (others is not 0)
-                {
-                    UpdateLog.NotAlone(_logger, others);
-                }
-
-                return others is 0;
+                return pass.Undetermined is 0
+                    ? LivenessAnswer.IsAlone
+                    : LivenessAnswer.Undetermined(
+                        pass.Why ?? $"a marker under '{_directory}' could not be read, and no reason was recorded.");
             }
             finally
             {
                 gate.Release();
             }
         }
-#pragma warning disable CA1031 // Any failure to establish solitude is answered "not alone", which is the only safe direction.
+#pragma warning disable CA1031 // Any failure to establish solitude is answered "undetermined", which AmIAlone collapses to the same safe direction it always had.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
             UpdateLog.CouldNotCensusLiveSet(_logger, _directory, failure);
-            return false;
+
+            return LivenessAnswer.Undetermined(
+                $"the live set under '{_directory}' could not be read ({failure.Message}).");
         }
+    }
+
+    /// <summary>
+    /// Whether this process is the only BrowserAI running out of this install
+    /// root, with every uncertainty answered <see langword="false"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This method is the guarantee that the updater did not move on
+    /// 2026-08-20.</b> It is one expression over <see cref="Census"/> and it has
+    /// exactly one <see langword="true"/> arm, so
+    /// <see cref="Liveness.Undetermined"/> is treated precisely as
+    /// <see cref="Liveness.NotAlone"/> was and is: <i>do not apply</i>. The cost
+    /// of being wrong in that direction is a delayed update; the cost of being
+    /// wrong in the other is every other agent's session.
+    /// <c>UpdateTests.EveryCensusAnswerOtherThanAloneStillReadsAsNotAloneToTheUpdater</c>
+    /// asserts the mapping over all three values, and
+    /// <c>UpdateTests.AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes</c>
+    /// asserts it through <see cref="UpdateService"/> itself rather than through
+    /// this signature.
+    /// </para>
+    /// <para>
+    /// <b>Widening a return type is where a consumer silently changes</b>, so the
+    /// widening deliberately did not touch this one. <see cref="UpdateService"/>
+    /// still calls this and nothing else.
+    /// </para>
+    /// </remarks>
+    /// <returns><see langword="true"/> only when nothing else is alive.</returns>
+    public bool AmIAlone() => Census().State is Liveness.Alone;
+
+    /// <summary>
+    /// Removes every marker under an install root whose holder is gone, and
+    /// touches nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Both call sites take the same gate as a join and a census, and both
+    /// skip instantly when it is held.</b> One process reclaims and the rest
+    /// move on — the same discipline <see cref="Sessions.StraySweep"/> already
+    /// applies machine-wide, reused rather than reinvented. The timeout is
+    /// <see cref="LockScopes.NeverWaits"/> and not
+    /// <see cref="LockScopes.LiveInstanceGate"/> precisely because this may run
+    /// while a process is starting: a reclaim is never worth a millisecond of
+    /// startup, and a skipped reclaim is not a missed one, because whoever holds
+    /// the gate is walking the same directory.
+    /// </para>
+    /// <para>
+    /// <b>A marker is stale only when it is NOT HELD. Existence is not
+    /// held-ness</b> — the same rule <see cref="Runtime.MaintenanceLock"/> and
+    /// <see cref="Sessions.SessionLock"/> state about their own files, and for
+    /// the same reason: a crashed holder leaves the file behind, so existence
+    /// means <i>somebody died here once</i> and never <i>somebody is working
+    /// now</i>. Held-ness is a sharing violation on an open this file's own
+    /// <see cref="Join"/> would be refused by, and nothing else in the answer is
+    /// acted on.
+    /// </para>
+    /// <para>
+    /// <b>Reclaiming another process's live marker would be a serious bug</b> —
+    /// it would make a running instance invisible to every later census and
+    /// therefore killable by an apply. The negative is proved with a positive
+    /// control rather than argued:
+    /// <c>UpdateTests.AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased</c>
+    /// holds one marker open, runs this, requires it to survive, releases it,
+    /// runs this again and requires it to go — so a pass that removed nothing at
+    /// all could not pass either half.
+    /// </para>
+    /// </remarks>
+    /// <param name="paths">The app-paths seam, for the directory and the gate's name.</param>
+    /// <param name="logger">Where the pass is recorded. Never <c>stdout</c>.</param>
+    /// <returns>What the pass found and what it removed.</returns>
+    public static LiveMarkerReclaim ReclaimStaleMarkers(IAppPaths paths, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        var directory = paths.LiveInstanceDirectory;
+
+        if (!Directory.Exists(directory))
+        {
+            // Nothing has ever joined here. Not a failure and not worth a mutex.
+            return new LiveMarkerReclaim { Outcome = LiveMarkerReclaimOutcome.Ran };
+        }
+
+        var mutexName = MutexNameFor(paths.RootAppDir);
+
+        // Declared before the try and disposed unconditionally in the finally:
+        // the pattern the rest of this product uses around a named object
+        // created inside a guarded region.
+        MachineMutex? gate = null;
+
+        try
+        {
+            try
+            {
+                gate = MachineMutex.Create(mutexName);
+            }
+            catch (Exception failure) when (failure
+                is UnauthorizedAccessException
+                or WaitHandleCannotBeOpenedException
+                or IOException
+                or NotSupportedException)
+            {
+                // Degraded, never fatal, and never a refusal to start. A session
+                // refuses outright when it cannot have its own lock because
+                // there the alternative is two browsers in one profile; here the
+                // alternative is a marker file nobody swept.
+                UpdateLog.CouldNotReclaimLiveMarkers(logger, directory, failure);
+
+                return new LiveMarkerReclaim
+                {
+                    Outcome = LiveMarkerReclaimOutcome.NoLock,
+                    Why = $"the gate '{mutexName}' could not be created ({failure.Message}).",
+                };
+            }
+
+            var acquisition = gate.Acquire(LockScopes.NeverWaits);
+
+            if (acquisition is MutexAcquisition.NotAcquired)
+            {
+                UpdateLog.LiveMarkerReclaimSkipped(logger, mutexName);
+
+                return new LiveMarkerReclaim
+                {
+                    Outcome = LiveMarkerReclaimOutcome.Skipped,
+                    Why = $"another process holds '{mutexName}' and is walking the same directory.",
+                };
+            }
+
+            try
+            {
+                LiveMarkerReclaim result;
+
+                try
+                {
+                    // own: null. This is a static pass with no marker of its
+                    // own, and the caller's marker needs no name-based exemption
+                    // because it is HELD -- which is the property the pass reads
+                    // and the only one it is allowed to act on.
+                    var pass = Walk(directory, own: null);
+
+                    result = new LiveMarkerReclaim
+                    {
+                        Outcome = LiveMarkerReclaimOutcome.Ran,
+                        Reclaimed = pass.Reclaimed,
+                        Held = pass.Held,
+                        Undetermined = pass.Undetermined + pass.Unreclaimed,
+                        GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned,
+                        Why = pass.Why,
+                    };
+                }
+                catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+                {
+                    UpdateLog.CouldNotReclaimLiveMarkers(logger, directory, failure);
+
+                    result = new LiveMarkerReclaim
+                    {
+                        Outcome = LiveMarkerReclaimOutcome.Failed,
+                        GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned,
+                        Why = $"'{directory}' could not be enumerated ({failure.Message}).",
+                    };
+                }
+
+                UpdateLog.ReclaimedLiveMarkers(logger, result.Summary);
+                return result;
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+        finally
+        {
+            gate?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Runs one reclaim pass on a background thread and returns immediately.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Startup must never wait for this.</b> The pass takes a machine-wide
+    /// mutex at zero timeout and walks one directory; both are fast and neither
+    /// is on the request path, so it runs on its own background thread with a
+    /// catch-all at the boundary. An exception escaping a background thread
+    /// tears the process down, and this process is an MCP server whose caller
+    /// would see a transport that simply stopped.
+    /// </para>
+    /// <para>
+    /// <b>Why this exists beside the copy inside
+    /// <see cref="Sessions.StraySweep"/>, which also runs at startup.</b> The
+    /// sweep can decline to run for reasons that have nothing to do with
+    /// markers: another process holds <see cref="LockScopes.Sweep"/>, or the
+    /// payload manifest its factory reads is broken. Neither of those should
+    /// cost a machine its marker reclaim, and this path shares none of it.
+    /// </para>
+    /// </remarks>
+    /// <param name="paths">The app-paths seam.</param>
+    /// <param name="logger">Where a failure is reported.</param>
+    public static void StartReclaimInBackground(IAppPaths paths, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                // ReclaimStaleMarkers logs its own census, so nothing is logged
+                // here: a second line would be the same fact twice.
+                _ = ReclaimStaleMarkers(paths, logger);
+            }
+#pragma warning disable CA1031 // The whole purpose of this method: nothing a reclaim can do may end the process.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                try
+                {
+                    UpdateLog.CouldNotReclaimLiveMarkers(logger, paths.LiveInstanceDirectory, failure);
+                }
+#pragma warning disable CA1031 // A logger that throws must not defeat the catch-all that was reporting through it.
+                catch (Exception)
+#pragma warning restore CA1031
+                {
+                }
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "BrowserAI live-marker reclaim",
+        };
+
+        thread.Start();
     }
 
     /// <summary>Leaves the live set.</summary>
@@ -215,7 +626,7 @@ internal sealed class LiveInstances : IDisposable
         }
 
         held.Dispose();
-        TryDelete(OwnFile);
+        _ = TryDelete(OwnFile, out _);
     }
 
     /// <summary>
@@ -231,39 +642,152 @@ internal sealed class LiveInstances : IDisposable
     /// <returns>A <c>Global\</c> name.</returns>
     public static string MutexNameFor(string rootAppDir) => SessionPath.Resolve(rootAppDir).MutexName;
 
-    private static bool IsHeld(string path)
+    /// <summary>
+    /// One walk of the marker directory: count what is held, remove what is not,
+    /// and touch nothing it could not settle.
+    /// </summary>
+    /// <remarks>
+    /// <b>The gate is the caller's to hold, and both callers do.</b> This is the
+    /// one routine that decides a marker's fate, so a census and a reclaim
+    /// cannot come to different conclusions about the same file — which is what
+    /// a second copy of the sharing-violation rule would eventually produce.
+    /// </remarks>
+    /// <param name="directory">The marker directory, which must exist.</param>
+    /// <param name="own">
+    /// A marker to skip by name, or <see langword="null"/>. Belt to the braces:
+    /// a caller's own marker is held and would be counted rather than removed
+    /// anyway, but a census must not count itself.
+    /// </param>
+    /// <returns>The tallies.</returns>
+    private static MarkerWalk Walk(string directory, string? own)
+    {
+        var held = 0;
+        var reclaimed = 0;
+        var unreclaimed = 0;
+        var undetermined = 0;
+        string? why = null;
+
+        foreach (var candidate in Directory.EnumerateFiles(directory, "*.live"))
+        {
+            if (own is not null && string.Equals(candidate, own, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var (state, reason) = Probe(candidate);
+
+            if (state is MarkerState.Held)
+            {
+                held++;
+                continue;
+            }
+
+            if (state is MarkerState.Unknown)
+            {
+                undetermined++;
+                why ??= reason;
+                continue;
+            }
+
+            if (TryDelete(candidate, out var refusal))
+            {
+                // Not held: whoever wrote it is gone. Removed rather than left
+                // as a growing pile that makes every later walk slower.
+                reclaimed++;
+                continue;
+            }
+
+            // ⚠️ NOT counted as another instance and NOT counted as an
+            // uncertainty. It was proven free; only the removal failed, and a
+            // removal failure must never move a census verdict.
+            unreclaimed++;
+            why ??= refusal;
+        }
+
+        return new MarkerWalk
+        {
+            Held = held,
+            Reclaimed = reclaimed,
+            Unreclaimed = unreclaimed,
+            Undetermined = undetermined,
+            Why = why,
+        };
+    }
+
+    /// <summary>
+    /// Whether one marker is held, by asking the kernel for the access a holder
+    /// denies.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The <see cref="MarkerState.Unknown"/> arm used to answer
+    /// <i>held</i>, and that was right for its one caller and wrong as a
+    /// general answer.</b> Counting an unreadable marker as a live instance kept
+    /// the updater on the safe side, which is why it was written that way; what
+    /// it cost was the ability to say <i>this is a permissions problem on this
+    /// path</i> rather than <i>somebody else is running</i>. The safe side is now
+    /// preserved by <see cref="Census"/>, which lets an uncertainty decide the
+    /// verdict when nothing definite did, and by <see cref="AmIAlone"/>, which
+    /// collapses both to <see langword="false"/>.
+    /// </remarks>
+    /// <param name="path">The marker file.</param>
+    /// <returns>Its state, and a reason when there is not one.</returns>
+    private static (MarkerState State, string? Why) Probe(string path)
     {
         try
         {
             using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
-            return false;
+            return (MarkerState.Free, null);
         }
         catch (IOException failure) when ((failure.HResult & 0xFFFF) is ErrorSharingViolation or ErrorLockViolation)
         {
-            return true;
+            return (MarkerState.Held, null);
         }
-        catch (FileNotFoundException)
+        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
         {
-            return false;
+            // It went away between the enumeration and the look. There is
+            // nothing to count and nothing left to remove.
+            return (MarkerState.Free, null);
         }
-#pragma warning disable CA1031 // Anything else -- a permission problem, a locked volume -- is treated as a live instance, which is the safe answer.
-        catch (Exception)
-#pragma warning restore CA1031
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            return true;
+            return (
+                MarkerState.Unknown,
+                $"'{path}' could not be opened, and the failure was not a sharing violation ({failure.Message}).");
         }
     }
 
-    private static void TryDelete(string path)
+    private static bool TryDelete(string path, out string? refusal)
     {
         try
         {
             File.Delete(path);
+            refusal = null;
+            return true;
         }
-#pragma warning disable CA1031 // A marker that will not delete is litter; the next census retries it.
-        catch (Exception)
-#pragma warning restore CA1031
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
+            // A marker that will not delete is litter; the next pass retries it.
+            refusal = $"'{path}' is not held and could not be removed ({failure.Message}).";
+            return false;
         }
+    }
+
+    /// <summary>What one walk of the marker directory found.</summary>
+    private readonly record struct MarkerWalk
+    {
+        /// <summary>Markers another process holds.</summary>
+        public required int Held { get; init; }
+
+        /// <summary>Markers proven free and removed.</summary>
+        public required int Reclaimed { get; init; }
+
+        /// <summary>Markers proven free that would not delete. Never a verdict.</summary>
+        public required int Unreclaimed { get; init; }
+
+        /// <summary>Markers whose held-ness could not be established.</summary>
+        public required int Undetermined { get; init; }
+
+        /// <summary>The first reason anything was left alone.</summary>
+        public required string? Why { get; init; }
     }
 }

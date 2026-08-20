@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Security.AccessControl;
 using BrowserAI.Hosting;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -236,8 +238,294 @@ internal sealed class UpdateTests
         var name = LiveInstances.MutexNameFor(@"C:\Users\x\AppData\Local\BrowserAI");
         var other = LiveInstances.MutexNameFor(@"c:\users\x\appdata\local\browserai\");
 
-        await Assert.That(name).StartsWith(BrowserAI.Sessions.LockScopes.PerDirectoryPrefix);
+        await Assert.That(name).StartsWith(LockScopes.PerDirectoryPrefix);
         await Assert.That(name).IsEqualTo(other);
+    }
+
+    // ---- Liveness is three-valued -------------------------------------------
+
+    /// <summary>
+    /// The census answers <b>Alone</b>, <b>NotAlone</b> or <b>Undetermined</b>,
+    /// and only the first of the three reads as <see langword="true"/> to the
+    /// updater.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The mapping is the whole assertion.</b> Widening a return type is
+    /// exactly where a consumer changes silently, so this drives all three states
+    /// through <see cref="LiveInstances.Census"/> and requires
+    /// <see cref="LiveInstances.AmIAlone"/> to agree with the pre-widening
+    /// behaviour on every one of them: <i>true</i> for <c>Alone</c> and
+    /// <i>false</i> for both of the others.
+    /// </para>
+    /// <para>
+    /// <b>Every state is produced by a real mechanism rather than constructed.</b>
+    /// One instance is alone; two are not; and an instance that has left the set
+    /// cannot speak for it, which is the cheapest genuine <c>Undetermined</c>
+    /// there is.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task EveryCensusAnswerOtherThanAloneStillReadsAsNotAloneToTheUpdater()
+    {
+        using var scratch = ScratchDirectory.Create("update-three-valued");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        using var first = LiveInstances.Join(paths, NullLogger.Instance);
+
+        await Assert.That(first!.Census().State).IsEqualTo(Liveness.Alone);
+        await Assert.That(first.Census().Why).IsNull();
+        await Assert.That(first.AmIAlone()).IsTrue();
+
+        var second = LiveInstances.Join(paths, NullLogger.Instance);
+        var crowded = first.Census();
+
+        await Assert.That(crowded.State).IsEqualTo(Liveness.NotAlone);
+        await Assert.That(crowded.Others).IsEqualTo(1);
+        await Assert.That(first.AmIAlone()).IsFalse();
+
+        second!.Dispose();
+        await Assert.That(first.AmIAlone()).IsTrue();
+
+        // The third state, and the reason this widening exists: it is neither of
+        // the other two and it says what stopped it.
+        first.Dispose();
+        var undetermined = first.Census();
+
+        await Assert.That(undetermined.State).IsEqualTo(Liveness.Undetermined);
+        await Assert.That(undetermined.Why).IsNotNull();
+        await Assert.That(undetermined.Why!).Contains(paths.LiveInstanceDirectory);
+        await Assert.That(first.AmIAlone()).IsFalse();
+    }
+
+    /// <summary>
+    /// A marker whose held-ness cannot be established makes the census
+    /// <b>undetermined</b> — and it is left exactly where it is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the arm that used to answer <i>not alone</i>, and both
+    /// answers keep the updater on the same side.</b> What the old one could not
+    /// do is tell a maintainer that the problem is an ACL on a named path rather
+    /// than a peer that is genuinely running — which is a refusal nothing can act
+    /// on. The assertion is therefore on the <i>reason</i> as much as on the
+    /// state.
+    /// </para>
+    /// <para>
+    /// <b>And the marker survives.</b> A file this pass cannot open is a file it
+    /// knows nothing about, and removing one on that basis is how a live
+    /// instance would become invisible.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AMarkerThatCannotBeOpenedIsLeftAloneAndMakesTheCensusUndeterminedRatherThanAlone()
+    {
+        using var scratch = ScratchDirectory.Create("update-live-denied");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        // Joined BEFORE the denial: this process's own marker has to be created,
+        // and the denial below is what stops a marker being opened at all.
+        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        await Assert.That(mine!.Census().State).IsEqualTo(Liveness.Alone);
+
+        var stranger = Path.Combine(paths.LiveInstanceDirectory, "4242-cannot-be-read.live");
+        await File.WriteAllTextAsync(stranger, string.Empty);
+
+        LivenessAnswer answer;
+        LiveMarkerReclaim reclaim;
+
+        // Captured INSIDE the denial below, because the denial is the whole
+        // condition: asserting on it afterwards would be asserting about a
+        // directory that had already been made readable again.
+        bool aloneWhileTheMarkerCouldNotBeRead;
+
+        // WriteData and not ReadData: the probe asks for ReadWrite, so denying
+        // the write half refuses it while leaving the directory enumerable and
+        // the file readable -- which is what makes this an unanswered question
+        // rather than a directory that vanished.
+        using (DirectoryDenial.Apply(
+            paths.LiveInstanceDirectory,
+            FileSystemRights.WriteData,
+            InheritanceFlags.ObjectInherit,
+            PropagationFlags.InheritOnly))
+        {
+            answer = mine.Census();
+            aloneWhileTheMarkerCouldNotBeRead = mine.AmIAlone();
+            reclaim = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+        }
+
+        await Assert.That(answer.State).IsEqualTo(Liveness.Undetermined);
+        await Assert.That(answer.Why!).Contains(stranger);
+        await Assert.That(aloneWhileTheMarkerCouldNotBeRead).IsFalse();
+
+        await Assert.That(reclaim.Reclaimed).IsEqualTo(0);
+        await Assert.That(reclaim.Undetermined).IsGreaterThanOrEqualTo(1);
+        await Assert.That(File.Exists(stranger)).IsTrue();
+
+        // The positive control: with the denial lifted the same marker is
+        // reclaimed and the same census is Alone, so the two answers above came
+        // from the ACL and not from something structural about this directory.
+        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance).Reclaimed).IsEqualTo(1);
+        await Assert.That(File.Exists(stranger)).IsFalse();
+        await Assert.That(mine.Census().State).IsEqualTo(Liveness.Alone);
+    }
+
+    // ---- Reclaiming the markers ---------------------------------------------
+
+    /// <summary>
+    /// The reclaim removes a marker nobody holds and <b>leaves a held one
+    /// exactly where it is</b> — proved in both directions with the same file.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the positive control the reclaim is not allowed to ship
+    /// without.</b> Reclaiming another process's live marker would make a running
+    /// instance invisible to every later census and therefore killable by an
+    /// update apply, so <i>it did not delete the held one</i> has to be
+    /// distinguished from <i>it did not delete anything</i>. The same marker is
+    /// released and the pass is run again: a reclaim that removed nothing at all
+    /// fails the second half, and a reclaim that removed everything fails the
+    /// first.
+    /// </para>
+    /// <para>
+    /// <b>The handle is the product's own</b> —
+    /// <c>FileAccess.ReadWrite, FileShare.Read</c>, byte for byte what
+    /// <see cref="LiveInstances.Join"/> takes — so what is being asserted is the
+    /// kernel's sharing rule rather than a convention this test invented.
+    /// </para>
+    /// <para>
+    /// <b>In-process, deliberately.</b> Sharing modes are enforced by the kernel
+    /// against handles, not against processes, so a second holder is refused
+    /// whether it is in this process or another one — which is the same argument
+    /// <see cref="ASecondLiveInstanceIsSeenAndTheFirstThenRefusesToApply"/>
+    /// already makes.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased()
+    {
+        using var scratch = ScratchDirectory.Create("update-live-reclaim");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
+
+        var held = Path.Combine(paths.LiveInstanceDirectory, "1234-held-by-a-peer.live");
+        var stale = Path.Combine(paths.LiveInstanceDirectory, "4242-nobody-is-there.live");
+
+        await File.WriteAllTextAsync(stale, string.Empty);
+
+        var peer = new FileStream(held, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+
+        try
+        {
+            var first = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+
+            await Assert.That(first.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
+            await Assert.That(first.Held).IsEqualTo(1);
+            await Assert.That(first.Reclaimed).IsEqualTo(1);
+            await Assert.That(first.Undetermined).IsEqualTo(0);
+
+            // THE INVARIANT. A peer's marker is another process's proof of life.
+            await Assert.That(File.Exists(held)).IsTrue();
+            await Assert.That(File.Exists(stale)).IsFalse();
+        }
+        finally
+        {
+            await peer.DisposeAsync();
+        }
+
+        // The other half of the control: nothing about that file made it
+        // un-reclaimable except the handle, and the handle is gone.
+        var second = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+
+        await Assert.That(second.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
+        await Assert.That(second.Held).IsEqualTo(0);
+        await Assert.That(second.Reclaimed).IsEqualTo(1);
+        await Assert.That(File.Exists(held)).IsFalse();
+    }
+
+    /// <summary>
+    /// A peer holding the gate makes the reclaim <b>skip instantly</b> rather
+    /// than wait, and nothing is touched while it does.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is what stops a hundred starting processes becoming a thundering
+    /// herd.</b> The gate is taken at <see cref="LockScopes.NeverWaits"/> — one
+    /// process reclaims and the rest pay an acquire and leave — which is the
+    /// discipline the stray sweep already applies machine-wide, reused rather
+    /// than reinvented. The mutex is held on <i>another thread</i> because a
+    /// Windows mutex is owned by the thread that waited on it, so this thread
+    /// would otherwise be granted it recursively and the test would prove
+    /// nothing.
+    /// </remarks>
+    [Test]
+    public async Task AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing()
+    {
+        using var scratch = ScratchDirectory.Create("update-live-contended");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
+        var stale = Path.Combine(paths.LiveInstanceDirectory, "4242-nobody-is-there.live");
+        await File.WriteAllTextAsync(stale, string.Empty);
+
+        using var taken = new ManualResetEventSlim(false);
+        using var release = new ManualResetEventSlim(false);
+
+        // Kept rather than discarded, for two reasons that are both about this
+        // test being able to fail honestly. It is the PRECONDITION -- a peer
+        // that did not take the gate would leave the assertions below measuring
+        // a skip that happened for some other reason -- and `Release` on a mutex
+        // this thread does not own throws, on a background thread, which ends
+        // the test host instead of failing a test.
+        var acquisition = MutexAcquisition.NotAcquired;
+
+        var holder = new Thread(() =>
+        {
+            using var gate = MachineMutex.Create(LiveInstances.MutexNameFor(paths.RootAppDir));
+            acquisition = gate.Acquire(LockScopes.LiveInstanceGate);
+            taken.Set();
+            release.Wait();
+
+            if (acquisition is not MutexAcquisition.NotAcquired)
+            {
+                gate.Release();
+            }
+        })
+        {
+            IsBackground = true,
+        };
+
+        holder.Start();
+        taken.Wait();
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var skipped = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+        clock.Stop();
+
+        release.Set();
+        holder.Join();
+
+        // `Join` is the barrier that makes this read safe, and the precondition
+        // is asserted before anything that depends on it.
+        await Assert.That(acquisition).IsNotEqualTo(MutexAcquisition.NotAcquired);
+
+        await Assert.That(skipped.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Skipped);
+        await Assert.That(skipped.Reclaimed).IsEqualTo(0);
+        await Assert.That(File.Exists(stale)).IsTrue();
+
+        // ⚠️ A HANG DETECTOR AND NOT A BUDGET, and it is the only thing that can
+        // tell "skipped at once" from "waited five seconds and then skipped" --
+        // both of which return Skipped. The bound is the product's OWN gate
+        // timeout, read rather than typed rather than guessed at: reaching it
+        // means this call waited on a gate it is supposed to try once, which is
+        // the defect. Nothing about a machine's load can approach it, because the
+        // work bounded is one zero-timeout acquire.
+        await Assert.That(clock.Elapsed).IsLessThan(LockScopes.LiveInstanceGate);
+
+        // The positive control: the same call, the same directory, nothing
+        // holding the gate. A skip that was really a no-op would fail here.
+        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance).Reclaimed).IsEqualTo(1);
+        await Assert.That(File.Exists(stale)).IsFalse();
     }
 
     // ---- The service ---------------------------------------------------------
@@ -251,6 +539,52 @@ internal sealed class UpdateTests
 
         using var mine = LiveInstances.Join(paths, NullLogger.Instance);
         using var other = LiveInstances.Join(paths, NullLogger.Instance);
+
+        var client = new ScriptedUpdateClient();
+        var shutdowns = 0;
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++);
+
+        var outcome = await service.RunOnceAsync(CancellationToken.None);
+
+        await Assert.That(outcome).IsEqualTo(UpdateOutcome.StagedButNotAlone);
+        await Assert.That(client.Downloads).IsEqualTo(1);
+        await Assert.That(client.Applies).IsEqualTo(0);
+        await Assert.That(shutdowns).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// An <b>undetermined</b> census stages the update and applies nothing —
+    /// byte for byte the outcome a <b>not alone</b> census produces.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Asserted through <see cref="UpdateService"/> rather than through
+    /// <see cref="LiveInstances.AmIAlone"/>'s signature, because the signature is
+    /// not what the maintainer's instruction was about.</b> The requirement was
+    /// that the updater keep treating <c>Undetermined</c> exactly as it treats
+    /// <c>NotAlone</c>, and only the service can be asked that: it is the one
+    /// consumer, and every assertion below is on what it <i>did</i> — one
+    /// download, zero applies, no shutdown request.
+    /// </para>
+    /// <para>
+    /// <b>The census is asserted to be undetermined first, so this cannot pass
+    /// for the wrong reason.</b> Without that line an implementation that
+    /// answered <c>NotAlone</c> here — the pre-widening behaviour — would produce
+    /// an identical result and the test would report a property it never checked.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes()
+    {
+        using var scratch = ScratchDirectory.Create("update-undetermined");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        var mine = LiveInstances.Join(paths, NullLogger.Instance);
+
+        // Left the set: this process is no longer a member of the thing it is
+        // being asked about, which is undetermined and is not "not alone".
+        mine!.Dispose();
+        await Assert.That(mine.Census().State).IsEqualTo(Liveness.Undetermined);
 
         var client = new ScriptedUpdateClient();
         var shutdowns = 0;

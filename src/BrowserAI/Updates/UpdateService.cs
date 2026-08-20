@@ -477,4 +477,44 @@ internal static partial class UpdateLog
         Level = LogLevel.Information,
         Message = "Installed at {RootAppDir}. channel={Channel} manifestVersion={ManifestVersion} assemblyVersion={AssemblyVersion}")]
     public static partial void Installed(ILogger logger, string rootAppDir, string channel, string manifestVersion, string assemblyVersion);
+
+    /// <summary>One reclaim pass over the live-marker directory, on one line.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="summary">The pass's own census.</param>
+    /// <remarks>
+    /// <b>Debug, because the healthy case is a pass that removed nothing.</b>
+    /// The counts are what makes an unhealthy one visible: a
+    /// <c>reclaimed=</c> that keeps growing is a fleet that keeps being killed
+    /// from outside, and an <c>undetermined=</c> that is not zero is a
+    /// permissions problem on a path the sentence names.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 18,
+        Level = LogLevel.Debug,
+        Message = "live-marker reclaim: {Summary}")]
+    public static partial void ReclaimedLiveMarkers(ILogger logger, string summary);
+
+    /// <summary>Somebody else holds the gate, so this process did not reclaim.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="mutex">The gate's name.</param>
+    /// <remarks>
+    /// Not a missed reclaim: whoever holds the gate is walking the same
+    /// directory, which is the same argument the stray sweep's own skip rests
+    /// on.
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 19,
+        Level = LogLevel.Debug,
+        Message = "Another process holds {Mutex} and is reclaiming live markers; this one skipped rather than waiting.")]
+    public static partial void LiveMarkerReclaimSkipped(ILogger logger, string mutex);
+
+    /// <summary>The reclaim could not run, or could not finish.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="directory">The live-instance directory.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 20,
+        Level = LogLevel.Warning,
+        Message = "Could not reclaim stale live-instance markers under {Directory}. Nothing was removed; BrowserAI is unaffected and the next pass tries again.")]
+    public static partial void CouldNotReclaimLiveMarkers(ILogger logger, string directory, Exception failure);
 }

@@ -10,6 +10,7 @@ using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
+using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -326,6 +327,99 @@ internal sealed class StraySweepTests
     /// spelling is how two sweepers come to serialise against nothing while both
     /// report success.
     /// </remarks>
+    /// <summary>
+    /// The sweep reclaims live-instance markers whose holders are gone, and
+    /// <b>leaves a held one exactly where it is</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-08-20. Reclaim used to happen only inside the updater's
+    /// "am I alone?" path</b> — which runs after an update has been found
+    /// <b>and</b> downloaded, and had therefore never once run on the machine
+    /// this product is developed on: 755 unheld markers in two days. It rides
+    /// this pass because this pass already has the three properties a reclaim
+    /// needs — machine-wide, mutex-serialised, and instantly skipped when a peer
+    /// holds the gate — rather than getting a second discipline of its own.
+    /// </para>
+    /// <para>
+    /// <b>The held marker is the control</b>, and it is what separates <i>the
+    /// sweep reclaimed the right file</i> from <i>the sweep deleted whatever it
+    /// found</i>. Reclaiming a live instance's marker would make that instance
+    /// invisible to every later census and therefore killable by an apply, so
+    /// the negative is proved rather than argued.
+    /// </para>
+    /// </remarks>
+    [Test]
+    [NotInParallel(SweepGroup)]
+    public async Task TheSweepReclaimsStaleLiveMarkersAndLeavesAHeldOneAlone()
+    {
+        using var scratch = ScratchDirectory.Create("sweep-live-markers");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
+
+        var stale = Path.Combine(paths.LiveInstanceDirectory, "4242-nobody-is-there.live");
+        var held = Path.Combine(paths.LiveInstanceDirectory, "1234-held-by-a-peer.live");
+
+        await File.WriteAllTextAsync(stale, string.Empty);
+
+        // The product's own open, so what is asserted is the kernel's sharing
+        // rule and not a convention this test invented.
+        var peer = new FileStream(held, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+
+        try
+        {
+            var result = await Task.Run(() =>
+                new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run());
+
+            await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
+            await Assert.That(result.LiveMarkers).IsNotNull();
+            await Assert.That(result.LiveMarkers!.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
+            await Assert.That(result.LiveMarkers.Reclaimed).IsEqualTo(1);
+            await Assert.That(result.LiveMarkers.Held).IsEqualTo(1);
+
+            await Assert.That(File.Exists(stale)).IsFalse();
+            await Assert.That(File.Exists(held)).IsTrue();
+
+            // And the pass says so on the one line it logs, because a count that
+            // never reaches the log is a count nobody can act on.
+            await Assert.That(result.Summary).Contains("liveMarkers=[outcome=Ran reclaimed=1 held=1");
+        }
+        finally
+        {
+            await peer.DisposeAsync();
+        }
+
+        // The other half of the control: nothing about that marker made it
+        // un-reclaimable except the handle.
+        var second = await Task.Run(() =>
+            new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run());
+
+        await Assert.That(second.LiveMarkers!.Reclaimed).IsEqualTo(1);
+        await Assert.That(File.Exists(held)).IsFalse();
+    }
+
+    /// <summary>
+    /// A sweep built without an <see cref="IAppPaths"/> reclaims nothing and says
+    /// so, rather than reporting a pass that did not happen.
+    /// </summary>
+    /// <remarks>
+    /// <see langword="null"/> and not a zeroed result: <i>this sweep had no
+    /// marker directory to be told about</i> is a different fact from <i>it
+    /// looked and found nothing</i>, and a caller reading the summary line has to
+    /// be able to tell them apart.
+    /// </remarks>
+    [Test]
+    [NotInParallel(SweepGroup)]
+    public async Task ASweepWithNoAppPathsReportsNoMarkerPassAtAll()
+    {
+        var result = await Task.Run(() => new StraySweep([], index: null, NullLogger.Instance).Run());
+
+        await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
+        await Assert.That(result.LiveMarkers).IsNull();
+        await Assert.That(result.Summary).Contains("liveMarkers=[-]");
+    }
+
     [Test]
     public async Task TheSweepMutexIsNamedOnceInTheProductAndEveryEntryPointReachesThatName()
     {

@@ -69,6 +69,49 @@ has been satisfied in form only.
 
 ### Added
 
+- **`browserai_list` now says whether each session it reports is being driven,
+  three-valued.** It carried mode, browser, purpose, dates and size and performed
+  no liveness check at all, so a caller could not tell an abandoned session from
+  one another agent was inside — which is the distinction that matters most in the
+  turn before `browserai_destroy`. Each entry now carries an `in use:` line:
+  **YES** when this BrowserAI is driving it or when something holds its
+  `lock.json`, **no** when nothing held it at the instant of the look, and
+  **UNKNOWN**, with the reason, when the question could not be settled.
+
+  **Through the pre-gate probe, `SessionLock.ProbeLiveness`, and never the
+  process-liveness check.** It needs no process handle, so a token that may not
+  open the peer cannot defeat it, and it asks about the resource rather than about
+  a pid Windows may have recycled. Cost is **one `CreateFile`/`CloseHandle` per
+  entry** — measured at 0.035 ms free and 0.049 ms held, against 0.6–2.3 ms for
+  the `SizeOnDisk` walk the same loop already performs per entry
+  ([kb](kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)) —
+  and the loop is over the session *index*, which the `directory` argument filters
+  rather than walks, so a drive-root listing adds one open per known session and
+  never one per file on the volume.
+
+  ⚠️ **The holder is deliberately not named, and that is the trap this was built
+  around.** A sharing violation says the file is held and never by whom; the
+  record inside can describe a previous holder. Printing *"held by PID n"* would
+  publish, on every listing, the wrong *sentence* the ownership work recorded on
+  2026-08-19. `SessionListTests.ListSaysWhichSessionsAreInUseAndNeverPrintsCouldNotTellAsFree`
+  asserts that absence as well as the four positive answers, each with its own
+  control.
+
+- **Liveness is three-valued: `Alone`, `NotAlone(n)` or `Undetermined(why)`.**
+  `LiveInstances` answered `false` for *not alone* and for *could not tell* at
+  once — a failed join, an expired gate, an unreadable marker. That was written
+  for the updater, where both mean *do not apply* and the safe direction is the
+  same one; for anything that repairs rather than refrains it is the unsafe
+  direction, because the refusal is permanent and has nothing to act on. `Census`
+  now returns the reason — a path, a mutex name, an exception's own message — so a
+  refusal built on one can be diagnosed.
+
+  **The updater did not move, and that is a guarantee rather than an intention.**
+  `UpdateService`'s call site is untouched, `AmIAlone` is one expression over
+  `Census` with exactly one `true` arm, and two tests hold it: one over all three
+  states directly, one through `UpdateService` itself requiring an undetermined
+  census to stage and apply nothing, exactly as a not-alone census does.
+
 - **A reinstall now takes the machine's browsers root for the whole call, and
   `browserai_init` and `browserai_resume` are refused while it holds it.**
   `browserai_reinstall_browser` already refused while sessions were open, and two
@@ -156,6 +199,37 @@ has been satisfied in form only.
   derived from a byte count rather than hand-written beside one.
 
 ### Fixed
+
+- **755 stale `.live` markers had accumulated, because the only code that
+  reclaimed them ran somewhere nothing ever reaches.** Reclaim lived inside the
+  updater's *am I alone?* census, which `UpdateService` calls only after an update
+  has been found **and** downloaded — which had never once happened on the machine
+  this product is developed on. Two days of ordinary work left 755 unheld files in
+  `%LocalAppData%\BrowserAI\live\`, and every census that ever did run would have
+  had to open all of them.
+
+  **Reclaim is now a routine of its own and runs from two places, both with the
+  same mutex discipline.** `LiveInstances.ReclaimStaleMarkers` takes the same
+  per-root gate a join and a census take, at **zero timeout**: one process
+  reclaims and every other pays an acquire and leaves. It runs from the stray
+  sweep — already machine-wide, already mutex-serialised, already skipping
+  instantly when a peer holds its own gate — and from **startup**, on a background
+  thread, so that a sweep declining to run for reasons that have nothing to do
+  with markers cannot cost a machine its reclaim. **Nothing waits for it**, and it
+  is deliberately not folded into `LiveInstances.Join`'s hold: walking 755 markers
+  inside a five-second-gated critical section that a hundred starting processes
+  queue on is how a join times out, and a process that could not join is invisible
+  to a peer's census.
+
+  ⚠️ **A marker is stale only when it is NOT HELD; existence is not held-ness** —
+  the same rule `MaintenanceLock` and `SessionLock` state about their own files.
+  Reclaiming a live instance's marker would make that instance invisible to every
+  later census and therefore killable by an apply, so the negative is proved with
+  a positive control rather than argued: `UpdateTests.AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased`
+  holds one marker open, runs the reclaim, requires it to survive, releases it,
+  runs the reclaim again and requires it to go — so a pass that removed nothing at
+  all could not pass either half. `StraySweepTests.TheSweepReclaimsStaleLiveMarkersAndLeavesAHeldOneAlone`
+  does the same through the sweep.
 
 - **The mode table claimed a persistence property the code has never had.**
   `README.md`'s third column read *"Stored credentials — No / No / Yes"* and
