@@ -231,20 +231,41 @@ both are written as a RATIO rather than as a duration** —
   on a race: no amount of scheduling delay can make an installer that never
   touches the disk look like one that is working.
 - `.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes` is the other half,
-  and it is the arm that is red against a total-time ceiling. Sixty writes 25 ms
-  apart against a one-second cap: the **total** is about 1.5× the cap and the
-  largest **gap** is about a fortieth of it, so everything can stretch by a factor
-  of thirty before the two meet — and a stretch moves both numbers together.
+  and it is the arm that is red against a total-time ceiling. ⚠️ **Rewritten
+  2026-08-20 onto two seams** *(previously "Sixty writes 25 ms apart against a
+  one-second cap: the **total** is about 1.5× the cap and the largest **gap** is
+  about a fortieth of it, so everything can stretch by a factor of thirty before
+  the two meet")*. The ratio reasoning was sound and insufficient — a ratio
+  between two **real** clocks is still a race, and this arm went red once in nine
+  consecutive full-suite runs with the product behaving perfectly. It now survives
+  **1,000 polls each one tick short of the whole budget**, nearly seven simulated
+  days against a ten-minute cap, in milliseconds of wall clock.
+- `.TheStallCapFiresOnTheFirstPollAfterTheBudgetPassesWithNoBytes` is the other
+  side of the same statement and pins the **exact poll** the detector fires on,
+  which no wall-clock test of this could ever have asserted.
 
-⚠️ **The double for the second one runs on a `LongRunning` thread and not on the
-pool, and that is a correctness requirement.** The product's watcher polls from a
-thread of its own and never starves; a double that ticked from the pool would
-starve at unbounded parallelism while the watcher did not, so its gaps would
-stretch and the watcher's would not — and the cap would fire on the scheduler
-rather than on the behaviour under test. **Observed exactly that way on
-2026-08-19: green alone, red in a full run.** The real installer is a separate OS
-process and is never pool-bound either, so this is the double being as
-schedulable as the thing it replaces rather than being given an advantage.
+⚠️ **Both of the detector's inputs are seams, and one alone would not have been
+enough.** `ProvisioningTimers.Clock` is a `TimeProvider` — and the **poll wait**
+goes through it too, because a loop whose arithmetic reads an injected clock and
+whose sleep reads the wall clock cannot be driven at all. The second seam is
+`BrowserProvisioner.WeighBrowsersRoot`, because the detector judges an install on
+bytes under the browsers root as well as on time, so a frozen clock beside a real
+directory is still half a race. The two together let a test drive the loop in
+**lockstep**: the product asks what the root weighs, and answering is where the
+test moves the clock. **There is no real duration anywhere in either arm**, so
+there is no load under which they behave differently — which is what closed
+[the hazard row](HAZARDS.md#hazard-index) that this flake opened on the same day.
+
+⚠️ **What that replaced, kept because the reasoning still applies to every other
+double in this suite.** The old arm's installer ran on a `LongRunning` thread
+rather than on the pool, and that was a correctness requirement: the product's
+watcher polls from a thread of its own and never starves, so a double that ticked
+from the pool would starve at unbounded parallelism while the watcher did not, and
+the cap would fire on the scheduler rather than on the behaviour under test.
+**Observed exactly that way on 2026-08-19: green alone, red in a full run.** The
+real installer is a separate OS process and is never pool-bound either, so a
+double must be as schedulable as the thing it replaces rather than be given an
+advantage.
 
 ## The first-run download runs at most once an hour
 

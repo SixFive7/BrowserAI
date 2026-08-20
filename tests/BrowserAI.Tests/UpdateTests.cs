@@ -598,6 +598,68 @@ internal sealed class UpdateTests
         await Assert.That(shutdowns).IsEqualTo(0);
     }
 
+    /// <summary>
+    /// The staged-but-not-applied line says what it is waiting on and how far in
+    /// it got.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-20, and the line it asserts replaced one that said
+    /// only "another BrowserAI is running out of this install".</b> That read the
+    /// same whether one peer was up or forty, and read the same again when the
+    /// census could not be taken at all — which is not a wait but a permanent
+    /// block. Whoever finds this line in a log has to act differently in those
+    /// two cases, so the line has to distinguish them.
+    /// </para>
+    /// <para>
+    /// <b>Both arms are here rather than one.</b> A version that hard-coded a
+    /// count would satisfy the first and fail the second, and one that printed
+    /// the census enum would satisfy neither.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStagedLineSaysHowManyItIsWaitingOnAndWhatWasAlreadyFetched()
+    {
+        using var scratch = ScratchDirectory.Create("update-staged-says-why");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        using var provider = new CapturingLoggerProvider();
+
+        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var other = LiveInstances.Join(paths, NullLogger.Instance);
+
+        _ = await new UpdateService(
+            new ScriptedUpdateClient(),
+            mine,
+            provider.CreateLogger("BrowserAI.Updates"),
+            () => { }).RunOnceAsync(CancellationToken.None);
+
+        // One peer, counted rather than implied, and the package the apply is no
+        // longer waiting on.
+        await Assert.That(provider.Logged("at least 1 other BrowserAI process(es) are running")).IsTrue();
+        await Assert.That(provider.Logged("112.4 MB was fetched in")).IsTrue();
+        await Assert.That(provider.Logged("Nothing more has to be downloaded")).IsTrue();
+
+        // And the other arm: a census that could not be taken is a permanent
+        // block rather than a queue, and the line says so and says why.
+        using var undetermined = new CapturingLoggerProvider();
+        var lost = LiveInstances.Join(paths, NullLogger.Instance);
+
+        lost!.Dispose();
+
+        await Assert.That(lost.Census().State).IsEqualTo(Liveness.Undetermined);
+
+        _ = await new UpdateService(
+            new ScriptedUpdateClient(),
+            lost,
+            undetermined.CreateLogger("BrowserAI.Updates"),
+            () => { }).RunOnceAsync(CancellationToken.None);
+
+        await Assert.That(undetermined.Logged("the census could not be taken, so solitude cannot be proven")).IsTrue();
+        await Assert.That(undetermined.Logged("at least")).IsFalse();
+    }
+
     /// <summary>Alone, the same pass applies and asks the process to end.</summary>
     /// <remarks>
     /// <b>It asks rather than exits.</b> <c>Update.exe</c> is waiting on this

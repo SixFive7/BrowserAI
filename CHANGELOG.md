@@ -196,6 +196,99 @@ has been satisfied in form only.
   locked-down machine is a worse failure than the one being prevented. All three
   gaps are stated on `InstallRootScope` itself.
 
+- **The claim on the browsers root is a reader/writer lock: every session holds it
+  shared, and a reinstall holds it exclusively.** The maintainer's design of
+  2026-08-20, verbatim: *"any init or resume should take a system level lock. No
+  matter the browser type. These locks are cumulative. And reinstalling the browser
+  should be an exclusive lock."* `browserai_init` and `browserai_resume` open
+  `<browsers root>\reinstall.lock` `FileAccess.Read` / `FileShare.Read` and hold it
+  for the session's whole life; `browserai_reinstall_browser` opens it
+  `FileAccess.ReadWrite` / `FileShare.Read`. **Windows' sharing rules give the
+  semantics directly** — an open is refused when its access is outside an existing
+  handle's share mode *or* when its share mode is narrower than an existing
+  handle's granted access, so any number of readers coexist with no count kept
+  anywhere, and one reader is enough to refuse the writer.
+
+  **The kernel is the gate now; the session census is only a sentence.** What used
+  to decide the refusal was `SessionManager.LiveSessions`, which walked this
+  process's sessions and the index; it survives to *name* what the caller must
+  close, and the exclusive open decides. That is strictly stronger — a session
+  whose index entry was swept, or whose process this one cannot see, still holds a
+  handle.
+
+  **The family filter is gone, and its removal is the maintainer's "no matter the
+  browser type".** A live Firefox session now refuses a Chromium reinstall. The old
+  reasoning — only a session of that family can hold an executable out of that
+  family's tree — was not wrong and is no longer the question: the claim is one
+  file at the root of the browsers directory and knows nothing about families, and
+  listing only the matching family would name none of the sessions the caller has
+  to close.
+
+  **No intent marker, no drain, and writer starvation accepted**, all three his:
+  *"I do not want the intent marker. If anything is busy then the reinstall should
+  be refused with the list… But it should not start a drain/preventstart process of
+  sorts. Keep it simple. Let the user solve the open sessions block."* A machine
+  that always has one session open never lets a reinstall through, and that is a
+  decision rather than a defect to be mitigated.
+
+  **A reader that dies releases the claim with nothing running to clean up**, which
+  is why this is a file and not a named semaphore — a semaphore's count is not
+  restored on its holder's death, so one crashed session would refuse every
+  reinstall until a reboot. `ReinstallBrowserTests.AReaderThatDiesReleasesTheRootWithNothingRunningToCleanUp`
+  kills a real process holding the shared claim by closing a job object — a
+  `TerminateProcess` with no unwinding at all — and proves the root goes free.
+
+- **Every refusal a caller meets during a long operation now says how far in it
+  is.** The maintainer's instruction of 2026-08-20: *"Also make sure that the
+  reinstall reports the progress just like the first run provisioning. Close both
+  gaps."* First-run provisioning already reported bytes, elapsed and the observed
+  rate; the other two refusals reported nothing.
+
+  **The reinstall refusal** — what `init`, `resume` and a second reinstall meet
+  while one is running — now carries what the download staging directory weighs,
+  how long the claim has been held, and the rate those two give. Both figures are
+  read off the filesystem, because a peer cannot see the reinstalling process's
+  own provisioner at all: the staging directory is
+  `<browsers root>\.downloads`, which the installer's `TEMP` points at, and the
+  elapsed time is the claim file's last write. **Zero staged bytes is reported as a
+  phase and never as a stall** — it is the delete, which comes first, or an
+  extraction already under way, and the sentence says which two things it cannot
+  tell apart.
+
+  **The update refusal** — an update downloaded, staged and not applied because
+  something else is live — now names *at least N other BrowserAI process(es)*
+  rather than "another BrowserAI is running", distinguishes that from a census that
+  could not be taken at all (a permanent block rather than a queue, and it says
+  why), and states that nothing more has to be downloaded, with the package size
+  and the seconds it took.
+
+- **The provisioning stall detector runs on an injected clock and an injected byte
+  source, and its own flaky test is fixed by that rather than by weakening it.**
+  `ProvisioningTests.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes`
+  went red once in nine consecutive full-suite runs on 2026-08-20 — the day CI was
+  removed and the local suite became the only gate — with the product behaving
+  perfectly: sixty real writes 25 ms apart against a real one-second cap is a
+  ratio, and a ratio between two real clocks is still a race at unbounded suite
+  parallelism.
+
+  **Both of the detector's inputs are seams, because one alone would not have been
+  enough.** `ProvisioningTimers.Clock` is a `TimeProvider`, and the **poll wait**
+  goes through it too — a loop whose arithmetic reads an injected clock and whose
+  sleep reads the wall clock cannot be driven, and would look deterministic while
+  racing exactly as before. `BrowserProvisioner.WeighBrowsersRoot` is the byte
+  source, because the detector judges an install on bytes on disk as well as on
+  time. The two together let the test drive the loop in **lockstep**: the product
+  asks what the root weighs, and answering is where the test moves the clock.
+
+  **The assertion is stronger rather than weaker**, which was the constraint. It
+  survives **1,000 polls each one tick short of the whole budget** — nearly seven
+  simulated days against a ten-minute cap, in milliseconds of wall clock — and
+  `.TheStallCapFiresOnTheFirstPollAfterTheBudgetPassesWithNoBytes` pins the other
+  side to the exact poll the detector fires on, which no wall-clock test of this
+  could have asserted. Both were watched red against a planted total-time cap and a
+  planted one-budget-late cap. **There is no real duration anywhere in either arm**,
+  so the flake is impossible rather than unlikely.
+
 - **A session's record is `browserai.json`, renamed from `lock.json`, and there is
   no compatibility read.** The maintainer's decision of 2026-08-20, verbatim:
   *"nothing is in production yet. The only version that exists is the alpha version

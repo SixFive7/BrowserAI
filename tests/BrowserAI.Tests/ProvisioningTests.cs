@@ -267,22 +267,57 @@ internal sealed class ProvisioningTests
     }
 
     /// <summary>
+    /// How many polls the unbounded arm below drives. Simulated, so the number
+    /// is a claim about the detector rather than a cost.
+    /// </summary>
+    /// <remarks>
+    /// A thousand polls each one tick short of a ten-minute budget is <b>six
+    /// days and twenty hours</b> of simulated running, against a cap of ten
+    /// minutes. It costs milliseconds, because no clock in it is real.
+    /// </remarks>
+    private const int UnboundedPolls = 1_000;
+
+    /// <summary>
     /// A slow install that keeps writing outlives a cap many times shorter than
-    /// its own total.
+    /// its own total — unboundedly, and without a real clock anywhere.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>This is the arm that is red against a total-time ceiling, and it is
     /// the whole reason the cap changed.</b> The old <c>AbsoluteCap</c> stopped
     /// an install that had taken longer than the cap, whatever it was doing, so
-    /// it fired on exactly one case — a link that was slow and working. Here the
-    /// install takes at least fifteen poll intervals against a cap of four, and
-    /// it must finish.
+    /// it fired on exactly one case — a link that was slow and working.
     /// </para>
     /// <para>
-    /// <b>The steps are asserted to have happened</b>, because an installer that
-    /// finished instantly would also pass a test that only checked the outcome —
-    /// and would be measuring nothing at all.
+    /// ⚠️ <b>Rewritten 2026-08-20, and it is the fix for this test rather than a
+    /// tidy-up</b> *(previously: sixty real writes 25 ms apart against a real
+    /// 1-second stall cap, justified as "a RATIO, not a duration, and that is
+    /// what makes it safe at unbounded suite parallelism")*. The ratio reasoning
+    /// was sound and insufficient: a ratio between two <b>real</b> clocks is
+    /// still a race, and this arm went red once in nine consecutive full-suite
+    /// runs with the product behaving perfectly — the double's 25 ms gap
+    /// stretching past the product's 1 s cap on a machine running five hundred
+    /// tests at once.
+    /// </para>
+    /// <para>
+    /// <b>Both of the detector's inputs are now seams, and one alone would not
+    /// have been enough.</b> It judges an install on a clock <i>and</i> on bytes
+    /// under the browsers root, so freezing the clock while a real double writes
+    /// to a real directory would leave half the race in place. With
+    /// <see cref="ProvisioningTimers.Clock"/> and
+    /// <see cref="BrowserProvisioner.WeighBrowsersRoot"/> both replaced, the test
+    /// drives the detector in <b>lockstep</b>: the product asks for a weight,
+    /// and the answer to that question is where this test moves the clock.
+    /// </para>
+    /// <para>
+    /// <b>The assertion is stronger than the one it replaces, which is the
+    /// point.</b> "Survived sixty writes" is a bounded claim about a number
+    /// somebody chose; this survives <see cref="UnboundedPolls"/> polls each one
+    /// tick short of the whole budget — nearly seven simulated days — and the
+    /// number could be raised by three orders of magnitude without costing a
+    /// second of wall clock. <b>Nothing here can be flaky</b>: there is no real
+    /// duration anywhere in it, so there is no load under which it behaves
+    /// differently.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -294,6 +329,12 @@ internal sealed class ProvisioningTests
 
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
+        var clock = new ManualClock();
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var cap = TimeSpan.FromMinutes(10);
+        var polls = 0;
+        var bytes = 0L;
         FakeInstaller? started = null;
 
         using var provisioner = new BrowserProvisioner(
@@ -302,20 +343,44 @@ internal sealed class ProvisioningTests
             log,
             new ProvisioningTimers
             {
-                // ⚠️ A RATIO, not a duration, and that is what makes it safe at
-                // unbounded suite parallelism. Sixty writes 25 ms apart is a
-                // total of about 1.5 s against a cap of 1 s, so a cap that
-                // measured TOTAL time fires two thirds of the way through and
-                // this arm is red -- while the largest gap a stall detector sees
-                // is one write, about 25 ms. Everything on this machine can
-                // stretch by a factor of thirty before the two meet, and a
-                // stretch moves both numbers together.
-                StallCap = TimeSpan.FromSeconds(1),
-                ExtractionCap = TimeSpan.FromMinutes(10),
-                Poll = TimeSpan.FromMilliseconds(20),
+                StallCap = cap,
+
+                // ⚠️ Effectively infinite, and deliberately: this arm is about
+                // the STALL cap, and the simulated clock passes ten real minutes
+                // per poll — so a lifelike extraction cap would fire on the
+                // second poll after the tree appears and this test would be
+                // measuring the wrong number.
+                ExtractionCap = TimeSpan.FromDays(3_650),
+
+                // A tenth of the budget, so one advance below fires the poll
+                // ticker ten times rather than six hundred. Nothing depends on
+                // the figure; it only bounds how much work a manual clock does
+                // per advance.
+                Poll = TimeSpan.FromMinutes(1),
+                Clock = clock,
             })
         {
-            StartInstaller = (_, _) => started = FakeInstaller.CreepingForward(directory, TimeSpan.FromMilliseconds(25), steps: 60),
+            StartInstaller = (_, _) => started = FakeInstaller.SucceedingWhenReleased(directory, release.Task),
+
+            // ⚠️ THE LOCKSTEP. The product asks what the root weighs; answering
+            // is where the clock moves. Every answer is one byte more than the
+            // last and lands one tick short of the whole budget later, which is
+            // the worst case a working install can present and the one a
+            // total-time cap kills.
+            WeighBrowsersRoot = (_, _) =>
+            {
+                if (Interlocked.Increment(ref polls) == UnboundedPolls)
+                {
+                    // Nearly seven simulated days in and still alive: let the
+                    // install land so the state below is `Installed` rather than
+                    // a run this test abandoned.
+                    _ = release.TrySetResult();
+                }
+
+                clock.Advance(cap - TimeSpan.FromTicks(ManualClock.OneTick));
+
+                return Interlocked.Increment(ref bytes);
+            },
         };
 
         var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
@@ -323,8 +388,90 @@ internal sealed class ProvisioningTests
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
         await Assert.That(started!.WasStopped).IsFalse();
 
-        // Every step really did land, so the run really was longer than the cap.
-        await Assert.That(started.StepsWritten).IsEqualTo(60);
+        // The run really was longer than the cap, by a factor of a thousand.
+        // Without this the arm would pass against a detector that fired on the
+        // first poll, because a stopped install and an install that never
+        // started look the same from outside.
+        await Assert.That(Volatile.Read(ref polls)).IsGreaterThanOrEqualTo(UnboundedPolls);
+        await Assert.That(clock.GetElapsedTime(0)).IsGreaterThan(cap * UnboundedPolls);
+    }
+
+    /// <summary>
+    /// And it dies on the first poll after the budget passes with no bytes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The other half of the same statement, on the same two seams.</b> The
+    /// arm above says a detector that fires on a working install is broken; this
+    /// one says a detector that never fires is equally broken, and it pins
+    /// <i>when</i>: the poll on which the budget is exceeded, and not the one
+    /// before or several after.
+    /// </para>
+    /// <para>
+    /// <b>The poll count is the assertion, and it is exact.</b> A detector with
+    /// an off-by-one in either direction, or one that needed two consecutive
+    /// silent polls, changes this number — which is a thing no wall-clock test
+    /// of this could ever have asserted.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStallCapFiresOnTheFirstPollAfterTheBudgetPassesWithNoBytes()
+    {
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("provision-stall-instant");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var clock = new ManualClock();
+        var cap = TimeSpan.FromMinutes(10);
+        var polls = 0;
+        FakeInstaller? started = null;
+
+        // Three polls of real progress, then silence. The three are there so the
+        // stall is a TRANSITION rather than the initial state, which is the shape
+        // a real dead socket has.
+        const int Moving = 3;
+
+        using var provisioner = new BrowserProvisioner(
+            RepositoryPayload.Layout,
+            root,
+            log,
+            new ProvisioningTimers
+            {
+                StallCap = cap,
+                ExtractionCap = TimeSpan.FromDays(3_650),
+                Poll = TimeSpan.FromMinutes(1),
+                Clock = clock,
+            })
+        {
+            StartInstaller = (_, _) => started = FakeInstaller.Hanging(),
+
+            WeighBrowsersRoot = (_, previous) =>
+            {
+                var poll = Interlocked.Increment(ref polls);
+
+                // One tick short of the budget while it is working, one tick
+                // past it once it stops. So the first silent poll is also the
+                // first poll at which the detector may fire, and "the instant
+                // they stop" is a fact about this run rather than a hope.
+                clock.Advance(poll <= Moving
+                    ? cap - TimeSpan.FromTicks(ManualClock.OneTick)
+                    : cap + TimeSpan.FromTicks(ManualClock.OneTick));
+
+                return poll <= Moving ? poll : previous;
+            },
+        };
+
+        var status = await provisioner.WaitAsync(SessionManager.DefaultBrowser);
+
+        await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
+        await Assert.That(status.Detail).Contains("wrote nothing at all under");
+        await Assert.That(started!.WasStopped).IsTrue();
+
+        // ⚠️ THE EXACT POLL. One before the first silent one is the baseline
+        // read, three are the moving ones, and the fourth is the first silence —
+        // so the detector must fire having asked exactly Moving + 1 times.
+        await Assert.That(Volatile.Read(ref polls)).IsEqualTo(Moving + 1);
     }
 
     /// <summary>

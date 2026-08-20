@@ -213,29 +213,50 @@ sessions of the family it is replacing — `ffmpeg-win64.exe` exists only while 
 recording runs, so *nothing is using it* and *nothing is about to* are different
 statements there and the same statement for a browser.
 
-**A reinstall takes a machine-wide claim on the browsers root and holds it for
-the whole call**, and `browserai_init` and `browserai_resume` are refused while it
-is held. *Added 2026-08-19.* The running-process census could never close this:
+**The browsers root carries a machine-wide READER/WRITER claim: every session
+holds it shared for its whole life, and a reinstall holds it exclusively for the
+whole call.** *Added 2026-08-19; became reader/writer 2026-08-20, at the
+maintainer's decision — "any init or resume should take a system level lock. No
+matter the browser type. These locks are cumulative. And reinstalling the browser
+should be an exclusive lock."* The running-process census could never close this:
 a reinstall establishes that nothing is running out of the tree and then deletes
 it, and a peer's `init` in that window launches a browser into a directory that is
 disappearing — the census was right when it was asked. The claim is
-`<browsers root>\reinstall.lock`, held open `FileShare.Read` by
-`Runtime/MaintenanceLock.cs`; **a file rather than a named mutex** because the
+`<browsers root>\reinstall.lock`; `Runtime/MaintenanceLock.cs` opens it
+`FileAccess.Read`/`FileShare.Read` for a session and
+`FileAccess.ReadWrite`/`FileShare.Read` for a reinstall, and **Windows' sharing
+rules give the reader/writer semantics directly** — an open is refused when its
+access is outside an existing handle's share mode *or* when its share mode is
+narrower than an existing handle's granted access, which is the check running in
+both directions. **A file rather than a named mutex** because the
 claim spans a 203.8 MB download inside an `async` method and a named mutex is
 owned by the thread that waited on it, and **not a named semaphore** because a
 semaphore's count is not restored when its holder dies, so one crashed reinstall
 would refuse every `init` on the machine until a reboot. Windows closes a file
 handle however the process ends.
 
-**It is mutual against itself, and it does not drain.** A second reinstall is
-refused for the same reason a session is. And a reinstall that takes the claim and
-*then* finds sessions open releases it and refuses immediately, naming how many —
-it never waits for them, because waiting on a browser a human may not close is the
-shape this product spent a week removing. **The lock order is fixed and has no
-cycle**: the claim is outermost and the per-family provisioning mutexes are taken
-under it, never the other way round; `init` and `resume` only *probe* the claim
-and never acquire it; and every acquisition on both sides is non-blocking, so even
-an inverted order would produce a refusal rather than a hang.
+**It is mutual against itself, it knows nothing about browser families, and it
+does not drain.** A second reinstall is refused for the same reason a session is,
+and a live Firefox session refuses a Chromium reinstall — the claim is one file at
+the root of the browsers directory, so *nothing runs during a reinstall, whatever
+family it belongs to*. **The family filter that used to narrow the refusal is
+gone**; `SessionManager.LiveSessions` survives only to name what the caller must
+close, and the kernel decides. A reinstall whose exclusive open is refused says so
+at once and names the sessions holding it; it publishes **no intent marker**, it
+starts no drain, and **writer starvation is accepted** — a machine that always has
+one session open never lets a reinstall through, which is the maintainer's
+decision rather than a defect to be mitigated. **The lock order is fixed and has
+no cycle**: the claim is outermost and the per-family provisioning mutexes are
+taken under it, never the other way round, and every acquisition on both sides is
+non-blocking, so even an inverted order would produce a refusal rather than a
+hang.
+
+**A caller refused by a reinstall is told how far in it is.** The refusal quotes
+the record the writer wrote and adds what the download staging directory weighs
+and how long the claim has been held — both read off the filesystem, because the
+peer cannot see the other process's provisioner at all. Zero staged bytes is
+reported as *the delete, or an extraction already under way* rather than as a
+stall, which is the honest reading of an empty staging directory.
 
 **One table drives six consumers.** `SessionMode` is the table; the server
 `instructions`, `init`'s description, `resume`'s result, the refusal text, the

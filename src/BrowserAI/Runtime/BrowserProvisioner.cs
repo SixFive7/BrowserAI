@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -210,6 +209,40 @@ internal sealed record ProvisioningTimers
 
     /// <summary>How often the phase watcher looks.</summary>
     public TimeSpan Poll { get; init; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// The clock every duration above is measured against, and the one that
+    /// releases each poll.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-20, and it is the fix for a named flake rather than a
+    /// generalisation.</b> <c>ProvisioningTests.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes</c>
+    /// went red once in nine consecutive full-suite runs. It asserted that an
+    /// install writing every 25 ms survives a 1-second stall cap, which is a
+    /// <i>ratio</i> and was chosen for exactly that reason — but a ratio between
+    /// two real clocks is still a race, and on a machine running 500 tests at
+    /// once the double's 25 ms gap can stretch past the product's cap while the
+    /// product behaves perfectly.
+    /// </para>
+    /// <para>
+    /// <b>The clock alone would not have fixed it, and that is the half worth
+    /// stating.</b> The detector judges an install on <b>bytes on disk</b> as
+    /// well as on time, so a test that froze the clock and still read a real
+    /// directory would still be racing the filesystem. The second seam is
+    /// <see cref="BrowserProvisioner.WeighBrowsersRoot"/>, and the two together
+    /// are what make the arm a statement about the product rather than about the
+    /// machine.
+    /// </para>
+    /// <para>
+    /// <b><see cref="TimeProvider"/> because it is the framework's own seam</b>,
+    /// and because the poll wait goes through it too — see
+    /// <c>BrowserProvisioner.PollTicker</c>. A clock that governed the elapsed
+    /// arithmetic and left the sleep on the wall clock would leave a test
+    /// advancing a frozen clock while the product slept for real.
+    /// </para>
+    /// </remarks>
+    public TimeProvider Clock { get; init; } = TimeProvider.System;
 }
 
 /// <summary>
@@ -577,6 +610,36 @@ internal sealed class BrowserProvisioner : IDisposable
     /// argument is the family whose mutex the calling thread already holds.
     /// </remarks>
     public Action<string> PruneRevisions { get; init; }
+
+    /// <summary>
+    /// What the browsers root weighs, which is the one number both the stall
+    /// detector and the progress report read.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A seam since 2026-08-20, and it exists for one arm that could not
+    /// otherwise be honest.</b> The stall detector judges an install on two
+    /// inputs — a clock and a byte count — so freezing only the clock leaves the
+    /// second one racing a real directory that a real double is really writing
+    /// to. With both replaced, <i>survives while bytes arrive</i> and <i>dies the
+    /// instant they stop</i> become statements a test can make in lockstep
+    /// rather than statements about how busy the machine was.
+    /// </para>
+    /// <para>
+    /// <b>The default is the real measurement and the arithmetic above it is
+    /// untouched</b> — the baseline, the stall comparison and the sentence a
+    /// caller reads are all on this side of the seam, so a substitute changes
+    /// where the number comes from and nothing about what is done with it.
+    /// </para>
+    /// <para>
+    /// <b>The signature carries the previous sample deliberately.</b> A root
+    /// that cannot be weighed answers with the caller's last figure rather than
+    /// with zero, so the stall clock keeps running instead of being reset by a
+    /// failure — and a substitute has to be handed the same fact to be able to
+    /// stand in for that.
+    /// </para>
+    /// </remarks>
+    public Func<string, long, long> WeighBrowsersRoot { get; init; } = ObservedBytes;
 
     /// <summary>The browsers root this provisioner installs into. Always absolute.</summary>
     public string BrowsersDirectory { get; }
@@ -1070,7 +1133,7 @@ internal sealed class BrowserProvisioner : IDisposable
 
         var revision = Manifest().For(ProvisionedBrowsers.SharedInstallTarget);
         var target = Path.Combine(BrowsersDirectory, revision.DirectoryName);
-        var result = RunInstaller(ProvisionedBrowsers.SharedInstallTarget, revision, target, Stopwatch.StartNew(), new AttemptPhase());
+        var result = RunInstaller(ProvisionedBrowsers.SharedInstallTarget, revision, target, AttemptClock.Start(_timers.Clock), new AttemptPhase());
 
         // Every component's own marker, not the installer's exit code and not the
         // one directory RunInstaller was pointed at. A second component that
@@ -1365,7 +1428,7 @@ internal sealed class BrowserProvisioner : IDisposable
     private ProvisioningResult Install(string browser, BrowserRevision revision, AttemptPhase phase)
     {
         var directory = Path.Combine(BrowsersDirectory, revision.DirectoryName);
-        var deadline = Stopwatch.StartNew();
+        var deadline = AttemptClock.Start(_timers.Clock);
 
         try
         {
@@ -1536,13 +1599,15 @@ internal sealed class BrowserProvisioner : IDisposable
         string browser,
         string directory,
         MachineMutex mutex,
-        Stopwatch deadline,
+        AttemptClock deadline,
         AttemptPhase phase)
     {
-        var bytes = ObservedBytes(BrowsersDirectory, 0);
+        var bytes = WeighBrowsersRoot(BrowsersDirectory, 0);
         var lastChange = deadline.Elapsed;
 
         phase.Observed(bytes, deadline.Elapsed, extracting: false);
+
+        using var ticker = new PollTicker(_timers.Clock, _timers.Poll);
 
         while (true)
         {
@@ -1564,7 +1629,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 return (null, acquisition);
             }
 
-            var sample = ObservedBytes(BrowsersDirectory, bytes);
+            var sample = WeighBrowsersRoot(BrowsersDirectory, bytes);
 
             if (sample != bytes)
             {
@@ -1596,11 +1661,11 @@ internal sealed class BrowserProvisioner : IDisposable
                     MutexAcquisition.NotAcquired);
             }
 
-            Thread.Sleep(_timers.Poll);
+            ticker.WaitForNextPoll(_stopping.Token);
         }
     }
 
-    private ProvisioningResult RunInstaller(string browser, BrowserRevision revision, string directory, Stopwatch deadline, AttemptPhase phase)
+    private ProvisioningResult RunInstaller(string browser, BrowserRevision revision, string directory, AttemptClock deadline, AttemptPhase phase)
     {
         _ = Directory.CreateDirectory(BrowsersDirectory);
 
@@ -1675,13 +1740,15 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <param name="deadline">The clock this attempt has been running against.</param>
     /// <param name="phase">Where the sample is published for a caller to read.</param>
     /// <returns><see langword="null"/> when the installer exited on its own.</returns>
-    private string? Watch(IInstallerRun run, string browser, string directory, Stopwatch deadline, AttemptPhase phase)
+    private string? Watch(IInstallerRun run, string browser, string directory, AttemptClock deadline, AttemptPhase phase)
     {
         var extraction = default(TimeSpan?);
-        var bytes = ObservedBytes(BrowsersDirectory, 0);
+        var bytes = WeighBrowsersRoot(BrowsersDirectory, 0);
         var lastChange = deadline.Elapsed;
 
         phase.Observed(bytes, deadline.Elapsed, extracting: false);
+
+        using var ticker = new PollTicker(_timers.Clock, _timers.Poll);
 
         while (!run.HasExited)
         {
@@ -1699,7 +1766,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 ProvisioningLog.Extracting(_logger, browser, (int)deadline.Elapsed.TotalSeconds);
             }
 
-            var sample = ObservedBytes(BrowsersDirectory, bytes);
+            var sample = WeighBrowsersRoot(BrowsersDirectory, bytes);
 
             if (sample != bytes)
             {
@@ -1727,7 +1794,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 return $"Extracting {browser} passed the {Minutes(_timers.ExtractionCap)}-minute cap and was stopped. Nothing usable was left on disk.";
             }
 
-            Thread.Sleep(_timers.Poll);
+            ticker.WaitForNextPoll(_stopping.Token);
         }
 
         return null;
@@ -1758,6 +1825,85 @@ internal sealed class BrowserProvisioner : IDisposable
             > 800 => "The installer said: " + text[^800..],
             _ => "The installer said: " + text,
         };
+    }
+
+    /// <summary>
+    /// How long this attempt has been running, read from the injected clock.
+    /// </summary>
+    /// <remarks>
+    /// <b>It replaced a <c>Stopwatch</c> on 2026-08-20</b>,
+    /// which is the same object with the wall clock welded into it. Everything
+    /// the caps compare against comes from here, so a test that freezes the
+    /// clock freezes the whole detector rather than half of it.
+    /// </remarks>
+    /// <param name="Clock">The clock this attempt is measured against.</param>
+    /// <param name="Started">The timestamp the attempt began at.</param>
+    private readonly record struct AttemptClock(TimeProvider Clock, long Started)
+    {
+        /// <summary>Starts one.</summary>
+        /// <param name="clock">The clock to measure against.</param>
+        /// <returns>The running clock.</returns>
+        public static AttemptClock Start(TimeProvider clock) => new(clock, clock.GetTimestamp());
+
+        /// <summary>How long it has been running.</summary>
+        public TimeSpan Elapsed => Clock.GetElapsedTime(Started);
+    }
+
+    /// <summary>
+    /// The wait between two polls of the browsers root, released by the same
+    /// clock the caps are measured against.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It replaced <c>Thread.Sleep(_timers.Poll)</c> on 2026-08-20, and
+    /// the replacement is what makes the clock seam usable at all.</b> A loop
+    /// whose arithmetic reads an injected clock and whose sleep reads the wall
+    /// clock cannot be driven: a test advancing a frozen clock would be
+    /// advancing it while the product slept for a real second, so the test would
+    /// be exactly as load-dependent as before and would additionally look
+    /// deterministic.
+    /// </para>
+    /// <para>
+    /// <b>A latching event rather than a wait on the timer itself</b>, because
+    /// the tick can arrive while the loop is between the sample and the wait —
+    /// with <see cref="TimeProvider.System"/> that is ordinary scheduling, and
+    /// with a manual clock it is the normal case, since a test advances the
+    /// clock from inside the sampler the loop calls. An
+    /// <see cref="AutoResetEvent"/> keeps that signal, so the wait returns at
+    /// once instead of missing a tick and stopping for ever.
+    /// </para>
+    /// <para>
+    /// <b>It also wakes on shutdown</b>, so the two waits this replaced keep the
+    /// property they had: a process going down does not sit in a poll interval
+    /// first.
+    /// </para>
+    /// </remarks>
+    private sealed class PollTicker : IDisposable
+    {
+        private readonly AutoResetEvent _tick = new(initialState: false);
+        private readonly ITimer _timer;
+
+        /// <summary>Arms a ticker.</summary>
+        /// <param name="clock">The clock that releases each poll.</param>
+        /// <param name="period">How long between polls.</param>
+        public PollTicker(TimeProvider clock, TimeSpan period)
+        {
+            ArgumentNullException.ThrowIfNull(clock);
+
+            _timer = clock.CreateTimer(_ => _ = _tick.Set(), null, period, period);
+        }
+
+        /// <summary>Waits for the next poll, or for shutdown.</summary>
+        /// <param name="stopping">Cancelled when the process is going down.</param>
+        public void WaitForNextPoll(CancellationToken stopping) =>
+            _ = WaitHandle.WaitAny([_tick, stopping.WaitHandle]);
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            _timer.Dispose();
+            _tick.Dispose();
+        }
     }
 
     /// <summary>One provisioning attempt in this process.</summary>

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
 using BrowserAI.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -220,9 +221,29 @@ internal sealed class UpdateService
 
             // Only now. A download is harmless and leaves the package staged for
             // whichever instance turns out to be last; an apply is not.
-            if (_live is null || !_live.AmIAlone())
+            //
+            // ⚠️ The census is read ONCE and its answer is carried into the
+            // sentence, added 2026-08-20. Asking `AmIAlone` and then asking
+            // again for a number to print would be two questions about a
+            // machine that moves between them, and the line would then be able
+            // to say "0 others" beside a refusal that happened because there
+            // was one.
+            var census = _live?.Census() ?? LivenessAnswer.Undetermined(
+                "this process never joined the live set, so it cannot prove anything about the others");
+
+            if (census.State is not Liveness.Alone)
             {
-                UpdateLog.StagedButNotAlone(_logger, candidate.Version);
+                // Guarded because the two clauses are composed rather than
+                // formatted, which CA1873 is right about in general: with the
+                // level off, neither is built.
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    var waitingOn = WhatItIsWaitingOn(census);
+                    var size = Megabytes(candidate.FullPackageSize);
+
+                    UpdateLog.StagedButNotAlone(_logger, candidate.Version, waitingOn, size, clock.Elapsed.TotalSeconds);
+                }
+
                 return UpdateOutcome.StagedButNotAlone;
             }
 
@@ -251,6 +272,33 @@ internal sealed class UpdateService
             return UpdateOutcome.Failed;
         }
     }
+
+    /// <summary>
+    /// What the staged apply is waiting on, in the census's own terms.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-08-20, and it is the same correction the reinstall
+    /// refusal got on the same day.</b> The line this replaces said only that
+    /// <i>another BrowserAI is running</i> — which reads identically whether one
+    /// peer is up or forty, and identically again when the census could not be
+    /// taken at all and the apply is therefore permanently blocked rather than
+    /// temporarily. Those two states need different actions from whoever reads
+    /// the log, so the line has to distinguish them.
+    /// </remarks>
+    /// <param name="census">What the live-instance census answered.</param>
+    /// <returns>One clause.</returns>
+    private static string WhatItIsWaitingOn(LivenessAnswer census) =>
+        census.State is Liveness.Undetermined
+            ? $"the census could not be taken, so solitude cannot be proven and nothing will be applied until it can: {census.Why}"
+            : $"at least {census.Others.ToString(CultureInfo.InvariantCulture)} other BrowserAI process(es) are running out of this install, each proven by a marker file the kernel would not hand over";
+
+    /// <summary>A package size a person can read.</summary>
+    /// <param name="bytes">The count, or 0 when the feed did not say.</param>
+    /// <returns>The figure.</returns>
+    private static string Megabytes(long bytes) =>
+        bytes <= 0
+            ? "a size the feed did not state"
+            : $"{(bytes / 1_000_000d).ToString("F1", CultureInfo.InvariantCulture)} MB";
 
     private async Task DownloadAsync(UpdateCandidate candidate, CancellationToken tripwire)
     {
@@ -371,16 +419,32 @@ internal static partial class UpdateLog
     /// <summary>Staged, but somebody else is running.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="version">What is staged.</param>
+    /// <param name="waitingOn">What the apply is waiting on, in the census's own terms.</param>
+    /// <param name="size">What the staged package weighs.</param>
+    /// <param name="seconds">How long the download that produced it took.</param>
     /// <remarks>
+    /// <para>
     /// Information rather than Warning, and the sentence says why nothing is
     /// wrong: applying would kill every other BrowserAI's browsers, and the
     /// staged package costs nothing to leave where it is.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It says what it is waiting on and how far in it got, since
+    /// 2026-08-20</b> *(previously "because another BrowserAI is running out of
+    /// this install", and nothing else)*. The old line read the same whether one
+    /// peer was up or forty, and read the same again when the census could not
+    /// be taken at all — which is not a wait, it is a permanent block, and the
+    /// two need different actions from whoever finds the line. The size and the
+    /// elapsed seconds are the <i>how far in</i> half: the work is done and
+    /// staged, so what is left is the exit of every other instance rather than
+    /// any more bytes.
+    /// </para>
     /// </remarks>
     [LoggerMessage(
         EventId = 8,
         Level = LogLevel.Information,
-        Message = "Update {Version} is staged and was NOT applied, because another BrowserAI is running out of this install. Applying would terminate every process under the install root, including other agents' browsers. The last instance to exit applies it.")]
-    public static partial void StagedButNotAlone(ILogger logger, string version);
+        Message = "Update {Version} is staged and was NOT applied: {WaitingOn}. Applying would terminate every process under the install root, including other agents' browsers. Nothing more has to be downloaded -- {Size} was fetched in {Seconds:F1} s and is waiting on disk -- so the last instance to exit applies it.")]
+    public static partial void StagedButNotAlone(ILogger logger, string version, string waitingOn, string size, double seconds);
 
     /// <summary>The apply is armed and this process must now end.</summary>
     /// <param name="logger">Where to write.</param>
