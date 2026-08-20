@@ -1097,3 +1097,76 @@ database holds the same credentials — [measured
 recoverable by any process running as the same user. What withholding buys is
 that a password is not written into the one file a model is *invited to read
 back*. It buys nothing against anything that can read the directory at all.
+
+---
+
+## Added 2026-08-20, from the six-commit run
+
+### 15. `AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing` measured 5.2 s for a zero-wait acquire — **OPEN, and it is a decision about the test**
+
+**The primer, for whoever reads this without the run.** That test proves the
+live-marker reclaim *skips* rather than *waits* when a peer holds the gate. Both
+behaviours return `Skipped`, so the only thing that can tell them apart is a
+clock — and the test bounds `Stopwatch.Elapsed` by the product's own
+`LockScopes.LiveInstanceGate`, five seconds. Its comment says, in as many words:
+*"Nothing about a machine's load can approach it, because the work bounded is one
+zero-timeout acquire."*
+
+**That sentence is measurably false on this machine.** One full-suite run out of
+seven on 2026-08-20 reported the test at **5 s 248 ms** and failed the bound. It
+cannot be the acquire: `LiveInstances.ReclaimStaleMarkers` acquires with
+`LockScopes.NeverWaits`, so the call returns without blocking whatever the peer
+is doing. What the stopwatch measured is the **thread being descheduled** —
+`Stopwatch` is wall clock, the suite runs 573 cases unbounded in parallel, and
+the same suite's own duration varied between **1 m 56 s and 3 m 34 s** across six
+consecutive runs from external load alone. **A wall-clock bound of five seconds
+is inside that noise.** Six other full runs on the same tree, three from
+PowerShell and three from Git Bash, were green.
+
+⚠️ **It was not introduced by this work, and that was checked rather than
+assumed.** Nothing changed can make a zero-wait acquire block. The obvious
+counter-hypothesis is load: the one time-ordered log now writes the **whole
+session record durably — `WriteThrough`, flush, atomic rename, re-open — on every
+forwarded browser call**, and the suite forwards hundreds. **The suite's own cost
+did not move.** The 530-case suite at `15fd054` ran in **1 m 57 s**; the 573-case
+suite at the end of this work ran in **1 m 56 s** at its fastest — 43 more cases
+for the same wall clock. What moved is the machine: the *identical* tree ran in
+**1 m 56 s** and in **5 m 59 s** on the same afternoon, and at the slow end this
+test, both real-`claude.exe` registration arms and a real-Firefox arm failed
+together. The load was external and was identified rather than guessed at —
+37 processes of the maintainer's own `C:\Program Files\Mozilla Firefox`, plus
+Discord, Outlook and an indexer — and nothing was terminated to make a number
+look better.
+
+**So the honest statement is: a real-clock bound of five seconds, on a machine
+whose suite duration varies threefold from causes outside the repository.**
+Across thirteen full runs on the final tree, ten were green and three failed on
+one or more of these load-sensitive arms; six of the ten green ones are
+consecutive, three from each shell, which is what [the release
+gate](RELEASING.md#8-run-everything) asks for.
+
+**Nothing was changed about the test.** Weakening the bound, adding a retry or
+quarantining it are all forbidden by the house rules and all wrong: the claim it
+makes is the right claim, and it is the only arm that can tell an instant skip
+from a five-second wait.
+
+**Four directions.**
+
+| # | Direction | What it costs | What it buys |
+|---|---|---|---|
+| **A** | **Correct the comment and leave the bound.** State that the bound is a hang detector against a *product* timeout and that a starved thread can trip it, and accept a rare red | One line, and a test that fails perhaps once in seven full runs — on a machine where the release gate is six runs | Honesty, and nothing else. The 2026-08-20 observation stops being a surprise to the next reader |
+| **B** | **Bound the acquire rather than the wall clock.** Measure inside `ReclaimStaleMarkers` — return how the acquire was attempted, or have the test assert `LockScopes.NeverWaits` is what it passes — and delete the stopwatch | The claim weakens from *it did not wait* to *it asked not to wait*. A future edit that passed a real timeout would still fail, but one that added a `Thread.Sleep` beside the acquire would not | A deterministic assertion with no clock in it, which is what [TESTING.md](TESTING.md) asks for everywhere else |
+| **C** | **Both: assert the argument AND keep a much larger wall-clock backstop** — say sixty seconds, which no scheduling gap on this machine approaches | Two assertions where there was one, and the backstop stops being evidence about *promptness* — it only catches an outright hang | Keeps a hang detector while removing the false positive. It is the shape the rest of the suite already uses |
+| **D** | **Run this one test alone.** Exclude it from the parallel set so the clock is honest | Cannot be expressed without a mechanism the suite does not have, and `HouseRuleTests.NoTestInTheTreeIsSkipped` is deliberately hostile to per-test special cases | A clock that means what it says, at the price of a second way to run tests |
+
+**Recommendation: C**, with A's sentence written into it either way. The property
+worth keeping is *the reclaim does not wait*, and the honest way to state it is
+the argument it passes plus a backstop far enough outside the noise to be about
+hangs rather than about scheduling. **B alone is a real weakening** and should
+not be taken without saying so in the test. **D is a trap**: it buys a clock at
+the cost of a second execution mode, and the first thing that would follow it is
+a second test wanting the same exemption.
+
+**The same question applies to nothing else in the suite today** — this is the
+only arm whose comment claims load cannot reach it, and the claim has now been
+falsified once.
