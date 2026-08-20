@@ -43,6 +43,28 @@ namespace BrowserAI.Runtime;
 /// <c>PLAYWRIGHT_MCP_CAPS</c>, which is why the environment is an allowlist
 /// rather than a strip list.
 /// </para>
+/// <para>
+/// <b><c>allowUnrestrictedFileAccess</c> is written <c>true</c> unconditionally,
+/// with no argument to turn it off.</b> The maintainer's answer of 2026-08-20,
+/// asked whether it should be always on, per mode or per call: <i>"a
+/// always"</i>. Left unset it is upstream's default of <see langword="false"/>,
+/// and that default is a <b>live regression</b> against every pre-BrowserAI way
+/// of running this child: <c>checkFile</c> then refuses any path outside
+/// <c>&lt;session&gt;\output</c> and the child's working directory, and
+/// <c>checkUrlAllowed</c> refuses the <c>file:</c> protocol outright — so
+/// <c>browser_file_upload</c> cannot reach a file the caller already has and
+/// <c>browser_navigate</c> cannot open a local page at all.
+/// <b>Upstream calls it a convenience defence rather than a secure
+/// boundary</b>, in <c>config.d.ts</c>'s own words: <i>"a guardrail to prevent
+/// the LLM from accidentally wandering outside its intended workspace … not a
+/// secure boundary; a deliberate attempt to reach other directories can be
+/// easily worked around, so always rely on client-level permissions for true
+/// security."</i> BrowserAI's caller already holds file tools of its own — the
+/// same reasoning that removed the <c>(tool, mode)</c> permission matrix on
+/// 2026-08-18 — so what the guardrail withholds is reachable one tool call
+/// away, and all it can do here is refuse the caller a thing it is entitled to
+/// while proving nothing.
+/// </para>
 /// </remarks>
 internal static class BrowserConfiguration
 {
@@ -69,6 +91,18 @@ internal static class BrowserConfiguration
 
     /// <summary>The capability a <c>persistent</c> session adds.</summary>
     public const string StorageCapability = "storage";
+
+    /// <summary>
+    /// The key that lifts upstream's workspace guardrail, spelled once so the
+    /// generator and the round trip cannot disagree about it.
+    /// </summary>
+    /// <remarks>
+    /// It is a top-level key rather than one under <c>browser</c>, which is how
+    /// upstream's <c>config.d.ts</c> declares it and how <c>checkFile</c> and
+    /// <c>checkUrlAllowed</c> read it. The reasoning for setting it at all is on
+    /// <see cref="BrowserConfiguration"/> itself.
+    /// </remarks>
+    public const string AllowUnrestrictedFileAccessKey = "allowUnrestrictedFileAccess";
 
     /// <summary>The four levels <c>console.level</c> accepts, most severe first.</summary>
     public static IReadOnlyList<string> ConsoleLevels { get; } = ["error", "warning", "info", "debug"];
@@ -152,6 +186,7 @@ internal static class BrowserConfiguration
         "capabilities",
         "outputDir",
         "saveSession",
+        AllowUnrestrictedFileAccessKey,
         "console.level",
     ];
 
@@ -160,7 +195,7 @@ internal static class BrowserConfiguration
     /// <param name="mode">The mode bound at <c>init</c>.</param>
     /// <param name="browser">
     /// The family this session was created for, read from its own
-    /// <c>lock.json</c> rather than assumed. A profile belongs to the browser
+    /// <c>browserai.json</c> rather than assumed. A profile belongs to the browser
     /// that made it, so generating a Chromium config for a session recorded as
     /// Firefox would point one browser at the other's profile — which upstream
     /// would launch, and which nothing would report.
@@ -331,6 +366,13 @@ internal static class BrowserConfiguration
             writer.WriteString("outputDir", request.OutputDirectory);
             writer.WriteBoolean("saveSession", request.SaveSession);
 
+            // ⚠️ ALWAYS, AND THERE IS NO REQUEST FIELD TO TURN IT OFF. See the
+            // type's remarks: the maintainer's answer was "a always", and
+            // upstream's default of false is a live regression against every
+            // pre-BrowserAI way of running this child. A field here would be a
+            // knob nothing sets and a second state nothing tests.
+            writer.WriteBoolean(AllowUnrestrictedFileAccessKey, true);
+
             writer.WriteStartObject("console");
             writer.WriteString("level", request.ConsoleLevel);
             writer.WriteEndObject();
@@ -419,7 +461,7 @@ internal sealed record BrowserConfigurationRequest
     /// <c>browserai_init</c> applies. ⚠️ <b>Corrected 2026-08-19 (previously
     /// "every caller in this build asks for Chromium").</b> That stopped being
     /// true when Firefox was offered — <see cref="BrowserConfiguration.ForSession"/> passes whatever
-    /// the session's <c>lock.json</c> records. The default survives for the
+    /// the session's <c>browserai.json</c> records. The default survives for the
     /// reason it always had: it keeps the Firefox branch a property of the
     /// session's own record rather than a decision each call site takes, and
     /// <see cref="BrowserConfiguration.ForSurface"/> — the run's own browser-less child — genuinely

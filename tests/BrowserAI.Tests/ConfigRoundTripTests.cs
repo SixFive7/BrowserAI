@@ -137,6 +137,70 @@ internal sealed class ConfigRoundTripTests
         await Assert.That(run.ProfileWasUsed).IsTrue();
     }
 
+    /// <summary>
+    /// Upstream's workspace guardrail is lifted in every config this product
+    /// generates, with no argument that can put it back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Asserted on the generator rather than on a running child, and both
+    /// halves matter.</b> The value is checked here for every mode, both
+    /// families and the run's own browser-less child;
+    /// <see cref="EveryGeneratedOpinionComesBackFromTheChild"/> is what proves
+    /// the child honoured it, because a key upstream discarded would be missing
+    /// from the resolved config it reports.
+    /// </para>
+    /// <para>
+    /// <b>The second half is the one that catches a knob being added back.</b>
+    /// A per-mode or per-call switch would show up here as an arm that generates
+    /// <see langword="false"/>, and the maintainer's answer on 2026-08-20 was
+    /// <i>"a always"</i> — so the absence of a way to write anything else is the
+    /// thing under test, not merely the value on the default path.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryGeneratedConfigLiftsUpstreamsWorkspaceGuardrail()
+    {
+        var refused = new List<string>();
+
+        foreach (var browser in ProvisionedBrowsers.Families)
+        {
+            foreach (var mode in SessionModes.All)
+            {
+                var config = BrowserConfiguration.ForSession(
+                    SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "unrestricted-file-access")),
+                    mode,
+                    browser,
+                    tracing: false,
+                    BrowserConfiguration.DefaultConsoleLevel);
+
+                check($"{browser}/{mode.Name}", config);
+            }
+        }
+
+        check("surface", BrowserConfiguration.ForSurface(Path.Combine(ScratchRoot.Path, "unrestricted-file-access-surface")));
+
+        await Assert.That(string.Join(Environment.NewLine, refused)).IsEmpty();
+
+        void check(string what, GeneratedConfig config)
+        {
+            var opinion = config.Opinions
+                .FirstOrDefault(entry => string.Equals(entry.Path, BrowserConfiguration.AllowUnrestrictedFileAccessKey, StringComparison.Ordinal));
+
+            if (opinion is null)
+            {
+                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' is not written at all, so upstream's default of false applies and 'file://' navigation and any upload from outside the session's output directory are refused");
+                return;
+            }
+
+            if (opinion.Value.ToJsonString() is not "true")
+            {
+                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' was written {opinion.Value.ToJsonString()} rather than true");
+            }
+        }
+    }
+
     [Test]
     public async Task NothingCanReplaceTheCapabilityListOnTheWayIn()
     {

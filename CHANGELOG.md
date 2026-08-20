@@ -180,6 +180,30 @@ has been satisfied in form only.
   a measurement updated by reasoning instead of re-measurement. `docs/reviews/`
   states that rule about itself and it is kept here.
 
+- **`allowUnrestrictedFileAccess` is set in every generated child config, always,
+  with no argument that can turn it off.** The maintainer's answer of 2026-08-20,
+  asked whether it should be always on, per mode or per call: *"a always"*.
+  Upstream's default is `false`, and leaving it there was a **live regression
+  against all four pre-BrowserAI ways of running this child**: `checkUrlAllowed`
+  refuses the `file:` protocol outright, so `browser_navigate` cannot open a local
+  page at all, and `checkFile` refuses any path outside `<session>\output` and the
+  child's working directory, so `browser_file_upload` cannot reach a file the
+  caller already has.
+
+  **Upstream calls it a convenience defence rather than a secure boundary**, in
+  `config.d.ts`'s own words — *"a guardrail to prevent the LLM from accidentally
+  wandering outside its intended workspace … not a secure boundary; a deliberate
+  attempt to reach other directories can be easily worked around, so always rely on
+  client-level permissions for true security"* — and BrowserAI's caller already
+  holds file tools of its own. That is the same reasoning that removed the
+  `(tool, mode)` permission matrix on 2026-08-18: what the guardrail withholds is
+  reachable one tool call away, so all it can do here is refuse the caller a thing
+  it is entitled to while proving nothing.
+  `ConfigRoundTripTests.EveryGeneratedConfigLiftsUpstreamsWorkspaceGuardrail`
+  checks the value for both families, every mode and the run's own browser-less
+  child; the key is in `RequiredSessionOpinions`, so the round trip through
+  `browser_get_config` fails if the child ever stops honouring it.
+
 - **Provisioning is stopped when it stops making progress, not when it has taken
   too long.** `ProvisioningTimers.AbsoluteCap` — 45 minutes on the whole install —
   is replaced by `StallCap`, ten minutes with **nothing written at all**. A total
