@@ -53,7 +53,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // Row 2 — a path that is not a session.
         var absent = Path.Combine(sessions.Root, "never-a-session");
-        var unknown = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = absent });
+        var unknown = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = absent, ["why"] = "the suite exercising this call" });
 
         Match(
             TextOf(unknown),
@@ -75,7 +75,7 @@ internal sealed partial class ErrorCatalogueTests
         Directory.CreateDirectory(stranded);
         File.Copy(Path.Combine(closed, SessionLayout.LockFileName), Path.Combine(stranded, SessionLayout.LockFileName));
 
-        var notOpen = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = stranded });
+        var notOpen = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = stranded, ["why"] = "the suite exercising this call" });
 
         Match(
             TextOf(notOpen),
@@ -83,12 +83,33 @@ internal sealed partial class ErrorCatalogueTests
             SessionErrors.SessionNotOpen("browser_navigate", stranded));
 
         // Row 3, through the session argument rather than through `directory`.
-        var relative = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = "relative\\path" });
+        var relative = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = "relative\\path", ["why"] = "the suite exercising this call" });
 
         Match(
             TextOf(relative),
             nameof(SessionErrors.DirectoryNotAbsolute),
             SessionErrors.DirectoryNotAbsolute("session", "relative\\path"));
+
+        // Row 1's companion — a real session, named correctly, with no `why`.
+        //
+        // ⚠️ THE SESSION HAS TO BE REAL AND OPEN, which is what makes this arm
+        // worth writing rather than obvious: the `why` refusal is deliberately
+        // BEHIND routing and provisioning, so a call that also names an unknown
+        // session is answered by row 2 and never reaches it. Written against the
+        // rig's own open session for that reason.
+        var noWhy = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            ["session"] = rig.Session!,
+        });
+
+        await Assert.That((bool?)noWhy["isError"]).IsTrue();
+        Match(TextOf(noWhy), nameof(SessionErrors.WhyMissing), SessionErrors.WhyMissing("browser_navigate"));
+
+        // And nothing was forwarded, which is the one fact the sentence promises
+        // and the one a model acts on when it retries.
+        await Assert.That(sessions.SessionChildren.Sum(child =>
+            child.ToolCallsReceived.Count(tool => tool == "browser_navigate"))).IsEqualTo(0);
     }
 
     [Test]
@@ -157,7 +178,7 @@ internal sealed partial class ErrorCatalogueTests
             SessionErrors.DirectoryOnANetworkPath("directory", Share, "it is a UNC path"));
 
         // And through resume, because a guard on one door is not a guard.
-        var uncResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = Share });
+        var uncResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)uncResume["isError"]).IsTrue();
         await Assert.That(TextOf(uncResume)).Contains("is on a network path");
@@ -186,6 +207,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var aliasedResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
+            ["why"] = "the suite exercising this call",
             ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
         });
 
@@ -245,6 +267,7 @@ internal sealed partial class ErrorCatalogueTests
         // Row 10 — an argument resume does not accept.
         var withBrowser = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
+            ["why"] = "the suite exercising this call",
             ["directory"] = original,
             ["browser"] = "firefox",
         });
@@ -294,7 +317,7 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "the unattended session an annotation call would hang",
         });
 
-        var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory });
+        var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         Match(
@@ -308,7 +331,7 @@ internal sealed partial class ErrorCatalogueTests
         var unknown = await rig.Client.SendAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_not_a_real_tool",
-            ["arguments"] = new JsonObject { ["session"] = directory },
+            ["arguments"] = new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" },
         });
 
         await Assert.That(sessions.SessionChildren.Any(child =>
@@ -581,6 +604,7 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["url"] = "data:text/html,x",
             [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -927,16 +951,26 @@ internal sealed partial class ErrorCatalogueTests
         // in step about one state, and the census would then require three
         // provocations of the same condition to prove the same thing.
         //
+        // ⚠️ **Corrected 2026-08-20 to 26 (previously 25).** `WhyMissing`
+        // arrived with the required `why` on every session-scoped call. It is
+        // the second row here written for a caller that omitted a required
+        // argument, and it does not read like the first: `SessionMissing` says
+        // what a session IS, because a model that omitted it does not know;
+        // this one says what to WRITE, because a model that omitted `why` will
+        // otherwise retry with a restatement of the tool name, which satisfies
+        // the schema and records nothing.
+        //
         // Every one of them was **deleted rather than orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
-        await Assert.That(rows.Count).IsEqualTo(25);
+        await Assert.That(rows.Count).IsEqualTo(26);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>
         await CallAsync(rig, "browser_take_screenshot", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = filename,
         });
 
@@ -1036,7 +1070,7 @@ internal sealed partial class ErrorCatalogueTests
         Directory.CreateDirectory(documents);
         await File.WriteAllTextAsync(Path.Combine(documents, "something-precious.txt"), "keep me");
 
-        var refusedNoRecord = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = documents });
+        var refusedNoRecord = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = documents, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)refusedNoRecord["isError"]).IsTrue();
         await Assert.That(Directory.Exists(documents)).IsTrue();
@@ -1050,7 +1084,7 @@ internal sealed partial class ErrorCatalogueTests
             Path.Combine(futureSchema, SessionLayout.LockFileName),
             SwapFirstNumber(valid, "schemaVersion", 9999));
 
-        var refusedSchema = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = futureSchema });
+        var refusedSchema = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = futureSchema, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)refusedSchema["isError"]).IsTrue();
         await Assert.That(File.Exists(Path.Combine(futureSchema, SessionLayout.LockFileName))).IsTrue();
@@ -1063,14 +1097,14 @@ internal sealed partial class ErrorCatalogueTests
             Path.Combine(unknownKey, SessionLayout.LockFileName),
             valid.TrimEnd().TrimEnd('}') + ",\n  \"aKeyNoBuildOfBrowserAiHasEverWritten\": true\n}");
 
-        var refusedUnknown = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = unknownKey });
+        var refusedUnknown = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = unknownKey, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)refusedUnknown["isError"]).IsTrue();
         await Assert.That(File.Exists(Path.Combine(unknownKey, SessionLayout.LockFileName))).IsTrue();
 
         // And destroy still works on the real one, so the three refusals above
         // are not a tool that refuses everything.
-        var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = real });
+        var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = real, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
         await Assert.That(Directory.Exists(real)).IsFalse();

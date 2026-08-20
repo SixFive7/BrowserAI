@@ -155,6 +155,7 @@ internal sealed class SessionDestroyTests
 
         var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject
         {
+            ["why"] = "the suite exercising this call",
             ["directory"] = directory,
         });
 
@@ -250,6 +251,7 @@ internal sealed class SessionDestroyTests
 
             destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject
             {
+                ["why"] = "the suite exercising this call",
                 ["directory"] = directory,
             });
 
@@ -364,6 +366,7 @@ internal sealed class SessionDestroyTests
 
             var destroyed = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject
             {
+                ["why"] = "the suite exercising this call",
                 ["directory"] = directory,
             });
 

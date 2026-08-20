@@ -93,6 +93,28 @@ internal static class SessionToolSurface
     /// </remarks>
     public const string ReinstallBrowser = "browserai_reinstall_browser";
 
+    /// <summary>
+    /// The second parameter every session-scoped call gains: <b>why</b> the
+    /// caller is making it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It rides the same path <see cref="SessionParameter"/> does</b> —
+    /// injected into the <see cref="JsonNode"/> the child sent, appended to
+    /// <c>properties</c> and to <c>required</c>, with everything upstream wrote
+    /// left where it was. The golden snapshot is unaffected: it records what
+    /// upstream <i>offers</i>, captured from the child before the rewrite.
+    /// </para>
+    /// <para>
+    /// <b>It goes on calls that NAME a session and nowhere else.</b>
+    /// <c>browserai_list</c> is directory-scoped and
+    /// <c>browserai_reinstall_browser</c> is machine-scoped, so neither has a
+    /// session record to write into; <c>browserai_init</c> is excluded for a
+    /// different reason — see its own <c>purpose</c>.
+    /// </para>
+    /// </remarks>
+    public const string WhyParameter = "why";
+
     /// <summary>The parameter every upstream tool gains.</summary>
     /// <remarks>
     /// Named <c>session</c> rather than <c>handle</c> because it is not one: it
@@ -263,6 +285,23 @@ internal static class SessionToolSurface
         "The session directory, exactly as browserai_init or browserai_resume returned it. "
         + "This is the session: BrowserAI has no default and will not guess one.";
 
+    /// <summary>
+    /// What <c>why</c> asks for, on an upstream browser tool.
+    /// </summary>
+    /// <remarks>
+    /// <b>Why rather than what, and the description has to do that work.</b> The
+    /// tool name already says what the call does, so a restatement of it is a
+    /// sentence nobody can use — <i>"clicking the submit button"</i> beside
+    /// <c>browser_click</c> is noise. What no one can reconstruct afterwards is
+    /// the intent: what was being established, checked or ruled out. The
+    /// examples are in the string because a model given only the instruction
+    /// writes the restatement.
+    /// </remarks>
+    private const string WhyDescription =
+        "Why you are making this call — not what it does; the tool name already says that. "
+        + "One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". "
+        + "It goes in this session's log, which is what lets the next agent to open the directory — or you, tomorrow — read back what was being attempted rather than only which tools ran.";
+
     private const string NameMember = "name";
 
     // ⚠️ DELETED 2026-08-18: `AppendModeNote`, which appended
@@ -305,15 +344,37 @@ internal static class SessionToolSurface
             ["description"] = SessionDescription,
         };
 
+        properties[WhyParameter] = new JsonObject
+        {
+            ["type"] = "string",
+            ["description"] = WhyDescription,
+        };
+
         if (schema[RequiredMember] is not JsonArray required)
         {
             required = [];
             schema[RequiredMember] = required;
         }
 
-        if (!required.Any(entry => entry is JsonValue value && value.TryGetValue(out string? name) && name == SessionParameter))
+        Require(required, SessionParameter);
+        Require(required, WhyParameter);
+    }
+
+    /// <summary>
+    /// Appends one name to a schema's <c>required</c> array unless it is already
+    /// there.
+    /// </summary>
+    /// <remarks>
+    /// Appended rather than inserted, so upstream's own required names keep
+    /// their order — the same reason the properties are appended.
+    /// </remarks>
+    /// <param name="required">The schema's <c>required</c> array.</param>
+    /// <param name="name">The property to require.</param>
+    private static void Require(JsonArray required, string name)
+    {
+        if (!required.Any(entry => entry is JsonValue value && value.TryGetValue(out string? existing) && existing == name))
         {
-            required.Add((JsonNode)SessionParameter);
+            required.Add((JsonNode)name);
         }
     }
 
@@ -350,12 +411,13 @@ internal static class SessionToolSurface
             {
                 ["directory"] = Property("string", "Absolute path of an existing session directory, on a LOCAL drive and spelled the way the filesystem spells it — the same two refusals as init, each naming the spelling to use instead."),
                 ["purpose"] = Property("string", "Optional. Appended to the recorded purpose rather than replacing it, so the directory keeps saying what it has been for."),
+                [WhyParameter] = Property("string", "Why you are taking this session over right now — not what resume does. One short clause: \"picking up the checkout bug after the overnight run stopped\". It goes in this session's log, beside the browser calls that follow it, so a later reader sees who arrived and what they came for."),
                 ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false, and it is NOT read back from what the session was last time — every run says what it wants. Accepted here as well as on init because the case that matters is a session created headless that now needs a human to sign in."),
                 ["debug"] = Property("boolean", "Raise this session's own log level for its life. Accepted here as well as on init, because the interesting case is almost always a session that is already running badly. Defaults to false."),
                 ["tracing"] = Property("boolean", "Record this run of the session into its output directory. Defaults to false."),
                 ["consoleLevel"] = Enumerated($"Which console messages browser tools return. Defaults to '{BrowserConfiguration.DefaultConsoleLevel}'.", BrowserConfiguration.ConsoleLevels),
             },
-            ["directory"]);
+            ["directory", WhyParameter]);
 
         yield return Tool(
             List,
@@ -377,8 +439,9 @@ internal static class SessionToolSurface
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of the session directory to delete."),
+                [WhyParameter] = Property("string", "Why this session is being deleted — not what destroy does. One short clause: \"the bug is reproduced and written up\", or \"this was a copy nobody needed\". It is the last entry in a log that is about to be deleted with everything else, so it is written for the answer this call returns rather than for a later reader."),
             },
-            ["directory"]);
+            ["directory", WhyParameter]);
 
         yield return Tool(
             SetPurpose,
@@ -388,8 +451,9 @@ internal static class SessionToolSurface
             {
                 [SessionParameter] = Property("string", "Absolute path of the session directory."),
                 ["purpose"] = Property("string", "The new one-sentence purpose."),
+                [WhyParameter] = Property("string", "Why you are changing the purpose right now — not what the new purpose is; that is the 'purpose' argument. One short clause: \"the original login bug turned out to be a redirect loop\". It goes in this session's log, in order, beside the browser calls that led to the change."),
             },
-            [SessionParameter, "purpose"]);
+            [SessionParameter, "purpose", WhyParameter]);
 
         yield return Tool(
             ReinstallBrowser,

@@ -255,6 +255,7 @@ internal sealed class LosslessPassthroughTests
             ["arguments"] = new JsonObject
             {
                 [SessionToolSurface.SessionParameter] = rig.Session!,
+                [SessionToolSurface.WhyParameter] = "the suite exercising this call",
                 ["filename"] = "login.png",
             },
         });
@@ -307,6 +308,7 @@ internal sealed class LosslessPassthroughTests
             ["arguments"] = new JsonObject
             {
                 [SessionToolSurface.SessionParameter] = rig.Session!,
+                [SessionToolSurface.WhyParameter] = "the suite exercising this call",
                 ["filename"] = "login.png",
             },
         });
@@ -541,6 +543,14 @@ internal sealed class LosslessPassthroughTests
     /// and the two vendor extensions a typed round trip drops. Byte-identity
     /// itself now lives on <c>tools/call</c>, where nothing is rewritten.
     /// </remarks>
+    /// <remarks>
+    /// ⚠️ <b>Two injected parameters since 2026-08-20 (previously one).</b>
+    /// <c>why</c> rides the same path <c>session</c> does — mutating the
+    /// <see cref="JsonNode"/> the child sent rather than rebuilding it — so this
+    /// test is what says the second one did not disturb the first: <c>url</c>
+    /// still holds position 0, both are appended in order, and upstream's own
+    /// <c>required</c> entry is still ahead of both.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ToolsListKeepsUpstreamsNamesOrderAndExtensionsThroughTheRewrite()
@@ -571,18 +581,19 @@ internal sealed class LosslessPassthroughTests
 
         var navigate = response.Result["tools"]![SessionToolSurface.Names.Count]!;
 
-        // `session` is appended, so `url` keeps its position, and it is required
-        // alongside whatever upstream already required.
+        // `session` and `why` are appended, so `url` keeps its position, and
+        // both are required alongside whatever upstream already required.
         await Assert.That(string.Join(",", navigate["inputSchema"]!["properties"]!.AsObject().Select(property => property.Key)))
-            .IsEqualTo("url,session");
+            .IsEqualTo("url,session,why");
 
-        await Assert.That(navigate["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["url","session"]""");
+        await Assert.That(navigate["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["url","session","why"]""");
 
-        // A tool that declared no properties at all still gains it, rather than
-        // being skipped because there was nothing to append to.
+        // A tool that declared no properties at all still gains both, rather
+        // than being skipped because there was nothing to append to.
         var click = response.Result["tools"]![SessionToolSurface.Names.Count + 1]!;
         await Assert.That(click["inputSchema"]!["properties"]!["session"]).IsNotNull();
-        await Assert.That(click["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["session"]""");
+        await Assert.That(click["inputSchema"]!["properties"]!["why"]).IsNotNull();
+        await Assert.That(click["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["session","why"]""");
     }
 
     [Test]
@@ -682,9 +693,72 @@ internal sealed class LosslessPassthroughTests
         if (rig.Session is { } session)
         {
             arguments["session"] = session;
+            arguments["why"] = "the suite exercising this call";
         }
 
         return new JsonObject { ["name"] = tool, ["arguments"] = arguments };
+    }
+
+    /// <summary>
+    /// Neither injected parameter reaches the child, and everything the caller
+    /// wrote beside them does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The child has never heard of <c>session</c> or <c>why</c>; BrowserAI
+    /// put them in the schema.</b> Forwarding either would hand upstream's zod
+    /// parse a property its own schema does not declare, and the failure mode is
+    /// not a clean error — it is upstream's own decision about unknown keys,
+    /// taken per tool, which this project does not control and must not depend
+    /// on.
+    /// </para>
+    /// <para>
+    /// <b>Asserted over the frame the double actually received</b>, rather than
+    /// over the arguments object the test built: the strip happens on a clone
+    /// inside the proxy, so a version that stripped the caller's own node
+    /// instead would pass an in-process check and corrupt a request the SDK may
+    /// still read.
+    /// </para>
+    /// <para>
+    /// <b>And the positive control is the point.</b> A strip that removed
+    /// everything would satisfy "neither is present" perfectly, so <c>url</c>
+    /// and a vendor key nobody declared are both required to survive.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NeitherInjectedParameterReachesTheChildAndEverythingElseDoes()
+    {
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync();
+
+        _ = await rig.Client.SendAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject
+            {
+                ["url"] = "data:text/html,<h1>ok</h1>",
+                [SessionToolSurface.SessionParameter] = rig.Session!,
+                [SessionToolSurface.WhyParameter] = "establishing that the page loads at all before anything else is tried",
+                ["x-caller-extension"] = "kept",
+            },
+        });
+
+        var forwarded = rig.Child.FramesReceived
+            .Select(FrameChannel.TextOf)
+            .Last(frame => frame.Contains("browser_navigate", StringComparison.Ordinal));
+
+        var arguments = JsonNode.Parse(forwarded)!["params"]!["arguments"]!.AsObject();
+
+        await Assert.That(arguments[SessionToolSurface.SessionParameter]).IsNull();
+        await Assert.That(arguments[SessionToolSurface.WhyParameter]).IsNull();
+
+        // The whole frame, not only the arguments object: a `why` left anywhere
+        // in the forwarded params is a `why` upstream may act on.
+        await Assert.That(forwarded).DoesNotContain("establishing that the page loads");
+
+        // The positive control.
+        await Assert.That((string?)arguments["url"]).IsEqualTo("data:text/html,<h1>ok</h1>");
+        await Assert.That((string?)arguments["x-caller-extension"]).IsEqualTo("kept");
     }
 
     private static string Text(byte[] span) => Encoding.UTF8.GetString(span);

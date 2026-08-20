@@ -439,7 +439,7 @@ internal sealed class ReinstallBrowserTests
             Path.Combine(built, SessionLayout.LockFileName),
             Path.Combine(session, SessionLayout.LockFileName));
 
-        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = built });
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = built, ["why"] = "the suite exercising this call" });
 
         using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
 
@@ -453,7 +453,7 @@ internal sealed class ReinstallBrowserTests
             ["purpose"] = "a session that must not start while the browsers are being replaced",
         }));
 
-        var refusedResume = TextOf(await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = session }));
+        var refusedResume = TextOf(await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = session, ["why"] = "the suite exercising this call" }));
 
         foreach (var text in new[] { refusedInit, refusedResume })
         {
@@ -901,7 +901,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(refused).Contains(second);
         await Assert.That(refused).Contains("2 session(s) are holding it");
 
-        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = first });
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = first, ["why"] = "the suite exercising this call" });
 
         // ⚠️ THE ARM THAT MATTERS. One is gone and the other still holds it, so
         // the claim must still be refused. A design that kept one claim per
@@ -911,7 +911,7 @@ internal sealed class ReinstallBrowserTests
             await Assert.That(stillHeld).IsNull();
         }
 
-        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = second });
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = second, ["why"] = "the suite exercising this call" });
 
         using var free = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
 

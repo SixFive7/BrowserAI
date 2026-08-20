@@ -252,6 +252,7 @@ internal sealed class ArtifactRoutingTests
         var answer = await CallAsync(rig, "browser_take_screenshot", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = filename,
         });
 
@@ -277,6 +278,7 @@ internal sealed class ArtifactRoutingTests
         var answer = await CallAsync(rig, "browser_take_screenshot", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = "login.png",
         });
 
@@ -319,6 +321,7 @@ internal sealed class ArtifactRoutingTests
         var element = await CallAsync(rig, "browser_take_screenshot", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = "button.png",
             ["target"] = "e17",
         });
@@ -326,6 +329,7 @@ internal sealed class ArtifactRoutingTests
         var body = await CallAsync(rig, "browser_network_request", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = "body.txt",
             ["part"] = "response-body",
         });
@@ -399,6 +403,7 @@ internal sealed class ArtifactRoutingTests
         var jpeg = await CallAsync(rig, "browser_take_screenshot", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["type"] = "jpeg",
         });
 
@@ -412,6 +417,7 @@ internal sealed class ArtifactRoutingTests
         var pdf = await CallAsync(rig, "browser_pdf_save", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That(TextOf(pdf)).Contains(".pdf");
@@ -492,6 +498,7 @@ internal sealed class ArtifactRoutingTests
         _ = await CallAsync(rig, "browser_navigate", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["url"] = "https://shop.example.com/checkout/step-3",
         });
 
@@ -510,6 +517,7 @@ internal sealed class ArtifactRoutingTests
         var console = await CallAsync(rig, "browser_console_messages", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That(TextOf(console)).DoesNotContain("BrowserAI routed");
@@ -536,6 +544,7 @@ internal sealed class ArtifactRoutingTests
         var answer = await CallAsync(rig, "browser_navigate", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["url"] = "data:text/html,<h1>ok</h1>",
         });
 
@@ -725,12 +734,14 @@ internal sealed class ArtifactRoutingTests
         _ = await CallAsync(rig, "browser_storage_state", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = "auth.json",
         });
 
         _ = await CallAsync(rig, "browser_set_storage_state", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
             ["filename"] = "auth.json",
         });
 
@@ -840,7 +851,7 @@ internal sealed class ArtifactRoutingTests
 
     private static async Task<JsonObject> ScreenshotAsync(McpTestHarness rig, string? filename)
     {
-        var arguments = new JsonObject { [SessionToolSurface.SessionParameter] = rig.Session! };
+        var arguments = new JsonObject { [SessionToolSurface.SessionParameter] = rig.Session!, [SessionToolSurface.WhyParameter] = "the suite exercising this call" };
 
         if (filename is not null)
         {

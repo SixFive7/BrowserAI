@@ -140,8 +140,21 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", unrouted)).IsEmpty();
     }
 
+    /// <summary>
+    /// Every upstream tool gains BrowserAI's two injected parameters, in order,
+    /// and loses none of its own.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Two since 2026-08-20 (previously <c>session</c> alone, and the test
+    /// was named <c>EveryUpstreamToolGainsTheSessionParameterAndNoneLosesItsOwn</c>).</b>
+    /// <c>why</c> rides the same path, and the ORDER is asserted rather than
+    /// mere presence: both are appended, upstream's own properties keep their
+    /// positions, and <c>session</c> comes before <c>why</c> — a rewrite that
+    /// reordered would cost a prompt-cache miss per call with nothing failing.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryUpstreamToolGainsTheSessionParameterAndNoneLosesItsOwn()
+    public async Task EveryUpstreamToolGainsBothInjectedParametersAndNoneLosesItsOwn()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
@@ -161,22 +174,31 @@ internal sealed class VerticalSliceTests
             var properties = schema["properties"]?.AsObject();
             var required = schema["required"]?.AsArray().Select(entry => (string)entry!).ToList() ?? [];
 
-            if (properties?["session"] is null)
+            foreach (var injected in new[] { SessionToolSurface.SessionParameter, SessionToolSurface.WhyParameter })
             {
-                offenders.Add($"{name}: no session property");
-            }
+                if (properties?[injected] is null)
+                {
+                    offenders.Add($"{name}: no {injected} property");
+                }
 
-            if (!required.Contains("session", StringComparer.Ordinal))
-            {
-                offenders.Add($"{name}: session is not required");
+                if (!required.Contains(injected, StringComparer.Ordinal))
+                {
+                    offenders.Add($"{name}: {injected} is not required");
+                }
             }
 
             // Appended, never inserted: upstream's own properties keep their
-            // order, and `session` is last. A rewrite that reordered would cost
-            // a prompt-cache miss per call with nothing failing.
-            if (properties is { Count: > 1 } && properties.Last().Key is not "session")
+            // order, and the two injected ones are last in that order. A rewrite
+            // that reordered would cost a prompt-cache miss per call with
+            // nothing failing.
+            if (properties is { Count: > 2 })
             {
-                offenders.Add($"{name}: session is not the last property");
+                var tail = properties.TakeLast(2).Select(property => property.Key).ToList();
+
+                if (string.Join(",", tail) != $"{SessionToolSurface.SessionParameter},{SessionToolSurface.WhyParameter}")
+                {
+                    offenders.Add($"{name}: the last two properties are {string.Join(",", tail)} rather than session,why");
+                }
             }
         }
 

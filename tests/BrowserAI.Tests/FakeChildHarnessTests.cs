@@ -511,6 +511,7 @@ internal sealed class FakeChildHarnessTests
         if (rig.Session is { } session)
         {
             arguments["session"] = session;
+            arguments["why"] = "the suite exercising this call";
         }
 
         return new JsonObject { ["name"] = tool, ["arguments"] = arguments };

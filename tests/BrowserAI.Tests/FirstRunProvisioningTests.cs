@@ -199,6 +199,7 @@ internal sealed class FirstRunProvisioningTests
         {
             ["url"] = SliceRun.TargetUrl,
             [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -213,6 +214,7 @@ internal sealed class FirstRunProvisioningTests
         var config = await CallAsync(client, "browser_get_config", new JsonObject
         {
             [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That((bool?)config["isError"]).IsTrue();
@@ -250,6 +252,7 @@ internal sealed class FirstRunProvisioningTests
         {
             ["url"] = SliceRun.TargetUrl,
             [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That((bool?)navigate["isError"]).IsNotEqualTo(true);

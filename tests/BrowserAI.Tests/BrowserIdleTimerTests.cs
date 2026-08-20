@@ -248,7 +248,7 @@ internal sealed partial class BrowserIdleTimerTests
             _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
             {
                 ["name"] = "browser_navigate",
-                ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session },
+                ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session, ["why"] = "the suite exercising this call" },
             });
 
             clock.AdvanceTicks(ShortPeriod.Ticks - ManualClock.OneTick);
@@ -333,7 +333,7 @@ internal sealed partial class BrowserIdleTimerTests
         var id = await harness.Client.BeginAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session! },
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = harness.Session!, ["why"] = "the suite exercising this call" },
         });
 
         // The event that says the call is really outstanding: the double records
@@ -434,7 +434,7 @@ internal sealed partial class BrowserIdleTimerTests
         var navigate = await harness.Client.RoundTripAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session! },
+            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session!, ["why"] = "the suite exercising this call" },
         });
 
         // ⚠️ **There is deliberately no assertion here that the close came no
@@ -493,7 +493,7 @@ internal sealed partial class BrowserIdleTimerTests
         var again = await harness.Client.RoundTripAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session! },
+            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = harness.Session!, ["why"] = "the suite exercising this call" },
         });
 
         var text = string.Join("\n", (again["content"]?.AsArray() ?? []).Select(block => (string?)block!["text"] ?? string.Empty));
@@ -550,7 +550,7 @@ internal sealed partial class BrowserIdleTimerTests
         _ = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = session },
+            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = session, ["why"] = "the suite exercising this call" },
         });
 
         // Read while the browser is up: a job holding only BrowserAI itself

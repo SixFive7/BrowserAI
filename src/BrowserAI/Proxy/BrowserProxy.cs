@@ -423,6 +423,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         var tool = name ?? "<none>";
         var session = (arguments?[SessionToolSurface.SessionParameter] as JsonValue)?.GetValue<string>();
+        var why = (arguments?[SessionToolSurface.WhyParameter] as JsonValue)?.GetValue<string>();
 
         // Mandatory, with no fall-through to the run's own child. Before this
         // step a call naming no session was answered by the surface child, which
@@ -481,6 +482,28 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ REQUIRED, and refused here rather than left to the child. `why` is
+        // injected into every upstream schema beside `session`, so a caller that
+        // omits it is not following a schema it was given -- and the child has
+        // never heard of the parameter, so forwarding the call would succeed and
+        // the session's log would silently lose the entry the whole feature
+        // exists for. The refusal is deliberately AFTER routing and provisioning:
+        // a call that names an unknown session or a browser that is still
+        // downloading has a more useful thing to be told first, and both of
+        // those refusals already say what to do next.
+        if (string.IsNullOrWhiteSpace(why))
+        {
+            ProxyLog.WhyMissing(_logger, tool, live.Location.FullPath);
+            await RefuseAsync(caller, request.Id, SessionErrors.WhyMissing(tool), cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // Written before the call is forwarded, so a call that never returns --
+        // a navigation that hangs, a child that dies -- still left a record of
+        // what it was for. A log line written on the way back would be missing
+        // from exactly the calls anybody investigates.
+        SessionToolLog.Why(live.Logger, tool, why);
+
         // §F's first half, and it happens before the child hears about the call:
         // a `filename` is rewritten into the folder its generator prefix
         // implies, so the file is born in the right place rather than swept
@@ -501,14 +524,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        // The child has never heard of `session`; BrowserAI added it. Removed
-        // from a CLONE rather than from the caller's own node, because the
-        // request object is the SDK's and may still be read after this.
+        // The child has never heard of `session` or `why`; BrowserAI added both.
+        // Removed from a CLONE rather than from the caller's own node, because
+        // the request object is the SDK's and may still be read after this.
         var forwarded = request.Params?.DeepClone() as JsonObject;
 
         if (forwarded?["arguments"] is JsonObject cloned)
         {
             _ = cloned.Remove(SessionToolSurface.SessionParameter);
+            _ = cloned.Remove(SessionToolSurface.WhyParameter);
         }
 
         if (plan is not null)
@@ -942,6 +966,23 @@ internal static partial class ProxyLog
         Level = LogLevel.Information,
         Message = "'{Tool}' was refused on the session at {Session}: it is not in this build's tools/list and would have blocked until this run was killed.")]
     public static partial void ToolRefused(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A session-scoped call arrived without the <c>why</c> its schema requires.
+    /// </summary>
+    /// <remarks>
+    /// Warning rather than Information: the refusal is correct, but a caller
+    /// repeatedly omitting a required parameter is a client that is not reading
+    /// the schema, and that is worth seeing without turning anything on.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 14,
+        Level = LogLevel.Warning,
+        Message = "'{Tool}' on the session at {Session} arrived without 'why', which its schema requires. Nothing was forwarded.")]
+    public static partial void WhyMissing(ILogger logger, string tool, string session);
 
     /// <summary>
     /// Upstream's install advice was replaced, and byte-identity was given up to

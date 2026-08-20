@@ -776,7 +776,7 @@ internal sealed partial class SaturationTests
                     var navigated = await client.RoundTripAsync("tools/call", new JsonObject
                     {
                         ["name"] = "browser_navigate",
-                        ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = Session },
+                        ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = Session, ["why"] = "the suite exercising this call" },
                     });
 
                     if ((bool?)navigated["isError"] is true)
@@ -793,13 +793,13 @@ internal sealed partial class SaturationTests
                     _ = await client.RoundTripAsync("tools/call", new JsonObject
                     {
                         ["name"] = LiveSession.BrowserCloseTool,
-                        ["arguments"] = new JsonObject { ["session"] = Session },
+                        ["arguments"] = new JsonObject { ["session"] = Session, ["why"] = "the suite exercising this call" },
                     });
 
                     var again = await client.RoundTripAsync("tools/call", new JsonObject
                     {
                         ["name"] = "browser_navigate",
-                        ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = Session },
+                        ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = Session, ["why"] = "the suite exercising this call" },
                     });
 
                     if ((bool?)again["isError"] is true)
@@ -825,7 +825,7 @@ internal sealed partial class SaturationTests
                 _ = await client.RoundTripAsync("tools/call", new JsonObject
                 {
                     ["name"] = SessionToolSurface.Destroy,
-                    ["arguments"] = new JsonObject { ["directory"] = Session },
+                    ["arguments"] = new JsonObject { ["directory"] = Session, ["why"] = "the suite exercising this call" },
                 });
 
                 return report;

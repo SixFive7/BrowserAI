@@ -187,7 +187,7 @@ internal sealed class SessionPolicyTests
         var answer = await rig.Client.SendAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_a_tool_from_the_future",
-            ["arguments"] = new JsonObject { ["session"] = directory },
+            ["arguments"] = new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" },
         });
 
         // The child was asked, which is the whole claim. Before 2026-08-18 this
@@ -260,7 +260,7 @@ internal sealed class SessionPolicyTests
             var callsBefore = sessions.SessionChildren.Sum(child =>
                 child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool));
 
-            var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory });
+            var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
             var text = TextOf(refused);
 
             await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -392,6 +392,7 @@ internal sealed class SessionPolicyTests
                         ["arguments"] = new JsonObject
                         {
                             ["session"] = directories[name],
+                            ["why"] = "the suite exercising this call",
                             ["round"] = round,
                         },
                     }));
@@ -417,7 +418,7 @@ internal sealed class SessionPolicyTests
             requests.Add(("tools/call", new JsonObject
             {
                 ["name"] = SessionToolSurface.Destroy,
-                ["arguments"] = new JsonObject { ["directory"] = churn },
+                ["arguments"] = new JsonObject { ["directory"] = churn, ["why"] = "the suite exercising this call" },
             }));
         }
 

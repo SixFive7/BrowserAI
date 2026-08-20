@@ -168,7 +168,7 @@ internal sealed record SliceRun(
         var navigate = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
-            ["arguments"] = new JsonObject { ["url"] = TargetUrl, ["session"] = session },
+            ["arguments"] = new JsonObject { ["url"] = TargetUrl, ["session"] = session, ["why"] = "the suite exercising this call" },
         }).ConfigureAwait(false);
 
         var text = string.Join(
@@ -187,7 +187,7 @@ internal sealed record SliceRun(
         var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_take_screenshot",
-            ["arguments"] = new JsonObject { ["session"] = session },
+            ["arguments"] = new JsonObject { ["session"] = session, ["why"] = "the suite exercising this call" },
         }).ConfigureAwait(false);
 
         var screenshotFile = ArtifactPathIn(screenshot);

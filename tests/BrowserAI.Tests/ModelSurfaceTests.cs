@@ -77,11 +77,11 @@ internal sealed class ModelSurfaceTests
             ["directory", "purpose", "headed", "browser", "tracing", "consoleLevel", "debug"],
             ["directory", "purpose"]),
         (SessionToolSurface.Resume,
-            ["directory", "purpose", "headed", "debug", "tracing", "consoleLevel"],
-            ["directory"]),
+            ["directory", "purpose", "why", "headed", "debug", "tracing", "consoleLevel"],
+            ["directory", "why"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
-        (SessionToolSurface.Destroy, ["directory"], ["directory"]),
-        (SessionToolSurface.SetPurpose, ["session", "purpose"], ["session", "purpose"]),
+        (SessionToolSurface.Destroy, ["directory", "why"], ["directory", "why"]),
+        (SessionToolSurface.SetPurpose, ["session", "purpose", "why"], ["session", "purpose", "why"]),
         (SessionToolSurface.ReinstallBrowser, ["browser"], ["browser"]),
     ];
 

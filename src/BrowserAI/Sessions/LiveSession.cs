@@ -97,6 +97,16 @@ internal sealed class LiveSession(
     /// <summary>The <c>@playwright/mcp</c> child driving it.</summary>
     public ChildConnection Child { get; } = child;
 
+    /// <summary>
+    /// A logger writing into this session's own log, built once.
+    /// </summary>
+    /// <remarks>
+    /// <b>Cached rather than created per call.</b> Every session-scoped call
+    /// writes its <c>why</c> here, so this is on the hot path of the whole
+    /// proxy; <c>CreateLogger</c> allocates and takes the factory's lock.
+    /// </remarks>
+    public ILogger Logger { get; } = logging.Factory.CreateLogger<LiveSession>();
+
     /// <summary>This session's own log file and level.</summary>
     public SessionLogging Logging { get; } = logging;
 

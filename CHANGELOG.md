@@ -113,6 +113,36 @@ has been satisfied in form only.
 
 ### Added
 
+- **A required `why` on every call that names a session.** Every upstream browser
+  tool, plus `browserai_resume`, `browserai_destroy` and
+  `browserai_set_purpose`. It rides the same path `session` does — the injection
+  mutates the `JsonNode` the child sent rather than rebuilding it, so unknown
+  members survive — and it is stripped from a clone of the request before the
+  call is forwarded, because the child has never heard of it. **The golden
+  snapshot is unaffected**: it records what upstream offers, captured from the
+  child before the rewrite.
+
+  **Not on `browserai_list` or `browserai_reinstall_browser`**, which are
+  directory- and machine-scoped: there is no session record to write into. **Not
+  on `browserai_init`**, which asks for a `purpose` instead — two mandatory
+  free-text fields on one call gets one thoughtful answer and one restatement.
+
+  **The description does the steering, and parameter descriptions are uncapped**,
+  so the long text is there rather than in the tool description that is capped at
+  2,048 characters. It asks for **why rather than what**, because the tool name
+  already says what: *"checking whether the login survived the redirect"* beats
+  *"clicking the submit button"*. A call that omits it is refused **before
+  anything is forwarded**, and the refusal — `SessionErrors.WhyMissing`, the
+  catalogue's 26th row — says what to write rather than only that something is
+  missing, because a model told *"'why' is required"* retries with a restatement
+  that satisfies the schema and records nothing.
+
+  **Where it goes for now:** the session's own `browserai.log`, written before the
+  call is forwarded so that a call which never returns still left a record of
+  what it was for. A closed session has no log of its own open, so
+  `browserai_set_purpose` against one writes to the machine-wide process log with
+  the directory named.
+
 - **Ten tools, reachable for the first time in this product's history or its
   predecessor's.** Upstream's `network` capability — `browser_route`,
   `browser_route_list`, `browser_unroute`, `browser_network_state_set` — its

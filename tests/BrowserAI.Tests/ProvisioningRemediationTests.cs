@@ -132,6 +132,7 @@ internal sealed class ProvisioningRemediationTests
         {
             ["url"] = "data:text/html,x",
             [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         var text = TextOf(answer);

@@ -155,6 +155,7 @@ internal sealed class FirefoxSessionTests
         {
             ["url"] = SliceRun.TargetUrl,
             [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
         });
 
         await Assert.That((bool?)navigated["isError"]).IsNotEqualTo(true);
@@ -188,7 +189,7 @@ internal sealed class FirefoxSessionTests
         var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
         {
             ["name"] = "browser_take_screenshot",
-            ["arguments"] = new JsonObject { [SessionToolSurface.SessionParameter] = session },
+            ["arguments"] = new JsonObject { [SessionToolSurface.SessionParameter] = session, [SessionToolSurface.WhyParameter] = "the suite exercising this call" },
         });
 
         await Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true);
@@ -209,6 +210,7 @@ internal sealed class FirefoxSessionTests
 
         var destroyed = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
         {
+            ["why"] = "the suite exercising this call",
             ["directory"] = session,
         });
 

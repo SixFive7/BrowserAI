@@ -117,6 +117,7 @@ internal static partial class ClientProbe
             {
                 ["url"] = "data:text/html,<h1>ok</h1>",
                 ["session"] = session,
+                ["why"] = "the suite exercising this call",
             },
         });
 
@@ -136,6 +137,7 @@ internal static partial class ClientProbe
             ["wrapperPid"] = Environment.ProcessId,
             ["navigated"] = navigated,
             ["session"] = session,
+            ["why"] = "the suite exercising this call",
             ["jobPids"] = new JsonArray([.. members.Select(pid => (JsonNode)pid)]),
 
             // Valid in the TEST's handle table, not in this one.

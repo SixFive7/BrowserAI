@@ -543,6 +543,7 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             var location = ResolveToOpen(Required(arguments, "directory"), "directory");
+            var why = Why(arguments, SessionToolSurface.Resume);
             var appended = Optional(arguments, "purpose");
             var debug = Flag(arguments, "debug") ?? false;
             var headed = Flag(arguments, "headed") ?? false;
@@ -562,6 +563,8 @@ internal sealed class SessionManager : IAsyncDisposable
 
             if (_live.TryGetValue(location.Key, out var already))
             {
+                SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
+
                 return new ToolOutcome(
                     Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
                     IsError: false);
@@ -622,7 +625,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 notes,
                 held,
                 cancellationToken,
-                movedFrom).ConfigureAwait(false);
+                movedFrom,
+                why).ConfigureAwait(false);
         }
         finally
         {
@@ -755,6 +759,12 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var location = Resolve(Required(arguments, "directory"), "directory");
 
+        // ⚠️ READ BEFORE ANYTHING IS TORN DOWN, and it is the ordering that
+        // matters rather than the read. A missing `why` has to be a refusal that
+        // changed nothing, and by the time the session's browser is closed and
+        // its tree is walked there is nothing left to refuse into.
+        var why = Why(arguments, SessionToolSurface.Destroy);
+
         if (_live.TryRemove(location.Key, out var live))
         {
             // Torn down first: the browser has to go before the tree it is
@@ -818,7 +828,7 @@ internal sealed class SessionManager : IAsyncDisposable
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
 
         var summary =
-            $"Destroyed the session at '{location.FullPath}' ({Megabytes(size)}). Its purpose was: {record.Purpose}";
+            $"Destroyed the session at '{location.FullPath}' ({Megabytes(size)}). Its purpose was: {record.Purpose}\nYou said it was being destroyed because: {why}";
 
         if (!rollUp.RolledUp && Path.GetDirectoryName(location.FullPath) is { Length: > 0 } parent)
         {
@@ -866,11 +876,13 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var location = Resolve(Required(arguments, "session"), "session");
         var purpose = LockRecord.SanitisePurpose(Required(arguments, "purpose"));
+        var why = Why(arguments, SessionToolSurface.SetPurpose);
 
         if (_live.TryGetValue(location.Key, out var live))
         {
             var previous = live.Lock.Record.Purpose;
             live.Lock.Rewrite(record => Repurpose(record, purpose));
+            SessionToolLog.Why(live.Logger, SessionToolSurface.SetPurpose, why);
             SessionToolLog.PurposeChanged(_logger, location.FullPath, previous, purpose);
 
             return new ToolOutcome($"Purpose of '{location.FullPath}' is now: {purpose}\nIt was: {previous}", IsError: false);
@@ -891,6 +903,13 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         held.Dispose();
+
+        // THE PROCESS LOG, because a closed session has no log of its own open
+        // to write into -- SessionLogging is created by OpenAsync and disposed
+        // when the session is torn down. The line carries the directory for that
+        // reason: it lands in a machine-wide file beside every other session's,
+        // where the session's own log would not have needed saying.
+        SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.SetPurpose, location.FullPath, why);
         SessionToolLog.PurposeChanged(_logger, location.FullPath, recorded.Purpose, purpose);
 
         return new ToolOutcome(
@@ -1390,7 +1409,8 @@ internal sealed class SessionManager : IAsyncDisposable
         IReadOnlyList<string> notes,
         MaintenanceLock claim,
         CancellationToken cancellationToken,
-        string? movedFrom = null)
+        string? movedFrom = null,
+        string? why = null)
     {
         // Nothing below is owned by anyone until the session is in the
         // dictionary, and the finally disposes whatever is left. That is the only
@@ -1483,6 +1503,11 @@ internal sealed class SessionManager : IAsyncDisposable
             handedOver = true;
             _index.Record(location);
             SessionToolLog.Opened(sessionLogger, location.FullPath, headed, createdHere);
+
+            if (why is not null)
+            {
+                SessionToolLog.Why(sessionLogger, SessionToolSurface.Resume, why);
+            }
 
             // One index walk, used twice: the roll-up beside the sessions and
             // the line in this answer that names them are the same question, and
@@ -1983,6 +2008,25 @@ internal sealed class SessionManager : IAsyncDisposable
             : location;
     }
 
+    /// <summary>
+    /// The <c>why</c> an authored session-scoped call must carry.
+    /// </summary>
+    /// <remarks>
+    /// <b>Through the catalogue rather than through <see cref="Required"/>.</b>
+    /// The generic sentence says a value is missing and that BrowserAI has no
+    /// default; that is right for a directory and useless for this one, because
+    /// a model that supplies <i>something</i> has satisfied the schema and
+    /// recorded nothing. <c>SessionErrors.WhyMissing</c> is the same sentence the
+    /// upstream tools' refusal uses, so a caller meets one wording rather than
+    /// two.
+    /// </remarks>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="tool">The tool being called, for the refusal.</param>
+    /// <returns>What the caller said it was for.</returns>
+    private static string Why(JsonObject? arguments, string tool) =>
+        Optional(arguments, SessionToolSurface.WhyParameter)
+        ?? throw new SessionToolException(SessionErrors.WhyMissing(tool));
+
     private static string Required(JsonObject? arguments, string name) =>
         Optional(arguments, name)
         ?? throw new SessionToolException(
@@ -2129,6 +2173,47 @@ internal static partial class SessionToolLog
     /// <param name="createdHere">Whether this connection created it.</param>
     [LoggerMessage(EventId = 40, Level = LogLevel.Information, Message = "Session open at {Directory}, headed: {Headed}; created by this connection: {CreatedHere}.")]
     public static partial void Opened(ILogger logger, string directory, bool headed, bool createdHere);
+
+    /// <summary>
+    /// The <c>why</c> a caller gave for one session-scoped call.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Information rather than Debug, and it goes to the SESSION's own log
+    /// rather than to the process log.</b> The audience is whoever opens this
+    /// directory next, and a level a caller has to turn on is a level that was
+    /// off when the interesting call happened.
+    /// </para>
+    /// <para>
+    /// <b>The text is the caller's, unmodified.</b> It is free text from a model
+    /// and it is written into a file another model may read, which is the same
+    /// channel <c>purpose</c> is — but it is not replayed into a tool answer, so
+    /// the framing that guards <c>purpose</c> is not needed here and would be
+    /// noise in a log line.
+    /// </para>
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="tool">The tool the caller named.</param>
+    /// <param name="why">What the caller said it was for.</param>
+    [LoggerMessage(EventId = 47, Level = LogLevel.Information, Message = "{Tool}: {Why}")]
+    public static partial void Why(ILogger logger, string tool, string why);
+
+    /// <summary>
+    /// The <c>why</c> a caller gave for a call against a session that is not
+    /// open.
+    /// </summary>
+    /// <remarks>
+    /// <b>It names the directory because it has to.</b> A closed session has no
+    /// log of its own open, so this goes to the machine-wide process log, where
+    /// a line saying only <i>"browserai_set_purpose: because X"</i> could be
+    /// about any session on the machine.
+    /// </remarks>
+    /// <param name="logger">The process log.</param>
+    /// <param name="tool">The tool the caller named.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="why">What the caller said it was for.</param>
+    [LoggerMessage(EventId = 48, Level = LogLevel.Information, Message = "{Tool} on the closed session at {Directory}: {Why}")]
+    public static partial void WhyForClosedSession(ILogger logger, string tool, string directory, string why);
 
     /// <summary>A resume found the recorded path gone and repaired the record.</summary>
     /// <param name="logger">Where it goes.</param>

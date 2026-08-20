@@ -119,12 +119,14 @@ internal sealed record SessionRun
             answers["getConfig"] = await CallAsync(client, "browser_get_config", new JsonObject
             {
                 ["session"] = alpha,
+                ["why"] = "the suite exercising this call",
             }).ConfigureAwait(false);
 
             answers["navigate"] = await CallAsync(client, "browser_navigate", new JsonObject
             {
                 ["url"] = SliceRun.TargetUrl,
                 ["session"] = alpha,
+                ["why"] = "the suite exercising this call",
             }).ConfigureAwait(false);
 
             // Read while the browser is up: this is the difference between "the
@@ -164,6 +166,7 @@ internal sealed record SessionRun
             answers["setPurpose"] = await CallAsync(client, SessionToolSurface.SetPurpose, new JsonObject
             {
                 ["session"] = alpha,
+                ["why"] = "the suite exercising this call",
                 ["purpose"] = "a purpose set after the fact",
             }).ConfigureAwait(false);
 
@@ -180,6 +183,7 @@ internal sealed record SessionRun
             answers["unknownSession"] = await CallAsync(client, "browser_snapshot", new JsonObject
             {
                 ["session"] = Path.Combine(root, "never-a-session"),
+                ["why"] = "the suite exercising this call",
             }).ConfigureAwait(false);
 
             foreach (var (label, directory) in new (string Label, JsonNode? Directory)[]
@@ -199,7 +203,7 @@ internal sealed record SessionRun
 
                 answers["init-" + label] = await CallAsync(client, SessionToolSurface.Init, arguments).ConfigureAwait(false);
 
-                var resumeArguments = new JsonObject();
+                var resumeArguments = new JsonObject { ["why"] = "the suite exercising this call" };
 
                 if (directory is not null)
                 {
@@ -225,6 +229,7 @@ internal sealed record SessionRun
 
             answers["resumeNotASession"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
             {
+                ["why"] = "the suite exercising this call",
                 ["directory"] = notASession,
             }).ConfigureAwait(false);
 
@@ -235,6 +240,7 @@ internal sealed record SessionRun
             // made it, and headedness belongs to nothing.
             answers["resumeWithBrowser"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
             {
+                ["why"] = "the suite exercising this call",
                 ["directory"] = alpha,
                 ["browser"] = "firefox",
             }).ConfigureAwait(false);
@@ -243,6 +249,7 @@ internal sealed record SessionRun
             // refusal, which is the whole reason the check is a read.
             answers["destroyDocuments"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
             {
+                ["why"] = "the suite exercising this call",
                 ["directory"] = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify),
             }).ConfigureAwait(false);
 
@@ -272,6 +279,7 @@ internal sealed record SessionRun
             {
                 answers["destroyBeta"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
                 {
+                    ["why"] = "the suite exercising this call",
                     ["directory"] = beta,
                 }).ConfigureAwait(false);
 
@@ -365,6 +373,7 @@ internal sealed record SessionRun
 
         answers["resumeMoved"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
         {
+            ["why"] = "the suite exercising this call",
             ["directory"] = moved,
             ["purpose"] = "and resumed after the move",
         }).ConfigureAwait(false);
@@ -387,6 +396,7 @@ internal sealed record SessionRun
         // renamed, because there is no second call to make.
         answers["resumeCopy"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
         {
+            ["why"] = "the suite exercising this call",
             ["directory"] = copy,
         }).ConfigureAwait(false);
 
@@ -397,6 +407,7 @@ internal sealed record SessionRun
         answers["strandedSession"] = await CallAsync(client, "browser_snapshot", new JsonObject
         {
             ["session"] = Path.Combine(root, "alpha"),
+            ["why"] = "the suite exercising this call",
         }).ConfigureAwait(false);
 
         var movedLog = ReadSharing(Path.Combine(moved, "browserai.log"));

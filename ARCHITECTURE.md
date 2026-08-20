@@ -191,12 +191,24 @@ schema-1 file is well-formed JSON whose keys this build still recognises by name
 so a version checked last would report it as damage and send a caller to repair a
 file that is not broken.
 
-**Six authored tools, and `session` is mandatory.** `browserai_init`,
-`browserai_resume`, `browserai_list`, `browserai_destroy`,
-`browserai_set_purpose` and `browserai_reinstall_browser`. A `session` parameter
-is injected into every upstream tool's raw `inputSchema`, appended so upstream's
-own properties keep their order; a call naming no session is refused rather than
-reaching the run's own child. `init` takes a required directory and purpose with
+**Six authored tools, and `session` and `why` are both mandatory.**
+`browserai_init`, `browserai_resume`, `browserai_list`, `browserai_destroy`,
+`browserai_set_purpose` and `browserai_reinstall_browser`. **Two** parameters are
+injected into every upstream tool's raw `inputSchema`, appended in that order so
+upstream's own properties keep their positions; a call naming no session is
+refused rather than reaching the run's own child, and a call naming a session
+with no `why` is refused before anything is forwarded. Both are stripped from a
+**clone** of the request before it goes to the child, which has never heard of
+either — from a clone because the request object is the SDK's and may still be
+read afterwards. *(`why` added 2026-08-20.)*
+
+**`why` is on calls that NAME a session and nowhere else.** Every upstream
+browser tool, plus `browserai_resume`, `browserai_destroy` and
+`browserai_set_purpose`. Not `browserai_list`, which is directory-scoped, nor
+`browserai_reinstall_browser`, which is machine-scoped: neither has a session
+record to write into. Not `browserai_init`, which asks for `purpose` instead —
+two mandatory free-text fields on one call gets one thoughtful answer and one
+restatement. `init` takes a required directory and purpose with
 no default and no fallback, an optional `browser` defaulting to `chromium`, and
 the three per-run booleans `headed`, `tracing` and `debug`; `resume` takes the
 same three and reads `browser` from `browserai.json`, **refusing it as an

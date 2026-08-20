@@ -68,6 +68,32 @@ internal static class SessionErrors
         $"'{tool}' needs a 'session'. Every browser tool takes one, and BrowserAI has no default: it is the session directory, exactly as {SessionToolSurface.Init} or {SessionToolSurface.Resume} returned it. "
         + $"Call {SessionToolSurface.Init} with an absolute directory to create a session, {SessionToolSurface.Resume} to reopen one that exists, or {SessionToolSurface.List} with a directory to see the sessions beneath it. Nothing was changed.";
 
+    /// <summary>
+    /// Row 1's companion — the call named a session and did not say why it was
+    /// being made.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It says what to write, not only that something is missing.</b> A model
+    /// told <i>"'why' is required"</i> retries with a restatement of the tool
+    /// name, which satisfies the schema and records nothing — so the refusal
+    /// carries the same contrast the parameter's own description does, because
+    /// the description was read once at connect time and this is read at the
+    /// moment of the mistake.
+    /// </para>
+    /// <para>
+    /// <b>Nothing was forwarded and the sentence says so.</b> The refusal happens
+    /// before the child hears about the call, so a retry is safe — which is the
+    /// one fact a model needs before it can act on this in a single turn.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <returns>The refusal.</returns>
+    public static string WhyMissing(string tool) =>
+        $"'{tool}' needs a '{SessionToolSurface.WhyParameter}'. Every call that names a session takes one, and it is not optional. Nothing was forwarded to the browser and nothing was changed, so calling again with it is safe. "
+        + "Write why you are making the call, not what it does — the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". "
+        + "It goes in the session's log, which is what lets whoever opens this directory next read back what was being attempted rather than only which tools ran.";
+
     /// <summary>Row 2 — the path is not a session at all.</summary>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The path the caller named.</param>

@@ -118,6 +118,7 @@ internal sealed class ProvisioningTests
         {
             ["url"] = "data:text/html,<h1>ok</h1>",
             ["session"] = directory,
+            ["why"] = "the suite exercising this call",
         });
 
         var text = TextOf(navigate);
@@ -143,7 +144,7 @@ internal sealed class ProvisioningTests
         // installed" advice -- provision it -- while provisioning is already
         // running, instead of row 6, which says how big the download is and that
         // the same call will work shortly.
-        var config = await CallAsync(rig, "browser_get_config", new JsonObject { ["session"] = directory });
+        var config = await CallAsync(rig, "browser_get_config", new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)config["isError"]).IsTrue();
         await Assert.That(TextOf(config)).Contains(BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser));
@@ -1089,6 +1090,7 @@ internal sealed class ProvisioningTests
     {
         ["url"] = "data:text/html,<h1>ok</h1>",
         ["session"] = directory,
+        ["why"] = "the suite exercising this call",
     };
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
