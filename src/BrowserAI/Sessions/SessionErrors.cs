@@ -94,6 +94,35 @@ internal static class SessionErrors
         + "Write why you are making the call, not what it does — the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". "
         + "It goes in the session's log, which is what lets whoever opens this directory next read back what was being attempted rather than only which tools ran.";
 
+    /// <summary>
+    /// Row 1's second companion — the call was not forwarded because its log
+    /// entry could not be written.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A refusal rather than a warning, and the sentence has to justify
+    /// that.</b> BrowserAI could have forwarded the call and left the log short
+    /// by one, and a model reading a session's log afterwards would have had no
+    /// way to know. The whole value of one time-ordered log is that reading it
+    /// back tells you what the session did; a gap nobody is told about is worse
+    /// than a refusal somebody can act on.
+    /// </para>
+    /// <para>
+    /// <b>It names the file, because the recovery is about the file.</b> The two
+    /// reachable causes are a per-directory gate that could not be taken inside
+    /// its timeout — another call on the same session, which passes — and a
+    /// record that could not be written, which does not.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="lockFile">The session record that could not be written.</param>
+    /// <param name="detail">What the filesystem said.</param>
+    /// <returns>The refusal.</returns>
+    public static string SessionLogCouldNotBeWritten(string tool, string lockFile, string detail) =>
+        $"'{tool}' was NOT forwarded to the browser, because its entry in '{lockFile}' could not be written ({detail}). Nothing reached the page and nothing was changed. "
+        + "Every call this session makes is recorded in that file in order, and a call BrowserAI cannot record is one whose absence nobody would ever see — so it is refused instead. "
+        + "If another call on this same session is in flight, wait for it and call again; if the file itself cannot be written, the volume is full or the directory has become read-only, and no call on this session will work until that is fixed.";
+
     /// <summary>Row 2 — the path is not a session at all.</summary>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The path the caller named.</param>

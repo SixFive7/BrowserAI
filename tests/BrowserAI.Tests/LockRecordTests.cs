@@ -142,11 +142,11 @@ internal sealed class LockRecordTests
     [Test]
     public async Task ARecordFromANewerBuildIsRefusedAndSaysWhichVersionWroteIt()
     {
-        var damaged = Text(Sample()).Replace(@"""schemaVersion"": 3", @"""schemaVersion"": 4", StringComparison.Ordinal);
+        var damaged = Text(Sample()).Replace(@"""schemaVersion"": 4", @"""schemaVersion"": 5", StringComparison.Ordinal);
 
         var failure = Assert.Throws<LockFileException>(() => _ = LockRecord.Read(Encoding.UTF8.GetBytes(damaged), Path));
 
-        await Assert.That(failure!.Message).Contains("schema version 4");
+        await Assert.That(failure!.Message).Contains("schema version 5");
         await Assert.That(failure.Message).Contains("newer BrowserAI");
     }
 
@@ -163,15 +163,17 @@ internal sealed class LockRecordTests
     /// untouched is everything beside <c>browserai.json</c>.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Two arms since 2026-08-20 (previously
-    /// <c>ASchemaOneRecordIsRefusedWithTheFixAndNoConverter</c>, one arm).</b>
-    /// Schema 3 dropped <c>mode</c>, so there is a second superseded shape on
-    /// disk — and it is the one an installed base actually has. <b>The schema-2
-    /// arm is the interesting one:</b> its keys are a strict superset of what
-    /// this build reads, so a parser that checked the version last would report
-    /// it as an unrecognised <c>mode</c> key rather than as an old file, and the
-    /// recovery a caller was handed would be "remove what does not belong"
-    /// instead of "delete it and init again".
+    /// ⚠️ <b>Three arms since 2026-08-20 (previously
+    /// <c>ASchemaOneRecordIsRefusedWithTheFixAndNoConverter</c>, one arm; then
+    /// two, earlier the same day).</b> Schema 3 dropped <c>mode</c> and schema 4
+    /// added the <c>log</c>, so there are three superseded shapes on disk.
+    /// <b>Schemas 2 and 3 are the interesting ones, in opposite directions:</b>
+    /// a version-2 record's keys are a strict SUPERSET of what this build reads,
+    /// so a parser checking the version last would report it as an unrecognised
+    /// <c>mode</c> key; a version-3 record's are a strict SUBSET, so the same
+    /// parser would report a missing <c>log</c>. Both recoveries would have been
+    /// "remove what does not belong" or "this file is damaged" instead of
+    /// "delete it and init again".
     /// </para>
     /// </remarks>
     /// <param name="version">The superseded schema version.</param>
@@ -190,6 +192,16 @@ internal sealed class LockRecordTests
           "lastUsed": "2026-08-16T11:45:30.1234567+02:00",
           "browserAiVersion": "1.0.0.0",
           "holder": { "processId": 4242, "processCreatedFileTime": 133000000000000000, "clientProcessName": "node" }
+        }
+        """)]
+    [Arguments(3, """
+        {
+          "schemaVersion": 3,
+          "directory": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "C:\sessions\example" } ],
+          "browser": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "chromium" } ],
+          "purpose": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "checking the customer portal" } ],
+          "browserAiVersion": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "1.0.0.0" } ],
+          "holder": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": { "processId": 4242, "processCreatedFileTime": 133000000000000000, "clientProcessName": "node" } } ]
         }
         """)]
     [Arguments(2, """
@@ -220,9 +232,11 @@ internal sealed class LockRecordTests
         // well-formed JSON whose top-level keys this build still recognises by
         // name, so a parser that checked the version last would report the wrong
         // thing about them -- `directory` "where an array was expected" for
-        // schema 1, and an unrecognised `mode` key for schema 2.
+        // schema 1, an unrecognised `mode` key for schema 2, and a missing
+        // `log` for schema 3.
         await Assert.That(failure.Message).DoesNotContain("was expected");
         await Assert.That(failure.Message).DoesNotContain("does not recognise");
+        await Assert.That(failure.Message).DoesNotContain("has no 'log'");
     }
 
     [Test]
@@ -450,6 +464,18 @@ internal sealed class LockRecordTests
     }
 
     /// <summary>
+    /// The sample, with a log of the caller's choosing.
+    /// </summary>
+    /// <remarks>
+    /// Exposed for <c>SessionLogTests</c>, which needs a real record to ask
+    /// <c>LogIsAtTheCap</c> of and has no business building one of its own: a
+    /// second sample is a second thing to keep in step with the schema.
+    /// </remarks>
+    /// <param name="log">The log to put in it.</param>
+    /// <returns>The sample.</returns>
+    public static LockRecord SampleWith(IReadOnlyList<LogEntry> log) => Sample() with { Log = log };
+
+    /// <summary>
     /// A record with three distinct instants in it, so that <c>Created</c>,
     /// <c>TakenAt</c> and <c>LastUsed</c> cannot all be right by coincidence.
     /// </summary>
@@ -473,6 +499,16 @@ internal sealed class LockRecordTests
                 ProcessCreatedFileTime = 133_000_000_000_000_000,
                 ClientProcessName = "node",
             }),
+        ],
+
+        // Two entries, at two of the three instants, so that a log which drove
+        // `Created` or `LastUsed` on its own would give a different answer from
+        // the statement lists -- which is what makes the bounds assertions above
+        // able to fail.
+        Log =
+        [
+            new LogEntry(Born, SessionToolSurface.Init, "first purpose", [new LoggedArgument("directory", @"C:\sessions\example")]),
+            new LogEntry(Repurposed, "browser_navigate", "checking the customer portal", [new LoggedArgument("url", "https://example.test/")]),
         ],
     };
 }

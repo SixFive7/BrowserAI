@@ -61,6 +61,48 @@ internal static class UpstreamSurface
     }
 
     /// <summary>
+    /// Which tools declare each parameter name, read off the committed snapshot.
+    /// </summary>
+    /// <remarks>
+    /// <b>The positive control for any list of parameter names the product keeps
+    /// by hand.</b> A name-keyed policy that matched nothing would read as a
+    /// policy and be one in name only; this is what makes an upstream rename a
+    /// snapshot diff first and a red build second.
+    /// </remarks>
+    /// <returns>Parameter name to the tools that declare it, in the snapshot's own order.</returns>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> ToolsCarryingParameter()
+    {
+        using var snapshot = Snapshot();
+
+        var carriers = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        foreach (var tool in snapshot.RootElement.GetProperty("tools").EnumerateArray())
+        {
+            if (!tool.TryGetProperty("inputSchema", out var schema)
+                || !schema.TryGetProperty("properties", out var properties))
+            {
+                continue;
+            }
+
+            foreach (var property in properties.EnumerateObject())
+            {
+                if (!carriers.TryGetValue(property.Name, out var tools))
+                {
+                    tools = [];
+                    carriers[property.Name] = tools;
+                }
+
+                tools.Add(tool.GetProperty("name").GetString()!);
+            }
+        }
+
+        return carriers.ToDictionary(
+            entry => entry.Key,
+            entry => (IReadOnlyList<string>)entry.Value,
+            StringComparer.Ordinal);
+    }
+
+    /// <summary>
     /// Every capability upstream declares that actually carries at least one
     /// tool.
     /// </summary>

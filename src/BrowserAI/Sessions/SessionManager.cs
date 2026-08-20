@@ -505,6 +505,13 @@ internal sealed class SessionManager : IAsyncDisposable
                     Browser = browser,
                     Purpose = purpose,
 
+                    // ⚠️ THE PURPOSE IS THE FIRST ENTRY OF THE LOG, and `init`
+                    // has no `why` to put there instead. Two mandatory free-text
+                    // fields on one call gets one thoughtful answer and one
+                    // restatement, so the purpose -- which IS the reason the
+                    // session exists -- is what entry zero says.
+                    Entry = Entry(SessionToolSurface.Init, purpose, arguments),
+
                     // `init` means MAKE a session here. A directory that already
                     // carries a record has to be resumed instead, and this is the
                     // half of that refusal the ungated look above cannot guarantee.
@@ -564,6 +571,7 @@ internal sealed class SessionManager : IAsyncDisposable
             if (_live.TryGetValue(location.Key, out var already))
             {
                 SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
+                already.Lock.Append(Entry(SessionToolSurface.Resume, why, arguments));
 
                 return new ToolOutcome(
                     Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
@@ -616,7 +624,12 @@ internal sealed class SessionManager : IAsyncDisposable
 
             return await OpenAsync(
                 location,
-                new SessionLockRequest { Browser = record.Browser, Purpose = purpose },
+                new SessionLockRequest
+                {
+                    Browser = record.Browser,
+                    Purpose = purpose,
+                    Entry = Entry(SessionToolSurface.Resume, why, arguments),
+                },
                 headed,
                 tracing ?? false,
                 consoleLevel,
@@ -782,6 +795,9 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var taken = SessionLock.TryAcquire(
             location,
+            // No `Entry`: this call takes the record in order to delete it,
+            // and an entry appended to a file that is about to be unlinked is a
+            // write nobody reads. The `why` is in the answer instead.
             new SessionLockRequest { Browser = record.Browser, Purpose = record.Purpose },
             _logger);
 
@@ -881,7 +897,16 @@ internal sealed class SessionManager : IAsyncDisposable
         if (_live.TryGetValue(location.Key, out var live))
         {
             var previous = live.Lock.Record.Purpose;
-            live.Lock.Rewrite(record => Repurpose(record, purpose));
+
+            // ⚠️ ONE REWRITE, not two. The purpose statement and the log entry
+            // are the same change to the same file: written separately, a reader
+            // could open `browserai.json` between them and find a purpose whose
+            // explanation had not arrived yet.
+            live.Lock.Rewrite(record => Repurpose(record, purpose) with
+            {
+                Log = LockRecord.AppendLog(record.Log, Entry(SessionToolSurface.SetPurpose, why, arguments)),
+            });
+
             SessionToolLog.Why(live.Logger, SessionToolSurface.SetPurpose, why);
             SessionToolLog.PurposeChanged(_logger, location.FullPath, previous, purpose);
 
@@ -894,7 +919,12 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var taken = SessionLock.TryAcquire(
             location,
-            new SessionLockRequest { Browser = recorded.Browser, Purpose = purpose },
+            new SessionLockRequest
+            {
+                Browser = recorded.Browser,
+                Purpose = purpose,
+                Entry = Entry(SessionToolSurface.SetPurpose, why, arguments),
+            },
             _logger);
 
         if (taken.Acquired is not { } held)
@@ -1393,6 +1423,44 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         return lines;
+    }
+
+    /// <summary>
+    /// Builds one log entry from a call's own arguments.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every argument the caller sent, in the order it sent them</b>, minus
+    /// the two BrowserAI injected — <c>session</c>, which is the directory the
+    /// file itself lives in, and <c>why</c>, which is the entry's own field. A
+    /// log that repeated both on every entry would be a third of its own size.
+    /// </para>
+    /// <para>
+    /// <b>What happens to a value is
+    /// <see cref="LoggedArgument.Of"/>'s decision</b>, and it is documented
+    /// there rather than here: two names are never stored, a non-scalar becomes
+    /// a shape, and everything else is cut at 200 characters.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool being called.</param>
+    /// <param name="why">What the caller said it was for. For <c>init</c>, the purpose.</param>
+    /// <param name="arguments">The call's arguments, as they arrived.</param>
+    /// <returns>The entry to append.</returns>
+    internal static LogEntry Entry(string tool, string why, JsonObject? arguments)
+    {
+        var recorded = new List<LoggedArgument>();
+
+        foreach (var (name, value) in arguments ?? [])
+        {
+            if (name is SessionToolSurface.SessionParameter or SessionToolSurface.WhyParameter)
+            {
+                continue;
+            }
+
+            recorded.Add(LoggedArgument.Of(name, value));
+        }
+
+        return new LogEntry(DateTimeOffset.Now, tool, LockRecord.SanitiseWhy(why), recorded);
     }
 
     private static LockRecord Repurpose(LockRecord record, string purpose) =>

@@ -1024,3 +1024,76 @@ read as though it were.** It is `core`; it has been reachable in every session
 this product has ever opened, `headless` included, and it reaches the cookie jar
 ([measured 2026-08-14](DECISIONS.md#licence-release-policy-and-the-tool-surface)).
 Nothing about the grant changed its availability.
+
+### 14. The one time-ordered log lives inside `browserai.json` — **DECIDED BY THE MAINTAINER, over my recommendation**
+
+⚠️ **Taken, in the maintainer's words: _"The log lives INSIDE `browserai.json`,
+under the same session-long lock. This is his decision over my recommendation of
+a sibling append-only file; build it as decided."_** It is implemented:
+`LockRecord.Log` is one ordered array carrying `browserai_init`'s purpose, every
+purpose change, and every browser call the session forwarded, and the record
+moved to **schema 4**.
+
+**What I recommended instead:** a sibling append-only file — `browserai-log.jsonl`
+beside `browserai.json` — one line per entry, opened `FileShare.Read` for the life
+of the session and appended to.
+
+**The one thing that decided it, and it is not the cost.** A session directory is
+moved and copied by people, and `browserai.json` is [already the thing that makes
+a copy self-describing](ARCHITECTURE.md#sessions) — every field is an ordered
+list of timestamped statements, so a resumed copy is *told* where it has been.
+A second file is a second thing that can be copied without the first, and the
+failure is silent in the worst direction: a session whose record says it was
+created for one thing and whose log describes another, with nothing to say which
+half is the stranger. **One file cannot be half-copied.** That is a stronger
+property than anything the sibling bought, and my recommendation did not weigh it.
+
+**What it costs, measured against the alternative rather than in the abstract.**
+Every forwarded browser call now rewrites the **whole record**:
+`SessionLock.Rewrite` closes the handle, writes a temp file `WriteThrough`,
+`Flush(flushToDisk: true)`, renames it over `browserai.json`, and re-opens. An
+append to a sibling would have been an `O(entry)` write with no rename and no
+re-open. **The record is capped at 250 entries and roughly 400 KB**, so the write
+does not grow without bound — but it is a full-file durable write per call, and a
+session that makes two hundred calls pays it two hundred times. **Nothing here
+measured it**; the cost is stated because it is real, not because it was found to
+be a problem.
+
+**The second cost, and it is the one to watch.** A call whose entry cannot be
+written is **refused**, and the browser never sees it —
+`SessionErrors.SessionLogCouldNotBeWritten`. That is deliberate: the value of one
+time-ordered log is that reading it back tells you what the session did, and a
+gap nobody is told about is worse than a refusal somebody can act on. With a
+sibling file the same failure could have been a note on an otherwise successful
+answer, because the record's own integrity would not have been in question.
+**This is the sharpest consequence of the decision and it is not reversible
+without reversing the decision.**
+
+**How to reverse it.** `LockRecord.Log`, `LockRecord.AppendLog`,
+`SessionLock.Append` and `SessionLockRequest.Entry` are the whole of it, plus one
+`try`/`catch` in `BrowserProxy` and a schema bump. `SessionLogTests` holds the
+behaviour and would move with it. **What would not survive the move is the copy
+property above**, and whoever reverses this should say what they are doing about
+it rather than discovering it later.
+
+**What I chose about argument values, since nobody instructed it.** The entry
+records **every argument name, always** — a reader must be able to see that a
+password field was filled even when the value is not there. The value is then:
+*withheld entirely for `value` and `text`*, the two scalar parameters upstream
+uses for something a person typed or a server set (`browser_cookie_set`,
+`browser_localstorage_set`, `browser_sessionstorage_set`, `browser_type`),
+recorded as `<withheld, N characters>` so the length survives; *summarised as a
+shape for an object or an array*, `<object, N keys>` / `<array, N items>`, which
+is what `browser_fill_form`'s `fields` and `browser_route`'s `headers` become;
+and *cut at 200 characters with a count of what was dropped* for everything else,
+which is what turns a `browser_evaluate` body from a transcript into a summary.
+**The withheld list is asserted against the golden snapshot**, so an upstream
+rename is a red build rather than a policy that quietly stopped matching.
+
+⚠️ **It is not a redaction boundary and must not be described as one.** The log
+sits inside the session directory, and so does the browser profile whose cookie
+database holds the same credentials — [measured
+2026-08-18](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18),
+recoverable by any process running as the same user. What withholding buys is
+that a password is not written into the one file a model is *invited to read
+back*. It buys nothing against anything that can read the directory at all.

@@ -504,6 +504,35 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // from exactly the calls anybody investigates.
         SessionToolLog.Why(live.Logger, tool, why);
 
+        // ⚠️ THE SAME ORDERING, AND HERE IT IS A REFUSAL RATHER THAN A LOG LINE.
+        // The entry goes into browserai.json under the session's own gate, and a
+        // call BrowserAI could not record is not forwarded: the whole point of
+        // one time-ordered log is that reading it back tells you what the
+        // session did, and a gap nobody is told about is worse than a refusal
+        // somebody can act on. It is also the only failure mode available --
+        // `Append` throws only when the gate cannot be taken or the record
+        // cannot be written, and neither is a thing to drive a browser through.
+        //
+        // Recorded from the CALLER's own arguments, before the artifact plan
+        // rewrites `filename`: the log says what was asked for, and the artifact
+        // index beside it says where the file landed.
+        try
+        {
+            live.Lock.Append(SessionManager.Entry(tool, why, arguments));
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            ProxyLog.LogEntryRefused(_logger, tool, live.Location.FullPath, failure);
+
+            await RefuseAsync(
+                caller,
+                request.Id,
+                SessionErrors.SessionLogCouldNotBeWritten(tool, live.Lock.Location.LockFile, failure.Message),
+                cancellationToken).ConfigureAwait(false);
+
+            return;
+        }
+
         // §F's first half, and it happens before the child hears about the call:
         // a `filename` is rewritten into the folder its generator prefix
         // implies, so the file is born in the right place rather than swept
@@ -983,6 +1012,24 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' on the session at {Session} arrived without 'why', which its schema requires. Nothing was forwarded.")]
     public static partial void WhyMissing(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A call was refused because its log entry could not be written.
+    /// </summary>
+    /// <remarks>
+    /// Error rather than Warning: nothing was forwarded and nothing was
+    /// recorded, and a session whose record cannot be written is one whose
+    /// ownership is in doubt.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="session">The session directory named.</param>
+    /// <param name="failure">What went wrong.</param>
+    [LoggerMessage(
+        EventId = 15,
+        Level = LogLevel.Error,
+        Message = "'{Tool}' on the session at {Session} was not forwarded: its log entry could not be written.")]
+    public static partial void LogEntryRefused(ILogger logger, string tool, string session, Exception failure);
 
     /// <summary>
     /// Upstream's install advice was replaced, and byte-identity was given up to

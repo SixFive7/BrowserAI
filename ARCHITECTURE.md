@@ -208,7 +208,35 @@ browser tool, plus `browserai_resume`, `browserai_destroy` and
 `browserai_reinstall_browser`, which is machine-scoped: neither has a session
 record to write into. Not `browserai_init`, which asks for `purpose` instead —
 two mandatory free-text fields on one call gets one thoughtful answer and one
-restatement. `init` takes a required directory and purpose with
+restatement.
+
+**`purpose` is durable and `why` is disposable, and the schemas have to make that
+unmistakable.** A `purpose` is the session's standing description — what
+`browserai_list` shows six weeks later, and what whoever resumes the directory
+reads first. A `why` is why you are doing this *right now*, it is one entry in
+the log, and nothing shows it in a listing. `browserai_set_purpose` takes both,
+which is where they collide, so its two descriptions carry the same example on
+both sides of the line: *"the original login bug turned out to be a redirect
+loop"* is a `why`; *"tracking the checkout redirect loop on staging"* is a
+`purpose`. **If what you are writing would still be true next week it belongs in
+`purpose`** — that sentence is in the schema, not only here.
+
+**One time-ordered log, inside the record.** `browserai_init`'s purpose, every
+purpose change, and every browser call the session **forwarded** are entries in
+one ordered list in `browserai.json`, under the same session-long lock — so a
+reader sees *the human changed the purpose here* between the calls it explains
+rather than merging two streams by timestamp. An entry is written **immediately
+before** a call is forwarded, so a call that never returns still left one, and a
+call BrowserAI **refused** never reaches the list at all: this records what the
+session *did*, and the refusals are in `browserai.log` beside it. **A call whose
+entry cannot be written is refused rather than forwarded** — see
+`SessionErrors.SessionLogCouldNotBeWritten`. It is inside the record rather than
+in a sibling append-only file at the maintainer's decision; the cost is a
+whole-record durable write per call, and
+[QUESTIONS.md §14](QUESTIONS.md#14-the-one-time-ordered-log-lives-inside-browseraijson--decided-by-the-maintainer-over-my-recommendation)
+weighs both sides. What is stored for an argument — every name always, `value`
+and `text` never, an object or array as a shape, everything else cut at 200
+characters — is `LoggedArgument`'s to say. `init` takes a required directory and purpose with
 no default and no fallback, an optional `browser` defaulting to `chromium`, and
 the three per-run booleans `headed`, `tracing` and `debug`; `resume` takes the
 same three and reads `browser` from `browserai.json`, **refusing it as an

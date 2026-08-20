@@ -279,6 +279,36 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
+    /// Appends one entry to this session's log, under the per-directory gate.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is a whole-record durable write, on every forwarded browser
+    /// call.</b> <see cref="Rewrite"/> closes the handle, writes a temp file
+    /// <c>WriteThrough</c>, flushes it to disk, renames it over
+    /// <c>browserai.json</c> and re-opens — so a busy session pays that per call.
+    /// That is the cost of the maintainer's decision to keep the log inside the
+    /// record rather than in a sibling append-only file, and it is stated here
+    /// rather than discovered: an append-only sibling would have been an
+    /// <c>O(entry)</c> write with no rename at all.
+    /// </para>
+    /// <para>
+    /// <b>It throws rather than swallowing.</b> A log entry that could not be
+    /// written is exactly the kind of loss this record exists to prevent, so the
+    /// caller decides — and the caller is <c>BrowserProxy</c>, which refuses the
+    /// call rather than forwarding one it could not record.
+    /// </para>
+    /// </remarks>
+    /// <param name="entry">What the session just did.</param>
+    /// <exception cref="IOException">The gate could not be taken, or the record could not be written.</exception>
+    public void Append(LogEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        Rewrite(record => record with { Log = LockRecord.AppendLog(record.Log, entry) });
+    }
+
+    /// <summary>
     /// Rewrites the record durably, keeping ownership across the replacement.
     /// </summary>
     /// <param name="update">Produces the next record from the current one.</param>
@@ -1159,6 +1189,18 @@ internal sealed class SessionLock : IDisposable
             PurposeHistory = LockRecord.Append(previous?.PurposeHistory, LockRecord.SanitisePurpose(request.Purpose), now),
             BrowserAiVersionHistory = LockRecord.Append(previous?.BrowserAiVersionHistory, BuildVersion.Current, now),
             HolderHistory = LockRecord.Append(previous?.HolderHistory, holder, now),
+
+            // ⚠️ AN ENTRY OR NOTHING, decided by the caller rather than here.
+            // `init` and `resume` both have something to say about why they
+            // opened the directory; `browserai_destroy` takes it in order to
+            // delete it, and an entry appended to a record that is about to be
+            // unlinked is a write nobody reads. `browserai_set_purpose` against
+            // a CLOSED session takes it too, and that one does append -- which
+            // is the whole reason this is a request field rather than a flag on
+            // the method.
+            Log = request.Entry is { } entry
+                ? LockRecord.AppendLog(previous?.Log, entry)
+                : previous?.Log ?? [],
         };
     }
 
@@ -1397,6 +1439,20 @@ internal sealed record SessionLockRequest
 
     /// <summary>Free text from the calling model, capped and de-controlled on the way in.</summary>
     public required string Purpose { get; init; }
+
+    /// <summary>
+    /// What to append to the session's log, or <see langword="null"/> to append
+    /// nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Null means "take the directory and say nothing", and exactly one
+    /// caller wants that:</b> <c>browserai_destroy</c>, which takes the record in
+    /// order to delete it. Every other path has something to record — <c>init</c>
+    /// its purpose, <c>resume</c> and <c>set_purpose</c> their <c>why</c> — and a
+    /// path that took the directory without saying why it did would be a gap in
+    /// the one stream this record exists to keep whole.
+    /// </remarks>
+    public LogEntry? Entry { get; init; }
 
     /// <summary>
     /// Whether finding a record already on disk is a <b>refusal</b> rather than

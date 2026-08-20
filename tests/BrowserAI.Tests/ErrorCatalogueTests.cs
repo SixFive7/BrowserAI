@@ -876,7 +876,78 @@ internal sealed partial class ErrorCatalogueTests
         }
     }
 
+    /// <summary>
+    /// A call whose log entry cannot be written is refused, and nothing reaches
+    /// the browser.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The seam is an ACL rather than a fake, and it has to be the right
+    /// right.</b> <c>SessionLock.Rewrite</c> writes a temp file into the session
+    /// directory and renames it over <c>browserai.json</c>, so denying
+    /// <c>CreateFiles</c> on the directory <i>itself</i> — not on the objects
+    /// inside it — breaks the write and leaves the re-open that recovers
+    /// ownership working. That is the condition a full volume produces, arranged
+    /// deterministically.
+    /// </para>
+    /// <para>
+    /// <b>The second assertion is the one worth writing.</b> A refusal that
+    /// forwarded first and then failed to record would present identically to
+    /// this one from the caller's side, and would have driven a real browser.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
+    public async Task ACallWhoseLogEntryCannotBeWrittenIsRefusedAndNeverReachesTheChild()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour());
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var before = sessions.SessionChildren.Sum(child =>
+            child.ToolCallsReceived.Count(tool => tool == "browser_navigate"));
+
+        JsonObject refused;
+
+        using (DirectoryDenial.Apply(rig.Session!, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
+        {
+            refused = await CallAsync(rig, "browser_navigate", new JsonObject
+            {
+                ["url"] = "data:text/html,x",
+                ["session"] = rig.Session!,
+                ["why"] = "provoking a record that cannot be written",
+            });
+        }
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        var text = TextOf(refused);
+
+        await Assert.That(text).Contains("was NOT forwarded to the browser");
+        await Assert.That(text).Contains(Path.Combine(rig.Session!, SessionLayout.LockFileName));
+        await Assert.That(text).Contains("a call BrowserAI cannot record");
+        Record(nameof(SessionErrors.SessionLogCouldNotBeWritten));
+
+        // Nothing reached the child, which is the half the sentence promises.
+        await Assert.That(sessions.SessionChildren.Sum(child =>
+            child.ToolCallsReceived.Count(tool => tool == "browser_navigate"))).IsEqualTo(before);
+
+        // And the session is still owned afterwards: a failed rewrite must not
+        // also release the directory. The proof is that the next call, with the
+        // denial gone, works.
+        var recovered = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            ["session"] = rig.Session!,
+            ["why"] = "proving the session survived the refused write",
+        });
+
+        await Assert.That((bool?)recovered["isError"]).IsNotEqualTo(true);
+    }
+
+    [Test]
+    [DependsOn(nameof(ACallWhoseLogEntryCannotBeWrittenIsRefusedAndNeverReachesTheChild))]
     [DependsOn(nameof(TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading))]
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
     [DependsOn(nameof(TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims))]
@@ -960,10 +1031,18 @@ internal sealed partial class ErrorCatalogueTests
         // otherwise retry with a restatement of the tool name, which satisfies
         // the schema and records nothing.
         //
+        // ⚠️ **Corrected 2026-08-20 to 27 (previously 26).**
+        // `SessionLogCouldNotBeWritten` arrived with the one time-ordered log
+        // inside `browserai.json`. It is the first row here that refuses a call
+        // BrowserAI could otherwise have made: the browser would have worked and
+        // the record would have been one entry short, which nobody would ever
+        // have seen. Written as a refusal for that reason, and the sentence
+        // justifies the choice rather than only reporting it.
+        //
         // Every one of them was **deleted rather than orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
-        await Assert.That(rows.Count).IsEqualTo(26);
+        await Assert.That(rows.Count).IsEqualTo(27);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

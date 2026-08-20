@@ -113,6 +113,61 @@ has been satisfied in form only.
 
 ### Added
 
+- **One time-ordered log, inside `browserai.json`.** `browserai_init`'s
+  `purpose`, every purpose change on `browserai_resume`, every explicit
+  `browserai_set_purpose` and every browser call the session forwarded are
+  entries in the **same ordered list** — so a reader sees *the human changed the
+  purpose here* sitting between the calls it explains, rather than two streams
+  nobody merges. `browserai.json` moved to **schema 4**; there is no converter
+  and the recovery is the one it has always carried.
+
+  **It is inside the record rather than in a sibling append-only file, and that
+  was the maintainer's decision over a recommendation of the sibling.** The
+  argument that decided it is one the recommendation did not weigh: a session
+  directory is moved and copied by people, `browserai.json` is already the thing
+  that makes a copy self-describing, and **one file cannot be half-copied**. The
+  cost is a whole-record durable write — `WriteThrough`, flush, atomic rename,
+  re-open — on **every forwarded browser call**, where an append to a sibling
+  would have been `O(entry)`.
+  [QUESTIONS.md §14](QUESTIONS.md#14-the-one-time-ordered-log-lives-inside-browseraijson--decided-by-the-maintainer-over-my-recommendation)
+  records both sides and what reversing it would cost.
+
+  ⚠️ **A call whose entry cannot be written is refused, and never reaches the
+  browser** — `SessionErrors.SessionLogCouldNotBeWritten`, the catalogue's 27th
+  row. The value of one log is that reading it back tells you what the session
+  did; a gap nobody is told about is worse than a refusal somebody can act on.
+  **A call BrowserAI refuses leaves no entry**, which is the same rule from the
+  other side: this records what the session *did*, and the refusals are in
+  `browserai.log` beside it.
+
+  **What is stored for an argument, since nothing instructed it.** Every argument
+  **name**, always — a reader must see that a password field was filled even when
+  the value is not there. Then: `value` and `text` are **never** stored, at any
+  length, recorded as `<withheld, N characters>` — they are the two scalar
+  parameters upstream uses for something a person typed or a server set, on
+  `browser_cookie_set`, `browser_localstorage_set`, `browser_sessionstorage_set`
+  and `browser_type`, and **the list is asserted against the golden snapshot** so
+  an upstream rename is a red build; an object or an array becomes a **shape**,
+  `<object, N keys>` / `<array, N items>`, which is what `browser_fill_form`'s
+  `fields` and `browser_route`'s `headers` become; and everything else is stored
+  verbatim to 200 characters and then **cut with a count**, which is what turns a
+  `browser_evaluate` body from a transcript into a summary. ⚠️ **It is not a
+  redaction boundary**: the log sits beside the profile whose cookie database
+  holds the same credentials. What it buys is that a password is not written into
+  the one file a model is invited to read back.
+
+  **The log is capped at 250 entries and trimmed out of the middle**, keeping
+  entry zero — `browserai_init`, the only statement of why the directory exists —
+  exactly as the statement lists keep their first statement. A record at the cap
+  says so, and every answer that reads one says entries *may* have been elided.
+
+  **`browserai_list`'s "last used" now means what it says.** It is read from the
+  log's newest entry when there is one: a session driven for an hour without its
+  purpose or its holder changing appended nothing to any statement list, so the
+  figure used to be *when the session was opened*. `created` is deliberately
+  unchanged — it is the first statement of every field, and the trim never
+  removes one.
+
 - **A required `why` on every call that names a session.** Every upstream browser
   tool, plus `browserai_resume`, `browserai_destroy` and
   `browserai_set_purpose`. It rides the same path `session` does — the injection
