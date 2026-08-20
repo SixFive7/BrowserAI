@@ -630,6 +630,40 @@ named in the class, each with the reason — the executed-test count in `README.
 is a different predicate from any reflection over `[Test]` methods, and the
 installer size needs an artifact that `Releases/` gitignores.
 
+### The dated records are append-only
+
+**Added 2026-08-20, because the failure had already happened.** The `lock.json` →
+`browserai.json` rename swept the whole tree, reached `docs/reviews/` and
+`CHANGELOG.md`'s released sections and rewrote history — a 2026-08-18 review came
+out claiming a filename that did not exist for another two days. Nothing failed;
+a human reading the diff caught it, and the only thing standing between the next
+sweep and the same outcome was a sentence of prose in
+[`docs/reviews/README.md`](docs/reviews/README.md). **Prose does not stop a
+find-and-replace.**
+
+`AppendOnlyRecordTests` is the mechanism, and it is deliberately **narrow**. Two
+kinds of thing are dated records: every `docs/reviews/*.md` **except**
+`README.md`, which carries the index and the status table and is *meant* to be
+updated; and each **released** `CHANGELOG.md` section, never `[Unreleased]`,
+which is not a record of anything until a release stamps it. What is held is the
+**prefix** — the characters a record already had, by count and by SHA-256 — so
+appending an addendum passes, rewriting a sentence in the middle fails, and
+truncating fails with the arithmetic in the message.
+
+**A deliberate edit stays possible and stops being silent.** A typo fix in a
+review is legitimate; changing a sealed record means changing its seal in the
+same commit, which is a line in the diff — the same trade
+[`upstream-review.json`](upstream-review.json) takes, and the same warning
+applies: **re-sealing a record to make the test pass is rewriting history with an
+extra step.** A second arm requires every dated record in the tree to be sealed
+and every seal to still resolve, so the newest review — the one a sweep is most
+likely to be run beside — cannot be the one thing nobody registered.
+
+**Why not `git log --numstat`**, which would say for free whether a file has ever
+had a line deleted: it fails on both halves. A legitimate typo fix deletes a
+line, and the changelog's protection is per-*section* rather than per-file, which
+no whole-file history check can express.
+
 ## The upstream-review gate
 
 **Settled 2026-08-15, replacing an approval prompt with evidence.** The first

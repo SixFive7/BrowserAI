@@ -123,6 +123,51 @@ has been satisfied in form only.
 
 ### Added
 
+- **The server `instructions` now say what a full-page screenshot costs, before
+  a model reaches for one.** One sentence: *"'fullPage: true' costs the per-image
+  token maximum on any page worth using it on: it leaves at full document height
+  and is downscaled to that ceiling."* The arithmetic behind it, measured
+  2026-08-20: a viewport shot at the 1920x1080 default arrives as **2,691 visual
+  tokens**; the same page with `fullPage: true` over a 3,637 px document leaves
+  as 1920x3637, which is `⌈1920/28⌉ × ⌈3637/28⌉ =` **8,970 patches**, and the API
+  downscales that to its per-image ceiling of **4,784**. Break-even is a document
+  about 1,960 px tall, so *every* full-page shot of a page long enough to want
+  one costs the maximum — and returns less detail than the viewport shot it
+  replaced, because BrowserAI diverges before upstream's
+  `scaleImageToFitMessage` and appends what is on disk.
+
+  **It is in the `instructions` and not on `browser_take_screenshot`**, which is
+  the instinctive place to put it and the wrong one: every upstream description
+  passes through this proxy byte for byte, and the append path that would have
+  made this possible was deleted on 2026-08-18.
+  `ModelSurfaceTests.TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription`
+  holds both halves, and was watched red on each of them separately — once with
+  the sentence removed, once with it appended to the tool. **The string now
+  stands at 2,028 characters of the 2,048 the client silently truncates at**
+  (2,038 bytes, which is not the figure the client counts), leaving **20**
+  — measured off the published binary's own `initialize` response, *previously
+  1,876 of 2,048*.
+
+- **The dated records are append-only, and a test says so.** Released
+  `CHANGELOG.md` sections and every body under `docs/reviews/` are sealed by
+  `AppendOnlyRecordTests` — prefix, character count and SHA-256 — so an addendum
+  may be appended and a body may not be rewritten or truncated. **The failure it
+  exists for had already happened**: the `lock.json` → `browserai.json` rename
+  swept the whole tree, reached both, and produced a 2026-08-18 review claiming a
+  filename that did not exist for another two days. Nothing failed; a human
+  reading the diff caught it, and the rule was prose in
+  `docs/reviews/README.md`. It was planted by re-applying that exact sweep and
+  watched red on four records at once, `CHANGELOG.md#0.1.0` among them.
+
+  **It is deliberately narrow.** `docs/reviews/README.md` is *not* sealed — it
+  carries the status table, which is meant to move as findings are acted on — and
+  the changelog's `[Unreleased]` section is not sealed either, because it is not
+  a record of anything until a release stamps it. A typo fix in a review stays
+  legitimate: it means changing the seal in the same commit, which is a line in
+  the diff rather than a silent rewrite. [Release checklist item
+  10](RELEASING.md#10-the-changelogs-unreleased-section-is-not-empty) now
+  registers the section a release stamps.
+
 - **Six per-run arguments, and four opinions that stopped being arguments.**
   `viewport`, `locale`, `timezone`, `ignoreHTTPSErrors` and `captureNetwork`
   join `headed`, `tracing` and `debug` on both `browserai_init` and
@@ -413,6 +458,37 @@ has been satisfied in form only.
   not block a Firefox reinstall. `shared` counts every family, as it already did.
 
 ### Changed
+
+- **`browser_get_config` DOES redact `secrets`, and the claim that it does not
+  is corrected in three places.** *Previously, in `DECISIONS.md`, `kb/playwright/tools-and-artifacts.md`
+  and re-verification row 71: "its handler is `JSON.stringify(context.config, null, 2)`
+  with no filtering, so it emits `config.secrets` in plaintext if that key is ever
+  set", `Verified 2026-08-13 @ 0.0.79`.* The handler reading was correct and the
+  conclusion drawn from it was wrong, because the redaction is not in the handler:
+  every response leaves through
+  `sanitizeUnicode(this._context.redactSecrets(serializedText))`, one layer above
+  it. **Measured 2026-08-20** against the bundled child started with
+  `secrets: {"MY_TOKEN": "sk-live-…", "OTHER": "hunter2"}` — the answer carries
+  `"MY_TOKEN": "<secret>MY_TOKEN</secret>"` and neither literal value appears
+  anywhere in the frame. Upstream's own `config.d.ts`, in the copy sitting in
+  `payload/`, has said so all along.
+
+  **This is not an endorsement of setting `secrets`, and the correction must not
+  be read as one.** `redactSecrets` is `text.replaceAll(secretValue, …)` — a
+  substring match on the **value**, over the whole response. Measured in the same
+  run with a third secret whose value was `chromium`: `"browserName": "chromium"`
+  came back as `"browserName": "<secret>COMMON</secret>"` and `chromiumSandbox`
+  as `<secret>COMMON</secret>Sandbox`. A short or common value corrupts unrelated
+  text, an empty value is skipped outright, and a value the page never renders
+  verbatim is not redacted at all — *"a convenience and not a security feature"*,
+  in upstream's words. BrowserAI still never writes the key and never passes
+  `--secrets`, so on every ordinary call there is nothing to redact.
+
+  **The same claim in `docs/reviews/2026-08-19-auth-transfer-and-session-modes.md`
+  was deliberately left standing.** It is a dated record of what this repository
+  believed on the day it was written, and correcting it there would destroy the
+  account rather than improve it — which is the rule the append-only seal above
+  now enforces.
 
 - **BrowserAI refuses to serve out of an app root that is not inside the current
   user's Windows profile.** The maintainer's decision of 2026-08-20, answering

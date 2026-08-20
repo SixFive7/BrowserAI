@@ -460,8 +460,17 @@ were written as the work landed rather than reconstructed here. A changelog
 assembled from `git log` at this moment satisfies the script and has satisfied
 this item in form only.
 
+**Stamping creates a dated record, so seal it in the same commit.** The section
+the command just wrote is a released section from that moment on, and
+`AppendOnlyRecordTests.EveryDatedRecordIsSealedAndNothingSealedHasVanished`
+fails until it is registered — by design, so the newest release notes are not the
+one thing nothing protects. Add a `new("CHANGELOG.md#<version>", …)` line to
+`AppendOnlyRecordTests.Sealed`; the sibling test's failure message prints the
+character count and digest to use. See
+[the release gate](TESTING.md#the-dated-records-are-append-only).
+
 **Evidence:** the unreleased section's contents, moved under the version being
-cut.
+cut, and the seal line added beside it.
 
 ### 11. The resolved set is recorded beside the artifact
 

@@ -422,6 +422,77 @@ internal sealed class ModelSurfaceTests
         await Assert.That((string?)initialize["instructions"]).IsEqualTo(ServerInstructions.Text);
     }
 
+    /// <summary>
+    /// The cost of <c>fullPage: true</c> is stated in the one string BrowserAI
+    /// writes itself, and <b>not</b> appended to the tool it is about.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Both halves, because either one alone is the wrong fix.</b> Upstream's
+    /// <c>browser_take_screenshot</c> description explains what <c>fullPage</c>
+    /// does and cannot know what it costs here — BrowserAI diverges before
+    /// <c>scaleImageToFitMessage</c>, so the unscaled image is what the model
+    /// receives. The instinctive repair is to append a sentence to that
+    /// description, and the append path was <b>deleted</b> on 2026-08-18 so that
+    /// every upstream description passes through byte for byte. So this asserts
+    /// the sentence is in the <c>instructions</c> <i>and</i> that the tool's own
+    /// description is still upstream's bytes: a future edit that moves it onto
+    /// the tool fails here rather than passing on the half it satisfied.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-08-20, which is why the line exists at all.</b> A
+    /// viewport shot at the 1920x1080 default arrives as <b>2,691 visual
+    /// tokens</b>; <c>fullPage: true</c> over a 3,637 px document leaves as
+    /// 1920x3637 = <b>8,970</b>, and the API downscales that to its per-image
+    /// ceiling of <b>4,784</b>. Break-even is a document about 1,960 px tall, so
+    /// every full-page shot of a page long enough to want one costs the maximum.
+    /// </para>
+    /// <para>
+    /// <b>The phrases are asserted rather than the whole sentence.</b> Wording is
+    /// the maintainer's to tune; what must survive a re-draft is that the model
+    /// is told the parameter's name and that the cost is a ceiling it reaches.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription()
+    {
+        var missing = new List<string>();
+
+        foreach (var required in RequiredFullPageCostPhrases)
+        {
+            if (!ServerInstructions.Text.Contains(required, StringComparison.Ordinal))
+            {
+                missing.Add($"the server instructions no longer say '{required}', so nothing tells a model what a full-page screenshot costs before it takes one");
+            }
+        }
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
+
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
+        var upstreamScreenshot = UpstreamSurface.SnapshotDescriptions()
+            .Single(tool => tool.Name == "browser_take_screenshot").Description;
+
+        if ((string?)advertised["browser_take_screenshot"]?["description"] != upstreamScreenshot)
+        {
+            missing.Add("browser_take_screenshot's description is not upstream's own bytes — the cost sentence belongs in the instructions, not appended to the tool");
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+    }
+
+    /// <summary>
+    /// What the <c>fullPage</c> cost line has to keep saying, however it is
+    /// reworded.
+    /// </summary>
+    private static readonly string[] RequiredFullPageCostPhrases =
+    [
+        "'fullPage: true'",
+        "maximum",
+        "ceiling",
+    ];
+
     [Test]
     public async Task EveryToolDescriptionFitsTheSameBudget()
     {

@@ -57,6 +57,31 @@ namespace BrowserAI.Proxy;
 /// this arrives before the first call, and a description arrives after the model
 /// has already decided to make one.
 /// </para>
+/// <para>
+/// <b>The <c>fullPage</c> line, added 2026-08-20, is here for the same reason
+/// and is a cost fact rather than a warning.</b> BrowserAI diverges from
+/// upstream before <c>scaleImageToFitMessage</c> and appends what is on disk, so
+/// <b>what the viewport renders is what the model receives</b>
+/// ([kb](../../../kb/playwright/tools-and-artifacts.md#what-it-costs)). Measured
+/// 2026-08-20: a viewport shot at the 1920x1080 default arrives as
+/// <b>2,691 visual tokens</b>; the same page with <c>fullPage: true</c> over a
+/// 3,637 px document leaves as 1920x3637, which is
+/// <c>⌈1920/28⌉ × ⌈3637/28⌉ =</c> <b>8,970</b>, and the API downscales that to
+/// its per-image ceiling of <b>4,784</b>. The break-even is a document about
+/// 1,960 px tall, so <i>every full-page shot of a page long enough to want one</i>
+/// costs the maximum — which is why the sentence says "any page worth using it
+/// on" rather than "always": on a page that does not scroll the two are the same
+/// image.
+/// </para>
+/// <para>
+/// ⚠️ <b>It must never be appended to <c>browser_take_screenshot</c>'s
+/// description instead.</b> That is where a reader's instinct sends it, and the
+/// append path was <b>deleted</b> on 2026-08-18 so that every upstream
+/// description passes through byte for byte — see the note above
+/// <c>SessionToolSurface.InjectSession</c>. <c>ModelSurfaceTests</c> holds both
+/// halves: the sentence is in this string, and
+/// <c>browser_take_screenshot</c>'s description is still upstream's own bytes.
+/// </para>
 /// </remarks>
 internal static class ServerInstructions
 {
@@ -81,6 +106,8 @@ internal static class ServerInstructions
         BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns a session directory that every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
 
         Every session gets every tool. Nothing is chosen at init that a later call has to live with: 'headed: true' opens a window, 'tracing: true' records the session, and both are per-run rather than bound to the directory.
+
+        'fullPage: true' costs the per-image token maximum on any page worth using it on: it leaves at full document height and is downscaled to that ceiling.
 
         You must supply an absolute directory. The directory IS the session — its profile, screenshots, downloads and log all live there — so name it for what the work is. You must also supply a one-sentence 'purpose': another agent meeting this directory later reads it.
 

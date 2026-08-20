@@ -195,9 +195,20 @@ with no options, so `{indexedDB: true}` is never passed. A persistent profile
 carries IndexedDB, so a "saved" session silently omits it and the tool is
 *weaker* than doing nothing. `[FLOATS]`
 
-**`browser_get_config` does not redact.** Its handler is
+**`browser_get_config` DOES redact.** ⚠️ *Corrected 2026-08-20 @
+`@playwright/mcp` 0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05 (previously
+"**`browser_get_config` does not redact.** Its handler is
 `JSON.stringify(context.config, null, 2)` with no filtering, so it emits
-`config.secrets` in plaintext if that key is ever set. It is not set today.
+`config.secrets` in plaintext if that key is ever set. It is not set today.")* —
+the handler reading was right and the conclusion drawn from it was wrong,
+because the redaction is not in the handler. Every response leaves through
+`sanitizeUnicode(this._context.redactSecrets(serializedText))`, so the whole
+serialised answer is rewritten after the handler has produced it. **Measured**
+against the bundled child started with
+`secrets: {"MY_TOKEN": "sk-live-9f2b7c41e0aa", "OTHER": "hunter2"}`: the answer
+carries `"MY_TOKEN": "<secret>MY_TOKEN</secret>"` and neither literal value
+appears anywhere in the frame. **It is still not set today**, and this is still
+not a reason to set it — see the substring measurement two entries down.
 `[FLOATS]`
 
 **`browser_annotate` opens a dashboard window and blocks until a human finishes
@@ -208,13 +219,43 @@ a real child; method, timings and the process tree in
 [what `browser_annotate` actually does](#what-browser_annotate-actually-does--measured-2026-08-18).
 `[FLOATS]`
 
-**`config.secrets` is a real key, so `browser_get_config` can disclose one.**
-`--secrets <path>` is on the CLI and `secrets?: Record<string, string>` is in
-`config.d.ts`, and the handler serialises the whole config with no filtering.
-BrowserAI never writes the key and never passes the flag, so the answer is
-forwarded byte-identical on every ordinary call and refused only if a `secrets`
-key comes back. `Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committed
-`cli-help.txt` and `config-schema.d.ts` snapshots. `[FLOATS]`
+**`config.secrets` is a real key, and `browser_get_config` names it without
+disclosing it.** `--secrets <path>` is on the CLI and
+`secrets?: Record<string, string>` is in `config.d.ts`.
+`Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committed `cli-help.txt`
+and `config-schema.d.ts` snapshots. ⚠️ *Corrected 2026-08-20 (previously "so
+`browser_get_config` can disclose one … the handler serialises the whole config
+with no filtering … the answer is forwarded byte-identical on every ordinary
+call and refused only if a `secrets` key comes back")* — the values are replaced
+by `<secret>NAME</secret>` before the response leaves the child, and the refusal
+that clause describes was removed on 2026-08-18. **The key names are still in
+the clear**, which is the disclosure that survives: the answer tells the caller
+which secrets this child was configured with. BrowserAI never writes the key and
+never passes the flag, so on every ordinary call there is nothing to redact and
+the answer is forwarded byte-identical. `[FLOATS]`
+
+⚠️ **Redaction is a substring match on the VALUE, so it both over- and
+under-fires.** `redactSecrets` runs over the whole serialised response:
+
+```js
+redactSecrets(text) {
+  for (const [secretName, secretValue] of Object.entries(this.config.secrets ?? {})) {
+    if (!secretValue)
+      continue;
+    text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
+  }
+  return text;
+}
+```
+
+**Measured 2026-08-20** with a third secret
+whose value was `chromium`: the same `browser_get_config` answer came back with
+`"browserName": "<secret>COMMON</secret>"` and `"chromiumSandbox"` mangled into
+`"<secret>COMMON</secret>Sandbox"`. So a short or common value corrupts unrelated
+text, an empty value is skipped outright, and a value the page never renders
+verbatim — encoded, split across nodes, or hashed — is not redacted at all.
+Upstream says as much in `config.d.ts`: *"a convenience and not a security
+feature"*. `[FLOATS]`
 
 ### What a BrowserAI session permits, after its own filtering
 

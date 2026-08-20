@@ -31,6 +31,15 @@ the only account of the reasoning. This table is where the status lives. `git lo
 carries the fix; [`HAZARDS.md`](../../HAZARDS.md) carries what is bounded rather
 than closed.
 
+⚠️ **That was prose until 2026-08-20, and prose did not hold it.** A rename sweep
+reached these files and rewrote them; it was caught by a human reading the diff.
+`AppendOnlyRecordTests` now seals every file in this directory **except this
+one** — by character count and SHA-256, on the prefix, so an addendum may be
+appended and a body may not be rewritten. This index is deliberately *not*
+sealed: the status table above is meant to move. See
+[the release gate](../../TESTING.md#the-dated-records-are-append-only); a new
+review is registered in the seal list in the same change that adds it.
+
 | Finding | State |
 |---|---|
 | locking **A1** — `destroy` releases the lock before deleting the tree | **fixed**, `SessionDestroyTests` |
