@@ -883,7 +883,25 @@ than it did.
 
 ## Added 2026-08-20, from the shared-root measurement
 
-### 12. What BrowserAI should do when two users share one install root — **OPEN, and the measurement you asked for is below**
+### 12. What BrowserAI should do when two users share one install root — **ANSWERED 2026-08-20: (a)**
+
+⚠️ **Answered, in the maintainer's words: _"L1 a"_.** Direction **(a)** is implemented —
+`Hosting/InstallRootScope.cs` refuses at startup when the app root is not inside the
+current user's profile, before the stray sweep, the live marker, the instance
+directory or any session is created, and the refusal names the root it found, why a
+shared root is unsafe and that clearing `BROWSERAI_ROOT` restores the per-user
+default. **The recommendation below is kept verbatim because it is what was
+recommended**, and it recommended C-then-B with A as his alone; he took A. What A
+cost is exactly what the table said it would: `D:\Tools\BrowserAI` is now refused
+for nothing, and the honest predicate — reading the marker directory's DACL for a
+group ACE — is still not implemented, so [the hazard row](HAZARDS.md#hazard-index)
+is **narrowed rather than closed** and says so.
+
+**The primer below is unchanged**, and everything in it is still true of a root the
+refusal does not reach.
+
+---
+
 
 **The primer, for whoever reads this without the investigation.**
 `%LocalAppData%` gives every Windows user their own BrowserAI state — browsers,

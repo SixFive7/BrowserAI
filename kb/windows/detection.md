@@ -180,7 +180,7 @@ misses, forward slashes miss, and a `NULL` class finds nothing at all. `[FLOATS]
 
 That is the whole pass — process enumeration, the window walk, a title read per
 window, and the index self-clean — not just the process half. Re-establish with
-`BrowserAI.exe --sweep` under a scratch `BROWSERAI_ROOT` and read the process
+`BrowserAI.exe --sweep` under a scratch `BROWSERAI_ROOT` **inside your own profile** (a root outside it has been refused at startup since 2026-08-20) and read the process
 log, or with the probe's `stray-sweep` mode.
 
 **51 of the 64 message windows are nameless, and one of the 13 named ones is not
@@ -1223,6 +1223,15 @@ install-to flag both defeat that, and two users then share one browsers
 directory, one session index and one live-marker directory. This section is what
 could be established about that arrangement on this machine, and — first,
 because it bounds everything after it — what could not.
+
+⚠️ **What the product does about it, added 2026-08-20 and deliberately not part of
+the measurement:** the arrangement is now **refused at startup** when the app root
+is not inside the current user's profile — `Hosting/InstallRootScope.cs`, the
+maintainer's decision *"L1 a"*. Nothing below changed; the measurement is what it
+always was, and the refusal is what was built on the strength of it. It narrows
+rather than closes: *outside the profile* is not the same predicate as *shared*,
+and a profile directory whose ACL an administrator widened to a group is still
+accepted. The hazard row stays `open` and says so.
 
 ### What could not be measured, and why
 

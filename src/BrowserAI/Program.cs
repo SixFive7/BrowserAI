@@ -162,6 +162,31 @@ internal static class Program
             StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
         }
 
+        // ⚠️ BEFORE EVERYTHING THAT CREATES STATE, and that ordering is the
+        // whole value of the check: below this line come the sweep, the live
+        // marker, the instance directory and every session. A root two Windows
+        // users share loses the live-instance census silently -- the file locks
+        // span users and the Global\ mutexes do not -- and an apply then kills
+        // the other user's browsers. Measured 2026-08-20; see InstallRootScope,
+        // whose remarks also name what this narrows rather than closes.
+        //
+        // It is AFTER the log, deliberately: the log is the only channel a
+        // refusal has. stdout is the protocol and Console is banned outright, so
+        // a refusal written anywhere else would be a server that exits 1 saying
+        // nothing at all.
+        var scope = InstallRootScope.Judge(paths.RootAppDir);
+
+        if (scope.Unestablished is { } unestablished)
+        {
+            StartupLog.AppRootScopeUnestablished(logger, unestablished);
+        }
+
+        if (!scope.MayServe)
+        {
+            StartupLog.AppRootIsShared(logger, scope.Refusal!);
+            return 1;
+        }
+
         // The measurement mode: one pass, synchronously, and nothing else -- no
         // child, no stdio, no server. See SweepArgument for its one remaining
         // caller, which is a kb re-verification row rather than the product.
@@ -464,6 +489,44 @@ internal static partial class StartupLog
         Level = LogLevel.Warning,
         Message = "{Variable} is set, so this BrowserAI's app root is {Root} rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.")]
     public static partial void AppRootOverridden(ILogger logger, string variable, string root);
+
+    /// <summary>
+    /// The app root is one more than this user can reach, so this process is not
+    /// serving.
+    /// </summary>
+    /// <remarks>
+    /// <b>Critical, and the whole sentence is the parameter.</b> The message
+    /// template is a constant by construction, and the refusal has to name the
+    /// root it found, why a shared root is unsafe and what to change — so it is
+    /// composed by <see cref="Hosting.InstallRootScope"/>, where the reasoning
+    /// lives, and carried here whole rather than reassembled out of fields a
+    /// template would fix the order of.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="refusal">The whole refusal, remedy included.</param>
+    [LoggerMessage(
+        EventId = 6,
+        Level = LogLevel.Critical,
+        Message = "{Refusal}")]
+    public static partial void AppRootIsShared(ILogger logger, string refusal);
+
+    /// <summary>
+    /// Whether the app root is per-user could not be settled, and BrowserAI is
+    /// serving anyway.
+    /// </summary>
+    /// <remarks>
+    /// Warning rather than Critical: an unreadable ancestor is a locked-down
+    /// machine rather than a shared root, and refusing on it would stop a
+    /// background MCP server starting at all. What it must not be is silent —
+    /// that is the state the whole 2026-08-20 measurement was about.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="why">What stopped the question being answered.</param>
+    [LoggerMessage(
+        EventId = 7,
+        Level = LogLevel.Warning,
+        Message = "{Why}")]
+    public static partial void AppRootScopeUnestablished(ILogger logger, string why);
 
     /// <summary>
     /// The client went and closing the protocol channel after it threw.

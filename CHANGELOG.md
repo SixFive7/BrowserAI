@@ -154,6 +154,48 @@ has been satisfied in form only.
 
 ### Changed
 
+- **BrowserAI refuses to serve out of an app root that is not inside the current
+  user's Windows profile.** The maintainer's decision of 2026-08-20, answering
+  [`QUESTIONS.md`](QUESTIONS.md) §12 with *"L1 a"* — direction (a), refuse at
+  startup. `%LocalAppData%` gives every user their own browsers directory, session
+  index, log and `live\` markers; `BROWSERAI_ROOT` and the installer's install-to
+  flag both defeat that. Measured on 2026-08-20, sharing a root is unsafe in a way
+  nothing reports at run time: the **file** locks span users, because a share mode
+  is enforced against handles rather than tokens, but the **`Global\` mutexes do
+  not** — the DACL the kernel puts on one names LOCAL SYSTEM, the creating logon
+  session and the creating user, with **no group ACE at all**. The user who loses
+  the race cannot join the live set, creates no marker, and is invisible to the
+  other's census; that census answers *alone*, and an apply then runs
+  `force_stop_package`, which terminates every process under the install root.
+
+  **The check runs before anything creates state** — before the stray sweep, the
+  live marker, the instance directory and every session — so a refused root gains
+  a log line and nothing else, and the test asserts exactly that: `logs\` is the
+  only thing under the root afterwards. The refusal is a log record and a non-zero
+  exit, because `stdout` is the protocol channel and `System.Console` is banned
+  outright, and it carries the remedy rather than only the verdict.
+
+  **It resolves through the filesystem rather than comparing strings.** Both the
+  root and the profile go through `VolumeIdentity.DeepestExistingFinalName` — a
+  walk extracted from `SessionDirectoryGuard`, so there is one implementation of
+  *what does the filesystem call this* rather than two — and four arms of
+  `InstallRootScopeTests` are about the false positive: a real `mklink /J`
+  junction, a real `subst`ed drive letter, a real 8.3 short name and the
+  extended-length prefix. **The arm that matters most points the other way**: a
+  junction *inside* the profile whose target is outside it, which every string
+  comparison accepts and which is a genuinely shared root. All four were watched
+  red against a string-only implementation.
+
+  **It narrows the hazard rather than closing it, and the row stays `open`.**
+  *Outside the profile* is not the same predicate as *shared*: a single-user
+  install at `D:\Tools\BrowserAI` is now refused for nothing, which §12's own
+  table named as the cost of taking direction (a); and a profile directory whose
+  ACL an administrator widened to a group is inside the profile and still
+  accepted. A root whose final name cannot be read is **served with a warning**
+  rather than refused, because a background MCP server that will not start on a
+  locked-down machine is a worse failure than the one being prevented. All three
+  gaps are stated on `InstallRootScope` itself.
+
 - **A session's record is `browserai.json`, renamed from `lock.json`, and there is
   no compatibility read.** The maintainer's decision of 2026-08-20, verbatim:
   *"nothing is in production yet. The only version that exists is the alpha version

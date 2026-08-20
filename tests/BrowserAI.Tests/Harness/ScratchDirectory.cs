@@ -32,6 +32,22 @@ internal sealed class ScratchDirectory : IDisposable
         new(System.IO.Path.Combine(ScratchRoot.Path, $"{label}-{Guid.NewGuid():N}"));
 
     /// <summary>
+    /// Creates a fresh scratch directory <b>inside this user's profile</b>, for
+    /// the one thing the repository's own scratch root cannot hold.
+    /// </summary>
+    /// <remarks>
+    /// See <see cref="ScratchRoot.ProfileScratch"/>: a published BrowserAI
+    /// refuses to serve out of an app root outside the current user's profile,
+    /// so an app root handed to one through
+    /// <see cref="BrowserAiPaths.AppRootOverride"/> has to come from here.
+    /// Nothing else may.
+    /// </remarks>
+    /// <param name="label">What the directory is for.</param>
+    /// <returns>The directory.</returns>
+    public static ScratchDirectory CreateUnderProfile(string label) =>
+        new(System.IO.Path.Combine(ScratchRoot.ProfileScratch, $"{label}-{Guid.NewGuid():N}"));
+
+    /// <summary>
     /// Removes a tree the way the product does, and answers with what would not
     /// go.
     /// </summary>

@@ -233,6 +233,66 @@ internal static partial class VolumeIdentity
     }
 
     /// <summary>
+    /// The filesystem's own name for the deepest ancestor of a path that
+    /// exists, and which ancestor that turned out to be.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One walk, two callers, because it is one discipline.</b>
+    /// <c>SessionDirectoryGuard</c> asks it to decide whether a caller's session
+    /// directory is an aliased spelling of another one;
+    /// <c>Hosting.InstallRootScope</c> asks it to decide whether this process's
+    /// app root is inside the current user's profile. Both are the same
+    /// question — <i>what does the filesystem call this?</i> — and a second walk
+    /// written beside this one would be a second answer to it.
+    /// </para>
+    /// <para>
+    /// <b>It walks up only while the answer is <i>this name does not exist</i></b>,
+    /// which is the ordinary state of a path nothing has created yet. A tail
+    /// that does not exist cannot be a reparse point, so proving the deepest
+    /// existing ancestor unaliased proves the whole path unaliased. Any other
+    /// failure — <c>ERROR_ACCESS_DENIED</c> above all — stops the walk with
+    /// <see langword="null"/>, because walking past it would turn <i>unknown</i>
+    /// into a confident answer read off an ancestor.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Never call this on a path <see cref="Of"/> has not already found
+    /// local</b> — it opens a directory, which is
+    /// <see cref="FinalNameOf"/>'s 22-second hazard.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The path to resolve. Need not exist.</param>
+    /// <param name="walkLimit">
+    /// How many levels the walk may climb. A bound rather than a loop to the
+    /// root, because the walk costs one directory open per level and a caller
+    /// can name a path of any depth.
+    /// </param>
+    /// <returns>
+    /// The final name — still carrying <see cref="ExtendedLengthPrefix"/> — and
+    /// the ancestor it belongs to, or <see langword="null"/> and the ancestor
+    /// the walk gave up on.
+    /// </returns>
+    public static (string? Final, string Existing) DeepestExistingFinalName(string path, int walkLimit)
+    {
+        var candidate = path;
+        string? final = null;
+
+        for (var level = 0; level < walkLimit; level++)
+        {
+            final = FinalNameOf(candidate);
+
+            if (final is not null || !NameDoesNotExist() || Path.GetDirectoryName(candidate) is not { } parent)
+            {
+                break;
+            }
+
+            candidate = parent;
+        }
+
+        return (final, candidate);
+    }
+
+    /// <summary>
     /// Whether the last failure was <i>this name does not exist</i> rather than
     /// anything else.
     /// </summary>

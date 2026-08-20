@@ -33,8 +33,8 @@ namespace BrowserAI.Sessions;
 /// <b>Why refuse an aliased spelling.</b> <c>Path.GetFullPath</c> resolves
 /// neither <c>\\?\</c>, 8.3 short names, junctions, <c>subst</c> nor mapped
 /// drives, so two spellings of one directory produce <b>two mutex names and one
-/// <c>lock.json</c></b> — the per-directory gate stops serialising while the
-/// lock file still says everything is fine
+/// <c>browserai.json</c></b> — the per-directory gate stops serialising while the
+/// record still says everything is fine
 /// ([review A4](../../../docs/reviews/2026-08-18-adversarial-locking.md)). The
 /// correct fix is to canonicalise through the filesystem's own final name, and
 /// it rewrites the identity of every mutex name, index key and lock path in the
@@ -181,20 +181,11 @@ internal static class SessionDirectoryGuard
         // the ordinary state of `init` on a directory nothing has created yet.
         // A tail that does not exist cannot be a reparse point, so proving the
         // deepest EXISTING ancestor unaliased proves the whole path unaliased.
-        var candidate = full;
-        string? final = null;
-
-        for (var level = 0; level < AncestorWalkLimit; level++)
-        {
-            final = VolumeIdentity.FinalNameOf(candidate);
-
-            if (final is not null || !VolumeIdentity.NameDoesNotExist() || Path.GetDirectoryName(candidate) is not { } parent)
-            {
-                break;
-            }
-
-            candidate = parent;
-        }
+        //
+        // The walk itself moved to VolumeIdentity on 2026-08-20, because
+        // Hosting.InstallRootScope asks the identical question of the app root
+        // and two walks would be two answers to it.
+        var (final, candidate) = VolumeIdentity.DeepestExistingFinalName(full, AncestorWalkLimit);
 
         if (final is null)
         {

@@ -78,35 +78,93 @@ internal static class ScratchRoot
     {
         get
         {
-            var path = System.IO.Path.Combine(RepositoryLayout.Root.FullName, ".work", "test-scratch");
+            EnsureReclaimed();
+            return RepositoryScratch;
+        }
+    }
 
-            lock (Gate)
+    /// <summary>
+    /// <c>%LocalAppData%\BrowserAI-test-scratch</c> — the one place the suite
+    /// writes outside the repository, created and swept on the same pass.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It exists for exactly one thing and must not be used for anything
+    /// else: an <b>app root</b> a published BrowserAI will accept.</b> Since
+    /// 2026-08-20 the product refuses at startup when its app root is outside
+    /// the current user's profile — see
+    /// <see cref="BrowserAI.Hosting.InstallRootScope"/> — so a test that hands
+    /// it <c>&lt;repo&gt;\.work\…</c> through
+    /// <see cref="BrowserAiPaths.AppRootOverride"/> is handed a process that
+    /// exits 1 before it serves anything.
+    /// </para>
+    /// <para>
+    /// <b>A sibling of the product's own root rather than a child of it</b>, so
+    /// the reclaim below can delete the whole thing without ever being one
+    /// mistake away from a developer's real browsers, sessions and log. The
+    /// repository's own rule — everything the suite writes goes in
+    /// <c>.work\</c> — is deliberately broken here and nowhere else, because the
+    /// property under test is <i>where the app root is</i> and no directory
+    /// inside the repository can have it.
+    /// </para>
+    /// </remarks>
+    public static string ProfileScratch
+    {
+        get
+        {
+            EnsureReclaimed();
+            return ProfileAnchoredScratch;
+        }
+    }
+
+    private static string RepositoryScratch =>
+        System.IO.Path.Combine(RepositoryLayout.Root.FullName, ".work", "test-scratch");
+
+    private static string ProfileAnchoredScratch =>
+        System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+            "BrowserAI-test-scratch");
+
+    private static void EnsureReclaimed()
+    {
+        lock (Gate)
+        {
+            if (_reclaimed)
             {
-                if (!_reclaimed)
-                {
-                    _ = Directory.CreateDirectory(path);
-
-                    // FIRST, and before the tree: a process the previous run
-                    // left running is what holds the files the delete below
-                    // cannot take, so reclaiming in the other order reports a
-                    // locked file where the cause is a live process.
-                    //
-                    // Only what it COULD NOT terminate joins the survivors. A
-                    // leftover this pass ended is the pass working, and putting
-                    // it in a list something asserts is empty would fail the run
-                    // that cleaned up rather than the run that leaked.
-                    LastPassReport.AddRange(SpawnRecord.Reclaim(SpawnRecord.Path));
-                    LastPassSurvivors.AddRange(LastPassReport
-                        .Where(line => line.StartsWith("could not terminate ", StringComparison.Ordinal)));
-
-                    Reclaim(path);
-                    ReclaimStrayIndexEntries(path);
-                    ReclaimTheSweepMutex();
-                    _reclaimed = true;
-                }
+                return;
             }
 
-            return path;
+            var path = RepositoryScratch;
+            var profile = ProfileAnchoredScratch;
+
+            _ = Directory.CreateDirectory(path);
+            _ = Directory.CreateDirectory(profile);
+
+            // FIRST, and before the tree: a process the previous run
+            // left running is what holds the files the delete below
+            // cannot take, so reclaiming in the other order reports a
+            // locked file where the cause is a live process.
+            //
+            // Only what it COULD NOT terminate joins the survivors. A
+            // leftover this pass ended is the pass working, and putting
+            // it in a list something asserts is empty would fail the run
+            // that cleaned up rather than the run that leaked.
+            LastPassReport.AddRange(SpawnRecord.Reclaim(SpawnRecord.Path));
+            LastPassSurvivors.AddRange(LastPassReport
+                .Where(line => line.StartsWith("could not terminate ", StringComparison.Ordinal)));
+
+            Reclaim(path);
+
+            // The profile-anchored root gets the identical pass, because it
+            // holds whole app roots -- browsers directory, index and live
+            // markers -- and a leaked one is exactly the leftover this class
+            // exists to stop the next run meeting as a failure.
+            Reclaim(profile);
+
+            ReclaimStrayIndexEntries(path);
+            ReclaimStrayIndexEntries(profile);
+            ReclaimTheSweepMutex();
+            _reclaimed = true;
         }
     }
 

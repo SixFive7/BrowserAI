@@ -111,10 +111,21 @@ internal sealed class FirstRunProvisioningTests
 
         using var scratch = ScratchDirectory.Create("first-run");
 
+        // ⚠️ INSIDE THE USER'S PROFILE, and it is the only directory in this
+        // test that has to be. Since 2026-08-20 a published BrowserAI refuses at
+        // startup when its app root is outside the profile -- see
+        // `Hosting.InstallRootScope` -- so an app root under `<repo>\.work\`,
+        // which is what this was until that day, is handed to a process that
+        // exits 1 before it serves anything. The session directory below stays
+        // in the repository's scratch root, because a session directory is the
+        // caller's own path and has nothing to do with where the app root is.
+        //
         // A BrowserAI whose whole app root is new, so its browsers directory is
         // empty in the only way that counts: nothing has ever been installed
         // there and no marker exists to short-circuit the check.
-        var appRoot = Path.Combine(scratch.Path, "app-root");
+        using var appRootScratch = ScratchDirectory.CreateUnderProfile("first-run");
+
+        var appRoot = Path.Combine(appRootScratch.Path, "app-root");
         var browsers = Path.Combine(appRoot, "browsers");
         var session = Path.Combine(scratch.Path, "first-run-session");
 
