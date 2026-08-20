@@ -8,6 +8,17 @@ The checklist a release must pass, and the gate it enforces.
 **This is the only gate that exists.** No GitHub Actions, no scheduled task, no
 git hook. Nothing else stands between a change and a shipped release.
 
+⚠️ **That was briefly untrue and is true again. *Corrected 2026-08-20 (previously
+the same sentence, which had been left standing while hosted CI existed).*** A
+GitHub Actions workflow ran the whole suite on every push and pull request from
+2026-08-18; it was removed on 2026-08-20 at the maintainer's decision, verbatim:
+*"Remove CI completely. Let all the tests run on my machine only. I want no CI and
+no github runner."* **So this file is once again the entire gate, and it is now
+the entire gate for the suite as well as for the release** — which is a stronger
+claim than the sentence carried before CI existed, because between those two dates
+a push at least built. What was lost by removing it, and what is unverified
+anywhere while it is gone, is [the audit in `TODO.md`](TODO.md#continuous-integration).
+
 Every item is **executed and evidenced**, and **any failing item blocks the
 release**. A failure is a work item, never a waiver — the response to a breaking
 upstream change is to make the newest version work
@@ -301,6 +312,19 @@ Three things to record rather than assume, because each is easy to skim past:
   conditional ignore anywhere in the tree. A `Skip` at release time is a red
   build wearing a disguise, and flakiness is a defect to fix rather than a state
   to tolerate.
+- **The suite ran from PowerShell *and* from Git Bash, and both were green.**
+  Added 2026-08-20, when CI was removed and this checklist became the only place
+  the suite is run. **It is not a preference and not redundancy.** The drive
+  letter's case is inherited from the shell that started the test host — `C:\…`
+  from PowerShell, `c:\…` from Git Bash — and a run from one shell alone bakes in
+  whichever spelling happens to agree. That is not hypothetical: the same commit
+  was 484 passed from PowerShell and 484 with **two failures** from Git Bash
+  ([kb](kb/windows/detection.md#windows-re-spells-a-paths-drive-letter-a-process-never-re-spells-its-own)),
+  and the hosted CI that has now been removed could never have seen it, because
+  every step of it ran under `pwsh`. `DriveLetterCase` is the mechanism that makes
+  the wrong comparison red from either shell; running both is what catches the
+  next defect of this shape before `DriveLetterCase` has been extended to cover
+  it. **Record both totals**, not one.
 - **Every tool in the snapshot, with its schema.** A tool upstream adds, removes
   or re-shapes fails the build, and `upstream-review.json` holds the release
   until a human has adjudicated it. ⚠️ *Corrected 2026-08-18 (previously "**Every
@@ -586,6 +610,14 @@ release; they only permit one.
 It works when it is invoked, and **there is no mechanism anywhere that invokes
 it.** That is deliberate: it allows many commits without re-running everything
 each time, and it keeps the project off hosted CI.
+
+⚠️ ***Corrected 2026-08-20 (previously the same paragraph, left standing through
+the two days hosted CI existed).*** The arrangement was suspended on 2026-08-18
+and restored on 2026-08-20 at the maintainer's decision. It now holds more
+completely than when it was written: for those two days a push at least built the
+payload, provisioned both browsers and ran the suite on a machine nobody owned,
+and nothing does that now. [`TODO.md`](TODO.md#continuous-integration) carries what
+that costs.
 
 The cost, stated plainly so it is inherited as a decision:
 

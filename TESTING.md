@@ -127,6 +127,11 @@ the tree silently diverges from what was last proven green. There are **no
 automated checks of any kind** — no hosted CI, no scheduled job, no git hook
 ([DECISIONS → Locking, logging, versioning and registration](DECISIONS.md#locking-logging-versioning-and-registration)).
 
+⚠️ **That sentence was false between 2026-08-18 and 2026-08-20 and is true again.**
+Hosted CI existed for those two days and was removed at the maintainer's decision;
+[Continuous integration](#continuous-integration) below is what is left of it, and
+what it cost to remove.
+
 Two things close it, and neither is a scheduled job:
 
 - **[The daily drift check](CLAUDE.md#the-daily-drift-check)** — a directive that
@@ -717,64 +722,77 @@ nothing, blocks nothing, and prompts nobody.
 
 ## Continuous integration
 
-**Added 2026-08-18, and it is the first time any of this ran on a machine nobody
-owns.** [`.github/workflows/build.yml`](.github/workflows/build.yml) builds the
-payload, provisions Chromium and Firefox, publishes the NativeAOT binary and runs
-the **whole** suite — `SaturationTests` included, because a CI that skipped the
-expensive half would recreate the gap it exists to close. Its own header states
-what it costs (about 204 MB of first-run browser download per run, plus ~125.7 MB
-for Firefox, uncached on purpose) and what it does **not** cover.
+**There is none, as of 2026-08-20.** `.github/workflows/build.yml` existed from
+2026-08-18 and was deleted that day at the maintainer's decision, verbatim:
+*"Remove CI completely. Let all the tests run on my machine only. I want no CI and
+no github runner."* `.github/` is gone entirely rather than left as an empty husk.
+Bringing it back needs self-hosted runner infrastructure that does not exist yet,
+and the maintainer is considering leaving GitHub before that happens — so
+[the TODO item](TODO.md#continuous-integration) deliberately does not assume
+GitHub Actions.
 
-Two things a reader should know before treating a red build as a defect:
+**The whole gate is now the suite, run on the maintainer's machine, from both
+shells.** [The release gate](RELEASING.md#the-release-gate) is the only thing
+between a change and a shipped release, and there is nothing behind it. Two
+consequences a reader has to carry:
 
-- **`BROWSERAI_RELEASE_RUN` is deliberately unset, so a green CI run reports
-  skips and that is correct.** It turns an absent capability from a loud skip
-  into a failure, and two capabilities are genuinely absent on a runner — the
-  packed release and an installed MCP client. CI is an ordinary run that states
-  its own coverage; the release gate is still
-  [`RELEASING.md`](RELEASING.md#the-release-gate), driven locally.
+- **Run the suite from PowerShell *and* from Git Bash.** Not a preference. The
+  drive-letter casing a test host inherits differs between them, and a
+  single-shell run bakes in whichever spelling happens to agree — which is exactly
+  what CI did, running `pwsh` end to end, and why that defect was reported twice
+  from a machine and never once from a build
+  ([kb](kb/windows/detection.md#windows-re-spells-a-paths-drive-letter-a-process-never-re-spells-its-own)).
+  `DriveLetterCase` is the mechanism that catches it from either shell; running
+  both is the belt beside it.
+- **Nothing builds a contributor's pull request any more.** For a public
+  repository that is the real cost of the removal: 54% of this project's
+  enforcement is a test or a release-phase check, and a pull request can now break
+  any of it with nothing to say so before somebody pulls it and runs the suite.
 
-  **Settled 2026-08-18, because a green build reporting four skips reads like a
-  rule being broken and is not.** [The house rule](CLAUDE.md) — *no skipped,
-  quarantined or conditionally-ignored test in the tree* — is about the **tree**,
-  and `HouseRuleTests.NoTestInTheTreeIsSkipped` enforces exactly that: no `[Skip]`
-  attribute anywhere. A capability skip is a different thing. It is decided at run
-  time, it names the capability, the path to restore it and the switch that makes
-  it fatal, and it is reported as **skipped rather than passed** so the run's
-  summary cannot be mistaken for a healthy one. That is the gate working.
+⚠️ **`BROWSERAI_EXPECTED_ABSENT` still exists and nothing sets it.** *Corrected
+2026-08-20 (previously "`build.yml`'s test step sets `BROWSERAI_EXPECTED_ABSENT:
+PackagedRelease,ClientCommandLine`", added 2026-08-19).* The workflow was the
+variable's only consumer anywhere in the repository, so with CI gone the live arm
+`SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared` asserts
+nothing on every run — which is *correct rather than broken*: an unset variable
+declares nothing, which is what a developer machine has always done. The
+reconciliation itself is still held by
+`SuiteCoverageTests.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent`,
+which is pure and in-process and unaffected. **The third arm was deleted rather
+than re-pointed.** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read
+`build.yml`, scoped to the step that ran the suite, and its positive control —
+*this really is the step that runs the suite* — is the thing a re-pointed version
+could not have: a scan for "any pipeline definition that runs the suite without
+declaring the pin" passes over an empty directory, over a typo in its own path and
+over a pipeline shape it does not recognise, indistinguishably. Restoring it
+against whatever runs the suite next is part of
+[the TODO item](TODO.md#continuous-integration).
 
-  On a GitHub runner the count is **4**: `EveryNoticeIsInsideThePackedRelease`
-  (no packed `.nupkg`), and `TheClientIsLocatedByFileNameAndNeverAsAShim`,
-  `TheClientStillSaysWhatTheExitCodesCannot` and
-  `TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched` (no
-  `claude.exe`). **Do not change the gating to make CI read zero** — that would
-  buy a tidier badge by deleting the run's own account of what it did not cover,
-  which is the whole point of the mechanism. **Zero skipped is a release
-  requirement, not a CI one**: [release checklist item 8](RELEASING.md#the-release-gate)
-  demands it, and it is met by cutting from a machine that has every capability
-  present. If that ever needs proving on a runner, the answer is to install the
-  missing capabilities there and set `BROWSERAI_RELEASE_RUN=1`, never to soften
-  the skip.
+**What a capability skip means, kept because it did not depend on CI.** *Settled
+2026-08-18, because a green build reporting skips reads like a rule being broken
+and is not.* [The house rule](CLAUDE.md) — *no skipped, quarantined or
+conditionally-ignored test in the tree* — is about the **tree**, and
+`HouseRuleTests.NoTestInTheTreeIsSkipped` enforces exactly that: no `[Skip]`
+attribute anywhere. A capability skip is a different thing. It is decided at run
+time, it names the capability, the path to restore it and the switch that makes it
+fatal, and it is reported as **skipped rather than passed** so the run's summary
+cannot be mistaken for a healthy one. That is the gate working. **Zero skipped is
+a release requirement**: [release checklist item 8](RELEASING.md#the-release-gate)
+demands it, and it is met by cutting from a machine that has every capability
+present. *Previously this paragraph also recorded that a GitHub runner skipped
+exactly 4 — `EveryNoticeIsInsideThePackedRelease` for the missing packed `.nupkg`,
+and `TheClientIsLocatedByFileNameAndNeverAsAShim`,
+`TheClientStillSaysWhatTheExitCodesCannot` and
+`TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched` for the missing
+`claude.exe`. There is no runner to count on now; the number is kept here because
+it is the only record of what a machine without those two capabilities reports.*
 
-  ⚠️ **And which two are absent is now declared rather than described, since
-  2026-08-19.** The paragraph above was the only place that said *the packed
-  release and an installed MCP client* — prose, checked by nobody, so a **third**
-  capability going absent on a runner would have read exactly like those two:
-  green run, one more `ABSENT` line, more tests skipping. `build.yml`'s test step
-  sets `BROWSERAI_EXPECTED_ABSENT: PackagedRelease,ClientCommandLine`, and
-  `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared`
-  fails the build on any absence that declaration does not name — **and** on any
-  name in it that turns out to be `PRESENT`, because a declaration wider than the
-  truth is standing permission for that capability to disappear later. An unset
-  variable declares nothing, which is what a developer machine does and why a
-  clean clone still runs. **Do not add a capability to that list to make a red
-  build green:** a name there is a promise that nobody minds it being gone, and
-  the count in the paragraph above moves with it.
-- **A red `UpstreamReviewTests` means upstream moved and nobody reviewed it.**
-  That is [the marker gate](#the-upstream-review-gate) working, not a stale file.
-  Lock-file drift is reported into the job summary and never fails the build,
-  because drift is information; **adopting** a moved version is what needs the
-  review.
+**A red `UpstreamReviewTests` means upstream moved and nobody reviewed it.** That
+is [the marker gate](#the-upstream-review-gate) working, not a stale file.
+Adopting a moved version is what needs the review. Lock-file drift is now reported
+by [release checklist item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green)
+alone — with `--exit-code` on both diffs, which is stricter than the `git diff` the
+workflow ran into a job summary.
 
 ## The release gate
 

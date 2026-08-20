@@ -136,10 +136,18 @@ internal static class SuiteEnvironment
     /// environment declares it.</b> A developer machine declares nothing and
     /// behaves exactly as it did before this existed: what is provisioned there
     /// is whatever that developer happens to have, and a suite that asserted a
-    /// set would be asserting a fact about somebody's disk. CI knows, because CI
-    /// builds the machine it runs on — so [`build.yml`](../../../.github/workflows/build.yml)
-    /// names the two it expects, and its own header comment stops being a claim
-    /// nothing checks.
+    /// set would be asserting a fact about somebody's disk. A controlled
+    /// environment knows, because it builds the machine it runs on.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Nothing sets it as of 2026-08-20, and that is a removal rather than
+    /// a defect.</b> Hosted CI was this variable's only consumer — it named
+    /// <c>PackagedRelease,ClientCommandLine</c> on the step that ran the suite —
+    /// and CI was removed that day at the maintainer's decision. Unset means
+    /// <i>declares nothing</i>, which is already the developer-machine
+    /// behaviour, so the mechanism below is correct, inert, and ready for
+    /// whatever environment runs the suite next. It is deliberately kept rather
+    /// than deleted; re-declaring is one environment variable.
     /// </para>
     /// <para>
     /// <b><c>none</c> is a value rather than an omission, and that is
@@ -342,9 +350,10 @@ internal static class SuiteEnvironment
         // WHAT THIS RUN'S ENVIRONMENT SAID IT WOULD LACK, printed beside what it
         // actually lacked so the two can be read together. A block that reported
         // ABSENT and said nothing about whether that absence was expected is the
-        // state this row was added to end: four ABSENT rows in CI look identical
+        // state this row was added to end: four ABSENT rows look identical
         // whether four were meant to be absent or five went and one was noticed
-        // by nobody.
+        // by nobody. Since 2026-08-20 this row reads "not declared" on every run,
+        // because CI was the only environment that ever declared.
         _ = report.Append("  ")
             .Append("expected absent".PadRight(20))
             .Append(ExpectedAbsentDeclaration is null ? "not declared" : ExpectedAbsentDeclaration)
@@ -436,9 +445,11 @@ internal static class SuiteEnvironment
     /// <remarks>
     /// <para>
     /// <b>Pure, for <see cref="Decide"/>'s reason exactly.</b> The declaration
-    /// only exists in CI, so an assertion written only against the live
-    /// environment would be a mechanism a developer machine can never exercise
-    /// and CI would meet for the first time at the moment it mattered. Every
+    /// only ever exists in a controlled environment, so an assertion written
+    /// only against the live environment would be a mechanism a developer
+    /// machine can never exercise and the controlled one would meet for the
+    /// first time at the moment it mattered — and with no controlled
+    /// environment left, it would be a mechanism nothing exercises at all. Every
     /// branch below is reachable in-process from
     /// <see cref="SuiteCoverageTests.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent"/>,
     /// and the live arm is the same function applied to the real environment.
@@ -504,14 +515,21 @@ internal static class SuiteEnvironment
     /// it named them.
     /// </summary>
     /// <remarks>
-    /// <b>Split out of <see cref="ReconcileDeclaredAbsence"/> so that the
-    /// workflow file's declaration and this run's are read by one
-    /// implementation.</b>
-    /// <see cref="SuiteCoverageTests.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent"/>
-    /// asks whether the string committed in <c>build.yml</c> is a well-formed
-    /// declaration, and the live arm asks whether this run's matches the disk;
-    /// a second copy of <i>what counts as a name</i> would eventually answer the
-    /// two differently.
+    /// <b>Split out of <see cref="ReconcileDeclaredAbsence"/> so that a
+    /// declaration committed to a pipeline definition and this run's live one
+    /// are read by one implementation.</b> A second copy of <i>what counts as a
+    /// name</i> would eventually answer the two differently.
+    /// <para>
+    /// ⚠️ <b>Only one caller is left as of 2026-08-20, and the split is kept
+    /// anyway.</b> The other was
+    /// <c>SuiteCoverageTests.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent</c>,
+    /// which read <c>.github/workflows/build.yml</c> and was deleted with CI —
+    /// it could not be re-pointed at a file that does not exist without losing
+    /// the positive control that made it worth having. The reason to keep this
+    /// entry point is the one it was created for: the day something declares
+    /// again, the string it commits and the string this run reads must be parsed
+    /// by the same code.
+    /// </para>
     /// </remarks>
     /// <param name="declaration">The declaration, which must not be <see langword="null"/>.</param>
     /// <returns>What it names, and one line per thing wrong with it.</returns>
@@ -542,7 +560,7 @@ internal static class SuiteEnvironment
         {
             // Against the NAMES rather than through Enum.TryParse, which parses
             // "1" into a capability -- and a declaration of `1` means nothing to
-            // anybody reading the workflow file it would be written in.
+            // anybody reading the pipeline definition it would be written in.
             var match = Array.Find(names, name => name.Equals(token, StringComparison.OrdinalIgnoreCase));
 
             if (match is null)

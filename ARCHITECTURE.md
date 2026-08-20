@@ -42,7 +42,6 @@ assumed and nothing on `PATH` is used.
 | Concern | Implemented by |
 |---|---|
 | Building the payload: Node, the vendored `node_modules`, the provenance stamp | `build/Build-Payload.ps1`, `build/payload/{package.json, package-lock.json}`, the publish-only payload copy in `src/BrowserAI/BrowserAI.csproj` |
-| Running all of that on a machine nobody owns | `.github/workflows/build.yml` — payload, both browsers, the AOT publish and the whole suite, on every push and pull request |
 | Finding the payload at run time | `src/BrowserAI/Runtime/PayloadLayout.cs` |
 | Composing the child's configuration and command line | `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
 | First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune, TreeDelete}.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
@@ -563,11 +562,19 @@ that could not.
 
 **And since 2026-08-19 a controlled environment declares *which* it expects to
 lack**, because *loud* is not *noticed*. The gate above made an absence visible;
-nothing pinned the set, so a fifth capability going absent in CI read exactly like
-the four that are absent by design — green run, one more `ABSENT` line, a handful
-of tests skipping instead of running. `BROWSERAI_EXPECTED_ABSENT` on the
-workflow's test step names what CI expects to lack, and an absence it does not
-name fails the build — as does a name in it that turns out to be `PRESENT`, since
-a declaration wider than the truth is standing permission for that capability to
-disappear later. An unset variable declares nothing, so a developer machine, whose
-provisioned set is a fact about somebody's disk, behaves exactly as before.
+nothing pinned the set, so a fifth capability going absent read exactly like the
+four that are absent by design — green run, one more `ABSENT` line, a handful of
+tests skipping instead of running. `BROWSERAI_EXPECTED_ABSENT` names what an
+environment expects to lack, and an absence it does not name fails the build — as
+does a name in it that turns out to be `PRESENT`, since a declaration wider than
+the truth is standing permission for that capability to disappear later. An unset
+variable declares nothing, so a developer machine, whose provisioned set is a fact
+about somebody's disk, behaves exactly as before.
+
+⚠️ **Corrected 2026-08-20 (previously "`BROWSERAI_EXPECTED_ABSENT` on the
+workflow's test step names what CI expects to lack"): nothing sets it now, so the
+mechanism is intact and inert.** Hosted CI was its only consumer and was removed
+that day at the maintainer's decision; the third arm that read the workflow file
+went with it, because a re-pointed version could have no positive control. What
+this leaves unverified, and what has to come back with CI, is
+[`TODO.md`](TODO.md#continuous-integration).

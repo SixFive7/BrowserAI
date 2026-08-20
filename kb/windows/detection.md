@@ -512,15 +512,24 @@ property of the caller's shell rather than of the product.** Reproduced at
 cheap version is `[System.IO.Path]::GetFullPath('c:\windows')` beside
 `(Get-Item 'c:\windows').FullName` in the same session.
 
-⚠️ **CI cannot see this, and structurally never will.** Every step in
-`build.yml` runs under `pwsh`, so the build picks the casing that happens to
-agree and bakes it in — which is why this has been reported twice from a machine
-and never once from a build. What puts it in front of CI is `DriveLetterCase`,
-over which six of `SessionDirectoryGuardTests`' arms are parameterised: its
-`Lower` value composes a spelling no Windows API ever returns, so the wrong
-comparison goes red everywhere rather than somewhere. Proof it does not need a
-shell: the planted arm failed *from PowerShell*, with the identical two failures
-Git Bash had produced.
+⚠️ **A single-shell run cannot see this, and structurally never will.** The
+hosted CI this project had between 2026-08-18 and 2026-08-20 ran every step under
+`pwsh`, so it picked the casing that happens to agree and baked it in — which is
+why this was reported twice from a machine and never once from a build. What puts
+it in front of a single-shell run is `DriveLetterCase`, over which six of
+`SessionDirectoryGuardTests`' arms are parameterised: its `Lower` value composes a
+spelling no Windows API ever returns, so the wrong comparison goes red everywhere
+rather than somewhere. Proof it does not need a shell: the planted arm failed
+*from PowerShell*, with the identical two failures Git Bash had produced.
+
+*Corrected 2026-08-20 (previously "CI cannot see this … Every step in `build.yml`
+runs under `pwsh`"): CI was removed that day, and the property is about
+single-shell runs rather than about CI.* With CI gone the release gate is the
+suite on one machine, so [release checklist item
+8](../../RELEASING.md#8-run-everything) now requires it to be run **from
+PowerShell and from Git Bash**, and both totals recorded. That is belt beside
+`DriveLetterCase`'s braces, and it is what catches the next defect of this shape
+before the parameterisation has been extended to cover it.
 
 ## Process image path — the fully documented detection path
 

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text;
-using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -81,7 +80,7 @@ internal static class SuiteCoverage
 /// same defect as the one this file closes.
 /// </para>
 /// </remarks>
-internal sealed partial class SuiteCoverageTests
+internal sealed class SuiteCoverageTests
 {
     /// <summary>
     /// A release run refuses what an ordinary run skips, and a partial
@@ -267,60 +266,34 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(empty[0]).Contains(SuiteEnvironment.NothingExpectedAbsent);
     }
 
-    /// <summary>
-    /// The workflow still declares what it expects to be absent, on the step
-    /// that runs the suite.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Without this, the pin is one deleted line from being inert and nothing
-    /// would say so.</b> The live arm below asserts nothing at all when
-    /// <c>BROWSERAI_EXPECTED_ABSENT</c> is unset — that is deliberate, because a
-    /// developer machine must keep behaving as it did — which means removing the
-    /// variable from [`build.yml`](../../.github/workflows/build.yml) turns the
-    /// mechanism off and leaves every test green. That is the same shape as the
-    /// thing being closed: a capability disappearing without a reader.
-    /// </para>
-    /// <para>
-    /// <b>Scoped to the step that runs the suite</b>, not to the file, because a
-    /// declaration on the publish step is a declaration the test process never
-    /// sees — inert in exactly the way this test exists to catch, while reading
-    /// as present to a file-wide search. The value is parsed through
-    /// <see cref="SuiteEnvironment.ReadDeclaration"/>, the same routine the live
-    /// arm uses, so a typo committed to the workflow is red here rather than on
-    /// the next CI run.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheWorkflowStillDeclaresWhatItExpectsToBeAbsent()
-    {
-        var workflow = Path.Combine(RepositoryLayout.Root.FullName, ".github", "workflows", "build.yml");
-
-        await Assert.That(File.Exists(workflow)).IsTrue().Because(workflow);
-
-        var yaml = await File.ReadAllTextAsync(workflow);
-
-        // The positive control, before anything is concluded from a match or
-        // from its absence: this really is the file that runs the suite. A scan
-        // of the wrong path would otherwise report a missing declaration and a
-        // scan of a renamed step would report a healthy one.
-        var steps = StepBoundary().Split(yaml).Where(step => step.Contains("run: dotnet test", StringComparison.Ordinal)).ToList();
-
-        await Assert.That(steps.Count).IsEqualTo(1).Because(workflow);
-
-        var declaration = ExpectedAbsentDeclaration().Match(steps[0]);
-
-        await Assert.That(declaration.Success)
-            .IsTrue()
-            .Because(
-                $"'{workflow}' runs the suite without setting {SuiteEnvironment.ExpectedAbsentVariable}, so nothing pins which capabilities CI expects to be absent and a fifth going missing would read as normal.");
-
-        var value = declaration.Groups["value"].Value;
-        var (_, problems) = SuiteEnvironment.ReadDeclaration(value);
-
-        await Assert.That(string.Join(Environment.NewLine, problems)).IsEmpty().Because(value);
-    }
+    // ⚠️ THE THIRD ARM WAS DELETED ON 2026-08-20 AND WAS NOT RE-POINTED. It was
+    // `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent`, and it read
+    // `.github/workflows/build.yml` -- scoped to the step that ran the suite --
+    // so that deleting the declaration was a red build rather than a silent
+    // switch-off. CI was removed at the maintainer's decision that day and the
+    // file it read no longer exists.
+    //
+    // IT WAS DELETED RATHER THAN RE-POINTED, and the reason is this repository's
+    // own rule that a search returning zero needs a positive control. The old
+    // test had one: `steps.Count is 1` proved it had really found the step that
+    // runs the suite before it concluded anything from a match or from a missing
+    // one. A re-pointed version -- "no pipeline definition anywhere runs the
+    // suite without declaring the pin" -- can have no positive control at all,
+    // because there is nothing for it to find. It would pass over an empty
+    // directory, over a typo in its own path, and over a pipeline written in a
+    // shape it does not recognise, for as long as CI stays gone; and it would go
+    // on passing on the day CI came back in a form it could not parse. That is a
+    // green-when-blind test, which is the exact failure class the mechanism below
+    // exists to remove.
+    //
+    // WHAT IS THEREFORE UNGUARDED, said plainly rather than left to be
+    // discovered: nothing sets BROWSERAI_EXPECTED_ABSENT anywhere in this
+    // repository, so `EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared`
+    // below asserts nothing on every run of the suite. The mechanism is intact,
+    // exercised in-process by
+    // `TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent`, and inert
+    // until an environment declares something again. Restoring this arm against
+    // whatever runs the suite next is part of the CI item in TODO.md.
 
     /// <summary>
     /// Every capability this run lacks is one its environment said it would
@@ -332,13 +305,22 @@ internal sealed partial class SuiteCoverageTests
     /// nothing</b> — which is correct rather than a gap. What is provisioned on
     /// somebody's laptop is a fact about their disk; a suite that pinned it would
     /// be red on every clean clone. <c>BROWSERAI_EXPECTED_ABSENT</c> is set by
-    /// the environment that knows, and [`build.yml`](../../.github/workflows/build.yml)
-    /// is the one that does.
+    /// the environment that knows.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Since 2026-08-20 no environment sets it, so this arm asserts nothing
+    /// on every run.</b> CI was removed that day at the maintainer's decision and
+    /// it was the only thing that ever declared. The code is deliberately kept
+    /// rather than deleted: unset means <i>declares nothing</i>, which is already
+    /// what a developer machine does, so it is correct and inert and ready for
+    /// whatever runs the suite next. Its behaviour is held by
+    /// <see cref="TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent"/>,
+    /// which is in-process and pure and therefore unaffected.
     /// </para>
     /// <para>
     /// <b>What it closes:</b> <see cref="AReleaseRunExercisedEveryLayer"/> makes
-    /// an absence *loud*, and loud is not the same as *noticed*. CI has run with
-    /// two capabilities ABSENT since the day it existed, so two more going the
+    /// an absence *loud*, and loud is not the same as *noticed*. CI ran with
+    /// two capabilities ABSENT from the day it existed, so two more going the
     /// same way changes nothing a reader would spot — the run is green, the block
     /// says ABSENT four times instead of twice, and the tests that needed them
     /// skip. This is the assertion that tells those two states apart.
@@ -396,19 +378,4 @@ internal sealed partial class SuiteCoverageTests
 
         await Assert.That(summary).Contains(SuiteEnvironment.ReleaseRunVariable);
     }
-
-    /// <summary>The start of a step in the workflow's step list.</summary>
-    /// <remarks>
-    /// Six spaces and a dash is where a step begins under <c>jobs.windows.steps</c>,
-    /// and splitting on it is what scopes the search to one step rather than to
-    /// the whole file.
-    /// </remarks>
-    /// <returns>The pattern.</returns>
-    [GeneratedRegex(@"^      - name: ", RegexOptions.Multiline)]
-    private static partial Regex StepBoundary();
-
-    /// <summary>The declaration, as it is written in the workflow.</summary>
-    /// <returns>The pattern.</returns>
-    [GeneratedRegex(@"^[ \t]*BROWSERAI_EXPECTED_ABSENT:[ \t]*(?<value>[^ \t\r\n][^\r\n]*?)[ \t]*$", RegexOptions.Multiline)]
-    private static partial Regex ExpectedAbsentDeclaration();
 }

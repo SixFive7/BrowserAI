@@ -21,6 +21,52 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+### Removed
+
+- **Continuous integration, completely.** `.github/workflows/build.yml` was added
+  on 2026-08-18 and deleted on 2026-08-20 without ever being released, at the
+  maintainer's decision, verbatim: *"Remove CI completely. Let all the tests run on
+  my machine only. I want no CI and no github runner. Add to the todo that we will
+  add CI back in later. But that requires me adding infrastructure for self-hosted
+  runners and I am considering leaving github before we do so."* `.github/` is gone
+  entirely rather than left as an empty husk. **The whole gate is now
+  [the release checklist](RELEASING.md#the-release-gate)**, which gained a
+  requirement in item 8: the suite is run from **PowerShell and from Git Bash**,
+  and both totals recorded, because the drive letter's case is inherited from the
+  shell and a single-shell run bakes in whichever spelling agrees — which is
+  precisely what the removed CI did, running `pwsh` end to end.
+
+  **What was audited before deleting it, because "do not lose anything unique" was
+  the load-bearing half of the instruction.** Most of what the workflow did is
+  already covered locally and more strictly — the two-step
+  `restore --force-evaluate` / `--locked-mode` and both lock diffs are release
+  checklist item 1 with `--exit-code`; the cold CDN download is
+  `FirstRunProvisioningTests` against an empty root, hourly and always on a release
+  run; the coverage block is written to stdout and to `.work/suite-coverage.txt` on
+  every run; MinVer has its tags in any developer clone. **Three things genuinely
+  die**, and they are [`TODO.md`](TODO.md#continuous-integration)'s content: a
+  *different machine* — four cores, cold caches, no interactive desktop, a volume
+  with 8.3 generation off — which found four defects this machine structurally
+  cannot, including the `browserai_destroy` survivor arm that passed nine local
+  runs and failed three consecutive CI ones; **a contributor's pull request built
+  before merge**, which on a public repository is what the workflow was for; and
+  `BROWSERAI_EXPECTED_ABSENT`, whose only consumer anywhere was that file.
+
+- **`SuiteCoverageTests.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent`, the
+  capability pin's third arm.** It read `build.yml` scoped to the step that ran the
+  suite, so deleting the declaration was a red build rather than a silent
+  switch-off. **Deleted rather than re-pointed, and the reason is a house rule:** a
+  search that returns zero needs a positive control. The old test had one —
+  *this really is the step that runs the suite* — and a re-pointed version aimed at
+  "any pipeline definition" could have none, so it would pass over an empty
+  directory, over a typo in its own path, and over a pipeline shape it does not
+  recognise, indistinguishably. **The mechanism itself is kept, correct and
+  inert:** an unset `BROWSERAI_EXPECTED_ABSENT` declares nothing, which is already
+  what a developer machine does, and
+  `TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent` still exercises
+  every branch in-process. Restoring the arm against whatever runs the suite next
+  is part of the CI item.
+
 ### Added
 
 - **A reinstall now takes the machine's browsers root for the whole call, and
@@ -204,7 +250,7 @@ has been satisfied in form only.
   [`TODO.md`](TODO.md) item had stood on *"whether those terms create a notices
   obligation for shipped generated code is not assessed and must not be asserted
   either way"* — with nobody having read the terms. They are now in
-  [QUESTIONS.md §12](QUESTIONS.md#12-the-cswin32-metadata-licence--the-text-gathered-2026-08-19-and-the-question-it-leaves-for-a-lawyer):
+  [QUESTIONS.md §12](QUESTIONS.md#12-the-cswin32-metadata-licence--moot-2026-08-20-and-the-entry-stays):
   the four packages and their resolved versions, how each declares its licence, the
   operative clauses quoted with URLs and the date fetched, what the text does and
   does not say about generated code, and five ordered questions for a lawyer.
@@ -1326,12 +1372,16 @@ has been satisfied in form only.
 - **The build runs on a machine nobody owns.** There was no `.github/` at all,
   so every test and every release-phase check ran only when somebody remembered
   to run it locally — invisible, on a public repository, to anyone opening a pull
-  request. [`.github/workflows/build.yml`](.github/workflows/build.yml) builds
-  the payload, provisions both browsers, publishes the NativeAOT binary and runs
-  the **whole** suite including `SaturationTests`, on every push and pull request.
-  It states its own cost in its header: about 204 MB of first-run browser
-  download per run, uncached on purpose, because a cache key would have to be
-  guessed ahead of the resolve it depends on.
+  request. `.github/workflows/build.yml` builds the payload, provisions both
+  browsers, publishes the NativeAOT binary and runs the **whole** suite including
+  `SaturationTests`, on every push and pull request. It states its own cost in its
+  header: about 204 MB of first-run browser download per run, uncached on purpose,
+  because a cache key would have to be guessed ahead of the resolve it depends on.
+
+  ⚠️ **Reversed on 2026-08-20, before this section was ever released, and both
+  entries are kept.** See *Removed* below. The link to the workflow file is gone
+  from this entry because the file is; the entry stays because a reader of the
+  release notes should see that CI existed and why, not only that it does not.
 - **The `#anchor` half of every relative link is checked too.** The link test
   resolved the path and said, honestly, that it did not resolve the fragment. A
   documentation restructure then retitled four headings and moved 53 anchored

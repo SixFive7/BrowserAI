@@ -18,11 +18,17 @@ namespace BrowserAI.Tests.Harness;
 /// other, <i>with no change to the product at all</i>.
 /// </para>
 /// <para>
-/// <b>CI cannot see it.</b> <c>build.yml</c> runs every step under <c>pwsh</c>,
-/// so CI picks the casing that happens to agree and bakes it in — which is why
-/// this has now been reported twice from a machine and never once from a build.
-/// A test parameterised over both values below is red on the wrong comparison
-/// <i>whatever</i> started it, CI included.
+/// <b>A single-shell run cannot see it, whoever runs it.</b> The hosted CI this
+/// project had between 2026-08-18 and 2026-08-20 ran every step under
+/// <c>pwsh</c>, so it picked the casing that happens to agree and baked it in —
+/// which is why the defect was reported twice from a machine and never once from
+/// a build. A test parameterised over both values below is red on the wrong
+/// comparison <i>whatever</i> started it. That property is now load-bearing
+/// rather than a bonus: with CI removed, the release gate is the suite run on the
+/// maintainer's machine, and <b>the standing instruction is to run it from
+/// PowerShell and from Git Bash</b> — see
+/// [the release gate](../../../RELEASING.md#the-release-gate). This type is what
+/// makes a single-shell run catch the defect anyway.
 /// </para>
 /// <para>
 /// The right comparison is case-insensitive, and that is not a loosening: two

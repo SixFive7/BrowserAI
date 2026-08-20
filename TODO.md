@@ -224,7 +224,7 @@ findable from more than one direction.
       ⚠️ **Half of this is done as of 2026-08-19, and the half that is left is not
       ours to do.** The terms have been fetched, quoted verbatim with their URLs and
       fetch date, and turned into five ordered questions — [QUESTIONS.md
-      §12](QUESTIONS.md#12-the-cswin32-metadata-licence--the-text-gathered-2026-08-19-and-the-question-it-leaves-for-a-lawyer). What that gathering found and this bullet did not
+      §12](QUESTIONS.md#12-the-cswin32-metadata-licence--moot-2026-08-20-and-the-entry-stays). What that gathering found and this bullet did not
       know: the two metadata packages ship the **same byte-identical** Windows 10
       SDK EULA (`EULAID:WIN10SDK.RTM.AUG_2018_en-US`), while `win32metadata`'s own
       `README.md` says `Windows.Win32.winmd` — the only file CsWin32 reads — is
@@ -285,16 +285,58 @@ findable from more than one direction.
       against the finished product and a real cadence, not against a guess about
       them.**
 
-      ⚠️ ***Half the premise expired on 2026-08-18, and this item did not notice.***
-      **There is hosted CI**: [`build.yml`](.github/workflows/build.yml) runs the
-      whole suite, `SaturationTests` included, on every push and every pull
-      request. So *"nothing makes it fire"* is now true of the **release
-      checklist** and false of the **suite** — which is most of what the original
-      trade was buying. What is left to decide is narrower and sharper than the
-      sentence above: whether the release-phase checks that CI deliberately does
-      not run — the packed release, the real client, `BROWSERAI_RELEASE_RUN=1` —
-      should move into automation too, and if so onto what trigger. **Nothing
-      here is a task; the whole remainder is the decision.** The condition that ends the arrangement is already named in
-      [the release gate](RELEASING.md#the-release-gate): the day a second person
-      can cut a release, the assumption breaks and the gate has to move into
-      automation.
+      ⚠️ ***Corrected 2026-08-20 (previously "Half the premise expired on
+      2026-08-18, and this item did not notice. **There is hosted CI**:
+      `build.yml` runs the whole suite, `SaturationTests` included, on every push
+      and every pull request"). The premise expired and then came back.*** Hosted
+      CI existed for two days, 2026-08-18 to 2026-08-20, and was removed at the
+      maintainer's decision. **Both `previously` clauses are here on purpose:** a
+      reader who learned either state needs to know it was reviewed and replaced
+      rather than lost, and this entry has now been wrong in both directions
+      within three days. The original sentence is true again — the release
+      checklist is the only gate that exists and nothing makes it fire — so what
+      is left to decide is exactly what it always said, and the *whole* of it
+      rather than the narrowed remainder. **Nothing here is a task; the whole
+      remainder is the decision.** The condition that ends the arrangement is
+      already named in [the release gate](RELEASING.md#the-release-gate): the day
+      a second person can cut a release, the assumption breaks and the gate has to
+      move into automation. Bringing CI back is
+      [its own item](#continuous-integration), and it is not this one.
+
+## Continuous integration
+
+- [ ] **Bring CI back — but not on GitHub Actions by default, and not before the
+      infrastructure exists.** Removed 2026-08-20. **The maintainer's decision,
+      verbatim:** *"Remove CI completely. Let all the tests run on my machine
+      only. I want no CI and no github runner. Add to the todo that we will add CI
+      back in later. But that requires me adding infrastructure for self-hosted
+      runners and I am considering leaving github before we do so. Double check we
+      do not lose anything unique only build in the CI before removing it."*
+
+      **Two preconditions, and the second is why this item must not assume a
+      provider.** It needs **self-hosted runner infrastructure** that does not
+      exist yet, and the maintainer is **considering leaving GitHub before that
+      happens** — so whatever is written must be portable, and a `.github/`
+      directory is a guess about the answer rather than a step towards it. What
+      was deleted is recoverable in full from
+      `git show 7f296b2:.github/workflows/build.yml` if the answer does turn out
+      to be Actions; it is a good specification of the steps whatever ends up
+      running them.
+
+      **What is unverified anywhere while CI is gone.** This is the item's real
+      content — the audit taken on the day of removal, split by whether the thing
+      dies, is preservable locally, or was already covered locally.
+
+      | What CI did that a local `dotnet test` does not | Verdict |
+      |---|---|
+      | **A different machine — four cores, cold caches, a service window station with no interactive desktop, and a volume with 8.3 generation off.** It found four defects a developer machine structurally could not: the `browserai_destroy` survivor arm (nine local greens against three consecutive CI reds, Firefox still holding mapped files); the `SessionLock` re-open sharing violation (run `32203064556` attempt 1), whose fix is specified and deliberately not yet made; a `RenameWindow` `ERROR_SHARING_VIOLATION`; and the console-logger queue drain, which cost two red runs and is invisible on a machine fast enough to drain the queue before the kill | **Dies.** Not preservable. This row is the whole of the loss and the rest of the table is bookkeeping |
+      | **A contributor's pull request, built before merge.** For a public repository this was the workflow's founding reason: 54% of this project's enforcement is a test or a release-phase check, and a pull request could break any of it with nothing to say so | **Dies.** No local substitute exists — a maintainer running the suite on his own machine cannot run it on a change he has not pulled |
+      | **`BROWSERAI_EXPECTED_ABSENT`, the capability pin.** The workflow's test step was its only consumer anywhere in the repository | **Dies as a declaration; the mechanism is kept, correct and inert.** Unset means *declares nothing*, which is already the developer-machine behaviour, so `SuiteEnvironment.ReconcileDeclaredAbsence` stays right and `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared` now asserts nothing on every run. **Restoring the third arm is part of this item:** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read `build.yml` and was deleted rather than re-pointed, because a version aimed at a file that does not exist can have no positive control |
+      | **The `SessionDirectoryGuardTests` branch for a volume with 8.3 generation *off*.** CI's checkout volume had it off; this machine's system volume has it on | **Preservable locally, and nothing routine does it.** Three of this machine's four volumes do not shorten, so running the suite from one exercises the other branch. Until something does, [re-verification row 98](kb/re-verification.md) is verified on one branch per run rather than both |
+      | **The cold CDN download on every push** — Chromium ~203.8 MB and Firefox ~125.7 MB, uncached on purpose | **Already covered locally, at a lower cadence.** `FirstRunProvisioningTests` runs against an empty root, `FirstRunCache` asks the CDN at most once an hour, and a release run always asks it. What dies is the per-push frequency and a second, independent network path to the CDN |
+      | **`dotnet restore --force-evaluate` then `--locked-mode`, and the lock-file drift report** | **Already covered locally, and more strictly.** [Release checklist item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green) runs both commands and takes both diffs with `--exit-code`, which the workflow's bare `git diff` did not |
+      | **`fetch-depth: 0`, so MinVer derives a real version from tags** | **Already covered locally.** A developer clone carries its tags; `New-Release.ps1` refuses a derived `0.0.0` and names this exact fix in its own error text |
+      | **The suite-coverage block, published to the job summary** | **Already covered locally.** `SuiteCoverage.ReportWhatThisRunExercised` writes it to the real stdout handle and to `.work/suite-coverage.txt` on every run; only the rendering died |
+      | **`upload-artifact` keeping `TestResults/`** | **Already covered locally** — they are on disk |
+      | **`dotnet --info`, core count and OS recorded per run** | **Dies, and it is worth nothing without the different machine above** |
+      | **Every step under `pwsh`** | **Not a loss — it was a weakness.** A single-shell run bakes in the drive-letter casing that happens to agree, which is why that defect was reported twice from a machine and never once from a build. The gate that replaced CI runs the suite from **both** PowerShell and Git Bash, which is strictly stronger |

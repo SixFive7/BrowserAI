@@ -68,32 +68,42 @@ constant now says so.
 Full measurement:
 [kb](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234).
 
-### 2. What should CI actually run? — **BUILT 2026-08-18, exactly as taken**
+### 2. What should CI actually run? — **BUILT 2026-08-18, REMOVED 2026-08-20**
 
 `SaturationTests` is `[NotInParallel]` and takes **80–96 seconds alone** — it is
 most of the suite's wall clock.
 
-⚠️ **Corrected 2026-08-19 (previously "There is no CI today; adding one is on the
-queue").** There has been since 2026-08-18:
-[`.github/workflows/build.yml`](.github/workflows/build.yml), `runs-on:
-windows-latest`, on push and on pull request, running the **whole** suite with
-`SaturationTests` in it. The decision below was not merely taken, it was built, and
-this entry went on describing a repository with no CI in it.
+⚠️ **Corrected 2026-08-20 (previously "There has been since 2026-08-18:
+`.github/workflows/build.yml`, `runs-on: windows-latest`, on push and on pull
+request, running the **whole** suite with `SaturationTests` in it", which had
+itself corrected "There is no CI today; adding one is on the queue" on 2026-08-19).
+The original text is true again.** **There is no CI today.** Both `previously`
+clauses are kept deliberately: this entry has been wrong in both directions inside
+three days, and a reader who learned either state needs to see that it was
+reviewed and replaced rather than lost. The workflow was removed at the
+maintainer's decision, verbatim: *"Remove CI completely. Let all the tests run on
+my machine only. I want no CI and no github runner. Add to the todo that we will
+add CI back in later. But that requires me adding infrastructure for self-hosted
+runners and I am considering leaving github before we do so."*
 
-**Taken:** CI runs the full suite including saturation, on Windows, on push and
+**What was taken, and it is the record of a thing that was built and then
+removed:** CI ran the full suite including saturation, on Windows, on push and
 pull request. Rationale: 54% of this project's enforcement is TEST or RELEASE
 phase, so a CI that skips the expensive half re-creates the gap it exists to
-close. Cost is roughly two minutes per run.
+close. Cost was roughly two minutes per run. **The reasoning is unchanged by the
+removal** — it is why the question is *when* CI comes back rather than *whether*.
 
-**One thing the entry did not price, and the workflow now carries it.**
-`BROWSERAI_RELEASE_RUN` is deliberately **not** set in CI — it is named below as the
-precedent for a stricter tier, and the reason it is off is that the stricter tier
-wants things the runner does not have. The workflow says so at the top rather than
-leaving a reader to infer it from a variable that is absent.
+**One thing the entry did not price, and the workflow carried it.**
+`BROWSERAI_RELEASE_RUN` was deliberately **not** set in CI — it is named below as
+the precedent for a stricter tier, and the reason it was off is that the stricter
+tier wants things a hosted runner does not have.
 
-**To reverse:** move saturation behind a label or a nightly schedule. The
-`BROWSERAI_RELEASE_RUN=1` switch already exists as a precedent for a stricter
-tier.
+**Where the question stands now.** It is not open: it is answered, built, and
+reversed by decision. What it becomes is [the TODO
+item](TODO.md#continuous-integration), which carries the audit of what is
+unverified anywhere while CI is gone — the one row that matters being *a different
+machine*, which found four defects a developer machine structurally could not.
+When CI returns it must not assume GitHub Actions.
 
 ---
 
@@ -608,7 +618,54 @@ either way. Nothing else in the product branches on it, and `FirefoxSessionTests
 no longer asserts the flag directly at all — it goes through `DestroyAnswer`,
 which reads the contract rather than a literal.
 
-### 12. The CsWin32 metadata licence — the text, gathered 2026-08-19, and the question it leaves for a lawyer
+### 12. The CsWin32 metadata licence — **MOOT 2026-08-20, and the entry stays**
+
+⚠️ **SETTLED PERMANENTLY, 2026-08-20, at the maintainer's decision: no generated
+code will ever ship.** That is direction **(a)** below, taken not as a *for now*
+but as a standing rule — CsWin32 is a test-only tool and nothing it emits enters
+`src/`, an artifact, or a published repository, at any future version. **So the
+question this entry gathers text for is no longer open; it is unreachable.** The
+licence contradiction it documents is real and unresolved, and it never has to be
+resolved, because the only act that would engage it has been ruled out.
+
+**The `PackageReference` stays exactly as it is, and this is what it is for.**
+`Microsoft.Windows.CsWin32` is a direct reference of
+[`tests/BrowserAI.Tests/BrowserAI.Tests.csproj`](tests/BrowserAI.Tests/BrowserAI.Tests.csproj)
+with `PrivateAssets="all"`, which is what keeps it out of the product's closure:
+it is a build-time analyzer for the **test project alone**, and it exists to be a
+*layout oracle*. The product hand-writes its seven interop structs, and CsWin32
+generates the same declarations from Microsoft's own metadata so the suite can
+assert the hand-written sizes and field offsets against the generated ones rather
+than against a comment. Deleting the reference would not remove a dependency from
+anything shipped — nothing shipped has it — it would remove the only independent
+check that the hand-written interop matches what Windows actually expects.
+
+**Three consequences worth naming**, because *moot* is not the same as *gone*:
+
+1. **`PrivateAssets="all"` is now load-bearing rather than tidy.**
+   `ForbiddenDependencyTests` and the notice tests already read the package files
+   and `packages.lock.json`; the rule this decision creates is that CsWin32 may
+   never appear in `src/BrowserAI/`, and the first commit that puts it there is
+   what re-opens everything below.
+2. **The three prerelease transitive packages stay**, and they remain the only
+   prerelease versions anywhere in the repository. They are build-time only, so
+   the *GA is a hard floor* rule is not violated in the artifact — that trade is
+   [its own TODO item](TODO.md) and this decision does not change it.
+3. **Nothing below is deleted.** Everything after this note is the primary-source
+   text, gathered 2026-08-19, and it stays as the record of *why nobody needs to
+   answer it* — which is a different and more useful thing than an entry that was
+   quietly dropped once it stopped mattering. A future maintainer who wants
+   generated code in `src/` needs this text, and needs to reverse the decision
+   above first.
+
+**What re-opens it:** any proposal to ship generated code — vendored, committed,
+emitted at build time into the product, or published in a public repository. At
+that point direction **(b)**, putting questions 1–5 to a lawyer, becomes the next
+step and this entry is already the brief.
+
+---
+
+#### The text, gathered 2026-08-19, and the question it leaves for a lawyer
 
 **This entry contains no legal opinion and must not acquire one.** It was
 commissioned to replace *"nobody has read the terms"* with the terms themselves, so
@@ -814,3 +871,10 @@ anyway. **What has changed is that (b) is now a one-hour task rather than a rese
 project**, because the text is above and the questions are written. What must not
 happen is the third option nobody proposed: reading the quotations here as an answer.
 They are not one, and this entry stays open until a lawyer closes it.
+
+⚠️ **Superseded 2026-08-20 (previously "this entry stays open until a lawyer closes
+it").** The maintainer took **(a)** as permanent rather than as *now*: no generated
+code will ever ship. The entry does not stay open — it becomes moot, which closes
+it without answering it. See the note under the heading above; the recommendation
+is kept verbatim because it is what was recommended and the decision went further
+than it did.
