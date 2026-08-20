@@ -90,86 +90,66 @@ namespace BrowserAI.Tests;
 internal sealed class SessionPolicyTests
 {
     /// <summary>
-    /// What each mode permits of the surface BrowserAI advertises, written down
-    /// rather than computed.
+    /// What one session permits of the surface BrowserAI advertises, written
+    /// down rather than computed.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-18 to 58 / 58 / 58 of 58 (previously 58 / 59 / 59
-    /// of 59, and 41 / 41 / 58 before that, measured 2026-08-16 against the
-    /// five-class permission matrix).</b> The denominator moved because
-    /// <c>browser_annotate</c> is no longer advertised: of the 59 upstream tools
-    /// the union child exposes, BrowserAI's <c>tools/list</c> carries <b>58</b>.
-    /// The numerators moved with it — every mode permits everything it
-    /// advertises, and the tool that would hang is not in the list to permit.
+    /// ⚠️ <b>Corrected 2026-08-20 to 68 of 68, one row (previously three rows,
+    /// 58 / 58 / 58 of 58, one per session mode; 58 / 59 / 59 of 59 before that,
+    /// and 41 / 41 / 58 before that, measured 2026-08-16 against the five-class
+    /// permission matrix).</b> Session modes were deleted, so there is one row
+    /// rather than three; and every capability is now granted to every session,
+    /// which put ten previously-unreachable tools into the surface —
+    /// <c>network</c>'s four, <c>pdf</c>'s one and <c>testing</c>'s five. Of the
+    /// 69 tools a fully-capable child exposes, BrowserAI's <c>tools/list</c>
+    /// carries <b>68</b>: <c>browser_annotate</c> is withheld, and it is the only
+    /// one.
     /// </para>
     /// <para>
     /// <b>Written down rather than derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
-    /// construction and could never fail. This one still can — a per-mode
-    /// refusal reintroduced anywhere, a surface that changed size, or a fourth
-    /// mode nobody wrote a row for.
+    /// construction and could never fail. This one still can — a refusal
+    /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private static readonly (string Mode, int Allowed, string[] Refused)[] Expected =
-    [
-        ("headless", 58, []),
-        ("interactive", 58, []),
-        ("persistent", 58, []),
-    ];
+    private const int Advertises = 68;
+
+    /// <summary>
+    /// The three sessions the concurrency arm drives at once.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Named rather than derived from anything, 2026-08-20 (previously one
+    /// session per row of <c>SessionModes.All</c>).</b> Modes are gone. Three is
+    /// what the arithmetic in that arm is written against — 25 rounds × 3
+    /// sessions × 4 probes — and naming them here rather than looping over a
+    /// product list is what stops the denominator moving when something
+    /// unrelated does.
+    /// </remarks>
+    private static readonly string[] Concurrent = ["alpha", "beta", "gamma"];
 
     [Test]
-    public async Task EveryModePermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised()
+    public async Task ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised()
     {
-        var union = UpstreamSurface.For(BrowserConfiguration.UnionCapabilities);
-        var advertised = union.Where(tool => !SessionToolPolicy.IsWithheldFromTheSurface(tool)).ToList();
-        var offenders = new List<string>();
+        var everything = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
+        var advertised = everything.Where(tool => !SessionToolPolicy.IsWithheldFromTheSurface(tool)).ToList();
 
-        // The denominators are stated before the numerators, and there are two
-        // of them: the union child exposes 59 tools, BrowserAI advertises 58 of
-        // them, and every mode permits all 58.
-        await Assert.That(union.Count).IsEqualTo(59);
-        await Assert.That(advertised.Count).IsEqualTo(58);
+        // The denominators are stated before the numerator, and there are two of
+        // them: a fully-capable child exposes 69 tools, BrowserAI advertises 68
+        // of them, and every session permits all 68.
+        await Assert.That(everything.Count).IsEqualTo(Advertises + 1);
+        await Assert.That(advertised.Count).IsEqualTo(Advertises);
+        await Assert.That(advertised.Count(tool => SessionToolPolicy.Decide(tool).IsAllowed)).IsEqualTo(Advertises);
 
         // The named hole, individually, because a count is satisfied by the
         // wrong tool as easily as by the right one. It is in the child's surface
         // and out of ours, which is the whole of the change.
-        await Assert.That(union).Contains(SessionToolPolicy.AnnotateTool);
+        await Assert.That(everything).Contains(SessionToolPolicy.AnnotateTool);
         await Assert.That(advertised).DoesNotContain(SessionToolPolicy.AnnotateTool);
-
-        foreach (var mode in SessionModes.All)
-        {
-            var rows = Expected.Where(candidate => candidate.Mode == mode.Name).ToList();
-
-            if (rows.Count is not 1)
-            {
-                offenders.Add($"{mode.Name}: {rows.Count} declared surface sizes, expected exactly one");
-                continue;
-            }
-
-            var (_, declared, refused) = rows[0];
-            var allowed = advertised.Where(tool => SessionToolPolicy.Decide(tool).IsAllowed).ToList();
-
-            if (allowed.Count != declared)
-            {
-                offenders.Add($"{mode.Name}: permits {allowed.Count} of {advertised.Count}, declared {declared}");
-            }
-
-            offenders.AddRange(refused
-                .Where(tool => allowed.Contains(tool, StringComparer.Ordinal))
-                .Select(tool => $"{mode.Name}: permits '{tool}', which it is declared to refuse"));
-        }
-
-        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
         // And the call is refused as well as unadvertised, which is the half a
         // filtered list cannot do: a model that knows the name from upstream can
         // still send it.
-        //
-        // ⚠️ Asserted ONCE rather than per mode. `Decide` no longer takes a
-        // mode, so a loop here would ask the same question three times and read
-        // as coverage it is not — the per-mode claim that survives is the one
-        // above, that every mode's advertised surface is the same 58.
         await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).IsAllowed).IsFalse();
 
         // The tools the old matrix turned on are permitted now. Asserted rather
@@ -200,7 +180,6 @@ internal sealed class SessionPolicyTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a tool from the future",
-            ["mode"] = "headless",
         });
 
         // Sent rather than round-tripped, because the answer is the CHILD's own
@@ -225,7 +204,7 @@ internal sealed class SessionPolicyTests
     }
 
     [Test]
-    public async Task TheAnnotationToolIsAbsentFromTheSurfaceInEveryModeAndRefusedIfNamedAnyway()
+    public async Task TheAnnotationToolIsAbsentFromTheSurfaceAndRefusedIfNamedAnyway()
     {
         // ⚠️ Rewritten 2026-08-18 (previously
         // TheAnnotationToolIsRefusedWhereNoWindowWasPromisedAndForwardedWhereOneWas,
@@ -264,17 +243,18 @@ internal sealed class SessionPolicyTests
         // description mentioning it, no note saying it would refuse.
         await Assert.That(advertised.ToJsonString()).DoesNotContain(SessionToolPolicy.AnnotateTool);
 
-        // The call half, on a session of every mode, because "in every mode" is
-        // the claim and one session cannot make it.
-        foreach (var mode in SessionModes.All)
+        // The call half, on a session with a window and one without, because
+        // the refusal used to be keyed on exactly that and a single session
+        // could not say it is no longer.
+        foreach (var headed in new[] { false, true })
         {
-            var directory = Path.Combine(sessions.Root, $"annotate-{mode.Name}");
+            var directory = Path.Combine(sessions.Root, $"annotate-headed-{headed}");
 
             _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = directory,
-                ["purpose"] = $"a '{mode.Name}' session that reaches for the annotation tool by name",
-                ["mode"] = mode.Name,
+                ["purpose"] = $"a headed={headed} session that reaches for the annotation tool by name",
+                ["headed"] = headed,
             });
 
             var callsBefore = sessions.SessionChildren.Sum(child =>
@@ -346,9 +326,15 @@ internal sealed class SessionPolicyTests
         // one session's handle to another's child drives the WRONG BROWSER, and
         // it presents as nothing at all — a successful call and a plausible
         // result, against a page the caller never asked for. So this drives real
-        // calls across sessions of different modes, all outstanding at the server
-        // together, WHILE other sessions are being opened and destroyed on the
-        // same connection, and checks which child each one landed in.
+        // calls across three sessions, all outstanding at the server together,
+        // WHILE other sessions are being opened and destroyed on the same
+        // connection, and checks which child each one landed in.
+        //
+        // Reframed again 2026-08-20 (previously the three sessions were one per
+        // MODE, and the loop read SessionModes.All). Modes are gone; three
+        // sessions is what the arithmetic below is written against and three is
+        // what it keeps. The claim was never about modes -- it is about routing
+        // a call to the child of the directory it named.
         //
         // Reframed 2026-08-18 (previously TheHandleToTypeLookupHoldsUnderConcurrencyAcrossModes,
         // which asserted that each answer matched the (tool, mode) verdict for
@@ -362,16 +348,15 @@ internal sealed class SessionPolicyTests
 
         var directories = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        foreach (var mode in SessionModes.All)
+        foreach (var name in Concurrent)
         {
-            var directory = Path.Combine(sessions.Root, $"concurrent-{mode.Name}");
-            directories[mode.Name] = directory;
+            var directory = Path.Combine(sessions.Root, $"concurrent-{name}");
+            directories[name] = directory;
 
             var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = directory,
-                ["purpose"] = $"the {mode.Name} session driven concurrently",
-                ["mode"] = mode.Name,
+                ["purpose"] = $"the {name} session driven concurrently",
             });
 
             await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true);
@@ -387,7 +372,7 @@ internal sealed class SessionPolicyTests
 
         foreach (var round in Enumerable.Range(0, Rounds))
         {
-            foreach (var mode in SessionModes.All)
+            foreach (var name in Concurrent)
             {
                 foreach (var tool in Probes)
                 {
@@ -398,7 +383,7 @@ internal sealed class SessionPolicyTests
                     // surplus in that child's log.
                     if (SessionToolPolicy.Decide(tool).IsAllowed)
                     {
-                        expected[directories[mode.Name]] = expected.GetValueOrDefault(directories[mode.Name]) + 1;
+                        expected[directories[name]] = expected.GetValueOrDefault(directories[name]) + 1;
                     }
 
                     requests.Add(("tools/call", new JsonObject
@@ -406,7 +391,7 @@ internal sealed class SessionPolicyTests
                         ["name"] = tool,
                         ["arguments"] = new JsonObject
                         {
-                            ["session"] = directories[mode.Name],
+                            ["session"] = directories[name],
                             ["round"] = round,
                         },
                     }));
@@ -426,7 +411,6 @@ internal sealed class SessionPolicyTests
                 {
                     ["directory"] = churn,
                     ["purpose"] = "opened and destroyed while the probes run",
-                    ["mode"] = "persistent",
                 },
             }));
 
@@ -475,10 +459,10 @@ internal sealed class SessionPolicyTests
         // session.
         var refusedByLiveness = SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).IsAllowed
             ? 0
-            : Rounds * SessionModes.All.Count;
+            : Rounds * Concurrent.Length;
 
         await Assert.That(expected.Values.Sum())
-            .IsEqualTo((Rounds * SessionModes.All.Count * Probes.Length) - refusedByLiveness);
+            .IsEqualTo((Rounds * Concurrent.Length * Probes.Length) - refusedByLiveness);
 
         await Assert.That(refusedByLiveness).IsEqualTo(75);
 

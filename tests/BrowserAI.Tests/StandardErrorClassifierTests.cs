@@ -276,7 +276,7 @@ internal sealed class StandardErrorClassifierTests
                 UserDataDirectory = Path.Combine(work, SessionLayout.ProfileFolderName),
                 OutputDirectory = Path.Combine(work, SessionLayout.OutputFolderName),
                 DownloadsDirectory = Path.Combine(work, SessionLayout.DownloadsFolderName),
-                Capabilities = BrowserConfiguration.BaseCapabilities,
+                Capabilities = BrowserConfiguration.GrantedCapabilities,
                 SaveSession = saveSession,
                 ConsoleLevel = BrowserConfiguration.DefaultConsoleLevel,
             }),

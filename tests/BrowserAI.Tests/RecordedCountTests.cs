@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -384,32 +385,42 @@ internal sealed partial class RecordedCountTests
         var normalised = Whitespace().Replace(decisions, " ");
 
         var whole = SnapshotToolCount().Match(normalised);
-        var storage = StorageToolCount().Match(normalised);
+        var advertised = AdvertisedToolCount().Match(normalised);
 
         await Assert.That(whole.Success).IsTrue();
-        await Assert.That(storage.Success).IsTrue();
+        await Assert.That(advertised.Success).IsTrue();
 
         // Every figure below comes from the golden snapshot, which the build
         // regenerates from the resolved payload and diffs on every run -- so an
         // upstream change reaches these sentences as a snapshot diff first and a
         // red count second, which is the right order.
-        var union = UpstreamSurface.For(BrowserConfiguration.UnionCapabilities).Count;
-        var withoutStorage = UpstreamSurface.For(BrowserConfiguration.BaseCapabilities).Count;
+        var granted = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
         var everything = UpstreamSurface.SnapshotToolCount();
+        var withheld = granted.Count(SessionToolPolicy.IsWithheldFromTheSurface);
 
         await Assert.That(int.Parse(whole.Groups["tools"].Value, CultureInfo.InvariantCulture))
             .IsEqualTo(everything)
             .Because("DECISIONS.md states how many tools the tools-list.json snapshot carries.");
 
-        await Assert.That(int.Parse(storage.Groups["tools"].Value, CultureInfo.InvariantCulture))
-            .IsEqualTo(union - withoutStorage)
-            .Because("DECISIONS.md states how many tools vanish from a child launched without the storage capability, which is the difference between the two surfaces.");
+        // ⚠️ Corrected 2026-08-20 (previously StorageToolCount, over "those 17
+        // tools do not exist in that process" -- how many tools vanished from a
+        // child launched without the storage capability). There is no such
+        // child: session modes are gone and every session is granted every
+        // capability, so that difference is structurally zero and the assertion
+        // would have been vacuous rather than wrong. What replaced it is the
+        // figure the same paragraph now publishes and the one a caller acts on:
+        // how many tools BrowserAI's own tools/list carries.
+        await Assert.That(int.Parse(advertised.Groups["tools"].Value, CultureInfo.InvariantCulture))
+            .IsEqualTo(granted.Count - withheld)
+            .Because("DECISIONS.md states how many tools BrowserAI advertises, which is what a fully-capable child exposes minus what BrowserAI withholds.");
 
         // Not vacuous, and the relationship is asserted rather than the numbers:
-        // a snapshot that had lost its capability map would make both surfaces
-        // equal and the difference zero.
-        await Assert.That(everything).IsGreaterThanOrEqualTo(union);
-        await Assert.That(union).IsGreaterThan(withoutStorage);
+        // a snapshot that had lost its capability map would make the granted
+        // surface the default 24, and a policy that stopped withholding anything
+        // would make the two counts equal.
+        await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
+        await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
+        await Assert.That(withheld).IsEqualTo(1);
     }
 
     /// <summary>
@@ -483,9 +494,17 @@ internal sealed partial class RecordedCountTests
     [GeneratedRegex(@"`tools-list\.json` carrying all (?<tools>\d+) tools")]
     private static partial Regex SnapshotToolCount();
 
-    /// <summary>The storage-only tool count, as <c>DECISIONS.md</c> states it.</summary>
-    [GeneratedRegex(@"those (?<tools>\d+) tools do not exist in that process")]
-    private static partial Regex StorageToolCount();
+    /// <summary>
+    /// The advertised tool count, as <c>DECISIONS.md</c> states it.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-20 (previously <c>StorageToolCount</c>, matching
+    /// "those N tools do not exist in that process").</b> That sentence was
+    /// about a child launched without the <c>storage</c> capability, and there
+    /// is no longer one.
+    /// </remarks>
+    [GeneratedRegex(@"BrowserAI's `tools/list` now carries (?<tools>\d+) tools")]
+    private static partial Regex AdvertisedToolCount();
 
     /// <summary>
     /// The <c>Article</c> cell of a "Where the holes are" row: a backticked path

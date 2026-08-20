@@ -77,12 +77,17 @@ the surface below the base 24**. `[FLOATS]`
 and the property is `tool.skillOnly` on the registry entry rather than anything
 on the schema. `[FLOATS]`
 
-**What BrowserAI's own modes expose, measured over the wire rather than added
-up:** `config` + `vision` + `devtools` gives **42**, and `persistent` adding
-`storage` gives **59** ([the session modes](../../ARCHITECTURE.md#sessions)).
-Those are the same two numbers the `createConnection` experiment below produced
-from two connections in one process, which is a second, independent route to
-them. `[FLOATS]`
+**What BrowserAI's own capability sets expose, measured over the wire rather
+than added up:** `config` + `vision` + `devtools` gives **42**, adding `storage`
+gives **59**, and adding `network`, `pdf` and `testing` on top of that gives
+**69** — the whole exposable surface, which is what
+[every session now gets](../../ARCHITECTURE.md#sessions). The first two are the
+same numbers the `createConnection` experiment below produced from two
+connections in one process, which is a second, independent route to them.
+⚠️ *Corrected 2026-08-20 (previously "What BrowserAI's own modes expose … and
+`persistent` adding `storage` gives **59**"): session modes were deleted, so 42
+and 59 are now historical capability sets rather than things a session can be,
+and 69 is what a child is launched with.* `[FLOATS]`
 
 > **Re-established a third way 2026-08-16, and it is now the one that runs on
 > every build.** `UpstreamSurface.For(capabilities)` reproduces
@@ -90,7 +95,10 @@ them. `[FLOATS]`
 > with the configured list, in the snapshot's own tool order — and
 > `UpstreamSnapshotTests.TheCapabilityFilterReproducesTheRecordedSurfaces`
 > asserts it against the snapshot's recorded `defaultSurface` (24, name for name
-> and in order) before asserting 42 and 59. The reproduction check is what stops
+> and in order) before asserting 42 and 69. *(Corrected 2026-08-20, previously
+> "42 and 59": the second arm now asks the product's own
+> `GrantedCapabilities`, which is every capability upstream declares.)* The
+> reproduction check is what stops
 > the helper being a second implementation nobody validates: without it, a
 > surface assertion built on it would be measuring the helper.
 > `VerticalSliceTests` then compares the **published binary's** real
@@ -208,36 +216,49 @@ forwarded byte-identical on every ordinary call and refused only if a `secrets`
 key comes back. `Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committed
 `cli-help.txt` and `config-schema.d.ts` snapshots. `[FLOATS]`
 
-### What BrowserAI's own modes permit, after its own filtering
+### What a BrowserAI session permits, after its own filtering
 
-**Re-measured 2026-08-18 @ `@playwright/mcp` 0.0.79 / `playwright-core`
-1.63.0-alpha-2026-08-05, and corrected twice on that day — from 41 / 41 / 58 to
-58 / 59 / 59 of 59, and then to 58 / 58 / 58 of 58.** Upstream's per-mode
-surfaces are 42 / 42 / 59 above; these are what survives BrowserAI's own
-decision, out of the **58-tool surface** it advertises to every caller — the
-59-tool union minus the one it withholds. Re-establish by running
-`SessionPolicyTests.EveryModePermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`,
-which computes the union from the committed snapshot, applies the product's own
+**Re-measured 2026-08-20 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05: 68 of 69, one row.** ⚠️ **Corrected 2026-08-20
+(previously three rows, 58 / 58 / 58 of 58, headed "What BrowserAI's own modes
+permit"; corrected twice on 2026-08-18 before that — from 41 / 41 / 58 to
+58 / 59 / 59 of 59, and then to 58 / 58 / 58 of 58).** **Session modes were
+deleted and every capability is granted to every session**, so there is one row
+rather than three and the denominator moved from the 59-tool union to the whole
+69-tool exposable surface: `network`, `pdf` and `testing` reached a child for the
+first time and brought ten tools with them. Upstream's own per-capability
+surfaces are 42 and 69 above; this is what survives BrowserAI's own decision, out
+of the **68-tool surface** it advertises to every caller — 69 minus the one it
+withholds. Re-establish by running
+`SessionPolicyTests.ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`,
+which computes the surface from the committed snapshot, applies the product's own
 withholding predicate, and asks its decision function about every name that
 survives. `[FLOATS]`
 
-| Mode | Advertised | Permitted | Refused, and why |
+| Session | Advertised | Permitted | Refused, and why |
 |---|---:|---:|---|
-| `headless` | **58** | **58** | nothing it advertises |
-| `interactive` | **58** | **58** | nothing it advertises |
-| `persistent` | **58** | **58** | nothing it advertises |
+| any | **68** | **68** | nothing it advertises |
 
-**The 59th tool is `browser_annotate`, and it is not refused per mode — it is
-not offered at all.** It is filtered out of `tools/list` in every mode, and a
-caller that names it anyway is refused wherever it is named, because the daemon
-lands in `%TEMP%` and outlives its parent on a headed session exactly as it does
-on a headless one. The measurement is
+**The 69th tool is `browser_annotate`, and it is not refused conditionally — it
+is not offered at all.** It is filtered out of `tools/list` in every session, and
+a caller that names it anyway is refused wherever it is named, because the daemon
+lands in `%TEMP%` and outlives its parent on a headed run exactly as it does on a
+headless one. The measurement is
 [what `browser_annotate` actually does](#what-browser_annotate-actually-does--measured-2026-08-18);
 the decision and what it would take to reverse are in
 [DECISIONS](../../DECISIONS.md#licence-release-policy-and-the-tool-surface).
 ⚠️ *Corrected 2026-08-18 (previously "`headless` **58** — `browser_annotate`,
 whose window appears even here … `interactive` **59** — nothing; `persistent`
 **59** — nothing").*
+
+**The ten that arrived on 2026-08-20**, none of which had ever been reachable in
+this product or its predecessor: `browser_route`, `browser_route_list`,
+`browser_unroute`, `browser_network_state_set` (`network`); `browser_pdf_save`
+(`pdf`); `browser_generate_locator`, `browser_verify_element_visible`,
+`browser_verify_text_visible`, `browser_verify_list_visible`,
+`browser_verify_value` (`testing`). ⚠️ **`browser_run_code_unsafe` is not among
+them** — it is `core`, so it was in all three of the old modes' surfaces
+including `headless`'s 41.
 
 ⚠️ **Corrected 2026-08-18 (previously "`headless` **41** — the 17 `storage`
 tools; `browser_annotate` … `interactive` **41** — the 17 `storage` tools;

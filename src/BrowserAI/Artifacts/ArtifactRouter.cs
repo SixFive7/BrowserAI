@@ -131,8 +131,16 @@ internal sealed class ArtifactRouter
     /// than being guessed at. Adding the field later would leave every file
     /// written before the change indistinguishable from version 1, forever.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>2 since 2026-08-20 (previously 1).</b> The roll-up's <c>beneath</c>
+    /// entries carried a <c>mode</c> for every session and session modes were
+    /// deleted that day. The field is gone rather than written empty, and the
+    /// version moved with it — which is the whole of what a version with no
+    /// reader is for: a file that has lost a field announces the fact instead of
+    /// being read as a version-1 file somebody truncated.
+    /// </para>
     /// </remarks>
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public const string IndexFileName = "session.json";
 
@@ -497,7 +505,6 @@ internal sealed class ArtifactRouter
             {
                 writer.WriteStartObject();
                 writer.WriteString("directory", session.Directory);
-                writer.WriteString("mode", session.Mode);
                 writer.WriteString("purpose", session.Purpose);
                 writer.WriteString("created", Stamp(session.Created));
                 writer.WriteString("lastUsed", Stamp(session.LastUsed));
@@ -794,7 +801,7 @@ internal sealed class ArtifactRouter
 
     /// <summary>Rewrites <c>session.json</c> from what this router knows.</summary>
     /// <remarks>
-    /// Mode, browser and <c>purpose</c> stay <c>browserai.json</c>'s to own. A second
+    /// Browser and <c>purpose</c> stay <c>browserai.json</c>'s to own. A second
     /// copy of the session's identity is a second thing to disagree with the
     /// first; this file is the artifact record and nothing else.
     /// </remarks>
@@ -868,14 +875,12 @@ internal sealed class ArtifactRouter
 
 /// <summary>One session, as the per-root roll-up lists it.</summary>
 /// <param name="Directory">The session directory.</param>
-/// <param name="Mode">The mode bound at <c>init</c>.</param>
 /// <param name="Purpose">What it says it is for.</param>
 /// <param name="Created">When it was created.</param>
 /// <param name="LastUsed">When it was last used.</param>
 /// <param name="Bytes">Its size on disk.</param>
 internal sealed record RollUpEntry(
     string Directory,
-    string Mode,
     string Purpose,
     DateTimeOffset Created,
     DateTimeOffset LastUsed,

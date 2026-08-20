@@ -162,7 +162,6 @@ internal sealed record SliceRun(
             {
                 ["directory"] = session,
                 ["purpose"] = "the vertical slice's own session",
-                ["mode"] = "headless",
             },
         }).ConfigureAwait(false);
 

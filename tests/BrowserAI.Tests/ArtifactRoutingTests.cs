@@ -148,7 +148,7 @@ internal sealed class ArtifactRoutingTests
         // environment door is `ChildEnvironmentTests`; this is the config one.
         var config = BrowserAI.Runtime.BrowserConfiguration.ForSession(
             SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "eviction-check")),
-            SessionModes.Recorded("headless"),
+            headed: false,
             SessionManager.DefaultBrowser,
             tracing: false,
             BrowserAI.Runtime.BrowserConfiguration.DefaultConsoleLevel);
@@ -854,7 +854,6 @@ internal sealed class ArtifactRoutingTests
         await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = directory,
-            ["mode"] = "headless",
             ["purpose"] = "one of several sessions under one root",
         });
 

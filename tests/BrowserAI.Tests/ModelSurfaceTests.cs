@@ -12,24 +12,26 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// One table, six consumers, and the check that runs in both directions.
+/// Everything a model reads before it acts, and the checks that run in both
+/// directions over it.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>The failure this file exists to catch has already happened once in this
 /// project's history:</b> a fourth thing is added, three copies are updated, and
 /// the fourth silently describes a system that no longer exists. Nothing breaks;
-/// a model simply stops being told about a mode it should have picked, and the
-/// symptom is an agent reporting a site as broken because it never logged in.
+/// a model is simply told something that is not true, and the symptom arrives
+/// somewhere else entirely.
 /// </para>
 /// <para>
-/// <b>So the assertion is bidirectional, and both directions were planted and
-/// reverted on 2026-08-16.</b> Adding a fourth row to
-/// <see cref="SessionModes.All"/> and nothing else turns
-/// <see cref="EveryConsumerRendersEveryModeInTheTable"/> red, because the new
-/// mode has no policy row and no expectation row; removing a mode from one
-/// consumer — by hard-coding a rendering rather than deriving it — turns the same
-/// test red from the other side.
+/// ⚠️ <b>Corrected 2026-08-20 (previously "One table, six consumers", and the
+/// paragraph here described planting a fourth row in <c>SessionModes.All</c> to
+/// turn <c>EveryConsumerRendersEveryModeInTheTable</c> red in both
+/// directions).</b> Session modes are gone and five of those six consumers went
+/// with them. The bidirectional shape survives in
+/// <see cref="EverySessionGetsEveryCapabilityAndTheNewlyGrantedTenAreInTheSurface"/>,
+/// which holds the product's own list of newly-granted tools against a
+/// hand-written one and fails whichever side moves.
 /// </para>
 /// </remarks>
 internal sealed class ModelSurfaceTests
@@ -40,7 +42,14 @@ internal sealed class ModelSurfaceTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Two of these differ from §H.2's table, and the difference is
+    /// ⚠️ <b>Changed 2026-08-20: <c>mode</c> is gone from <c>init</c> and
+    /// <c>headed</c> is on both.</b> Session modes were deleted, every
+    /// capability is granted to every session, and headedness became a per-run
+    /// argument — so <c>init</c> no longer has a third required property and
+    /// <c>resume</c> takes one more optional one.
+    /// </para>
+    /// <para>
+    /// <b>Three of these differ from §H.2's table, and the difference is
     /// deliberate rather than drift.</b> <c>browserai_resume</c> ships
     /// <c>tracing</c> and <c>consoleLevel</c>, which §H.2 gives only to
     /// <c>init</c>. The rule §H.2 states for refusing an argument on
@@ -65,10 +74,10 @@ internal sealed class ModelSurfaceTests
     private static readonly (string Tool, string[] Properties, string[] Required)[] TheAuthoredSignatures =
     [
         (SessionToolSurface.Init,
-            ["directory", "purpose", "mode", "browser", "tracing", "consoleLevel", "debug"],
-            ["directory", "purpose", "mode"]),
+            ["directory", "purpose", "headed", "browser", "tracing", "consoleLevel", "debug"],
+            ["directory", "purpose"]),
         (SessionToolSurface.Resume,
-            ["directory", "purpose", "debug", "tracing", "consoleLevel"],
+            ["directory", "purpose", "headed", "debug", "tracing", "consoleLevel"],
             ["directory"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory"], ["directory"]),
@@ -174,129 +183,180 @@ internal sealed class ModelSurfaceTests
     ];
 
     /// <summary>
-    /// What each mode is expected to refuse, written down rather than computed.
+    /// The ten tools that became reachable on 2026-08-20, written down here as
+    /// well as in the product, because the two lists are the claim.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>This is the sixth consumer of the one table, and it is a consumer
-    /// precisely because it is written by hand.</b> Derived from the product's
-    /// own decision it would agree with it by construction and could never fail;
-    /// written down, a fourth mode is a red build with a number in the message.
-    /// The counts are of the <b>58-tool surface</b> BrowserAI advertises.
+    /// <b>Written down rather than read off
+    /// <see cref="SessionToolSurface.NewlyGrantedTools"/>.</b> Derived from the
+    /// product's own list this would agree with it by construction and could
+    /// never fail — the same reason the mode table this replaced kept a
+    /// hand-written expectation row. What it can catch: a capability quietly
+    /// dropped from <see cref="BrowserConfiguration.GrantedCapabilities"/>, an
+    /// upstream rename, and a product list edited to match a surface rather than
+    /// the other way round.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-18 to 58 / 58 / 58 of 58 (previously 58 / 59 / 59
-    /// of 59; and 41 / 41 / 58 before that, measured 2026-08-16 against the
-    /// five-class <c>(tool, mode)</c> permission matrix).</b> Two changes, on the
-    /// same day. The matrix went first: it was never a boundary against the
-    /// caller, who chooses the session directory and can read the profile inside
-    /// it as the same Windows user. Then <c>browser_annotate</c> — the one tool
-    /// any mode still refused — was withheld from <c>tools/list</c> altogether,
-    /// which moved the denominator from 59 to 58 and left no per-mode refusal at
-    /// all. The reason is <b>liveness</b>: it blocks with no self-timeout, its
-    /// window belongs to a second non-headless browser, and its daemon outlives
-    /// the session in <c>%TEMP%</c>.
+    /// <b>None of these has ever been reachable</b> — not in BrowserAI and not
+    /// in the predecessor product it was written against. Four are
+    /// <c>network</c>, one is <c>pdf</c>, five are <c>testing</c>, and BrowserAI
+    /// never named any of those three capabilities until session modes were
+    /// deleted.
     /// </para>
     /// </remarks>
-    private static readonly (string Mode, int Allowed, string[] Refused)[] Expected =
+    private static readonly string[] TheNewlyGrantedTen =
     [
-        ("headless", 58, []),
-        ("interactive", 58, []),
-        ("persistent", 58, []),
+        "browser_route",
+        "browser_route_list",
+        "browser_unroute",
+        "browser_network_state_set",
+        "browser_pdf_save",
+        "browser_generate_locator",
+        "browser_verify_element_visible",
+        "browser_verify_text_visible",
+        "browser_verify_list_visible",
+        "browser_verify_value",
     ];
 
+    /// <summary>
+    /// Every capability is granted to every session, and the ten tools that
+    /// arrived with the last three of them are in the surface a model reads.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Replaces <c>EveryConsumerRendersEveryModeInTheTable</c>,
+    /// 2026-08-20.</b> That test asserted that six consumers each rendered every
+    /// row of <c>SessionModes.All</c> — the server instructions, <c>init</c>'s
+    /// description, <c>resume</c>'s result, the refusal a bad <c>mode</c>
+    /// produced, the generated child config, and the suite's own expectation
+    /// table. Five of the six no longer exist, and the sixth renders nothing
+    /// that varies. It was <b>replaced rather than deleted</b>: the failure it
+    /// existed to catch — a capability decided in one place and rendered in
+    /// another, drifting silently — is exactly the failure a grant of ten
+    /// previously-unreachable tools can reintroduce.
+    /// </para>
+    /// <para>
+    /// <b>This is the record that the grant was deliberate.</b> Ten tools became
+    /// callable for the first time in this product's history as a side effect of
+    /// deleting something else, and a side effect nothing asserts is
+    /// indistinguishable from an accident at the next review.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryConsumerRendersEveryModeInTheTable()
+    public async Task EverySessionGetsEveryCapabilityAndTheNewlyGrantedTenAreInTheSurface()
     {
-        await using var sessions = RigSessionEnvironment.Create();
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult());
 
+        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
         var missing = new List<string>();
 
-        // Consumer 2 — init's description, read out of the advertised surface
-        // rather than off the class, so what is checked is what a model receives.
-        var advertised = Advertised(rig.SurfaceChild.ToolsListResult);
-        var initDescription = (string?)advertised[SessionToolSurface.Init]?["description"] ?? string.Empty;
+        // 1. The two lists agree, in both directions. The product's own list is
+        //    what a reader is sent to; this one is what fails when it drifts.
+        missing.AddRange(TheNewlyGrantedTen
+            .Where(tool => !SessionToolSurface.NewlyGrantedTools.Contains(tool, StringComparer.Ordinal))
+            .Select(tool => $"'{tool}' is expected to be a newly-granted tool and the product does not list it"));
 
-        // Consumer 4 — the refusal channel, triggered rather than quoted: a mode
-        // argument that is not one of the three is answered with the table.
-        var badMode = await TextOfAsync(rig, SessionToolSurface.Init, new JsonObject
+        missing.AddRange(SessionToolSurface.NewlyGrantedTools
+            .Where(tool => !TheNewlyGrantedTen.Contains(tool, StringComparer.Ordinal))
+            .Select(tool => $"the product lists '{tool}' as newly granted and this test does not expect it"));
+
+        // 2. Each of the ten, by name, in the surface a model receives. A count
+        //    is satisfied by the wrong tool as easily as by the right one.
+        missing.AddRange(TheNewlyGrantedTen
+            .Where(tool => !advertised.ContainsKey(tool))
+            .Select(tool => $"'{tool}' is not in the advertised surface"));
+
+        // 3. And in the child a session is actually launched with, which is the
+        //    half that decides whether the call works. A tool in `tools/list`
+        //    whose capability the session's own config never names reaches
+        //    upstream and is answered with "unknown tool".
+        var reachable = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
+
+        missing.AddRange(TheNewlyGrantedTen
+            .Where(tool => !reachable.Contains(tool, StringComparer.Ordinal))
+            .Select(tool => $"'{tool}' does not exist in a child launched with the granted capabilities"));
+
+        // 4. THE GRANT ITSELF: every capability upstream declares that carries a
+        //    tool is either unconditional or named in the generated config.
+        //    Nothing upstream offers is left out, which is what "the full union"
+        //    means and what a per-mode subset used to break.
+        foreach (var capability in UpstreamSurface.CapabilitiesCarryingTools())
         {
-            ["directory"] = Path.Combine(sessions.Root, "never-created"),
-            ["purpose"] = "should never be created",
-            ["mode"] = "headed",
-        });
-
-        foreach (var mode in SessionModes.All)
-        {
-            // 1. The server instructions.
-            Require(missing, ServerInstructions.Text, mode.Name, "the server instructions");
-            Require(missing, ServerInstructions.Text, mode.Grants, "the server instructions");
-
-            // 2. init's description.
-            Require(missing, initDescription, mode.Name, "browserai_init's description");
-            Require(missing, initDescription, mode.Grants, "browserai_init's description");
-
-            // 3. resume's result — one session per mode, opened and reopened.
-            var resumed = await ResumeInModeAsync(rig, sessions, mode);
-            Require(missing, resumed, mode.Name, "browserai_resume's result");
-            Require(missing, resumed, mode.Grants, "browserai_resume's result");
-
-            // 4. The refusal channel.
-            Require(missing, badMode, mode.Name, "the refusal text");
-            Require(missing, badMode, mode.Grants, "the refusal text");
-
-            // 5. The generated child config, which is where a mode stops being
-            //    a description and becomes two switches on a real browser.
-            //
-            //    ⚠️ Corrected 2026-08-18 (previously "session-type enforcement",
-            //    asserting the mode had a row in the (tool, mode) permission
-            //    matrix). That matrix is gone, and a check against it would now
-            //    pass for every mode including one nobody had considered — a
-            //    consumer that cannot fail is worse than a missing one. This is
-            //    the consumer that was always doing the work: `Headed` becomes
-            //    upstream's `headless`, and `Storage` becomes the capability set
-            //    the session's own child is launched with, so a mode without it
-            //    has no cookie tools IN ITS CHILD rather than a lookup declining
-            //    to forward them.
-            var generated = BrowserConfiguration.ForSession(
-                SessionPath.Resolve(Path.Combine(sessions.Root, $"config-{mode.Name}")),
-                mode,
-                SessionManager.DefaultBrowser,
-                tracing: false,
-                BrowserConfiguration.DefaultConsoleLevel);
-
-            var opinions = generated.Opinions.ToDictionary(
-                opinion => opinion.Path,
-                opinion => opinion.Value.ToJsonString(),
-                StringComparer.Ordinal);
-
-            var headless = mode.Headed ? "false" : "true";
-
-            if (opinions.GetValueOrDefault("browser.launchOptions.headless") != headless)
+            if (!UpstreamSurface.UnconditionalCapabilities().Contains(capability, StringComparer.Ordinal)
+                && !BrowserConfiguration.GrantedCapabilities.Contains(capability, StringComparer.Ordinal))
             {
-                missing.Add($"the generated config does not render '{mode.Name}' headed={mode.Headed}");
-            }
-
-            var capabilities = new JsonArray(
-                [.. (mode.Storage ? BrowserConfiguration.UnionCapabilities : BrowserConfiguration.BaseCapabilities)
-                    .Select(capability => (JsonNode)capability!)]).ToJsonString();
-
-            if (opinions.GetValueOrDefault("capabilities") != capabilities)
-            {
-                missing.Add($"the generated config does not render '{mode.Name}' storage={mode.Storage}");
-            }
-
-            // 6. The tests. A mode nobody wrote an expectation for is a mode
-            //    nobody checked, which reads as covered and is not.
-            if (!Expected.Any(row => row.Mode == mode.Name))
-            {
-                missing.Add($"the tests carry no expected surface for '{mode.Name}'");
+                missing.Add($"upstream's '{capability}' capability carries tools and no session is granted it");
             }
         }
 
+        // 5. `browser_run_code_unsafe` is NOT one of the ten and never was. It
+        //    is `core`, so it has been reachable in every session this product
+        //    has ever opened — a reader meeting the grant must not come away
+        //    thinking it arrived with it.
+        if (SessionToolSurface.NewlyGrantedTools.Contains("browser_run_code_unsafe", StringComparer.Ordinal))
+        {
+            missing.Add("browser_run_code_unsafe is listed as newly granted; it is core and always was");
+        }
+
+        if (!UpstreamSurface.DefaultSurface().Contains("browser_run_code_unsafe", StringComparer.Ordinal))
+        {
+            missing.Add("browser_run_code_unsafe is not in upstream's default surface, so the claim that it is core is stale");
+        }
+
+        // 6. The response-mocking warning is in the server instructions, which
+        //    are BrowserAI's own string, and NOT appended to browser_route's
+        //    description, which passes through byte for byte.
+        if (!ServerInstructions.Text.Contains("browser_route", StringComparison.Ordinal))
+        {
+            missing.Add("the server instructions do not name browser_route");
+        }
+
+        if (!ServerInstructions.Text.Contains("mocked response", StringComparison.Ordinal))
+        {
+            missing.Add("the server instructions do not warn that a mocked response renders as if it came from the server");
+        }
+
+        var upstreamRoute = UpstreamSurface.SnapshotDescriptions().Single(tool => tool.Name == "browser_route").Description;
+
+        if ((string?)advertised["browser_route"]?["description"] != upstreamRoute)
+        {
+            missing.Add("browser_route's description is not upstream's own bytes");
+        }
+
+        // 7. Headedness changes the window and nothing else. A generated config
+        //    for a headed session and one for a headless session carry the same
+        //    capability list, which is what "no session-scoped capability
+        //    decision survives" means at the one place it used to be taken.
+        var headless = CapabilitiesOf(headed: false);
+        var headed = CapabilitiesOf(headed: true);
+
+        if (headless != headed)
+        {
+            missing.Add($"a headed session's capabilities ({headed}) differ from a headless one's ({headless})");
+        }
+
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+
+        // Not vacuous: the surface really is bigger than it was, and by exactly
+        // the ten. 58 was the advertised count on 2026-08-19.
+        await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
+            .IsEqualTo(58 + TheNewlyGrantedTen.Length);
     }
+
+    /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
+    /// <param name="headed">Whether the session opens a window.</param>
+    /// <returns>The <c>capabilities</c> opinion, serialised.</returns>
+    private static string CapabilitiesOf(bool headed) =>
+        BrowserConfiguration.ForSession(
+            SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"capabilities-{(headed ? "headed" : "headless")}")),
+            headed,
+            SessionManager.DefaultBrowser,
+            tracing: false,
+            BrowserConfiguration.DefaultConsoleLevel)
+        .Opinions.Single(opinion => opinion.Path == "capabilities").Value.ToJsonString();
 
     [Test]
     public async Task TheInstructionsStringFitsTheClientsSilentTruncationBudget()
@@ -422,18 +482,17 @@ internal sealed class ModelSurfaceTests
         // draft DID NOT FIT … the description now stands at 1,991 of 2,048 …
         // **57 bytes of headroom is the finding, and it is not a comfortable
         // number**"). It is comfortable now, and nothing was cut to make it so:
-        // this description renders SessionModes.Table, whose clauses each carried
-        // a second half naming what the mode REFUSES. That half came from the
-        // (tool, mode) permission policy, which was removed, and the description
-        // lost 352 bytes with it.
+        // this description used to render SessionModes.Table, whose clauses each
+        // carried a second half naming what the mode REFUSES. That half came
+        // from the (tool, mode) permission policy, which was removed, and the
+        // description lost 352 bytes with it. The mode table itself went on
+        // 2026-08-20, which freed the rest of it.
         //
         // The finding the old note carried still stands and is why the assertion
         // below exists: both required sentences are at the END of the string, so
         // an overflow deletes exactly the two things the charter demanded be
-        // present, and the description grows without anybody editing this file
-        // whenever the mode table does. Together with
-        // EveryToolDescriptionFitsTheSameBudget that is a red build rather than a
-        // warning nobody reads.
+        // present. Together with EveryToolDescriptionFitsTheSameBudget that is a
+        // red build rather than a warning nobody reads.
         await Assert.That(description.Length).IsLessThanOrEqualTo(SessionToolSurface.DescriptionMaximumCharacters);
     }
 
@@ -807,16 +866,23 @@ internal sealed class ModelSurfaceTests
         // DEBUG` here would make every test above evidence about a build nobody
         // ships.
         //
-        // The five files are unchanged since 2026-08-18, when the (tool, mode)
-        // permission matrix was removed from the first of them. What they carry
-        // now is routing — `session` is mandatory and resolves to one child —
-        // plus the single liveness refusal, and both deserve the same guarantee
-        // for the same reason: a caller cannot tell from the outside which build
-        // it is talking to.
+        // ⚠️ FOUR FILES SINCE 2026-08-20 (previously five, the fifth being
+        // `Sessions/SessionMode.cs`). That file was DELETED with session modes
+        // and this list is not allowed to shrink by accident — the loop below
+        // fails on a named file that is missing, which is exactly what it did
+        // when the deletion landed. `Runtime/BrowserConfiguration.cs` takes its
+        // place rather than the list simply getting shorter: it is where a
+        // session's capability set is now decided, so it is on the enforcement
+        // path by the same argument SessionMode.cs was.
+        //
+        // What these carry is routing — `session` is mandatory and resolves to
+        // one child — the capability grant, and the single liveness refusal. All
+        // three deserve the same guarantee for the same reason: a caller cannot
+        // tell from the outside which build it is talking to.
         string[] enforcement =
         [
             "src/BrowserAI/Sessions/SessionToolPolicy.cs",
-            "src/BrowserAI/Sessions/SessionMode.cs",
+            "src/BrowserAI/Runtime/BrowserConfiguration.cs",
             "src/BrowserAI/Sessions/SessionErrors.cs",
             "src/BrowserAI/Proxy/BrowserProxy.cs",
             "src/BrowserAI/Proxy/ServerInstructions.cs",
@@ -862,8 +928,16 @@ internal sealed class ModelSurfaceTests
         //
         // It matters more rather than less now that only the liveness refusal is
         // left: an environment variable that turned `browser_annotate` back on
-        // in a headless session would hang an overnight run, and the hang is the
-        // thing this product exists not to do.
+        // would hang an overnight run, and the hang is the thing this product
+        // exists not to do. And since 2026-08-20 the capability GRANT is on this
+        // list too — a variable that quietly dropped `storage` from a session
+        // would present as upstream not knowing the tool.
+        //
+        // ⚠️ `Sessions/SessionMode.cs` was replaced by
+        // `Runtime/BrowserConfiguration.cs` here on 2026-08-20, for the reason
+        // given on the scan above: the file was deleted with session modes, and
+        // a list that only got shorter would have covered less while reading the
+        // same.
         //
         // The convenience this forbids is real and is answered elsewhere:
         // `debug` on init and resume raises the log level so a refusal can be
@@ -872,7 +946,7 @@ internal sealed class ModelSurfaceTests
         string[] enforcement =
         [
             "src/BrowserAI/Sessions/SessionToolPolicy.cs",
-            "src/BrowserAI/Sessions/SessionMode.cs",
+            "src/BrowserAI/Runtime/BrowserConfiguration.cs",
             "src/BrowserAI/Sessions/SessionErrors.cs",
             "src/BrowserAI/Proxy/ServerInstructions.cs",
         ];
@@ -1071,27 +1145,6 @@ internal sealed class ModelSurfaceTests
 
         return (rewritten["tools"]?.AsArray() ?? [])
             .ToDictionary(tool => (string)tool!["name"]!, tool => tool?.AsObject(), StringComparer.Ordinal);
-    }
-
-    /// <summary>Opens a session in one mode, closes nothing, and resumes it.</summary>
-    private static async Task<string> ResumeInModeAsync(
-        McpTestHarness rig,
-        RigSessionEnvironment sessions,
-        SessionModeDefinition mode)
-    {
-        var directory = Path.Combine(sessions.Root, $"consumer-{mode.Name}");
-
-        _ = await TextOfAsync(rig, SessionToolSurface.Init, new JsonObject
-        {
-            ["directory"] = directory,
-            ["purpose"] = $"the {mode.Name} session the mode-table test resumes",
-            ["mode"] = mode.Name,
-        });
-
-        return await TextOfAsync(rig, SessionToolSurface.Resume, new JsonObject
-        {
-            ["directory"] = directory,
-        });
     }
 
     private static async Task<string> TextOfAsync(McpTestHarness rig, string tool, JsonObject arguments)

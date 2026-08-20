@@ -174,8 +174,13 @@ internal static class SessionErrors
         + $"Call the same tool again with {argument}='{accepted}'.";
 
     /// <summary>Row 4 — <c>init</c> met a directory that is already a session.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-20 (previously the sentence opened "a '{mode}'
+    /// session on {browser}", and the method took a <c>mode</c>).</b> Session
+    /// modes are gone; there is no mode to quote and nothing about the record
+    /// that a caller could get wrong by resuming it.
+    /// </remarks>
     /// <param name="path">The directory.</param>
-    /// <param name="mode">The mode it records.</param>
     /// <param name="browser">The browser it records.</param>
     /// <param name="created">When it was created.</param>
     /// <param name="lastUsed">When it was last used.</param>
@@ -183,12 +188,11 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string SessionAlreadyExists(
         string path,
-        string mode,
         string browser,
         DateTimeOffset created,
         DateTimeOffset lastUsed,
         string purpose) =>
-        $"A session already exists at '{path}': a '{mode}' session on {browser}, created {Stamp(created)}, last used {Stamp(lastUsed)}. {Recorded(purpose)} "
+        $"A session already exists at '{path}': a session on {browser}, created {Stamp(created)}, last used {Stamp(lastUsed)}. {Recorded(purpose)} "
         + $"{SessionToolSurface.Init} will not take it over. Use {SessionToolSurface.Resume} with directory='{path}' to drive it — do that only if you expected it to be there, because another agent may be using it — or {SessionToolSurface.Destroy} to delete it, or {SessionToolSurface.Init} on a directory that is not already one. "
         + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
 
@@ -228,7 +232,7 @@ internal static class SessionErrors
     /// <param name="tool">The tool that was refused.</param>
     /// <returns>The refusal.</returns>
     public static string AnnotationIsNotInTheSurface(string tool) =>
-        $"'{tool}' is deliberately NOT in this server's tools/list, in any session mode, and calling it by name does not reach the browser. It was not run and nothing was changed. "
+        $"'{tool}' is deliberately NOT in this server's tools/list, in any session, and calling it by name does not reach the browser. It was not run and nothing was changed. "
         + "The reason is liveness rather than security: it opens the Playwright Dashboard and waits for a human to draw, it has no self-timeout — one measured call stood silent for a full 90 s and returned only when its window was closed — and the window it opens belongs to a SECOND, non-headless browser under a detached daemon that writes outside the session directory. There is no configuration in which it runs headless. An unattended run that called it would hang until it was killed. "
         + "To see the page, use browser_snapshot for structure or browser_take_screenshot for pixels; both return immediately. If a human really is at the keyboard and has to mark something up, take a screenshot and have them annotate the file.";
 

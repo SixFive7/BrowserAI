@@ -233,7 +233,6 @@ internal sealed partial class BrowserIdleTimerTests
             {
                 ["directory"] = session,
                 ["purpose"] = "the session driven continuously",
-                ["mode"] = "persistent",
             },
         });
 
@@ -545,7 +544,6 @@ internal sealed partial class BrowserIdleTimerTests
             {
                 ["directory"] = session,
                 ["purpose"] = "the session stdin EOF tears down",
-                ["mode"] = "headless",
             },
         });
 

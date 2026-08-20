@@ -109,7 +109,7 @@ internal sealed class FirefoxTests
 
         var session = NewSession(scratch, "held");
         var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
-        var config = BrowserConfiguration.ForSession(session, SessionModes.Recorded("headless"), ProvisionedBrowsers.Firefox, tracing: false, BrowserConfiguration.DefaultConsoleLevel);
+        var config = BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, tracing: false, BrowserConfiguration.DefaultConsoleLevel);
 
         _ = Directory.CreateDirectory(profile);
 
@@ -476,7 +476,7 @@ internal sealed class FirefoxTests
         _ = Directory.CreateDirectory(bystanderProfile);
         await File.WriteAllTextAsync(FirefoxProfile.LockFileIn(bystanderProfile), string.Empty);
 
-        var config = BrowserConfiguration.ForSession(session, SessionModes.Recorded("headless"), ProvisionedBrowsers.Firefox, tracing: false, BrowserConfiguration.DefaultConsoleLevel);
+        var config = BrowserConfiguration.ForSession(session, headed: false, ProvisionedBrowsers.Firefox, tracing: false, BrowserConfiguration.DefaultConsoleLevel);
         var configFile = Path.Combine(scratch.Path, "playwright-mcp.json");
 
         // The product's own launch funnel, which also runs the preflight against
@@ -598,7 +598,7 @@ internal sealed class FirefoxTests
 
         var taken = SessionLock.TryAcquire(
             session,
-            new SessionLockRequest { Mode = "headless", Browser = ProvisionedBrowsers.Firefox, Purpose = "the live session that owns this browser" },
+            new SessionLockRequest { Browser = ProvisionedBrowsers.Firefox, Purpose = "the live session that owns this browser" },
             NullLogger.Instance);
 
         await Assert.That(taken.Acquired).IsNotNull();
@@ -795,7 +795,7 @@ internal sealed class FirefoxTests
 
         var result = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headless", Browser = ProvisionedBrowsers.Firefox, Purpose = $"firefox session {label}" },
+            new SessionLockRequest { Browser = ProvisionedBrowsers.Firefox, Purpose = $"firefox session {label}" },
             NullLogger.Instance);
 
         // Taken and released: what a BrowserAI that exited leaves behind is a

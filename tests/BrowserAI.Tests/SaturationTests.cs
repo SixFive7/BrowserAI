@@ -758,7 +758,6 @@ internal sealed partial class SaturationTests
                     {
                         ["directory"] = Session,
                         ["purpose"] = $"saturation peer {index.ToString(CultureInfo.InvariantCulture)}",
-                        ["mode"] = "headless",
                     },
                 });
 

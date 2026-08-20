@@ -47,7 +47,7 @@ internal sealed class SessionToolTests
         // — a destroy that REFUSED would never compose the summary line, and a
         // destroy that failed outright would not carry a tally.
         await Assert.That(run.IsError("destroyBeta")).IsTrue();
-        await Assert.That(run.Text("destroyBeta")).Contains("Destroyed the 'headless' session at ");
+        await Assert.That(run.Text("destroyBeta")).Contains("Destroyed the session at ");
 
         // The sixth, whose ANSWER is a refusal — which is the tool working
         // rather than failing. It was called while a real Chromium was running
@@ -62,17 +62,17 @@ internal sealed class SessionToolTests
         await Assert.That(refusal).Contains(Path.Combine(run.Root, "alpha"));
         await Assert.That(refusal).Contains("no force option");
 
-        // init's result carries the resolved absolute paths, the mode and the
-        // browser, which is what lets an agent say where a screenshot went
-        // instead of guessing.
+        // init's result carries the resolved absolute paths and the browser,
+        // which is what lets an agent say where a screenshot went instead of
+        // guessing. *(The mode line went on 2026-08-20 with session modes.)*
         var text = run.Text("init");
 
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.ProfileFolderName));
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.OutputFolderName));
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.DownloadsFolderName));
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", "browserai.log"));
-        await Assert.That(text).Contains("mode: headless");
         await Assert.That(text).Contains("browser: chromium");
+        await Assert.That(text).DoesNotContain("mode: ");
     }
 
     [Test]
@@ -85,10 +85,10 @@ internal sealed class SessionToolTests
 
         await Assert.That(run.IsError("initAgain")).IsTrue();
 
-        // The purpose, the mode and the date, which is what makes the refusal
-        // actionable rather than merely correct.
+        // The purpose, the browser and the date, which is what makes the
+        // refusal actionable rather than merely correct.
         await Assert.That(text).Contains("the first session's purpose");
-        await Assert.That(text).Contains("'headless' session");
+        await Assert.That(text).Contains("a session on chromium");
         await Assert.That(text).Contains("created 20");
 
         // And it directs the caller to resume. Being made to say "resume" is the
@@ -209,22 +209,37 @@ internal sealed class SessionToolTests
         await Assert.That(run.Text("init-absent")).Contains("'directory' is required");
         await Assert.That(run.Text("init-volumeRoot")).Contains("volume root");
 
-        // Nothing was created by any of them.
-        await Assert.That(Directory.Exists(Path.Combine(run.Root, "bad-mode"))).IsFalse();
-        await Assert.That(run.IsError("init-badMode")).IsTrue();
-        await Assert.That(run.Text("init-badMode")).Contains("headless");
-        await Assert.That(run.Text("init-badMode")).Contains("persistent");
+        // Nothing was created by any of them, the wrongly-typed `headed`
+        // included. ⚠️ Was `init-badMode` until 2026-08-20; the refusal names
+        // the type it got rather than a list of accepted values, because there
+        // is no list — `headed` is a boolean.
+        await Assert.That(Directory.Exists(Path.Combine(run.Root, "bad-headed"))).IsFalse();
+        await Assert.That(run.IsError("init-badHeaded")).IsTrue();
+        await Assert.That(run.Text("init-badHeaded")).Contains("'headed' must be true or false");
+        await Assert.That(run.Text("init-badHeaded")).Contains("String");
     }
 
+    /// <summary>
+    /// <c>resume</c> refuses the one argument that is bound to the directory,
+    /// and a directory that is not a session at all.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-08-20 from
+    /// <c>ResumeRefusesAModeArgumentAndADirectoryThatIsNotASession</c>.</b>
+    /// <c>mode</c> is not an argument anywhere any more, so there is nothing to
+    /// refuse. <c>browser</c> still is, and it is the one that always carried
+    /// the real reason: a profile on disk belongs to the browser that made it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ResumeRefusesAModeArgumentAndADirectoryThatIsNotASession()
+    public async Task ResumeRefusesABrowserArgumentAndADirectoryThatIsNotASession()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
 
-        await Assert.That(run.IsError("resumeWithMode")).IsTrue();
-        await Assert.That(run.Text("resumeWithMode")).Contains("bound at init");
+        await Assert.That(run.IsError("resumeWithBrowser")).IsTrue();
+        await Assert.That(run.Text("resumeWithBrowser")).Contains("the profile on disk belongs to it");
 
         await Assert.That(run.IsError("resumeNotASession")).IsTrue();
         await Assert.That(run.Text("resumeNotASession")).Contains(SessionLayout.LockFileName);
@@ -272,7 +287,7 @@ internal sealed class SessionToolTests
         var text = run.Text("list");
 
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha"));
-        await Assert.That(text).Contains("mode: headless");
+        await Assert.That(text).Contains("browser: chromium");
         await Assert.That(text).Contains("size on disk:");
 
         // Framed as recorded data rather than as text addressed to the reader:

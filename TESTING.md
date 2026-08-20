@@ -587,8 +587,11 @@ the gate, and five things about it are deliberate:
   characters and never bytes. The byte figure is printed and not gated.
 - **Hard at 100%, with no warning tier.** This does not contradict the recorded
   argument against a headroom gate — that argument was against failing *below*
-  100%, so that a fourth session mode fails on the six-consumer line rather than
-  on a budget line. Over 100% is a broken state rather than a tight one.
+  100%, so that a surface that grew failed on the line about the surface rather
+  than on a budget line. Over 100% is a broken state rather than a tight one.
+  *(Reworded 2026-08-20, previously "so that a fourth session mode fails on the
+  six-consumer line"; session modes and the six-consumer test are gone, and the
+  argument was never about modes.)*
 
 It prints every length sorted on a **passing** run, to the run output and to
 `.work/description-budget.txt`, because a gate that only speaks when it fails

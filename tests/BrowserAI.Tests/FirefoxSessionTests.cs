@@ -136,7 +136,6 @@ internal sealed class FirefoxSessionTests
         {
             ["directory"] = session,
             ["purpose"] = "the first session anybody ever asked Firefox for",
-            ["mode"] = "headless",
             ["browser"] = ProvisionedBrowsers.Firefox,
         });
 
@@ -342,7 +341,6 @@ internal sealed class FirefoxSessionTests
         {
             ["directory"] = Path.Combine(sessions.Root, "webkit-please"),
             ["purpose"] = "a browser nobody provisions",
-            ["mode"] = "headless",
             ["browser"] = "webkit",
         });
 
@@ -363,7 +361,6 @@ internal sealed class FirefoxSessionTests
         {
             ["directory"] = Path.Combine(sessions.Root, "shouty"),
             ["purpose"] = "a family named in the wrong case",
-            ["mode"] = "headless",
             ["browser"] = "ChRoMiUm",
         });
 

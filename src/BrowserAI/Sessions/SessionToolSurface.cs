@@ -141,6 +141,58 @@ internal static class SessionToolSurface
     /// </remarks>
     public const int ParameterDescriptionMaximumCharacters = Proxy.ClientTruncationBudget.ParameterDescriptionCharacters;
 
+    /// <summary>
+    /// The ten tools that became reachable on 2026-08-20, when session modes
+    /// were deleted and every capability was granted to every session.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Not one of these has ever been reachable in this product or in the
+    /// predecessor it was written against.</b> BrowserAI generated
+    /// <c>capabilities</c> as <c>config</c>, <c>vision</c>, <c>devtools</c> and —
+    /// on a <c>persistent</c> session only — <c>storage</c>. Upstream's
+    /// <c>network</c>, <c>pdf</c> and <c>testing</c> capabilities were never
+    /// named, so the ten tools below did not exist in any session's child: a
+    /// caller naming one reached upstream and upstream answered that it did not
+    /// know the tool. They are listed here rather than derived, because a
+    /// deliberate grant that nothing records reads as a side effect of deleting
+    /// something else.
+    /// </para>
+    /// <para>
+    /// <b><c>browser_run_code_unsafe</c> is deliberately NOT in this list.</b> It
+    /// is <c>core</c> and always was — reachable in every session this product
+    /// has ever opened, including every <c>headless</c> one — and a reader
+    /// meeting the grant below should not be able to come away thinking it
+    /// arrived with it. The measurement that made it interesting is in
+    /// <see cref="Runtime.BrowserConfiguration"/>'s history and in
+    /// <c>DECISIONS.md</c>.
+    /// </para>
+    /// <para>
+    /// <b>The one that changes what a human sees is
+    /// <c>browser_route</c>.</b> Response mocking can make a page lie to a person
+    /// watching a headed window: the browser renders what the mock returned, the
+    /// address bar says the real origin, and nothing in the window says a rule is
+    /// in force. That warning is in the server <c>instructions</c>, which are
+    /// BrowserAI's own string — <b>never</b> appended to
+    /// <c>browser_route</c>'s description, because upstream descriptions pass
+    /// through byte for byte and this file has no rewrite path left to do it
+    /// with.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<string> NewlyGrantedTools { get; } =
+    [
+        "browser_route",
+        "browser_route_list",
+        "browser_unroute",
+        "browser_network_state_set",
+        "browser_pdf_save",
+        "browser_generate_locator",
+        "browser_verify_element_visible",
+        "browser_verify_text_visible",
+        "browser_verify_list_visible",
+        "browser_verify_value",
+    ];
+
     /// <summary>The six authored tools, in the order they are offered.</summary>
     public static IReadOnlyList<string> Names { get; } = [Init, Resume, List, Destroy, SetPurpose, ReinstallBrowser];
 
@@ -272,32 +324,33 @@ internal static class SessionToolSurface
             "Create a BrowserAI browser session in a directory that is not already one.",
             "Creates a browser session whose home is the directory you name. The directory IS the session: everything this session stores — its browser profile, its screenshots and downloads, its log — lives there, and you name it again on every browser call. "
             + $"There is no default directory and no fallback; an empty, relative or unusable path is refused rather than turned into one that happens to work. If the directory is already a session, this refuses and tells you to call {Resume} — being made to say so is the point. "
-            + $"The mode is permanent for the directory's life and is required, because a mode chosen by omission is a security posture nobody decided on: {SessionModes.Table} "
-            + "'tracing' is a boolean orthogonal to all three and records the session into the output directory. 'debug' raises this session's log level only, for its life, and changes nothing else. "
+            + "Every capability this server can grant is granted to every session, so there is nothing to choose and nothing bound that a later call has to live with. "
+            + "'headed' opens a window for THIS run only; 'tracing' records the session into the output directory; 'debug' raises this session's log level for its life. All three are per-run and none is recorded. "
             + "SECURITY: name a NEW directory. Only two kinds of path are refused — one on a network drive, and a second spelling of a directory the filesystem calls something else — and nothing else about it is validated: one that already holds a browser profile — the user's real Chrome profile, or a copy — becomes this session's, and a 'persistent' session then drives its live cookies and logins, as can any agent given the path. "
             + $"RETENTION: nothing here expires. BrowserAI never deletes a session directory, so it stays until you call {Destroy}; {List} shows what has accumulated, and its size.",
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of the session directory, on a LOCAL drive and spelled the way the filesystem spells it. It is created if it does not exist. This is also the session's name, so make it say what the session is for — 'checkout-flow-bug' beats a timestamp. A network path or a mapped network drive is refused, because one unreachable share stalls every session sharing that directory; so is a second spelling of one directory — a \\\\?\\ prefix, a junction, a subst drive — because two spellings make two locks over one lock file. Both refusals name the spelling to use instead."),
                 ["purpose"] = Property("string", "One sentence saying what this session is for. It is recorded, replayed to whoever resumes the directory later, and is the only thing that makes an old session identifiable."),
-                ["mode"] = Enumerated("Permanent for the life of the directory. " + SessionModes.Table, [.. SessionModes.All.Select(mode => mode.Name)]),
-                ["browser"] = Enumerated($"The browser family, permanent for the directory's life like the mode — a profile belongs to the browser that made it, so this cannot be changed on resume. Defaults to '{SessionManager.DefaultBrowser}'. Each family is downloaded once per machine on first use ({string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}), so naming the other one for the first time starts a download and the first browser call is refused until it lands.", ProvisionedBrowsers.Families),
-                ["tracing"] = Property("boolean", "Record this session into its output directory. Orthogonal to the mode; defaults to false."),
+                ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false. It is a property of THIS launch and is not recorded: the same session can be resumed headed tomorrow and headless the day after, and nothing on disk changes either way. Turn it on when a human is going to watch, sign in, or clear something the agent cannot. A window is not a security control and this server makes no claim that it is — every session gets every tool, headed or not."),
+                ["browser"] = Enumerated($"The browser family, permanent for the directory's life — a profile belongs to the browser that made it, so this cannot be changed on resume. Defaults to '{SessionManager.DefaultBrowser}'. Each family is downloaded once per machine on first use ({string.Join(", ", ProvisionedBrowsers.Families.Select(family => $"{family} {BrowserProvisioner.DownloadSizeFor(family)}"))}), so naming the other one for the first time starts a download and the first browser call is refused until it lands.", ProvisionedBrowsers.Families),
+                ["tracing"] = Property("boolean", "Record this session into its output directory. A property of this run rather than of the session; defaults to false."),
                 ["consoleLevel"] = Enumerated($"Which console messages browser tools return. Defaults to '{BrowserConfiguration.DefaultConsoleLevel}', which silently drops debug messages.", BrowserConfiguration.ConsoleLevels),
                 ["debug"] = Property("boolean", "Raise this session's own log level for its life. Per session, so turning it on for the one misbehaving does not drown the others. Defaults to false."),
             },
-            ["directory", "purpose", "mode"]);
+            ["directory", "purpose"]);
 
         yield return Tool(
             Resume,
             "Take over a directory that is already a BrowserAI session.",
-            "Reopens a session that exists, and replays what it was: its recorded mode, browser, purpose and history. Mode and browser are NOT arguments — they were bound when the session was created and a profile on disk belongs to its browser — and passing either is refused. "
+            "Reopens a session that exists, and replays what it was: its recorded browser, purpose and history. 'browser' is NOT an argument — it was bound when the session was created and a profile on disk belongs to its browser — and passing it is refused. "
             + "A session is resumable forever; there is no expiry, so a directory that exists can always be resumed. "
             + "This never refuses a directory for what its session has BEEN — only for how the path is written: a network path and a second spelling of one directory are refused here exactly as they are at init. If the session was moved or renamed, its record is repaired and you are told. If it is a COPY of a session that still exists somewhere else, it resumes and tells you that too — every field of the record is an ordered list of timestamped statements, so the answer shows you where the directory has been and that the recorded purpose describes the original. Read that before acting on the purpose, and set a new one.",
             new JsonObject
             {
                 ["directory"] = Property("string", "Absolute path of an existing session directory, on a LOCAL drive and spelled the way the filesystem spells it — the same two refusals as init, each naming the spelling to use instead."),
                 ["purpose"] = Property("string", "Optional. Appended to the recorded purpose rather than replacing it, so the directory keeps saying what it has been for."),
+                ["headed"] = Property("boolean", "Open a visible browser window for this run. Defaults to false, and it is NOT read back from what the session was last time — every run says what it wants. Accepted here as well as on init because the case that matters is a session created headless that now needs a human to sign in."),
                 ["debug"] = Property("boolean", "Raise this session's own log level for its life. Accepted here as well as on init, because the interesting case is almost always a session that is already running badly. Defaults to false."),
                 ["tracing"] = Property("boolean", "Record this run of the session into its output directory. Defaults to false."),
                 ["consoleLevel"] = Enumerated($"Which console messages browser tools return. Defaults to '{BrowserConfiguration.DefaultConsoleLevel}'.", BrowserConfiguration.ConsoleLevels),
@@ -307,7 +360,7 @@ internal static class SessionToolSurface
         yield return Tool(
             List,
             "List every BrowserAI session beneath a directory.",
-            "Reports every session under the path you name: its mode, browser, recorded purpose, when it was created and last used, and its size on disk — because retention is your decision and you cannot make it well without knowing you are sitting on four gigabytes. "
+            "Reports every session under the path you name: its browser, recorded purpose, when it was created and last used, and its size on disk — because retention is your decision and you cannot make it well without knowing you are sitting on four gigabytes. "
             + "There is no unscoped form: breadth is stated rather than assumed. Pass a drive root to see everything, and the size of the answer is then your own doing. The directory need not exist; a path with nothing under it returns an empty list, which is an answer rather than an error.",
             new JsonObject
             {

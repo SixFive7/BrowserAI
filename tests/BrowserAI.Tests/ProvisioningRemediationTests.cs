@@ -126,7 +126,6 @@ internal sealed class ProvisioningRemediationTests
         {
             ["directory"] = directory,
             ["purpose"] = "the session whose child answers with upstream's npx advice",
-            ["mode"] = "headless",
         });
 
         var answer = await CallAsync(rig, "browser_navigate", new JsonObject

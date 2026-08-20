@@ -61,6 +61,46 @@ internal static class UpstreamSurface
     }
 
     /// <summary>
+    /// Every capability upstream declares that actually carries at least one
+    /// tool.
+    /// </summary>
+    /// <remarks>
+    /// <b>Derived from <c>toolsByCapability</c> rather than from
+    /// <c>declaredCapabilities</c>, and the two differ.</b> Upstream declares
+    /// <c>core-install</c>, which carries no tool at all — the snapshot records
+    /// it under <c>capabilitiesCarryingNoTool</c> — so a check that every
+    /// declared capability is granted would fail on a capability there is
+    /// nothing to grant.
+    /// </remarks>
+    /// <returns>The capability names, in the snapshot's own order.</returns>
+    public static IReadOnlyList<string> CapabilitiesCarryingTools()
+    {
+        using var snapshot = Snapshot();
+
+        return
+        [
+            .. snapshot.RootElement.GetProperty("toolsByCapability").EnumerateObject()
+                .Where(group => group.Value.GetArrayLength() > 0)
+                .Select(group => group.Name),
+        ];
+    }
+
+    /// <summary>
+    /// The capabilities upstream enables whatever the config says, which is why
+    /// naming one in <c>capabilities</c> would do nothing.
+    /// </summary>
+    /// <returns>The capability names.</returns>
+    public static IReadOnlyList<string> UnconditionalCapabilities()
+    {
+        using var snapshot = Snapshot();
+
+        return
+        [
+            .. snapshot.RootElement.GetProperty("unconditionalCapabilities").EnumerateArray().Select(value => value.GetString()!),
+        ];
+    }
+
+    /// <summary>
     /// How many tools the snapshot carries in total — every tool upstream can
     /// expose under any capability set.
     /// </summary>

@@ -37,11 +37,25 @@ namespace BrowserAI.Proxy;
 /// nothing went red.
 /// </para>
 /// <para>
-/// <b>The mode lines are rendered from
-/// <see cref="SessionModes.Lines"/>, never typed here.</b> This is one of the six
-/// consumers of the one table, and it is the one where a stale copy would be
-/// least visible: it is read by every model on every connection and by no human
-/// ever.
+/// ⚠️ <b>The mode lines are gone, 2026-08-20 (previously three lines rendered
+/// from <c>SessionModes.Lines</c>, never typed here — "one of the six consumers
+/// of the one table").</b> There is no table: every capability is granted to
+/// every session and headedness is a per-run argument, so there is nothing left
+/// for a model to choose before it calls <c>browserai_init</c>.
+/// </para>
+/// <para>
+/// <b>What took the space is the response-mocking warning, and it is here
+/// rather than on the tool.</b> <c>browser_route</c> became reachable in the
+/// same change. A rule installed with it can make a page lie to a human watching
+/// a headed window — the browser renders the mock, the address bar keeps the real
+/// origin, and nothing on screen says a rule is in force. Upstream's own
+/// description says what the tool does and cannot say what BrowserAI knows about
+/// the window it is being called against, and every upstream description passes
+/// through this proxy byte for byte, so the warning has to live in the one
+/// string BrowserAI writes itself. It is here rather than in
+/// <c>browserai_init</c>'s description for the reason the whole file exists:
+/// this arrives before the first call, and a description arrives after the model
+/// has already decided to make one.
 /// </para>
 /// </remarks>
 internal static class ServerInstructions
@@ -66,11 +80,11 @@ internal static class ServerInstructions
         $"""
         BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns a session directory that every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
 
-        Modes — chosen at init, permanent for the session's life:
-        {SessionModes.Lines}
-        'tracing: true' records the session into its output directory, and works with any of them.
+        Every session gets every tool. Nothing is chosen at init that a later call has to live with: 'headed: true' opens a window, 'tracing: true' records the session, and both are per-run rather than bound to the directory.
 
         You must supply an absolute directory. The directory IS the session — its profile, screenshots, downloads and log all live there — so name it for what the work is. You must also supply a one-sentence 'purpose': another agent meeting this directory later reads it.
+
+        WARNING — browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if it came from the server: the address bar keeps the real origin and nothing on screen says a rule is in force, so a human watching a headed window is looking at something you made up. Say so to the human, and call browser_unroute when you are done.
 
         {SessionToolSurface.Init} refuses a directory that already holds a session and directs you to {SessionToolSurface.Resume}. That is deliberate rather than an obstacle: it turns an accidental collision into a stated intent. {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.Destroy} deletes one, {SessionToolSurface.SetPurpose} rewrites what one says it is for.
         """;

@@ -453,8 +453,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
         //
         // Corrected 2026-08-18 (previously `Decide(tool, live.Mode)`, refusing
         // only on a mode that opens no window). The daemon lands in %TEMP% and
-        // outlives its parent on every mode alike, so there is no mode this is
-        // safe on and no mode argument left to pass.
+        // outlives its parent whatever the window says, so there was no mode
+        // this was safe on and no mode argument left to pass. Modes themselves
+        // went on 2026-08-20.
         //
         // Corrected 2026-08-18 (previously "THE enforcement point", deciding a
         // (tool, mode) permission matrix): that matrix was never a boundary
@@ -465,13 +466,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         if (!decision.IsAllowed)
         {
-            ProxyLog.ToolRefused(_logger, tool, live.Mode.Name, live.Location.FullPath);
+            ProxyLog.ToolRefused(_logger, tool, live.Location.FullPath);
             await RefuseAsync(caller, request.Id, decision.Refusal!, cancellationToken).ConfigureAwait(false);
             return;
         }
 
         // First-run provisioning, and it happens before the child hears about
-        // the call for the same reason the mode decision does: a browser tool
+        // the call for the same reason the liveness decision does: a browser tool
         // forwarded now would block inside the child's own launch for the whole
         // download and answer with upstream's `npx` advice at the end of it.
         if (_sessions.ProvisioningRefusal(tool, live) is { } notYet)
@@ -935,17 +936,12 @@ internal static partial class ProxyLog
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="tool">The tool that was refused.</param>
-    /// <param name="mode">
-    /// The mode of the session named. Context rather than cause since
-    /// 2026-08-18: the refusal no longer depends on it, and the line records
-    /// which session met it.
-    /// </param>
     /// <param name="session">The session directory named.</param>
     [LoggerMessage(
         EventId = 9,
         Level = LogLevel.Information,
-        Message = "'{Tool}' was refused on the '{Mode}' session at {Session}: it is not in this build's tools/list and would have blocked until this run was killed.")]
-    public static partial void ToolRefused(ILogger logger, string tool, string mode, string session);
+        Message = "'{Tool}' was refused on the session at {Session}: it is not in this build's tools/list and would have blocked until this run was killed.")]
+    public static partial void ToolRefused(ILogger logger, string tool, string session);
 
     /// <summary>
     /// Upstream's install advice was replaced, and byte-identity was given up to

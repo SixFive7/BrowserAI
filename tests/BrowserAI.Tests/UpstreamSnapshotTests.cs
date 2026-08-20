@@ -237,8 +237,14 @@ internal sealed class UpstreamSnapshotTests
         await Assert.That(string.Join(", ", UpstreamSurface.For([])))
             .IsEqualTo(string.Join(", ", UpstreamSurface.DefaultSurface()));
 
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.BaseCapabilities).Count).IsEqualTo(42);
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.UnionCapabilities).Count).IsEqualTo(59);
+        // ⚠️ Corrected 2026-08-20 (previously 42 for `BaseCapabilities` and 59
+        // for `UnionCapabilities`, the two lists a session's mode chose
+        // between). Session modes are gone and there is one list; the numbers
+        // that survive are the two ends of the range this helper has to
+        // reproduce -- upstream's default with nothing configured, and the whole
+        // exposable surface with everything granted.
+        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(42);
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(69);
     }
 
     private static JsonDocument ReadToolsList() =>

@@ -465,7 +465,7 @@ internal sealed class BrowserContainmentTests
                 UserDataDirectory = profile,
                 OutputDirectory = output,
                 DownloadsDirectory = downloads,
-                Capabilities = BrowserConfiguration.BaseCapabilities,
+                Capabilities = BrowserConfiguration.GrantedCapabilities,
             }).Json;
         }
 

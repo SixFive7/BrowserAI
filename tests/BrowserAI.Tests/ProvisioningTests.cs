@@ -1083,7 +1083,6 @@ internal sealed class ProvisioningTests
     {
         ["directory"] = Path.Combine(sessions.Root, name),
         ["purpose"] = "a session created while the browser is still downloading",
-        ["mode"] = "headless",
     };
 
     private static JsonObject Navigate(string directory) => new()

@@ -106,14 +106,12 @@ internal sealed record SessionRun
             {
                 ["directory"] = alpha,
                 ["purpose"] = "the first session's purpose",
-                ["mode"] = "headless",
             }).ConfigureAwait(false);
 
             answers["initAgain"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = alpha,
                 ["purpose"] = "a second attempt on the same directory",
-                ["mode"] = "persistent",
             }).ConfigureAwait(false);
 
             // No browser is launched by this one, which is what makes the round
@@ -192,7 +190,7 @@ internal sealed record SessionRun
                 ("absent", null),
             })
             {
-                var arguments = new JsonObject { ["purpose"] = "should never be created", ["mode"] = "headless" };
+                var arguments = new JsonObject { ["purpose"] = "should never be created" };
 
                 if (directory is not null)
                 {
@@ -211,11 +209,15 @@ internal sealed record SessionRun
                 answers["resume-" + label] = await CallAsync(client, SessionToolSurface.Resume, resumeArguments).ConfigureAwait(false);
             }
 
-            answers["init-badMode"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
+            // ⚠️ Was `init-badMode` until 2026-08-20, when session modes were
+            // deleted and there was no longer a bad mode to give. What replaced
+            // it is the same shape one layer down: an argument of the wrong TYPE
+            // on the one boolean that took a mode's place.
+            answers["init-badHeaded"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
-                ["directory"] = Path.Combine(root, "bad-mode"),
+                ["directory"] = Path.Combine(root, "bad-headed"),
                 ["purpose"] = "should never be created",
-                ["mode"] = "headed",
+                ["headed"] = "yes",
             }).ConfigureAwait(false);
 
             var notASession = Path.Combine(root, "not-a-session");
@@ -226,10 +228,15 @@ internal sealed record SessionRun
                 ["directory"] = notASession,
             }).ConfigureAwait(false);
 
-            answers["resumeWithMode"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
+            // ⚠️ Was `resumeWithMode` until 2026-08-20. `mode` is not an
+            // argument anywhere any more, so there is nothing for resume to
+            // refuse about it; `browser` still is, for the reason that always
+            // separated the two — a profile on disk belongs to the browser that
+            // made it, and headedness belongs to nothing.
+            answers["resumeWithBrowser"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
             {
                 ["directory"] = alpha,
-                ["mode"] = "persistent",
+                ["browser"] = "firefox",
             }).ConfigureAwait(false);
 
             // Documents, which has no browserai.json. Nothing is touched before the
@@ -243,7 +250,6 @@ internal sealed record SessionRun
             {
                 ["directory"] = beta,
                 ["purpose"] = "the session that gets destroyed",
-                ["mode"] = "headless",
                 ["tracing"] = true,
                 ["consoleLevel"] = "debug",
                 ["debug"] = true,
@@ -255,7 +261,6 @@ internal sealed record SessionRun
             {
                 ["directory"] = gamma,
                 ["purpose"] = "the session that gets moved",
-                ["mode"] = "headless",
             }).ConfigureAwait(false);
 
             bool lockGone;

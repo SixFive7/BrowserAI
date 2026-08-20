@@ -178,7 +178,7 @@ internal sealed class StraySweepTests
 
         var held = SessionLock.TryAcquire(
             SessionPath.Resolve(session),
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = "driving a checkout flow" },
+            new SessionLockRequest { Browser = "chromium", Purpose = "driving a checkout flow" },
             NullLogger.Instance);
 
         await Assert.That(held.Taken).IsTrue();
@@ -1018,7 +1018,7 @@ internal sealed class StraySweepTests
 
         var result = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = $"session {label}" },
+            new SessionLockRequest { Browser = "chromium", Purpose = $"session {label}" },
             NullLogger.Instance);
 
         // Taken and released: what a crashed BrowserAI leaves behind is a

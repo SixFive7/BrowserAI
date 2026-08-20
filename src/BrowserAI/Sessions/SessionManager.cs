@@ -76,11 +76,15 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <c>browserai_reinstall_browser</c> now names the family it reinstalls.
     /// </para>
     /// <para>
-    /// <b>A default at all, where <c>mode</c> has none, and the asymmetry is the
-    /// point.</b> A mode chosen by omission is a security posture nobody
-    /// decided on; a browser chosen by omission is a rendering engine, and every
-    /// session in this product's history has been Chromium. Naming the other one
-    /// is the deliberate act, not naming either.
+    /// <b>A default at all, where <c>browserai_reinstall_browser</c>'s
+    /// <c>browser</c> has none, and the asymmetry is the point.</b> A browser
+    /// chosen by omission at <c>init</c> is a rendering engine, and every session
+    /// in this product's history has been Chromium; a browser chosen by omission
+    /// at a <i>reinstall</i> deletes a working tree and reports success.
+    /// <i>Corrected 2026-08-20 (previously the comparison was with
+    /// <c>mode</c>, which "has none" because "a mode chosen by omission is a
+    /// security posture nobody decided on").</i> Session modes are gone, so that
+    /// precedent no longer exists to point at.
     /// </para>
     /// <para>
     /// <b>The rest of the product was already family-parameterised.</b>
@@ -439,8 +443,8 @@ internal sealed class SessionManager : IAsyncDisposable
 
             var location = ResolveToOpen(Required(arguments, "directory"), "directory");
             var purpose = Required(arguments, "purpose");
-            var mode = Mode(arguments);
             var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
+            var headed = Flag(arguments, "headed") ?? false;
             var tracing = Flag(arguments, "tracing") ?? false;
             var consoleLevel = ConsoleLevel(arguments);
             var debug = Flag(arguments, "debug") ?? false;
@@ -449,7 +453,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // collision into a stated intent. There is deliberately no difference
             // between a lost session, a neatly closed one and one this very process
             // has open -- all three must be resumed, and all three get the same
-            // refusal naming the purpose, the mode and the date, because the reason
+            // refusal naming the purpose, the browser and the date, because the reason
             // a session ended stops being a thing anyone has to model. An earlier
             // version special-cased "already open in this process" and answered
             // first with a shorter message, which hid the informative one behind an
@@ -498,7 +502,6 @@ internal sealed class SessionManager : IAsyncDisposable
                 location,
                 new SessionLockRequest
                 {
-                    Mode = mode.Name,
                     Browser = browser,
                     Purpose = purpose,
 
@@ -507,7 +510,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     // half of that refusal the ungated look above cannot guarantee.
                     RefuseAnExistingRecord = true,
                 },
-                mode,
+                headed,
                 tracing,
                 consoleLevel,
                 debug,
@@ -542,6 +545,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var location = ResolveToOpen(Required(arguments, "directory"), "directory");
             var appended = Optional(arguments, "purpose");
             var debug = Flag(arguments, "debug") ?? false;
+            var headed = Flag(arguments, "headed") ?? false;
             var tracing = Flag(arguments, "tracing");
             var consoleLevel = ConsoleLevel(arguments);
 
@@ -549,7 +553,11 @@ internal sealed class SessionManager : IAsyncDisposable
             // so a caller asking to resume a Firefox directory as Chromium is
             // stating something impossible. Answering "sure" would be the wrong kind
             // of helpful.
-            Refuse(arguments, "mode", "the mode is bound at init and recorded in browserai.json");
+            //
+            // MODE WAS REFUSED HERE TOO UNTIL 2026-08-20, for the same reason.
+            // It is neither refused nor accepted now: there is no such argument
+            // and no such property, so a caller that sends one is answered by the
+            // schema rather than by a sentence about a thing this build has.
             Refuse(arguments, "browser", "the browser is bound at init and the profile on disk belongs to it");
 
             if (_live.TryGetValue(location.Key, out var already))
@@ -564,7 +572,6 @@ internal sealed class SessionManager : IAsyncDisposable
                     $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
                     + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists — {SessionToolSurface.List} will show what is under a path.");
 
-            var mode = SessionModes.Recorded(record.Mode);
             var notes = new List<string>();
             string? movedFrom = null;
 
@@ -606,8 +613,8 @@ internal sealed class SessionManager : IAsyncDisposable
 
             return await OpenAsync(
                 location,
-                new SessionLockRequest { Mode = record.Mode, Browser = record.Browser, Purpose = purpose },
-                mode,
+                new SessionLockRequest { Browser = record.Browser, Purpose = purpose },
+                headed,
                 tracing ?? false,
                 consoleLevel,
                 debug,
@@ -641,7 +648,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
             lines.Add(
                 $"{session.FullPath}\n"
-                + $"  mode: {record.Mode}   browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
+                + $"  browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
                 + $"  created: {Stamp(record.Created)}   last used: {Stamp(record.LastUsed)}\n"
                 + $"  {InUse(session)}\n"
                 + $"  {SessionErrors.Recorded(record.Purpose)}");
@@ -662,7 +669,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Added 2026-08-20. Until then the listing reported mode, browser,
+    /// <b>Added 2026-08-20. Until then the listing reported browser,
     /// purpose, dates and size and performed no liveness check at all</b>, so a
     /// caller could not tell an abandoned session from one another agent was
     /// inside — which is the distinction that matters most in the turn before
@@ -765,7 +772,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var taken = SessionLock.TryAcquire(
             location,
-            new SessionLockRequest { Mode = record.Mode, Browser = record.Browser, Purpose = record.Purpose },
+            new SessionLockRequest { Browser = record.Browser, Purpose = record.Purpose },
             _logger);
 
         if (taken.Acquired is not { } held)
@@ -811,7 +818,7 @@ internal sealed class SessionManager : IAsyncDisposable
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
 
         var summary =
-            $"Destroyed the '{record.Mode}' session at '{location.FullPath}' ({Megabytes(size)}). Its purpose was: {record.Purpose}";
+            $"Destroyed the session at '{location.FullPath}' ({Megabytes(size)}). Its purpose was: {record.Purpose}";
 
         if (!rollUp.RolledUp && Path.GetDirectoryName(location.FullPath) is { Length: > 0 } parent)
         {
@@ -875,7 +882,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var taken = SessionLock.TryAcquire(
             location,
-            new SessionLockRequest { Mode = recorded.Mode, Browser = recorded.Browser, Purpose = purpose },
+            new SessionLockRequest { Browser = recorded.Browser, Purpose = purpose },
             _logger);
 
         if (taken.Acquired is not { } held)
@@ -924,9 +931,11 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </item>
     /// </list>
     /// <para>
-    /// <b>Required rather than optional-with-no-default, following <c>mode</c>
-    /// on <c>init</c>.</b> That is the precedent already settled in this file
-    /// for an argument whose omission cannot be answered honestly, and the
+    /// <b>Required rather than optional-with-no-default.</b> <i>Corrected
+    /// 2026-08-20 (previously "following <c>mode</c> on <c>init</c> … the
+    /// precedent already settled in this file").</i> That precedent went with
+    /// session modes; the rule it stated survives on its own, which is that an
+    /// argument whose omission cannot be answered honestly is required. The
     /// caller always knows which family: the refusal that sent them here names
     /// it, <c>browserai.json</c> records it, and <c>browserai_list</c> prints it per
     /// session.
@@ -1343,7 +1352,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         foreach (var session in _live.Values)
         {
-            lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (mode '{session.Mode.Name}', browser '{session.Lock.Record.Browser}')");
+            lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (browser '{session.Lock.Record.Browser}')");
         }
 
         foreach (var entry in _index.Follow())
@@ -1373,7 +1382,7 @@ internal sealed class SessionManager : IAsyncDisposable
     private async Task<ToolOutcome> OpenAsync(
         SessionPath location,
         SessionLockRequest request,
-        SessionModeDefinition mode,
+        bool headed,
         bool tracing,
         string consoleLevel,
         bool debug,
@@ -1422,7 +1431,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // The family comes from the session's own record rather than from a
             // constant: `resume` reads it out of browserai.json, and a profile
             // belongs to the browser that made it.
-            var config = BrowserConfiguration.ForSession(location, mode, request.Browser, tracing, consoleLevel);
+            var config = BrowserConfiguration.ForSession(location, headed, request.Browser, tracing, consoleLevel);
             var configFile = Path.Combine(
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
@@ -1460,7 +1469,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, claim, mode, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod, _environment.Clock);
+            session = new LiveSession(location, held, claim, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod, _environment.Clock);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))
@@ -1473,7 +1482,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // Everything above is now owned by the dictionary.
             handedOver = true;
             _index.Record(location);
-            SessionToolLog.Opened(sessionLogger, location.FullPath, mode.Name, createdHere);
+            SessionToolLog.Opened(sessionLogger, location.FullPath, headed, createdHere);
 
             // One index walk, used twice: the roll-up beside the sessions and
             // the line in this answer that names them are the same question, and
@@ -1574,7 +1583,6 @@ internal sealed class SessionManager : IAsyncDisposable
         _ = text
             .Append("Session ready. Pass session='").Append(session.Location.FullPath).Append("' on every browser tool call.\n")
             .Append("  directory: ").Append(session.Location.FullPath).Append('\n')
-            .Append("  mode: ").Append(session.Mode.Name).Append(" — ").Append(session.Mode.Grants).Append('\n')
             .Append("  browser: ").Append(record.Browser).Append('\n')
             .Append("  profile: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.ProfileFolderName)).Append('\n')
             .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName)).Append('\n')
@@ -1701,7 +1709,6 @@ internal sealed class SessionManager : IAsyncDisposable
             ? null
             : SessionErrors.SessionAlreadyExists(
                 location.FullPath,
-                record.Mode,
                 record.Browser,
                 record.Created,
                 record.LastUsed,
@@ -1828,7 +1835,6 @@ internal sealed class SessionManager : IAsyncDisposable
 
             entries.Add(new RollUpEntry(
                 session.FullPath,
-                record.Mode,
                 record.Purpose,
                 record.Created,
                 record.LastUsed,
@@ -1878,7 +1884,6 @@ internal sealed class SessionManager : IAsyncDisposable
         var fields = new List<string>();
 
         line(fields, LockJson.Directory, record.DirectoryHistory, static value => $"'{value}'");
-        line(fields, LockJson.Mode, record.ModeHistory, static value => value);
         line(fields, LockJson.Browser, record.BrowserHistory, static value => value);
         line(fields, LockJson.Purpose, record.PurposeHistory, static value => value);
         line(fields, LockJson.BrowserAiVersion, record.BrowserAiVersionHistory, static value => value);
@@ -2025,15 +2030,6 @@ internal sealed class SessionManager : IAsyncDisposable
         }
     }
 
-    private static SessionModeDefinition Mode(JsonObject? arguments)
-    {
-        var name = Required(arguments, "mode");
-
-        return SessionModes.Find(name)
-            ?? throw new SessionToolException(
-                $"'{name}' is not a BrowserAI session mode. The three are: {SessionModes.Table} There is deliberately no default: a mode chosen by omission is a security posture nobody decided on, and the whole point of 'interactive' is that a human relies on it.");
-    }
-
     /// <summary>
     /// The family a call named, normalised to the spelling upstream uses.
     /// </summary>
@@ -2129,10 +2125,10 @@ internal static partial class SessionToolLog
     /// <summary>A session was opened, by init or by resume.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="directory">The session directory.</param>
-    /// <param name="mode">The mode bound at creation.</param>
+    /// <param name="headed">Whether this run of the session opened a window.</param>
     /// <param name="createdHere">Whether this connection created it.</param>
-    [LoggerMessage(EventId = 40, Level = LogLevel.Information, Message = "Session open at {Directory} in mode {Mode}; created by this connection: {CreatedHere}.")]
-    public static partial void Opened(ILogger logger, string directory, string mode, bool createdHere);
+    [LoggerMessage(EventId = 40, Level = LogLevel.Information, Message = "Session open at {Directory}, headed: {Headed}; created by this connection: {CreatedHere}.")]
+    public static partial void Opened(ILogger logger, string directory, bool headed, bool createdHere);
 
     /// <summary>A resume found the recorded path gone and repaired the record.</summary>
     /// <param name="logger">Where it goes.</param>

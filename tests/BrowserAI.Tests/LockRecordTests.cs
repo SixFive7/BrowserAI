@@ -142,49 +142,72 @@ internal sealed class LockRecordTests
     [Test]
     public async Task ARecordFromANewerBuildIsRefusedAndSaysWhichVersionWroteIt()
     {
-        var damaged = Text(Sample()).Replace(@"""schemaVersion"": 2", @"""schemaVersion"": 3", StringComparison.Ordinal);
+        var damaged = Text(Sample()).Replace(@"""schemaVersion"": 3", @"""schemaVersion"": 4", StringComparison.Ordinal);
 
         var failure = Assert.Throws<LockFileException>(() => _ = LockRecord.Read(Encoding.UTF8.GetBytes(damaged), Path));
 
-        await Assert.That(failure!.Message).Contains("schema version 3");
+        await Assert.That(failure!.Message).Contains("schema version 4");
         await Assert.That(failure.Message).Contains("newer BrowserAI");
     }
 
     /// <summary>
-    /// A schema-1 file is refused with the fix in the message, and <b>no
-    /// converter is offered</b>.
+    /// A superseded record is refused with the fix in the message, and <b>no
+    /// converter is offered</b> — for schema 1 and for schema 2 alike.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The recovery for this one is a deletion, so the sentence has to say
     /// what deleting costs and what it does not.</b> A model told only "delete
     /// it" either will not, or will and then re-create a browser profile it
     /// still had. What is lost is the recorded purpose and the history; what is
     /// untouched is everything beside <c>browserai.json</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Two arms since 2026-08-20 (previously
+    /// <c>ASchemaOneRecordIsRefusedWithTheFixAndNoConverter</c>, one arm).</b>
+    /// Schema 3 dropped <c>mode</c>, so there is a second superseded shape on
+    /// disk — and it is the one an installed base actually has. <b>The schema-2
+    /// arm is the interesting one:</b> its keys are a strict superset of what
+    /// this build reads, so a parser that checked the version last would report
+    /// it as an unrecognised <c>mode</c> key rather than as an old file, and the
+    /// recovery a caller was handed would be "remove what does not belong"
+    /// instead of "delete it and init again".
+    /// </para>
     /// </remarks>
+    /// <param name="version">The superseded schema version.</param>
+    /// <param name="record">A real record as that version wrote it.</param>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ASchemaOneRecordIsRefusedWithTheFixAndNoConverter()
+    [Arguments(1, """
+        {
+          "schemaVersion": 1,
+          "directory": "C:\\sessions\\example",
+          "mode": "headless",
+          "browser": "chromium",
+          "purpose": "checking the customer portal",
+          "purposeHistory": [ "first purpose", "checking the customer portal" ],
+          "created": "2026-08-16T09:30:00.0000000+02:00",
+          "lastUsed": "2026-08-16T11:45:30.1234567+02:00",
+          "browserAiVersion": "1.0.0.0",
+          "holder": { "processId": 4242, "processCreatedFileTime": 133000000000000000, "clientProcessName": "node" }
+        }
+        """)]
+    [Arguments(2, """
+        {
+          "schemaVersion": 2,
+          "directory": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "C:\\sessions\\example" } ],
+          "mode": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "headless" } ],
+          "browser": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "chromium" } ],
+          "purpose": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "checking the customer portal" } ],
+          "browserAiVersion": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": "1.0.0.0" } ],
+          "holder": [ { "at": "2026-08-16T09:30:00.0000000+02:00", "value": { "processId": 4242, "processCreatedFileTime": 133000000000000000, "clientProcessName": "node" } } ]
+        }
+        """)]
+    public async Task ASupersededRecordIsRefusedWithTheFixAndNoConverter(int version, string record)
     {
-        // The real thing, as schema 1 wrote it: one value per field, a bare
-        // string array for the purpose history, and stored created/lastUsed.
-        const string Version1 = """
-            {
-              "schemaVersion": 1,
-              "directory": "C:\\sessions\\example",
-              "mode": "headless",
-              "browser": "chromium",
-              "purpose": "checking the customer portal",
-              "purposeHistory": [ "first purpose", "checking the customer portal" ],
-              "created": "2026-08-16T09:30:00.0000000+02:00",
-              "lastUsed": "2026-08-16T11:45:30.1234567+02:00",
-              "browserAiVersion": "1.0.0.0",
-              "holder": { "processId": 4242, "processCreatedFileTime": 133000000000000000, "clientProcessName": "node" }
-            }
-            """;
+        var failure = Assert.Throws<LockFileException>(() => _ = LockRecord.Read(Encoding.UTF8.GetBytes(record), Path));
 
-        var failure = Assert.Throws<LockFileException>(() => _ = LockRecord.Read(Encoding.UTF8.GetBytes(Version1), Path));
-
-        await Assert.That(failure!.Message).Contains("schema version 1");
+        await Assert.That(failure!.Message).Contains($"schema version {version.ToString(CultureInfo.InvariantCulture)}");
         await Assert.That(failure.Message).Contains("There is no converter and there will not be one.");
         await Assert.That(failure.Message).Contains($"Delete '{Path}'");
         await Assert.That(failure.Message).Contains(SessionToolSurface.Init);
@@ -193,11 +216,13 @@ internal sealed class LockRecordTests
         await Assert.That(failure.Message).Contains("profile, output and downloads beside it are untouched");
         await Assert.That(failure.Message).Contains("Repeating the call that just failed will fail identically.");
 
-        // Refused as a VERSION rather than as damage. A schema-1 file is
+        // Refused as a VERSION rather than as damage. Both shapes are
         // well-formed JSON whose top-level keys this build still recognises by
         // name, so a parser that checked the version last would report the wrong
-        // thing about it -- `directory` would be "where an array was expected".
+        // thing about them -- `directory` "where an array was expected" for
+        // schema 1, and an unrecognised `mode` key for schema 2.
         await Assert.That(failure.Message).DoesNotContain("was expected");
+        await Assert.That(failure.Message).DoesNotContain("does not recognise");
     }
 
     [Test]
@@ -433,7 +458,6 @@ internal sealed class LockRecordTests
     {
         SchemaVersion = LockRecord.CurrentSchemaVersion,
         DirectoryHistory = [new Statement<string>(Born, @"C:\sessions\example")],
-        ModeHistory = [new Statement<string>(Born, "headless")],
         BrowserHistory = [new Statement<string>(Born, "chromium")],
         PurposeHistory =
         [

@@ -966,3 +966,61 @@ because the predicate that detects *shared* honestly — reading the marker
 directory's DACL for a group ACE — is a different and larger change than
 comparing the root against `%LocalAppData%`. **D needs a security conversation
 before it needs code.** E is a trap.
+
+---
+
+## Added 2026-08-20, from the session-modes deletion
+
+### 13. The ten newly-granted tools — **DECIDED BY THE MAINTAINER, over my recommendation**
+
+⚠️ **Taken, in the maintainer's words: _"Every capability is granted to every
+session — the full union, including `network`, `pdf` and `testing`, which have
+never been granted before."_** It is implemented:
+`BrowserConfiguration.GrantedCapabilities` names every capability upstream
+declares that carries a tool, and the advertised surface went from **58 tools to
+68**.
+
+**What I recommended instead**, recorded because it is what a reader would
+otherwise assume was never considered: grant `network`, `pdf` and `testing`
+**behind the same deletion but as a separate, later decision** — delete the modes
+now, keep the capability set at the union the `persistent` mode already had, and
+weigh the three new capabilities on their own merits with a measurement of each.
+The argument was that deleting modes and widening the surface are two changes
+with one blast radius, and that ten tools arriving as a *consequence* of a
+simplification is exactly the shape nobody reviews.
+
+**Why he is right and I was wrong about the framing.** The session-mode deletion
+rests on one finding: a capability withheld from a session was never a boundary
+against the caller, who owns the session directory. That finding does not
+distinguish `storage` from `network` — it applies to every capability equally, so
+holding three of them back would have been a boundary defended by nothing but
+inertia, and the honest version of the change is the full union. **Splitting it
+would have produced a build in which the stated reason and the actual behaviour
+disagreed.**
+
+**What my recommendation bought that this does not, stated so it is not lost.**
+Nothing about the ten tools was measured before they were granted. `browser_route`
+in particular changes what a page *is* rather than what the agent sees, and the
+one measurement that would matter — what a mocked response does to a human
+watching a headed window — was reasoned about rather than run. What went in
+instead of a measurement is a **warning in the server `instructions`**, which is
+BrowserAI's own string and therefore the only channel available: upstream
+descriptions pass through byte for byte, and [the rewrite path that could have
+appended to `browser_route`'s description was deleted on
+2026-08-18](DECISIONS.md#licence-release-policy-and-the-tool-surface).
+
+**How to reverse it.** One list, in one file: remove a capability from
+`BrowserConfiguration.GrantedCapabilities`. Three tests fail and each names what
+it expected — `ModelSurfaceTests.EverySessionGetsEveryCapabilityAndTheNewlyGrantedTenAreInTheSurface`
+on the capability by name,
+`SessionPolicyTests.ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`
+on the count, and `VerticalSliceTests` off the wire. **Reversing it is not free
+for a caller**, though: an agent that has learned the tools exist will keep
+calling them, and upstream's answer to a tool its child was not launched with is
+*unknown tool* rather than anything a model can act on.
+
+⚠️ **`browser_run_code_unsafe` is not one of the ten and this entry must not be
+read as though it were.** It is `core`; it has been reachable in every session
+this product has ever opened, `headless` included, and it reaches the cookie jar
+([measured 2026-08-14](DECISIONS.md#licence-release-policy-and-the-tool-surface)).
+Nothing about the grant changed its availability.

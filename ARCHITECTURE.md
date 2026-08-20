@@ -47,9 +47,9 @@ assumed and nothing on `PATH` is used.
 | First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune, TreeDelete}.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
 
 **The configuration is generated, never hand-held.** `BrowserConfiguration` writes
-`browserName`, an explicit `chrome-for-testing` channel, `headless` from the mode,
-`userDataDir`, `downloadsPath`, `outputDir`, `capabilities`, `saveSession` and
-`console.level`. `--sandbox` goes on the **command line** and never in the config
+`browserName`, an explicit `chrome-for-testing` channel, `headless` from the
+call's own `headed` argument, `userDataDir`, `downloadsPath`, `outputDir`,
+`capabilities`, `saveSession` and `console.level`. `--sandbox` goes on the **command line** and never in the config
 file, because only the command line reaches the browser.
 `ConfigRoundTripTests` reads every one of those leaves back out of the running
 child, with a named list of required keys, so deleting one from the generator
@@ -140,7 +140,7 @@ The largest area, and the one everything else keys on.
 | Concern | Implemented by |
 |---|---|
 | The directory, the lock and the record | `src/BrowserAI/Sessions/{SessionPath, SessionLayout, LockRecord, SessionLock}.cs` |
-| The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionMode, SessionToolSurface, SessionToolPolicy, SessionManager, SessionEnvironment, LiveSession}.cs` |
+| The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, SessionToolPolicy, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
@@ -149,23 +149,26 @@ The largest area, and the one everything else keys on.
 **The session directory is the identity.** One directory holds `browserai.json` at its
 root and `profile/`, `output/` and `downloads/` beneath it. `browserai.json` is both
 the lock and the record — held `FileAccess.ReadWrite, FileShare.Read`, carrying
-the schema version and then mode, browser, purpose, the resolved path, the
+the schema version and then browser, purpose, the resolved path, the
 BrowserAI build and a `(pid, creationFileTime, clientProcessName)` holder that
 deliberately outlives its holder. There is no central registry, no bearer token,
 no label and no expiry timer; all four were designed and then dropped, because the
 directory already is all of those things.
 
 **Every field of `browserai.json` is an ordered list of timestamped statements —
-schema 2, since 2026-08-18.** The record is append-only rather than a snapshot, so
-it says how a session got here and not only where it is; `created` and `lastUsed`
-are no longer stored because they are exactly the earliest and latest statement,
-and a stored copy could only disagree with what it summarises. **A statement is
-appended only when the value changes**, so mode, browser, directory and build stay
-one statement long for a session that is not moved, copied or run under a new
-build, and each field is capped at 32 statements — trimmed out of the *middle*,
-because `created` is read from the first one and a trim at the front would move a
-session's creation date. **There is no schema-1 converter**: an old file is
-refused with the fix in the message.
+schema 3, since 2026-08-20** *(previously schema 2, since 2026-08-18)*. The record
+is append-only rather than a snapshot, so it says how a session got here and not
+only where it is; `created` and `lastUsed` are no longer stored because they are
+exactly the earliest and latest statement, and a stored copy could only disagree
+with what it summarises. **A statement is appended only when the value changes**,
+so browser, directory and build stay one statement long for a session that is not
+moved, copied or run under a new build, and each field is capped at 32 statements
+— trimmed out of the *middle*, because `created` is read from the first one and a
+trim at the front would move a session's creation date. **There is no converter
+for either superseded version**: an old file is refused with the fix in the
+message. **What moved at schema 3 is that `mode` is gone** — session modes were
+deleted, so the field described nothing while the strict parser went on requiring
+it.
 
 **`browserai_resume` no longer refuses a copied directory, and BrowserAI has zero
 confirmation flags.** `acknowledgeCopy` existed because the record was a snapshot
@@ -193,10 +196,14 @@ file that is not broken.
 `browserai_set_purpose` and `browserai_reinstall_browser`. A `session` parameter
 is injected into every upstream tool's raw `inputSchema`, appended so upstream's
 own properties keep their order; a call naming no session is refused rather than
-reaching the run's own child. `init` takes a required directory, purpose and mode
-with no default and no fallback, and an optional `browser` defaulting to
-`chromium`; `resume` reads mode and browser from `browserai.json`
-and **refuses them as arguments**, because a profile is browser-specific.
+reaching the run's own child. `init` takes a required directory and purpose with
+no default and no fallback, an optional `browser` defaulting to `chromium`, and
+the three per-run booleans `headed`, `tracing` and `debug`; `resume` takes the
+same three and reads `browser` from `browserai.json`, **refusing it as an
+argument**, because a profile is browser-specific. *(Corrected 2026-08-20,
+previously "a required directory, purpose and mode … `resume` reads mode and
+browser … and **refuses them as arguments**": session modes were deleted, and
+`browser` is now the only thing `resume` refuses.)*
 `browserai_reinstall_browser` takes a **required** `browser` and nothing else —
 *changed 2026-08-19 (previously no arguments, "because there is nothing to
 name")*, which stopped being true the day a second family could be on disk. Its
@@ -258,18 +265,30 @@ peer cannot see the other process's provisioner at all. Zero staged bytes is
 reported as *the delete, or an extraction already under way* rather than as a
 stall, which is the honest reading of an empty staging directory.
 
-**One table drives six consumers.** `SessionMode` is the table; the server
-`instructions`, `init`'s description, `resume`'s result, the refusal text, the
-generated child config and the tests all render from it, and `ModelSurfaceTests`
-asserts each consumer renders every row. A mode added to the table alone turns the
-build red naming the consumers that do not render it. *Corrected 2026-08-18
-(previously the fifth consumer was "the `(tool, mode)` decision").*
+⚠️ **Session modes were deleted on 2026-08-20, and the one table with them.**
+*Corrected 2026-08-20 (previously "**One table drives six consumers.**
+`SessionMode` is the table; the server `instructions`, `init`'s description,
+`resume`'s result, the refusal text, the generated child config and the tests all
+render from it, and `ModelSurfaceTests` asserts each consumer renders every row. A
+mode added to the table alone turns the build red naming the consumers that do not
+render it"; and "**A mode is two switches on a real browser, not a permission
+set.** `BrowserConfiguration.ForSession` turns `Headed` into upstream's `headless`
+and `Storage` into the capability set the session's own child is launched with —
+so a session without storage has no cookie tools **in its child at all**, which is
+the 'the capability does not exist' form rather than 'our code declines to use
+it'".)* Five of the six consumers no longer exist. **The two switches went
+different ways:** the window became a per-run argument — `headed` on `init` and on
+`resume`, regenerated at every child launch and never recorded — and the
+capability set became **every capability upstream declares**, in
+`BrowserConfiguration.GrantedCapabilities`. Why, and what it cost, is in
+[DECISIONS](DECISIONS.md#processes-browsers-and-session-modes).
 
-**A mode is two switches on a real browser, not a permission set.**
-`BrowserConfiguration.ForSession` turns `Headed` into upstream's `headless` and
-`Storage` into the capability set the session's own child is launched with — so a
-session without storage has no cookie tools **in its child at all**, which is the
-"the capability does not exist" form rather than "our code declines to use it".
+**Ten tools became reachable in that change**, listed in
+`SessionToolSurface.NewlyGrantedTools` and asserted by name in `ModelSurfaceTests`
+and `VerticalSliceTests`: upstream's `network`, `pdf` and `testing` capabilities
+had never been named in a generated config. The advertised surface is **68 of the
+69** a fully-capable child exposes. `browser_run_code_unsafe` is **not** one of
+them — it is `core` and always was.
 
 ⚠️ **The tool-permission policy was removed on 2026-08-18.** *Corrected
 2026-08-18 (previously "**Enforcement is deny-by-default in two dimensions.**
@@ -304,7 +323,7 @@ new CLI flag, which deny-by-default on a tool *name* never did.
 run's own child, because that is *routing* — a proxy holding N children has to be
 told which one a call belongs to, and a default would silently pick a session
 nobody chose. And `browser_annotate` is **filtered out of `tools/list`**, in every
-mode, as a **liveness** decision with no security claim attached: it opens the
+session, as a **liveness** decision with no security claim attached: it opens the
 Playwright Dashboard and blocks until a human draws, with no self-timeout, and the
 window belongs to a second non-headless browser under a daemon that writes into
 `%TEMP%` and outlives the session. Filtering the surface is in scope by the

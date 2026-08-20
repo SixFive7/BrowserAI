@@ -41,19 +41,21 @@ internal sealed record Statement<T>(DateTimeOffset At, T Value);
 /// twice.
 /// </para>
 /// <para>
-/// <b>A statement is appended only when the value changes</b>, so the four fields
-/// that describe what the session <i>is</i> — mode, browser, directory, build —
+/// <b>A statement is appended only when the value changes</b>, so the three
+/// fields that describe what the session <i>is</i> — browser, directory, build —
 /// stay one statement long for the life of a session that is not moved, copied or
-/// run under a new build. Growth comes from <see cref="PurposeHistory"/> and
+/// run under a new build. <i>Corrected 2026-08-20 (previously "the four fields …
+/// mode, browser, directory, build"); <c>mode</c> went at schema 3.</i> Growth comes from <see cref="PurposeHistory"/> and
 /// <see cref="HolderHistory"/>, and is capped: see
 /// <see cref="MaximumStatementsPerField"/>.
 /// </para>
 /// <para>
-/// <b>Schema 2 does not read schema 1, and there is no converter.</b> A version-1
-/// file is refused with a message naming the fix. That is a deliberate choice
-/// rather than an omission — nothing but this machine's own alpha has ever
-/// written one, and a converter for a format with no installed base is code that
-/// can only ever be wrong in private.
+/// <b>A schema reads only its own version, and there is no converter.</b> A
+/// version-1 or version-2 file is refused with a message naming the fix. That is
+/// a deliberate choice rather than an omission — a converter for a format with no
+/// installed base is code that can only ever be wrong in private, and the recovery
+/// costs a caller nothing that matters: the profile, output and downloads survive
+/// the delete, so what is lost is the recorded purpose and the history.
 /// </para>
 /// <para>
 /// <b>The holder record persists after death on purpose.</b> It is what lets a
@@ -74,12 +76,20 @@ internal sealed record LockRecord
 {
     /// <summary>The schema this build writes and the only one it reads.</summary>
     /// <remarks>
-    /// ⚠️ <b>2 since 2026-08-18 (previously 1, one value per field with a
-    /// history on <c>purpose</c> alone).</b> Bumping it is what makes an old file
-    /// a refusal with a recovery rather than a record read as something it is
-    /// not.
+    /// ⚠️ <b>3 since 2026-08-20 (previously 2 since 2026-08-18, and 1 before
+    /// that — one value per field with a history on <c>purpose</c> alone).</b>
+    /// Bumping it is what makes an old file a refusal with a recovery rather than
+    /// a record read as something it is not. <b>What moved at 3 is that
+    /// <c>mode</c> is gone.</b> Session modes were deleted that day, every
+    /// capability is granted to every session, and headedness became a per-run
+    /// argument — so a <c>mode</c> in a record described nothing, and the strict
+    /// parser below would have gone on requiring a field no code reads. A
+    /// version-2 file is refused with the recovery it has always carried: delete
+    /// the record and call <c>browserai_init</c> on the directory again; the
+    /// profile, output and downloads beside it are untouched and the new session
+    /// goes on using them.
     /// </remarks>
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     /// <summary>
     /// The longest <c>purpose</c> that is stored. Free text written by one agent
@@ -138,9 +148,6 @@ internal sealed record LockRecord
     /// </remarks>
     public required IReadOnlyList<Statement<string>> DirectoryHistory { get; init; }
 
-    /// <summary>Every mode this session has been. A session cannot change what it is, so in practice: one.</summary>
-    public required IReadOnlyList<Statement<string>> ModeHistory { get; init; }
-
     /// <summary>Every browser family this profile has belonged to. In practice: one.</summary>
     public required IReadOnlyList<Statement<string>> BrowserHistory { get; init; }
 
@@ -155,9 +162,6 @@ internal sealed record LockRecord
 
     /// <summary>The resolved absolute path as of the newest statement.</summary>
     public string Directory => DirectoryHistory[^1].Value;
-
-    /// <summary>The session's mode.</summary>
-    public string Mode => ModeHistory[^1].Value;
 
     /// <summary>The browser family this profile belongs to.</summary>
     public string Browser => BrowserHistory[^1].Value;
@@ -209,7 +213,6 @@ internal sealed record LockRecord
         other is not null
         && SchemaVersion == other.SchemaVersion
         && DirectoryHistory.SequenceEqual(other.DirectoryHistory)
-        && ModeHistory.SequenceEqual(other.ModeHistory)
         && BrowserHistory.SequenceEqual(other.BrowserHistory)
         && PurposeHistory.SequenceEqual(other.PurposeHistory)
         && BrowserAiVersionHistory.SequenceEqual(other.BrowserAiVersionHistory)
@@ -217,7 +220,7 @@ internal sealed record LockRecord
 
     /// <inheritdoc />
     public override int GetHashCode() =>
-        HashCode.Combine(SchemaVersion, Directory, Mode, Browser, Purpose, Created, LastUsed, Holder);
+        HashCode.Combine(SchemaVersion, Directory, Browser, Purpose, Created, LastUsed, Holder);
 
     /// <summary>
     /// Appends a statement, <b>only if it says something new</b>, and keeps the
@@ -320,7 +323,6 @@ internal sealed record LockRecord
             writer.WriteNumber(LockJson.SchemaVersion, SchemaVersion);
 
             WriteStatements(writer, LockJson.Directory, DirectoryHistory, static (w, value) => w.WriteStringValue(value));
-            WriteStatements(writer, LockJson.Mode, ModeHistory, static (w, value) => w.WriteStringValue(value));
             WriteStatements(writer, LockJson.Browser, BrowserHistory, static (w, value) => w.WriteStringValue(value));
             WriteStatements(writer, LockJson.Purpose, PurposeHistory, static (w, value) => w.WriteStringValue(value));
             WriteStatements(writer, LockJson.BrowserAiVersion, BrowserAiVersionHistory, static (w, value) => w.WriteStringValue(value));
@@ -347,7 +349,6 @@ internal sealed record LockRecord
     {
         int? schemaVersion = null;
         List<Statement<string>>? directory = null;
-        List<Statement<string>>? mode = null;
         List<Statement<string>>? browser = null;
         List<Statement<string>>? purpose = null;
         List<Statement<string>>? version = null;
@@ -381,9 +382,6 @@ internal sealed record LockRecord
                         break;
                     case LockJson.Directory:
                         directory = ReadStatements<string>(ref reader, name, path, ReadString);
-                        break;
-                    case LockJson.Mode:
-                        mode = ReadStatements<string>(ref reader, name, path, ReadString);
                         break;
                     case LockJson.Browser:
                         browser = ReadStatements<string>(ref reader, name, path, ReadString);
@@ -419,7 +417,6 @@ internal sealed record LockRecord
         {
             SchemaVersion = schemaVersion.Value,
             DirectoryHistory = directory ?? throw Missing(LockJson.Directory, path),
-            ModeHistory = mode ?? throw Missing(LockJson.Mode, path),
             BrowserHistory = browser ?? throw Missing(LockJson.Browser, path),
             PurposeHistory = purpose ?? throw Missing(LockJson.Purpose, path),
             BrowserAiVersionHistory = version ?? throw Missing(LockJson.BrowserAiVersion, path),
@@ -508,7 +505,6 @@ internal sealed record LockRecord
         Bound(
             first,
             first ? DirectoryHistory[0].At : DirectoryHistory[^1].At,
-            first ? ModeHistory[0].At : ModeHistory[^1].At,
             first ? BrowserHistory[0].At : BrowserHistory[^1].At,
             first ? PurposeHistory[0].At : PurposeHistory[^1].At,
             first ? BrowserAiVersionHistory[0].At : BrowserAiVersionHistory[^1].At,
@@ -805,9 +801,6 @@ internal static class LockJson
 
     /// <summary>Every absolute path the record has been written at.</summary>
     public const string Directory = "directory";
-
-    /// <summary>Every mode the session has been.</summary>
-    public const string Mode = "mode";
 
     /// <summary>Every browser family the profile has belonged to.</summary>
     public const string Browser = "browser";

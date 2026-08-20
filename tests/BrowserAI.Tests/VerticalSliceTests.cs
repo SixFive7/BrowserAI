@@ -68,10 +68,15 @@ internal sealed class VerticalSliceTests
         // shuffled the list.
         //
         // The six authored tools come first; upstream's follow, and it is the
-        // UNION surface — 59 rather than the default 24 — because the run's own
-        // child is started with every capability any mode can have. The spec
-        // forbids the tool set varying per connection, so one static list is the
-        // only shape available and it has to be the superset.
+        // WHOLE exposable surface — 69 rather than the default 24 — because the
+        // run's own child is started with every capability upstream declares.
+        // The spec forbids the tool set varying per connection, so one static
+        // list is the only shape available and it has to be everything.
+        //
+        // ⚠️ Corrected 2026-08-20 (previously "the UNION surface — 59 rather
+        // than the default 24 — every capability any MODE can have"). Session
+        // modes were deleted and `network`, `pdf` and `testing` were granted for
+        // the first time, so the list is ten longer.
         //
         // ⚠️ Minus the one tool this build withholds. Corrected 2026-08-18
         // (previously the whole union, and `Names.Count + 59`): `browser_annotate`
@@ -80,27 +85,37 @@ internal sealed class VerticalSliceTests
         // still computed from the committed snapshot rather than typed, and the
         // filter is applied through the product's own predicate, so the day the
         // decision is reversed this test follows it.
-        var expectedUpstream = UpstreamSurface.For(BrowserConfiguration.UnionCapabilities)
+        var expectedUpstream = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities)
             .Where(tool => !SessionToolPolicy.IsWithheldFromTheSurface(tool))
             .ToList();
 
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 42/59 is what DECISIONS records and
-        // a list comparison that both sides got wrong the same way would not say
-        // so.
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 58);
+        // Stated as a number as well, because 68 of 69 is what DECISIONS records
+        // and a list comparison that both sides got wrong the same way would not
+        // say so. *(Corrected 2026-08-20, previously 58 of 59.)*
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 68);
 
         // ⚠️ And the withheld tool is absent from the REAL binary's real answer,
         // named individually. The list comparison above would also catch it, but
-        // only as one differing string among 64: this is the assertion that says
+        // only as one differing string among 74: this is the assertion that says
         // what happened, and it is the off-the-wire half of the decision.
         await Assert.That(run.ToolNames).DoesNotContain(SessionToolPolicy.AnnotateTool);
 
+        // ⚠️ And the ten that arrived on 2026-08-20 are in the REAL binary's
+        // real answer, named individually for the same reason. This is the
+        // off-the-wire half of the grant: `ModelSurfaceTests` asserts it in
+        // process, and a rewrite that dropped them between there and the pipe
+        // would pass that and fail this.
+        foreach (var granted in SessionToolSurface.NewlyGrantedTools)
+        {
+            await Assert.That(run.ToolNames).Contains(granted);
+        }
+
         // Not vacuous — the child really does have it, so the absence above is
         // BrowserAI's filter rather than an upstream that never shipped it.
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.UnionCapabilities))
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities))
             .Contains(SessionToolPolicy.AnnotateTool);
 
         // And every one of them gains BrowserAI's `session` parameter, asserted

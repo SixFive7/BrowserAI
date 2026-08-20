@@ -1361,7 +1361,7 @@ internal sealed class SessionLockTests
 
         var first = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headless", Browser = "firefox", Purpose = "the session that is already here" },
+            new SessionLockRequest { Browser = "firefox", Purpose = "the session that is already here" },
             NullLogger.Instance);
 
         first.Acquired!.Dispose();
@@ -1370,7 +1370,7 @@ internal sealed class SessionLockTests
 
         var refused = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headed", Browser = "chromium", Purpose = "an init that should have been a resume", RefuseAnExistingRecord = true },
+            new SessionLockRequest { Browser = "chromium", Purpose = "an init that should have been a resume", RefuseAnExistingRecord = true },
             NullLogger.Instance);
 
         try
@@ -1636,7 +1636,7 @@ internal sealed class SessionLockTests
         record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
 
     private static SessionLockRequest Request(string purpose) =>
-        new() { Mode = "headless", Browser = "chromium", Purpose = purpose };
+        new() { Browser = "chromium", Purpose = purpose };
 
     private static (string Directory, SessionPath Path) NewSession(ScratchDirectory scratch, string name)
     {

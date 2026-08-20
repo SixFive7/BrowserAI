@@ -122,7 +122,6 @@ internal static class SessionProbe
 
         var request = new SessionLockRequest
         {
-            Mode = "headless",
             Browser = "chromium",
             Purpose = $"race contender {Environment.ProcessId.ToString(CultureInfo.InvariantCulture)}",
         };
@@ -284,7 +283,7 @@ internal static class SessionProbe
 
         var result = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = purpose },
+            new SessionLockRequest { Browser = "chromium", Purpose = purpose },
             NullLogger.Instance);
 
         try
@@ -493,7 +492,7 @@ internal static class SessionProbe
 
         var result = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = "rewrite probe" },
+            new SessionLockRequest { Browser = "chromium", Purpose = "rewrite probe" },
             NullLogger.Instance);
 
         try

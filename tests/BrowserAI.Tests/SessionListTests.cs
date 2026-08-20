@@ -64,7 +64,6 @@ internal sealed class SessionListTests
         {
             ["directory"] = driven,
             ["purpose"] = "a session this BrowserAI is driving",
-            ["mode"] = "headless",
         });
 
         // The other three are made the way a previous process would have made
@@ -179,7 +178,7 @@ internal sealed class SessionListTests
 
         var taken = SessionLock.TryAcquire(
             location,
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = "probed for liveness" },
+            new SessionLockRequest { Browser = "chromium", Purpose = "probed for liveness" },
             NullLogger.Instance);
 
         await Assert.That(taken.Taken).IsTrue();
@@ -220,7 +219,7 @@ internal sealed class SessionListTests
 
         var taken = SessionLock.TryAcquire(
             location,
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = purpose },
+            new SessionLockRequest { Browser = "chromium", Purpose = purpose },
             NullLogger.Instance);
 
         index.Record(location);

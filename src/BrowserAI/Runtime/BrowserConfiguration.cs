@@ -89,9 +89,6 @@ internal static class BrowserConfiguration
     /// <summary>The console level upstream defaults to, which silently drops <c>debug</c>.</summary>
     public const string DefaultConsoleLevel = "info";
 
-    /// <summary>The capability a <c>persistent</c> session adds.</summary>
-    public const string StorageCapability = "storage";
-
     /// <summary>
     /// The key that lifts upstream's workspace guardrail, spelled once so the
     /// generator and the round trip cannot disagree about it.
@@ -108,40 +105,37 @@ internal static class BrowserConfiguration
     public static IReadOnlyList<string> ConsoleLevels { get; } = ["error", "warning", "info", "debug"];
 
     /// <summary>
-    /// The capabilities every session gets, whatever its mode.
-    /// </summary>
-    /// <remarks>
-    /// <c>config</c> is what makes <c>browser_get_config</c> callable, and that
-    /// tool is the only thing that can prove the rest of this file reached the
-    /// child. The base 24 tools are unconditional — upstream ors
-    /// <c>capability.startsWith("core")</c> with whatever is configured — so
-    /// naming a <c>core*</c> capability here would do nothing.
-    /// </remarks>
-    public static IReadOnlyList<string> BaseCapabilities { get; } = ["config", "vision", "devtools"];
-
-    /// <summary>
-    /// Every capability any session can have, which is what the caller-facing
-    /// tool list must be built from.
+    /// The capabilities every session gets — <b>all of them</b>.
     /// </summary>
     /// <remarks>
     /// <para>
     /// The MCP spec forbids the tool set varying per connection, and SEP-2567
-    /// removed protocol-level sessions outright, so <c>init</c> cannot shrink the
-    /// list. There is one static list and it has to be the union.
+    /// removed protocol-level sessions outright, so there is one static tool
+    /// list and every session's child has to be able to answer all of it.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-19 (previously "; a call that its session's mode
-    /// does not permit is refused at call time instead").</b> <b>No such refusal
-    /// exists.</b> The <c>(tool, mode)</c> permission matrix was removed on
-    /// 2026-08-18, and what replaced it is narrower and better: a mode without
-    /// <see cref="StorageCapability"/> has no cookie tools <b>in its child at
-    /// all</b>, so naming one reaches upstream and upstream answers that it does
-    /// not know the tool. Nothing in BrowserAI intercepts it. The sentence
-    /// survived the removal by describing a fallback that had gone, which is
-    /// exactly the shape a reader would act on and find missing.
+    /// ⚠️ <b>Changed 2026-08-20 (previously two lists — <c>BaseCapabilities</c>
+    /// of <c>config</c>, <c>vision</c> and <c>devtools</c>, and
+    /// <c>UnionCapabilities</c> which added <c>storage</c>; which of the two a
+    /// session got was decided by its mode's <c>Storage</c> flag).</b> Session
+    /// modes are gone, so there is no longer anything to decide <i>between</i>,
+    /// and the honest list is the whole of what upstream offers. Three
+    /// capabilities are granted here that no BrowserAI session has ever carried:
+    /// <c>network</c> (4 tools), <c>pdf</c> (1) and <c>testing</c> (5). See
+    /// <see cref="Sessions.SessionToolSurface"/> for what those ten are and why
+    /// granting them is a decision rather than a consequence.
+    /// </para>
+    /// <para>
+    /// <c>config</c> is what makes <c>browser_get_config</c> callable, and that
+    /// tool is the only thing that can prove the rest of this file reached the
+    /// child. The base 24 tools are unconditional — upstream ors
+    /// <c>capability.startsWith("core")</c> with whatever is configured — so
+    /// naming a <c>core*</c> capability here would do nothing, and
+    /// <c>core-install</c> carries no tool at all.
     /// </para>
     /// </remarks>
-    public static IReadOnlyList<string> UnionCapabilities { get; } = [.. BaseCapabilities, StorageCapability];
+    public static IReadOnlyList<string> GrantedCapabilities { get; } =
+        ["config", "vision", "devtools", "storage", "network", "pdf", "testing"];
 
     /// <summary>
     /// The keys that must survive into the child for a session to be the session
@@ -192,7 +186,15 @@ internal static class BrowserConfiguration
 
     /// <summary>The config one session's child is started with.</summary>
     /// <param name="session">The session directory, which is where every path below lives.</param>
-    /// <param name="mode">The mode bound at <c>init</c>.</param>
+    /// <param name="headed">
+    /// Whether a browser window appears. ⚠️ <b>A per-run argument since
+    /// 2026-08-20 (previously <c>SessionModeDefinition mode</c>, whose
+    /// <c>Headed</c> flag was bound at <c>init</c> and permanent for the
+    /// directory's life).</b> Headedness is a property of <i>this launch</i>: it
+    /// changes nothing on disk, so nothing is served by recording it, and a
+    /// caller that wants to watch a session it created headless should not have
+    /// to destroy it first.
+    /// </param>
     /// <param name="browser">
     /// The family this session was created for, read from its own
     /// <c>browserai.json</c> rather than assumed. A profile belongs to the browser
@@ -209,8 +211,8 @@ internal static class BrowserConfiguration
     /// <c>@playwright/mcp</c> 0.0.79: neither the CLI surface nor
     /// <c>config.d.ts</c> carries a trace option at all — <c>tracesDir</c> is
     /// computed internally as <c>&lt;outputDir&gt;/traces</c> and is not
-    /// configurable — so BrowserAI's own <c>tracing</c> modifier, a boolean
-    /// orthogonal to all three modes, has no upstream trace key to reach
+    /// configurable — so BrowserAI's own <c>tracing</c> modifier has no upstream
+    /// trace key to reach
     /// ([kb](../../../kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like)).
     /// <c>saveSession</c> is the surviving
     /// feature with the same purpose: it records what the session did into the
@@ -218,23 +220,22 @@ internal static class BrowserConfiguration
     /// </remarks>
     public static GeneratedConfig ForSession(
         SessionPath session,
-        SessionModeDefinition mode,
+        bool headed,
         string browser,
         bool tracing,
         string consoleLevel)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(mode);
         ArgumentException.ThrowIfNullOrWhiteSpace(browser);
 
         return Generate(new BrowserConfigurationRequest
         {
             Browser = browser,
-            Headless = !mode.Headed,
+            Headless = !headed,
             UserDataDirectory = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName),
             OutputDirectory = Path.Combine(session.FullPath, SessionLayout.OutputFolderName),
             DownloadsDirectory = Path.Combine(session.FullPath, SessionLayout.DownloadsFolderName),
-            Capabilities = mode.Storage ? UnionCapabilities : BaseCapabilities,
+            Capabilities = GrantedCapabilities,
             SaveSession = tracing,
             ConsoleLevel = consoleLevel,
         });
@@ -245,9 +246,11 @@ internal static class BrowserConfiguration
     /// <c>tools/list</c> before any session exists.
     /// </summary>
     /// <remarks>
-    /// <b>It carries the union capability set on purpose.</b> This child produces
-    /// the one static tool list every caller sees, so it has to expose every tool
-    /// any mode could reach. It also carries a <c>userDataDir</c> for a reason
+    /// <b>It carries the same capability set every session gets.</b> This child
+    /// produces the one static tool list every caller sees, so it has to expose
+    /// every tool a session could reach — and since 2026-08-20 every session
+    /// reaches all of them, so the two lists are the same list rather than one
+    /// being the union of several. It also carries a <c>userDataDir</c> for a reason
     /// that has nothing to do with sessions: with the key unset, upstream writes
     /// each run's profile into <c>%LOCALAPPDATA%\ms-playwright-mcp\</c>, keyed by
     /// a hash of the client's working directory — 159 directories and 877 MB had
@@ -265,7 +268,7 @@ internal static class BrowserConfiguration
             UserDataDirectory = Path.Combine(instanceDirectory, SessionLayout.ProfileFolderName),
             OutputDirectory = Path.Combine(instanceDirectory, SessionLayout.OutputFolderName),
             DownloadsDirectory = Path.Combine(instanceDirectory, SessionLayout.DownloadsFolderName),
-            Capabilities = UnionCapabilities,
+            Capabilities = GrantedCapabilities,
             SaveSession = false,
             ConsoleLevel = DefaultConsoleLevel,
         });

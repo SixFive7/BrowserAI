@@ -23,6 +23,50 @@ has been satisfied in form only.
 
 ### Removed
 
+- **Session modes.** `headless`, `interactive` and `persistent` are gone, and so
+  is the `mode` argument on `browserai_init` and the refusal `browserai_resume`
+  made when it was given one. **A mode was two things** — whether a window
+  appeared, and which upstream capabilities the session's child was launched with
+  — and the two went different ways. **The window became a per-run argument**,
+  `headed`, on `init` and on `resume`: it is regenerated at every child launch
+  beside `tracing` and `debug`, and is **not** written to the session record, so
+  a session created headless is watched headed tomorrow without being destroyed
+  and recreated first. **The capability set became every capability upstream
+  declares.**
+
+  **Why, and it is the reason the two 2026-08-18 and 2026-08-19 corrections had
+  already established twice over:** a capability withheld from a session was
+  never a boundary against the *caller*. The calling agent chooses the session
+  directory, the profile and its cookie database are created inside it, and the
+  agent runs as the same Windows user — [measured
+  2026-08-18](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)
+  — and could in any case reach whatever a missing capability withheld by
+  resuming the same directory as a different mode. What it *cost* was real: a
+  `headless` session that needed to read one cookie had to be destroyed and
+  recreated. **The one argument the modes had left was headless-with-storage** —
+  "full credential access with no visible signal" — and it did not survive the
+  observations that `headless` already persisted cookies on disk, that
+  `browser_run_code_unsafe` is `core` and reaches the cookie jar in every
+  session, and that a window is a signal to a **human**, who is absent in the
+  case that argument was about.
+
+  **`browserai.json` moved to schema 3** in the same change, because `mode` was a
+  recorded field and a field nobody reads is worse than no field. There is no
+  converter and there will not be one: a version-2 record is refused with the
+  recovery it has always carried — delete it and call `browserai_init` on the
+  directory again; the profile, output and downloads beside it are untouched and
+  the new session goes on using them. **What is lost is the recorded purpose and
+  the history.**
+
+  **What went with it:** `SessionMode.cs` entirely — the enum, the one table and
+  the six consumers that rendered it; the mode line in `browserai_init`'s and
+  `browserai_resume`'s answers; the `mode:` column in `browserai_list`; the mode
+  in `browserai_destroy`'s summary and in `browserai_init`'s already-a-session
+  refusal; the `mode` field in the per-root roll-up, which moved to schema 2 with
+  it. `browser` is now the only thing `init` binds permanently and the only
+  argument `resume` refuses — for the reason that always separated it from
+  `mode`: a profile on disk belongs to the browser that made it.
+
 - **Continuous integration, completely.** `.github/workflows/build.yml` was added
   on 2026-08-18 and deleted on 2026-08-20 without ever being released, at the
   maintainer's decision, verbatim: *"Remove CI completely. Let all the tests run on
@@ -68,6 +112,41 @@ has been satisfied in form only.
   is part of the CI item.
 
 ### Added
+
+- **Ten tools, reachable for the first time in this product's history or its
+  predecessor's.** Upstream's `network` capability — `browser_route`,
+  `browser_route_list`, `browser_unroute`, `browser_network_state_set` — its
+  `pdf` capability (`browser_pdf_save`) and its `testing` capability
+  (`browser_generate_locator`, `browser_verify_element_visible`,
+  `browser_verify_text_visible`, `browser_verify_list_visible`,
+  `browser_verify_value`) had **never been named in a generated config at all**,
+  so those ten tools did not exist in any session's child and a caller naming one
+  was told by upstream that it did not know the tool. The advertised surface is
+  now **68 of the 69** a fully-capable child exposes; it was 58 of 59.
+
+  **Recorded as a deliberate grant rather than left as a consequence.** They
+  arrived because session modes were deleted, and a side effect nothing names
+  reads as an accident at the next review — so the list is
+  `SessionToolSurface.NewlyGrantedTools`, asserted by name in process by
+  `ModelSurfaceTests` and off the wire by `VerticalSliceTests`, against a
+  hand-written expectation that fails whichever side moves. The decision went
+  against a recommendation to weigh the three new capabilities separately;
+  [QUESTIONS.md §13](QUESTIONS.md#13-the-ten-newly-granted-tools--decided-by-the-maintainer-over-my-recommendation)
+  records what that recommendation was and why it was wrong about the framing.
+
+  ⚠️ **`browser_run_code_unsafe` is not among them and never was.** It is `core`,
+  so it has been reachable in every session this product has ever opened —
+  `headless` included — and it reaches the cookie jar.
+
+- **A warning in the server `instructions` that response mocking can make a page
+  lie to a human.** `browser_route` installs a rule and the browser then renders
+  the mock as if it came from the server: the address bar keeps the real origin,
+  and nothing on screen says a rule is in force, so a person watching a headed
+  window is looking at something the agent made up. **It is in BrowserAI's own
+  string rather than appended to the tool's description**, because every upstream
+  description passes through byte for byte and the one rewrite path that could
+  have done it was deleted on 2026-08-18. The space it occupies is the space the
+  three mode lines used to.
 
 - **`browserai_list` now says whether each session it reports is being driven,
   three-valued.** It carried mode, browser, purpose, dates and size and performed

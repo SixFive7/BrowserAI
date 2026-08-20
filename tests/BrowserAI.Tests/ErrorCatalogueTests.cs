@@ -67,7 +67,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = closed,
             ["purpose"] = "opened and then destroyed to leave a record behind",
-            ["mode"] = "headless",
         });
 
         // A record on disk with nothing driving it: written by a live session,
@@ -106,7 +105,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = cramped,
             ["purpose"] = "should never be created",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)full["isError"]).IsTrue();
@@ -125,7 +123,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = "C:\\a\0b",
             ["purpose"] = "should never be created",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)malformed["isError"]).IsTrue();
@@ -151,7 +148,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = Share,
             ["purpose"] = "should never be created",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)uncInit["isError"]).IsTrue();
@@ -176,7 +172,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
             ["purpose"] = "should never be created",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)aliasedInit["isError"]).IsTrue();
@@ -208,7 +203,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = real,
             ["purpose"] = "the same directory, spelled the way the filesystem spells it",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true);
@@ -226,7 +220,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = original,
             ["purpose"] = "the original a copy is taken of",
-            ["mode"] = "headless",
         });
 
         // Row 4 — init on a directory that already holds a session.
@@ -234,7 +227,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = original,
             ["purpose"] = "a second attempt",
-            ["mode"] = "persistent",
         });
 
         var record = SessionLock.ReadRecord(SessionPath.Resolve(original))!;
@@ -245,7 +237,6 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.SessionAlreadyExists),
             SessionErrors.SessionAlreadyExists(
                 original,
-                record.Mode,
                 record.Browser,
                 record.Created,
                 record.LastUsed,
@@ -301,7 +292,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "the unattended session an annotation call would hang",
-            ["mode"] = "headless",
         });
 
         var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory });
@@ -335,7 +325,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var location = SessionPath.Resolve(directory);
         var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
-        var request = new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = "the session that holds the lock" };
+        var request = new SessionLockRequest { Browser = "chromium", Purpose = "the session that holds the lock" };
 
         // Row 8 — held. A second acquisition against a lock this process still
         // owns is the same refusal a second BrowserAI would meet.
@@ -442,7 +432,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets a runtime that will not start",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
@@ -470,7 +459,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "meets three filenames it may not write to",
-            ["mode"] = "headless",
         });
 
         // Row 16 — every shape that names somewhere else. One method, five
@@ -549,7 +537,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = hostile,
-            ["mode"] = "headless",
         });
 
         var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
@@ -585,7 +572,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = directory,
             ["purpose"] = "created before the browser exists",
-            ["mode"] = "headless",
         });
 
         // Row 6. The condition is real — this rig's browsers root is empty and
@@ -652,7 +638,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = Path.Combine(sessions.Root, "refused-while-the-browsers-are-replaced"),
             ["purpose"] = "a session that must not start during a reinstall",
-            ["mode"] = "headless",
         });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -799,7 +784,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var config = BrowserConfiguration.ForSession(
             session,
-            SessionModes.Recorded("headless"),
+            headed: false,
             ProvisionedBrowsers.Firefox,
             tracing: false,
             BrowserConfiguration.DefaultConsoleLevel);
@@ -836,7 +821,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var opaque = FirefoxProfileLockedException.For(BrowserConfiguration.ForSession(
             unreadable,
-            SessionModes.Recorded("headless"),
+            headed: false,
             ProvisionedBrowsers.Firefox,
             tracing: false,
             BrowserConfiguration.DefaultConsoleLevel));
@@ -1037,7 +1022,6 @@ internal sealed partial class ErrorCatalogueTests
         {
             ["directory"] = real,
             ["purpose"] = "opened so its browserai.json can be copied and corrupted three ways",
-            ["mode"] = "headless",
         });
 
         // FileShare.ReadWrite | FileShare.Delete, because the live session holds

@@ -117,7 +117,7 @@ internal sealed partial class BuildVersionTests
 
         var acquired = SessionLock.TryAcquire(
             path,
-            new SessionLockRequest { Mode = "headless", Browser = "chromium", Purpose = "record the build stamp" },
+            new SessionLockRequest { Browser = "chromium", Purpose = "record the build stamp" },
             NullLogger.Instance);
 
         try

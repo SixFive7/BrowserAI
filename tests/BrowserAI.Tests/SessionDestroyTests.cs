@@ -113,7 +113,6 @@ internal sealed class SessionDestroyTests
         {
             ["directory"] = directory,
             ["purpose"] = "destroyed while a peer tries to take the directory out from under it",
-            ["mode"] = "headless",
         });
 
         for (var i = 0; i < PlantedFiles; i++)
@@ -181,7 +180,6 @@ internal sealed class SessionDestroyTests
             control,
             new SessionLockRequest
             {
-                Mode = "headless",
                 Browser = ProvisionedBrowsers.Chromium,
                 Purpose = "taken and released, so the peer's own probe has something to say yes to",
             },
@@ -240,7 +238,6 @@ internal sealed class SessionDestroyTests
         {
             ["directory"] = directory,
             ["purpose"] = "destroyed while this test holds one of its files open",
-            ["mode"] = "headless",
         });
 
         var held = Path.Combine(directory, "something-still-has-this-open.bin");
@@ -349,7 +346,6 @@ internal sealed class SessionDestroyTests
         {
             ["directory"] = directory,
             ["purpose"] = "destroyed while this test holds more files open than the answer will name",
-            ["mode"] = "headless",
         });
 
         var held = new List<FileStream>();

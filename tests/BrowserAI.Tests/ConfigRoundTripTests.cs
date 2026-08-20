@@ -83,7 +83,7 @@ internal sealed class ConfigRoundTripTests
         {
             var config = BrowserConfiguration.ForSession(
                 SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "generator-shape")),
-                SessionModes.Recorded("persistent"),
+                headed: false,
                 browser,
                 tracing: true,
                 "debug");
@@ -130,7 +130,7 @@ internal sealed class ConfigRoundTripTests
         // `capabilities` replaces rather than merges, so it arriving intact is
         // also the evidence that nothing on the way in wiped it.
         await Assert.That(Follow(resolved, "capabilities")?.ToJsonString())
-            .IsEqualTo(new JsonArray([.. BrowserConfiguration.BaseCapabilities.Select(capability => (JsonNode)capability)]).ToJsonString());
+            .IsEqualTo(new JsonArray([.. BrowserConfiguration.GrantedCapabilities.Select(capability => (JsonNode)capability)]).ToJsonString());
 
         // And the browser really used the directory, rather than the key merely
         // surviving the merge.
@@ -166,16 +166,19 @@ internal sealed class ConfigRoundTripTests
 
         foreach (var browser in ProvisionedBrowsers.Families)
         {
-            foreach (var mode in SessionModes.All)
+            // ⚠️ Both headednesses rather than both modes, 2026-08-20. Session
+            // modes are gone; what a session's config still varies on is the
+            // window, and it varies per RUN rather than per directory.
+            foreach (var headed in new[] { false, true })
             {
                 var config = BrowserConfiguration.ForSession(
                     SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "unrestricted-file-access")),
-                    mode,
+                    headed,
                     browser,
                     tracing: false,
                     BrowserConfiguration.DefaultConsoleLevel);
 
-                check($"{browser}/{mode.Name}", config);
+                check($"{browser}/headed={headed}", config);
             }
         }
 
@@ -234,7 +237,7 @@ internal sealed class ConfigRoundTripTests
     private static GeneratedConfig Expected(SessionRun run) =>
         BrowserConfiguration.ForSession(
             SessionPath.Resolve(Path.Combine(run.Root, "alpha")),
-            SessionModes.Recorded("headless"),
+            headed: false,
             SessionManager.DefaultBrowser,
             tracing: false,
             BrowserConfiguration.DefaultConsoleLevel);

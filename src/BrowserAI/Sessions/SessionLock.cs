@@ -154,7 +154,7 @@ internal sealed class SessionLock : IDisposable
     /// Takes the directory, or says who has it — immediately, either way.
     /// </summary>
     /// <param name="location">The canonicalised session directory.</param>
-    /// <param name="request">Mode, browser and purpose for the new record.</param>
+    /// <param name="request">Browser and purpose for the new record.</param>
     /// <param name="logger">Where the acquisition is recorded.</param>
     /// <returns>The outcome, the lock when there is one, and a sentence for the caller.</returns>
     /// <remarks>
@@ -915,8 +915,7 @@ internal sealed class SessionLock : IDisposable
             // by construction and can land in the instant in which browserai.json's
             // NAME IS UNBOUND while a peer replaces the record -- it then reads
             // null as "free, proceed" and reaches the reclaim below, which
-            // appends a mode and a browser statement and rebinds the session's
-            // family. The same question here costs one comparison and cannot be
+            // appends a browser statement and rebinds the session's family. The same question here costs one comparison and cannot be
             // asked at the wrong instant, because a peer replacing a record
             // holds this gate to do it.
             //
@@ -931,7 +930,6 @@ internal sealed class SessionLock : IDisposable
                     SessionLockOutcome.AlreadyASession,
                     SessionErrors.SessionAlreadyExists(
                         location.FullPath,
-                        previous.Mode,
                         previous.Browser,
                         previous.Created,
                         previous.LastUsed,
@@ -1134,13 +1132,13 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <b>Nothing is overwritten and nothing is invented.</b> A field whose value
     /// has not changed keeps the list it had, so a session that is opened a
-    /// hundred times still reports one <c>mode</c> statement and one
-    /// <c>browser</c> statement — while <c>directory</c> gains one the moment the
+    /// hundred times still reports one <c>browser</c> statement — while
+    /// <c>directory</c> gains one the moment the
     /// tree is moved or copied, which is what lets <c>resume</c> hand a model the
     /// provenance instead of demanding an acknowledgement for it.
     /// </remarks>
     /// <param name="location">Where the record is being written.</param>
-    /// <param name="request">Mode, browser and purpose as the caller asked for them.</param>
+    /// <param name="request">Browser and purpose as the caller asked for them.</param>
     /// <param name="previous">The record found on disk, or <see langword="null"/> for a directory that has never been locked.</param>
     /// <param name="now">The instant every statement written by this call carries.</param>
     /// <returns>The record to write.</returns>
@@ -1157,7 +1155,6 @@ internal sealed class SessionLock : IDisposable
         {
             SchemaVersion = LockRecord.CurrentSchemaVersion,
             DirectoryHistory = LockRecord.Append(previous?.DirectoryHistory, location.FullPath, now),
-            ModeHistory = LockRecord.Append(previous?.ModeHistory, request.Mode, now),
             BrowserHistory = LockRecord.Append(previous?.BrowserHistory, request.Browser, now),
             PurposeHistory = LockRecord.Append(previous?.PurposeHistory, LockRecord.SanitisePurpose(request.Purpose), now),
             BrowserAiVersionHistory = LockRecord.Append(previous?.BrowserAiVersionHistory, BuildVersion.Current, now),
@@ -1395,9 +1392,6 @@ internal sealed class SessionDirectoryHold(SessionPath location, FileStream held
 /// <summary>What a caller asked for when taking a directory.</summary>
 internal sealed record SessionLockRequest
 {
-    /// <summary>The session's mode.</summary>
-    public required string Mode { get; init; }
-
     /// <summary>The browser family.</summary>
     public required string Browser { get; init; }
 
@@ -1414,8 +1408,8 @@ internal sealed record SessionLockRequest
     /// <b>Set by <c>browserai_init</c> and nothing else.</b> `init` means
     /// <i>make a session here</i>, and a directory that already carries a record
     /// has to be `resume`d instead — otherwise the second call silently rebinds
-    /// the session's mode and browser family, appending a `chromium` statement
-    /// to a Firefox profile's history or the reverse.
+    /// the session's browser family, appending a `chromium` statement to a
+    /// Firefox profile's history or the reverse.
     /// </para>
     /// <para>
     /// ⚠️ <b>It is asked UNDER THE GATE because the ungated ask can miss.</b>

@@ -85,20 +85,19 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         // other top-level windows were created by Chromium, Firefox, the probes
         // and conhost, and every one of them stayed hidden.
         //
-        // `persistent` is right for a rig whose child is a double: it is the mode
-        // whose policy permits every tool, the passthrough assertions are about
-        // bytes, and a mode refusal would replace the child's answer with ours --
-        // and no window can exist behind a child that is a Pipe. It is wrong the
-        // moment the child is a real node with a real Chromium under it, where
-        // the headedness is incidental to every assertion and lands on a
-        // developer's screen.
+        // The reason the double-backed rig was headed WENT AWAY on 2026-08-20
+        // and the setting did not have to survive it. `persistent` used to be
+        // the mode whose policy permitted every tool, so a double-backed rig
+        // took it to keep any BrowserAI refusal from standing between the double
+        // and the caller. There are no modes now and every session gets every
+        // capability, so a window buys the rig exactly nothing -- and it costs a
+        // developer their foreground the moment a real child is behind it.
         //
-        // Headless permits a smaller tool set (41 against 58) and refuses
-        // `browser_annotate`, so a future real-child arm needing a headed-only
-        // tool gets a refusal naming the tool rather than a silent difference.
-        // That is the correct trade: loud, and about the tool it is actually
-        // about.
-        DefaultSessionMode = realSessionChildren ? "headless" : "persistent";
+        // So NO rig opens a window, and the difference between the two kinds of
+        // rig is the child rather than the browser.
+        // `FakeChildHarnessTests.NoRigThatStartsARealBrowserOpensItWithAWindow`
+        // asserts it.
+        DefaultSessionHeaded = false;
 
         // Created here because the product does not create it: Program.cs makes
         // this run's own directory before the proxy exists, and a session's
@@ -247,21 +246,21 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     public ManualClock? Clock { get; }
 
     /// <summary>
-    /// The mode <see cref="McpTestHarness"/> opens this rig's own session in.
+    /// Whether <see cref="McpTestHarness"/> opens this rig's own session with a
+    /// window. <b>It does not, for any rig.</b>
     /// </summary>
     /// <remarks>
-    /// <b>A rig whose children are doubles gets <c>persistent</c>; a rig whose
-    /// children are real gets <c>headless</c>.</b> The first is so that no
-    /// BrowserAI refusal can stand between the double and the caller —
-    /// <c>persistent</c> opens a window, so even the one surviving refusal
-    /// (<c>browser_annotate</c> on a windowless session) does not fire, and the
-    /// passthrough assertions are about bytes. The second is about a window:
-    /// <c>persistent</c> is
-    /// <c>Headed: true</c>, and behind a real node child that is a full Chromium
-    /// window on the developer's screen, taking their foreground. Asserted by
+    /// ⚠️ <b>Corrected 2026-08-20 (previously <c>DefaultSessionMode</c>, a
+    /// string: "a rig whose children are doubles gets <c>persistent</c>; a rig
+    /// whose children are real gets <c>headless</c>").</b> The double-backed
+    /// rig was headed only because <c>persistent</c> was the mode whose policy
+    /// permitted every tool, and a refusal of ours standing between the double
+    /// and the caller would have replaced the child's bytes with our sentence.
+    /// Session modes are gone and every session now gets every capability, so
+    /// the window bought nothing and is not opened. Asserted by
     /// <c>FakeChildHarnessTests.NoRigThatStartsARealBrowserOpensItWithAWindow</c>.
     /// </remarks>
-    public string DefaultSessionMode { get; }
+    public bool DefaultSessionHeaded { get; }
 
     /// <summary>The provisioner this rig's sessions ask about their browser.</summary>
     public BrowserProvisioner Provisioner { get; }

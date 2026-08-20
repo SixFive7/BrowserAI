@@ -40,7 +40,6 @@ namespace BrowserAI.Sessions;
 /// makes <c>browserai_reinstall_browser</c>'s exclusive open fail while this
 /// session exists, whatever browser family it uses.
 /// </param>
-/// <param name="mode">The mode bound at <c>init</c>.</param>
 /// <param name="child">The child driving this session. This object owns it.</param>
 /// <param name="logging">This session's own logging stack. This object owns it.</param>
 /// <param name="config">The config the child was started with.</param>
@@ -53,7 +52,6 @@ internal sealed class LiveSession(
     SessionPath location,
     SessionLock sessionLock,
     MaintenanceLock browsersClaim,
-    SessionModeDefinition mode,
     ChildConnection child,
     SessionLogging logging,
     GeneratedConfig config,
@@ -95,9 +93,6 @@ internal sealed class LiveSession(
     /// this process dies.
     /// </remarks>
     public MaintenanceLock BrowsersClaim { get; } = browsersClaim;
-
-    /// <summary>What this session is, bound at creation and never changed.</summary>
-    public SessionModeDefinition Mode { get; } = mode;
 
     /// <summary>The <c>@playwright/mcp</c> child driving it.</summary>
     public ChildConnection Child { get; } = child;

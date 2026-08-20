@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
@@ -415,8 +416,8 @@ internal sealed class FakeChildHarnessTests
     }
 
     /// <summary>
-    /// A rig that starts a real browser opens it in a mode with no window; a rig
-    /// whose children are doubles keeps the mode that permits every tool.
+    /// No rig opens a browser window — not the one whose children are real, and
+    /// not the one whose children are doubles.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -427,73 +428,64 @@ internal sealed class FakeChildHarnessTests
     /// the suite showed exactly two windows and took the foreground twice, both
     /// from the single <c>realSessionChildren: true</c> arm, because
     /// <see cref="McpTestHarness"/> opened its default session in
-    /// <c>persistent</c> — which is <c>Headed: true</c>. Every other real browser
-    /// the suite launches was already headless and showed nothing.
+    /// <c>persistent</c> — which was <c>Headed: true</c>. Every other real
+    /// browser the suite launches was already headless and showed nothing.
     /// </para>
     /// <para>
-    /// <b>Both halves are asserted, because fixing one by breaking the other is
-    /// the available mistake.</b> Making every rig headless would change the mode
-    /// the passthrough layer runs under — <c>headless</c> permits 41 tools where
-    /// <c>persistent</c> permits 58 — and a refusal there would replace the
-    /// child's answer with ours, which is precisely what that layer exists to
-    /// detect. So the double-backed rig must stay on the permissive mode and the
-    /// real-backed one must be windowless, and neither is free to drift.
+    /// ⚠️ <b>Rewritten 2026-08-20 (previously
+    /// "<c>NoRigThatStartsARealBrowserOpensItWithAWindow</c>", which asserted
+    /// both halves of a trade: the real-backed rig windowless AND the
+    /// double-backed rig headed).</b> The trade is gone. The double-backed rig
+    /// was headed only because <c>persistent</c> was the mode whose policy
+    /// permitted every tool — <c>headless</c> permitted 41 of 58 — and a refusal
+    /// of ours standing in front of a double would have replaced the child's
+    /// bytes with our sentence. Session modes were deleted that day and every
+    /// session now gets every capability, so there is no permissive mode to
+    /// stay on and no reason for any rig to open a window. <b>The half that
+    /// survives is the half that was about the developer's screen</b>, and it is
+    /// asserted for both rigs rather than one.
     /// </para>
     /// <para>
-    /// <b>Asserted through the mode table rather than against the string
-    /// <c>"headless"</c>.</b> What matters is <c>Headed</c>; a fourth windowless
-    /// mode added later must satisfy this test by being windowless, not by being
-    /// spelled a particular way.
+    /// <b>The claim the deleted half was really making is asserted below in the
+    /// form that is now true:</b> a double-backed rig meets no refusal of ours
+    /// on the tools it calls, which is a statement about
+    /// <see cref="SessionToolPolicy"/> rather than about a mode.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task NoRigThatStartsARealBrowserOpensItWithAWindow()
+    public async Task NoRigOpensABrowserWindow()
     {
         await using var real = RigSessionEnvironment.Create(realSessionChildren: true, opensDefaultSession: false);
         await using var doubles = RigSessionEnvironment.Create(opensDefaultSession: false);
 
-        var realMode = SessionModes.Find(real.DefaultSessionMode);
-        var doubleMode = SessionModes.Find(doubles.DefaultSessionMode);
-
-        // A mode the product does not know would make everything below vacuous:
-        // the rig would fail to open its session and this test would be asserting
-        // about a null.
-        await Assert.That(realMode).IsNotNull();
-        await Assert.That(doubleMode).IsNotNull();
-
         // THE POINT. A real node child means a real Chromium, and a headed one
         // lands on the developer's screen and takes their foreground.
-        await Assert.That(realMode!.Headed).IsFalse();
+        await Assert.That(real.DefaultSessionHeaded).IsFalse();
 
-        // And the half that keeps the fix from being a regression somewhere else:
-        // the double-backed rigs still run under the mode whose policy permits
-        // every tool, so a passthrough assertion still sees the child's bytes
-        // rather than a refusal of ours.
-        await Assert.That(doubleMode!.Headed).IsTrue();
+        // And the rig whose children are doubles, which has nothing to gain from
+        // a window and used to open one anyway.
+        await Assert.That(doubles.DefaultSessionHeaded).IsFalse();
 
-        // ⚠️ THE DIFFERENCE BETWEEN THE TWO MODES IS THE STORAGE CAPABILITY AND
-        // NOTHING ELSE, and this test asserts that rather than describing it.
-        //
-        // Corrected 2026-08-18 (previously this asserted the difference through
-        // `SessionToolPolicy.Decide("browser_cookie_list", ...)`, which refused
-        // it on the windowless mode; and it carried a note that
-        // `browser_annotate` was `HumanPresent` and so refused on `persistent`
-        // too). The (tool, mode) permission matrix is gone, so `Decide` now
-        // allows the cookie tools everywhere and that assertion would be a
-        // tautology. The difference it was reaching for is still real and is
-        // now asserted where it lives: the windowless mode's child is launched
-        // WITHOUT the `storage` capability, so those tools do not exist in it.
-        await Assert.That(doubleMode.Storage).IsTrue();
-        await Assert.That(realMode.Storage).IsFalse();
+        // Not vacuous: the rig really does hand this value to `browserai_init`,
+        // and a config generated from it really does turn it into upstream's
+        // `headless`. Asserted through the product's own generator rather than
+        // by reading the flag back out of itself.
+        var generated = BrowserConfiguration.ForSession(
+            SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"rig-headedness-{Guid.NewGuid():N}")),
+            real.DefaultSessionHeaded,
+            SessionManager.DefaultBrowser,
+            tracing: false,
+            BrowserConfiguration.DefaultConsoleLevel);
 
-        // And the one refusal that is left is not keyed on either rig's mode.
-        //
-        // Corrected 2026-08-18 (previously "it is a liveness guard keyed on
-        // `Headed`, so the headless rig refuses it and the headed one does
-        // not"). `browser_annotate` is now withheld from the surface outright
-        // and refused wherever it is named, so both rigs refuse it — which is
-        // what makes the mode difference above the ONLY difference between them.
+        await Assert.That(generated.Opinions
+            .Single(opinion => opinion.Path == "browser.launchOptions.headless")
+            .Value.ToJsonString()).IsEqualTo("true");
+
+        // ⚠️ WHAT THE DELETED HALF WAS REALLY ASSERTING, in the form that is now
+        // true: nothing of ours stands between a double and the caller. It used
+        // to be a claim about which mode the rig ran under; it is now a claim
+        // about the one refusal that is left, which is keyed on the tool alone.
         await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).Refusal).IsNotNull();
         await Assert.That(SessionToolPolicy.IsWithheldFromTheSurface(SessionToolPolicy.AnnotateTool)).IsTrue();
 

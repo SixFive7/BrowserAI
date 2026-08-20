@@ -584,7 +584,7 @@ internal sealed class SessionIndexTests
     }
 
     private static SessionLockRequest Request(string purpose) =>
-        new() { Mode = "headless", Browser = "chromium", Purpose = purpose };
+        new() { Browser = "chromium", Purpose = purpose };
 
     private static SessionIndex NewIndex(ScratchDirectory scratch) =>
         new(new LocalAppDataPaths(Path.Combine(scratch.Path, "appdata")), NullLogger.Instance);
