@@ -310,7 +310,7 @@ internal sealed class SessionDirectoryGuardTests
         // the true path or refused at the door is an implementation detail split
         // across two layers; what may never happen is the third outcome -- a
         // spelling ADMITTED while hashing to a different key, which is two
-        // mutexes over one lock.json and the whole point of the exercise.
+        // mutexes over one browserai.json and the whole point of the exercise.
         using var scratch = ScratchDirectory.Create("guard-invariant");
 
         var real = Path.Combine(casing.Spell(scratch.Path), "one real session directory");

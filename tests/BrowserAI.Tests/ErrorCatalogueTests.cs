@@ -358,7 +358,7 @@ internal sealed partial class ErrorCatalogueTests
         Record(nameof(SessionErrors.LockReclaimed));
         reclaimed.Acquired!.Dispose();
 
-        // The row added 2026-08-19 — `lock.json` is there, nobody is holding it,
+        // The row added 2026-08-19 — `browserai.json` is there, nobody is holding it,
         // and this process cannot open it. THIS ARM USED TO THROW. The first open
         // in `TakeOrReport` — the read of the previous record, under the gate —
         // caught a missing file, a sharing violation and an unparseable record,
@@ -538,7 +538,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(framed.Length).IsLessThan(SessionErrors.ReplayedPurposeLength + 120);
         Record(nameof(SessionErrors.Recorded));
 
-        // And it round-trips through lock.json capped and stripped, which is the
+        // And it round-trips through browserai.json capped and stripped, which is the
         // half that has to be true of the FILE rather than of a formatter.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -901,7 +901,7 @@ internal sealed partial class ErrorCatalogueTests
         // `ConfigurationWouldDiscloseSecrets` — and one arrived in their place,
         // `AnnotationWouldHangAWindowlessSession`, which took it to 22. The
         // twenty-second to go was `DirectoryIsACopy`, deleted with
-        // `acknowledgeCopy` when `lock.json` became an append-only list of
+        // `acknowledgeCopy` when `browserai.json` became an append-only list of
         // timestamped statements: a resumed copy is now told what it is instead
         // of being refused until it says that it knows.
         //
@@ -918,7 +918,7 @@ internal sealed partial class ErrorCatalogueTests
         // ⚠️ **Corrected 2026-08-19 to 24 (previously 23).** `LockFileCannotBeOpened`
         // arrived, and it is the first row here written for a condition that was
         // ALREADY REACHABLE and was answered by an exception rather than by a
-        // refusal: a permanently denied `lock.json` propagated out of
+        // refusal: a permanently denied `browserai.json` propagated out of
         // `SessionLock.TryAcquire`. The census could never have found it -- a
         // missing row is invisible to a check that reads the rows that exist --
         // which is the standing limit of this test and is worth saying beside its
@@ -1013,7 +1013,7 @@ internal sealed partial class ErrorCatalogueTests
     public async Task DestroyRefusesEveryRecordShapeItIsSpecifiedToRefuseThroughDestroyItself()
     {
         // §H.6 asks for three refusals from `browserai_destroy` specifically:
-        // no lock.json, a lock.json of the wrong schema version, and one
+        // no browserai.json, a browserai.json of the wrong schema version, and one
         // carrying a key it does not recognise. All three were proven at the
         // LockRecord layer and none through the tool, which is the gap that
         // matters -- `destroy` is the one authored tool that deletes a tree, and
@@ -1027,7 +1027,7 @@ internal sealed partial class ErrorCatalogueTests
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = real,
-            ["purpose"] = "opened so its lock.json can be copied and corrupted three ways",
+            ["purpose"] = "opened so its browserai.json can be copied and corrupted three ways",
             ["mode"] = "headless",
         });
 

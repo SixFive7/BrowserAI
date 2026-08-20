@@ -97,7 +97,7 @@ internal sealed class ProcessLog : IDisposable
     }
 
     /// <summary>
-    /// Builds one session's logging stack: its own file beside <c>lock.json</c>,
+    /// Builds one session's logging stack: its own file beside <c>browserai.json</c>,
     /// the machine-wide process log, and stderr.
     /// </summary>
     /// <remarks>

@@ -36,7 +36,7 @@ namespace BrowserAI.Sessions;
 /// per-directory case sensitivity since 1803, so a caller whose directory sits
 /// under a case-sensitive parent would be sent to a path that does not exist.
 /// <see cref="FullPath"/> therefore keeps the caller's own casing, which is also
-/// what <c>lock.json</c> records as the resolved path.
+/// what <c>browserai.json</c> records as the resolved path.
 /// </para>
 /// </remarks>
 internal sealed class SessionPath
@@ -85,7 +85,7 @@ internal sealed class SessionPath
     /// </summary>
     public string IndexKey { get; }
 
-    /// <summary>The absolute path of <c>lock.json</c> inside this directory.</summary>
+    /// <summary>The absolute path of <c>browserai.json</c> inside this directory.</summary>
     public string LockFile { get; }
 
     /// <summary>Canonicalises a directory the caller named.</summary>

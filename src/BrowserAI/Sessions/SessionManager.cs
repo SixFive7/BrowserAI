@@ -85,7 +85,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>The rest of the product was already family-parameterised.</b>
     /// Provisioning, the config generator, the launch preflight and the stray
-    /// sweep all take the family from the session's own <c>lock.json</c>, so a
+    /// sweep all take the family from the session's own <c>browserai.json</c>, so a
     /// record that names Firefox is honoured on <c>resume</c> rather than
     /// silently run as Chromium against a Firefox profile.
     /// </para>
@@ -253,7 +253,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <b>Three distinguishable causes, three different recoveries.</b> A path
     /// that is not absolute is <see cref="SessionErrors.DirectoryNotAbsolute"/>;
-    /// a path with no <c>lock.json</c> is
+    /// a path with no <c>browserai.json</c> is
     /// <see cref="SessionErrors.SessionNamesNoSession"/> and wants <c>init</c>; a
     /// path that <i>is</i> a session this process is not driving wants
     /// <c>resume</c>. Collapsing the last two — as this once did — sends half the
@@ -284,7 +284,7 @@ internal sealed class SessionManager : IAsyncDisposable
         }
         catch (LockFileException failure)
         {
-            // A lock.json that cannot be read is still a session, and saying so
+            // A browserai.json that cannot be read is still a session, and saying so
             // is more useful than reporting it as absent: the recovery is to fix
             // or destroy the directory, never to init over it.
             return $"'{location.FullPath}' holds a '{SessionLayout.LockFileName}' this build cannot read, so '{tool}' was not run and nothing was changed. {failure.Message}";
@@ -437,7 +437,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // accident of who happened to hold the directory.
         //
         // ⚠️ AND IT IS NOT THE ONLY ASK, since 2026-08-19. This one is UNGATED --
-        // it reads lock.json with no lock held -- so it can land in the instant
+        // it reads browserai.json with no lock held -- so it can land in the instant
         // in which the name is unbound while a peer replaces the record, read
         // null as "free, proceed", and reach a reclaim that rebinds the
         // session's browser family. `RefuseAnExistingRecord` below asks the same
@@ -508,7 +508,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // so a caller asking to resume a Firefox directory as Chromium is
         // stating something impossible. Answering "sure" would be the wrong kind
         // of helpful.
-        Refuse(arguments, "mode", "the mode is bound at init and recorded in lock.json");
+        Refuse(arguments, "mode", "the mode is bound at init and recorded in browserai.json");
         Refuse(arguments, "browser", "the browser is bound at init and the profile on disk belongs to it");
 
         if (_live.TryGetValue(location.Key, out var already))
@@ -527,7 +527,7 @@ internal sealed class SessionManager : IAsyncDisposable
         var notes = new List<string>();
         string? movedFrom = null;
 
-        // The directory is the identity; the path in lock.json is provenance. A
+        // The directory is the identity; the path in browserai.json is provenance. A
         // move leaves nothing behind and a copy leaves the original standing, so
         // the recorded path already discriminates and no fingerprint field is
         // needed.
@@ -549,7 +549,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
 
             // Recorded rather than logged here. The interesting log is the
-            // SESSION's own, beside its lock.json, and that file does not exist
+            // SESSION's own, beside its browserai.json, and that file does not exist
             // until OpenAsync has opened it -- so the line is written there,
             // where whoever is looking into this directory will find it.
             movedFrom = Directory.Exists(record.Directory) ? null : record.Directory;
@@ -625,7 +625,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>Three answers, and the third one is the reason this is not a
-    /// <see langword="bool"/>.</b> An unreadable <c>lock.json</c> is not a free
+    /// <see langword="bool"/>.</b> An unreadable <c>browserai.json</c> is not a free
     /// session; it is an unanswered question, and printing it as free is the one
     /// direction that costs a caller a session it was about to destroy.
     /// </para>
@@ -700,7 +700,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (_live.TryRemove(location.Key, out var live))
         {
             // Torn down first: the browser has to go before the tree it is
-            // writing into, and this process's own handles on lock.json and the
+            // writing into, and this process's own handles on browserai.json and the
             // session log have to be closed before either can be deleted.
             await live.DisposeAsync().ConfigureAwait(false);
         }
@@ -725,7 +725,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // ⚠️ Corrected 2026-08-18 (previously `held.Dispose()` on this line,
         // defended as "Windows will not remove a file this process is holding
         // open, and the lock has done its job the moment ownership is proven").
-        // The first half is true of lock.json and the second half is the defect:
+        // The first half is true of browserai.json and the second half is the defect:
         // ownership was proven for an instant and the DELETE happened outside
         // it, with the recursive walk below in between. A peer that resumed in
         // that gap was told it owned the directory, launched a browser into
@@ -742,15 +742,15 @@ internal sealed class SessionManager : IAsyncDisposable
         // call. A destroy that silently left half a tree would be the founding
         // failure shape.
         //
-        // This pass runs with lock.json STILL HELD, so it removes everything
-        // except lock.json and the directory above it. Its failure list is
+        // This pass runs with browserai.json STILL HELD, so it removes everything
+        // except browserai.json and the directory above it. Its failure list is
         // discarded because those two are in it by construction and neither is
         // news; the pass below is the one whose survivors the caller is told
         // about, and it re-tries anything this one could not take.
         TreeDelete.Remove(location.FullPath, []);
 
         // Release and finish inside one hold of the per-directory gate, so the
-        // instant in which lock.json is unheld and still on disk is an instant
+        // instant in which browserai.json is unheld and still on disk is an instant
         // no peer's create-or-take can be inside. The gate is held across two
         // unlinks in the ordinary case -- everything else is already gone.
         held.ReleaseAndDelete(() => TreeDelete.Remove(location.FullPath, failures));
@@ -877,7 +877,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// on <c>init</c>.</b> That is the precedent already settled in this file
     /// for an argument whose omission cannot be answered honestly, and the
     /// caller always knows which family: the refusal that sent them here names
-    /// it, <c>lock.json</c> records it, and <c>browserai_list</c> prints it per
+    /// it, <c>browserai.json</c> records it, and <c>browserai_list</c> prints it per
     /// session.
     /// </para>
     /// <para>
@@ -1254,7 +1254,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Two sources, because neither alone is "anywhere".</b> The sessions this
     /// process is driving are known directly; sessions driven by <i>another</i>
     /// BrowserAI are found through the index, whose entries are followed to a
-    /// <c>lock.json</c> whose holder is checked with
+    /// <c>browserai.json</c> whose holder is checked with
     /// <see cref="ProcessLiveness.IsAlive"/> — pid and creation time together,
     /// never a pid alone, because Windows reuses pids and a reclaim keyed on one
     /// eventually reads a stranger as the holder.
@@ -1359,7 +1359,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             // The session's own log is opened FIRST, before the lock, so that
             // taking the lock is one of the things it records. Every line about
-            // this directory then lands beside its lock.json, where whoever is
+            // this directory then lands beside its browserai.json, where whoever is
             // debugging this session will look, as well as in the machine-wide
             // process log. An earlier version acquired first and logged the
             // acquisition to the process log alone, which left the session's own
@@ -1382,7 +1382,7 @@ internal sealed class SessionManager : IAsyncDisposable
             acquired = held;
 
             // The family comes from the session's own record rather than from a
-            // constant: `resume` reads it out of lock.json, and a profile
+            // constant: `resume` reads it out of browserai.json, and a profile
             // belongs to the browser that made it.
             var config = BrowserConfiguration.ForSession(location, mode, request.Browser, tracing, consoleLevel);
             var configFile = Path.Combine(
@@ -1449,7 +1449,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // to start: nothing was started, deliberately, and the sentence
             // already names the recovery. Reachable from `init` as well as
             // `resume` since 2026-08-19 -- previously only from `resume`, which
-            // reads the family out of lock.json, because `init` could not record
+            // reads the family out of browserai.json, because `init` could not record
             // Firefox at all.
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, collision);
 
@@ -1826,7 +1826,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// has actually happened.
     /// </para>
     /// </remarks>
-    /// <param name="record">The record read from <c>lock.json</c>.</param>
+    /// <param name="record">The record read from <c>browserai.json</c>.</param>
     /// <returns>The block, or an empty string when nothing has changed.</returns>
     private static string HowItGotHere(LockRecord record)
     {
@@ -1845,7 +1845,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return fields.Count is 0
             ? string.Empty
-            : "  how this session got here — every field of lock.json is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
+            : "  how this session got here — every field of browserai.json is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
                 + string.Join(string.Empty, fields);
 
         static void line<T>(List<string> into, string name, IReadOnlyList<Statement<T>> statements, Func<T, string> render)
@@ -1898,7 +1898,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>A separate entry point rather than a check inside
     /// <see cref="SessionPath.Resolve"/>, and the difference is what the path is
     /// for.</b> <c>Resolve</c> canonicalises every path this product handles,
-    /// including ones read back out of a <c>lock.json</c> written by another
+    /// including ones read back out of a <c>browserai.json</c> written by another
     /// machine and ones that are only ever compared. Refusing there would make
     /// <see cref="SamePath"/> throw on a recorded network path, and
     /// <c>browserai_list</c> unable to show a session it can see.
@@ -1914,7 +1914,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>It runs before everything.</b> Ahead of <see cref="Existing"/>, which
-    /// reads <c>lock.json</c>; ahead of <see cref="FreeSpaceRefusal"/>, which
+    /// reads <c>browserai.json</c>; ahead of <see cref="FreeSpaceRefusal"/>, which
     /// queries the volume; ahead of <see cref="SessionLayout.Create"/> and ahead
     /// of the gate. Each of those is a filesystem call, which is the thing the
     /// network half of the guard exists to keep off an unreachable share.
@@ -1995,7 +1995,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// <b>Normalised rather than echoed, because the answer is written to
-    /// <c>lock.json</c> and read back forever.</b> The comparison is
+    /// <c>browserai.json</c> and read back forever.</b> The comparison is
     /// case-insensitive so <c>"Firefox"</c> is accepted, and what is stored is
     /// the canonical member of <see cref="ProvisionedBrowsers.Families"/> — the
     /// same string <c>browsers.json</c> keys on, the config generator writes as
@@ -2096,7 +2096,7 @@ internal static partial class SessionToolLog
     [LoggerMessage(
         EventId = 41,
         Level = LogLevel.Warning,
-        Message = "Session directory moved: lock.json recorded '{Recorded}', which no longer exists, and the session was opened at '{Actual}'. The record has been repaired.")]
+        Message = "Session directory moved: browserai.json recorded '{Recorded}', which no longer exists, and the session was opened at '{Actual}'. The record has been repaired.")]
     public static partial void DirectoryMoved(ILogger logger, string recorded, string actual);
 
     /// <summary>A session directory was deleted.</summary>

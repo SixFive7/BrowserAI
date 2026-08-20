@@ -58,7 +58,7 @@ internal static class RegistrationRecord
     /// <param name="when">When it ran.</param>
     /// <returns>UTF-8 bytes, LF-separated, no BOM.</returns>
     /// <remarks>
-    /// <b>The relaxed encoder, for the same reason <c>lock.json</c> uses one:</b>
+    /// <b>The relaxed encoder, for the same reason <c>browserai.json</c> uses one:</b>
     /// the default escapes <c>+</c>, so every ISO 8601 timestamp east of UTC
     /// would round-trip perfectly and be unreadable by the person this file
     /// exists for.

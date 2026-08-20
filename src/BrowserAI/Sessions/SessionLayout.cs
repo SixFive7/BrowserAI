@@ -12,12 +12,12 @@ namespace BrowserAI.Sessions;
 /// <remarks>
 /// <para>
 /// Everything a session accumulates is a subfolder, so the files at the root are
-/// the three that describe it — <c>lock.json</c>, the session log, and the
+/// the three that describe it — <c>browserai.json</c>, the session log, and the
 /// artifact index <c>session.json</c> — and artifacts get a typed home instead of
 /// scattering among Chromium's internals.
 /// </para>
 /// <para>
-/// ⚠️ <b>Corrected 2026-08-16 (previously: "<c>lock.json</c> is the only file at
+/// ⚠️ <b>Corrected 2026-08-16 (previously: "<c>browserai.json</c> is the only file at
 /// the root and everything else is a subfolder").</b> That was true when this
 /// file was written and stopped being true twice: the session log landed beside
 /// it once sessions had a lifetime to log, and <c>session.json</c> — which
@@ -32,7 +32,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>The session log is deliberately not created here.</b>
 /// <see cref="Logging.SessionLogFile"/> puts it at
-/// <c>&lt;session-dir&gt;\browserai.log</c>, beside <c>lock.json</c>, and it
+/// <c>&lt;session-dir&gt;\browserai.log</c>, beside <c>browserai.json</c>, and it
 /// holds <i>anything a session did</i> — so a file created by the layout and
 /// written by nothing would be [a mechanism that only looks like
 /// one](../Logging/ProcessLog.cs). It is created by the thing that writes it.
@@ -43,13 +43,27 @@ namespace BrowserAI.Sessions;
 /// </remarks>
 internal static class SessionLayout
 {
-    /// <summary>Ours. The lock and the record, and the only file at the root.</summary>
-    public const string LockFileName = "lock.json";
+    /// <summary>
+    /// Ours. The session's own record, and the file whose open handle is the
+    /// directory's lock.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-08-20 (previously <c>lock.json</c>).</b> The record had
+    /// stopped being only a lock: every field of it is an ordered list of
+    /// timestamped statements about how the session got here — mode, browser,
+    /// purpose, holder, client — and <c>browserai_list</c> and
+    /// <c>browserai_resume</c> read it for those rather than for ownership. A
+    /// name that said <i>lock</i> described the smallest thing the file does.
+    /// <b>There is no compatibility read and no migration</b>: the maintainer
+    /// took that decision on 2026-08-20, on the ground that nothing is in
+    /// production and the only build that ever wrote the old name is this one.
+    /// </remarks>
+    public const string LockFileName = "browserai.json";
 
     /// <summary>
     /// What a record being written durably is called before it is renamed over
     /// <see cref="LockFileName"/> — and therefore what its presence beside an
-    /// absent <c>lock.json</c> means.
+    /// absent <c>browserai.json</c> means.
     /// </summary>
     /// <remarks>
     /// <b>Written once because two components read it for opposite reasons.</b>

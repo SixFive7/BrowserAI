@@ -161,7 +161,7 @@ internal static class SessionModes
     public static SessionModeDefinition? Find(string? name) =>
         name is not null && ByName.TryGetValue(name, out var mode) ? mode : null;
 
-    /// <summary>Looks a mode up by the name recorded in <c>lock.json</c>.</summary>
+    /// <summary>Looks a mode up by the name recorded in <c>browserai.json</c>.</summary>
     /// <param name="name">The recorded mode.</param>
     /// <returns>The definition.</returns>
     /// <exception cref="LockFileException">The recorded mode is not one this build knows.</exception>
@@ -172,7 +172,7 @@ internal static class SessionModes
 
 /// <summary>One row of the mode table.</summary>
 /// <param name="Mode">The mode itself.</param>
-/// <param name="Name">Its name on the wire and in <c>lock.json</c>.</param>
+/// <param name="Name">Its name on the wire and in <c>browserai.json</c>.</param>
 /// <param name="Headed">Whether a browser window appears.</param>
 /// <param name="Storage">
 /// Whether this session's child is launched with upstream's <c>storage</c>

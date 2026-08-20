@@ -201,7 +201,7 @@ internal sealed class SessionLockTests
     /// whole queue rather than behind one critical section, and the cost was
     /// super-linear: 367 ms at 16 contenders, 3,349 ms at the charter's design
     /// point of 100, and at 200 the then-five-second gate was reached by queueing
-    /// alone. The sharing violation on <c>lock.json</c> already proves ownership,
+    /// alone. The sharing violation on <c>browserai.json</c> already proves ownership,
     /// so the gate was being taken to answer a question the kernel had answered.
     /// </para>
     /// </remarks>
@@ -271,7 +271,7 @@ internal sealed class SessionLockTests
     /// both see "free"; A writes and holds its record; B's rename is refused
     /// because A's handle is open, and B <i>retries</i>. The moment anything
     /// closes A's handle — a rewrite, a teardown, a destroy — B's next retry
-    /// lands, and <b>B holds <c>lock.json</c> while A holds a valid handle to a
+    /// lands, and <b>B holds <c>browserai.json</c> while A holds a valid handle to a
     /// now-nameless file</b>. Both report ownership. The retry loop becomes the
     /// serialiser, and a retry loop is not a lock.
     /// </para>
@@ -293,7 +293,7 @@ internal sealed class SessionLockTests
         using var scratch = ScratchDirectory.Create("session-probe-free");
         var (directory, path) = NewSession(scratch, "probe-free");
 
-        // No lock.json at all, so the probe's open fails with "not found" rather
+        // No browserai.json at all, so the probe's open fails with "not found" rather
         // than with a sharing violation -- the "looks free" answer, which is the
         // one it is not allowed to act on.
         await Assert.That(File.Exists(path.LockFile)).IsFalse();
@@ -802,7 +802,7 @@ internal sealed class SessionLockTests
         //     immediate re-read found a record: True
         //
         // The name was genuinely UNBOUND -- not a zero-length file, not a
-        // missing directory -- while the writer's own `lock.json.new-<guid>` was
+        // missing directory -- while the writer's own `browserai.json.new-<guid>` was
         // on disk, which is direct evidence that `WriteDurably` was mid-rewrite,
         // and the record was back on the next read. So `MoveFileEx` with
         // `MOVEFILE_REPLACE_EXISTING` does NOT keep the name bound throughout on
@@ -834,7 +834,7 @@ internal sealed class SessionLockTests
         //
         // So every null is probed on the spot -- does the name resolve, how long
         // is the file, is a rewrite in flight (the writer's own
-        // `lock.json.new-<guid>` temp is present for exactly the length of one),
+        // `browserai.json.new-<guid>` temp is present for exactly the length of one),
         // and does an immediate re-read succeed -- and the probe goes in the
         // failure. The next occurrence answers the question instead of
         // re-opening it.
@@ -1023,7 +1023,7 @@ internal sealed class SessionLockTests
     /// arm.</b> Until 2026-08-19 <c>WriteDurably</c> and the re-open shared a
     /// single <c>catch</c>, so a failure <i>after</i> the rename answered
     /// <i>"the directory was not taken and nothing was changed"</i> — about a
-    /// machine where <c>lock.json</c> had just been replaced with a record
+    /// machine where <c>browserai.json</c> had just been replaced with a record
     /// naming this process as the holder. Asserting the honest sentence without
     /// also asserting that the other arm still says <i>nothing was changed</i>
     /// would let the fix be "stop claiming that anywhere", which is not a fix.
@@ -1049,7 +1049,7 @@ internal sealed class SessionLockTests
     /// is the only test in the suite that reaches the end of that budget, so it
     /// is also the only one that proves the wait is bounded at all")</i> — there
     /// are two now. <c>ErrorCatalogueTests.TheLockRowsAreEmittedByRealLockConditions</c>
-    /// denies the same right over a <c>lock.json</c> that already exists, which
+    /// denies the same right over a <c>browserai.json</c> that already exists, which
     /// reaches the <b>first</b> open in <c>TakeOrReport</c> rather than the
     /// re-open this test reaches, and that open had no arm for it at all until
     /// the same day.
@@ -1139,7 +1139,7 @@ internal sealed class SessionLockTests
     /// <b>Ownership is asserted from the kernel, not from the object.</b> Asking
     /// the lock whether it still holds the directory would be asking the thing
     /// under test; a stranger's <c>FileAccess.ReadWrite</c> open of
-    /// <c>lock.json</c> is refused while — and only while — a handle is really
+    /// <c>browserai.json</c> is refused while — and only while — a handle is really
     /// there, so it is the same test a competing BrowserAI performs.
     /// </para>
     /// </remarks>
@@ -1217,7 +1217,7 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// A peer's pre-gate probe holds <c>lock.json</c> for an instant, and that
+    /// A peer's pre-gate probe holds <c>browserai.json</c> for an instant, and that
     /// instant must not take the directory away from the process that just wrote
     /// its own record into it — while a handle that never goes away is still
     /// reported rather than waited on forever.
@@ -1226,7 +1226,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>This is the interleaving CI produced on 2026-08-19</b>, run
     /// 32203064556 attempt 1: sixteen contenders, two holder statements in one
-    /// <c>lock.json</c> 61 ms apart, the first writer answering
+    /// <c>browserai.json</c> 61 ms apart, the first writer answering
     /// <c>Unreadable</c> about a record it had genuinely written. The mechanism
     /// is one handle: <c>SessionLock.ProbeForHolder</c> opens the file
     /// <c>FileAccess.ReadWrite</c> in front of the gate, and an open sharing only
@@ -1331,7 +1331,7 @@ internal sealed class SessionLockTests
     /// <remarks>
     /// <para>
     /// <b>Why the question is asked twice.</b> `browserai_init`'s own look at
-    /// <c>lock.json</c> is ungated, which it has to be — it runs before the
+    /// <c>browserai.json</c> is ungated, which it has to be — it runs before the
     /// directory is created — so it can land in the instant in which the name is
     /// unbound while a peer replaces the record, read <see langword="null"/> as
     /// <i>free, proceed</i>, and reach the reclaim below. The reclaim appends a
@@ -1700,7 +1700,7 @@ internal sealed class SessionLockTests
     /// file that reads perfectly well a microsecond later is the rename window,
     /// which is the only one of the three that is Windows rather than a defect.
     /// The temp count is the decisive half: the writer creates
-    /// <c>lock.json.new-&lt;guid&gt;</c> in this directory and it exists for
+    /// <c>browserai.json.new-&lt;guid&gt;</c> in this directory and it exists for
     /// exactly the length of one rewrite, so its presence is direct evidence
     /// that a rename was in flight at this instant rather than an inference
     /// about how wide a window is.
@@ -1751,7 +1751,7 @@ internal sealed class SessionLockTests
     /// record.
     /// </summary>
     /// <param name="RewriteInFlight">
-    /// The writer's own <c>lock.json.new-&lt;guid&gt;</c> is on disk, so a
+    /// The writer's own <c>browserai.json.new-&lt;guid&gt;</c> is on disk, so a
     /// rewrite was demonstrably in progress at that instant. Direct evidence
     /// rather than an inference about how wide a window is.
     /// </param>

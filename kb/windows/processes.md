@@ -318,7 +318,7 @@ the temp on every exit path. Two details worth taking:
 > the call is written `Flush(flushToDisk: true)`. A named argument defeats a
 > literal grep, so a negative grep result is not an absence either.)*
 
-**A durable write of this project's own `lock.json` costs 16.1 ms and 18.2 ms.**
+**A durable write of this project's own `browserai.json` costs 16.1 ms and 18.2 ms.**
 Measured 2026-08-16, two runs of **100 sequential rewrites** through the product's
 path — a temp file in the same directory opened `FileShare.None` with
 `FileOptions.WriteThrough`, `Flush(flushToDisk: true)`, then
@@ -345,7 +345,7 @@ walks all three share modes on every run.
 
 > **This is what forces close → rename → re-open under a mutex**, and it is worth
 > stating because the obvious repair does not exist. [The session design](../../ARCHITECTURE.md#sessions)
-> makes an open handle on `lock.json` the lock, and [the locking design](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
+> makes an open handle on `browserai.json` the lock, and [the locking design](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 > requires the record to arrive by atomic rename. The natural guess is that
 > adding `FILE_SHARE_DELETE` to the lock handle reconciles them — it does not;
 > the rename is refused identically. So the handle has to be closed for the
@@ -356,9 +356,9 @@ walks all three share modes on every run.
 direction: a file being replaced is DELETE-PENDING, and every new open of that
 name is refused `ERROR_ACCESS_DENIED`.** Measured 2026-08-18 at
 `SuiteParallelism.Unbounded`, twice in twenty-eight full-suite runs and at two
-different call sites — `File.Move(temp, lock.json, overwrite: true)` refused on a
+different call sites — `File.Move(temp, browserai.json, overwrite: true)` refused on a
 destination this process had just closed its own handle to, and
-`new FileStream(lock.json, FileMode.Open, FileAccess.Read, FileShare.ReadWrite |
+`new FileStream(browserai.json, FileMode.Open, FileAccess.Read, FileShare.ReadWrite |
 FileShare.Delete)` refused while another process was renaming over it. **Sharing
 the delete does not help the reader**, and that is the half the entry above does
 not cover: `FILE_SHARE_DELETE` is what lets the *other* process's rename proceed,
@@ -394,7 +394,7 @@ the instant a read returned no record:
 | does the name resolve | **False** |
 | the file's length | — (it did not exist) |
 | does the directory exist | True |
-| is one of the writer's `lock.json.new-<guid>` temps on disk | **1** |
+| is one of the writer's `browserai.json.new-<guid>` temps on disk | **1** |
 | does an immediate re-read find a record | **True** |
 
 **All five together are the finding, and no single one of them is.** The name was
@@ -472,7 +472,7 @@ dangerous of the two because null means *not locked*.
 > **What still holds, and is the reason the original judgement was nearly
 > right.** A denial was an unhandled exception escaping `TryAcquire`; an absence
 > is a documented return value every caller already handles — `SessionLock` even
-> carries the sentence *"which removed its `lock.json` between the refusal and
+> carries the sentence *"which removed its `browserai.json` between the refusal and
 > the read"* for exactly this. **Every rewrite happens under the per-directory
 > mutex**, so no gated reader can see the window at all. The sweep's
 > `SessionDirectoryFrom` reads a missing lock as *"not a BrowserAI session
@@ -580,7 +580,7 @@ push it further.
 > contend, and the concurrency test would then prove nothing while still passing.
 
 **A non-durable temp-and-rename write costs 1.7 ms alone and 9.2 ms under 8-way
-contention** — against ~17 ms for the durable `lock.json` write above. Measured
+contention** — against ~17 ms for the durable `browserai.json` write above. Measured
 2026-08-16, two runs each: **1.72 and 1.84 ms** per write with one writer,
 **9.15 and 9.26 ms** with eight writers on one name. Each write is a temp file
 created and written, `File.Move(overwrite: true)`, and the temp deleted in a
@@ -588,12 +588,12 @@ created and written, `File.Move(overwrite: true)`, and the temp deleted in a
 roughly a **10× multiplier on an uncontended small write**, and contention on a
 single name is roughly **5×** on top of the base cost. That ratio is why
 [the session index is written without either](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
-while `lock.json` keeps both: an index entry regenerates itself from the
+while `browserai.json` keeps both: an index entry regenerates itself from the
 directory it names, and a lock record cannot. `[MACHINE]`
 
 **`Utf8JsonWriter`'s default encoder escapes `+`**, so every ISO 8601 timestamp
 with a positive UTC offset is written with its sign as a `+` escape.
-Measured 2026-08-16 while writing `lock.json`: the file round-trips perfectly,
+Measured 2026-08-16 while writing `browserai.json`: the file round-trips perfectly,
 parses everywhere, and is unreadable by the person the file exists for.
 `JavaScriptEncoder.UnsafeRelaxedJsonEscaping` — the same encoder
 [the server transport already takes](../mcp/sdk.md) — removes it. **It was caught
@@ -719,7 +719,7 @@ processes, and this machine carries it.** Measured 2026-08-17 by
 `SaturationTests`, which starts 100 published binaries at once, gives each its
 own session with a real `node.exe`, and has 24 of them launch, close and
 relaunch a real headless Chromium. Every peer answered; every session was
-claimed by exactly one process and its `lock.json` named that process's pid;
+claimed by exactly one process and its `browserai.json` named that process's pid;
 every job object was pairwise disjoint; nothing survived teardown; the shared
 process log held no torn record. **82 s** wall, alone on the machine. The 802
 figure is the survivor census from the fault-injection run in which teardown was

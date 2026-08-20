@@ -799,7 +799,7 @@ internal sealed class FirefoxTests
             NullLogger.Instance);
 
         // Taken and released: what a BrowserAI that exited leaves behind is a
-        // lock.json with nothing holding it.
+        // browserai.json with nothing holding it.
         result.Acquired?.Dispose();
 
         return path;

@@ -28,7 +28,7 @@ namespace BrowserAI.Hosting;
 /// observed symptom rather than a theory
 /// ([kb](../../../kb/packaging/velopack.md)), with the number collapsed
 /// as well as widened, and it was live in this repository before this type
-/// landed: <c>SessionLock</c> stamped every <c>lock.json</c> from
+/// landed: <c>SessionLock</c> stamped every <c>browserai.json</c> from
 /// <c>GetName().Version</c>, which would have recorded <c>0.0.0.0</c> for the
 /// whole 0.x line.
 /// </para>

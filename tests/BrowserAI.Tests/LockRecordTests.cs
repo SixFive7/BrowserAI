@@ -9,7 +9,7 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// <c>lock.json</c>'s schema: strict on the way in, invariant on the way out.
+/// <c>browserai.json</c>'s schema: strict on the way in, invariant on the way out.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -39,7 +39,7 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class LockRecordTests
 {
-    private const string Path = @"C:\sessions\example\lock.json";
+    private const string Path = @"C:\sessions\example\browserai.json";
 
     private static readonly DateTimeOffset Born = new(2026, 8, 16, 9, 30, 0, TimeSpan.FromHours(2));
     private static readonly DateTimeOffset Taken = new(2026, 8, 16, 10, 0, 0, TimeSpan.FromHours(2));
@@ -159,7 +159,7 @@ internal sealed class LockRecordTests
     /// what deleting costs and what it does not.</b> A model told only "delete
     /// it" either will not, or will and then re-create a browser profile it
     /// still had. What is lost is the recorded purpose and the history; what is
-    /// untouched is everything beside <c>lock.json</c>.
+    /// untouched is everything beside <c>browserai.json</c>.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

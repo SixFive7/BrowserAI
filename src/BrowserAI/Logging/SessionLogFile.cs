@@ -9,7 +9,7 @@ namespace BrowserAI.Logging;
 
 /// <summary>
 /// One session's own log: <c>&lt;session-dir&gt;\browserai.log</c>, beside its
-/// <c>lock.json</c>.
+/// <c>browserai.json</c>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -35,7 +35,7 @@ namespace BrowserAI.Logging;
 internal sealed class SessionLogFile : ILogSink, IDisposable
 {
     /// <summary>
-    /// The file name, at the session root beside <c>lock.json</c>.
+    /// The file name, at the session root beside <c>browserai.json</c>.
     /// </summary>
     /// <remarks>
     /// It lives with the session rather than under the app data root because the

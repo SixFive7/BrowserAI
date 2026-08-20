@@ -18,7 +18,7 @@ namespace BrowserAI.Sessions;
 ///   </item>
 ///   <item>
 ///     <term>Per-session, proving ownership</term>
-///     <description><c>lock.json</c> opened <c>FileShare.Read</c>, held for the session's life</description>
+///     <description><c>browserai.json</c> opened <c>FileShare.Read</c>, held for the session's life</description>
 ///   </item>
 ///   <item>
 ///     <term>Machine-wide, guarding the sweep</term>
@@ -51,7 +51,7 @@ namespace BrowserAI.Sessions;
 /// ⚠️ <b>Later the same day, the better answer: stop putting the peers in the
 /// queue.</b> A process that only wants to <i>report</i> the holder is now
 /// answered by <c>SessionLock.ProbeForHolder</c> in front of the gate, because
-/// the sharing violation on <c>lock.json</c> already proves ownership and the
+/// the sharing violation on <c>browserai.json</c> already proves ownership and the
 /// mutex never made it more true. <b>Sizing the timeout and removing the queue
 /// are both needed and neither replaces the other</b> — the probe is why the
 /// queue is short, the timeout is what still has to be right when it is not.
@@ -144,7 +144,7 @@ internal static class LockScopes
     /// <para>
     /// ⚠️ <b>And since 2026-08-18 most of that queue does not exist, because
     /// most of it never wanted this mutex.</b> <c>SessionLock.ProbeForHolder</c>
-    /// opens <c>lock.json</c> <b>in front of</b> this gate: a sharing violation
+    /// opens <c>browserai.json</c> <b>in front of</b> this gate: a sharing violation
     /// is the kernel's answer to <i>who owns this</i>, so a peer that only wants
     /// to report the holder is answered there and never creates the object. What
     /// queues here now is processes that intend to <b>take</b> the directory.

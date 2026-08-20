@@ -10,12 +10,12 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// Ownership of one session directory: the open handle on <c>lock.json</c> that
+/// Ownership of one session directory: the open handle on <c>browserai.json</c> that
 /// proves it, and the record inside that says who and why.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The handle is the lock.</b> <c>lock.json</c> is held
+/// <b>The handle is the lock.</b> <c>browserai.json</c> is held
 /// <c>FileAccess.ReadWrite, FileShare.Read</c> — a second BrowserAI asking for
 /// write access is refused by the kernel, while any reader can still say who
 /// holds it and why. The OS releases the handle when the holder dies, however it
@@ -46,7 +46,7 @@ namespace BrowserAI.Sessions;
 /// paragraph above makes the <i>open handle</i> the lock. Durability makes the
 /// <i>atomic rename</i> the way the record is put in place: a plain write returns
 /// once the bytes are in the file-system cache, so a power loss between the write
-/// and the flush leaves a file the writer believes it wrote — and <c>lock.json</c>
+/// and the flush leaves a file the writer believes it wrote — and <c>browserai.json</c>
 /// is the one file whose loss cannot be reconstructed, because it is the entire
 /// ownership guard. So it is written <c>WriteThrough</c>, flushed with
 /// <c>Flush(true)</c>, and moved over the previous copy. <b>Measured 2026-08-16: a
@@ -66,7 +66,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-19 (previously "instants in which nobody else can
 /// look").</b> A peer can look, and does: <see cref="ProbeForHolder"/> runs in
-/// front of the gate by design, so it opens <c>lock.json</c> inside that gap and
+/// front of the gate by design, so it opens <c>browserai.json</c> inside that gap and
 /// its handle — held for one <c>FileStream</c> construction — refuses the gate
 /// holder's own re-open. <b>Nobody else can take it, which is the property the
 /// gate was for; nobody else can look was never true and the design never needed
@@ -92,7 +92,7 @@ internal sealed class SessionLock : IDisposable
     /// Five attempts over 150 ms — the shape the C# prior art on this machine
     /// uses — was observed exhausting under full-suite load, with
     /// <c>ERROR_ACCESS_DENIED</c> on the destination while another process held
-    /// <c>lock.json</c> open for reading in a tight loop. Something briefly
+    /// <c>browserai.json</c> open for reading in a tight loop. Something briefly
     /// holding the destination is a live condition rather than a bug (a
     /// concurrent reader, a virus scanner opening a file that was just created),
     /// so the answer is a budget generous enough to outlast it — and a bound, so
@@ -352,7 +352,7 @@ internal sealed class SessionLock : IDisposable
     /// <b>This exists because <c>browserai_destroy</c>'s destructive act has to
     /// happen while the directory is still ours, and its last two nodes cannot
     /// be removed while it is.</b> Windows will not unlink a file this process
-    /// is holding open, so <c>lock.json</c> — and therefore the directory above
+    /// is holding open, so <c>browserai.json</c> — and therefore the directory above
     /// it — can only go after the handle does. The instant between is exactly
     /// the instant a peer's <see cref="TryAcquire"/> reclaims the directory and
     /// launches a browser into a tree that is about to be deleted. Every
@@ -380,7 +380,7 @@ internal sealed class SessionLock : IDisposable
     /// </remarks>
     /// <param name="delete">
     /// Removes what is left. It runs <b>after</b> the handle is closed and
-    /// <b>before</b> the gate is released, so it may unlink <c>lock.json</c>
+    /// <b>before</b> the gate is released, so it may unlink <c>browserai.json</c>
     /// and no peer can be inside create-or-take while it does.
     /// </param>
     /// <exception cref="ObjectDisposedException">This lock has already been released.</exception>
@@ -411,7 +411,7 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
-    /// Releases the directory. <c>lock.json</c> stays: the holder record
+    /// Releases the directory. <c>browserai.json</c> stays: the holder record
     /// outliving the holder is what makes a stale lock a sentence rather than a
     /// refusal.
     /// </summary>
@@ -441,7 +441,7 @@ internal sealed class SessionLock : IDisposable
     /// acquire, and it holds that lock for the whole kill</i> — which is what
     /// stops one process sweeping away a browser that a second process, mid-
     /// <c>init</c> on the same directory, has just launched.
-    /// If <c>lock.json</c> cannot be opened for write, someone owns the
+    /// If <c>browserai.json</c> cannot be opened for write, someone owns the
     /// directory, and the sweep skips it unconditionally.
     /// <c>StraySweepTests</c> carries one test per race, this one included.
     /// </para>
@@ -449,7 +449,7 @@ internal sealed class SessionLock : IDisposable
     /// <b>But "whose lock we can acquire" must not mean <see cref="TryAcquire"/>,
     /// and that distinction is the whole reason this method exists.</b> A sweep is
     /// not opening a session, and <see cref="TryAcquire"/> would rewrite
-    /// <c>lock.json</c> with the sweeper as holder — overwriting a crashed
+    /// <c>browserai.json</c> with the sweeper as holder — overwriting a crashed
     /// session's own record, its purpose and its history with a janitor's. That
     /// record is the one piece of evidence about what the stray was, and a
     /// janitor is the last party that should be destroying it.
@@ -463,7 +463,7 @@ internal sealed class SessionLock : IDisposable
     /// and is refused by the kernel while we hold it.
     /// </para>
     /// <para>
-    /// <b>A directory with no <c>lock.json</c>, an unparseable one, or one held
+    /// <b>A directory with no <c>browserai.json</c>, an unparseable one, or one held
     /// by somebody else all answer the same way: not ours to act on.</b> Every
     /// one of those is a refusal to kill, which is the only direction this
     /// method is allowed to be wrong in.
@@ -577,7 +577,7 @@ internal sealed class SessionLock : IDisposable
         {
             // ⚠️ Through RenameWindow, which is the READ side of the rename this
             // class's own `Replace` performs. A reader that arrives while another
-            // process is replacing `lock.json` is refused ACCESS_DENIED -- not a
+            // process is replacing `browserai.json` is refused ACCESS_DENIED -- not a
             // sharing violation -- and nothing on this path caught it. See that
             // type's remarks for the measurement and for which callers may use it.
             using var stream = RenameWindow.WaitOut(() =>
@@ -642,7 +642,7 @@ internal sealed class SessionLock : IDisposable
     /// <i>retries</i>, to <see cref="MoveBudget"/>. The instant anything closes
     /// A's handle for a moment — a <see cref="Rewrite"/>, a teardown, a
     /// <c>destroy</c> — B's next retry lands, B renames over A's record and
-    /// re-opens it. <b>B now holds <c>lock.json</c> and A holds a valid handle to
+    /// re-opens it. <b>B now holds <c>browserai.json</c> and A holds a valid handle to
     /// a now-nameless file</b>, which is what a Windows rename over an open file
     /// does to the loser; A finds out only on its next rewrite. Both report
     /// ownership and two processes drive one profile. The mechanism underneath:
@@ -743,7 +743,7 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
-    /// Whether anything holds a session's <c>lock.json</c> at the instant of the
+    /// Whether anything holds a session's <c>browserai.json</c> at the instant of the
     /// look — <b>held, not held, or neither</b> — without taking anything and
     /// without opening a process handle.
     /// </summary>
@@ -830,7 +830,7 @@ internal sealed class SessionLock : IDisposable
         }
         catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
         {
-            // ⚠️ NOT read as free. `lock.json`'s NAME IS UNBOUND for an instant
+            // ⚠️ NOT read as free. `browserai.json`'s NAME IS UNBOUND for an instant
             // while a peer replaces the record, and a directory whose record is
             // being replaced is owned by whoever is replacing it. An absence is
             // therefore a window this caller cannot see the inside of.
@@ -887,7 +887,7 @@ internal sealed class SessionLock : IDisposable
                 // catches above are a missing file, a sharing violation and an
                 // unparseable record; an `UnauthorizedAccessException` is not an
                 // `IOException` and is none of them, so a permanently denied
-                // `lock.json` PROPAGATED OUT OF `TryAcquire` -- the product's
+                // `browserai.json` PROPAGATED OUT OF `TryAcquire` -- the product's
                 // primary session-opening entry point -- after `RenameWindow` had
                 // spent its whole budget waiting out a rename that was never in
                 // flight. `OpenHeld`'s remarks recorded that this had already
@@ -912,7 +912,7 @@ internal sealed class SessionLock : IDisposable
 
             // ⚠️ ASKED HERE BECAUSE THE RECORD IS ALREADY READ AND THE GATE IS
             // ALREADY HELD, added 2026-08-19. `init`'s pre-gate look is ungated
-            // by construction and can land in the instant in which lock.json's
+            // by construction and can land in the instant in which browserai.json's
             // NAME IS UNBOUND while a peer replaces the record -- it then reads
             // null as "free, proceed" and reaches the reclaim below, which
             // appends a mode and a browser statement and rebinds the session's
@@ -966,7 +966,7 @@ internal sealed class SessionLock : IDisposable
             // AND THE REASON IS THE SENTENCE ABOVE. Corrected 2026-08-19
             // (previously `WriteDurably` and this open shared one catch, which
             // answered "nothing was changed" to both). The write is a rename of
-            // a fully-formed record over the name: once it returns, lock.json
+            // a fully-formed record over the name: once it returns, browserai.json
             // HAS been replaced and it names this process as the holder. A
             // failure here is therefore the one case where "nothing was changed"
             // is false at the moment it is said -- and a caller acting on it
@@ -1101,7 +1101,7 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <b><c>holderRunning: true</c> is a statement about the handle, not about
     /// the pid.</b> Both call sites arrive here having just been refused by the
-    /// kernel on an open of <c>lock.json</c>, and Windows releases a handle when
+    /// kernel on an open of <c>browserai.json</c>, and Windows releases a handle when
     /// its process dies however it dies — so something is alive holding it, and
     /// that is a stronger fact than any liveness check on the recorded
     /// <c>(pid, creationFileTime)</c> could produce.
@@ -1168,7 +1168,7 @@ internal sealed class SessionLock : IDisposable
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Opens <c>lock.json</c> the way a holder holds it, <b>as an ownership
+    /// Opens <c>browserai.json</c> the way a holder holds it, <b>as an ownership
     /// test</b>: read-write, sharing only reads, so any other BrowserAI trying to
     /// take the same directory meets a sharing violation — and so does this,
     /// which is the answer rather than a condition to wait out.
@@ -1236,7 +1236,7 @@ internal sealed class SessionLock : IDisposable
     /// CI run 32203064556 attempt 1: contender 2652 wrote its record, was
     /// refused on this open by a peer's pre-gate probe, and answered that it had
     /// not taken the directory; contender 696 reclaimed the same directory 61 ms
-    /// later, and <c>lock.json</c> carried two processes' holder statements. The
+    /// later, and <c>browserai.json</c> carried two processes' holder statements. The
     /// three call sites are the two post-write re-opens and
     /// <see cref="Reclaim"/>; <c>SessionLockTests.TheOpensThatFollowThisClassesOwnWriteAreTheOnlyOnesThatWaitOutAHandle</c>
     /// fails the build if a fourth appears or one of the three moves back.
@@ -1263,7 +1263,7 @@ internal sealed class SessionLock : IDisposable
         using var buffer = new MemoryStream();
         stream.CopyTo(buffer);
 
-        // A zero-length lock.json is treated as "no record" rather than as
+        // A zero-length browserai.json is treated as "no record" rather than as
         // corruption. Nothing this product writes can produce one -- the record
         // arrives by rename, fully formed -- so it means somebody else made the
         // file, and refusing to act on an empty file would strand a directory
@@ -1288,7 +1288,7 @@ internal sealed class SessionLock : IDisposable
                 // out. A plain Write returns once the bytes are in the
                 // filesystem cache, so a power loss between the write and the
                 // flush leaves a file the writer believes it wrote -- and
-                // lock.json is the entire ownership guard, the one file whose
+                // browserai.json is the entire ownership guard, the one file whose
                 // loss cannot be reconstructed.
                 stream.Write(record.ToUtf8());
                 stream.Flush(flushToDisk: true);
@@ -1376,7 +1376,7 @@ internal sealed class SessionLock : IDisposable
 /// </summary>
 /// <remarks>
 /// The kernel is the whole mechanism: the handle is <c>FileAccess.ReadWrite,
-/// FileShare.Read</c>, so any other BrowserAI opening <c>lock.json</c> to take
+/// FileShare.Read</c>, so any other BrowserAI opening <c>browserai.json</c> to take
 /// the directory is refused while this lives. Disposing releases it and leaves
 /// the record exactly as it was found.
 /// </remarks>
@@ -1420,7 +1420,7 @@ internal sealed record SessionLockRequest
     /// <para>
     /// ⚠️ <b>It is asked UNDER THE GATE because the ungated ask can miss.</b>
     /// `init`'s own pre-gate look — `SessionManager.Existing` — reads
-    /// `lock.json` with no lock held, so it can land in the instant in which the
+    /// `browserai.json` with no lock held, so it can land in the instant in which the
     /// name is unbound while a peer replaces the record, read <see langword="null"/>
     /// as <i>free, proceed</i>, and reach a reclaim. Under the gate the record
     /// has already been read for the reclaim path, so the same question costs

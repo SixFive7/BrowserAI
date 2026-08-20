@@ -75,7 +75,7 @@ namespace BrowserAI.Sessions;
 /// <i>somebody owns this</i> into <i>eventually, nobody did</i> — which is the
 /// mechanism, inverted. <b>Never route one of those through here.</b>
 /// <c>SessionLock.ProbeForHolder</c> is the newest and the clearest case: it
-/// opens <c>lock.json</c> in front of the per-directory gate to find out whether
+/// opens <c>browserai.json</c> in front of the per-directory gate to find out whether
 /// anyone owns it, so a denial waited out would be a live owner waited out. It
 /// is also the one that cannot decide <see cref="UnauthorizedAccessException"/>
 /// at all — delete-pending and a permanent ACL denial arrive identically — so it
@@ -105,7 +105,7 @@ namespace BrowserAI.Sessions;
 /// <see cref="IOException"/> … a sharing violation on one of these opens means
 /// the holder opened the file in a mode that excludes us").</b> That reading is
 /// right for the two rows above it and wrong for the third, and the difference
-/// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>lock.json</c>
+/// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>browserai.json</c>
 /// <c>FileAccess.ReadWrite</c> without the gate, so its handle — microseconds
 /// wide — refuses a gate holder's own re-open, which then reported a record it
 /// had genuinely written as one it could not take. <b>The probe cannot be made
@@ -211,7 +211,7 @@ internal static class RenameWindow
     /// inside that instant a gate holder's re-open is refused
     /// <c>ERROR_SHARING_VIOLATION</c>. Observed in CI on 2026-08-19, run
     /// 32203064556 attempt 1: two contenders wrote holder statements into one
-    /// <c>lock.json</c> 61 ms apart because the first one's re-open was refused
+    /// <c>browserai.json</c> 61 ms apart because the first one's re-open was refused
     /// and it gave up on the directory it had already written itself into.
     /// </para>
     /// <para>

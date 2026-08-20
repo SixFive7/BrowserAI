@@ -299,7 +299,7 @@ indistinguishable from a real Chromium singleton. `[STABLE]`
 
 **Two guards, both required:** `[FLOATS]`
 
-1. The titled directory contains our `lock.json`, with our schema.
+1. The titled directory contains our `browserai.json`, with our schema.
 2. The owning process's **full image path** equals the Chrome for Testing binary
    BrowserAI provisioned — `QueryFullProcessImageNameW`, exact path comparison.
    **This is not image-name matching and does not weaken that rule**: matching one
@@ -327,7 +327,7 @@ indistinguishable from a real Chromium singleton. `[STABLE]`
 **Two hazards specific to enumeration:** `[FLOATS]`
 
 - **The title is an untrusted string on a filesystem path.** Measured
-  `File.Exists(<title>\lock.json)`: local existing 0.56 ms, unmapped `Z:\`
+  `File.Exists(<title>\browserai.json)`: local existing 0.56 ms, unmapped `Z:\`
   0.01 ms, `\\127.0.0.1\C$\nope` **22 ms**, `\\10.255.255.1\share` **21,037 ms**,
   `\\no-such-host\share` **22,225 ms**. **One UNC title stalls the sweep for 21
   seconds.** Reject anything that is not a rooted local drive-letter path
@@ -1024,7 +1024,7 @@ contenders and 2.4× the wait.
 
 **⚠️ The queue is gone for contenders that can name the holder, measured
 2026-08-18 before and after `SessionLock.ProbeForHolder`.** A contender now
-opens `lock.json` **in front of** the per-directory gate; a sharing violation is
+opens `browserai.json` **in front of** the per-directory gate; a sharing violation is
 the kernel's answer to *who owns this*, so it refuses there and never creates
 the mutex. Same rig, same idle machine, 3 runs at each N, gate at 120 s
 throughout so nothing can reach `Busy` on either side. Every refusal named the
@@ -1191,8 +1191,8 @@ one `CloseHandle`, no directory walk, no process handle and no mutex.
 
 | Arm | Warm, 2,000 iterations, 3 runs | What it is |
 |---|---:|---|
-| `lock.json` free | **0.0342 · 0.0351 · 0.0359 ms** | the open succeeds and the handle is closed |
-| `lock.json` held | **0.0481 · 0.0490 · 0.0493 ms** | a sharing violation, so a **managed exception** rather than a return |
+| `browserai.json` free | **0.0342 · 0.0351 · 0.0359 ms** | the open succeeds and the handle is closed |
+| `browserai.json` held | **0.0481 · 0.0490 · 0.0493 ms** | a sharing violation, so a **managed exception** rather than a return |
 | first probe in a process | 0.85 · 0.95 · 6.32 ms | one-time initialisation; the 6.32 ms run is the one that also JIT-compiled |
 
 **The held arm costs about 40% more than the free arm, and that is the
@@ -1209,7 +1209,7 @@ Adding a probe per entry therefore cannot make a listing pathological: the
 listing's cost was already the walk. `[MACHINE]`
 
 > **Reproduce, and keep the sanity check.** Time the open above in a loop against
-> a real `lock.json`, once with nothing holding it and once with a second handle
+> a real `browserai.json`, once with nothing holding it and once with a second handle
 > open `FileAccess.ReadWrite, FileShare.Read` — and **assert that the second arm
 > really is a sharing violation**, `(HResult & 0xFFFF) is 32 or 33`, before
 > believing its number. Without that assertion an open that quietly succeeded
@@ -1312,7 +1312,7 @@ propagates. `[MACHINE]` for the SDDLs; `[STABLE]` for the inheritance rule.
 ### 5. The consequence, and it is asymmetric
 
 **A file lock is enforced by the kernel against handles and is indifferent to
-which token opened them.** So under a shared root `lock.json`, `reinstall.lock`
+which token opened them.** So under a shared root `browserai.json`, `reinstall.lock`
 and every `.live` marker stay honestly held-or-free across users, a second user
 can probe them, and the held-ness rule keeps working: a marker another user
 holds answers *sharing violation* and is left alone, and one that cannot be

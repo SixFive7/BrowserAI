@@ -154,6 +154,32 @@ has been satisfied in form only.
 
 ### Changed
 
+- **A session's record is `browserai.json`, renamed from `lock.json`, and there is
+  no compatibility read.** The maintainer's decision of 2026-08-20, verbatim:
+  *"nothing is in production yet. The only version that exists is the alpha version
+  that we are building and testing in this session, so rename all the locks in code
+  to browserai.json and don't take into account any legacy setup anywhere."* The
+  file had stopped being only a lock long before the name did: every field of it is
+  an ordered list of timestamped statements about how the session got here — mode,
+  browser, purpose, holder, client — and `browserai_list` and `browserai_resume`
+  read it for those rather than for ownership, so the old name described the
+  smallest thing it does. The **handle** is still the lock, and every type that
+  says so keeps its name: `SessionLock`, `LockRecord`, `LockScopes` and
+  `SessionPath.LockFile` are about the lock, which is unchanged.
+
+  **No fallback, no migration and no compatibility read**, which is the half worth
+  stating: a directory holding the old name is not a session to this build, and
+  `browserai_init` will make a new record beside it rather than adopting it. That
+  is safe only because the old name never shipped — `v0.1.0` and `v0.1.3` are the
+  only tags, and neither is installed anywhere but this machine.
+
+  **The historical record keeps the old name.** `CHANGELOG.md`'s released sections
+  and everything under `docs/reviews/` are dated accounts of what was true when
+  they were written; a 2026-08-18 review saying `browserai.json` would be claiming
+  a filename that did not exist for another two days, which is the same defect as
+  a measurement updated by reasoning instead of re-measurement. `docs/reviews/`
+  states that rule about itself and it is kept here.
+
 - **Provisioning is stopped when it stops making progress, not when it has taken
   too long.** `ProvisioningTimers.AbsoluteCap` — 45 minutes on the whole install —
   is replaced by `StallCap`, ten minutes with **nothing written at all**. A total

@@ -643,17 +643,17 @@ id_ed25519
 # names, taken from the plan's session-directory and artifact-management
 # sections rather than guessed:
 #
-#   <session-dir>\  lock.json  session.json  profile\  downloads\
+#   <session-dir>\  browserai.json  session.json  profile\  downloads\
 #                   output\{console,network,page,request,response,result,
 #                           storage-state,video,traces}\
 #
 # `storage-state` is the one that matters most: those files are live session
 # bearer tokens, including the httpOnly cookies JavaScript cannot read, so it is
 # matched as a loose name-class too and not only as a folder. The per-session
-# log sits beside `lock.json` and is already covered by the upstream half's
+# log sits beside `browserai.json` and is already covered by the upstream half's
 # `*.log`.
 #
-# `lock.json` is a whole-name match: it does not touch `packages.lock.json`,
+# `browserai.json` is a whole-name match: it does not touch `packages.lock.json`,
 # which must stay tracked because the floating-dependency check diffs it.
 #
 # The typed folders carry their `output/` parent so a future `src\...\Page\` or
@@ -661,7 +661,7 @@ id_ed25519
 # header. `profile/` and `downloads/` sit at the session root and cannot be
 # scoped that way; if this repository ever grows source folders by those names,
 # negate them here.
-lock.json
+browserai.json
 session.json
 storage-state*
 profile/

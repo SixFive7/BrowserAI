@@ -17,7 +17,7 @@ namespace BrowserAI.Sessions;
 internal sealed record Statement<T>(DateTimeOffset At, T Value);
 
 /// <summary>
-/// The contents of <c>lock.json</c>: who owns this session directory, what it is
+/// The contents of <c>browserai.json</c>: who owns this session directory, what it is
 /// for, what wrote the file — and, since schema 2, <b>how it got that way</b>.
 /// </summary>
 /// <remarks>
@@ -535,7 +535,7 @@ internal sealed record LockRecord
         };
 
     private static string RecoveryAdvice(string path) =>
-        $"Recovery: open '{path}' and remove what does not belong, or delete that file and create the session again — a session directory whose lock file is gone is a new session, not a broken one. {RepeatingFails}";
+        $"Recovery: open '{path}' and remove what does not belong, or delete that file and create the session again — a session directory whose record is gone is a new session, not a broken one. {RepeatingFails}";
 
     private static LockFileException Unrecognised(string name, string path) =>
         new($"'{path}' carries a key BrowserAI does not recognise: '{name}'. Our own files are parsed strictly, because an unrecognised key is indistinguishable from a missing one under lenient parsing — the file would be reported as understood while a field nobody honoured decided nothing. {RecoveryAdvice(path)}");
@@ -786,7 +786,7 @@ internal sealed record LockHolder
     public required string? ClientProcessName { get; init; }
 }
 
-/// <summary>The key names in <c>lock.json</c>, spelled once.</summary>
+/// <summary>The key names in <c>browserai.json</c>, spelled once.</summary>
 /// <remarks>
 /// Strict parsing means a typo in a key name here becomes a refusal at runtime
 /// rather than a field that silently reads as absent, so the writer and the
@@ -832,7 +832,7 @@ internal static class LockJson
 }
 
 /// <summary>
-/// A <c>lock.json</c> that cannot be acted on, with a recovery in its message.
+/// A <c>browserai.json</c> that cannot be acted on, with a recovery in its message.
 /// </summary>
 /// <remarks>
 /// The message always names a recovery that is <b>not</b> the call that just

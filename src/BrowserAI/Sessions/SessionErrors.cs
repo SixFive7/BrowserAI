@@ -153,7 +153,7 @@ internal static class SessionErrors
     /// and the lock, and every derived name — the mutex, the index key — comes
     /// from the spelling. <c>Path.GetFullPath</c> resolves neither <c>\\?\</c>,
     /// 8.3 short names, junctions, <c>subst</c> nor mapped drives, so two
-    /// spellings of one directory produce two mutexes and one <c>lock.json</c>:
+    /// spellings of one directory produce two mutexes and one <c>browserai.json</c>:
     /// the gate stops serialising while every signal still reads healthy.
     /// </para>
     /// <para>
@@ -170,7 +170,7 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string DirectoryIsAnAliasedSpelling(string argument, string value, string accepted, string why) =>
         $"'{argument}' = '{value}' is a second spelling of a directory the filesystem calls something else — {why}. Nothing was created and nothing was changed. "
-        + "BrowserAI takes only the filesystem's own spelling, because a session directory is also its lock: two spellings of one directory produce two locks and one lock file, and the lock then reports success while guarding nothing. "
+        + "BrowserAI takes only the filesystem's own spelling, because a session directory is also its lock: two spellings of one directory produce two locks and one record, and the lock then reports success while guarding nothing. "
         + $"Call the same tool again with {argument}='{accepted}'.";
 
     /// <summary>Row 4 — <c>init</c> met a directory that is already a session.</summary>
@@ -627,7 +627,7 @@ internal static class SessionErrors
         + "Run BrowserAI as an ordinary interactive user.";
 
     /// <summary>
-    /// <c>lock.json</c> is there and this process cannot open it, and no other
+    /// <c>browserai.json</c> is there and this process cannot open it, and no other
     /// process is holding it.
     /// </summary>
     /// <remarks>
@@ -679,7 +679,7 @@ internal static class SessionErrors
     // that had been told nothing would then be running against another session's
     // purpose with nothing on disk to say so. The flag bought a moment of
     // deliberateness at the cost of a refusal on a directory that is perfectly
-    // usable. Under schema 2 every field of lock.json is an ordered list of
+    // usable. Under schema 2 every field of browserai.json is an ordered list of
     // timestamped statements and nothing is overwritten: a resumed copy appends
     // its own path to a `directory` history that still carries the original, and
     // the answer hands the model that history. The confirmation was a question

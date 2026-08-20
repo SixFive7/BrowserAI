@@ -202,7 +202,7 @@ internal static class SessionProbe
     }
 
     /// <summary>
-    /// What <c>lock.json</c> looked like at the instant an attempt on it ended.
+    /// What <c>browserai.json</c> looked like at the instant an attempt on it ended.
     /// </summary>
     /// <remarks>
     /// <b>Read with every share flag set, so that this diagnostic can never be
@@ -210,7 +210,7 @@ internal static class SessionProbe
     /// <c>FileAccess.ReadWrite, FileShare.Read</c> and may be renaming over, and
     /// a probe that threw while describing the state would destroy the only
     /// evidence there was. The temp count is the decisive column when the record
-    /// is absent: the writer's <c>lock.json.new-&lt;guid&gt;</c> exists for
+    /// is absent: the writer's <c>browserai.json.new-&lt;guid&gt;</c> exists for
     /// exactly the length of one rewrite.
     /// </remarks>
     /// <param name="lockFile">The lock file to describe.</param>

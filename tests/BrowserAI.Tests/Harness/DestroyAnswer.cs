@@ -136,7 +136,7 @@ internal static class DestroyAnswer
 
         // Both arms promise this and only one of them says it out loud: the
         // survivor arm's own sentence is "The session itself IS destroyed: its
-        // record is gone and BrowserAI's index has forgotten it". A lock.json
+        // record is gone and BrowserAI's index has forgotten it". A browserai.json
         // that outlived the answer saying so leaves a directory the next resume
         // would take -- and since that arm is now an error, it would also leave
         // a model an error to act on with the session still standing.

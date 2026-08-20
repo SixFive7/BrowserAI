@@ -15,7 +15,7 @@ namespace BrowserAI.Interop;
 /// <remarks>
 /// <para>
 /// <b>This is what turns a stale lock into a sentence instead of a refusal.</b>
-/// <c>lock.json</c> keeps its holder record after the holder dies, on purpose,
+/// <c>browserai.json</c> keeps its holder record after the holder dies, on purpose,
 /// so a second BrowserAI can say <i>"held by PID 1234 since 14:02, no longer
 /// running — reclaiming"</i> rather than simply failing. That sentence is only
 /// safe if "no longer running" is answered correctly, and a pid on its own
@@ -26,7 +26,7 @@ namespace BrowserAI.Interop;
 /// <b>Nothing here matches, counts or terminates by image name, and there is no
 /// terminate at all.</b> <see cref="ClientProcessName"/> reads the parent's
 /// image path for one purpose — writing a human-readable name into the record so
-/// that a person reading <c>lock.json</c> knows which client opened the session.
+/// that a person reading <c>browserai.json</c> knows which client opened the session.
 /// It is display data. The rule forbids <i>choosing</i> a process by name; it
 /// does not forbid observing one, and the distinction is kept sharp here because
 /// this is exactly the file where it would erode.
@@ -171,7 +171,7 @@ internal static partial class ProcessLiveness
             }
 
             // ⚠️ Added 2026-08-18. Without it this reads the image name off a
-            // RECYCLED pid and writes a stranger's name into lock.json as the
+            // RECYCLED pid and writes a stranger's name into browserai.json as the
             // client's identity: ParentProcessId is a stale field, so between a
             // wrapper launcher exiting and this line running, the number can
             // already belong to somebody else
@@ -202,7 +202,7 @@ internal static partial class ProcessLiveness
     /// <para>
     /// <b>Read once and used for two different things.</b>
     /// <see cref="ClientProcessName"/> turns it into a display string for
-    /// <c>lock.json</c>; <see cref="ClientLivenessWatcher"/> opens a handle on it
+    /// <c>browserai.json</c>; <see cref="ClientLivenessWatcher"/> opens a handle on it
     /// so BrowserAI is told when the client goes. Neither matches a name, and
     /// neither terminates anything.
     /// </para>

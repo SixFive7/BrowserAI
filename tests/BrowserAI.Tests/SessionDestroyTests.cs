@@ -58,12 +58,12 @@ namespace BrowserAI.Tests;
 /// released ownership, then walked the whole tree for a size, then deleted — so
 /// the unowned interval was a full recursive walk of a Chromium profile wide.
 /// The planted files reproduce that width without a browser: they sort before
-/// <c>lock.json</c>, so the delete pass removes every one of them before it
+/// <c>browserai.json</c>, so the delete pass removes every one of them before it
 /// reaches the lock file.
 /// </para>
 /// <para>
 /// <b>The green direction is a property, not a coincidence.</b> Nothing under the
-/// session is removed except while <c>lock.json</c> is held, and the last two
+/// session is removed except while <c>browserai.json</c> is held, and the last two
 /// nodes go inside the per-directory gate that
 /// <see cref="SessionLock.TryHoldUnowned"/> has to take itself. So the peer
 /// cannot succeed at any point after the first file goes, at any planted size,
@@ -74,7 +74,7 @@ internal sealed class SessionDestroyTests
 {
     /// <summary>
     /// How many files are planted at the session root, all sorting before
-    /// <c>lock.json</c>.
+    /// <c>browserai.json</c>.
     /// </summary>
     /// <remarks>
     /// Enough that removing them is measurable work rather than one syscall, and

@@ -998,7 +998,7 @@ internal sealed class ModelSurfaceTests
     /// <c>acknowledgeCopy</c> was deleted</b>, and this is what keeps it there.
     /// That flag gated <c>browserai_resume</c> on a directory that looked like a
     /// copy of a session that still existed. It was necessary while
-    /// <c>lock.json</c> was a snapshot — taking the copy over overwrote the only
+    /// <c>browserai.json</c> was a snapshot — taking the copy over overwrote the only
     /// evidence that it <i>was</i> a copy — and it stopped being necessary the
     /// moment the record became an append-only list of timestamped statements,
     /// because the resume can now hand the model the whole provenance instead.

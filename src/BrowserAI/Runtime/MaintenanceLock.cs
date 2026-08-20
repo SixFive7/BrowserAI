@@ -37,7 +37,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>Held-ness is a sharing violation and never the file's existence</b>, which
-/// is the same rule <c>SessionLock</c> follows for <c>lock.json</c> and for the
+/// is the same rule <c>SessionLock</c> follows for <c>browserai.json</c> and for the
 /// same reason: a crashed holder leaves the file behind, so existence would mean
 /// <i>somebody died here once</i> rather than <i>somebody is working now</i>.
 /// </para>

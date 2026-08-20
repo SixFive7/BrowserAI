@@ -44,7 +44,7 @@ namespace BrowserAI.Sessions;
 /// Discord, Signal, 1Password, Steam, Teams, WhatsApp and ChatGPT all publish
 /// real <c>userDataDir</c>s on that channel — and the class is forgeable by any
 /// process that cares to register it. So a candidate becomes a stray only when
-/// its attributed directory holds a <c>lock.json</c> this sweeper can take
+/// its attributed directory holds a <c>browserai.json</c> this sweeper can take
 /// itself, which is a directory BrowserAI created and nothing else can be.
 /// </para>
 /// <para>
@@ -375,7 +375,7 @@ internal sealed class StraySweep
     /// match against a binary BrowserAI provisioned — <b>and</b> its start time
     /// matches the one recorded when it was found.
     /// Both guards are the same ones the Chromium path uses; the third — the
-    /// session's own <c>lock.json</c> being takeable — is applied by
+    /// session's own <c>browserai.json</c> being takeable — is applied by
     /// <see cref="ActOn"/> after this.
     /// </para>
     /// <para>
@@ -549,7 +549,7 @@ internal sealed class StraySweep
         {
             // R1. The directory lock is held for the WHOLE kill, and it is taken
             // without writing anything: a sweeper is not opening a session, and
-            // rewriting lock.json would overwrite the crashed session's own
+            // rewriting browserai.json would overwrite the crashed session's own
             // record with a janitor's.
             if (SessionLock.TryHoldUnowned(location, out hold) is { } refusal)
             {
@@ -580,10 +580,10 @@ internal sealed class StraySweep
     /// <remarks>
     /// <b>A browser publishes its <c>userDataDir</c>, and ours is a subfolder of
     /// the session.</b> BrowserAI passes <c>&lt;session&gt;\profile</c>, so the
-    /// title names the profile and the <c>lock.json</c> that proves ownership is
+    /// title names the profile and the <c>browserai.json</c> that proves ownership is
     /// one level up. The climb happens only when the leaf is exactly the profile
     /// folder name and only to look for a lock file — it can never reach a
-    /// personal Chrome profile, whose parent holds no <c>lock.json</c> either.
+    /// personal Chrome profile, whose parent holds no <c>browserai.json</c> either.
     /// </remarks>
     /// <param name="title">A title already known to be a rooted local drive-letter path.</param>
     /// <returns>The session directory, or <see langword="null"/>.</returns>

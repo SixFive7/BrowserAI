@@ -48,7 +48,7 @@ internal sealed record SessionEnvironment
     /// config</b> is written.
     /// </summary>
     /// <remarks>
-    /// Never inside the session directory. <c>lock.json</c> and the session log
+    /// Never inside the session directory. <c>browserai.json</c> and the session log
     /// are the only files at a session's root; a third would make the one that
     /// matters missable, and a config file is a per-run artifact rather than
     /// part of the session's durable state.

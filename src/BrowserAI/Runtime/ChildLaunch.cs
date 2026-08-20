@@ -76,7 +76,7 @@ internal static class ChildLaunch
     /// </param>
     /// <param name="configFile">
     /// Where to write the generated config. <b>Never inside a session
-    /// directory</b>: <c>lock.json</c> and the session log are the only files at
+    /// directory</b>: <c>browserai.json</c> and the session log are the only files at
     /// a session's root, and a third one would make the file that matters
     /// missable.
     /// </param>

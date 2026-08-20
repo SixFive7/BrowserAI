@@ -169,7 +169,7 @@ internal sealed class SessionIndexTests
     /// <c>MoveFileEx</c> with <c>MOVEFILE_REPLACE_EXISTING</c>; a rename over a
     /// file with an open handle is refused, so the writer sits in its retry
     /// loop, and between the pending delete completing and the next attempt
-    /// landing the name <c>lock.json</c> does not resolve. Measured 2026-08-18
+    /// landing the name <c>browserai.json</c> does not resolve. Measured 2026-08-18
     /// and recorded in the [hazard index](../../HAZARDS.md#hazard-index).
     /// <c>SessionIndex</c> read that instant as <i>never was a session</i>, which
     /// is a **removable** state, and dropped a live session out of the only
@@ -178,7 +178,7 @@ internal sealed class SessionIndexTests
     /// <para>
     /// <b>The window is not raced for here, and it does not need to be.</b> What
     /// the window produces on disk is exactly this: a directory with no
-    /// <c>lock.json</c> and a <c>lock.json.new-…</c> beside it. Composing that
+    /// <c>browserai.json</c> and a <c>browserai.json.new-…</c> beside it. Composing that
     /// state directly tests the discriminator rather than the scheduler, and the
     /// name comes from <c>SessionLayout.NewLockFileName</c> — the same helper the
     /// durable write uses, so a rename of the convention cannot leave this test
@@ -239,7 +239,7 @@ internal sealed class SessionIndexTests
 
         // A profile shaped like the real thing, including the file whose name is
         // one character from ours: Chromium's own `lockfile`. Keying on anything
-        // fuzzier than an exact `lock.json` would claim this directory.
+        // fuzzier than an exact `browserai.json` would claim this directory.
         var profile = Path.Combine(scratch.Path, "User Data");
         _ = Directory.CreateDirectory(Path.Combine(profile, "Default"));
         await File.WriteAllTextAsync(Path.Combine(profile, "Local State"), """{"os_crypt":{"encrypted_key":"x"}}""");
@@ -357,7 +357,7 @@ internal sealed class SessionIndexTests
         var original = await File.ReadAllTextAsync(path.LockFile);
         await File.WriteAllTextAsync(path.LockFile, original.Replace(@"""purpose""", @"""purpse""", StringComparison.Ordinal));
 
-        // THIS IS THE MEASUREMENT THE KEEP RESTS ON. A session whose lock.json
+        // THIS IS THE MEASUREMENT THE KEEP RESTS ON. A session whose browserai.json
         // cannot be parsed is refused by TryAcquire, so there is no init and no
         // resume that would ever re-assert its index entry. Removing the entry
         // would make a directory that still exists permanently invisible to the

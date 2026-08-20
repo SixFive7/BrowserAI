@@ -271,7 +271,7 @@ decision that stops being findable is one that gets re-litigated.
 - **Completions: impossible.** Only `ref/prompt` and `ref/resource` exist; there
   is no `ref/tool`, so the `session` argument can never be completed.
 - **Resources: output artifacts only** — screenshots, downloads, log,
-  `lock.json`. Never the profile.
+  `browserai.json`. Never the profile.
 - **The tool-permission policy was removed**, on 2026-08-18. *Corrected
   2026-08-18 (previously "is being removed").* What went: five `ToolClass`
   values, the 69-name classification, the `(tool, mode)` matrix, deny-by-default
@@ -370,7 +370,7 @@ the verdict, and the framing that produced it.
 
 **The verdict: it was taken**, the day after this entry was written, in `2759aad`
 — *"The gate was being taken to answer a question the kernel had answered"*.
-`SessionLock.ProbeForHolder` opens `lock.json` **in front of** the per-directory
+`SessionLock.ProbeForHolder` opens `browserai.json` **in front of** the per-directory
 gate, reads the sharing violation as the kernel's answer to *who owns this*, and
 refuses there without ever joining the queue. The queue is gone for every contender
 that can name the holder, measured before and after
@@ -393,7 +393,7 @@ and an open sharing only `Read` is refused while that handle lives. In CI run
 `32203064556` attempt 1 the writer's own re-open was refused by a peer's *probe*, so
 it surrendered a directory whose record already named it, and the next contender read
 that record as a live session and reclaimed it — two holder statements in one
-`lock.json`, 61 ms apart.
+`browserai.json`, 61 ms apart.
 
 **The probe cannot be made harmless, and that is a property rather than a defect.**
 To be refused by a holder's `FileShare.Read` it must ask for access outside `Read`,
@@ -576,7 +576,7 @@ the nine thousand into a channel a model reads as *this did not work*.
 **My objection, stated plainly at the time: an error invites a retry, and the
 retry is worse than the truth.** A model that reads `isError: true` calls the tool
 again. There is no session at that directory any more, so `browserai_destroy`
-refuses — *"has no `lock.json`, so it is not a BrowserAI session"* — and the model
+refuses — *"has no `browserai.json`, so it is not a BrowserAI session"* — and the model
 now has a refusal that reads like the directory was never BrowserAI's at all.
 That is a worse final state than the honest partial success it replaced.
 
@@ -899,7 +899,7 @@ decision is yours and **nothing has been implemented on the strength of it**.
 The short form:
 
 - **The file locks span users.** A share mode is enforced by the kernel against
-  handles and is indifferent to which token opened them, so `lock.json`,
+  handles and is indifferent to which token opened them, so `browserai.json`,
   `reinstall.lock` and every `.live` marker stay honestly held-or-free across
   users. Under a shared root at a volume root, a second user can additionally
   enumerate, read, write and **delete** them — `Authenticated Users` inherits

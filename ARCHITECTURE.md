@@ -146,8 +146,8 @@ The largest area, and the one everything else keys on.
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
-**The session directory is the identity.** One directory holds `lock.json` at its
-root and `profile/`, `output/` and `downloads/` beneath it. `lock.json` is both
+**The session directory is the identity.** One directory holds `browserai.json` at its
+root and `profile/`, `output/` and `downloads/` beneath it. `browserai.json` is both
 the lock and the record — held `FileAccess.ReadWrite, FileShare.Read`, carrying
 the schema version and then mode, browser, purpose, the resolved path, the
 BrowserAI build and a `(pid, creationFileTime, clientProcessName)` holder that
@@ -155,7 +155,7 @@ deliberately outlives its holder. There is no central registry, no bearer token,
 no label and no expiry timer; all four were designed and then dropped, because the
 directory already is all of those things.
 
-**Every field of `lock.json` is an ordered list of timestamped statements —
+**Every field of `browserai.json` is an ordered list of timestamped statements —
 schema 2, since 2026-08-18.** The record is append-only rather than a snapshot, so
 it says how a session got here and not only where it is; `created` and `lastUsed`
 are no longer stored because they are exactly the earliest and latest statement,
@@ -195,7 +195,7 @@ is injected into every upstream tool's raw `inputSchema`, appended so upstream's
 own properties keep their order; a call naming no session is refused rather than
 reaching the run's own child. `init` takes a required directory, purpose and mode
 with no default and no fallback, and an optional `browser` defaulting to
-`chromium`; `resume` reads mode and browser from `lock.json`
+`chromium`; `resume` reads mode and browser from `browserai.json`
 and **refuses them as arguments**, because a profile is browser-specific.
 `browserai_reinstall_browser` takes a **required** `browser` and nothing else —
 *changed 2026-08-19 (previously no arguments, "because there is nothing to
@@ -303,7 +303,7 @@ never a poll and never a ping — and there is deliberately no close tool.
 
 **One canonicalisation function feeds three consumers.** `GetFullPath` →
 `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → hex produces the mutex name, the
-lock file's identity and the index key alike. `LockScopes` names the three scopes;
+the record file's identity and the index key alike. `LockScopes` names the three scopes;
 `MachineMutex` creates `Global\` names **only** and throws on anything else, with
 no `Local\` fallback anywhere and a test that fails the build if any other file in
 `src/` constructs a named waitable object.
@@ -331,7 +331,7 @@ create-or-take gate, and an `AbandonedMutexException` on it is a distinct
 `AcquiredAbandoned` outcome that is logged and proceeded through.
 
 **A contender probes for the holder in front of that gate, and only in front of
-it.** `SessionLock.ProbeForHolder` opens `lock.json` before the per-directory
+it.** `SessionLock.ProbeForHolder` opens `browserai.json` before the per-directory
 mutex is created: a sharing violation is the kernel's answer to *who owns this*,
 so a peer that only wants to name the holder is answered there and never queues
 behind every other peer. Measured against a directory a live holder already had,
@@ -379,12 +379,12 @@ Attribution may fail and must fail safe: a class-qualified
 `FindWindowExW(HWND_MESSAGE, …)` walk with `ERROR_INVALID_WINDOW_HANDLE` checked
 and the walk restarted, and a candidate no window claims is reported loudly and
 never touched. A stray is a process running our binary **whose** attributed
-directory holds a `lock.json` this sweeper can take itself, without writing to it.
+directory holds a `browserai.json` this sweeper can take itself, without writing to it.
 
 **Both families are offered, and everything below the front door reads the family
 from the session's own record.** `browserai_init` accepts `chromium` or
 `firefox`; provisioning, the config generator, the launch preflight and the stray
-sweep all take it from `lock.json` rather than assuming one, so a Firefox record
+sweep all take it from `browserai.json` rather than assuming one, so a Firefox record
 can never be run as Chromium against a Firefox profile. *Corrected 2026-08-19
 (previously Firefox was built, measured and not offered.)* The per-family
 first-run download sizes a refusal quotes are in

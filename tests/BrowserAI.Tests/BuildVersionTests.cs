@@ -61,7 +61,7 @@ internal sealed partial class BuildVersionTests
         // Another shipped Velopack product filed the widened form of this as an
         // observed symptom -- "version shows 4 parts" -- and BrowserAI carried
         // the collapsed form live until step 18: SessionLock stamped every
-        // lock.json from GetName().Version.
+        // browserai.json from GetName().Version.
         var assemblyVersion = typeof(BuildVersion).Assembly.GetName().Version;
 
         await Assert.That(assemblyVersion).IsNotNull();
@@ -109,7 +109,7 @@ internal sealed partial class BuildVersionTests
     [Test]
     public async Task EverySessionRecordsTheVersionTheBuildWasDerivedAs()
     {
-        // lock.json's build stamp is the first thing a support question reads,
+        // browserai.json's build stamp is the first thing a support question reads,
         // and until step 18 it would have said 0.0.0.0 for the entire 0.x line.
         using var scratch = ScratchDirectory.Create("version-stamp");
         var path = SessionPath.Resolve(Path.Combine(scratch.Path, "stamped"));

@@ -22,7 +22,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Never trusted, only followed.</b> An entry is a pointer, never an
-/// authorisation. Every entry is verified by opening the <c>lock.json</c> it
+/// authorisation. Every entry is verified by opening the <c>browserai.json</c> it
 /// points at, and a directory that has none is reported as not ours and acted on
 /// in no other way. That is what makes an entry that somehow named a personal
 /// Chrome profile harmless: it is an inventory line, and nothing downstream may
@@ -45,7 +45,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>The write is <i>not</i> durable, and that is the difference from
-/// <see cref="SessionLock"/>.</b> <c>lock.json</c> is written
+/// <see cref="SessionLock"/>.</b> <c>browserai.json</c> is written
 /// <c>WriteThrough</c> plus <c>Flush(flushToDisk: true)</c> — measured at ~17 ms
 /// — because it is the whole ownership guard and its loss cannot be
 /// reconstructed. An index entry can: it is a pure function of a directory that
@@ -181,7 +181,7 @@ internal sealed class SessionIndex
     /// <remarks>
     /// <b>Following is verification, not trust.</b> Nothing here decides that a
     /// directory is ours because it is listed; it decides that by opening the
-    /// <c>lock.json</c> inside it. The states this returns are an inventory
+    /// <c>browserai.json</c> inside it. The states this returns are an inventory
     /// report and confer no authority on anything.
     /// </remarks>
     public IReadOnlyList<SessionIndexEntry> Follow()
@@ -226,7 +226,7 @@ internal sealed class SessionIndex
     /// self-cleaning rule would remove.</b> That rule licenses removal only
     /// because a wrongly-dropped entry is restored by the next <c>init</c> or
     /// <c>resume</c>, and neither of these two can ever do that. A
-    /// directory whose <c>lock.json</c> is present but unparseable is a session
+    /// directory whose <c>browserai.json</c> is present but unparseable is a session
     /// — a broken one — and it cannot restore its own entry, because
     /// <see cref="SessionLock.TryAcquire"/> refuses an unreadable record. And a
     /// path on a volume that is not mounted has not been destroyed; the drive is
@@ -448,7 +448,7 @@ internal sealed class SessionIndex
         }
         catch (Exception failure) when (failure is LockFileException or IOException or UnauthorizedAccessException)
         {
-            // There IS a lock.json and it cannot be acted on. That is a session
+            // There IS a browserai.json and it cannot be acted on. That is a session
             // in trouble, and the pointer is the only thing that can lead anyone
             // to it — see the note on Sweep().
             return new SessionIndexEntry
@@ -464,7 +464,7 @@ internal sealed class SessionIndex
     }
 
     /// <summary>
-    /// What an absent <c>lock.json</c> means, which is two different things and
+    /// What an absent <c>browserai.json</c> means, which is two different things and
     /// only one of them is safe to act on.
     /// </summary>
     /// <remarks>
@@ -475,7 +475,7 @@ internal sealed class SessionIndex
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md).
     /// <c>SessionLock.ReadRecord</c> takes no gate — it cannot, because the whole
     /// point of the index is to describe sessions nobody is holding — so it can
-    /// land in the instant in which <c>lock.json</c>'s <b>name is unbound</b>
+    /// land in the instant in which <c>browserai.json</c>'s <b>name is unbound</b>
     /// while another process replaces the record
     /// ([hazard index](../../../HAZARDS.md#hazard-index): a rename over a file
     /// with an open handle is refused, the writer retries, and the name is free
@@ -658,24 +658,24 @@ internal sealed class SessionIndex
 /// <summary>What following one entry found.</summary>
 internal enum SessionIndexEntryState
 {
-    /// <summary>The directory exists and holds a <c>lock.json</c> this build can read.</summary>
+    /// <summary>The directory exists and holds a <c>browserai.json</c> this build can read.</summary>
     Session,
 
     /// <summary>
-    /// The directory exists and holds a <c>lock.json</c> that cannot be acted on.
+    /// The directory exists and holds a <c>browserai.json</c> that cannot be acted on.
     /// <b>Kept</b>: it is a session in trouble, and nothing else can lead anyone to it.
     /// </summary>
     LockUnreadable,
 
     /// <summary>
-    /// The directory exists and has no <c>lock.json</c>. Not ours — a personal
+    /// The directory exists and has no <c>browserai.json</c>. Not ours — a personal
     /// browser profile reaches this state, and nothing acts on it.
     /// </summary>
     NotASession,
 
     /// <summary>
-    /// The directory exists, has no <c>lock.json</c> <b>at this instant</b>, and
-    /// carries a <c>lock.json.new-…</c> beside the gap — so another BrowserAI is
+    /// The directory exists, has no <c>browserai.json</c> <b>at this instant</b>, and
+    /// carries a <c>browserai.json.new-…</c> beside the gap — so another BrowserAI is
     /// replacing the record right now. <b>Kept</b>: a session mid-rewrite is the
     /// opposite of a session that never was.
     /// </summary>
@@ -737,7 +737,7 @@ internal sealed record SessionIndexEntry
     /// ⚠️ <b><see cref="SessionIndexEntryState.RecordInFlight"/> is deliberately
     /// not in the list, and separating it out of
     /// <see cref="SessionIndexEntryState.NotASession"/> is what made the list
-    /// safe.</b> An absent <c>lock.json</c> was one state, so the instant in
+    /// safe.</b> An absent <c>browserai.json</c> was one state, so the instant in
     /// which a live session's record is being renamed into place read as *never
     /// was a session* and the entry was dropped. See <c>SessionIndex.Absent</c>
     /// for the discriminator and why it cannot fail dangerously.

@@ -48,7 +48,7 @@ namespace BrowserAI.Tests;
 /// </description></item>
 /// <item><description>
 /// <b>Every session belongs to exactly one process.</b> Each <c>init</c> answer
-/// names its own directory and no other's, and each session's <c>lock.json</c>
+/// names its own directory and no other's, and each session's <c>browserai.json</c>
 /// names the pid that opened it. A shared static, a path collision or a
 /// cross-wired session shows up here as one directory claimed twice.
 /// </description></item>

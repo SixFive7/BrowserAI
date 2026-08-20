@@ -192,7 +192,7 @@ internal sealed class ArtifactRoutingTests
         await Assert.That(index.RootElement.GetProperty("folders").EnumerateObject().Count())
             .IsEqualTo(ArtifactRouting.Folders.Count);
 
-        // §C names session.json beside lock.json under "our own files reject
+        // §C names session.json beside browserai.json under "our own files reject
         // what they do not recognise", and it carried no version to reject
         // anything against until 2026-08-17. The field is the half that cannot
         // be added afterwards: every file written before it existed would be
@@ -586,7 +586,7 @@ internal sealed class ArtifactRoutingTests
             await Assert.That(artifact.GetProperty("sessionRelative").GetString()!).StartsWith(SessionLayout.OutputFolderName);
         }
 
-        // Mode, browser and purpose stay lock.json's to own: a second copy of
+        // Mode, browser and purpose stay browserai.json's to own: a second copy of
         // the session's identity is a second thing to disagree with the first.
         await Assert.That(index.RootElement.TryGetProperty("mode", out _)).IsFalse();
         await Assert.That(index.RootElement.TryGetProperty("purpose", out _)).IsFalse();

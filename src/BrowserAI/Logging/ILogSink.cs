@@ -8,7 +8,7 @@ namespace BrowserAI.Logging;
 /// </summary>
 /// <remarks>
 /// There are two: the machine-wide rolling process log, and one file per session
-/// beside its <c>lock.json</c>. The seam exists so both get the <b>same</b>
+/// beside its <c>browserai.json</c>. The seam exists so both get the <b>same</b>
 /// record format from <see cref="FileLoggerProvider"/> — a second formatter would
 /// drift, and the first thing to drift would be the scope that names the session,
 /// which is the only thing making ~100 interleaved processes readable.

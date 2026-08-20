@@ -112,9 +112,9 @@ internal sealed class ArtifactRouter
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>§C names these files beside <c>lock.json</c> under "our own files
+    /// <b>§C names these files beside <c>browserai.json</c> under "our own files
     /// reject what they do not recognise", and until 2026-08-17 they carried no
-    /// version to reject anything against.</b> <c>lock.json</c> has had one from
+    /// version to reject anything against.</b> <c>browserai.json</c> has had one from
     /// the start because it is <i>read</i> — by the process that takes the
     /// session, by the sweeper deciding ownership, by <c>destroy</c> refusing a
     /// record it does not understand. These two are written and read by nobody
@@ -794,7 +794,7 @@ internal sealed class ArtifactRouter
 
     /// <summary>Rewrites <c>session.json</c> from what this router knows.</summary>
     /// <remarks>
-    /// Mode, browser and <c>purpose</c> stay <c>lock.json</c>'s to own. A second
+    /// Mode, browser and <c>purpose</c> stay <c>browserai.json</c>'s to own. A second
     /// copy of the session's identity is a second thing to disagree with the
     /// first; this file is the artifact record and nothing else.
     /// </remarks>
@@ -809,7 +809,7 @@ internal sealed class ArtifactRouter
 
             writer.WriteString(
                 "_what_this_is",
-                "What is inside this session: one entry per artifact BrowserAI routed, with the tool that produced it and both path forms. The session's identity -- mode, browser, purpose -- is lock.json's and is deliberately not duplicated here.");
+                "What is inside this session: one entry per artifact BrowserAI routed, with the tool that produced it and both path forms. The session's identity -- mode, browser, purpose -- is browserai.json's and is deliberately not duplicated here.");
 
             writer.WriteNumber("schemaVersion", CurrentSchemaVersion);
             writer.WriteString("session", _location.FullPath);

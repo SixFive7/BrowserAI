@@ -48,7 +48,7 @@ internal sealed record SessionRun
     /// <summary>Everything the moved session's own log held after it was resumed.</summary>
     public required string MovedSessionLog { get; init; }
 
-    /// <summary>Whether the destroyed session's <c>lock.json</c> is gone.</summary>
+    /// <summary>Whether the destroyed session's <c>browserai.json</c> is gone.</summary>
     public required bool DestroyedLockFileIsGone { get; init; }
 
     /// <summary>Whether the file that was held open through the destroy survived.</summary>
@@ -232,7 +232,7 @@ internal sealed record SessionRun
                 ["mode"] = "persistent",
             }).ConfigureAwait(false);
 
-            // Documents, which has no lock.json. Nothing is touched before the
+            // Documents, which has no browserai.json. Nothing is touched before the
             // refusal, which is the whole reason the check is a read.
             answers["destroyDocuments"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
             {

@@ -38,7 +38,7 @@ namespace BrowserAI.Interop;
 /// <c>browserai_reinstall_browser</c>, which refuses rather than coordinates.
 /// The sweep's scan does hold a handle with <c>PROCESS_TERMINATE</c>, and a
 /// candidate is still only killed when its attributed directory holds a
-/// <c>lock.json</c> whose lock the sweeper can take itself.
+/// <c>browserai.json</c> whose lock the sweeper can take itself.
 /// </para>
 /// <para>
 /// <b>Every row carries a creation time.</b> A pid alone is meaningless the
@@ -295,7 +295,7 @@ internal sealed class StrayScan(IReadOnlyList<StrayCandidate> candidates, int en
 /// <remarks>
 /// A candidate is <b>not</b> a stray. It becomes one only when a second,
 /// independent guard agrees: its attributed directory holds a
-/// <c>lock.json</c> whose lock the sweeper can take itself. Everything here is
+/// <c>browserai.json</c> whose lock the sweeper can take itself. Everything here is
 /// the first guard and the mechanics of acting on the second.
 /// </remarks>
 internal sealed partial class StrayCandidate : IDisposable

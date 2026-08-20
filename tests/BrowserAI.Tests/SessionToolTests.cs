@@ -323,7 +323,7 @@ internal sealed class SessionToolTests
         // Collapsing them sent half the callers to a tool that would refuse them
         // on the next turn with row 4.
         await Assert.That(run.IsError("unknownSession")).IsTrue();
-        await Assert.That(run.Text("unknownSession")).Contains("there is no 'lock.json' there");
+        await Assert.That(run.Text("unknownSession")).Contains("there is no 'browserai.json' there");
         await Assert.That(run.Text("unknownSession")).Contains(SessionToolSurface.Init);
         await Assert.That(run.Text("unknownSession")).Contains(SessionToolSurface.List);
 

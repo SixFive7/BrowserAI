@@ -33,7 +33,7 @@ namespace BrowserAI.Tests;
 /// <list type="table">
 ///   <item>
 ///     <term>R1 — the sweep kills a browser a live session just launched</term>
-///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>lock.json</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill — and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
+///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.json</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill — and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
 ///   </item>
 ///   <item>
 ///     <term>R2 — PID reuse between detection and kill</term>
@@ -604,7 +604,7 @@ internal sealed class StraySweepTests
             sweeps++;
 
             // A live session's entry is never removable: it exists, it has a
-            // lock.json, and following it lands on a session. The race is only
+            // browserai.json, and following it lands on a session. The race is only
             // ever about missing one that is about to be re-asserted anyway.
             await Assert.That(swept.Removed.Where(entry => live.Any(session => string.Equals(session.IndexKey, entry.Key, StringComparison.OrdinalIgnoreCase)))).IsEmpty();
         }
@@ -1022,7 +1022,7 @@ internal sealed class StraySweepTests
             NullLogger.Instance);
 
         // Taken and released: what a crashed BrowserAI leaves behind is a
-        // lock.json with nothing holding it.
+        // browserai.json with nothing holding it.
         result.Acquired?.Dispose();
 
         return directory;
