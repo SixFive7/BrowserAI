@@ -645,6 +645,46 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The pointers BrowserAI handed the model did not resolve — two of them, and
+  they were the same defect twice.** Upstream writes two artifacts BrowserAI's
+  inbound routing cannot reach, because neither comes from a `filename`
+  argument: the **console log** and the **snapshot `.yml`**. It publishes a
+  pointer to each *inside the answer* — a Markdown link to `./page-<stamp>.yml`,
+  and `- New console entries: console-<stamp>.log#L1-L24` — and both are
+  relative to the child's working directory, which is the output root.
+  **BrowserAI's after-the-fact sweep moved both into typed folders**, so every
+  one of those pointers named a file that was no longer there.
+
+  **The console half compounded, because the file is still open.** Reproduced
+  2026-08-20 against a real Chromium through the published binary: after the
+  first sweep the child appended again, recreated the log at the output root,
+  and the next sweep collided with the moved copy and landed it as `-2`. The
+  answer then said `console-<stamp>.log#L25-L28` about a file with **24 lines in
+  it**, while those four entries sat in `console-<stamp>-2.log` at *its* lines 1
+  to 4. A third call produced `-3`. **Bare upstream does not have this** —
+  nothing there moves the file.
+
+  **The fix is a mechanical rule rather than a list of prefixes.**
+  `ArtifactRouter.NoteWhatTheAnswerPublished` reads the child's own result
+  before the sweep runs and marks every loose file whose name it mentions; the
+  sweep then **records those where they are instead of moving them**, so the
+  caller still gets the absolute path, the index still gets an entry, and the
+  note says plainly that the file was left where the browser wrote it. A list of
+  the two prefixes would have been right today and silently wrong the first time
+  upstream published a pointer to a third.
+
+  ⚠️ **The set is monotone, and that is the half a careless fix would miss.**
+  The console log is named only in the answer that *creates* entries and in none
+  of the answers that follow, so a set scoped to one call leaves the file movable
+  on the very next call — which reintroduces the whole defect. Both tests were
+  planted red first and reported the exact symptom above:
+  `ArtifactPointerTests.EveryPointerARealChildPublishesResolves` drives a real
+  browser and checks every `#Lx-Ly` against the lines of the file it names, and
+  `.ANamedFileSurvivesEveryLaterSweepAndAnUnnamedOneIsStillSorted` holds the
+  monotone half and carries the control — a download nothing named is still
+  sorted, so this is a rule about pointers rather than the sweep being switched
+  off.
+
 - **755 stale `.live` markers had accumulated, because the only code that
   reclaimed them ran somewhere nothing ever reaches.** Reclaim lived inside the
   updater's *am I alone?* census, which `UpdateService` calls only after an update

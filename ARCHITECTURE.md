@@ -176,6 +176,21 @@ The largest area, and the one everything else keys on.
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
+⚠️ **A file the child has named in its own answer is never moved.** Upstream
+writes two artifacts the inbound rewrite cannot reach — the console log and the
+snapshot `.yml` — and publishes a pointer to each *inside the answer*, relative
+to the child's working directory, which is the output root. Sorting either into
+a typed folder left the pointer naming nothing, and the console log compounded
+because it is still open: the child recreated it at the root and the next sweep
+landed the copy as `-2`, so the answer named lines a 24-line file did not have.
+**`ArtifactRouter.NoteWhatTheAnswerPublished` reads the child's result before
+the sweep and marks every loose file the answer mentions**; those are recorded
+where they are instead of moved. The set is **monotone** — the log is named only
+in the answer that creates entries — and the rule is *the answer mentioned this
+name* rather than a list of prefixes, so a third pointer upstream adds is covered
+without an edit. `ArtifactPointerTests` holds both halves, one against a real
+browser.
+
 **The session directory is the identity.** One directory holds `browserai.json` at its
 root and `profile/`, `output/` and `downloads/` beneath it. `browserai.json` is both
 the lock and the record — held `FileAccess.ReadWrite, FileShare.Read`, carrying

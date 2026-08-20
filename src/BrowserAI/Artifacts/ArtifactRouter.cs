@@ -55,6 +55,16 @@ internal sealed record ArtifactAnswer(string Note, ArtifactImage? Image);
 /// <param name="SessionRelativePath">Where it is, relative to the session directory.</param>
 /// <param name="RenamedFrom">The name that was taken, when the file had to be suffixed.</param>
 /// <param name="SortedAfterTheFact">Whether it was classified after the fact rather than routed inbound.</param>
+/// <param name="LeftWhereTheChildPutIt">
+/// Whether it was recorded where the child wrote it rather than moved, because
+/// the child's own answer had already published its name.
+/// <para>
+/// ⚠️ <b>The third state, added 2026-08-20, and it exists because the second one
+/// was breaking links.</b> Sorting a file the child has told the caller about
+/// moves it out from under a pointer the caller is about to follow — see
+/// <c>ArtifactRouter.NoteWhatTheAnswerPublished</c>.
+/// </para>
+/// </param>
 internal sealed record ArtifactRecord(
     string Tool,
     DateTimeOffset At,
@@ -63,7 +73,8 @@ internal sealed record ArtifactRecord(
     string AbsolutePath,
     string SessionRelativePath,
     string? RenamedFrom,
-    bool SortedAfterTheFact);
+    bool SortedAfterTheFact,
+    bool LeftWhereTheChildPutIt = false);
 
 /// <summary>
 /// One session's artifacts: where each goes, what happened to it, and what the
@@ -172,6 +183,26 @@ internal sealed class ArtifactRouter
     private readonly SessionPath _location;
     private readonly Lock _gate = new();
     private readonly HashSet<string> _reserved = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Every file name the child has published in an answer of its own, and
+    /// therefore every file this router must never move.
+    /// </summary>
+    /// <remarks>
+    /// <b>Monotone on purpose.</b> A name is added the first time an answer
+    /// mentions it and is never removed: the console log is named in the answer
+    /// that <i>creates</i> entries and not in the ones that follow, so a set
+    /// scoped to one call would leave the file movable on the very next call —
+    /// which is the second half of the defect this exists to close.
+    /// </remarks>
+    private readonly HashSet<string> _published = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Which published files have already been written into the index.</summary>
+    /// <remarks>
+    /// Without it a session that made forty calls would record the same console
+    /// log forty times, and the note under every answer would repeat it.
+    /// </remarks>
+    private readonly HashSet<string> _recorded = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ArtifactRecord> _artifacts = [];
     private readonly Dictionary<string, int> _counters = new(StringComparer.Ordinal);
     private readonly DateTimeOffset _created = DateTimeOffset.Now;
@@ -359,8 +390,17 @@ internal sealed class ArtifactRouter
     /// for a file that is not there.
     /// </remarks>
     /// <param name="plan">What <see cref="Plan"/> decided, or <see langword="null"/>.</param>
+    /// <param name="answer">
+    /// The child's own result, serialised, or <see langword="null"/> when there
+    /// is none.
+    /// <para>
+    /// ⚠️ <b>Read BEFORE the sweep and for one reason: a file the child has
+    /// named in its own answer must not move.</b> See
+    /// <see cref="NoteWhatTheAnswerPublished"/>.
+    /// </para>
+    /// </param>
     /// <returns>What to append to the answer, or <see langword="null"/> when there is nothing to say.</returns>
-    public ArtifactAnswer? Complete(ArtifactPlan? plan)
+    public ArtifactAnswer? Complete(ArtifactPlan? plan, string? answer = null)
     {
         // A call that was refused inside a success envelope -- upstream's
         // `isError: true` -- wrote nothing, and reporting a file that is not
@@ -372,6 +412,12 @@ internal sealed class ArtifactRouter
             Release(plan);
             plan = null;
         }
+
+        // ⚠️ BEFORE THE SWEEP, ALWAYS. The names this call published are what
+        // the sweep below is forbidden to move, and reading them afterwards
+        // would be reading them one call too late -- which is exactly the defect
+        // this closes.
+        NoteWhatTheAnswerPublished(answer);
 
         var moved = SweepOutputRoot();
 
@@ -663,6 +709,85 @@ internal sealed class ArtifactRouter
     /// name with no prefix is a download, because a download is the one artifact
     /// whose name upstream did not choose.
     /// </remarks>
+    /// <summary>
+    /// Marks every loose file whose name the child's own answer mentions, so
+    /// that the sweep below leaves it alone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THIS IS THE FIX FOR TWO REPRODUCED DEFECTS, and they were the same
+    /// defect twice.</b> Upstream writes two kinds of file that BrowserAI's
+    /// inbound routing cannot reach, because neither comes from a
+    /// <c>filename</c> argument: the <b>console log</b> and the <b>snapshot
+    /// <c>.yml</c></b>. It then publishes a pointer to each <i>in the answer
+    /// itself</i> — a Markdown link to <c>./page-….yml</c>, and
+    /// <c>- New console entries: console-….log#L1-L24</c> — and both are
+    /// relative to the child's working directory, which is the output root. The
+    /// sweep moved both into <c>output\console\</c> and <c>output\page\</c>, so
+    /// <b>every one of those pointers named a file that was no longer there</b>.
+    /// </para>
+    /// <para>
+    /// <b>The console half was worse, because the file is still open.</b>
+    /// Measured 2026-08-20 against a real Chromium through the published binary:
+    /// after the first sweep the child appended again, recreated the log at the
+    /// output root, and the next sweep collided with the moved copy and landed it
+    /// as <c>-2</c>. The answer then said
+    /// <c>console-….log#L25-L28</c> — a file with 24 lines in it — while those
+    /// four entries sat in <c>console-….log-2</c> at <i>its</i> lines 1 to 4.
+    /// A third call produced <c>-3</c>. <b>Bare upstream does not have this</b>:
+    /// nothing there moves the file.
+    /// </para>
+    /// <para>
+    /// <b>The rule is mechanical rather than a list.</b> A list of the two
+    /// prefixes would be right today and silently wrong the first time upstream
+    /// published a pointer to a third; what is actually true is <i>the child
+    /// named this file in an answer</i>, and that is what is tested. The set is
+    /// monotone — see <c>_published</c> — because the console log is named only
+    /// in the answer that creates entries, and a per-call set would leave it
+    /// movable on the very next call.
+    /// </para>
+    /// <para>
+    /// <b>Substring rather than a parse, deliberately.</b> The pointer's shape is
+    /// upstream's and changes without notice — a Markdown link today, a bare name
+    /// with an <c>#L</c> fragment beside it — and what matters is only whether
+    /// the name appears at all. A generated name carries a millisecond timestamp,
+    /// so a false positive would need the answer to contain that exact string for
+    /// some other reason.
+    /// </para>
+    /// </remarks>
+    /// <param name="answer">The child's result, serialised, or <see langword="null"/>.</param>
+    private void NoteWhatTheAnswerPublished(string? answer)
+    {
+        if (string.IsNullOrEmpty(answer))
+        {
+            return;
+        }
+
+        IReadOnlyList<string> loose;
+
+        try
+        {
+            loose = [.. Directory.EnumerateFiles(OutputRoot)];
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        lock (_gate)
+        {
+            foreach (var file in loose)
+            {
+                var name = Path.GetFileName(file);
+
+                if (answer.Contains(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    _ = _published.Add(name);
+                }
+            }
+        }
+    }
+
     private List<ArtifactRecord> SweepOutputRoot()
     {
         var moved = new List<ArtifactRecord>();
@@ -681,6 +806,38 @@ internal sealed class ArtifactRouter
         foreach (var file in loose)
         {
             var name = Path.GetFileName(file);
+
+            bool published;
+            bool alreadyRecorded;
+
+            lock (_gate)
+            {
+                published = _published.Contains(name);
+                alreadyRecorded = published && !_recorded.Add(name);
+            }
+
+            if (published)
+            {
+                // ⚠️ RECORDED WHERE IT IS, NOT MOVED. The child's own answer
+                // points at this path; moving the file would leave that pointer
+                // naming nothing, which is worse than no pointer at all. It is
+                // still recorded, because "not moved" must not mean "not
+                // mentioned" -- the caller gets the absolute path and the index
+                // gets an entry, once.
+                if (!alreadyRecorded)
+                {
+                    moved.Add(Record(
+                        $"named by the child in its own answer: {name}",
+                        file,
+                        Path.GetRelativePath(_location.FullPath, file),
+                        renamedFrom: null,
+                        sortedAfterTheFact: false,
+                        leftWhereTheChildPutIt: true));
+                }
+
+                continue;
+            }
+
             var prefix = ArtifactRouting.PrefixOf(name) ?? ArtifactRouting.DownloadPrefix;
             var folder = Path.Combine(_location.FullPath, ArtifactRouting.FolderFor(prefix));
 
@@ -715,7 +872,13 @@ internal sealed class ArtifactRouter
         return moved;
     }
 
-    private ArtifactRecord Record(string tool, string absolute, string relative, string? renamedFrom, bool sortedAfterTheFact)
+    private ArtifactRecord Record(
+        string tool,
+        string absolute,
+        string relative,
+        string? renamedFrom,
+        bool sortedAfterTheFact,
+        bool leftWhereTheChildPutIt = false)
     {
         long bytes;
 
@@ -735,7 +898,7 @@ internal sealed class ArtifactRouter
             url = _lastUrl;
         }
 
-        return new ArtifactRecord(tool, DateTimeOffset.Now, url, bytes, absolute, relative, renamedFrom, sortedAfterTheFact);
+        return new ArtifactRecord(tool, DateTimeOffset.Now, url, bytes, absolute, relative, renamedFrom, sortedAfterTheFact, leftWhereTheChildPutIt);
     }
 
     private string Note(ArtifactPlan? plan, IReadOnlyList<ArtifactRecord> written, bool indexed, InlineImage image)
@@ -751,9 +914,13 @@ internal sealed class ArtifactRouter
         foreach (var artifact in written)
         {
             _ = note
-                .Append(artifact.SortedAfterTheFact
-                    ? "BrowserAI sorted an artifact it could not route on the way in.\n"
-                    : "BrowserAI routed this artifact.\n")
+                .Append(artifact switch
+                {
+                    { LeftWhereTheChildPutIt: true } =>
+                        "BrowserAI LEFT this artifact where the browser wrote it, because the answer above links to it there. Do not expect it under a typed folder.\n",
+                    { SortedAfterTheFact: true } => "BrowserAI sorted an artifact it could not route on the way in.\n",
+                    _ => "BrowserAI routed this artifact.\n",
+                })
                 .Append("  file: ").Append(artifact.AbsolutePath).Append('\n')
                 .Append("  session-relative: ").Append(artifact.SessionRelativePath).Append('\n')
                 .Append("  size: ").Append(Megabytes(artifact.Bytes)).Append('\n');
@@ -859,6 +1026,11 @@ internal sealed class ArtifactRouter
                     if (artifact.SortedAfterTheFact)
                     {
                         writer.WriteBoolean("sortedAfterTheFact", value: true);
+                    }
+
+                    if (artifact.LeftWhereTheChildPutIt)
+                    {
+                        writer.WriteBoolean("leftWhereTheChildPutIt", value: true);
                     }
 
                     writer.WriteEndObject();

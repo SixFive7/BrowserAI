@@ -605,7 +605,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // silent failure introduced by the fix for an old one. It carries
             // the image block back as well, on the calls whose name BrowserAI
             // supplied -- see ArtifactTools.
-            var completion = live.Artifacts.Complete(plan);
+            // ⚠️ THE CHILD'S OWN ANSWER GOES IN, and it is what stops the
+            // artifact sweep moving a file the answer has just linked to. Two
+            // reproduced defects, both the same shape: a Markdown link to
+            // `./page-<stamp>.yml` and `- New console entries:
+            // console-<stamp>.log#L1-L24` are both relative
+            // to the child's working directory, which is the output root, and
+            // sorting either into a typed folder left the pointer naming
+            // nothing. See ArtifactRouter.NoteWhatTheAnswerPublished.
+            var completion = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
 
             await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
             return;
