@@ -644,7 +644,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
 
-        using var claim = MaintenanceLock.TryTake(root, ProvisionedBrowsers.Chromium);
+        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
 
         await Assert.That(claim).IsNotNull();
 
@@ -657,13 +657,22 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
+        // ⚠️ Compared against the part of the row that does not move. Since
+        // 2026-08-20 the refusal carries a progress clause -- how long the
+        // reinstall has been running and what is staged -- and the elapsed
+        // figure advances between the call and this line, so a whole-string
+        // comparison would be asserting that two clocks agree. The clause itself
+        // is asserted in ReinstallBrowserTests, where the reinstall is the thing
+        // under test rather than the catalogue.
+        var reference = SessionErrors.BrowsersAreBeingReinstalled(
+            SessionToolSurface.Init,
+            root,
+            MaintenanceLock.Describe(root));
+
         Match(
             TextOf(refused),
             nameof(SessionErrors.BrowsersAreBeingReinstalled),
-            SessionErrors.BrowsersAreBeingReinstalled(
-                SessionToolSurface.Init,
-                root,
-                MaintenanceLock.Probe(root)!));
+            reference[..reference.IndexOf("There is no claim file", StringComparison.Ordinal)]);
     }
 
     [Test]

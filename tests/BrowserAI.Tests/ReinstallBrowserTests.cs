@@ -32,6 +32,9 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class ReinstallBrowserTests
 {
+    /// <summary>The probe executable, which is how a claim is held from another process.</summary>
+    private static readonly string ProbePath = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+
     /// <summary>The one argument the tool takes, named once so no assertion carries a literal array.</summary>
     private static readonly string[] TheOnlyArgument = ["browser"];
 
@@ -335,10 +338,17 @@ internal sealed class ReinstallBrowserTests
         await Assert.That((bool?)refused["isError"]).IsTrue().Because(text);
         await Assert.That(text).Contains(session);
 
-        // It says the thing the lock made true, which is what the refusal is FOR:
-        // no new session can start while this call is deciding.
-        await Assert.That(text).Contains("no new session can start meanwhile");
+        // ⚠️ It no longer claims that no new session can start meanwhile, and the
+        // deletion is a CORRECTION rather than a loss (previously
+        // `Contains("no new session can start meanwhile")`). Under the
+        // reader/writer claim this call did NOT get the root -- the session has
+        // it -- so nothing is stopping a second session starting, and the old
+        // sentence was true only of the design where the reinstall took the
+        // claim first and counted afterwards.
+        await Assert.That(text.Contains("no new session can start meanwhile", StringComparison.Ordinal)).IsFalse();
         await Assert.That(text).Contains("did not wait for those sessions and never will");
+        await Assert.That(text).Contains("shared for its whole life");
+        await Assert.That(text).Contains("published no intent");
     }
 
     /// <summary>
@@ -361,7 +371,7 @@ internal sealed class ReinstallBrowserTests
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        using var claim = MaintenanceLock.TryTake(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
 
         await Assert.That(claim).IsNotNull();
 
@@ -406,29 +416,38 @@ internal sealed class ReinstallBrowserTests
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var session = Path.Combine(sessions.Root, "created-before-the-reinstall");
+        var built = Path.Combine(sessions.Root, "created-before-the-reinstall");
+        var session = Path.Combine(sessions.Root, "resumable-and-held-by-nobody");
 
         var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
-            ["directory"] = session,
+            ["directory"] = built,
             ["purpose"] = "a session that exists so resume has something to name",
             ["mode"] = "headless",
         });
 
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
-        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = session });
 
-        // Re-created on disk without this process driving it, so `resume` has a
-        // record to reopen rather than a session it already holds.
-        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
-        {
-            ["directory"] = session,
-            ["purpose"] = "a session that exists so resume has something to name",
-            ["mode"] = "headless",
-        });
+        // ⚠️ A RECORD COPIED ASIDE, AND THEN NOTHING LIVE ANYWHERE, which is a
+        // consequence of the reader/writer claim rather than ceremony: since
+        // 2026-08-20 every open session holds the browsers root SHARED, so a
+        // reinstall cannot take it exclusively while one exists. Leaving the
+        // session open -- which is what this test did until that day -- would now
+        // fail the exclusive open and test the opposite direction.
+        //
+        // The copy is exactly the shape `browserai_resume` needs: a directory
+        // holding a record that no live process owns.
+        _ = Directory.CreateDirectory(session);
+        File.Copy(
+            Path.Combine(built, SessionLayout.LockFileName),
+            Path.Combine(session, SessionLayout.LockFileName));
 
-        using var claim = MaintenanceLock.TryTake(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = built });
 
+        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+
+        // The control: it really was taken, which is only possible because
+        // nothing holds the root shared any more.
         await Assert.That(claim).IsNotNull();
 
         var refusedInit = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -566,7 +585,7 @@ internal sealed class ReinstallBrowserTests
     /// </para>
     /// <para>
     /// <b>No default session, because that is the refusal this target has</b> —
-    /// see <see cref="ASharedReinstallIsBlockedByASessionOfEitherFamily"/>. The
+    /// see <see cref="ASessionOfEitherFamilyBlocksEveryReinstallTarget"/>. The
     /// rig opens one, and it would block this.
     /// </para>
     /// </remarks>
@@ -679,7 +698,7 @@ internal sealed class ReinstallBrowserTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ASharedReinstallIsBlockedByASessionOfEitherFamily()
+    public async Task ASessionOfEitherFamilyBlocksEveryReinstallTarget()
     {
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -705,13 +724,12 @@ internal sealed class ReinstallBrowserTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue().Because(text);
         await Assert.That(text).Contains(session);
-        await Assert.That(text).Contains("BOTH browser families use");
         await Assert.That(text).Contains("no force option");
 
-        // ⚠️ AND IT SAYS WHY A SESSION THAT IS NOT RUNNING THE CODEC BLOCKS IT.
+        // ⚠️ AND IT SAYS WHY A SESSION THAT IS NOT RUNNING ANYTHING BLOCKS IT.
         // Without that sentence the refusal reads as a bug to whoever meets it:
         // nothing is running out of those trees, and the tool refused anyway.
-        await Assert.That(text).Contains("only at the moment it records");
+        await Assert.That(text).Contains("shared for its whole life");
 
         // The shared trees are untouched, which is what "nothing was changed"
         // has to mean.
@@ -720,15 +738,21 @@ internal sealed class ReinstallBrowserTests
             await Assert.That(Directory.Exists(directory)).IsFalse().Because(text);
         }
 
-        // The control, and it is the half that stops this passing against a
-        // filter that gave up: the same Firefox session does NOT block a
+        // ⚠️ THE CONTROL IS NOW THE OPPOSITE ASSERTION, and the inversion is the
+        // decision (previously: "the same Firefox session does NOT block a
         // chromium reinstall, because nothing is running out of the chromium
-        // tree. The rig has no installer, so this is asserted on the refusal not
-        // being the session one rather than on the reinstall completing.
+        // tree"). The maintainer's words on 2026-08-20 were "any init or resume
+        // should take a system level lock. No matter the browser type", and the
+        // claim is one file at the root of the browsers directory that knows
+        // nothing about families -- so the same Firefox session blocks a chromium
+        // reinstall too, and the refusal names it. A filter that "simply stopped
+        // filtering" is now the correct behaviour rather than the failure this
+        // arm guarded against, and what guards the property instead is that the
+        // refusal has to NAME the session the caller must close.
         var chromium = TextOf(await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium));
 
         await Assert.That(chromium.Contains(session, StringComparison.OrdinalIgnoreCase))
-            .IsFalse()
+            .IsTrue()
             .Because(chromium);
     }
 
@@ -838,6 +862,234 @@ internal sealed class ReinstallBrowserTests
 
         await Assert.That((bool?)invented["isError"]).IsTrue();
         await Assert.That(TextOf(invented)).Contains("is not a BrowserAI session tool");
+    }
+
+    /// <summary>
+    /// The claims are cumulative: two sessions both hold the root, and the
+    /// reinstall is refused until <b>both</b> are gone.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two rather than one, because one proves nothing about cumulativeness.</b>
+    /// The maintainer's word for it was <i>"cumulative"</i>, and what that means
+    /// on Windows is that any number of <c>FileAccess.Read</c> /
+    /// <c>FileShare.Read</c> opens coexist with no count kept anywhere — so the
+    /// arm that would fail against a design holding one claim per process is the
+    /// one where the first session goes and the second still holds it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TwoSessionsBothHoldTheRootAndOneClosingIsNotEnough()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var root = sessions.Environment.Paths.BrowsersDirectory;
+        var first = Path.Combine(sessions.Root, "cumulative-one");
+        var second = Path.Combine(sessions.Root, "cumulative-two");
+
+        foreach (var directory in new[] { first, second })
+        {
+            var opened = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = directory,
+                ["purpose"] = "one of two sessions holding the browsers root at once",
+                ["mode"] = "headless",
+            });
+
+            await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
+        }
+
+        // Both are open, so the exclusive open is refused and the refusal names
+        // both -- a list that named one would leave the caller closing half of
+        // what is in the way.
+        var refused = TextOf(await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium));
+
+        await Assert.That(refused).Contains(first);
+        await Assert.That(refused).Contains(second);
+        await Assert.That(refused).Contains("2 session(s) are holding it");
+
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = first });
+
+        // ⚠️ THE ARM THAT MATTERS. One is gone and the other still holds it, so
+        // the claim must still be refused. A design that kept one claim per
+        // process, or a count released on the first close, is red here.
+        using (var stillHeld = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium))
+        {
+            await Assert.That(stillHeld).IsNull();
+        }
+
+        _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = second });
+
+        using var free = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+
+        // And the control: with both gone it really is available, so the arm
+        // above is about the second session rather than about something that
+        // never releases.
+        await Assert.That(free).IsNotNull();
+    }
+
+    /// <summary>
+    /// A reader that <b>dies</b> releases the claim, with nothing running to
+    /// clean up after it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the property that decided the mechanism, and it cannot be
+    /// proven in one process.</b> A named semaphore spans threads exactly as a
+    /// file does, and its count is <i>not</i> restored when its holder dies — so
+    /// one crashed session would refuse every reinstall on the machine until the
+    /// next reboot. Windows closes a file handle when the process object goes,
+    /// however it went.
+    /// </para>
+    /// <para>
+    /// <b>The probe takes the claim through <c>MaintenanceLock.TakeShared</c></b>,
+    /// so what is killed holds the product's own open with the product's own
+    /// share mode rather than a <c>FileStream</c> a test wrote.
+    /// </para>
+    /// <para>
+    /// <b>The kill is the job object closing</b>, which is a
+    /// <c>TerminateProcess</c> with no unwinding at all — the harshest death
+    /// available, and the one a semaphore could not survive.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AReaderThatDiesReleasesTheRootWithNothingRunningToCleanUp()
+    {
+        using var scratch = ScratchDirectory.Create("claim-holder-dies");
+
+        var root = Path.Combine(scratch.Path, "browsers");
+        var ready = Path.Combine(scratch.Path, "ready.json");
+
+        _ = Directory.CreateDirectory(root);
+
+        using (var scope = new JobObjectScope())
+        {
+            _ = scope.Launch(ProbePath, scratch.Path, "browsers-claim", root, ready);
+
+            await WaitForFileAsync(ready);
+
+            // Held by a process this one has no handle on and shares no memory
+            // with, which is the only arrangement that proves anything here.
+            using var blocked = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+
+            await Assert.That(blocked).IsNull();
+        }
+
+        // The job closed, so the probe was terminated. Nothing ran on its way
+        // out -- no finally, no Dispose, no release.
+        //
+        // ⚠️ POLLED WITH A HANG DETECTOR RATHER THAN ASSERTED ON THE NEXT LINE,
+        // and the reason is the same one ScratchDirectory.RemoveTreeWhenReleased
+        // gives: `TerminateProcess` returning -- and even the process object
+        // signalling -- is not proof that the kernel has finished closing that
+        // process's handles. What is under test is whether the claim becomes
+        // free AT ALL with nothing running to release it, never how fast, so the
+        // bound is a hang detector and its failure names what it was waiting
+        // for.
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+
+        while (true)
+        {
+            using var afterwards = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+
+            if (afterwards is not null)
+            {
+                return;
+            }
+
+            await Assert.That(deadline.Elapsed < TestDefaults.BrowserHang)
+                .IsTrue()
+                .Because($"the claim on '{root}' was still held after the process holding it was terminated, so nothing released it");
+
+            await Task.Delay(10);
+        }
+    }
+
+    /// <summary>
+    /// The refusal a session tool meets during a reinstall says how far in the
+    /// reinstall is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Asserted on a figure the test can predict, exactly as the first-run
+    /// progress arm is.</b> The staging directory is filled by hand with a known
+    /// number of bytes; elapsed and the rate derived from it are the speed of the
+    /// machine, so what is asserted is the byte figure and that a rate was given
+    /// at all.
+    /// </para>
+    /// <para>
+    /// <b>And the zero-bytes arm is asserted too</b>, because it is the one a
+    /// careless renderer gets wrong: an empty staging directory is the delete, or
+    /// an extraction already under way, and never a stall.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRefusalDuringAReinstallSaysHowFarInItIs()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var root = sessions.Environment.Paths.BrowsersDirectory;
+
+        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+
+        await Assert.That(claim).IsNotNull();
+
+        // Nothing staged yet: the delete comes first, and the sentence must say
+        // which two things it cannot tell apart rather than implying a stall.
+        var beforeTheDownload = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "refused-before-the-download"),
+            ["purpose"] = "refused while the tree is being deleted",
+            ["mode"] = "headless",
+        }));
+
+        await Assert.That(beforeTheDownload).Contains("nothing in the download staging directory");
+        await Assert.That(beforeTheDownload).Contains("an extraction already under way");
+
+        // An archive in flight, as upstream's installer would have written it:
+        // the child's TEMP points at this directory, so it is the one place a
+        // peer can read a download's progress from outside the process running
+        // it.
+        var staging = Path.Combine(root, BrowserProvisioner.DownloadDirectoryName, ProvisionedBrowsers.Chromium);
+
+        _ = Directory.CreateDirectory(staging);
+        await File.WriteAllBytesAsync(Path.Combine(staging, "chrome-win64.zip"), new byte[2_500_000]);
+
+        var duringTheDownload = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "refused-during-the-download"),
+            ["purpose"] = "refused while the archive is arriving",
+            ["mode"] = "headless",
+        }));
+
+        await Assert.That(duringTheDownload).Contains("2.5 MB downloaded in");
+        await Assert.That(duringTheDownload).Contains("Mbps observed");
+
+        // And it still names the holder, which is the half the progress clause
+        // must not have displaced.
+        await Assert.That(duringTheDownload).Contains($"is reinstalling '{ProvisionedBrowsers.Chromium}'");
+    }
+
+    /// <summary>Waits for a probe's ready file, with a hang detector rather than a budget.</summary>
+    /// <param name="path">The file the probe writes once it holds the claim.</param>
+    /// <returns>The wait.</returns>
+    private static async Task WaitForFileAsync(string path)
+    {
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+
+        while (!File.Exists(path))
+        {
+            if (deadline.Elapsed > TestDefaults.BrowserHang)
+            {
+                throw new InvalidOperationException(
+                    $"The probe never wrote '{path}', so it never took the claim and nothing below would be testing what it says it is.");
+            }
+
+            await Task.Delay(10);
+        }
     }
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>

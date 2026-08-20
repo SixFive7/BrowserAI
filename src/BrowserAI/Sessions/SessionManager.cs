@@ -413,163 +413,214 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private async Task<ToolOutcome> InitAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
-        if (MaintenanceRefusal(SessionToolSurface.Init) is { } maintenance)
-        {
-            return maintenance;
-        }
+        // ⚠️ FIRST, AND HELD FROM HERE TO THE END OF THE SESSION. This is the
+        // reader half of the machine-wide reader/writer claim on the browsers
+        // root -- see MaintenanceLock. Nothing below may run while a reinstall
+        // holds it exclusively, and once this handle exists no reinstall can
+        // take it away.
+        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory);
 
-        var location = ResolveToOpen(Required(arguments, "directory"), "directory");
-        var purpose = Required(arguments, "purpose");
-        var mode = Mode(arguments);
-        var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
-        var tracing = Flag(arguments, "tracing") ?? false;
-        var consoleLevel = ConsoleLevel(arguments);
-        var debug = Flag(arguments, "debug") ?? false;
-
-        // Being made to say "resume" is the point: it converts an accidental
-        // collision into a stated intent. There is deliberately no difference
-        // between a lost session, a neatly closed one and one this very process
-        // has open -- all three must be resumed, and all three get the same
-        // refusal naming the purpose, the mode and the date, because the reason
-        // a session ended stops being a thing anyone has to model. An earlier
-        // version special-cased "already open in this process" and answered
-        // first with a shorter message, which hid the informative one behind an
-        // accident of who happened to hold the directory.
+        // Ownership moves to the session when OpenAsync is reached -- the local
+        // is nulled at that moment, which is what makes the finally below cover
+        // every path that does NOT get there, including the several that throw
+        // SessionToolException out of argument parsing.
         //
-        // ⚠️ AND IT IS NOT THE ONLY ASK, since 2026-08-19. This one is UNGATED --
-        // it reads browserai.json with no lock held -- so it can land in the instant
-        // in which the name is unbound while a peer replaces the record, read
-        // null as "free, proceed", and reach a reclaim that rebinds the
-        // session's browser family. `RefuseAnExistingRecord` below asks the same
-        // question under the per-directory gate, where the record has already
-        // been read and a peer replacing one is holding the gate. This look
-        // stays because it is what produces the ONE answer described above:
-        // moving it inside would let the pre-gate probe answer first for a live
-        // session, with a shorter sentence about who holds the file, which is
-        // the regression the paragraph above records having already been made
-        // once.
-        if (Existing(location) is { } existing)
-        {
-            return new ToolOutcome(existing, IsError: true);
-        }
-
-        if (FreeSpaceRefusal(location) is { } refusal)
-        {
-            return new ToolOutcome(refusal, IsError: true);
-        }
+        // ⚠️ It is a NULLABLE local rather than a bool flag because CA2000 reads
+        // this exact shape and nothing else: declare before the try, transfer by
+        // assigning null, dispose unconditionally on the null-conditional in the
+        // finally.
 
         try
         {
-            SessionLayout.Create(location);
-        }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or NotSupportedException)
-        {
-            return new ToolOutcome(
-                $"'{location.FullPath}' could not be created ({failure.Message}). Nothing was changed. Name a directory BrowserAI can write to.",
-                IsError: true);
-        }
-
-        return await OpenAsync(
-            location,
-            new SessionLockRequest
+            if (claim is null)
             {
-                Mode = mode.Name,
-                Browser = browser,
-                Purpose = purpose,
+                return ReinstallHoldsTheRoot(SessionToolSurface.Init);
+            }
 
-                // `init` means MAKE a session here. A directory that already
-                // carries a record has to be resumed instead, and this is the
-                // half of that refusal the ungated look above cannot guarantee.
-                RefuseAnExistingRecord = true,
-            },
-            mode,
-            tracing,
-            consoleLevel,
-            debug,
-            createdHere: true,
-            notes: [],
-            cancellationToken).ConfigureAwait(false);
+            var location = ResolveToOpen(Required(arguments, "directory"), "directory");
+            var purpose = Required(arguments, "purpose");
+            var mode = Mode(arguments);
+            var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
+            var tracing = Flag(arguments, "tracing") ?? false;
+            var consoleLevel = ConsoleLevel(arguments);
+            var debug = Flag(arguments, "debug") ?? false;
+
+            // Being made to say "resume" is the point: it converts an accidental
+            // collision into a stated intent. There is deliberately no difference
+            // between a lost session, a neatly closed one and one this very process
+            // has open -- all three must be resumed, and all three get the same
+            // refusal naming the purpose, the mode and the date, because the reason
+            // a session ended stops being a thing anyone has to model. An earlier
+            // version special-cased "already open in this process" and answered
+            // first with a shorter message, which hid the informative one behind an
+            // accident of who happened to hold the directory.
+            //
+            // ⚠️ AND IT IS NOT THE ONLY ASK, since 2026-08-19. This one is UNGATED --
+            // it reads browserai.json with no lock held -- so it can land in the instant
+            // in which the name is unbound while a peer replaces the record, read
+            // null as "free, proceed", and reach a reclaim that rebinds the
+            // session's browser family. `RefuseAnExistingRecord` below asks the same
+            // question under the per-directory gate, where the record has already
+            // been read and a peer replacing one is holding the gate. This look
+            // stays because it is what produces the ONE answer described above:
+            // moving it inside would let the pre-gate probe answer first for a live
+            // session, with a shorter sentence about who holds the file, which is
+            // the regression the paragraph above records having already been made
+            // once.
+            if (Existing(location) is { } existing)
+            {
+                return new ToolOutcome(existing, IsError: true);
+            }
+
+            if (FreeSpaceRefusal(location) is { } refusal)
+            {
+                return new ToolOutcome(refusal, IsError: true);
+            }
+
+            try
+            {
+                SessionLayout.Create(location);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or NotSupportedException)
+            {
+                return new ToolOutcome(
+                    $"'{location.FullPath}' could not be created ({failure.Message}). Nothing was changed. Name a directory BrowserAI can write to.",
+                    IsError: true);
+            }
+
+            // The claim's ownership moves to the session here and nowhere
+            // else. Nulling the local is what makes the finally cover every
+            // path that did not get this far.
+            var held = claim;
+            claim = null;
+
+            return await OpenAsync(
+                location,
+                new SessionLockRequest
+                {
+                    Mode = mode.Name,
+                    Browser = browser,
+                    Purpose = purpose,
+
+                    // `init` means MAKE a session here. A directory that already
+                    // carries a record has to be resumed instead, and this is the
+                    // half of that refusal the ungated look above cannot guarantee.
+                    RefuseAnExistingRecord = true,
+                },
+                mode,
+                tracing,
+                consoleLevel,
+                debug,
+                createdHere: true,
+                notes: [],
+                held,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            claim?.Dispose();
+        }
     }
 
     private async Task<ToolOutcome> ResumeAsync(JsonObject? arguments, CancellationToken cancellationToken)
     {
-        if (MaintenanceRefusal(SessionToolSurface.Resume) is { } maintenance)
+        // ⚠️ FIRST, exactly as `init` does and for the same reason: a resume
+        // opens a browser into an existing profile under the same tree, so it is
+        // exactly as unsafe while a reinstall is replacing it.
+        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory);
+
+        // Ownership moves at the same point `init` moves it, by the same
+        // mechanism. See there.
+
+        try
         {
-            return maintenance;
+            if (claim is null)
+            {
+                return ReinstallHoldsTheRoot(SessionToolSurface.Resume);
+            }
+
+            var location = ResolveToOpen(Required(arguments, "directory"), "directory");
+            var appended = Optional(arguments, "purpose");
+            var debug = Flag(arguments, "debug") ?? false;
+            var tracing = Flag(arguments, "tracing");
+            var consoleLevel = ConsoleLevel(arguments);
+
+            // A profile is browser-specific and a session cannot change what it is,
+            // so a caller asking to resume a Firefox directory as Chromium is
+            // stating something impossible. Answering "sure" would be the wrong kind
+            // of helpful.
+            Refuse(arguments, "mode", "the mode is bound at init and recorded in browserai.json");
+            Refuse(arguments, "browser", "the browser is bound at init and the profile on disk belongs to it");
+
+            if (_live.TryGetValue(location.Key, out var already))
+            {
+                return new ToolOutcome(
+                    Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
+                    IsError: false);
+            }
+
+            var record = SessionLock.ReadRecord(location)
+                ?? throw new SessionToolException(
+                    $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
+                    + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists — {SessionToolSurface.List} will show what is under a path.");
+
+            var mode = SessionModes.Recorded(record.Mode);
+            var notes = new List<string>();
+            string? movedFrom = null;
+
+            // The directory is the identity; the path in browserai.json is provenance. A
+            // move leaves nothing behind and a copy leaves the original standing, so
+            // the recorded path already discriminates and no fingerprint field is
+            // needed.
+            //
+            // ⚠️ A COPY IS NO LONGER REFUSED, and `acknowledgeCopy` is gone with the
+            // refusal (2026-08-18). The flag existed because the record was a
+            // snapshot: taking the copy over rewrote the only evidence that it WAS a
+            // copy, so the caller had to be made to say it knew. Under schema 2 the
+            // record is a list of timestamped statements and nothing is overwritten
+            // -- resuming appends `location` to a `directory` history that still
+            // carries the original -- so the answer below hands the model the
+            // provenance instead of demanding a confirmation for it. A confirmation
+            // flag whose whole content can be returned as fact is a question that did
+            // not need asking. BrowserAI now has none.
+            if (!SamePath(record.Directory, location))
+            {
+                notes.Add(Directory.Exists(record.Directory)
+                    ? $"This directory is a COPY of the session at '{record.Directory}', which still exists — the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.SetPurpose} to say what this copy is for."
+                    : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
+
+                // Recorded rather than logged here. The interesting log is the
+                // SESSION's own, beside its browserai.json, and that file does not exist
+                // until OpenAsync has opened it -- so the line is written there,
+                // where whoever is looking into this directory will find it.
+                movedFrom = Directory.Exists(record.Directory) ? null : record.Directory;
+            }
+
+            var purpose = appended is null
+                ? record.Purpose
+                : $"{record.Purpose} | {appended}";
+
+            // Ownership moves here, by the mechanism `init` documents.
+            var held = claim;
+            claim = null;
+
+            return await OpenAsync(
+                location,
+                new SessionLockRequest { Mode = record.Mode, Browser = record.Browser, Purpose = purpose },
+                mode,
+                tracing ?? false,
+                consoleLevel,
+                debug,
+                createdHere: false,
+                notes,
+                held,
+                cancellationToken,
+                movedFrom).ConfigureAwait(false);
         }
-
-        var location = ResolveToOpen(Required(arguments, "directory"), "directory");
-        var appended = Optional(arguments, "purpose");
-        var debug = Flag(arguments, "debug") ?? false;
-        var tracing = Flag(arguments, "tracing");
-        var consoleLevel = ConsoleLevel(arguments);
-
-        // A profile is browser-specific and a session cannot change what it is,
-        // so a caller asking to resume a Firefox directory as Chromium is
-        // stating something impossible. Answering "sure" would be the wrong kind
-        // of helpful.
-        Refuse(arguments, "mode", "the mode is bound at init and recorded in browserai.json");
-        Refuse(arguments, "browser", "the browser is bound at init and the profile on disk belongs to it");
-
-        if (_live.TryGetValue(location.Key, out var already))
+        finally
         {
-            return new ToolOutcome(
-                Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
-                IsError: false);
+            claim?.Dispose();
         }
-
-        var record = SessionLock.ReadRecord(location)
-            ?? throw new SessionToolException(
-                $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
-                + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists — {SessionToolSurface.List} will show what is under a path.");
-
-        var mode = SessionModes.Recorded(record.Mode);
-        var notes = new List<string>();
-        string? movedFrom = null;
-
-        // The directory is the identity; the path in browserai.json is provenance. A
-        // move leaves nothing behind and a copy leaves the original standing, so
-        // the recorded path already discriminates and no fingerprint field is
-        // needed.
-        //
-        // ⚠️ A COPY IS NO LONGER REFUSED, and `acknowledgeCopy` is gone with the
-        // refusal (2026-08-18). The flag existed because the record was a
-        // snapshot: taking the copy over rewrote the only evidence that it WAS a
-        // copy, so the caller had to be made to say it knew. Under schema 2 the
-        // record is a list of timestamped statements and nothing is overwritten
-        // -- resuming appends `location` to a `directory` history that still
-        // carries the original -- so the answer below hands the model the
-        // provenance instead of demanding a confirmation for it. A confirmation
-        // flag whose whole content can be returned as fact is a question that did
-        // not need asking. BrowserAI now has none.
-        if (!SamePath(record.Directory, location))
-        {
-            notes.Add(Directory.Exists(record.Directory)
-                ? $"This directory is a COPY of the session at '{record.Directory}', which still exists — the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.SetPurpose} to say what this copy is for."
-                : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
-
-            // Recorded rather than logged here. The interesting log is the
-            // SESSION's own, beside its browserai.json, and that file does not exist
-            // until OpenAsync has opened it -- so the line is written there,
-            // where whoever is looking into this directory will find it.
-            movedFrom = Directory.Exists(record.Directory) ? null : record.Directory;
-        }
-
-        var purpose = appended is null
-            ? record.Purpose
-            : $"{record.Purpose} | {appended}";
-
-        return await OpenAsync(
-            location,
-            new SessionLockRequest { Mode = record.Mode, Browser = record.Browser, Purpose = purpose },
-            mode,
-            tracing ?? false,
-            consoleLevel,
-            debug,
-            createdHere: false,
-            notes,
-            cancellationToken,
-            movedFrom).ConfigureAwait(false);
     }
 
     private ToolOutcome List(JsonObject? arguments)
@@ -931,7 +982,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// open with its browser not currently launched let the delete through. The
     /// maintainer's decision of 2026-08-19: <i>"No reinstall if there is any
     /// session running system wide. Including any reinstall sessions."</i> See
-    /// <see cref="OpenSessionRefusal"/>.
+    /// <see cref="TheRootIsBusy"/>.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously "No extra lock is taken around the
@@ -954,25 +1005,23 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var target = Browser(arguments, "browser", fallback: null, ProvisionedBrowsers.ReinstallTargets);
 
-        // ⚠️ FIRST, AND HELD FOR THE WHOLE CALL. Everything below -- the session
-        // census, the process census, the recursive delete and the download --
-        // happens inside this claim, so a peer's `browserai_init` cannot launch a
-        // browser into a tree this call is part way through deleting. The
-        // ordering is the deadlock argument: this is the OUTERMOST lock and the
-        // provisioning mutexes are taken under it, never the other way round.
-        // See MaintenanceLock's remarks.
-        using var maintenance = MaintenanceLock.TryTake(_environment.Paths.BrowsersDirectory, target);
+        // ⚠️ FIRST, AND HELD FOR THE WHOLE CALL. This is the WRITER half of the
+        // machine-wide reader/writer claim on the browsers root, and it is the
+        // whole gate: every open session holds the same file shared, so this
+        // open is refused by the kernel while any of them lives -- of any
+        // family, in any process, on this machine. Everything below -- the
+        // process census, the recursive delete and the download -- happens
+        // inside it, so a peer's `browserai_init` cannot launch a browser into a
+        // tree this call is part way through deleting.
+        //
+        // The ordering is the deadlock argument: this is the OUTERMOST lock and
+        // the provisioning mutexes are taken under it, never the other way
+        // round. See MaintenanceLock's remarks.
+        using var maintenance = MaintenanceLock.TryTakeExclusive(_environment.Paths.BrowsersDirectory, target);
 
         if (maintenance is null)
         {
-            // Mutual against itself, and the maintainer said so explicitly:
-            // "Including any reinstall sessions."
-            return new ToolOutcome(
-                SessionErrors.BrowsersAreBeingReinstalled(
-                    SessionToolSurface.ReinstallBrowser,
-                    _environment.Paths.BrowsersDirectory,
-                    MaintenanceLock.Probe(_environment.Paths.BrowsersDirectory) ?? "the claim could not be taken and its holder did not say who it is"),
-                IsError: true);
+            return new ToolOutcome(TheRootIsBusy(), IsError: true);
         }
 
         return ProvisionedBrowsers.IsShared(target)
@@ -981,84 +1030,101 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// The refusal a session tool earns while a reinstall holds this machine's
-    /// browsers root, or <see langword="null"/> when none does.
+    /// The refusal <c>init</c> and <c>resume</c> earn when the shared claim
+    /// could not be taken.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>A probe and never an acquire</b>, for the reason
-    /// <see cref="MaintenanceLock.Probe"/> gives: an <c>init</c> that took the
-    /// claim for a microsecond would make a racing reinstall report that another
-    /// reinstall was running.
+    /// ⚠️ <b>The take IS the check since 2026-08-20 (previously a
+    /// <c>MaintenanceLock.Probe</c> that acquired nothing).</b> The probe existed
+    /// because an <c>init</c> that took the claim for a microsecond would make a
+    /// racing reinstall report that another reinstall was running — and under the
+    /// reader/writer design there is nothing to probe with: an open that a
+    /// reinstall's exclusive handle refuses is exactly the shared open a session
+    /// needs anyway, and it is held rather than released, so there is no
+    /// microsecond and no second question.
     /// </para>
     /// <para>
-    /// <b>It is the FIRST thing <c>init</c> and <c>resume</c> do</b>, before the
-    /// directory is resolved or the guard runs, because everything after it either
-    /// creates something or reports on something that is about to be created.
+    /// <b>The refusal names the reinstall by quoting the record the writer
+    /// wrote</b>, and carries how far in it is — see
+    /// <see cref="SessionErrors.BrowsersAreBeingReinstalled"/>. A caller blocked
+    /// by a 203.8 MB download should learn what it is waiting on and how far
+    /// through it is, which is the same treatment first-run provisioning already
+    /// gives.
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool being refused.</param>
-    /// <returns>The refusal, or <see langword="null"/>.</returns>
-    private ToolOutcome? MaintenanceRefusal(string tool) =>
-        MaintenanceLock.Probe(_environment.Paths.BrowsersDirectory) is { } holder
-            ? new ToolOutcome(
-                SessionErrors.BrowsersAreBeingReinstalled(tool, _environment.Paths.BrowsersDirectory, holder),
-                IsError: true)
-            : null;
+    /// <returns>The refusal.</returns>
+    private ToolOutcome ReinstallHoldsTheRoot(string tool) =>
+        new(
+            SessionErrors.BrowsersAreBeingReinstalled(
+                tool,
+                _environment.Paths.BrowsersDirectory,
+                MaintenanceLock.Describe(_environment.Paths.BrowsersDirectory),
+                MaintenanceLock.ProgressOf(_environment.Paths.BrowsersDirectory)),
+            IsError: true);
 
     /// <summary>
-    /// The refusal a reinstall earns while sessions are open, or
-    /// <see langword="null"/> when none are.
+    /// The refusal a reinstall earns when the exclusive claim could not be
+    /// taken.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Asked UNCONDITIONALLY since 2026-08-19 (previously the family path
-    /// asked it only when a process was already running out of the tree).</b> The
-    /// maintainer's decision, verbatim: <i>"No reinstall if there is any session
-    /// running system wide."</i> The old gate had a real gap — a session open with
-    /// its browser not currently launched answered <i>nothing is running</i>, and
-    /// the browser it is about to launch lands in a tree being deleted. The
-    /// <c>shared</c> path already asked it this way, [for a reason of its
-    /// own](#), and the two paths now differ only in <i>which</i> sessions count.
+    /// ⚠️ <b>The kernel decides, and this only says which of the two causes it
+    /// was — a correction of 2026-08-20 (previously a census that decided).</b>
+    /// The gate used to be a census that counted sessions and
+    /// refused on the count; it is now the exclusive open itself, which is
+    /// refused while any session holds the same file shared. That is strictly
+    /// stronger: a session whose index entry is missing, or whose process this
+    /// one cannot see, still holds a handle.
     /// </para>
     /// <para>
-    /// <b>The family filter survives, and that is deliberate rather than an
-    /// oversight against the word "system wide".</b> Only a session of the family
-    /// being reinstalled can hold an executable out of that family's tree, so
-    /// listing a live Chromium session beside a blocked Firefox reinstall would
-    /// tell the caller to close the wrong browser — which is the reasoning
-    /// <see cref="LiveSessions"/> was given on 2026-08-19 and nothing here
-    /// overturns it. <c>shared</c> passes <see langword="null"/> and counts every
-    /// family, because <c>ffmpeg</c> and <c>winldd</c> belong to both.
+    /// <b>The two causes are mutually exclusive by construction, which is why no
+    /// parsing is needed to tell them apart.</b> A reinstall can only hold the
+    /// claim exclusively when no session holds it shared — so if the census finds
+    /// sessions, sessions are the cause and they are what the caller must close;
+    /// if it finds none, another reinstall has it and the record says which.
     /// </para>
     /// <para>
-    /// <b>It runs INSIDE the maintenance claim, and the order is what makes the
-    /// sentence true.</b> The claim is taken first, so by the time these sessions
-    /// are counted no new one can start — which is why the refusal can say "no new
-    /// session can start while this call is deciding" as a fact rather than as a
-    /// hope. There is deliberately no drain: a reinstall that finds sessions open
-    /// releases the claim and refuses, rather than holding it until a human closes
-    /// a browser they may never close.
+    /// ⚠️ <b>The family filter is gone, and the maintainer removed it on purpose:
+    /// <i>"No matter the browser type."</i></b> <see cref="LiveSessions"/> used to
+    /// take a family and list only sessions of it, because only a Chromium
+    /// session can hold an executable out of the Chromium tree. That reasoning is
+    /// still true and no longer relevant: the claim is one file at the root of the
+    /// browsers directory and knows nothing about families, so a live Firefox
+    /// session refuses a Chromium reinstall. Listing only the matching family
+    /// would now name none of the sessions the caller has to close.
+    /// </para>
+    /// <para>
+    /// <b>There is no drain and no intent marker, and writer starvation is
+    /// accepted</b> — the maintainer's words: <i>"it should not start a
+    /// drain/preventstart process of sorts. Keep it simple. Let the user solve the
+    /// open sessions block."</i>
     /// </para>
     /// </remarks>
-    /// <param name="browser">The family, or <see langword="null"/> for every family.</param>
-    /// <param name="why">The clause explaining why this target is gated the way it is.</param>
-    /// <returns>The refusal, or <see langword="null"/>.</returns>
-    private ToolOutcome? OpenSessionRefusal(string? browser, string why)
+    /// <returns>The whole refusal.</returns>
+    private string TheRootIsBusy()
     {
-        var claimants = LiveSessions(browser);
+        var root = _environment.Paths.BrowsersDirectory;
+        var claimants = LiveSessions();
 
         if (claimants.Count is 0)
         {
-            return null;
+            // Nothing holds it shared, so what holds it is another writer --
+            // mutual against itself, and the maintainer said so explicitly:
+            // "Including any reinstall sessions."
+            return SessionErrors.BrowsersAreBeingReinstalled(
+                SessionToolSurface.ReinstallBrowser,
+                root,
+                MaintenanceLock.Describe(root),
+                MaintenanceLock.ProgressOf(root));
         }
 
-        return new ToolOutcome(
-            $"{SessionToolSurface.ReinstallBrowser} was not run: it holds this machine's browsers root while it runs, so no new session can start meanwhile — and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are still running:\n"
+        return $"{SessionToolSurface.ReinstallBrowser} was not run: it needs this machine's browsers root to itself, and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are holding it:\n"
             + Listing(claimants)
-            + $"\n{why} Nothing was changed, nothing was terminated, and the claim on the browsers root has been released — this call did not wait for those sessions and never will, because waiting on a browser a human may not close is not a thing a tool call may do. "
-            + $"Close them, or wait for them to end, and call {SessionToolSurface.ReinstallBrowser} again. There is deliberately no force option — forcing here means killing browsers other agents are driving.",
-            IsError: true);
+            + $"\nEvery open session holds '{Path.Combine(root, MaintenanceLock.FileName)}' shared for its whole life, whatever browser family it uses, so a live {ProvisionedBrowsers.Firefox} session blocks a {ProvisionedBrowsers.Chromium} reinstall as surely as a {ProvisionedBrowsers.Chromium} one does — nothing runs out of this root while it is being replaced. "
+            + "Nothing was changed and nothing was terminated. This call did not wait for those sessions and never will, because waiting on a browser a human may not close is not a thing a tool call may do, and it published no intent that would stop new sessions starting meanwhile. "
+            + $"Close them, or wait for them to end, and call {SessionToolSurface.ReinstallBrowser} again. There is deliberately no force option — forcing here means killing browsers other agents are driving.";
     }
 
     /// <summary>
@@ -1114,15 +1180,12 @@ internal sealed class SessionManager : IAsyncDisposable
         var named = string.Join("' and '", directories);
         var running = new List<RunningImage>();
 
-        // The gate, and the family path's is narrower on purpose -- see the
-        // remarks. `null` is every family rather than none.
-        if (OpenSessionRefusal(
-            browser: null,
-            $"'{ProvisionedBrowsers.Shared}' is {string.Join(" and ", ProvisionedBrowsers.SharedComponents)}, which BOTH browser families use, so every session blocks this one whatever family it is — a browser starts {ProvisionedBrowsers.SharedInstallTarget} only at the moment it records, so nothing running out of '{named}' right now is not the same statement as nothing being about to.") is { } open)
-        {
-            return open;
-        }
-
+        // ⚠️ NO SESSION GATE HERE ANY MORE, and its absence is the design rather
+        // than a deletion. The caller could not have reached this method with a
+        // session open anywhere on the machine: `ReinstallBrowserAsync` holds the
+        // browsers root EXCLUSIVELY, and every live session holds the same file
+        // shared. What used to be a census this method ran is now the kernel's
+        // answer to one open, taken before this method was called.
         foreach (var directory in directories)
         {
             try
@@ -1159,18 +1222,11 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var directory = _environment.Provisioner.DirectoryFor(browser);
 
-        // ⚠️ ASKED FIRST AND ASKED UNCONDITIONALLY since 2026-08-19. It used to
-        // be inside `if (running.Count is not 0)`, which made an open session
-        // harmless whenever its browser happened not to be launched at that
-        // instant -- and a session that is open is a session about to launch one
-        // into the tree this call is about to delete.
-        if (OpenSessionRefusal(
-            browser,
-            $"Only a {browser} session can hold an executable out of '{directory}', so sessions of the other family are not listed and do not block this.") is { } open)
-        {
-            return open;
-        }
-
+        // ⚠️ NO SESSION GATE HERE ANY MORE -- see ReinstallSharedAsync for the
+        // same note. It is the exclusive claim on the browsers root, taken
+        // before this method was called, and it does not distinguish families:
+        // a live Firefox session refuses a Chromium reinstall.
+        //
         // Every process running an executable out of the tree about to be
         // deleted, found by full image path and never by image name.
         IReadOnlyList<RunningImage> running;
@@ -1259,30 +1315,35 @@ internal sealed class SessionManager : IAsyncDisposable
     /// never a pid alone, because Windows reuses pids and a reclaim keyed on one
     /// eventually reads a stranger as the holder.
     /// <para>
-    /// <b>Filtered by family since 2026-08-19, and the filter is what makes the
-    /// refusal actionable.</b> Its one caller is
-    /// <c>browserai_reinstall_browser</c>, which now names the tree it is about
-    /// to delete: only a session of <i>that</i> family can be holding an
-    /// executable out of it, so listing a live Chromium session beside a blocked
-    /// Firefox reinstall would tell the caller to close the wrong browser. A
-    /// session whose family cannot be read is <b>listed</b> rather than
-    /// filtered out — the list exists to explain a refusal, and dropping a
-    /// session because its record was unreadable is how a refusal stops naming
-    /// its own cause.
+    /// ⚠️ <b>The family filter is gone, removed 2026-08-20 at the maintainer's
+    /// decision</b> *(previously "Filtered by family since 2026-08-19, and the
+    /// filter is what makes the refusal actionable … listing a live Chromium
+    /// session beside a blocked Firefox reinstall would tell the caller to close
+    /// the wrong browser")*. His words were <i>"any init or resume should take a
+    /// system level lock. No matter the browser type"</i>, and the lock is one
+    /// file at the root of the browsers directory that knows nothing about
+    /// families — so a live Firefox session really does refuse a Chromium
+    /// reinstall, and listing only the matching family would name none of the
+    /// sessions the caller has to close. The old reasoning was not wrong and is
+    /// no longer the question: it was about which sessions can hold an
+    /// <i>executable</i> out of a tree, and the gate is no longer about
+    /// executables.
+    /// </para>
+    /// <para>
+    /// <b>This list explains a refusal; it never decides one.</b> The kernel
+    /// decides, on the exclusive open. So a session this walk cannot see — an
+    /// index entry that was swept, a record that will not parse — costs the
+    /// refusal a line rather than costing the machine a guarantee.
     /// </para>
     /// </remarks>
-    /// <param name="browser">The family to report, as upstream names it, or <see langword="null"/> for every family.</param>
-    /// <returns>One line per live session of that family.</returns>
-    private List<string> LiveSessions(string? browser)
+    /// <returns>One line per live session, of any family.</returns>
+    private List<string> LiveSessions()
     {
         var lines = new List<string>();
 
         foreach (var session in _live.Values)
         {
-            if (Family(session.Lock.Record.Browser, browser))
-            {
-                lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (mode '{session.Mode.Name}', browser '{session.Lock.Record.Browser}')");
-            }
+            lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (mode '{session.Mode.Name}', browser '{session.Lock.Record.Browser}')");
         }
 
         foreach (var entry in _index.Follow())
@@ -1292,7 +1353,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 continue;
             }
 
-            if (_live.ContainsKey(session.Key) || !Family(record.Browser, browser))
+            if (_live.ContainsKey(session.Key))
             {
                 continue;
             }
@@ -1306,30 +1367,6 @@ internal sealed class SessionManager : IAsyncDisposable
         return lines;
     }
 
-    /// <summary>Whether a recorded family is the one being asked about.</summary>
-    /// <remarks>
-    /// <para>
-    /// An unreadable or unrecognised recorded family answers <see langword="true"/>
-    /// deliberately: see <see cref="LiveSessions"/>' remarks.
-    /// </para>
-    /// <para>
-    /// <b><see langword="null"/> is every family, added 2026-08-19 with the
-    /// <c>shared</c> reinstall target.</b> Its refusal is gated on every session
-    /// on the machine rather than on one family's, because <c>ffmpeg</c> and
-    /// <c>winldd</c> belong to both — the reasoning is at
-    /// <see cref="ReinstallSharedAsync"/>. Expressed as an absent question rather
-    /// than as a second method, so the one filter stays the one filter.
-    /// </para>
-    /// </remarks>
-    /// <param name="recorded">What the session's record says, which may be anything.</param>
-    /// <param name="asked">The canonical family being reinstalled, or <see langword="null"/> for all of them.</param>
-    /// <returns>Whether the session belongs in the answer.</returns>
-    private static bool Family(string? recorded, string? asked) =>
-        asked is null
-        || string.IsNullOrWhiteSpace(recorded)
-        || string.Equals(recorded, asked, StringComparison.OrdinalIgnoreCase)
-        || !ProvisionedBrowsers.Families.Contains(recorded, StringComparer.OrdinalIgnoreCase);
-
     private static LockRecord Repurpose(LockRecord record, string purpose) =>
         record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
 
@@ -1342,6 +1379,7 @@ internal sealed class SessionManager : IAsyncDisposable
         bool debug,
         bool createdHere,
         IReadOnlyList<string> notes,
+        MaintenanceLock claim,
         CancellationToken cancellationToken,
         string? movedFrom = null)
     {
@@ -1422,7 +1460,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, mode, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod, _environment.Clock);
+            session = new LiveSession(location, held, claim, mode, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod, _environment.Clock);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))
@@ -1484,6 +1522,13 @@ internal sealed class SessionManager : IAsyncDisposable
                     // record stays on disk, which is what makes the next resume
                     // able to say who had it.
                     acquired?.Dispose();
+
+                    // And nor may it leave the browsers root claimed. A shared
+                    // claim nobody releases is a reinstall that can never run
+                    // again on this machine, and the caller would have no way to
+                    // find out why. `LiveSession` owns it on the path that
+                    // succeeds; this is every path that does not.
+                    claim.Dispose();
 
                     // Last, so the release above is still recorded in it.
                     logging?.Dispose();

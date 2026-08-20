@@ -604,9 +604,24 @@ internal static class FirstRunCache
 
         foreach (var file in Directory.EnumerateFiles(source))
         {
-            var target = Path.Combine(destination, Path.GetFileName(file));
+            var name = Path.GetFileName(file);
+            var target = Path.Combine(destination, name);
 
-            if (markers is not null && Path.GetFileName(file) is BrowsersManifest.InstallationCompleteMarker)
+            // ⚠️ THE CLAIM FILE IS NOT PART OF A PROVISIONED TREE, and skipping
+            // it is a correctness requirement rather than tidiness. Since
+            // 2026-08-20 every open session holds `<browsers root>\reinstall.lock`
+            // shared for its whole life -- see `Runtime/MaintenanceLock` -- so a
+            // seed that copied one over it fails with a sharing violation
+            // against the very session the seed exists to unblock. It carries no
+            // information either: what it says is which process was last
+            // reinstalling, which is meaningless in a cache captured from
+            // somewhere else.
+            if (string.Equals(name, MaintenanceLock.FileName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (markers is not null && name is BrowsersManifest.InstallationCompleteMarker)
             {
                 markers.Add(target);
                 continue;

@@ -6,40 +6,75 @@ using System.Globalization;
 namespace BrowserAI.Runtime;
 
 /// <summary>
-/// The machine-wide claim on a browsers root, held for the whole of a
-/// <c>browserai_reinstall_browser</c> and refused to every session that tries to
-/// start meanwhile.
+/// The machine-wide reader/writer claim on a browsers root: every session holds
+/// it <b>shared</b> for its whole life, and
+/// <c>browserai_reinstall_browser</c> holds it <b>exclusively</b> for the whole
+/// of a call.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>What it closes is a race between two agents on one machine</b>, which the
-/// existing running-process census cannot see: a reinstall establishes that
-/// nothing is running out of the tree, and a peer's <c>browserai_init</c> then
-/// launches a browser into that tree while the recursive delete is part way
-/// through it. The delete's own guard answers <i>nothing is running</i> because
-/// at the moment it asked, nothing was. Taken by the maintainer on 2026-08-19:
-/// <i>"No reinstall if there is any session running system wide. Including any
-/// reinstall sessions."</i>
+/// <b>The design is the maintainer's, verbatim, taken 2026-08-20:</b> <i>"any
+/// init or resume should take a system level lock. No matter the browser type.
+/// These locks are cumulative. And reinstalling the browser should be an
+/// exclusive lock."</i> And on what happens when the exclusive open fails:
+/// <i>"I do not want the intent marker. If anything is busy then the reinstall
+/// should be refused with the list… But it should not start a drain/preventstart
+/// process of sorts. Keep it simple. Let the user solve the open sessions
+/// block."</i>
 /// </para>
 /// <para>
-/// <b>It is a FILE and not a named mutex, and that is forced rather than
-/// chosen.</b> A named mutex is owned by the <i>thread</i> that waited on it —
-/// <see cref="Sessions.MachineMutex"/> says so in its own remarks — and this
-/// claim is held across a 203.8 MB download inside an <c>async</c> method, so a
-/// continuation resuming on another pool thread would make the release throw
-/// about "an unsynchronized block of code". A <see cref="FileStream"/> has no
-/// thread affinity at all. The alternative that does span threads is a named
-/// <b>semaphore</b>, and it is worse than either: a semaphore's count is not
-/// restored when its holder dies, so one crashed reinstall would refuse every
-/// <c>browserai_init</c> on the machine until the next reboot. Windows closes a
-/// file handle however the process ends, which is the crash recovery this design
-/// needs and cannot write itself.
+/// <b>Windows file sharing modes give reader/writer directly, and that is why
+/// this is a file rather than anything else.</b> An open is refused when the
+/// requested <i>access</i> is outside an existing handle's share mode, <b>or</b>
+/// when the requested <i>share mode</i> is narrower than an existing handle's
+/// granted access — the check runs in both directions, which is exactly what a
+/// reader/writer lock needs and what a named object would have to simulate:
+/// </para>
+/// <list type="bullet">
+///   <item><description>
+///     <b>Reader</b> — <see cref="TakeShared"/> opens
+///     <c>FileAccess.Read</c> / <c>FileShare.Read</c>. Two of them are
+///     compatible in both directions, so any number succeed together and the
+///     claims are cumulative with no count to keep anywhere.
+///   </description></item>
+///   <item><description>
+///     <b>Writer</b> — <see cref="TryTakeExclusive"/> opens
+///     <c>FileAccess.ReadWrite</c> / <c>FileShare.Read</c>. A reader's
+///     <c>FileShare.Read</c> does not admit <c>Write</c>, so the exclusive open
+///     is refused while <b>any</b> reader holds it; and a reader's later
+///     <c>FileShare.Read</c> does not admit the writer's granted <c>Write</c>,
+///     so no reader can start while the writer holds it. Two writers exclude
+///     each other by the same rule.
+///   </description></item>
+/// </list>
+/// <para>
+/// ⚠️ <b>The writer shares <c>Read</c> rather than nothing, and the difference
+/// is a sentence rather than a lock.</b> With <c>FileShare.None</c> the
+/// exclusion is identical — the arithmetic above never reaches the writer's own
+/// share mode — but <b>nothing could read the record</b>, so a peer refused by
+/// a reinstall could not say whose reinstall, and could not quote how far in it
+/// is. <see cref="Read"/> opens <c>FileAccess.Read</c> /
+/// <c>FileShare.ReadWrite | Delete</c>, which is wide enough to admit the
+/// writer's granted access and is therefore the one open that succeeds against
+/// a holder of either kind. It takes nothing and blocks nothing.
+/// </para>
+/// <para>
+/// <b>The kernel releases a handle however the process dies, and that is the
+/// whole reason this is not a named semaphore.</b> A semaphore does span
+/// threads, which a named mutex does not — <see cref="Sessions.MachineMutex"/>
+/// says why in its own remarks, and this claim is held across a 203.8 MB
+/// download inside an <c>async</c> method whose continuations move between pool
+/// threads — but a semaphore's count is <b>not</b> restored when its holder
+/// dies, so one crashed reinstall would refuse every <c>browserai_init</c> on
+/// the machine until the next reboot. A <see cref="FileStream"/> has no thread
+/// affinity at all and Windows closes it on any death, clean or not.
 /// </para>
 /// <para>
 /// <b>Held-ness is a sharing violation and never the file's existence</b>, which
-/// is the same rule <c>SessionLock</c> follows for <c>browserai.json</c> and for the
-/// same reason: a crashed holder leaves the file behind, so existence would mean
-/// <i>somebody died here once</i> rather than <i>somebody is working now</i>.
+/// is the same rule <c>SessionLock</c> follows for <c>browserai.json</c> and for
+/// the same reason: a crashed holder leaves the file behind, so existence would
+/// mean <i>somebody died here once</i> rather than <i>somebody is working
+/// now</i>.
 /// </para>
 /// <para>
 /// <b>Keyed on the browsers root, exactly as
@@ -52,31 +87,41 @@ namespace BrowserAI.Runtime;
 /// and no name to get wrong.
 /// </para>
 /// <para>
+/// <b>There is no intent marker, no drain and no wait, and writer starvation is
+/// accepted.</b> A reinstall whose exclusive open is refused says so at once and
+/// names what is holding the root; it does not publish an intent that would stop
+/// new sessions starting, and it does not wait. A machine that always has one
+/// session open therefore never lets a reinstall through — that is the
+/// maintainer's decision and it is not a defect to be mitigated. Waiting on a
+/// browser a human may never close is exactly the shape this product spent a
+/// week removing.
+/// </para>
+/// <para>
 /// <b>The order it is taken in, and why nothing here can deadlock.</b> This lock
 /// is <b>outermost</b>: <c>SessionManager.ReinstallBrowserAsync</c> takes it
 /// first and only then reaches <see cref="BrowserProvisioner"/>, which takes the
 /// per-family provisioning mutexes — one for a family, and chromium, firefox and
 /// <c>shared</c> in that fixed order for the shared target. <b>No path anywhere
 /// takes a provisioning mutex and then asks for this</b>, so there is no cycle to
-/// close; and every acquisition on both sides is non-blocking — this one opens
-/// at once or fails, the mutexes use <c>LockScopes.NeverWaits</c> — so even a
-/// future edit that inverted the order would produce a refusal rather than a
-/// hang. <c>browserai_init</c> and <c>browserai_resume</c> only
-/// <see cref="Probe"/> this: they never acquire it, so they can never take it
-/// away from a reinstall or wait behind one.
+/// close; and every acquisition on both sides is non-blocking — these opens
+/// succeed at once or fail, the mutexes use <c>LockScopes.NeverWaits</c> — so
+/// even a future edit that inverted the order would produce a refusal rather
+/// than a hang.
 /// </para>
 /// <para>
-/// <b>There is no drain and no wait, and that is a decision rather than an
-/// omission.</b> A reinstall that found sessions already open refuses at once
-/// and says how many; it does not hold this lock and wait for them to close.
-/// Waiting on a browser a human may never close is exactly the shape this
-/// product spent a week removing.
+/// ⚠️ <b>The file is still called <c>reinstall.lock</c> and the name is now
+/// narrower than what it guards</b>, since every session holds it. It is kept
+/// because a dated measurement names it —
+/// [the cross-user table](../../../kb/windows/detection.md#two-users-and-one-install-root--what-spans-users-and-what-does-not--measured-2026-08-20)
+/// lists <c>&lt;browsers&gt;\reinstall.lock</c> by name — and renaming it would
+/// leave that measurement describing a file that does not exist, which this
+/// repository treats as worse than a name that has outgrown its meaning.
 /// </para>
 /// </remarks>
 internal sealed class MaintenanceLock : IDisposable
 {
     /// <summary>
-    /// The lock file's name, at the root of the browsers directory.
+    /// The claim file's name, at the root of the browsers directory.
     /// </summary>
     /// <remarks>
     /// <b>Beside the trees rather than inside one</b>, because the trees are what
@@ -91,7 +136,7 @@ internal sealed class MaintenanceLock : IDisposable
 
     private MaintenanceLock(FileStream held) => _held = held;
 
-    /// <summary>Where a browsers root's lock file is.</summary>
+    /// <summary>Where a browsers root's claim file is.</summary>
     /// <param name="browsersDirectory">The browsers root.</param>
     /// <returns>The absolute path.</returns>
     public static string PathIn(string browsersDirectory)
@@ -101,24 +146,73 @@ internal sealed class MaintenanceLock : IDisposable
     }
 
     /// <summary>
-    /// Takes the claim, or answers who has it.
+    /// Takes the claim <b>shared</b>, for a session that is about to open.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b><c>FileShare.Read</c> and no more.</b> A peer may read the record to
-    /// name the holder — which is what <see cref="Probe"/> does — and no peer may
-    /// open it for writing, which is what makes a second taker fail.
+    /// <b>It creates the file when it is not there, and that is required rather
+    /// than convenient.</b> A reader that treated <i>absent</i> as <i>nothing to
+    /// take</i> would hold no handle at all, and a reinstall starting a moment
+    /// later would find the root free and delete the tree under a live session.
+    /// <c>FileMode.OpenOrCreate</c> with <c>FileAccess.Read</c> is a
+    /// <c>CreateFileW</c> with <c>OPEN_ALWAYS</c> and <c>GENERIC_READ</c>:
+    /// creating the name is governed by the directory's permissions rather than
+    /// by the access asked for on the file, so no writer is needed to bring it
+    /// into existence.
+    /// </para>
+    /// <para>
+    /// <b>It writes nothing, ever.</b> The record belongs to the writer; a
+    /// reader that stamped itself would have to open for write, which is the one
+    /// access that would make two sessions exclude each other.
+    /// </para>
+    /// </remarks>
+    /// <param name="browsersDirectory">The browsers root. Created if absent.</param>
+    /// <returns>The claim, or <see langword="null"/> when a reinstall holds it.</returns>
+    public static MaintenanceLock? TakeShared(string browsersDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
+
+        try
+        {
+            _ = Directory.CreateDirectory(browsersDirectory);
+
+            return new MaintenanceLock(new FileStream(
+                PathIn(browsersDirectory),
+                FileMode.OpenOrCreate,
+                FileAccess.Read,
+                FileShare.Read));
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            // Held by a reinstall, denied, or unreachable. Every one of them
+            // means this process may not open a session against this root, and
+            // Describe says which for the sentence.
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Takes the claim <b>exclusively</b>, for a reinstall.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b><c>FileMode.Create</c>, so the record is this holder's and not the
+    /// last one's.</b> A stale line left by a crashed reinstall would otherwise
+    /// be quoted at a peer as though it were current.
     /// </para>
     /// <para>
     /// <b>The record is one line of plain text and deliberately not JSON.</b>
     /// Nothing parses it; its only consumer is a sentence, so a schema would be a
-    /// second thing to keep in step for no reader's benefit.
+    /// second thing to keep in step for no reader's benefit. Which of the two
+    /// causes blocked a call is decided by the <i>session census</i> rather than
+    /// by reading this file, because the two are mutually exclusive by
+    /// construction: a writer cannot hold the claim while any session does.
     /// </para>
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root. Created if absent.</param>
     /// <param name="target">What is being reinstalled, for the sentence a peer reads.</param>
-    /// <returns>The claim, or <see langword="null"/> when somebody else holds it.</returns>
-    public static MaintenanceLock? TryTake(string browsersDirectory, string target)
+    /// <returns>The claim, or <see langword="null"/> when anything else holds it.</returns>
+    public static MaintenanceLock? TryTakeExclusive(string browsersDirectory, string target)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
         ArgumentNullException.ThrowIfNull(target);
@@ -136,7 +230,7 @@ internal sealed class MaintenanceLock : IDisposable
             try
             {
                 using var writer = new StreamWriter(held, leaveOpen: true);
-                writer.Write(Describe(target));
+                writer.Write(DescribeSelf(target));
                 writer.Flush();
                 held.Flush(flushToDisk: true);
             }
@@ -150,70 +244,109 @@ internal sealed class MaintenanceLock : IDisposable
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            // Held, denied or unreachable. Every one of them means this process
-            // may not start a reinstall, and Probe says which for the sentence.
+            // A session holds it shared, another reinstall holds it exclusively,
+            // or it is denied. Every one of them means this process may not start
+            // a reinstall.
             return null;
         }
     }
 
     /// <summary>
-    /// Whether a reinstall is running against this browsers root, and who is
-    /// running it.
+    /// What the current holder wrote about itself, for a refusal to quote.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It never acquires anything.</b> A probe that took the file — even for
-    /// the microsecond it takes to release it — would make a racing reinstall
-    /// report <i>"another reinstall is running"</i> about an <c>init</c> that was
-    /// only looking, which is a refusal naming a cause that does not exist. So
-    /// the probe opens for <b>write</b> and reads the answer off the failure:
-    /// refused means held, granted means free.
+    /// <b>It takes nothing and blocks nothing.</b> The open is
+    /// <c>FileAccess.Read</c> with <c>FileShare.ReadWrite | Delete</c> — wide
+    /// enough to admit a writer's granted access, so it is the one open that
+    /// succeeds against a holder of either kind, and narrow enough that it can
+    /// never be what excludes anybody.
     /// </para>
     /// <para>
-    /// <b>And the write-open is closed immediately without writing.</b>
-    /// <c>FileMode.Open</c> with no truncation, so a stale record left by a dead
-    /// holder survives being looked at.
-    /// </para>
-    /// <para>
-    /// <b>It is a check-then-act and it is not pretending otherwise.</b> A
-    /// reinstall can take the lock in the instant between this answer and the
-    /// session that follows it. That window is closed from the other side — the
-    /// reinstall takes the lock and <i>then</i> counts live sessions, so a
-    /// session that got in first is seen and refuses the reinstall instead.
-    /// Neither half closes it alone.
+    /// ⚠️ <b>The line it returns is the <i>last writer's</i>, which is not the
+    /// same as <i>the current holder's</i>.</b> Nothing truncates the file when a
+    /// reinstall ends, so a root whose last reinstall finished an hour ago still
+    /// carries that line. It is quoted only on a path that has already
+    /// established the claim is held, and where the session census has already
+    /// been consulted — see <c>SessionManager.ReinstallBrowserAsync</c>, which
+    /// names open sessions when there are any and quotes this only when there are
+    /// none.
     /// </para>
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root.</param>
-    /// <returns>What the holder said about itself, or <see langword="null"/> when nothing holds it.</returns>
-    public static string? Probe(string browsersDirectory)
+    /// <returns>What the last writer said about itself, or a sentence saying why that could not be read.</returns>
+    public static string Describe(string browsersDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
 
-        var path = PathIn(browsersDirectory);
+        return Read(PathIn(browsersDirectory));
+    }
+
+    /// <summary>
+    /// How far into its work the reinstall holding this root is, measured from
+    /// outside it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Both figures are read off the filesystem, so this works from a
+    /// different process</b> — which is the only case that matters. A peer
+    /// refused by a reinstall cannot see that reinstall's
+    /// <see cref="BrowserProvisioner"/> at all: the attempt, its stopwatch and
+    /// its samples are in another process's memory. What both processes can see
+    /// is the disk.
+    /// </para>
+    /// <para>
+    /// <b>Bytes are the download staging directory and nothing wider</b>, and
+    /// that is what makes the number baseline-free. A reinstall deletes a tree
+    /// and then downloads it, so bytes under the browsers <i>root</i> fall and
+    /// then rise and a reader with no baseline cannot tell which. The installer's
+    /// <c>TEMP</c> points at <see cref="BrowserProvisioner.DownloadDirectoryName"/>
+    /// inside the root, so the archive in flight is the only thing there, it
+    /// starts at nothing, and upstream unlinks it once extraction is done.
+    /// </para>
+    /// <para>
+    /// <b>Elapsed is the claim file's last write time</b>, which is the instant
+    /// <see cref="TryTakeExclusive"/> stamped its record — so it is a fact of the
+    /// filesystem rather than a field somebody has to parse out of a sentence.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Zero bytes is not a stall and the renderer must not say it is.</b>
+    /// The staging directory is empty during the delete, which comes first, and
+    /// again after extraction begins. See
+    /// <c>SessionErrors.BrowsersAreBeingReinstalled</c>, which says which of
+    /// those it cannot distinguish rather than implying progress it has not
+    /// measured.
+    /// </para>
+    /// </remarks>
+    /// <param name="browsersDirectory">The browsers root.</param>
+    /// <returns>The reading, or <see langword="null"/> when there is no claim file to time from.</returns>
+    public static MaintenanceProgress? ProgressOf(string browsersDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
 
         try
         {
-            using var probe = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+            var claimed = File.GetLastWriteTimeUtc(PathIn(browsersDirectory));
+
+            // The .NET sentinel for "no such file", which is what this answers
+            // rather than throwing. A root with no claim file has no reinstall
+            // to be timed.
+            if (claimed.Year <= 1601)
+            {
+                return null;
+            }
+
+            var elapsed = DateTime.UtcNow - claimed;
+
+            return new MaintenanceProgress(
+                StagedBytes(Path.Combine(browsersDirectory, BrowserProvisioner.DownloadDirectoryName)),
+                elapsed < TimeSpan.Zero ? TimeSpan.Zero : elapsed);
+        }
+#pragma warning disable CA1031 // A progress clause that can fail the refusal it decorates is worse than a refusal with no clause.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
             return null;
-        }
-        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
-        {
-            // No reinstall has ever run against this root.
-            return null;
-        }
-        catch (IOException failure) when (IsSharingViolation(failure))
-        {
-            return Read(path);
-        }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-        {
-            // ⚠️ NOT read as free. An ACL that denies the write-open would answer
-            // "nobody is reinstalling" on every call, which is the one direction
-            // this probe must never fail in: it would put a session back into the
-            // race the lock exists to remove. What it costs when it is wrong is a
-            // refusal a retry cannot clear, and the sentence says which file to
-            // look at.
-            return $"the lock file '{path}' could not be examined ({failure.Message}), which is not the same as nobody holding it";
         }
     }
 
@@ -228,6 +361,35 @@ internal sealed class MaintenanceLock : IDisposable
         _held.Dispose();
     }
 
+    /// <summary>
+    /// What the download staging directory weighs, tolerating a tree another
+    /// process is writing and unlinking underneath the walk.
+    /// </summary>
+    /// <param name="staging">The staging directory, which need not exist.</param>
+    /// <returns>The byte total, or 0.</returns>
+    private static long StagedBytes(string staging)
+    {
+        try
+        {
+            var directory = new DirectoryInfo(staging);
+
+            return directory.Exists
+                ? directory.EnumerateFiles("*", new EnumerationOptions
+                {
+                    RecurseSubdirectories = true,
+                    IgnoreInaccessible = true,
+                    AttributesToSkip = FileAttributes.ReparsePoint,
+                }).Sum(file => file.Length)
+                : 0;
+        }
+#pragma warning disable CA1031 // Same reason as the caller's: no clause beats a thrown refusal.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return 0;
+        }
+    }
+
     /// <summary>What this process is doing, for a peer's refusal to quote.</summary>
     /// <remarks>
     /// <b>The pid and its creation time together</b>, which is this repository's
@@ -235,8 +397,8 @@ internal sealed class MaintenanceLock : IDisposable
     /// carrying a bare one eventually names a stranger.
     /// </remarks>
     /// <param name="target">What is being reinstalled.</param>
-    /// <returns>The one line written into the lock file.</returns>
-    private static string Describe(string target)
+    /// <returns>The one line written into the claim file.</returns>
+    private static string DescribeSelf(string target)
     {
         using var self = System.Diagnostics.Process.GetCurrentProcess();
 
@@ -247,8 +409,8 @@ internal sealed class MaintenanceLock : IDisposable
     {
         try
         {
-            // FileShare.ReadWrite because the holder has it open for WRITE, and
-            // a reader that shared less than the holder's own access would be
+            // FileShare.ReadWrite because a writer has it open for WRITE, and a
+            // reader that shared less than the holder's own access would be
             // refused by its own share mode rather than by the holder's.
             using var reader = new StreamReader(
                 new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
@@ -256,8 +418,12 @@ internal sealed class MaintenanceLock : IDisposable
             var said = reader.ReadToEnd().Trim();
 
             return said.Length is 0
-                ? $"the holder wrote nothing into '{path}'"
+                ? $"nothing has ever written a record into '{path}'"
                 : said;
+        }
+        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return $"there is no '{path}', so no reinstall has ever run against this root";
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
@@ -266,7 +432,16 @@ internal sealed class MaintenanceLock : IDisposable
             return $"its holder could not be identified from '{path}' ({failure.Message})";
         }
     }
-
-    private static bool IsSharingViolation(IOException failure) =>
-        (failure.HResult & 0xFFFF) is 32 or 33;
 }
+
+/// <summary>
+/// How far into its work a reinstall is, as a peer refused by it can measure
+/// from outside the process running it.
+/// </summary>
+/// <param name="StagedBytes">
+/// What the download staging directory weighs right now. <b>Zero means the
+/// archive is not on disk</b> — the delete, or an extraction already under
+/// way — and never that nothing is happening.
+/// </param>
+/// <param name="Elapsed">How long ago the claim was taken.</param>
+internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan Elapsed);

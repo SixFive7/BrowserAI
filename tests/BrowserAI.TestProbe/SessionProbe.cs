@@ -663,6 +663,47 @@ internal static class SessionProbe
         return 2;
     }
 
+    /// <summary>
+    /// Takes the <b>shared</b> claim on a browsers root through the product's
+    /// own code and holds it until this process is killed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It exists to prove the one property no in-process test can:</b> a
+    /// reader that dies releases the claim, with nothing running to clean up
+    /// after it. Windows closes the handle when the process object goes, whether
+    /// the process exited, crashed or was terminated — which is exactly why this
+    /// claim is a file and not a named semaphore, whose count is not restored on
+    /// a holder's death.
+    /// </para>
+    /// <para>
+    /// <b>It calls <c>MaintenanceLock.TakeShared</c> rather than opening the file
+    /// itself</b>, so what a host asserts against is the product's own open with
+    /// the product's own share mode. A hand-written <c>FileStream</c> here would
+    /// be a test of this file.
+    /// </para>
+    /// </remarks>
+    /// <param name="browsersRoot">The browsers root to claim.</param>
+    /// <param name="readyPath">Written once the claim is held.</param>
+    /// <returns>2 if this process was never killed, which is the host's failure.</returns>
+    public static int HoldBrowsersClaim(string browsersRoot, string readyPath)
+    {
+        using var claim = BrowserAI.Runtime.MaintenanceLock.TakeShared(browsersRoot);
+
+        Write(readyPath, new JsonObject
+        {
+            ["pid"] = Environment.ProcessId,
+            ["path"] = browsersRoot,
+            ["held"] = claim is not null,
+            ["startedFileTime"] = Process.GetCurrentProcess().StartTime.ToFileTime(),
+        });
+
+        // Killed from outside. Reaching the end of this wait means the host
+        // failed to do so, and the exit code says which.
+        Thread.Sleep(Patience);
+        return 2;
+    }
+
     private static void WaitForFile(string path)
     {
         var clock = Stopwatch.StartNew();

@@ -33,6 +33,13 @@ namespace BrowserAI.Sessions;
 /// </remarks>
 /// <param name="location">The canonicalised session directory.</param>
 /// <param name="sessionLock">The held lock. This object owns it.</param>
+/// <param name="browsersClaim">
+/// The <b>shared</b> claim on the machine's browsers root, taken by <c>init</c>
+/// or <c>resume</c> before anything else and held for this session's whole life.
+/// This object owns it. See <see cref="Runtime.MaintenanceLock"/>: it is what
+/// makes <c>browserai_reinstall_browser</c>'s exclusive open fail while this
+/// session exists, whatever browser family it uses.
+/// </param>
 /// <param name="mode">The mode bound at <c>init</c>.</param>
 /// <param name="child">The child driving this session. This object owns it.</param>
 /// <param name="logging">This session's own logging stack. This object owns it.</param>
@@ -45,6 +52,7 @@ namespace BrowserAI.Sessions;
 internal sealed class LiveSession(
     SessionPath location,
     SessionLock sessionLock,
+    MaintenanceLock browsersClaim,
     SessionModeDefinition mode,
     ChildConnection child,
     SessionLogging logging,
@@ -75,6 +83,18 @@ internal sealed class LiveSession(
 
     /// <summary>The held lock, and the record inside it.</summary>
     public SessionLock Lock { get; } = sessionLock;
+
+    /// <summary>
+    /// The shared claim on the machine's browsers root, held for this session's
+    /// whole life.
+    /// </summary>
+    /// <remarks>
+    /// <b>It is not read for anything and that is the point.</b> Its existence
+    /// as an open handle is the whole mechanism: a reinstall's exclusive open is
+    /// refused by the kernel while it lives, and the kernel releases it however
+    /// this process dies.
+    /// </remarks>
+    public MaintenanceLock BrowsersClaim { get; } = browsersClaim;
 
     /// <summary>What this session is, bound at creation and never changed.</summary>
     public SessionModeDefinition Mode { get; } = mode;
@@ -147,6 +167,13 @@ internal sealed class LiveSession(
         await Child.DisposeAsync().ConfigureAwait(false);
 
         Lock.Dispose();
+
+        // ⚠️ AFTER THE CHILD, and the order is the guarantee rather than tidiness.
+        // Releasing the claim tells the machine that nothing of this session is
+        // running out of the browsers root, so it may not be released while the
+        // child -- and therefore the browser -- is still up: a reinstall would
+        // take the root exclusively and delete a tree with a live browser in it.
+        BrowsersClaim.Dispose();
 
         // Last, so anything logged on the way down still lands in the session's
         // own file -- and so the file handle is closed before a destroy tries to

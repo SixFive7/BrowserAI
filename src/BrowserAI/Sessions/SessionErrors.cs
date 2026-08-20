@@ -466,12 +466,79 @@ internal static class SessionErrors
     /// <param name="tool">The tool that was refused.</param>
     /// <param name="browsersDirectory">The browsers root being replaced.</param>
     /// <param name="holder">What the holder wrote about itself.</param>
+    /// <param name="progress">
+    /// How far in the reinstall is, measured from outside the process running
+    /// it, or <see langword="null"/> when there was nothing to time from.
+    /// </param>
     /// <returns>The refusal.</returns>
-    public static string BrowsersAreBeingReinstalled(string tool, string browsersDirectory, string holder) =>
+    public static string BrowsersAreBeingReinstalled(
+        string tool,
+        string browsersDirectory,
+        string holder,
+        MaintenanceProgress? progress = null) =>
         $"'{tool}' was not run and nothing was changed: BrowserAI is replacing the browsers under '{browsersDirectory}' on this machine right now, and no session can start and no second reinstall can begin until that finishes. "
         + $"The claim says: {holder}. "
+        + $"{ReinstallProgress(progress)} "
         + "It deletes a browser tree and downloads it again, so a session started meanwhile would launch out of a directory that is being removed. "
         + $"Nothing was terminated and there is deliberately no force option. Call the same tool again once it lands — a browser download is minutes rather than seconds, and {SessionToolSurface.List} answers throughout.";
+
+    /// <summary>
+    /// The progress clause a reinstall's refusal carries, which is the whole of
+    /// what a blocked caller has to decide on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-20, at the maintainer's instruction that a reinstall
+    /// report progress "just like the first run provisioning" does.</b> Before
+    /// it, this refusal named the holder and said <i>minutes rather than
+    /// seconds</i> — which reads identically at 4 s in and at 4 minutes in, so a
+    /// caller had no way to tell a reinstall that was working from one that was
+    /// not, and its only recourse was to keep calling. That is the same defect
+    /// the first-run refusal had and the same fix.
+    /// </para>
+    /// <para>
+    /// <b>Zero staged bytes is reported as a phase rather than as a stall, and
+    /// the honesty is the point.</b> A reinstall deletes a tree and then
+    /// downloads it, so the staging directory is empty for the whole delete and
+    /// again once extraction starts. This clause says which two things it cannot
+    /// tell apart rather than implying either.
+    /// </para>
+    /// <para>
+    /// <b>No percentage, and that is not an omission.</b> The measured download
+    /// totals are per family, and which family is being reinstalled is the
+    /// holder's to say — it is in the quoted claim, one clause above. A
+    /// percentage computed against the wrong family's total would be a confident
+    /// number that is simply wrong, which this catalogue never prefers to an
+    /// admitted gap.
+    /// </para>
+    /// </remarks>
+    /// <param name="progress">The reading, or <see langword="null"/>.</param>
+    /// <returns>One sentence.</returns>
+    private static string ReinstallProgress(MaintenanceProgress? progress)
+    {
+        if (progress is not { } sample)
+        {
+            return "There is no claim file to time it from, so there is no progress to report.";
+        }
+
+        var elapsed = Elapsed(sample.Elapsed);
+
+        if (sample.StagedBytes <= 0)
+        {
+            return $"Progress: it has been running {elapsed} and there is nothing in the download staging directory — which is either the delete, which comes first, or an extraction already under way; the two look the same from outside the process doing them.";
+        }
+
+        var written = BrowserProvisioner.Megabytes(sample.StagedBytes);
+
+        if (sample.Elapsed <= TimeSpan.Zero)
+        {
+            return $"Progress: {written} staged so far.";
+        }
+
+        var rate = sample.StagedBytes * 8d / sample.Elapsed.TotalSeconds / 1_000_000d;
+
+        return $"Progress: {written} downloaded in {elapsed}, {rate.ToString("F2", CultureInfo.InvariantCulture)} Mbps observed. The claim above names which browser it is fetching, and that is what the figure is against.";
+    }
 
     /// <summary>Row 7 — the directory was locked and the browser runtime did not start.</summary>
     /// <param name="path">The session directory.</param>
