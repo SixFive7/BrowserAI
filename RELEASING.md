@@ -336,12 +336,31 @@ Three things to record rather than assume, because each is easy to skim past:
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
   **Run the suite with `BROWSERAI_RELEASE_RUN=1` set**, which is what makes this
-  answerable at all:
+  answerable at all — **detached, teed to a log, and the log polled**, which is
+  [the shape every run here takes](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
+  and where the reasons live. ⚠️ *Corrected 2026-08-23 (previously a two-line
+  block that set `$env:BROWSERAI_RELEASE_RUN` and then ran
+  `tests/BrowserAI.Tests/bin/Debug/net10.0-windows/BrowserAI.Tests.exe` in the
+  foreground.)* The variable has to be set **inside the detached shell**, not in
+  the one that starts it, or the test host never sees it and the run reports
+  `release run  no` while looking exactly like one that did:
 
+  ```powershell
+  $log = ".work\suite\release-$(Get-Date -Format yyyyMMdd-HHmmss).log"
+  Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $PWD `
+      -ArgumentList '-NoProfile','-Command',
+      "`$env:BROWSERAI_RELEASE_RUN = '1'; dotnet test 2>&1 | Tee-Object -LiteralPath '$log'"
   ```
-  $env:BROWSERAI_RELEASE_RUN = '1'
-  tests/BrowserAI.Tests/bin/Debug/net10.0-windows/BrowserAI.Tests.exe
+
+  ```bash
+  log=.work/suite/release-$(date +%Y%m%d-%H%M%S).log
+  nohup bash -c "BROWSERAI_RELEASE_RUN=1 dotnet test 2>&1 | tee $log" >/dev/null 2>&1 </dev/null &
   ```
+
+  **The coverage block's `release run` row is the check on this**, and it is why
+  it exists: it says `YES` or `no` in every run, so a release cut from a run that
+  never saw the variable is visible in its own evidence rather than inferred from
+  the command somebody remembers typing.
 
   Under that variable every capability guard — the published slice, the
   repository payload, a provisioned Chromium, a provisioned Firefox, a packed

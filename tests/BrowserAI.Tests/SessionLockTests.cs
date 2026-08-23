@@ -520,11 +520,29 @@ internal sealed class SessionLockTests
         // missed sweep: whoever holds it is scanning the same store.
         await Assert.That(swept.Count).IsEqualTo(1);
 
-        foreach (var skipped in outcomes.Where(report => (string?)report["acquisition"] == nameof(MutexAcquisition.NotAcquired)))
+        foreach (var report in outcomes)
         {
-            // Zero timeout means zero. Anything that queued would show here as
-            // the time the winner held it.
-            await Assert.That((double)skipped["elapsedMilliseconds"]!).IsLessThan(1000);
+            // ⚠️ THE ARGUMENT, READ BACK OFF THE GATE — never the wall-clock
+            // time the call took. Every contender asked for
+            // LockScopes.NeverWaits, and that is the whole of "try-acquire-and-
+            // skip at zero timeout": the acquire records what it was handed, so
+            // a build that started waiting is caught by the record moving.
+            //
+            // This replaced `elapsedMilliseconds < 1000` on 2026-08-23, which
+            // was the same defect the live-marker reclaim had shed three days
+            // earlier with five times MORE headroom — and this one measured
+            // across a process boundary, in each of eight processes launched
+            // together, where process creation is the most contended thing on a
+            // loaded box. It also invented its own 1000 rather than deriving
+            // anything. What the record proves and what it does not is stated on
+            // MachineMutex.LastAcquireTimeout;
+            // AGateRecordsTheWaitItWasHandedRatherThanAConstant is the control
+            // that it follows the argument rather than sitting on a constant.
+            //
+            // Asserted over EVERY outcome rather than only the skippers: the
+            // winner asked for zero too, and a version that only checked the
+            // losers would pass a sweep whose first contender blocked.
+            await Assert.That((long?)report["acquireTimeoutTicks"]).IsEqualTo(LockScopes.NeverWaits.Ticks);
         }
 
         await File.WriteAllTextAsync(release, "go");

@@ -80,6 +80,8 @@ internal static partial class JobLauncher
     private const uint CreateNoWindow = 0x08000000;
     private const uint ExtendedStartupInfoPresent = 0x00080000;
     private const uint StartFUseStdHandles = 0x00000100;
+    private const uint StartFUseShowWindow = 0x00000001;
+    private const ushort ShowNoActivate = 4;
     private const uint HandleFlagInherit = 0x00000001;
     private const int ErrorInsufficientBuffer = 122;
 
@@ -131,10 +133,45 @@ internal static partial class JobLauncher
 
             var startupInfo = default(StartupInfoEx);
             startupInfo.StartupInfo.Cb = Unsafe.SizeOf<StartupInfoEx>();
-            startupInfo.StartupInfo.Flags = StartFUseStdHandles;
+
+            // ⚠️ EVERY FIELD BELOW IS PAIRED WITH THE FLAG THAT MAKES WINDOWS
+            // READ IT, and a STARTUPINFO field with no flag beside it is not a
+            // setting -- it is dead memory that reads like one. That is exactly
+            // how the show-window half survived here unnoticed until 2026-08-23:
+            // the struct has carried `ShowWindow` since it was written, and
+            // without STARTF_USESHOWWINDOW `CreateProcessW` never looked at it.
+            // `HouseRuleTests.EveryStartupInfoFieldIsPairedWithTheFlagThatMakesWindowsReadIt`
+            // is what keeps the next one from doing the same.
+            startupInfo.StartupInfo.Flags = StartFUseStdHandles | StartFUseShowWindow;
             startupInfo.StartupInfo.StdInput = pipes.ChildStandardInput;
             startupInfo.StartupInfo.StdOutput = pipes.ChildStandardOutput;
             startupInfo.StartupInfo.StdError = pipes.ChildStandardError;
+
+            // BELT AND BRACES, AND DELIBERATELY NOT CALLED A FIX. CREATE_NO_WINDOW
+            // below covers a CONSOLE child and does nothing at all for a GUI
+            // child's first window, so this is the only thing in the launch that
+            // speaks to one. It is a no-op today -- nothing this product starts
+            // shows a window -- but it is not hypothetical: a caller may ask for
+            // a headed session and the product grants it, and that Chromium is
+            // full-size, on the primary monitor, and focused.
+            //
+            // ⚠️ SW_SHOWNOACTIVATE ALONE IS KNOWN NOT TO BE ENOUGH SOMEWHERE
+            // ELSE, and the measurement is recorded here rather than
+            // rediscovered. The StationeersPlus rig measured it stealing focus
+            // on 40 samples out of 40, because `wShowWindow` governs only the
+            // first ShowWindow(SW_SHOWDEFAULT) and Unity called ShowWindow
+            // itself afterwards; a separate desktop stole focus on 0 of 55, and
+            // their own comment calls the show flag "belt and braces alongside
+            // the desktop, not the mechanism". WHETHER CHROMIUM BEHAVES LIKE
+            // UNITY HERE IS UNMEASURED. The desktop half is not available to us
+            // regardless: FindWindowExW(HWND_MESSAGE, ...) is scoped to a window
+            // station AND a desktop, so a private one blinds the stray sweeper
+            // completely -- it would find no message windows, sweep, and report
+            // success forever with its tests green (hazard R5), and no split
+            // helps, because putting only the browsers there leaves the sweeper
+            // on Default with the same blindness.
+            startupInfo.StartupInfo.ShowWindow = ShowNoActivate;
+
             startupInfo.AttributeList = attributes.Pointer;
 
             // lpApplicationName is set as well as argv[0], so the executable is
@@ -157,6 +194,17 @@ internal static partial class JobLauncher
                     Marshal.GetLastPInvokeError(),
                     $"CreateProcessW could not start '{command}' in '{workingDirectory}'.");
             }
+
+            // ⚠️ AFTER the call, which is the entire point of it being here and
+            // not in ProcessAttributeList.For, where it used to be: For returns
+            // before CreateProcessW runs, so a keep-alive inside it covered the
+            // wrong window. `job` has no other use after the attribute list is
+            // built, so without this the JIT is free to treat the parameter as
+            // dead across the one call that reads the handle it names. The
+            // ref-count taken in For is what makes the handle safe; this is what
+            // makes the object holding it safe, and the two are different
+            // problems.
+            GC.KeepAlive(job);
 
             // The thread handle is of no use to anyone: the child is running,
             // not suspended, so there is nothing to resume.
@@ -375,12 +423,14 @@ internal static partial class JobLauncher
         /// <summary>The job, then the handle list.</summary>
         private const int AttributeCount = 2;
 
+        private readonly SafeJobHandle _job;
         private readonly nint _jobHandleStorage;
         private readonly nint _handleListStorage;
 
-        private ProcessAttributeList(nint list, nint jobHandleStorage, nint handleListStorage)
+        private ProcessAttributeList(nint list, SafeJobHandle job, nint jobHandleStorage, nint handleListStorage)
         {
             Pointer = list;
+            _job = job;
             _jobHandleStorage = jobHandleStorage;
             _handleListStorage = handleListStorage;
         }
@@ -409,6 +459,7 @@ internal static partial class JobLauncher
             var list = Marshal.AllocHGlobal((nint)size);
             var jobStorage = nint.Zero;
             var handleStorage = nint.Zero;
+            var counted = false;
 
             try
             {
@@ -416,6 +467,19 @@ internal static partial class JobLauncher
                 {
                     throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not initialise the process attribute list.");
                 }
+
+                // ⚠️ THE REF-COUNT, TAKEN BEFORE THE RAW VALUE IS READ AND
+                // RELEASED IN Dispose -- which the caller runs AFTER
+                // CreateProcessW. A SafeHandle's protection ends at
+                // DangerousGetHandle: what goes into native storage below is a
+                // number, and a teardown racing an in-flight launch would close
+                // the handle it names. Windows recycles handle values
+                // aggressively, so the child would be created either with
+                // ERROR_INVALID_HANDLE or -- if the value had been reused -- in
+                // ANOTHER SESSION'S JOB, which nothing downstream looks for
+                // because Contains and ProcessIds are only ever asked of the job
+                // the caller believes it has.
+                job.Handle.DangerousAddRef(ref counted);
 
                 // Both buffers have to stay at a fixed address until
                 // CreateProcessW returns -- the attribute list stores pointers,
@@ -444,11 +508,15 @@ internal static partial class JobLauncher
                         "Could not restrict the child's inherited handles to this launch's own three. Every handle in the list must be inheritable and valid.");
                 }
 
-                GC.KeepAlive(job);
-                return new ProcessAttributeList(list, jobStorage, handleStorage);
+                return new ProcessAttributeList(list, job.Handle, jobStorage, handleStorage);
             }
             catch
             {
+                if (counted)
+                {
+                    job.Handle.DangerousRelease();
+                }
+
                 Free(jobStorage);
                 Free(handleStorage);
                 DeleteProcThreadAttributeList(list);
@@ -463,6 +531,13 @@ internal static partial class JobLauncher
             Marshal.FreeHGlobal(Pointer);
             Free(_jobHandleStorage);
             Free(_handleListStorage);
+
+            // The other half of the DangerousAddRef in For, and the reason this
+            // type holds the SafeHandle rather than only the number it named:
+            // the reference is what keeps the handle open across CreateProcessW,
+            // and the field is what keeps the handle itself from being
+            // collected. The `using` in Start puts this after the launch.
+            _job.DangerousRelease();
         }
 
         private static void Free(nint storage)

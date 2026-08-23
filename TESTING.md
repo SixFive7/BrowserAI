@@ -220,6 +220,79 @@ generated and that the installed version moved**. Delta granularity is the reaso
 Velopack was chosen at all ([kb](kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed)),
 and nothing in-house had ever proved `vpk` produces one before 2026-08-16.
 
+## How the suite is run: detached, teed, and the log polled
+
+**Settled 2026-08-23. This section owns the invocation; every other file points
+at it.** A suite run here is two minutes on a quiet machine and has been over
+four on a loaded one, and until this was written the documented way to start one
+was to type `dotnet test` and let it stream.
+
+**Never let the run hold the caller's pipe.** `dotnet test` starts MSBuild nodes
+and a test host, and the test host starts probes and browsers — and a grandchild
+that inherits the stdout handle keeps the pipe open after the command it came
+from has exited. The caller then never sees EOF, **so its declared timeout does
+not fire**: the call is wedged, and no timeout, no `Stop` hook and no watchdog
+can reach it, because a wedged caller never reaches a turn boundary at all. That
+is not a hypothetical — it cost a full night's work once, 824 minutes against a
+400-second limit. The second half is cheaper and happens more often: **a run
+stopped part-way used to take its output with it**, so the evidence of the thing
+you stopped it to look at was gone.
+
+Both are answered by the same shape. Redirect the run into a file, detach it, and
+poll the file.
+
+**From PowerShell:**
+
+```powershell
+$log = ".work\suite\ps-$(Get-Date -Format yyyyMMdd-HHmmss).log"
+Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $PWD `
+    -ArgumentList '-NoProfile','-Command',"dotnet test 2>&1 | Tee-Object -LiteralPath '$log'"
+```
+
+**From Git Bash:**
+
+```bash
+log=.work/suite/bash-$(date +%Y%m%d-%H%M%S).log
+nohup bash -c "dotnet test 2>&1 | tee $log" >/dev/null 2>&1 </dev/null &
+```
+
+Then poll `$log` — `Get-Content -Tail`, `tail -c`, or wait on the summary:
+
+```bash
+until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
+```
+
+**Four things this shape has to keep, and does:**
+
+- **The shell the test host inherits is still the shell you started from**, which
+  is the entire point of running both. `Start-Process pwsh` from PowerShell and
+  `bash -c` from Git Bash each pass their own working directory down, so the
+  drive letter still arrives `C:\…` from one and `c:\…` from the other —
+  verified 2026-08-23, on the six-run gate that shipped this section, by reading
+  the spelling back out of each log. A wrapper script shared between the two
+  shells would destroy exactly this and would look like a simplification.
+- **Everything the gate reads is still produced**: the `total` / `failed` /
+  `succeeded` / `skipped` block, the coverage block, and the run's file
+  artifacts. The coverage block goes to `.work\suite-coverage.txt` and the HTML
+  report to `TestResults\` regardless of where the console output went.
+- **`Tee-Object` and `tee` both flush as the run goes**, so the log is readable
+  while the run is still going and survives the run being killed. Observed
+  directly: the log carried the test host's first line 90 seconds before the
+  summary arrived.
+- **The window is hidden rather than absent**, because a detached run still
+  starts a process and [every launch in this tree suppresses its
+  console](CLAUDE.md). A run started this way puts nothing on the screen.
+
+**`BROWSERAI_RELEASE_RUN=1` goes on the same invocation** — set it in the
+detached shell's own environment, not the caller's, or the variable is not where
+the test host will read it. [Release checklist item 8](RELEASING.md#8-run-everything)
+is where that matters and what it changes.
+
+**Nothing enforces this.** A test could read this file and check the code fence
+still says `nohup`, and that would assert the documentation rather than the
+practice; the practice is a habit of whoever types the command, and this section
+is the reader it needs.
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and
@@ -473,6 +546,29 @@ Three rules follow, each of which has a scar behind it:
   46 `Initialization timed out`, 71 `No frame arrived on this pipe within 30 s`,
   48 bare `A task was canceled` — and not one was a logic fault
   ([kb](kb/toolchain.md#running-419-tests-at-once-what-starves-and-by-how-much)).
+
+⚠️ **Half of this is a mechanism now, and the half that is not is the more
+interesting one.** *Added 2026-08-23, after the sweep this rule authorised was
+found to have left two of these standing.*
+`HouseRuleTests.NoAssertionBoundsAMeasuredDurationWithANumberItInvented` reads
+the tree for an assertion that bounds a **measured** duration from above, and
+fails if the bound is a number rather than the name of one — `1000`, or a
+`TimeSpan.From…` around a literal. It carries a synthetic positive control
+rebuilt from the exact assertion deleted that day, because the tree is clean and
+a clean tree is indistinguishable from a scan whose needles stopped matching.
+
+**What it cannot see is a promptness claim wearing a named constant**, which by
+text alone is the same thing as a hang detector — so the two rows of the table
+above are still adjudicated by a reader, and the mechanism only closes the
+*"invented its own number"* half. That is worth stating plainly rather than
+letting a green build imply the rule is now automatic. What made the survivors
+findable at all was that the 2026-08-18 sweep **left its comments behind** where
+it deleted each one; the second survivor was found on 2026-08-23 only because the
+first had just been fixed and somebody went looking for siblings. Lower bounds
+are not examined — load can only make one pass — and neither is the inverse shape
+that watches a call *fail* to return (`SessionLockTests.StillBlocked`), which is
+sized against the defect rather than against the product and is the one duration
+here a starved machine makes safer.
 
 ⚠️ **And a third case the two rows above do not cover: a property whose only
 witness is the clock.** Added 2026-08-19. `SessionDirectoryGuard` answers *is

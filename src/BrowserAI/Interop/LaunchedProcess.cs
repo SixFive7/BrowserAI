@@ -102,31 +102,54 @@ internal sealed partial class LaunchedProcess(
         // blocking shutdown wait per child is five seconds of a thread each.
         var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        using var signal = new ManualResetEvent(initialState: false);
-        var placeholder = signal.SafeWaitHandle;
-
-        // ownsHandle: false -- the process handle belongs to this object and
-        // outlives the wait.
-        signal.SafeWaitHandle = new SafeWaitHandle(handle.DangerousGetHandle(), ownsHandle: false);
-        placeholder.Dispose();
-
-        var registration = ThreadPool.RegisterWaitForSingleObject(
-            signal,
-            static (state, timedOut) => ((TaskCompletionSource<bool>)state!).TrySetResult(!timedOut),
-            completion,
-            timeout,
-            executeOnlyOnce: true);
+        // ⚠️ THE REF-COUNT, AND IT IS NOT THE SAME PROBLEM GC.KeepAlive SOLVED.
+        // The wait below is built over the raw handle value with
+        // ownsHandle: false, and Dispose() closes `handle` with no coordination
+        // against an in-flight registration: Dispose is idempotent against
+        // itself and not against this method. A teardown racing a shutdown wait
+        // would leave the thread pool waiting on a closed -- and, because
+        // Windows recycles handle values aggressively, possibly reused -- handle,
+        // so this would report the exit of some other object, and that answer
+        // feeds the "did the child exit gracefully" decision and therefore
+        // whether the job is closed early. Holding a reference makes Dispose's
+        // own release the one that does not close it.
+        var counted = false;
+        handle.DangerousAddRef(ref counted);
 
         try
         {
-            return await completion.Task.ConfigureAwait(false);
+            using var signal = new ManualResetEvent(initialState: false);
+            var placeholder = signal.SafeWaitHandle;
+
+            // ownsHandle: false -- the process handle belongs to this object and
+            // outlives the wait, which the reference above is what guarantees.
+            signal.SafeWaitHandle = new SafeWaitHandle(handle.DangerousGetHandle(), ownsHandle: false);
+            placeholder.Dispose();
+
+            var registration = ThreadPool.RegisterWaitForSingleObject(
+                signal,
+                static (state, timedOut) => ((TaskCompletionSource<bool>)state!).TrySetResult(!timedOut),
+                completion,
+                timeout,
+                executeOnlyOnce: true);
+
+            try
+            {
+                return await completion.Task.ConfigureAwait(false);
+            }
+            finally
+            {
+                // Before the ManualResetEvent above is disposed, which is why
+                // this is a finally and not a using.
+                _ = registration.Unregister(null);
+            }
         }
         finally
         {
-            // Before the ManualResetEvent above is disposed, which is why this
-            // is a finally and not a using.
-            _ = registration.Unregister(null);
-            GC.KeepAlive(handle);
+            if (counted)
+            {
+                handle.DangerousRelease();
+            }
         }
     }
 

@@ -390,6 +390,14 @@ internal static class SessionProbe
     /// The sweep scope: try-acquire-and-skip at zero timeout, from N processes
     /// at once.
     /// </summary>
+    /// <remarks>
+    /// <b>The report carries the timeout the acquire was handed, not how long it
+    /// took.</b> A stopwatch here would be measuring the scheduler on a loaded
+    /// box, across a process boundary, in each of eight processes started
+    /// together — and process creation is the most contended operation there is.
+    /// <see cref="MachineMutex.LastAcquireTimeout"/> is set by the acquire from
+    /// its own argument, so nothing a starved machine does can move it.
+    /// </remarks>
     /// <param name="mutexName">The machine-wide name to contend for.</param>
     /// <param name="startEventName">A named event the host sets to release them all at once.</param>
     /// <param name="reportPath">Where to write this process's outcome.</param>
@@ -405,9 +413,7 @@ internal static class SessionProbe
             _ = start.WaitOne(Patience);
         }
 
-        var clock = Stopwatch.StartNew();
         var acquisition = mutex.Acquire(LockScopes.NeverWaits);
-        var elapsed = clock.Elapsed;
 
         try
         {
@@ -415,7 +421,14 @@ internal static class SessionProbe
             {
                 ["pid"] = Environment.ProcessId,
                 ["acquisition"] = acquisition.ToString(),
-                ["elapsedMilliseconds"] = elapsed.TotalMilliseconds,
+
+                // The wait this acquire was HANDED, read back off the gate --
+                // never the wall-clock time the call took. See
+                // MachineMutex.LastAcquireTimeout for what it proves and what it
+                // deliberately does not, and
+                // SessionLockTests.AGateRecordsTheWaitItWasHandedRatherThanAConstant
+                // for the control that the record follows the argument.
+                ["acquireTimeoutTicks"] = mutex.LastAcquireTimeout?.Ticks,
             });
 
             if (acquisition is not MutexAcquisition.NotAcquired)
