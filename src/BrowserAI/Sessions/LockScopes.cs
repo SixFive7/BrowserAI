@@ -4,12 +4,12 @@
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// The three lock scopes, named in one place, so that two components cannot
-/// disagree about a name.
+/// The lock scopes, named in one place, so that two components cannot disagree
+/// about a name.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Three scopes exist and must not be conflated:</b>
+/// <b>Four scopes exist and must not be conflated:</b>
 /// </para>
 /// <list type="table">
 ///   <item>
@@ -24,7 +24,22 @@ namespace BrowserAI.Sessions;
 ///     <term>Machine-wide, guarding the sweep</term>
 ///     <description><c>Global\BrowserAI-Sweep</c>, held for one sweep pass</description>
 ///   </item>
+///   <item>
+///     <term>Per-root, guarding the live-instance set</term>
+///     <description><c>Global\BrowserAI-Live-{sha256(root)[..32]}</c>, held for one join or one census</description>
+///   </item>
 /// </list>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-23 (previously "The three lock scopes" and a table of
+/// three).</b> The fourth existed and was undocumented, which would be a
+/// tidiness complaint except that it also had <b>no namespace of its own</b>:
+/// <c>Updates.LiveInstances.MutexNameFor</c> was the per-directory name
+/// verbatim, so a session opened on the install root took the live set's gate
+/// and held it for the session's life. Found by
+/// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+/// B3. The prefix and the row above arrived together, because a scope that is
+/// not written down here is a scope the next reader composes a name for.
+/// </para>
 /// <para>
 /// <b>The discriminator is the duration the object is held for, and it decides
 /// whether there is a wait at all.</b> Anything held for a session's life is the

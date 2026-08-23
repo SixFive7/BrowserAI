@@ -65,6 +65,34 @@ internal sealed class MachineMutex : IDisposable
     /// <summary>The kernel object's name, always <c>Global\</c> prefixed.</summary>
     public string Name { get; }
 
+    /// <summary>
+    /// The timeout the most recent <see cref="Acquire"/> was handed, recorded by
+    /// the acquire itself. <see langword="null"/> until one has happened.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It exists so that "this call did not wait" can be asserted without a
+    /// clock.</b> A <see cref="LockScopes.NeverWaits"/> acquire and a
+    /// five-second one that expired both return
+    /// <see cref="MutexAcquisition.NotAcquired"/>, so the return value cannot
+    /// tell them apart and the only other witness is elapsed wall time — which
+    /// on a loaded machine measures the scheduler rather than the lock.
+    /// <c>UpdateTests.AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing</c>
+    /// bounded <c>Stopwatch.Elapsed</c> by five seconds and
+    /// <b>measured 5.2 s</b> on 2026-08-20 for a zero-timeout acquire, on a
+    /// machine whose suite duration varied threefold from external load.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>What it proves is the argument, not the absence of a delay.</b> It
+    /// is set from the value passed in, so an edit that started passing a real
+    /// timeout is caught and an edit that slept beside the acquire is not.
+    /// That is a weaker claim than a clock would make if a clock could be
+    /// trusted here, and it is stated rather than glossed at the one assertion
+    /// that rests on it.
+    /// </para>
+    /// </remarks>
+    public TimeSpan? LastAcquireTimeout { get; private set; }
+
     /// <summary>Creates or opens the named mutex.</summary>
     /// <param name="name">A <c>Global\</c>-prefixed name.</param>
     /// <returns>The mutex.</returns>
@@ -118,6 +146,11 @@ internal sealed class MachineMutex : IDisposable
     /// <returns>Whether it was acquired, and whether it was abandoned.</returns>
     public MutexAcquisition Acquire(TimeSpan timeout)
     {
+        // Recorded BEFORE the wait, so it is set on every path out of this
+        // method -- acquired, expired, or abandoned. See LastAcquireTimeout for
+        // what it is for and what it deliberately does not prove.
+        LastAcquireTimeout = timeout;
+
         try
         {
             return _mutex.WaitOne(timeout) ? MutexAcquisition.Acquired : MutexAcquisition.NotAcquired;

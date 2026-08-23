@@ -130,6 +130,28 @@ internal sealed record LiveMarkerReclaim
     /// <summary>Whether the gate was found abandoned by a dead holder (race R3).</summary>
     public bool GateWasAbandoned { get; init; }
 
+    /// <summary>
+    /// The wait this pass asked the gate for, read back off the gate rather than
+    /// restated here. <see langword="null"/> when no acquire happened at all —
+    /// the directory did not exist, or the gate could not be created.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is how a caller can tell an instant skip from a skip that waited
+    /// first</b>, which <see cref="Outcome"/> cannot: both are
+    /// <see cref="LiveMarkerReclaimOutcome.Skipped"/>. This pass takes the gate
+    /// at <see cref="Sessions.LockScopes.NeverWaits"/> on purpose — it runs while
+    /// a process is starting, and a reclaim is never worth a millisecond of
+    /// startup — so a value other than zero here is the defect, arriving as a
+    /// fact rather than as an inference from a stopwatch on a loaded machine.
+    /// </para>
+    /// <para>
+    /// See <see cref="Sessions.MachineMutex.LastAcquireTimeout"/> for what this
+    /// proves and what it does not.
+    /// </para>
+    /// </remarks>
+    public TimeSpan? GateWait { get; init; }
+
     /// <summary>The first reason anything was left alone, for the log line.</summary>
     public string? Why { get; init; }
 
@@ -504,6 +526,7 @@ internal sealed class LiveInstances : IDisposable
                 return new LiveMarkerReclaim
                 {
                     Outcome = LiveMarkerReclaimOutcome.Skipped,
+                    GateWait = gate.LastAcquireTimeout,
                     Why = $"another process holds '{mutexName}' and is walking the same directory.",
                 };
             }
@@ -527,6 +550,7 @@ internal sealed class LiveInstances : IDisposable
                         Held = pass.Held,
                         Undetermined = pass.Undetermined + pass.Unreclaimed,
                         GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned,
+                        GateWait = gate.LastAcquireTimeout,
                         Why = pass.Why,
                     };
                 }
@@ -538,6 +562,7 @@ internal sealed class LiveInstances : IDisposable
                     {
                         Outcome = LiveMarkerReclaimOutcome.Failed,
                         GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned,
+                        GateWait = gate.LastAcquireTimeout,
                         Why = $"'{directory}' could not be enumerated ({failure.Message}).",
                     };
                 }
@@ -630,17 +655,66 @@ internal sealed class LiveInstances : IDisposable
     }
 
     /// <summary>
-    /// The per-root mutex name, from the same canonicalisation every other
-    /// directory-keyed name in this product uses.
+    /// The live set's own machine-wide gate: the same canonicalisation every
+    /// other directory-keyed name in this product uses, in a namespace of its
+    /// own.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// One canonicalisation function, four consumers — the per-directory gate,
-    /// the lock file, the session index key and now this. A second spelling is
-    /// how two names come to mean different things while both report success.
+    /// the lock file, the session index key and this. A second spelling is how
+    /// two names come to mean different things while both report success.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-23 (previously
+    /// <c>SessionPath.Resolve(rootAppDir).MutexName</c>, with no prefix of its
+    /// own).</b> That shared the <i>per-directory gate's</i> namespace as well
+    /// as its canonicalisation, which made this a fourth scope wearing the
+    /// first's names — and <see cref="Sessions.LockScopes"/> documents three.
+    /// A session opened on the install root itself collided <b>exactly</b>, and
+    /// nothing refuses that path: <c>SessionDirectoryGuard</c> refuses network
+    /// paths and aliased spellings, and <c>%LOCALAPPDATA%\BrowserAI</c> is
+    /// neither.
+    /// </para>
+    /// <para>
+    /// <b>What the collision cost was silent and lasted the process's life.</b>
+    /// <see cref="Join"/> waits <see cref="LockScopes.LiveInstanceGate"/>, five
+    /// seconds. Queued behind a hold of the 120-second
+    /// <see cref="LockScopes.PerDirectoryGate"/> it expires, and a failed join
+    /// costs this process its ability to update <b>for good</b> — one log line,
+    /// no refusal, nothing a caller could see. <see cref="AmIAlone"/>'s census
+    /// held the same object from the other side, blocking that directory's
+    /// <c>TryAcquire</c>. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// B3.
+    /// </para>
+    /// <para>
+    /// <b>The prefix is the remedy the review named and the one this product
+    /// had already used once</b> — <c>BrowserProvisioner.MutexPrefix</c> is
+    /// <c>Global\BrowserAI-Provision-</c> for exactly this reason. Adding a
+    /// second one is cheaper than making the session guard understand a
+    /// directory it otherwise has no opinion about.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The name changed, so a BrowserAI from before this and one from
+    /// after do not serialise against each other on the live set.</b> That
+    /// window is one upgrade wide and what is inside it is safe by
+    /// construction: <see cref="Join"/> creates a file whose name carries a
+    /// GUID, and <see cref="Walk"/> only removes a marker it has itself proven
+    /// unheld, so two passes running together reach the same answer more slowly
+    /// rather than a different one.
+    /// </para>
     /// </remarks>
     /// <param name="rootAppDir">The install root.</param>
     /// <returns>A <c>Global\</c> name.</returns>
-    public static string MutexNameFor(string rootAppDir) => SessionPath.Resolve(rootAppDir).MutexName;
+    public static string MutexNameFor(string rootAppDir) =>
+        MutexPrefix + SessionPath.Resolve(rootAppDir).MutexName[LockScopes.PerDirectoryPrefix.Length..];
+
+    /// <summary>
+    /// The live set's own prefix, so that this scope and a session's
+    /// per-directory gate cannot name one kernel object.
+    /// </summary>
+    public const string MutexPrefix = $@"{LockScopes.GlobalPrefix}BrowserAI-Live-";
 
     /// <summary>
     /// One walk of the marker directory: count what is held, remove what is not,

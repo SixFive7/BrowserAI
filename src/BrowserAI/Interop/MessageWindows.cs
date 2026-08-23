@@ -170,6 +170,22 @@ internal static partial class MessageWindows
     /// The window's title as the <b>documented</b> API reads it — which
     /// cross-process is the kernel-side name and not a <c>WM_GETTEXT</c>.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A title longer than <see cref="MaximumTitleLength"/> is silently
+    /// truncated to a prefix and no caller learns that it was.</b> Named here
+    /// rather than fixed, on 2026-08-23, because the consequence is bounded by
+    /// something outside this method: the only thing done with a title is to
+    /// resolve it to a directory and test whether its <c>browserai.json</c> can
+    /// be taken, so a prefix fails that test and lands in the <b>refuse</b>
+    /// direction. Reporting the truncation would add a branch to the one path
+    /// this type wants boring, and would buy nothing the ownership test does not
+    /// already buy. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+    /// finding 12; <b>declined with the reason above</b>, and written down
+    /// because the type's premise is that everything on this path fails safe and
+    /// a silent prefix is the one shape of it that is not obviously
+    /// refusal-only.
+    /// </remarks>
     /// <param name="window">The window handle.</param>
     /// <returns>The title, or an empty string for a nameless or dead window.</returns>
     public static unsafe string WindowText(nint window)

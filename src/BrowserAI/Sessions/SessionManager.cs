@@ -1589,6 +1589,28 @@ internal sealed class SessionManager : IAsyncDisposable
     /// log that repeated both on every entry would be a third of its own size.
     /// </para>
     /// <para>
+    /// ⚠️ <b>And, for <see cref="SessionToolSurface.Init"/> alone,
+    /// <c>purpose</c> — because on that one call it IS the <c>why</c>.</b>
+    /// <c>init</c> takes no separate <see cref="SessionToolSurface.WhyParameter"/>,
+    /// so the same string was written twice into one entry and printed twice by
+    /// <c>browserai_catch_up</c>: once in full under <c>why:</c> and once under
+    /// <c>with: purpose=…</c> cut at
+    /// <see cref="LockRecord.ArgumentValueMaximumLength"/> characters with
+    /// <c>(+N more characters)</c> after it. <b>That is not an aesthetic
+    /// defect.</b> The second copy is a different, shorter string sitting
+    /// directly beneath the first, and a reader — or a model — has no way to
+    /// tell a truncated restatement from a second value that genuinely
+    /// disagrees with the one above it.
+    /// </para>
+    /// <para>
+    /// <b>It is narrowed to <c>init</c> and must stay narrowed.</b> On
+    /// <see cref="SessionToolSurface.Resume"/> and
+    /// <see cref="SessionToolSurface.SetPurpose"/> the caller sends
+    /// <c>purpose</c> <i>and</i> <c>why</c> and they say different things — one
+    /// standing, one disposable — so both belong in the entry, and dropping
+    /// either would lose the fact that the purpose moved.
+    /// </para>
+    /// <para>
     /// <b>What happens to a value is
     /// <see cref="LoggedArgument.Of"/>'s decision</b>, and it is documented
     /// there rather than here: two names are never stored, a non-scalar becomes
@@ -1602,10 +1624,16 @@ internal sealed class SessionManager : IAsyncDisposable
     internal static LogEntry Entry(string tool, string why, JsonObject? arguments)
     {
         var recorded = new List<LoggedArgument>();
+        var purposeIsTheWhy = string.Equals(tool, SessionToolSurface.Init, StringComparison.Ordinal);
 
         foreach (var (name, value) in arguments ?? [])
         {
             if (name is SessionToolSurface.SessionParameter or SessionToolSurface.WhyParameter)
+            {
+                continue;
+            }
+
+            if (purposeIsTheWhy && name is SessionToolSurface.PurposeParameter)
             {
                 continue;
             }

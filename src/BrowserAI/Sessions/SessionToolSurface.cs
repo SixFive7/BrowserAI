@@ -149,6 +149,22 @@ internal static class SessionToolSurface
     /// </remarks>
     public const string SessionParameter = "session";
 
+    /// <summary>
+    /// The session's standing description, on the three tools that take one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>On <see cref="Init"/> it is also the entry's <c>why</c>, and that is
+    /// why it has a name in code rather than a literal at three call sites.</b>
+    /// <c>init</c> takes no separate <see cref="WhyParameter"/> — the purpose
+    /// <i>is</i> why the session exists — so <c>SessionManager.Entry</c> drops it
+    /// from the arguments it records for that one tool. On <see cref="Resume"/>
+    /// and <see cref="SetPurpose"/> the two are genuinely different values and
+    /// both are recorded.
+    /// </para>
+    /// </remarks>
+    public const string PurposeParameter = "purpose";
+
     /// <summary>The prefix that marks a tool as one of ours.</summary>
     public const string Prefix = "browserai_";
 

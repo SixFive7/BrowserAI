@@ -156,6 +156,155 @@ internal sealed class CatchUpTests
         await Assert.That(record.Log.Any(entry => entry.Tool == SessionToolSurface.CatchUp)).IsFalse();
     }
 
+    /// <summary>
+    /// <c>browserai_init</c>'s purpose is printed <b>once</b>, in full, under
+    /// <c>why:</c> — and never a second time under <c>with:</c> as a stump.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The defect this holds against is not an aesthetic one.</b>
+    /// <c>browserai_init</c> is the one call whose <c>why</c> and whose
+    /// <c>purpose</c> are the same string — it takes no separate <c>why</c>, so
+    /// the purpose <i>is</i> the why. The entry printed it in full under
+    /// <c>why:</c> and then again directly beneath under <c>with: purpose=…</c>,
+    /// cut at <see cref="LockRecord.ArgumentValueMaximumLength"/> characters with
+    /// <c>(+N more characters)</c> after it. <b>Two adjacent lines, the second
+    /// one shorter and different</b>: nothing in the answer says the second is a
+    /// truncation of the first rather than a value that disagrees with it, and a
+    /// model reading its own session back has to guess which one is current.
+    /// </para>
+    /// <para>
+    /// <b>The purpose is deliberately longer than the argument cap and shorter
+    /// than <see cref="LockRecord.WhyMaximumLength"/></b>, and both are asserted
+    /// rather than eyeballed — a purpose under 200 characters would make this
+    /// test pass against the defect it exists for.
+    /// </para>
+    /// <para>
+    /// <b>The <c>with:</c> line itself must survive.</b> <c>init</c> also carries
+    /// <c>directory</c>, which is still recorded, so an implementation that
+    /// dropped the whole line rather than the one duplicated argument fails here.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInitPurposeIsPrintedInFullOnceAndNeverAgainAsATruncatedArgument()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "printed-once");
+
+        const string Purpose =
+            "reproducing the checkout 500 on staging: the cart posts to /checkout, the response is a 500 with an "
+            + "empty body, and it only happens for accounts whose default address is outside the billing country, "
+            + "which is why the fixture needs a Norwegian address on a UK account";
+
+        // The preconditions that make a failure possible at all. Under the first
+        // the argument is never cut and there is no stump to find; over the
+        // second the `why:` line is cut too and the two lines stop disagreeing.
+        await Assert.That(Purpose.Length).IsGreaterThan(LockRecord.ArgumentValueMaximumLength);
+        await Assert.That(Purpose.Length).IsLessThanOrEqualTo(LockRecord.WhyMaximumLength);
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = Purpose,
+        });
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+        }));
+
+        // Printed, in full, as the entry's own reason.
+        await Assert.That(text).Contains($"why: {Purpose}");
+
+        // ⚠️ THE CLAIM. The stump is composed from the product's own cap rather
+        // than typed, so it stays the string the defect actually produced.
+        var stump = Purpose[..LockRecord.ArgumentValueMaximumLength];
+        var dropped = Purpose.Length - LockRecord.ArgumentValueMaximumLength;
+
+        await Assert.That(text).DoesNotContain($"{stump}… (+{dropped} more characters)");
+        await Assert.That(text).DoesNotContain("more characters)");
+        await Assert.That(text).DoesNotContain($"{SessionToolSurface.PurposeParameter}=");
+
+        // And the line is still there, carrying what init's OTHER argument said.
+        await Assert.That(text).Contains($"with: directory={directory}");
+
+        // At the record, not only in the rendering: the entry never gained the
+        // duplicate, so nothing downstream can print it either.
+        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+
+        await Assert.That(record.Log[0].Tool).IsEqualTo(SessionToolSurface.Init);
+        await Assert.That(record.Log[0].Why).IsEqualTo(Purpose);
+        await Assert.That(record.Log[0].Arguments.Select(argument => argument.Name).ToArray())
+            .IsEquivalentTo(["directory"]);
+    }
+
+    /// <summary>
+    /// <c>browserai_resume</c> and <c>browserai_set_purpose</c> keep printing
+    /// <c>purpose</c> beside their own <c>why</c>, because there the two are
+    /// different values.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the other half of the arm above and it is what keeps the
+    /// suppression narrow.</b> On these two tools the caller sends a standing
+    /// description <i>and</i> a disposable reason, and an entry that dropped
+    /// either would lose the fact that the purpose moved at the moment it moved.
+    /// A version that suppressed <c>purpose</c> everywhere passes the test above
+    /// and fails this one.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ResumeAndSetPurposeStillRecordPurposeBesideTheirOwnWhy()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "two-values");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "reproducing the checkout 500 on staging",
+        });
+
+        _ = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "and the same 500 on the mobile checkout",
+            ["why"] = "picking this up after the overnight run stopped",
+        });
+
+        _ = await CallAsync(rig, SessionToolSurface.SetPurpose, new JsonObject
+        {
+            ["session"] = directory,
+            ["purpose"] = "tracking the checkout redirect loop on staging",
+            ["why"] = "the 500 turned out to be a redirect loop",
+        });
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+        }));
+
+        await Assert.That(text).Contains("why: picking this up after the overnight run stopped");
+        await Assert.That(text).Contains($"{SessionToolSurface.PurposeParameter}=and the same 500 on the mobile checkout");
+
+        await Assert.That(text).Contains("why: the 500 turned out to be a redirect loop");
+        await Assert.That(text).Contains($"{SessionToolSurface.PurposeParameter}=tracking the checkout redirect loop on staging");
+
+        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+
+        await Assert.That(record.Log.Select(entry => entry.Tool).ToArray())
+            .IsEquivalentTo([SessionToolSurface.Init, SessionToolSurface.Resume, SessionToolSurface.SetPurpose]);
+
+        foreach (var entry in record.Log.Where(entry => entry.Tool != SessionToolSurface.Init))
+        {
+            await Assert.That(entry.Arguments.Any(argument => argument.Name == SessionToolSurface.PurposeParameter)).IsTrue();
+        }
+    }
+
     [Test]
     public async Task ADirectoryThatIsNotASessionIsRefusedWithSomewhereToGo()
     {

@@ -880,6 +880,63 @@ internal sealed class StraySweepTests
     }
 
     /// <summary>
+    /// A title on a <b>mapped network drive letter</b> is refused too — the
+    /// guard is about the volume, not about the spelling.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the half the character check cannot reach, and it costs the
+    /// same twenty-two seconds.</b> <c>net use Z: \\dead\share</c> produces a
+    /// path that satisfies every test in the arm above — an ASCII letter, a
+    /// colon, a separator — and <c>File.Exists</c> on it was measured at
+    /// <b>22,210 ms</b>
+    /// ([kb](../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
+    /// The loop evaluates <b>every</b> title on the machine rather than only a
+    /// candidate's, and the class it walks is forgeable, so one process
+    /// registering <c>Chrome_MessageWindow</c> with a <c>Z:\…</c> title stalls
+    /// the whole pass — while holding the machine-wide sweep mutex.
+    /// </para>
+    /// <para>
+    /// <b>Found by <a href="../../docs/reviews/2026-08-18-adversarial-processes.md">the
+    /// adversarial review</a>, finding 8, and triaged 2026-08-23.</b> It was
+    /// declined as expensive when it was written; what changed is that
+    /// <c>VolumeIdentity</c> arrived on 2026-08-19 for
+    /// <c>SessionDirectoryGuard</c> and answers exactly this question with
+    /// <b>no filesystem call</b> — <c>QueryDosDeviceW</c> and
+    /// <c>GetDriveTypeW</c>, measured at 0.9 ms — so the fix became a call to
+    /// something already in the tree and already tested.
+    /// </para>
+    /// <para>
+    /// <b>Asserted on the rejection and never on a clock</b>, for the reason the
+    /// arm above sets out at length.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AMappedNetworkDriveTitleIsRefusedThoughItIsSpelledLocally()
+    {
+        using var mapped = DosDeviceAlias.MappedTo(@"10.255.255.1\share");
+
+        var title = mapped.PathTo("profile");
+
+        // The precondition, and it is what makes a failure here mean something:
+        // this title passes every character test the old guard applied.
+        await Assert.That(title.Length).IsGreaterThanOrEqualTo(3);
+        await Assert.That(char.IsAsciiLetter(title[0])).IsTrue();
+        await Assert.That(title[1]).IsEqualTo(':');
+        await Assert.That(title[2]).IsEqualTo('\\');
+
+        // ⚠️ THE CLAIM. Refused anyway, because the letter resolves through a
+        // network redirector and the sweep must never form a path from it.
+        await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(title)).IsFalse();
+
+        // The control, on the same predicate: a real local letter still passes,
+        // so this is a rule about the volume rather than a refusal of everything.
+        await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(
+            Path.Combine(Path.GetTempPath(), "profile"))).IsTrue();
+    }
+
+    /// <summary>
     /// Attribution failed, so the sweep declines to act and says so.
     /// </summary>
     [Test]

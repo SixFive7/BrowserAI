@@ -445,10 +445,69 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
+    /// The live-instance set's gate is in a namespace of its <b>own</b>, so a
+    /// session opened on the install root cannot collide with it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It used to be the same name.</b> <c>LiveInstances.MutexNameFor</c> was
+    /// <c>SessionPath.Resolve(rootAppDir).MutexName</c> — the same construction
+    /// and the same namespace a session's per-directory gate uses — so a session
+    /// opened on <c>%LOCALAPPDATA%\BrowserAI</c> collided <i>exactly</i>, and
+    /// nothing refuses that path: <c>SessionDirectoryGuard</c> refuses network
+    /// paths and aliased spellings, and the install root is neither.
+    /// </para>
+    /// <para>
+    /// <b>What that cost was silent and permanent.</b>
+    /// <see cref="LiveInstances.Join"/> waits
+    /// <see cref="LockScopes.LiveInstanceGate"/>, five seconds; queued behind a
+    /// hold of the 120-second <see cref="LockScopes.PerDirectoryGate"/> it
+    /// expires, and a failed join costs that process <b>its whole ability to
+    /// update, for its whole life</b>, with one log line. Found by
+    /// <a href="../../docs/reviews/2026-08-18-adversarial-locking.md">the
+    /// adversarial review</a>, B3, and triaged 2026-08-23.
+    /// </para>
+    /// <para>
+    /// <b>The remedy is the one the review named and the one this product had
+    /// already used once</b> — <c>BrowserProvisioner.MutexPrefix</c> is
+    /// <c>Global\BrowserAI-Provision-</c> for the same reason. Asserted as
+    /// <i>different from</i> the per-directory name rather than as a literal, so
+    /// it stays true if either construction is ever changed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheLiveSetsGateCannotCollideWithASessionOpenedOnTheInstallRoot()
+    {
+        using var scratch = ScratchDirectory.Create("update-live-namespace");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        var live = LiveInstances.MutexNameFor(paths.RootAppDir);
+        var asASession = SessionPath.Resolve(paths.RootAppDir).MutexName;
+
+        // ⚠️ THE CLAIM. One directory, two scopes, two names.
+        await Assert.That(live).IsNotEqualTo(asASession);
+
+        // Still machine-wide, and still in this product's namespace: a fix that
+        // reached for Local\ would satisfy the line above and remove the lock
+        // precisely where it is needed.
+        await Assert.That(live).StartsWith(LockScopes.GlobalPrefix);
+        await Assert.That(asASession).StartsWith(LockScopes.GlobalPrefix);
+
+        // And it is still a function of the root, so two roots do not share one
+        // live set -- which is the property the old name did have.
+        using var other = ScratchDirectory.Create("update-live-namespace-other");
+
+        await Assert.That(LiveInstances.MutexNameFor(new LocalAppDataPaths(other.Path).RootAppDir))
+            .IsNotEqualTo(live);
+    }
+
+    /// <summary>
     /// A peer holding the gate makes the reclaim <b>skip instantly</b> rather
     /// than wait, and nothing is touched while it does.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>This is what stops a hundred starting processes becoming a thundering
     /// herd.</b> The gate is taken at <see cref="LockScopes.NeverWaits"/> — one
     /// process reclaims and the rest pay an acquire and leave — which is the
@@ -457,6 +516,30 @@ internal sealed class UpdateTests
     /// Windows mutex is owned by the thread that waited on it, so this thread
     /// would otherwise be granted it recursively and the test would prove
     /// nothing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>There is no clock in this test, and there was one until
+    /// 2026-08-23.</b> It bounded <c>Stopwatch.Elapsed</c> by
+    /// <see cref="LockScopes.LiveInstanceGate"/> and said, in as many words,
+    /// <i>"nothing about a machine's load can approach it, because the work
+    /// bounded is one zero-timeout acquire"</i>. <b>That sentence was falsified:
+    /// one full-suite run in seven on 2026-08-20 measured 5 s 248 ms</b> — not
+    /// in the acquire, which structurally cannot block at a zero timeout, but in
+    /// the thread being descheduled while the same tree's suite duration varied
+    /// between 1 m 56 s and 5 m 59 s from load outside the repository. <b>A
+    /// wall-clock bound of five seconds sat inside that noise.</b>
+    /// </para>
+    /// <para>
+    /// <b>What replaced it is the gate's own record of the wait it was asked
+    /// for</b> — <see cref="MachineMutex.LastAcquireTimeout"/>, surfaced on
+    /// <see cref="LiveMarkerReclaim.GateWait"/> — which a starved thread cannot
+    /// move. <b>It is a weaker claim and that is stated rather than glossed:</b>
+    /// the assertion is now <i>the pass asked not to wait</i> rather than <i>the
+    /// pass did not wait</i>. An edit that passed a real timeout is still caught;
+    /// an edit that slept beside the acquire is not, and no clock this suite can
+    /// run on this machine would have caught it either. See
+    /// <c>QUESTIONS.md</c> §15.
+    /// </para>
     /// </remarks>
     [Test]
     public async Task AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing()
@@ -498,9 +581,7 @@ internal sealed class UpdateTests
         holder.Start();
         taken.Wait();
 
-        var clock = System.Diagnostics.Stopwatch.StartNew();
         var skipped = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
-        clock.Stop();
 
         release.Set();
         holder.Join();
@@ -513,14 +594,19 @@ internal sealed class UpdateTests
         await Assert.That(skipped.Reclaimed).IsEqualTo(0);
         await Assert.That(File.Exists(stale)).IsTrue();
 
-        // ⚠️ A HANG DETECTOR AND NOT A BUDGET, and it is the only thing that can
-        // tell "skipped at once" from "waited five seconds and then skipped" --
-        // both of which return Skipped. The bound is the product's OWN gate
-        // timeout, read rather than typed rather than guessed at: reaching it
-        // means this call waited on a gate it is supposed to try once, which is
-        // the defect. Nothing about a machine's load can approach it, because the
-        // work bounded is one zero-timeout acquire.
-        await Assert.That(clock.Elapsed).IsLessThan(LockScopes.LiveInstanceGate);
+        // ⚠️ THE ONLY THING THAT SEPARATES "skipped at once" FROM "waited five
+        // seconds and then skipped" -- both of which return Skipped. It is the
+        // timeout the acquire was HANDED, recorded by the acquire itself and read
+        // back off the gate the pass used, so a descheduled thread cannot move it
+        // and no wall clock is consulted. A version that passed
+        // LockScopes.LiveInstanceGate here would report five seconds and fail.
+        //
+        // It proves the ARGUMENT, not the absence of a delay: a Thread.Sleep
+        // beside the acquire would still pass. That is a real weakening of the
+        // claim the old stopwatch made, and it is taken deliberately, because the
+        // stopwatch's own claim -- "nothing about a machine's load can approach
+        // it" -- was measured false at 5.2 s on 2026-08-20.
+        await Assert.That(skipped.GateWait).IsEqualTo(LockScopes.NeverWaits);
 
         // The positive control: the same call, the same directory, nothing
         // holding the gate. A skip that was really a no-op would fail here.

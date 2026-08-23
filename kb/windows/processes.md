@@ -213,6 +213,42 @@ that the forced variables are present — it would pass against a transport that
 never called `Clear()`, on any machine that happened not to have them set.
 `[STABLE]`
 
+### Redirecting a child's streams does not suppress its console window — measured 2026-08-23
+
+**`CreateNoWindow` is the only thing that does, and whether its absence is
+*visible* depends on the parent, which is why it hides.** Measured 2026-08-23 on
+Windows 11 Pro 26200 with .NET 10, launching `pwsh` through
+`ProcessStartInfo` with `UseShellExecute = false` and both output streams
+redirected on every arm.
+
+| Parent | `CreateNoWindow` | What the child got | New visible top-level windows |
+|---|---|---|---|
+| **has a console** | `false` | **joined the parent's** — its console process list went 3 → 4 | 0 |
+| **has a console** | `true` | a private console, process list **1** | 0 |
+| **no console** (`FreeConsole` first) | `false` | **a new console** | **2** |
+| **no console** (`FreeConsole` first) | `true` | a private console | 0 |
+
+The two windows are `CASCADIA_HOSTING_WINDOW_CLASS` titled with the child's
+image path, and a `PseudoConsoleWindow`. **The class name matters more than it
+looks:** on Windows 11 the default console host is Windows Terminal, so a sweep
+for the classic `ConsoleWindowClass` finds **nothing** and reports a clean
+screen while two windows are on it. The figures above come from a diff of every
+visible top-level window before and during the launch, for that reason.
+
+**What this explains.** A suite run from a terminal never shows the defect,
+because the child joins the terminal's own console; the identical run started by
+a *windowless* parent — an agent harness, a scheduled task, a service — flashes
+a terminal per launch. Two of this repository's ten launch sites had omitted the
+flag and it was found twice by a human noticing the flicker, never by a run.
+`HouseRuleTests.EveryProcessLaunchInTheTreeSuppressesTheConsoleWindow` is the
+mechanism now. `[FLOATS]` — it rests on Windows' default console host, which
+changed once already.
+
+**To re-establish it:** from a parent that has called `FreeConsole`, start any
+console-subsystem child twice with the flag set and unset, and diff
+`EnumWindows` over visible top-level windows around each launch. Read the class
+names rather than filtering for one, or the measurement answers zero both times.
+
 ## Files, durable writes and deletes
 
 **`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on

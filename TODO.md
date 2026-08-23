@@ -92,6 +92,81 @@ found and this pass did **not** do; the bounded ones also have rows in the
 [hazard index](HAZARDS.md#hazard-index), because a thing that is open needs to be
 findable from more than one direction.
 
+⚠️ **The last twelve were triaged on 2026-08-23, and this is what came out of
+it.** `locking B3, B4, B5` and `processes 4, 6-14` had sat unread since the day
+they were written. Reading them produced **two fixes** — B3's shared mutex
+namespace and processes 8's title guard, both cheap only *because* the tree had
+moved underneath them — **three declines with reasons**, **one finding closed by
+work that had landed since**, and **seven hazard rows**. Two of those seven are
+below, because their remedy is a decision somebody has to take rather than a
+change somebody has to make. The other five are hazards and nothing else; they
+are in the [index](HAZARDS.md#hazard-index) and not here, because this file is
+work settled in intent and they are not settled.
+
+- [ ] **Decide what a torn log record should do.** `NativeFile.Append` loops on a
+      short write, and `FILE_APPEND_DATA` is atomic **per `WriteFile` call** — so
+      the second call lands after whatever another of the hundred processes wrote
+      in between. The record is torn, interleaved, and every call returned
+      success.
+      [Hazard row](HAZARDS.md#hazard-index); [review](docs/reviews/2026-08-18-adversarial-processes.md),
+      finding 9. **Nothing here is a bug to fix; it is a choice about which
+      failure to have**, on the one path that must never take the process down:
+
+      1. **Throw on a partial write.** One line. Turns a silent tear into a lost
+         record plus an exception the writer's own catch already handles. What it
+         costs: a record that was *partly* written is still partly written, so
+         the file is torn either way — this makes it loud, not clean.
+      2. **Write through a single call and refuse anything larger than one
+         call can carry.** Honest about the guarantee, and it caps a log record
+         at whatever the filesystem will take in one write — a number nobody has
+         measured here, and it would be a new limit on a diagnostic surface.
+      3. **Retry the whole record from the start after a short write.** Restores
+         atomicity per record at the cost of duplicating the fragment that did
+         land, which is worse than a tear for anything parsing the file.
+      4. **Leave it and say so in place.** The reachable route named by the
+         review has narrowed — the log directory is derived from the install
+         location rather than supplied by a caller, and a UNC app root is refused
+         at startup since 2026-08-19 — so what remains is quota and disk-full
+         boundaries. It has never been observed.
+
+      **Recommendation: 1, with 4's sentence written into it.** It is the only
+      option that does not trade a silent failure for a new limit, and the
+      narrowing in 4 is why it is not urgent rather than why it is unnecessary.
+
+- [ ] **Decide whether `SessionLock` gets a per-session lock.** Two concurrent
+      tool calls on one session — a `browserai_set_purpose` and a
+      `browserai_destroy` — can leave `browserai.json` held by a `FileStream`
+      nothing will ever close, after which every `TryAcquire` on that directory
+      answers `Held` naming a pid with no session, for the life of the process.
+      [Hazard row](HAZARDS.md#hazard-index); [review](docs/reviews/2026-08-18-adversarial-locking.md),
+      B4. **`SessionManager` serialises nothing** — `_live` is a
+      `ConcurrentDictionary` and is the only synchronisation there is — and
+      `SessionLock.Rewrite` tests `_disposed` *before* taking `_gate`, which is
+      the window.
+
+      1. **A per-session lock every mutating path and both disposal paths take.**
+         The complete fix. It is a concurrency change to the most load-bearing
+         type in the product, and it puts a second lock inside a design whose
+         whole discipline is *three scopes, named in one place* — now four.
+      2. **Take `_gate` before the `_disposed` check in `Rewrite`.** Smaller, and
+         **not sufficient**: `Dispose` disposes `_gate` itself, so a rewrite
+         blocked on it wakes holding a disposed object. It narrows the window
+         without closing it, which is the worst outcome to ship.
+      3. **Serialise tool calls per session at the manager.** One `SemaphoreSlim`
+         per live session, taken by every tool that names one. Closes this and
+         every sibling of it at once, and costs concurrency the product currently
+         advertises: two calls on one session would queue rather than interleave.
+      4. **Decline it as unreachable in practice** and say so. One agent drives
+         one session, and the interleaving needs two concurrent calls naming the
+         same directory. **The reason this is weak** is that BrowserAI's charter
+         is many agents on one machine, and nothing in the protocol stops two of
+         them holding the same session path.
+
+      **Recommendation: 3.** It is the only one that closes the class rather than
+      the instance, and it is testable deterministically — which 1 is not, since
+      the interleaving cannot be raced for reliably and would have to be asserted
+      as an invariant instead. **Whatever is chosen, 2 alone must not be.**
+
 - [ ] **Headless-with-storage is still refused on a reason the same pass
       declared void.** [`DECISIONS.md`](DECISIONS.md) keeps it out because *"it
       is the one combination granting full credential access with no visible

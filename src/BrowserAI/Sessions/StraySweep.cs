@@ -248,10 +248,42 @@ internal sealed class StraySweep
     /// seconds.
     /// </para>
     /// <para>
-    /// So the check is on the characters and nothing else: a drive letter, a
-    /// colon and a separator. It runs before <c>Path.GetFullPath</c> as well as
-    /// before <c>File.Exists</c>, because a rejected title must cost microseconds
-    /// rather than being rejected somewhere further in.
+    /// So the characters are asked first and nothing else is asked until they
+    /// pass: a drive letter, a colon and a separator. That runs before
+    /// <c>Path.GetFullPath</c> as well as before <c>File.Exists</c>, because a
+    /// rejected title must cost microseconds rather than being rejected
+    /// somewhere further in.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-23 (previously "the check is on the characters
+    /// and nothing else").</b> The characters cannot see the failure they were
+    /// sized against. <c>net use Z: \\dead\share</c> produces a title that
+    /// satisfies every test above and costs the <b>same 22,210 ms</b> at
+    /// <c>File.Exists</c>
+    /// ([kb](../../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)),
+    /// so the guard rejected the UNC <i>spelling</i> while admitting UNC
+    /// <i>semantics</i>. Found by
+    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+    /// finding 8, and triaged on 2026-08-23 — where it was cheap because
+    /// <see cref="Interop.VolumeIdentity"/> had arrived in between for
+    /// <see cref="SessionDirectoryGuard"/>.
+    /// </para>
+    /// <para>
+    /// <b>The volume question costs no filesystem call, which is the only
+    /// reason it may be asked here.</b> <c>VolumeIdentity.Of</c> is
+    /// <c>QueryDosDeviceW</c> and <c>GetDriveTypeW</c> — the object manager and
+    /// the operating system's own classification, measured at <b>0.9 ms</b> —
+    /// so this guard still cannot pay the cost it exists to prevent. A guard
+    /// that opened anything would be the defect wearing the fix's name.
+    /// </para>
+    /// <para>
+    /// <b>Only <see cref="VolumeKind.Network"/> is refused, and that is
+    /// deliberate.</b> A <c>subst</c>ed letter is local and its filesystem calls
+    /// are local-speed; a letter naming nothing answers in 0.01 ms. Neither can
+    /// stall the pass, and refusing them would narrow what the sweep can see —
+    /// which costs a stray browser left running, the failure this whole class
+    /// exists for. The session directory guard refuses both because it is
+    /// deciding what a caller may *own*, which is a different question.
     /// </para>
     /// </remarks>
     /// <param name="title">The title, exactly as the window published it.</param>
@@ -261,7 +293,8 @@ internal sealed class StraySweep
         && char.IsAsciiLetter(title[0])
         && title[1] is ':'
         && title[2] is '\\' or '/'
-        && !title.Contains('\0', StringComparison.Ordinal);
+        && !title.Contains('\0', StringComparison.Ordinal)
+        && VolumeIdentity.Of(title).Kind is not VolumeKind.Network;
 
     private StraySweepResult Pass(Stopwatch clock)
     {

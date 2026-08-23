@@ -279,6 +279,14 @@ internal sealed class PayloadTests
             RedirectStandardError = true,
             UseShellExecute = false,
 
+            // Redirecting the three streams does NOT suppress the console.
+            // Measured 2026-08-23: from a parent with no console of its own,
+            // this launch without the flag put two visible windows on screen
+            // and with it put none. A suite run from a terminal hides the
+            // difference, because the child joins the terminal's console
+            // instead of allocating one.
+            CreateNoWindow = true,
+
             // Explicit, because an unset WorkingDirectory passes null to
             // CreateProcess and the child inherits the test host's -- which for
             // a tree that resolves anything relative is a different answer per

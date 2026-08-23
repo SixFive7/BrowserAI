@@ -383,6 +383,14 @@ internal sealed class ReleaseScriptTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
+
+            // Redirecting the two streams does NOT suppress the console.
+            // Measured 2026-08-23: from a parent with no console of its own,
+            // this launch without the flag put two visible windows on screen —
+            // a Windows Terminal host and a pseudoconsole — and with it put
+            // none. This one is the worst of the ten sites for it: `pwsh` is
+            // started once per script arm.
+            CreateNoWindow = true,
         };
 
         start.ArgumentList.Add("-NoProfile");

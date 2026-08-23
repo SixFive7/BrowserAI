@@ -1102,7 +1102,7 @@ back*. It buys nothing against anything that can read the directory at all.
 
 ## Added 2026-08-20, from the six-commit run
 
-### 15. `AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing` measured 5.2 s for a zero-wait acquire — **OPEN, and it is a decision about the test**
+### 15. `AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing` measured 5.2 s for a zero-wait acquire — **CLOSED 2026-08-23: the clock is gone and the gate records the wait it was handed**
 
 **The primer, for whoever reads this without the run.** That test proves the
 live-marker reclaim *skips* rather than *waits* when a peer holds the gate. Both
@@ -1167,6 +1167,81 @@ not be taken without saying so in the test. **D is a trap**: it buys a clock at
 the cost of a second execution mode, and the first thing that would follow it is
 a second test wanting the same exemption.
 
-**The same question applies to nothing else in the suite today** — this is the
-only arm whose comment claims load cannot reach it, and the claim has now been
-falsified once.
+⚠️ **Corrected 2026-08-23 (previously "The same question applies to nothing else
+in the suite today — this is the only arm whose comment claims load cannot reach
+it, and the claim has now been falsified once").** It applies to one other arm,
+and that arm is *tighter*. See the closure below.
+
+---
+
+#### Closed 2026-08-23 — **B was taken, not the recommended C**, and the reason is in the instruction
+
+**What was done.** The stopwatch is gone from the test entirely; there is no
+backstop and no second assertion of elapsed time anywhere in that arm. In its
+place `MachineMutex.Acquire` records the timeout it was **handed** —
+`MachineMutex.LastAcquireTimeout`, set before the wait so it lands on every path
+out of the method — and `LiveInstances.ReclaimStaleMarkers` surfaces it on
+`LiveMarkerReclaim.GateWait`, read back off the gate the pass used rather than
+restated at the construction site. The assertion is now
+`Assert.That(skipped.GateWait).IsEqualTo(LockScopes.NeverWaits)`. A descheduled
+thread cannot move it.
+
+**That is direction B, and B alone was called "a real weakening" above.** The
+table's recommendation was **C** — the argument *plus* a sixty-second backstop.
+The maintainer's instruction of 2026-08-23 was explicit in the other direction:
+*"remove the elapsed-time bound entirely"*. So the weakening is taken
+deliberately and it is written into the test in place, in the words the entry
+above asked for: the claim is now **the pass asked not to wait** rather than
+**the pass did not wait**. An edit that started passing a real timeout is still
+caught; an edit that put a `Thread.Sleep` beside the acquire is not, and neither
+is an outright hang.
+
+**What stops the new assertion being vacuous.** A `GateWait` that always read
+zero would be indistinguishable from a working one when read from the reclaim
+test, so the property is exercised in both directions on one object by
+`SessionLockTests.AGateRecordsTheWaitItWasHandedRatherThanAConstant`: unasked is
+`null`, `NeverWaits` records zero, `LiveInstanceGate` records five seconds. Both
+arms were planted red before being restored — the reclaim arm by making the
+product acquire at `LockScopes.LiveInstanceGate`, which is the exact defect it
+exists to catch, and the control by pinning `LastAcquireTimeout` to
+`TimeSpan.Zero`.
+
+#### The same shape does appear elsewhere, and nothing was changed about it
+
+`SessionLockTests.TheSweepScopeIsTryAcquireAndSkipAtZeroTimeout`, one line:
+
+```csharp
+// Zero timeout means zero. Anything that queued would show here as
+// the time the winner held it.
+await Assert.That((double)skipped["elapsedMilliseconds"]!).IsLessThan(1000);
+```
+
+**It is the same claim with five times less headroom**, and it is measured
+across a process boundary: `SessionProbe`'s `session-sweep` mode wraps a
+`Stopwatch` around one `mutex.Acquire(LockScopes.NeverWaits)` in each of **eight
+separate probe processes** launched together, and the suite asserts every loser
+came back inside a second. Process creation is the most contended operation on a
+saturated Windows box, and the arm that was falsified at 5.2 s did strictly less
+work in-process. It also invents its own number — a bare `1000` rather than
+anything from `TestDefaults` — which is the second rule
+[the house doctrine](TESTING.md#every-duration-is-a-hang-detector-or-it-is-a-defect)
+states.
+
+**It has not gone red on this machine and it has not been touched**, because the
+instruction was to report it rather than fix it silently. The rest of the suite
+was swept for the shape and is clean: the only other elapsed-time *assertions*
+left are `SessionLockTests`' 120-second one, whose comment already disclaims
+promptness and whose bound is far outside the noise;
+`FakeChildHarnessTests`' and `ProvisioningTests`' two, which are **lower**
+bounds and which load can only push further from failing (and the second reads a
+`ManualClock`); and `ReinstallBrowserTests`' `TestDefaults.BrowserHang`, a
+thirty-minute hang detector inside a polling loop. Everything else that times
+something writes it into a report and asserts nothing about it.
+
+**And nothing mechanises this rule.** The 2026-08-18 sweep that deleted five
+promptness assertions left comments where each one had been, which is why they
+were findable — but `HouseRuleTests` has two arms and neither of them is *no
+test asserts on a wall clock*. The reclaim arm was added on 2026-08-20, after
+that sweep, by someone who had read the doctrine. **That is what a habit looks
+like**, and it is a candidate for the mechanism column in `CLAUDE.md` rather
+than the reader column.

@@ -599,6 +599,51 @@ internal sealed class SessionLockTests
         _ = Assert.Throws<ArgumentException>(() => _ = MachineMutex.Create("BrowserAI-anything"));
     }
 
+    /// <summary>
+    /// The gate records the wait it was <b>handed</b>, and the record follows the
+    /// argument rather than sitting on a constant.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the positive control underneath
+    /// <c>UpdateTests.AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing</c></b>,
+    /// which asserts that the live-marker reclaim skipped <i>at once</i> by
+    /// reading <see cref="MachineMutex.LastAcquireTimeout"/> back off the gate
+    /// instead of timing the call. A property that always answered
+    /// <see cref="LockScopes.NeverWaits"/> would make that assertion vacuous and
+    /// would be indistinguishable from a working one when read from there — so
+    /// both values are exercised here, on one object, in order.
+    /// </para>
+    /// <para>
+    /// <b>Unasked is a third state and is kept separate from zero.</b> A reclaim
+    /// that never reached an acquire — no directory, or a gate that could not be
+    /// created — must not report that it asked not to wait.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AGateRecordsTheWaitItWasHandedRatherThanAConstant()
+    {
+        using var gate = MachineMutex.Create(
+            $"{LockScopes.PerDirectoryPrefix}acquire-record-{Guid.NewGuid():N}");
+
+        // Nothing has been asked of it yet, which is a different fact from
+        // "it was asked for zero".
+        await Assert.That(gate.LastAcquireTimeout).IsNull();
+
+        await Assert.That(gate.Acquire(LockScopes.NeverWaits)).IsEqualTo(MutexAcquisition.Acquired);
+        await Assert.That(gate.LastAcquireTimeout).IsEqualTo(LockScopes.NeverWaits);
+        gate.Release();
+
+        // ⚠️ THE CONTROL. A different value, on the same object: the record moved
+        // with the argument, so it is not a constant wearing a property's name.
+        await Assert.That(gate.Acquire(LockScopes.LiveInstanceGate)).IsEqualTo(MutexAcquisition.Acquired);
+        await Assert.That(gate.LastAcquireTimeout).IsEqualTo(LockScopes.LiveInstanceGate);
+        gate.Release();
+
+        await Assert.That(LockScopes.NeverWaits).IsNotEqualTo(LockScopes.LiveInstanceGate);
+    }
+
     [Test]
     public async Task TheProductCreatesNamedKernelObjectsInExactlyOnePlace()
     {
