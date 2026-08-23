@@ -249,6 +249,63 @@ console-subsystem child twice with the flag set and unset, and diff
 `EnumWindows` over visible top-level windows around each launch. Read the class
 names rather than filtering for one, or the measurement answers zero both times.
 
+### `SW_SHOWNOACTIVATE` keeps a headed Chromium off the foreground, and Firefox never takes it — measured 2026-08-24
+
+**`CREATE_NO_WINDOW` and the show-window flag answer two different questions, and
+this is the one about a GUI child.** The entry above is about a *console* child's
+window; this one is about a browser's first real window, which `CREATE_NO_WINDOW`
+says nothing about. Measured 2026-08-24 on the reference machine, driving
+`CreateProcessW` directly with a hand-built `STARTUPINFOW` rather than through the
+product, against the provisioned browsers. The foreground was read with
+`GetForegroundWindow` and attributed with `GetWindowThreadProcessId`, polled every
+250 ms.
+
+| Browser | With `STARTF_USESHOWWINDOW` + `SW_SHOWNOACTIVATE` | Without it |
+|---|---|---|
+| **Chromium** — `chromium-1237`, `chrome-win64\chrome.exe` | **did NOT take the foreground** | **TOOK the foreground** |
+| **Firefox** — `firefox-1539` | did not | **did not either** |
+
+`[FLOATS]` — each row is a property of the browser build Playwright pins, and
+Chromium's is the half a revision could move.
+
+⚠️ **The Chromium row rests on exactly ONE discriminating trial, and the condition
+it needed matters far more than the count.** Three further trials each way
+returned *no steal* on **both** arms and therefore discriminate nothing. The
+reason is machine configuration rather than the browser:
+[`SPI_GETFOREGROUNDLOCKTIMEOUT` on this machine is 2,147,483,647 ms](detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal--measured-2026-08-24)
+— about 24.8 days — so Windows refuses a foreground change in the general case and
+both arms look identical. The one trial that separated them did so through the
+lock's own exception: the foreground window belonged to **VS Code, an ancestor of
+the launching process**, so the child inherited the right to take the foreground.
+**Anyone re-running this has to arrange that condition.** With an unrelated
+window in the foreground it reproduces the null on both arms and reads as *the
+flag does nothing*, which is the wrong conclusion and an easy one.
+
+**Firefox's row is a real negative and not a void trial**, and the positive
+control is what makes it one: a **visible top-level window belonging to the
+launched process appeared at 0.25 s and 0.75 s** in the two arms —
+`EnumWindows` filtered to that process with `IsWindowVisible` — while the
+foreground stayed where it was, in the *same* discriminating condition as the
+Chromium trial. So Firefox shows a window on launch and does not take the
+foreground either way, and the flag changes nothing for it.
+
+⚠️ **What the Chromium row does NOT establish, said here rather than left to be
+assumed:** no visible-window control is recorded for it. Its without-flag arm
+proves a window appears at all, and on the with-flag arm *did not take the
+foreground* is not separated from *showed nothing this time*. Whoever repeats
+this should carry the Firefox arm's control across to it.
+
+**To re-establish it:** read `SPI_GETFOREGROUNDLOCKTIMEOUT` first and write the
+value down — it is what tells a null trial from a negative result afterwards.
+Then put a window owned by an **ancestor of the launching process** in the
+foreground (VS Code, when the launcher is started from its terminal) and confirm
+that with `GetForegroundWindow` + `GetWindowThreadProcessId` rather than by eye.
+Launch the browser twice through `CreateProcessW` with a hand-built
+`STARTUPINFOW` — `STARTF_USESHOWWINDOW` with `SW_SHOWNOACTIVATE`, then neither —
+polling the foreground every 250 ms for a few seconds and attributing each
+foreground window to a pid. Keep the visible-window control on **every** arm, or
+a browser that showed nothing is indistinguishable from one that behaved.
+
 ## Files, durable writes and deletes
 
 **`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on

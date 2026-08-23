@@ -918,6 +918,47 @@ screen"* and it is not that. `[MACHINE]`
 > happened. **Create and show are distinct events about the same handle**; a
 > detector must key on both. `[STABLE]`
 
+### This machine's foreground lock is effectively infinite, so it cannot see a focus steal — measured 2026-08-24
+
+**`SPI_GETFOREGROUNDLOCKTIMEOUT` reads `2147483647` ms on this machine — about
+24.8 days.** Read on 2026-08-24 through `SystemParametersInfoW`, on the same
+machine every other `[MACHINE]` entry here was measured on. Windows uses that
+timeout to decide whether a process may change the foreground window at all, so
+at this value it refuses foreground changes **in the general case**, and grants
+them only through the documented exceptions — the one that fired here being that
+the foreground window belonged to an **ancestor of the launching process**.
+`[MACHINE]`
+
+⚠️ **The consequence runs the wrong way, and it is a blind spot rather than a
+comfort: this machine cannot detect a focus-stealing regression.** A change that
+reintroduced one would take the foreground on a default install and be refused
+here, so it passes on the only machine that runs the suite and fails on a user's.
+That is the mirror image of the constraint this repository already keeps — that a
+number measured here is not claimed to hold elsewhere — and it is the more
+dangerous half, because the local answer is *clean* rather than *unknown*. **What
+the value is on a default install was not measured**, here or anywhere in this
+repository; only that this machine's is not it. It is written down as a hazard
+rather than left in this article, because it is a property of the checking rather
+than of the product.
+
+**What it costs the measurement above.** The 2026-08-17 run recorded **zero
+foreground events** across a full green suite, and that zero is weaker evidence
+than it reads: with the lock at this value, most of what a foreground steal would
+have to get past is the lock and not the code. The same run's *before* arm is the
+countervailing half — **two windows that did take the foreground** — so steals are
+observable here under some condition, and the ancestor exception is a candidate
+for what that condition was — the run's own note that the developer's editor held
+the foreground throughout makes *the launcher's ancestor owned it* plausible and
+does not establish it. **That last step is an inference across two records and not
+a measurement of the 2026-08-17 condition**, which nobody read at the time.
+
+**To re-establish it:** call `SystemParametersInfoW(SPI_GETFOREGROUNDLOCKTIMEOUT)`
+and read the `uint` back. It costs one call, and it belongs at the top of any
+experiment about focus on this machine — a run that skips it cannot tell a
+browser that behaved from an OS that refused, and both look like a pass. The
+consequence for a launch flag is measured in
+[kb](processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it--measured-2026-08-24).
+
 ## Named mutexes and lock files
 
 Windows and .NET facts about cross-process locking, and the design lessons that

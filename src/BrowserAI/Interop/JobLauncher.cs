@@ -147,29 +147,58 @@ internal static partial class JobLauncher
             startupInfo.StartupInfo.StdOutput = pipes.ChildStandardOutput;
             startupInfo.StartupInfo.StdError = pipes.ChildStandardError;
 
-            // BELT AND BRACES, AND DELIBERATELY NOT CALLED A FIX. CREATE_NO_WINDOW
-            // below covers a CONSOLE child and does nothing at all for a GUI
-            // child's first window, so this is the only thing in the launch that
-            // speaks to one. It is a no-op today -- nothing this product starts
-            // shows a window -- but it is not hypothetical: a caller may ask for
-            // a headed session and the product grants it, and that Chromium is
-            // full-size, on the primary monitor, and focused.
+            // MEASURED, AND NO LONGER BELT AND BRACES. Corrected 2026-08-24
+            // (previously "BELT AND BRACES, AND DELIBERATELY NOT CALLED A FIX",
+            // and "WHETHER CHROMIUM BEHAVES LIKE UNITY HERE IS UNMEASURED").
+            // CREATE_NO_WINDOW below covers a CONSOLE child and does nothing at
+            // all for a GUI child's first window, so this is still the only
+            // thing in the launch that speaks to one -- and it is now measured
+            // to be what keeps a headed Chromium off the foreground rather than
+            // a precaution against a guess. It stays a no-op on the path the
+            // product normally takes, because nothing it starts headless shows a
+            // window; the case it is for is a caller asking for a headed
+            // session, which the product grants, and that Chromium is full-size,
+            // on the primary monitor, and would otherwise be focused.
+            //
+            // Measured 2026-08-24, driving CreateProcessW directly against the
+            // provisioned browsers with the foreground read from
+            // GetForegroundWindow: Chromium (chromium-1237) did NOT take the
+            // foreground with the flag and DID take it without; Firefox
+            // (firefox-1539) took it in NEITHER arm, with a visible window of
+            // its own as the positive control, so Firefox does not do this at
+            // all
+            // ([kb](../../../kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it--measured-2026-08-24)).
+            //
+            // ⚠️ IT IS ONE DISCRIMINATING TRIAL, AND WHOEVER RE-RUNS IT MUST
+            // REPRODUCE THE CONDITION RATHER THAN THE COUNT. Three further trials
+            // each way answered "no steal" on BOTH arms and discriminate nothing:
+            // SPI_GETFOREGROUNDLOCKTIMEOUT on this machine is 2,147,483,647 ms --
+            // about 24.8 days -- so Windows refuses a foreground change in the
+            // general case and the two arms look identical. The trial that
+            // separated them did so through the lock's own exception: the
+            // foreground window belonged to VS Code, an ANCESTOR of the launching
+            // process, so the child inherited the right to take the foreground.
+            // Arrange that condition or the experiment reproduces the null and
+            // reads as "the flag does nothing"
+            // ([kb](../../../kb/windows/detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal--measured-2026-08-24)).
             //
             // ⚠️ SW_SHOWNOACTIVATE ALONE IS KNOWN NOT TO BE ENOUGH SOMEWHERE
-            // ELSE, and the measurement is recorded here rather than
+            // ELSE, and that measurement is recorded here rather than
             // rediscovered. The StationeersPlus rig measured it stealing focus
             // on 40 samples out of 40, because `wShowWindow` governs only the
             // first ShowWindow(SW_SHOWDEFAULT) and Unity called ShowWindow
             // itself afterwards; a separate desktop stole focus on 0 of 55, and
             // their own comment calls the show flag "belt and braces alongside
-            // the desktop, not the mechanism". WHETHER CHROMIUM BEHAVES LIKE
-            // UNITY HERE IS UNMEASURED. The desktop half is not available to us
-            // regardless: FindWindowExW(HWND_MESSAGE, ...) is scoped to a window
-            // station AND a desktop, so a private one blinds the stray sweeper
-            // completely -- it would find no message windows, sweep, and report
-            // success forever with its tests green (hazard R5), and no split
-            // helps, because putting only the browsers there leaves the sweeper
-            // on Default with the same blindness.
+            // the desktop, not the mechanism". CHROMIUM DID NOT BEHAVE LIKE UNITY
+            // in the trial above -- and one trial does not establish that it
+            // never calls ShowWindow itself, so the Unity result stays here as
+            // what says the failure mode is real. The desktop half is not
+            // available to us regardless: FindWindowExW(HWND_MESSAGE, ...) is
+            // scoped to a window station AND a desktop, so a private one blinds
+            // the stray sweeper completely -- it would find no message windows,
+            // sweep, and report success forever with its tests green (hazard R5),
+            // and no split helps, because putting only the browsers there leaves
+            // the sweeper on Default with the same blindness.
             startupInfo.StartupInfo.ShowWindow = ShowNoActivate;
 
             startupInfo.AttributeList = attributes.Pointer;
