@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Text;
 using BrowserAI.Tests.Harness;
 
@@ -23,6 +24,21 @@ internal static class SuiteCoverage
     /// <summary>The block's own copy on disk, for whoever assembles the evidence.</summary>
     public static string ReportPath { get; } =
         Path.Combine(RepositoryLayout.Root.FullName, ".work", "suite-coverage.txt");
+
+    /// <summary>
+    /// Takes the filter reading before anything else runs.
+    /// </summary>
+    /// <remarks>
+    /// <b>Here rather than lazily on first use, and the timing is the honesty.</b>
+    /// <c>TUnitTestFramework.ExecuteRequestAsync</c> assigns
+    /// <c>GlobalContext.Current</c> and <c>TestSessionContext.Current</c> before
+    /// it runs a single hook, so a reading taken here is taken after the only
+    /// event that could populate them — and a null filter read before that point
+    /// is indistinguishable from a run that really had none, which is the false
+    /// green <see cref="SuiteFilter"/> exists to prevent.
+    /// </remarks>
+    [Before(TestSession)]
+    public static void ReadWhetherThisRunWasFiltered() => SuiteFilter.Take();
 
     /// <summary>Writes the coverage block at the end of the session.</summary>
     [After(TestSession)]
@@ -150,6 +166,13 @@ internal sealed class SuiteCoverageTests
         await Assert.That(summary).Contains("drive letter");
         await Assert.That(summary).Contains(GateDriveCase.Variable);
 
+        // Not a capability either, and it is the premise the four numbers in the
+        // run summary rest on: a filtered run prints the same shape of block a
+        // full one does. Read from the platform's own filter -- see SuiteFilter,
+        // which also records why ICommandLineOptions could not be used.
+        await Assert.That(summary).Contains(SuiteFilter.Title);
+        await Assert.That(summary).Contains(SuiteFilter.StateWord(SuiteFilter.Verdict));
+
         // Not a capability either, and for a stronger reason: nothing this run
         // may do would turn it green. It says whether Windows would have let a
         // browser take the foreground at all, which decides whether a green run
@@ -261,6 +284,302 @@ internal sealed class SuiteCoverageTests
         await Assert.That(GateDriveCase.Verdict)
             .IsNotEqualTo(GateDriveVerdict.NotAsDeclared)
             .Because(GateDriveCase.Refusal(GateDriveCase.Declared, GateDriveCase.Received));
+    }
+
+    /// <summary>
+    /// A filtered run is told from a full one, from one that could not tell, and
+    /// from a broken instrument — and only one of the four costs a release.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The positive control under the live arms below</b>, and it is mandatory
+    /// rather than thorough. A gate run is never filtered, so
+    /// <see cref="SuiteFilter.Verdict"/> reads <c>FULL RUN</c> on every run this
+    /// repository takes — and a reading that can only ever come back empty is
+    /// indistinguishable from one that cannot read. This drives all four states
+    /// and both modes in-process, on every ordinary run.
+    /// </para>
+    /// <para>
+    /// <b><see cref="SuiteFilterVerdict.Unread"/> is the state this exists
+    /// for.</b> <see cref="GlobalContext"/> lazily creates an empty instance for
+    /// whoever asks first, so a filter read before the framework populated
+    /// anything is <see langword="null"/> — identical to a run that really had
+    /// none. The pair of readings below is what separates them, and the row must
+    /// never spell that state <c>FULL RUN</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFilteredRunIsToldFromAFullOneFromOneThatCouldNotTellAndFromABrokenInstrument()
+    {
+        const string Filter = "/*/*/SessionPathTests/*";
+
+        var unread = SuiteFilterReading.NotTaken;
+        var unpopulated = new SuiteFilterReading(Taken: true, SessionContextPopulated: false, Global: null, Session: null);
+        var full = new SuiteFilterReading(Taken: true, SessionContextPopulated: true, Global: null, Session: null);
+        var filtered = new SuiteFilterReading(Taken: true, SessionContextPopulated: true, Global: Filter, Session: Filter);
+        var torn = new SuiteFilterReading(Taken: true, SessionContextPopulated: true, Global: Filter, Session: "/*/*/LockRecordTests/*");
+        var halfTorn = new SuiteFilterReading(Taken: true, SessionContextPopulated: true, Global: Filter, Session: null);
+
+        // ⚠️ NOBODY READ IT, AND IT IS NOT 'FULL RUN'. Both shapes: nothing took
+        // the reading at all, and a reading taken before the framework populated
+        // the contexts it is taken from.
+        await Assert.That(SuiteFilter.Judge(unread)).IsEqualTo(SuiteFilterVerdict.Unread);
+        await Assert.That(SuiteFilter.Judge(unpopulated)).IsEqualTo(SuiteFilterVerdict.Unread);
+
+        await Assert.That(SuiteFilter.Judge(full)).IsEqualTo(SuiteFilterVerdict.NotFiltered);
+        await Assert.That(SuiteFilter.Judge(filtered)).IsEqualTo(SuiteFilterVerdict.Filtered);
+
+        // Two seams the framework fills from ONE value carrying two values, in
+        // both shapes it can take: two different filters, and one seam empty.
+        await Assert.That(SuiteFilter.Judge(torn)).IsEqualTo(SuiteFilterVerdict.Disagreed);
+        await Assert.That(SuiteFilter.Judge(halfTorn)).IsEqualTo(SuiteFilterVerdict.Disagreed);
+
+        // The four states are four words, and none of them is another's prefix,
+        // so a reader of one log can tell them apart.
+        var words = new[] { SuiteFilterVerdict.Unread, SuiteFilterVerdict.NotFiltered, SuiteFilterVerdict.Filtered, SuiteFilterVerdict.Disagreed }
+            .Select(SuiteFilter.StateWord)
+            .ToList();
+
+        await Assert.That(words.Distinct(StringComparer.Ordinal).Count()).IsEqualTo(4);
+        await Assert.That(SuiteFilter.StateWord(SuiteFilterVerdict.Unread)).IsEqualTo(SuiteFilter.UnreadState);
+
+        // ⚠️ THE RELEASE ASYMMETRY, which is the whole of decision (d): a
+        // filtered run is a CORRECT run and a filtered release is not a release.
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.NotFiltered, isReleaseRun: false)).IsEqualTo(SuiteFilterDecision.Proceed);
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.NotFiltered, isReleaseRun: true)).IsEqualTo(SuiteFilterDecision.Proceed);
+
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.Filtered, isReleaseRun: false)).IsEqualTo(SuiteFilterDecision.Proceed);
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.Filtered, isReleaseRun: true)).IsEqualTo(SuiteFilterDecision.Refuse);
+
+        // 'I cannot say' is not 'no', so it costs a release too.
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.Unread, isReleaseRun: false)).IsEqualTo(SuiteFilterDecision.Proceed);
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.Unread, isReleaseRun: true)).IsEqualTo(SuiteFilterDecision.Refuse);
+
+        // A broken instrument fails in BOTH modes, exactly as CapabilityState
+        // .Partial does and for the same reason: it was never a clean state.
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.Disagreed, isReleaseRun: false)).IsEqualTo(SuiteFilterDecision.Refuse);
+        await Assert.That(SuiteFilter.Decide(SuiteFilterVerdict.Disagreed, isReleaseRun: true)).IsEqualTo(SuiteFilterDecision.Refuse);
+
+        // And the rows those states produce, since a verdict nobody can read in
+        // the block is a verdict that changes nothing.
+        await Assert.That(SuiteFilter.RowFor(filtered, isReleaseRun: false)).Contains(Filter);
+        await Assert.That(SuiteFilter.RowFor(filtered, isReleaseRun: false)).Contains(SuiteFilter.FilteredState);
+        await Assert.That(SuiteFilter.RowFor(filtered, isReleaseRun: false)).Contains("NOT A VERIFICATION");
+        await Assert.That(SuiteFilter.RowFor(full, isReleaseRun: false)).Contains(SuiteFilter.FullRunState);
+        await Assert.That(SuiteFilter.RowFor(full, isReleaseRun: false)).DoesNotContain("⚠️");
+        await Assert.That(SuiteFilter.RowFor(unread, isReleaseRun: false)).Contains("DID NOT ANSWER");
+        await Assert.That(SuiteFilter.RowFor(torn, isReleaseRun: false)).Contains("INSTRUMENT IS BROKEN");
+
+        // The refusals name the variable that produced them and the filter that
+        // did, because whoever reads one is looking at a log and not at a screen.
+        await Assert.That(SuiteFilter.Refusal(filtered, isReleaseRun: true)).Contains(SuiteEnvironment.ReleaseRunVariable);
+        await Assert.That(SuiteFilter.Refusal(filtered, isReleaseRun: true)).Contains(Filter);
+        await Assert.That(SuiteFilter.Refusal(unread, isReleaseRun: true)).Contains("CANNOT SAY");
+        await Assert.That(SuiteFilter.Refusal(torn, isReleaseRun: false)).Contains("ONE value");
+    }
+
+    /// <summary>
+    /// This run says whether it was filtered, and it reads that from the
+    /// platform rather than from its own command line.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The live arm, shaped after
+    /// <see cref="TheRunReportsTheDriveLetterSpellingItActuallyReceived"/>.</b>
+    /// The row is unconditional because it is what a reader of one log can act
+    /// on; the verdict is not asserted to be any particular value, because a
+    /// developer running one class deliberately is not a defect.
+    /// </para>
+    /// <para>
+    /// <b>What is asserted is that the latched reading is the seam it claims to
+    /// be.</b> <see cref="SuiteFilter.Observe"/> re-reads both contexts here,
+    /// inside a test rather than inside the session hook, so a latch that had
+    /// gone stale or had been taken from somewhere else shows up as a
+    /// disagreement rather than as a row nobody checked.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRunReportsWhetherItWasFiltered()
+    {
+        await Assert.That(SuiteFilter.CoverageRow).Contains(SuiteFilter.Title);
+        await Assert.That(SuiteFilter.CoverageRow).Contains(SuiteFilter.StateWord(SuiteFilter.Verdict));
+        await Assert.That(SuiteFilter.CoverageRow).Contains("GlobalContext.TestFilter");
+
+        // The hook ran, so the reading is a reading. Without this the row could
+        // sit at UNREAD forever and every assertion above would still pass.
+        await Assert.That(SuiteFilter.Reading.Taken).IsTrue();
+        await Assert.That(SuiteFilter.Verdict).IsNotEqualTo(SuiteFilterVerdict.Unread);
+
+        // ⚠️ THE SEAM, RE-READ. The latch was taken in [Before(TestSession)];
+        // this reads the same two contexts from inside a test. They must agree,
+        // and both must still be populated.
+        var now = SuiteFilter.Observe();
+
+        await Assert.That(now.Global).IsEqualTo(SuiteFilter.Reading.Global);
+        await Assert.That(SuiteFilter.Judge(now)).IsEqualTo(SuiteFilter.Verdict);
+
+        // The filter is only ever handed out from the one state where it means
+        // something, so nothing downstream can quote a string out of UNREAD.
+        await Assert.That(SuiteFilter.Filter is null).IsEqualTo(SuiteFilter.Verdict is not SuiteFilterVerdict.Filtered);
+    }
+
+    /// <summary>
+    /// A run that was filtered is not a release, and a full one is not refused.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Decision (d), and this method is also the probe a filtered child
+    /// run executes</b> — see
+    /// <see cref="AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/>. It
+    /// is one method rather than two because the refusal has to fire in
+    /// something the child actually runs, and the child runs exactly one thing.
+    /// </para>
+    /// <para>
+    /// <b>On the gate this asserts the negative direction live</b>: an
+    /// unfiltered ordinary run is not refused. The positive direction cannot be
+    /// arranged in-process — a test cannot filter the run it is inside — so it
+    /// is arranged out of process instead.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARunThatWasFilteredIsNeverARelease()
+    {
+        // The child writes what it read before it fails, because a process that
+        // failed the way it was meant to still has to be readable.
+        if (Environment.GetEnvironmentVariable(SuiteFilter.ProbeVariable) is { Length: > 0 } report)
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(report)!);
+            await File.WriteAllTextAsync(report, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
+        }
+
+        await Assert.That(SuiteFilter.Decision)
+            .IsNotEqualTo(SuiteFilterDecision.Refuse)
+            .Because(SuiteFilter.Refusal(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
+    }
+
+    /// <summary>
+    /// A child run that really was filtered reads as filtered, and refuses to be
+    /// a release.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the positive control the pure test above cannot be, and
+    /// this repository has already been burned by the gap between them.</b> A
+    /// search that returns zero needs proof it could have returned something:
+    /// every run of this suite is unfiltered, so <c>GlobalContext.TestFilter</c>
+    /// is <see langword="null"/> on every one of them, and an instrument stuck at
+    /// <see langword="null"/> would publish <c>FULL RUN</c> forever with nothing
+    /// to say otherwise. One short child process, genuinely filtered, is what
+    /// makes the row's <c>FULL RUN</c> mean something.
+    /// </para>
+    /// <para>
+    /// <b>It carries the release half too.</b> The child is handed
+    /// <c>BROWSERAI_RELEASE_RUN=1</c> deliberately, so the one test it runs meets
+    /// exactly the state decision (d) forbids — filtered <i>and</i> claiming to
+    /// be a release — and must fail. The other direction is this very run:
+    /// unfiltered, ordinary, and green.
+    /// </para>
+    /// <para>
+    /// <b>Recursion is impossible by construction and guarded anyway.</b> The
+    /// child's filter names <see cref="ARunThatWasFilteredIsNeverARelease"/> and
+    /// nothing else, so it can never select this method; and
+    /// <see cref="SuiteFilter.ProbeVariable"/> is set only by this launcher, so a
+    /// process that sees it set knows it is the child. The second bolt exists for
+    /// the day a filter fails open, which is a thing
+    /// <c>--treenode-filter</c> is already documented to do.
+    /// </para>
+    /// <para>
+    /// <b>The bound is <see cref="TestDefaults.ProcessHang"/> and it is a hang
+    /// detector</b>: the child discovers one assembly and runs one test, so
+    /// nothing here is a promptness claim.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease()
+    {
+        // The recursion guard. Unreachable while the child's filter selects one
+        // other method, and a real assertion on the day it is not.
+        if (Environment.GetEnvironmentVariable(SuiteFilter.ProbeVariable) is { Length: > 0 })
+        {
+            await Assert.That(SuiteFilter.Verdict).IsEqualTo(SuiteFilterVerdict.Filtered);
+            return;
+        }
+
+        var host = Path.Combine(AppContext.BaseDirectory, "BrowserAI.Tests.exe");
+
+        // The instrument has something to run. A missing host would make every
+        // assertion below unreachable rather than false.
+        await Assert.That(File.Exists(host)).IsTrue().Because(host);
+
+        using var scratch = ScratchDirectory.Create("filter-probe");
+        var report = Path.Combine(scratch.Path, "filter.txt");
+        const string Filter = "/*/*/SuiteCoverageTests/" + nameof(ARunThatWasFilteredIsNeverARelease);
+
+        var startInfo = new ProcessStartInfo(host)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = AppContext.BaseDirectory,
+            StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            StandardErrorEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+        };
+
+        startInfo.ArgumentList.Add("--disable-logo");
+        startInfo.ArgumentList.Add("--treenode-filter");
+        startInfo.ArgumentList.Add(Filter);
+
+        startInfo.Environment[SuiteFilter.ProbeVariable] = report;
+        startInfo.Environment[SuiteEnvironment.ReleaseRunVariable] = "1";
+
+        using var child = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start '{host}'.");
+
+        // Started outside a job object, so the spawn record is the only thing
+        // that can name it if this run is killed while it is running.
+        SpawnRecord.Add(child.Id);
+
+        var stdout = child.StandardOutput.ReadToEndAsync();
+        var stderr = child.StandardError.ReadToEndAsync();
+
+        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
+
+        await child.WaitForExitAsync(patience.Token);
+
+        var exitCode = child.ExitCode;
+        var console = await stdout + await stderr;
+
+        // ⚠️ THE READING, ON A RUN THAT REALLY WAS FILTERED. Not the state word
+        // alone: the filter string itself, byte for byte, because a verdict that
+        // said FILTERED while carrying somebody else's filter would be the same
+        // defect one layer in.
+        await Assert.That(File.Exists(report)).IsTrue().Because(console);
+
+        var described = await File.ReadAllTextAsync(report);
+
+        await Assert.That(described).Contains($"verdict={SuiteFilter.FilteredState}").Because(console);
+        await Assert.That(described).Contains($"global={Filter}");
+        await Assert.That(described).Contains($"session={Filter}");
+        await Assert.That(described).Contains($"decision={SuiteFilterDecision.Refuse}");
+
+        // The diagnostic beside the verdict, asserted to be present rather than
+        // to have a value: it records whether the child's OWN command line
+        // carried the filter, which is the question the verdict deliberately
+        // does not answer from. A field nobody reads is a field that can rot.
+        await Assert.That(described).Contains("commandLineCarriesIt=");
+
+        // ⚠️ AND THE REFUSAL FIRED. A child that read FILTERED and passed anyway
+        // would leave decision (d) written and never taken.
+        await Assert.That(exitCode).IsNotEqualTo(0).Because(console);
+        await Assert.That(console).Contains(SuiteEnvironment.ReleaseRunVariable).Because(console);
+
+        // The other direction, live: this process took the same reading through
+        // the same code and did not refuse.
+        await Assert.That(SuiteFilter.Decide(SuiteFilter.Verdict, isReleaseRun: false)).IsEqualTo(SuiteFilterDecision.Proceed);
     }
 
     /// <summary>

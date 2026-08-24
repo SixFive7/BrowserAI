@@ -409,6 +409,17 @@ internal static class SuiteEnvironment
         // whether the forcing took -- see GateDriveCase.
         _ = report.Append(GateDriveCase.CoverageRow).Append('\n');
 
+        // ⚠️ WHETHER THIS RUN WAS FILTERED, which is the premise every other
+        // number in this block and in the run summary rests on. A filtered run is
+        // a CORRECT run -- every figure it prints is true of what it ran -- and
+        // that is exactly why it needs a row: its total/failed/succeeded block is
+        // character-for-character the shape a full run's is, so the false sentence
+        // is the one a human writes underneath it, which no test can read. What a
+        // test can do is make the run state the premise. Read from the platform's
+        // own ITestExecutionFilter and never from this process's command line;
+        // see SuiteFilter for why ICommandLineOptions could not be used.
+        _ = report.Append(SuiteFilter.CoverageRow).Append('\n');
+
         // ⚠️ WHAT THIS RUN COULD NOT HAVE SEEN, which is a different statement
         // from every row above it. Those say whether an artefact was there; this
         // one says whether Windows would have let a defect show itself at all.

@@ -474,10 +474,56 @@ filtered run is a correct run: every number it prints is true of what it ran.
 What is false is the sentence somebody writes underneath it, and no test can read
 that sentence. A mechanism that refused filtered runs would forbid the iteration
 loop this rule explicitly permits; one that merely flagged them would fire on
-every legitimate use and be tuned out within a day. The nearest thing to a
-mechanism here is the one that actually caught it — a published count re-scanned
-by `RecordedCountTests` — and that works by disagreeing about something else
-entirely.
+every legitimate use and be tuned out within a day.
+
+⚠️ **Corrected 2026-08-24** *(previously "The nearest thing to a mechanism here
+is the one that actually caught it — a published count re-scanned by
+`RecordedCountTests` — and that works by disagreeing about something else
+entirely.")*. **The run now states the premise**, which is the half a mechanism
+can hold: `SuiteEnvironment.Summary()` carries a **`filter`** row reading
+`FULL RUN`, `FILTERED` (with the filter quoted), `UNREAD` or `DISAGREED`, and
+`BROWSERAI_RELEASE_RUN=1` turns `FILTERED` and `UNREAD` into failing tests. The
+prose rule is unmoved and stays in the list that needs a person, because what is
+mechanised is the **premise** and not the sentence written under it — see
+[Testing](../TESTING.md#the-run-says-whether-it-was-filtered-and-a-release-may-not-be).
+
+#### A filter reaches the test host's own command line under `dotnet test` — measured 2026-08-24
+
+**And reading it from there would still be the wrong instrument.** Measured
+2026-08-24 on this machine — SDK **10.0.400**, TUnit **1.65.0**,
+`Microsoft.Testing.Platform` **2.3.3** — by running
+`dotnet test <solution> --treenode-filter '/*/*/SuiteCoverageTests/ARunThatWasFilteredIsNeverARelease'`
+and having the selected test print its own `Environment.GetCommandLineArgs()`:
+
+```text
+BrowserAI.Tests.dll --treenode-filter /*/*/SuiteCoverageTests/ARunThatWasFilteredIsNeverARelease
+                    --server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>
+```
+
+So `dotnet test` **forwards the filter to the test host as an argument** rather
+than delivering it over the channel it also opens. That answers the question the
+`filter` row was designed around and does not change the design, for two reasons
+that are visible in that same line. **`--server dotnettestcli` and
+`--dotnet-test-pipe` say a channel exists**, and an IDE's uid-list selection
+travels a route that has not been measured here at all; and a filter that arrives
+as `TestNodeUidListFilter` rather than `TreeNodeFilter` is a filter either way.
+Reading `GlobalContext.TestFilter` is what the framework **applied**, so it covers
+every route by construction, and it is what `SuiteFilter` reads.
+
+⚠️ **`ICommandLineOptions` is unreachable from a test, and that is what forced
+the choice.** Established the same day by decompiling the resolved packages, not
+by assuming: the platform hands `ICommandLineOptions` to TUnit's
+`TUnitServiceProvider`, which is `internal`, keeps it in a plain property, and
+never registers it in the `_services` dictionary its own `GetService` reads — so
+the one public seam that surfaces an `IServiceProvider` to user code,
+`DataSourceContext.ServiceProvider` (reachable only from a data-source
+attribute), answers `null` for it. `TestContext` takes an `IServiceProvider` in
+its constructor and exposes no property for it. To re-establish: `ilspycmd -p`
+over `TUnit.Engine.dll` and `TUnit.Core.dll` from
+`~/.nuget/packages/tunit.{engine,core}/<v>/lib/net9.0/`, then read
+`TUnitServiceProvider`'s constructor and `GetService`. The parent entry's own floats marker
+covers this too and row 117 covers both halves: it is the same fact family with
+the same trigger, an MTP or TUnit bump.
 
 ## What a NativeAOT publish emits
 

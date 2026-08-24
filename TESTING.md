@@ -364,6 +364,49 @@ the class of defect is red from either shell whoever runs it. What is forced her
 is the **gate's claim about itself**: that its two halves are two instruments.
 Different guarantees, and the first cannot stand in for the second.
 
+### The run says whether it was filtered, and a release may not be
+
+**A filtered run is a CORRECT run.** Every number it prints is true of what it
+ran; the false thing is the sentence a human writes underneath it, and no test
+can read that sentence. What a test can do is make the run **state the premise**,
+so `SuiteEnvironment.Summary()` carries a **`filter`** row on every run, beside
+`drive letter` and for the same reason: it is the run's claim about itself rather
+than a fact about the machine.
+
+| State | What it means |
+|---|---|
+| `FULL RUN` | The platform handed the framework no filter, so the run discovered the whole assembly |
+| `FILTERED` | The platform handed the framework a filter, quoted in full beside it. Six further lines say the run is **evidence about what it selected and about nothing else**, and name the `\|` trap below |
+| `UNREAD` | Nothing read the filter, or the framework had not populated its contexts when it was read. **Never spelled `FULL RUN`** — a null filter read too early is identical to a run that had none, and that false green is worse than no row at all |
+| `DISAGREED` | The two contexts TUnit fills from one value carry different values. The instrument is broken, so the run may not be read as filtered *or* as unfiltered, and it fails in **both** modes exactly as `CapabilityState.Partial` does |
+
+⚠️ **It is read from the platform's own `ITestExecutionFilter` and never from
+`Environment.GetCommandLineArgs()`.** `TUnitTestFramework.ExecuteRequestAsync`
+takes the filter off `ExecuteRequestContext.Request`, stringifies it and gives it
+to the context provider, which fills `GlobalContext.TestFilter` and
+`TestSessionContext.TestFilter` — so `SuiteFilter` reads the filter the framework
+**applied**, whatever route it arrived by, including an IDE's uid-list selection
+that never touches a command line. `ICommandLineOptions` was the first choice and
+is unreachable from a test: it lives on TUnit's `internal` service provider and is
+never registered in the dictionary that provider's own `GetService` reads
+([kb](kb/toolchain.md#a-filter-reaches-the-test-hosts-own-command-line-under-dotnet-test--measured-2026-08-24)).
+
+**`BROWSERAI_RELEASE_RUN=1` makes `FILTERED` a failing test**, and `UNREAD` with
+it — *this run cannot say whether it was filtered* is not a premise a release may
+rest on. An ordinary run is never refused for being filtered, because the
+iteration loop the rule exists to permit depends on it.
+
+⚠️ **The positive control is a real child process, and it is not decoration.**
+Every run of this suite is unfiltered, so the reading comes back empty on every
+one of them — and a reading that can only ever come back empty is
+indistinguishable from one that cannot read.
+`SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease`
+starts the test host again against **one** method, with a filter and
+`BROWSERAI_RELEASE_RUN=1`, and asserts the child read `FILTERED` carrying that
+exact filter string and then refused. Watched red both ways: with the reading
+blinded the parent printed `FULL RUN` over a genuinely filtered run and **only
+this arm caught it**, 11 of the other 12 staying green.
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and
