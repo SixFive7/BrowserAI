@@ -726,6 +726,7 @@ the two gates. What implements it:
 | The clock the suite advances by hand, so the one timer in the product is asserted on rather than raced | `tests/BrowserAI.Tests/Harness/ManualClock.cs`, `src/BrowserAI/Sessions/SessionEnvironment.cs` (`Clock`) |
 | How wide the suite runs, and the design point run for real: 100 concurrent BrowserAI processes | `tests/BrowserAI.Tests/{SuiteParallelism, SaturationTests}.cs` |
 | The capability gate that makes a degraded run visible | `tests/BrowserAI.Tests/Harness/SuiteEnvironment.cs`, `tests/BrowserAI.Tests/SuiteCoverageTests.cs` |
+| Whether this machine could have seen a browser take the foreground at all — read, reported in the coverage block, never repaired | `tests/BrowserAI.Tests/Harness/ForegroundLock.cs`, `tests/BrowserAI.Tests/ForegroundLockTests.cs` |
 | The upstream-review gate | `upstream-snapshots/`, `build/upstream-snapshots.mjs`, `build/Update-UpstreamSnapshots.ps1`, `build/UpstreamSnapshots.targets`, `tests/BrowserAI.Tests/{UpstreamSnapshotTests, UpstreamReviewTests, ReVerificationIndexTests, ResolvedVersions}.cs` |
 | The documents themselves | `tests/BrowserAI.Tests/{DocumentationLinkTests, HazardIndexTests, ChangelogTests, BuildConfigurationTests}.cs` |
 

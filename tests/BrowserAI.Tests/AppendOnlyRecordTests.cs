@@ -75,9 +75,16 @@ internal sealed partial class AppendOnlyRecordTests
 
     /// <summary>
     /// Every dated record in the tree, sealed 2026-08-20 at the state the
-    /// rename sweep was reverted to.
+    /// rename sweep was reverted to, and each later record sealed in the change
+    /// that added it.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// <b>The 2026-08-24 review was sealed on the day it was copied in</b>, which
+    /// is what the second arm of this class exists to force: a record added
+    /// without a seal is one nothing would notice being rewritten, and the newest
+    /// record is the likeliest to be the one nobody registered.
+    /// </para>
     /// The changelog carries exactly one released section today, and the
     /// <c>[Unreleased]</c> section — 143,210 characters of it on the day this
     /// was written — is deliberately not in the list. It is not a record of what
@@ -91,6 +98,7 @@ internal sealed partial class AppendOnlyRecordTests
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea"),
         new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17223, "f0fd2b224ac80b033a17b518ca500730b1bfc2ded5ae3a546d6d193cdca3fc30"),
         new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11022, "1a5b9733e0f023de5c0a8a5879ac20298fd7193277b88bac075838c31fea1a65"),
+        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32404, "5f8fdaa1289f2a945a9c8ac1da91dcaf76c0067ec6aba82d8edc6a18474446d1"),
     ];
 
     /// <summary>

@@ -18,6 +18,7 @@ lives only here is a finding nobody will act on.
 | `2026-08-18-truncation-findings.md` | What Claude Code's *"2KB each"* actually means, measured off the client's own outbound API request |
 | `2026-08-18-truncation-prompt-for-sibling-project.md` | The same, written self-contained for another MCP server's maintainer. Includes the full re-run recipe |
 | `2026-08-19-auth-transfer-and-session-modes.md` | Can a human's interactive login be handed to an unattended headless run? Measured yes, on one route of three — and copying the profile directory is **not** it. Also three claims this repository makes about its own modes that the code does not make |
+| `2026-08-24-adversarial-since-the-mode-drop.md` | Adversarial review of the seams where the 2026-08-20/24 changes — the mode removal, the injected `why`, the durable action log, `browserai_catch_up`, the reader/writer maintenance lock and the instance-directory marker — meet the code that predates them. Nine findings, and fourteen things attacked that held |
 
 **Both adversarial reviews state what they tried to break and could not**, which
 is the half that makes the rest trustworthy. A review that reports only findings

@@ -123,6 +123,55 @@ has been satisfied in form only.
 
 ### Added
 
+- **The 2026-08-24 adversarial review is a dated record rather than a file in
+  `.work\`.** It is the read-only pass over the seams where the 2026-08-20/24
+  changes — the mode removal, the injected `why`, the durable action log,
+  `browserai_catch_up`, the reader/writer maintenance lock and the
+  instance-directory marker — meet the code that predates them: nine findings
+  and fourteen things attacked that held. It went into `docs/reviews/` **and
+  into the append-only seal in the same change**, which is what
+  `AppendOnlyRecordTests`' second arm exists to force — the newest review is the
+  one likeliest to be registered by nobody, and an unsealed record is one
+  nothing would notice being rewritten. Nothing in it has been acted on yet, and
+  the index's status table says so.
+
+- **Every run now says whether it could have seen a browser take the
+  foreground — because on this machine it could not.** `JobLauncher` sets
+  `STARTF_USESHOWWINDOW` with `SW_SHOWNOACTIVATE`, and that is measured; what
+  was never checked is whether *this* machine can tell the difference.
+  `SPI_GETFOREGROUNDLOCKTIMEOUT` reads **2,147,483,647 ms — about 24.8 days —**
+  here, so Windows refuses a foreground change in the general case and both arms
+  of a focus experiment answer *no steal*. The consequence runs the wrong way
+  round the usual portability rule: **a change that reintroduced focus stealing
+  would pass here and fail on a default install**, and the local answer is
+  *clean* rather than *unknown*.
+
+  So the coverage block gained a `foreground lock` row beside `first-run bytes`,
+  carrying the value and one of four states — `CAN SEE` (the lock never
+  applies), `IF IDLE` (it expires inside the budget an experiment here may
+  take), `BLIND` (it outlasts that budget — this machine) and `UNREAD` (Windows
+  refused the call). In the `BLIND` band it adds three lines saying the run
+  **did not answer** the question, and naming the exception — a foreground
+  window owned by an ancestor of the launching process — that makes a null trial
+  read as a pass.
+
+  **It reports and it never repairs.** Nothing calls
+  `SPI_SETFOREGROUNDLOCKTIMEOUT`: the timeout is a machine-wide user preference,
+  and writing to it would edit the developer's desktop and make every
+  `[MACHINE]` figure already recorded incomparable with the next one. Nothing
+  starts a browser or touches the foreground either. **The band edge derives
+  from `TestDefaults.BrowserHang`** rather than being written at the comparison,
+  because *can this machine discriminate?* is exactly *can the lock expire
+  inside the time an experiment here may take?*. It is a row and not a
+  `SuiteCapability` for the reason `first-run bytes` is: every capability names
+  a command that produces it, and the only thing that would turn this one green
+  is a setting the suite may not change — so a capability would make every
+  release from this machine unreachable with no permitted remedy.
+  `ForegroundLockTests` holds the bands, the boundary and both directions of the
+  warning; `SuiteCoverageTests` holds that the row reaches the block. The hazard
+  row stays **open**: the machine is exactly as blind as it was, and what
+  changed is that a green run no longer reads as an assurance it cannot give.
+
 - **The server `instructions` now say what a full-page screenshot costs, before
   a model reaches for one.** One sentence: *"'fullPage: true' costs the per-image
   token maximum on any page worth using it on: it leaves at full document height
@@ -458,6 +507,19 @@ has been satisfied in form only.
   not block a Firefox reinstall. `shared` counts every family, as it already did.
 
 ### Changed
+
+- **`BrowserAiPaths` no longer claims to answer "the directory the product would
+  actually have used".** It resolves through the product's own
+  `LocalAppDataPaths` — which is the part worth keeping — but constructs it with
+  **no** root argument, so it always answers the per-user default under
+  `%LOCALAPPDATA%`. `Program.Main` honours `BROWSERAI_ROOT` and takes it over
+  that default, and `PublishedSlice.InheritedEnvironment` copies the whole
+  environment into the published child, so the two disagree in exactly the case
+  the suite creates on purpose: a test that points a real BrowserAI at an empty
+  browsers root. **Making it honour the override was considered and deliberately
+  not taken** — the members are read by assertions about the developer's real
+  provisioned tree, and following the variable would re-point them at the rig
+  the variable was set to create. The comment changed; the resolution did not.
 
 - **The release gate's two shells are now two instruments by construction, and a
   run says which drive-letter spelling it actually received.** The gate runs the

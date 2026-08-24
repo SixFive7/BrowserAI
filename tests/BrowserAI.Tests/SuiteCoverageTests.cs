@@ -150,6 +150,13 @@ internal sealed class SuiteCoverageTests
         await Assert.That(summary).Contains("drive letter");
         await Assert.That(summary).Contains(GateDriveCase.Variable);
 
+        // Not a capability either, and for a stronger reason: nothing this run
+        // may do would turn it green. It says whether Windows would have let a
+        // browser take the foreground at all, which decides whether a green run
+        // is evidence about focus or is evidence about the lock.
+        // ForegroundLockTests asserts what the row may contain.
+        await Assert.That(summary).Contains(ForegroundLock.Title);
+
         foreach (var capability in SuiteEnvironment.All)
         {
             var state = SuiteEnvironment.StateOf(capability);

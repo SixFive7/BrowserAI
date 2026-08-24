@@ -1034,6 +1034,27 @@ browser that behaved from an OS that refused, and both look like a pass. The
 consequence for a launch flag is measured in
 [kb](processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it--measured-2026-08-24).
 
+> **Added 2026-08-24: the suite now takes that reading itself, every run.**
+> `ForegroundLock` in the test harness makes the call once per run and the
+> coverage block carries a `foreground lock` row: the value, the band it falls
+> in — `CAN SEE` at zero, `IF IDLE` when the lock expires inside the budget an
+> experiment here may take, `BLIND` when it outlasts it, `UNREAD` when Windows
+> refuses to answer — and, in the `BLIND` band, three lines saying that the run
+> **did not answer** whether a browser takes the foreground and that the
+> ancestor exception is what makes a null trial read as a pass. **It reports and
+> it never repairs:** nothing calls `SPI_SETFOREGROUNDLOCKTIMEOUT`, starts a
+> browser or touches the foreground, because writing to a machine-wide user
+> preference would make every `[MACHINE]` entry on this page incomparable with
+> the next one. ⚠️ **The row prints `24.9 days` where this article says `about
+> 24.8 days`, and that is a rounding rather than a drift**: 2,147,483,647 ms is
+> **24.855 days**, truncated in the prose here and rounded to one decimal there.
+> The band edge derives from `TestDefaults.BrowserHang` rather than being
+> written at the comparison, so it moves with the suite's own budget and not
+> with anyone's estimate. `ForegroundLockTests` holds the bands, the boundary
+> and both directions of the warning. **None of this closes the hazard** — the
+> machine is exactly as blind as it was; what changed is that a green run says
+> so.
+
 ## Named mutexes and lock files
 
 Windows and .NET facts about cross-process locking, and the design lessons that

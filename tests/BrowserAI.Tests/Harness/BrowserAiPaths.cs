@@ -12,10 +12,35 @@ namespace BrowserAI.Tests.Harness;
 /// expects to find under them.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Resolved through the product's own <see cref="LocalAppDataPaths"/> rather
-/// than rebuilt from <c>%LOCALAPPDATA%</c> here, so a test asserting "the
-/// browser is <i>ours</i>" is asserting against the directory the product would
-/// actually have used.
+/// than rebuilt from <c>%LOCALAPPDATA%</c> here, so the shape of the root and
+/// every directory name beneath it come from the product and never from a
+/// literal spelled in the suite.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-24 (previously "so a test asserting <i>the browser
+/// is ours</i> is asserting against the directory the product would actually
+/// have used").</b> That was false whenever <see cref="AppRootOverride"/> is
+/// set, which is a case this suite creates on purpose:
+/// <c>Program.Main</c> reads <see cref="AppRootOverride"/> and takes it over
+/// the computed default, and
+/// <see cref="PublishedSlice.InheritedEnvironment"/> copies the whole
+/// environment — that variable included — into the published child. This type
+/// constructs <see cref="LocalAppDataPaths"/> with <b>no</b> root argument, so
+/// it always answers the per-user default under
+/// <c>%LOCALAPPDATA%</c>. The two disagree exactly when the override is set,
+/// and the members below are the default rather than "what the product used".
+/// </para>
+/// <para>
+/// <b>Making it honour the override was considered and deliberately not
+/// taken.</b> The override exists to hand a real BrowserAI an <i>empty</i>
+/// browsers root without deleting the developer's own, and the assertions that
+/// read these members are about the real provisioned tree that empty root is
+/// standing in for. Reading the variable here would re-point them at the rig
+/// the override was set up to create, which is the opposite of what they ask.
+/// The comment is what changed; the resolution is not.
+/// </para>
 /// </remarks>
 internal static class BrowserAiPaths
 {

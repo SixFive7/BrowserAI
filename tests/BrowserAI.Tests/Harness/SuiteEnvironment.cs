@@ -383,6 +383,18 @@ internal static class SuiteEnvironment
         // whether the forcing took -- see GateDriveCase.
         _ = report.Append(GateDriveCase.CoverageRow).Append('\n');
 
+        // ⚠️ WHAT THIS RUN COULD NOT HAVE SEEN, which is a different statement
+        // from every row above it. Those say whether an artefact was there; this
+        // one says whether Windows would have let a defect show itself at all.
+        // A row rather than a capability, for the reason ForegroundLock states:
+        // every capability above names a command that produces it, and the only
+        // thing that would turn this one green is changing a machine-wide user
+        // preference, which is out of bounds. Without it a run on a machine whose
+        // foreground lock is effectively infinite reports exactly what a run on a
+        // machine that could see a focus steal reports — this block's founding
+        // defect, one layer out from the product.
+        _ = report.Append(ForegroundLock.CoverageRow).Append('\n');
+
         _ = report.Append(rule).Append('\n');
 
         var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);

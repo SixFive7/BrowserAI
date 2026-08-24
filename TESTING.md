@@ -492,6 +492,53 @@ quotes are the capped ones.)* **The saving is bandwidth, not seconds**, which is
 for; and the same measurement establishes that a cached run reaches the network
 for **133,761 B** where a cold one moves **425 MB** across the adapter counters.
 
+## The run says which question it answered about focus
+
+**Added 2026-08-24.** `JobLauncher` sets `STARTF_USESHOWWINDOW` with
+`SW_SHOWNOACTIVATE` so that a headed browser's first window appears without
+taking the foreground, and that is measured
+([kb](kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it--measured-2026-08-24)).
+**No test in this suite can check it, and the reason is the machine rather than
+the code.** `SPI_GETFOREGROUNDLOCKTIMEOUT` reads `2147483647` ms here, so Windows
+refuses a foreground change in the general case: a focus experiment answers *no
+steal* on both arms, and a change that reintroduced stealing would pass here and
+fail on somebody else's screen.
+
+**So the run reports what it could have seen, and never implies more.** A
+`foreground lock` row sits in the coverage block beside `first-run bytes`, and
+carries one of four states with the number it read:
+
+| State | What it means |
+|---|---|
+| `CAN SEE` | The timeout is zero. The lock never applies, so a browser taking the foreground is visible the moment it happens |
+| `IF IDLE` | The timeout expires inside the budget an experiment here may take, so a machine nobody is typing at reaches the moment a steal becomes visible |
+| `BLIND` | The timeout outlasts that budget. **This machine.** Three further lines say the run *did not answer* the question and name the exception — a foreground window owned by an ancestor of the launching process — that makes a null trial read as a pass |
+| `UNREAD` | Windows refused the call, which is neither of the above and is not reported as either |
+
+**The band edge derives from `TestDefaults.BrowserHang`** rather than being
+written at the comparison, for [the same reason every other bound
+does](#every-duration-is-a-hang-detector-or-it-is-a-defect): *can this machine
+discriminate?* is exactly *can the lock expire inside the time an experiment here
+is allowed to take?*, and the only budget in this suite for anything involving a
+real browser is that one.
+
+⚠️ **It reports and it never repairs, and both halves are deliberate.** Nothing
+calls `SPI_SETFOREGROUNDLOCKTIMEOUT`: the timeout is a machine-wide user
+preference, and a suite that wrote to it to make itself informative would be
+editing the developer's desktop and invalidating every `[MACHINE]` figure already
+recorded against this machine. Nothing here starts a browser or touches the
+foreground either — a test that provoked a real steal would put a window over
+whoever is at the keyboard.
+
+**It is a row and not a `SuiteCapability`**, and the distinction is the one
+`first-run bytes` already draws. Every capability names a command that produces
+it, so `BROWSERAI_RELEASE_RUN=1` turning an absence into a failure is actionable.
+This one is not: the only thing that would turn it green is changing that
+setting, so a capability would make every release from this machine unreachable
+with no permitted remedy. `ForegroundLockTests` holds the bands, the boundary
+between them and both directions of the warning; `SuiteCoverageTests` holds that
+the row reaches the block.
+
 ## We write our own harness
 
 We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines
