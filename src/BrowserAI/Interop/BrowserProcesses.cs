@@ -57,7 +57,10 @@ internal static partial class BrowserProcesses
     /// <param name="root">
     /// An absolute directory. Matching is a case-insensitive prefix match on the
     /// process's full image path, with a separator appended so that a root of
-    /// <c>…\browsers</c> cannot match <c>…\browsers-backup</c>.
+    /// <c>…\browsers</c> cannot match <c>…\browsers-backup</c> — and it is made
+    /// against <b>every spelling of this root</b> a Win32 path reporter could
+    /// answer with, never only the one <c>Path.Combine</c> produced. See
+    /// <see cref="ImageSpellings"/>.
     /// </param>
     /// <returns>
     /// The matching processes, which may be empty. Processes this token cannot
@@ -69,7 +72,15 @@ internal static partial class BrowserProcesses
     {
         ArgumentNullException.ThrowIfNull(root);
 
-        var prefix = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+        // Every spelling of the root a Win32 path reporter could answer with, not
+        // only the one Path.Combine produced. See ImageSpellings: a junction
+        // above the root made this list empty for every process on the machine,
+        // and here that empties RevisionPrune's live set — which is the census a
+        // tree is DELETED on when it comes back empty.
+        var prefixes = ImageSpellings.OfDirectory(root).Matched
+            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
+            .ToArray();
+
         var found = new List<RunningImage>();
 
         foreach (var processId in ProcessIds())
@@ -84,7 +95,7 @@ internal static partial class BrowserProcesses
             var path = ImagePathOf(handle);
 
             if (path is null
-                || !path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                || !Array.Exists(prefixes, prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 || !GetProcessTimes(handle, out var created, out _, out _, out _))
             {
                 continue;
@@ -118,7 +129,13 @@ internal static partial class BrowserProcesses
     {
         ArgumentNullException.ThrowIfNull(images);
 
-        var wanted = new HashSet<string>(images, StringComparer.OrdinalIgnoreCase);
+        // ⚠️ EVERY SPELLING OF OUR OWN EXECUTABLES, AND NOTHING ELSE. The match
+        // below is still exact and still against a closed set of absolute paths
+        // BrowserAI itself composed; what the set gained is the spelling the
+        // FILESYSTEM gives those same files, because that is the one
+        // QueryFullProcessImageNameW answers with. See ImageSpellings.
+        var spellings = ImageSpellings.Of(images);
+        var wanted = spellings.Matched;
         var candidates = new List<StrayCandidate>();
         var enumerated = 0;
         var opened = 0;
@@ -162,7 +179,7 @@ internal static partial class BrowserProcesses
             throw;
         }
 
-        return new StrayScan(candidates, enumerated, opened);
+        return new StrayScan(candidates, enumerated, opened, spellings);
     }
 
     /// <summary>Every pid on the machine, from <c>EnumProcesses</c>.</summary>
@@ -255,6 +272,195 @@ internal static partial class BrowserProcesses
         out long lpUserTime);
 }
 
+/// <summary>
+/// One path BrowserAI composed, and what the filesystem itself calls it.
+/// </summary>
+/// <param name="Composed">The path as <c>Path.Combine</c> produced it.</param>
+/// <param name="Reported">
+/// The same object in the spelling every Win32 path reporter answers with, or
+/// <see langword="null"/> when that could not be established.
+/// </param>
+/// <param name="Why">
+/// Why it could not be established, when it could not. Never a
+/// <see langword="null"/> on its own: an absence a caller cannot explain is the
+/// failure shape this whole type exists to remove.
+/// </param>
+internal sealed record PathSpelling(string Composed, string? Reported, string? Why)
+{
+    /// <summary>Whether the filesystem spells this path differently.</summary>
+    public bool IsAliased =>
+        Reported is not null && !string.Equals(Composed, Reported, StringComparison.OrdinalIgnoreCase);
+}
+
+/// <summary>
+/// Every spelling of a set of paths BrowserAI composed that a Win32 path
+/// reporter could answer with — and, where one could not be established, why.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>It exists because the two sides of the detection comparison are produced
+/// by different things.</b> <c>Hosting.LocalAppDataPaths</c> composes every path
+/// with <c>Path.Combine</c>, which never resolves a link;
+/// <c>QueryFullProcessImageNameW</c> answers with the path <b>after</b> the
+/// object manager has done reparse processing. One junction above the install
+/// root — a relocated user profile, a redirected <c>AppData</c>, a
+/// <c>subst</c>ed letter, an 8.3 component — therefore made the two different
+/// strings for every process on the machine, so
+/// <see cref="BrowserProcesses.ScanFor"/> returned <c>candidates=0</c> for good
+/// and <see cref="BrowserProcesses.RunningFrom"/> returned an empty live set for
+/// good. Casing was handled; link resolution was not. Found by
+/// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
+/// finding 4, and fixed 2026-08-24.
+/// </para>
+/// <para>
+/// ⚠️ <b>What this widens is what the sweep may MATCH, and it does not widen
+/// what the sweep may TERMINATE.</b> The distinction is the whole reason this
+/// is a type rather than a line:
+/// </para>
+/// <list type="bullet">
+///   <item><description>
+///     <b>Only paths BrowserAI itself composed are ever resolved.</b> Nothing
+///     here is ever asked of a path a foreign process reported. The direction is
+///     one-way by construction — the wanted set is canonicalised once, before
+///     the scan — so no stranger's process can influence what is opened, and the
+///     22-second hazard <see cref="VolumeIdentity"/> is ordered around cannot be
+///     reached through the process list.
+///   </description></item>
+///   <item><description>
+///     <b>A spelling names the same file, never a different one.</b> The answer
+///     is what the filesystem calls the object the composed path already named,
+///     so a process matching it is running <i>that exact binary</i>. The set of
+///     processes that match is unchanged in intent and only corrected in fact;
+///     the match is still exact, still full-path, still never a prefix and still
+///     never an image name.
+///   </description></item>
+///   <item><description>
+///     <b>Nothing between a candidate and a kill is touched.</b> A candidate
+///     becomes a stray only when a second, independent guard agrees — its
+///     attributed directory holds a <c>browserai.json</c> whose lock the sweeper
+///     can take itself — and the kill still runs behind the held process handle
+///     and the creation-time re-check. Widening detection moves the first guard
+///     and no other.
+///   </description></item>
+/// </list>
+/// <para>
+/// <b>The leaf is deliberately not resolved, and the gap is named rather than
+/// left to be found.</b> What is resolved is the <i>containing directory</i>,
+/// with the file name re-attached. That is what every alias form this product
+/// actually meets is made of — a link, a substitution or a short name is a
+/// property of a directory component — and it is also what keeps this off a
+/// running image: opening the executable itself would meet the loader's own
+/// section, whose refusal is not <i>this name does not exist</i> and would
+/// therefore stop <see cref="VolumeIdentity.DeepestExistingFinalName"/>'s walk
+/// with no answer at all, on exactly the machine where a browser is running.
+/// <b>A symlinked leaf is consequently still invisible</b>, and it lands in
+/// <see cref="Unresolved"/>'s sibling condition rather than being reported —
+/// which is a real, narrow hole in a guard that used to have a wide one.
+/// </para>
+/// </remarks>
+internal sealed class ImageSpellings
+{
+    /// <summary>
+    /// How far up the tree the final-name walk may climb looking for a directory
+    /// that exists.
+    /// </summary>
+    /// <remarks>
+    /// The same bound <c>Hosting.InstallRootScope.AncestorWalkLimit</c> and
+    /// <c>Sessions.SessionDirectoryGuard.AncestorWalkLimit</c> use, spelled again
+    /// for the reason the first of those gives: they are independent budgets that
+    /// happen to agree, and the walk costs one directory open per level.
+    /// </remarks>
+    public const int AncestorWalkLimit = 64;
+
+    private ImageSpellings(IReadOnlyList<PathSpelling> each)
+    {
+        Each = each;
+        Matched = new HashSet<string>(
+            each.SelectMany(spelling => spelling.Reported is null
+                ? (IEnumerable<string>)[spelling.Composed]
+                : [spelling.Composed, spelling.Reported]),
+            StringComparer.OrdinalIgnoreCase);
+
+        Unresolved = [.. each
+            .Where(spelling => spelling.Why is not null)
+            .Select(spelling => $"'{spelling.Composed}' could not be matched against what Windows reports, because {spelling.Why} Anything running out of it is invisible to this pass.")];
+    }
+
+    /// <summary>One entry per path asked about, in the order they were given.</summary>
+    public IReadOnlyList<PathSpelling> Each { get; }
+
+    /// <summary>
+    /// Every spelling a match may be made against: each composed path, plus the
+    /// filesystem's own name for it where that differs.
+    /// </summary>
+    public IReadOnlySet<string> Matched { get; }
+
+    /// <summary>How many paths were asked about.</summary>
+    public int Watched => Each.Count;
+
+    /// <summary>How many the filesystem spells differently.</summary>
+    public int Aliased => Each.Count(spelling => spelling.IsAliased);
+
+    /// <summary>
+    /// Every path whose filesystem spelling could not be established, one
+    /// sentence each.
+    /// </summary>
+    public IReadOnlyList<string> Unresolved { get; }
+
+    /// <summary>Resolves a set of composed <b>executable</b> paths.</summary>
+    /// <remarks>
+    /// <b>Each is resolved through its containing directory and the file name is
+    /// re-attached</b> — see this type's remarks for both halves of why. There
+    /// are two factories rather than one that guesses, because whether a path
+    /// names a file or a directory is a fact the caller has and the filesystem
+    /// would have to be asked for.
+    /// </remarks>
+    /// <param name="imagePaths">The executables, absolute, as BrowserAI composed them.</param>
+    /// <returns>The spellings.</returns>
+    public static ImageSpellings Of(IReadOnlyCollection<string> imagePaths)
+    {
+        ArgumentNullException.ThrowIfNull(imagePaths);
+
+        return new ImageSpellings([.. imagePaths.Select(ResolveImage)]);
+    }
+
+    /// <summary>Resolves one composed <b>directory</b>, leaf included.</summary>
+    /// <remarks>
+    /// <b>The leaf is resolved here and skipped for an executable</b>, and the
+    /// asymmetry is the point: a directory leaf may itself be the junction — a
+    /// browsers root somebody linked aside is exactly that — while an executable
+    /// leaf is a file the loader has mapped, which is the one open that would end
+    /// the walk with no answer.
+    /// </remarks>
+    /// <param name="directory">The directory, absolute, as BrowserAI composed it.</param>
+    /// <returns>The spellings, holding one entry.</returns>
+    public static ImageSpellings OfDirectory(string directory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(directory);
+
+        var (spelling, why) = VolumeIdentity.DosSpellingOf(directory, AncestorWalkLimit);
+
+        return new ImageSpellings([new PathSpelling(directory, spelling, why)]);
+    }
+
+    private static PathSpelling ResolveImage(string path)
+    {
+        if (Path.GetDirectoryName(path) is not { Length: > 0 } directory)
+        {
+            // No directory part to be aliased above it, so the path is asked
+            // about whole and the loader's mapping is not in the way of anything.
+            var (whole, wholeWhy) = VolumeIdentity.DosSpellingOf(path, AncestorWalkLimit);
+            return new PathSpelling(path, whole, wholeWhy);
+        }
+
+        var (spelling, why) = VolumeIdentity.DosSpellingOf(directory, AncestorWalkLimit);
+
+        return spelling is null
+            ? new PathSpelling(path, null, why)
+            : new PathSpelling(path, Path.Combine(spelling, Path.GetFileName(path)), null);
+    }
+}
+
 /// <summary>One live process running an image BrowserAI owns.</summary>
 /// <param name="ProcessId">Its pid, meaningful only together with <paramref name="CreatedFileTime"/>.</param>
 /// <param name="CreatedFileTime">Its creation time, which together with the pid is its identity.</param>
@@ -267,7 +473,12 @@ internal sealed record RunningImage(int ProcessId, long CreatedFileTime, string 
 /// <param name="candidates">Every process running one of our binaries, each holding an open handle.</param>
 /// <param name="enumerated">How many pids <c>EnumProcesses</c> returned.</param>
 /// <param name="opened">How many of them this token could open. The rest are protected or SYSTEM-owned.</param>
-internal sealed class StrayScan(IReadOnlyList<StrayCandidate> candidates, int enumerated, int opened) : IDisposable
+/// <param name="spellings">What the pass was matching against, and what it could not establish.</param>
+internal sealed class StrayScan(
+    IReadOnlyList<StrayCandidate> candidates,
+    int enumerated,
+    int opened,
+    ImageSpellings spellings) : IDisposable
 {
     /// <summary>Every process running one of our binaries.</summary>
     public IReadOnlyList<StrayCandidate> Candidates { get; } = candidates;
@@ -277,6 +488,36 @@ internal sealed class StrayScan(IReadOnlyList<StrayCandidate> candidates, int en
 
     /// <summary>How many of them could be opened at all.</summary>
     public int Opened { get; } = opened;
+
+    /// <summary>How many executables this pass counted as ours.</summary>
+    public int ImagesWatched => spellings.Watched;
+
+    /// <summary>
+    /// How many of them the filesystem spells differently from the way they were
+    /// composed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Evidence rather than a fault.</b> A non-zero here is an aliased install
+    /// root working correctly; before 2026-08-24 the same machine produced
+    /// <c>candidates=0</c> on every pass forever and said nothing at all.
+    /// </remarks>
+    public int ImagesAliased => spellings.Aliased;
+
+    /// <summary>
+    /// Every image whose filesystem spelling could not be established, one
+    /// sentence each.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This is the tripwire, and it is the sibling of
+    /// <c>Sessions.StraySweepResult.TitledWindows</c>.</b> That count exists
+    /// because a walk that found dozens of windows and none named is what a
+    /// broken title read looks like, and would otherwise be indistinguishable
+    /// from a clean machine. The identical thing is true one column over: a pass
+    /// reporting no candidates while it could not establish what any of its own
+    /// binaries are called is a pass that cannot match anything, and it must not
+    /// read as an empty machine.
+    /// </remarks>
+    public IReadOnlyList<string> ImagesUnresolved => spellings.Unresolved;
 
     /// <inheritdoc />
     public void Dispose()

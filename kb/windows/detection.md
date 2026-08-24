@@ -531,6 +531,53 @@ PowerShell and from Git Bash**, and both totals recorded. That is belt beside
 `DriveLetterCase`'s braces, and it is what catches the next defect of this shape
 before the parameterisation has been extended to cover it.
 
+## A process reports the junction's target, not the spelling it was launched by — measured 2026-08-24
+
+Measured 2026-08-24 on this machine, .NET 10 / Windows 11 26200. `[STABLE]` for
+the API behaviour, `[MACHINE]` for the run.
+
+**The sibling of the section above, and the one that was left reasoned rather
+than measured.** That one says Windows re-spells a path's drive letter; this one
+says Windows also resolves every reparse point above it, so a composed path and a
+reported path can differ by far more than a letter's case.
+
+A real `mklink /J` junction was created over a scratch tree, a runnable image was
+planted under the **target**, and the process was started through the **link**:
+
+| | |
+|---|---|
+| Launched as | `…\sweep-junctioned-root-<guid>\link\browsers\ours\chrome-win64\chrome.exe` |
+| `QueryFullProcessImageNameW` answers | `…\sweep-junctioned-root-<guid>\real\browsers\ours\chrome-win64\chrome.exe` |
+
+So the object manager's resolution is what is reported, and it is reported for a
+process that never named the target at any point. `Path.Combine` resolves
+nothing, which makes the two sides of an image-path comparison the answers to two
+different questions — and the comparison is *exact*, so the mismatch is total
+rather than partial: **every** process misses, on every pass, for good.
+
+**What it cost before it was measured.** `BrowserProcesses.ScanFor` returned
+`candidates=0` and `BrowserProcesses.RunningFrom` returned an empty live set on
+any machine with a relocated user profile, a redirected `AppData`, a `subst`ed
+letter or an 8.3 component above the install root — with nothing on the census
+line distinguishing that from a clean machine. The second of those is the census
+`RevisionPrune` **deletes** a superseded tree on when it comes back empty.
+
+**To re-establish it:** `mklink /J <link> <target>`, plant any self-contained
+image under `<target>`, start it through `<link>`, and read
+`QueryFullProcessImageNameW` back. The suite does exactly this on every run —
+`StraySweepTests.DetectionSeesABinaryThroughAJunctionedRootAndStillSeesNothingElseInIt`
+asserts the reported path equals the target spelling and differs from the launch
+spelling, both case-insensitively, before it asserts anything about detection.
+
+⚠️ **The resolution is asked of the containing directory and never of the
+executable.** `Interop.ImageSpellings` resolves the directory and re-attaches the
+file name, because opening the executable would meet the loader's own image
+section — and a refusal that is *not* `ERROR_FILE_NOT_FOUND` stops
+`VolumeIdentity.DeepestExistingFinalName`'s walk with no answer at all, on
+precisely the machine where a browser is running. The cost of that choice is that
+a **symlinked executable leaf** is still invisible; the alias forms this product
+actually meets are all properties of a directory component.
+
 ## Process image path — the fully documented detection path
 
 Measured 2026-08-15 with a PowerShell harness that is not in this repository; the

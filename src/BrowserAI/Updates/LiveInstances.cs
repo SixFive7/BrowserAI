@@ -196,11 +196,18 @@ internal sealed record LiveMarkerReclaim
 /// has not joined yet and will find the applier's own file when it does.
 /// </para>
 /// <para>
-/// <b>Deliberately not <see cref="IAppPaths.InstanceRoot"/>.</b> That
-/// directory's liveness signal is the child holding it as a working directory,
-/// so a run has no signal until its child has started — and the update check
-/// runs on a background thread from the moment the process starts, which is
-/// inside exactly that window.
+/// <b>Deliberately not <see cref="IAppPaths.InstanceRoot"/>.</b> ⚠️
+/// <b>Corrected 2026-08-24 (previously "That directory's liveness signal is the
+/// child holding it as a working directory, so a run has no signal until its
+/// child has started").</b> It has one now —
+/// <c>Runtime.InstanceDirectory.MarkerFileName</c>, this same mechanism applied
+/// to the same problem — and the separation stands on what was always the load
+/// bearing half: <b>this marker is joined before the instance directory
+/// exists at all</b>, and the update check runs on a background thread from the
+/// moment the process starts, which is inside exactly that window. The two also
+/// answer different questions and are reclaimed by different passes: that one
+/// asks <i>may this directory be deleted</i>, and this one asks <i>am I the last
+/// instance</i>.
 /// </para>
 /// <para>
 /// ⚠️ <b>Reclaim used to happen only here, and that was measured to be nowhere.</b>

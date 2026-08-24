@@ -225,7 +225,21 @@ internal static class Program
         // profile and the config generated for every session this run opens.
         // Sessions do not replace it: they are additional, and each has its own
         // directory chosen by the caller.
-        var instance = InstanceDirectory.CreateFresh(paths, logger);
+        // ⚠️ THE MARKER IS TAKEN HERE, BY THIS PROCESS, and that is the whole of
+        // what closes the hazard both 2026-08-18 adversarial reviews found
+        // independently. Until 2026-08-24 the only thing holding this directory
+        // was the SURFACE CHILD, which holds it as a working directory — while
+        // the directory holds the generated config of every session in the run.
+        // A surface child that died while the run kept serving left it unheld,
+        // and another BrowserAI's startup sweep deleted it five minutes later.
+        // The marker is released by the kernel however this process dies, so the
+        // signal no longer depends on any child at all.
+        //
+        // Declared before the try and released in the finally: the pattern
+        // CA2000 asks for, and the one this file already uses for a named object
+        // created outside a guarded region.
+        var run = InstanceDirectory.CreateFresh(paths, logger);
+        var instance = run.Directory;
 
         try
         {
@@ -352,6 +366,12 @@ internal static class Program
         }
         finally
         {
+            // ⚠️ THE MARKER FIRST, THEN THE TREE. It is a file inside the
+            // directory about to be walked, so releasing it second would have
+            // this process's own handle named back to it as the one node that
+            // would not go.
+            run.Dispose();
+
             // The clean path. The killed path is the next run's sweep, because
             // nothing here runs when the process is terminated from outside.
             InstanceDirectory.Delete(instance, logger);

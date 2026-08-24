@@ -721,6 +721,75 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **One junction above the install root made the stray sweep structurally blind,
+  and nothing distinguished that from a clean machine.** Every path BrowserAI
+  composes goes through `Path.Combine`, which never resolves a link;
+  `QueryFullProcessImageNameW` answers with the path the object manager resolved,
+  reparse processing already done. The comparison between them is *exact*, so on
+  any machine with a relocated user profile, a redirected `AppData`, a `subst`ed
+  drive letter or an 8.3 component above the root, **every process missed, on
+  every pass, for good** — `candidates=0` forever, reported as a clean machine.
+  The same mismatch emptied the live set `RevisionPrune` deletes a superseded
+  browser tree on, which turned a race into a certainty: every superseded tree
+  looked idle while browsers ran out of it.
+
+  Measured rather than reasoned about, on 2026-08-24 and for the first time: a
+  process launched through a real `mklink /J` junction is reported under the
+  **target** spelling, having never named it
+  ([kb](kb/windows/detection.md#a-process-reports-the-junctions-target-not-the-spelling-it-was-launched-by--measured-2026-08-24)).
+
+  **What the sweep may match widened; what it may terminate did not**, and the
+  two were kept apart deliberately because this code decides what may be killed.
+  Only paths BrowserAI itself composed are ever resolved — never one a foreign
+  process reported, so the process list cannot steer what gets opened. A resolved
+  spelling names *the same file* the composed path already named, so the match
+  stays exact, stays full-path, and is still never a prefix and never an image
+  name. And every guard between a candidate and a kill is untouched: the second
+  independent guard, the held process handle, the creation-time re-check and the
+  `browserai.json` lock the sweeper has to be able to take itself.
+
+  **The tripwire is the other half of the fix.** A pass now reports how many
+  executables it watched, how many the filesystem spells differently, and — as a
+  **warning**, not only a census number — every one whose spelling it could not
+  establish at all. That is the sibling of `TitledWindows`, which exists for
+  exactly this reason one column over: a pass that cannot match anything must
+  never read like a machine with nothing on it.
+
+  Two residues are named rather than left to be rediscovered. A **symlinked
+  executable leaf** is still invisible, because what is resolved is the
+  containing directory — opening a mapped image would end the ancestor walk with
+  no answer at all on precisely the machine where a browser is running. And a
+  root whose spelling cannot be established falls back to the composed one; the
+  sweep says so, and the prune census has nowhere to say it.
+
+- **The instance directory's liveness rested on one child, and the blast radius
+  was every session in the run.** A run's instance directory holds the generated
+  Playwright config of *every* live session, and exactly one process ever held it
+  open: the surface child, which is given it as a working directory. Session
+  children are given the session's own output root instead. So a surface child
+  that died while the run kept serving left the directory unheld — and a
+  directory's `GetLastWriteTimeUtc` does not move when files inside it are
+  written, so five minutes later another BrowserAI's startup sweep renamed it
+  aside and deleted it. Live sessions kept working, because their configs had
+  already been read; every new one failed, and the run's own tidy-up then
+  reported nothing at all, because a missing directory is deliberately never a
+  failure.
+
+  **BrowserAI now holds a marker inside its own instance directory** —
+  `instance.live`, opened `ReadWrite`/`FileShare.Read` and held for the whole
+  life of the process, the same mechanism the live-instance set and the browsers
+  root's maintenance claim already use. It is taken by BrowserAI rather than by
+  any child, so the signal no longer depends on one child staying alive, and the
+  kernel releases it however the process dies. A sharing violation is a fact
+  Windows enforces; a timestamp and one process's working directory were an
+  inference. The sweep now says *this belongs to a BrowserAI that is still
+  running* instead of *something refused my rename*, and the five-minute age
+  guard, which used to cover the whole interval until a child started, now covers
+  the two statements between creating the directory and marking it.
+
+  **Found independently by both 2026-08-18 adversarial reviews** and carried as
+  two hazard rows for five days before they were recognised as one.
+
 - **The pointers BrowserAI handed the model did not resolve — two of them, and
   they were the same defect twice.** Upstream writes two artifacts BrowserAI's
   inbound routing cannot reach, because neither comes from a `filename`

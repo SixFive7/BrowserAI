@@ -346,6 +346,19 @@ internal sealed class StraySweep
         // otherwise be reported and left forever.
         var byProfileLock = AttributeByProfileLock(unattributable, terminated, spared);
 
+        // ⚠️ THE TRIPWIRE, and it is the sibling of TitledWindows. A pass whose
+        // own binaries could not be matched against what Windows reports finds
+        // nothing, forever, and reads on the census line exactly like a clean
+        // machine. That is the shape this project refuses everywhere else, and
+        // it was the second half of the finding that produced ImageSpellings.
+        if (scan.ImagesUnresolved.Count is not 0)
+        {
+            SweepLog.CouldNotResolveImages(
+                _logger,
+                scan.ImagesUnresolved.Count,
+                string.Join(Environment.NewLine, scan.ImagesUnresolved));
+        }
+
         if (unattributable.Count is not 0)
         {
             // Reported loudly and never acted on. A browser tree publishes its
@@ -365,6 +378,9 @@ internal sealed class StraySweep
             ProcessesEnumerated = scan.Enumerated,
             ProcessesOpened = scan.Opened,
             Candidates = scan.Candidates.Count,
+            ImagesWatched = scan.ImagesWatched,
+            ImagesAliased = scan.ImagesAliased,
+            ImagesUnresolved = scan.ImagesUnresolved,
             WindowsWalked = walk.Windows.Count,
             TitledWindows = titled,
             WalkRestarts = walk.Restarts,
@@ -692,6 +708,34 @@ internal sealed record StraySweepResult
     /// <summary>How many were running one of our binaries.</summary>
     public int Candidates { get; init; }
 
+    /// <summary>How many executables the pass counted as ours.</summary>
+    public int ImagesWatched { get; init; }
+
+    /// <summary>
+    /// How many of them the filesystem spells differently from the way they were
+    /// composed.
+    /// </summary>
+    /// <remarks>
+    /// Evidence rather than a fault: a non-zero here is an aliased install root
+    /// being matched correctly. Before 2026-08-24 the same machine reported
+    /// <c>candidates=0</c> on every pass forever and said nothing at all.
+    /// </remarks>
+    public int ImagesAliased { get; init; }
+
+    /// <summary>
+    /// Every executable whose filesystem spelling could not be established, one
+    /// sentence each.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The sibling of <see cref="TitledWindows"/>, and the second half of
+    /// the finding that produced <c>Interop.ImageSpellings</c>.</b> A pass that
+    /// cannot establish what its own binaries are called cannot match anything,
+    /// and a <c>candidates=0</c> arriving from that is not a clean machine.
+    /// Non-empty is also a <b>warning in the log</b>, not only a number on the
+    /// census line.
+    /// </remarks>
+    public IReadOnlyList<string> ImagesUnresolved { get; init; } = [];
+
     /// <summary>How many message-only windows of the class were walked.</summary>
     public int WindowsWalked { get; init; }
 
@@ -755,7 +799,7 @@ internal sealed record StraySweepResult
     public string Summary =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"outcome={Outcome} elapsed={Elapsed.TotalMilliseconds:F1}ms processes={ProcessesEnumerated}/{ProcessesOpened} candidates={Candidates} windows={WindowsWalked} titled={TitledWindows} restarts={WalkRestarts} truncated={WalkTruncated} terminated={Terminated.Count} spared={Spared.Count} byProfileLock={AttributedByProfileLock} unattributable={Unattributable.Count} rejectedTitles={RejectedTitles.Count} indexRemoved={Index?.Removed.Count ?? 0} liveMarkers=[{LiveMarkers?.Summary ?? "-"}] abandonedGate={GateWasAbandoned}");
+            $"outcome={Outcome} elapsed={Elapsed.TotalMilliseconds:F1}ms processes={ProcessesEnumerated}/{ProcessesOpened} candidates={Candidates} images={ImagesWatched} aliasedImages={ImagesAliased} unresolvedImages={ImagesUnresolved.Count} windows={WindowsWalked} titled={TitledWindows} restarts={WalkRestarts} truncated={WalkTruncated} terminated={Terminated.Count} spared={Spared.Count} byProfileLock={AttributedByProfileLock} unattributable={Unattributable.Count} rejectedTitles={RejectedTitles.Count} indexRemoved={Index?.Removed.Count ?? 0} liveMarkers=[{LiveMarkers?.Summary ?? "-"}] abandonedGate={GateWasAbandoned}");
 }
 
 /// <summary>Source-generated log messages for the stray sweep.</summary>
@@ -845,6 +889,29 @@ internal static partial class SweepLog
         Level = LogLevel.Warning,
         Message = "Could not ask which process holds the profile lock under {Profile}; nothing was attributed to that session and nothing was terminated.")]
     public static partial void ProfileLockUnreadable(ILogger logger, string profile, Exception failure);
+
+    /// <summary>
+    /// The pass could not establish what the filesystem calls one or more of the
+    /// binaries it counts as ours.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Warning, and it is the loudest thing this class says about its own
+    /// blindness.</b> Detection is an exact match of a full image path against a
+    /// path BrowserAI composed, and the two are produced by different things —
+    /// one by string composition, one by the kernel after reparse processing. An
+    /// image whose filesystem spelling is unknown therefore cannot match any
+    /// process at all, and the pass that follows reports a clean machine. The
+    /// sentence says which images, so it is actionable rather than merely
+    /// alarming.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="count">How many images could not be resolved.</param>
+    /// <param name="images">Each of them, one per line, with the reason.</param>
+    [LoggerMessage(
+        EventId = 10,
+        Level = LogLevel.Warning,
+        Message = "The stray sweep could not establish what the filesystem calls {Count} of the executables it counts as ours, so nothing running out of them can be detected and a clean-looking census is not evidence of a clean machine:\n{Images}")]
+    public static partial void CouldNotResolveImages(ILogger logger, int count, string images);
 
     /// <summary>The pass threw, and the thread boundary caught it.</summary>
     [LoggerMessage(

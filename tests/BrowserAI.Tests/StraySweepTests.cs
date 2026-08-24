@@ -1064,7 +1064,191 @@ internal sealed class StraySweepTests
         await Assert.That(executables).IsEquivalentTo(expected);
     }
 
+    /// <summary>
+    /// A junction anywhere above the install root: detection matches the binary
+    /// through the spelling <b>the filesystem itself reports</b>, and not only
+    /// through the one <c>Path.Combine</c> produced.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by <a href="../../docs/reviews/2026-08-18-adversarial-processes.md">the
+    /// adversarial review</a>, finding 4, and fixed 2026-08-24.</b>
+    /// <c>Hosting.LocalAppDataPaths</c> composes every path with
+    /// <c>Path.Combine</c>, which never resolves a link, while
+    /// <c>QueryFullProcessImageNameW</c> answers with the path the object manager
+    /// resolved — i.e. <b>after</b> reparse processing. A relocated user profile,
+    /// a redirected <c>AppData</c>, a <c>subst</c>ed letter or an 8.3 component
+    /// therefore made the two sides of the comparison different strings for every
+    /// process on the machine: <c>candidates=0</c> on every pass, for good, and
+    /// indistinguishable from a clean machine.
+    /// </para>
+    /// <para>
+    /// <b>The first three assertions are the measurement the whole fix rests on,
+    /// and the review left it <c>[REASONED]</c>.</b> The process below is
+    /// launched <i>through the junction</i> — which is what BrowserAI does,
+    /// because the junction is above the root it was configured with — and what
+    /// the kernel reports back is the target. Nothing here is a stand-in: the
+    /// junction is a real <c>mklink /J</c> and the process is a real one running
+    /// out of it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The stranger is what keeps <i>what the sweep may match</i> separate
+    /// from <i>what it may terminate</i>.</b> A second process planted in the
+    /// same junctioned tree and launched through the same junction is <b>not</b>
+    /// a candidate — so what the wanted set gained is a second spelling of the
+    /// same file, never a wider rule. Detection is still an exact full-path match
+    /// against a closed set of executables BrowserAI itself composed; it is still
+    /// never a prefix and never an image name; and every guard between a
+    /// candidate and a kill is untouched.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task DetectionSeesABinaryThroughAJunctionedRootAndStillSeesNothingElseInIt()
+    {
+        using var scratch = ScratchDirectory.Create("sweep-junctioned-root");
+        using var scope = new JobObjectScope();
+
+        // A real junction standing in for a relocated profile: `real` is where
+        // the bytes are, `link` is the spelling everything above the root uses.
+        var real = Path.Combine(scratch.Path, "real");
+        var link = Path.Combine(scratch.Path, "link");
+
+        _ = Directory.CreateDirectory(real);
+        await PathAliases.JunctionAsync(link, real);
+
+        var ours = await LaunchThroughAsync(scope, real, link, "ours");
+        var stranger = await LaunchThroughAsync(scope, real, link, "stranger");
+
+        // ⚠️ THE MEASUREMENT. Launched by the junctioned spelling, reported by
+        // the target one. That is the whole mechanism of the finding, and it is
+        // asserted here rather than reasoned about.
+        var reported = BrowserProcesses.RunningFrom(real).Single(entry => entry.ProcessId == ours.Process.Id);
+
+        // ⚠️ CASE-INSENSITIVE ON BOTH SIDES, and this arm was watched failing for
+        // exactly that reason before it was: `ours.Real` is composed in this
+        // process from a working directory the shell spelled `c:\…`, and
+        // QueryFullProcessImageNameW reports the drive letter upper-case whatever
+        // started the host. See DriveLetterCase, and `Sessions\CLAUDE.md`, which
+        // records the same defect arriving three times.
+        await Assert.That(reported.ImagePath).IsEqualTo(ours.Real, StringComparison.OrdinalIgnoreCase);
+        await Assert.That(string.Equals(reported.ImagePath, ours.Composed, StringComparison.OrdinalIgnoreCase)).IsFalse();
+
+        // THE CLAIM. The wanted set carries only the spelling Path.Combine made,
+        // exactly as ProvisionedBrowsers.Executables produces it, and the match
+        // finds the process anyway.
+        using var scan = BrowserProcesses.ScanFor([ours.Composed]);
+        var candidates = scan.Candidates.Select(candidate => candidate.ProcessId).ToList();
+
+        await Assert.That(candidates).Contains(ours.Process.Id);
+
+        // ⚠️ AND NOTHING ELSE IN THE SAME TREE. The stranger is a real process
+        // running out of the same junctioned directory, launched through the
+        // same link; its image is not one of the strings that count as ours, so
+        // it is not a candidate and nothing here can make it one.
+        await Assert.That(candidates).DoesNotContain(stranger.Process.Id);
+        await Assert.That(ProcessIdentity.IsAlive(stranger.Process.Id, ProcessIdentity.CreationTimeOf(stranger.Process.Id))).IsTrue();
+
+        // And the scan says the two spellings disagreed, which is the tripwire
+        // half of the finding: a detection surface that cannot match anything
+        // must never again look like a clean machine.
+        await Assert.That(scan.ImagesWatched).IsEqualTo(1);
+        await Assert.That(scan.ImagesAliased).IsEqualTo(1);
+        await Assert.That(scan.ImagesUnresolved).IsEmpty();
+    }
+
+    /// <summary>
+    /// An image whose filesystem spelling cannot be established is named on the
+    /// census, so <c>candidates=0</c> is never again indistinguishable from a
+    /// clean machine.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the half of finding 4 that is not the match itself.</b> The
+    /// review's words: <i>"nothing distinguishes 'no strays on this machine' from
+    /// 'detection is structurally blind'. Contrast <c>TitledWindows</c>, which
+    /// exists precisely because a walk that found dozens of windows and none
+    /// named is what a broken title read looks like."</i> The identical tripwire
+    /// now exists one column over.
+    /// </para>
+    /// <para>
+    /// <b>A UNC image is the case that produces it without a single filesystem
+    /// call</b>, which is also the property being asserted: resolution is ordered
+    /// exactly as <see cref="VolumeIdentity"/> is, so a share that would cost
+    /// 22 s to open is refused on its characters and reported instead.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnImageWhoseSpellingCannotBeEstablishedIsNamedRatherThanSilentlyMissed()
+    {
+        const string Unreachable = @"\\10.255.255.1\share\browsers\chromium-1\chrome-win64\chrome.exe";
+
+        var clock = Stopwatch.StartNew();
+        using var scan = BrowserProcesses.ScanFor([Unreachable]);
+        var elapsed = clock.Elapsed;
+
+        await Assert.That(scan.ImagesWatched).IsEqualTo(1);
+        await Assert.That(scan.ImagesUnresolved.Count).IsEqualTo(1);
+        await Assert.That(scan.ImagesUnresolved[0]).Contains(Unreachable);
+
+        // Nothing opened it, which is what the ordering inside VolumeIdentity is
+        // for: a share is refused on its characters. Bounded by the suite's own
+        // hang budget rather than by a number invented at the assertion — what
+        // this excludes is a twenty-two-second stall, not a slow answer.
+        await Assert.That(elapsed).IsLessThan(TestDefaults.InProcessHang);
+
+        // And it is still a scan: the machine really was enumerated, so the empty
+        // candidate set is a fact about the images rather than about a pass that
+        // never happened.
+        await Assert.That(scan.Enumerated).IsGreaterThan(100);
+        await Assert.That(scan.Candidates).IsEmpty();
+    }
+
     private static string ProbeExecutable { get; } = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+
+    /// <summary>
+    /// Plants a runnable image under <paramref name="real"/> and starts it
+    /// <b>through</b> the junction, which is what BrowserAI does when a link sits
+    /// above the root it was configured with.
+    /// </summary>
+    /// <param name="scope">The job that owns it, so a failed assertion cannot leak it.</param>
+    /// <param name="real">The junction's target, where the bytes go.</param>
+    /// <param name="link">The junction, which is the spelling it is launched by.</param>
+    /// <param name="leaf">A directory name distinguishing one plant from another.</param>
+    /// <returns>The process and both spellings of its image.</returns>
+    private static async Task<PlantedThroughJunction> LaunchThroughAsync(
+        JobObjectScope scope,
+        string real,
+        string link,
+        string leaf)
+    {
+        var directory = Path.Combine(real, "browsers", leaf, "chrome-win64");
+        _ = Directory.CreateDirectory(directory);
+
+        // cmd.exe, for the reason PlantedProcess records at length: it is the one
+        // image that runs from a strange directory without its own dependency
+        // closure beside it, and with no arguments it reads its stdin forever.
+        var image = Path.Combine(directory, "chrome.exe");
+        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), image, overwrite: true);
+
+        var composed = Path.Combine(link, "browsers", leaf, "chrome-win64", "chrome.exe");
+        var process = scope.Launch(composed, real);
+        var waited = Stopwatch.StartNew();
+
+        while (BrowserProcesses.RunningFrom(real).All(entry => entry.ProcessId != process.Id))
+        {
+            if (waited.Elapsed > TestDefaults.ProcessHang)
+            {
+                throw new InvalidOperationException(
+                    $"The process launched from '{composed}' (pid {process.Id}) was never visible under '{real}' after {waited.Elapsed.TotalSeconds:F1} s, so this test would be asserting against an empty answer.");
+            }
+
+            await Task.Delay(25);
+        }
+
+        return new PlantedThroughJunction(process, image, composed);
+    }
 
     private static string NewSessionDirectory(ScratchDirectory scratch, string label)
     {
@@ -1265,6 +1449,12 @@ internal sealed class StraySweepTests
     }
 
     private sealed record Attribution(IReadOnlyList<int> Candidates, string Attributed, int WindowOwner);
+
+    /// <summary>One planted process and the two spellings of its image.</summary>
+    /// <param name="Process">The running process.</param>
+    /// <param name="Real">Where the bytes are, which is what the kernel reports.</param>
+    /// <param name="Composed">The junctioned spelling it was launched by.</param>
+    private sealed record PlantedThroughJunction(LaunchedProcess Process, string Real, string Composed);
 
     /// <summary>
     /// A logger that fails, so the catch-all's own reporting path can be shown

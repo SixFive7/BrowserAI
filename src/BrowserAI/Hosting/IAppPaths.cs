@@ -137,12 +137,18 @@ internal interface IAppPaths
     /// </para>
     /// <para>
     /// <b>A sibling of <c>current\</c>, and deliberately not
-    /// <see cref="InstanceRoot"/>.</b> An instance directory's liveness signal is
-    /// the child holding it as a working directory, which means a run has no
-    /// signal at all until its child has started — precisely the window in which
-    /// an update check can run. This one is a file handle taken by BrowserAI
-    /// itself, before anything else, and released by the OS however the process
-    /// dies.
+    /// <see cref="InstanceRoot"/>.</b> ⚠️ <b>Corrected 2026-08-24 (previously
+    /// "An instance directory's liveness signal is the child holding it as a
+    /// working directory, which means a run has no signal at all until its child
+    /// has started").</b> That was true and is not any more —
+    /// <c>Runtime.InstanceDirectory</c> now holds a marker of its own, taken by
+    /// BrowserAI rather than by any child. <b>The separation survives on the
+    /// half that was always the real reason:</b> this marker is taken
+    /// <i>before anything else</i>, and the instance directory does not exist
+    /// yet at that point — the update check runs on a background thread from the
+    /// moment the process starts, which is inside exactly that window. Both are
+    /// a file handle released by the OS however the process dies; they answer
+    /// different questions and are reclaimed by different passes.
     /// </para>
     /// </remarks>
     string LiveInstanceDirectory { get; }

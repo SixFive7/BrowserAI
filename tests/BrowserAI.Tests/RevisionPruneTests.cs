@@ -403,6 +403,80 @@ internal sealed class RevisionPruneTests
     }
 
     /// <summary>
+    /// The same guard, through a junction above the browsers root — where the
+    /// census used to come back empty for every revision on the machine.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found by <a href="../../docs/reviews/2026-08-18-adversarial-processes.md">the
+    /// adversarial review</a>, finding 4, and fixed 2026-08-24.</b> The review
+    /// called this the compounding half: the pass composes candidate paths from a
+    /// root spelled with <c>Path.Combine</c>, and <c>QueryFullProcessImageNameW</c>
+    /// answers with what the object manager resolved. One junction above the root
+    /// and the two never match — so <c>RevisionPrune</c> stops being a race and
+    /// becomes deterministic: <b>every superseded tree looks idle while browsers
+    /// run out of it</b>, which is the direction that loses data rather than the
+    /// one that keeps disk.
+    /// </para>
+    /// <para>
+    /// <b>The assertion is on the contents, not on <c>Removed</c>.</b> A live
+    /// browser's own <c>.exe</c> is refused by the image section, so a blind pass
+    /// does not report the revision as removed — it reports it as
+    /// <i>would not fully delete</i>, having already taken everything the browser
+    /// had not yet mapped. The file planted below is what a resource load would
+    /// have needed, and it is the difference between the two outcomes.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARevisionInUseIsKeptWhenAJunctionSitsAboveTheBrowsersRoot()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
+        using var scratch = ScratchDirectory.Create("prune-junctioned-root");
+        using var scope = new JobObjectScope();
+
+        // A real junction standing in for a relocated profile: `real` holds the
+        // bytes and `link` is the spelling the app root was composed from.
+        var real = Path.Combine(scratch.Path, "real");
+        var link = Path.Combine(scratch.Path, "link");
+
+        _ = Directory.CreateDirectory(real);
+        await PathAliases.JunctionAsync(link, real);
+
+        var root = Path.Combine(real, "browsers");
+        var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
+        var superseded = Plant(root, SupersededChromium, bytes: 1024);
+
+        // What a resource load would need, and what a blind pass takes: the
+        // browser has not mapped it, so nothing refuses its deletion.
+        var resource = Path.Combine(superseded, "chrome-win64", "resources.pak");
+        await File.WriteAllTextAsync(resource, "x");
+
+        var (planted, imagePath) = await PlantedProcess.StartInAsync(scope, Path.Combine(superseded, "chrome-win64"), root);
+
+        // ⚠️ THE PASS IS POINTED AT THE JUNCTIONED SPELLING, which is what
+        // LocalAppDataPaths would have composed on a machine with a relocated
+        // profile. Everything it enumerates below it carries that spelling; the
+        // kernel reports every one of these processes under the target.
+        var report = RevisionPrune.Run(Path.Combine(link, "browsers"), manifest, log.CreateLogger<RevisionPruneTests>());
+
+        // THE CLAIM. The tree is intact, not merely present.
+        await Assert.That(Directory.Exists(superseded)).IsTrue();
+        await Assert.That(File.Exists(resource)).IsTrue();
+        await Assert.That(File.Exists(imagePath)).IsTrue();
+        await Assert.That(report.Removed).IsEmpty();
+
+        // And it was retained because a process is running out of it, with the
+        // pid somebody can act on — never because a file happened not to delete.
+        var retained = string.Join(Environment.NewLine, report.Retained);
+
+        await Assert.That(retained).Contains(planted.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        await Assert.That(retained).DoesNotContain("would not fully delete");
+    }
+
+    /// <summary>
     /// Lays down a directory of a given size under the browsers root, complete
     /// with the marker a real install writes last.
     /// </summary>

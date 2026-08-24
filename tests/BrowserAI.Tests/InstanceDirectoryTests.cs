@@ -59,10 +59,15 @@ internal sealed class InstanceDirectoryTests
         // ~100-process design point, minutes.
         await WaitUntilNothingHoldsAsync(abandoned);
 
-        var created = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+        using var created = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
 
-        await Assert.That(Directory.Exists(created)).IsTrue();
+        await Assert.That(Directory.Exists(created.Directory)).IsTrue();
         await Assert.That(Directory.Exists(abandoned)).IsFalse();
+
+        // And this run announced itself in it, which is what stops the NEXT
+        // BrowserAI's sweep judging it on a timestamp and a rename.
+        await Assert.That(created.IsMarked).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(created.Directory, InstanceDirectory.MarkerFileName))).IsTrue();
 
         // Nothing is left renamed aside either: the claim is a step on the way
         // to a delete, not a rubbish heap the next run has to recognise.
@@ -70,7 +75,7 @@ internal sealed class InstanceDirectoryTests
 
         // Under the root the app-paths seam names, so the swap to Velopack's
         // locator at step 19 moves it without anything else changing.
-        await Assert.That(created).StartsWith(paths.InstanceRoot);
+        await Assert.That(created.Directory).StartsWith(paths.InstanceRoot);
     }
 
     /// <summary>
@@ -125,9 +130,96 @@ internal sealed class InstanceDirectoryTests
         var young = Path.Combine(paths.InstanceRoot, "5678-just-started");
         _ = Directory.CreateDirectory(young);
 
-        _ = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+        using var mine = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
 
         await Assert.That(Directory.Exists(young)).IsTrue();
+    }
+
+    /// <summary>
+    /// A run keeps its instance directory with <b>no child holding it as a
+    /// working directory at all</b>, because the run itself holds a marker
+    /// inside it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Found independently by both 2026-08-18 adversarial reviews —
+    /// <a href="../../docs/reviews/2026-08-18-adversarial-locking.md">locking</a>
+    /// B5 and
+    /// <a href="../../docs/reviews/2026-08-18-adversarial-processes.md">processes</a>
+    /// finding 11 — and fixed 2026-08-24.</b> Exactly one process had ever held
+    /// this directory: the surface child, which is given it as a working
+    /// directory. Session children are given the session's own output root
+    /// instead, while the instance directory holds the generated config of
+    /// <i>every</i> live session in the run. So a surface child that died while
+    /// the run kept serving left the directory unheld, its mtime did not move
+    /// because a directory's mtime does not track writes to files inside it, and
+    /// five minutes later another BrowserAI's startup sweep renamed it aside and
+    /// deleted it.
+    /// </para>
+    /// <para>
+    /// <b>Nothing in this test is ever anybody's current directory</b>, which is
+    /// the whole point — the old holder is absent by construction rather than by
+    /// timing. The sibling test above keeps the working-directory lock honest;
+    /// this one proves the run no longer depends on it.
+    /// </para>
+    /// <para>
+    /// <b>The control is the second half and it is what makes the first mean
+    /// something.</b> Release the marker and the very same sweep reclaims the
+    /// very same directory, so what kept it was the handle and not the age
+    /// guard, not the rename, and not some property of a directory this test
+    /// created.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARunKeepsItsInstanceDirectoryWithNoChildHoldingItAsAWorkingDirectory()
+    {
+        using var scratch = ScratchDirectory.Create("instance-marker");
+        using var provider = new CapturingLoggerProvider();
+
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        // A live run, exactly as Program.cs starts one.
+        using var mine = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+
+        await Assert.That(mine.IsMarked).IsTrue();
+
+        var config = Path.Combine(mine.Directory, "playwright-mcp.config.json");
+        await File.WriteAllTextAsync(config, "{}");
+
+        // Old enough to be swept. The age guard is the only other thing that
+        // could keep this tree, and leaving it in play would make this pass for
+        // the wrong reason.
+        Directory.SetLastWriteTimeUtc(mine.Directory, DateTime.UtcNow.AddHours(-1));
+
+        // The next BrowserAI's startup sweep, which is what CreateFresh runs
+        // before it makes a directory of its own.
+        using var theirs = InstanceDirectory.CreateFresh(paths, provider.CreateLogger("BrowserAI.Tests"));
+
+        await Assert.That(Directory.Exists(mine.Directory)).IsTrue();
+        await Assert.That(File.Exists(config)).IsTrue();
+
+        // Nothing was renamed aside either -- a claim that half-succeeded would
+        // leave a live run's directory under a name it never agreed to.
+        await Assert.That(Directory.EnumerateDirectories(paths.InstanceRoot)
+            .Select(Path.GetFileName)
+            .Any(name => name!.StartsWith("sweeping-", StringComparison.Ordinal)))
+            .IsFalse();
+
+        // And the pass NAMED it as a live instance rather than merely failing to
+        // rename it, which is the difference between the two log lines.
+        await Assert.That(provider.Logged("belongs to a BrowserAI that is still running")).IsTrue();
+        await Assert.That(provider.Logged("could not be renamed aside")).IsFalse();
+
+        // ⚠️ THE CONTROL. Nothing about that directory made it unsweepable
+        // except the handle.
+        mine.Dispose();
+        await WaitUntilNothingHoldsAsync(mine.Directory);
+        Directory.SetLastWriteTimeUtc(mine.Directory, DateTime.UtcNow.AddHours(-1));
+
+        using var afterwards = InstanceDirectory.CreateFresh(paths, NullLogger.Instance);
+
+        await Assert.That(Directory.Exists(mine.Directory)).IsFalse();
     }
 
     /// <summary>
@@ -244,7 +336,7 @@ internal sealed class InstanceDirectoryTests
         _ = scope.Launch(ProbePath, live, "hold-file", elsewhere, ready);
         await WaitForFileAsync(ready);
 
-        _ = InstanceDirectory.CreateFresh(paths, provider.CreateLogger("BrowserAI.Tests"));
+        using var mine = InstanceDirectory.CreateFresh(paths, provider.CreateLogger("BrowserAI.Tests"));
 
         await Assert.That(Directory.Exists(live)).IsTrue();
         await Assert.That(File.Exists(config)).IsTrue();

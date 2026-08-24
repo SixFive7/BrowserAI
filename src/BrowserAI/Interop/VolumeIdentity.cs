@@ -293,6 +293,122 @@ internal static partial class VolumeIdentity
     }
 
     /// <summary>
+    /// The filesystem's own name for a path, in the plain drive-letter spelling
+    /// every Win32 path reporter answers with — or why that could not be
+    /// established.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The one question here that is safe to ask about a path of unknown
+    /// shape</b>, because it asks the other two itself:
+    /// <see cref="IsUncOrDeviceSpelling"/> on the characters,
+    /// <see cref="Of"/> on the object manager, and only then the directory open
+    /// <see cref="DeepestExistingFinalName"/> costs. That ordering is the whole
+    /// point of this type — an open against an unreachable share costs a measured
+    /// <b>22,210 ms</b> — so a caller reaching for <see cref="FinalNameOf"/>
+    /// directly is taking the guard on itself.
+    /// </para>
+    /// <para>
+    /// <b>The answer is comparable against what Windows reports and the input is
+    /// not.</b> <c>QueryFullProcessImageNameW</c>, <c>GetModuleFileNameW</c> and
+    /// every other Win32 path reporter answer in this form: a drive letter, no
+    /// <see cref="ExtendedLengthPrefix"/>, and every reparse point already
+    /// resolved. A path composed with <c>Path.Combine</c> is none of those, and
+    /// comparing the two directly compares the answers to two different
+    /// questions — which is what made
+    /// <c>Interop.BrowserProcesses.ScanFor</c> return <c>candidates=0</c> for
+    /// good under one junction.
+    /// </para>
+    /// <para>
+    /// <b>A UNC answer is refused rather than stripped</b>, for the reason
+    /// <c>Hosting.InstallRootScope</c> gives at its own copy of this rule:
+    /// <c>\\?\UNC\host\share</c> with the prefix removed reads as a rooted local
+    /// path and would then be compared as one.
+    /// </para>
+    /// <para>
+    /// <b>Why a sentence rather than a bare <see langword="null"/>.</b> Every
+    /// caller of this is deciding whether it may act on an <i>absence</i> — no
+    /// candidate found, nothing running out of a tree — and an absence that
+    /// arrives because the question could not be asked is a different fact from
+    /// one that arrives because there is nothing there. The sentence is what
+    /// makes the two distinguishable on a log line.
+    /// </para>
+    /// <para>
+    /// <b><c>Hosting.InstallRootScope</c> deliberately does not call this</b>,
+    /// and that is not an oversight to be tidied. It compares <i>two</i> paths
+    /// and answers three ways — serve, refuse, could-not-establish — and its
+    /// refusals quote the ancestor the walk stopped at, so it needs the halves
+    /// this method composes rather than the composition.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The path to resolve. Need not exist.</param>
+    /// <param name="walkLimit">
+    /// How many levels the walk may climb looking for an ancestor that exists,
+    /// passed straight to <see cref="DeepestExistingFinalName"/>.
+    /// </param>
+    /// <returns>
+    /// The spelling, or <see langword="null"/> with a clause saying why not.
+    /// Exactly one of the two is ever set.
+    /// </returns>
+    public static (string? Spelling, string? Why) DosSpellingOf(string path, int walkLimit)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        // 1. Characters only, and first. `\\?\C:\…` is NOT a share -- it is the
+        //    extended spelling of an ordinary local path -- so the prefix is
+        //    stripped for the volume question and the caller's own spelling is
+        //    what the filesystem is asked about, which CreateFileW accepts
+        //    either way.
+        var probe = path;
+
+        if (IsUncOrDeviceSpelling(path))
+        {
+            var afterPrefix = path.Length > 4 && path[1] is '\\' && path[2] is '?' or '.' && path[3] is '\\'
+                ? path[4..]
+                : null;
+
+            if (afterPrefix is null || afterPrefix.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase))
+            {
+                return (null, $"it is a UNC or device path, and asking the filesystem what it calls one can block for as long as the share takes to answer — measured at 22,210 ms.");
+            }
+
+            probe = afterPrefix;
+        }
+
+        // 2. The object manager only -- still no filesystem call. A mapped drive
+        //    letter is a share wearing a letter, and it is the one form that
+        //    would cost 22 s to discover the slow way.
+        if (Of(probe).Kind is VolumeKind.Network)
+        {
+            return (null, $"drive '{probe[..2]}' is a mapped network drive, so asking the filesystem what it calls that path can block for as long as the share takes to answer — measured at 22,210 ms.");
+        }
+
+        // 3. And only now, one directory open per level climbed.
+        var (final, existing) = DeepestExistingFinalName(path, walkLimit);
+
+        if (final is null)
+        {
+            return (null, $"the filesystem would not say what it calls '{existing}'.");
+        }
+
+        var stripped = final.StartsWith(ExtendedLengthPrefix, StringComparison.Ordinal)
+            ? final[ExtendedLengthPrefix.Length..]
+            : final;
+
+        if (stripped.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase))
+        {
+            return (null, $"the filesystem calls '{existing}' the share '{final}', which has no drive-letter spelling to compare a reported path against.");
+        }
+
+        // Whatever was trimmed off to find an existing ancestor goes back on. The
+        // answer is unaffected either way: a tail that does not exist cannot be a
+        // reparse point, so an unaliased ancestor makes the whole path unaliased.
+        var tail = existing.Length <= path.Length ? path.AsSpan(existing.Length) : [];
+
+        return (tail.IsEmpty ? stripped : Path.Join(stripped, tail), null);
+    }
+
+    /// <summary>
     /// Whether the last failure was <i>this name does not exist</i> rather than
     /// anything else.
     /// </summary>
