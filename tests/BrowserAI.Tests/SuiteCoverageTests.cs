@@ -38,6 +38,15 @@ internal static class SuiteCoverage
         // captured text to tests, of which a session hook is none. So this
         // writes through the REAL standard output handle, which nothing has
         // replaced, and leaves it open for the run summary that follows.
+        //
+        // ⚠️ AND THAT REACHES A DIRECT RUN OF THE TEST EXECUTABLE AND NOT A
+        // `dotnet test` ONE, measured 2026-08-24 on this tree: neither the real
+        // stdout handle nor the real stderr handle appears in a fully redirected
+        // `dotnet test` log, because the MTP integration talks to the test app
+        // over its own channel rather than forwarding its console. The gate runs
+        // `dotnet test`, so ReportPath below is the copy a gate run actually
+        // has, and TESTING.md's two invocations append that file to each run's
+        // own log for exactly this reason.
         using (var standardOutput = Console.OpenStandardOutput())
         using (var writer = new StreamWriter(standardOutput, new UTF8Encoding(false), 4096, leaveOpen: true) { AutoFlush = true })
         {
@@ -136,6 +145,11 @@ internal sealed class SuiteCoverageTests
         // say which. FirstRunCacheTests asserts what the row may contain.
         await Assert.That(summary).Contains("first-run bytes");
 
+        // Not a capability either, and the only row here that reports what the
+        // SHELL handed this run rather than what the machine holds.
+        await Assert.That(summary).Contains("drive letter");
+        await Assert.That(summary).Contains(GateDriveCase.Variable);
+
         foreach (var capability in SuiteEnvironment.All)
         {
             var state = SuiteEnvironment.StateOf(capability);
@@ -147,6 +161,99 @@ internal sealed class SuiteCoverageTests
                 _ => "PARTIAL",
             });
         }
+    }
+
+    /// <summary>
+    /// A declared drive-letter spelling that did not take is a red run, and an
+    /// undeclared one pins nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The positive control under the live arm below.</b> A developer machine
+    /// declares nothing, so the live arm asserts nothing there — and a check that
+    /// can only pass is indistinguishable from one that works. Every combination
+    /// is driven here instead, in-process and pure, on every ordinary run.
+    /// </para>
+    /// <para>
+    /// <b><see cref="GateDriveVerdict.NotAsDeclared"/> is the whole point.</b>
+    /// The gate's two shells exist to be two instruments; forcing that by
+    /// construction is worth nothing if a forcing that silently failed reads the
+    /// same as one that worked.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADeclaredDriveLetterSpellingThatDidNotTakeIsARedRunAndAnUndeclaredOneIsNot()
+    {
+        // Nothing declared: whatever the shell handed this run is what it gets,
+        // which is what a developer machine has always done.
+        await Assert.That(GateDriveCase.Judge(null, DriveLetterCase.Upper)).IsEqualTo(GateDriveVerdict.NotDeclared);
+        await Assert.That(GateDriveCase.Judge(null, DriveLetterCase.Lower)).IsEqualTo(GateDriveVerdict.NotDeclared);
+        await Assert.That(GateDriveCase.Judge(null, null)).IsEqualTo(GateDriveVerdict.NotDeclared);
+
+        // Declared and received: this half of the gate is the instrument it says
+        // it is.
+        await Assert.That(GateDriveCase.Judge(DriveLetterCase.Upper, DriveLetterCase.Upper)).IsEqualTo(GateDriveVerdict.AsDeclared);
+        await Assert.That(GateDriveCase.Judge(DriveLetterCase.Lower, DriveLetterCase.Lower)).IsEqualTo(GateDriveVerdict.AsDeclared);
+
+        // ⚠️ THE FAULT, in both directions, which is the state the 2026-08-24
+        // gate was in three times over without anything saying so.
+        await Assert.That(GateDriveCase.Judge(DriveLetterCase.Lower, DriveLetterCase.Upper)).IsEqualTo(GateDriveVerdict.NotAsDeclared);
+        await Assert.That(GateDriveCase.Judge(DriveLetterCase.Upper, DriveLetterCase.Lower)).IsEqualTo(GateDriveVerdict.NotAsDeclared);
+
+        // A base directory that is not on a drive letter at all cannot satisfy a
+        // declaration either, and must not read as though it had.
+        await Assert.That(GateDriveCase.Judge(DriveLetterCase.Upper, null)).IsEqualTo(GateDriveVerdict.NotAsDeclared);
+        await Assert.That(GateDriveCase.Judge(DriveLetterCase.Lower, null)).IsEqualTo(GateDriveVerdict.NotAsDeclared);
+
+        // And the reading itself, since the verdict is only as good as it: the
+        // lower-case spelling is the one no Windows API ever returns, so telling
+        // the two apart cannot be left to a comparison that ignores case.
+        await Assert.That(GateDriveCase.SpellingOf(@"C:\Source\BrowserAI")).IsEqualTo(DriveLetterCase.Upper);
+        await Assert.That(GateDriveCase.SpellingOf(@"c:\Source\BrowserAI")).IsEqualTo(DriveLetterCase.Lower);
+        await Assert.That(GateDriveCase.SpellingOf(@"\\server\share\BrowserAI")).IsNull();
+        await Assert.That(GateDriveCase.SpellingOf(null)).IsNull();
+    }
+
+    /// <summary>
+    /// This run says which drive-letter spelling it actually received, and a
+    /// forcing that did not take fails here rather than passing quietly.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The gate's reason for running two shells is that they are two
+    /// instruments, and until 2026-08-24 nothing measured that.</b> All six runs
+    /// of that day's gate received <c>C:</c> — three of them silently duplicating
+    /// the other three — and the run summary, the coverage block and the release
+    /// checklist all read exactly as they read on a gate that really did exercise
+    /// both spellings.
+    /// </para>
+    /// <para>
+    /// <b>This is not <see cref="DriveLetterCase"/> restated.</b> That type
+    /// spells every guard path both ways <i>inside</i> a run, so the class of
+    /// defect is covered whatever started the suite; this is the gate's claim
+    /// about <i>itself</i>, and the two are different guarantees. See
+    /// <see cref="GateDriveCase"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRunReportsTheDriveLetterSpellingItActuallyReceived()
+    {
+        // Unconditional: the row is what a reader of one log can act on, and it
+        // is printed whether or not this run declared anything.
+        await Assert.That(GateDriveCase.CoverageRow).Contains("drive letter");
+        await Assert.That(GateDriveCase.CoverageRow).Contains(AppContext.BaseDirectory);
+        await Assert.That(GateDriveCase.CoverageRow).Contains(GateDriveCase.Variable);
+
+        await Assert.That(GateDriveCase.SpellingOf(AppContext.BaseDirectory)).IsEqualTo(GateDriveCase.Received);
+
+        // ⚠️ THE LIVE ARM. It asserts nothing on a machine that declared nothing,
+        // exactly as BROWSERAI_EXPECTED_ABSENT does, and the combinations it
+        // cannot reach are driven by the pure test above.
+        await Assert.That(GateDriveCase.Verdict)
+            .IsNotEqualTo(GateDriveVerdict.NotAsDeclared)
+            .Because(GateDriveCase.Refusal(GateDriveCase.Declared, GateDriveCase.Received));
     }
 
     /// <summary>

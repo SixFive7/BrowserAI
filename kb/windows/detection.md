@@ -497,7 +497,35 @@ started it**, and stays that way for the life of the process:
 | Test host invoked from | `AppContext.BaseDirectory` |
 |---|---|
 | PowerShell / `pwsh` | `C:\Source\…` |
-| Git Bash | `c:\Source\…` |
+| Git Bash, working directory **inherited** | `c:\Source\…` |
+| Git Bash, working directory reached by **any `cd`** | `C:\Source\…` |
+
+⚠️ ***Corrected 2026-08-24 (previously two rows, the second reading simply "Git
+Bash → `c:\Source\…`").*** Re-measured on this machine, .NET 10 / Windows 11
+26200 — `[MACHINE]`, and the mechanism `[STABLE]`. The lower-case spelling is
+**not a property of Git Bash**: it is the spelling bash inherited from whatever
+started *it*, passed through untouched. **MSYS re-spells on `cd`**, whatever form
+the argument takes — `/c/Source/…`, `c:/Source/…`, `C:/Source/…`, `c:\Source\…`
+all leave a child process with `C:\Source\…` — because it resolves the real path
+and the mount manager answers upper. It also re-spells a **command** path given
+the same way, and it does **not** touch a path passed as an **argument**.
+
+**To re-establish it:** from Git Bash, `pwsh -NoProfile -Command
+'[System.IO.Directory]::GetCurrentDirectory()'` with the working directory
+inherited, then again after `cd` to the same directory in each of the four forms.
+
+**What that costs the release gate, and what was done about it.** A gate whose
+two halves *inherit* their spelling is two instruments only by luck: on the
+2026-08-24 gate **all six runs received `C:`**, three of them silently
+duplicating the other three, and every signal the gate publishes read exactly as
+it reads when both spellings really were exercised. Since 2026-08-24 each half
+**forces** its spelling by handing `dotnet test` an absolute, explicitly-spelled
+path to the solution — measured through `dotnet msbuild -getProperty:TargetPath`
+from both shells, each handed the other's spelling, and it carries through
+`MSBuildProjectDirectory` → `TargetPath` → the test host's own
+`AppContext.BaseDirectory` — and declares what it forced in
+`BROWSERAI_DRIVE_CASE`, which the suite reads back and fails on. See
+[Testing](../../TESTING.md#the-two-spellings-are-forced-and-the-run-says-which-one-it-got).
 
 **Which makes an ordinal comparison between a composed path and an OS-read one a
 property of the caller's shell rather than of the product.** Reproduced at

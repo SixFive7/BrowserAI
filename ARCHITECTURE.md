@@ -474,6 +474,20 @@ holder's pid, start time, lock time and purpose. The one bounded wait is the
 create-or-take gate, and an `AbandonedMutexException` on it is a distinct
 `AcquiredAbandoned` outcome that is logged and proceeded through.
 
+**One process's own two callers are serialised in process, and that is a
+different lock from the gate.** `SessionManager` deliberately serialises nothing
+— `_live` is a `ConcurrentDictionary` — so a `browserai_set_purpose` and a
+`browserai_destroy` naming one session reach one `SessionLock` at once.
+`Rewrite`, `Append`, `ReleaseAndDelete` and `Dispose` therefore each hold
+`SessionLock._inProcess` for their whole body, caller delegates included, so a
+disposal **waits for** an in-flight mutation instead of disposing the gate
+underneath it. Without it the rewrite re-opened `browserai.json` into a disposed
+lock, `_gate.Release()` threw, and every later `TryAcquire` on that directory
+answered `Held` naming a pid with no session for the life of the process —
+[the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md)'s B4,
+closed 2026-08-24. It is **not** a fourth scope: `LockScopes` still names three
+machine-wide objects in one place, and this one has no name and no kernel object.
+
 **A contender probes for the holder in front of that gate, and only in front of
 it.** `SessionLock.ProbeForHolder` opens `browserai.json` before the per-directory
 mutex is created: a sharing violation is the kernel's answer to *who owns this*,

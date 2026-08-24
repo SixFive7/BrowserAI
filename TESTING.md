@@ -244,16 +244,23 @@ poll the file.
 **From PowerShell:**
 
 ```powershell
-$log = ".work\suite\ps-$(Get-Date -Format yyyyMMdd-HHmmss).log"
-Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $PWD `
-    -ArgumentList '-NoProfile','-Command',"dotnet test 2>&1 | Tee-Object -LiteralPath '$log'"
+$root = (Get-Location).Path
+$root = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)   # C:\… — forced
+$log  = ".work\suite\ps-$(Get-Date -Format yyyyMMdd-HHmmss).log"
+$run  = "`$env:BROWSERAI_DRIVE_CASE='upper'; dotnet test '$root\BrowserAI.slnx' 2>&1 |" +
+        " Tee-Object -LiteralPath '$log'; Get-Content .work\suite-coverage.txt | Add-Content -LiteralPath '$log'"
+Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $root `
+    -ArgumentList '-NoProfile','-Command',$run
 ```
 
 **From Git Bash:**
 
 ```bash
+root=$(cygpath -m "$PWD")                                              # C:/…
+root="$(printf %s "${root:0:1}" | tr 'A-Z' 'a-z')${root:1}"            # c:/… — forced
 log=.work/suite/bash-$(date +%Y%m%d-%H%M%S).log
-nohup bash -c "dotnet test 2>&1 | tee $log" >/dev/null 2>&1 </dev/null &
+nohup bash -c "BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&1 | tee $log
+               cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
 ```
 
 Then poll `$log` — `Get-Content -Tail`, `tail -c`, or wait on the summary:
@@ -264,13 +271,23 @@ until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
 
 **Four things this shape has to keep, and does:**
 
-- **The shell the test host inherits is still the shell you started from**, which
-  is the entire point of running both. `Start-Process pwsh` from PowerShell and
+- **Each half forces its own drive-letter spelling and declares what it forced**,
+  which is the entire point of running both — see
+  [the section below](#the-two-spellings-are-forced-and-the-run-says-which-one-it-got).
+  A wrapper script shared between the two shells would destroy exactly this and
+  would look like a simplification.
+
+  ⚠️ ***Corrected 2026-08-24 (previously "The shell the test host inherits is
+  still the shell you started from … `Start-Process pwsh` from PowerShell and
   `bash -c` from Git Bash each pass their own working directory down, so the
   drive letter still arrives `C:\…` from one and `c:\…` from the other —
   verified 2026-08-23, on the six-run gate that shipped this section, by reading
-  the spelling back out of each log. A wrapper script shared between the two
-  shells would destroy exactly this and would look like a simplification.
+  the spelling back out of each log").*** The verification was real and the
+  property was not: it holds run to run rather than by construction. **On the
+  2026-08-24 gate all six runs received `C:`** — three of them silently
+  duplicating the other three — and the gate reported exactly what a genuine
+  two-instrument gate reports; on the very next gate the two shells did differ.
+  What was inherited was never the *shell*, it was whatever started the shell.
 - **Everything the gate reads is still produced**: the `total` / `failed` /
   `succeeded` / `skipped` block, the coverage block, and the run's file
   artifacts. The coverage block goes to `.work\suite-coverage.txt` and the HTML
@@ -292,6 +309,60 @@ is where that matters and what it changes.
 still says `nohup`, and that would assert the documentation rather than the
 practice; the practice is a habit of whoever types the command, and this section
 is the reader it needs.
+
+### The two spellings are forced, and the run says which one it got
+
+**Settled 2026-08-24, at the maintainer's decision, and it replaces a property
+that held by luck.** [Continuous integration](#continuous-integration) below says
+the gate runs two shells because they hand the test host two different
+drive-letter spellings. That was true often enough to be believed and it was
+never guaranteed: **all six runs of the 2026-08-24 gate received `C:`**, three of
+them silently duplicating the other three, and nothing anywhere said so. The
+spelling comes from whatever started the shell, so a harness-started Git Bash and
+a human-started one are not the same instrument.
+
+**Measured 2026-08-24 on this machine, which is why `cd` is not the lever.** A
+Git Bash that *inherits* its working directory hands a child `c:\…`; the same
+shell after **any** `cd` — `/c/…`, `c:/…`, `C:/…`, `c:\…` — hands it `C:\…`,
+because MSYS resolves the real path and Windows always answers upper. So the two
+invocations above force the spelling somewhere `cd` cannot reach it:
+
+- **`dotnet test` is given an absolute, explicitly-spelled path to the
+  solution.** That spelling lands in `MSBuildProjectDirectory`, in `TargetPath`
+  and therefore in the test host's own `AppContext.BaseDirectory`, whatever the
+  shell's working directory says — measured through
+  `dotnet msbuild -getProperty:TargetPath` from both shells, each handed the
+  other's spelling, and confirmed end to end by reading the coverage row back out
+  of a real run. **MSYS re-spells a command path and a `cd`, and does not touch a
+  path passed as an argument**, which is what makes this work from Git Bash at
+  all.
+- **Each half declares what it forced**, in `BROWSERAI_DRIVE_CASE` — `upper` from
+  PowerShell, `lower` from Git Bash — set in the detached shell's own
+  environment, exactly as `BROWSERAI_RELEASE_RUN` is and for the same reason.
+
+⚠️ **The declaration is the half that is not optional.** A forced spelling that
+silently fails to take is the same trap in a new coat, so
+`SuiteCoverageTests.TheRunReportsTheDriveLetterSpellingItActuallyReceived` fails
+the run when the spelling it received is not the one this run declared, and
+`SuiteEnvironment.Summary()` carries a **`drive letter`** row on every run —
+declared or not — naming the spelling, the base directory it was read off, and
+whether the forcing took. Unset declares nothing and asserts nothing, which is
+what an ordinary developer run has always done; the fault is planted in both
+directions by the pure arm beside it, because a machine that declares nothing
+cannot plant it live.
+
+**The coverage block reaches `.work\suite-coverage.txt` and does not reach a
+`dotnet test` log**, measured 2026-08-24: neither the real stdout handle nor the
+real stderr handle survives the MTP integration, which talks to the test app over
+a channel of its own. That is why both invocations above append that file to the
+run's log as their last act — a six-run gate otherwise keeps one copy of a block
+it needs six of.
+
+**This is not `DriveLetterCase` restated.** That type spells every guard path
+both ways *inside* a run, including a spelling no Windows API ever returns, so
+the class of defect is red from either shell whoever runs it. What is forced here
+is the **gate's claim about itself**: that its two halves are two instruments.
+Different guarantees, and the first cannot stand in for the second.
 
 ## Provisioning caps: what a duration test may assert here
 
@@ -897,7 +968,11 @@ consequences a reader has to carry:
   from a machine and never once from a build
   ([kb](kb/windows/detection.md#windows-re-spells-a-paths-drive-letter-a-process-never-re-spells-its-own)).
   `DriveLetterCase` is the mechanism that catches it from either shell; running
-  both is the belt beside it.
+  both is the belt beside it. ⚠️ **Since 2026-08-24 the difference is *forced*
+  rather than inherited, and each half declares what it forced** — *previously
+  this bullet's "differs between them" was the whole of it, and it was true run
+  to run rather than by construction*. See
+  [the two spellings are forced](#the-two-spellings-are-forced-and-the-run-says-which-one-it-got).
 - **Nothing builds a contributor's pull request any more.** For a public
   repository that is the real cost of the removal: 54% of this project's
   enforcement is a test or a release-phase check, and a pull request can now break

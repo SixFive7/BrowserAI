@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
+using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
@@ -66,10 +67,11 @@ internal sealed class SessionLockTests
     private const int Contenders = 16;
 
     /// <summary>
-    /// How long <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/>
-    /// watches a call that must not return.
+    /// How long the three tests here that watch a call which <b>must not
+    /// return</b> watch it for.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Not a hang detector and not a promptness assertion — the inverse of
     /// both.</b> Everything else in this suite bounds how long something may
     /// take, and must be unreachable by a slow machine. This bounds how long a
@@ -80,6 +82,21 @@ internal sealed class SessionLockTests
     /// seconds is roughly two orders of magnitude of headroom on the behaviour
     /// being excluded, and it is three seconds of a suite that is otherwise
     /// event-driven.
+    /// </para>
+    /// <para>
+    /// <b>Its three users are sized against three different defects and the
+    /// argument is the same for each.</b>
+    /// <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/> is the
+    /// original;
+    /// <see cref="ADisposalArrivingDuringARewriteWaitsForItInsteadOfLeakingTheHandle"/>
+    /// and
+    /// <see cref="AMutationArrivingDuringAReleaseAndDeleteWaitsForItRatherThanReadingAFieldItIsWriting"/>
+    /// were added 2026-08-24 for adversarial review B4, where the excluded
+    /// behaviour is a disposal that contends with nothing and returns in
+    /// microseconds, and the required behaviour is a wait that <b>cannot</b> end
+    /// until the thread doing the watching lets it — so there is no load under
+    /// which the fixed code reaches this bound at all.
+    /// </para>
     /// </remarks>
     private static readonly TimeSpan StillBlocked = TimeSpan.FromSeconds(3);
 
@@ -1280,6 +1297,216 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
+    /// A <c>destroy</c> arriving while a <c>set_purpose</c> is in flight on the
+    /// same session waits for it, rather than disposing the lock out from under
+    /// it and leaving <c>browserai.json</c> held by a <c>FileStream</c> nothing
+    /// will ever close.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is finding B4 of
+    /// [the 2026-08-18 adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// and it is the one whose failure does not heal.</b> <c>SessionManager</c>
+    /// serialises nothing — <c>_live</c> is a <c>ConcurrentDictionary</c> and is
+    /// the only synchronisation there is — so two tool calls naming one session
+    /// run concurrently by design. <c>Rewrite</c> tested <c>_disposed</c>
+    /// <i>before</i> taking the gate, and <c>Dispose</c> disposed the gate
+    /// underneath it: the rewrite then re-opened <c>browserai.json</c> into a
+    /// disposed lock, <c>_gate.Release()</c> threw, and for the rest of the
+    /// process's life every <c>TryAcquire</c> on that directory answered
+    /// <c>Held</c> naming a pid with no session — while the destroy reported a
+    /// partial failure blaming <i>"something still has them open"</i>.
+    /// </para>
+    /// <para>
+    /// <b>The interleaving is forced, not raced for</b>, and the seam is the
+    /// product's own: <c>Rewrite</c> calls the caller's <c>update</c> delegate
+    /// after the disposal check and while holding the gate — which is
+    /// <b>t3</b> in the review's table exactly. The disposal is started from
+    /// there, on its own thread, so <b>t5</b> can only happen inside the window
+    /// <b>t3</b> opened. No sleeps, no retries, no polling for a state.
+    /// </para>
+    /// <para>
+    /// <b>What makes it decisive is which way the join goes, and load can only
+    /// make it safer.</b> Against the defect the disposal contends with nothing,
+    /// returns in microseconds and the join succeeds — after which the rewrite
+    /// re-opens the file it no longer owns and the release throws. Against the
+    /// fix the disposal <i>cannot</i> return, because it takes the same
+    /// per-session lock this rewrite is holding, so the join fails however
+    /// starved the machine is. That is the inverse shape
+    /// <see cref="StillBlocked"/> exists for and the only one this file bounds a
+    /// duration with.
+    /// </para>
+    /// <para>
+    /// <b>And the leak is asserted directly rather than inferred.</b> Once both
+    /// threads have finished, a stranger's exclusive open of
+    /// <c>browserai.json</c> either succeeds — nothing holds it, which is what a
+    /// released session looks like — or is refused by the handle the review says
+    /// nothing will ever close.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADisposalArrivingDuringARewriteWaitsForItInsteadOfLeakingTheHandle()
+    {
+        using var scratch = ScratchDirectory.Create("session-destroy-races-rewrite");
+        var (_, path) = NewSession(scratch, "destroy-races-rewrite");
+
+        var taken = SessionLock.TryAcquire(path, Request("about to be destroyed mid-rewrite"), NullLogger.Instance);
+        await Assert.That(taken.Taken).IsTrue();
+
+        var held = taken.Acquired!;
+
+        using var disposalReached = new ManualResetEventSlim(false);
+        var disposal = new Thread(() =>
+        {
+            // Set BEFORE the call, so "the thread never ran" is a different
+            // observation from "the disposal returned", and the join below
+            // cannot be satisfied by a scheduler that ignored this thread.
+            disposalReached.Set();
+            held.Dispose();
+        })
+        {
+            IsBackground = true,
+            Name = "b4-destroy",
+        };
+
+        var disposalReturnedMidRewrite = false;
+        Exception? rewriteFailure = null;
+
+        try
+        {
+            // t1-t3: past the disposal check, holding the per-directory gate.
+            held.Rewrite(record =>
+            {
+                disposal.Start();
+                _ = disposalReached.Wait(TestDefaults.InProcessHang);
+
+                // t5. True is the defect: the disposal ran to completion -- and
+                // therefore disposed the gate -- while this rewrite was between
+                // its own check and its own release.
+                disposalReturnedMidRewrite = disposal.Join(StillBlocked);
+
+                return Repurposed(record, "rewritten while a destroy raced it");
+            });
+        }
+#pragma warning disable CA1031 // Whatever came out is evidence; the assertions below say which failures are acceptable.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            rewriteFailure = failure;
+        }
+
+        // Unbounded would be a hang; this is the suite's in-process hang
+        // detector and nothing asserts on it beyond "it finished".
+        await Assert.That(disposal.Join(TestDefaults.InProcessHang)).IsTrue();
+
+        await Assert.That(disposalReturnedMidRewrite).IsFalse()
+            .Because(
+                "a destroy that disposes the session lock while a set_purpose is between its own _disposed check and its "
+                + "own gate release leaves browserai.json held by a FileStream nothing will ever close -- the disposal has "
+                + "to wait for the mutation, which is what a per-session lock taken by every mutating path and both "
+                + "disposal paths is for (adversarial review B4)");
+
+        await Assert.That(rewriteFailure?.ToString()).IsNull()
+            .Because("the rewrite ran to completion under the gate, so nothing in it may fail on account of a concurrent disposal");
+
+        // THE LEAK ITSELF. Both threads are done and the session is released, so
+        // nothing may still be holding the record -- and a stranger's exclusive
+        // open is the same question a competing BrowserAI's TryAcquire asks.
+        await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsTrue()
+            .Because($"'{path.LockFile}' is still held after the session that owned it was disposed, which is the end state finding B4 describes: every later TryAcquire on this directory answers Held, naming a pid with no session, for the life of the process");
+    }
+
+    /// <summary>
+    /// A mutation arriving while <c>ReleaseAndDelete</c> is mid-delete waits for
+    /// it, rather than racing the disposal it is being torn down by.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The other disposal path, and the fix is worth nothing if it only
+    /// covers one.</b> <c>browserai_destroy</c> reaches <c>Dispose</c> through
+    /// <c>LiveSession.DisposeAsync</c> for a session this process is driving and
+    /// <c>ReleaseAndDelete</c> for the record it then re-takes, so a per-session
+    /// lock that only <c>Dispose</c> takes closes half of B4 and leaves the half
+    /// that unlinks the directory.
+    /// </para>
+    /// <para>
+    /// <b>The seam is again the product's own delegate</b> — <c>delete</c> runs
+    /// after the handle is closed and before the gate is released — and the
+    /// direction of the join is again the whole assertion. Against the defect
+    /// the rewrite is refused <i>at once</i>, because <c>_disposed</c> was set at
+    /// the top of <c>ReleaseAndDelete</c> and <c>Rewrite</c> read it without
+    /// synchronisation; against the fix it cannot even reach that check until the
+    /// disposal has finished. <b>Both end in an
+    /// <see cref="ObjectDisposedException"/>, and that is the point:</b> the same
+    /// answer arrived at by reading a field another thread is writing is a race
+    /// whose <i>other</i> outcome is the leak above. The exclusion is the
+    /// property; the refusal is what it then reports.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AMutationArrivingDuringAReleaseAndDeleteWaitsForItRatherThanReadingAFieldItIsWriting()
+    {
+        using var scratch = ScratchDirectory.Create("session-rewrite-races-destroy");
+        var (_, path) = NewSession(scratch, "rewrite-races-destroy");
+
+        var taken = SessionLock.TryAcquire(path, Request("about to be released and deleted"), NullLogger.Instance);
+        await Assert.That(taken.Taken).IsTrue();
+
+        var held = taken.Acquired!;
+
+        using var rewriteReached = new ManualResetEventSlim(false);
+        Exception? rewriteFailure = null;
+
+        var rewrite = new Thread(() =>
+        {
+            rewriteReached.Set();
+
+            try
+            {
+                held.Rewrite(record => Repurposed(record, "a purpose set while the session was being destroyed"));
+            }
+#pragma warning disable CA1031 // Whatever came out is evidence; the assertion below says which failure is the contract.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                rewriteFailure = failure;
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "b4-set-purpose",
+        };
+
+        var rewriteReturnedMidDelete = false;
+
+        held.ReleaseAndDelete(() =>
+        {
+            rewrite.Start();
+            _ = rewriteReached.Wait(TestDefaults.InProcessHang);
+
+            // True is the defect: the mutation reached a decision about a
+            // half-torn-down lock, on a field the thread running this delete is
+            // in the middle of writing.
+            rewriteReturnedMidDelete = rewrite.Join(StillBlocked);
+
+            TreeDelete.Remove(path.FullPath, []);
+        });
+
+        await Assert.That(rewrite.Join(TestDefaults.InProcessHang)).IsTrue();
+
+        await Assert.That(rewriteReturnedMidDelete).IsFalse()
+            .Because(
+                "browserai_destroy's release-and-delete and browserai_set_purpose's rewrite are the two halves of "
+                + "adversarial review B4, and a rewrite that answers while the delete is still running answered by "
+                + "reading _disposed unsynchronised -- the same read whose other outcome leaks the handle");
+
+        // What it reports once it is allowed to look: the session is gone.
+        await Assert.That(rewriteFailure).IsTypeOf<ObjectDisposedException>();
+    }
+
+    /// <summary>
     /// A peer's pre-gate probe holds <c>browserai.json</c> for an instant, and that
     /// instant must not take the directory away from the process that just wrote
     /// its own record into it — while a handle that never goes away is still
@@ -1676,6 +1903,39 @@ internal sealed class SessionLockTests
     private static bool IsProductCode(FileInfo file) =>
         file.Extension is ".cs"
         && file.FullName.Contains($"{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Whether nothing at all holds <c>browserai.json</c>, asked the way a
+    /// competing BrowserAI asks it.
+    /// </summary>
+    /// <remarks>
+    /// <b>An exclusive open rather than a question put to the object under
+    /// test.</b> Asking the lock whether it still holds the directory would be
+    /// asking the thing under test; the kernel refuses this open while — and only
+    /// while — a handle is really there. A file that is not there at all counts
+    /// as unheld: a destroy that unlinked it took the handle with it, which is
+    /// the outcome rather than the defect.
+    /// </remarks>
+    /// <param name="lockFile">The session's <c>browserai.json</c>.</param>
+    /// <returns>Whether it could be opened with no sharing at all.</returns>
+    private static bool NothingHoldsTheLockFile(string lockFile)
+    {
+        if (!File.Exists(lockFile))
+        {
+            return true;
+        }
+
+        try
+        {
+            using var exclusive = new FileStream(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None, bufferSize: 1);
+
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
 
     /// <summary>
     /// Reads a lock file while its holder still has it open, which needs the

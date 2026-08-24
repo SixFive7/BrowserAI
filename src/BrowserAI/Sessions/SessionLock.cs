@@ -75,6 +75,17 @@ namespace BrowserAI.Sessions;
 /// it.
 /// </para>
 /// <para>
+/// <b>Two callers on one session are the design, so this object is
+/// thread-safe about its own lifetime.</b> Nothing above
+/// <c>SessionManager</c> serialises tool calls, so a
+/// <c>browserai_set_purpose</c> and a <c>browserai_destroy</c> naming the same
+/// directory arrive at one instance concurrently. Every mutating path and
+/// <b>both</b> disposal paths therefore hold <see cref="_inProcess"/> for their
+/// whole body — which is where the reasoning lives, and which is
+/// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md)
+/// rather than defensive programming.
+/// </para>
+/// <para>
 /// <b>The error code is load-bearing, not trivia.</b> <c>ERROR_ACCESS_DENIED</c>
 /// surfaces as <c>UnauthorizedAccessException</c>, which is <i>not</i> an
 /// <c>IOException</c> — so the rename retry below catches both, and a version
@@ -106,6 +117,64 @@ internal sealed class SessionLock : IDisposable
     /// </para>
     /// </remarks>
     private static readonly TimeSpan MoveBudget = RenameWindow.Budget;
+
+    /// <summary>
+    /// The in-process half of the same exclusion: every mutating path and
+    /// <b>both</b> disposal paths hold this for their whole body.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-08-24 for
+    /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+    /// which is the one finding in that review whose failure does not heal.</b>
+    /// <c>SessionManager</c> serialises nothing — its <c>_live</c> is a
+    /// <c>ConcurrentDictionary</c> and is the only synchronisation there is — so
+    /// two tool calls naming one session run concurrently by design. Before
+    /// this, <see cref="Rewrite"/> tested <see cref="_disposed"/> and *then* took
+    /// <see cref="_gate"/>, while <see cref="Dispose"/> disposed
+    /// <see cref="_gate"/> underneath it. A <c>browserai_destroy</c> landing in
+    /// that window left the rewrite re-opening <c>browserai.json</c> into a
+    /// disposed lock and <c>_gate.Release()</c> throwing — after which
+    /// <b>every</b> <see cref="TryAcquire"/> on that directory answered
+    /// <c>Held</c>, naming a pid with no session, for the life of the process,
+    /// while the destroy reported a partial failure blaming <i>"something still
+    /// has them open"</i>.
+    /// </para>
+    /// <para>
+    /// <b>A tighter <see cref="_disposed"/> check would not have done, and the
+    /// review says so in as many words.</b> Taking <see cref="_gate"/> before the
+    /// check narrows the window and does not close it: the disposal disposes
+    /// <see cref="_gate"/> itself, so a rewrite blocked on it wakes holding a
+    /// disposed object. A check that races is still a race; what closes it is
+    /// something the disposal has to take and cannot destroy.
+    /// </para>
+    /// <para>
+    /// <b>It is not a fourth lock scope.</b> <see cref="LockScopes"/> names the
+    /// machine-wide scopes — three named kernel objects, in one place — and this
+    /// is a private field with no name, no kernel object and no reach outside
+    /// this instance, so <c>SessionLockTests.TheThreeScopesAreNamedInOnePlaceAndAllOfThemAreGlobal</c>
+    /// and <c>.TheProductCreatesNamedKernelObjectsInExactlyOnePlace</c> are both
+    /// untouched by it. What it serialises is <b>one object's</b> callers; what
+    /// <see cref="_gate"/> serialises is the machine's.
+    /// </para>
+    /// <para>
+    /// <b>The order is always this one, then <see cref="_gate"/>.</b>
+    /// <see cref="Rewrite"/> and <see cref="ReleaseAndDelete"/> both take them
+    /// that way round and nothing takes them the other way, so there is no
+    /// lock-ordering cycle to construct. Every delegate this class invokes —
+    /// <c>update</c> and <c>delete</c> — runs inside both, which is what makes a
+    /// caller's callback part of the critical section rather than a hole in it.
+    /// </para>
+    /// <para>
+    /// <b>What it costs, stated rather than discovered.</b> A disposal now waits
+    /// for an in-flight rewrite instead of racing it, and a rewrite runs
+    /// <c>WriteThrough</c> plus a rename under <see cref="_gate"/> — so
+    /// <c>LiveSession.DisposeAsync</c> can block for as long as one of those
+    /// takes. That is the whole point: the alternative is the two overlapping,
+    /// which is the defect.
+    /// </para>
+    /// </remarks>
+    private readonly Lock _inProcess = new();
 
     private readonly MachineMutex _gate;
     private readonly IDisposable? _logScope;
@@ -316,43 +385,52 @@ internal sealed class SessionLock : IDisposable
     public void Rewrite(Func<LockRecord, LockRecord> update)
     {
         ArgumentNullException.ThrowIfNull(update);
-        ObjectDisposedException.ThrowIf(_disposed is not 0, this);
 
-        if (_gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
+        // ⚠️ THE DISPOSAL CHECK IS INSIDE THIS LOCK AND MUST STAY THERE. Outside
+        // it, the check and the acquisition below are two steps with a window
+        // between them, and the object guarding the critical section is disposed
+        // by the other thread inside that window -- which is B4, and which is why
+        // "test _disposed more carefully" is not a fix. See _inProcess.
+        lock (_inProcess)
         {
-            throw new IOException($"Could not take '{_gate.Name}' to rewrite '{Location.LockFile}'.");
-        }
+            ObjectDisposedException.ThrowIf(_disposed is not 0, this);
 
-        try
-        {
-            var next = update(Record);
-
-            // The same close/rename/re-open as acquisition, and for the same
-            // reason: an atomic rename cannot replace a file we are holding, and
-            // the gate is what makes the gap unobservable.
-            _held.Dispose();
+            if (_gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
+            {
+                throw new IOException($"Could not take '{_gate.Name}' to rewrite '{Location.LockFile}'.");
+            }
 
             try
             {
-                WriteDurably(Location.LockFile, next);
-                _held = ReopenHeld(Location.LockFile);
-                Record = next;
+                var next = update(Record);
+
+                // The same close/rename/re-open as acquisition, and for the same
+                // reason: an atomic rename cannot replace a file we are holding, and
+                // the gate is what makes the gap unobservable.
+                _held.Dispose();
+
+                try
+                {
+                    WriteDurably(Location.LockFile, next);
+                    _held = ReopenHeld(Location.LockFile);
+                    Record = next;
+                }
+                catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+                {
+                    // A FAILED REWRITE MUST NOT ALSO RELEASE THE LOCK, and without
+                    // this it did: the handle is dropped before the replacement, so
+                    // an exception on the way through left the session silently
+                    // unowned while the caller was told only that a write failed.
+                    // Take the name back before letting the failure out.
+                    SessionLog.CouldNotWriteLockFile(_logger, Location.LockFile, failure);
+                    _held = Reclaim(Location.LockFile, failure);
+                    throw;
+                }
             }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            finally
             {
-                // A FAILED REWRITE MUST NOT ALSO RELEASE THE LOCK, and without
-                // this it did: the handle is dropped before the replacement, so
-                // an exception on the way through left the session silently
-                // unowned while the caller was told only that a write failed.
-                // Take the name back before letting the failure out.
-                SessionLog.CouldNotWriteLockFile(_logger, Location.LockFile, failure);
-                _held = Reclaim(Location.LockFile, failure);
-                throw;
+                _gate.Release();
             }
-        }
-        finally
-        {
-            _gate.Release();
         }
     }
 
@@ -417,26 +495,33 @@ internal sealed class SessionLock : IDisposable
     public void ReleaseAndDelete(Action delete)
     {
         ArgumentNullException.ThrowIfNull(delete);
-        ObjectDisposedException.ThrowIf(Interlocked.Exchange(ref _disposed, 1) is not 0, this);
 
-        var acquisition = _gate.Acquire(LockScopes.PerDirectoryGate);
-
-        try
+        // Both disposal paths take this, not just Dispose: a per-session lock
+        // that covered only one of them would close half of B4 and leave the half
+        // that unlinks the directory. See _inProcess.
+        lock (_inProcess)
         {
-            SessionLog.Released(_logger, Location.FullPath);
+            ObjectDisposedException.ThrowIf(Interlocked.Exchange(ref _disposed, 1) is not 0, this);
 
-            _held.Dispose();
-            delete();
-        }
-        finally
-        {
-            if (acquisition is not MutexAcquisition.NotAcquired)
+            var acquisition = _gate.Acquire(LockScopes.PerDirectoryGate);
+
+            try
             {
-                _gate.Release();
-            }
+                SessionLog.Released(_logger, Location.FullPath);
 
-            _logScope?.Dispose();
-            _gate.Dispose();
+                _held.Dispose();
+                delete();
+            }
+            finally
+            {
+                if (acquisition is not MutexAcquisition.NotAcquired)
+                {
+                    _gate.Release();
+                }
+
+                _logScope?.Dispose();
+                _gate.Dispose();
+            }
         }
     }
 
@@ -447,16 +532,24 @@ internal sealed class SessionLock : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) is not 0)
+        // ⚠️ IT WAITS FOR AN IN-FLIGHT MUTATION RATHER THAN RACING ONE. Disposing
+        // _gate underneath a rewrite that is holding it is B4: the release then
+        // throws, the re-opened handle on browserai.json is never closed, and every
+        // later TryAcquire on this directory answers Held naming a pid with no
+        // session. See _inProcess.
+        lock (_inProcess)
         {
-            return;
+            if (Interlocked.Exchange(ref _disposed, 1) is not 0)
+            {
+                return;
+            }
+
+            SessionLog.Released(_logger, Location.FullPath);
+
+            _held.Dispose();
+            _logScope?.Dispose();
+            _gate.Dispose();
         }
-
-        SessionLog.Released(_logger, Location.FullPath);
-
-        _held.Dispose();
-        _logScope?.Dispose();
-        _gate.Dispose();
     }
 
     /// <summary>

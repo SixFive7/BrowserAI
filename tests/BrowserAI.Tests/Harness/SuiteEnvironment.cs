@@ -374,6 +374,15 @@ internal static class SuiteEnvironment
         // met one layer down. See FirstRunCache.
         _ = report.Append(FirstRunCache.CoverageRow).Append('\n');
 
+        // ⚠️ WHICH DRIVE-LETTER SPELLING THIS RUN ACTUALLY RECEIVED, which is the
+        // release gate's claim about itself rather than a capability. The gate
+        // runs two shells because they hand the test host two different
+        // spellings; on 2026-08-24 all six runs received `C:` and the gate
+        // reported exactly what a genuine two-instrument gate reports. Both
+        // halves now force a spelling and declare it, and this row is what says
+        // whether the forcing took -- see GateDriveCase.
+        _ = report.Append(GateDriveCase.CoverageRow).Append('\n');
+
         _ = report.Append(rule).Append('\n');
 
         var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);

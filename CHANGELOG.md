@@ -459,6 +459,39 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The release gate's two shells are now two instruments by construction, and a
+  run says which drive-letter spelling it actually received.** The gate runs the
+  suite from PowerShell and from Git Bash because the two hand the test host
+  different spellings of the drive letter — `C:\…` against `c:\…` — and an
+  assertion comparing a composed path against one Windows re-spelled is green
+  from one and red from the other. **That property held run to run rather than
+  by construction**: on the 2026-08-24 gate all six runs received `C:`, three of
+  them silently duplicating the other three, and every signal the gate publishes
+  read exactly as it reads when both spellings really were exercised.
+
+  Measured the same day: the lower-case spelling is not a property of Git Bash
+  but of whatever started it. A bash that **inherits** its working directory
+  hands a child `c:\…`; the same shell after **any** `cd` — `/c/…`, `c:/…`,
+  `C:/…`, `c:\…` alike — hands it `C:\…`, because MSYS resolves the real path
+  and the mount manager answers upper. So `cd` cannot be the lever. Both
+  invocations in [Testing](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
+  now hand `dotnet test` an **absolute, explicitly-spelled** path to the
+  solution, which carries the spelling through `MSBuildProjectDirectory` and
+  `TargetPath` into the test host's own `AppContext.BaseDirectory` whatever the
+  working directory says — MSYS re-spells a command path and a `cd`, and leaves a
+  path passed as an argument alone.
+
+  **The forcing has its own check, because a forcing that silently fails to take
+  is the same trap in a new coat.** Each half declares what it forced in
+  `BROWSERAI_DRIVE_CASE`, the coverage block carries a **`drive letter`** row on
+  every run naming the spelling, the base directory it was read off and whether
+  the declaration held, and a run that did not receive what it declared is a
+  failing test. Unset declares nothing and asserts nothing, which is what an
+  ordinary developer run has always done — so the fault is planted in both
+  directions by a pure arm beside the live one. **This is not `DriveLetterCase`
+  restated**: that spells every guard path both ways *inside* a run and covers
+  the class of defect; this covers the gate's claim about itself.
+
 - **`browser_get_config` DOES redact `secrets`, and the claim that it does not
   is corrected in three places.** *Previously, in `DECISIONS.md`, `kb/playwright/tools-and-artifacts.md`
   and re-verification row 71: "its handler is `JSON.stringify(context.config, null, 2)`
@@ -720,6 +753,42 @@ has been satisfied in form only.
   derived from a byte count rather than hand-written beside one.
 
 ### Fixed
+
+- **A `browserai_destroy` racing a `browserai_set_purpose` on one session leaked
+  that session's directory for the life of the process.** Nothing above
+  `SessionManager` serialises tool calls — `_live` is a `ConcurrentDictionary`
+  and is the only synchronisation there is — so two calls naming one session
+  reach one `SessionLock` concurrently, which is the design rather than an
+  accident. `Rewrite` tested `_disposed` and *then* took the per-directory gate,
+  and `Dispose` disposed that gate underneath it: the rewrite re-opened
+  `browserai.json` into a disposed lock, `_gate.Release()` threw, and for the rest
+  of the process's life **every** `SessionLock.TryAcquire` on that directory
+  answered `Held`, naming a pid with no session — while the destroy reported a
+  partial failure blaming *"something still has them open"*. It is the one
+  finding of [the 2026-08-18 adversarial locking
+  review](docs/reviews/2026-08-18-adversarial-locking.md) whose failure does not
+  heal: nothing releases that handle short of ending the process.
+
+  **The fix is a per-session lock that every mutating path and both disposal
+  paths hold for their whole body** — `Rewrite`, `Append`, `ReleaseAndDelete` and
+  `Dispose`, including the caller delegates they invoke. The smaller change,
+  taking the gate before the `_disposed` check, was **declined**: the disposal
+  disposes the gate itself, so a rewrite blocked on it wakes holding a disposed
+  object, and a check that races is still a race. It is not a fourth lock scope —
+  `LockScopes` still names three machine-wide objects in one place, and this one
+  has no name, no kernel object and no reach outside its instance.
+
+  **The interleaving is forced rather than raced for, and the seams were already
+  there.** `Rewrite` calls the caller's `update` delegate past the disposal check
+  and under the gate; `ReleaseAndDelete` calls `delete` after the handle is
+  closed and before the gate is released. Both tests place the second thread from
+  inside those delegates, so no sleep, retry or stress loop is involved and the
+  join can only go one way: against the defect the disposal contends with nothing
+  and returns in microseconds, against the fix it cannot return at all. The
+  first was watched red on all three of its assertions — the join, the
+  `ObjectDisposedException` the rewrite threw, and **the leak itself**, a
+  stranger's exclusive open of `browserai.json` refused after the session that
+  owned it had been disposed.
 
 - **One junction above the install root made the stray sweep structurally blind,
   and nothing distinguished that from a clean machine.** Every path BrowserAI

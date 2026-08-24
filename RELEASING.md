@@ -325,6 +325,19 @@ Three things to record rather than assume, because each is easy to skim past:
   the wrong comparison red from either shell; running both is what catches the
   next defect of this shape before `DriveLetterCase` has been extended to cover
   it. **Record both totals**, not one.
+
+  ⚠️ **And record the `drive letter` row from every run, because until
+  2026-08-24 the difference held by luck.** *Corrected 2026-08-24 (previously
+  this bullet ended at "Record both totals", with the differing spelling stated
+  as a property of the two shells).* On that day's gate **all six runs received
+  `C:`** and the gate read exactly as a genuine two-instrument gate reads. Both
+  invocations in
+  [Testing](TESTING.md#the-two-spellings-are-forced-and-the-run-says-which-one-it-got)
+  now force a spelling and declare it in `BROWSERAI_DRIVE_CASE`, a run that did
+  not receive what it declared is **red**, and each run's log ends with the
+  coverage block that names the spelling it got. Three logs reading `LOWER c:\`
+  and three reading `UPPER C:\` is the evidence; six of either is a gate that
+  ran one instrument twice.
 - **Every tool in the snapshot, with its schema.** A tool upstream adds, removes
   or re-shapes fails the build, and `upstream-review.json` holds the release
   until a human has adjudicated it. ⚠️ *Corrected 2026-08-18 (previously "**Every
