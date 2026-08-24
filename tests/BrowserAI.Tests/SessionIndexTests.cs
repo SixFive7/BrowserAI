@@ -586,17 +586,43 @@ internal sealed class SessionIndexTests
 
     /// <summary>
     /// Following one subtree returns element for element what following
-    /// everything would have returned for it.
+    /// everything would have returned for it — <b>plus every entry that carries
+    /// no session to compare</b>.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>This could not be planted red, and that is a property of the fix
-    /// rather than a gap in the effort — say so rather than implying otherwise.</b>
-    /// <c>FollowUnder</c> did not exist before the change, so no run of any tree
-    /// can have failed this. It is weaker than a red test: what it holds is that
-    /// the two reads cannot drift apart later, which is the claim the fix rests
-    /// on. The half that <i>was</i> red is
-    /// <c>HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry</c>,
+    /// <para>
+    /// ⚠️ <b>This could not be planted red as a statement about the product, and
+    /// that is a property of the fix rather than a gap in the effort — say so
+    /// rather than implying otherwise.</b> <c>FollowUnder</c> did not exist
+    /// before the change, so no run of any tree can have failed it. It is weaker
+    /// than a red test: what it holds is that the two reads cannot drift apart
+    /// later, which is the claim the fix rests on. The half that <i>was</i> red
+    /// is <c>HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry</c>,
     /// over the two real offenders.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously the whole of it built
+    /// <c>expected</c> as <c>Follow().Where(entry =&gt; entry.Session is { }
+    /// session &amp;&amp; …)</c> and asserted two).*** That predicate drops
+    /// exactly the class where the equivalence <b>fails</b>, so the test named an
+    /// equivalence and excluded its only counter-example — and
+    /// <c>SessionIndex.FollowUnder</c>'s own remark cited it as asserting that
+    /// equivalence directly. The truth is narrower and is now what is asserted:
+    /// <c>FollowUnder(p)</c> is <c>Follow()</c> filtered by <c>IsUnder</c> <b>for
+    /// the entries that resolved to a session</b>, and every entry that could not
+    /// be resolved at all is returned whatever subtree it does or does not name.
+    /// The third entry below is one of those — mis-hashed, pointing nowhere near
+    /// <c>left</c> — and it comes back from a read scoped to <c>left</c>. This
+    /// arm <b>was</b> watched red in the corrected direction: with it planted and
+    /// the old expectation in place, <c>Expected to be equal to 2 but received
+    /// 3</c>.
+    /// </para>
+    /// <para>
+    /// <b>Harmless in the product today and asserted anyway.</b>
+    /// <c>SessionManager.List</c> and <c>SessionManager.Beneath</c> both drop
+    /// <c>Session is null</c> on the next line, so no caller sees the divergence;
+    /// what a caller of the API sees is what this holds.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -619,28 +645,39 @@ internal sealed class SessionIndexTests
             lease.Acquired!.Dispose();
         }
 
-        await Assert.That(index.Follow().Count).IsEqualTo(4);
+        // ⚠️ THE DIVERGENT CLASS, PLANTED. An entry whose name is not the hash of
+        // what it holds is refused above the subtree test, so it carries no
+        // session to compare against the prefix — and it names a directory under
+        // NEITHER root.
+        var divergent = Key("mis-hashed and out of both subtrees");
+        _ = Directory.CreateDirectory(index.Root);
+        await File.WriteAllTextAsync(Path.Combine(index.Root, divergent), Path.Combine(scratch.Path, "elsewhere", "nowhere"));
+
+        await Assert.That(index.Follow().Count).IsEqualTo(5);
 
         var prefix = Prefix(left);
         var scoped = index.FollowUnder(prefix);
 
         var expected = index.Follow()
-            .Where(entry => entry.Session is { } session
-                && (session.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal))
+            .Where(entry => entry.Session is not { } session
+                || (session.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal))
             .ToList();
 
-        await Assert.That(scoped.Count).IsEqualTo(2);
+        // Two under the prefix, and the one nothing could resolve.
+        await Assert.That(scoped.Count).IsEqualTo(3);
+        await Assert.That(scoped.Count(entry => entry.Session is null)).IsEqualTo(1);
+        await Assert.That(scoped.Any(entry => string.Equals(entry.Key, divergent, StringComparison.OrdinalIgnoreCase))).IsTrue();
         await Assert.That(scoped.Select(entry => entry.Key).ToList()).IsEquivalentTo(expected.Select(entry => entry.Key).ToList());
 
         // Element for element, and the record with it: the claim is that the
-        // entries are followed the same way and not merely that the same two
+        // entries are followed the same way and not merely that the same three
         // came back.
         foreach (var (one, other) in scoped.Zip(expected))
         {
             await Assert.That(one.Key).IsEqualTo(other.Key);
             await Assert.That(one.State).IsEqualTo(other.State);
-            await Assert.That(one.Session!.FullPath).IsEqualTo(other.Session!.FullPath);
-            await Assert.That(one.Record!.Purpose).IsEqualTo(other.Record!.Purpose);
+            await Assert.That(one.Session?.FullPath).IsEqualTo(other.Session?.FullPath);
+            await Assert.That(one.Record?.Purpose).IsEqualTo(other.Record?.Purpose);
         }
     }
 

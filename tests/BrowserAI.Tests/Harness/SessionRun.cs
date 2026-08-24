@@ -171,8 +171,29 @@ internal sealed record SessionRun
             }).ConfigureAwait(false);
 
             // ⚠️ The seventh authored tool, called on a session this process is
-            // driving -- which is the arm that proves it takes no lock, because
-            // anything that did would be refused by the holder above.
+            // driving -- which is the arm that proves it ANSWERS for a session
+            // that is in use, and nothing more than that.
+            //
+            // ***Corrected 2026-08-24, same day (previously "which is the arm
+            // that proves it takes no lock, because anything that did would be
+            // refused by the holder above").*** Both halves were false, and this
+            // is the fifth site of that sweep: the four in ARCHITECTURE.md,
+            // README.md, SessionManager.InUse and SessionToolSurface.CatchUp were
+            // corrected in the same commit and this one was missed.
+            //
+            //   * `catch_up` DOES take a lock -- `InUse` reaches
+            //     `SessionLock.ProbeLivenessUnderTheGate`, which acquires the
+            //     per-directory gate for one CreateFile/CloseHandle.
+            //   * And the gate would not refuse a second writer anyway; it waits
+            //     120 seconds for one. That is the exact reasoning
+            //     `SessionToolSurface.CatchUp` corrected in the same commit that
+            //     left this comment standing.
+            //
+            // The call still passes, and it passes for a reason this comment used
+            // to hide: `InUse`'s first branch short-circuits for a session THIS
+            // process drives, so it never reaches the gate at all. Proving the
+            // no-refusal property needs a holder in another process, which this
+            // capture rig does not have.
             answers["catchUp"] = await CallAsync(client, SessionToolSurface.CatchUp, new JsonObject
             {
                 [SessionToolSurface.SessionParameter] = alpha,

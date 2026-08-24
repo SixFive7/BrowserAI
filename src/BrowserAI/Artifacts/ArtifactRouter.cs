@@ -521,6 +521,15 @@ internal sealed class ArtifactRouter
     /// so a file that is on disk holds its own name, and a file the caller later
     /// deletes stops holding a name it no longer occupies — which is behaviour the
     /// reservation set on its own was never able to give.
+    /// <para>
+    /// ⚠️ <b>That last clause is about every reservation this type takes, and on
+    /// 2026-08-24 it was true only of the ones this method releases.</b>
+    /// <c>SweepOutputRoot</c> adds to <c>_reserved</c> on its own account and
+    /// released nothing, so a sweep-reserved name outlived both the failure and
+    /// the success of the move it was taken for. It now gives the name back in a
+    /// <c>finally</c> around that move, which is what makes the sentence above a
+    /// property of the set rather than of one of its two writers.
+    /// </para>
     /// </remarks>
     /// <param name="plan">What <see cref="Plan"/> decided, or <see langword="null"/>.</param>
     public void Release(ArtifactPlan? plan)
@@ -946,6 +955,23 @@ internal sealed class ArtifactRouter
 
             string target;
 
+            // ⚠️ THE RESERVATION COVERS THE MOVE AND NOTHING MORE, AND THE
+            // `finally` IS WHAT MAKES THAT TRUE. It exists so that a `Plan` or a
+            // concurrent sweep cannot choose the same name while this move is in
+            // flight; once the move has been attempted the name is held by the
+            // file itself, because `Taken` is
+            // `_reserved.Contains(candidate) || File.Exists(candidate)`.
+            //
+            // Until 2026-08-24 there was no release here at all, and both halves
+            // of that were defects. A move that THREW left the name reserved with
+            // no file behind it, so the next sweep of the same loose name landed
+            // it as `-2` and reported `renamedFrom` -- the answer reporting a
+            // rename that nothing on disk justifies, which is the exact symptom
+            // the reservation set was extracted to remove. And a move that
+            // SUCCEEDED left the name reserved for the session's life, so a
+            // sorted file the caller then deleted went on suffixing every later
+            // download of that name -- while `Release`'s own remark said a file
+            // the caller deletes stops holding a name it no longer occupies.
             lock (_gate)
             {
                 target = Unique(Path.Combine(folder, name));
@@ -962,6 +988,13 @@ internal sealed class ArtifactRouter
                 // Still being written, most likely. It stays where it is and the
                 // next call sweeps it.
                 continue;
+            }
+            finally
+            {
+                lock (_gate)
+                {
+                    _ = _reserved.Remove(target);
+                }
             }
 
             moved.Add(Record(

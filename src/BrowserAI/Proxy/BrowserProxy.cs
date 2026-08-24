@@ -678,7 +678,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
         finally
         {
             live.Artifacts.Release(plan);
-            ProxyLog.ReservationReleased(live.Logger, tool, live.Location.FullPath);
+
+            // ⚠️ ONLY FOR A CALL THAT HAD A RESERVATION, and until 2026-08-24
+            // this line ran on every forwarded call. `Release` is a no-op for a
+            // plan that writes nothing, so `browser_click`, `browser_navigate`
+            // and `browser_snapshot` each wrote "released its in-flight filename
+            // reservation" into a session log that is model-facing evidence,
+            // about a reservation they never took. The record's own remark said
+            // it fires on the calls that named a file; this is what makes that
+            // true.
+            if (plan is { Writes: true })
+            {
+                ProxyLog.ReservationReleased(live.Logger, tool, live.Location.FullPath);
+            }
         }
     }
 
@@ -1224,9 +1236,15 @@ internal static partial class ProxyLog
 
     /// <summary>An in-flight filename reservation was given back.</summary>
     /// <remarks>
-    /// Debug rather than Information: it fires on every call that named a file,
-    /// which is most screenshots. It is logged at all because it is the only
-    /// evidence that the release happened on a path that RETURNED NOTHING — a
+    /// Debug rather than Information: it fires on every call that reserved a
+    /// name — every call the router gave a <c>Writes</c> plan, whether the caller
+    /// named the file or BrowserAI generated the name — which is most
+    /// screenshots. ⚠️ <b>The call site is guarded, and until 2026-08-24 it was
+    /// not</b>: the <c>finally</c> wrote this on every forwarded call, so
+    /// <c>browser_click</c> and <c>browser_navigate</c> asserted an event that
+    /// did not occur in a log a model reads. It is logged at all because it is
+    /// the only evidence that the release happened on a path that RETURNED
+    /// NOTHING — a
     /// cancelled call sends the caller no frame at all, since the SDK suppresses
     /// the error response when the request's own linked token is what fired, so
     /// without this line the cancellation path is invisible in every signal.

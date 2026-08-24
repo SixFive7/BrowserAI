@@ -575,7 +575,11 @@ live **outside** a test run, and both must be true at release time:
 ### 13. Third-party notices ship
 
 Redistribution obligations attach at **first installer handoff**, independent of
-BrowserAI's own licence. Verified against
+BrowserAI's own licence. ⚠️ **That handoff has not happened yet** — *corrected
+2026-08-24, and it strengthens this item rather than relaxing it*: `v1.0.0` is a
+tag and a packed artifact in a gitignored `Releases/`, and nothing has been given
+to anyone. This checklist is what makes the first handoff correct rather than a
+record of one already made. Verified against
 [README → Third-party components](README.md#third-party-components):
 
 - **Node's full `LICENSE`** — it aggregates OpenSSL, ICU, V8, zlib and c-ares
@@ -614,7 +618,7 @@ is never copied to a publish output — and all four ship in
 > Apache-2.0 §4(a) is stricter than MIT's notice clause rather than looser. It
 > was raised once and deliberately left undecided, because shipping a fifth
 > obligation on one reading would have changed a settled table without anyone
-> deciding it; the product is publicly distributed now, so the table was changed
+> deciding it; the repository is public now, so the table was changed
 > deliberately instead. The count in this item is the only
 > place it is written down as prose — the enforcing list is
 > `ThirdPartyNoticeTests.Obligations`, and the `Microsoft.Extensions.*` half is

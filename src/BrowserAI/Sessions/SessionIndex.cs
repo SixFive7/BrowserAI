@@ -203,9 +203,22 @@ internal sealed class SessionIndex
     /// terms of this one. <b>Three callers must keep using this one</b>, and each
     /// is machine-wide by design: <see cref="Sweep"/>, which would otherwise
     /// leave entries un-swept forever; <c>SessionManager.LiveSessions</c>, whose
-    /// browsers root is machine-wide; and <c>StraySweep</c>, whose whole reach is
-    /// the point of it. <c>HouseRuleTests</c> asserts that rather than leaving it
-    /// to a reader.
+    /// browsers root is machine-wide; and <c>StraySweep.AttributeByProfileLock</c>,
+    /// whose whole reach is the point of it.
+    /// <c>HouseRuleTests.TheThreeWholeMachineIndexReadersStillTakeTheWholeMachineRead</c>
+    /// asserts that, by name, rather than leaving it to a reader.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24, same day (previously "<c>HouseRuleTests</c>
+    /// asserts that rather than leaving it to a reader").*** On the day it was
+    /// written, it did not. The only scan there was —
+    /// <c>NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry</c> — holds that no
+    /// <c>foreach</c> over this read filters by subtree inside its body and that
+    /// at least <b>two</b> such loops exist. It names none of the three; two of
+    /// them were held only by that lower bound on a loop <i>shape</i>, and
+    /// <see cref="Sweep"/> by nothing at all, because it reads the result into a
+    /// local. The named assertion exists now, and a sentence citing a mechanism
+    /// is worse than no sentence when the mechanism does not hold what it says.
     /// </para>
     /// </remarks>
     public IReadOnlyList<SessionIndexEntry> Follow() => Walk(under: null);
@@ -227,13 +240,24 @@ internal sealed class SessionIndex
     /// scoped to a completely unrelated tree.
     /// </para>
     /// <para>
+    /// ⚠️ ***Corrected 2026-08-24, same day (previously the paragraph above ended
+    /// there, and <c>ARCHITECTURE.md</c> said the same).*** <b>What this removed
+    /// is the RECORD open, and the ENTRY-FILE open is still one per index entry
+    /// on the machine, still through <c>RenameWindow.WaitOut</c>, still carrying
+    /// the whole 30-second budget.</b> <c>FollowOne</c> opens the entry file
+    /// before it can read the pointer it filters on, so a denied or
+    /// delete-pending <i>entry file</i> anywhere on the host still adds up to
+    /// that budget to a <c>browserai_list</c> scoped to an unrelated tree, and to
+    /// the roll-up on every <c>init</c> and every <c>resume</c>. The number of
+    /// opens per call is unchanged; only the strict <i>parse</i> moved. A reader
+    /// who took from the paragraph above that a subtree-scoped call can no longer
+    /// be delayed by a stranger's file took the wrong thing.
+    /// </para>
+    /// <para>
     /// <b>The predicate is unchanged; only its position is.</b> Everything ahead
     /// of the filter is the entry's own verification — a bounded read, an
     /// absolute-path check, a canonical resolve and the hash-of-content check —
-    /// and none of it opens the session. So the entries this returns are exactly
-    /// the entries <see cref="Follow"/> would have returned for the same subtree,
-    /// followed the same way; <c>SessionIndexTests</c> asserts that equivalence
-    /// directly.
+    /// and none of it opens the session.
     /// </para>
     /// <para>
     /// <b>An entry this cannot compare is returned rather than dropped.</b>
@@ -241,10 +265,46 @@ internal sealed class SessionIndex
     /// wrongly named — carries no path to test against the prefix, and dropping
     /// it would make a subtree read narrower than its caller can see.
     /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24, same day (previously "So the entries this
+    /// returns are exactly the entries <c>Follow</c> would have returned for the
+    /// same subtree, followed the same way; <c>SessionIndexTests</c> asserts that
+    /// equivalence directly").*** That sentence and the paragraph above it — the
+    /// one that says an entry this cannot compare is <b>returned</b> — contradict
+    /// each other, and the code agrees with the second. <b>The true equivalence
+    /// is narrower</b>: <c>FollowUnder(p)</c> is <c>Follow()</c> filtered by
+    /// <see cref="IsUnder"/> <i>over the entries that resolved to a session</i>,
+    /// plus every entry that resolved to none, whatever subtree it does or does
+    /// not name. The falsifying input is an entry that is empty, relative or
+    /// mis-hashed and points nowhere near <c>p</c>: returned here, not returned
+    /// by <c>Follow()</c> filtered. The test the old sentence cited built its
+    /// expectation with <c>entry.Session is { } session &amp;&amp; …</c>, which
+    /// drops exactly that class, so it excluded the only case where the
+    /// equivalence fails; it now plants one and asserts the narrower claim.
+    /// <b>Harmless in the product today</b> — <c>SessionManager.List</c> and
+    /// <c>SessionManager.Beneath</c> both drop <c>Session is null</c> on the next
+    /// line — and the API's contract is what a later caller will read.
+    /// </para>
     /// </remarks>
     /// <param name="prefix">
-    /// A case-folded, separator-terminated path prefix, as
-    /// <c>SessionManager.Subtree</c> produces it.
+    /// A case-folded, separator-terminated, fully-qualified path prefix.
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24, same day (previously "as
+    /// <c>SessionManager.Subtree</c> produces it").*** There are <b>two</b>
+    /// producers and the contract is the shape rather than one of them:
+    /// <c>SessionManager.Subtree</c> is one, and <c>SessionManager.Beneath</c>
+    /// re-derives the prefix itself — <c>ToUpperInvariant</c> then a separator —
+    /// and in particular skips <c>Subtree</c>'s <c>Path.GetFullPath</c>. That is
+    /// benign today only because its input is <c>Path.GetDirectoryName</c> of an
+    /// already-canonical <see cref="SessionPath"/>. <b>It is also a second
+    /// spelling of a derivation, which is what <see cref="IsUnder"/>'s own remark
+    /// forbids two members below</b>: that remark says the copy in
+    /// <c>SessionManager</c> was deleted rather than left standing, and it is the
+    /// <i>predicate</i> that was — the <i>prefix</i> derivation is still there,
+    /// unmentioned, and pre-dates this method. Naming it here rather than
+    /// changing it: collapsing the two is a change to path handling and belongs
+    /// with whoever owns that, not to a documentation pass.
+    /// </para>
     /// </param>
     /// <returns>The entries under that subtree, ordered by key.</returns>
     public IReadOnlyList<SessionIndexEntry> FollowUnder(string prefix)
@@ -401,6 +461,17 @@ internal sealed class SessionIndex
     /// of this predicate is the class of defect this repository keeps re-finding,
     /// which is why the copy that used to live in <c>SessionManager</c> was
     /// deleted rather than left beside this one.
+    /// <para>
+    /// ⚠️ <b>That is true of the PREDICATE and not of the PREFIX, and saying so
+    /// is the point of this clause.</b> <c>SessionManager.Beneath</c> still
+    /// derives the prefix on its own — <c>ToUpperInvariant</c>, then append a
+    /// separator, without <c>Subtree</c>'s <c>Path.GetFullPath</c> — so a second
+    /// spelling of a derivation is standing right next to a remark forbidding
+    /// one. It is benign today for the reason given on
+    /// <see cref="FollowUnder"/>'s parameter, it pre-dates this member, and it is
+    /// recorded here rather than quietly fixed because collapsing it is a change
+    /// to path handling.
+    /// </para>
     /// </remarks>
     /// <param name="candidate">The session a followed entry points at.</param>
     /// <param name="prefix">The case-folded, separator-terminated prefix.</param>

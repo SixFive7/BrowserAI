@@ -486,12 +486,39 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 
 /// <summary>Why a claim on the browsers root could not be taken.</summary>
 /// <remarks>
-/// <b>The discriminator is the kernel's, not a guess.</b>
-/// <c>ERROR_SHARING_VIOLATION</c> and <c>ERROR_LOCK_VIOLATION</c> are the only
-/// codes a holder produces on this open — the exclusion arithmetic in
+/// <para>
+/// <b>The discriminator is the kernel's, not a guess.</b> No code outside
+/// <c>ERROR_SHARING_VIOLATION</c> and <c>ERROR_LOCK_VIOLATION</c> can be produced
+/// by a holder on this open — the exclusion arithmetic in
 /// <see cref="MaintenanceLock"/>'s remarks is what makes that exhaustive — so
 /// anything else is a failure to reach the file at all, and the two recoveries
-/// are different: one is waited out, the other is fixed.
+/// are different: one is waited out, the other is fixed. <b>That is the direction
+/// <see cref="Unreachable"/> needs</b>, and it is sound: a caller who really is
+/// behind a reinstall is never shown the unreachable row.
+/// </para>
+/// <para>
+/// ⚠️ ***Corrected 2026-08-24, same day (previously "<c>ERROR_SHARING_VIOLATION</c>
+/// and <c>ERROR_LOCK_VIOLATION</c> are the only codes a holder produces on this
+/// open").*** As written it read as a biconditional and was relied on as one, and
+/// <b>the converse is false for 33</b>. <c>reinstall.lock</c> is claimed by share
+/// mode alone (<see cref="MaintenanceLock.TakeShared"/>,
+/// <see cref="MaintenanceLock.TryTakeExclusive"/>), and the only byte-range lock
+/// in this product is <c>NativeFile.TakeGate</c>, reachable solely through
+/// <c>OpenForLockedAppend</c> on <b>log</b> files — so <b>no BrowserAI holder can
+/// produce <c>ERROR_LOCK_VIOLATION</c> on this open at all</b>. A 33 here can only
+/// come from a foreign process byte-range-locking the file, and it is routed to
+/// <see cref="Contended"/> and thence to <i>"BrowserAI is replacing the browsers …
+/// right now"</i> with a progress clause counting from zero.
+/// </para>
+/// <para>
+/// <b>Left as it is, deliberately, and this is the note rather than the fix.</b>
+/// It is the same trade already taken and written down for code 32 — an AV
+/// scanner, a backup agent or an indexer holding <c>reinstall.lock</c> reads as a
+/// reinstall — in <c>SessionManager.TheRootCouldNotBeClaimed</c>'s remarks, and
+/// the recovery a caller is given (wait, then look again) is right for a foreign
+/// holder too. What was wrong was a sentence that made the misdiagnosis
+/// impossible; naming it is what stops the next reader deriving from it.
+/// </para>
 /// </remarks>
 internal enum MaintenanceDenial
 {

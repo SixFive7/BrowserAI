@@ -567,8 +567,21 @@ else entirely. The roll-up did the same on **every `init` and every `resume`**.
 `SessionIndex.FollowUnder` applies the prefix above the open instead; the
 predicate is unchanged and the reported set is identical.
 `HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry` is what keeps
-it there, and `Follow()` stays whole-machine for the sweep, the reinstall census
-and the stray sweep.
+it there; `HouseRuleTests.TheThreeWholeMachineIndexReadersStillTakeTheWholeMachineRead`
+names the three that must not move; and `Follow()` stays whole-machine for the
+sweep, the reinstall census and the stray sweep.
+
+⚠️ ***Corrected 2026-08-24, same day (previously the paragraph stopped at "the
+reported set is identical", with the budget exposure attributed entirely to the
+`browserai.json` open).*** **What moved is the strict parse, not the open count.**
+`SessionIndex.FollowOne` opens each *index entry file* through
+`RenameWindow.WaitOut` before it can read the pointer the prefix is tested
+against, so a subtree-scoped call still performs **one such open per index entry
+on the machine**, each carrying `RenameWindow`'s whole 30-second budget. One
+denied or delete-pending entry file anywhere on the host still adds up to that
+budget to a `browserai_list` scoped to an unrelated tree, and to the roll-up on
+every `init` and every `resume`. What is gone is the *record* open and its parse,
+which is the larger of the two and the only one this change touched.
 
 **Writes are durable and atomic.** `WriteThrough` + `Flush(flushToDisk: true)` +
 `File.Move(overwrite: true)`, with the temp file in the target's own directory.

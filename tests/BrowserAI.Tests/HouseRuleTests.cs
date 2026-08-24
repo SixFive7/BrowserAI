@@ -550,6 +550,133 @@ internal sealed partial class HouseRuleTests
     }
 
     /// <summary>
+    /// <b>The three whole-machine index readers still take the whole-machine
+    /// read</b>, by name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-24, because <c>SessionIndex.Follow</c>'s own remark
+    /// said this was already asserted and it was not.</b> That remark named three
+    /// callers — <c>Sweep</c>, <c>SessionManager.LiveSessions</c> and
+    /// <c>StraySweep</c> — and cited
+    /// <see cref="NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry"/> for it.
+    /// That scan names none of them: it holds that no <c>foreach</c> over the
+    /// whole-machine read filters by subtree inside its body, and that at least
+    /// two such loops exist. Two of the three were therefore held only by a
+    /// <c>&gt;= 2</c> lower bound on a loop <i>shape</i>, and the third — <c>Sweep</c>,
+    /// which reads the result into a local — by nothing at all, as that scan's own
+    /// comment concedes.
+    /// </para>
+    /// <para>
+    /// <b>Each is machine-wide by design and the reason differs per caller</b>:
+    /// <c>SessionIndex.Sweep</c> would otherwise leave entries un-swept forever;
+    /// <c>SessionManager.LiveSessions</c> answers about a browsers root that is
+    /// machine-wide; <c>StraySweep.AttributeByProfileLock</c>'s whole reach is the
+    /// point of it. Moving any of them onto the subtree read is a behaviour change
+    /// that has to be made deliberately, which is what a named assertion costs and
+    /// a lower bound does not.
+    /// </para>
+    /// <para>
+    /// <b>It reads the member's brace-matched body</b>, so the call may sit in a
+    /// loop header, in a local, or in an expression — the shape is not the rule,
+    /// the whole-machine read is. The positive control is synthetic and runs in
+    /// both directions, because every member in the tree satisfies this today and
+    /// a scan that can only come back clean is indistinguishable from one that
+    /// cannot read.
+    /// </para>
+    /// <para>
+    /// <b>Watched red twice, against the real regression rather than against the
+    /// control.</b> With <c>SessionManager.LiveSessions</c> moved onto the subtree
+    /// read this failed naming the file and the member, and the older scan failed
+    /// too — with <i>Expected to be greater than or equal to 2 but received 1</i>,
+    /// which names nothing. With <c>SessionIndex.Sweep</c> moved instead, this was
+    /// the <b>only</b> red of the nine in this class: that caller reads the result
+    /// into a local, which is a shape the loop scan cannot see. That is the gap
+    /// this test closes, stated as what was measured.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheThreeWholeMachineIndexReadersStillTakeTheWholeMachineRead()
+    {
+        (string File, string Member)[] readers =
+        [
+            (Path.Combine("src", "BrowserAI", "Sessions", "SessionIndex.cs"), "public SessionIndexSweep Sweep()"),
+            (Path.Combine("src", "BrowserAI", "Sessions", "SessionManager.cs"), "private List<string> LiveSessions()"),
+            (Path.Combine("src", "BrowserAI", "Sessions", "StraySweep.cs"), "private int AttributeByProfileLock("),
+        ];
+
+        var offenders = new List<string>();
+
+        foreach (var (file, member) in readers)
+        {
+            var full = new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, file));
+
+            if (!full.Exists)
+            {
+                offenders.Add($"{file}: there is no such file, so the reader it was supposed to hold cannot be checked");
+                continue;
+            }
+
+            offenders.AddRange(NotTakingTheWholeMachineRead((await RepositoryLayout.ReadCodeAsync(full)).Split('\n'), file, member));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, BOTH DIRECTIONS. The first is the shape a
+        // later change would leave behind; the second is what the tree has now.
+        string[] moved =
+        [
+            "    private List<string> LiveSessions()",
+            "    {",
+            "        foreach (var entry in _index." + Walk + "Under(prefix))",
+            "        {",
+            "        }",
+            "    }",
+        ];
+
+        string[] kept =
+        [
+            "    private List<string> LiveSessions()",
+            "    {",
+            "        foreach (var entry in _index." + Walk + "())",
+            "        {",
+            "        }",
+            "    }",
+        ];
+
+        await Assert.That(NotTakingTheWholeMachineRead(moved, "synthetic.cs", "private List<string> LiveSessions()").Count).IsEqualTo(1);
+        await Assert.That(NotTakingTheWholeMachineRead(kept, "synthetic.cs", "private List<string> LiveSessions()")).IsEmpty();
+
+        // And a member that is not there at all is a finding rather than a pass,
+        // because a renamed member would otherwise be silently unchecked.
+        await Assert.That(NotTakingTheWholeMachineRead(kept, "synthetic.cs", "private List<string> Renamed()").Count).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// Whether one named member still reads the whole machine, as findings.
+    /// </summary>
+    /// <param name="lines">The file, comment-only lines already removed.</param>
+    /// <param name="file">What to call it in a finding.</param>
+    /// <param name="member">The declaration the body is matched from.</param>
+    /// <returns>Nothing when it does; one finding when it does not.</returns>
+    private static List<string> NotTakingTheWholeMachineRead(string[] lines, string file, string member)
+    {
+        var declared = Array.FindIndex(lines, line => line.Contains(member, StringComparison.Ordinal));
+
+        if (declared < 0)
+        {
+            return [$"{file}: '{member}' is not declared there, so nothing holds it to the whole-machine read"];
+        }
+
+        var body = Body(lines, declared);
+
+        return body.Contains(Walk + "()", StringComparison.Ordinal)
+            ? []
+            : [$"{file}: '{member}' no longer calls {Walk}(), so a whole-machine reader has been scoped to a subtree"];
+    }
+
+    /// <summary>
     /// The predicate that decides a session is under a subtree, composed so this
     /// file does not match its own scan.
     /// </summary>

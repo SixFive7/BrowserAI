@@ -862,7 +862,14 @@ internal sealed class ArtifactRoutingTests
             "notifications/cancelled",
             new JsonObject { ["requestId"] = id, ["reason"] = "the caller timed out" });
 
-        await WaitUntilAsync(() => rig.Logs.Logged("released its in-flight filename reservation"));
+        // ⚠️ THE TOOL IS NAMED IN THE NEEDLE, and until 2026-08-24 it was not.
+        // The bare sentence was sound here only because the screenshot happens to
+        // be this rig's first forwarded call, while the release record fired on
+        // EVERY forwarded call — so any earlier one would have satisfied this
+        // wait before the cancellation and made the arm below pass vacuously.
+        // The record is conditional now and the needle is specific; both halves
+        // were the same defect.
+        await WaitUntilAsync(() => rig.Logs.Logged($"'browser_take_screenshot' on the session at {session} released"));
 
         sessions.SessionChildren[0].Tools["browser_take_screenshot"] = new FakeToolBehaviour { WritesArtifactBytes = 8 };
 
@@ -881,6 +888,196 @@ internal sealed class ArtifactRoutingTests
         await Assert.That(File.Exists(Path.Combine(session, SessionLayout.OutputFolderName, "page", "login-2.png"))).IsFalse();
 
         await release.CancelAsync();
+    }
+
+    /// <summary>
+    /// A sweep whose move fails gives the name back, so the next sweep of the
+    /// same file is not suffixed against a file nobody ever wrote.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The reservation set has two writers and only one of them used to
+    /// give anything back.</b> <c>Plan</c> reserves and <c>Release</c> frees;
+    /// <c>SweepOutputRoot</c> reserved and freed nothing, so a <c>File.Move</c>
+    /// that threw left a name held with no file behind it — for the session's
+    /// life. The next sweep of the same loose name then landed it as <c>-2</c>
+    /// and the answer reported <c>renamed:</c>, which is <i>the answer reporting
+    /// a rename that no file on disk justifies</i>: the exact symptom the
+    /// reservation set exists to remove, produced by the reservation set.
+    /// </para>
+    /// <para>
+    /// <b>The move is made to fail by a directory standing where the file must
+    /// go</b>, which is deterministic rather than timed. <c>File.Exists</c> is
+    /// <see langword="false"/> for a directory, so <c>Unique</c> hands back the
+    /// plain name, reserves it, and <c>File.Move</c> onto an existing directory
+    /// throws — the same catch a half-written download takes, reached without
+    /// racing one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASweepWhoseMoveFailsGivesTheNameBackSoTheNextSweepIsNotSuffixed()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour());
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var output = Path.Combine(rig.Session!, SessionLayout.OutputFolderName);
+        var sorted = Path.Combine(rig.Session!, SessionLayout.DownloadsFolderName, "report.pdf");
+
+        // The blocker: a DIRECTORY where the sorted file has to land.
+        _ = Directory.CreateDirectory(sorted);
+
+        await File.WriteAllBytesAsync(Path.Combine(output, "report.pdf"), new byte[16]);
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call whose sweep cannot move the file",
+        });
+
+        // The move really did fail, so the reservation really was taken and left.
+        await Assert.That(File.Exists(Path.Combine(output, "report.pdf"))).IsTrue();
+
+        Directory.Delete(sorted);
+
+        var answer = TextOf(await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call whose sweep can move it now",
+        }));
+
+        await Assert.That(File.Exists(sorted)).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(rig.Session!, SessionLayout.DownloadsFolderName, "report-2.pdf"))).IsFalse();
+        await Assert.That(answer).DoesNotContain("renamed:");
+    }
+
+    /// <summary>
+    /// A sorted file the caller then deletes stops holding the name it no longer
+    /// occupies.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the second half of the same missing release, and it is the one
+    /// <c>Release</c>'s own remark claimed as a property.</b> That remark says a
+    /// file the caller later deletes stops holding a name it no longer occupies —
+    /// true of a plan-reserved name and, until 2026-08-24, false of a
+    /// sweep-reserved one, because the sweep never gave its reservation back
+    /// after a move that <i>succeeded</i> either. Every later download of that
+    /// name was suffixed against a file that had not existed since.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASortedFileTheCallerDeletesStopsHoldingItsName()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour());
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var output = Path.Combine(rig.Session!, SessionLayout.OutputFolderName);
+        var sorted = Path.Combine(rig.Session!, SessionLayout.DownloadsFolderName, "report.pdf");
+
+        await File.WriteAllBytesAsync(Path.Combine(output, "report.pdf"), new byte[16]);
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call that sorts the download",
+        });
+
+        await Assert.That(File.Exists(sorted)).IsTrue();
+
+        // The caller takes the sorted file away, and the site sends the same name
+        // again.
+        File.Delete(sorted);
+        await File.WriteAllBytesAsync(Path.Combine(output, "report.pdf"), new byte[32]);
+
+        var answer = TextOf(await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call that sorts the second download of that name",
+        }));
+
+        await Assert.That(File.Exists(sorted)).IsTrue();
+        await Assert.That(new FileInfo(sorted).Length).IsEqualTo(32);
+        await Assert.That(File.Exists(Path.Combine(rig.Session!, SessionLayout.DownloadsFolderName, "report-2.pdf"))).IsFalse();
+        await Assert.That(answer).DoesNotContain("renamed:");
+    }
+
+    /// <summary>
+    /// The release record names only the calls that had a reservation to give
+    /// back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24.*** The <c>finally</c> covering
+    /// <c>BrowserProxy.AnswerToolsCallAsync</c> wrote
+    /// <c>ProxyLog.ReservationReleased</c> <b>unconditionally</b>, so
+    /// <c>browser_click</c>, <c>browser_navigate</c> and every other call that
+    /// named no file said in the session's own log that it had released an
+    /// in-flight filename reservation it never took. That log is model-facing
+    /// evidence, so a line asserting an event that did not occur is the defect
+    /// class this product exists to remove, not a cosmetic one. Its own remark
+    /// already said it fires <i>on every call that named a file</i>.
+    /// </para>
+    /// <para>
+    /// <b>The negative rests on ordering rather than on a duration, and the
+    /// ordering is stated rather than assumed.</b> The navigate call's
+    /// <c>finally</c> is a synchronous logger call on the continuation that has
+    /// already sent its response — the client cannot have sent the screenshot
+    /// request until it received that response — so waiting for the screenshot's
+    /// own record gives the navigate's a whole further round trip of slack.
+    /// Nothing here bounds a duration.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheReleaseRecordNamesOnlyTheCallsThatReservedAName()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.Tools["browser_take_screenshot"] = new FakeToolBehaviour { WritesArtifactBytes = 8 };
+            },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // `debug: true` for the reason the cancellation arm needs it: the record
+        // is Debug, and a session's log runs at Information unless it was opened
+        // the way an operator opens one when they are looking.
+        var session = Path.Combine(sessions.Root, "reserves-nothing");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the session whose calls mostly name no file",
+            ["debug"] = true,
+        });
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the forwarded call that reserves nothing",
+        });
+
+        _ = await CallAsync(rig, "browser_take_screenshot", new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the forwarded call that does reserve a name",
+            ["filename"] = "login.png",
+        });
+
+        await WaitUntilAsync(() => rig.Logs.Logged($"'browser_take_screenshot' on the session at {session} released"));
+
+        await Assert.That(rig.Logs.Logged($"'browser_navigate' on the session at {session} released")).IsFalse();
     }
 
     /// <summary>What the two sets disagree about, in the shape the gate reports.</summary>

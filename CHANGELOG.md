@@ -343,10 +343,21 @@ has been satisfied in form only.
   ⚠️ **It is the one session-scoped tool with no `why`**, and that is deliberate
   twice over: a tool whose whole purpose is to tell you what happened must not
   itself become the most recent thing that happened, and writing an entry would
-  mean taking the per-directory gate — which a session another live BrowserAI is
-  driving would refuse, and that is precisely the case it exists for. It is
-  **read-only and takes no lock at all**, asserted byte-for-byte against a record
-  a live session is holding.
+  mean replacing `browserai.json` — which a session another live BrowserAI is
+  driving refuses through its own `FileShare.Read`, and that is precisely the case
+  it exists for. It is **read-only and takes no lock it can be refused by**,
+  asserted byte-for-byte against a record a live session is holding.
+
+  ⚠️ ***Corrected 2026-08-24 (previously "writing an entry would mean taking the
+  per-directory gate — which a session another live BrowserAI is driving would
+  refuse … It is **read-only and takes no lock at all**").*** Two wrong claims in
+  one paragraph, both corrected elsewhere in the same commit and missed here:
+  `LockScopes.PerDirectoryGate` does not refuse a second writer, it **waits** 120
+  seconds for one — what refuses one is the holder's share mode on
+  `browserai.json`; and since 2026-08-24 `catch_up` does take a lock, briefly —
+  `SessionManager.InUse` reaches `SessionLock.ProbeLivenessUnderTheGate`, which
+  holds that gate at a **zero** timeout for one open and close, so it can be
+  undetermined but never queued.
 
 - **One time-ordered log, inside `browserai.json`.** `browserai_init`'s
   `purpose`, every purpose change on `browserai_resume`, every explicit

@@ -391,21 +391,70 @@ is unreachable from a test: it lives on TUnit's `internal` service provider and 
 never registered in the dictionary that provider's own `GetService` reads
 ([kb](kb/toolchain.md#a-filter-reaches-the-test-hosts-own-command-line-under-dotnet-test--measured-2026-08-24)).
 
-**`BROWSERAI_RELEASE_RUN=1` makes `FILTERED` a failing test**, and `UNREAD` with
-it — *this run cannot say whether it was filtered* is not a premise a release may
-rest on. An ordinary run is never refused for being filtered, because the
-iteration loop the rule exists to permit depends on it.
+**`BROWSERAI_RELEASE_RUN=1` fails the run when the state is `FILTERED`**, and
+when it is `UNREAD` with it — *this run cannot say whether it was filtered* is not
+a premise a release may rest on. An ordinary run is never refused for being
+filtered, because the iteration loop the rule exists to permit depends on it.
+
+⚠️ ***Corrected 2026-08-24 (previously "**`BROWSERAI_RELEASE_RUN=1` makes
+`FILTERED` a failing test**, and `UNREAD` with it").*** The sentence was
+unqualified and the mechanism was not: the refusal shipped as an ordinary
+`[Test]`, `SuiteCoverageTests.ARunThatWasFilteredIsNeverARelease`, so
+`BROWSERAI_RELEASE_RUN=1` together with a filter that did not happen to select
+that one method was a filtered run, a claimed release, and **green** — the guard
+failing in exactly the class of run it exists to guard. **A refusal a filter can
+remove is not a refusal.** It is now raised from
+`SuiteCoverage.ReportWhatThisRunExercised`, the `[After(TestSession)]` hook that
+writes the coverage block, and the `[Test]` is kept as the in-run echo rather than
+as the mechanism.
+
+**What TUnit guarantees about that, measured 2026-08-24 at TUnit `1.65.0` /
+`Microsoft.Testing.Platform` `2.3.3` rather than assumed:** a
+`[Before(TestSession)]`/`[After(TestSession)]` hook is registered against the
+session and not against a test node, so no `--treenode-filter` and no IDE
+uid-list selection can deselect it; an exception thrown out of one is reported as
+`Test adapter test session failure`, counted in the summary as a failure, and the
+host **exits 10**. Re-establish it by running the test executable directly with
+`BROWSERAI_RELEASE_RUN=1` and a filter naming any single method, and reading the
+exit code — which is exactly what the child control below does.
+
+⚠️ **The guarantee has one limit and it is stated rather than implied.** The
+refusal needs a test session to exist. A run that never starts one — a filter
+naming no assembly at all, a host that fails before the framework registers its
+hooks — reports nothing and is refused by nothing. That run is not a release
+either, and nothing in this repository makes it fail.
 
 ⚠️ **The positive control is a real child process, and it is not decoration.**
 Every run of this suite is unfiltered, so the reading comes back empty on every
 one of them — and a reading that can only ever come back empty is
 indistinguishable from one that cannot read.
 `SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease`
-starts the test host again against **one** method, with a filter and
-`BROWSERAI_RELEASE_RUN=1`, and asserts the child read `FILTERED` carrying that
-exact filter string and then refused. Watched red both ways: with the reading
-blinded the parent printed `FULL RUN` over a genuinely filtered run and **only
-this arm caught it**, 11 of the other 12 staying green.
+starts the test host again with `BROWSERAI_RELEASE_RUN=1` and a filter naming
+**one method that is not the refusal** — `AReleaseRunFailsWhereAnOrdinaryRunSkips`,
+which passes — and asserts the child read `FILTERED` carrying that exact filter
+string, that it exited non-zero anyway, and that its console carries the refusal's
+own sentence. Watched red three ways: with the reading blinded the parent printed
+`FULL RUN` over a genuinely filtered run and **only this arm caught it**, 11 of
+the other 12 staying green; with the refusal still an ordinary `[Test]` the child
+reported `total: 1 · failed: 0 · succeeded: 1 · Passed!` and exited 0, against
+`Expected to not be equal to 0`; and in that same child console the variable name
+`BROWSERAI_RELEASE_RUN` appeared **six times** while the refusal's sentence
+appeared **none**, which is why the console assertion names the sentence.
+
+⚠️ ***The console assertion was a tautology until 2026-08-24*** — it read
+`console.Contains("BROWSERAI_RELEASE_RUN")` under a comment calling it the
+decisive half, and the `FILTERED` row itself ends *"`BROWSERAI_RELEASE_RUN=1`
+makes this state a failure."*, printed through the real standard output handle on
+every filtered run whether anything refused or not. It now names a sentence
+`SuiteFilter.Refusal` is the only producer of.
+
+**The child writes its own coverage block beside its own report and not over the
+repository's.** `SuiteCoverage.ReportPath` is repository-rooted for an ordinary
+run and derived from `BROWSERAI_FILTER_PROBE` for the probe child; before
+2026-08-24 the child wrote its one-test `FILTERED` block over `.work/suite-coverage.txt`
+while the parent was still running. The parent rewrote it at its own session end,
+so the copy a gate log appends was never wrong — but anyone reading the file
+during that window got the child's.
 
 ## Provisioning caps: what a duration test may assert here
 

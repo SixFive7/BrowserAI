@@ -21,9 +21,34 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal static class SuiteCoverage
 {
+    /// <summary>
+    /// Where this process writes what it read, when it is the filtered child.
+    /// </summary>
+    /// <remarks>
+    /// Empty in every ordinary run: <see cref="SuiteFilter.ProbeVariable"/> is
+    /// set by one launcher and nothing else, which is what makes it both the
+    /// child's mailbox and the recursion guard. <b>Declared above
+    /// <see cref="ReportPath"/> because a static initialiser runs in textual
+    /// order</b>, and the one below reads this one.
+    /// </remarks>
+    public static string? ProbeReportFile { get; } = Environment.GetEnvironmentVariable(SuiteFilter.ProbeVariable);
+
     /// <summary>The block's own copy on disk, for whoever assembles the evidence.</summary>
-    public static string ReportPath { get; } =
-        Path.Combine(RepositoryLayout.Root.FullName, ".work", "suite-coverage.txt");
+    /// <remarks>
+    /// ⚠️ <b>Repository-rooted for an ordinary run and beside the probe's own
+    /// report for the filtered child, and the split is not tidiness.</b> Until
+    /// 2026-08-24 this was repository-rooted unconditionally, so the child
+    /// <see cref="SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/>
+    /// starts wrote its own one-test <c>FILTERED</c> block <i>over the parent's
+    /// file while the parent was still running</i>. The parent rewrote it at its
+    /// own session end, so the copy a gate log appends was never wrong — but
+    /// anyone reading the file during that window got the child's, and a block
+    /// whose whole job is to say what a run covered must not be readable as a
+    /// statement about a different run.
+    /// </remarks>
+    public static string ReportPath { get; } = ProbeReportFile is { Length: > 0 } probe
+        ? Path.Combine(Path.GetDirectoryName(probe)!, "suite-coverage.txt")
+        : Path.Combine(RepositoryLayout.Root.FullName, ".work", "suite-coverage.txt");
 
     /// <summary>
     /// Takes the filter reading before anything else runs.
@@ -83,6 +108,71 @@ internal static class SuiteCoverage
         }
         catch (UnauthorizedAccessException)
         {
+        }
+
+        // The child writes what it read BEFORE the refusal below throws, because
+        // a process that failed the way it was meant to still has to be
+        // readable. It lives here rather than in a test for the reason the
+        // refusal does: a filter that did not select that test took the report
+        // with it.
+        if (ProbeReportFile is { Length: > 0 } probe)
+        {
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(probe)!);
+            File.WriteAllText(probe, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
+        }
+
+        RefuseARunThatMayNotBeARelease();
+    }
+
+    /// <summary>
+    /// Fails the whole run when its own filter reading says it may not be a
+    /// release.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A refusal that a filter can remove is not a refusal, and this used
+    /// to be one.</b> Until 2026-08-24 the refusal was an ordinary <c>[Test]</c>,
+    /// so <c>BROWSERAI_RELEASE_RUN=1</c> plus a <c>--treenode-filter</c> that did
+    /// not happen to select that one method was a filtered run, a claimed
+    /// release, and <b>green</b> — the guard failing in exactly the class of run
+    /// it exists to guard. It is a session hook now, and
+    /// <see cref="SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/>
+    /// proves the difference by filtering the child down to a method that is
+    /// <i>not</i> this one.
+    /// </para>
+    /// <para>
+    /// <b>What TUnit actually guarantees, measured 2026-08-24 at TUnit 1.65.0 /
+    /// Microsoft.Testing.Platform 2.3.3 on this tree rather than assumed.</b> A
+    /// <c>[Before(TestSession)]</c>/<c>[After(TestSession)]</c> hook is
+    /// registered against the session and not against a test node, so no
+    /// <c>--treenode-filter</c> and no uid-list selection can deselect it; an
+    /// exception thrown from one is reported as a session-level failure and the
+    /// host exits non-zero. The re-establishment is the child control itself:
+    /// filter the host to one unrelated method with the variable set and read
+    /// the exit code.
+    /// </para>
+    /// <para>
+    /// <b>After the block is written, never before.</b> The coverage block and
+    /// the probe report are the evidence a refused run is read from, and a
+    /// refusal that threw first would take them with it.
+    /// </para>
+    /// <para>
+    /// <b>The one thing it still cannot cover is a run that never starts a
+    /// session</b> — a filter naming no assembly at all, or a host that fails
+    /// before the framework's hooks are registered. That run reports nothing and
+    /// is not a release either, but nothing here fails it, and
+    /// [`TESTING.md`](../../TESTING.md) states the guarantee with that limit
+    /// rather than unqualified.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// The run asked to be a release and its own reading forbids it.
+    /// </exception>
+    private static void RefuseARunThatMayNotBeARelease()
+    {
+        if (SuiteFilter.Decision is SuiteFilterDecision.Refuse)
+        {
+            throw new InvalidOperationException(SuiteFilter.Refusal(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
         }
     }
 }
@@ -426,39 +516,33 @@ internal sealed class SuiteCoverageTests
     }
 
     /// <summary>
-    /// A run that was filtered is not a release, and a full one is not refused.
+    /// This run is not one the gate would refuse.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Decision (d), and this method is also the probe a filtered child
-    /// run executes</b> — see
-    /// <see cref="AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/>. It
-    /// is one method rather than two because the refusal has to fire in
-    /// something the child actually runs, and the child runs exactly one thing.
+    /// ⚠️ <b>This is the ECHO of decision (d) and no longer the mechanism, and
+    /// the difference is the defect it was.</b> Until 2026-08-24 the refusal
+    /// lived here, in an ordinary <c>[Test]</c> — so <c>BROWSERAI_RELEASE_RUN=1</c>
+    /// with a filter that did not select this one method was a filtered run, a
+    /// claimed release, and green. It is
+    /// <see cref="SuiteCoverage.ReportWhatThisRunExercised"/>'s session hook that
+    /// refuses now, from a place no filter reaches.
     /// </para>
     /// <para>
-    /// <b>On the gate this asserts the negative direction live</b>: an
-    /// unfiltered ordinary run is not refused. The positive direction cannot be
-    /// arranged in-process — a test cannot filter the run it is inside — so it
-    /// is arranged out of process instead.
+    /// <b>What it still buys, kept deliberately rather than deleted.</b> The
+    /// session hook fails a run <i>after</i> everything has run; this fails it in
+    /// the list of tests, with the refusal quoted, which is where a human looks
+    /// first. It also asserts the negative direction live — an unfiltered
+    /// ordinary run is not refused — on every run of this suite, which is the
+    /// direction the out-of-process control cannot cover.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ARunThatWasFilteredIsNeverARelease()
-    {
-        // The child writes what it read before it fails, because a process that
-        // failed the way it was meant to still has to be readable.
-        if (Environment.GetEnvironmentVariable(SuiteFilter.ProbeVariable) is { Length: > 0 } report)
-        {
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(report)!);
-            await File.WriteAllTextAsync(report, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
-        }
-
+    public async Task ARunThatWasFilteredIsNeverARelease() =>
         await Assert.That(SuiteFilter.Decision)
             .IsNotEqualTo(SuiteFilterDecision.Refuse)
             .Because(SuiteFilter.Refusal(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
-    }
 
     /// <summary>
     /// A child run that really was filtered reads as filtered, and refuses to be
@@ -476,16 +560,23 @@ internal sealed class SuiteCoverageTests
     /// makes the row's <c>FULL RUN</c> mean something.
     /// </para>
     /// <para>
-    /// <b>It carries the release half too.</b> The child is handed
-    /// <c>BROWSERAI_RELEASE_RUN=1</c> deliberately, so the one test it runs meets
-    /// exactly the state decision (d) forbids — filtered <i>and</i> claiming to
-    /// be a release — and must fail. The other direction is this very run:
-    /// unfiltered, ordinary, and green.
+    /// ⚠️ <b>And since 2026-08-24 it carries the harder half: the filter names a
+    /// method that is NOT the refusal.</b> The child selects
+    /// <see cref="AReleaseRunFailsWhereAnOrdinaryRunSkips"/>, a pure test that
+    /// passes, and is handed <c>BROWSERAI_RELEASE_RUN=1</c> — so the only thing
+    /// that can fail it is the session hook. That is the whole point: while the
+    /// refusal was an ordinary <c>[Test]</c> this child <b>exited 0</b>, which is
+    /// a filtered release reporting success, and it is the red this arm was
+    /// re-pointed to catch.
+    /// </para>
+    /// <para>
+    /// <b>The other direction is this very run</b>: unfiltered, ordinary, and
+    /// green.
     /// </para>
     /// <para>
     /// <b>Recursion is impossible by construction and guarded anyway.</b> The
-    /// child's filter names <see cref="ARunThatWasFilteredIsNeverARelease"/> and
-    /// nothing else, so it can never select this method; and
+    /// child's filter names <see cref="AReleaseRunFailsWhereAnOrdinaryRunSkips"/>
+    /// and nothing else, so it can never select this method; and
     /// <see cref="SuiteFilter.ProbeVariable"/> is set only by this launcher, so a
     /// process that sees it set knows it is the child. The second bolt exists for
     /// the day a filter fails open, which is a thing
@@ -517,7 +608,7 @@ internal sealed class SuiteCoverageTests
 
         using var scratch = ScratchDirectory.Create("filter-probe");
         var report = Path.Combine(scratch.Path, "filter.txt");
-        const string Filter = "/*/*/SuiteCoverageTests/" + nameof(ARunThatWasFilteredIsNeverARelease);
+        const string Filter = "/*/*/SuiteCoverageTests/" + nameof(AReleaseRunFailsWhereAnOrdinaryRunSkips);
 
         var startInfo = new ProcessStartInfo(host)
         {
@@ -572,10 +663,29 @@ internal sealed class SuiteCoverageTests
         // does not answer from. A field nobody reads is a field that can rot.
         await Assert.That(described).Contains("commandLineCarriesIt=");
 
-        // ⚠️ AND THE REFUSAL FIRED. A child that read FILTERED and passed anyway
-        // would leave decision (d) written and never taken.
+        // ⚠️ AND THE REFUSAL FIRED, IN A RUN THAT SELECTED SOMETHING ELSE. The
+        // one test this child ran passes; the only thing in the process that can
+        // fail it is the session hook, so a non-zero exit is the refusal and
+        // nothing else. Measured 2026-08-24 at TUnit 1.65.0: an exception out of
+        // an [After(TestSession)] hook exits 10 and prints
+        // "Test adapter test session failure".
         await Assert.That(exitCode).IsNotEqualTo(0).Because(console);
-        await Assert.That(console).Contains(SuiteEnvironment.ReleaseRunVariable).Because(console);
+
+        // ⚠️ AND IT IS THE REFUSAL RATHER THAN SOMETHING ELSE THAT FAILED IT.
+        // ***Corrected 2026-08-24 (previously
+        // `Assert.That(console).Contains(SuiteEnvironment.ReleaseRunVariable)`).***
+        // That was a tautology under a comment claiming it was the decisive
+        // half: SuiteFilter.RowFor's FILTERED arm ends with
+        // "<variable>=1 makes this state a failure.", and the coverage block goes
+        // out through the real standard output handle on every run -- so the
+        // child printed that variable's name whether or not anything refused.
+        // The sentence below is written by SuiteFilter.Refusal and by nothing
+        // else in this process, and it is spelled ASCII-only on purpose: the
+        // child's console transliterates an em dash to a hyphen, so a needle
+        // carrying one would be a needle that can never match.
+        await Assert.That(console)
+            .Contains("Re-run without a filter, or unset the variable and stop calling it a release.")
+            .Because(console);
 
         // The other direction, live: this process took the same reading through
         // the same code and did not refuse.
