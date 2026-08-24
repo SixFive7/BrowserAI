@@ -567,9 +567,23 @@ answers about whatever file it is handed and is never actionable alone.
 | The two custom transports | `src/BrowserAI/Protocol/{DirectStdioClientTransport, ChildProcessSession, DirectStdioServerTransport, JsonLines, JsonLinesTransport, VerbatimPayload, ChildLink, ChildEnvironment}.cs` |
 | stdout ownership | `src/BrowserAI/Protocol/StdioChannel.cs`, `src/BrowserAI/BannedSymbols.txt` |
 | stderr classification | `src/BrowserAI/Protocol/StandardErrorClassifier.cs` and its pinned reference copy |
-| Logging | `src/BrowserAI/Logging/` |
+| Logging — one machine-wide file under a cross-process write gate, plus one file per session | `src/BrowserAI/Logging/`, `src/BrowserAI/Interop/NativeFile.cs` |
 | Where files live, installed or not | `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths, BuildVersion}.cs`, `src/BrowserAI/Updates/InstallLocation.cs` |
 | Refusing to serve out of a root two users could share | `src/BrowserAI/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state |
+
+**Anything attributable to a session is written to that session's own
+`browserai.log` and to nothing else; the machine-wide log keeps only what no
+session owns** — the stray sweep, which is machine-wide by design, startup,
+updates, provisioning, the server transport, the MCP server, and the two proxy
+refusals that have no session directory to be written into: a call naming no
+session, and a call naming one that does not exist. *Changed 2026-08-24
+(previously every session record went to both).* **That reduces the shared file's
+write rate and does not dissolve the contention**, which is why it is written
+under a lock rather than instead of one: `NativeFile.TakeGate` takes an exclusive
+byte-range claim one byte past any possible end of file — so no concurrent reader
+is ever refused — and the length read, the write stamp and the bytes all happen
+inside it. Write order and timestamp order therefore coincide, the file is sorted
+by construction, and rotation happens exactly at the cap rather than near it.
 
 **One unnamed, non-inheritable job per child**, carrying `KILL_ON_JOB_CLOSE` and
 nothing else, assigned at creation through `PROC_THREAD_ATTRIBUTE_JOB_LIST`, held

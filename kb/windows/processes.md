@@ -721,18 +721,66 @@ end *at open* and then tracks the position itself, so two writers that opened at
 the same length overwrite each other. `FileShare.ReadWrite` permits the sharing
 and guarantees nothing about it.
 
-The fix is the platform's own guarantee rather than a lock: a handle opened via
+One fix is the platform's own guarantee rather than a lock: a handle opened via
 `CreateFileW` with **`FILE_APPEND_DATA` and without `FILE_WRITE_DATA`** has its
 writes placed at the end of the file by the filesystem, atomically, regardless
 of how many other handles are open. **Requesting `GENERIC_WRITE` silently
 forfeits it**, because `GENERIC_WRITE` expands to include `FILE_WRITE_DATA`. The
 same eight-by-twenty-five run then loses nothing, repeated three times.
+`[FLOATS]` for the .NET half, which could change with any SDK; `[STABLE]` for the
+Win32 guarantee.
 
-This matters beyond the log. **The design has ~100 concurrent BrowserAI
-processes sharing one process log**, and a lock would have worked while also
-making logging able to block — the one thing [the observability design](../../ARCHITECTURE.md#process-containment-and-observability)
-says the sink may never do. `[FLOATS]` for the .NET half, which could change
-with any SDK; `[STABLE]` for the Win32 guarantee.
+⚠️ **Corrected 2026-08-24 (previously "The fix is …" and "a lock would have
+worked while also making logging able to block — the one thing the observability
+design says the sink may never do"). BrowserAI does not use it any more.** The
+measurement above is untouched and still forbids `FileMode.Append`; what was
+wrong was treating the append guarantee as the whole answer, because **it is per
+`WriteFile` call**. A completion loop above it — reissue on a short write — voids
+it: the second call appends after whatever another process wrote in between, the
+record is torn, and every call returns success. So the machinery was deleted and
+the shared log is now written under a cross-process byte-range lock taken with
+`LockFileEx`, blocking, with the length read, the instant stamped and the bytes
+written inside one claim. **A lock can block and this one is bounded by
+construction**: the hold is a single write of a few hundred bytes, and the kernel
+releases a byte-range lock however the holder dies — which is the same property
+that made `MaintenanceLock` a file rather than a semaphore.
+
+### Locking a log file without locking its readers out — 2026-08-24
+
+**A Windows byte-range lock is enforced against `ReadFile` as well as
+`WriteFile`, so the obvious spelling — lock `[0, ∞)` — makes every concurrent
+reader of the file fail with `ERROR_LOCK_VIOLATION`.** For a log that is read
+while it is being written, that trades one silent failure for a loud one. **The
+region is therefore one byte at offset `long.MaxValue`**, past any offset a file
+can have: locking beyond the end of file is explicitly legal, costs nothing, and
+overlaps no byte anybody reads, so the lock is a pure semaphore.
+
+Two declaration traps came with it, both build-time and both recorded here
+because each looks like a defect in the code rather than a rule of the toolchain:
+
+- **`LibraryImport` refuses to marshal `System.Threading.NativeOverlapped`** —
+  `error SYSLIB1051`, asking for `DisableRuntimeMarshallingAttribute` on the
+  whole assembly to satisfy one parameter. `NativeFile` declares its own
+  five-field `Overlapped` instead.
+- **CsWin32 refuses to generate `OVERLAPPED` at all** — `error PInvoke003: This
+  API will not be generated. Use System.Threading.NativeOverlapped instead` — so
+  the [layout oracle](../../tests/BrowserAI.Tests/NativeMethods.txt) cannot
+  supply it, and that one struct is checked against the framework's definition
+  rather than against the Win32 metadata. `[FLOATS]` for both, which are
+  properties of the SDK and of the generator rather than of Windows.
+
+**And the delete half, which is the other direction of the same question.** A
+handle opened **without** `FILE_SHARE_DELETE` refuses `File.Delete` on that path
+with `ERROR_SHARING_VIOLATION`, which .NET surfaces as **`IOException`** —
+measured 2026-08-24 against the live process log. That is *not* the same
+exception as the rename refusal recorded above, which is `ERROR_ACCESS_DENIED`
+and surfaces as `UnauthorizedAccessException`; a handler written for one does not
+catch the other, and the two sit a page apart in the same design. `[STABLE]` for
+the Windows refusal, and the .NET mapping floats with the framework exactly as
+the rename's does. Reproduce:
+`ProcessLogTests.TheSharedLogCannotBeUnlinkedWhileAWriterHoldsIt`, which asserts
+the refusal **and** that a concurrent reader is still admitted — the second half
+being what a share mode narrow enough to fix the first would have broken.
 
 ## Saturation: the 100-process design point
 

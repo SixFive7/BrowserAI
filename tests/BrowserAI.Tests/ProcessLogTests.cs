@@ -470,6 +470,302 @@ internal sealed partial class ProcessLogTests
 
         await Assert.That(string.Join(", ", missing)).IsEmpty();
     }
+
+    /// <summary>
+    /// A session's records go to that session's own log and to nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The rule taken 2026-08-24: anything attributable to a session goes to
+    /// that session's own log; the central log keeps only what has none.</b>
+    /// Until then <c>OpenSessionLog</c> added a second provider over the
+    /// machine-wide <see cref="RollingFileWriter"/>, so every session record was
+    /// written twice - and with ~100 processes each running N sessions, that
+    /// duplicate was the bulk of the shared file's traffic.
+    /// </para>
+    /// <para>
+    /// <b>Planted red by putting that provider back</b>, which is a one-line
+    /// revert in <c>ProcessLog.OpenSessionLog</c>: the marker then appears in
+    /// both files and the second assertion fails.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASessionsRecordsGoToItsOwnLogAndNotToTheSharedOne()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-session-scope");
+
+        var session = Path.Combine(scratch.Path, "session");
+        _ = Directory.CreateDirectory(session);
+
+        var marker = $"session-scope-{Guid.NewGuid():N}";
+
+        using (var log = ProcessLog.Create(new LocalAppDataPaths(scratch.Path), LogLevel.Information))
+        {
+            // The shared file has to be open and working, or "it is not in
+            // there" is answerable by a writer that never wrote anything.
+            var machine = log.Factory.CreateLogger("BrowserAI.Startup");
+
+            ProcessLogProbe.Wrote(machine, "the machine's own record");
+
+            using var sessionLog = ProcessLog.OpenSessionLog(session, LogLevel.Information);
+            var mine = sessionLog.Factory.CreateLogger("BrowserAI.Tests.Session");
+
+            ProcessLogProbe.Wrote(mine, marker);
+        }
+
+        var beside = await File.ReadAllTextAsync(Path.Combine(session, "browserai.log"));
+        var shared = ProbeProcess.ReadProcessLog(scratch.Path);
+
+        await Assert.That(beside).Contains(marker, StringComparison.Ordinal);
+
+        // The positive control for the line below: the shared file exists, is
+        // readable, and holds this run's records.
+        await Assert.That(shared).Contains("the machine's own record", StringComparison.Ordinal);
+        await Assert.That(shared).DoesNotContain(marker, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Every record in the shared log sits in the file in the order it was
+    /// written, because the instant on it was read inside the write gate.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the property the gate exists for, and it is strictly stronger
+    /// than the torn-record check in <c>SaturationTests</c>.</b> A file whose
+    /// leading timestamps never go backwards is one where no writer read its
+    /// clock, lost the race, and wrote behind somebody who read theirs later -
+    /// which is what a lock-free appender does under load, and what made
+    /// on-write sorting look like a problem needing a sort.
+    /// </para>
+    /// <para>
+    /// <b>Planted red</b> by taking the stamp where it used to be taken - in
+    /// <c>FileLoggerProvider.Log</c>, before the record reaches the sink at all:
+    /// with eight processes writing sixty records each, the file comes back with
+    /// timestamps out of order.
+    /// </para>
+    /// <para>
+    /// <b>Scoped to a scratch root</b>, because the real one is shared with every
+    /// other BrowserAI on the machine and this assertion is about a file, not
+    /// about a run.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryRecordInTheSharedLogSitsInTheOrderItWasWritten()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-ordered");
+
+        const int Processes = 8;
+        const int LinesEach = 60;
+
+        var runs = await Task.WhenAll(Enumerable.Range(0, Processes)
+            .Select(i => ProbeProcess.RunAsync("log-many", scratch.Path, $"ordered{i}", LinesEach.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+        foreach (var run in runs)
+        {
+            await Assert.That(run.ExitCode).IsEqualTo(0);
+        }
+
+        var stamps = WriteStampsIn(ProbeProcess.ReadProcessLog(scratch.Path));
+
+        // Not vacuous: eight processes wrote sixty records each, so anything
+        // near zero means the file was not read rather than that it was sorted.
+        await Assert.That(stamps.Count).IsGreaterThanOrEqualTo(Processes * LinesEach);
+
+        var backwards = new List<string>();
+
+        for (var i = 1; i < stamps.Count; i++)
+        {
+            if (stamps[i] < stamps[i - 1])
+            {
+                backwards.Add($"record {i.ToString(System.Globalization.CultureInfo.InvariantCulture)} is stamped {stamps[i]:O}, behind the record before it at {stamps[i - 1]:O}");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, backwards.Take(10))).IsEmpty();
+    }
+
+    /// <summary>
+    /// Every record names its writer by the pair, never by a bare pid, and
+    /// carries both of its times.
+    /// </summary>
+    /// <remarks>
+    /// <b>A pid alone does not identify a writer of this file.</b> The shared log
+    /// keeps thirty days of records and Windows reuses pids within seconds, so a
+    /// bare pid in a week-old record eventually names a stranger - which is the
+    /// same reasoning <c>browserai.json</c> already follows, and the FILETIME here
+    /// is spelled the way that file spells <c>processCreatedFileTime</c> so the
+    /// two name a writer with the same characters. <b>Planted red</b> by dropping the
+    /// <c>made=</c> field, which is the half a reader loses first because it looks
+    /// like the timestamp already at the front of the line.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryRecordNamesItsWriterByPidAndCreationTimeAndCarriesBothTimes()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-writer");
+
+        using (var log = ProcessLog.Create(new LocalAppDataPaths(scratch.Path), LogLevel.Information))
+        {
+            var logger = log.Factory.CreateLogger("BrowserAI.Test");
+
+            ProcessLogProbe.Wrote(logger, nameof(EveryRecordNamesItsWriterByPidAndCreationTimeAndCarriesBothTimes));
+        }
+
+        var lines = ProbeProcess.ReadProcessLog(scratch.Path)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        await Assert.That(lines.Count).IsGreaterThan(0);
+
+        var wrong = lines.Where(line => !WriterHeader().IsMatch(line)).ToList();
+
+        await Assert.That(string.Join(Environment.NewLine, wrong.Take(5))).IsEmpty();
+
+        // The pair has to be usable, not merely present: a zero FILETIME is the
+        // documented "could not read my own creation time" value and would make
+        // a liveness check answer 'not running' for a process that is.
+        var pair = WriterHeader().Match(lines[0]);
+
+        await Assert.That(int.Parse(pair.Groups["pid"].Value, System.Globalization.CultureInfo.InvariantCulture))
+            .IsEqualTo(Environment.ProcessId);
+        await Assert.That(long.Parse(pair.Groups["created"].Value, System.Globalization.CultureInfo.InvariantCulture))
+            .IsGreaterThan(0);
+    }
+
+    /// <summary>
+    /// The roll happens exactly at the cap: no file in the directory ever
+    /// exceeds it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Corrected 2026-08-24 (previously the writer said "the roll happens at
+    /// approximately the cap rather than exactly at it").</b> That was true while
+    /// the size was a per-process counter seeded once at open, which drifts as
+    /// soon as a second process appends. Under the gate the length is the file's
+    /// own, read through the open handle inside the claim, and the decision is
+    /// made <i>before</i> the write rather than after it. <b>Planted red</b> by
+    /// restoring the old shape - a counter, incremented after each write, rolling
+    /// once it has already passed the cap - which leaves every full file over the
+    /// line by one record.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoFileInTheSharedLogEverExceedsItsCap()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-cap");
+
+        var directory = new LocalAppDataPaths(scratch.Path).LogDirectory;
+
+        // 64 KiB a record: enough that filling two 8 MiB files is a couple of
+        // hundred writes rather than tens of thousands, and far enough below the
+        // cap that this is the ordinary arm and not the oversized-record one.
+        var padding = new string('x', 64 * 1024);
+
+        using (var writer = new RollingFileWriter(directory))
+        {
+            for (var i = 0; i < 260; i++)
+            {
+                writer.Write(padding);
+            }
+        }
+
+        var files = Directory.EnumerateFiles(directory, "browserai-*.log").Order(StringComparer.Ordinal).ToList();
+
+        // Not vacuous: 260 records of 64 KiB is over 16 MiB, so a single file
+        // would mean nothing rolled at all.
+        await Assert.That(files.Count).IsGreaterThan(1);
+
+        var over = files
+            .Select(file => new FileInfo(file))
+            .Where(file => file.Length > 8L * 1024 * 1024)
+            .Select(file => $"{file.Name} is {file.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)} bytes, past the 8 MiB cap")
+            .ToList();
+
+        await Assert.That(string.Join(Environment.NewLine, over)).IsEmpty();
+    }
+
+    /// <summary>
+    /// Nothing can unlink the shared log while a writer holds it open.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>[Finding 10](../../docs/reviews/2026-08-18-adversarial-processes.md),
+    /// closed by removing <c>FILE_SHARE_DELETE</c>.</b> With it granted, anything
+    /// on the machine could delete or rename the live log while a hundred
+    /// BrowserAIs held it; every subsequent write then <i>succeeded</i> into an
+    /// unlinked file object, <c>CurrentFile</c> went on naming a path that no
+    /// longer existed, and the writer's own catch never fired because nothing had
+    /// failed.
+    /// </para>
+    /// <para>
+    /// <b>The cost is stated where it is paid, and it is the machine's log rather
+    /// than one process's own</b>: while any BrowserAI runs, nobody can remove
+    /// today's file. That was accepted knowingly. <b>Planted red</b> by putting
+    /// the share flag back, which makes the delete succeed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSharedLogCannotBeUnlinkedWhileAWriterHoldsIt()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-unlink");
+
+        using var log = ProcessLog.Create(new LocalAppDataPaths(scratch.Path), LogLevel.Information);
+
+        var logger = log.Factory.CreateLogger("BrowserAI.Test");
+
+        ProcessLogProbe.Wrote(logger, nameof(TheSharedLogCannotBeUnlinkedWhileAWriterHoldsIt));
+
+        var file = log.CurrentFile;
+
+        await Assert.That(file).IsNotNull();
+
+        // The delete is refused, and a reader is still admitted -- both halves,
+        // because a share mode narrow enough to lock out the reader would have
+        // traded one silent failure for a louder one.
+        //
+        // IOException rather than UnauthorizedAccessException, and the pair is
+        // worth keeping straight because this repository already records the
+        // other half: a RENAME over an open file is refused ERROR_ACCESS_DENIED
+        // and surfaces as UnauthorizedAccessException (kb/re-verification.md row
+        // 65), while a DELETE against a handle that withheld FILE_SHARE_DELETE
+        // is refused ERROR_SHARING_VIOLATION and surfaces as IOException.
+        // Measured here 2026-08-24; the type is .NET is mapping, so it floats
+        // with the framework and the Windows half does not.
+        await Assert.That(() => File.Delete(file!)).Throws<IOException>();
+        await Assert.That(ProbeProcess.ReadProcessLog(scratch.Path)).IsNotEmpty();
+        await Assert.That(File.Exists(file!)).IsTrue();
+    }
+
+    /// <summary>The write stamps in a log, in the order the file holds them.</summary>
+    /// <param name="log">The log's whole text.</param>
+    /// <returns>One <see cref="DateTime"/> per record header.</returns>
+    private static List<DateTime> WriteStampsIn(string log) =>
+        [.. log.Split('\n')
+            .Select(line => WriterHeader().Match(line))
+            .Where(match => match is { Success: true, Index: 0 })
+            .Select(match => DateTime.ParseExact(
+                match.Groups["written"].Value,
+                "O",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.RoundtripKind))];
+
+    /// <summary>
+    /// One record's header: the write stamp, the creation stamp, the level, and
+    /// the writer as the pair.
+    /// </summary>
+    /// <remarks>
+    /// Anchored at the start of a line, and deliberately not shared with
+    /// <c>SaturationTests</c>' expression: that one exists to prove a header
+    /// appears <i>only</i> at offset zero and this one to read the fields out, so
+    /// one expression serving both would be a change to either that quietly
+    /// weakened the other.
+    /// </remarks>
+    /// <returns>The compiled expression.</returns>
+    [System.Text.RegularExpressions.GeneratedRegex(
+        @"^(?<written>\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s\smade=(?<made>\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s\s\S+\s+pid=(?<pid>\d+)@(?<created>\d+)\s\s")]
+    private static partial System.Text.RegularExpressions.Regex WriterHeader();
 }
 
 /// <summary>

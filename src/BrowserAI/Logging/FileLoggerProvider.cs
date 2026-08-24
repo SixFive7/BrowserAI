@@ -1,34 +1,55 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
 using System.Globalization;
 using System.Text;
+using BrowserAI.Interop;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Logging;
 
 /// <summary>
-/// Routes <see cref="ILogger"/> records into an <see cref="ILogSink"/>.
+/// Routes <see cref="ILogger"/> records into an <see cref="ILogSink"/>, and owns
+/// the one record format both sinks write.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Scope support is wired from the start because the process log is written by
-/// ~100 processes at once and, from step 10, by N sessions inside each: every
-/// record carries its session so the interleaving is readable at the moment it
-/// matters.
+/// Scope support is wired from the start because a session's records carry the
+/// session that produced them, and the same factory serves N sessions inside one
+/// process.
 /// </para>
 /// <para>
-/// <b>Ownership of the sink is a constructor argument rather than an
-/// assumption.</b> A session's logger factory carries two of these — one over
-/// its own <see cref="SessionLogFile"/>, which it owns, and one over the
-/// machine-wide <see cref="RollingFileWriter"/>, which
-/// <see cref="ProcessLog"/> owns and outlives it. Disposing that second one
-/// would take the process log down with the first session that ended.
+/// <b>Two times per record, and neither replaces the other.</b> The leading
+/// column is when the record was <i>written</i>, taken by the sink inside the
+/// file's write gate immediately before the bytes go down — so write order and
+/// timestamp order coincide and the file is sorted <b>by construction</b> rather
+/// than by anybody sorting it. <c>made=</c> is when the record was
+/// <i>created</i>, stamped here. The two differ only by however long a writer
+/// waited at the gate, which is the one thing a reader investigating contention
+/// wants and the one thing a single timestamp cannot show.
+/// </para>
+/// <para>
+/// <b>The writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c>, never a bare
+/// pid.</b> Windows reuses pids, and the machine-wide log outlives the processes
+/// in it by thirty days — so a bare pid in a month-old record eventually names a
+/// stranger. The pair is this repository's standing identity for a process:
+/// it is what <see cref="ProcessLiveness.IsAlive(int, long)"/> takes, and it is
+/// spelled here exactly as <c>browserai.json</c> spells
+/// <c>processCreatedFileTime</c>, so a log line and a lock record name the same
+/// writer with the same characters.
+/// </para>
+/// <para>
+/// ⚠️ <b><c>@0</c> means this process could not read its own creation time</b>,
+/// which is a pair a reader must not feed to a liveness check: it would answer
+/// <i>not running</i> for a process that is. It has never been observed —
+/// <c>GetProcessTimes</c> on the current-process pseudo-handle has no documented
+/// failure — and it is spelled rather than thrown because a logger that cannot
+/// construct itself takes the process with it.
 /// </para>
 /// </remarks>
 /// <param name="sink">Where records go.</param>
-/// <param name="ownsSink">Whether disposing this provider disposes the sink.</param>
-internal sealed class FileLoggerProvider(ILogSink sink, bool ownsSink = true) : ILoggerProvider, ISupportExternalScope
+internal sealed class FileLoggerProvider(ILogSink sink) : ILoggerProvider, ISupportExternalScope
 {
     private IExternalScopeProvider? _scopes;
 
@@ -38,10 +59,23 @@ internal sealed class FileLoggerProvider(ILogSink sink, bool ownsSink = true) : 
     /// <inheritdoc />
     public void SetScopeProvider(IExternalScopeProvider scopeProvider) => _scopes = scopeProvider;
 
+    /// <summary>
+    /// The leading column of a record: the instant it reached the file.
+    /// </summary>
+    /// <remarks>
+    /// <b>Called from inside a sink's write gate and nowhere else.</b> Read
+    /// anywhere earlier it would be a creation time wearing the sort key's
+    /// column, and the ordering claim above would quietly stop being true.
+    /// </remarks>
+    /// <param name="written">The instant, UTC.</param>
+    /// <returns>The column, separator included.</returns>
+    public static string WriteStamp(DateTime written) =>
+        written.ToString("O", CultureInfo.InvariantCulture) + "  ";
+
     /// <inheritdoc />
     public void Dispose()
     {
-        if (ownsSink && sink is IDisposable disposable)
+        if (sink is IDisposable disposable)
         {
             disposable.Dispose();
         }
@@ -50,6 +84,7 @@ internal sealed class FileLoggerProvider(ILogSink sink, bool ownsSink = true) : 
     private sealed class FileLogger(ILogSink sink, string category, Func<IExternalScopeProvider?> scopes) : ILogger
     {
         private static readonly int ProcessId = Environment.ProcessId;
+        private static readonly long ProcessCreatedFileTime = ReadOwnCreationTime();
 
         public IDisposable? BeginScope<TState>(TState state)
             where TState : notnull =>
@@ -72,11 +107,14 @@ internal sealed class FileLoggerProvider(ILogSink sink, bool ownsSink = true) : 
             }
 
             var record = new StringBuilder(256)
+                .Append("made=")
                 .Append(DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture))
                 .Append("  ")
                 .Append(Abbreviate(logLevel))
                 .Append("  pid=")
                 .Append(ProcessId.ToString(CultureInfo.InvariantCulture))
+                .Append('@')
+                .Append(ProcessCreatedFileTime.ToString(CultureInfo.InvariantCulture))
                 .Append("  ")
                 .Append(category);
 
@@ -113,5 +151,20 @@ internal sealed class FileLoggerProvider(ILogSink sink, bool ownsSink = true) : 
             LogLevel.Critical => "CRIT ",
             _ => "?????",
         };
+
+        /// <summary>This process's creation time, or 0 if it could not be read.</summary>
+        /// <remarks>See the type's remarks for what <c>@0</c> tells a reader.</remarks>
+        /// <returns>A Windows FILETIME, or 0.</returns>
+        private static long ReadOwnCreationTime()
+        {
+            try
+            {
+                return ProcessLiveness.CreationTimeOfThisProcess();
+            }
+            catch (Win32Exception)
+            {
+                return 0;
+            }
+        }
     }
 }

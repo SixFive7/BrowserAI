@@ -1020,6 +1020,14 @@ consequences a reader has to carry:
   this bullet's "differs between them" was the whole of it, and it was true run
   to run rather than by construction*. See
   [the two spellings are forced](#the-two-spellings-are-forced-and-the-run-says-which-one-it-got).
+
+  ⚠️ **Once from each shell is the gate for ordinary work; three from each is the
+  RELEASE gate.** *Written down 2026-08-24, after the release gate had been
+  applied to every intermediate batch — six full runs, at two to four minutes
+  each, where two would do.* The repetition exists for the flake that appears
+  once in three, which is how [the probe-report race](HAZARDS.md#hazard-index)
+  was found on 2026-08-19; nothing about an intermediate batch needs it, and
+  [the release checklist](RELEASING.md#8-run-everything) is where it is owed.
 - **Nothing builds a contributor's pull request any more.** For a public
   repository that is the real cost of the removal: 54% of this project's
   enforcement is a test or a release-phase check, and a pull request can now break

@@ -34,13 +34,33 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What this does NOT catch, and nothing here should be read as claiming it
-/// does: access masks.</b> <c>FILE_APPEND_DATA</c> without
-/// <c>FILE_WRITE_DATA</c> is a semantic choice, not a layout fact, and the
-/// atomic-append guarantee it buys is worth
-/// [70 lost records in 200](../../kb/windows/processes.md#files-durable-writes-and-deletes).
-/// No size or offset assertion can see it. Only
-/// <c>ProcessLogTests.ConcurrentProcessesDoNotLoseEachOthersRecords</c> covers
-/// that, by failing the way the original defect presented.
+/// does: access masks and share modes.</b> Whether the process log grants delete
+/// sharing, and whether its handle carries enough access for <c>LockFileEx</c> to
+/// accept it, are semantic choices rather than layout facts and no size or offset
+/// assertion can see either. <c>ProcessLogTests</c> covers them, by failing the
+/// way each defect presented:
+/// <c>ConcurrentProcessesDoNotLoseEachOthersRecords</c> for the
+/// [70 lost records in 200](../../kb/windows/processes.md#files-durable-writes-and-deletes)
+/// that made <c>FileMode.Append</c> unusable here, and
+/// <c>TheCentralLogCannotBeUnlinkedWhileAWriterHoldsIt</c> for the share mode.
+/// <i>Corrected 2026-08-24 (previously this named <c>FILE_APPEND_DATA</c> without
+/// <c>FILE_WRITE_DATA</c> as the uncheckable choice): that mask is gone. The
+/// atomicity it bought was per <c>WriteFile</c> call and the completion loop
+/// above it voided the guarantee, so the machinery was deleted rather than
+/// repaired.</i>
+/// </para>
+/// <para>
+/// ⚠️ <b>One of the eight structs has a different oracle, and it is named here so
+/// that the difference is not mistaken for an oversight.</b>
+/// <c>NativeFile.Overlapped</c> is compared against
+/// <see cref="System.Threading.NativeOverlapped"/> rather than against
+/// [`NativeMethods.txt`](NativeMethods.txt), because CsWin32 refuses to generate
+/// <c>OVERLAPPED</c> at all — <c>error PInvoke003: This API will not be
+/// generated. Use System.Threading.NativeOverlapped instead</c>, measured
+/// 2026-08-24. It is still Microsoft's own definition and still a definition this
+/// repository did not write; it simply arrives from the framework instead of from
+/// the metadata. The <b>literal</b> tiebreaker below applies to it exactly as it
+/// does to the other seven.
 /// </para>
 /// <para>
 /// <b>The structs are reached by reflection because they are <c>private</c>
@@ -69,6 +89,7 @@ internal sealed class InteropLayoutTests
         (nameof(JobObject), "IoCounters", 48),
         (nameof(JobObject), "JobObjectBasicLimitInformation", 64),
         (nameof(JobObject), "JobObjectExtendedLimitInformation", 144),
+        (nameof(NativeFile), "Overlapped", 32),
     ];
 
     /// <summary>
@@ -99,7 +120,7 @@ internal sealed class InteropLayoutTests
     [Test]
     public async Task TheOracleReachesEveryStruct()
     {
-        await Assert.That(Structs.Length).IsEqualTo(7);
+        await Assert.That(Structs.Length).IsEqualTo(8);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -203,6 +224,7 @@ internal sealed class InteropLayoutTests
         await Assert.That(SizeOfMetadata("IoCounters")).IsEqualTo(48);
         await Assert.That(SizeOfMetadata("JobObjectBasicLimitInformation")).IsEqualTo(64);
         await Assert.That(SizeOfMetadata("JobObjectExtendedLimitInformation")).IsEqualTo(144);
+        await Assert.That(SizeOfMetadata("Overlapped")).IsEqualTo(32);
     }
 
     /// <summary>
@@ -244,6 +266,23 @@ internal sealed class InteropLayoutTests
         await Assert.That((int)Marshal.OffsetOf(extended, "IoInfo")).IsEqualTo(64);
         await Assert.That((int)Marshal.OffsetOf<W.System.JobObjects.JOBOBJECT_EXTENDED_LIMIT_INFORMATION>("IoInfo"))
             .IsEqualTo(64);
+
+        // OVERLAPPED, for the same reason and with more riding on it: `Offset`
+        // is the ONLY field BrowserAI ever writes into this struct, and it is
+        // the offset the process log's cross-process write gate is taken on. A
+        // field that had slid four bytes would put the lock on a different byte
+        // -- and two BrowserAIs locking two different bytes exclude nobody, at
+        // no error, which is exactly the property the gate exists to provide.
+        var overlapped = Nested(nameof(NativeFile), "Overlapped");
+
+        await Assert.That((int)Marshal.OffsetOf(overlapped, "Offset")).IsEqualTo(16);
+        await Assert.That((int)Marshal.OffsetOf(overlapped, "OffsetHigh")).IsEqualTo(20);
+        await Assert.That((int)Marshal.OffsetOf(overlapped, "EventHandle")).IsEqualTo(24);
+
+        // And Microsoft agrees, field for field.
+        await Assert.That((int)Marshal.OffsetOf<System.Threading.NativeOverlapped>("OffsetLow")).IsEqualTo(16);
+        await Assert.That((int)Marshal.OffsetOf<System.Threading.NativeOverlapped>("OffsetHigh")).IsEqualTo(20);
+        await Assert.That((int)Marshal.OffsetOf<System.Threading.NativeOverlapped>("EventHandle")).IsEqualTo(24);
     }
 
     /// <summary>
@@ -258,6 +297,11 @@ internal sealed class InteropLayoutTests
         "IoCounters" => sizeof(W.System.Threading.IO_COUNTERS),
         "JobObjectBasicLimitInformation" => sizeof(W.System.JobObjects.JOBOBJECT_BASIC_LIMIT_INFORMATION),
         "JobObjectExtendedLimitInformation" => sizeof(W.System.JobObjects.JOBOBJECT_EXTENDED_LIMIT_INFORMATION),
+
+        // The one row whose oracle is the framework rather than the metadata --
+        // see the type's remarks, and NativeMethods.txt, which says the same
+        // thing at the place somebody would otherwise add the name.
+        "Overlapped" => sizeof(System.Threading.NativeOverlapped),
         _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the seven."),
     };
 }

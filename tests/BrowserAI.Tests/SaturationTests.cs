@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using System.Text.Json.Nodes;
-using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -344,7 +343,7 @@ internal sealed partial class SaturationTests
             var written = lines.Count(line =>
                 RecordHeader().Match(line) is { Success: true, Index: 0 } header
                 && int.TryParse(
-                    header.Value.AsSpan(header.Value.LastIndexOf("pid=", StringComparison.Ordinal) + 4),
+                    header.Groups["pid"].ValueSpan,
                     CultureInfo.InvariantCulture,
                     out var pid)
                 && ours.Contains(pid));
@@ -422,7 +421,7 @@ internal sealed partial class SaturationTests
     /// <param name="ours">The pids this run started.</param>
     private static void ReclaimOurOwnBookkeeping(HashSet<int> ours)
     {
-        var paths = new LocalAppDataPaths();
+        var paths = BrowserAiPaths.Real;
 
         foreach (var directory in Enumerate(paths.InstanceRoot, directories: true))
         {
@@ -481,7 +480,7 @@ internal sealed partial class SaturationTests
 
     /// <summary>
     /// The start of one record, as <c>FileLoggerProvider</c> writes it:
-    /// <c>&lt;ISO-8601&gt;  &lt;LVL&gt;  pid=&lt;n&gt;</c>.
+    /// <c>&lt;ISO-8601&gt;  made=&lt;ISO-8601&gt;  &lt;LVL&gt;  pid=&lt;n&gt;@&lt;filetime&gt;</c>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -533,14 +532,30 @@ internal sealed partial class SaturationTests
     /// first time it met a machine with no history. With the expression fixed,
     /// that same run reads 2,217 headers, all at index 0, from 100 distinct pids.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-24 (previously
+    /// <c>…T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+</c>).</b> A record now carries
+    /// <b>two</b> times — the leading column is when it was <i>written</i>, taken
+    /// inside the file's write gate, and <c>made=</c> is when it was created —
+    /// and the writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c> rather than
+    /// a bare pid. Both halves are matched here rather than skipped over with
+    /// <c>.*</c>: this expression is what says <i>a header may only appear at the
+    /// start of a line</i>, and one that matched a prefix of the header would
+    /// find the header inside itself.
+    /// </para>
+    /// <para>
+    /// <b>The pid is a named group now</b>, because the caller used to read
+    /// everything after the last <c>pid=</c> as an integer and there is a
+    /// <c>@</c> and a FILETIME behind it.
+    /// </para>
     /// </remarks>
     /// <returns>The compiled expression.</returns>
-    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+")]
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[^\s]*\s\smade=\S+\s\s\S+\s+pid=(?<pid>\d+)@\d+")]
     private static partial System.Text.RegularExpressions.Regex RecordHeader();
 
     private static List<string> IndexEntriesPointingInto(string root)
     {
-        var index = new LocalAppDataPaths().IndexDirectory;
+        var index = BrowserAiPaths.Real.IndexDirectory;
 
         if (!Directory.Exists(index))
         {
@@ -574,7 +589,7 @@ internal sealed partial class SaturationTests
 
     private static IReadOnlyList<string> LogFilesNow()
     {
-        var directory = new LocalAppDataPaths().LogDirectory;
+        var directory = BrowserAiPaths.Real.LogDirectory;
 
         return Directory.Exists(directory) ? [.. Directory.EnumerateFiles(directory, "browserai-*.log")] : [];
     }

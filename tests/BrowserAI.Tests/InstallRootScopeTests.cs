@@ -43,7 +43,7 @@ internal sealed class InstallRootScopeTests
         // The root an uninstalled BrowserAI computes -- %LocalAppData%\BrowserAI
         // -- and the one Velopack installs to by default. If this is ever
         // refused, every BrowserAI on the machine stops starting.
-        var verdict = InstallRootScope.Judge(new LocalAppDataPaths().RootAppDir);
+        var verdict = InstallRootScope.Judge(BrowserAiPaths.Real.RootAppDir);
 
         await Assert.That(verdict.MayServe).IsTrue();
         await Assert.That(verdict.Refusal).IsNull();

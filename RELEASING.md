@@ -306,7 +306,9 @@ subset, not "the fast ones", not "the ones related to this change".** The layers
 their cadences and the enumerated tests are in [Testing](TESTING.md) — this item
 does not restate them.
 
-Three things to record rather than assume, because each is easy to skim past:
+Five things to record rather than assume, because each is easy to skim past.
+*Corrected 2026-08-24 (previously "Three things") — the list had reached four
+before this and nobody had re-read the number:*
 
 - **The skipped count, which must be zero.** No `Skip`, no quarantine, no
   conditional ignore anywhere in the tree. A `Skip` at release time is a red
@@ -338,6 +340,13 @@ Three things to record rather than assume, because each is easy to skim past:
   coverage block that names the spelling it got. Three logs reading `LOWER c:\`
   and three reading `UPPER C:\` is the evidence; six of either is a gate that
   ran one instrument twice.
+- **Three runs from each shell, and this is the only place that is owed.**
+  *Written down 2026-08-24; the practice is older than the sentence, and its
+  absence here is why it was being applied to every intermediate batch as well.*
+  A flake that appears once in three is invisible to a single run — which is how
+  the probe-report race was found on 2026-08-19, by running the whole suite three
+  times in a row — and a release is the one moment where paying six runs for that
+  is proportionate. [Ordinary work is one run per shell](TESTING.md#continuous-integration).
 - **Every tool in the snapshot, with its schema.** A tool upstream adds, removes
   or re-shapes fails the build, and `upstream-review.json` holds the release
   until a human has adjudicated it. ⚠️ *Corrected 2026-08-18 (previously "**Every

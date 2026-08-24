@@ -576,7 +576,7 @@ internal sealed class SessionIndexTests
 
         // And the production answer is the one the plan names, computed rather
         // than typed at a call site.
-        var real = new LocalAppDataPaths().IndexDirectory;
+        var real = BrowserAiPaths.Real.IndexDirectory;
         await Assert.That(real).IsEqualTo(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
             "BrowserAI",

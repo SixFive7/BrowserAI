@@ -9,14 +9,23 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.Logging;
 
 /// <summary>
-/// The process log's sink: append-only, flushed per record, rolling by day and
-/// by size, and incapable of becoming the outage.
+/// The process log's sink: one file per day shared by every BrowserAI on the
+/// machine, append-only, written under a cross-process gate, flushed per record,
+/// and incapable of becoming the outage.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>Append, never truncate.</b> With ~100 concurrent BrowserAI processes a
 /// start is the most common event there is, so a sink that truncates on start
 /// has deleted the previous crash before anyone looks at it.
+/// </para>
+/// <para>
+/// <b>One shared file under a lock, which is the maintainer's decision taken
+/// 2026-08-24 over a recommendation of one file per process:</b> <i>"Simple to
+/// read, simple to write."</i> Per-process files are not to be revived. What the
+/// gate buys is stated where it is taken, in <see cref="NativeFile.TakeGate"/>:
+/// the length is read, the instant is stamped and the bytes go down inside one
+/// claim, so nothing interleaves and the file is sorted by construction.
 /// </para>
 /// <para>
 /// <b>Flushed per record, synchronously.</b> An asynchronous sink plus an
@@ -33,13 +42,27 @@ namespace BrowserAI.Logging;
 /// answering blocks a file call for 21 measured seconds, and a log write is not
 /// where anyone should discover that.
 /// </para>
+/// <para>
+/// ⚠️ <b>The file cannot be deleted while any BrowserAI is running, and that is
+/// the machine's log rather than one process's own.</b>
+/// <see cref="NativeFile.OpenForLockedAppend"/> is asked for no delete sharing
+/// here, which closes
+/// [finding 10](../../../docs/reviews/2026-08-18-adversarial-processes.md) — with
+/// it granted, anything could unlink the live log and every subsequent write
+/// succeeded into an unlinked file object while <see cref="CurrentFile"/> went
+/// on naming a path that no longer existed, and nothing failed. The cost is
+/// accepted knowingly: while one BrowserAI holds today's file, <b>nobody</b> can
+/// remove it — not the user, not an installer, and not this type's own
+/// <see cref="SweepExpired"/>, which is why that pass tolerates a refusal
+/// instead of reporting one.
+/// </para>
 /// </remarks>
 internal sealed class RollingFileWriter : ILogSink, IDisposable
 {
     /// <summary>
-    /// Roll to the next indexed file past this size. Small enough that a reader
-    /// can open one in an editor, large enough that a busy day is a handful of
-    /// files rather than hundreds.
+    /// Roll to the next indexed file before a record would take it past this
+    /// size. Small enough that a reader can open one in an editor, large enough
+    /// that a busy day is a handful of files rather than hundreds.
     /// </summary>
     private const long MaxBytesPerFile = 8L * 1024 * 1024;
 
@@ -59,7 +82,6 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     private readonly string _directory;
 
     private SafeFileHandle? _handle;
-    private long _bytesInFile;
     private string _currentDay = string.Empty;
     private int _currentIndex;
     private bool _disabled;
@@ -118,19 +140,17 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
 
             try
             {
-                var handle = EnsureOpen();
-
-                // One WriteFile per record, so a record is never half on disk,
-                // and LF rather than CRLF to match every other file this
-                // repository writes. The protocol channel's line ending is
-                // StdioChannel's business; this one is only about not
-                // surprising a reader.
-                var bytes = Encoding.UTF8.GetBytes(record + "\n");
-                NativeFile.Append(handle, bytes);
-                _bytesInFile += bytes.Length;
-
-                if (_bytesInFile >= MaxBytesPerFile)
+                // The loop turns over at most once per roll: the only `continue`
+                // is the one that closes a full file and opens the next index.
+                while (true)
                 {
+                    var handle = EnsureOpen();
+
+                    if (TryAppend(handle, record))
+                    {
+                        return;
+                    }
+
                     Close();
                     _currentIndex++;
                 }
@@ -143,14 +163,17 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
                 // throws upward turns a diagnostic into the failure it was
                 // meant to describe. The handle is closed so the next write
                 // re-opens rather than reusing one that has just failed: a
-                // retry that repeats the failed call is not a recovery.
+                // retry that repeats the failed call is not a recovery. Closing
+                // is also what releases the write gate if the failure was the
+                // release itself, which is the one failure that would otherwise
+                // stall every BrowserAI on the machine.
                 Close();
             }
         }
     }
 
     // There is deliberately no Flush(). Nothing is buffered anywhere: every
-    // record is one unbuffered WriteFile against a synchronous handle. That is
+    // record is one unbuffered write against a synchronous handle. That is
     // what makes "a deliberately unhandled exception still leaves its last log
     // line on disk" a property of the design rather than of the timing, and a
     // no-op method named Flush would be a mechanism that only looks like one.
@@ -187,6 +210,58 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     // caller-supplied path is the SESSION directory, and that one goes through
     // Sessions/SessionDirectoryGuard, which asks both halves.
 
+    /// <summary>
+    /// Writes one record into the open file, or answers <see langword="false"/>
+    /// when that file is full and the caller must roll.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-24 (previously "The starting size is read once.
+    /// It drifts under concurrency, which only means the roll happens at
+    /// approximately the cap rather than exactly at it — and paying a metadata
+    /// query per record to fix that would be a worse trade").</b> The roll now
+    /// happens <b>exactly</b> at the cap: the length is the file's own, read
+    /// through the open handle <i>inside the write gate</i>, so no other
+    /// process can have appended between the read and the decision and there is
+    /// no per-process counter left to drift. It is not a metadata query — the
+    /// handle is already open — and no file in the directory ever exceeds
+    /// <see cref="MaxBytesPerFile"/>.
+    /// </para>
+    /// <para>
+    /// <b>Except for a record that is bigger than the cap on its own</b>, which
+    /// is written rather than dropped and lands alone in its own file: the
+    /// <c>length is 0</c> arm is what stops that record rolling forever without
+    /// ever being written. A log may not lose a record for being long.
+    /// </para>
+    /// <para>
+    /// <b>The instant is stamped here, in the gate, one statement before the
+    /// bytes go down</b> — see <see cref="FileLoggerProvider.WriteStamp"/> for
+    /// why that is the whole answer to keeping the file sorted.
+    /// </para>
+    /// </remarks>
+    /// <param name="handle">The open log file.</param>
+    /// <param name="record">The formatted record, without its line terminator.</param>
+    /// <returns>Whether the record was written.</returns>
+    private static bool TryAppend(SafeFileHandle handle, string record)
+    {
+        using var claim = NativeFile.TakeGate(handle);
+
+        var length = RandomAccess.GetLength(handle);
+
+        // LF rather than CRLF, to match every other file this repository
+        // writes. The protocol channel's line ending is StdioChannel's
+        // business; this one is only about not surprising a reader.
+        var bytes = Encoding.UTF8.GetBytes(FileLoggerProvider.WriteStamp(DateTime.UtcNow) + record + "\n");
+
+        if (length > 0 && length + bytes.Length > MaxBytesPerFile)
+        {
+            return false;
+        }
+
+        RandomAccess.Write(handle, bytes, length);
+        return true;
+    }
+
     private SafeFileHandle EnsureOpen()
     {
         var today = DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
@@ -205,9 +280,10 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
 
         _ = Directory.CreateDirectory(_directory);
 
-        // Skip past any file another process has already filled. Two processes
-        // may briefly disagree about the index; both files are valid and the
-        // same glob reads them, so the disagreement costs nothing.
+        // Skip past any file another process has already filled. This is the
+        // cheap starting point and not the decision: TryAppend re-reads the
+        // length under the gate, so a file that fills between this scan and the
+        // first write still rolls exactly.
         while (true)
         {
             var candidate = Path.Combine(_directory, $"{FilePrefix}{_currentDay}-{_currentIndex:D3}{FileSuffix}");
@@ -219,17 +295,12 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
                 continue;
             }
 
-            // Atomic append, shared with every other BrowserAI process on the
-            // machine. See NativeFile: FileMode.Append loses records here, and
-            // it loses them silently.
-            _handle = NativeFile.OpenForAtomicAppend(candidate);
+            // Shared with every other BrowserAI process on the machine for
+            // reading and writing, and with nothing at all for deleting. See
+            // NativeFile: FileMode.Append loses records here, and it loses them
+            // silently.
+            _handle = NativeFile.OpenForLockedAppend(candidate, shareDelete: false);
             CurrentFile = candidate;
-
-            // The starting size is read once. It drifts under concurrency,
-            // which only means the roll happens at approximately the cap
-            // rather than exactly at it -- and paying a metadata query per
-            // record to fix that would be a worse trade.
-            _bytesInFile = existing.Exists ? existing.Length : 0;
             return _handle;
         }
     }
@@ -245,6 +316,13 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
             {
                 if (File.GetLastWriteTimeUtc(file) < cutoff)
                 {
+                    // A file another BrowserAI still holds open cannot be
+                    // deleted at all now that delete sharing is withheld, and
+                    // that refusal lands in the catch below rather than
+                    // anywhere a reader sees it. It is the accepted half of
+                    // finding 10 and not a fault: a file old enough to sweep
+                    // and still open belongs to a process whose clock or
+                    // backup put it there, and the next start sweeps it.
                     File.Delete(file);
                 }
             }
@@ -274,7 +352,6 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
         {
             _handle = null;
             CurrentFile = null;
-            _bytesInFile = 0;
         }
     }
 }

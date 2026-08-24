@@ -15,6 +15,15 @@
 // call Windows sitting in the test assembly, and the point of the oracle is to
 // check the declarations we ship, not to provide an alternative to them.
 //
+// AND NOT EVERY STRUCT, WHICH IS WORTH SAYING HERE RATHER THAN LEAVING TO BE
+// REDISCOVERED. NativeFile.Overlapped is hand-written and checked, but its
+// oracle is System.Threading.NativeOverlapped rather than this file: CsWin32
+// refuses the name outright -- `error PInvoke003: This API will not be
+// generated. Use System.Threading.NativeOverlapped instead`, measured
+// 2026-08-24 -- so adding OVERLAPPED below turns the build red rather than
+// producing a comparison. InteropLayoutTests says the same thing where the
+// substitution is made.
+//
 // Adding a name here is cheap; adding one and not asserting on it is how this
 // file becomes a dependency nobody can justify. Every name below is asserted.
 

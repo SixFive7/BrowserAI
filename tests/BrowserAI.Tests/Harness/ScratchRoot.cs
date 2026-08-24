@@ -190,7 +190,7 @@ internal static class ScratchRoot
     /// </remarks>
     private static void ReclaimStrayIndexEntries(string scratchRoot)
     {
-        var index = new LocalAppDataPaths().IndexDirectory;
+        var index = BrowserAiPaths.Real.IndexDirectory;
 
         if (!Directory.Exists(index))
         {

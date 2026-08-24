@@ -263,7 +263,7 @@ internal static class Program
                 Payload = payload,
                 Provisioner = provisioner,
                 InstanceDirectory = instance,
-                OpenSessionLog = log.OpenSessionLog,
+                OpenSessionLog = ProcessLog.OpenSessionLog,
             };
 
             // Declared before the watcher below so that it is disposed after it:

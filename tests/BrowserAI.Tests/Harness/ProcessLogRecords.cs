@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using System.Text;
-using BrowserAI.Hosting;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -47,16 +46,18 @@ internal static class ProcessLogRecords
     /// <returns>Its records, joined, or an empty string if it wrote none.</returns>
     public static string ForPid(int processId)
     {
-        var directory = new LocalAppDataPaths().LogDirectory;
+        var directory = BrowserAiPaths.Real.LogDirectory;
 
         if (!Directory.Exists(directory))
         {
             return string.Empty;
         }
 
-        // The header form FileLoggerProvider writes: "<level>  pid=<n>  ". The
-        // trailing separator matters -- without it pid=1 also matches pid=1234.
-        var marker = string.Create(CultureInfo.InvariantCulture, $"  pid={processId}  ");
+        // The header form FileLoggerProvider writes: "<level>  pid=<n>@<ft>".
+        // The '@' matters exactly as the trailing separator used to -- without
+        // it pid=1 also matches pid=1234 -- and it is there because a bare pid
+        // does not identify a writer: see the type's remarks on the pair.
+        var marker = string.Create(CultureInfo.InvariantCulture, $"  pid={processId}@");
         var collected = new StringBuilder();
 
         foreach (var file in Directory.EnumerateFiles(directory, "browserai-*.log").Order(StringComparer.Ordinal))

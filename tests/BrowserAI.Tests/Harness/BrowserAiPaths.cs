@@ -61,6 +61,17 @@ internal static class BrowserAiPaths
     public static string AppRootOverride => Program.AppRootVariable;
 
     /// <summary>
+    /// Every path the product resolves under the default app root — the same
+    /// object <see cref="BrowsersDirectory"/> comes from.
+    /// </summary>
+    /// <remarks>
+    /// <b>One route rather than a <c>new LocalAppDataPaths()</c> at each call
+    /// site</b>, so the day the override above is honoured it is honoured
+    /// everywhere at once instead of in the places somebody remembered.
+    /// </remarks>
+    public static IAppPaths Real => Paths;
+
+    /// <summary>
     /// The chromium revision the committed snapshot names, so nothing in the
     /// suite spells a directory with a literal.
     /// </summary>

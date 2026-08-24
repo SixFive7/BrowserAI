@@ -98,16 +98,32 @@ internal sealed class ProcessLog : IDisposable
 
     /// <summary>
     /// Builds one session's logging stack: its own file beside <c>browserai.json</c>,
-    /// the machine-wide process log, and stderr.
+    /// and stderr.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Three destinations rather than a redirect.</b> A session's records
-    /// belong in the session directory, where whoever is debugging that session
-    /// will look — and equally in the process log, because the interesting
-    /// question is often "what were the other ninety-five doing". The scope
-    /// <see cref="Sessions.SessionLock"/> pushes is what keeps the second
-    /// readable.
+    /// ⚠️ <b>Corrected 2026-08-24 (previously "Three destinations rather than a
+    /// redirect … a session's records belong in the session directory … and
+    /// equally in the process log, because the interesting question is often
+    /// 'what were the other ninety-five doing'").</b> The second destination is
+    /// gone, at the maintainer's decision: <b>anything attributable to a session
+    /// goes to that session's own log, and the central log keeps only what has
+    /// none.</b> The duplicate was the bulk of the shared file's traffic — every
+    /// session's every record, from ~100 processes at once — and every byte of it
+    /// was already on disk somewhere a reader could find it by the session's own
+    /// path. What answers *what were the other ninety-five doing* is now the
+    /// session index and the per-session files it names, not one file a hundred
+    /// writers queue at.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This reduces the shared file's write rate; it does not dissolve the
+    /// contention.</b> Six categories can never move because no session owns
+    /// them — the stray sweep (machine-wide by design: it hunts browsers
+    /// belonging to <i>any</i> session), startup, updates, provisioning, the
+    /// server transport and the MCP server itself — and one more from the proxy:
+    /// a call naming no session, and a call naming a session that does not exist.
+    /// The gate in <see cref="RollingFileWriter"/> is what makes the remainder
+    /// safe, not this.
     /// </para>
     /// <para>
     /// <b><paramref name="minimumLevel"/> is per session, which is the whole
@@ -120,7 +136,7 @@ internal sealed class ProcessLog : IDisposable
     /// <param name="sessionDirectory">The session directory the log file goes in.</param>
     /// <param name="minimumLevel">The level for this session alone.</param>
     /// <returns>The session's logging stack. Dispose it when the session ends.</returns>
-    public SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
+    public static SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
     {
         ArgumentNullException.ThrowIfNull(sessionDirectory);
 
@@ -132,18 +148,13 @@ internal sealed class ProcessLog : IDisposable
             // Ownership moves into the returned SessionLogging, whose Dispose
             // calls Factory.Dispose -- the same transfer Create() above makes and
             // the rule accepts there. The difference the rule reacts to is that
-            // this is an instance method rather than a static factory of the type
-            // being returned, which is not a difference in ownership.
+            // SessionLogging is not the type this method belongs to, which is not
+            // a difference in ownership.
 #pragma warning disable CA2000
             var factory = LoggerFactory.Create(builder =>
             {
                 _ = builder.SetMinimumLevel(minimumLevel);
                 _ = builder.AddProvider(new FileLoggerProvider(file));
-
-                // Not owned: the process log outlives every session in it, and
-                // disposing this provider would close the machine-wide handle
-                // the moment the first session ended.
-                _ = builder.AddProvider(new FileLoggerProvider(_writer, ownsSink: false));
                 _ = builder.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
             });
 #pragma warning restore CA2000

@@ -9,7 +9,7 @@ namespace BrowserAI.Logging;
 
 /// <summary>
 /// One session's own log: <c>&lt;session-dir&gt;\browserai.log</c>, beside its
-/// <c>browserai.json</c>.
+/// <c>browserai.json</c>, and <b>the only file that session's records go to</b>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -21,11 +21,21 @@ namespace BrowserAI.Logging;
 /// scatter the one conversation it exists to hold.
 /// </para>
 /// <para>
-/// <b>Atomic append, for the same reason the process log uses it.</b> A session
-/// is resumable forever and may be driven by a succession of BrowserAI processes,
-/// so two of them can hold this file open across a reclaim.
-/// <c>FileMode.Append</c> loses records silently under exactly that;
-/// <c>FILE_APPEND_DATA</c> does not.
+/// <b>Written under the same cross-process gate the process log uses</b>, for the
+/// same reason and at the same two-syscall cost: a session is resumable forever
+/// and may be driven by a succession of BrowserAI processes, so two of them can
+/// hold this file open across a reclaim. The length read, the write stamp and the
+/// bytes all happen inside one claim, so this file is sorted by construction
+/// exactly as the shared one is.
+/// </para>
+/// <para>
+/// ⚠️ <b>Delete sharing is granted here and withheld on the process log, and the
+/// asymmetry is the point.</b> The process log must not be unlinkable out from
+/// under a hundred writers; this file <i>must</i> be, because
+/// <c>browserai_destroy</c> deletes the session directory while the session that
+/// owns it is still live — that is the tool working, not a failure — and a log
+/// that could veto its own directory's removal would turn a supported call into a
+/// refusal.
 /// </para>
 /// <para>
 /// <b>Every failure is swallowed</b>, as everywhere else in this namespace. A log
@@ -75,8 +85,14 @@ internal sealed class SessionLogFile : ILogSink, IDisposable
 
             try
             {
-                _handle ??= NativeFile.OpenForAtomicAppend(Path);
-                NativeFile.Append(_handle, Encoding.UTF8.GetBytes(record + "\n"));
+                var handle = _handle ??= NativeFile.OpenForLockedAppend(Path, shareDelete: true);
+
+                using var claim = NativeFile.TakeGate(handle);
+
+                var length = RandomAccess.GetLength(handle);
+                var bytes = Encoding.UTF8.GetBytes(FileLoggerProvider.WriteStamp(DateTime.UtcNow) + record + "\n");
+
+                RandomAccess.Write(handle, bytes, length);
             }
 #pragma warning disable CA1031 // See the type's remarks: logging never propagates a failure.
             catch (Exception)
@@ -86,6 +102,8 @@ internal sealed class SessionLogFile : ILogSink, IDisposable
                 // rather than reusing one that has just failed. A session
                 // directory can be deleted underneath a live session; that is
                 // browserai_destroy working, not a reason to fail a call.
+                // Closing is also what releases the gate when the failure was
+                // the release itself.
                 Close();
             }
         }

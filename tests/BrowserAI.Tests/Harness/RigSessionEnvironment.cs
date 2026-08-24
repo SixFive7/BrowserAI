@@ -55,6 +55,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private readonly Lock _gate = new();
     private readonly ILoggerFactory _provisioningLog;
 
+    private CapturingLoggerProvider? _sessionRecords;
     private int _disposed;
 
     private RigSessionEnvironment(
@@ -466,6 +467,29 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         .. _children.Where(child => !child.HasStopped).Select(_ => "a session's fake child is still running"),
     ];
 
+    /// <summary>
+    /// Also send every session's records to the rig's own capturing provider.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Needed from 2026-08-24, when a session's records stopped going to
+    /// the machine-wide log.</b> Until then a session's factory carried a second
+    /// provider over the process log's writer, so a rig that captured the
+    /// <i>process</i> factory saw session records for free. It no longer does,
+    /// and two tests went red for it — a child that died mid-call and a rebuilt
+    /// result — both asserting that a record was <b>written at all</b>, which is
+    /// still true and was still being asserted in the right place.
+    /// </para>
+    /// <para>
+    /// <b>It is not a way around the scoping rule and cannot become one.</b> This
+    /// captures in memory; what the rule is about is which <i>file</i> a record
+    /// lands in, and that is asserted directly against the two files by
+    /// <c>ProcessLogTests.ASessionsRecordsGoToItsOwnLogAndNotToTheSharedOne</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="records">The rig's capturing provider.</param>
+    public void CaptureSessionRecordsInto(CapturingLoggerProvider records) => _sessionRecords = records;
+
     private SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
     {
         // The product's own session log, into the session's own directory: the
@@ -486,6 +510,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
                 _ = builder.SetMinimumLevel(minimumLevel);
                 _ = builder.AddProvider(new FileLoggerProvider(file));
                 _ = builder.AddProvider(new TUnitLoggerProvider());
+
+                if (_sessionRecords is { } records)
+                {
+                    _ = builder.AddProvider(records);
+                }
             });
 #pragma warning restore CA2000
 

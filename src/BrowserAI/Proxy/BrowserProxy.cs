@@ -393,7 +393,10 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         if (answer.Response is not { } response)
         {
-            await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
+            // The run's own child, which no session owns -- so this one stays in
+            // the machine-wide log, where a child that will not answer
+            // `tools/list` is visible to whoever is looking at the machine.
+            await AnswerFailureAsync(_logger, caller, request, answer, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -431,6 +434,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // below could be sidestepped by omitting an argument.
         if (string.IsNullOrWhiteSpace(session))
         {
+            // ⚠️ ONE OF THE TWO RECORDS IN THIS METHOD THAT STAY IN THE
+            // MACHINE-WIDE LOG, and the reason is that there is nowhere else for
+            // them to go. Since 2026-08-24 everything attributable to a session
+            // is written to that session's own file and to nothing else -- but a
+            // call that named no session, and the one below that named one
+            // nobody opened, have no session directory to be written into. They
+            // are also the two a reader goes to the shared log for: a client
+            // getting the tool surface wrong is a fact about the client, not
+            // about any one session.
             ProxyLog.SessionMissing(_logger, tool);
             await RefuseAsync(caller, request.Id, SessionErrors.SessionMissing(tool), cancellationToken).ConfigureAwait(false);
             return;
@@ -467,7 +479,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         if (!decision.IsAllowed)
         {
-            ProxyLog.ToolRefused(_logger, tool, live.Location.FullPath);
+            ProxyLog.ToolRefused(live.Logger, tool, live.Location.FullPath);
             await RefuseAsync(caller, request.Id, decision.Refusal!, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -493,7 +505,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // those refusals already say what to do next.
         if (string.IsNullOrWhiteSpace(why))
         {
-            ProxyLog.WhyMissing(_logger, tool, live.Location.FullPath);
+            ProxyLog.WhyMissing(live.Logger, tool, live.Location.FullPath);
             await RefuseAsync(caller, request.Id, SessionErrors.WhyMissing(tool), cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -522,7 +534,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            ProxyLog.LogEntryRefused(_logger, tool, live.Location.FullPath, failure);
+            ProxyLog.LogEntryRefused(live.Logger, tool, live.Location.FullPath, failure);
 
             await RefuseAsync(
                 caller,
@@ -548,7 +560,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
         catch (SessionToolException refusal)
         {
-            ProxyLog.FilenameRefused(_logger, tool, live.Location.FullPath);
+            ProxyLog.FilenameRefused(live.Logger, tool, live.Location.FullPath);
             await RefuseAsync(caller, request.Id, refusal.Message, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -591,7 +603,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             if (Remediate(response) is { } corrected)
             {
                 live.Artifacts.Release(plan);
-                ProxyLog.RemediationRewritten(_logger, tool, live.Location.FullPath);
+                ProxyLog.RemediationRewritten(live.Logger, tool, live.Location.FullPath);
 
                 await caller.SendMessageAsync(
                     new JsonRpcResponse { Id = request.Id, Result = corrected },
@@ -615,12 +627,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // nothing. See ArtifactRouter.NoteWhatTheAnswerPublished.
             var completion = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
 
-            await AnswerChildResultAsync(caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
+            await AnswerChildResultAsync(live.Logger, caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
             return;
         }
 
         live.Artifacts.Release(plan);
-        await AnswerFailureAsync(caller, request, answer, cancellationToken).ConfigureAwait(false);
+        await AnswerFailureAsync(live.Logger, caller, request, answer, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -670,7 +682,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
             new JsonRpcResponse { Id = callerId, Result = TextResult(text, isError: true) },
             cancellationToken).ConfigureAwait(false);
 
-    private async Task AnswerFailureAsync(
+    private static async Task AnswerFailureAsync(
+        ILogger log,
         McpServer caller,
         JsonRpcRequest request,
         ChildAnswer answer,
@@ -678,11 +691,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
     {
         if (answer.ProtocolFailure is { } protocolFailure)
         {
-            await AnswerChildErrorAsync(caller, request.Id, protocolFailure, answer.Payload, cancellationToken).ConfigureAwait(false);
+            await AnswerChildErrorAsync(log, caller, request.Id, protocolFailure, answer.Payload, cancellationToken).ConfigureAwait(false);
             return;
         }
 
         await AnswerTransportFailureAsync(
+            log,
             caller,
             request.Id,
             request.Method,
@@ -691,6 +705,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     }
 
     /// <summary>Answers a caller with the child's result, and what BrowserAI did to the file it names.</summary>
+    /// <param name="log">The session's own logger: every record below names a call that session made.</param>
     /// <remarks>
     /// <para>
     /// <b>Byte-identity is a property of forwarding, and this is where that is
@@ -714,7 +729,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// the escaping is then ours.
     /// </para>
     /// </remarks>
-    private async Task AnswerChildResultAsync(
+    /// <param name="caller">The connection to answer.</param>
+    /// <param name="callerId">The caller's own request id.</param>
+    /// <param name="response">The child's response.</param>
+    /// <param name="payload">The child's frame as captured bytes, when the transport kept it.</param>
+    /// <param name="completion">What BrowserAI did to the file the call named, or null.</param>
+    /// <param name="cancellationToken">Cancels the send.</param>
+    /// <returns>The send task.</returns>
+    private static async Task AnswerChildResultAsync(
+        ILogger log,
         McpServer caller,
         RequestId callerId,
         JsonRpcResponse response,
@@ -741,7 +764,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 // JsonNode -- but its escaping is now ours, so the one claim the
                 // passthrough exists to make is no longer true of it. Said out
                 // loud rather than absorbed.
-                ProxyLog.VerbatimPayloadMissing(_logger, callerId.ToString());
+                ProxyLog.VerbatimPayloadMissing(log, callerId.ToString());
             }
 
             await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
@@ -757,7 +780,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // nobody has asked for is work on the hot path of every screenshot.
         if (completion.Image is { } appended)
         {
-            ProxyLog.InlineImageRestored(_logger, callerId, appended.MediaType, appended.Data.Length);
+            ProxyLog.InlineImageRestored(log, callerId, appended.MediaType, appended.Data.Length);
         }
 
         var spliced = payload is { } captured ? ResultNote.Append(captured.Json, blocks) : null;
@@ -768,7 +791,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
         else
         {
-            ProxyLog.NoteNotSpliced(_logger, callerId.ToString());
+            ProxyLog.NoteNotSpliced(log, callerId.ToString());
         }
 
         // Kept in step with the bytes on both arms. On the spliced arm nothing
@@ -804,6 +827,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     }
 
     /// <summary>Answers a caller with the child's own JSON-RPC error.</summary>
+    /// <param name="log">Where to record: the session's own logger, or the run's when no session owns the call.</param>
     /// <remarks>
     /// <b>The <c>"Request failed (remote): "</c> prefix is never met on this
     /// path, rather than met and stripped.</b> The SDK does add it — it is real,
@@ -811,7 +835,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// written here come from the child's frame, so the message that reaches the
     /// caller is the message the child sent.
     /// </remarks>
-    private async Task AnswerChildErrorAsync(
+    /// <param name="caller">The connection to answer.</param>
+    /// <param name="callerId">The caller's own request id.</param>
+    /// <param name="exception">The child's protocol failure.</param>
+    /// <param name="payload">The child's error frame as captured bytes, when the transport kept it.</param>
+    /// <param name="cancellationToken">Cancels the send.</param>
+    /// <returns>The send task.</returns>
+    private static async Task AnswerChildErrorAsync(
+        ILogger log,
         McpServer caller,
         RequestId callerId,
         McpProtocolException exception,
@@ -827,7 +858,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
         else
         {
-            ProxyLog.VerbatimPayloadMissing(_logger, callerId.ToString());
+            ProxyLog.VerbatimPayloadMissing(log, callerId.ToString());
 
             answer = new JsonRpcError
             {
@@ -857,14 +888,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// JSON-RPC <b>error</b> here because it is a transport failure rather than a
     /// tool outcome, and the cause is named.
     /// </remarks>
-    private async Task AnswerTransportFailureAsync(
+    private static async Task AnswerTransportFailureAsync(
+        ILogger log,
         McpServer caller,
         RequestId callerId,
         string method,
         Exception cause,
         CancellationToken cancellationToken)
     {
-        ProxyLog.ChildDidNotAnswer(_logger, method, callerId.ToString(), cause);
+        ProxyLog.ChildDidNotAnswer(log, method, callerId.ToString(), cause);
 
         var answer = new JsonRpcError
         {

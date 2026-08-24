@@ -171,6 +171,12 @@ internal sealed class McpTestHarness : IAsyncDisposable
         McpServer? server = null;
         var sessionEnvironment = sessions ?? RigSessionEnvironment.Create(configure);
 
+        // Before the first session is opened, so `Logs` means "this rig logged
+        // it" at either scope. A session's records stopped reaching the
+        // machine-wide log on 2026-08-24; see the method's own remarks for why
+        // that is a capture and not a hole in the rule.
+        sessionEnvironment.CaptureSessionRecordsInto(logs);
+
         try
         {
             proxy = await BrowserProxy.ConnectAsync(

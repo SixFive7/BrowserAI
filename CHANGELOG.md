@@ -508,6 +508,49 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The machine-wide log is one shared file under a cross-process write gate, and
+  a session's records no longer go into it.** Two changes that are one decision.
+  **First, scope:** anything attributable to a session is written to that
+  session's own `browserai.log` and to nothing else — `ProcessLog.OpenSessionLog`
+  no longer adds a second provider over the machine-wide writer, and the proxy's
+  per-call refusals are logged through the session's own logger where one is in
+  hand. What stays central is what no session owns: the stray sweep, which is
+  machine-wide by design because it hunts browsers belonging to *any* session,
+  plus startup, updates, provisioning, the server transport, the MCP server, and
+  the two proxy refusals with no session directory to be written into — a call
+  naming no session, and a call naming one that does not exist. ⚠️ **That reduces
+  the shared file's write rate; it does not dissolve the contention**, and the
+  lock rather than the scoping is what makes the remainder safe.
+  **Second, the lock**, chosen over one file per process at the maintainer's
+  decision, verbatim: *"Simple to read, simple to write."* `NativeFile.TakeGate`
+  takes an exclusive byte-range claim through `LockFileEx`, one byte past any
+  possible end of file — a lock over the data would be enforced against
+  `ReadFile` too and would refuse every concurrent reader of the log. A file lock
+  rather than a named object for the reason `MaintenanceLock` already gives: the
+  kernel releases it however the holder dies, where a semaphore's count is not
+  restored. **The length is read, the instant is stamped and the bytes are
+  written inside one claim**, so write order and timestamp order coincide and the
+  file is sorted *by construction* rather than by anybody sorting it.
+  **Every record now carries both of its times** — the leading column is when it
+  reached the file, `made=` is when it was created, and the two diverge only under
+  contention, which is the one thing a single timestamp cannot show. **And it
+  names its writer as `pid=<n>@<createdFileTime>`**, never a bare pid: the log
+  keeps thirty days and Windows reuses pids, so a bare one eventually names a
+  stranger. The FILETIME is spelled the way `browserai.json` spells
+  `processCreatedFileTime`, so a log line and a lock record name the same writer
+  with the same characters, and it is the pair `ProcessLiveness.IsAlive` takes.
+
+- **Rotation happens exactly at the cap.** *Corrected in
+  `RollingFileWriter` (previously "The starting size is read once. It drifts under
+  concurrency, which only means the roll happens at approximately the cap rather
+  than exactly at it — and paying a metadata query per record to fix that would be
+  a worse trade").* The length is now the file's own, read through the open handle
+  inside the write gate, so nothing can have appended between the read and the
+  decision and there is no per-process counter left to drift. It is not a metadata
+  query — the handle is already open — and no file in the directory ever exceeds
+  8 MiB, with one stated exception: a record larger than the cap on its own is
+  written rather than dropped, and lands alone in its own file.
+
 - **`BrowserAiPaths` no longer claims to answer "the directory the product would
   actually have used".** It resolves through the product's own
   `LocalAppDataPaths` — which is the part worth keeping — but constructs it with
@@ -553,6 +596,38 @@ has been satisfied in form only.
   directions by a pure arm beside the live one. **This is not `DriveLetterCase`
   restated**: that spells every guard path both ways *inside* a run and covers
   the class of defect; this covers the gate's claim about itself.
+
+### Fixed
+
+- **A torn log record is no longer possible, and the machinery that made it
+  possible is deleted rather than repaired.**
+  [Adversarial review finding 9](docs/reviews/2026-08-18-adversarial-processes.md).
+  `NativeFile.Append` looped on a short write, and `FILE_APPEND_DATA` atomicity is
+  **per `WriteFile` call** — so the second call landed after whatever another of
+  the ~100 processes had written in between, the record was torn and interleaved,
+  and every call returned success. Four directions were recorded for this and
+  **none of them was taken**: all four repaired a loop whose premise was a
+  lock-free design. Under a real lock there is no per-call size bound and nothing
+  can interleave, so resuming a short write at the right offset is correct by
+  construction and `RandomAccess.Write` does it. `OpenForAtomicAppend` and
+  `Append` are gone; **no truncation and no new record-length limit were needed**,
+  which is what every recorded direction cost.
+
+- **Nothing can unlink the live machine-wide log out from under its writers.**
+  [Adversarial review finding 10](docs/reviews/2026-08-18-adversarial-processes.md).
+  `FILE_SHARE_DELETE` let anything on the machine delete or rename it while a
+  hundred BrowserAIs held it open, after which every write **succeeded** into an
+  unlinked file object, `RollingFileWriter.CurrentFile` went on naming a path that
+  no longer existed, and the writer's own catch never fired because nothing had
+  failed. Delete sharing is now an argument each caller states: withheld for the
+  machine-wide log, granted for a session's own `browserai.log`, which
+  `browserai_destroy` must be able to remove under a live session.
+  ⚠️ **The cost is stated where it is decided and was accepted knowingly: the
+  MACHINE's central log — not one process's own file — cannot be deleted or
+  renamed while any BrowserAI runs**, `SweepExpired` included, and that pass now
+  tolerates the refusal instead of reporting it.
+
+### Changed
 
 - **`browser_get_config` DOES redact `secrets`, and the claim that it does not
   is corrected in three places.** *Previously, in `DECISIONS.md`, `kb/playwright/tools-and-artifacts.md`

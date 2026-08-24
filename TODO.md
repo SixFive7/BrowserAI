@@ -97,9 +97,10 @@ it.** `locking B3, B4, B5` and `processes 4, 6-14` had sat unread since the day
 they were written. Reading them produced **two fixes** — B3's shared mutex
 namespace and processes 8's title guard, both cheap only *because* the tree had
 moved underneath them — **three declines with reasons**, **one finding closed by
-work that had landed since**, and **seven hazard rows**. One of those seven is
-below, because its remedy is a decision somebody has to take rather than a change
-somebody has to make. The rest are hazards and nothing else; they are in the
+work that had landed since**, and **seven hazard rows**. Two of those seven were
+below, because their remedy was a decision somebody had to take rather than a
+change somebody had to make; **both have since been taken, and neither is below
+any more**. The other five are hazards and nothing else; they are in the
 [index](HAZARDS.md#hazard-index) and not here, because this file is work settled
 in intent and they are not settled.
 
@@ -109,39 +110,23 @@ five are hazards and nothing else").*** The second item was *"decide whether
 direction 1 — a per-session lock every mutating path and both disposal paths take
 — and it shipped the same day with a **deterministic** same-process interleaving
 behind it, which is the thing that item recorded as the reason to doubt direction
-1 at all. **Three of the seven have now closed**; the row is `closed` in the
+1 at all. **Five of the seven have now closed** *(previously "Three")*, the last
+two of them in the change the note below records; the row is `closed` in the
 [index](HAZARDS.md#hazard-index) and the reasoning is in
 [`docs/reviews/`](docs/reviews/README.md).
 
-- [ ] **Decide what a torn log record should do.** `NativeFile.Append` loops on a
-      short write, and `FILE_APPEND_DATA` is atomic **per `WriteFile` call** — so
-      the second call lands after whatever another of the hundred processes wrote
-      in between. The record is torn, interleaved, and every call returned
-      success.
-      [Hazard row](HAZARDS.md#hazard-index); [review](docs/reviews/2026-08-18-adversarial-processes.md),
-      finding 9. **Nothing here is a bug to fix; it is a choice about which
-      failure to have**, on the one path that must never take the process down:
-
-      1. **Throw on a partial write.** One line. Turns a silent tear into a lost
-         record plus an exception the writer's own catch already handles. What it
-         costs: a record that was *partly* written is still partly written, so
-         the file is torn either way — this makes it loud, not clean.
-      2. **Write through a single call and refuse anything larger than one
-         call can carry.** Honest about the guarantee, and it caps a log record
-         at whatever the filesystem will take in one write — a number nobody has
-         measured here, and it would be a new limit on a diagnostic surface.
-      3. **Retry the whole record from the start after a short write.** Restores
-         atomicity per record at the cost of duplicating the fragment that did
-         land, which is worse than a tear for anything parsing the file.
-      4. **Leave it and say so in place.** The reachable route named by the
-         review has narrowed — the log directory is derived from the install
-         location rather than supplied by a caller, and a UNC app root is refused
-         at startup since 2026-08-19 — so what remains is quota and disk-full
-         boundaries. It has never been observed.
-
-      **Recommendation: 1, with 4's sentence written into it.** It is the only
-      option that does not trade a silent failure for a new limit, and the
-      narrowing in 4 is why it is not urgent rather than why it is unnecessary.
+⚠️ **The other is gone too, taken 2026-08-24, and for that one it is worth
+saying how rather than only that.** *Previously "**Decide what a torn log record
+should do**", with four directions and a recommendation of the first —
+throw on a partial write.* **None of the four was chosen.** All four repaired a
+completion loop whose premise was that the shared log is written lock-free; the
+maintainer replaced the premise. Every write to that file now takes a
+cross-process byte-range claim, so there is no per-call size bound to exceed and
+nothing that can interleave — the torn record is dissolved rather than made loud,
+and neither the truncation nor the new record-length limit any of the four
+directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
+[review](docs/reviews/2026-08-18-adversarial-processes.md) finding 9. The
+`FILE_SHARE_DELETE` row beside it closed in the same change.
 
 - [ ] **Headless-with-storage is still refused on a reason the same pass
       declared void.** [`DECISIONS.md`](DECISIONS.md) keeps it out because *"it
