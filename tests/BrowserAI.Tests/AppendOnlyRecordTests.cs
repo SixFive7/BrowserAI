@@ -80,10 +80,21 @@ internal sealed partial class AppendOnlyRecordTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The 2026-08-24 review was sealed on the day it was copied in</b>, which
-    /// is what the second arm of this class exists to force: a record added
+    /// <b>Both 2026-08-24 reviews were sealed on the day each was copied in</b>,
+    /// which is what the second arm of this class exists to force: a record added
     /// without a seal is one nothing would notice being rewritten, and the newest
     /// record is the likeliest to be the one nobody registered.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A record is edited before it is sealed or not at all, and the
+    /// narrow re-review is the case that proves the ordering matters.</b> It was
+    /// written in <c>.work/</c> with one upstream pointer shape spelled as a
+    /// Markdown link inside a code span; <c>DocumentationLinkTests</c> reads raw
+    /// text and does not skip code spans, so registering it verbatim would have
+    /// added a relative link into <c>docs/reviews/</c> that resolves to nothing.
+    /// The span was rewritten, the change is named in the record's own opening
+    /// note, and the seal was taken afterwards — which is the only order that
+    /// does not mean re-sealing a record to make a test pass.
     /// </para>
     /// The changelog carries exactly one released section today, and the
     /// <c>[Unreleased]</c> section — 143,210 characters of it on the day this
@@ -98,6 +109,7 @@ internal sealed partial class AppendOnlyRecordTests
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea"),
         new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17223, "f0fd2b224ac80b033a17b518ca500730b1bfc2ded5ae3a546d6d193cdca3fc30"),
         new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11022, "1a5b9733e0f023de5c0a8a5879ac20298fd7193277b88bac075838c31fea1a65"),
+        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29792, "55a40260c260d23240c069ef846929106a0a20c4ea1f34b8bf073590ec8587e1"),
         new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32404, "5f8fdaa1289f2a945a9c8ac1da91dcaf76c0067ec6aba82d8edc6a18474446d1"),
     ];
 
