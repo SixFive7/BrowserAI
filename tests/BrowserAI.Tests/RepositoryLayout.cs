@@ -159,18 +159,54 @@ internal static class RepositoryLayout
     /// bundled payload, and build output under every name it takes here.
     /// </para>
     /// <para>
-    /// Verified 2026-08-17: this yields the same 215 files as
-    /// <c>git ls-files *.cs *.ps1 *.psm1 *.mjs *.js *.md</c>, with no difference
-    /// in either direction. It is not <c>git ls-files</c> itself because the
-    /// suite must run on an export with no git in it.
+    /// ⚠️ <b>Corrected 2026-08-24 (previously "Verified 2026-08-17: this yields
+    /// the same 215 files as <c>git ls-files *.cs *.ps1 *.psm1 *.mjs *.js
+    /// *.md</c>, with no difference in either direction").</b> That sentence was
+    /// true when it was written, was never checked again, and was <b>false by
+    /// 520 files</b> for as long as agent worktrees existed under
+    /// <c>.claude\</c> — which this walk does not prune, because
+    /// <c>settings.json</c> and <c>hooks\</c> are committed and pruning would
+    /// lose the SPDX and link coverage of both. Every tree-as-text scan read a
+    /// second checkout as repository content: the fragment scan counted
+    /// <b>2,378</b> against a real <b>797</b>, and three gate arms went red for a
+    /// reason no message named.
+    /// </para>
+    /// <para>
+    /// <b>It is a mechanism now rather than a remark:</b>
+    /// <see cref="HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds"/>
+    /// compares this list against <c>git ls-files</c> on every run, in both
+    /// directions, and skips loudly when git is absent. No count is quoted here
+    /// any more — a number in a remark is the thing that went stale, and the
+    /// comparison does not need one.
+    /// </para>
+    /// <para>
+    /// It is still not <c>git ls-files</c> itself, and that has not changed: the
+    /// suite must run on an export with no git in it. Git is the oracle, never
+    /// the source of truth.
     /// </para>
     /// </remarks>
     public static IReadOnlyList<FileInfo> LinkBearingFiles { get; } =
     [
         .. Walk(Root, atRoot: true)
-            .Where(file => file.Extension is ".cs" or ".ps1" or ".psm1" or ".mjs" or ".js" or ".md")
+            .Where(file => IsLinkBearing(file.Name))
             .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
+
+    /// <summary>
+    /// Whether a path names one of the file kinds
+    /// <see cref="LinkBearingFiles"/> is made of.
+    /// </summary>
+    /// <remarks>
+    /// <b>Public so that the walk and the thing that checks the walk ask the
+    /// same question.</b> A second copy of this list on the git side of that
+    /// comparison would eventually answer differently, and the divergence it
+    /// reported would be its own — which is exactly the trap
+    /// <c>RecordedCountTests</c> exists to avoid one layer up.
+    /// </remarks>
+    /// <param name="path">A file name or path.</param>
+    /// <returns>Whether it carries prose this repository scans.</returns>
+    public static bool IsLinkBearing(string path) =>
+        Path.GetExtension(path) is ".cs" or ".ps1" or ".psm1" or ".mjs" or ".js" or ".md";
 
     /// <summary>
     /// A file's text with whole-line comments removed, so that a scan for a

@@ -3,12 +3,13 @@
 
 using System.Globalization;
 using System.Text.RegularExpressions;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// Six rules from <c>CLAUDE.md</c> that were held by habit alone — two until
-/// 2026-08-17 and four until 2026-08-23.
+/// Seven rules from <c>CLAUDE.md</c> that were held by habit alone — two until
+/// 2026-08-17, four until 2026-08-23 and one until 2026-08-24.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -31,6 +32,14 @@ namespace BrowserAI.Tests;
 /// <see cref="EveryRawHandleThatOutlivesItsExpressionIsRefCounted"/> is the
 /// assertable part of a fix that could not be planted red, and it is a weaker
 /// claim than the others make.
+/// </para>
+/// <para>
+/// <b>The seventh, added 2026-08-24, is the one the other six rest on.</b>
+/// <see cref="TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds"/> asserts
+/// that the corpus every scan here reads is the set of files git considers part
+/// of this repository. It was a sentence in a doc comment that had been false by
+/// 520 files, and a rule applied to the wrong corpus is a rule nobody is
+/// keeping.
 /// </para>
 /// </remarks>
 internal sealed partial class HouseRuleTests
@@ -821,4 +830,107 @@ internal sealed partial class HouseRuleTests
 
     private static string Relative(FileInfo file) =>
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);
+
+    /// <summary>
+    /// <b>What the suite scans is exactly what git says this repository holds</b>
+    /// — no file the walk invented, and none it lost.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the rule every other tree-as-text rule rests on, and it was
+    /// a sentence in a remark until 2026-08-24.</b>
+    /// <see cref="RepositoryLayout.LinkBearingFiles"/> claimed in its own doc
+    /// comment to yield "the same 215 files as <c>git ls-files</c>", verified
+    /// once by hand on 2026-08-17. It was <b>false by 520 files</b> while
+    /// nothing noticed: the walk prunes <c>.git</c>, <c>.vs</c>, <c>.work</c>,
+    /// <c>payload</c>, <c>bin</c>, <c>obj</c> and <c>node_modules</c> and does
+    /// <b>not</b> prune <c>.claude</c>, so when agent worktrees appeared under
+    /// <c>.claude\worktrees\</c> every scan built on that list read a second
+    /// checkout as repository content — the fragment scan counted <b>2,378</b>
+    /// against a real <b>797</b>, and three gate arms went red for a reason no
+    /// message named.
+    /// </para>
+    /// <para>
+    /// <b>The fix was to assert the invariant, not to change the corpus.</b>
+    /// Pruning <c>.claude</c> was considered and rejected at the maintainer's
+    /// decision: <c>.claude\settings.json</c> and <c>.claude\hooks\</c> are
+    /// committed, so a prune would silently drop them out of the SPDX check and
+    /// the link check to fix a cause that retired with the worktrees. This arm
+    /// costs nothing, catches the next stray directory whatever it is called,
+    /// and takes no exception list of its own.
+    /// </para>
+    /// <para>
+    /// <b>Both directions, and the two are different defects.</b> A path the
+    /// walk has and git does not is ignored-but-present — a worktree, a cache, a
+    /// build output nobody added to the prune list — and it <i>inflates</i>
+    /// every scan. A path git has and the walk does not is a prune that reaches
+    /// too far, which is how <c>src\BrowserAI\Artifacts\</c> lost five product
+    /// source files to the root's <c>artifacts\</c> rule on case-insensitive
+    /// Windows: it <i>hides</i> files, silently, from the SPDX header check and
+    /// the link check alike.
+    /// </para>
+    /// <para>
+    /// <b>Skips loudly without git, and that is the whole answer to the export
+    /// objection.</b> The suite must run where there is no repository; git here
+    /// is an oracle rather than a source of truth, so its absence is
+    /// <see cref="SuiteCapability.Git"/> reading ABSENT in the coverage block and
+    /// this arm reporting <i>skipped</i> — never <i>passed</i>. A release run
+    /// fails instead, because a release whose corpus was never checked has every
+    /// tree scan resting on an unverified list.
+    /// </para>
+    /// <para>
+    /// <b>Planted red on 2026-08-24 before it was trusted</b>, with an ignored
+    /// directory under <c>.claude\</c> holding one Markdown file: the walk found
+    /// it, git did not, and this arm named it. Removing the plant returned the
+    /// run to green.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds()
+    {
+        SuiteEnvironment.RequireGit();
+
+        // Through RepositoryLayout.IsLinkBearing on both sides, so the two lists
+        // cannot be filtered by two different opinions about what a scanned file
+        // is -- and so a new extension joining the walk joins the oracle in the
+        // same edit.
+        var oracle = (await GitOracle.RepositoryFilesAsync())
+            .Where(RepositoryLayout.IsLinkBearing)
+            .Select(path => Path.GetFullPath(Path.Combine(RepositoryLayout.Root.FullName, path)))
+            // A path in the index whose file is not on disk -- staged, then
+            // deleted -- is not something a walk of the disk could ever yield,
+            // and it is a different question from this one.
+            .Where(File.Exists)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var walked = RepositoryLayout.LinkBearingFiles
+            .Select(file => file.FullName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // OrdinalIgnoreCase on both sides. Git records the spelling that was
+        // committed and the walk reads the spelling on disk, and on a
+        // case-insensitive filesystem a disagreement between those two is a
+        // real but entirely different defect -- reporting it here would say
+        // "this file is missing AND extra", which is the least useful true
+        // sentence available.
+        var invented = walked.Except(oracle, StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .Select(path => $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, path)}: the walk scans it and git does not consider it part of the repository, so every tree-as-text rule is being applied to a file that is not ours")
+            .ToList();
+
+        var lost = oracle.Except(walked, StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .Select(path => $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, path)}: git considers it part of the repository and the walk prunes it away, so every tree-as-text rule is silently blind to it")
+            .ToList();
+
+        await Assert.That(string.Join(Environment.NewLine, invented.Concat(lost))).IsEmpty();
+
+        // Not vacuous: two empty sets agree perfectly, and a git that answered
+        // nothing at all would satisfy the comparison above exactly as a healthy
+        // one does. This is the same shape of hole the record count in
+        // SaturationTests had, asserted here before it can open.
+        await Assert.That(walked.Count).IsGreaterThan(200);
+        await Assert.That(oracle.Count).IsEqualTo(walked.Count);
+    }
 }

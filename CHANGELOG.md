@@ -123,6 +123,51 @@ has been satisfied in form only.
 
 ### Added
 
+- **The corpus every tree-as-text rule reads is now asserted against
+  `git ls-files`, in both directions.**
+  `HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds`
+  compares `RepositoryLayout`'s walk against
+  `git ls-files --cached --others --exclude-standard`, filtered through one
+  shared predicate so the two sides cannot ask different questions. **The
+  remark it replaces was false by 520 files**: the walk claimed to yield "the
+  same 215 files as `git ls-files`", verified once by hand on 2026-08-17, and
+  while agent worktrees sat under `.claude\worktrees\` — ignored by git,
+  not pruned by the walk — every scan built on that list read a second
+  checkout as repository content. The fragment scan counted **2,378** against a
+  real **797**, and three gate arms went red for a reason no message named.
+  **`.claude` is deliberately still not pruned**: `settings.json` and `hooks\`
+  are committed, so a prune would have traded one blind spot for another. Git is
+  an **oracle** here and never a source of truth — absent, the new
+  `SuiteCapability.Git` reads ABSENT in the coverage block and the arm skips
+  loudly, and a release run fails. Planted red both ways before it was trusted.
+
+- **`SaturationTests`' torn-record arm is scoped to the run's own pids**, and a
+  second arm plants the fault it can no longer plant live. The hundred-process
+  arm reads the machine-wide process log with **no time filter** —
+  deliberately, because NTFS does not keep an mtime current while a hundred
+  handles are open on the file and a filter there once hid the only file that
+  mattered — so **one torn record written by any BrowserAI from any
+  checkout failed it on every later run until the log rolled, and no checkout
+  could clear it**. A sibling's tear at 03:38 failed a run two hours later. The
+  strength is unchanged for this run's writes: a tear counts if **either** end
+  of it is one of this run's pids, because our write failing to be atomic
+  against a stranger's is the same defect seen from the other side. Watched red
+  with a synthetic tear in the shared log (1 m 21 s to fail),
+  then green with the same plant in place.
+
+- **The `--treenode-filter` trap, in
+  [`kb/toolchain.md`](kb/toolchain.md).** The alternation character is an OR
+  **inside one path segment** and never between path patterns: six class
+  patterns joined with it select the **whole assembly** in one arrangement and
+  the **first class only** in another, both reporting a clean pass, and one of
+  them did so while two of the tests it claimed to cover were red. The proof it
+  is not an OR at all is a pair that individually match nothing and together
+  match everything. The correct syntax, the counts side by side and a
+  re-establishment procedure are in the article; the rule — **a filtered
+  run is a development convenience, never a verification** — is in
+  [`CLAUDE.md`](CLAUDE.md), in the list of rules that need a person, with the
+  reason no mechanism can close it stated there rather than implied.
+
 - **The 2026-08-24 adversarial review is a dated record rather than a file in
   `.work\`.** It is the read-only pass over the seams where the 2026-08-20/24
   changes — the mode removal, the injected `why`, the durable action log,

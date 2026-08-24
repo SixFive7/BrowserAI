@@ -239,6 +239,30 @@ rules a .NET source folder could realistically collide with are `[Ll]og/`, `[Oo]
 `[Rr]elease/` and `[Oo]bj/`; a folder named `Logs\`, `Out\` or `Release\` under
 `src/` would be swallowed exactly as `Artifacts\` was.
 
+⚠️ **Corrected 2026-08-24 (previously "Nothing compares the files on disk
+against what git can see"): something does again, from the other end, and it
+was not built for this.** `HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds`
+landed that day to assert that the corpus every tree-as-text rule reads is what
+`git ls-files --cached --others --exclude-standard` says the repository holds
+— it exists because `RepositoryLayout`'s own remark about that had been false
+by 520 files. **A `.cs` file swallowed by an ignore rule now fails it**: the walk
+reads the disk and sees the file, git excludes it as ignored, and the arm names
+it in the direction it calls *invented*. That is the defect of 2026-08-15,
+mechanised again, by a test whose subject is something else.
+
+**It is not the deleted test and does not restore it, and the difference is the
+part worth reading.** The new arm covers `.cs`, `.ps1`, `.psm1`, `.mjs`, `.js`
+and `.md` **across the whole tree** rather than `.cs` under `src/` and `tests/`,
+so it is wider where it matters most and it is **blind to every other extension**
+— a swallowed `.json`, `.txt`, `.props` or `.targets` is still invisible, and
+so is a data folder holding no prose. That last gap is exactly what the widening
+recommended above would have closed and what the decision declined. It also
+skips loudly rather than failing on a machine with no git, where the deleted test
+would simply have thrown. **So the decision stands as taken**, and what changed is
+that its most expensive consequence — the 2026-08-15 loss recurring silently
+— now has a mechanism in front of it by accident rather than by design. Nobody
+should read that as permission to stop reading this entry.
+
 **Where the reasoning now lives, so nobody re-adds this believing it was an
 oversight.** Both `.gitignore` comments that used to name the test now say it was
 deliberately deleted, name this entry, and say what the loss of it means; the refresh

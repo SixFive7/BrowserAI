@@ -382,6 +382,103 @@ detecting a hang, and every one of them here reported something other than
 reference machine is 32 cores, and a smaller one will starve harder rather than
 differently.
 
+### A filtered run covers less than it asked for, and reports success anyway — measured 2026-08-24
+
+**`--treenode-filter` treats `|` as an OR *inside one path segment*. It does not
+OR whole path patterns**, and neither the platform nor the summary says so when a
+filter means something other than what it looks like. Six class patterns joined
+with `|` do not run six classes.
+
+Measured 2026-08-24 on this machine — SDK **10.0.400**, .NET **10.0.11**, TUnit
+**1.65.0**, `Microsoft.Testing.Platform` **2.3.3** — against six real classes of
+this suite, whose sizes were established one at a time first:
+`SessionPathTests` **4**, `LockRecordTests` **19**, `ErrorCatalogueTests` **18**,
+`ArtifactRoutingTests` **29**, `ConfigRoundTripTests` **5**, `RunOptionTests`
+**20**. **The right answer is 95.**
+
+| Filter handed to `--treenode-filter` | Discovered | What it actually selected |
+|---|--:|---|
+| `/*/*/SessionPathTests/*\|/*/*/LockRecordTests/*\|…` — six whole patterns joined by `\|` | **601** | **the entire suite**: every test in the assembly |
+| `/*/*/SessionPathTests/*\|LockRecordTests/*\|…` — the same six, written without repeating the prefix | **4** | **the first class only** |
+| `/*/*/SessionPathTests\|LockRecordTests\|…/*` — the alternation inside the class segment | **95** | the six classes, and nothing else |
+| `/*/*/(SessionPathTests\|LockRecordTests)/*` — the same, parenthesised | 23 | the two classes named |
+
+**So the correct syntax is one path whose class segment holds the alternation**,
+`/<assembly>/<namespace>/<class>/<test>` with `*` for any segment and `|` (with
+optional parentheses) *within* a segment. Every other arrangement above is
+accepted silently.
+
+**The `|`-joined form does not merely mis-select — it stops filtering.** The
+proof is a pair that individually match nothing:
+`/*/*/NoSuchClassAtAll/*` discovers **0** and
+`/*/*/AlsoNotAClass/*` discovers **0**, and
+`/*/*/NoSuchClassAtAll/*|/*/*/AlsoNotAClass/*` discovers **601**. Two patterns
+that select nothing cannot OR into everything, so the `|` is not an OR of paths
+at all.
+
+**And it is green-when-broken, which is the whole reason this is written down.**
+The same two forms *executed*, minutes apart, against the same tree:
+
+| Filter | `total` | `failed` | `succeeded` | Verdict | Exit |
+|---|--:|--:|--:|---|--:|
+| the `\|`-joined six, no repeated prefix | 4 | 0 | 4 | **`Passed!`** | 0 |
+| the alternation inside the class segment | 95 | **2** | 93 | `Failed!` | 2 |
+
+The first run reports a clean pass over what its author believed were six
+classes. Two of the tests it claimed to cover were red at that moment. *(Those
+two were `ConfigRoundTripTests` refusing a **stale published binary** — an
+environment state, not a defect in the tree; the point here is the disagreement
+between two runs of the same intent, not what the failure was.)*
+
+**How it was caught, and it was not caught by the run.** An agent ran the
+`|`-joined form over six classes, read *"16 passed"*, and reported it as evidence
+about all six. Nothing in that output was false — the run genuinely passed what
+it genuinely ran — and nothing in it said the filter had not done what it looked
+like. What disagreed was a **positive control on a published count**: a fragment
+scan said 794 where the stamp said 785, and only that second number made anybody
+re-run anything.
+
+**To re-establish**, from the repository root, with a built test assembly:
+
+```bash
+EXE=tests/BrowserAI.Tests/bin/Debug/net10.0-windows/BrowserAI.Tests.exe
+for f in '/*/*/SessionPathTests/*' \
+         '/*/*/LockRecordTests/*' \
+         '/*/*/SessionPathTests/*|/*/*/LockRecordTests/*' \
+         '/*/*/SessionPathTests|LockRecordTests/*'; do
+  printf '%-52s ' "$f"
+  "$EXE" --disable-logo --list-tests --treenode-filter "$f" | grep -o 'found [0-9]* test'
+done
+```
+
+The first two are the parts, the third is the trap, the fourth is the answer.
+`--list-tests` is enough and costs a fifth of a second; nothing here needs a run.
+`[FLOATS]` — it is a property of `Microsoft.Testing.Platform`'s filter grammar
+and will move when that moves.
+
+> ⚠️ **The shell is a second, independent trap in the same character.** `|` is a
+> pipeline operator in both PowerShell and Git Bash, so an **unquoted** filter is
+> cut at the first `|` before the test host ever sees it. Measured the same day
+> in Git Bash: the second half became a command, bash answered
+> `/*/*/LockRecordTests/*: No such file or directory`, and the *first* half still
+> ran — its output going into a pipe whose reader had already failed. **Always
+> quote a tree-node filter.** Two different mechanisms, one keystroke, and the
+> same outcome: a run that covered less than it was asked for and said nothing.
+
+**The rule this earns: a filtered run is a development convenience, never a
+verification.** Only a full run is evidence, which is what
+[the gate](../TESTING.md#continuous-integration) already requires in practice and
+what [`CLAUDE.md`](../CLAUDE.md) now says in the list of rules that need a person.
+**It is in that list rather than the mechanised one, and honestly so.** A
+filtered run is a correct run: every number it prints is true of what it ran.
+What is false is the sentence somebody writes underneath it, and no test can read
+that sentence. A mechanism that refused filtered runs would forbid the iteration
+loop this rule explicitly permits; one that merely flagged them would fire on
+every legitimate use and be tuned out within a day. The nearest thing to a
+mechanism here is the one that actually caught it — a published count re-scanned
+by `RecordedCountTests` — and that works by disagreeing about something else
+entirely.
+
 ## What a NativeAOT publish emits
 
 **NativeAOT embeds `ApplicationManifest` into the published binary.** Verified by

@@ -98,11 +98,20 @@ project.fragment.lock.json
 # `BuildConfigurationTests.NoSourceFileIsInvisibleToGit`, because a comment is
 # not a mechanism"). That test was DELETED on 2026-08-19, deliberately, by the
 # maintainer -- not lost in a refactor and not an oversight. The reasoning is in
-# QUESTIONS.md, judgement call E. What went with it: nothing now compares the
-# `.cs` files on disk under `src/` and `tests/` against `git ls-files`, so a
+# QUESTIONS.md, judgement call E.
+#
+# !! CORRECTED 2026-08-24 (previously "What went with it: nothing now compares
+# the `.cs` files on disk under `src/` and `tests/` against `git ls-files`, so a
 # source file swallowed by an ignore rule is invisible again, exactly as it was
-# on 2026-08-15, and `git status --porcelain` still reports clean because an
-# ignored file is not untracked. 64 unanchored directory rules remain in the
+# on 2026-08-15"). Something compares them again, from the other end and by
+# accident: HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds
+# asserts that the corpus every tree-as-text scan reads is exactly what
+# `git ls-files --cached --others --exclude-standard` holds, so a swallowed
+# `.cs`, `.ps1`, `.psm1`, `.mjs`, `.js` or `.md` ANYWHERE in the tree is a red
+# build naming the file. What is STILL invisible is every other extension -- a
+# swallowed `.json`, `.txt`, `.props` or `.targets`, or a data folder holding no
+# prose -- and `git status --porcelain` still reports clean either way, because
+# an ignored file is not untracked. 64 unanchored directory rules remain in the
 # upstream half above -- the predicate is "a line above the BrowserAI marker
 # that ends in `/`, does not begin with `/` and is not a negation", re-counted
 # 2026-08-19; only these two are anchored. `[Ll]og/`, `[Oo]ut/`, `[Rr]elease/`
@@ -473,9 +482,15 @@ FodyWeavers.xsd
 # (previously "then run the suite.
 # `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` is what makes forgetting
 # a red build rather than a silent loss"). That test was deleted on 2026-08-19 --
-# the maintainer's decision, recorded as judgement call E in QUESTIONS.md -- so
-# forgetting the re-anchor is a silent loss again and the suite will stay green
-# through it. This comment is all there is.
+# the maintainer's decision, recorded as judgement call E in QUESTIONS.md.
+#
+# !! CORRECTED 2026-08-24 (previously "so forgetting the re-anchor is a silent
+# loss again and the suite will stay green through it. This comment is all there
+# is"). The suite does NOT stay green through it for a source or prose file:
+# HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds fails and
+# names it. It stays green for every other extension, so the by-hand
+# `git check-ignore -v` above is still the step, and this comment is still what
+# asks for it.
 #
 # Everything below is project-specific.
 #

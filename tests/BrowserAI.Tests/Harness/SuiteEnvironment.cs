@@ -9,9 +9,14 @@ using BrowserAI.Registration;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// The four things a run either has or does not have, named so that a run that
-/// did not have one cannot report the same summary as a run that did.
+/// The things a run either has or does not have, named so that a run that did
+/// not have one cannot report the same summary as a run that did.
 /// </summary>
+/// <remarks>
+/// ⚠️ <b>Deliberately not counted here.</b> This summary said "the four things"
+/// while the enum held six, and then seven; a count in a sentence beside the
+/// list it counts is a stale number waiting to happen, and nothing reads it.
+/// </remarks>
 internal enum SuiteCapability
 {
     /// <summary>The NativeAOT publish, with a payload beside it.</summary>
@@ -44,6 +49,22 @@ internal enum SuiteCapability
     /// is one whose founding promise is untested.
     /// </remarks>
     ClientCommandLine,
+
+    /// <summary>
+    /// A git that can answer questions about the tree this run is reading.
+    /// </summary>
+    /// <remarks>
+    /// <b>A capability rather than an assumption because the suite must run on
+    /// an export that has none.</b> Every tree-as-text rule in this repository —
+    /// the SPDX header, the link scan, the fragment count, never-by-image-name —
+    /// reads the corpus <see cref="RepositoryLayout"/>'s walk produces, and the
+    /// only second opinion about that corpus is <c>git ls-files</c>. Absent, the
+    /// arm that compares them skips loudly and the block below says so; under
+    /// <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is correct — a release cut
+    /// from a run that could not check its own corpus is a release whose every
+    /// tree scan is unverified.
+    /// </remarks>
+    Git,
 }
 
 /// <summary>
@@ -213,6 +234,11 @@ internal static class SuiteEnvironment
         Require(SuiteCapability.PackagedRelease, test);
         return PackagedRelease()!;
     }
+
+    /// <summary>A git that can answer about this tree, or a skip.</summary>
+    /// <param name="test">The calling test, filled in by the compiler.</param>
+    public static void RequireGit([CallerMemberName] string test = "") =>
+        Require(SuiteCapability.Git, test);
 
     /// <summary>The MCP client's own command line, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
@@ -629,6 +655,16 @@ internal static class SuiteEnvironment
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
+        // No Partial state here either, for the same reason and one more: git
+        // either answers "this is a work tree" or it does not, and the two ways
+        // of not answering — no git on PATH, and a directory that is not a
+        // repository — are the same absence to every caller. A `.git` present
+        // and unreadable would be a third thing, and it is not distinguished
+        // here because nothing could act on the distinction.
+        SuiteCapability.Git => GitOracle.IsAvailable
+            ? CapabilityState.Present
+            : CapabilityState.AbsentAsAWhole,
+
         _ => PackagedRelease() is not null ? CapabilityState.Present : CapabilityState.AbsentAsAWhole,
     };
 
@@ -721,6 +757,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => "Chromium",
         SuiteCapability.ProvisionedFirefox => "Firefox",
         SuiteCapability.ClientCommandLine => "client CLI",
+        SuiteCapability.Git => "git",
         _ => "packed release",
     };
 
@@ -731,6 +768,9 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => BrowserAiPaths.ExpectedChromiumExecutable,
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
         SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
+        SuiteCapability.Git => GitOracle.IsAvailable
+            ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
+            : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",
         _ => PackagedRelease() ?? Path.Combine(RepositoryLayout.Root.FullName, "Releases", "BrowserAI-<version>-full.nupkg"),
     };
 
@@ -741,6 +781,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => "Provision it: BrowserAI downloads it on first use, or run the suite once with a payload present.",
         SuiteCapability.ProvisionedFirefox => "Provision it: BrowserAI downloads it on first use of a Firefox session.",
         SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{McpClientRegistration.ClientExecutable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
+        SuiteCapability.Git => "Install git and run the suite from a checkout rather than from an export. Nothing is written: the only command asked for is 'git ls-files'.",
         _ => $"Run: pwsh -File build/New-Release.ps1, or set {ReleasePackageVariable} to a packed .nupkg.",
     };
 }

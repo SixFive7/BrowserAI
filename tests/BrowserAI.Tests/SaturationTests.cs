@@ -62,11 +62,23 @@ namespace BrowserAI.Tests;
 /// creation times, so a recycled pid cannot make a leak look like a clean exit.
 /// </description></item>
 /// <item><description>
-/// <b>The shared process log is still readable.</b> Every line in it is a whole
-/// record or an indented continuation, and every one of this test's processes
-/// appears in it by pid. A hundred processes appending to one file is the
-/// charter's own claim about <c>FILE_APPEND_DATA</c>, and this is the only test
-/// that puts a hundred processes behind it.
+/// <b>The shared process log is still readable.</b> No record header appears
+/// anywhere but at the start of a line in anything this run's processes wrote,
+/// and every one of this test's processes appears in it by pid. A hundred
+/// processes appending to one file is the charter's own claim about
+/// <c>FILE_APPEND_DATA</c>, and this is the only test that puts a hundred
+/// processes behind it.
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-24 (previously "Every line in it is a whole record or
+/// an indented continuation").</b> That sentence outlived the assertion by seven
+/// days: the rule about what every <i>other</i> line must look like was removed
+/// on 2026-08-17, because a log message may contain newlines and the shape of
+/// its continuations is not this test's business
+/// (see <see cref="RecordHeader"/>). The clause about <i>this run's</i>
+/// processes is the 2026-08-24 pid scope
+/// (see <see cref="TornRecordsThisRunWasPartyTo"/>) — the log is machine-wide,
+/// so an unscoped claim about it is a claim about every checkout on the box.
+/// </para>
 /// </description></item>
 /// </list>
 /// <para>
@@ -317,18 +329,6 @@ internal sealed partial class SaturationTests
 
             var (lines, pids) = ReadProcessLogSince(logsBefore, started);
 
-            var torn = lines
-                .SelectMany(line => RecordHeader().Matches(line).Where(match => match.Index is not 0).Select(match => (line, match)))
-                .Take(10)
-                .Select(found => $"a record header starts at offset {found.match.Index.ToString(CultureInfo.InvariantCulture)} of a line, so two processes' bytes are interleaved: {(found.line.Length <= 300 ? found.line : found.line[..300] + "…")}")
-                .ToList();
-
-            await Assert.That(string.Join(Environment.NewLine, torn)).IsEmpty();
-
-            // Not vacuous: the check above only means something if this log
-            // actually holds records, and a run that read the wrong file or an
-            // empty one would satisfy it perfectly.
-            //
             // ⚠️ COUNTED OVER THIS RUN'S OWN PIDS, and that is the 2026-08-18
             // correction. It used to count every record header in every log file
             // on the machine — so on a developer's machine, with months of
@@ -338,7 +338,19 @@ internal sealed partial class SaturationTests
             // 6; with the directory moved aside here, 0. A check whose subject is
             // "what this run wrote" must not be answerable by what a previous one
             // wrote, however many files that takes.
+            //
+            // Read before the torn check rather than after it because both are
+            // now scoped by it, which is the same rule applied to the same file
+            // twice.
             var ours = new HashSet<int>(reports.Select(report => report.ProcessId));
+
+            var torn = TornRecordsThisRunWasPartyTo(lines, ours);
+
+            await Assert.That(string.Join(Environment.NewLine, torn)).IsEmpty();
+
+            // Not vacuous: the check above only means something if this log
+            // actually holds records, and a run that read the wrong file or an
+            // empty one would satisfy it perfectly.
 
             var written = lines.Count(line =>
                 RecordHeader().Match(line) is { Success: true, Index: 0 } header
@@ -377,6 +389,156 @@ internal sealed partial class SaturationTests
 
             ReclaimOurOwnBookkeeping([.. peers.Select(peer => peer.ProcessId).Where(id => id is not 0)]);
         }
+    }
+
+    /// <summary>
+    /// A stranger's torn record is not this run's failure, and one this run was
+    /// party to still is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The both-directions control for the pid scope above, planted here
+    /// because it cannot be planted live.</b> The arm it guards reads the
+    /// machine-wide log with no time filter — deliberately, see
+    /// <see cref="ReadProcessLogSince"/> — so the only way to watch the scope
+    /// work is to hand the same predicate a line it must ignore and a line it
+    /// must catch. A green run of the live arm proves nothing about either,
+    /// because on a machine whose log holds no torn record at all both scopes
+    /// pass by matching nothing.
+    /// </para>
+    /// <para>
+    /// <b>The synthetic headers go through <see cref="RecordHeader"/>, the same
+    /// expression the live arm uses.</b> That is what stops this becoming a
+    /// second copy of the record format: if <c>FileLoggerProvider</c> moves the
+    /// header and the expression follows it, the catch arm below stops matching
+    /// and this test goes red rather than quietly asserting about a shape
+    /// nothing writes any more.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AStrangersTornRecordIsNotThisRunsAndOneThisRunWasPartyToIs()
+    {
+        // Odd, so neither could ever be a real Windows pid — those are
+        // multiples of four — which is what makes a planted line provably a
+        // stranger's rather than a peer's on an unlucky day.
+        const int Ours = 4242;
+        const int Stranger = 9191;
+        const int AnotherStranger = 9193;
+
+        var ours = new HashSet<int> { Ours };
+
+        // The control on the control: the expression really does find a header
+        // at a non-zero offset in a line built this way, so an empty result
+        // below means "ignored" rather than "never matched anything".
+        await Assert.That(RecordHeader().Count(Torn(Stranger, AnotherStranger))).IsEqualTo(2);
+
+        // A sibling checkout's tear, hours old, still in the machine-wide log.
+        // Not this run's business, and until 2026-08-24 it failed this run.
+        await Assert.That(TornRecordsThisRunWasPartyTo([Torn(Stranger, AnotherStranger)], ours)).IsEmpty();
+
+        // Intact records, ours and a stranger's, are not tears in either scope.
+        await Assert.That(TornRecordsThisRunWasPartyTo([SyntheticRecord(Ours), SyntheticRecord(Stranger)], ours)).IsEmpty();
+
+        // Somebody else's bytes landed inside OUR record: our write was not
+        // atomic against theirs, which is exactly the claim under test.
+        await Assert.That(TornRecordsThisRunWasPartyTo([Torn(Ours, Stranger)], ours).Count).IsEqualTo(1);
+
+        // And the other way round: OUR bytes landed inside somebody else's. The
+        // same defect seen from the other side, and just as much ours.
+        await Assert.That(TornRecordsThisRunWasPartyTo([Torn(Stranger, Ours)], ours).Count).IsEqualTo(1);
+
+        // The cap survives the scope: ten reported, not one per line.
+        await Assert.That(TornRecordsThisRunWasPartyTo(
+            [.. Enumerable.Repeat(Torn(Ours, Stranger), 25)],
+            ours).Count)
+            .IsEqualTo(10);
+    }
+
+    /// <summary>
+    /// One process's record with another's spliced into the middle of it, which
+    /// is what a torn append looks like on disk.
+    /// </summary>
+    /// <param name="interrupted">The pid whose record was being written.</param>
+    /// <param name="interrupting">The pid whose bytes landed inside it.</param>
+    /// <returns>The line.</returns>
+    private static string Torn(int interrupted, int interrupting) =>
+        SyntheticRecord(interrupted) + SyntheticRecord(interrupting);
+
+    /// <summary>One whole record, in the form <c>FileLoggerProvider</c> writes.</summary>
+    /// <param name="processId">The pid that wrote it.</param>
+    /// <returns>The record.</returns>
+    private static string SyntheticRecord(int processId) => string.Create(
+        CultureInfo.InvariantCulture,
+        $"2026-08-24T03:38:00.0000000Z  made=2026-08-24T03:38:00.0000000Z  INFO   pid={processId}@133000000000000000  BrowserAI  a record");
+
+    /// <summary>
+    /// The torn records among these lines that this run's own processes were
+    /// party to, at either end of the tear.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-24 (previously every torn record in every log
+    /// file on the machine, scoped by nothing).</b> The log is machine-wide and
+    /// read here with no time filter, so one torn record written by <i>any</i>
+    /// BrowserAI from <i>any</i> checkout failed this arm on every subsequent
+    /// run until the log rolled, and no checkout could clear it: a sibling's
+    /// tear at 03:38 failed a run two hours later. The claim this arm makes is
+    /// about <b>this</b> run's hundred processes appending to one
+    /// <c>FILE_APPEND_DATA</c> handle, and a stranger's history cannot be
+    /// evidence for or against it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Scoped by pid and never by time.</b> The obvious filter — skip what
+    /// was written before this run started — is the one
+    /// <see cref="ReadProcessLogSince"/> already refuses, and for a reason that
+    /// has not changed: NTFS does not keep a file's last-write time current
+    /// while handles are open on it, and this file has a hundred BrowserAIs
+    /// appending to it, so the one file holding all the records is the one such
+    /// a filter skips. Measured 2026-08-17, three runs in a row. The pids are
+    /// this run's own, exactly the scope the non-vacuity check beside it uses.
+    /// </para>
+    /// <para>
+    /// <b>Either end counts, and that is the strength being kept.</b> A tear has
+    /// two parties — the record that was interrupted and the record that
+    /// interrupted it — and our write failing to be atomic against a stranger's
+    /// is the same defect as a stranger's failing to be atomic against ours.
+    /// Only a line naming none of this run's pids is somebody else's history.
+    /// </para>
+    /// </remarks>
+    /// <param name="lines">The log's lines.</param>
+    /// <param name="ours">The pids this run started.</param>
+    /// <returns>Up to ten findings, empty when there are none.</returns>
+    private static List<string> TornRecordsThisRunWasPartyTo(IReadOnlyList<string> lines, HashSet<int> ours)
+    {
+        var found = new List<string>();
+
+        foreach (var line in lines)
+        {
+            var headers = RecordHeader().Matches(line);
+
+            if (!headers.Any(header => int.TryParse(
+                    header.Groups["pid"].ValueSpan,
+                    CultureInfo.InvariantCulture,
+                    out var pid)
+                && ours.Contains(pid)))
+            {
+                continue;
+            }
+
+            foreach (var header in headers.Where(header => header.Index is not 0))
+            {
+                found.Add(
+                    $"a record header starts at offset {header.Index.ToString(CultureInfo.InvariantCulture)} of a line, so two processes' bytes are interleaved: {(line.Length <= 300 ? line : line[..300] + "…")}");
+
+                if (found.Count is 10)
+                {
+                    return found;
+                }
+            }
+        }
+
+        return found;
     }
 
     /// <summary>
