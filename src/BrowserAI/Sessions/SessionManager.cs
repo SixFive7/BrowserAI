@@ -423,7 +423,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // root -- see MaintenanceLock. Nothing below may run while a reinstall
         // holds it exclusively, and once this handle exists no reinstall can
         // take it away.
-        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory);
+        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory, out var denial, out var denialDetail);
 
         // Ownership moves to the session when OpenAsync is reached -- the local
         // is nulled at that moment, which is what makes the finally below cover
@@ -439,7 +439,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             if (claim is null)
             {
-                return ReinstallHoldsTheRoot(SessionToolSurface.Init);
+                return TheRootCouldNotBeClaimed(SessionToolSurface.Init, denial, denialDetail);
             }
 
             var location = ResolveToOpen(Required(arguments, "directory"), "directory");
@@ -538,7 +538,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // ⚠️ FIRST, exactly as `init` does and for the same reason: a resume
         // opens a browser into an existing profile under the same tree, so it is
         // exactly as unsafe while a reinstall is replacing it.
-        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory);
+        var claim = MaintenanceLock.TakeShared(_environment.Paths.BrowsersDirectory, out var denial, out var denialDetail);
 
         // Ownership moves at the same point `init` moves it, by the same
         // mechanism. See there.
@@ -547,7 +547,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             if (claim is null)
             {
-                return ReinstallHoldsTheRoot(SessionToolSurface.Resume);
+                return TheRootCouldNotBeClaimed(SessionToolSurface.Resume, denial, denialDetail);
             }
 
             var location = ResolveToOpen(Required(arguments, "directory"), "directory");
@@ -663,11 +663,21 @@ internal sealed class SessionManager : IAsyncDisposable
     /// tools were used"</i> about a directory holding a live signed-in profile.
     /// </para>
     /// <para>
-    /// <b>Read-only, and it takes no lock.</b> A session another BrowserAI is
-    /// driving is exactly the case this exists for, so anything that could be
-    /// refused by a live holder would refuse when it was needed. The record is
-    /// read the way <see cref="List"/> reads one, and the directory walk opens
-    /// no file inside it.
+    /// <b>Read-only, and it takes no lock it can be refused by.</b> A session
+    /// another BrowserAI is driving is exactly the case this exists for, so
+    /// anything that could be refused by a live holder would refuse when it was
+    /// needed. The record is read the way <see cref="List"/> reads one, and the
+    /// directory walk opens no file inside it.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "Read-only, and it takes no
+    /// lock").*** It now takes one, briefly: <see cref="InUse"/> goes through
+    /// <see cref="SessionLock.ProbeLivenessUnderTheGate"/>, which acquires this
+    /// directory's own gate at a <b>zero</b> timeout. The property the sentence
+    /// was protecting is intact and is what the new wording says — an acquire
+    /// that never waits cannot be refused into a failure, only into an
+    /// <c>UNKNOWN</c> line — and it is why the timeout is the load-bearing half
+    /// rather than the lock.
     /// </para>
     /// <para>
     /// <b>The log is printed newest-last and truncated from the FRONT.</b> A
@@ -806,9 +816,9 @@ internal sealed class SessionManager : IAsyncDisposable
         var lines = new List<string>();
         var found = 0;
 
-        foreach (var entry in _index.Follow())
+        foreach (var entry in _index.FollowUnder(prefix))
         {
-            if (entry.Session is not { } session || entry.Record is not { } record || !IsUnder(session, prefix))
+            if (entry.Session is not { } session || entry.Record is not { } record)
             {
                 continue;
             }
@@ -846,10 +856,21 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <c>browserai_destroy</c>.
     /// </para>
     /// <para>
-    /// <b>Through the pre-gate probe and never the process-liveness check.</b>
-    /// <see cref="SessionLock.ProbeLiveness"/> asks the kernel about the file; the
-    /// process check asks for a handle on a peer, which a token may not be able
-    /// to open and which names a pid Windows may already have reused.
+    /// <b>Through the pre-gate probe, under this directory's own gate at zero
+    /// timeout, and never the process-liveness check.</b>
+    /// <see cref="SessionLock.ProbeLivenessUnderTheGate"/> asks the kernel about
+    /// the file; the process check asks for a handle on a peer, which a token may
+    /// not be able to open and which names a pid Windows may already have reused.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "Through the pre-gate probe and
+    /// never the process-liveness check. `SessionLock.ProbeLiveness` asks the
+    /// kernel about the file").*** The bare probe is a sound ownership test and
+    /// an unsound freedom test: a rewrite drops the ownership handle and takes it
+    /// back with the gate held throughout, so a busy session's record is
+    /// periodically present and unheld and this printed <i>no</i> about it. The
+    /// gate is what separates <i>nobody has this</i> from <i>somebody is
+    /// mid-rewrite</i>, and the second is <c>UNKNOWN</c> rather than <c>no</c>.
     /// </para>
     /// <para>
     /// <b>Three answers, and the third one is the reason this is not a
@@ -875,9 +896,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// handle-collision exposure above.
     /// </para>
     /// <para>
-    /// <b>Cost: one extra <c>CreateFile</c>/<c>CloseHandle</c> per listed entry,
-    /// and nothing else.</b> No process handle, no mutex, no second directory
-    /// walk. Measured 2026-08-20 at <b>0.035 ms</b> free and <b>0.049 ms</b>
+    /// <b>Cost: one <c>CreateFile</c>/<c>CloseHandle</c> per listed entry, plus
+    /// the gate's own create/acquire/release/close.</b> No process handle and no
+    /// second directory walk. ⚠️ ***Corrected 2026-08-24 (previously "and nothing
+    /// else. No process handle, no mutex, no second directory walk") — there IS
+    /// now a mutex per entry, and the figures below are the file half only. The
+    /// uncontended acquire alone was measured at 0.007–0.009 ms; the create/close
+    /// pair is unmeasured and is deliberately not guessed at here.*** Measured
+    /// 2026-08-20 at <b>0.035 ms</b> free and <b>0.049 ms</b>
     /// held
     /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)),
     /// against <b>0.6–2.3 ms</b> for the <see cref="SessionLayout.SizeOnDisk"/>
@@ -896,6 +922,15 @@ internal sealed class SessionManager : IAsyncDisposable
     /// never one per file on the volume, and the entries it adds them for are
     /// exactly the entries it was already going to weigh.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>That was true of this probe and read as though it were true of the
+    /// listing, and until 2026-08-24 the listing was the expensive half.</b> The
+    /// subtree filter ran <i>after</i> the record was opened, so every session on
+    /// the machine had its <c>browserai.json</c> strictly parsed — and each of
+    /// those opens carried <c>RenameWindow</c>'s budget — to print the few under
+    /// the prefix. <see cref="SessionIndex.FollowUnder"/> is what moved the
+    /// filter above the open.
+    /// </para>
     /// </remarks>
     /// <param name="session">The canonicalised session directory.</param>
     /// <returns>The line, framed so a model can act on it.</returns>
@@ -906,7 +941,7 @@ internal sealed class SessionManager : IAsyncDisposable
             return "in use: YES — this BrowserAI process is driving it right now.";
         }
 
-        var answer = SessionLock.ProbeLiveness(session);
+        var answer = SessionLock.ProbeLivenessUnderTheGate(session);
 
         return answer.State switch
         {
@@ -914,7 +949,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"in use: YES — something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the record inside it can still name a previous holder, so this does not say which process.",
 
             SessionLiveness.NotHeld =>
-                $"in use: no — nothing held '{session.LockFile}' at the instant this listing looked. It is a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
+                $"in use: no — nothing held '{session.LockFile}', asked with this directory's own gate held, so it is not a session caught mid-rewrite. It is still a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
 
             _ =>
                 $"in use: UNKNOWN — {answer.Why} Treat it as possibly in use; this is not the same answer as 'no'.",
@@ -1228,11 +1263,15 @@ internal sealed class SessionManager : IAsyncDisposable
         // The ordering is the deadlock argument: this is the OUTERMOST lock and
         // the provisioning mutexes are taken under it, never the other way
         // round. See MaintenanceLock's remarks.
-        using var maintenance = MaintenanceLock.TryTakeExclusive(_environment.Paths.BrowsersDirectory, target);
+        using var maintenance = MaintenanceLock.TryTakeExclusive(
+            _environment.Paths.BrowsersDirectory,
+            target,
+            out var denial,
+            out var denialDetail);
 
         if (maintenance is null)
         {
-            return new ToolOutcome(TheRootIsBusy(), IsError: true);
+            return new ToolOutcome(TheRootIsBusy(denial, denialDetail), IsError: true);
         }
 
         return ProvisionedBrowsers.IsShared(target)
@@ -1276,6 +1315,31 @@ internal sealed class SessionManager : IAsyncDisposable
             IsError: true);
 
     /// <summary>
+    /// Picks between the two refusals a failed shared claim can earn, on the
+    /// kernel's own answer.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-08-24. Until then every cause wore the reinstall's
+    /// sentence</b>, so an ACL denial, a full volume and a path that is too long
+    /// all told the caller to wait minutes for a download that was not running —
+    /// and the recovery for those is the opposite of waiting. A sharing violation
+    /// on this open really is contention, by the exclusion arithmetic in
+    /// <see cref="MaintenanceLock"/>'s remarks, so <b>that half is deliberately
+    /// left unhedged</b>: hedging a sentence that is right in every case the
+    /// kernel can distinguish, to cover one it cannot, is a loss.
+    /// </remarks>
+    /// <param name="tool">The tool being refused.</param>
+    /// <param name="denial">What the kernel said.</param>
+    /// <param name="detail">Windows' own message, for the unreachable arm.</param>
+    /// <returns>The refusal.</returns>
+    private ToolOutcome TheRootCouldNotBeClaimed(string tool, MaintenanceDenial denial, string detail) =>
+        denial is MaintenanceDenial.Unreachable
+            ? new ToolOutcome(
+                SessionErrors.TheBrowsersRootCouldNotBeClaimed(tool, _environment.Paths.BrowsersDirectory, detail),
+                IsError: true)
+            : ReinstallHoldsTheRoot(tool);
+
+    /// <summary>
     /// The refusal a reinstall earns when the exclusive claim could not be
     /// taken.
     /// </summary>
@@ -1294,7 +1358,17 @@ internal sealed class SessionManager : IAsyncDisposable
     /// parsing is needed to tell them apart.</b> A reinstall can only hold the
     /// claim exclusively when no session holds it shared — so if the census finds
     /// sessions, sessions are the cause and they are what the caller must close;
-    /// if it finds none, another reinstall has it and the record says which.
+    /// if it finds none <i>and the kernel said the file was held</i>, another
+    /// reinstall has it and the record says which.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "if it finds none, another
+    /// reinstall has it and the record says which").*** There is a third case the
+    /// census cannot see and it was being reported as the second: <b>the claim
+    /// could not be opened at all.</b> The mutual exclusion holds for the kernel's
+    /// refusal and not for the count, so a census of zero over a file nothing
+    /// could open concluded <i>another reinstall has it</i> about a machine on
+    /// which no reinstall was running.
     /// </para>
     /// <para>
     /// ⚠️ <b>The family filter is gone, and the maintainer removed it on purpose:
@@ -1314,9 +1388,18 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// </remarks>
     /// <returns>The whole refusal.</returns>
-    private string TheRootIsBusy()
+    private string TheRootIsBusy(MaintenanceDenial denial, string detail)
     {
         var root = _environment.Paths.BrowsersDirectory;
+
+        // ⚠️ BEFORE THE CENSUS, and the order is the fix. A census of zero over
+        // a file nothing could open is not evidence of a second reinstall; it is
+        // evidence that the question was never asked.
+        if (denial is MaintenanceDenial.Unreachable)
+        {
+            return SessionErrors.TheBrowsersRootCouldNotBeClaimed(SessionToolSurface.ReinstallBrowser, root, detail);
+        }
+
         var claimants = LiveSessions();
 
         if (claimants.Count is 0)
@@ -2064,9 +2147,6 @@ internal sealed class SessionManager : IAsyncDisposable
         return (full, key.EndsWith(Path.DirectorySeparatorChar) ? key : key + Path.DirectorySeparatorChar);
     }
 
-    private static bool IsUnder(SessionPath candidate, string prefix) =>
-        (candidate.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal);
-
     /// <summary>
     /// Rewrites the roll-up covering the root one session sits under.
     /// </summary>
@@ -2110,9 +2190,9 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var entries = new List<RollUpEntry>();
 
-        foreach (var entry in _index.Follow())
+        foreach (var entry in _index.FollowUnder(prefix))
         {
-            if (entry.Session is not { } session || entry.Record is not { } record || !IsUnder(session, prefix))
+            if (entry.Session is not { } session || entry.Record is not { } record)
             {
                 continue;
             }

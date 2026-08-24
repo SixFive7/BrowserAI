@@ -484,6 +484,23 @@ difference cannot be a silent behaviour change, and a phrase that fires on no
 current output costs nothing while a deleted one cannot be recovered by anybody
 who did not know it was there. `[FLOATS]`.
 
+> **Why `isError` is a sound gate, read out of the bundle rather than inferred
+> from the two measurements above.** `Response.serialize()` returns
+> `...sections.some((section) => section.isError) ? { isError: true } : {}`, and
+> `addSection` sets `isError: title === "Error"` — so the flag is set by the
+> presence of an `Error` section and by nothing else, and
+> `throwIfExecutableMissing`'s throw is what puts one there. That is what makes
+> `BrowserProxy.Remediate`'s `isError` gate lossless on the provisioning path.
+> ⚠️ **It is not a provenance guarantee about the *text*.** The same `_build()`
+> puts the `Error`, `Page`, `Snapshot` and `Events` sections into **one** result,
+> and `renderTabMarkdown` pushes `` `- Page Title: ${tab.title}` `` — the page's
+> own title — so an `isError: true` answer against a live tab carries
+> page-controlled text and the console and snapshot pointers alongside the error.
+> *Verified 2026-08-24 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+> 1.63.0-alpha-2026-08-05.* **Re-establish it** by grepping
+> `payload/mcp/node_modules/playwright-core/lib/coreBundle.js` for
+> `sections.some` and for `isError: title ===`.
+
 ## Policy
 
 **Chrome for Testing reads policy from

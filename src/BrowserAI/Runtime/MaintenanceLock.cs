@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using BrowserAI.Sessions;
 
 namespace BrowserAI.Runtime;
 
@@ -167,10 +168,15 @@ internal sealed class MaintenanceLock : IDisposable
     /// </para>
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root. Created if absent.</param>
-    /// <returns>The claim, or <see langword="null"/> when a reinstall holds it.</returns>
-    public static MaintenanceLock? TakeShared(string browsersDirectory)
+    /// <param name="denial">What the kernel said, when the claim was not taken.</param>
+    /// <param name="detail">Windows own message, when the claim was not taken.</param>
+    /// <returns>The claim, or <see langword="null"/> when it could not be taken.</returns>
+    public static MaintenanceLock? TakeShared(string browsersDirectory, out MaintenanceDenial denial, out string detail)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
+
+        denial = MaintenanceDenial.None;
+        detail = string.Empty;
 
         try
         {
@@ -184,9 +190,27 @@ internal sealed class MaintenanceLock : IDisposable
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            // Held by a reinstall, denied, or unreachable. Every one of them
-            // means this process may not open a session against this root, and
-            // Describe says which for the sentence.
+            // ⚠️ WHICH ONE IT WAS IS CARRIED OUT, and until 2026-08-24 it was
+            // not: every cause here wore the reinstall's sentence, so an ACL
+            // denial, a full volume and a path that is too long all told the
+            // caller to wait minutes for a download that was not running.
+            //
+            // ***Corrected 2026-08-24 (previously "Held by a reinstall, denied,
+            // or unreachable. Every one of them means this process may not open a
+            // session against this root, and Describe says which for the
+            // sentence").*** The last clause was the false one, and it is the
+            // finding in miniature: `Describe` returns the LAST WRITER's line and
+            // nothing truncates the file when a reinstall ends, so it cannot say
+            // which. The kernel had already answered -- a sharing violation is a
+            // holder and nothing else on this open, per the exclusion arithmetic
+            // in this type's remarks -- and the answer was being discarded one
+            // line above the sentence that needed it.
+            denial = failure is IOException io && RenameWindow.IsSharingViolation(io)
+                ? MaintenanceDenial.Contended
+                : MaintenanceDenial.Unreachable;
+
+            detail = failure.Message;
+
             return null;
         }
     }
@@ -211,11 +235,16 @@ internal sealed class MaintenanceLock : IDisposable
     /// </remarks>
     /// <param name="browsersDirectory">The browsers root. Created if absent.</param>
     /// <param name="target">What is being reinstalled, for the sentence a peer reads.</param>
-    /// <returns>The claim, or <see langword="null"/> when anything else holds it.</returns>
-    public static MaintenanceLock? TryTakeExclusive(string browsersDirectory, string target)
+    /// <param name="denial">What the kernel said, when the claim was not taken.</param>
+    /// <param name="detail">Windows own message, when the claim was not taken.</param>
+    /// <returns>The claim, or <see langword="null"/> when it could not be taken.</returns>
+    public static MaintenanceLock? TryTakeExclusive(string browsersDirectory, string target, out MaintenanceDenial denial, out string detail)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(browsersDirectory);
         ArgumentNullException.ThrowIfNull(target);
+
+        denial = MaintenanceDenial.None;
+        detail = string.Empty;
 
         try
         {
@@ -245,8 +274,17 @@ internal sealed class MaintenanceLock : IDisposable
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
             // A session holds it shared, another reinstall holds it exclusively,
-            // or it is denied. Every one of them means this process may not start
-            // a reinstall.
+            // or it could not be reached at all -- and the third is carried out
+            // separately for the same reason the shared take carries it: a
+            // census of zero concludes "another reinstall has it", which is a
+            // confident wrong diagnosis when the truth is that nothing could open
+            // the file.
+            denial = failure is IOException io && RenameWindow.IsSharingViolation(io)
+                ? MaintenanceDenial.Contended
+                : MaintenanceDenial.Unreachable;
+
+            detail = failure.Message;
+
             return null;
         }
     }
@@ -445,3 +483,24 @@ internal sealed class MaintenanceLock : IDisposable
 /// </param>
 /// <param name="Elapsed">How long ago the claim was taken.</param>
 internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan Elapsed);
+
+/// <summary>Why a claim on the browsers root could not be taken.</summary>
+/// <remarks>
+/// <b>The discriminator is the kernel's, not a guess.</b>
+/// <c>ERROR_SHARING_VIOLATION</c> and <c>ERROR_LOCK_VIOLATION</c> are the only
+/// codes a holder produces on this open — the exclusion arithmetic in
+/// <see cref="MaintenanceLock"/>'s remarks is what makes that exhaustive — so
+/// anything else is a failure to reach the file at all, and the two recoveries
+/// are different: one is waited out, the other is fixed.
+/// </remarks>
+internal enum MaintenanceDenial
+{
+    /// <summary>Nothing was denied.</summary>
+    None,
+
+    /// <summary>Somebody holds it in a mode that excludes this one.</summary>
+    Contended,
+
+    /// <summary>It could not be opened at all, and why is not knowable here.</summary>
+    Unreachable,
+}

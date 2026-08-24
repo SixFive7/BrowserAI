@@ -38,9 +38,23 @@ namespace BrowserAI.Runtime;
 /// passthrough is the property <c>LosslessPassthroughTests</c> exists to
 /// protect; here it is deliberately given up for the one payload that
 /// contains an instruction which would send the caller somewhere harmful. The
-/// rewrite fires only when the marker is present — every other answer, including
-/// every other error, goes through untouched — and the proxy logs the fact when
-/// it does, so a lost byte-identity is a recorded event rather than a silent one.
+/// rewrite fires only when the child reported an error <b>and</b> the marker is
+/// present — every other answer goes through untouched — and the proxy logs the
+/// fact when it does, so a lost byte-identity is a recorded event rather than a
+/// silent one.
+/// </para>
+/// <para>
+/// ⚠️ ***Corrected 2026-08-24 (previously "The rewrite fires only when the marker
+/// is present — every other answer, including every other error, goes through
+/// untouched").*** That understated nothing and overstated the gate: the marker
+/// was the whole test, so any answer whose text contained upstream's sentence —
+/// a page rendering it in its title, an issue, release notes — had BrowserAI's
+/// own instruction text spliced into it and lost byte-identity on an ordinary
+/// successful call. <c>BrowserProxy.Remediate</c> now requires
+/// <c>isError: true</c> as well, which upstream sets on every answer carrying an
+/// <c>Error</c> section and on no other. <b>The gate lives in the proxy and not
+/// in <see cref="Rewrite"/></b>, because <c>Rewrite</c> is a pure function over
+/// one text block and has no answer to ask about.
 /// </para>
 /// </remarks>
 internal static partial class ProvisioningRemediation

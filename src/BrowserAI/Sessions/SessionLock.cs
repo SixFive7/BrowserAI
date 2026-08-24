@@ -407,6 +407,13 @@ internal sealed class SessionLock : IDisposable
                 // The same close/rename/re-open as acquisition, and for the same
                 // reason: an atomic rename cannot replace a file we are holding, and
                 // the gate is what makes the gap unobservable.
+                //
+                // ⚠️ "Unobservable" is a claim about readers that TAKE THE GATE, and
+                // between 2026-08-20 and 2026-08-24 one reader did not:
+                // `browserai_list`'s liveness line called the bare probe and read
+                // this gap as `NotHeld`, i.e. as a session nobody has. It now goes
+                // through `ProbeLivenessUnderTheGate`. Any new reader of this file
+                // that is not under this gate re-opens that defect.
                 _held.Dispose();
 
                 try
@@ -966,6 +973,113 @@ internal sealed class SessionLock : IDisposable
             return new SessionLivenessAnswer(
                 SessionLiveness.Undetermined,
                 $"'{location.LockFile}' could not be opened, and the failure was not a sharing violation ({failure.Message}).");
+        }
+    }
+
+    /// <summary>
+    /// The same question as <see cref="ProbeLiveness"/>, asked from <b>inside</b>
+    /// <see cref="LockScopes.PerDirectoryGate"/> — so a record being replaced can
+    /// never be reported as a directory nobody has.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-24. The bare probe is a sound ownership test and an
+    /// unsound freedom test, and <c>browserai_list</c> was reading its
+    /// <see cref="SessionLiveness.NotHeld"/> as free.</b> Since 2026-08-20 every
+    /// forwarded browser call runs <see cref="Append"/>, which is
+    /// <see cref="Rewrite"/>: the ownership handle is dropped at the top of the
+    /// replacement and taken back at the bottom, so a busy session's
+    /// <c>browserai.json</c> is periodically present and unheld. The listing landed
+    /// in that window and printed <i>in use: no</i> about a session another agent
+    /// was driving.
+    /// </para>
+    /// <para>
+    /// <b>The gate is the discriminator and it cannot be wrong.</b>
+    /// <see cref="Rewrite"/> holds it across the whole close → write → rename →
+    /// re-open; <see cref="TryHoldUnowned"/> and <c>TakeOrReport</c> take it
+    /// before they open the file at all. So <i>the gate is free</i> means no peer
+    /// is between those two states, and the probe's answer is then a fact about
+    /// ownership rather than about timing. The temp-file discriminator
+    /// <c>SessionIndex.Absent</c> uses was considered and is <b>not</b> enough
+    /// here: it covers the instant the NAME is unbound, which is strictly inside
+    /// <c>WriteDurably</c>'s <c>try</c>, and the unheld window opens before the
+    /// temp exists and closes after it has gone.
+    /// </para>
+    /// <para>
+    /// <b>Zero timeout, and that is what keeps this out of the queue.</b>
+    /// <see cref="LockScopes.NeverWaits"/>: this never waits, never queues and
+    /// therefore does not re-create the contention <see cref="ProbeForHolder"/>
+    /// was extracted to remove. A gate it could not take is
+    /// <see cref="SessionLiveness.Undetermined"/> with a reason, which is the
+    /// answer this type has for exactly this.
+    /// </para>
+    /// <para>
+    /// <b>Cost: one <c>CreateMutexW</c>, one zero-timeout
+    /// <c>WaitForSingleObject</c>, one <c>ReleaseMutex</c> and one
+    /// <c>CloseHandle</c> on top of <see cref="ProbeLiveness"/>'s own pair.</b>
+    /// The uncontended acquire alone was measured at 0.007–0.009 ms; <b>the
+    /// create/close pair is unmeasured</b> and is deliberately not guessed at
+    /// here.
+    /// </para>
+    /// <para>
+    /// <b>Acquire and release are on one thread, in one synchronous method, with
+    /// no <c>await</c> between them</b> — see <see cref="MachineMutex"/>'s own
+    /// remarks on why that is not a style preference.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The canonicalised session directory.</param>
+    /// <returns>The state, and a reason whenever it is not settled.</returns>
+    public static SessionLivenessAnswer ProbeLivenessUnderTheGate(SessionPath location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        // Declared before the try and disposed unconditionally in the finally,
+        // the same shape TryAcquire and TryHoldUnowned use for the same reason.
+        MachineMutex? gate = null;
+
+        try
+        {
+            try
+            {
+                gate = MachineMutex.Create(location.MutexName);
+            }
+            catch (Exception failure)
+                when (failure is UnauthorizedAccessException
+                    or WaitHandleCannotBeOpenedException
+                    or IOException
+                    or NotSupportedException)
+            {
+                // Never fatal to a listing: this is a report, and a report that
+                // could not be produced says so rather than throwing out of the
+                // tool.
+                return new SessionLivenessAnswer(
+                    SessionLiveness.Undetermined,
+                    $"'{location.MutexName}' could not be created, so whether anything holds '{location.LockFile}' could not be settled ({failure.Message}).");
+            }
+
+            // AcquiredAbandoned IS acquired and is released below exactly as an
+            // ordinary acquisition is. What it reports -- a holder that died
+            // mid-section -- is about the record's bytes, and this call asks the
+            // kernel about the handle.
+            if (gate.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
+            {
+                return new SessionLivenessAnswer(
+                    SessionLiveness.Undetermined,
+                    $"another process holds '{location.MutexName}', which is the gate every take, release and record rewrite of '{location.FullPath}' runs inside — so this looked while somebody was in the middle of one.");
+            }
+
+            try
+            {
+                return ProbeLiveness(location);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+        finally
+        {
+            gate?.Dispose();
         }
     }
 

@@ -553,6 +553,44 @@ has been satisfied in form only.
 
 ### Changed
 
+- **`browserai_list` no longer opens and strictly parses every session record on
+  the machine to print the few under a prefix — and neither does `init` or
+  `resume`.**
+  [Adversarial review F9](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
+  The subtree filter ran on the wrong side of the parse: `SessionIndex.Follow`
+  opened each entry's `browserai.json` and parsed it strictly — up to 250 log
+  entries and all their arguments — and `IsUnder` was applied to what came back.
+  Each of those opens goes through `RenameWindow.WaitOut`, whose budget is
+  **30 seconds** and which retries a denial, so one session *anywhere on the
+  machine* whose record is denied by an ACL or held by a scanner could add that
+  to a call scoped to a completely unrelated tree. **The sharper half is the one
+  the review does not name**: the roll-up runs the same walk on every
+  `browserai_init` and every `browserai_resume`, so this was on the session-open
+  path rather than only on a listing. `SessionIndex.FollowUnder` applies the
+  prefix **above** the open, at the one point where everything already done is
+  the entry's own verification and nothing has been opened inside the session.
+  **The predicate is unchanged and only its position is**, so the reported set is
+  bit-identical; `IsUnder` moved with it rather than being spelled twice.
+  `Follow()` keeps its exact semantics and stays whole-machine for the index's
+  own sweep, the reinstall census and the stray sweep.
+  *Corrected: `SessionIndex`'s contract sentence "Every entry is verified by
+  opening the `browserai.json` it points at", which becomes "no entry is ever
+  **reported as a session** without opening it" — a subtree read decides which
+  entries to ask about and never which answers to trust; and "the only way this
+  store is ever read", which is now one of two.*
+  **The header-only-read fork was declined, and the reason is the symmetry:** it
+  *could* have been planted red, precisely because it changes what is reported —
+  a record whose log is malformed would read as a session to the listing and be
+  refused by `TryAcquire`, which is two readers of one file that disagree. The
+  fork that is safe is the fork that is invisible, so the red-today test is the
+  rule itself: `HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry`,
+  planted red on both real offenders, with both synthetic controls and a
+  non-vacuity floor over the two whole-machine walks that must stay whole-machine.
+  ⚠️ `SessionIndexTests.FollowingOneSubtreeReturnsExactlyWhatFollowingEverythingWouldHaveReturnedForIt`
+  and `.FollowingOneSubtreeOpensNoRecordOutsideIt` ship with the change, name an
+  API that did not exist before it, and say in their own remarks that they are
+  **weaker than a red test** and why.
+
 - **The machine-wide log is one shared file under a cross-process write gate, and
   a session's records no longer go into it.** Two changes that are one decision.
   **First, scope:** anything attributable to a session is written to that
@@ -643,6 +681,143 @@ has been satisfied in form only.
   the class of defect; this covers the gate's claim about itself.
 
 ### Fixed
+
+- **`browserai_list` said `in use: no` about a session another agent was driving
+  right now.**
+  [Adversarial review F1](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
+  Since 2026-08-20 every forwarded browser call runs `SessionLock.Append`, which
+  is `Rewrite`: the ownership handle is dropped at the top of the replacement and
+  taken back at the bottom, with the per-directory gate held throughout. So a
+  *busy* session's `browserai.json` is periodically **present and unheld**, and
+  the bare probe reads that as a directory nobody has. The listing landed in that
+  window and printed `no` — the one direction that costs a caller a session it
+  was about to `browserai_destroy`. `SessionLock.ProbeLivenessUnderTheGate` asks
+  the same question with that directory's own gate held at a **zero** timeout:
+  the gate is the discriminator and cannot be wrong, and a gate it could not take
+  is `UNKNOWN` with a reason rather than `no`. The zero timeout is what keeps the
+  listing out of the queue `ProbeForHolder` was extracted to remove.
+  **`browserai_catch_up` is gated too** — one opener, two callers, and two tools
+  printing different `in use:` lines about one session in the same second is the
+  failure that extraction's own remarks exist to prevent.
+  *Corrected with it: `SessionLock`'s comment that "the gate is what makes the gap
+  unobservable" (true of readers that take the gate, and one did not),
+  `SessionManager.InUse`'s "through the pre-gate probe", `browserai_catch_up`'s
+  "takes no lock" in four places including its model-facing description, and
+  `README.md`'s "`no` when nothing held it at the instant of the look".*
+  ⚠️ **The per-entry cost figures in `ARCHITECTURE.md`, `SessionManager` and
+  [kb](kb/windows/detection.md) are now incomplete and have NOT been adjusted** —
+  a mutex create, acquire, release and close are in the per-entry cost and the
+  create/close pair is **unmeasured**.
+  `SessionListTests.ASessionWhoseGateIsHeldByAPeerIsReportedUnknownRatherThanFree`,
+  planted red. The zero-timeout property could not be planted red at all — a
+  120-second acquire would still return inside the rig's patience — so
+  `SessionLockTests.TheListingProbeTakesTheGateWithoutWaitingForIt` is a
+  source-level guard and says in its own remarks that it is the weaker thing.
+
+- **Page content could switch the artifact-pointer protection off.**
+  [Adversarial review F2](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
+  The provisioning answer-rewrite returned before `live.Artifacts.Complete`, so a
+  call whose answer tripped it **pinned no name, recorded no artifact and carried
+  no note** — and upstream builds the `Error`, `Page`, `Snapshot` and `Events`
+  sections into **one** result, so an ordinary failed call against a live tab
+  carries the page's own `<title>` beside the console and snapshot pointers. A
+  page whose title quoted upstream's install advice therefore disabled the
+  protection and the next sweep moved the file the answer had just linked to.
+  That branch now runs `Complete` like every other answered call, with the
+  child's own answer going in and the note appended to the node.
+  **The scan is also gated on `isError`**, which upstream sets from the presence
+  of an `Error` section and from nothing else —
+  `sections.some(s => s.isError) ? { isError: true } : {}` beside
+  `isError: title === "Error"`, read out of the resolved bundle and recorded in
+  [kb](kb/playwright/configuration.md) — so the gate is lossless on the path the
+  rewrite exists for and takes every ordinary answer out of reach of page text.
+  *Corrected: `BrowserProxy.Remediate`'s claim that "on the paths where it appears
+  at all the answer is already a failure with no bytes worth preserving", and
+  `ProvisioningRemediation`'s "the rewrite fires only when the marker is present —
+  every other answer, including every other error, goes through untouched".*
+  ⚠️ **The gate does not close the bypass on its own and is not claimed to**:
+  `ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite`
+  sets `isError` deliberately, so half 1 cannot make it pass.
+  `ProvisioningRemediationTests.APageQuotingUpstreamsAdviceInASuccessfulAnswerIsForwardedUntouched`
+  is the other, and both were planted red.
+
+- **Every failure to open `reinstall.lock` was reported as a reinstall in
+  progress.**
+  [Adversarial review F5](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
+  `MaintenanceLock.TakeShared` caught `IOException` and `UnauthorizedAccessException`
+  together and returned one bit, so an ACL denial, a full volume and a path that
+  is too long all told the caller *"BrowserAI is replacing the browsers under
+  '…' on this machine right now"* — complete with a progress clause counting from
+  zero — and to wait minutes for a download that was not running. The kernel had
+  already answered: a sharing violation on this open is a holder and **nothing
+  else**, because the reader asks `Read`/`FileShare.Read` and a second reader is
+  compatible with it. Both takes now carry a `MaintenanceDenial` and Windows' own
+  message out, and `SessionErrors.TheBrowsersRootCouldNotBeClaimed` is a **new
+  catalogue row** rather than a clause on the existing one: **two recoveries are
+  two rows**, and waiting clears one and will never clear the other. It names the
+  causes and refuses to pick one, because they are not distinguishable from a
+  caught `IOException`. **`browserai_reinstall_browser`'s half is included**: a
+  census of zero over a file nothing could open was concluding *another reinstall
+  has it*, so the unreachable arm is answered before `LiveSessions()` is
+  consulted. The contended sentence is deliberately left unhedged.
+  *Corrected: `MaintenanceLock`'s catch comment that "`Describe` says which for
+  the sentence" (it returns the last writer's line and nothing truncates the file
+  when a reinstall ends, so it cannot), and `TheRootIsBusy`'s "if it finds none,
+  another reinstall has it".* The catalogue census moves **27 → 28**.
+  `ErrorCatalogueTests.AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning`,
+  planted red against a real ACL denial.
+
+- **A pinned artifact name was matched undelimited and never given back.**
+  [Adversarial review F7](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
+  `NoteWhatTheAnswerPublished` asked whether the answer *contained* each loose
+  file's name, so `report.pdf` was pinned by an answer that only ever said
+  `quarterly-report.pdf`, and a one-character name was pinned by any answer at
+  all; and `_published` was monotone across **files** as well as calls, so a name
+  pinned once pinned every later file that shared it, for the session's life,
+  with **no answer naming it**. The match is delimited now, and a name is dropped
+  once nothing loose in the output root carries it. **The review's own
+  recommended fix — requiring the name to look generator-produced — was declined
+  with the reason:** upstream publishes a pointer to a browser-initiated download
+  too, `- Downloaded file <name> to "./<name>"` with the *site's* unprefixed name,
+  so a prefix rule would move every real download out from under upstream's own
+  pointer. That is verified in the resolved bundle and recorded in
+  [kb](kb/playwright/tools-and-artifacts.md).
+  *Corrected: the "substring rather than a parse" defence, which covered
+  generated names and said nothing about the one artifact class this same file
+  records upstream as not naming; and "Monotone on purpose … never removed".*
+  ⚠️ **The residue is stated rather than closed** — a short, word-shaped name a
+  page renders in prose is still delimited and still pins, and the harm is
+  bounded to classification inside the session tree, with the absolute path in
+  the note either way.
+  `ArtifactPointerTests.AFileWhoseNameOnlyOccursInsideALongerOneIsStillSorted`
+  and `.APinnedNameIsNotInheritedByALaterFileThatHappensToShareIt`, both planted
+  red, with the control arm that upstream's own download pointer still resolves.
+
+- **A cancelled `tools/call` leaked its filename reservation for the life of the
+  session.**
+  [Adversarial review F8](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
+  `_reserved` loses an entry only through `Release`, and every release site was
+  on a path that **returns** — so a caller that cancelled a screenshot left
+  `login.png` reserved forever, and the retry came back as `login-2.png` **with
+  the answer reporting a rename that no file on disk justified**, which is the
+  exact class this product exists to remove. `AnswerToolsCallAsync` is wrapped
+  from the plan onward and the three release sites are folded into one `finally`.
+  Releasing after a *successful* write is deliberate and safe: `Taken` is
+  `_reserved.Contains(candidate) || File.Exists(candidate)`, so a file that is on
+  disk holds its own name — and a file the caller later deletes stops holding a
+  name it no longer occupies, which the reservation set alone could never give.
+  A new `ProxyLog.ReservationReleased` at Debug is the only evidence the
+  cancellation path leaves, because the SDK sends no frame at all for a request
+  cancelled by `notifications/cancelled`.
+  *Corrected: `ArtifactRouter.Release`'s summary, "for a call that never reached
+  the child", and `ARCHITECTURE.md`'s "Never overwrite" paragraph, which was
+  missing the clause that a reservation is given back **however** the call ends.*
+  ⚠️ **The test asserts cancellation only and says so** — the idle-timer scope
+  and the remediation regex's 1,000 ms match timeout are covered by the same
+  `finally`, neither is deterministically reachable, and a test that provoked one
+  by timing is the promptness assertion this suite forbids.
+  `ArtifactRoutingTests.ACancelledCallGivesItsReservedNameBackSoTheRetryIsNotSuffixed`,
+  planted red on the suffix.
 
 - **A torn log record is no longer possible, and the machinery that made it
   possible is deleted rather than repaired.**

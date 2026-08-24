@@ -189,11 +189,24 @@ internal sealed class ArtifactRouter
     /// therefore every file this router must never move.
     /// </summary>
     /// <remarks>
-    /// <b>Monotone on purpose.</b> A name is added the first time an answer
-    /// mentions it and is never removed: the console log is named in the answer
-    /// that <i>creates</i> entries and not in the ones that follow, so a set
-    /// scoped to one call would leave the file movable on the very next call —
-    /// which is the second half of the defect this exists to close.
+    /// <para>
+    /// <b>Monotone across calls, on purpose.</b> A name is added the first time
+    /// an answer mentions it: the console log is named in the answer that
+    /// <i>creates</i> entries and not in the ones that follow, so a set scoped to
+    /// one call would leave the file movable on the very next call — which is the
+    /// second half of the defect this exists to close.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "and is never removed").*** It was
+    /// monotone across <b>files</b> too, and that half was a defect rather than a
+    /// property: a name pinned once — correctly, or by the undelimited match this
+    /// set used to be fed — pinned every later file that happened to carry the
+    /// same name, for the session's life, with no answer naming it. A name is now
+    /// dropped at the end of a sweep once nothing loose in the output root
+    /// carries it, so nothing is inherited. The cost is stated rather than
+    /// hidden: a pinned file deleted between calls and recreated under the same
+    /// name before any answer names it again is swept once.
+    /// </para>
     /// </remarks>
     private readonly HashSet<string> _published = new(StringComparer.OrdinalIgnoreCase);
 
@@ -495,8 +508,20 @@ internal sealed class ArtifactRouter
     }
 
     /// <summary>
-    /// Gives a reserved name back, for a call that never reached the child.
+    /// Gives a reserved name back, for a call that has ended.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "for a call that never reached the
+    /// child").*** It is now called for every call that took a plan, from a
+    /// <c>finally</c> covering the whole of <c>BrowserProxy.AnswerToolsCallAsync</c>,
+    /// because until then the release sites were all on paths that <b>return</b>
+    /// — so a cancelled <c>tools/call</c> left its name reserved for the
+    /// session's life. <b>Releasing after a successful write is safe</b>:
+    /// <c>Taken</c> is <c>_reserved.Contains(candidate) || File.Exists(candidate)</c>,
+    /// so a file that is on disk holds its own name, and a file the caller later
+    /// deletes stops holding a name it no longer occupies — which is behaviour the
+    /// reservation set on its own was never able to give.
+    /// </remarks>
     /// <param name="plan">What <see cref="Plan"/> decided, or <see langword="null"/>.</param>
     public void Release(ArtifactPlan? plan)
     {
@@ -750,9 +775,20 @@ internal sealed class ArtifactRouter
     /// <b>Substring rather than a parse, deliberately.</b> The pointer's shape is
     /// upstream's and changes without notice — a Markdown link today, a bare name
     /// with an <c>#L</c> fragment beside it — and what matters is only whether
-    /// the name appears at all. A generated name carries a millisecond timestamp,
-    /// so a false positive would need the answer to contain that exact string for
-    /// some other reason.
+    /// the answer names the file.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "what matters is only whether the
+    /// name appears at all. A generated name carries a millisecond timestamp, so
+    /// a false positive would need the answer to contain that exact string for
+    /// some other reason").*** The timestamp defence covers <i>generated</i>
+    /// names and says nothing about the one artifact class this same file records
+    /// upstream as not naming — a browser-initiated download, which carries the
+    /// site's own suggested name. A bare <c>Contains</c> pinned
+    /// <c>report.pdf</c> on an answer that only ever said
+    /// <c>quarterly-report.pdf</c>, and pinned a one-character name on every
+    /// answer there is. The match is now delimited; see
+    /// <see cref="NamesTheFile"/>.
     /// </para>
     /// </remarks>
     /// <param name="answer">The child's result, serialised, or <see langword="null"/>.</param>
@@ -780,13 +816,80 @@ internal sealed class ArtifactRouter
             {
                 var name = Path.GetFileName(file);
 
-                if (answer.Contains(name, StringComparison.OrdinalIgnoreCase))
+                if (NamesTheFile(answer, name))
                 {
                     _ = _published.Add(name);
                 }
             }
         }
     }
+
+    /// <summary>
+    /// Whether the answer names this file, as opposed to merely spelling it
+    /// inside a longer word.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Still a substring rather than a parse</b> — the pointer's shape is
+    /// upstream's and changes without notice — but a bare <c>Contains</c> pinned
+    /// <c>report.pdf</c> on an answer that only ever said
+    /// <c>quarterly-report.pdf</c>. What is added is a boundary, and it is the
+    /// weakest thing that separates <i>the answer points at this file</i> from
+    /// <i>these characters occur</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A generator prefix is deliberately NOT required.</b> Upstream
+    /// publishes a pointer to a browser-initiated download too —
+    /// <c>- Downloaded file &lt;name&gt; to "./&lt;name&gt;"</c>, read out of the
+    /// resolved bundle 2026-08-24 — and that name is the site's, with no prefix
+    /// on it. Requiring one would move the file out from under upstream's own
+    /// pointer, which is the defect this whole mechanism exists to close.
+    /// </para>
+    /// <para>
+    /// <b>What this does not fix, stated rather than glossed:</b> a short,
+    /// word-shaped name — <c>a</c>, <c>data</c>, <c>index</c> — that a page
+    /// renders as ordinary prose is still delimited and still pins. The residue
+    /// is bounded to <i>the file stays in <c>output\</c> and is recorded
+    /// <c>LeftWhereTheChildPutIt</c> rather than sorted</i>, inside the same
+    /// session tree, with the absolute path in the note either way.
+    /// </para>
+    /// </remarks>
+    /// <param name="answer">The child's result, serialised.</param>
+    /// <param name="name">A file name, with no directory part.</param>
+    /// <returns>Whether the answer names it.</returns>
+    private static bool NamesTheFile(string answer, string name)
+    {
+        for (var at = answer.IndexOf(name, StringComparison.OrdinalIgnoreCase);
+             at >= 0;
+             at = answer.IndexOf(name, at + 1, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!IsNameCharacter(answer, at - 1) && !IsNameCharacter(answer, at + name.Length))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Whether the character at that index could be part of a file name.</summary>
+    /// <remarks>
+    /// ⚠️ <b><c>/</c>, <c>\</c>, <c>#</c>, <c>(</c>, <c>)</c> and <c>"</c> are
+    /// deliberately absent</b>, because every pointer upstream writes puts one of
+    /// them on at least one side: a Markdown link whose target is
+    /// <c>./page-….yml</c>, so a <c>/</c> before and a <c>)</c> after;
+    /// <c>- New console entries: console-….log#L1-L24</c>;
+    /// <c>- Downloaded file x.pdf to "./x.pdf"</c> — and the answer this reads is
+    /// the SERIALISED result, so a quote arrives as <c>\"</c> and a separator as
+    /// <c>\\</c>.
+    /// </remarks>
+    /// <param name="answer">The child's result, serialised.</param>
+    /// <param name="index">Where to look; out of range is not a name character.</param>
+    /// <returns>Whether that character could be part of a file name.</returns>
+    private static bool IsNameCharacter(string answer, int index) =>
+        index >= 0
+        && index < answer.Length
+        && (char.IsLetterOrDigit(answer[index]) || answer[index] is '-' or '_' or '.');
 
     private List<ArtifactRecord> SweepOutputRoot()
     {
@@ -867,6 +970,25 @@ internal sealed class ArtifactRouter
                 Path.GetRelativePath(_location.FullPath, target),
                 string.Equals(Path.GetFileName(target), name, StringComparison.OrdinalIgnoreCase) ? null : name,
                 sortedAfterTheFact: true));
+        }
+
+        // ⚠️ THE SET IS STILL MONOTONE ACROSS CALLS, WHICH IS THE PROPERTY THE
+        // POINTER FIX NEEDED -- the console log is named only in the answer that
+        // creates entries, so a per-call set would leave it movable on the very
+        // next call. What it is no longer is monotone across FILES: a name is
+        // dropped once nothing loose in the output root carries it, so a later,
+        // unrelated file that happens to be called the same thing is not pinned
+        // by inheritance from an answer that named something else.
+        //
+        // `loose` is the enumeration taken BEFORE anything moved, so a file this
+        // very sweep sorted is dropped from `_recorded` -- which is correct: it
+        // is no longer in the output root and its index entry is already written.
+        lock (_gate)
+        {
+            var present = loose.Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            _ = _published.RemoveWhere(name => !present.Contains(name));
+            _ = _recorded.RemoveWhere(name => !present.Contains(name));
         }
 
         return moved;

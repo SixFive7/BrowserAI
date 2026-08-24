@@ -507,6 +507,15 @@ internal static class SessionErrors
     /// rows would be three sentences to keep in step about one condition.
     /// </para>
     /// <para>
+    /// ⚠️ <b>One condition was split out of it on 2026-08-24, and this says which
+    /// so that the next reader does not merge them back.</b> Until then every
+    /// failure to open the claim file wore this sentence, including the ones that
+    /// were not a holder at all — an ACL denial, a full volume, an unwritable
+    /// profile. <see cref="TheBrowsersRootCouldNotBeClaimed"/> is that case, and
+    /// it is a separate row because <b>the recovery is the opposite one</b>:
+    /// waiting clears this and will never clear that.
+    /// </para>
+    /// <para>
     /// <b>It is an error rather than a wait, on the same reasoning as
     /// <c>browserai_destroy</c>'s survivors:</b> the call did not do what was
     /// asked. A block would put an <c>init</c> behind a 203.8 MB download with
@@ -540,6 +549,38 @@ internal static class SessionErrors
         + $"{ReinstallProgress(progress)} "
         + "It deletes a browser tree and downloads it again, so a session started meanwhile would launch out of a directory that is being removed. "
         + $"Nothing was terminated and there is deliberately no force option. Call the same tool again once it lands — a browser download is minutes rather than seconds, and {SessionToolSurface.List} answers throughout.";
+
+    /// <summary>
+    /// Row 28 — the browsers root's claim file could not be opened at all, and
+    /// the kernel's refusal was not a sharing violation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A separate row from <see cref="BrowsersAreBeingReinstalled"/> rather
+    /// than a clause inside it, and the test is the recovery.</b> That row's
+    /// three callers share one row because they share one recovery — <i>wait,
+    /// then call again</i>. This condition's recovery is the opposite: nothing
+    /// will change by waiting, and something outside BrowserAI has to be fixed.
+    /// Two recoveries are two rows; one row that says both is a sentence a model
+    /// cannot act on.
+    /// </para>
+    /// <para>
+    /// <b>It names the causes and refuses to pick one.</b> An ACL denial, a full
+    /// volume, an unwritable profile and a filter driver are not distinguishable
+    /// from a caught <c>IOException</c>, and a confident wrong diagnosis is what
+    /// this catalogue exists to remove. What is quoted is what Windows said.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="browsersDirectory">The browsers root.</param>
+    /// <param name="detail">What Windows said, verbatim.</param>
+    /// <returns>The refusal.</returns>
+    public static string TheBrowsersRootCouldNotBeClaimed(string tool, string browsersDirectory, string detail) =>
+        $"'{tool}' was not run and nothing was changed: BrowserAI could not open this machine's browsers claim at '{Path.Combine(browsersDirectory, MaintenanceLock.FileName)}', and the kernel's refusal was not a sharing violation — so this is NOT a reinstall in progress, and waiting will not clear it. "
+        + $"Windows said: {detail} "
+        + "Every session holds that file open for its whole life, so it has to be openable before any session can start. "
+        + "The usual causes are an ACL that denies this account, a full or failing volume, a profile directory that is not writable, and a filter driver holding the file open; BrowserAI cannot tell which of those it is from here and has deliberately not guessed. "
+        + $"Check that '{browsersDirectory}' exists and is writable by this account and that its volume has space, then call '{tool}' again. Nothing was terminated and nothing was changed.";
 
     /// <summary>
     /// The progress clause a reinstall's refusal carries, which is the whole of

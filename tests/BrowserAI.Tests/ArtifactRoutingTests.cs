@@ -785,6 +785,104 @@ internal sealed class ArtifactRoutingTests
         await Assert.That(File.Exists(Path.Combine(rig.Session!, SessionLayout.OutputFolderName, "page", "login.png"))).IsTrue();
     }
 
+    /// <summary>
+    /// A caller that cancels a <c>tools/call</c> gets its reserved
+    /// <c>filename</c> back, so the retry is not suffixed against a file nobody
+    /// ever wrote.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The reservation is released in a <c>finally</c> and the assertion
+    /// here is about cancellation only.</b> <c>OperationCanceledException</c> is
+    /// the one exception that escapes <c>ChildConnection.AskAsync</c> — every
+    /// other failure comes back as a <c>ChildAnswer</c> and reaches the release
+    /// on its own path — but the idle-timer scope, the remediation regex's
+    /// 1,000 ms match timeout and the two sends can throw too. Those three are
+    /// covered by the same <c>finally</c> and <b>are not asserted here</b>:
+    /// neither is deterministically reachable, and a test that provoked one by
+    /// timing would be the promptness assertion this suite forbids. This test is
+    /// therefore narrower than the fix, and says so rather than implying it
+    /// covers the class.
+    /// </para>
+    /// <para>
+    /// <b>The wait is on the log record rather than on a frame.</b> A request
+    /// cancelled by <c>notifications/cancelled</c> is answered with no frame at
+    /// all — the SDK suppresses the error response when the request's own linked
+    /// token is what fired — so there is nothing to await. The Debug record the
+    /// <c>finally</c> writes is the only thing that happens strictly after the
+    /// name is given back, and waiting on it is what makes the green
+    /// deterministic rather than a race the unwind happens to win.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task ACancelledCallGivesItsReservedNameBackSoTheRetryIsNotSuffixed()
+    {
+        // Held rather than delayed: a child parked inside its own dispatch could
+        // not hear the cancellation, so the assertion would be about the double.
+        using var release = new CancellationTokenSource();
+
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
+            {
+                HoldUntil = Task.Delay(Timeout.Infinite, release.Token),
+            },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // ⚠️ `debug: true`, and that is what makes the record observable at all.
+        // A session's own log runs at Information unless it was opened this way
+        // (`SessionManager` at the `OpenSessionLog` call), and the release record
+        // is Debug because it fires on every call that named a file. Opening the
+        // session the way an operator would when they are looking is cheaper than
+        // raising the product's level for the sake of a test.
+        var session = Path.Combine(sessions.Root, "cancels-a-screenshot");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "the session whose caller changes its mind mid-screenshot",
+            ["debug"] = true,
+        });
+
+        var id = await rig.Client.BeginAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_take_screenshot",
+            ["arguments"] = new JsonObject
+            {
+                [SessionToolSurface.SessionParameter] = session,
+                [SessionToolSurface.WhyParameter] = "the call the caller changes its mind about",
+                ["filename"] = "login.png",
+            },
+        });
+
+        await WaitUntilAsync(() => sessions.SessionChildren[0].MethodsReceived.Contains("tools/call"));
+
+        await rig.Client.NotifyAsync(
+            "notifications/cancelled",
+            new JsonObject { ["requestId"] = id, ["reason"] = "the caller timed out" });
+
+        await WaitUntilAsync(() => rig.Logs.Logged("released its in-flight filename reservation"));
+
+        sessions.SessionChildren[0].Tools["browser_take_screenshot"] = new FakeToolBehaviour { WritesArtifactBytes = 8 };
+
+        var retried = await CallAsync(rig, "browser_take_screenshot", new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = session,
+            [SessionToolSurface.WhyParameter] = "the retry the caller does mean",
+            ["filename"] = "login.png",
+        });
+
+        // The retry gets the name it asked for. A rename reported here is a
+        // rename no file on disk justifies, which is the class this product
+        // exists to remove.
+        await Assert.That(TextOf(retried)).DoesNotContain("renamed:");
+        await Assert.That(File.Exists(Path.Combine(session, SessionLayout.OutputFolderName, "page", "login.png"))).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(session, SessionLayout.OutputFolderName, "page", "login-2.png"))).IsFalse();
+
+        await release.CancelAsync();
+    }
+
     /// <summary>What the two sets disagree about, in the shape the gate reports.</summary>
     /// <remarks>
     /// Both directions, because a rename presents as one of each: an unexplained
@@ -878,6 +976,27 @@ internal sealed class ArtifactRoutingTests
     private static string TextOf(JsonObject result) =>
         string.Concat((result["content"]?.AsArray() ?? [])
             .Select(block => (string?)block?["text"] ?? string.Empty));
+
+    /// <summary>Waits for a condition, bounded by the rig's own patience.</summary>
+    /// <remarks>
+    /// The bound comes from <see cref="TestDefaults.InProcessHang"/> and never
+    /// from a number written here: this is a hang detector, not a claim that the
+    /// condition becomes true promptly.
+    /// </remarks>
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TestDefaults.InProcessHang;
+
+        while (!condition())
+        {
+            if (DateTime.UtcNow > deadline)
+            {
+                throw new TimeoutException("The condition never became true within the rig's patience.");
+            }
+
+            await Task.Delay(5);
+        }
+    }
 
     /// <summary>Every <c>image</c> content block of one answer, in order.</summary>
     private static List<JsonNode?> ImagesIn(JsonObject result) =>

@@ -704,6 +704,97 @@ internal sealed class SessionLockTests
         await Assert.That(string.Join(", ", creators)).IsEqualTo("MachineMutex.cs");
     }
 
+    /// <summary>
+    /// The listing's probe takes the per-directory gate <b>without waiting for
+    /// it</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is weaker than a red test and could not have been planted as
+    /// one — say so rather than implying otherwise.</b>
+    /// <c>ProbeLivenessUnderTheGate</c> did not exist before 2026-08-24, so no
+    /// run can have failed this. What it holds is the one property the
+    /// behavioural test beside it cannot: a <c>PerDirectoryGate</c> acquire (120
+    /// seconds) would still return inside the rig's patience and
+    /// <c>SessionListTests.ASessionWhoseGateIsHeldByAPeerIsReportedUnknownRatherThanFree</c>
+    /// would still pass, while every listed entry would have queued behind
+    /// whatever held the gate.
+    /// </para>
+    /// <para>
+    /// <b>Zero timeout is what keeps the listing out of the queue
+    /// <c>ProbeForHolder</c> was extracted to remove.</b>
+    /// <c>LockScopes.NeverWaits</c> never queues, so the super-linear contention
+    /// measurement behind that extraction does not apply to it. A gate it could
+    /// not take is <c>Undetermined</c> with a reason, which is the answer the
+    /// type already has for exactly this.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheListingProbeTakesTheGateWithoutWaitingForIt()
+    {
+        var file = RepositoryLayout.SourceAndScriptFiles
+            .Single(candidate => string.Equals(candidate.Name, "SessionLock.cs", StringComparison.OrdinalIgnoreCase));
+
+        var body = MethodBody(await RepositoryLayout.ReadCodeAsync(file), "ProbeLivenessUnderTheGate");
+
+        // Not vacuous: a scan that failed to find the method would otherwise
+        // report both halves clean.
+        await Assert.That(body).IsNotNull();
+        await Assert.That(body!).Contains("LockScopes.NeverWaits");
+        await Assert.That(body!).DoesNotContain("LockScopes.PerDirectoryGate");
+    }
+
+    /// <summary>One method's body, brace-matched from its signature down.</summary>
+    /// <param name="code">The file, comment-only lines already removed.</param>
+    /// <param name="name">The method name to find.</param>
+    /// <returns>The body, or <see langword="null"/> when the method is not there.</returns>
+    private static string? MethodBody(string code, string name)
+    {
+        var lines = code.Split('\n');
+
+        for (var at = 0; at < lines.Length; at++)
+        {
+            if (!lines[at].Contains(name + "(", StringComparison.Ordinal)
+                || !lines[at].Contains("static", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var body = new List<string>();
+            var depth = 0;
+            var opened = false;
+
+            for (var line = at; line < lines.Length; line++)
+            {
+                foreach (var character in lines[line])
+                {
+                    if (character is '{')
+                    {
+                        depth++;
+                        opened = true;
+                    }
+                    else if (character is '}')
+                    {
+                        depth--;
+                    }
+                }
+
+                if (opened)
+                {
+                    body.Add(lines[line]);
+                }
+
+                if (opened && depth <= 0)
+                {
+                    return string.Join('\n', body);
+                }
+            }
+        }
+
+        return null;
+    }
+
     [Test]
     public async Task AHeldLockRefusesASecondWriterAndStillAnswersAReader()
     {

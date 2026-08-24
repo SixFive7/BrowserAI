@@ -46,6 +46,8 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed class SessionListTests
 {
+    private static readonly string ProbePath = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+
     [Test]
     public async Task ListSaysWhichSessionsAreInUseAndNeverPrintsCouldNotTellAsFree()
     {
@@ -202,6 +204,101 @@ internal sealed class SessionListTests
             : throw new InvalidOperationException("the directory was expected to be free at this point");
 
         await Assert.That(SessionLock.ProbeLiveness(location).State).IsEqualTo(SessionLiveness.NotHeld);
+    }
+
+    /// <summary>
+    /// A session whose per-directory gate a peer is holding is reported
+    /// <b>UNKNOWN</b>, never as a directory nobody has.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The state this constructs is byte for byte the state a rewrite is
+    /// in.</b> Since 2026-08-20 every forwarded browser call runs
+    /// <c>SessionLock.Append</c>, which is <c>Rewrite</c>: the ownership handle
+    /// is dropped at the top of the replacement and taken back at the bottom, so
+    /// a busy session's <c>browserai.json</c> is periodically <i>present and
+    /// unheld</i> while its gate is held. The bare probe cannot tell that from a
+    /// session whose process exited, and the listing printed <i>in use: no</i>
+    /// about a session another agent was driving.
+    /// </para>
+    /// <para>
+    /// <b>No clock anywhere.</b> The gate is held by a real process that will not
+    /// let go until the job object is disposed, so this asserts the same property
+    /// a rewrite would without racing one.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One property this does not assert, stated rather than glossed:</b>
+    /// that the acquire asks for <c>LockScopes.NeverWaits</c>. A
+    /// <c>PerDirectoryGate</c> acquire would still return inside the rig's
+    /// patience and this test would pass; asserting it by elapsed time is the
+    /// promptness claim in a hang detector's clothes that this suite forbids. The
+    /// source-level guard beside it —
+    /// <see cref="SessionLockTests.TheListingProbeTakesTheGateWithoutWaitingForIt"/>
+    /// — is what holds it, and it is weaker than a red test.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASessionWhoseGateIsHeldByAPeerIsReportedUnknownRatherThanFree()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var midRewrite = Path.Combine(sessions.Root, "a-peer-is-rewriting-its-record");
+        var index = new SessionIndex(sessions.Environment.Paths, NullLogger.Instance);
+
+        Plant(index, midRewrite, "a session a peer is rewriting");
+
+        var ready = Path.Combine(sessions.Root, "gate-ready.json");
+
+        string text;
+
+        using (var scope = new JobObjectScope())
+        {
+            _ = scope.Launch(ProbePath, AppContext.BaseDirectory, "session-hold-gate", midRewrite, ready);
+
+            // The control that the right kernel object is held by a process that
+            // will not let go: without it a probe that failed to start would leave
+            // the gate free and the assertion below would be about nothing.
+            var gate = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
+
+            await Assert.That((string?)gate["acquisition"]).IsEqualTo(nameof(MutexAcquisition.Acquired));
+            await Assert.That((string?)gate["mutexName"]).IsEqualTo(SessionPath.Resolve(midRewrite).MutexName);
+
+            text = TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
+            {
+                ["directory"] = sessions.Root,
+            }));
+        }
+
+        var block = BlockFor(text, midRewrite);
+
+        await Assert.That(block).Contains("in use: UNKNOWN");
+        await Assert.That(block).DoesNotContain("in use: no");
+
+        // ⚠️ THE PRECONDITION, AND IT IS NOT A RETRY. Killing the job stops the
+        // holder; the kernel releasing its handle is a step after that, so a
+        // listing issued immediately can still see the gate held and the control
+        // below would be racing a teardown rather than asserting anything.
+        // Taking the gate here is the deterministic proof that the peer's hold is
+        // gone -- an abandoned mutex IS acquired, which is exactly the state a
+        // killed holder leaves -- and the bound is the product's own constant
+        // rather than a number written here.
+        using (var gate = MachineMutex.Create(SessionPath.Resolve(midRewrite).MutexName))
+        {
+            await Assert.That(gate.Acquire(LockScopes.PerDirectoryGate)).IsNotEqualTo(MutexAcquisition.NotAcquired);
+            gate.Release();
+        }
+
+        // ⚠️ THE POSITIVE CONTROL. The holder is gone, so the same session must
+        // now answer `no` — an implementation that said UNKNOWN for everything
+        // passes above and fails here.
+        var after = TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
+        {
+            ["directory"] = sessions.Root,
+        }));
+
+        await Assert.That(BlockFor(after, midRewrite)).Contains("in use: no — nothing held ");
     }
 
     /// <summary>

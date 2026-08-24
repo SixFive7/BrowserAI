@@ -588,6 +588,22 @@ and then `download.saveAs(...)`, so the saved copy is
 when the site suggests no name at all**. `launchOptions.downloadsPath` is where
 Playwright keeps the raw artifact, not where the visible file ends up. `[FLOATS]`
 
+> **Addendum, 2026-08-24: upstream also *publishes a pointer* to that file, by
+> name, in the answer that produced it.** `Response._build()` pushes
+> `` - Downloaded file ${event.download.download.suggestedFilename()} to "${this._computeRelativeTo(event.download.outputFile)}"``
+> for a `download-finish` event, and `_computeRelativeTo` returns `"./" + rel`
+> for a file directly in the client workspace — which is the child's cwd, which
+> is the session's `output\`. So a real download's answer reads
+> `- Downloaded file quarterly-report.pdf to "./quarterly-report.pdf"`, with the
+> **site's** name and no generator prefix on it. The consequence is the one this
+> entry did not state: any rule that decides which loose files to leave alone by
+> requiring a generator prefix would move a real download out from under
+> upstream's own pointer.
+> *Verified 2026-08-24 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+> 1.63.0-alpha-2026-08-05.* **Re-establish it** by grepping
+> `payload/mcp/node_modules/playwright-core/lib/coreBundle.js` for
+> `Downloaded file` and reading `_computeRelativeTo` beside it.
+
 **`browser_take_screenshot`'s image format comes from `type` before the file
 name.** `fileType = params.type ?? <from filename extension> ?? "png"`, so
 supplying a `.png` name to a call that asked for `jpeg` yields jpeg bytes in a

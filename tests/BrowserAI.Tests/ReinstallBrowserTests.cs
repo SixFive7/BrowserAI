@@ -369,7 +369,7 @@ internal sealed class ReinstallBrowserTests
         await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium, out _, out _);
 
         await Assert.That(claim).IsNotNull();
 
@@ -441,7 +441,7 @@ internal sealed class ReinstallBrowserTests
 
         _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = built, ["why"] = "the suite exercising this call" });
 
-        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium);
+        using var claim = MaintenanceLock.TryTakeExclusive(sessions.Environment.Paths.BrowsersDirectory, ProvisionedBrowsers.Chromium, out _, out _);
 
         // The control: it really was taken, which is only possible because
         // nothing holds the root shared any more.
@@ -906,14 +906,14 @@ internal sealed class ReinstallBrowserTests
         // ⚠️ THE ARM THAT MATTERS. One is gone and the other still holds it, so
         // the claim must still be refused. A design that kept one claim per
         // process, or a count released on the first close, is red here.
-        using (var stillHeld = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium))
+        using (var stillHeld = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _))
         {
             await Assert.That(stillHeld).IsNull();
         }
 
         _ = await CallAsync(rig, SessionToolSurface.Destroy, new JsonObject { ["directory"] = second, ["why"] = "the suite exercising this call" });
 
-        using var free = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+        using var free = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
 
         // And the control: with both gone it really is available, so the arm
         // above is about the second session rather than about something that
@@ -964,7 +964,7 @@ internal sealed class ReinstallBrowserTests
 
             // Held by a process this one has no handle on and shares no memory
             // with, which is the only arrangement that proves anything here.
-            using var blocked = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+            using var blocked = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
 
             await Assert.That(blocked).IsNull();
         }
@@ -984,7 +984,7 @@ internal sealed class ReinstallBrowserTests
 
         while (true)
         {
-            using var afterwards = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+            using var afterwards = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
 
             if (afterwards is not null)
             {
@@ -1026,7 +1026,7 @@ internal sealed class ReinstallBrowserTests
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
 
-        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
 
         await Assert.That(claim).IsNotNull();
 

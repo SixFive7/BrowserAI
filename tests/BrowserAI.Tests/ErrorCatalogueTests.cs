@@ -654,7 +654,7 @@ internal sealed partial class ErrorCatalogueTests
 
         var root = sessions.Environment.Paths.BrowsersDirectory;
 
-        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium);
+        using var claim = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
 
         await Assert.That(claim).IsNotNull();
 
@@ -682,6 +682,92 @@ internal sealed partial class ErrorCatalogueTests
             TextOf(refused),
             nameof(SessionErrors.BrowsersAreBeingReinstalled),
             reference[..reference.IndexOf("There is no claim file", StringComparison.Ordinal)]);
+    }
+
+    /// <summary>
+    /// An <c>init</c> that cannot open the browsers claim at all is not told a
+    /// reinstall is running.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two recoveries, so two rows.</b> A sharing violation on this open is a
+    /// holder and is waited out; anything else is a failure to reach the file,
+    /// and waiting will never clear it. Until 2026-08-24 both wore the reinstall's
+    /// sentence, so an ACL denial told the caller to wait minutes for a download
+    /// that was not running.
+    /// </para>
+    /// <para>
+    /// <b>The both-directions control is
+    /// <see cref="TheMaintenanceRowIsEmittedByAnInitThatMeetsARunningReinstall"/></b>,
+    /// which takes the claim exclusively and therefore produces a genuine sharing
+    /// violation — so the unhedged reinstall sentence is still asserted for the
+    /// case it is right about, and this test is the case it was wrong about.
+    /// </para>
+    /// <para>
+    /// <b>The rig's browsers root is per-rig</b>, so the ACL below never touches
+    /// <c>%LocalAppData%\BrowserAI</c> and cannot collide with a parallel run.
+    /// The denial is disposed before the rig is: a leaked denial does not fail
+    /// the test that made it, it fails whatever runs next.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var root = sessions.Environment.Paths.BrowsersDirectory;
+
+        // Brought into existence exactly as the product brings it, then let go:
+        // what follows is a denial and not a holder.
+        using (MaintenanceLock.TakeShared(root, out _, out _))
+        {
+        }
+
+        JsonObject refused;
+
+        using (DirectoryDenial.Apply(
+            root,
+            FileSystemRights.ReadData,
+            InheritanceFlags.ObjectInherit,
+            PropagationFlags.None))
+        {
+            // The precondition, so the test cannot pass by the denial not taking.
+            await Assert.That(MaintenanceLock.TakeShared(root, out var denial, out _)).IsNull();
+            await Assert.That(denial).IsEqualTo(MaintenanceDenial.Unreachable);
+
+            refused = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+            {
+                ["directory"] = Path.Combine(sessions.Root, "refused-because-the-claim-cannot-be-opened"),
+                ["purpose"] = "a session whose browsers claim cannot be opened at all",
+            });
+        }
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+        await Assert.That(TextOf(refused)).DoesNotContain("is replacing the browsers");
+        await Assert.That(TextOf(refused)).Contains("was not a sharing violation");
+
+        // Compared against the part of the row that does not move: the clause
+        // after it is Windows' own message, which is not this repository's to
+        // predict.
+        var reference = SessionErrors.TheBrowsersRootCouldNotBeClaimed(SessionToolSurface.Init, root, "x");
+
+        Match(
+            TextOf(refused),
+            nameof(SessionErrors.TheBrowsersRootCouldNotBeClaimed),
+            reference[..reference.IndexOf("Windows said:", StringComparison.Ordinal)]);
+
+        // ⚠️ THE POSITIVE CONTROL. The ACL is off, so the same init must now
+        // succeed — which is what proves the refusal was the denial rather than
+        // the rig.
+        var allowed = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "opens-once-the-claim-can-be-opened"),
+            ["purpose"] = "a session whose browsers claim opens normally",
+        });
+
+        await Assert.That((bool?)allowed["isError"]).IsNotEqualTo(true);
     }
 
     [Test]
@@ -960,6 +1046,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheFilenameRowsAreEmittedByRealCallsThatNameAFileOutsideTheSession))]
     [DependsOn(nameof(APurposeIsCappedStrippedAndFramedAsRecordedData))]
     [DependsOn(nameof(TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen))]
+    [DependsOn(nameof(AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning))]
     public async Task EveryRowInTheCatalogueWasTriggeredBySomethingAbove()
     {
         // The census, and the reason the catalogue is a type rather than a set of
@@ -1042,7 +1129,16 @@ internal sealed partial class ErrorCatalogueTests
         // Every one of them was **deleted rather than orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
-        await Assert.That(rows.Count).IsEqualTo(27);
+        //
+        // ⚠️ **Corrected 2026-08-24 to 28 (previously 27).**
+        // `TheBrowsersRootCouldNotBeClaimed` arrived as a row of its own rather
+        // than as a clause on `BrowsersAreBeingReinstalled`, and the test is the
+        // recovery: that row's three callers share one row because they share
+        // one recovery -- wait, then call again -- and this condition's recovery
+        // is the opposite one. Nothing about waiting will clear an ACL that
+        // denies this account, a full volume or an unwritable profile, and a
+        // single row that said both would be a sentence a model cannot act on.
+        await Assert.That(rows.Count).IsEqualTo(28);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

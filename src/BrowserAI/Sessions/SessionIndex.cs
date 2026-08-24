@@ -22,11 +22,20 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Never trusted, only followed.</b> An entry is a pointer, never an
-/// authorisation. Every entry is verified by opening the <c>browserai.json</c> it
-/// points at, and a directory that has none is reported as not ours and acted on
-/// in no other way. That is what makes an entry that somehow named a personal
-/// Chrome profile harmless: it is an inventory line, and nothing downstream may
-/// treat it as permission to touch anything.
+/// authorisation. No entry is ever <b>reported as a session</b> without opening
+/// the <c>browserai.json</c> it points at, and a directory that has none is
+/// reported as not ours and acted on in no other way. That is what makes an entry
+/// that somehow named a personal Chrome profile harmless: it is an inventory
+/// line, and nothing downstream may treat it as permission to touch anything.
+/// </para>
+/// <para>
+/// ⚠️ ***Corrected 2026-08-24 (previously "Every entry is verified by opening the
+/// `browserai.json` it points at").*** That was true of
+/// <see cref="Follow"/> and became false as a statement about this store the
+/// moment <see cref="FollowUnder"/> existed: a subtree read decides which entries
+/// to <i>ask about</i> and never which answers to <i>trust</i>. A filtered entry
+/// is not reported at all, which is a third thing beside <i>ours</i> and <i>not
+/// ours</i> and is why the sentence had to move rather than be dropped.
 /// </para>
 /// <para>
 /// <b>No lock, by design.</b> Create and delete are atomic per file, so there is
@@ -175,39 +184,74 @@ internal sealed class SessionIndex
     }
 
     /// <summary>
-    /// Reads every entry and follows it — the only way this store is ever read.
+    /// Reads every entry and follows it — the whole-machine read, and one of the
+    /// two ways this store is ever read.
     /// </summary>
     /// <returns>Every entry, each with what following it found, ordered by key.</returns>
     /// <remarks>
+    /// <para>
     /// <b>Following is verification, not trust.</b> Nothing here decides that a
     /// directory is ours because it is listed; it decides that by opening the
     /// <c>browserai.json</c> inside it. The states this returns are an inventory
-    /// report and confer no authority on anything.
+    /// report and confer no authority on anything. <b>That survives
+    /// <see cref="FollowUnder"/> intact</b> — it is a rule about what a returned
+    /// state means, and no returned state changes.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "the only way this store is ever
+    /// read").*** <see cref="FollowUnder"/> is the second, and it is defined in
+    /// terms of this one. <b>Three callers must keep using this one</b>, and each
+    /// is machine-wide by design: <see cref="Sweep"/>, which would otherwise
+    /// leave entries un-swept forever; <c>SessionManager.LiveSessions</c>, whose
+    /// browsers root is machine-wide; and <c>StraySweep</c>, whose whole reach is
+    /// the point of it. <c>HouseRuleTests</c> asserts that rather than leaving it
+    /// to a reader.
+    /// </para>
     /// </remarks>
-    public IReadOnlyList<SessionIndexEntry> Follow()
+    public IReadOnlyList<SessionIndexEntry> Follow() => Walk(under: null);
+
+    /// <summary>
+    /// Follows only the entries that name a directory under one subtree.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-24. The filter used to run on the wrong side of the
+    /// parse</b>: <c>browserai_list</c> and the roll-up called
+    /// <see cref="Follow"/> and then dropped what was not under their prefix, so
+    /// every session on the machine had its record opened and strictly parsed —
+    /// up to 250 log entries and all their arguments — to print the four fields
+    /// of the few that matched. The roll-up runs on every <c>init</c> and every
+    /// <c>resume</c>, so that was a session-open cost rather than a listing one,
+    /// and each of those opens inherits <c>RenameWindow</c>'s budget: one denied
+    /// or scanner-held record anywhere on the machine could add it to a call
+    /// scoped to a completely unrelated tree.
+    /// </para>
+    /// <para>
+    /// <b>The predicate is unchanged; only its position is.</b> Everything ahead
+    /// of the filter is the entry's own verification — a bounded read, an
+    /// absolute-path check, a canonical resolve and the hash-of-content check —
+    /// and none of it opens the session. So the entries this returns are exactly
+    /// the entries <see cref="Follow"/> would have returned for the same subtree,
+    /// followed the same way; <c>SessionIndexTests</c> asserts that equivalence
+    /// directly.
+    /// </para>
+    /// <para>
+    /// <b>An entry this cannot compare is returned rather than dropped.</b>
+    /// Every earlier refusal — unreadable, empty, relative, not a session path,
+    /// wrongly named — carries no path to test against the prefix, and dropping
+    /// it would make a subtree read narrower than its caller can see.
+    /// </para>
+    /// </remarks>
+    /// <param name="prefix">
+    /// A case-folded, separator-terminated path prefix, as
+    /// <c>SessionManager.Subtree</c> produces it.
+    /// </param>
+    /// <returns>The entries under that subtree, ordered by key.</returns>
+    public IReadOnlyList<SessionIndexEntry> FollowUnder(string prefix)
     {
-        if (!Directory.Exists(Root))
-        {
-            return [];
-        }
+        ArgumentException.ThrowIfNullOrEmpty(prefix);
 
-        var entries = new List<SessionIndexEntry>();
-
-        foreach (var file in Directory.EnumerateFiles(Root).Order(StringComparer.OrdinalIgnoreCase))
-        {
-            var key = Path.GetFileName(file);
-
-            // Anything that is not a key is not an entry. That covers a live
-            // writer's rename temp, and anything else that found its way in.
-            if (!IsKey(key))
-            {
-                continue;
-            }
-
-            entries.Add(FollowOne(file, key));
-        }
-
-        return entries;
+        return Walk(prefix);
     }
 
     /// <summary>
@@ -310,10 +354,61 @@ internal sealed class SessionIndex
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        return FollowOne(entry.EntryFile, entry.Key);
+        return FollowOne(entry.EntryFile, entry.Key, under: null)!;
     }
 
-    private static SessionIndexEntry FollowOne(string file, string key)
+    /// <summary>The one walk, with the subtree filter optional.</summary>
+    /// <param name="under">
+    /// The prefix to keep, or <see langword="null"/> for the whole machine.
+    /// </param>
+    /// <returns>Every entry that survived, ordered by key.</returns>
+    private List<SessionIndexEntry> Walk(string? under)
+    {
+        if (!Directory.Exists(Root))
+        {
+            return [];
+        }
+
+        var entries = new List<SessionIndexEntry>();
+
+        foreach (var file in Directory.EnumerateFiles(Root).Order(StringComparer.OrdinalIgnoreCase))
+        {
+            var key = Path.GetFileName(file);
+
+            // Anything that is not a key is not an entry. That covers a live
+            // writer's rename temp, and anything else that found its way in.
+            if (!IsKey(key))
+            {
+                continue;
+            }
+
+            if (FollowOne(file, key, under) is { } followed)
+            {
+                entries.Add(followed);
+            }
+        }
+
+        return entries;
+    }
+
+    /// <summary>
+    /// Spelled exactly once, and this is the spelling.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Do not re-derive it.</b> <c>SessionManager.Subtree</c> produces the
+    /// prefix upper-cased and separator-terminated, and
+    /// <see cref="SessionPath.Key"/> is the upper-cased full path. Two spellings
+    /// of this predicate is the class of defect this repository keeps re-finding,
+    /// which is why the copy that used to live in <c>SessionManager</c> was
+    /// deleted rather than left beside this one.
+    /// </remarks>
+    /// <param name="candidate">The session a followed entry points at.</param>
+    /// <param name="prefix">The case-folded, separator-terminated prefix.</param>
+    /// <returns>Whether the candidate is at or beneath the prefix.</returns>
+    private static bool IsUnder(SessionPath candidate, string prefix) =>
+        (candidate.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal);
+
+    private static SessionIndexEntry? FollowOne(string file, string key, string? under)
     {
         string pointer;
 
@@ -394,6 +489,19 @@ internal sealed class SessionIndex
         if (!string.Equals(session.IndexKey, key, StringComparison.OrdinalIgnoreCase))
         {
             return Unusable(file, key, pointer, $"its name is not the hash of the path it holds (that path hashes to {session.IndexKey})");
+        }
+
+        // ⚠️ THE ONE PLACE A PREFIX MAY BE APPLIED, AND IT IS ABOVE `Locate` BY
+        // CONSTRUCTION. Everything above this line is the entry's own
+        // verification -- a bounded read, an absolute-path check, a canonical
+        // resolve and the hash-of-content check -- and none of it opens the
+        // session. `Locate` is the open and the strict parse. A caller that wants
+        // one subtree stops here for everything outside it, which is why
+        // `browserai_list` no longer parses every record on the machine to print
+        // the few under its prefix.
+        if (under is not null && !IsUnder(session, under))
+        {
+            return null;
         }
 
         return Locate(file, key, pointer, session);

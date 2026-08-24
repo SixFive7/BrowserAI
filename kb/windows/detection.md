@@ -1345,6 +1345,20 @@ session whose profile has actually been used holds far more than 310 files.
 Adding a probe per entry therefore cannot make a listing pathological: the
 listing's cost was already the walk. `[MACHINE]`
 
+> ⚠️ **These figures still describe `SessionLock.ProbeLiveness`, and since
+> 2026-08-24 they are no longer the whole of what a listing pays per entry.**
+> `browserai_list` and `browserai_catch_up` go through
+> `SessionLock.ProbeLivenessUnderTheGate`, which wraps the same open in a
+> `CreateMutexW`, a **zero-timeout** `WaitForSingleObject`, a `ReleaseMutex` and a
+> `CloseHandle` on this directory's own gate — because the bare probe is a sound
+> ownership test and an unsound *freedom* test, and a record being rewritten is
+> present and unheld. **The added cost is UNMEASURED and is deliberately not
+> estimated here.** The uncontended acquire alone is recorded elsewhere in this
+> article at 0.007–0.009 ms; the create/close pair is not. **Nothing above has
+> been adjusted** — re-run the procedure below against
+> `ProbeLivenessUnderTheGate` and stamp a new row beside these rather than
+> editing them.
+
 > **Reproduce, and keep the sanity check.** Time the open above in a loop against
 > a real `browserai.json`, once with nothing holding it and once with a second handle
 > open `FileAccess.ReadWrite, FileShare.Read` — and **assert that the second arm

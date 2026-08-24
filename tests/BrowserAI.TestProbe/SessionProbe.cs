@@ -700,7 +700,7 @@ internal static class SessionProbe
     /// <returns>2 if this process was never killed, which is the host's failure.</returns>
     public static int HoldBrowsersClaim(string browsersRoot, string readyPath)
     {
-        using var claim = BrowserAI.Runtime.MaintenanceLock.TakeShared(browsersRoot);
+        using var claim = BrowserAI.Runtime.MaintenanceLock.TakeShared(browsersRoot, out _, out _);
 
         Write(readyPath, new JsonObject
         {

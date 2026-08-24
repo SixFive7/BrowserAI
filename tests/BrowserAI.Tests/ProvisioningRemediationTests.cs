@@ -145,6 +145,64 @@ internal sealed class ProvisioningRemediationTests
         await Assert.That(text).Contains("chrome-for-testing");
     }
 
+    /// <summary>
+    /// A page that renders upstream's advice in its own title, in an answer the
+    /// child did not mark as an error, is forwarded exactly as the child wrote
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The gate is <c>isError</c>, and it is the whole provenance check there
+    /// is.</b> Upstream sets <c>isError</c> on every answer carrying an
+    /// <c>Error</c> section and on no other, so gating the scan on it loses
+    /// nothing on the path the rewrite exists for and takes every ordinary
+    /// answer out of reach of page-controlled text.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This does not close the whole bypass and is not claimed to.</b> An
+    /// <c>isError</c> answer against a live tab carries the page's own title and
+    /// the console and snapshot pointers in the same result, so page content can
+    /// still trip the rewrite; what stops that mattering is the other half —
+    /// <see cref="ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite"/>.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task APageQuotingUpstreamsAdviceInASuccessfulAnswerIsForwardedUntouched()
+    {
+        // The sentence sits exactly where upstream puts a page title, and the
+        // answer carries no `isError`: this is an ordinary, successful call
+        // against a page that happens to render the words.
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour
+            {
+                RawResult = $$"""{"content":[{"type":"text","text":{{JsonValue.Create("### Page\n- Page Title: " + UpstreamMessage)!.ToJsonString()}}}]}""",
+            });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+        var directory = Path.Combine(sessions.Root, "meets-a-page-that-quotes-it");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "the session whose child answers with a page quoting upstream's npx advice",
+        });
+
+        var answer = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
+        });
+
+        var text = TextOf(answer);
+
+        // The child's own bytes, unedited: BrowserAI's instruction text does not
+        // get spliced into whatever a page happened to say.
+        await Assert.That(text).Contains("Run `npx");
+        await Assert.That(text).DoesNotContain("Do NOT run npx");
+        await Assert.That(text).DoesNotContain(SessionToolSurface.ReinstallBrowser);
+    }
+
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
         await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {

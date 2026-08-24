@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Artifacts;
 using BrowserAI.Hosting;
@@ -581,58 +582,104 @@ internal sealed class BrowserProxy : IAsyncDisposable
             ArtifactRouter.Apply(plan, forwarded);
         }
 
-        // The one timer, reset here and nowhere else. A call this session
-        // forwards is what "being driven" means for a browser-idle timer — a
-        // call refused by the mode policy or by provisioning never reaches a
-        // browser and never keeps one warm — and the scope holds the call
-        // outstanding across the await, so a navigation that outlives the whole
-        // period cannot have the browser closed underneath it.
-        using var driving = live.Idle.Call();
-
-        var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
-
-        if (answer.Response is { } response)
+        // ⚠️ THE RESERVATION OUTLIVES EVERY WAY OUT OF THIS METHOD OR IT LEAKS
+        // FOR THE SESSION'S LIFE. `_reserved` loses an entry only through
+        // `Release`, and until 2026-08-24 the release sites were all on paths
+        // that RETURN -- so a caller that cancelled a screenshot left its
+        // `filename` reserved forever, and the retry came back suffixed with the
+        // answer reporting a rename that no file on disk justifies.
+        // `OperationCanceledException` is the only exception that escapes
+        // `ChildConnection.AskAsync` -- every other failure comes back as a
+        // `ChildAnswer` -- but the idle-timer scope, the remediation regex's
+        // 1,000 ms match timeout and the two sends can all throw as well, and a
+        // `finally` is the only shape that covers a set nobody has to keep
+        // enumerating.
+        //
+        // Releasing after a SUCCESSFUL write is deliberate and safe: `Taken` is
+        // `_reserved.Contains(candidate) || File.Exists(candidate)`, so a file
+        // that is on disk holds its own name -- and a file the caller later
+        // deletes stops holding a name it no longer occupies, which is the
+        // behaviour the reservation set on its own was never able to give.
+        try
         {
-            // The one answer BrowserAI rewrites rather than forwards, and the
-            // trade is deliberate: upstream's "not installed" message ends with
-            // an npx command this product does not ship, which resolves a
-            // different package at a different revision into a directory
-            // BrowserAI never launches from -- and a model will run it. Byte
-            // identity is given up for exactly this payload, only when the
-            // marker is present, and the fact is logged rather than absorbed.
-            if (Remediate(response) is { } corrected)
+            // The one timer, reset here and nowhere else. A call this session
+            // forwards is what "being driven" means for a browser-idle timer — a
+            // call refused by the mode policy or by provisioning never reaches a
+            // browser and never keeps one warm — and the scope holds the call
+            // outstanding across the await, so a navigation that outlives the
+            // whole period cannot have the browser closed underneath it.
+            using var driving = live.Idle.Call();
+
+            var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
+
+            if (answer.Response is { } response)
             {
-                live.Artifacts.Release(plan);
-                ProxyLog.RemediationRewritten(live.Logger, tool, live.Location.FullPath);
+                // The one answer BrowserAI rewrites rather than forwards, and the
+                // trade is deliberate: upstream's "not installed" message ends with
+                // an npx command this product does not ship, which resolves a
+                // different package at a different revision into a directory
+                // BrowserAI never launches from -- and a model will run it. Byte
+                // identity is given up for exactly this payload, only when the
+                // child reported an error and the marker is present, and the fact
+                // is logged rather than absorbed.
+                if (Remediate(response) is { } corrected)
+                {
+                    ProxyLog.RemediationRewritten(live.Logger, tool, live.Location.FullPath);
 
-                await caller.SendMessageAsync(
-                    new JsonRpcResponse { Id = request.Id, Result = corrected },
-                    cancellationToken).ConfigureAwait(false);
+                    // ⚠️ THE SAME `Complete` THE ORDINARY PATH TAKES, and it is
+                    // here because a rewritten answer is still an answer that may
+                    // have published a pointer. Until 2026-08-24 this branch
+                    // returned early, so a call whose answer tripped the rewrite
+                    // pinned no name, recorded no artifact and carried no note --
+                    // which made the pointer protection bypassable by page
+                    // CONTENT, since an `isError` answer carries the page's own
+                    // title and the console and snapshot links in the same result.
+                    //
+                    // The child's OWN answer goes in, not the rewritten copy: the
+                    // rewrite touches only the `Run ... to install` clause, and
+                    // the pointers are the child's.
+                    var rewritten = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
 
+                    // Byte-identity is already given up on this branch, so the
+                    // note is appended to the node rather than spliced into the
+                    // child's own bytes.
+                    await caller.SendMessageAsync(
+                        new JsonRpcResponse
+                        {
+                            Id = request.Id,
+                            Result = rewritten is { } note ? WithNote(corrected, note) : corrected,
+                        },
+                        cancellationToken).ConfigureAwait(false);
+
+                    return;
+                }
+
+                // §F's second half, which ships with the first or not at all:
+                // relocating a file while telling the model otherwise is a new
+                // silent failure introduced by the fix for an old one. It carries
+                // the image block back as well, on the calls whose name BrowserAI
+                // supplied -- see ArtifactTools.
+                // ⚠️ THE CHILD'S OWN ANSWER GOES IN, and it is what stops the
+                // artifact sweep moving a file the answer has just linked to. Two
+                // reproduced defects, both the same shape: a Markdown link to
+                // `./page-<stamp>.yml` and `- New console entries:
+                // console-<stamp>.log#L1-L24` are both relative
+                // to the child's working directory, which is the output root, and
+                // sorting either into a typed folder left the pointer naming
+                // nothing. See ArtifactRouter.NoteWhatTheAnswerPublished.
+                var completion = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
+
+                await AnswerChildResultAsync(live.Logger, caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
-            // §F's second half, which ships with the first or not at all:
-            // relocating a file while telling the model otherwise is a new
-            // silent failure introduced by the fix for an old one. It carries
-            // the image block back as well, on the calls whose name BrowserAI
-            // supplied -- see ArtifactTools.
-            // ⚠️ THE CHILD'S OWN ANSWER GOES IN, and it is what stops the
-            // artifact sweep moving a file the answer has just linked to. Two
-            // reproduced defects, both the same shape: a Markdown link to
-            // `./page-<stamp>.yml` and `- New console entries:
-            // console-<stamp>.log#L1-L24` are both relative
-            // to the child's working directory, which is the output root, and
-            // sorting either into a typed folder left the pointer naming
-            // nothing. See ArtifactRouter.NoteWhatTheAnswerPublished.
-            var completion = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
-
-            await AnswerChildResultAsync(live.Logger, caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
-            return;
+            await AnswerFailureAsync(live.Logger, caller, request, answer, cancellationToken).ConfigureAwait(false);
         }
-
-        live.Artifacts.Release(plan);
-        await AnswerFailureAsync(live.Logger, caller, request, answer, cancellationToken).ConfigureAwait(false);
+        finally
+        {
+            live.Artifacts.Release(plan);
+            ProxyLog.ReservationReleased(live.Logger, tool, live.Location.FullPath);
+        }
     }
 
     /// <summary>
@@ -640,16 +687,46 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <see langword="null"/> when there is none.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Every ordinary answer returns <see langword="null"/> here and goes back
     /// as the child's own bytes.</b> The scan is one <c>Contains</c> per text
     /// block against a marker that appears in exactly one upstream sentence, and
     /// it is worth that cost because the sentence is an <i>instruction</i>: a
-    /// model that reads it will run <c>npx</c>, and on the paths where it appears
-    /// at all the answer is already a failure with no bytes worth preserving.
+    /// model that reads it will run <c>npx</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-24 (previously "and on the paths where it appears
+    /// at all the answer is already a failure with no bytes worth
+    /// preserving").*** That was a claim about provenance and there was nothing
+    /// enforcing it: the scan read every text block of every answer, so a page
+    /// that merely rendered upstream's sentence — in its title, in an issue, in
+    /// release notes — had BrowserAI's own instruction text spliced into it, and
+    /// byte-identity was lost on an ordinary successful call. The gate is
+    /// <c>isError</c>, and it is the whole provenance check there is: upstream's
+    /// <c>Response.serialize()</c> returns
+    /// <c>...sections.some(s =&gt; s.isError) ? { isError: true } : {}</c> and
+    /// <c>throwIfExecutableMissing</c>'s throw is what puts an <c>Error</c>
+    /// section there, so the gate loses nothing on the path the rewrite exists
+    /// for (measured twice 2026-08-16,
+    /// <see href="../../../kb/playwright/configuration.md">kb</see>).
+    /// </para>
+    /// <para>
+    /// <b>It does not close the bypass on its own, and the caller no longer
+    /// relies on it to.</b> An <c>isError</c> answer against a live tab carries
+    /// the page's own title and the console and snapshot pointers in the same
+    /// result, so page content can still trip this. What makes that harmless is
+    /// that the rewrite branch now runs <c>Complete</c> like every other
+    /// answered call: a rewritten answer is still an answer that may have
+    /// published a pointer.
+    /// </para>
     /// </remarks>
     private JsonObject? Remediate(JsonRpcResponse response)
     {
-        if (response.Result is not JsonObject result || result["content"] is not JsonArray)
+        // `GetValueKind()` rather than `GetValue<bool>()`: the latter throws on
+        // `"isError": 5`, which a misbehaving child can send.
+        if (response.Result is not JsonObject result
+            || result["content"] is not JsonArray
+            || result["isError"]?.GetValueKind() is not JsonValueKind.True)
         {
             return null;
         }
@@ -1144,4 +1221,22 @@ internal static partial class ProxyLog
         Level = LogLevel.Error,
         Message = "The result for caller request {CallerRequestId} carries no top-level 'content' array, so the artifact note was appended by rebuilding it. That answer is no longer byte-identical.")]
     public static partial void NoteNotSpliced(ILogger logger, string callerRequestId);
+
+    /// <summary>An in-flight filename reservation was given back.</summary>
+    /// <remarks>
+    /// Debug rather than Information: it fires on every call that named a file,
+    /// which is most screenshots. It is logged at all because it is the only
+    /// evidence that the release happened on a path that RETURNED NOTHING — a
+    /// cancelled call sends the caller no frame at all, since the SDK suppresses
+    /// the error response when the request's own linked token is what fired, so
+    /// without this line the cancellation path is invisible in every signal.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 16,
+        Level = LogLevel.Debug,
+        Message = "'{Tool}' on the session at {Session} released its in-flight filename reservation.")]
+    public static partial void ReservationReleased(ILogger logger, string tool, string session);
 }

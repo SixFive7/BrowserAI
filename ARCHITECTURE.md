@@ -184,12 +184,30 @@ a typed folder left the pointer naming nothing, and the console log compounded
 because it is still open: the child recreated it at the root and the next sweep
 landed the copy as `-2`, so the answer named lines a 24-line file did not have.
 **`ArtifactRouter.NoteWhatTheAnswerPublished` reads the child's result before
-the sweep and marks every loose file the answer mentions**; those are recorded
-where they are instead of moved. The set is **monotone** — the log is named only
-in the answer that creates entries — and the rule is *the answer mentioned this
-name* rather than a list of prefixes, so a third pointer upstream adds is covered
-without an edit. `ArtifactPointerTests` holds both halves, one against a real
-browser.
+the sweep and marks every loose file the answer names**; those are recorded
+where they are instead of moved. The set is **monotone across calls** — the log
+is named only in the answer that creates entries — and the rule is *the answer
+named this file* rather than a list of prefixes, so a third pointer upstream adds
+is covered without an edit. `ArtifactPointerTests` holds both halves, one against
+a real browser.
+
+⚠️ ***Corrected 2026-08-24 (previously "marks every loose file the answer
+mentions … The set is monotone … and the rule is the answer mentioned this
+name").*** Three clauses, three corrections, and the middle one matters most.
+**(a)** *Mentions* was an undelimited `Contains`, so an answer saying
+`quarterly-report.pdf` pinned a different file called `report.pdf`, and a
+one-character name was pinned by any answer at all. It is now delimited.
+**(b)** The set was monotone across **files** as well as calls, so a name pinned
+once pinned every later file that shared it, for the session's life, with no
+answer naming it; a name is now dropped once nothing loose carries it.
+**(c)** The mechanism ran on every answer *except* one — a result that tripped
+the provisioning rewrite returned before `Complete`, so page content that quoted
+upstream's install advice bypassed the whole protection. The rewrite path now
+runs `Complete` like every other answered call. **The "rather than a list of
+prefixes" half is more load-bearing than it was, not less:** upstream publishes a
+pointer to a browser-initiated download too, under the site's own unprefixed
+name, so a prefix rule would move a real download out from under upstream's own
+pointer.
 
 **The session directory is the identity.** One directory holds `browserai.json` at its
 root and `profile/`, `output/` and `downloads/` beneath it. `browserai.json` is both
@@ -256,8 +274,13 @@ two mandatory free-text fields on one call gets one thoughtful answer and one
 restatement. **And not `browserai_catch_up`, which names a session and is the one
 exception**: a tool whose whole purpose is to tell you what happened must not
 itself become the most recent thing that happened, and writing an entry would
-mean taking the per-directory gate — which a session another live BrowserAI is
-driving would refuse, and that is the case it exists for. `ModelSurfaceTests`
+mean replacing `browserai.json` — which a session another live BrowserAI is
+driving refuses, and that is the case it exists for
+(⚠️ ***corrected 2026-08-24, previously "taking the per-directory gate — which a
+session another live BrowserAI is driving would refuse"***: the conclusion is
+right and the named mechanism was wrong, because `LockScopes.PerDirectoryGate`
+does not refuse a second writer, it waits 120 seconds for it; what refuses one is
+the holder's own `FileShare.Read`). `ModelSurfaceTests`
 carries a row for it, so adding a `why` later is a red build rather than a silent
 widening.
 
@@ -268,9 +291,12 @@ cookie store — and the answer prints it beside the log under two headings so a
 reader knows which source each fact came from. **The disagreement that matters is
 credentials**: cookies arrive from *navigation* rather than from tools, so a
 log-only answer would report *"no credential tools were used"* about a directory
-holding a live signed-in profile. It is **read-only and takes no lock**: the
-record is read the way `browserai_list` reads one and the walk opens no file
-inside the directory, so a session another BrowserAI is driving answers normally.
+holding a live signed-in profile. It is **read-only and takes no lock it can be
+refused by** (⚠️ ***corrected 2026-08-24, previously "takes no lock"***): the
+record is read the way `browserai_list` reads one — which since 2026-08-24 means
+under that directory's own gate at a **zero** timeout — and the walk opens no
+file inside the directory, so a session another BrowserAI is driving answers
+normally.
 Nothing here reads a cookie database — the answer a caller acts on is *this may
 hold credentials*, which the file's existence settles.
 
@@ -506,15 +532,43 @@ the version that replaced the gate rather than fronting it.
 decides.** `SessionLock.ProbeLiveness` is the one opener; `ProbeForHolder` is a
 decision built on it and `browserai_list` is a **report** built on it, so the rule
 *a sharing violation may be read as owned and nothing else may be read as free*
-is stated once and cannot come apart. The listing prints **in use: YES / no /
-UNKNOWN** per entry and **never names the holder**, because a sharing violation
-says the file is held and not by whom — the record inside can describe a previous
-one. It costs one `CreateFile`/`CloseHandle` per entry, measured at 0.035 ms free
-and 0.049 ms held against 0.6–2.3 ms for the size walk the same loop already
-performs
+is stated once. The listing prints **in use: YES / no / UNKNOWN** per entry and
+**never names the holder**, because a sharing violation says the file is held and
+not by whom — the record inside can describe a previous one. It costs one
+`CreateFile`/`CloseHandle` per entry, measured at 0.035 ms free and 0.049 ms held
+against 0.6–2.3 ms for the size walk the same loop already performs
 ([kb](kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)),
 and a session this process is already driving is answered from its own live-session
 map without asking the kernel at all.
+
+⚠️ ***Corrected 2026-08-24 (previously "…so the rule is stated once and cannot
+come apart", and "It costs one `CreateFile`/`CloseHandle` per entry").*** **The
+rule did come apart, in the direction the rule names.** Every forwarded browser
+call rewrites `browserai.json`, which drops the ownership handle and takes it
+back with the per-directory gate held throughout — so a busy session's record is
+periodically *present and unheld*, the bare probe answered `NotHeld`, and the
+listing printed *in use: no* about a session another agent was driving. The
+report now goes through `SessionLock.ProbeLivenessUnderTheGate`, which asks the
+same question with that directory's gate held at a **zero** timeout: the gate is
+the discriminator, and a gate it could not take is `UNKNOWN` rather than `no`.
+The zero timeout is what keeps the listing out of the queue `ProbeForHolder` was
+extracted to remove. **The cost sentence is therefore incomplete rather than
+wrong:** a mutex create, a zero-timeout acquire, a release and a close are now in
+the per-entry cost. The uncontended acquire alone was measured at 0.007–0.009 ms;
+**the create/close pair is unmeasured**, and the figures above are the file half
+only and have not been adjusted.
+
+**The listing no longer parses every record on the machine to print a few.** The
+subtree filter used to run *after* `SessionIndex.Follow` had opened and strictly
+parsed each session's `browserai.json` — up to 250 log entries and all their
+arguments — and each of those opens inherits `RenameWindow`'s budget, so one
+denied or scanner-held record anywhere could add it to a call scoped somewhere
+else entirely. The roll-up did the same on **every `init` and every `resume`**.
+`SessionIndex.FollowUnder` applies the prefix above the open instead; the
+predicate is unchanged and the reported set is identical.
+`HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry` is what keeps
+it there, and `Follow()` stays whole-machine for the sweep, the reinstall census
+and the stray sweep.
 
 **Writes are durable and atomic.** `WriteThrough` + `Flush(flushToDisk: true)` +
 `File.Move(overwrite: true)`, with the temp file in the target's own directory.
@@ -653,7 +707,12 @@ the shape and the fix. Touching the filesystem to decide is what makes a single
 call hang for 21 measured seconds on an unresponsive UNC host.
 
 **Never overwrite.** A taken name is suffixed, in-flight names are reserved so two
-concurrent calls cannot collide, and the answer says what it was renamed from.
+concurrent calls cannot collide, the reservation is given back when the call ends
+**however it ends**, and the answer says what it was renamed from. ⚠️ *The
+`however it ends` clause was added 2026-08-24: the release sites were all on
+paths that returned, so a caller that cancelled a screenshot left its `filename`
+reserved for the session's life and the retry came back suffixed, with the answer
+reporting a rename that no file on disk justified. It is a `finally` now.*
 
 ## Updates
 

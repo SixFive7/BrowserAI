@@ -269,6 +269,191 @@ internal sealed partial class ArtifactPointerTests
         await Assert.That(File.Exists(Path.Combine(output, "quarterly-report.pdf"))).IsFalse();
     }
 
+    /// <summary>
+    /// An answer that also tripped the provisioning rewrite still pins the file
+    /// it published a pointer to.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the half that closes the bypass, and the shape is upstream's
+    /// own.</b> A failed call against a live tab returns one result carrying the
+    /// <c>Error</c> section, the page's own title and the console pointer
+    /// together — so a page whose title quotes upstream's install advice trips
+    /// the rewrite through any <c>isError</c> gate. Until the rewrite branch ran
+    /// <c>Complete</c>, that call pinned no name, recorded no artifact and
+    /// carried no note, and the very next sweep moved the file the pointer
+    /// named. The <c>isError</c> gate cannot make this test pass: the answer
+    /// sets it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite()
+    {
+        const string Log = "console-2026-08-24T09-00-00-000Z.log";
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour());
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var output = Path.Combine(rig.Session!, SessionLayout.OutputFolderName);
+
+        await File.WriteAllTextAsync(Path.Combine(output, Log), "one\ntwo\n");
+
+        sessions.SessionChildren[0].Tools["browser_navigate"] = new FakeToolBehaviour
+        {
+            RawResult = $$"""{"content":[{"type":"text","text":"### Error\nError: element is not visible\n### Page\n- Page Title: Run `npx @playwright/mcp install-browser chromium` to install.\n### Events\n- New console entries: {{Log}}#L1-L2"}],"isError":true}""",
+        };
+
+        var rewritten = TextOf(await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the failed call whose page title quotes upstream's advice",
+        }));
+
+        await Assert.That(rewritten).Contains("LEFT this artifact where the browser wrote it");
+
+        // A later call that names nothing: the sweep runs and must leave the
+        // pinned file where the pointer says it is.
+        sessions.SessionChildren[0].Tools["browser_navigate"] = new FakeToolBehaviour
+        {
+            RawResult = """{"content":[{"type":"text","text":"### Page\n- Page URL: about:blank"}]}""",
+        };
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "a call that says nothing about the log",
+        });
+
+        await Assert.That(File.Exists(Path.Combine(output, Log))).IsTrue();
+        await Assert.That(Directory.Exists(Path.Combine(output, "console"))).IsFalse();
+
+        var index = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(rig.Session!, ArtifactRouter.IndexFileName)))!;
+
+        await Assert.That((index["artifacts"]?.AsArray() ?? []).Count(entry => (string?)entry?["path"] == Path.Combine(output, Log)))
+            .IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// A file whose name only occurs inside a longer one is still sorted, and
+    /// the download upstream did name is still left alone.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A generator prefix is deliberately not required, and the control
+    /// arm is why.</b> Upstream publishes a pointer to a browser-initiated
+    /// download too — <c>- Downloaded file &lt;name&gt; to "./&lt;name&gt;"</c> —
+    /// and that name is the site's, with no prefix on it. A prefix rule would
+    /// move a real download out from under upstream's own pointer, which is the
+    /// defect the pin exists to close. What is added is a boundary and nothing
+    /// else.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFileWhoseNameOnlyOccursInsideALongerOneIsStillSorted()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour());
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var output = Path.Combine(rig.Session!, SessionLayout.OutputFolderName);
+
+        await File.WriteAllBytesAsync(Path.Combine(output, "report.pdf"), new byte[16]);
+        await File.WriteAllBytesAsync(Path.Combine(output, "invoice.pdf"), new byte[16]);
+
+        sessions.SessionChildren[0].Tools["browser_navigate"] = new FakeToolBehaviour
+        {
+            RawResult = """{"content":[{"type":"text","text":"### Page\n- Page Title: quarterly-report.pdf archive\n### Events\n- Downloaded file invoice.pdf to \"./invoice.pdf\""}]}""",
+        };
+
+        var answer = TextOf(await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call whose answer names one file and merely spells another",
+        }));
+
+        // The one the answer only SPELLS inside a longer name is sorted.
+        await Assert.That(File.Exists(Path.Combine(rig.Session!, SessionLayout.DownloadsFolderName, "report.pdf"))).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(output, "report.pdf"))).IsFalse();
+
+        // ⚠️ THE CONTROL, and it is the half that stops the fix being "the sweep
+        // stopped honouring pointers". Upstream names a download in its own
+        // answer; that pointer is relative to the output root and must keep
+        // resolving.
+        await Assert.That(File.Exists(Path.Combine(output, "invoice.pdf"))).IsTrue();
+        await Assert.That(answer).Contains("LEFT this artifact where the browser wrote it");
+    }
+
+    /// <summary>
+    /// A name pinned by one answer is not inherited by a later, unrelated file
+    /// that happens to share it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The set is still monotone across calls, which is the property the
+    /// pointer fix needed</b> — the console log is named only in the answer that
+    /// creates entries, so a per-call set would leave it movable on the very
+    /// next call. What it is no longer is monotone across <i>files</i>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APinnedNameIsNotInheritedByALaterFileThatHappensToShareIt()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour());
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var output = Path.Combine(rig.Session!, SessionLayout.OutputFolderName);
+
+        await File.WriteAllBytesAsync(Path.Combine(output, "report.pdf"), new byte[16]);
+
+        sessions.SessionChildren[0].Tools["browser_navigate"] = new FakeToolBehaviour
+        {
+            RawResult = """{"content":[{"type":"text","text":"### Events\n- Downloaded file report.pdf to \"./report.pdf\""}]}""",
+        };
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call whose answer names the download",
+        });
+
+        await Assert.That(File.Exists(Path.Combine(output, "report.pdf"))).IsTrue();
+
+        // The caller takes the file away, and one sweep later nothing loose
+        // carries the name.
+        File.Delete(Path.Combine(output, "report.pdf"));
+
+        sessions.SessionChildren[0].Tools["browser_navigate"] = new FakeToolBehaviour
+        {
+            RawResult = """{"content":[{"type":"text","text":"### Page\n- Page URL: about:blank"}]}""",
+        };
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call that evicts a name nothing carries",
+        });
+
+        // A different file, the same name, and no answer naming it.
+        await File.WriteAllBytesAsync(Path.Combine(output, "report.pdf"), new byte[32]);
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,x",
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.WhyParameter] = "the call that sweeps a file no answer ever named",
+        });
+
+        await Assert.That(File.Exists(Path.Combine(rig.Session!, SessionLayout.DownloadsFolderName, "report.pdf"))).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(output, "report.pdf"))).IsFalse();
+    }
+
     /// <summary>Upstream's events line: a file name and an inclusive line range.</summary>
     [GeneratedRegex(@"New console entries: (?<file>\S+?\.log)#L(?<first>\d+)-L(?<last>\d+)")]
     private static partial Regex ConsolePointer();

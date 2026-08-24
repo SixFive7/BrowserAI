@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Text;
 using BrowserAI.Hosting;
@@ -581,6 +582,133 @@ internal sealed class SessionIndexTests
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
             "BrowserAI",
             "index"));
+    }
+
+    /// <summary>
+    /// Following one subtree returns element for element what following
+    /// everything would have returned for it.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This could not be planted red, and that is a property of the fix
+    /// rather than a gap in the effort — say so rather than implying otherwise.</b>
+    /// <c>FollowUnder</c> did not exist before the change, so no run of any tree
+    /// can have failed this. It is weaker than a red test: what it holds is that
+    /// the two reads cannot drift apart later, which is the claim the fix rests
+    /// on. The half that <i>was</i> red is
+    /// <c>HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry</c>,
+    /// over the two real offenders.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task FollowingOneSubtreeReturnsExactlyWhatFollowingEverythingWouldHaveReturnedForIt()
+    {
+        using var scratch = ScratchDirectory.Create("index-subtree");
+
+        var left = Path.Combine(scratch.Path, "left");
+        var right = Path.Combine(scratch.Path, "right");
+
+        var index = NewIndex(scratch);
+
+        foreach (var (root, name) in new[] { (left, "one"), (left, "two"), (right, "three"), (right, "four") })
+        {
+            var session = SessionPath.Resolve(Path.Combine(root, name));
+            SessionLayout.Create(session);
+
+            var lease = SessionLock.TryAcquire(session, Request($"the session called {name}"), NullLogger.Instance);
+            index.Record(session);
+            lease.Acquired!.Dispose();
+        }
+
+        await Assert.That(index.Follow().Count).IsEqualTo(4);
+
+        var prefix = Prefix(left);
+        var scoped = index.FollowUnder(prefix);
+
+        var expected = index.Follow()
+            .Where(entry => entry.Session is { } session
+                && (session.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal))
+            .ToList();
+
+        await Assert.That(scoped.Count).IsEqualTo(2);
+        await Assert.That(scoped.Select(entry => entry.Key).ToList()).IsEquivalentTo(expected.Select(entry => entry.Key).ToList());
+
+        // Element for element, and the record with it: the claim is that the
+        // entries are followed the same way and not merely that the same two
+        // came back.
+        foreach (var (one, other) in scoped.Zip(expected))
+        {
+            await Assert.That(one.Key).IsEqualTo(other.Key);
+            await Assert.That(one.State).IsEqualTo(other.State);
+            await Assert.That(one.Session!.FullPath).IsEqualTo(other.Session!.FullPath);
+            await Assert.That(one.Record!.Purpose).IsEqualTo(other.Record!.Purpose);
+        }
+    }
+
+    /// <summary>
+    /// Following one subtree opens no record outside it.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Weaker than a red test, for the same reason as the test above</b> —
+    /// it names an API that did not exist, so nothing can have watched it fail.
+    /// What makes it worth having is the control: the denied session out of
+    /// prefix is proved to be a record that <i>would</i> have failed to open, so
+    /// the scoped read returning one clean entry is a statement about the open
+    /// rather than about the filter.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task FollowingOneSubtreeOpensNoRecordOutsideIt()
+    {
+        using var scratch = ScratchDirectory.Create("index-subtree-denied");
+
+        var mine = SessionPath.Resolve(Path.Combine(scratch.Path, "mine", "session"));
+        var stranger = SessionPath.Resolve(Path.Combine(scratch.Path, "stranger", "session"));
+
+        SessionLayout.Create(mine);
+        SessionLayout.Create(stranger);
+
+        var index = NewIndex(scratch);
+
+        foreach (var session in new[] { mine, stranger })
+        {
+            var lease = SessionLock.TryAcquire(session, Request("a session somebody else's tree holds"), NullLogger.Instance);
+            index.Record(session);
+            lease.Acquired!.Dispose();
+        }
+
+        // ReadData on the directory, inherited by the browserai.json inside it:
+        // the record cannot be opened at all, which is what a whole-machine walk
+        // pays for and a scoped one must not.
+        using (DirectoryDenial.Apply(
+            stranger.FullPath,
+            FileSystemRights.ReadData,
+            InheritanceFlags.ObjectInherit,
+            PropagationFlags.None))
+        {
+            // ⚠️ THE CONTROL, and without it this test passes on a denial that
+            // never bit.
+            var everything = index.Follow();
+
+            await Assert.That(everything.Count).IsEqualTo(2);
+            await Assert.That(everything.Count(entry => entry.State is SessionIndexEntryState.LockUnreadable)).IsEqualTo(1);
+
+            var scoped = index.FollowUnder(Prefix(Path.Combine(scratch.Path, "mine")));
+
+            await Assert.That(scoped.Count).IsEqualTo(1);
+            await Assert.That(scoped[0].State).IsEqualTo(SessionIndexEntryState.Session);
+            await Assert.That(scoped[0].Session!.FullPath).IsEqualTo(mine.FullPath);
+        }
+    }
+
+    /// <summary>
+    /// A subtree prefix spelled the one way <c>SessionManager.Subtree</c> spells
+    /// it: upper-cased and separator-terminated.
+    /// </summary>
+    private static string Prefix(string root)
+    {
+        var key = Path.GetFullPath(root).ToUpperInvariant();
+
+        return key.EndsWith(Path.DirectorySeparatorChar) ? key : key + Path.DirectorySeparatorChar;
     }
 
     private static SessionLockRequest Request(string purpose) =>

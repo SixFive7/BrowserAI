@@ -447,6 +447,178 @@ internal sealed partial class HouseRuleTests
     }
 
     /// <summary>
+    /// <b>No index walk follows every entry on the machine and then throws away
+    /// the ones outside its subtree</b> — the filter belongs above the open, not
+    /// below it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Following an entry is not free and the cost is not local.</b>
+    /// <c>SessionIndex.Follow</c> ends at <c>SessionLock.ReadRecord</c>, which is
+    /// a strict parse of up to 250 log entries and all their arguments, opened
+    /// through <c>RenameWindow.WaitOut</c> — so one session anywhere on the
+    /// machine whose <c>browserai.json</c> is denied or held adds that budget to
+    /// a walk scoped to a completely unrelated tree. A subtree caller that
+    /// filters afterwards pays both, for every session on the machine, to report
+    /// the few that matched.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This is a rule about the POSITION of the filter and not about the
+    /// word.</b> <c>Follow()</c> stays exactly as it is and stays whole-machine:
+    /// <c>SessionIndex.Sweep</c>, <c>SessionManager.LiveSessions</c> and
+    /// <c>StraySweep</c> all need every entry, and the non-vacuity assertion
+    /// below is what keeps a later change from quietly moving the two of them
+    /// this scan can see onto the subtree read.
+    /// </para>
+    /// <para>
+    /// <b>What it cannot see:</b> a filter applied to the walk's result somewhere
+    /// other than inside the loop body — a LINQ <c>Where</c> over
+    /// <c>Follow()</c>, or a second pass over a list. It reads the loop that
+    /// <c>.Follow()</c> opens and nothing else, which is the shape both offenders
+    /// had.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry()
+    {
+        var offenders = new List<string>();
+        var walks = 0;
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
+
+            foreach (var (line, body) in IndexWalks(lines))
+            {
+                walks++;
+
+                if (body.Contains(Subtree, StringComparison.Ordinal))
+                {
+                    offenders.Add(
+                        $"{Relative(file)}: the loop opened at line {(line + 1).ToString(CultureInfo.InvariantCulture)}"
+                        + $" follows every entry on the machine and then applies {Subtree} to what came back"
+                        + " — every session's record is opened and strictly parsed to report the few under the prefix");
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, synthetic on purpose. A scan whose needles
+        // stopped matching reports the tree clean, and that is indistinguishable
+        // from the tree BEING clean. This is the exact shape both offenders
+        // carried on 2026-08-24.
+        string[] planted =
+        [
+            "        foreach (var entry in _index." + Walk + "())",
+            "        {",
+            "            if (entry.Session is not { } session || !" + Subtree + "session, prefix))",
+            "            {",
+            "                continue;",
+            "            }",
+            "        }",
+        ];
+
+        await Assert.That(IndexWalks(planted).Count).IsEqualTo(1);
+        await Assert.That(IndexWalks(planted)[0].Body.Contains(Subtree, StringComparison.Ordinal)).IsTrue();
+
+        // The other half of it: the same loop over the scoped read, with no
+        // filter in the body, is not reported — so the rule is the position of
+        // the filter rather than the presence of the word.
+        string[] corrected =
+        [
+            "        foreach (var entry in _index.FollowUnder(prefix))",
+            "        {",
+            "            if (entry.Session is not { } session)",
+            "            {",
+            "                continue;",
+            "            }",
+            "        }",
+        ];
+
+        await Assert.That(IndexWalks(corrected)).IsEmpty();
+
+        // Not vacuous over the tree either: two loops of this shape as of
+        // 2026-08-24, re-measured rather than estimated — `SessionManager`'s
+        // reinstall census and `StraySweep`'s — and both must stay
+        // whole-machine. `SessionIndex.Sweep` is a third whole-machine reader and
+        // is deliberately not one of these two: it calls `Follow()` on itself and
+        // reads the result into a local, which is a shape this scan does not see
+        // and says so above.
+        await Assert.That(walks).IsGreaterThanOrEqualTo(2);
+    }
+
+    /// <summary>
+    /// The predicate that decides a session is under a subtree, composed so this
+    /// file does not match its own scan.
+    /// </summary>
+    private const string Subtree = "IsUnder" + "(";
+
+    /// <summary>The whole-machine read, composed for the same reason.</summary>
+    private const string Walk = "Fol" + "low";
+
+    /// <summary>Every loop in one file's lines that walks the whole index.</summary>
+    /// <param name="lines">The file, comment-only lines already removed.</param>
+    /// <returns>The line index of each walk, and the text of its body.</returns>
+    private static List<(int Line, string Body)> IndexWalks(string[] lines)
+    {
+        var walks = new List<(int Line, string Body)>();
+
+        for (var at = 0; at < lines.Length; at++)
+        {
+            if (!lines[at].Contains("foreach", StringComparison.Ordinal)
+                || !lines[at].Contains("." + Walk + "()", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            walks.Add((at, Body(lines, at)));
+        }
+
+        return walks;
+    }
+
+    /// <summary>One loop body, brace-matched from the header down.</summary>
+    /// <param name="lines">The file, comment-only lines already removed.</param>
+    /// <param name="header">The line the <c>foreach</c> is on.</param>
+    /// <returns>Every line of the body, joined.</returns>
+    private static string Body(string[] lines, int header)
+    {
+        var body = new List<string>();
+        var depth = 0;
+        var opened = false;
+
+        for (var at = header; at < lines.Length; at++)
+        {
+            foreach (var character in lines[at])
+            {
+                if (character is '{')
+                {
+                    depth++;
+                    opened = true;
+                }
+                else if (character is '}')
+                {
+                    depth--;
+                }
+            }
+
+            if (opened)
+            {
+                body.Add(lines[at]);
+            }
+
+            if (opened && depth <= 0)
+            {
+                break;
+            }
+        }
+
+        return string.Join('\n', body);
+    }
+
+    /// <summary>
     /// Every <c>STARTUPINFO</c> field this tree assigns is paired with the flag
     /// that makes <c>CreateProcessW</c> read it, and every flag it sets is paired
     /// with a field.
