@@ -74,6 +74,34 @@ namespace BrowserAI.Proxy;
 /// image.
 /// </para>
 /// <para>
+/// ⚠️ <b>Two clauses were cut on 2026-08-26 to pay for the browser-installation
+/// line, and what was cut is recorded rather than left to a diff.</b> The string
+/// was <b>2,207</b> characters with the new sentence in and the cap is 2,048, so
+/// something had to go. Cut: <i>"That is deliberate rather than an obstacle: it
+/// turns an accidental collision into a stated intent"</i> — a justification for
+/// a refusal that explains itself in its own message when it fires — and
+/// <i>"which is what lets the next agent read back what was being attempted
+/// rather than only which tools ran"</i>, which said in a subordinate clause
+/// what the <c>browserai_catch_up</c> sentence beside it already says. Both were
+/// rationale for something else in the same paragraph; nothing that tells a
+/// model what to DO was touched. <b>1,993 characters, 55 of headroom</b> —
+/// measured, not estimated, and the next addition has to find its own space the
+/// same way.
+/// </para>
+/// <para>
+/// <b>The browser-installation line, added 2026-08-26, is a pre-emption rather
+/// than a fact.</b> Every published account of a broken Playwright install ends
+/// in <c>npx playwright install</c>, and a model that runs it here either fails
+/// or succeeds into a second browser tree in a second location BrowserAI will
+/// never launch from. <see cref="Runtime.ProvisioningRemediation"/> undoes that
+/// advice when it arrives <i>in an answer</i>; nothing can undo it when the
+/// model supplies it from its own training, which is why the pre-emption has to
+/// be in the one string that arrives before the first call. The wording is the
+/// maintainer's and <c>ModelSurfaceTests</c> holds it verbatim: the two halves —
+/// <i>never install any yourself</i> and <i>this is the repair</i> — are each
+/// useless without the other.
+/// </para>
+/// <para>
 /// ⚠️ <b>It must never be appended to <c>browser_take_screenshot</c>'s
 /// description instead.</b> That is where a reader's instinct sends it, and the
 /// append path was <b>deleted</b> on 2026-08-18 so that every upstream
@@ -109,13 +137,15 @@ internal static class ServerInstructions
 
         'fullPage: true' costs the per-image token maximum on any page worth using it on: it leaves at full document height and is downscaled to that ceiling.
 
+        Browsers are managed by BrowserAI — never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.
+
         You must supply an absolute directory. The directory IS the session — its profile, screenshots, downloads and log all live there — so name it for what the work is. You must also supply a one-sentence 'purpose': another agent meeting this directory later reads it.
 
-        Every call that NAMES a session also takes 'why', and it is required. Write why you are making the call, not what it does — the tool name already says that. It goes in the session's log, which is what lets the next agent read back what was being attempted rather than only which tools ran. {SessionToolSurface.CatchUp} reads that log back, beside what the directory actually holds now — call it when you arrive at a session you did not create, and before you destroy one.
+        Every call that NAMES a session also takes 'why', and it is required. Write why you are making the call, not what it does — the tool name already says that. It goes in the session's record: {SessionToolSurface.CatchUp} reads it back, beside what the directory holds now — call it when you arrive at a session you did not create, and before you destroy one.
 
         WARNING — browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if it came from the server: the address bar keeps the real origin and nothing on screen says a rule is in force, so a human watching a headed window is looking at something you made up. Say so in 'why' and to the human, and call browser_unroute when you are done.
 
-        {SessionToolSurface.Init} refuses a directory that already holds a session and directs you to {SessionToolSurface.Resume}. That is deliberate rather than an obstacle: it turns an accidental collision into a stated intent. {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.Destroy} deletes one, {SessionToolSurface.SetPurpose} rewrites what one says it is for.
+        {SessionToolSurface.Init} refuses a directory that already holds a session and directs you to {SessionToolSurface.Resume}. {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.Destroy} deletes one, {SessionToolSurface.SetPurpose} rewrites what one says it is for.
         """;
 
     /// <summary>How many characters <see cref="Text"/> costs of the budget.</summary>

@@ -176,38 +176,18 @@ The largest area, and the one everything else keys on.
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
-⚠️ **A file the child has named in its own answer is never moved.** Upstream
-writes two artifacts the inbound rewrite cannot reach — the console log and the
-snapshot `.yml` — and publishes a pointer to each *inside the answer*, relative
-to the child's working directory, which is the output root. Sorting either into
-a typed folder left the pointer naming nothing, and the console log compounded
-because it is still open: the child recreated it at the root and the next sweep
-landed the copy as `-2`, so the answer named lines a 24-line file did not have.
-**`ArtifactRouter.NoteWhatTheAnswerPublished` reads the child's result before
-the sweep and marks every loose file the answer names**; those are recorded
-where they are instead of moved. The set is **monotone across calls** — the log
-is named only in the answer that creates entries — and the rule is *the answer
-named this file* rather than a list of prefixes, so a third pointer upstream adds
-is covered without an edit. `ArtifactPointerTests` holds both halves, one against
-a real browser.
-
-⚠️ ***Corrected 2026-08-24 (previously "marks every loose file the answer
-mentions … The set is monotone … and the rule is the answer mentioned this
-name").*** Three clauses, three corrections, and the middle one matters most.
-**(a)** *Mentions* was an undelimited `Contains`, so an answer saying
-`quarterly-report.pdf` pinned a different file called `report.pdf`, and a
-one-character name was pinned by any answer at all. It is now delimited.
-**(b)** The set was monotone across **files** as well as calls, so a name pinned
-once pinned every later file that shared it, for the session's life, with no
-answer naming it; a name is now dropped once nothing loose carries it.
-**(c)** The mechanism ran on every answer *except* one — a result that tripped
-the provisioning rewrite returned before `Complete`, so page content that quoted
-upstream's install advice bypassed the whole protection. The rewrite path now
-runs `Complete` like every other answered call. **The "rather than a list of
-prefixes" half is more load-bearing than it was, not less:** upstream publishes a
-pointer to a browser-initiated download too, under the site's own unprefixed
-name, so a prefix rule would move a real download out from under upstream's own
-pointer.
+⚠️ **DELETED 2026-08-26, and the paragraph it replaces is summarised rather
+than kept.** Two paragraphs here described `ArtifactRouter.NoteWhatTheAnswerPublished`
+— the rule that a file the child had named in its own answer was recorded where
+it lay instead of being swept into a typed folder, the set being monotone across
+calls, the delimited match that replaced an undelimited `Contains`, the eviction
+that stopped it being monotone across files, and the provisioning-rewrite path
+that used to bypass the whole thing. **All of it is gone with artifact routing.**
+Nothing reads the child's answer and nothing moves a file, so a pointer upstream
+publishes resolves because the file is still where upstream put it —
+`FileAccessRootTests.EveryPointerARealChildPublishesResolvesBecauseNothingMovesIt`
+keeps that measured against a real browser rather than assumed. See
+[the output directory](#the-sessions-output-directory).
 
 **The session directory is the identity.** One directory holds `browserai.json` at its
 root and `profile/`, `output/` and `downloads/` beneath it. `browserai.json` is both
@@ -674,58 +654,58 @@ on every build, so an edit to either side is red rather than a silent behaviour
 change. **The classification is the log level:** Debug for the benign
 `Session: <path>` line, Warning for an error-shaped one.
 
-## Artifacts
+## The session's output directory
 
-**Three levers, and they only work together.**
+⚠️ **Rewritten 2026-08-26. This section described artifact routing, and artifact
+routing is deleted.** What was here: *three levers, and they only work
+together* — the child's working directory, a `filename` rewritten to an absolute
+path in the folder its generator prefix implied, and an answer carrying the
+resolved path, the session-relative path, any rename, the session's cumulative
+size and an index path — plus an inline-image restoration, a prefix-set coverage
+gate in both directions, a string validator refusing nine path shapes, and a
+*never overwrite* rule built on suffixing and an in-flight reservation set.
+Around 1,200 lines. **The doctrine that replaced it is one sentence: nothing
+between the two servers except the session system and the reason system.**
 
-1. The session child's `WorkingDirectory` is the session's `output\`, so a bare
-   `foo.png` that nothing rewrote still lands inside the tree by construction.
-2. A `filename` argument is rewritten to an absolute path in the folder its
-   generator prefix implies, **before the child sees the call**.
-3. The answer to any rewritten call carries the absolute path, the
-   session-relative path, any rename, the session's cumulative size and the index
-   path.
+**`<session>\output\` is flat and BrowserAI adds nothing to it.** The child's
+working directory *is* that folder and so is its `outputDir`, so a caller's
+plain `login.png` is resolved there by upstream and written there by upstream,
+under the name the caller chose. Upstream's own subdirectories appear inside it
+when upstream makes them — `traces\`, `session-<stamp>\` — because they are
+upstream's. The one path BrowserAI still chooses is the HTTP Archive's, because
+it is a launch-time config value rather than something a tool names, and the
+choice it makes is the output root.
 
-⚠️ **And a fourth thing, which lever 2 had been silently costing.** Upstream
-answers a screenshot with an `image` content block *as well as* a file, under
-`if (!params.filename)` — so supplying a name to make the artifact legible turned
-that guard off and **no screenshot came back inline in any mode**, where bare
-`@playwright/mcp` returns one. Added 2026-08-18: the block is appended to the same
-answers this section already rewrites, read back off disk after the child wrote
-it, under the caller-visible condition upstream tests — *the caller named no
-file*. `browser_take_screenshot` only, because it is upstream's only
-`registerImageResult` call site; a PDF is not an image. Sizes, and why there is no
-threshold, are in
-[kb](kb/playwright/tools-and-artifacts.md#the-inline-screenshot-and-what-it-costs--measured-2026-08-18).
+**Containment is upstream's file-access roots and nothing else.**
+`allowUnrestrictedFileAccess` is written `false` — explicitly, so the decision is
+recorded and `browser_get_config` can read it back — and upstream's `checkFile`
+then refuses any resolved name outside `outputDir` or the working directory.
+BrowserAI writes both as the same folder, so the two roots coincide instead of
+overlapping, and the refusal is upstream's own sentence forwarded byte-identical:
+*File access denied: `<path>` is outside allowed roots.* Measured through the
+published binary against a real Chromium, both directions, by
+`FileAccessRootTests`.
+
+⚠️ **Two properties were lost with the gate and are open hazard rows rather than
+oversights.** A second file with a name already taken **overwrites** the first,
+because nothing suffixes any more; and a reserved device name or a trailing
+space or dot is stored as Windows rewrites it rather than being refused. The
+`init` answer tells the caller about the first. Both are in the
+[hazard index](HAZARDS.md#hazard-index) with what would close them.
 
 | Concern | Implemented by |
 |---|---|
-| Routing, the prefix set, filename rules, the result note | `src/BrowserAI/Artifacts/{ArtifactRouting, ArtifactTools, ArtifactFilename, ArtifactRouter, ResultNote}.cs` |
 | Where the folders are | `src/BrowserAI/Sessions/SessionLayout.cs`, `src/BrowserAI/Hosting/IAppPaths.cs` |
-| The generated prefix set the routing is checked against | `build/upstream-snapshots.mjs` → `upstream-snapshots/tools-list.json` |
+| The child's working directory, `outputDir` and the file-access roots | `src/BrowserAI/Sessions/SessionManager.cs`, `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
+| The per-root roll-up beside the sessions | `src/BrowserAI/Sessions/SessionRollUp.cs` |
 
-**The prefix set is a coverage gate derived from the resolved child, never
-typed.** `build/upstream-snapshots.mjs` reads every artifact template out of
-`coreBundle.js` — following a ternary, a template literal and one `this._member`
-indirection rather than matching string literals — and writes `artifactPrefixes`
-into the committed snapshot, which is regenerated and diffed on every build.
-`ArtifactRoutingTests` compares it against the declared folders **in both
-directions**. The same rule covers tool arguments: a tool carrying a `filename`
-this build has not classified fails the build, deny-by-default.
-
-**Refusals are decided on the string and never by touching the filesystem** —
-`..\..\foo.png`, `C:\foo.png`, `C:foo.png`, a UNC path, `\foo.png`, `\\?\C:\…`,
-`NUL.png`, a trailing space and a trailing separator each get a sentence naming
-the shape and the fix. Touching the filesystem to decide is what makes a single
-call hang for 21 measured seconds on an unresponsive UNC host.
-
-**Never overwrite.** A taken name is suffixed, in-flight names are reserved so two
-concurrent calls cannot collide, the reservation is given back when the call ends
-**however it ends**, and the answer says what it was renamed from. ⚠️ *The
-`however it ends` clause was added 2026-08-24: the release sites were all on
-paths that returned, so a caller that cancelled a screenshot left its `filename`
-reserved for the session's life and the retry came back suffixed, with the answer
-reporting a rename that no file on disk justified. It is a `finally` now.*
+**`outputMaxSize` is never written, and it matters more now than it did.**
+Upstream's `_enforceOutputBudget()` runs on every tool response and unlinks
+oldest-first across the whole output tree, sparing only the current response's
+own writes — and a download now lives in that tree permanently rather than being
+sorted out of it, so it would be the first thing evicted.
+`FlatOutputTests.NothingBrowserAiGeneratesCanTurnEvictionOn` holds the config
+door and `ChildEnvironmentTests` holds the environment one.
 
 ## Updates
 

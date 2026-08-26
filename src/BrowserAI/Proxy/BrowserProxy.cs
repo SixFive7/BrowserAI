@@ -4,7 +4,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using BrowserAI.Artifacts;
 using BrowserAI.Hosting;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
@@ -554,9 +553,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // here is that the call was made and what it was for -- which is
         // everything a hung call, a dead child or a killed process ever leaves.
         //
-        // Recorded from the CALLER's own arguments, before the artifact plan
-        // rewrites `filename`: the log says what was asked for, and the artifact
-        // index beside it says where the file landed.
+        // The tool name and the caller's `why`, and nothing else -- no
+        // arguments, no answer. ⚠️ *Corrected 2026-08-26 (previously "Recorded
+        // from the CALLER's own arguments, before the artifact plan rewrites
+        // `filename` … and the artifact index beside it says where the file
+        // landed").* Nothing rewrites `filename` and there is no index: the
+        // arguments reach the child as the caller spelled them, so there is no
+        // second version of them for a record to have to choose between.
         long row;
 
         try
@@ -579,26 +582,24 @@ internal sealed class BrowserProxy : IAsyncDisposable
         var outcome = SessionStore.InFlight;
         byte[]? payload = null;
 
-        // §F's first half, and it happens before the child hears about the call:
-        // a `filename` is rewritten into the folder its generator prefix
-        // implies, so the file is born in the right place rather than swept
-        // there. A refusal here is a refusal -- never a path normalised into
-        // something that happens to land somewhere.
-        live.Artifacts.Observe(arguments);
-
-        ArtifactPlan? plan;
-
-        try
-        {
-            plan = live.Artifacts.Plan(tool, arguments);
-        }
-        catch (SessionToolException refusal)
-        {
-            ProxyLog.FilenameRefused(live.Logger, tool, live.Location.FullPath);
-            await RefuseAsync(caller, request.Id, refusal.Message, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
+        // ⚠️ EVERYTHING BETWEEN THE DOOR AND THE CHILD IS GONE, 2026-08-26, AND
+        // THE ABSENCE IS THE FEATURE. What stood here observed the caller's
+        // `url`, judged its `filename` against a table of tools, refused the
+        // shapes it did not like, reserved a name, created a typed folder and
+        // rewrote the argument to an absolute path -- and on the way back it
+        // read the child's own answer as text, pinned the names that answer
+        // mentioned, swept the output root, moved what it found and spliced a
+        // note into the child's bytes saying where everything went.
+        //
+        // Nothing between the two servers except the session system and the
+        // reason system. The remaining arguments are forwarded byte-identical
+        // and the child's answer is returned byte-identical: no note, no scan,
+        // no path handling, no filename rewrite, no artifact routing. Upstream
+        // resolves a relative `filename` against its own working directory,
+        // which is this session's `output\`, and refuses anything that leaves it
+        // -- `allowUnrestrictedFileAccess` is written `false` for exactly that,
+        // and it is the only containment there is now (BrowserConfiguration).
+        //
         // The child has never heard of `session` or `why`; BrowserAI added both.
         // Removed from a CLONE rather than from the caller's own node, because
         // the request object is the SDK's and may still be read after this.
@@ -610,29 +611,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
             _ = cloned.Remove(SessionToolSurface.WhyParameter);
         }
 
-        if (plan is not null)
-        {
-            ArtifactRouter.Apply(plan, forwarded);
-        }
-
-        // ⚠️ THE RESERVATION OUTLIVES EVERY WAY OUT OF THIS METHOD OR IT LEAKS
-        // FOR THE SESSION'S LIFE. `_reserved` loses an entry only through
-        // `Release`, and until 2026-08-24 the release sites were all on paths
-        // that RETURN -- so a caller that cancelled a screenshot left its
-        // `filename` reserved forever, and the retry came back suffixed with the
-        // answer reporting a rename that no file on disk justifies.
-        // `OperationCanceledException` is the only exception that escapes
-        // `ChildConnection.AskAsync` -- every other failure comes back as a
-        // `ChildAnswer` -- but the idle-timer scope, the remediation regex's
-        // 1,000 ms match timeout and the two sends can all throw as well, and a
-        // `finally` is the only shape that covers a set nobody has to keep
-        // enumerating.
-        //
-        // Releasing after a SUCCESSFUL write is deliberate and safe: `Taken` is
-        // `_reserved.Contains(candidate) || File.Exists(candidate)`, so a file
-        // that is on disk holds its own name -- and a file the caller later
-        // deletes stops holding a name it no longer occupies, which is the
-        // behaviour the reservation set on its own was never able to give.
         try
         {
             // The one timer, reset here and nowhere else. A call this session
@@ -661,50 +639,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 {
                     ProxyLog.RemediationRewritten(live.Logger, tool, live.Location.FullPath);
 
-                    // ⚠️ THE SAME `Complete` THE ORDINARY PATH TAKES, and it is
-                    // here because a rewritten answer is still an answer that may
-                    // have published a pointer. Until 2026-08-24 this branch
-                    // returned early, so a call whose answer tripped the rewrite
-                    // pinned no name, recorded no artifact and carried no note --
-                    // which made the pointer protection bypassable by page
-                    // CONTENT, since an `isError` answer carries the page's own
-                    // title and the console and snapshot links in the same result.
-                    //
-                    // The child's OWN answer goes in, not the rewritten copy: the
-                    // rewrite touches only the `Run ... to install` clause, and
-                    // the pointers are the child's.
-                    var rewritten = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
-
-                    // Byte-identity is already given up on this branch, so the
-                    // note is appended to the node rather than spliced into the
-                    // child's own bytes.
                     await caller.SendMessageAsync(
-                        new JsonRpcResponse
-                        {
-                            Id = request.Id,
-                            Result = rewritten is { } note ? WithNote(corrected, note) : corrected,
-                        },
+                        new JsonRpcResponse { Id = request.Id, Result = corrected },
                         cancellationToken).ConfigureAwait(false);
 
                     return;
                 }
 
-                // §F's second half, which ships with the first or not at all:
-                // relocating a file while telling the model otherwise is a new
-                // silent failure introduced by the fix for an old one. It carries
-                // the image block back as well, on the calls whose name BrowserAI
-                // supplied -- see ArtifactTools.
-                // ⚠️ THE CHILD'S OWN ANSWER GOES IN, and it is what stops the
-                // artifact sweep moving a file the answer has just linked to. Two
-                // reproduced defects, both the same shape: a Markdown link to
-                // `./page-<stamp>.yml` and `- New console entries:
-                // console-<stamp>.log#L1-L24` are both relative
-                // to the child's working directory, which is the output root, and
-                // sorting either into a typed folder left the pointer naming
-                // nothing. See ArtifactRouter.NoteWhatTheAnswerPublished.
-                var completion = live.Artifacts.Complete(plan, response.Result?.ToJsonString());
-
-                await AnswerChildResultAsync(live.Logger, caller, request.Id, response, answer.Payload, completion, cancellationToken).ConfigureAwait(false);
+                await AnswerChildResultAsync(live.Logger, caller, request.Id, response, answer.Payload, cancellationToken).ConfigureAwait(false);
                 return;
             }
 
@@ -725,21 +667,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 outcome is SessionStore.InFlight
                     ? Encoding.UTF8.GetBytes("The call did not reach the child, or the caller cancelled it before an answer arrived. BrowserAI never saw a result.")
                     : payload);
-
-            live.Artifacts.Release(plan);
-
-            // ⚠️ ONLY FOR A CALL THAT HAD A RESERVATION, and until 2026-08-24
-            // this line ran on every forwarded call. `Release` is a no-op for a
-            // plan that writes nothing, so `browser_click`, `browser_navigate`
-            // and `browser_snapshot` each wrote "released its in-flight filename
-            // reservation" into a session log that is model-facing evidence,
-            // about a reservation they never took. The record's own remark said
-            // it fires on the calls that named a file; this is what makes that
-            // true.
-            if (plan is { Writes: true })
-            {
-                ProxyLog.ReservationReleased(live.Logger, tool, live.Location.FullPath);
-            }
         }
     }
 
@@ -966,36 +893,35 @@ internal sealed class BrowserProxy : IAsyncDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Answers a caller with the child's result, and what BrowserAI did to the file it names.</summary>
+    /// <summary>Answers a caller with the child's result, exactly as it arrived.</summary>
     /// <param name="log">The session's own logger: every record below names a call that session made.</param>
     /// <remarks>
     /// <para>
-    /// <b>Byte-identity is a property of forwarding, and this is where that is
-    /// made precise.</b> With nothing to append — every call that names no file,
-    /// which is nearly all of them — the child's own bytes are written unchanged,
-    /// which is step 9's guarantee untouched. Otherwise the child's
-    /// <c>content</c> array gains elements by a splice into those same bytes:
-    /// nothing the child wrote is re-serialised, re-escaped or reordered, and
-    /// what is added is appended at the end.
+    /// <b>Byte-identity is a property of forwarding, and this is where it is
+    /// made.</b> The child's own bytes are written unchanged, on every answer,
+    /// with nothing appended and nothing rewritten.
     /// </para>
     /// <para>
-    /// <b>One element, or two.</b> The note is always one text block. A
-    /// screenshot BrowserAI named gains a second, and it is the <c>image</c>
-    /// block upstream itself would have sent had the caller's own arguments
-    /// reached it — see <c>ArtifactTools</c> for why that is a restoration
-    /// rather than an addition, and why it is that tool alone.
+    /// ⚠️ <b>Simplified 2026-08-26 (previously it took an
+    /// <c>ArtifactAnswer? completion</c> and, when there was one, spliced one or
+    /// two encoded blocks into the child's <c>content</c> array by token
+    /// offset).</b> The splice existed to reconcile two requirements — every byte
+    /// the child wrote survives, and a file BrowserAI relocated is reported at
+    /// the path it was relocated to — and it was the right resolution while both
+    /// held. BrowserAI relocates nothing now, so the second requirement has no
+    /// subject and the reconciliation has nothing to reconcile.
     /// </para>
     /// <para>
-    /// The <see cref="JsonNode"/> arm is the fallback for a result carrying no
-    /// top-level <c>content</c> array. It is logged rather than absorbed, because
-    /// the escaping is then ours.
+    /// <b>The one thing that can still cost byte-identity is a frame the
+    /// transport did not capture</b>, and it is said out loud rather than
+    /// absorbed: the answer is semantically right, because <c>Result</c> is the
+    /// child's own <see cref="JsonNode"/>, but its escaping is then ours.
     /// </para>
     /// </remarks>
     /// <param name="caller">The connection to answer.</param>
     /// <param name="callerId">The caller's own request id.</param>
     /// <param name="response">The child's response.</param>
     /// <param name="payload">The child's frame as captured bytes, when the transport kept it.</param>
-    /// <param name="completion">What BrowserAI did to the file the call named, or null.</param>
     /// <param name="cancellationToken">Cancels the send.</param>
     /// <returns>The send task.</returns>
     private static async Task AnswerChildResultAsync(
@@ -1004,7 +930,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
         RequestId callerId,
         JsonRpcResponse response,
         VerbatimPayload? payload,
-        ArtifactAnswer? completion,
         CancellationToken cancellationToken)
     {
         // A fresh envelope rather than the child's own: JsonRpcMessage.Context
@@ -1013,79 +938,16 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // be sent back to the child it came from.
         var answer = new JsonRpcResponse { Id = callerId, Result = response.Result };
 
-        if (completion is null)
+        if (payload is { } untouched)
         {
-            if (payload is { } untouched)
-            {
-                Verbatim.Attach(answer, untouched.Json);
-            }
-            else
-            {
-                // Reached only if the transport failed to capture the frame. The
-                // answer is still semantically right -- Result is the child's own
-                // JsonNode -- but its escaping is now ours, so the one claim the
-                // passthrough exists to make is no longer true of it. Said out
-                // loud rather than absorbed.
-                ProxyLog.VerbatimPayloadMissing(log, callerId.ToString());
-            }
-
-            await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        byte[][] blocks = completion.Image is { } image
-            ? [ResultNote.Block(completion.Note), ResultNote.ImageBlock(image.Data, image.MediaType)]
-            : [ResultNote.Block(completion.Note)];
-
-        // The IsEnabled guard is the analyzer's (CA1873) and it is right: this
-        // line is Debug, and formatting the request id to build a message
-        // nobody has asked for is work on the hot path of every screenshot.
-        if (completion.Image is { } appended)
-        {
-            ProxyLog.InlineImageRestored(log, callerId, appended.MediaType, appended.Data.Length);
-        }
-
-        var spliced = payload is { } captured ? ResultNote.Append(captured.Json, blocks) : null;
-
-        if (spliced is not null)
-        {
-            Verbatim.Attach(answer, spliced);
+            Verbatim.Attach(answer, untouched.Json);
         }
         else
         {
-            ProxyLog.NoteNotSpliced(log, callerId.ToString());
+            ProxyLog.VerbatimPayloadMissing(log, callerId.ToString());
         }
-
-        // Kept in step with the bytes on both arms. On the spliced arm nothing
-        // reads it, but a message whose object and whose bytes disagree is a
-        // trap for whatever reads it next.
-        answer.Result = WithNote(response.Result, completion);
 
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>The child's result with what BrowserAI appended, as nodes.</summary>
-    private static JsonObject WithNote(JsonNode? result, ArtifactAnswer completion)
-    {
-        var copy = result?.DeepClone() as JsonObject ?? [];
-
-        if (copy["content"] is not JsonArray content)
-        {
-            content = [];
-            copy["content"] = content;
-        }
-
-        // The (JsonNode) cast is the one AOT trap the 2026-08-15 spike found
-        // in our own code rather than the SDK's: the generic overload is
-        // RequiresDynamicCode and turns the publish red.
-        content.Add((JsonNode)ResultNote.Node(completion.Note));
-
-        if (completion.Image is { } image)
-        {
-            content.Add((JsonNode)ResultNote.ImageNode(image.Data, image.MediaType));
-        }
-
-        return copy;
     }
 
     /// <summary>Answers a caller with the child's own JSON-RPC error.</summary>
@@ -1351,83 +1213,10 @@ internal static partial class ProxyLog
         Message = "'{Tool}' on the session at {Session} answered with upstream's 'npx @playwright/mcp install-browser' advice, which does not apply to a BrowserAI install. It was replaced, so that answer is not byte-identical.")]
     public static partial void RemediationRewritten(ILogger logger, string tool, string session);
 
-    /// <summary>
-    /// An answer regained the image block that renaming its file had cost it.
-    /// </summary>
-    /// <remarks>
-    /// Debug rather than Information: it happens on every screenshot a caller
-    /// did not name, which is most of them, and Information would make the log
-    /// of a session that took a hundred screenshots a hundred lines longer for a
-    /// fact nobody is looking for. It is logged at all because the block is the
-    /// one thing in an answer that costs the caller tokens without appearing in
-    /// any file, so "why is this conversation so expensive" has an answer with a
-    /// size in it.
-    /// </remarks>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="callerRequestId">
-    /// The caller request being answered, taken as the id itself rather than as
-    /// <c>id.ToString()</c>. At <see cref="LogLevel.Debug"/> the analyzer counts
-    /// a conversion at the call site as work done to build a message that is
-    /// usually discarded, and this one would do it on every screenshot (CA1873);
-    /// handed the struct, the generated method formats it only if the level is
-    /// enabled.
-    /// </param>
-    /// <param name="mediaType">What the block says it is.</param>
-    /// <param name="bytes">How big the file was, before base64 grew it by a third.</param>
-    [LoggerMessage(
-        EventId = 10,
-        Level = LogLevel.Debug,
-        Message = "Appended the inline {MediaType} upstream would have sent for caller request {CallerRequestId}: {Bytes} bytes on disk.")]
-    public static partial void InlineImageRestored(ILogger logger, RequestId callerRequestId, string mediaType, int bytes);
-
-    /// <summary>A call named a file outside the session it named.</summary>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool that was called.</param>
-    /// <param name="session">The session directory named.</param>
-    [LoggerMessage(
-        EventId = 11,
-        Level = LogLevel.Information,
-        Message = "'{Tool}' named a 'filename' outside the session at {Session}; it was refused rather than normalised.")]
-    public static partial void FilenameRefused(ILogger logger, string tool, string session);
-
-    /// <summary>
-    /// A routed artifact's note could not be spliced into the child's own bytes.
-    /// </summary>
-    /// <remarks>
-    /// Error rather than Warning: the note still reaches the caller, so nothing
-    /// is lost, but the answer was rebuilt from a node and its escaping is
-    /// therefore ours. That is the one claim the passthrough exists to make, and
-    /// losing it silently is what this line prevents.
-    /// </remarks>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="callerRequestId">The caller request being answered.</param>
-    [LoggerMessage(
-        EventId = 12,
-        Level = LogLevel.Error,
-        Message = "The result for caller request {CallerRequestId} carries no top-level 'content' array, so the artifact note was appended by rebuilding it. That answer is no longer byte-identical.")]
-    public static partial void NoteNotSpliced(ILogger logger, string callerRequestId);
-
-    /// <summary>An in-flight filename reservation was given back.</summary>
-    /// <remarks>
-    /// Debug rather than Information: it fires on every call that reserved a
-    /// name — every call the router gave a <c>Writes</c> plan, whether the caller
-    /// named the file or BrowserAI generated the name — which is most
-    /// screenshots. ⚠️ <b>The call site is guarded, and until 2026-08-24 it was
-    /// not</b>: the <c>finally</c> wrote this on every forwarded call, so
-    /// <c>browser_click</c> and <c>browser_navigate</c> asserted an event that
-    /// did not occur in a log a model reads. It is logged at all because it is
-    /// the only evidence that the release happened on a path that RETURNED
-    /// NOTHING — a
-    /// cancelled call sends the caller no frame at all, since the SDK suppresses
-    /// the error response when the request's own linked token is what fired, so
-    /// without this line the cancellation path is invisible in every signal.
-    /// </remarks>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool that was called.</param>
-    /// <param name="session">The session directory named.</param>
-    [LoggerMessage(
-        EventId = 16,
-        Level = LogLevel.Debug,
-        Message = "'{Tool}' on the session at {Session} released its in-flight filename reservation.")]
-    public static partial void ReservationReleased(ILogger logger, string tool, string session);
+    // ⚠️ EVENT IDS 10, 11, 12 AND 16 ARE RETIRED AND ARE NOT TO BE REUSED,
+    // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused`,
+    // `NoteNotSpliced` and `ReservationReleased` -- the four records the
+    // artifact machinery wrote, all deleted with it. An id is a key somebody's
+    // log query may still be written against, and a retired one silently
+    // reassigned makes an old query answer about a new event.
 }

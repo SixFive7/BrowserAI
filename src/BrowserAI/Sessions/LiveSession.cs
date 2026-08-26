@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json.Nodes;
-using BrowserAI.Artifacts;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
@@ -45,7 +44,6 @@ namespace BrowserAI.Sessions;
 /// <param name="config">The config the child was started with.</param>
 /// <param name="configFile">Where that config was written.</param>
 /// <param name="createdHere">Whether this connection is the one that created the session.</param>
-/// <param name="artifacts">Where this session's files go, and what it knows about them.</param>
 /// <param name="idlePeriod">How long this session's browser may sit unused before it is closed.</param>
 /// <param name="clock">The clock the idle timer reads. <see cref="TimeProvider.System"/> in the product.</param>
 internal sealed class LiveSession(
@@ -57,7 +55,6 @@ internal sealed class LiveSession(
     GeneratedConfig config,
     string configFile,
     bool createdHere,
-    ArtifactRouter artifacts,
     TimeSpan idlePeriod,
     TimeProvider clock) : IAsyncDisposable
 {
@@ -126,12 +123,6 @@ internal sealed class LiveSession(
     /// is told so, at first use, rather than at reclaim time.
     /// </remarks>
     public bool CreatedHere { get; } = createdHere;
-
-    /// <summary>
-    /// Where this session's artifacts go, and the record of the ones that got
-    /// there.
-    /// </summary>
-    public ArtifactRouter Artifacts { get; } = artifacts;
 
     /// <summary>Whether the notice about driving somebody else's session has been given.</summary>
     public bool NoticeGiven { get; set; }

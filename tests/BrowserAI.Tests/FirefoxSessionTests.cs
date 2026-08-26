@@ -183,7 +183,7 @@ internal sealed class FirefoxSessionTests
         // and the file Playwright's own Chromium-only check never looks at.
         await Assert.That(File.Exists(FirefoxProfile.LockFileIn(Path.Combine(session, SessionLayout.ProfileFolderName)))).IsTrue();
 
-        // An artifact, routed by BrowserAI into the session's own output tree.
+        // An artifact, written by the child into the session's own output root.
         // No `filename`, which is upstream's own condition for returning the
         // image in the answer as well as writing it.
         var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
@@ -194,7 +194,7 @@ internal sealed class FirefoxSessionTests
 
         await Assert.That((bool?)screenshot["result"]?["isError"]).IsNotEqualTo(true);
 
-        var artifact = ArtifactPathIn(screenshot);
+        var artifact = SliceRun.ArtifactPathIn(screenshot, Path.Combine(session, SessionLayout.OutputFolderName));
 
         await Assert.That(artifact).IsNotEmpty();
         await Assert.That(artifact.StartsWith(session, StringComparison.OrdinalIgnoreCase)).IsTrue();
@@ -445,37 +445,4 @@ internal sealed class FirefoxSessionTests
             (answer["content"]?.AsArray() ?? [])
                 .Where(block => (string?)block!["type"] == "text")
                 .Select(block => (string?)block!["text"] ?? string.Empty));
-
-    /// <summary>
-    /// The absolute path BrowserAI's own note names, out of a <c>tools/call</c>
-    /// envelope.
-    /// </summary>
-    /// <remarks>
-    /// The same reader <see cref="SliceRun"/> uses, and for the same reason: the
-    /// generated name depends on the last URL and a per-stem counter, so a test
-    /// that composed the path would assert its own arithmetic instead of the
-    /// claim, which is that the path in the note is the path the file is at.
-    /// </remarks>
-    /// <param name="envelope">The whole response envelope.</param>
-    /// <returns>The path, or an empty string when the note names none.</returns>
-    private static string ArtifactPathIn(JsonObject envelope)
-    {
-        const string Marker = "  file: ";
-
-        var text = string.Join(
-            "\n",
-            (envelope["result"]?["content"]?.AsArray() ?? [])
-                .Where(block => (string?)block!["type"] == "text")
-                .Select(block => (string?)block!["text"] ?? string.Empty));
-
-        foreach (var line in text.Split('\n'))
-        {
-            if (line.StartsWith(Marker, StringComparison.Ordinal))
-            {
-                return line[Marker.Length..].Trim();
-            }
-        }
-
-        return string.Empty;
-    }
 }

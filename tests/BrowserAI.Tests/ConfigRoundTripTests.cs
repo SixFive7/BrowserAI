@@ -138,29 +138,39 @@ internal sealed class ConfigRoundTripTests
     }
 
     /// <summary>
-    /// Upstream's workspace guardrail is lifted in every config this product
-    /// generates, with no argument that can put it back.
+    /// Upstream's workspace guardrail is switched on <b>explicitly</b> in every
+    /// config this product generates, with no argument that can turn it off.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Asserted on the generator rather than on a running child, and both
-    /// halves matter.</b> The value is checked here for every mode, both
-    /// families and the run's own browser-less child;
-    /// <see cref="EveryGeneratedOpinionComesBackFromTheChild"/> is what proves
-    /// the child honoured it, because a key upstream discarded would be missing
-    /// from the resolved config it reports.
+    /// ⚠️ <b>Inverted 2026-08-26 (previously
+    /// <c>EveryGeneratedConfigLiftsUpstreamsWorkspaceGuardrail</c>, requiring
+    /// <see langword="true"/> everywhere on the maintainer's 2026-08-20 answer
+    /// of "a always").</b> The guardrail is BrowserAI's containment now.
+    /// BrowserAI's own <c>filename</c> gate is deleted — nothing validates,
+    /// rewrites or bounds a caller's path any more — so upstream's file-access
+    /// roots are the only thing left between a caller's string and the
+    /// filesystem, and a config that lifted them would leave nothing at all.
     /// </para>
     /// <para>
-    /// <b>The second half is the one that catches a knob being added back.</b>
-    /// A per-mode or per-call switch would show up here as an arm that generates
-    /// <see langword="false"/>, and the maintainer's answer on 2026-08-20 was
-    /// <i>"a always"</i> — so the absence of a way to write anything else is the
-    /// thing under test, not merely the value on the default path.
+    /// <b>Written rather than merely omitted, and that is the assertion.</b>
+    /// <see langword="false"/> is upstream's default, so leaving the key out
+    /// produces the same behaviour and says nothing about whether anybody chose
+    /// it — and <see cref="EveryGeneratedOpinionComesBackFromTheChild"/> can
+    /// only prove the child honoured an opinion the file actually carries. An
+    /// absent key is therefore a failure here exactly as a <see langword="true"/>
+    /// one is, which is the both-directions half.
+    /// </para>
+    /// <para>
+    /// <b>What it costs is stated where a reader meets it:</b> <c>file:</c>
+    /// navigation is refused outright and <c>browser_file_upload</c> can no
+    /// longer reach a file outside the session's output directory. That trade is
+    /// the maintainer's, taken knowingly — see <c>BrowserConfiguration</c>.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryGeneratedConfigLiftsUpstreamsWorkspaceGuardrail()
+    public async Task EveryGeneratedConfigKeepsUpstreamsFileAccessRootsAndSaysSoExplicitly()
     {
         var refused = new List<string>();
 
@@ -193,13 +203,13 @@ internal sealed class ConfigRoundTripTests
 
             if (opinion is null)
             {
-                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' is not written at all, so upstream's default of false applies and 'file://' navigation and any upload from outside the session's output directory are refused");
+                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' is not written at all. Upstream's default is false and the behaviour would be the same, but nothing then says BrowserAI chose it and the round trip has no opinion to read back — an omission is not a decision");
                 return;
             }
 
-            if (opinion.Value.ToJsonString() is not "true")
+            if (opinion.Value.ToJsonString() is not "false")
             {
-                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' was written {opinion.Value.ToJsonString()} rather than true");
+                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' was written {opinion.Value.ToJsonString()} rather than false, which lifts the only containment left now that BrowserAI's own filename gate is gone");
             }
         }
     }

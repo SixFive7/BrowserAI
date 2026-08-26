@@ -210,7 +210,15 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             ConnectChild = async (options, loggerFactory, idPrefix, relay, cancellationToken) =>
             {
                 var hop = new PipeDuplex("session hop (BrowserAI ↔ fake session child)");
-                var child = new FakePlaywrightChild(hop);
+
+                var child = new FakePlaywrightChild(hop)
+                {
+                    // The same directory the real child is started in, so a
+                    // relative `filename` this double is handed resolves where
+                    // upstream would resolve it.
+                    WorkingDirectory = options.WorkingDirectory,
+                };
+
                 configure?.Invoke(child);
                 child.Start();
 

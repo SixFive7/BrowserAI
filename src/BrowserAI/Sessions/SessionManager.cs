@@ -7,7 +7,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using BrowserAI.Artifacts;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
@@ -1253,7 +1252,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // succeeds, and a roll-up naming a directory that is gone is worse
             // than one that is merely behind.
             summary +=
-                $"\n\n⚠️ The roll-up at '{Path.Combine(parent, ArtifactRouter.RollUpFileName)}' could not be rewritten, so it still lists this session. Nothing else depends on it: browserai_list reads BrowserAI's own index.";
+                $"\n\n⚠️ The roll-up at '{Path.Combine(parent, SessionRollUp.FileName)}' could not be rewritten, so it still lists this session. Nothing else depends on it: browserai_list reads BrowserAI's own index.";
         }
 
         // ⚠️ THE SURVIVOR ARM IS `IsError: true`, CHANGED 2026-08-19 (previously
@@ -1938,21 +1937,21 @@ internal sealed class SessionManager : IAsyncDisposable
                 _environment.InstanceDirectory,
                 $"playwright-mcp-{location.Hash[..16]}.json");
 
-            var artifacts = new ArtifactRouter(location);
-
             var options = ChildLaunch.Create(
                 _environment.Payload,
                 _environment.Paths.BrowsersDirectory,
 
-                // The OUTPUT root rather than the session root, which is the
-                // first and cheapest of the artifact-routing levers: upstream
-                // resolves a relative `filename` against the child's cwd, so a
-                // bare `foo.png` that nothing rewrote still lands inside the
-                // instance tree by construction rather than in whatever
-                // directory the client happened to be started from. It is also
-                // what upstream's own `checkFile` measures against, so the two
-                // allowed roots coincide instead of overlapping.
-                artifacts.OutputRoot,
+                // ⚠️ THE OUTPUT ROOT RATHER THAN THE SESSION ROOT, AND SINCE
+                // 2026-08-26 IT IS THE WHOLE OF THE CONTAINMENT RATHER THAN THE
+                // cheapest of several levers. Upstream resolves a relative
+                // `filename` against the child's cwd and refuses anything that
+                // resolves outside `outputDir` or that cwd -- BrowserAI writes
+                // both as this one directory and writes
+                // `allowUnrestrictedFileAccess: false` so the check runs -- so
+                // the two allowed roots coincide rather than overlapping, and a
+                // caller's own string never reaches the filesystem through
+                // anything of ours.
+                Path.Combine(location.FullPath, SessionLayout.OutputFolderName),
                 configFile,
                 config,
                 name: $"playwright-mcp[{location.Hash[..8]}]");
@@ -1971,7 +1970,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, claim, child, logging, config, configFile, createdHere, artifacts, _environment.BrowserIdlePeriod, _environment.Clock);
+            session = new LiveSession(location, held, claim, child, logging, config, configFile, createdHere, _environment.BrowserIdlePeriod, _environment.Clock);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))
@@ -2118,10 +2117,9 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("  directory: ").Append(session.Location.FullPath).Append('\n')
             .Append("  browser: ").Append(record.Browser).Append('\n')
             .Append("  profile: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.ProfileFolderName)).Append('\n')
-            .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName)).Append('\n')
+            .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName))
+            .Append(" — every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n")
             .Append("  downloads: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.DownloadsFolderName)).Append('\n')
-            .Append("  artifact index: ").Append(Path.Combine(session.Location.FullPath, ArtifactRouter.IndexFileName))
-            .Append(" — pass a plain 'filename' such as login.png on any tool that takes one; BrowserAI files it by kind under output\\ and tells you the full path.\n")
             .Append("  purpose: ").Append(record.Purpose).Append('\n')
             .Append("  created: ").Append(Stamp(record.Created)).Append("   last used: ").Append(Stamp(record.LastUsed)).Append('\n')
             .Append("  viewport: ").Append(session.Config.Opinions.FirstOrDefault(opinion => opinion.Path == "browser.contextOptions.viewport.width")?.Value.ToString() ?? "?")
@@ -2156,7 +2154,7 @@ internal sealed class SessionManager : IAsyncDisposable
             }
 
             _ = text.Append(rollUp.RolledUp ? " (rolled up in " : " (⚠️ the roll-up at ")
-                .Append(Path.Combine(root, ArtifactRouter.RollUpFileName))
+                .Append(Path.Combine(root, SessionRollUp.FileName))
                 .Append(rollUp.RolledUp
                     ? ")\n"
                     : " COULD NOT BE WRITTEN on this call, so it is stale or absent; the count above came from BrowserAI's own index and is current)\n");
@@ -2338,7 +2336,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// rewritten. <b>The second half is not optional</b>: the answer this feeds
     /// names the file by path, and naming a file that was not written is the
     /// silent failure this product exists to remove. It read
-    /// <c>ArtifactRouter.WriteRollUp(root, beneath);</c> — discarding the answer
+    /// <c>SessionRollUp.Write(root, beneath);</c> — discarding the answer
     /// its own doc comment says the caller must carry — until 2026-08-16.
     /// </returns>
     private (List<RollUpEntry> Beneath, bool RolledUp) RefreshRollUp(SessionPath location)
@@ -2354,7 +2352,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var beneath = Beneath(root);
 
-        return (beneath, ArtifactRouter.WriteRollUp(root, beneath));
+        return (beneath, SessionRollUp.Write(root, beneath));
     }
 
     /// <summary>Every session under a root, newest use first.</summary>

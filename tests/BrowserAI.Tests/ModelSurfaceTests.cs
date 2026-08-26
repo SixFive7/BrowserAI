@@ -423,6 +423,69 @@ internal sealed class ModelSurfaceTests
     }
 
     /// <summary>
+    /// The model is told, before it calls anything, that BrowserAI owns the
+    /// browsers and that <c>browserai_reinstall_browser</c> is the repair.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is a pre-emption, and the thing it pre-empts is a model acting on
+    /// its own training.</b> Every published account of a broken Playwright
+    /// install ends in <c>npx playwright install</c>, and a model that runs it
+    /// here either fails or succeeds into a second browser tree in a second
+    /// location BrowserAI will never launch from — the same harm
+    /// <c>ProvisioningRemediation</c> exists to undo, arriving by a route no
+    /// answer-rewrite can reach because nothing in this server said it.
+    /// </para>
+    /// <para>
+    /// <b>Here rather than on a tool description, for this file's standing
+    /// reason.</b> <c>instructions</c> is the one model-facing string BrowserAI
+    /// writes; every upstream description passes through byte for byte, and
+    /// there is no tool to hang it on anyway — the mistake is made <i>instead
+    /// of</i> calling a tool.
+    /// </para>
+    /// <para>
+    /// <b>The wording is asserted verbatim rather than by phrase, and that is
+    /// deliberate for this one sentence.</b> The maintainer wrote it; the two
+    /// halves — <i>never install any yourself</i> and <i>this is the repair</i> —
+    /// are each useless without the other, and a re-draft that keeps one is the
+    /// failure worth a red build.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheBrowserInstallationSentenceIsInTheInstructionsAndInsideTheBudget()
+    {
+        const string Sentence =
+            "Browsers are managed by BrowserAI — never install any yourself (no `npx playwright install`). "
+            + "If the browser installation is broken, `browserai_reinstall_browser` is the repair.";
+
+        await Assert.That(ServerInstructions.Text).Contains(Sentence);
+
+        // The sentence names the tool that actually exists, rather than a name
+        // somebody typed: a repair a model cannot call is worse than none.
+        await Assert.That(Sentence).Contains(SessionToolSurface.ReinstallBrowser);
+
+        // ⚠️ The budget, asserted again HERE rather than left to the test above,
+        // because this is the change that spends it. The client cuts at 2,048
+        // UTF-16 characters with nothing reported, so a sentence added past the
+        // cut is a sentence nobody has ever read — which is the exact failure it
+        // was added to prevent, wearing a green suite.
+        await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
+
+        // And it survives the wire, rather than only the constant.
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync();
+
+        var initialize = await rig.Client.RoundTripAsync("initialize", new JsonObject
+        {
+            ["protocolVersion"] = TestDefaults.CallerProtocolVersion,
+            ["capabilities"] = new JsonObject(),
+            ["clientInfo"] = new JsonObject { ["name"] = "install-sentence-probe", ["version"] = "0" },
+        });
+
+        await Assert.That((string?)initialize["instructions"]).Contains(Sentence);
+    }
+
+    /// <summary>
     /// The cost of <c>fullPage: true</c> is stated in the one string BrowserAI
     /// writes itself, and <b>not</b> appended to the tool it is about.
     /// </summary>

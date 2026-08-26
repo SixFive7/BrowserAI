@@ -186,6 +186,23 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// <summary>What <c>tools/list</c> returns, as literal JSON.</summary>
     public string ToolsListResult { get; set; } = DefaultToolsList;
 
+    /// <summary>
+    /// What a relative <c>filename</c> argument resolves against, which is the
+    /// real child's own working directory.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-08-26 with the passthrough, and it is fidelity rather
+    /// than convenience.</b> Until then BrowserAI rewrote every <c>filename</c>
+    /// to an absolute path before the child saw it, so this double could write
+    /// straight to the argument it was handed. Nothing rewrites one now: the
+    /// caller's own string reaches the child, and upstream resolves it with
+    /// <c>path.resolve(workspace, fileName)</c> where <c>workspace</c> is
+    /// <c>options.cwd</c>. A double that resolved it against the test host's
+    /// current directory would write outside the session and would be doubling
+    /// nothing.
+    /// </remarks>
+    public string? WorkingDirectory { get; set; }
+
     /// <summary>The highest revision this child will negotiate.</summary>
     public string ProtocolCeiling { get; set; } = TestDefaults.ChildProtocolCeiling;
 
@@ -504,10 +521,18 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             ?? (behaviour.WritesArtifactBytes is { } size ? new byte[size] : null);
 
         if (artifactContent is not null
-            && request?["params"]?["arguments"]?["filename"]?.GetValue<string>() is { } artifact)
+            && request?["params"]?["arguments"]?["filename"]?.GetValue<string>() is { } named)
         {
-            // The path arrives absolute because BrowserAI made it so. Written
-            // before the answer, which is the order upstream writes in.
+            // ⚠️ Resolved against this child's own working directory, which is
+            // what upstream's `workspaceFile` does and what BrowserAI no longer
+            // does for it. Written before the answer, which is the order
+            // upstream writes in.
+            var artifact = WorkingDirectory is { Length: > 0 } workspace
+                ? Path.GetFullPath(Path.Combine(workspace, named))
+                : named;
+
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(artifact)!);
+
             await File.WriteAllBytesAsync(artifact, artifactContent, _stopping.Token);
 
             if (behaviour.HoldsArtifactOpen)

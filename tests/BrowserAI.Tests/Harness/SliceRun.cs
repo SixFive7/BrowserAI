@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -36,11 +37,14 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// <param name="ScreenshotEnvelope">
 /// The whole <c>tools/call</c> envelope for a <c>browser_take_screenshot</c>
 /// that named no file — which is upstream's own condition for answering with an
-/// inline image, and the case BrowserAI's routing used to swallow.
+/// inline image, and the case BrowserAI's routing used to swallow by always
+/// supplying a name. It supplies none now, so the guard is upstream's again.
 /// </param>
 /// <param name="ScreenshotFile">
-/// The absolute path BrowserAI routed that screenshot to, read out of its own
-/// note rather than reconstructed.
+/// The absolute path that screenshot is at, resolved from UPSTREAM's own
+/// pointer rather than reconstructed. ⚠️ <i>Corrected 2026-08-26 (previously
+/// "the absolute path BrowserAI routed that screenshot to, read out of its own
+/// note").</i> Nothing routes and there is no note.
 /// </param>
 /// <param name="ScreenshotBytes">
 /// What is on disk at that path, captured <b>before</b> the scratch tree is
@@ -190,7 +194,7 @@ internal sealed record SliceRun(
             ["arguments"] = new JsonObject { ["session"] = session, ["why"] = "the suite exercising this call" },
         }).ConfigureAwait(false);
 
-        var screenshotFile = ArtifactPathIn(screenshot);
+        var screenshotFile = ArtifactPathIn(screenshot, Path.Combine(session, SessionLayout.OutputFolderName));
 
         // Read here rather than in the test: `scratch` is removed when this
         // method returns, so a test that opened the path afterwards would be
@@ -241,36 +245,69 @@ internal sealed record SliceRun(
     }
 
     /// <summary>
-    /// The absolute path BrowserAI's own note names, out of a <c>tools/call</c>
-    /// envelope.
+    /// The absolute path a <c>tools/call</c> answer points at, resolved against
+    /// the session's output directory.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Reads UPSTREAM's pointer since 2026-08-26 (previously BrowserAI's
+    /// own note, matched on the line prefix <c>"  file: "</c>).</b> There is no
+    /// note: nothing between the two servers appends to an answer, so the only
+    /// thing naming the file is upstream's own <c>- [Title](./name.png)</c> —
+    /// relative to the child's working directory, which is
+    /// <c>&lt;session&gt;\output</c>.
+    /// </para>
+    /// <para>
     /// <b>Read from the answer rather than rebuilt from the layout.</b> The
-    /// generated name depends on the last URL the session navigated to and on a
-    /// per-stem counter, so a test that composed the path would be asserting its
-    /// own arithmetic; and the claim under test is that the path in the note is
-    /// the path the file is at, which cannot be checked by producing both ends.
+    /// generated name carries upstream's own timestamp, so a test that composed
+    /// the path would be asserting its own arithmetic; and the claim under test
+    /// is that the path the ANSWER names is the path the file is at, which
+    /// cannot be checked by producing both ends. That claim is the same one it
+    /// was — what changed is whose sentence carries it.
+    /// </para>
     /// </remarks>
     /// <param name="envelope">The whole response envelope.</param>
-    /// <returns>The path, or an empty string when the note names none.</returns>
-    private static string ArtifactPathIn(JsonObject envelope)
+    /// <param name="outputRoot">The session's <c>output\</c>, which is what the pointer is relative to.</param>
+    /// <returns>The absolute path, or an empty string when nothing in the answer names a file.</returns>
+    public static string ArtifactPathIn(JsonObject envelope, string outputRoot)
     {
-        const string Marker = "  file: ";
+        ArgumentNullException.ThrowIfNull(envelope);
+        ArgumentNullException.ThrowIfNull(outputRoot);
 
-        foreach (var block in envelope["result"]?["content"]?.AsArray() ?? [])
+        var text = string.Join(
+            "\n",
+            (envelope["result"]?["content"]?.AsArray() ?? [])
+                .Where(block => (string?)block!["type"] == "text")
+                .Select(block => (string?)block!["text"] ?? string.Empty));
+
+        // `- [Screenshot of viewport](./page-<iso>.png)`. The target is taken
+        // between the first `](` and the matching `)`, on any line that starts a
+        // Markdown link, and only when it names a file rather than a heading
+        // anchor -- upstream writes no other link shape into a tool answer.
+        foreach (var line in text.Split('\n'))
         {
-            if ((string?)block?["type"] is not "text" || (string?)block["text"] is not { } content)
+            var opened = line.IndexOf("](", StringComparison.Ordinal);
+
+            if (opened < 0)
             {
                 continue;
             }
 
-            foreach (var line in content.Split('\n'))
+            var closed = line.IndexOf(')', opened + 2);
+
+            if (closed < 0)
             {
-                if (line.StartsWith(Marker, StringComparison.Ordinal))
-                {
-                    return line[Marker.Length..].Trim();
-                }
+                continue;
             }
+
+            var relative = line[(opened + 2)..closed].Trim();
+
+            if (relative.Length is 0 || !Path.HasExtension(relative))
+            {
+                continue;
+            }
+
+            return Path.GetFullPath(Path.Combine(outputRoot, relative));
         }
 
         return string.Empty;

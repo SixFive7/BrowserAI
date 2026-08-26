@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
-using BrowserAI.Artifacts;
 
 namespace BrowserAI.Sessions;
 
@@ -43,10 +42,10 @@ internal static class SessionInventory
     /// <remarks>
     /// A HAR records every request and response the browser made, headers
     /// included — so a session that holds one holds every bearer token and
-    /// session cookie that crossed the wire in clear text. It is named
-    /// separately from the artifact folders because it can land anywhere: it is
-    /// upstream's <c>recordHar</c> output rather than something BrowserAI's
-    /// filename routing places.
+    /// session cookie that crossed the wire in clear text. It is matched by
+    /// EXTENSION rather than by location, because a caller may point
+    /// <c>browser_network_requests</c> anywhere inside <c>output\</c> and the
+    /// launch-time capture lands at that directory's root.
     /// </remarks>
     public const string HarExtension = ".har";
 
@@ -127,10 +126,14 @@ internal static class SessionInventory
     /// downloads, or the session's own files.
     /// </summary>
     /// <remarks>
-    /// <b>Keyed on the folder rather than on the filename's generator prefix.</b>
-    /// The prefix is what <see cref="ArtifactRouting"/> uses to decide where a
-    /// file <i>goes</i>; a caller reading this wants to know what is <i>there</i>,
-    /// including anything that arrived without a prefix at all.
+    /// <b>Keyed on the folder, which since 2026-08-26 is the only thing there is
+    /// to key on.</b> <i>Corrected that day (previously "rather than on the
+    /// filename's generator prefix. The prefix is what <c>ArtifactRouting</c>
+    /// uses to decide where a file goes").</i> Nothing decides where a file goes
+    /// any more, so there is no competing answer: the folders under
+    /// <c>output\</c> are upstream's own (<c>traces\</c>,
+    /// <c>session-&lt;stamp&gt;\</c>) and everything else is loose beside them,
+    /// which is what <c>output (unfiled)</c> counts.
     /// </remarks>
     /// <param name="root">The session directory.</param>
     /// <param name="file">One file inside it.</param>

@@ -350,9 +350,14 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       bundle at `@playwright/mcp` 0.0.79 / `playwright-core`
       1.63.0-alpha-2026-08-05, 2026-08-25.
 
-      BrowserAI works around it by naming every artifact absolutely in its own
+      ⚠️ **BrowserAI no longer works around it at all, 2026-08-26** *(previously
+      "BrowserAI works around it by naming every artifact absolutely in its own
       result note and saying so in one sentence, which is a workaround rather
-      than a fix. If upstream adds the option the workaround can go.
+      than a fix")*. The result note is deleted with artifact routing: every
+      answer is the child's own bytes, so those six relative pointers now reach a
+      model unaccompanied. **That makes the ask stronger rather than weaker** —
+      there is no workaround left to weigh against it — and it is the one thing
+      an upstream option would fix that nothing on this side can.
 
       **File this text, unchanged:**
 

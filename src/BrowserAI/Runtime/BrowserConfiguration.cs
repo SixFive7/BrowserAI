@@ -45,26 +45,46 @@ namespace BrowserAI.Runtime;
 /// rather than a strip list.
 /// </para>
 /// <para>
-/// <b><c>allowUnrestrictedFileAccess</c> is written <c>true</c> unconditionally,
-/// with no argument to turn it off.</b> The maintainer's answer of 2026-08-20,
-/// asked whether it should be always on, per mode or per call: <i>"a
-/// always"</i>. Left unset it is upstream's default of <see langword="false"/>,
-/// and that default is a <b>live regression</b> against every pre-BrowserAI way
-/// of running this child: <c>checkFile</c> then refuses any path outside
-/// <c>&lt;session&gt;\output</c> and the child's working directory, and
-/// <c>checkUrlAllowed</c> refuses the <c>file:</c> protocol outright — so
-/// <c>browser_file_upload</c> cannot reach a file the caller already has and
-/// <c>browser_navigate</c> cannot open a local page at all.
-/// <b>Upstream calls it a convenience defence rather than a secure
-/// boundary</b>, in <c>config.d.ts</c>'s own words: <i>"a guardrail to prevent
-/// the LLM from accidentally wandering outside its intended workspace … not a
-/// secure boundary; a deliberate attempt to reach other directories can be
-/// easily worked around, so always rely on client-level permissions for true
-/// security."</i> BrowserAI's caller already holds file tools of its own — the
-/// same reasoning that removed the <c>(tool, mode)</c> permission matrix on
-/// 2026-08-18 — so what the guardrail withholds is reachable one tool call
-/// away, and all it can do here is refuse the caller a thing it is entitled to
-/// while proving nothing.
+/// ⚠️ <b><c>allowUnrestrictedFileAccess</c> is written <c>false</c>
+/// EXPLICITLY, and it is the only containment this product has left. Corrected
+/// 2026-08-26 (previously "written <c>true</c> unconditionally, with no argument
+/// to turn it off … the maintainer's answer of 2026-08-20, asked whether it
+/// should be always on, per mode or per call: <i>a always</i>").</b> That answer
+/// was given while BrowserAI had a <c>filename</c> gate of its own — a validator
+/// that refused <c>..</c>, drive-relative, UNC, rooted and device paths on the
+/// string, and then rewrote every surviving name into an absolute path inside
+/// the session. The gate is deleted. Nothing of ours looks at a path any more,
+/// so lifting upstream's guardrail on top of that would leave a caller's raw
+/// string going straight to the filesystem with nothing between.
+/// </para>
+/// <para>
+/// <b>What the key does, from upstream's own code.</b> <c>checkFile</c> refuses
+/// any resolved name that is inside neither <c>outputDir</c> nor the child's
+/// working directory, and <c>checkUrlAllowed</c> refuses the <c>file:</c>
+/// protocol outright. BrowserAI writes both roots as the same directory —
+/// <c>&lt;session&gt;\output</c> — so the two coincide instead of overlapping,
+/// and the refusal names the path and both roots.
+/// </para>
+/// <para>
+/// <b>Written rather than omitted, and the difference is the point.</b>
+/// <see langword="false"/> is upstream's default, so the behaviour would be
+/// identical either way — but an omitted key says nothing about whether anybody
+/// chose it, and <c>browser_get_config</c> cannot report back an opinion the
+/// file does not carry. <c>ConfigRoundTripTests</c> fails an absent key exactly
+/// as it fails a <see langword="true"/> one.
+/// </para>
+/// <para>
+/// <b>What it costs, stated rather than discovered.</b>
+/// <c>browser_file_upload</c> can no longer reach a file outside the session's
+/// output directory, and <c>browser_navigate</c> cannot open a <c>file:</c> URL
+/// at all. Upstream calls the key a convenience defence rather than a secure
+/// boundary, in <c>config.d.ts</c>'s own words — <i>"a guardrail to prevent the
+/// LLM from accidentally wandering outside its intended workspace … not a secure
+/// boundary; a deliberate attempt to reach other directories can be easily
+/// worked around"</i> — and that is exactly what this product wants it for.
+/// Hostile-caller defence is an explicit non-goal; steering an honest mistake is
+/// the whole job, and upstream's roots do it in the one place a mistake actually
+/// reaches a file.
 /// </para>
 /// </remarks>
 internal static class BrowserConfiguration
@@ -72,16 +92,18 @@ internal static class BrowserConfiguration
     /// <summary>The default browser family. Never left to upstream's default, which is Chrome.</summary>
     public const string BrowserName = ProvisionedBrowsers.Chromium;
 
-    /// <summary>The folder a captured HTTP Archive is written into.</summary>
-    /// <remarks>
-    /// <c>output\network\</c>, which is already where BrowserAI's filename
-    /// routing files anything a <c>network-</c> prefixed tool produces — so the
-    /// archive sits beside the request and response bodies it duplicates rather
-    /// than in a folder of its own.
-    /// </remarks>
-    public const string HarFolder = "network";
-
     /// <summary>The extension of a captured HTTP Archive.</summary>
+    /// <remarks>
+    /// ⚠️ <b><c>HarFolder</c> is deleted, 2026-08-26 (previously
+    /// <c>"network"</c>, "which is already where BrowserAI's filename routing
+    /// files anything a <c>network-</c> prefixed tool produces — so the archive
+    /// sits beside the request and response bodies it duplicates rather than in
+    /// a folder of its own").</b> There is no filename routing and there is no
+    /// <c>output\network\</c>: the output directory is flat, and the archive
+    /// lands at its root beside everything else the session writes. The name
+    /// still carries a timestamp, and that half is unchanged and load-bearing —
+    /// see <see cref="ForSession"/>.
+    /// </remarks>
     public const string HarExtension = ".har";
 
     /// <summary>
@@ -424,8 +446,15 @@ internal static class BrowserConfiguration
             // find out about by looking for evidence that had gone. The config
             // is regenerated per launch, so a timestamp in the name makes the
             // problem avoidable rather than documentable.
+            //
+            // ⚠️ At the OUTPUT ROOT since 2026-08-26 (previously
+            // `output\network\`). The output directory is flat and BrowserAI
+            // adds no structure to it. This is the one artifact whose directory
+            // BrowserAI still chooses at all, because it is a launch-time config
+            // value rather than something a tool names -- and the choice it
+            // makes is to choose nothing.
             HarPath = run.CaptureNetwork
-                ? Path.Combine(output, HarFolder, $"network-{DateTimeOffset.Now.ToString("yyyyMMdd-HHmmssfff", CultureInfo.InvariantCulture)}{HarExtension}")
+                ? Path.Combine(output, $"network-{DateTimeOffset.Now.ToString("yyyyMMdd-HHmmssfff", CultureInfo.InvariantCulture)}{HarExtension}")
                 : null,
         });
     }
@@ -617,12 +646,17 @@ internal static class BrowserConfiguration
             writer.WriteString("outputDir", request.OutputDirectory);
             writer.WriteBoolean("saveSession", request.SaveSession);
 
-            // ⚠️ ALWAYS, AND THERE IS NO REQUEST FIELD TO TURN IT OFF. See the
-            // type's remarks: the maintainer's answer was "a always", and
-            // upstream's default of false is a live regression against every
-            // pre-BrowserAI way of running this child. A field here would be a
-            // knob nothing sets and a second state nothing tests.
-            writer.WriteBoolean(AllowUnrestrictedFileAccessKey, true);
+            // ⚠️ FALSE, WRITTEN RATHER THAN OMITTED, AND THERE IS NO REQUEST
+            // FIELD TO TURN IT ON. Upstream's file-access roots are the whole of
+            // BrowserAI's containment since 2026-08-26: our own `filename` gate
+            // was deleted that day as a weaker duplicate of them, so a config
+            // that lifted this would leave a caller's raw string reaching the
+            // filesystem with nothing in between. `false` is also upstream's
+            // default, which is exactly why it is spelled out -- an omission
+            // behaves the same and records no decision, and
+            // `browser_get_config` cannot read back a key the file never
+            // carried. See the type's remarks for what it costs.
+            writer.WriteBoolean(AllowUnrestrictedFileAccessKey, false);
 
             writer.WriteStartObject("console");
             writer.WriteString("level", ConsoleLevel);

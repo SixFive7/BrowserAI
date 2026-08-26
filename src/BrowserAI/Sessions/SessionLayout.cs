@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using BrowserAI.Artifacts;
-
 namespace BrowserAI.Sessions;
 
 /// <summary>
@@ -11,23 +9,26 @@ namespace BrowserAI.Sessions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Everything a session accumulates is a subfolder, so the files at the root are
-/// the ones that describe it — <c>browserai.lock</c>, <c>browserai.data</c> and
-/// the artifact index <c>session.json</c> — and artifacts get a typed home
-/// instead of scattering among Chromium's internals.
+/// Everything a session accumulates is a subfolder, so the two files at the root
+/// are the ones that describe it — <c>browserai.lock</c> and
+/// <c>browserai.data</c> — and everything a tool writes goes into
+/// <c>output\</c>.
 /// </para>
 /// <para>
-/// ⚠️ <b>Corrected 2026-08-16 (previously: "<c>browserai.json</c> is the only file at
-/// the root and everything else is a subfolder").</b> That was true when this
-/// file was written and stopped being true twice: the session log landed beside
-/// it once sessions had a lifetime to log, and <c>session.json</c> — which
-/// <see cref="Artifacts.ArtifactRouter"/> writes into the session folder by name
-/// — landed beside both once artifacts were routed. The claim it was making is
-/// still worth keeping and is restated above: <b>no artifact is ever at the
-/// root</b>, so the files that <i>are</i> there all describe the session rather
-/// than being things it produced. The generated Playwright config stays
-/// forbidden here for the same reason — it is a per-run artifact and lives in the
-/// run's instance directory.
+/// ⚠️ <b>Corrected 2026-08-26 (previously "<c>browserai.lock</c>,
+/// <c>browserai.data</c> and the artifact index <c>session.json</c> — and
+/// artifacts get a typed home instead of scattering among Chromium's
+/// internals").</b> <c>session.json</c> is gone and so are the typed homes:
+/// <c>output\</c> is flat, holding what the child wrote under the name the
+/// child chose, with upstream's own subdirectories (<c>traces\</c>,
+/// <c>session-&lt;stamp&gt;\</c>) inside it because they are upstream's to make.
+/// <i>The 2026-08-16 correction this replaces read: "<c>browserai.json</c> is
+/// the only file at the root and everything else is a subfolder".</i> What
+/// survives from both is the claim they were each making — <b>no artifact is
+/// ever at the session root</b>, so the files that <i>are</i> there describe the
+/// session rather than being things it produced. The generated Playwright config
+/// stays forbidden here for the same reason: it is a per-run artifact and lives
+/// in the run's instance directory.
 /// </para>
 /// <para>
 /// ⚠️ <b>The session's own log file is gone (2026-08-26, previously
@@ -145,23 +146,21 @@ internal static class SessionLayout
     /// <summary>Creates the directory and its three subfolders, idempotently.</summary>
     /// <remarks>
     /// <para>
-    /// <b>The typed artifact folders are created on first use, not here</b>, and
-    /// that was measured rather than assumed. Creating all of
-    /// <see cref="ArtifactRouting.Folders"/> up front costs <b>10.4 ms per
-    /// session</b> against <b>2.5 ms</b> for these three (measured twice,
-    /// 2026-08-16, 120 sessions per pass) — about a second per suite run, plus
-    /// the same again reclaiming them. It also leaves ten empty directories in
-    /// every session a caller ever creates, for generators they never used,
-    /// which is navigational noise in the tree the typed folders exist to make
-    /// navigable in the first place.
+    /// <b>Three, and there are no others to make.</b> ⚠️ <i>Corrected 2026-08-26
+    /// (previously "The typed artifact folders are created on first use, not
+    /// here", with the measurement that creating all of
+    /// <c>ArtifactRouting.Folders</c> up front cost 10.4 ms per session against
+    /// 2.5 ms for these three).</i> There are no typed artifact folders. The
+    /// measurement stands and its subject does not: what it was weighing was a
+    /// choice between creating ten directories eagerly and creating them
+    /// lazily, and the answer now is that nothing creates them at all.
     /// </para>
     /// <para>
-    /// The property that would have bought is not lost: the folder set is
-    /// declared by <see cref="ArtifactRouting"/> and asserted against the
-    /// resolved child's prefixes on every build, and <c>session.json</c> names
-    /// every one of them with its resolved path whether it exists yet or not.
-    /// What changes is that a folder on disk now means <i>an artifact of that
-    /// kind was produced</i>.
+    /// <c>output\</c> exists before the child starts because it is the child's
+    /// working directory <i>and</i> its <c>outputDir</c> <i>and</i> the root
+    /// upstream's file-access check measures against; <c>downloads\</c> because
+    /// the launch config names it; <c>profile\</c> because the browser is
+    /// pointed at it.
     /// </para>
     /// </remarks>
     /// <param name="path">The canonicalised session directory.</param>

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Text.Json.Nodes;
+using BrowserAI.Protocol;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -160,10 +161,16 @@ internal sealed class ProvisioningRemediationTests
     /// </para>
     /// <para>
     /// ⚠️ <b>This does not close the whole bypass and is not claimed to.</b> An
-    /// <c>isError</c> answer against a live tab carries the page's own title and
-    /// the console and snapshot pointers in the same result, so page content can
-    /// still trip the rewrite; what stops that mattering is the other half —
-    /// <see cref="ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite"/>.
+    /// <c>isError</c> answer against a live tab carries the page's own title in
+    /// the same result, so page content can still trip the rewrite on a call
+    /// that genuinely failed. ⚠️ <i>Corrected 2026-08-26 (previously "what stops
+    /// that mattering is the other half — <c>ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite</c>").</i>
+    /// There is no other half and there is nothing left for it to matter to:
+    /// what made a spurious rewrite <i>harmful</i> was that the rewrite branch
+    /// skipped the artifact bookkeeping, so a page could switch the pointer
+    /// protection off. Nothing does bookkeeping now. A page that quotes
+    /// upstream's advice inside a genuinely failed call costs that one answer
+    /// its byte-identity, and the proxy logs that it did.
     /// </para>
     /// </remarks>
     [Test]
@@ -201,6 +208,137 @@ internal sealed class ProvisioningRemediationTests
         await Assert.That(text).Contains("Run `npx");
         await Assert.That(text).DoesNotContain("Do NOT run npx");
         await Assert.That(text).DoesNotContain(SessionToolSurface.ReinstallBrowser);
+    }
+
+    /// <summary>
+    /// The real bundled child, with a browsers root that has nothing in it,
+    /// still says the sentence this rewrite is anchored on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THE CANARY, and the thing it watches is upstream's WORDING rather
+    /// than BrowserAI's code.</b> Every other test in this file drives
+    /// <see cref="UpstreamMessage"/>, which is a constant somebody typed out of
+    /// the bundle on 2026-08-16. If upstream rewords its advice, every one of
+    /// them stays green while the rewrite silently stops firing in production —
+    /// and what a caller then receives is the <c>npx</c> instruction this whole
+    /// file exists to keep away from a model. Nothing else in the suite would
+    /// notice: the golden snapshot covers tool names, descriptions and schemas,
+    /// and not the prose inside an answer.
+    /// </para>
+    /// <para>
+    /// <b>The child is started directly rather than through BrowserAI, and it
+    /// has to be.</b> Through the product, an empty browsers root never reaches
+    /// upstream at all — <c>SessionManager.ProvisioningRefusal</c> answers the
+    /// call itself and starts a download, which is the correct behaviour and the
+    /// reason the genuine error is unreachable from that direction. So this
+    /// starts <c>node.exe</c> on the payload's own <c>cli.js</c> with
+    /// <c>PLAYWRIGHT_BROWSERS_PATH</c> pointed at an empty directory, which is
+    /// exactly the shape <c>ChildLaunch</c> builds.
+    /// </para>
+    /// <para>
+    /// <b>Both directions, over the same real text.</b> The positive arm is that
+    /// <see cref="ProvisioningRemediation.Rewrite"/> fires on what upstream
+    /// actually said. The control is the same string with upstream's subcommand
+    /// literal taken out of it: that must NOT rewrite, which is what separates
+    /// <i>the anchor matched</i> from <i>this function rewrites whatever it is
+    /// handed</i>. A canary that could not come back negative is a canary that
+    /// proves nothing.
+    /// </para>
+    /// <para>
+    /// <b>It costs no download.</b> The failure is <c>throwIfExecutableMissing</c>
+    /// resolving a path and finding nothing there — upstream never reaches for
+    /// the network on this path, which is the whole complaint the rewrite makes
+    /// about its advice.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARealChildWithNoBrowsersStillSaysTheSentenceTheRewriteIsAnchoredOn()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        using var scratch = ScratchDirectory.Create("remediation-canary");
+
+        var browsers = Path.Combine(scratch.Path, "browsers-with-nothing-in-them");
+        var session = SessionPath.Resolve(Path.Combine(scratch.Path, "canary-session"));
+        var output = Path.Combine(session.FullPath, SessionLayout.OutputFolderName);
+        var configFile = Path.Combine(scratch.Path, "playwright-mcp.config.json");
+
+        _ = Directory.CreateDirectory(browsers);
+
+        SessionLayout.Create(session);
+
+        var config = BrowserConfiguration.ForSession(
+            session,
+            headed: false,
+            SessionManager.DefaultBrowser,
+            tracing: false,
+            RunOptions.Default);
+
+        BrowserConfiguration.WriteTo(configFile, config);
+
+        // Empty in the only way that counts: nothing installed, and no
+        // INSTALLATION_COMPLETE marker for a check to short-circuit on.
+        await Assert.That(Directory.EnumerateFileSystemEntries(browsers).Any()).IsFalse();
+
+        var environment = ChildEnvironment.Build(
+            [new KeyValuePair<string, string>(ChildLaunch.BrowsersPathVariable, browsers)]);
+
+        await using var child = RawStdioClient.Start(
+            RepositoryPayload.Layout.NodeExecutable,
+            [
+                RepositoryPayload.Layout.PlaywrightMcpCli,
+                "--config",
+                configFile,
+                ChildLaunch.SandboxFlag,
+            ],
+            output,
+            environment);
+
+        _ = await child.InitializeAsync(SliceRun.OfferedProtocolVersion);
+
+        var answer = await child.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl },
+        });
+
+        var text = TextOf(answer);
+
+        // ⚠️ THE GATE THE PROXY USES, asserted against the real thing rather
+        // than against a constant. F2's fix rests on upstream setting `isError`
+        // on exactly the answers that carry an Error section; if it ever stops,
+        // the rewrite stops with it and nothing else says so.
+        await Assert.That((bool?)answer["isError"])
+            .IsTrue()
+            .Because($"upstream answered a missing browser without isError, so BrowserProxy.Remediate would never look at it. It said: {text}");
+
+        // The marker, in upstream's own live output.
+        await Assert.That(text)
+            .Contains(ProvisioningRemediation.Marker)
+            .Because($"upstream no longer spells its install advice with '{ProvisioningRemediation.Marker}'. It said: {text}");
+
+        // And the whole clause, so the regex still has something to replace
+        // rather than only the marker still being present somewhere.
+        var rewritten = ProvisioningRemediation.Rewrite(text, browsers);
+
+        await Assert.That(rewritten)
+            .IsNotNull()
+            .Because($"upstream's remediation clause no longer matches ProvisioningRemediation.UpstreamAdvice. It said: {text}");
+
+        await Assert.That(rewritten!).DoesNotContain("Run `npx");
+        await Assert.That(rewritten).Contains(SessionToolSurface.ReinstallBrowser);
+
+        // ⚠️ THE CONTROL, over the same real text. Take upstream's subcommand
+        // out of it and the rewrite must decline — otherwise the arm above is
+        // satisfied by a function that rewrites anything, and the canary is
+        // measuring nothing.
+        var withoutTheAnchor = text.Replace(ProvisioningRemediation.Marker, "do-something-else", StringComparison.Ordinal);
+
+        await Assert.That(ProvisioningRemediation.Rewrite(withoutTheAnchor, browsers))
+            .IsNull()
+            .Because("the rewrite fired on a message that does not carry upstream's subcommand, so the positive arm above says nothing about the anchor");
     }
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>

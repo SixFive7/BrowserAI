@@ -230,16 +230,17 @@ internal sealed class VerticalSliceTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>The defect this closes was ours, and it was silent for the life of
-    /// artifact routing.</b> Upstream's handler ends
+    /// ⚠️ <b>The defect this closed was ours, and 2026-08-26 removed its cause
+    /// rather than its symptom.</b> Upstream's handler ends
     /// <c>await response.addFileResult(resolvedFile, data); if (!params.filename)
     /// await response.registerImageResult(data, fileType);</c> — the only
     /// <c>registerImageResult</c> call site in the resolved bundle. BrowserAI
-    /// always rewrote <c>arguments["filename"]</c>, to give the file a name a
-    /// human can read a month later, so <b>the guard was never true and no
-    /// screenshot ever came back inline, in any mode</b>, where bare
-    /// <c>@playwright/mcp</c> returns one. The model paid an extra file read on
-    /// the most-used artifact tool and nothing anywhere said so.
+    /// used to rewrite <c>arguments["filename"]</c> on every screenshot, to give
+    /// the file a name a human could read a month later, so <b>the guard was
+    /// never true and no screenshot ever came back inline</b>; the repair was to
+    /// append the block ourselves. Nothing rewrites the argument now, so the
+    /// guard is true again on its own and there is no restoration left in the
+    /// product — <b>the block in the answer is upstream's own</b>.
     /// </para>
     /// <para>
     /// <b>Against the real child, off the wire, because a double proves the
@@ -262,11 +263,17 @@ internal sealed class VerticalSliceTests
         await Assert.That(run.ScreenshotEnvelope.ContainsKey("error")).IsFalse();
         await Assert.That((bool?)run.ScreenshotEnvelope["result"]!["isError"] is true).IsFalse();
 
-        // The file half: a name derived from the page rather than a timestamp,
-        // in the folder its generator prefix names, and actually on disk.
+        // The file half. ⚠️ *Corrected 2026-08-26 (previously "a name derived
+        // from the page rather than a timestamp, in the folder its generator
+        // prefix names", asserting the path contained `output\page\`).* There
+        // is no generator folder and no derived name: upstream chooses the name,
+        // upstream writes the file, and it lands at the output ROOT because that
+        // is upstream's own working directory. What survives from the old claim
+        // is the half that was ever a claim about the product — the path in the
+        // answer is the path the file is at.
         await Assert.That(run.ScreenshotFile).EndsWith(".png");
-        await Assert.That(run.ScreenshotFile).Contains($@"{SessionLayout.OutputFolderName}\page\");
-        await Assert.That(run.ScreenshotFile).StartsWith(run.SessionDirectory);
+        await Assert.That(Path.GetDirectoryName(run.ScreenshotFile))
+            .IsEqualTo(Path.Combine(run.SessionDirectory, SessionLayout.OutputFolderName));
         await Assert.That(run.ScreenshotBytes.Length).IsGreaterThan(0);
 
         // ⚠️ It is a PNG, checked at the file's own magic number rather than at
@@ -276,8 +283,26 @@ internal sealed class VerticalSliceTests
         await Assert.That(run.ScreenshotBytes.Take(8))
             .IsEquivalentTo(new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A });
 
-        // The inline half. Exactly one image block, and its bytes are the file's
-        // bytes -- not merely the same length.
+        // ⚠️ THE INLINE HALF IS UPSTREAM'S OWN IMAGE SINCE 2026-08-26, AND IT IS
+        // NOT THE FILE'S BYTES. *Corrected that day (previously "exactly one
+        // image block, and its bytes are the file's bytes — not merely the same
+        // length", asserting `inline.SequenceEqual(run.ScreenshotBytes)`).* That
+        // was true while BrowserAI produced the block itself, by reading the
+        // file back off disk, because it had taken upstream's own block away by
+        // always supplying a `filename`. It supplies none now, so the block is
+        // the one upstream sends — and upstream puts its bytes through
+        // `scaleImageToFitMessage` first, which shrinks anything over 1,568 px
+        // on a side and re-encodes.
+        //
+        // **Measured here rather than assumed, because the divergence is the
+        // finding.** The two are different images and the difference is not the
+        // direction anybody guesses: at the 1920x1080 default the file is the
+        // full capture and the inline block is scaled DOWN in pixels while being
+        // several times LARGER in bytes — 9,379 on disk against 379,731 inline
+        // on 2026-08-26, because a re-encode is not Chromium's own encoder. So
+        // what is asserted is the property that survives: the block is a PNG,
+        // and it is within upstream's stated ceiling on both sides while the
+        // file is not.
         var images = content.Where(block => (string?)block?["type"] is "image").ToList();
 
         await Assert.That(images.Count).IsEqualTo(1);
@@ -285,18 +310,47 @@ internal sealed class VerticalSliceTests
 
         var inline = Convert.FromBase64String((string)images[0]!["data"]!);
 
-        await Assert.That(inline.Length).IsEqualTo(run.ScreenshotBytes.Length);
-        await Assert.That(inline.SequenceEqual(run.ScreenshotBytes)).IsTrue();
+        await Assert.That(inline.Take(8))
+            .IsEquivalentTo(new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A });
 
-        // And the note that names the file is still there, after the child's own
-        // text and before the image: the file path is what makes the artifact
-        // findable later, and the image is what saves the read now. Neither
-        // replaces the other.
+        var (inlineWidth, inlineHeight) = PngSize(inline);
+        var (fileWidth, fileHeight) = PngSize(run.ScreenshotBytes);
+
+        // The file is the viewport, unscaled: that is what a caller reading the
+        // path gets, and it is the number the instructions' cost sentence is
+        // about.
+        await Assert.That(fileWidth).IsEqualTo(BrowserConfiguration.DefaultViewport.Width);
+        await Assert.That(fileHeight).IsEqualTo(BrowserConfiguration.DefaultViewport.Height);
+
+        // The block is upstream's, inside upstream's own ceiling on both sides.
+        // ⚠️ 1,568 is UPSTREAM's constant and not one invented here — it is the
+        // bound `scaleImageToFitMessage` applies, and a change to it shows up as
+        // this assertion rather than as an image nobody compared.
+        await Assert.That(Math.Max(inlineWidth, inlineHeight)).IsLessThanOrEqualTo(1568);
+
+        // Not vacuous: it really is a scaled version of the same capture rather
+        // than a placeholder — same aspect ratio to within a rounded pixel, and
+        // genuinely smaller than the file it stands for.
+        await Assert.That(inlineWidth).IsLessThan(fileWidth);
+        await Assert.That(Math.Abs(((double)inlineWidth / inlineHeight) - ((double)fileWidth / fileHeight)))
+            .IsLessThan(0.01);
+
+        // ⚠️ AND NOTHING OF OURS IS IN THE ANSWER. *Corrected 2026-08-26
+        // (previously "the note that names the file is still there, after the
+        // child's own text and before the image", asserting two text blocks and
+        // the absolute path in the last of them).* There is no note. What names
+        // the file is upstream's own `- [Screenshot of viewport](./page-….png)`,
+        // relative to its working directory, which is what `ScreenshotFile` was
+        // read from — so this asserts the file name and NOT the absolute path,
+        // because an absolute path here would mean somebody had started
+        // rewriting answers again.
         var texts = content.Where(block => (string?)block?["type"] is "text").ToList();
 
-        await Assert.That(texts.Count).IsGreaterThanOrEqualTo(2);
-        await Assert.That((string?)texts[^1]!["text"]).Contains(run.ScreenshotFile);
-        await Assert.That(content.IndexOf(images[0])).IsEqualTo(content.Count - 1);
+        var answerText = string.Join("\n", texts.Select(block => (string?)block!["text"]));
+
+        await Assert.That(texts.Count).IsGreaterThanOrEqualTo(1);
+        await Assert.That(answerText).Contains(Path.GetFileName(run.ScreenshotFile));
+        await Assert.That(answerText).DoesNotContain(run.SessionDirectory);
 
         // The cost, reported rather than asserted. An inline image is the one
         // thing in an answer that costs the caller tokens and appears in no
@@ -313,6 +367,20 @@ internal sealed class VerticalSliceTests
     /// which is right — and awaiting a diagnostic write in the middle of an
     /// assertion sequence is the wrong fix.
     /// </remarks>
+    /// <summary>A PNG's pixel dimensions, read out of its own IHDR chunk.</summary>
+    /// <remarks>
+    /// <b>Eight bytes at a fixed offset, and no image library.</b> The IHDR is
+    /// the first chunk of every PNG by the format's own rule, so width and
+    /// height are big-endian integers at offsets 16 and 20. Decoding the image
+    /// to ask its size would mean a second image pipeline in the suite, which is
+    /// the thing the scope boundary uses as its own example.
+    /// </remarks>
+    /// <param name="png">The whole file.</param>
+    /// <returns>Width and height in pixels.</returns>
+    private static (int Width, int Height) PngSize(byte[] png) =>
+        (System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16, 4)),
+         System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20, 4)));
+
     private static void Report(SliceRun run, string base64) =>
         TestContext.Current?.OutputWriter.WriteLine(
             $"inline screenshot: {run.ScreenshotBytes.Length} bytes on disk, {base64.Length} base64 characters, "

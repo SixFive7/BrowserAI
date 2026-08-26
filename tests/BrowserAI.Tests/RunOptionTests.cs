@@ -153,20 +153,33 @@ internal sealed partial class RunOptionTests
     }
 
     /// <summary>
-    /// Every launch gets its own archive filename, because <c>recordHar</c>
-    /// truncates whatever path it is given.
+    /// Every launch gets its own archive filename, at the output root, because
+    /// <c>recordHar</c> truncates whatever path it is given.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The timestamp IS the mechanism, so the format is what is asserted.</b>
     /// A fixed name would destroy the previous run's capture the moment a
     /// session was resumed — an overwrite a caller would discover by looking for
     /// evidence that had gone. Two configs generated in the same millisecond
     /// would collide and a test cannot rule that out; what it can rule out is the
     /// version with no timestamp at all, which is the one anybody would write.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>At the output root since 2026-08-26 (previously
+    /// <c>output\network\</c>, "which is already where BrowserAI's filename
+    /// routing files anything a <c>network-</c> prefixed tool produces").</b>
+    /// There is no filename routing and there are no typed folders, so the
+    /// folder that sentence pointed at does not exist — and the HAR is the one
+    /// artifact whose directory BrowserAI still chooses, because it is a
+    /// launch-time config value rather than something a tool names. It goes
+    /// where everything else the session writes goes: <c>output\</c>, flat, as
+    /// the child leaves it.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryLaunchGetsItsOwnArchiveFilename()
+    public async Task EveryLaunchGetsItsOwnArchiveFilenameAtTheOutputRoot()
     {
         var session = SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"har-{Guid.NewGuid():N}"));
 
@@ -179,9 +192,11 @@ internal sealed partial class RunOptionTests
 
         await Assert.That(config.HarPath).IsNotNull();
 
-        var relative = Path.GetRelativePath(session.FullPath, config.HarPath!);
+        // The output root itself, not a folder under it: one path segment before
+        // the file name, and that segment is `output`.
+        await Assert.That(Path.GetDirectoryName(config.HarPath!))
+            .IsEqualTo(Path.Combine(session.FullPath, SessionLayout.OutputFolderName));
 
-        await Assert.That(relative).StartsWith(Path.Combine(SessionLayout.OutputFolderName, BrowserConfiguration.HarFolder));
         await Assert.That(TimestampedArchive().IsMatch(Path.GetFileName(config.HarPath!))).IsTrue();
 
         // The folder is created with the rest of the config's directories, so a
