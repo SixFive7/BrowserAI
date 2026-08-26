@@ -184,18 +184,18 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
-    /// The resolved-set manifest is emitted, holds the six files item 11 names,
-    /// and states the version each one carries.
+    /// The resolved-set manifest is emitted, holds the seven files item 11
+    /// names, and states the version each one carries.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Driven against a synthetic root rather than the repository's own.</b>
-    /// One of the six is <c>payload/payload.json</c>, which exists only after
+    /// One of the seven is <c>payload/payload.json</c>, which exists only after
     /// <c>build/Build-Payload.ps1</c> has run — so pointing this at the real
     /// root would make the test's own result depend on whether a payload
     /// happened to be assembled, which is the conditional-pass shape the whole
     /// [coverage gate](SuiteCoverageTests.cs) exists to remove. The script's
-    /// behaviour is identical either way: it copies six paths and reads them
+    /// behaviour is identical either way: it copies seven paths and reads them
     /// back.
     /// </para>
     /// <para>
@@ -203,10 +203,19 @@ internal sealed class ReleaseScriptTests
     /// where it copied a file stating it, which is what makes the number
     /// evidence rather than something somebody typed.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// <c>TheResolvedSetManifestIsEmittedWithAllSixFilesAndWhatEachStates</c>,
+    /// over six files).</b> <c>tool-verdicts.json</c> arrived at the repository
+    /// root the same week and was left out of the manifest's charter: it states
+    /// which tools a build forwards and which upstream versions that judgement
+    /// was made against, so a release that cannot produce it cannot answer why
+    /// it refused a tool the next release allows.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheResolvedSetManifestIsEmittedWithAllSixFilesAndWhatEachStates()
+    public async Task TheResolvedSetManifestIsEmittedWithAllSevenFilesAndWhatEachStates()
     {
         using var scratch = ScratchDirectory.Create("release-manifest");
         var root = await SyntheticRootAsync(scratch.Path);
@@ -226,6 +235,7 @@ internal sealed class ReleaseScriptTests
             "payload.package-lock.json",
             "payload.json",
             "browsers.json",
+            "tool-verdicts.json",
             "manifest.json",
         ];
 
@@ -243,16 +253,23 @@ internal sealed class ReleaseScriptTests
         await Assert.That(manifest).Contains("\"@playwright/mcp\": \"0.0.777\"");
         await Assert.That(manifest).Contains("\"version\": \"v24.0.0\"");
         await Assert.That(manifest).Contains("\"revision\": \"4321\"");
+
+        // The verdicts file states what it was judged against, and the manifest
+        // states that rather than the row set: which tools a build forwards is
+        // only meaningful beside the upstream it was adjudicated on. The
+        // synthetic value is one no real resolve could produce.
+        await Assert.That(manifest).Contains("\"@playwright/mcp\": \"0.0.778\"");
     }
 
     /// <summary>
     /// A missing file refuses the manifest rather than writing a partial one.
     /// </summary>
     /// <remarks>
-    /// <b>A manifest holding five of six files reads exactly like a complete
+    /// <b>A manifest holding six of seven files reads exactly like a complete
     /// one</b> to whoever opens it a year later, which makes a partial worse
     /// than none. The refusal names the file, because the usual cause is that
-    /// nobody assembled a payload.
+    /// nobody assembled a payload. *(Six of seven since 2026-08-26, previously
+    /// five of six.)*
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -290,7 +307,7 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
-    /// A repository-shaped tree holding the six files, with versions no real
+    /// A repository-shaped tree holding the seven files, with versions no real
     /// resolve could produce so that a copy cannot be mistaken for a default.
     /// </summary>
     private static async Task<string> SyntheticRootAsync(string directory)
@@ -337,6 +354,16 @@ internal sealed class ReleaseScriptTests
         await writeAsync("upstream-snapshots/browsers.json", """
             {"browsers":[{"name":"chromium","revision":"4321","browserVersion":"999.0.0.0"},
                          {"name":"winldd","revision":"1007"}]}
+            """);
+        // ⚠️ 0.0.778 rather than the 0.0.777 above, deliberately. The manifest
+        // reads this file's OWN judgedAgainst rather than the payload lock's
+        // resolve, and two fixtures carrying one number could not tell the two
+        // apart -- which is exactly the mistake a manifest exists to prevent.
+        await writeAsync("tool-verdicts.json", """
+            {"schemaVersion":1,
+             "judgedAgainst":{"@playwright/mcp":"0.0.778","playwright-core":"1.99.0-alpha-2026-01-01"},
+             "upstream":{"browser_close":{"verdict":"allow"}},
+             "browserai":{"browserai_list":{"verdict":"answer"}}}
             """);
 
         return root;

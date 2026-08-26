@@ -54,7 +54,8 @@ internal static class Program
             "browsers-claim" when args.Length is 3 => SessionProbe.HoldBrowsersClaim(args[1], args[2]),
             "window" when args.Length is 5 => WindowProbe.Publish(args[1], args[2], args[3], args[4]),
             "session-sweep" when args.Length is 5 => SessionProbe.Sweep(args[1], args[2], args[3], args[4]),
-            "stray-sweep" when args.Length is 3 => SessionProbe.StraySweepPass(args[1], args[2]),
+            "stray-sweep" when args.Length is 4 =>
+                SessionProbe.StraySweepPass(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture)),
             "session-rewrite" when args.Length is 5 =>
                 SessionProbe.Rewrite(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture), args[4]),
             "client-parent" when args.Length is 5 =>

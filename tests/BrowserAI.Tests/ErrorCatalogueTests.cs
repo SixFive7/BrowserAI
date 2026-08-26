@@ -407,7 +407,7 @@ internal sealed partial class ErrorCatalogueTests
         Record(nameof(SessionErrors.LockReclaimed));
         reclaimed.Acquired!.Dispose();
 
-        // The row added 2026-08-19 — `browserai.json` is there, nobody is holding it,
+        // The row added 2026-08-19 — `browserai.lock` is there, nobody is holding it,
         // and this process cannot open it. THIS ARM USED TO THROW. The first open
         // in `TakeOrReport` — the read of the previous record, under the gate —
         // caught a missing file, a sharing violation and an unparseable record,
@@ -532,7 +532,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(framed.Length).IsLessThan(SessionErrors.ReplayedPurposeLength + 120);
         Record(nameof(SessionErrors.Recorded));
 
-        // And it round-trips through browserai.json capped and stripped, which is the
+        // And it round-trips through browserai.data capped and stripped, which is the
         // half that has to be true of the FILE rather than of a formatter.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -935,24 +935,46 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
-    /// Runs a pass, asking again while some other process on the machine happens
-    /// to be sweeping — a skipped sweep is not a missed one.
+    /// Runs a pass, <b>waiting</b> for the machine-wide gate while some other
+    /// process on the machine happens to be sweeping.
     /// </summary>
-    private static async Task<StraySweepResult> RunSweepAsync(Microsoft.Extensions.Logging.ILogger logger)
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously "asking again … — a skipped sweep
+    /// is not a missed one").</b> That is true of the product and was never a
+    /// reason for a test that needs its own pass to have run: asking again is a
+    /// poll that can lose every time, and the mutex is a queue. The measurement
+    /// behind the change is in <c>StraySweepTests.SweepAsync</c>.
+    /// </remarks>
+    /// <param name="logger">Where the pass records itself.</param>
+    /// <returns>What the pass found.</returns>
+    private static Task<StraySweepResult> RunSweepAsync(Microsoft.Extensions.Logging.ILogger logger)
     {
-        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
+        var completion = new TaskCompletionSource<StraySweepResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        while (true)
+        // A dedicated thread rather than the pool: the wait is blocking, and a
+        // parked worker is how an unrelated in-process rig starts missing its
+        // budget.
+        var thread = new Thread(() =>
         {
-            var result = await Task.Run(() => new StraySweep([PlantedProbe.ExecutablePath], index: null, logger).Run());
-
-            if (result.Outcome is not StraySweepOutcome.Skipped || DateTime.UtcNow > deadline)
+            try
             {
-                return result;
+                completion.SetResult(new StraySweep([PlantedProbe.ExecutablePath], index: null, logger).Run(TestDefaults.ProcessHang));
             }
+#pragma warning disable CA1031 // The exception belongs to the awaiting test, not to this thread.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                completion.SetException(failure);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "stray sweep test pass",
+        };
 
-            await Task.Delay(25);
-        }
+        thread.Start();
+
+        return completion.Task;
     }
 
     /// <summary>

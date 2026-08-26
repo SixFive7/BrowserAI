@@ -79,10 +79,16 @@ internal static class SessionToolSurface
     /// reasons, and the second is decisive. <b>A tool whose whole purpose is to
     /// tell you what happened must not itself become the most recent thing that
     /// happened</b> — a log whose tail is three agents reading it has buried the
-    /// answer it was asked for. And <b>writing an entry means replacing
-    /// <c>browserai.json</c>, which a session another live BrowserAI is driving
-    /// refuses</b>; that is precisely the case this tool exists for, so a version
+    /// answer it was asked for. And <b>writing an entry means writing to
+    /// <c>browserai.data</c>, which only the directory's holder may do</b> — and the
+    /// reader this tool exists for is by definition not the holder, so a version
     /// that wrote could not answer the question it was built to answer.
+    /// ⚠️ <i>Corrected 2026-08-26 (previously "writing an entry means replacing
+    /// <c>browserai.json</c>, which a session another live BrowserAI is driving
+    /// refuses").</i> Nothing is replaced now: an entry is an <c>INSERT</c> on a
+    /// connection the holder already has open. The first reason is unchanged; the
+    /// second moved from <i>the write would be refused</i> to <i>the write is not
+    /// this caller's to make</i>.
     /// </para>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-24 (previously "writing an entry means taking the
@@ -90,7 +96,7 @@ internal static class SessionToolSurface
     /// would refuse").*** The conclusion is right and the mechanism named for it
     /// was wrong: <c>LockScopes.PerDirectoryGate</c> does not refuse a second
     /// writer, it <i>waits</i> 120 seconds for it. What refuses one is the
-    /// holder's own <c>FileShare.Read</c> on <c>browserai.json</c> — the share
+    /// holder's own <c>FileShare.Read</c> on <c>browserai.lock</c> — the share
     /// mode that IS the ownership test.
     /// </para>
     /// <para>

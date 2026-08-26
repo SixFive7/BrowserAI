@@ -390,7 +390,7 @@ internal static class BrowserConfiguration
     /// </param>
     /// <param name="browser">
     /// The family this session was created for, read from its own
-    /// <c>browserai.json</c> rather than assumed. A profile belongs to the browser
+    /// <c>browserai.data</c> rather than assumed. A profile belongs to the browser
     /// that made it, so generating a Chromium config for a session recorded as
     /// Firefox would point one browser at the other's profile — which upstream
     /// would launch, and which nothing would report.
@@ -771,7 +771,7 @@ internal sealed record BrowserConfigurationRequest
     /// <c>browserai_init</c> applies. ⚠️ <b>Corrected 2026-08-19 (previously
     /// "every caller in this build asks for Chromium").</b> That stopped being
     /// true when Firefox was offered — <see cref="BrowserConfiguration.ForSession"/> passes whatever
-    /// the session's <c>browserai.json</c> records. The default survives for the
+    /// the session's <c>browserai.data</c> records. The default survives for the
     /// reason it always had: it keeps the Firefox branch a property of the
     /// session's own record rather than a decision each call site takes, and
     /// <see cref="BrowserConfiguration.ForSurface"/> — the run's own browser-less child — genuinely

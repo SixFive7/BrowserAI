@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
@@ -33,7 +32,7 @@ namespace BrowserAI.Tests;
 /// <list type="table">
 ///   <item>
 ///     <term>R1 — the sweep kills a browser a live session just launched</term>
-///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.json</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill — and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
+///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.lock</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill — and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
 ///   </item>
 ///   <item>
 ///     <term>R2 — PID reuse between detection and kill</term>
@@ -297,7 +296,12 @@ internal sealed class StraySweepTests
 
         await WaitUntilGoneAsync(holder, holderCreated);
 
-        var afterwards = await Sweep();
+        // Waiting, because these two need the pass to have RUN. An
+        // AbandonedMutexException is raised by the acquire whatever timeout it
+        // was given, so the property is unaffected by the wait -- what the wait
+        // removes is a stranger's BrowserAI holding the gate for a millisecond
+        // and turning this into Skipped.
+        var afterwards = await SweepAsync();
 
         await Assert.That(afterwards.GateWasAbandoned).IsTrue();
         await Assert.That(afterwards.Outcome).IsEqualTo(StraySweepOutcome.Ran);
@@ -305,7 +309,7 @@ internal sealed class StraySweepTests
         // Consumed: the very next pass is ordinary. Unhandled, the exception
         // would disable sweeping permanently after the first crash and nothing
         // would report it.
-        var next = await Sweep();
+        var next = await SweepAsync();
 
         await Assert.That(next.GateWasAbandoned).IsFalse();
         await Assert.That(next.Outcome).IsEqualTo(StraySweepOutcome.Ran);
@@ -369,8 +373,8 @@ internal sealed class StraySweepTests
 
         try
         {
-            var result = await Task.Run(() =>
-                new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run());
+            var result = await OnItsOwnThreadAsync(() =>
+                new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run(GatePatience));
 
             await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
             await Assert.That(result.LiveMarkers).IsNotNull();
@@ -392,8 +396,8 @@ internal sealed class StraySweepTests
 
         // The other half of the control: nothing about that marker made it
         // un-reclaimable except the handle.
-        var second = await Task.Run(() =>
-            new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run());
+        var second = await OnItsOwnThreadAsync(() =>
+            new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run(GatePatience));
 
         await Assert.That(second.LiveMarkers!.Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(held)).IsFalse();
@@ -404,16 +408,29 @@ internal sealed class StraySweepTests
     /// so, rather than reporting a pass that did not happen.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <see langword="null"/> and not a zeroed result: <i>this sweep had no
     /// marker directory to be told about</i> is a different fact from <i>it
     /// looked and found nothing</i>, and a caller reading the summary line has to
     /// be able to tell them apart.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This is the arm that found the gate race, on 2026-08-26.</b> It
+    /// reported <c>Skipped</c> where it requires <c>Ran</c> once in five full
+    /// runs — not a skipped <i>test</i>, which is what the outcome's name reads
+    /// like in a failure message, but the product's own
+    /// <see cref="StraySweepOutcome.Skipped"/> arriving as the actual value of a
+    /// failed assertion. <c>[NotInParallel]</c> holds these arms apart from each
+    /// other and from nothing else, and the peer that took the gate was a real
+    /// BrowserAI another test had just started. It waits for the gate now; see
+    /// <see cref="SweepAsync"/>.
+    /// </para>
     /// </remarks>
     [Test]
     [NotInParallel(SweepGroup)]
     public async Task ASweepWithNoAppPathsReportsNoMarkerPassAtAll()
     {
-        var result = await Task.Run(() => new StraySweep([], index: null, NullLogger.Instance).Run());
+        var result = await OnItsOwnThreadAsync(() => new StraySweep([], index: null, NullLogger.Instance).Run(GatePatience));
 
         await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
         await Assert.That(result.LiveMarkers).IsNull();
@@ -444,6 +461,119 @@ internal sealed class StraySweepTests
 
         await Assert.That(program).DoesNotContain("BrowserAI-Sweep");
         await Assert.That(Regex.Count(program, @"CreateSweep\(paths, ", RegexOptions.None, TimeSpan.FromSeconds(5))).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// R9's other half: <b>the product never queues on the sweep gate</b>, and
+    /// the suite's waiting passes cannot become one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b><c>Run</c> has a second overload since 2026-08-26 and it exists for
+    /// this suite</b>, because an arm that needs its own pass to have <i>run</i>
+    /// was losing the gate to a real BrowserAI another test had started — once in
+    /// five full runs. Waiting is the correct serialisation there: the kernel
+    /// hands the mutex over in the order it was asked for.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>In the product it would be the thundering herd R9 exists to
+    /// prevent.</b> This design's working day is ~100 concurrent BrowserAIs;
+    /// each one sweeps at startup, and each one waiting for the gate would
+    /// queue ninety-nine passes to do work the first one already did. So the
+    /// seam is scanned rather than trusted: in <c>src\</c>, a pass may be handed
+    /// <c>LockScopes.NeverWaits</c> and nothing else.
+    /// </para>
+    /// <para>
+    /// <b>What it cannot see:</b> a call whose expression does not mention the
+    /// sweep and does not live in its own file — a local variable named
+    /// something else, handed across a method boundary. That is the same limit
+    /// every tree-as-text rule here has, and the two real call sites both have
+    /// the shape it reads. An argument carrying parentheses of its own is
+    /// reported <i>clipped</i> at the first one, which is enough to name the
+    /// offender: the rule turns on the argument not being one of the two
+    /// permitted spellings, never on what the text says.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OnlyTheSuiteEverWaitsForTheSweepGate()
+    {
+        var offenders = new List<string>();
+        var passes = 0;
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            foreach (var line in (await RepositoryLayout.ReadCodeAsync(file)).Split('\n'))
+            {
+                foreach (var argument in SweepPassArguments(line, file.Name))
+                {
+                    passes++;
+
+                    if (argument is not ("" or "LockScopes.NeverWaits"))
+                    {
+                        offenders.Add(
+                            $"{file.Name}: a sweep pass is started with '{argument}' — the product may not wait for"
+                            + " the machine-wide gate, because ~100 peers queueing to redo one pass is the herd R9 removes");
+                    }
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // Both directions, off lines shaped like the two real ones. Joined with
+        // a marker so an empty argument list reads as one entry rather than as
+        // no entries at all -- which is the whole distinction being asserted.
+        static string arguments(string line, string file) =>
+            string.Join(" · ", SweepPassArguments(line, file).Select(argument => $"[{argument}]"));
+
+        await Assert.That(arguments("            _ = CreateSweep(paths, factory).Run();", "Program.cs")).IsEqualTo("[]");
+        await Assert.That(arguments("                _ = create().Run();", "StraySweep.cs")).IsEqualTo("[]");
+        await Assert.That(arguments("            _ = CreateSweep(paths, factory).Run(LockScopes.PerDirectoryGate);", "Program.cs"))
+            .IsEqualTo("[LockScopes.PerDirectoryGate]");
+
+        // The declaration is not a call, so the parameter is not an argument --
+        // and the one deliberate argument on the same line still is.
+        await Assert.That(arguments("    public StraySweepResult Run(TimeSpan gatePatience)", "StraySweep.cs")).IsEmpty();
+        await Assert.That(arguments("    public StraySweepResult Run() => Run(LockScopes.NeverWaits);", "StraySweep.cs"))
+            .IsEqualTo("[LockScopes.NeverWaits]");
+
+        // And a line with no sweep on it is none of this rule's business, which
+        // is what keeps VelopackApp.Build().Run(args) out of it.
+        await Assert.That(arguments("        VelopackApp.Build().Run(args);", "Program.cs")).IsEmpty();
+
+        // Not vacuous over the tree: the delegation plus the two entry points.
+        await Assert.That(passes).IsGreaterThanOrEqualTo(3);
+    }
+
+    /// <summary>
+    /// What one line hands a sweep pass, once per call it makes.
+    /// </summary>
+    /// <param name="line">The line, comments already stripped.</param>
+    /// <param name="file">The file it came from, which is half the keying.</param>
+    /// <returns>One entry per <c>Run(…)</c> call the line makes on a sweep.</returns>
+    private static string[] SweepPassArguments(string line, string file)
+    {
+        // Keyed on the expression OR the file, because the background thread's
+        // own call is `create().Run()` -- which names no sweep at all and is
+        // inside the sweep's own file.
+        if (!line.Contains("Sweep", StringComparison.Ordinal) && !string.Equals(file, "StraySweep.cs", StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        // A declaration is not a call and its parameter is not an argument.
+        // Removed first, so the delegation `Run() => Run(LockScopes.NeverWaits)`
+        // still reports the one argument it really passes.
+        var calls = Regex.Replace(
+            line,
+            @"\b(?:public|private|internal|protected)[^;{=]*\bRun\([^)]*\)",
+            string.Empty,
+            RegexOptions.None,
+            TimeSpan.FromSeconds(5));
+
+        return [.. Regex.Matches(calls, @"\bRun\((?<argument>[^)]*)\)", RegexOptions.None, TimeSpan.FromSeconds(5))
+            .Select(match => match.Groups["argument"].Value.Trim())];
     }
 
     /// <summary>
@@ -604,7 +734,7 @@ internal sealed class StraySweepTests
             sweeps++;
 
             // A live session's entry is never removable: it exists, it has a
-            // browserai.json, and following it lands on a session. The race is only
+            // browserai.data, and following it lands on a session. The race is only
             // ever about missing one that is about to be re-asserted anyway.
             await Assert.That(swept.Removed.Where(entry => live.Any(session => string.Equals(session.IndexKey, entry.Key, StringComparison.OrdinalIgnoreCase)))).IsEmpty();
         }
@@ -803,27 +933,24 @@ internal sealed class StraySweepTests
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
         var (pid, created) = await PublishAsync(scope, scratch, profile);
 
-        var deadline = DateTime.UtcNow + Patience;
-        JsonNode census;
+        var report = Path.Combine(scratch.Path, $"sweep-{Guid.NewGuid():N}.json");
 
-        // Asked again while another process on the machine happens to be
-        // sweeping -- a skipped sweep is not a missed one -- and stdout is
-        // asserted empty on EVERY attempt, including the skipped ones.
-        while (true)
-        {
-            var report = Path.Combine(scratch.Path, $"sweep-{Guid.NewGuid():N}.json");
-            var run = await ProbeProcess.RunInAsync(scratch.Path, "stray-sweep", report, PlantedProbe.ExecutablePath);
+        // ⚠️ Corrected 2026-08-26 (previously a loop asking again "while another
+        // process on the machine happens to be sweeping"). The probe waits for
+        // the gate now, so there is one attempt and one pipe to read -- and the
+        // stdout assertion is stronger for it: the loop's version could exit on
+        // a Skipped pass that wrote nothing because it did nothing.
+        var run = await ProbeProcess.RunInAsync(
+            scratch.Path,
+            "stray-sweep",
+            report,
+            PlantedProbe.ExecutablePath,
+            ((int)GatePatience.TotalMilliseconds).ToString(CultureInfo.InvariantCulture));
 
-            await Assert.That(run.ExitCode).IsEqualTo(0);
-            await Assert.That(run.StandardOutput).IsEmpty();
+        await Assert.That(run.ExitCode).IsEqualTo(0);
+        await Assert.That(run.StandardOutput).IsEmpty();
 
-            census = await ProbeReport.ReadAsync(report, Patience);
-
-            if ((string?)census["outcome"] is not nameof(StraySweepOutcome.Skipped) || DateTime.UtcNow > deadline)
-            {
-                break;
-            }
-        }
+        var census = await ProbeReport.ReadAsync(report, Patience);
 
         // Not vacuous: the pass really ran, really found the candidate, and
         // really acted on it -- and said none of that on stdout.
@@ -1303,7 +1430,7 @@ internal sealed class StraySweepTests
             NullLogger.Instance);
 
         // Taken and released: what a crashed BrowserAI leaves behind is a
-        // browserai.json with nothing holding it.
+        // browserai.lock with nothing holding it.
         result.Acquired?.Dispose();
 
         return directory;
@@ -1331,34 +1458,92 @@ internal sealed class StraySweepTests
     }
 
     /// <summary>
-    /// Runs one pass over the planted image, retrying while another process
-    /// happens to hold the machine-wide mutex.
+    /// Runs one pass over the planted image, <b>waiting</b> for the machine-wide
+    /// gate rather than asking again while somebody else holds it.
     /// </summary>
     /// <remarks>
-    /// A skipped sweep is not a missed sweep — that is the design — so a test
-    /// that needs a pass to <i>run</i> asks again rather than failing. Anything
-    /// else would be a suite that goes red because a real BrowserAI started
-    /// somewhere on the machine at the wrong moment.
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously a retry loop — "a test that needs
+    /// a pass to <i>run</i> asks again rather than failing").</b> Asking again is
+    /// the same coin tossed more often: the gate is held for a few milliseconds
+    /// by every BrowserAI that starts, this suite starts a great many of them in
+    /// parallel, and <c>[NotInParallel]</c> serialises these arms against each
+    /// other and against nothing else. The measured consequence was
+    /// <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c> failing once in five
+    /// full runs with <c>Skipped</c> where it required <c>Ran</c> — and that arm
+    /// had no loop to lose in, which is what made the loop look like a solution
+    /// rather than a workaround.
+    /// </para>
+    /// <para>
+    /// <b>A wait is the serialisation; a loop is a poll.</b> The kernel hands
+    /// the mutex over in the order it was asked for, so a pass that waits gets
+    /// its turn, and <see cref="TestDefaults.ProcessHang"/> bounds it as a hang
+    /// detector — a gate still held after that is a real BrowserAI stuck, which
+    /// is a finding rather than a flake.
+    /// </para>
+    /// <para>
+    /// <b>On a thread of its own, never the pool.</b> The wait is a blocking
+    /// wait and the pool grows by about one thread a second, so parking a worker
+    /// on it is how an unrelated in-process rig starts missing its budget.
+    /// </para>
     /// </remarks>
-    private static async Task<StraySweepResult> SweepAsync(ILogger? logger = null)
-    {
-        var deadline = DateTime.UtcNow + Patience;
+    private static Task<StraySweepResult> SweepAsync(ILogger? logger = null) =>
+        OnItsOwnThreadAsync(() =>
+            new StraySweep([PlantedProbe.ExecutablePath], index: null, logger ?? NullLogger.Instance)
+                .Run(GatePatience));
 
-        while (true)
-        {
-            var result = await Sweep(logger);
-
-            if (result.Outcome is not StraySweepOutcome.Skipped || DateTime.UtcNow > deadline)
-            {
-                return result;
-            }
-
-            await Task.Delay(25);
-        }
-    }
-
+    /// <summary>
+    /// Runs one pass the way the product does — taking the gate or not, never
+    /// waiting.
+    /// </summary>
+    /// <remarks>
+    /// The arms that assert <see cref="StraySweepOutcome.Skipped"/> are about
+    /// this exact acquisition, so they must not be handed the waiting one: a
+    /// pass that queued would eventually acquire, and the property under test
+    /// would be gone rather than red.
+    /// </remarks>
     private static Task<StraySweepResult> Sweep(ILogger? logger = null) =>
         Task.Run(() => new StraySweep([PlantedProbe.ExecutablePath], index: null, logger ?? NullLogger.Instance).Run());
+
+    /// <summary>
+    /// How long a suite pass may wait for <c>Global\BrowserAI-Sweep</c>.
+    /// </summary>
+    /// <remarks>
+    /// A hang detector and not a promptness claim: the gate is held for
+    /// milliseconds, so anything approaching this bound is a BrowserAI that has
+    /// stopped.
+    /// </remarks>
+    private static TimeSpan GatePatience => TestDefaults.ProcessHang;
+
+    /// <summary>Runs blocking work on a dedicated thread rather than on the pool.</summary>
+    /// <param name="work">The work.</param>
+    /// <returns>Its result.</returns>
+    private static Task<StraySweepResult> OnItsOwnThreadAsync(Func<StraySweepResult> work)
+    {
+        var completion = new TaskCompletionSource<StraySweepResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                completion.SetResult(work());
+            }
+#pragma warning disable CA1031 // The exception belongs to the awaiting test, not to this thread.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                completion.SetException(failure);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "stray sweep test pass",
+        };
+
+        thread.Start();
+
+        return completion.Task;
+    }
 
     private static async Task<Attribution> WaitForAttributionAsync(
         string image,

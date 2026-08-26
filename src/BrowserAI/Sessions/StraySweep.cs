@@ -44,7 +44,7 @@ namespace BrowserAI.Sessions;
 /// Discord, Signal, 1Password, Steam, Teams, WhatsApp and ChatGPT all publish
 /// real <c>userDataDir</c>s on that channel — and the class is forgeable by any
 /// process that cares to register it. So a candidate becomes a stray only when
-/// its attributed directory holds a <c>browserai.json</c> this sweeper can take
+/// its attributed directory holds a <c>browserai.lock</c> this sweeper can take
 /// itself, which is a directory BrowserAI created and nothing else can be.
 /// </para>
 /// <para>
@@ -164,9 +164,40 @@ internal sealed class StraySweep
         thread.Start();
     }
 
-    /// <summary>Runs one pass, synchronously.</summary>
+    /// <summary>Runs one pass, synchronously, waiting for nothing.</summary>
+    /// <remarks>
+    /// <b>This is the product's only entry, and it is the argument-free one on
+    /// purpose</b> — race <b>R9</b> is that a pass which cannot have the gate
+    /// does nothing at all rather than queueing behind the one that has it.
+    /// <c>StraySweepTests.OnlyTheSuiteEverWaitsForTheSweepGate</c> holds that
+    /// against <c>src\</c> as text.
+    /// </remarks>
     /// <returns>What the pass found and what it did.</returns>
-    public StraySweepResult Run()
+    public StraySweepResult Run() => Run(LockScopes.NeverWaits);
+
+    /// <summary>Runs one pass, synchronously, waiting up to <paramref name="gatePatience"/> for the gate.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The overload exists for the suite, and what it buys is
+    /// serialisation rather than luck.</b> The machine-wide gate is held for a
+    /// few milliseconds by every BrowserAI that starts, this suite starts a
+    /// great many of them in parallel, and an arm that needs its own pass to
+    /// have <i>run</i> was therefore losing a coin toss roughly once in five
+    /// full runs — <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c>, 2026-08-26.
+    /// The fix is to queue on the same kernel object the winner holds, which is
+    /// what a mutex is for; asking again in a loop is the same coin tossed more
+    /// often.
+    /// </para>
+    /// <para>
+    /// <b>Nothing in the product may call this</b>, and that is a scan rather
+    /// than a sentence: a waiting sweep at startup would put every one of ~100
+    /// peers into a queue behind the first, which is the thundering herd the
+    /// zero timeout exists to prevent.
+    /// </para>
+    /// </remarks>
+    /// <param name="gatePatience">How long to wait for <see cref="LockScopes.Sweep"/>.</param>
+    /// <returns>What the pass found and what it did.</returns>
+    public StraySweepResult Run(TimeSpan gatePatience)
     {
         var clock = Stopwatch.StartNew();
 
@@ -196,13 +227,18 @@ internal sealed class StraySweep
                 return new StraySweepResult { Outcome = StraySweepOutcome.NoLock, Elapsed = clock.Elapsed };
             }
 
-            var acquisition = mutex.Acquire(LockScopes.NeverWaits);
+            var acquisition = mutex.Acquire(gatePatience);
 
             if (acquisition is MutexAcquisition.NotAcquired)
             {
                 // R9 as well as the herd: a pass that overruns the ten-minute
                 // re-check simply means the re-check does nothing. No pile-up
-                // is possible because nothing ever queues here.
+                // is possible because nothing in the PRODUCT ever queues here
+                // -- `Run()` hands this a zero timeout and a scan keeps it that
+                // way. (Corrected 2026-08-26, previously "because nothing ever
+                // queues here": the suite's own passes wait, which is how an arm
+                // that needs a pass to have run stops losing to a peer that
+                // started a BrowserAI at the wrong moment.)
                 SweepLog.AlreadyRunning(_logger, LockScopes.Sweep);
                 return new StraySweepResult { Outcome = StraySweepOutcome.Skipped, Elapsed = clock.Elapsed };
             }
@@ -433,7 +469,7 @@ internal sealed class StraySweep
     /// match against a binary BrowserAI provisioned — <b>and</b> its start time
     /// matches the one recorded when it was found.
     /// Both guards are the same ones the Chromium path uses; the third — the
-    /// session's own <c>browserai.json</c> being takeable — is applied by
+    /// session's own <c>browserai.lock</c> being takeable — is applied by
     /// <see cref="ActOn"/> after this.
     /// </para>
     /// <para>
@@ -626,8 +662,9 @@ internal sealed class StraySweep
         {
             // R1. The directory lock is held for the WHOLE kill, and it is taken
             // without writing anything: a sweeper is not opening a session, and
-            // rewriting browserai.json would overwrite the crashed session's own
-            // record with a janitor's.
+            // TryAcquire would write a new browserai.lock naming the sweeper and add
+            // a holder row to the crashed session's own history. A janitor is the
+            // last party that should be editing the evidence.
             if (SessionLock.TryHoldUnowned(location, out hold) is { } refusal)
             {
                 spared.Add(new StraySpared(candidate.ProcessId, published, refusal));
@@ -657,10 +694,10 @@ internal sealed class StraySweep
     /// <remarks>
     /// <b>A browser publishes its <c>userDataDir</c>, and ours is a subfolder of
     /// the session.</b> BrowserAI passes <c>&lt;session&gt;\profile</c>, so the
-    /// title names the profile and the <c>browserai.json</c> that proves ownership is
+    /// title names the profile and the <c>browserai.lock</c> that proves ownership is
     /// one level up. The climb happens only when the leaf is exactly the profile
     /// folder name and only to look for a lock file — it can never reach a
-    /// personal Chrome profile, whose parent holds no <c>browserai.json</c> either.
+    /// personal Chrome profile, whose parent holds no <c>browserai.lock</c> either.
     /// </remarks>
     /// <param name="full">
     /// A title already known to be a rooted local drive-letter path and already

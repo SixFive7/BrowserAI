@@ -128,20 +128,13 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 [review](docs/reviews/2026-08-18-adversarial-processes.md) finding 9. The
 `FILE_SHARE_DELETE` row beside it closed in the same change.
 
-- [ ] **Headless-with-storage is still refused on a reason the same pass
-      declared void.** [`DECISIONS.md`](DECISIONS.md) keeps it out because *"it
-      is the one combination granting full credential access with no visible
-      signal"* — a security reason of precisely the class the 2026-08-18 removal
-      above ruled out. The pass that retired the tool matrix, the
-      `browser_get_config` secrets guard and the annotate permission judgement
-      did not revisit this row; it simply was not looked at. **It cannot be both
-      ways**: either the reason above holds and this row falls with the rest, or
-      it does not and the removal needs re-opening. Nothing to measure — this is
-      a consistency decision that is owed either way.
-
-- [ ] **The justification sweep's residue: 28 assumed justifications named and
+- [ ] **The justification sweep's residue: 27 assumed justifications named and
       not settled.** ⚠️ ***The predicate is one per italicised or named claim in
-      the three lists below, counted 2026-08-19 after the ones settled since.***
+      the three lists below, counted 2026-08-26 after the ones settled since.***
+      *Re-counted rather than decremented: the three lists hold 29 named claims,
+      two of which the notes below mark done, which is 27. **Previously "28
+      assumed justifications … counted 2026-08-19"**, and what left the list is
+      named where it left it — the filename refusals, in the `src/` list.*
       *The item said **24** when it was written on 2026-08-18 and did not state
       what it was counting, so this is a **different question over the same
       list** rather than a correction of it — which is the trap this repository
@@ -171,9 +164,15 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       cited from all six documents that used to cite each other, and covered by
       row 95. **Both confirmed the decision they had been holding up**, which is
       the outcome that makes an unmeasured justification easiest to leave
-      standing and is exactly why they were the two worth taking first. The two
+      standing and is exactly why they were the two worth taking first. ⚠️ *The
+      sentence that followed is corrected 2026-08-26 (previously "The two
       remainders with items above are the browser-reinstall rename and
-      headless-with-storage.
+      headless-with-storage").* **Neither has an item above any more.** The
+      browser-reinstall rename shipped, and headless-with-storage was settled by
+      [the charter](DECISIONS.md#what-browserai-does-not-defend-against): the
+      reason it was refused on was a security reason of exactly the class that is
+      now a stated non-goal, and there is no session mode left to refuse in any
+      case.
 
       ***A third is done, 2026-08-19.*** `LongPathsEnabled` is now recorded where
       the long-path guarantee is claimed — read off the reference machine as `1`
@@ -218,8 +217,21 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       design · *"a shim cannot be started without `cmd.exe`"* cites two kb entries
       about other subjects · *"nothing a child writes to stderr can be lost"* is
       broader than both the measurement and the code, which abandons the pump
-      after 2 s · `win` as Velopack's default channel · *"a rollback always
-      reports zero"* · the `NUL.png` and trailing-dot filename refusals.
+      after 2 s · `win` as Velopack's default channel · and *"a rollback always
+      reports zero"*.
+
+      ***A fourth is off the list, 2026-08-26, and it left in two pieces.*** The
+      entry was *"the `NUL.png` and trailing-dot filename refusals"*, in
+      `ArtifactFilename`. **That refusal is deleted** with the whole `filename`
+      gate, and what it protected against is now an
+      [open hazard row](HAZARDS.md#hazard-index) rather than an assumed
+      justification. **The same claim about a session DIRECTORY is now measured**
+      rather than assumed: `CanonicalPath` refuses a trailing dot, a trailing
+      space, a reserved device name, an alternate data stream and a wildcard
+      before `Path.GetFullPath` can rewrite them, and `C:\work\NUL` was measured
+      coming back as `\\.\NUL`. So the justification did not survive by being
+      re-argued; the question it stood on was answered on one path and deleted on
+      the other.
 
       **In the top-level documents** — SmartScreen *"instant reputation"* for
       ~$10/mo is the basis on which somebody will one day spend money, and

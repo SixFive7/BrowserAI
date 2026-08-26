@@ -76,9 +76,11 @@ internal static class ChildLaunch
     /// </param>
     /// <param name="configFile">
     /// Where to write the generated config. <b>Never inside a session
-    /// directory</b>: <c>browserai.json</c> and the session log are the only files at
-    /// a session's root, and a third one would make the file that matters
-    /// missable.
+    /// directory</b>: <c>browserai.lock</c> and <c>browserai.data</c> are the only
+    /// files at a session's root, and a third one would make the two that matter
+    /// missable. *(Corrected 2026-08-26, previously "<c>browserai.json</c> and the
+    /// session log" — one file became two and the session log went to stderr; the
+    /// rule is unchanged and now has one more file to protect.)*
     /// </param>
     /// <param name="config">The generated config, from <see cref="BrowserConfiguration"/>.</param>
     /// <param name="name">The transport's name in diagnostics.</param>

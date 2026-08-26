@@ -32,7 +32,16 @@ MCP client ──stdio──> BrowserAI.exe ──stdio──> node.exe + @playw
 ```
 
 The session directory is the identity, the handle and the lock. Everything else —
-the index, the mutex names, the artifact routing, the sweep — is derived from it.
+the index, the mutex names, the guard file, the store, the sweep — is derived
+from it. *(Corrected 2026-08-26, previously "the index, the mutex names, the
+artifact routing, the sweep": artifact routing is deleted, and the two files the
+directory carries are what the identity now derives.)*
+
+**What BrowserAI is, in one sentence:** a session-lifecycle manager and reason
+logger wrapped around a verbatim Playwright pipe. Nothing sits between the two
+servers except the session system and the reason system, and
+[the one exception](#byte-identical-and-the-one-exception) is named rather than
+implied.
 
 ## The runtime it ships
 
@@ -141,6 +150,44 @@ short-circuits both methods, and the answer is the child's `result` sliced by
 passthrough lossless — an unknown content type, an unmodelled tool member and a
 non-ASCII character all survive, none of which a typed round trip preserves.
 
+### Byte-identical, and the one exception
+
+**A forwarded call goes out byte-identical and its answer comes back
+byte-identical.** BrowserAI kind-checks `name`, `session` and `why` at the door —
+a wrong JSON type is a named refusal and never a bare `-32603` — looks the tool up
+in [the verdicts file](#the-verdicts-file-and-why-a-tool-nobody-judged-is-refused),
+writes the log row `in-flight`, **strips `session` and `why` from a clone of the
+request**, and forwards what is left unchanged. Nothing is added to the answer:
+no note, no scan of the text for filenames, no path handling, no filename
+rewrite. `LosslessPassthroughTests` asserts the property as *byte-identical*
+rather than as *byte-identical plus exactly one appended block*, which is what it
+asserted while artifact routing existed.
+
+⚠️ **THE ONE EXCEPTION, and it is named here so that it stays one: the
+provisioning remediation rewrite.** When a child answers a call by telling the
+caller to run `npx @playwright/mcp install-browser`, that advice is wrong for a
+BrowserAI install — browsers are ours to provision — and following it puts a
+second browser tree on the machine that nothing here manages.
+`ProvisioningRemediation.Rewrite` replaces the advice with
+`browserai_reinstall_browser`, keeping upstream's own diagnosis intact, and
+`BrowserProxy` logs that the answer was **not** byte-identical when it fires.
+
+**Three things keep the exception from spreading.** It is **anchored on an
+identifier**, upstream's `install-browser` CLI subcommand, never on prose. It is
+**`isError`-gated**, so a page that merely quotes upstream's advice inside a
+successful answer is forwarded untouched —
+`ProvisioningRemediationTests.APageQuotingUpstreamsAdviceInASuccessfulAnswerIsForwardedUntouched`.
+And it has a **real-child canary**: an empty browsers root, the genuine error
+provoked against a real child, and both halves asserted —
+`ProvisioningRemediationTests.ARealChildWithNoBrowsersStillSaysTheSentenceTheRewriteIsAnchoredOn`.
+If upstream rewords its advice, that is a red build at the next upstream review
+rather than a rewrite that quietly stopped firing.
+
+**The model is told, on a surface the client does not truncate.** The server
+`instructions` carry it: *"Browsers are managed by BrowserAI — never install any
+yourself (no `npx playwright install`). If the browser installation is broken,
+`browserai_reinstall_browser` is the repair."*
+
 **There is one outgoing filter, and it removes a capability the SDK adds behind
 our back.** `McpServerImpl` builds its own `ServerCapabilities` and gates
 `Tools`, `Prompts`, `Resources` and `Completion` on configuration —
@@ -169,7 +216,8 @@ The largest area, and the one everything else keys on.
 
 | Concern | Implemented by |
 |---|---|
-| The directory, the lock and the record | `src/BrowserAI/Sessions/{SessionPath, SessionLayout, LockRecord, SessionLock}.cs` |
+| The directory, the guard and the record | `src/BrowserAI/Sessions/{CanonicalPath, SessionPath, SessionLayout, SessionLock, SessionRecord}.cs` over `src/BrowserAI/Storage/{LockFile, SessionStore}.cs` *(`LockRecord.cs` and the whole `browserai.json` serialisation were deleted 2026-08-26; `SessionDirectoryGuard.cs` the same day, into `CanonicalPath`)* |
+| The two files themselves, and the SQLite they rest on | `src/BrowserAI/Storage/` — [its own rules](src/BrowserAI/Storage/CLAUDE.md) |
 | The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, ToolVerdicts, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20; `SessionToolPolicy.cs` 2026-08-26, into `ToolVerdicts` and the file it reads)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
@@ -189,29 +237,46 @@ publishes resolves because the file is still where upstream put it —
 keeps that measured against a real browser rather than assumed. See
 [the output directory](#the-sessions-output-directory).
 
-**The session directory is the identity.** One directory holds `browserai.json` at its
-root and `profile/`, `output/` and `downloads/` beneath it. `browserai.json` is both
-the lock and the record — held `FileAccess.ReadWrite, FileShare.Read`, carrying
-the schema version and then browser, purpose, the resolved path, the
-BrowserAI build and a `(pid, creationFileTime, clientProcessName)` holder that
-deliberately outlives its holder. There is no central registry, no bearer token,
-no label and no expiry timer; all four were designed and then dropped, because the
-directory already is all of those things.
+**The session directory is the identity.** One directory holds `browserai.lock`
+and `browserai.data` at its root and `profile/`, `output/` and `downloads/`
+beneath it. There is no central registry, no bearer token, no label and no expiry
+timer; all four were designed and then dropped, because the directory already is
+all of those things.
 
-**Every field of `browserai.json` is an ordered list of timestamped statements —
-schema 3, since 2026-08-20** *(previously schema 2, since 2026-08-18)*. The record
-is append-only rather than a snapshot, so it says how a session got here and not
-only where it is; `created` and `lastUsed` are no longer stored because they are
-exactly the earliest and latest statement, and a stored copy could only disagree
-with what it summarises. **A statement is appended only when the value changes**,
-so browser, directory and build stay one statement long for a session that is not
-moved, copied or run under a new build, and each field is capped at 32 statements
-— trimmed out of the *middle*, because `created` is read from the first one and a
-trim at the front would move a session's creation date. **There is no converter
-for either superseded version**: an old file is refused with the fix in the
-message. **What moved at schema 3 is that `mode` is gone** — session modes were
-deleted, so the field described nothing while the strict parser went on requiring
-it.
+⚠️ ***Corrected 2026-08-26 (previously "One directory holds `browserai.json` at
+its root … `browserai.json` is both the lock and the record — held
+`FileAccess.ReadWrite, FileShare.Read`, carrying the schema version and then
+browser, purpose, the resolved path, the BrowserAI build and a
+`(pid, creationFileTime, clientProcessName)` holder that deliberately outlives its
+holder").*** **They are two files, and neither answers the other's question.**
+`browserai.lock` says *who owns this directory*: it carries the holder alone —
+pid, process-creation FILETIME, and a display-only client name — it is written
+**once**, at acquisition, and its open handle is the whole of ownership.
+`browserai.data` says *what happened here*: a SQLite store in WAL mode,
+`PRAGMA user_version` 1, with a `statements` table for the browser / directory /
+purpose / build histories and a `log` table for every call. The split is not
+tidiness — a transaction cannot be both the lock and the write path, because a
+reader only sees committed work and committing ends the transaction, so a store
+that tried to be the guard would either hide the log from every reader or lock
+them out of it.
+
+**Every field of the record is an ordered list of timestamped statements**, and
+that survived the move intact: the record is append-only rather than a snapshot,
+so it says how a session got here and not only where it is. `created` and
+`lastUsed` are not stored because they are exactly the earliest and latest
+statement, and a stored copy could only disagree with what it summarises. **A
+statement is appended only when the value changes** — except `holder`, which
+dedup cannot bound because `(pid, creationFileTime)` never repeats. ⚠️ *Corrected
+2026-08-26 (previously "schema 3, since 2026-08-20", and "each field is capped at
+32 statements — trimmed out of the middle, because `created` is read from the
+first one and a trim at the front would move a session's creation date").*
+**There is no cap and there is no trim**, anywhere: `created` is the oldest
+statement because it is still there rather than because a policy protected it.
+**There is no converter**, and a directory holding the old `browserai.json` is
+refused with the format as the reason and the recovery in the message —
+`browserai_destroy` says *"I cannot clean this up — remove the entire directory
+yourself"*, because a converter for a population of zero is a migration path
+nobody tests.
 
 **`browserai_resume` no longer refuses a copied directory, and BrowserAI has zero
 confirmation flags.** `acknowledgeCopy` existed because the record was a snapshot
@@ -224,15 +289,19 @@ is a question that did not need asking.
 [`ModelSurfaceTests.NoAuthoredToolAsksTheCallerToConfirmAnything`](tests/BrowserAI.Tests/ModelSurfaceTests.cs)
 keeps the count at zero.
 
-**Our own files reject what they do not recognise.** `LockRecord.Read` is a
-hand-written `Utf8JsonReader` parse that refuses an unknown key at any of the
-three levels, a missing key, an **empty statement list**, a schema version it does
-not know, and a timestamp that is not round-trippable ISO 8601 — every refusal
-naming a recovery and stating that repeating the call will fail identically. **The
-version is checked in a pass of its own, before anything else is parsed**: a
-schema-1 file is well-formed JSON whose keys this build still recognises by name,
-so a version checked last would report it as damage and send a caller to repair a
-file that is not broken.
+**Our own files reject what they do not recognise.** ⚠️ *Corrected 2026-08-26
+(previously "`LockRecord.Read` is a hand-written `Utf8JsonReader` parse that
+refuses an unknown key at any of the three levels, a missing key, an **empty
+statement list**, a schema version it does not know, and a timestamp that is not
+round-trippable ISO 8601 … **The version is checked in a pass of its own, before
+anything else is parsed**").* The rule is unchanged and it is enforced in two
+places now. `LockFile.Parse` refuses a lock file carrying a property BrowserAI
+does not write, one missing the process-creation FILETIME — **a pid alone is not
+an identity, because Windows reuses pids within seconds** — and one missing the
+client name; a lock file that is not ours has to stay a different answer from
+*this directory is free*. `SessionStore` refuses a `user_version` it does not
+know, **with the version as the reason**, and there is no converter. Each refusal
+names a recovery and says that repeating the call will fail identically.
 
 **Seven authored tools, and `session` and `why` are both mandatory.**
 `browserai_init`, `browserai_resume`, `browserai_catch_up`, `browserai_list`,
@@ -253,16 +322,17 @@ record to write into. Not `browserai_init`, which asks for `purpose` instead —
 two mandatory free-text fields on one call gets one thoughtful answer and one
 restatement. **And not `browserai_catch_up`, which names a session and is the one
 exception**: a tool whose whole purpose is to tell you what happened must not
-itself become the most recent thing that happened, and writing an entry would
-mean replacing `browserai.json` — which a session another live BrowserAI is
-driving refuses, and that is the case it exists for
-(⚠️ ***corrected 2026-08-24, previously "taking the per-directory gate — which a
-session another live BrowserAI is driving would refuse"***: the conclusion is
-right and the named mechanism was wrong, because `LockScopes.PerDirectoryGate`
-does not refuse a second writer, it waits 120 seconds for it; what refuses one is
-the holder's own `FileShare.Read`). `ModelSurfaceTests`
-carries a row for it, so adding a `why` later is a red build rather than a silent
-widening.
+itself become the most recent thing that happened, and writing an entry means
+writing to `browserai.data` — which only the directory's holder may do, and the
+reader this tool exists for is by definition not the holder
+(⚠️ ***corrected 2026-08-26, previously "writing an entry would mean replacing
+`browserai.json` — which a session another live BrowserAI is driving refuses"***,
+itself a correction of 2026-08-24's "taking the per-directory gate — which a
+session another live BrowserAI is driving would refuse". Nothing is replaced now:
+an entry is an `INSERT` on a connection the holder already has open, so the second
+reason moved from *the write would be refused* to *the write is not this caller's
+to make*). `ModelSurfaceTests` carries a row for it, so adding a `why` later is a
+red build rather than a silent widening.
 
 **`browserai_catch_up` reads the log back against the directory, and the two
 routinely disagree.** `SessionInventory` walks the tree — total size, a breakdown
@@ -272,13 +342,31 @@ reader knows which source each fact came from. **The disagreement that matters i
 credentials**: cookies arrive from *navigation* rather than from tools, so a
 log-only answer would report *"no credential tools were used"* about a directory
 holding a live signed-in profile. It is **read-only and takes no lock it can be
-refused by** (⚠️ ***corrected 2026-08-24, previously "takes no lock"***): the
-record is read the way `browserai_list` reads one — which since 2026-08-24 means
-under that directory's own gate at a **zero** timeout — and the walk opens no
-file inside the directory, so a session another BrowserAI is driving answers
-normally.
+refused by**: the store is opened read-only, and the walk opens no file inside the
+directory, so a session another BrowserAI is driving answers normally.
 Nothing here reads a cookie database — the answer a caller acts on is *this may
 hold credentials*, which the file's existence settles.
+
+⚠️ ***Corrected 2026-08-26 (previously "the record is read the way
+`browserai_list` reads one — which since 2026-08-24 means under that directory's
+own gate at a zero timeout").*** There is no gate on this path: the listing's
+liveness question is one `CreateFile` on `browserai.lock` and never a database
+open at all. **And read-only is not the same as side-effect-free, which was
+measured rather than assumed**: a read-only open against a crashed holder's
+uncheckpointed write-ahead log *recovers* the log and answers with the newest
+rows, because `SQLITE_OPEN_READONLY` constrains the database file and not the
+directory — and building the wal-index leaves a `-shm` beside the store. It is
+refused only where the caller may not create that file. **`browserai_catch_up`'s
+own description says so**, because that tool is the reader a caller reaches for.
+
+**Both answers report the session's output size, and nothing is ever
+auto-deleted.** `browserai_list` and `browserai_catch_up` state what the
+directory weighs; deletion is `browserai_destroy` and nothing else. *(Q100=e,
+2026-08-25.)* **`catch_up` is paged**: an optional `page`, about a hundred
+entries a page, numbered **oldest-first** so a page number keeps meaning the same
+entries as the log grows, each page stating its number, the total and the call
+that fetches the next. The volatile material — the inventory, the in-use line,
+the ages — appears on page 1 only.
 
 **`purpose` is durable and `why` is disposable, and the schemas have to make that
 unmistakable.** A `purpose` is the session's standing description — what
@@ -292,24 +380,44 @@ loop"* is a `why`; *"tracking the checkout redirect loop on staging"* is a
 `purpose`** — that sentence is in the schema, not only here.
 
 **One time-ordered log, inside the record.** `browserai_init`'s purpose, every
-purpose change, and every browser call the session **forwarded** are entries in
-one ordered list in `browserai.json`, under the same session-long lock — so a
-reader sees *the human changed the purpose here* between the calls it explains
-rather than merging two streams by timestamp. An entry is written **immediately
-before** a call is forwarded, so a call that never returns still left one, and a
-call BrowserAI **refused** never reaches the list at all: this records what the
-session *did*, and the refusals are in `browserai.log` beside it. **A call whose
-entry cannot be written is refused rather than forwarded** — see
-`SessionErrors.SessionLogCouldNotBeWritten`. It is inside the record rather than
-in a sibling append-only file at the maintainer's decision; the cost is a
-whole-record durable write per call, and
+purpose change, and every browser call the session forwarded **and every call it
+refused** are rows in one ordered table in `browserai.data`, written by the
+directory's holder — so a reader sees *the human changed the purpose here*
+between the calls it explains rather than merging two streams by timestamp. **A
+call whose row cannot be written is refused rather than forwarded**, and
+`SessionLock.Append` throws rather than swallowing.
+
+⚠️ ***Corrected 2026-08-26, in four places (previously "entries in one ordered
+list in `browserai.json`, under the same session-long lock"; "a call BrowserAI
+**refused** never reaches the list at all: this records what the session *did*,
+and the refusals are in `browserai.log` beside it"; "the cost is a whole-record
+durable write per call"; and "What is stored for an argument — every name always,
+`value` and `text` never, an object or array as a shape, everything else cut at
+200 characters — is `LoggedArgument`'s to say").*** **`browserai.log` is gone**,
+so the record is the only place *the agent reached for a tool this build will not
+forward* survives at all — which makes the log replay rather than diagnostics, and
+is why the refusal is a row. **No argument is recorded**, and `LoggedArgument` is
+deleted: the caller's `why` is what the row says the call was for, which is a
+better answer to the same question and needs no list of upstream parameter names
+to stay honest. **The cost is an `INSERT`**, not a whole-record rewrite.
 [QUESTIONS.md §14](QUESTIONS.md#14-the-one-time-ordered-log-lives-inside-browseraijson--decided-by-the-maintainer-over-my-recommendation)
-weighs both sides. What is stored for an argument — every name always, `value`
-and `text` never, an object or array as a shape, everything else cut at 200
-characters — is `LoggedArgument`'s to say. `init` takes a required directory and purpose with
+carries the reversal and what survived of the reasoning.
+
+**A row's outcome has three values and a settle time.** It is written `in-flight`
+**before** the call is forwarded — the property the write-before ordering always
+existed for, so a call that never returns still leaves a record — and updated to
+`successful` or `failed` with `settled_at`, from which the duration is derivable.
+`browserai_catch_up` renders a stale `in-flight` as *"no answer was recorded"*.
+**Failure payloads only:** the child's error bytes, its JSON-RPC error or the
+transport exception with its stack go into `failure`; a successful call stores no
+payload. ⚠️ **The settle happens in a `finally`, after the answer has gone out**,
+which is deliberate and has a visible transient — see
+[the hazard index](HAZARDS.md#hazard-index).
+
+`init` takes a required directory and purpose with
 no default and no fallback, an optional `browser` defaulting to `chromium`, and
 the three per-run booleans `headed`, `tracing` and `debug`; `resume` takes the
-same three and reads `browser` from `browserai.json`, **refusing it as an
+same three and reads `browser` from `browserai.data`, **refusing it as an
 argument**, because a profile is browser-specific. *(Corrected 2026-08-20,
 previously "a required directory, purpose and mode … `resume` reads mode and
 browser … and **refuses them as arguments**": session modes were deleted, and
@@ -509,6 +617,49 @@ never a poll and never a ping — and there is deliberately no close tool.
 
 ## Locking, ownership and the sweep
 
+### The guard: six properties, and where each one lives
+
+**`browserai.lock` is the whole of who owns a session directory, and it is a
+plain file held open.** It is opened `FileAccess.ReadWrite, FileShare.Read` for
+the session's life and written **once**, at acquisition, by
+`Storage/LockFile.TakeAndWrite`. The six properties below are the constraint any
+storage proposal has to meet; they are listed because they are the reason the
+guard did **not** move into SQLite when the record did, and because two of them
+live in an argument list where nothing reads like a mechanism.
+
+| # | Property | What produces it |
+|---|---|---|
+| 1 | **One writer per directory**, across processes | `LockFile.Hold`'s `FileShare.Read`. A second `ReadWrite` open is refused by the kernel — no registry, no token, no lease |
+| 2 | **Readers proceed *and see live data*** | The same share mode admits every reader, and what they read is `browserai.data`, a different file — so the guard never has to admit anybody to itself |
+| 3 | **Held for the session's whole life** | The `FileStream` is a field of `LockFileHold` and nothing closes it. Written once and never rewritten, which is what removes the per-call unheld window the old record opened |
+| 4 | **Released by the OS on death, however it dies** | A handle. No expiry, no heartbeat, no reaper — *stale* and *alive* are distinguishable without guessing because the kernel already knows |
+| 5 | **Cheap to observe from a third process** | `LockFile.Probe` — one `CreateFile` and one `CloseHandle`, measured at **0.035 ms** free and **0.049 ms** held, with no directory walk, no process open and no database. That is what makes `browserai_list` affordable over a whole tree |
+| 6 | **It names the holder** | The file's content: pid, process-creation FILETIME, and a display-only client name. Roughly a hundred bytes of indented UTF-8, because a person opens this file |
+
+**Why no database engine can be the guard.** SQLite's own `xOpen` asks Windows
+for `FILE_SHARE_READ | FILE_SHARE_WRITE` or for nothing at all. The first makes
+property 1 unobservable — a probe reads a driven session as free; the second
+breaks property 2 — a reader is locked out of the record it came for.
+`FileShare.Read` is the one predicate this design needs and the one no engine
+offers.
+
+⚠️ **The probe cannot be made harmless, and that is a property rather than an
+oversight.** To be refused by a holder's `FileShare.Read` it must ask for access
+outside `Read` — so for the instant its handle lives it would refuse a holder's
+own re-open. *Detecting an owner and blocking one are the same capability.* Its
+share mode is deliberately wider than a holder's, `Delete` included, because a
+narrower one would refuse a concurrent `browserai_destroy` for as long as the
+handle lived.
+
+**Two literals carry properties 1 and 5, and a scan holds them there.**
+`HouseRuleTests.TheSessionGuardsTwoLoadBearingLiteralsAreTheOnesItIsWrittenWith`
+reads `LockFile.cs` as text and fails a hold that shares writes or a probe that
+asks only to read. Neither perturbation breaks a behavioural test — both leave a
+file that opens — which is exactly why the rule is written down rather than left
+to a reviewer. *(Q119, 2026-08-26.)*
+
+### The identity chain
+
 **One canonicalisation function feeds one identity chain, and the chain feeds
 three consumers.** `CanonicalPath.Of` answers *what does the filesystem call
 this*; `SessionPath` then does `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 →
@@ -559,19 +710,26 @@ create-or-take gate, and an `AbandonedMutexException` on it is a distinct
 different lock from the gate.** `SessionManager` deliberately serialises nothing
 — `_live` is a `ConcurrentDictionary` — so a `browserai_set_purpose` and a
 `browserai_destroy` naming one session reach one `SessionLock` at once.
-`Rewrite`, `Append`, `ReleaseAndDelete` and `Dispose` therefore each hold
-`SessionLock._inProcess` for their whole body, caller delegates included, so a
-disposal **waits for** an in-flight mutation instead of disposing the gate
-underneath it. Without it the rewrite re-opened `browserai.json` into a disposed
-lock, `_gate.Release()` threw, and every later `TryAcquire` on that directory
-answered `Held` naming a pid with no session for the life of the process —
+`Append`, `Settle`, `SettleOpening`, `AppendPurpose`, `ReleaseAndDelete` and
+`Dispose` therefore each hold `SessionLock._inProcess` for their whole body,
+caller delegates included, so a disposal **waits for** an in-flight mutation
+instead of disposing the gate underneath it. *(Corrected 2026-08-26, previously
+"`Rewrite`, `Append`, `ReleaseAndDelete` and `Dispose`" — `Rewrite` is gone and
+three settle paths arrived.)* It carries a second job since the store arrived:
+`Append` is an `INSERT` followed by `last_insert_rowid` on **one** connection,
+and two threads interleaving there would hand one call the other's row id, after
+which a settle lands on somebody else's entry. Without the exclusion the old
+rewrite re-opened `browserai.json` into a disposed lock, `_gate.Release()` threw,
+and every later `TryAcquire` on that directory answered `Held` naming a pid with
+no session for the life of the process —
 [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md)'s B4,
 closed 2026-08-24. It is **not** a fourth scope: `LockScopes` still names three
 machine-wide objects in one place, and this one has no name and no kernel object.
 
 **A contender probes for the holder in front of that gate, and only in front of
-it.** `SessionLock.ProbeForHolder` opens `browserai.json` before the per-directory
-mutex is created: a sharing violation is the kernel's answer to *who owns this*,
+it.** `SessionLock.ProbeForHolder` opens `browserai.lock` before the
+per-directory mutex is created: a sharing violation is the kernel's answer to
+*who owns this*,
 so a peer that only wants to name the holder is answered there and never queues
 behind every other peer. Measured against a directory a live holder already had,
 the slowest refusal falls from **2,084 ms to 203 ms at 100 contenders** — the
@@ -596,22 +754,22 @@ against 0.6–2.3 ms for the size walk the same loop already performs
 and a session this process is already driving is answered from its own live-session
 map without asking the kernel at all.
 
-⚠️ ***Corrected 2026-08-24 (previously "…so the rule is stated once and cannot
-come apart", and "It costs one `CreateFile`/`CloseHandle` per entry").*** **The
-rule did come apart, in the direction the rule names.** Every forwarded browser
-call rewrites `browserai.json`, which drops the ownership handle and takes it
-back with the per-directory gate held throughout — so a busy session's record is
-periodically *present and unheld*, the bare probe answered `NotHeld`, and the
-listing printed *in use: no* about a session another agent was driving. The
-report now goes through `SessionLock.ProbeLivenessUnderTheGate`, which asks the
-same question with that directory's gate held at a **zero** timeout: the gate is
-the discriminator, and a gate it could not take is `UNKNOWN` rather than `no`.
-The zero timeout is what keeps the listing out of the queue `ProbeForHolder` was
-extracted to remove. **The cost sentence is therefore incomplete rather than
-wrong:** a mutex create, a zero-timeout acquire, a release and a close are now in
-the per-entry cost. The uncontended acquire alone was measured at 0.007–0.009 ms;
-**the create/close pair is unmeasured**, and the figures above are the file half
-only and have not been adjusted.
+⚠️ ***Corrected 2026-08-26 (previously a 2026-08-24 correction reading "The rule
+did come apart… The report now goes through
+`SessionLock.ProbeLivenessUnderTheGate`, which asks the same question with that
+directory's gate held at a **zero** timeout … a mutex create, a zero-timeout
+acquire, a release and a close are now in the per-entry cost").*** **The defect
+that correction closed no longer exists and neither does the code that closed
+it.** It rested on the rewrite: every forwarded call replaced `browserai.json`
+whole, dropping the ownership handle and taking it back, so a busy session's
+record was periodically *present and unheld* and a bare probe answered `NotHeld`
+about a session another agent was driving. `browserai.lock` is written once and
+never rewritten, so **an absent guard now genuinely means free**,
+`ProbeLivenessUnderTheGate` is deleted, and the per-entry cost is the one
+`CreateFile`/`CloseHandle` the figures above measure. **One window is left and it
+is pinned rather than argued away**: a peer between its own rename and its first
+hold, inside the gate, once per session —
+`SessionListTests.APeerInsideCreateOrTakeIsTheOneWindowTheListingCanStillMisreport`.
 
 **The listing no longer parses every record on the machine to print a few.** The
 subtree filter used to run *after* `SessionIndex.Follow` had opened and strictly
@@ -638,10 +796,17 @@ budget to a `browserai_list` scoped to an unrelated tree, and to the roll-up on
 every `init` and every `resume`. What is gone is the *record* open and its parse,
 which is the larger of the two and the only one this change touched.
 
-**Writes are durable and atomic.** `WriteThrough` + `Flush(flushToDisk: true)` +
-`File.Move(overwrite: true)`, with the temp file in the target's own directory.
-A rename cannot replace a file whose handle is open under any share mode, so
-create-or-take is close → rename → re-open *inside* the per-directory mutex.
+**The guard's write is durable and atomic, and it happens once.**
+`WriteThrough` + `Flush(flushToDisk: true)` + `File.Move(overwrite: true)`, with
+the temp file in the target's own directory, because a rename is atomic only
+within one volume and cheap only within one directory. A rename cannot replace a
+file whose handle is open under any share mode, so acquisition is write → rename
+→ hold *inside* the per-directory mutex. ⚠️ *Corrected 2026-08-26 (previously
+"**Writes** are durable and atomic … create-or-take is close → rename →
+re-open").* **The record's writes are `INSERT`s** and are durable by SQLite's WAL
+rather than by a rename, so the rename window is paid once per acquisition
+instead of once per forwarded call — and there is no close-and-re-open at all,
+which is what dissolved the two hazards that lived in it.
 
 **Never by image name — structurally, not procedurally.** BrowserAI can terminate
 a process only if it belongs to a job BrowserAI created, or if its **full image
@@ -659,13 +824,16 @@ Attribution may fail and must fail safe: a class-qualified
 `FindWindowExW(HWND_MESSAGE, …)` walk with `ERROR_INVALID_WINDOW_HANDLE` checked
 and the walk restarted, and a candidate no window claims is reported loudly and
 never touched. A stray is a process running our binary **whose** attributed
-directory holds a `browserai.json` this sweeper can take itself, without writing to it.
+directory holds a `browserai.lock` this sweeper can take itself, without writing
+to it — `SessionLock.TryHoldUnowned`, never `TryAcquire`, because a janitor is
+the last party that should be writing a holder row into a crashed session's own
+history.
 
 **Both families are offered, and everything below the front door reads the family
 from the session's own record.** `browserai_init` accepts `chromium` or
 `firefox`; provisioning, the config generator, the launch preflight and the stray
-sweep all take it from `browserai.json` rather than assuming one, so a Firefox record
-can never be run as Chromium against a Firefox profile. *Corrected 2026-08-19
+sweep all take it from `browserai.data` rather than assuming one, so a Firefox
+record can never be run as Chromium against a Firefox profile. *Corrected 2026-08-19
 (previously Firefox was built, measured and not offered.)* The per-family
 first-run download sizes a refusal quotes are in
 `BrowserProvisioner.FirstRunDownloadSizes`, measured and dated
@@ -689,19 +857,23 @@ answers about whatever file it is handed and is never actionable alone.
 | The two custom transports | `src/BrowserAI/Protocol/{DirectStdioClientTransport, ChildProcessSession, DirectStdioServerTransport, JsonLines, JsonLinesTransport, VerbatimPayload, ChildLink, ChildEnvironment}.cs` |
 | stdout ownership | `src/BrowserAI/Protocol/StdioChannel.cs`, `src/BrowserAI/BannedSymbols.txt` |
 | stderr classification | `src/BrowserAI/Protocol/StandardErrorClassifier.cs` and its pinned reference copy |
-| Logging — one machine-wide file under a cross-process write gate, plus one file per session | `src/BrowserAI/Logging/`, `src/BrowserAI/Interop/NativeFile.cs` |
+| Logging — one machine-wide file under a cross-process write gate | `src/BrowserAI/Logging/`, `src/BrowserAI/Interop/NativeFile.cs` *(the per-session file went 2026-08-26)* |
 | Where files live, installed or not | `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths, BuildVersion}.cs`, `src/BrowserAI/Updates/InstallLocation.cs` |
 | Refusing to serve out of a root two users could share | `src/BrowserAI/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state |
 
-**Anything attributable to a session is written to that session's own
-`browserai.log` and to nothing else; the machine-wide log keeps only what no
-session owns** — the stray sweep, which is machine-wide by design, startup,
-updates, provisioning, the server transport, the MCP server, and the two proxy
-refusals that have no session directory to be written into: a call naming no
-session, and a call naming one that does not exist. *Changed 2026-08-24
-(previously every session record went to both).* **That reduces the shared file's
-write rate and does not dissolve the contention**, which is why it is written
-under a lock rather than instead of one: `NativeFile.TakeGate` takes an exclusive
+⚠️ ***Corrected 2026-08-26 (previously "Anything attributable to a session is
+written to that session's own `browserai.log` and to nothing else; the
+machine-wide log keeps only what no session owns … *Changed 2026-08-24
+(previously every session record went to both)*").*** **There is no per-session
+log file.** Everything it carried is on stderr, which `ProcessLog.OpenSessionLog`
+already wrote to at every level, and what a session itself did is rows in
+`browserai.data` — including, since the same day, the refusals that used to reach
+only that file. The console half of `OpenSessionLog` stays and gained
+`IncludeScopes`, because it is the only sink left carrying `session=`. **The
+machine-wide log is unchanged**: startup, updates, provisioning, the stray sweep,
+the server transport, the MCP server, and the proxy refusals that have no session
+directory to be written into. **It is written under a lock rather than instead of
+one**, and that is unchanged too: `NativeFile.TakeGate` takes an exclusive
 byte-range claim one byte past any possible end of file — so no concurrent reader
 is ever refused — and the length read, the write stamp and the bytes all happen
 inside it. Write order and timestamp order therefore coincide, the file is sorted

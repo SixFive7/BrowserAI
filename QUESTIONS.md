@@ -464,6 +464,51 @@ the expected state of direction (a)** — it buys diagnosis on the next occurren
 not evidence that there will not be one. This entry stays open until one arrives, or
 until somebody chooses (b).
 
+⚠️ **IT RECURRED, 2026-08-26 19:43, and the trap fired exactly as designed —
+which is the first new evidence this question has had since it was written.**
+`StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`,
+the single failure in a 626-case full run from PowerShell. **It did not recur in
+the two full runs taken immediately afterwards** — one from each shell, 626 of
+626 in both — which is one in three on this machine on this day and says nothing
+about a rate. **The whole of what the browser said**, from its own log,
+timestamps as written:
+
+```
+[68076:77224:0826/194308.000:VERBOSE1:…\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
+[68076:77224:0826/194308.004:VERBOSE1:…\variations_field_trial_creator.cc:603] Applying FieldTrialTestingConfig
+[68076:77224:0826/194308.007:VERBOSE1:…\variations_field_trial_creator.cc:399] VariationsSetupComplete
+[68076:77224:0826/194308.026:VERBOSE1:…\scheduler_loop_quarantine_config.cc:195] No entry found for browser/global.
+[68076:77224:0826/194308.026:VERBOSE1:…\scheduler_loop_quarantine_config.cc:195] No entry found for browser/*.
+```
+
+**Exit code 1. Nothing on stdout, nothing on stderr, both pipes at EOF.** It died
+**26 milliseconds** into its own startup, after `VariationsSetupComplete` and
+before anything that would name a subsystem.
+
+**The machine at that instant**, from `GetPerformanceInfo`: 527 processes,
+13,062 threads, 289,927 kernel handles, **82,982 MiB physical free** of 130,989,
+commit 64,815 of a 141,229 limit, 32 processors.
+
+⚠️ **What that rules out and what it leaves.** It is **not** memory: 63% of
+physical RAM was free and commit was at 46% of its limit. It is **not** a process
+or handle ceiling at this scale — the 80-instance experiment above reached 1,436
+processes with zero failures, nearly three times this run's 527. It is **not** a
+disk or path failure, because the browser got far enough to read policy and apply
+a field-trial config. **CPU starvation and desktop heap both survive**, and
+desktop heap is the one the figures above cannot see — it is not readable without
+a kernel debugger, and *a Chromium that cannot create a window object fails
+exactly this way*: no message window, no diagnostic, exit 1. The failing test is
+one whose entire subject is that a message window appears.
+
+**The question stays open and the recommendation does not change.** One
+occurrence with a 26 ms log is a much better lead than three occurrences with
+none, and it is still not a diagnosis. What would settle it is direction (b) — a
+deliberate reproduction — now aimed specifically at **desktop heap** rather than
+at CPU: launch into a session station whose heap has been consumed, and see
+whether this exact shape comes out. *Nobody has run that.* Recorded here rather
+than in `.work/`, because the capture that produced it lives in a scratch
+directory this machine deletes.
+
 ---
 
 ## Added 2026-08-18, from the honesty pass
@@ -1051,12 +1096,39 @@ Nothing about the grant changed its availability.
 
 ### 14. The one time-ordered log lives inside `browserai.json` — **DECIDED BY THE MAINTAINER, over my recommendation**
 
+> ⚠️ **REVERSED 2026-08-26, by the same maintainer, and the whole section below
+> is kept as the record of what was decided and why.** *The heading is left
+> exactly as written because [`CHANGELOG.md`](CHANGELOG.md) links to it from a
+> released section that may not be rewritten; read it as the question's name, not
+> as a live claim.* **`browserai.json` no longer exists.** A session directory now
+> carries two files — `browserai.lock`, the guard, written once at acquisition
+> and never again; and `browserai.data`, a SQLite store in WAL mode holding every
+> statement the session has made about itself and every call it has logged. Four
+> of this section's answers went with it, and each is corrected in place below:
+> **the one-file answer**, **the argument-recording answer**, **the caps answer**
+> and **the refusals-go-to-`browserai.log` answer**.
+>
+> **What survived is the reasoning that decided it, and that is worth saying
+> plainly.** The one-file argument — *a session directory is moved and copied by
+> people, and a second file is a second thing that can be copied without the
+> first* — was right, and it is what the new design is built to keep: the record
+> and the log are still **one** file, `browserai.data`, and it is still the file
+> a copy carries. What changed is that the *guard* left it. The guard was never
+> part of that argument; it was in the same file only because the record happened
+> to be the thing being held open, and that accident is what made every append a
+> whole-file durable rewrite plus a rename — with the ownership handle dropped and
+> retaken each time. **A half-copied session was the risk this section weighed;
+> a periodically-unowned live session was the one it did not.**
+
 ⚠️ **Taken, in the maintainer's words: _"The log lives INSIDE `browserai.json`,
 under the same session-long lock. This is his decision over my recommendation of
-a sibling append-only file; build it as decided."_** It is implemented:
-`LockRecord.Log` is one ordered array carrying `browserai_init`'s purpose, every
+a sibling append-only file; build it as decided."_** It was implemented:
+`LockRecord.Log` was one ordered array carrying `browserai_init`'s purpose, every
 purpose change, and every browser call the session forwarded, and the record
-moved to **schema 4**.
+moved to **schema 4**. ⚠️ *Corrected 2026-08-26 (previously "It is implemented:
+`LockRecord.Log` **is** one ordered array …").* `LockRecord` is deleted; the log
+is the `log` table in `browserai.data`, the statements are the `statements`
+table, and `PRAGMA user_version` is 1.
 
 **What I recommended instead:** a sibling append-only file — `browserai-log.jsonl`
 beside `browserai.json` — one line per entry, opened `FileShare.Read` for the life
@@ -1083,6 +1155,29 @@ session that makes two hundred calls pays it two hundred times. **Nothing here
 measured it**; the cost is stated because it is real, not because it was found to
 be a problem.
 
+> ⚠️ **It was measured afterwards, and the cost was not the interesting part.**
+> *Corrected 2026-08-26 (previously "Nothing here measured it").* A whole-record
+> durable rewrite was **3.94 ms at 1 KB, 10.72 ms at 200 KB and 13.62 ms at
+> 400 KB** — real and, as this section guessed, affordable. What the paragraph
+> above did not name is what the rewrite did to the **guard**: closing the handle
+> and taking it back left the directory demonstrably unowned for a few
+> milliseconds *per forwarded call*, so a peer's `browserai_list` printed
+> *in use: no* about a session another agent was driving, and a peer's transient
+> probe handle could refuse the writer's own re-open — which it did, in CI run
+> 32203064556 attempt 1, leaving two processes' holder statements in one record.
+> **Both windows are gone**: the guard is written once and the store is appended
+> to in place.
+>
+> ⚠️ **And the caps are gone, at the maintainer's decision** — *previously "The
+> record is capped at 250 entries and roughly 400 KB"*. There is **no cap on
+> anything**: not on the number of rows, not on a value's length, not on a
+> `purpose`. `SqliteStorageTests.NothingInTheStoreIsCappedByLengthOrByCount`
+> holds it. The cap existed to bound a rewrite that no longer happens, and it had
+> a defect of its own on the way out: `resume` concatenated each new purpose onto
+> the old one and the result was silently truncated at 2,000 characters. A
+> `purpose` is a row per change now, so the concatenation and its data loss died
+> together.
+
 **The second cost, and it is the one to watch.** A call whose entry cannot be
 written is **refused**, and the browser never sees it —
 `SessionErrors.SessionLogCouldNotBeWritten`. That is deliberate: the value of one
@@ -1100,6 +1195,15 @@ behaviour and would move with it. **What would not survive the move is the copy
 property above**, and whoever reverses this should say what they are doing about
 it rather than discovering it later.
 
+> ⚠️ **Reversed 2026-08-26, and the copy property was kept rather than traded
+> away.** The paragraph above is the right question to have asked and it named
+> the wrong file set. What moved out of the record was the **guard**, not the
+> log: `browserai.data` still carries the statements and the log together, so a
+> copied directory still describes itself, and what a copy is now missing is only
+> the ownership handle of a process that has nothing to do with it. The reversal
+> is `Storage/SessionStore.cs` and `Storage/LockFile.cs`; `SessionLogTests` moved
+> with it and did not shrink.
+
 **What I chose about argument values, since nobody instructed it.** The entry
 records **every argument name, always** — a reader must be able to see that a
 password field was filled even when the value is not there. The value is then:
@@ -1114,6 +1218,25 @@ which is what turns a `browser_evaluate` body from a transcript into a summary.
 **The withheld list is asserted against the golden snapshot**, so an upstream
 rename is a red build rather than a policy that quietly stopped matching.
 
+> ⚠️ **REVERSED 2026-08-26: no argument is recorded at all, and `LoggedArgument`
+> is deleted.** *(Previously the whole paragraph above.)* A log row is
+> `(at, tool, why, outcome, settled_at, failure)` — **the caller's `why`, in its
+> own words, is what the row says the call was for**, and the tool name is
+> recorded verbatim, unknown and refused names included. The withheld list, the
+> shape summaries, the 200-character cut and the golden-snapshot assertion behind
+> them are all gone.
+>
+> **The reason is the doctrine rather than the cost.** *Nothing between the two
+> servers except the session system and the reason system*: an argument summary
+> is BrowserAI reading a caller's request and writing its own account of it, and
+> a `<object, 3 keys>` in a log is a fact about a serialiser rather than about
+> what the agent did. The `why` is a better answer to the same question, it is
+> mandatory on every call that names a session, and nobody has to maintain a list
+> of upstream parameter names to keep it honest. **What is lost is named rather
+> than glossed**: a reader can no longer see *which* selector was typed into, or
+> that a password field was filled at all, from the log alone. F3 — a review
+> finding about argument recording — is moot for the same reason.
+
 ⚠️ **It is not a redaction boundary and must not be described as one.** The log
 sits inside the session directory, and so does the browser profile whose cookie
 database holds the same credentials — [measured
@@ -1121,6 +1244,52 @@ database holds the same credentials — [measured
 recoverable by any process running as the same user. What withholding buys is
 that a password is not written into the one file a model is *invited to read
 back*. It buys nothing against anything that can read the directory at all.
+
+> ⚠️ **Still true and now for a simpler reason (2026-08-26).** No value reaches
+> the record, so there is nothing to withhold; the sentence above is kept because
+> the *claim it refuses to make* is the one that would be made again by whoever
+> proposes recording arguments next. **Guarding against a hostile caller is an
+> explicit non-goal of this product** — see
+> [the charter](DECISIONS.md#what-browserai-does-not-defend-against) — and this
+> paragraph is where that was first argued in this repository.
+
+---
+
+### 14a. The refusals live in `browserai.log` beside the record — **REVERSED 2026-08-26**
+
+**The primer, for whoever reads this without §14.** The design §14 settled
+recorded what a session *did*: a row went in immediately before a call was
+forwarded, and a call BrowserAI **refused** left no row at all, because a refusal
+is not something the session did. The refusals went to `browserai.log`, a
+per-session text log beside the record, and that split is what made
+`SessionLogCouldNotBeWritten` — the refusal of a call whose row could not be
+written — the sharpest consequence §14 names.
+
+⚠️ **Both halves of that are gone.** `browserai.log` does not exist: everything
+it carried is on stderr, which the session's logging stack already wrote to at
+every level, and the per-session file was a second copy nobody read. And **a
+refused call is now a row** — `outcome = failed`, carrying the refusal itself —
+so the record answers *the agent reached for a tool this build will not forward*,
+which nothing else in the directory could say once the log file went.
+`SessionLogTests.ARefusedCallIsRecordedAsAFailedRowCarryingTheRefusal` holds it,
+and it is an **inverted** test rather than a new one: the arm it replaced
+asserted that a refusal left no row.
+
+**What did not change**, and it is the half §14 called the sharpest consequence:
+**a call whose row cannot be written is still refused rather than forwarded.**
+`SessionLock.Append` throws rather than swallowing, and `SessionErrors`
+still carries the row. The value of one time-ordered record is that reading it
+back tells you what the session did, and a gap nobody is told about is worse than
+a refusal somebody can act on.
+
+**The outcome is three-valued now, which §14's boolean was not.** A row is
+written `in-flight` **before** the call is forwarded — the property the
+write-before ordering always existed for, so a call that never returns still left
+a record — and updated to `successful` or `failed` on settle, with `settled_at`,
+from which the duration is derivable. `browserai_catch_up` renders a stale
+`in-flight` as *"no answer was recorded"*. **Failure payloads only:** the child's
+error bytes, its JSON-RPC error or the transport exception go into `failure`, and
+a successful call stores no payload at all.
 
 ---
 

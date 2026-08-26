@@ -23,7 +23,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>Never trusted, only followed.</b> An entry is a pointer, never an
 /// authorisation. No entry is ever <b>reported as a session</b> without opening
-/// the <c>browserai.json</c> it points at, and a directory that has none is
+/// the <c>browserai.data</c> it points at, and a directory that has none is
 /// reported as not ours and acted on in no other way. That is what makes an entry
 /// that somehow named a personal Chrome profile harmless: it is an inventory
 /// line, and nothing downstream may treat it as permission to touch anything.
@@ -54,7 +54,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>The write is <i>not</i> durable, and that is the difference from
-/// <see cref="SessionLock"/>.</b> <c>browserai.json</c> is written
+/// <see cref="SessionLock"/>.</b> <c>browserai.lock</c> is written
 /// <c>WriteThrough</c> plus <c>Flush(flushToDisk: true)</c> — measured at ~17 ms
 /// — because it is the whole ownership guard and its loss cannot be
 /// reconstructed. An index entry can: it is a pure function of a directory that
@@ -192,7 +192,7 @@ internal sealed class SessionIndex
     /// <para>
     /// <b>Following is verification, not trust.</b> Nothing here decides that a
     /// directory is ours because it is listed; it decides that by opening the
-    /// <c>browserai.json</c> inside it. The states this returns are an inventory
+    /// <c>browserai.data</c> inside it. The states this returns are an inventory
     /// report and confer no authority on anything. <b>That survives
     /// <see cref="FollowUnder"/> intact</b> — it is a rule about what a returned
     /// state means, and no returned state changes.
@@ -330,7 +330,7 @@ internal sealed class SessionIndex
     /// self-cleaning rule would remove.</b> That rule licenses removal only
     /// because a wrongly-dropped entry is restored by the next <c>init</c> or
     /// <c>resume</c>, and neither of these two can ever do that. A
-    /// directory whose <c>browserai.json</c> is present but unparseable is a session
+    /// directory whose <c>browserai.data</c> is present but unparseable is a session
     /// — a broken one — and it cannot restore its own entry, because
     /// <see cref="SessionLock.TryAcquire"/> refuses an unreadable record. And a
     /// path on a volume that is not mounted has not been destroyed; the drive is
@@ -638,7 +638,7 @@ internal sealed class SessionIndex
         }
         catch (Exception failure) when (failure is SessionRecordException or IOException or UnauthorizedAccessException)
         {
-            // There IS a browserai.json and it cannot be acted on. That is a session
+            // There IS a browserai.data and it cannot be acted on. That is a session
             // in trouble, and the pointer is the only thing that can lead anyone
             // to it — see the note on Sweep().
             return new SessionIndexEntry
@@ -654,7 +654,7 @@ internal sealed class SessionIndex
     }
 
     /// <summary>
-    /// What an absent <c>browserai.json</c> means, which is two different things and
+    /// What an absent <c>browserai.data</c> means, which is two different things and
     /// only one of them is safe to act on.
     /// </summary>
     /// <remarks>
@@ -665,8 +665,8 @@ internal sealed class SessionIndex
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md).
     /// <c>SessionLock.ReadRecord</c> takes no gate — it cannot, because the whole
     /// point of the index is to describe sessions nobody is holding — so it can
-    /// land in the instant in which <c>browserai.json</c>'s <b>name is unbound</b>
-    /// while another process replaces the record
+    /// land in the instant in which the guard's <b>name is unbound</b>
+    /// while another process is acquiring the directory
     /// ([hazard index](../../../HAZARDS.md#hazard-index): a rename over a file
     /// with an open handle is refused, the writer retries, and the name is free
     /// between the pending delete completing and the next attempt landing).
@@ -848,26 +848,31 @@ internal sealed class SessionIndex
 /// <summary>What following one entry found.</summary>
 internal enum SessionIndexEntryState
 {
-    /// <summary>The directory exists and holds a <c>browserai.json</c> this build can read.</summary>
+    /// <summary>The directory exists and holds a <c>browserai.data</c> this build can read.</summary>
     Session,
 
     /// <summary>
-    /// The directory exists and holds a <c>browserai.json</c> that cannot be acted on.
+    /// The directory exists and holds a <c>browserai.data</c> that cannot be acted on.
     /// <b>Kept</b>: it is a session in trouble, and nothing else can lead anyone to it.
     /// </summary>
     LockUnreadable,
 
     /// <summary>
-    /// The directory exists and has no <c>browserai.json</c>. Not ours — a personal
+    /// The directory exists and has no <c>browserai.data</c>. Not ours — a personal
     /// browser profile reaches this state, and nothing acts on it.
     /// </summary>
     NotASession,
 
     /// <summary>
-    /// The directory exists, has no <c>browserai.json</c> <b>at this instant</b>, and
-    /// carries a <c>browserai.json.new-…</c> beside the gap — so another BrowserAI is
-    /// replacing the record right now. <b>Kept</b>: a session mid-rewrite is the
-    /// opposite of a session that never was.
+    /// The directory exists, has no <c>browserai.data</c> <b>at this instant</b>,
+    /// and carries a <c>browserai.lock.new-…</c> beside the gap — so another
+    /// BrowserAI is inside create-or-take on it right now. <b>Kept</b>: a session
+    /// being acquired is the opposite of a session that never was.
+    /// ⚠️ <i>Corrected 2026-08-26 (previously "has no <c>browserai.json</c> … and
+    /// carries a <c>browserai.json.new-…</c> beside the gap — so another BrowserAI
+    /// is replacing the record right now").</i> Nothing replaces a record any more;
+    /// the store is appended to in place. What is left is the <b>one</b> rename a
+    /// session ever performs, of its own guard, at acquisition.
     /// </summary>
     RecordInFlight,
 

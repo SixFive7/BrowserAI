@@ -56,7 +56,7 @@ internal sealed record SessionRun
     /// </remarks>
     public required string SessionLog { get; init; }
 
-    /// <summary>Whether the destroyed session's <c>browserai.json</c> is gone.</summary>
+    /// <summary>Whether the destroyed session's <c>browserai.lock</c> is gone.</summary>
     public required bool DestroyedLockFileIsGone { get; init; }
 
     /// <summary>Whether the file that was held open through the destroy survived.</summary>
@@ -282,7 +282,7 @@ internal sealed record SessionRun
                 ["browser"] = "firefox",
             }).ConfigureAwait(false);
 
-            // Documents, which has no browserai.json. Nothing is touched before the
+            // Documents, which has no browserai.data. Nothing is touched before the
             // refusal, which is the whole reason the check is a read.
             answers["destroyDocuments"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
             {

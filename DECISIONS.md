@@ -135,6 +135,38 @@ This is the whole model, and it needs stating precisely because the charter's fo
 
 > ⚠️ **This heading read "The four rules" until 2026-08-16**, when rule 5 was added. Rules 1–4 are unchanged; what was missing was the ordering, which had been left as an implication and therefore never happened.
 
+### Every release builds against the latest Playwright, and only a human may say otherwise
+
+**The rule.** A release is cut against the newest `@playwright/mcp` the resolve
+returns — with the `playwright-core` alpha that arrives as *its own exact
+dependency*, never npm `latest` for that package. This is rule 4 applied to the
+one upstream that moves daily and is the whole reason this product exists.
+
+**The exception, and who owns it.** A **human may force a crunch override** —
+ship against a version that is not the newest, because the newest breaks
+something and the release cannot wait. That is a judgement about a deadline, and
+judgements about deadlines belong to the person with the deadline.
+
+⚠️ **An agent may never take that decision, under any circumstances, however
+reasonable it looks at the time.** Not to unblock a red suite, not to finish a
+batch, not because the break "is upstream's". An agent that meets a break fixes
+it forward or stops and says so; *"I pinned it back for now"* is the failure this
+whole policy exists to prevent, and it is the failure an agent is most likely to
+commit, because reverting to green is locally the cheapest correct-looking move.
+
+**An override leaves a trace in the release artifact.** It is not a decision that
+may be taken in a shell and forgotten: the resolved set is recorded beside the
+package ([RELEASING item 11](RELEASING.md#11-the-resolved-set-is-recorded-beside-the-artifact)),
+so the manifest states the version that was actually shipped, and the override
+is stated with it — what was held, at what version, and why. **A release whose
+manifest does not say it was overridden is a release claiming it was not.**
+
+*Written down 2026-08-26, at the maintainer's decision. Nothing enforces the
+"agents may never" half and nothing can — it is a rule about who is asking, and
+the build cannot see that. What the build does hold is the trace: the manifest is
+emitted by [`build/Write-ReleaseManifest.ps1`](build/Write-ReleaseManifest.ps1)
+and copied rather than transcribed, so the version in it is evidence.*
+
 ### Never assert a version from memory
 
 **If it was not looked up this session, it is unverified — say so.** Model training knowledge lags this toolchain by design, and a confident stale version is worse than an admitted gap. Same discipline as the `Verified <date> @ <version>` stamps in [Provenance stamps](#provenance-stamps), applied to the act of writing a version rather than to the value written.
@@ -166,6 +198,55 @@ This is the whole model, and it needs stating precisely because the charter's fo
 
 ---
 
+## What BrowserAI does not defend against
+
+**Adversarial and hostile-caller defence is an explicit NON-GOAL of this
+product.** The maintainer's words, 2026-08-25:
+
+> *"We are building this tool on the premise that the LLM tries to behave and we
+> try to steer it correctly where it would make honest mistakes but we do not
+> guard against hostile intentions."*
+
+Guarding at that level is *"hopeless and thus meaningless"* — the calling agent
+chooses the session directory, the browser profile and its cookie database are
+created inside it, and the agent runs as the same Windows user, so anything a
+refusal declines to do is reachable with a file tool the agent already holds.
+**Measured 2026-08-18** rather than argued: a second process as the same user
+recovered a cookie from a session this product configured, using
+`CryptUnprotectData` and AES-256-GCM alone, with App-Bound Encryption not in
+force for the provisioned Chromium
+([kb](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)).
+
+**What this licenses, and what it does not.**
+
+- **It licenses application-level invariants.** *The writer of `browserai.data`
+  is the lock holder* is kept by the code path that reaches it and by nothing
+  else; a caller that opens the store itself and writes to it is out of scope by
+  charter rather than defended against and losing.
+- **It licenses steering over refusing.** A hazard whose only closure would be a
+  door refusal aimed at a hostile string gets a sentence in an answer instead —
+  which is what [Q128](TODO.md#upstream-asks) settled for the two output-filename
+  hazards, alongside an upstream ask.
+- **It does not license leaving a defect unrecorded.** Everything above stays in
+  [`HAZARDS.md`](HAZARDS.md), open, with what it would take to close it. A
+  non-goal is a decision about what to build, never a reason to stop knowing.
+- **It does not license carelessness about honest mistakes.** Every refusal in
+  `SessionErrors` exists because a model that meant well would otherwise get a
+  wrong answer or a silent one. That is the whole product.
+
+⚠️ **Written down 2026-08-26, and several of the arguments that preceded it
+would have gone differently had it been here.** The tool-permission matrix
+deleted on 2026-08-18, the `browser_get_config` secrets guard, the filename gate
+deleted on 2026-08-26 — each was argued at length as a boundary before somebody
+noticed it was not one against the only caller there is. **It also retires a
+standing item**: *headless-with-storage is still refused on a reason the same
+pass declared void* sat in [`TODO.md`](TODO.md) from 2026-08-18 to 2026-08-26,
+asking which way that inconsistency should be resolved. This is which way — and
+session modes were deleted in between, so there is no combination left to refuse.
+This section exists so the next one is a paragraph rather than a day.
+
+---
+
 ## Known trade-offs
 
 Recorded so they are inherited as decisions, not rediscovered as surprises.
@@ -178,7 +259,7 @@ Under one server with `init`, that becomes a **runtime check in BrowserAI's own 
 
 To be precise about the size of this: it is *not* a demotion to "the model must behave" — BrowserAI enforces it server-side, and a model that calls `browser_cookie_list` in an interactive session gets refused. It *is* a demotion from "the capability does not exist in this process" to "our code declines to use it." Weaker, and worth the eyes-open acknowledgement.
 
-The session design ([sessions](ARCHITECTURE.md#sessions)) narrows this considerably — a call is judged against the mode recorded in the `browserai.json` of the directory it names, never against the caller's word — but it does not change the *kind* of guarantee. It remains our code declining, not a capability that does not exist.
+The session design ([sessions](ARCHITECTURE.md#sessions)) narrows this considerably — a call is judged against the mode recorded in the `browserai.json` of the directory it names, never against the caller's word — but it does not change the *kind* of guarantee. It remains our code declining, not a capability that does not exist. *(Both halves of that sentence are historical: session modes were deleted 2026-08-20 and `browserai.json` on 2026-08-26. The paragraph is kept unchanged because the correction two paragraphs down is written against it, and rewriting the thing a correction quotes is how a correction stops being readable.)*
 
 ⚠️ **Corrected 2026-08-16 at the plan's final audit, previously "a server-minted handle cannot be forged for a session type the agent never created."** **The mint is gone.** The session is a directory path, which a model can compose freely, so nothing prevents an agent *naming* a `persistent` directory it did not create. What the enforcement rests on instead is the file at that path: the mode comes from its `browserai.json`, so the refusal holds and the *forgery* argument does not. The residual gap is worth stating plainly — a connection holding both an `interactive` and a `persistent` session can route a call to the persistent one, which grants nothing new, and **the `interactive` guarantee, the one a human relies on, holds.**
 
@@ -340,8 +421,8 @@ that the alternative is twenty-two seconds inside a machine-wide mutex.**
 
 **The measured problem, second half.** `Path.GetFullPath` resolves neither
 `\?\`, junctions, `subst` nor mapped drives, so two spellings of one directory
-produce **two mutex names and one `browserai.json`**: the per-directory gate stops
-serialising while every signal still reads healthy, and
+produce **two mutex names and one session directory**: the per-directory gate
+stops serialising while every signal still reads healthy, and
 [review A4](docs/reviews/2026-08-18-adversarial-locking.md) gives two
 interleavings, one ending with two processes driving one browser profile and the
 other destroying a session's purpose and history. The correct fix is to
@@ -516,7 +597,7 @@ Two things follow, and they are design obligations rather than caveats:
 | **A reinstall holds the machine's browsers root** | ⚠️ **Became a READER/WRITER claim on 2026-08-20, in the maintainer's words: _"any init or resume should take a system level lock. No matter the browser type. These locks are cumulative. And reinstalling the browser should be an exclusive lock."_** Every session opens `<browsers root>\reinstall.lock` `FileAccess.Read`/`FileShare.Read` and holds it for its whole life; a reinstall opens it `FileAccess.ReadWrite`/`FileShare.Read`, which Windows refuses while any reader holds it. **The kernel is the gate and the census is only a sentence** — `SessionManager.LiveSessions` survives to name what the caller must close, and the family filter is gone, so a live Firefox session refuses a Chromium reinstall. **No intent marker, no drain, and writer starvation accepted**, all three his: _"If anything is busy then the reinstall should be refused with the list… But it should not start a drain/preventstart process of sorts. Keep it simple. Let the user solve the open sessions block."_ *Previously settled 2026-08-19: _"No reinstall if there is any session running system wide. Including any reinstall sessions."_* `browserai_reinstall_browser` takes a machine-wide claim before it looks at anything and holds it for the whole call; `browserai_init` and `browserai_resume` are refused while it is held, and so is a second reinstall. **It is a lock FILE and not a named mutex, and that is forced rather than chosen** — the claim spans a 203.8 MB download inside an `async` method and a named mutex is owned by the thread that waited on it. **Nor a named semaphore**, which does span threads: a semaphore's count is not restored when its holder dies, so one crashed reinstall would refuse every `init` on the machine until a reboot; Windows closes a file handle however the process ends. **Keyed on the browsers root**, exactly as the provisioning mutexes are, because two installations with different roots are genuinely independent. **No drain and no wait** — a reinstall that finds sessions open releases the claim and refuses at once, naming how many. See [`Runtime/MaintenanceLock.cs`](src/BrowserAI/Runtime/MaintenanceLock.cs) and [`ARCHITECTURE.md`](ARCHITECTURE.md#the-mcp-server). |
 | **Git detection** | **Out of scope. BrowserAI performs no git detection of any kind.** Considered and rejected on 2026-08-16, recorded here so it is not rediscovered as a gap. The concern was well-shaped: `storage-state` artifacts are session bearer tokens, and a session directory inside a working tree is both untracked *and* unignored — one `git add -A` from being pushed. A detector was designed (refuse, require explicit acknowledgement) and then dropped on two grounds. **Where an agent puts its data is the agent's decision**, consistent with [any path is accepted](#shape-and-packaging); and **the premise does not hold** — a browser session writes hundreds of files, so it is plainly visible in the staged list and the failure was never silent, which was the entire basis for the concern. This says nothing about this repository's own `.gitignore`, which is repository hygiene rather than a runtime feature. |
 | **A renamed session directory** | **The directory is the identity. The path recorded in `browserai.json` is provenance.** On `resume`, when the recorded path differs from the actual one: recorded path **gone** → it was *moved*, so repair the record, log it, carry on. Recorded path **still present** → it was *copied*. **⚠️ Re-answered 2026-08-18: the copy is resumed and told what it is, not refused** (*previously "so refuse and require explicit acknowledgement"*, through an `acknowledgeCopy=true` argument that is now deleted). The refusal was necessary only while `browserai.json` was a **snapshot**, because taking the copy over overwrote the one piece of evidence that it was a copy. Schema 2 made every field an ordered list of timestamped statements, so a resumed copy **appends** its path beside the original and the answer returns the whole history — which is strictly more than the refusal ever conveyed, and leaves the product with **zero confirmation flags**. **No extra identifier is needed** — the recorded path is already the discriminator, and a proposal to add a random fingerprint field is dropped. The rationale is narrower than it first looks and is worth stating exactly: **a copy corrupts nothing.** Each copy has its own profile folder, and each browser writes only to its own. What the copy inherits is an *ownership record* naming a process that may still be live against a **different** directory, which produces either a wrong refusal or a confusing takeover of another session's recorded purpose and history. **Legibility, not data loss** — the same reason `resume` exists at all. |
-| **Logging** | **Session logs live in the session directory, beside `browserai.json`.** Everything that happens outside a session — startup, the stray sweep, first-run browser provisioning, applying an update — has no session directory, so it goes to **one rolling process log under the app data root, outside `current\`**, resolved from `VelopackLocator.Current.RootAppDir` and never `AppContext.BaseDirectory`. Outside `current\` because an update replaces that folder, and a log wiped by the update is a log missing exactly the event you came to read. **Every line is forced to stderr by configuration, not by rule** — [`stdout` is the protocol channel](CLAUDE.md#rules-a-mechanism-enforces), and a rule is a habit that fails inside a `catch`. Append, never wipe on start; **every record is one unbuffered write, so there is nothing to flush and no flush hook exists**; no destination that can block or open a window; reading from the console is banned alongside writing to it. *(**Corrected 2026-08-16, previously "flush before exit, including on the crash path."** [containment and observability](ARCHITECTURE.md#process-containment-and-observability) asked for a flush; the sink was built with nothing to flush instead, and a no-op `Flush()` would be a mechanism that only looks like one. `ILogSink` carries no `Flush` member, so the absence is structural rather than an omission, and `ProcessLogTests.AnUnhandledExceptionStillLeavesItsLastLogLineOnDisk` asserts the property the flush was for. **Still unverified, and named rather than assumed:** whether the framework's console provider drains its own queue at an abnormal exit — every record also goes to stderr through it.)* **Debug level is an optional argument on `init` and `resume`**, replacing an earlier idea of a differently-named executable — the agent that wants diagnostics is the one opening the session, and it should not have to relaunch the server to get them. |
+| **Logging** | ⚠️ **There is no per-session log file, since 2026-08-26** — *previously "**Session logs live in the session directory, beside `browserai.json`.**"*. Everything it carried is on stderr, which the session's logging stack already wrote to at every level, and what a session itself did is rows in `browserai.data`. The rest of this row is unchanged and is about the machine-wide log. Everything that happens outside a session — startup, the stray sweep, first-run browser provisioning, applying an update — has no session directory, so it goes to **one rolling process log under the app data root, outside `current\`**, resolved from `VelopackLocator.Current.RootAppDir` and never `AppContext.BaseDirectory`. Outside `current\` because an update replaces that folder, and a log wiped by the update is a log missing exactly the event you came to read. **Every line is forced to stderr by configuration, not by rule** — [`stdout` is the protocol channel](CLAUDE.md#rules-a-mechanism-enforces), and a rule is a habit that fails inside a `catch`. Append, never wipe on start; **every record is one unbuffered write, so there is nothing to flush and no flush hook exists**; no destination that can block or open a window; reading from the console is banned alongside writing to it. *(**Corrected 2026-08-16, previously "flush before exit, including on the crash path."** [containment and observability](ARCHITECTURE.md#process-containment-and-observability) asked for a flush; the sink was built with nothing to flush instead, and a no-op `Flush()` would be a mechanism that only looks like one. `ILogSink` carries no `Flush` member, so the absence is structural rather than an omission, and `ProcessLogTests.AnUnhandledExceptionStillLeavesItsLastLogLineOnDisk` asserts the property the flush was for. **Still unverified, and named rather than assumed:** whether the framework's console provider drains its own queue at an abnormal exit — every record also goes to stderr through it.)* **Debug level is an optional argument on `init` and `resume`**, replacing an earlier idea of a differently-named executable — the agent that wants diagnostics is the one opening the session, and it should not have to relaunch the server to get them. |
 | **Automated checks** | ⚠️ ***Corrected 2026-08-20 (previously "**There is hosted CI as of 2026-08-18** — `build.yml` builds the payload, provisions both browsers, publishes the NativeAOT binary and runs the **whole** suite on every push and pull request", which had itself corrected "**None. No CI, no scheduled job, no git hook.**" on 2026-08-19). **The original decision stands again**, and both `previously` clauses are kept because this row has now been wrong in both directions inside three days.*** Hosted CI existed from 2026-08-18 to 2026-08-20 and was removed at the maintainer's decision, verbatim: *"Remove CI completely. Let all the tests run on my machine only. I want no CI and no github runner. Add to the todo that we will add CI back in later. But that requires me adding infrastructure for self-hosted runners and I am considering leaving github before we do so."* **None. No CI, no scheduled job, no git hook.** Bringing it back needs self-hosted runner infrastructure that does not exist yet and must not assume GitHub Actions; the item, and the audit of what is unverified anywhere while CI is gone, is [`TODO.md`](TODO.md#continuous-integration). The original text follows, unchanged, because it is what holds. — The [release checklist](RELEASING.md) is the only gate that exists. That buys many commits without re-running everything on each of them, and keeps the project off hosted CI entirely. **The cost is recorded rather than softened: the gate works when it is invoked, and nothing makes it fire.** It is accepted because [the release trigger is already manual](#licence-release-policy-and-the-tool-surface) — the checklist runs at the one moment a human is deliberately doing something. **To be reviewed once the product is finished**, when the shape of the suite and the release cadence are known rather than predicted. |
 | **Version numbers** | **Derived from git tags — three parts plus a pre-release suffix**, which is the shape `vpk` accepts. Tag `1.2.0` and that build is `1.2.0`; five untagged commits later it is `1.2.1-alpha.0.5`. Auto-incrementing, nothing hand-edited. **The house four-part `base.commitcount` convention cannot be carried**: `vpk` rejects four-part versions outright, so this is a constraint imposed by the packaging tool, not a preference. One consequence removes a design problem rather than adding one — **no magic development-build version number is needed.** An untagged build already carries the not-a-release suffix, so "never self-update from a build that is not a release" is readable straight off the version string instead of depending on a sentinel someone has to remember to set. **The mechanism was settled on 2026-08-16 and is [MinVer](https://github.com/adamralph/minver)**, taken from the one sibling repository that already derives its version from tags. Tag prefix `v`, product project only, and it floats like everything else (7.0.0 on the day). Two consequences are load-bearing rather than incidental: a build that derives `0.0.0`, which is what an unfetched tag or a shallow clone produces, **fails** rather than stamping; and **nothing reads `AssemblyVersion`**, because MinVer sets it to `{Major}.0.0.0` by design, so the number a caller would naturally reach for is `0.0.0.0` for the whole 0.x line. |
 | **The plan's lifetime** | **A plan is consumed and then deleted**, and this one was, on 2026-08-17. It was written as one file per section behind a short index — a section was marked built, recorded what implements it, and was removed on its own, so the ending was a folder that emptied as the build proceeded. The rejected alternative was one document deleted in a single motion at the end, which makes the last step frightening enough never to be taken. What outlived it is what was never a section of it: the [hazard index](HAZARDS.md#hazard-index), whose rows gain a status and the evidence that closed them rather than being deleted, and the [architecture map](ARCHITECTURE.md) the `Implemented by` column became. |

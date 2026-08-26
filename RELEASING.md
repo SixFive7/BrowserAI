@@ -143,6 +143,34 @@ of each of the five upstreams and the browser revision.
 > release** — re-resolve, fix the fallout, then do the work. Doing it here for
 > the first time is how one upgrade nobody ever takes gets built.
 
+#### Playwright, and the one override a human may take
+
+**Every release builds against the latest Playwright.** `@playwright/mcp` from
+the `latest` dist-tag, with the `playwright-core` alpha that arrives as its own
+exact dependency. That is not a preference; it is
+[the rule](DECISIONS.md#every-release-builds-against-the-latest-playwright-and-only-a-human-may-say-otherwise),
+and it is the upstream this whole product exists to keep up with.
+
+**A HUMAN may force a crunch override.** Shipping against a version that is not
+the newest, because the newest breaks something and the release cannot wait, is a
+judgement about a deadline and it belongs to the person holding the deadline.
+
+⚠️ **AGENTS MAY NEVER.** Not to unblock a red suite, not to finish a batch, not
+because the break is upstream's. An agent that meets a break fixes it forward or
+**stops and reports** — pinning back is the failure the versioning policy exists
+to prevent and the one an agent is most likely to commit, because reverting to
+green is locally the cheapest correct-looking move.
+
+**An override leaves a trace in the release artifact.** The resolved set recorded
+at [item 11](#11-the-resolved-set-is-recorded-beside-the-artifact) states the
+version that actually shipped, copied rather than transcribed. Say what was
+held, at what version, and why, **in this item's evidence and in the changelog
+entry** — a release whose manifest does not say it was overridden is a release
+claiming it was not.
+
+**Evidence when it applies:** the held version, the newest version, the break,
+and the name of the human who took the decision. *(Added 2026-08-26.)*
+
 ### 2. No pin anywhere
 
 Every package version lives in `Directory.Packages.props` as `*`. A `Version=` on
@@ -544,10 +572,21 @@ the package's SHA-256 and the resolved version each copied file carries:
 | `package-lock.json` | `build/payload/` — the committed provenance stamp the payload build writes |
 | `payload.json` | `payload/` — Node's version, LTS name, archive SHA-256 and both tree sizes |
 | `browsers.json` | `upstream-snapshots/` — the browser revisions, from the resolved payload |
+| `tool-verdicts.json` | the repository root — which tools this build forwards, and the `judgedAgainst` upstream versions that judgement was made on |
 | The derived version and its tag | item 9 |
 | The full `.nupkg` and its size | item 12 |
 
 **Evidence:** the manifest's path, and the resolved version each file states.
+
+> ⚠️ **Seven since 2026-08-26** *(previously six — the row above and the word
+> "six" in `build/Write-ReleaseManifest.ps1`)*. `tool-verdicts.json` arrived at
+> the repository root [with the verdict decision](ARCHITECTURE.md#the-verdicts-file-and-why-a-tool-nobody-judged-is-refused)
+> and was left out of this item's charter for a week. It belongs here rather
+> than in the payload's provenance: it is the file that says which tools a
+> release forwards and which it refuses, and **a release that cannot produce it
+> cannot answer why it refused a tool the next release allows.** The manifest
+> also states the file's own `judgedAgainst` pair, because a row set means
+> nothing without the upstream it was adjudicated against.
 
 > **Corrected twice on 2026-08-16, both on the day the run raised it
 > (previously: "Evidence: the manifest, beside the artifact", then "nothing
@@ -557,13 +596,13 @@ the package's SHA-256 and the resolved version each copied file carries:
 > that satisfied it once, at `.work/step20/manifest/`, which is a checklist item
 > nobody satisfies twice.
 >
-> ✅ **It is emitted.** `build/Write-ReleaseManifest.ps1` copies the six files
+> ✅ **It is emitted.** `build/Write-ReleaseManifest.ps1` copies the seven files
 > and writes `manifest.json`; `build/New-Release.ps1` calls it as its eighth
 > step and returns the path as `ResolvedSet`. It lives in its own script for the
 > same reason `Test-ReleaseVersion.ps1` does — **so the suite can drive it** —
 > and `ReleaseScriptTests` runs it both ways, including that **a missing file
-> refuses rather than writing a partial**, because a manifest holding five of
-> six reads exactly like a complete one a year later.
+> refuses rather than writing a partial**, because a manifest holding six of
+> seven reads exactly like a complete one a year later.
 
 ### 12. The rollback path is publishable
 

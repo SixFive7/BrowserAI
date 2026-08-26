@@ -24,7 +24,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Four arms, because the answer has four shapes and three of them are
 /// reachable only by construction.</b> A session this process drives; one a peer
-/// holds; one nobody holds; and one whose <c>browserai.json</c> cannot be opened at
+/// holds; one nobody holds; and one whose <c>browserai.lock</c> cannot be opened at
 /// all. The fourth is the one this test exists for: <i>could not tell</i> must
 /// not be printed as <i>free</i>, because a caller about to destroy a session
 /// acts on the difference.
@@ -59,7 +59,7 @@ internal sealed class SessionListTests
         var free = Path.Combine(sessions.Root, "left-behind-by-a-dead-process");
         var unreadable = Path.Combine(sessions.Root, "lock-file-cannot-be-opened");
 
-        // The first arm is the product's own front door: init leaves browserai.json
+        // The first arm is the product's own front door: init leaves browserai.lock
         // held for the session's life, so the listing must answer for it without
         // asking the kernel anything.
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -70,7 +70,7 @@ internal sealed class SessionListTests
 
         // The other three are made the way a previous process would have made
         // them: taken, recorded in the index, and released. What is left on disk
-        // is a real browserai.json that nobody holds.
+        // is a real browserai.lock that nobody holds.
         var index = new SessionIndex(sessions.Environment.Paths, NullLogger.Instance);
 
         Plant(index, peerHeld, "a session another BrowserAI is driving");

@@ -8,11 +8,16 @@ namespace BrowserAI.Logging;
 /// </summary>
 /// <remarks>
 /// <para>
-/// There are two: the machine-wide rolling process log, and one file per session
-/// beside its <c>browserai.json</c>. The seam exists so both get the <b>same</b>
-/// record format from <see cref="FileLoggerProvider"/> — a second formatter would
-/// drift, and the two files are read side by side while somebody works out what a
-/// session did and what the machine was doing to it.
+/// ⚠️ <b>There is one, and there were two until 2026-08-26</b> — <i>previously
+/// "There are two: the machine-wide rolling process log, and one file per session
+/// beside its <c>browserai.json</c> … the two files are read side by side while
+/// somebody works out what a session did and what the machine was doing to it"</i>.
+/// The per-session log file is gone: everything it carried is on stderr, which the
+/// session's logging stack already wrote to at every level, and what the session
+/// itself did is rows in <c>browserai.data</c>. The seam stays because it is what
+/// keeps the record format in <see cref="FileLoggerProvider"/> rather than in a
+/// sink — a second formatter would drift — and because a second sink is the shape
+/// this interface exists to make cheap.
 /// </para>
 /// <para>
 /// <b>An implementation stamps the write time itself</b>, from inside whatever

@@ -157,7 +157,10 @@ internal sealed partial class HazardIndexTests
         // right. Two conventions that cannot both hold is a defect in one of
         // them; the convention wins, because a correction nobody can read
         // against the value it replaced is the thing it exists to prevent.
-        var evidence = PreviousValue().Replace(evidenceIncludingHistory, string.Empty);
+        //
+        // Shared with ReVerificationIndexTests since 2026-08-26, which read the
+        // identical clause and did not strip it. See Harness/CorrectionClause.
+        var evidence = CorrectionClause.Strip(evidenceIncludingHistory);
 
         // `ArtifactRoutingTests.{First, Second, Third}` is one backticked token
         // naming three methods, and it is how the densest rows are written.
@@ -224,17 +227,4 @@ internal sealed partial class HazardIndexTests
     /// <summary>A backticked type with several members named at once.</summary>
     [GeneratedRegex(@"`(?<type>[A-Z][A-Za-z0-9_]*)\.\{(?<members>[^}]*)\}`")]
     private static partial Regex BraceGroup();
-
-    /// <summary>
-    /// The <c>(previously "…")</c> half of this repository's correction
-    /// convention, which quotes the superseded text verbatim.
-    /// </summary>
-    /// <remarks>
-    /// <c>CLAUDE.md</c> calls that clause <b>the load-bearing half</b> — it is
-    /// what makes a change legible to someone who learned the file before it
-    /// moved. So the clause is authoritative and this gate reads around it,
-    /// rather than the reverse.
-    /// </remarks>
-    [GeneratedRegex(@"previously\s*""[^""]*""")]
-    private static partial Regex PreviousValue();
 }

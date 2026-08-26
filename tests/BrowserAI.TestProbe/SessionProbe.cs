@@ -214,16 +214,17 @@ internal static class SessionProbe
     }
 
     /// <summary>
-    /// What <c>browserai.json</c> looked like at the instant an attempt on it ended.
+    /// What <c>browserai.lock</c> looked like at the instant an attempt on it ended.
     /// </summary>
     /// <remarks>
     /// <b>Read with every share flag set, so that this diagnostic can never be
     /// the thing that fails.</b> It is looking at a file another process holds
     /// <c>FileAccess.ReadWrite, FileShare.Read</c> and may be renaming over, and
     /// a probe that threw while describing the state would destroy the only
-    /// evidence there was. The temp count is the decisive column when the record
-    /// is absent: the writer's <c>browserai.json.new-&lt;guid&gt;</c> exists for
-    /// exactly the length of one rewrite.
+    /// evidence there was. The temp count is the decisive column when the guard
+    /// is absent: the writer's <c>browserai.lock.new-&lt;guid&gt;</c> exists for
+    /// exactly the length of one acquisition, which since 2026-08-26 is the only
+    /// rename a session ever performs.
     /// </remarks>
     /// <param name="lockFile">The lock file to describe.</param>
     /// <returns>What the machine said, for the host's failure message.</returns>
@@ -475,15 +476,25 @@ internal static class SessionProbe
     /// </remarks>
     /// <param name="reportPath">Where to write the pass's own census.</param>
     /// <param name="images">The image paths that count as ours, separated by <c>;</c>.</param>
+    /// <param name="gatePatienceMilliseconds">
+    /// How long to wait for the machine-wide sweep gate. <b>The caller supplies
+    /// it rather than this file choosing one</b>, because the bound is the
+    /// suite's own hang detector and this project cannot see
+    /// <c>TestDefaults</c> — it references the product and nothing else.
+    /// </param>
     /// <returns>Zero.</returns>
-    public static int StraySweepPass(string reportPath, string images)
+    public static int StraySweepPass(string reportPath, string images, int gatePatienceMilliseconds)
     {
         var sweep = new StraySweep(
             [.. images.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)],
             index: null,
             NullLogger.Instance);
 
-        var result = sweep.Run();
+        // Waiting, and only because this is a test asset: the caller needs the
+        // pass to have RUN, and the machine-wide gate is held for a few
+        // milliseconds by every BrowserAI that starts. The product's own entry
+        // point never waits -- see StraySweep.Run().
+        var result = sweep.Run(TimeSpan.FromMilliseconds(gatePatienceMilliseconds));
 
         Write(reportPath, new JsonObject
         {

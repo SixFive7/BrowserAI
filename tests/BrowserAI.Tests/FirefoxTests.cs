@@ -717,34 +717,29 @@ internal sealed class FirefoxTests
     }
 
     /// <summary>
-    /// Runs one pass over the Firefox image only, retrying while some other
-    /// process on the machine happens to be sweeping.
+    /// Runs one pass over the Firefox image only, <b>waiting</b> for the
+    /// machine-wide gate rather than asking again while somebody else holds it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The image list is the Firefox executable and nothing else</b>, so this
     /// sweep cannot form an opinion about any other browser on the machine —
     /// including a Chromium another test has open.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously a retry loop — "retrying while
+    /// some other process on the machine happens to be sweeping").</b> A loop is
+    /// a poll that can lose every time it asks; queueing on the mutex is the
+    /// serialisation. See <c>StraySweepTests.SweepAsync</c>, which is where the
+    /// once-in-five failure that provoked this was measured.
+    /// </para>
     /// </remarks>
-    private static async Task<StraySweepResult> SweepAsync(SessionIndex index)
-    {
-        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
-
-        while (true)
-        {
-            var result = await OnItsOwnThreadAsync(() => new StraySweep(
-                [BrowserAiPaths.FirefoxExecutable],
-                index,
-                NullLogger.Instance,
-                [BrowserAiPaths.FirefoxExecutable]).Run());
-
-            if (result.Outcome is not StraySweepOutcome.Skipped || DateTime.UtcNow > deadline)
-            {
-                return result;
-            }
-
-            await Task.Delay(25);
-        }
-    }
+    private static Task<StraySweepResult> SweepAsync(SessionIndex index) =>
+        OnItsOwnThreadAsync(() => new StraySweep(
+            [BrowserAiPaths.FirefoxExecutable],
+            index,
+            NullLogger.Instance,
+            [BrowserAiPaths.FirefoxExecutable]).Run(TestDefaults.ProcessHang));
 
     /// <summary>
     /// Runs blocking work on a dedicated thread rather than on the pool.
@@ -799,7 +794,7 @@ internal sealed class FirefoxTests
             NullLogger.Instance);
 
         // Taken and released: what a BrowserAI that exited leaves behind is a
-        // browserai.json with nothing holding it.
+        // browserai.lock with nothing holding it.
         result.Acquired?.Dispose();
 
         return path;

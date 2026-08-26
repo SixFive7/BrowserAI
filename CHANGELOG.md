@@ -23,6 +23,67 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The release manifest records seven files, not six: `tool-verdicts.json` is
+  the seventh.** It states which tools a build forwards and which upstream
+  versions that judgement was made against, so a release that cannot produce it
+  cannot answer why it refused a tool the next release allows. The manifest also
+  carries the file's own `judgedAgainst` pair, read back out of the copy rather
+  than transcribed.
+
+- **Every release builds against the latest Playwright, and the one override is
+  a human's.** Written down rather than assumed: a human may force a crunch
+  override and **an agent may never**, and an override has to leave a trace in
+  the release artifact — the manifest states the version that shipped, and the
+  checklist item asks for what was held, at what version, and why.
+
+- **Adversarial and hostile-caller defence is a stated non-goal.** The premise is
+  that the model tries to behave and what BrowserAI steers is honest mistakes;
+  guarding against a caller that owns the session directory, the profile and the
+  same Windows user is *"hopeless and thus meaningless"*. Several arguments over
+  the last week would have been a paragraph rather than a day had this been
+  written down, and it retires a standing question about headless-with-storage
+  that had been open since 2026-08-18.
+
+- **Two hazards that lost their protection when the filename gate went are
+  adjudicated and stay open.** A reused output name still overwrites and a name
+  Windows will not keep verbatim is still stored as Windows rewrites it. The
+  decision is **steer only, plus an upstream ask** — no door refusal on the
+  string alone — and both rows say so now, in place, without closing.
+
+- **A just-answered call can read as still in flight, and that is now written
+  down.** The log row is settled in a `finally` that runs after the answer is
+  sent, so a second agent's `browserai_catch_up` landing in that window is told
+  no answer was recorded about a call that has just been answered. The ordering
+  is deliberate — settling first would risk a `successful` row for an answer the
+  caller never received — and the window is a hazard row rather than a fix.
+
+### Fixed
+
+- **A suite arm that needed its own stray sweep to have run was losing the
+  machine-wide gate to a real BrowserAI another test had just started**, once in
+  five full runs. The sweep's pass may now be handed a patience, the suite's own
+  passes **wait** on the gate instead of asking again in a loop, and a scan over
+  `src\` holds that the product never waits — ninety-nine peers queueing to redo
+  one pass is the thundering herd the zero timeout exists to prevent. Reproduced
+  deterministically by holding the gate from another process, which is also how
+  the fix was watched.
+
+- **The two literals the session guard is made of are now held by a test.**
+  `LockFile.Hold`'s `FileShare.Read` is one writer per directory; the probe's
+  `FileAccess.ReadWrite` is what a holder's share mode can refuse. Widening the
+  first lets two BrowserAIs drive one profile and narrowing the second reports
+  every driven session as free — and **both perturbations leave a file that
+  opens**, so every behavioural test in the suite stayed green under each.
+
+- **The re-verification index's gate now reads around a `previously "…"` clause,
+  the way the hazard index's already did.** A superseded test name quoted the way
+  `CLAUDE.md` requires — verbatim, in backticks — failed one gate and passed the
+  other, so two rows of that index had been left quoting dead names *without*
+  backticks and explaining the gate in prose. Both read as corrections again, and
+  the clause has one definition both gates ask.
+
+### Changed
+
 - **An aliased session directory is resolved rather than refused, and the network
   refusal now runs at every door.** `\\?\C:\work\sess`, a `subst`ed drive letter,
   a junction, a directory symlink and a mount point are all taken as the

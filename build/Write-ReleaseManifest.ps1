@@ -15,13 +15,13 @@
     and a hand-assembled manifest is one nobody assembles twice, which is why
     this script exists rather than a paragraph of instructions.
 
-    Six files, copied rather than transcribed, plus a manifest.json stating the
-    version, the tag it came from, the package and its SHA-256, and the resolved
-    version each copied file states. Copied is the operative word: a transcribed
-    version number is a number somebody typed, and the whole point of the
-    manifest is that it is not.
+    Seven files, copied rather than transcribed, plus a manifest.json stating
+    the version, the tag it came from, the package and its SHA-256, and the
+    resolved version each copied file states. Copied is the operative word: a
+    transcribed version number is a number somebody typed, and the whole point
+    of the manifest is that it is not.
 
-    IT REFUSES ON A MISSING FILE, NAMING IT. A manifest with five of six files
+    IT REFUSES ON A MISSING FILE, NAMING IT. A manifest with six of seven files
     in it looks exactly like a complete one to whoever reads it a year later, so
     a partial manifest is worse than none. In particular payload/payload.json
     only exists once build/Build-Payload.ps1 has run, and a release cut without
@@ -32,7 +32,7 @@
     inside a release script is one nobody exercises until the day it matters.
 
 .PARAMETER Root
-    The repository root the six files are read from. Defaults to this script's
+    The repository root the seven files are read from. Defaults to this script's
     parent, which is what a release does.
 
 .PARAMETER Destination
@@ -72,8 +72,14 @@ $PSStyle.OutputRendering = 'PlainText'
 
 if (-not $Root) { $Root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')) }
 
-# The exact six of RELEASING.md item 11, with the flattened names the first
+# The exact seven of RELEASING.md item 11, with the flattened names the first
 # hand-assembled manifest used, so the two are comparable.
+#
+# SEVEN SINCE 2026-08-26, previously six. tool-verdicts.json is part of the
+# resolved set and not documentation about it: it says which tools this build
+# forwards and which upstream versions that judgement was made against, and a
+# release whose manifest cannot state that cannot answer "why did this build
+# refuse a tool the next one allows".
 $wanted = [ordered]@{
     'src-BrowserAI.packages.lock.json'            = 'src/BrowserAI/packages.lock.json'
     'tests-BrowserAI.Tests.packages.lock.json'    = 'tests/BrowserAI.Tests/packages.lock.json'
@@ -81,6 +87,7 @@ $wanted = [ordered]@{
     'payload.package-lock.json'                   = 'build/payload/package-lock.json'
     'payload.json'                                = 'payload/payload.json'
     'browsers.json'                               = 'upstream-snapshots/browsers.json'
+    'tool-verdicts.json'                          = 'tool-verdicts.json'
 }
 
 $missing = @()
@@ -89,7 +96,7 @@ foreach ($entry in $wanted.GetEnumerator()) {
 }
 
 if ($missing) {
-    Write-Error ("The resolved set cannot be recorded: " + ($missing -join ', ') + " is missing from $Root. A manifest holding five of six files reads exactly like a complete one to whoever opens it a year from now, so this refuses rather than writing a partial. If payload/payload.json is the missing one, run build/Build-Payload.ps1 first: a release cut without a payload is not a release.")
+    Write-Error ("The resolved set cannot be recorded: " + ($missing -join ', ') + " is missing from $Root. A manifest holding six of seven files reads exactly like a complete one to whoever opens it a year from now, so this refuses rather than writing a partial. If payload/payload.json is the missing one, run build/Build-Payload.ps1 first: a release cut without a payload is not a release.")
     exit 1
 }
 
@@ -128,6 +135,7 @@ function Get-LockVersion([string] $lockFile, [string] $package) {
 $npm = Get-Content -LiteralPath (Join-Path $destination 'payload.package-lock.json') -Raw | ConvertFrom-Json -AsHashtable
 $payload = Get-Content -LiteralPath (Join-Path $destination 'payload.json') -Raw | ConvertFrom-Json
 $browsers = Get-Content -LiteralPath (Join-Path $destination 'browsers.json') -Raw | ConvertFrom-Json
+$verdicts = Get-Content -LiteralPath (Join-Path $destination 'tool-verdicts.json') -Raw | ConvertFrom-Json
 
 $npmVersion = {
     param($name)
@@ -175,6 +183,13 @@ $manifest = [ordered]@{
             version = $payload.node.version
             lts     = $payload.node.lts
             sha256  = $payload.node.sha256
+        }
+        # What the verdict file itself says it was judged against, read back out
+        # of the copy. A row set is only meaningful beside the upstream it was
+        # adjudicated on, and this is the pair a rollback has to be able to see.
+        toolVerdicts = [ordered]@{
+            schemaVersion = $verdicts.schemaVersion
+            judgedAgainst = $verdicts.judgedAgainst
         }
         browsers = [ordered]@{}
     }

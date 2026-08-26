@@ -35,7 +35,7 @@ namespace BrowserAI.Logging;
 /// in it by thirty days — so a bare pid in a month-old record eventually names a
 /// stranger. The pair is this repository's standing identity for a process:
 /// it is what <see cref="ProcessLiveness.IsAlive(int, long)"/> takes, and it is
-/// spelled here exactly as <c>browserai.json</c> spells
+/// spelled here exactly as <c>browserai.lock</c> spells
 /// <c>processCreatedFileTime</c>, so a log line and a lock record name the same
 /// writer with the same characters.
 /// </para>

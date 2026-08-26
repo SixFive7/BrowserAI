@@ -627,7 +627,7 @@ internal sealed partial class ProcessLogTests
     /// <b>A pid alone does not identify a writer of this file.</b> The shared log
     /// keeps thirty days of records and Windows reuses pids within seconds, so a
     /// bare pid in a week-old record eventually names a stranger - which is the
-    /// same reasoning <c>browserai.json</c> already follows, and the FILETIME here
+    /// same reasoning <c>browserai.lock</c> already follows, and the FILETIME here
     /// is spelled the way that file spells <c>processCreatedFileTime</c> so the
     /// two name a writer with the same characters. <b>Planted red</b> by dropping the
     /// <c>made=</c> field, which is the half a reader loses first because it looks

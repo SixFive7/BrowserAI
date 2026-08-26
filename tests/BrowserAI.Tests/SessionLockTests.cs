@@ -223,7 +223,7 @@ internal sealed class SessionLockTests
     /// whole queue rather than behind one critical section, and the cost was
     /// super-linear: 367 ms at 16 contenders, 3,349 ms at the charter's design
     /// point of 100, and at 200 the then-five-second gate was reached by queueing
-    /// alone. The sharing violation on <c>browserai.json</c> already proves ownership,
+    /// alone. The sharing violation on <c>browserai.lock</c> already proves ownership,
     /// so the gate was being taken to answer a question the kernel had answered.
     /// </para>
     /// </remarks>
@@ -293,7 +293,7 @@ internal sealed class SessionLockTests
     /// both see "free"; A writes and holds its record; B's rename is refused
     /// because A's handle is open, and B <i>retries</i>. The moment anything
     /// closes A's handle — a rewrite, a teardown, a destroy — B's next retry
-    /// lands, and <b>B holds <c>browserai.json</c> while A holds a valid handle to a
+    /// lands, and <b>B holds <c>browserai.lock</c> while A holds a valid handle to a
     /// now-nameless file</b>. Both report ownership. The retry loop becomes the
     /// serialiser, and a retry loop is not a lock.
     /// </para>
@@ -315,7 +315,7 @@ internal sealed class SessionLockTests
         using var scratch = ScratchDirectory.Create("session-probe-free");
         var (directory, path) = NewSession(scratch, "probe-free");
 
-        // No browserai.json at all, so the probe's open fails with "not found" rather
+        // No browserai.lock at all, so the probe's open fails with "not found" rather
         // than with a sharing violation -- the "looks free" answer, which is the
         // one it is not allowed to act on.
         await Assert.That(File.Exists(path.LockFile)).IsFalse();
@@ -1151,7 +1151,7 @@ internal sealed class SessionLockTests
     /// arm.</b> Until 2026-08-19 <c>WriteDurably</c> and the re-open shared a
     /// single <c>catch</c>, so a failure <i>after</i> the rename answered
     /// <i>"the directory was not taken and nothing was changed"</i> — about a
-    /// machine where <c>browserai.json</c> had just been replaced with a record
+    /// machine where <c>browserai.lock</c> had just been replaced with a record
     /// naming this process as the holder. Asserting the honest sentence without
     /// also asserting that the other arm still says <i>nothing was changed</i>
     /// would let the fix be "stop claiming that anywhere", which is not a fix.
@@ -1177,7 +1177,7 @@ internal sealed class SessionLockTests
     /// is the only test in the suite that reaches the end of that budget, so it
     /// is also the only one that proves the wait is bounded at all")</i> — there
     /// are two now. <c>ErrorCatalogueTests.TheLockRowsAreEmittedByRealLockConditions</c>
-    /// denies the same right over a <c>browserai.json</c> that already exists, which
+    /// denies the same right over a <c>browserai.lock</c> that already exists, which
     /// reaches the <b>first</b> open in <c>TakeOrReport</c> rather than the
     /// re-open this test reaches, and that open had no arm for it at all until
     /// the same day.
@@ -1639,9 +1639,9 @@ internal sealed class SessionLockTests
     /// <remarks>
     /// <para>
     /// <b>Why the question is asked twice.</b> `browserai_init`'s own look at
-    /// <c>browserai.json</c> is ungated, which it has to be — it runs before the
-    /// directory is created — so it can land in the instant in which the name is
-    /// unbound while a peer replaces the record, read <see langword="null"/> as
+    /// the record is ungated, which it has to be — it runs before the
+    /// directory is created — so it can land in the instant in which the guard's
+    /// name is unbound while a peer is acquiring the directory, read <see langword="null"/> as
     /// <i>free, proceed</i>, and reach the reclaim below. The reclaim appends a
     /// <c>mode</c> and a <c>browser</c> statement, so what the window costs is a
     /// Firefox session's record gaining a `chromium` statement, or the reverse.
@@ -1944,7 +1944,7 @@ internal sealed class SessionLockTests
         && file.FullName.Contains($"{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 
     /// <summary>
-    /// Whether nothing at all holds <c>browserai.json</c>, asked the way a
+    /// Whether nothing at all holds <c>browserai.lock</c>, asked the way a
     /// competing BrowserAI asks it.
     /// </summary>
     /// <remarks>
@@ -1955,7 +1955,7 @@ internal sealed class SessionLockTests
     /// as unheld: a destroy that unlinked it took the handle with it, which is
     /// the outcome rather than the defect.
     /// </remarks>
-    /// <param name="lockFile">The session's <c>browserai.json</c>.</param>
+    /// <param name="lockFile">The session's <c>browserai.lock</c>.</param>
     /// <returns>Whether it could be opened with no sharing at all.</returns>
     private static bool NothingHoldsTheLockFile(string lockFile)
     {
@@ -2055,10 +2055,12 @@ internal sealed class SessionLockTests
     /// file that reads perfectly well a microsecond later is the rename window,
     /// which is the only one of the three that is Windows rather than a defect.
     /// The temp count is the decisive half: the writer creates
-    /// <c>browserai.json.new-&lt;guid&gt;</c> in this directory and it exists for
-    /// exactly the length of one rewrite, so its presence is direct evidence
+    /// <c>browserai.lock.new-&lt;guid&gt;</c> in this directory and it exists for
+    /// exactly the length of one acquisition, so its presence is direct evidence
     /// that a rename was in flight at this instant rather than an inference
-    /// about how wide a window is.
+    /// about how wide a window is. <i>(Corrected 2026-08-26, previously
+    /// "<c>browserai.json.new-&lt;guid&gt;</c> … the length of one rewrite" —
+    /// there are no rewrites left, so the one rename is acquisition's.)</i>
     /// </remarks>
     /// <param name="lockFile">The lock file that read as no record.</param>
     /// <returns>What the machine says, for the decision and for the message.</returns>
@@ -2106,8 +2108,8 @@ internal sealed class SessionLockTests
     /// record.
     /// </summary>
     /// <param name="RewriteInFlight">
-    /// The writer's own <c>browserai.json.new-&lt;guid&gt;</c> is on disk, so a
-    /// rewrite was demonstrably in progress at that instant. Direct evidence
+    /// The writer's own <c>browserai.lock.new-&lt;guid&gt;</c> is on disk, so an
+    /// acquisition was demonstrably in progress at that instant. Direct evidence
     /// rather than an inference about how wide a window is.
     /// </param>
     /// <param name="RereadFoundARecord">The record was there on the next read.</param>

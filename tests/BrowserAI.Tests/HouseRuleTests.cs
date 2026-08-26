@@ -454,13 +454,19 @@ internal sealed partial class HouseRuleTests
     /// <remarks>
     /// <para>
     /// <b>Following an entry is not free and the cost is not local.</b>
-    /// <c>SessionIndex.Follow</c> ends at <c>SessionLock.ReadRecord</c>, which is
-    /// a strict parse of up to 250 log entries and all their arguments, opened
-    /// through <c>RenameWindow.WaitOut</c> — so one session anywhere on the
-    /// machine whose <c>browserai.json</c> is denied or held adds that budget to
-    /// a walk scoped to a completely unrelated tree. A subtree caller that
-    /// filters afterwards pays both, for every session on the machine, to report
-    /// the few that matched.
+    /// <c>SessionIndex.Follow</c> ends at <c>SessionLock.ReadRecord</c>, which
+    /// opens the session's store read-only and waits <c>SQLITE_BUSY</c> and
+    /// <c>SQLITE_IOERR</c> out inside <c>RenameWindow</c>'s budget — so one
+    /// session anywhere on the machine whose <c>browserai.data</c> is denied or
+    /// whose holder is dying adds that budget to a walk scoped to a completely
+    /// unrelated tree. A subtree caller that filters afterwards pays it for every
+    /// session on the machine, to report the few that matched.
+    /// <i>(Corrected 2026-08-26, previously "a strict parse of up to 250 log
+    /// entries and all their arguments, opened through
+    /// <c>RenameWindow.WaitOut</c> … whose <c>browserai.json</c> is denied or
+    /// held" — the record is a database, there is no cap on entries and no
+    /// argument is stored at all. The cost is smaller and the position of the
+    /// filter is the same rule.)</i>
     /// </para>
     /// <para>
     /// ⚠️ <b>This is a rule about the POSITION of the filter and not about the
@@ -1174,6 +1180,216 @@ internal sealed partial class HouseRuleTests
         }
 
         return complaints;
+    }
+
+    /// <summary>
+    /// <b>The two literals the session guard is made of are the two literals it
+    /// is written with</b> — <c>Hold</c>'s <c>FileShare.Read</c>, and the probe's
+    /// <c>FileAccess.ReadWrite</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Six properties rest on two arguments, and neither of them looks load-
+    /// bearing at the call site.</b> <c>FileShare.Read</c> on the hold is what
+    /// makes one writer per directory, admits every reader, and lets the OS
+    /// release the claim on death; <c>FileAccess.ReadWrite</c> on the probe is
+    /// what makes the probe detectable by that share mode at all. Widen the
+    /// first to <c>ReadWrite</c> and two BrowserAIs drive one profile. Narrow
+    /// the second to <c>Read</c> and every probe answers <i>free</i> about a
+    /// session somebody is driving — <b>and every test above still passes</b>,
+    /// because both perturbations produce a file that opens.
+    /// </para>
+    /// <para>
+    /// <b>Why a tree-as-text scan and not an assertion in
+    /// <c>LockFileTests</c>.</b> The behavioural arms there drive the real
+    /// kernel and are the primary check; what they cannot say is <i>this is the
+    /// mechanism, do not negotiate it</i>. A banned symbol cannot either —
+    /// <c>FileShare</c> is fine everywhere else in the tree, and what is
+    /// forbidden is one value in one method. This is the same judgement
+    /// <see cref="EveryProcessLaunchInTheTreeSuppressesTheConsoleWindow"/> makes
+    /// about <c>CreateNoWindow</c>.
+    /// </para>
+    /// <para>
+    /// <b>Q119, and it is the half a document cannot keep.</b> The six
+    /// properties are written down in
+    /// [ARCHITECTURE](../../ARCHITECTURE.md#locking-ownership-and-the-sweep);
+    /// this is what makes the two that live in an argument list survive an edit
+    /// nobody reviews.
+    /// </para>
+    /// <para>
+    /// <b>What it cannot see:</b> a third open of the same file added elsewhere,
+    /// and whether the values are <i>correct</i> — it holds that they are the
+    /// ones this design chose, which is why the behavioural arms stay.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSessionGuardsTwoLoadBearingLiteralsAreTheOnesItIsWrittenWith()
+    {
+        var guards = RepositoryLayout.ProductSourceFiles
+            .Where(file => string.Equals(file.Name, GuardFile, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Named rather than walked, so a rename or a move is a red build instead
+        // of a scan that quietly reads nothing. That is the failure mode of
+        // every rule keyed on a file name.
+        await Assert.That(guards.Count).IsEqualTo(1);
+
+        var code = await RepositoryLayout.ReadCodeAsync(guards[0]);
+
+        await Assert.That(string.Join(Environment.NewLine, GuardOffences(code))).IsEmpty();
+
+        // ⚠️ BOTH DIRECTIONS, off a synthetic pair rather than off a rewrite of
+        // the real file: the two opens are formatted differently -- one line and
+        // five -- so a perturbation spelled against today's layout would go
+        // looking for a string that a reflow had moved, and report the reflow as
+        // the defect. What the shape supports is a control that carries the same
+        // declarations with the same arguments, which is what this is.
+        const string Correct = """
+            public static LockFileHold Hold(string path) =>
+                new(new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1), path);
+
+            public static LockFileAnswer Probe(string path)
+            {
+                using var probe = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
+            }
+            """;
+
+        await Assert.That(GuardOffences(Correct)).IsEmpty();
+
+        // The two perturbations an edit would plausibly make, each with the
+        // sentence that makes it sound reasonable: share writes "so a second
+        // handle can be taken", and probe read-only "so the look disturbs
+        // nothing". Both leave a file that opens, and both are caught here.
+        var shared = Correct.Replace(
+            "FileShare.Read, bufferSize: 1",
+            "FileShare.ReadWrite, bufferSize: 1",
+            StringComparison.Ordinal);
+
+        await Assert.That(shared).IsNotEqualTo(Correct);
+        await Assert.That(GuardOffences(shared).Count).IsEqualTo(1);
+
+        var harmless = Correct.Replace(
+            "FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete",
+            "FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete",
+            StringComparison.Ordinal);
+
+        await Assert.That(harmless).IsNotEqualTo(Correct);
+        await Assert.That(GuardOffences(harmless).Count).IsEqualTo(1);
+
+        // And a file the scan cannot find the opens in is two offences rather
+        // than a pass, which is the vacuity every rule of this shape is prone
+        // to.
+        await Assert.That(GuardOffences("internal static class LockFile { }").Count).IsEqualTo(2);
+    }
+
+    /// <summary>The file the whole of directory ownership is written in.</summary>
+    private const string GuardFile = "LockFile.cs";
+
+    /// <summary>
+    /// The two opens, and what each one must ask for.
+    /// </summary>
+    /// <remarks>
+    /// Keyed on the declaration rather than on a line number, and read out of
+    /// the <c>new FileStream(</c> that follows it, so reformatting the argument
+    /// list cannot satisfy this and moving the method cannot vacate it.
+    /// </remarks>
+    private static readonly (string Declaration, string Required, string Because)[] GuardOpens =
+    [
+        (
+            "LockFileHold Hold(",
+            "FileShare.Read",
+            "the hold's share mode is the whole of one-writer-per-directory: it admits every reader and refuses every writer, and widening it lets a second BrowserAI drive one profile"),
+        (
+            "LockFileAnswer Probe(",
+            "FileAccess.ReadWrite",
+            "the probe must ask for access outside Read or a holder's FileShare.Read cannot refuse it, and a probe nothing refuses reports every driven session as free"),
+    ];
+
+    /// <summary>The whole per-file judgement, so the control can drive both directions through it.</summary>
+    /// <param name="code">The guard's code, comments already stripped.</param>
+    /// <returns>One complaint per open that does not ask for what it must.</returns>
+    private static List<string> GuardOffences(string code)
+    {
+        var offences = new List<string>();
+
+        foreach (var (declaration, required, because) in GuardOpens)
+        {
+            if (Arguments(code, declaration) is not { } arguments)
+            {
+                offences.Add($"{GuardFile}: no 'new FileStream(' follows '{declaration}' — {because}");
+                continue;
+            }
+
+            if (!Names(arguments, required))
+            {
+                offences.Add($"{GuardFile}: the open in '{declaration}' does not ask for {required} — {because}");
+            }
+        }
+
+        return offences;
+    }
+
+    /// <summary>Whether an argument list names an enumeration member, whole.</summary>
+    /// <remarks>
+    /// ⚠️ <b>A plain <c>Contains</c> is satisfied by the one edit this rule
+    /// exists to catch</b>: <c>FileShare.ReadWrite</c> carries
+    /// <c>FileShare.Read</c> inside it, so the widened share mode would read as
+    /// the narrow one. The member has to end where it ends.
+    /// </remarks>
+    /// <param name="arguments">The argument list.</param>
+    /// <param name="member">The <c>Type.Member</c> spelling required.</param>
+    /// <returns>Whether it is named as a whole token.</returns>
+    private static bool Names(string arguments, string member)
+    {
+        for (var at = arguments.IndexOf(member, StringComparison.Ordinal); at >= 0;
+             at = arguments.IndexOf(member, at + 1, StringComparison.Ordinal))
+        {
+            var after = at + member.Length;
+
+            if (after >= arguments.Length || !(char.IsLetterOrDigit(arguments[after]) || arguments[after] is '_'))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>The argument list of the first <c>new FileStream(</c> after a declaration.</summary>
+    /// <param name="code">The file's code.</param>
+    /// <param name="declaration">The declaration to start looking at.</param>
+    /// <returns>The arguments, or <see langword="null"/> when there is no such open.</returns>
+    private static string? Arguments(string code, string declaration)
+    {
+        var at = code.IndexOf(declaration, StringComparison.Ordinal);
+        if (at < 0)
+        {
+            return null;
+        }
+
+        const string Opener = "new FileStream(";
+
+        var opened = code.IndexOf(Opener, at, StringComparison.Ordinal);
+        if (opened < 0)
+        {
+            return null;
+        }
+
+        var start = opened + Opener.Length;
+        var depth = 1;
+
+        for (var index = start; index < code.Length; index++)
+        {
+            depth += code[index] switch { '(' => 1, ')' => -1, _ => 0 };
+
+            if (depth is 0)
+            {
+                return code[start..index];
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Parses a hexadecimal or decimal literal as written in source.</summary>

@@ -852,7 +852,7 @@ internal static class SessionErrors
         + "Run BrowserAI as an ordinary interactive user.";
 
     /// <summary>
-    /// <c>browserai.json</c> is there and this process cannot open it, and no other
+    /// <c>browserai.lock</c> is there and this process cannot open it, and no other
     /// process is holding it.
     /// </summary>
     /// <remarks>
@@ -904,8 +904,8 @@ internal static class SessionErrors
     // that had been told nothing would then be running against another session's
     // purpose with nothing on disk to say so. The flag bought a moment of
     // deliberateness at the cost of a refusal on a directory that is perfectly
-    // usable. Under schema 2 every field of browserai.json is an ordered list of
-    // timestamped statements and nothing is overwritten: a resumed copy appends
+    // usable. Every field of the record is an ordered list of timestamped
+    // statements and nothing is overwritten: a resumed copy appends
     // its own path to a `directory` history that still carries the original, and
     // the answer hands the model that history. The confirmation was a question
     // whose entire content could be returned as fact, which is the definition of

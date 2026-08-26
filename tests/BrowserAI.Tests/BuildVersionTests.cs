@@ -109,7 +109,7 @@ internal sealed partial class BuildVersionTests
     [Test]
     public async Task EverySessionRecordsTheVersionTheBuildWasDerivedAs()
     {
-        // browserai.json's build stamp is the first thing a support question reads,
+        // browserai.data's build stamp is the first thing a support question reads,
         // and until step 18 it would have said 0.0.0.0 for the entire 0.x line.
         using var scratch = ScratchDirectory.Create("version-stamp");
         var path = SessionPath.For(Path.Combine(scratch.Path, "stamped"));

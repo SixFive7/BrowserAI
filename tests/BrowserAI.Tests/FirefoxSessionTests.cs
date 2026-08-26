@@ -357,7 +357,7 @@ internal sealed class FirefoxSessionTests
 
         await Assert.That(text).Contains("Nothing was changed");
 
-        // Case is normalised rather than refused: what is written to browserai.json
+        // Case is normalised rather than refused: what is written to browserai.data
         // and read back forever is the canonical spelling.
         var created = await CallAsync(rig.Client, SessionToolSurface.Init, new JsonObject
         {

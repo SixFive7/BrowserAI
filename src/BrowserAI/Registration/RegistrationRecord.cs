@@ -58,10 +58,13 @@ internal static class RegistrationRecord
     /// <param name="when">When it ran.</param>
     /// <returns>UTF-8 bytes, LF-separated, no BOM.</returns>
     /// <remarks>
-    /// <b>The relaxed encoder, for the same reason <c>browserai.json</c> uses one:</b>
-    /// the default escapes <c>+</c>, so every ISO 8601 timestamp east of UTC
-    /// would round-trip perfectly and be unreadable by the person this file
-    /// exists for.
+    /// <b>The relaxed encoder, and the reason is the reader:</b> the default
+    /// escapes <c>+</c>, so every ISO 8601 timestamp east of UTC would round-trip
+    /// perfectly and be unreadable by the person this file exists for.
+    /// *(Corrected 2026-08-26, previously "for the same reason
+    /// <c>browserai.json</c> uses one" — that file is gone, and the timestamps it
+    /// carried are columns in <c>browserai.data</c> now, where no encoder sees
+    /// them.)*
     /// </remarks>
     public static byte[] ToUtf8(RegistrationReport report, RegistrationIntent intent, string version, DateTimeOffset when)
     {

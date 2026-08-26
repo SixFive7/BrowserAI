@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Text.RegularExpressions;
+using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
@@ -58,16 +59,58 @@ internal sealed partial class ReVerificationIndexTests
     [Test]
     public async Task EveryRowIsEitherManualOrNamesSomethingThatExists()
     {
+        await Assert.That(string.Join(Environment.NewLine, Offenders(Rows()))).IsEmpty();
+
+        // ⚠️ BOTH DIRECTIONS over the clause, off synthetic rows rather than by
+        // doctoring the index: a name inside a `previously "…"` clause is a
+        // record of what a row USED to name, and a name outside one is a claim.
+        // Only the second is this gate's business.
+        var superseded = Offenders([("9", "`ReVerificationIndexTests.TheIndexReportsItsOwnSizeCorrectly`, *previously \"`GoneTests.Vanished`\"*", "")]);
+        var claimed = Offenders([("9", "`GoneTests.Vanished`", "")]);
+
+        await Assert.That(string.Join(Environment.NewLine, superseded)).IsEmpty();
+        await Assert.That(claimed.Count).IsEqualTo(1);
+
+        // And a cell whose only name is inside the clause names nothing now,
+        // which is a different offence from naming something that is gone.
+        var emptied = Offenders([("9", "*previously \"`GoneTests.Vanished`\"*", "")]);
+
+        await Assert.That(emptied.Count).IsEqualTo(1);
+        await Assert.That(emptied[0]).Contains("names neither a test nor manual");
+    }
+
+    /// <summary>
+    /// The whole per-row judgement, so the controls can drive both directions
+    /// through it.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The <c>previously "…"</c> clause is stripped first, and it was not
+    /// until 2026-08-26.</b> <c>HazardIndexTests</c> has read around it since
+    /// the day that gate provoked its first correction; this one did not, so a
+    /// superseded test name quoted the way <c>CLAUDE.md</c> requires — verbatim,
+    /// in backticks — failed here while the identical correction passed there.
+    /// The cost was paid in the document: rows 19 and 96 of the index quoted
+    /// dead test names <b>without</b> backticks and explained the gate in prose,
+    /// which is a document bent around a test. Both now read as corrections, and
+    /// the clause has [one definition](Harness/CorrectionClause.cs) that both
+    /// gates ask.
+    /// </remarks>
+    /// <param name="rows">The rows to judge.</param>
+    /// <returns>One complaint per row that names nothing, or names something gone.</returns>
+    private static List<string> Offenders(IEnumerable<(string Number, string AutomatedBy, string Content)> rows)
+    {
         var offenders = new List<string>();
 
-        foreach (var (number, automatedBy, _) in Rows())
+        foreach (var (number, automatedBy, _) in rows)
         {
             if (automatedBy.Contains("manual", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            var named = Backticked().Matches(automatedBy).Select(match => match.Groups[1].Value).ToList();
+            var claims = CorrectionClause.Strip(automatedBy);
+
+            var named = Backticked().Matches(claims).Select(match => match.Groups[1].Value).ToList();
             if (named.Count == 0)
             {
                 offenders.Add($"row {number}: '{automatedBy}' names neither a test nor manual");
@@ -79,7 +122,7 @@ internal sealed partial class ReVerificationIndexTests
                 .Select(name => $"row {number}: '{name}' does not exist"));
         }
 
-        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+        return offenders;
     }
 
     [Test]

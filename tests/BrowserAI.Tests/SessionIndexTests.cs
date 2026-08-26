@@ -252,7 +252,7 @@ internal sealed class SessionIndexTests
 
         // A profile shaped like the real thing, including the file whose name is
         // one character from ours: Chromium's own `lockfile`. Keying on anything
-        // fuzzier than an exact `browserai.json` would claim this directory.
+        // fuzzier than an exact `browserai.data` would claim this directory.
         var profile = Path.Combine(scratch.Path, "User Data");
         _ = Directory.CreateDirectory(Path.Combine(profile, "Default"));
         await File.WriteAllTextAsync(Path.Combine(profile, "Local State"), """{"os_crypt":{"encrypted_key":"x"}}""");
@@ -785,7 +785,7 @@ internal sealed class SessionIndexTests
             lease.Acquired!.Dispose();
         }
 
-        // ReadData on the directory, inherited by the browserai.json inside it:
+        // ReadData on the directory, inherited by the browserai.data inside it:
         // the record cannot be opened at all, which is what a whole-machine walk
         // pays for and a scoped one must not.
         using (DirectoryDenial.Apply(

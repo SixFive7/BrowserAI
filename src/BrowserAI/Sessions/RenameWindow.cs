@@ -75,7 +75,7 @@ namespace BrowserAI.Sessions;
 /// <i>somebody owns this</i> into <i>eventually, nobody did</i> — which is the
 /// mechanism, inverted. <b>Never route one of those through here.</b>
 /// <c>SessionLock.ProbeForHolder</c> is the newest and the clearest case: it
-/// opens <c>browserai.json</c> in front of the per-directory gate to find out whether
+/// opens <c>browserai.lock</c> in front of the per-directory gate to find out whether
 /// anyone owns it, so a denial waited out would be a live owner waited out. It
 /// is also the one that cannot decide <see cref="UnauthorizedAccessException"/>
 /// at all — delete-pending and a permanent ACL denial arrive identically — so it
@@ -105,7 +105,7 @@ namespace BrowserAI.Sessions;
 /// <see cref="IOException"/> … a sharing violation on one of these opens means
 /// the holder opened the file in a mode that excludes us").</b> That reading is
 /// right for the two rows above it and wrong for the third, and the difference
-/// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>browserai.json</c>
+/// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>browserai.lock</c>
 /// <c>FileAccess.ReadWrite</c> without the gate, so its handle — microseconds
 /// wide — refuses a gate holder's own re-open, which then reported a record it
 /// had genuinely written as one it could not take. <b>The probe cannot be made

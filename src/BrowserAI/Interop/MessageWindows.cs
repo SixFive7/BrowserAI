@@ -175,7 +175,7 @@ internal static partial class MessageWindows
     /// truncated to a prefix and no caller learns that it was.</b> Named here
     /// rather than fixed, on 2026-08-23, because the consequence is bounded by
     /// something outside this method: the only thing done with a title is to
-    /// resolve it to a directory and test whether its <c>browserai.json</c> can
+    /// resolve it to a directory and test whether its <c>browserai.lock</c> can
     /// be taken, so a prefix fails that test and lands in the <b>refuse</b>
     /// direction. Reporting the truncation would add a branch to the one path
     /// this type wants boring, and would buy nothing the ownership test does not
