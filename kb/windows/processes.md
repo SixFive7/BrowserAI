@@ -1207,6 +1207,49 @@ KnownDLLs, `[MACHINE]` for the list membership. Re-establish by copying a
 `System32` DLL beside a probe and reading `GetModuleFileNameW(GetModuleHandleW(name))`
 after a call, with and without the attribute.
 
+### `System32` is not a superset of "no attribute", and the module cache hides it — measured 2026-08-26
+
+**`[DefaultDllImportSearchPaths(DllImportSearchPath.System32)]` makes a native
+library sitting beside the host UNFINDABLE, and it does not fall back.** The
+entry above measures the attribute against libraries that live *in* `System32`,
+where it is inert or protective; this is the other case, and it answers the
+opposite way. Measured 2026-08-26 on .NET **10.0.11**, `win-x64`, against a
+purpose-built `probe_native.dll` (one exported function, compiled with the same
+MSVC the publish uses) copied into the test host's own output directory, with
+four declarations of the same entry point differing only in the attribute:
+
+| Attribute | Result |
+|---|---|
+| `DllImportSearchPath.System32` | **`DllNotFoundException` (0x8007007E)** |
+| `DllImportSearchPath.SafeDirectories` | loaded |
+| `DllImportSearchPath.AssemblyDirectory` | loaded |
+| none at all | loaded |
+
+`SafeDirectories` is `LOAD_LIBRARY_SEARCH_DEFAULT_DIRS`, which covers the
+**application directory** as well as `System32`; the System32-only flag covers
+neither the application directory nor a fallback to the runtime's ordinary
+probing. `[MACHINE]` for the runtime version, `[STABLE]` for the flag semantics.
+
+⚠️ **The trap is the per-module cache, and it is why a mixed file tests clean.**
+In the first arrangement of the same probe the four calls ran in the order
+*none · System32 · SafeDirectories · AssemblyDirectory* and **all four returned
+the value** — the resolved library is cached per module name, so once any one
+declaration has loaded it the rest bind to the cached handle whatever their
+attribute says. Reordering so that `System32` ran **first** in a fresh process
+produced the table above. A file that mixed the values would therefore pass or
+fail purely on which declaration happened to be called first.
+
+**What this decided.** `Storage/Sqlite.cs` carries `SafeDirectories` rather than
+the `System32` every declaration under [`Interop/`](../../src/BrowserAI/Interop)
+carries, and the difference is not a style choice: `e_sqlite3` is not an OS
+component, so under a CoreCLR host it can only ever be a loose DLL beside the
+host, which `System32` refuses to find. Under the published binary the attribute
+is inert in a third way again — the symbol is resolved by the linker at publish
+time and nothing is loaded at all. `SafeDirectories` is also the strongest value
+CA5393 accepts, since `AssemblyDirectory` and `ApplicationDirectory` are both on
+its unsafe list. Re-establish by compiling a one-function DLL, copying it beside
+a console host, and calling it **first** through a `System32`-only declaration.
+
 **`Marshal.GetLastPInvokeError()` survives managed work and is destroyed by the
 next P/Invoke, and without `SetLastError = true` there is nothing to read at
 all.** Measured 2026-08-18 on .NET 10, `win-x64`, against a deliberately failing

@@ -11,7 +11,7 @@
 
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
 
-  "lastChecked": "2026-08-24",
+  "lastChecked": "2026-08-26",
   "result": "no drift",
 
   "resolved": {
@@ -44,6 +44,31 @@
       "reviewed": "v24.19.0",
       "drift": false,
       "how": "nodejs.org/dist/index.json, newest entry with an lts field (Krypton, released 2026-08-03, npm 11.17.0). The Current line is deliberately not tracked."
+    }
+  },
+
+  "_why_vendored_is_a_separate_section": "`resolved` above is the five upstreams the BUILD floats to latest, and UpstreamReviewTests.TheFiveReviewedUpstreamsAreTheOnesTheDriftCheckResolves holds that set identical, in both directions, to upstream-review.json's. `vendored` below is source PINNED inside this tree: it does not float, no build resolves it, it has no golden snapshot to diff, and reviewing it is a human downloading one zip and re-running the gate. Putting it in `resolved` would either break that correspondence or force a name into upstream-review.json that no review procedure applies to -- and editing upstream-review.json to make a test pass is exactly what CLAUDE.md forbids. So a pin is never counted as a float, and the row below carries its own `checked` date because the top-level `lastChecked` is about the five.",
+
+  "vendored": {
+    "sqlite-amalgamation": {
+      "pinned": "3.53.4",
+      "resolved": "3.53.4",
+      "drift": false,
+      "checked": "2026-08-26",
+      "vendored_at": "third-party/sqlite/sqlite3.c and third-party/sqlite/sqlite3.h, extracted from sqlite-amalgamation-3530400.zip. shell.c and sqlite3ext.h are NOT vendored: nothing here builds a shell, and sqlite3ext.h is already inlined into the amalgamation.",
+      "archive": {
+        "name": "sqlite-amalgamation-3530400.zip",
+        "bytes": 2946650,
+        "sha3-256": "628a44cfe82c66aed1ccbbe85a562d2e33ebe64b3288981ed76285612227934e",
+        "note": "sqlite.org publishes SHA3-256 and not SHA-256. Verified 2026-08-26: the downloaded archive hashed to exactly this value, and the size matched to the byte. The archive itself is NOT in the tree, so nothing can re-derive this hash -- it is provenance. What IS re-derivable is the pair of file hashes below, and SqliteTests checks them on every run."
+      },
+      "files": {
+        "third-party/sqlite/sqlite3.c": "b1dd5d74ec7f29055a6684fa06fb3c2f6821c87dd38f9a458dfd2e8a1db28189",
+        "third-party/sqlite/sqlite3.h": "919e7f2e8ed1d8f56ac17b412b8971c76aa5d1a879752cc6058f75e7d5910e1d",
+        "note": "SHA-256 of the files as they sit on disk. Stable across checkouts because .gitattributes normalises everything to LF and the amalgamation already ships LF (measured 2026-08-26: 269,649 LF and zero CR in sqlite3.c), so git rewrites nothing on the way in or out."
+      },
+      "how": "sqlite.org/download.html, and read the MACHINE-READABLE line rather than the rendered table: the page source carries `PRODUCT,<version>,<year>/sqlite-amalgamation-<n>.zip,<bytes>,<sha3-256>` for exactly this artifact. Download that URL, check the SHA3-256 BEFORE unzipping, and take sqlite3.c and sqlite3.h. This is NOT a registry query and NOT an npm or nuget `latest`: no maintained package carries this source at all, which is why it is pinned here. The nearest cross-check is the floating `SourceGear.sqlite3` nuget version, whose version number IS the SQLite version and which lags sqlite.org by 3-30 days.",
+      "watch": "ericsink/SQLitePCL.raw issue 657, 'Provide static libraries for Native AOT deployment' -- open since 2025-12-27, owner said 2026-01-08 he plans to work on it. The 3.x line already ships libe_sqlite3.a for fourteen Linux RIDs and nothing for win-*. THE DAY a win-x64 e_sqlite3.lib ships inside SourceGear.sqlite3, build/Sqlite.targets' compile step is deleted, <NativeLibrary> points into the restored package, and the native floats again like everything else. Check it by globbing the restored package for a .lib under runtimes/win-x64 -- a glob for *.a in the same package returns twenty, which is the positive control that the glob shape works."
     }
   }
 }

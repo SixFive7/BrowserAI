@@ -339,6 +339,43 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       move into automation. Bringing CI back is
       [its own item](#continuous-integration), and it is not this one.
 
+## Upstream asks
+
+- [ ] **Ask `@playwright/mcp` for an option that emits absolute paths in tool
+      results.** Every file the child produces is named in the answer with a path
+      relative to the child's working directory, and the six shapes all come from
+      two call sites in `Response`. A client that is not a process with a working
+      directory cannot resolve those, which is every LLM reading a tool result.
+      There is no configuration key for it today; verified against the shipped
+      bundle at `@playwright/mcp` 0.0.79 / `playwright-core`
+      1.63.0-alpha-2026-08-05, 2026-08-25.
+
+      BrowserAI works around it by naming every artifact absolutely in its own
+      result note and saying so in one sentence, which is a workaround rather
+      than a fix. If upstream adds the option the workaround can go.
+
+      **File this text, unchanged:**
+
+      > **Title:** Option for absolute paths in tool result links
+      >
+      > Tool results name generated files with paths relative to the server's
+      > working directory, for example `- [Snapshot](./page-2026-08-25T09-14-22-104Z.yml)`.
+      >
+      > A client that is not a process with a working directory cannot resolve
+      > these. This is the normal case when the consumer is a model rather than
+      > a shell.
+      >
+      > Request: a config option such as `pointerPaths: "absolute" | "relative"`,
+      > default `relative`, that makes the path returned by
+      > `Response._computeRelativeTo` absolute.
+      >
+      > It would cover the screenshot, PDF and storage-state links, the snapshot
+      > link, the console log link, the download line, binary response body
+      > lines, and the trace links. They all resolve through the same two call
+      > sites.
+
+---
+
 ## Continuous integration
 
 - [ ] **Bring CI back — but not on GitHub Actions by default, and not before the

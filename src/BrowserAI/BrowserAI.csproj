@@ -154,6 +154,16 @@
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
 
+  <!-- SQLite is compiled from the vendored amalgamation and linked into the
+       executable, so the publish output stays one file. Imported rather than
+       inlined for the same reason UpstreamSnapshots.targets is: it is a build
+       step with its own toolchain discovery, and it is deleted whole on the day
+       upstream ships a win-x64 static library (drift-check.json carries the
+       watch). Imported HERE, above the SDK's own targets, because the items it
+       declares are read by IlcCompile and SetupOSSpecificProps and both run
+       before the link. -->
+  <Import Project="..\..\build\Sqlite.targets" />
+
   <ItemGroup>
     <!-- The suite asserts on internals by design: the point of the app-paths
          seam and the stdio wrapper is that they are testable, and exporting

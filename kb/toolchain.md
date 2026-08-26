@@ -552,3 +552,99 @@ does on such a machine: nothing here has run against `LongPathsEnabled = 0`, and
 the product makes no check and produces no diagnostic that would name it.
 Re-establish with `Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem
 -Name LongPathsEnabled`.
+
+## Compiling a vendored C library into the publish
+
+**The SQLite amalgamation compiles into a static library and links into
+`BrowserAI.exe` with no new prerequisite and no new file in the publish
+output.** Measured 2026-08-26 on the reference machine, MSVC from Visual Studio
+**18** Community, SDK **10.0.400** / ILC **10.0.11**, `win-x64`:
+
+| | |
+|---|--:|
+| `cl /nologo /c /MT /O2` over `sqlite3.c`, cold | **12.1 s** |
+| `sqlite3.obj` | 3,110,519 B |
+| `sqlite3.lib` | 3,243,978 B |
+| `BrowserAI.exe` before the link | 18,126,336 B |
+| `BrowserAI.exe` after it | **19,194,880 B** (+1,068,544, +5.9%) |
+| Whole cold publish, native intermediates deleted first | **42.96 s** |
+| Publish diagnostics | **0 Warning(s), 0 Error(s)**, exit 0 |
+| Files added to the publish directory | **none** |
+
+`[MACHINE]` for every figure. Re-establish by deleting
+`src\BrowserAI\obj\sqlite` and `src\BrowserAI\obj\Release\net10.0-windows\win-x64`
+and running the publish at `-v normal`.
+
+**The provenance is a SHA3-256 and not a SHA-256, and sqlite.org publishes a
+machine-readable line for it.** The rendered download table is not the thing to
+read; the page source carries
+`PRODUCT,3.53.4,2026/sqlite-amalgamation-3530400.zip,2946650,628a44cfe82c66aed1ccbbe85a562d2e33ebe64b3288981ed76285612227934e`,
+whose fields are version, path, bytes and hash. Verified 2026-08-26: the
+downloaded archive matched that hash and that byte count exactly. `[STABLE]` —
+a released archive's hash cannot move. The pin, the two file hashes and the
+re-resolve procedure live in [`drift-check.json`](../drift-check.json) under
+`vendored`, deliberately outside `resolved`, because `resolved` is the five
+upstreams the build floats and a name added there has to exist in
+`upstream-review.json` too.
+
+**The amalgamation ships LF and is warning-clean at `/W4`.** Measured
+2026-08-26: `sqlite3.c` carries **269,649 LF and zero CR**, so
+`.gitattributes`' `* text=auto eol=lf` rewrites nothing on the way into or out
+of the repository — which matters because a 9 MB file silently renormalised
+would change its recorded hash on every checkout. Compiled at `/W4` with the
+shipped flag set it emits **zero** warnings, which is why the build does not
+raise the warning level for it: the default is already clean, and forcing `/W4`
+would only make a future SQLite release noisy in third-party source nobody here
+maintains. `[MACHINE]` for the compiler, `[STABLE]` for the line endings.
+
+⚠️ **`Exec` at `StandardOutputImportance="Low"` still raises a canonical warning,
+and this needed a control rather than an assumption.** The compile is run with
+`EchoOff="true"` and its stdout at `Low`, so the *"0 Warning(s)"* above is only
+evidence if a `cl` warning would have escaped that. `/W4` could not be used as
+the control, because the source is clean at `/W4` and a control that cannot fail
+proves nothing. Measured instead on a throwaway project, 2026-08-26: an `Exec`
+with exactly those two settings, whose command echoes
+`probe.c(42,1): warning C4996: …` to stdout, surfaced it as a real MSBuild
+warning **even at `-v:minimal`**. `ToolTask` matches the canonical format before
+importance is applied. `[STABLE]`.
+
+**What it does NOT do is fail the publish.** `TreatWarningsAsErrors` is a
+*compiler* property handed to csc and ILC; it does not promote an MSBuild task
+warning, and `MSBuildTreatWarningsAsErrors` is not set here. So a `cl` warning
+would be counted and printed and the publish would still exit 0 — which is a
+weaker guarantee than the one the ILC output has, and is stated here rather than
+implied.
+
+**No `/Zi`, and the reason is a warning rather than a size.** A `.lib` compiled
+with `/Zi` records a path to a PDB the ILC link is never given, `link.exe`
+raises **LNK4099**, and a repository whose publish is expected to print zero
+warnings then reports one about a missing debug file. `/Z7` puts the same
+information inside the object and is the flag to reach for if it is ever wanted.
+Measured 2026-08-26: with `/O2 /MT` and no `/Zi`, **`LNK4099` appears zero times**
+in a cold publish log.
+
+**ILC's own toolchain discovery cannot be reused, and the reason is one missing
+variable.** `Microsoft.NETCore.Native.Windows.targets` runs `findvcvarsall.bat`,
+which asks `vswhere` for `Microsoft.VisualStudio.Component.VC.Tools.x86.x64`,
+calls `vcvarsall.bat`, and then echoes **`link.exe`'s directory and `%LIB%`** —
+and nothing else. `cl.exe` sits in that same directory, so the compiler is
+found; but `%INCLUDE%` is never echoed, and a `cl` with no `INCLUDE` cannot
+resolve `stdio.h`. So [`build/Sqlite.targets`](../build/Sqlite.targets) makes
+the same `vswhere` query and calls `vcvarsall.bat` itself, which sets `PATH`,
+`INCLUDE` and `LIB` together. `[FLOATS]` — it reads a private layout of the ILC
+package, and re-verification row 121 covers it.
+
+⚠️ **`IntermediateOutputPath` is EMPTY inside a `.targets` imported from the
+project body**, and using it there is silent rather than loud: the archive lands
+at the project root and the `NativeLibrary` item points at a relative path.
+`BaseIntermediateOutputPath` is set by `Microsoft.Common.props`, which the SDK
+imports *above* the project body, and is therefore the one to compose from;
+`IntermediateOutputPath` is set by `Microsoft.Common.CurrentVersion.targets`,
+imported *below* it. `[STABLE]`.
+
+⚠️ **`DirectPInvoke` and `NativeLibrary` must be evaluation-time items.**
+`DirectPInvoke` is read by `IlcCompile` and `NativeLibrary` by
+`SetupOSSpecificProps`, and both run before `LinkNative` — so declaring either
+inside a `BeforeTargets="LinkNative"` target writes it after the only readers
+have looked, and the publish then succeeds while binding the module lazily at
+run time. `[FLOATS]`, same package layout as above.

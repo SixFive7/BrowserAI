@@ -8,6 +8,7 @@ using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
@@ -126,7 +127,16 @@ internal static class Program
             BuildVersion.Current,
             Environment.ProcessId,
             Environment.ProcessPath ?? "<unknown>",
-            Environment.CurrentDirectory);
+            Environment.CurrentDirectory,
+
+            // ⚠️ THE FIRST CALL INTO THE STATICALLY LINKED SQLITE, and it is
+            // here rather than anywhere later on purpose. If the amalgamation
+            // did not compile, or ILC did not link the archive, this line is
+            // where that shows -- on the startup path, in the first record,
+            // before a session exists. The alternative is finding out at the
+            // moment a session first writes its record, which is the worst
+            // available place and the one the loose-DLL deployments hit.
+            Sqlite.Version);
 
         foreach (var (level, message, failure) in velopack)
         {
@@ -463,22 +473,41 @@ internal static partial class StartupLog
     /// version is recorded.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The version is here because the process log survives an update</b> —
     /// it lives outside <c>current\</c>, which an update replaces wholesale, so
     /// the log of a machine that updated itself carries both versions and the
     /// moment it changed. Without it, *"which build was running when this
     /// happened"* is unanswerable for every past run.
+    /// </para>
+    /// <para>
+    /// <b>The SQLite version is here for the same reason and for one more.</b>
+    /// It is the only dependency this product does not float — no maintained
+    /// package ships a win-x64 static library, so the amalgamation is pinned in
+    /// the tree and compiled by the build — and a pin is exactly the thing that
+    /// stops matching what a reader assumes. Recording it beside the build
+    /// version makes <i>"which SQLite was linked when this happened"</i>
+    /// answerable for every past run, on the same file that already survives an
+    /// update.
+    /// </para>
+    /// <para>
+    /// It is also the whole of what proves the static link at all: the archive
+    /// is resolved by the linker at publish time, so a build in which the
+    /// compile step quietly did nothing is indistinguishable from a correct one
+    /// everywhere except at a call, and this is the earliest call there is.
+    /// </para>
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="version">The version derived from the git tag at build time.</param>
     /// <param name="processId">This process.</param>
     /// <param name="imagePath">The binary it is running.</param>
     /// <param name="workingDirectory">Where it was started.</param>
+    /// <param name="sqlite">The version of the SQLite compiled into this binary.</param>
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "BrowserAI {Version} started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory}")]
-    public static partial void Started(ILogger logger, string version, int processId, string imagePath, string workingDirectory);
+        Message = "BrowserAI {Version} started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory} sqlite={Sqlite}")]
+    public static partial void Started(ILogger logger, string version, int processId, string imagePath, string workingDirectory, string sqlite);
 
     [LoggerMessage(
         EventId = 2,

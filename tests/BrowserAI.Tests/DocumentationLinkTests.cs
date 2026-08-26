@@ -383,6 +383,114 @@ internal sealed partial class DocumentationLinkTests
         await Assert.That(string.Join(Environment.NewLine, assets)).IsEmpty();
     }
 
+    /// <summary>
+    /// A line with every inline code span blanked, so that a link somebody
+    /// <b>quoted</b> is not read as a link somebody <b>made</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-26, and it is the same rule this class already rests
+    /// on, one layer over.</b> The remarks above say the scan must read raw text
+    /// and never <see cref="RepositoryLayout.ReadCodeAsync"/>, because writing
+    /// down <i>why</i> a rule exists must not violate the rule. Quoting a link is
+    /// the same act: <c>TODO.md</c> carries the verbatim text of an upstream
+    /// feature request, and that text quotes upstream's own output —
+    /// <c>`- [Snapshot](./page-2026-08-25T09-14-22-104Z.yml)`</c> — as an example
+    /// of the defect being reported. It is inside a code span, so no renderer
+    /// treats it as a link, and this scan reported it as a broken one.
+    /// </para>
+    /// <para>
+    /// <b>It loses no coverage, and that was measured rather than argued.</b>
+    /// Counted over the whole scanned corpus on 2026-08-26: <b>1,304</b> link
+    /// targets raw, <b>1,300</b> after blanking, and all <b>four</b> of the
+    /// difference are the same quoted example — upstream's snapshot line, in
+    /// <c>TODO.md</c>, in <c>README.md</c> and twice in this file. Not one real
+    /// link in the tree is hidden. The pairing is what makes it safe: the pattern
+    /// requires an opening and a closing backtick on the same line, so an
+    /// unpaired one matches nothing and blanks nothing, and the pattern begins at
+    /// the closing bracket rather than the opening one — so backticks around a
+    /// link's <i>text</i>, which is the commonest shape in this repository's
+    /// prose, sit entirely outside what it looks at. (Spelled in words rather
+    /// than shown, for the reason <see cref="MarkdownLink"/>'s own remark gives:
+    /// a paragraph here that writes the shape out becomes an occurrence of it,
+    /// and this one did — the scan named this very line.) Blanking is by equal-length
+    /// spaces so that every match index still lands in the raw line the offender
+    /// message prints.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The first version of that measurement said five, and the fifth was
+    /// real.</b> A line in <c>DECISIONS.md</c> carried <b>25</b> backticks — an
+    /// odd number — because a <b>lone carriage return</b> sat inside it where the
+    /// two characters <c>\r</c> belonged, in the path
+    /// <c>&lt;browsers root&gt;\reinstall.lock</c>. That split the line, left one
+    /// half with unbalanced spans, and shifted every pairing on it, so a genuine
+    /// link went dark. It was a pre-existing defect rather than a limit of this
+    /// approach — a CommonMark renderer pairs single backticks left to right
+    /// exactly as this does, so GitHub had been rendering that line wrong all
+    /// along — and it was repaired rather than accommodated. <b>Anything that
+    /// hides a link is a defect somewhere</b>; the count above is what says which
+    /// one, and re-running it is a loop over the corpus rather than a judgement.
+    /// </para>
+    /// <para>
+    /// <b>The alternative was to reword the quoted text</b>, and it was rejected:
+    /// the paragraph's own instruction is <i>"File this text, unchanged"</i>, so
+    /// editing it to please a scanner would break the one thing it is for.
+    /// </para>
+    /// </remarks>
+    /// <param name="line">One raw line.</param>
+    /// <returns>The line, with inline code spans replaced by spaces.</returns>
+    private static string OutsideCodeSpans(string line) =>
+        InlineCodeSpan().Replace(line, match => new string(' ', match.Length));
+
+    /// <summary>
+    /// A quoted link is not a link, and a link beside a code span still is.
+    /// </summary>
+    /// <remarks>
+    /// <b>The positive control for <see cref="OutsideCodeSpans"/>.</b> A blanking
+    /// step that blanked too much would empty the corpus and leave every
+    /// assertion in this class green over nothing — the standing failure mode of
+    /// every scan here — so both directions are asserted against literals, and
+    /// the real offender that provoked the change is one of them.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ALinkQuotedInsideACodeSpanIsNotOneTheRepositoryMade()
+    {
+        static List<string> targets(string line) =>
+        [
+            .. MarkdownLink().Matches(OutsideCodeSpans(line)).Cast<Match>().Select(match => match.Groups["target"].Value),
+        ];
+
+        // The real line, from TODO.md's verbatim upstream request. It was the
+        // whole of this test's reason and it must stay invisible to the scan.
+        await Assert.That(targets("> working directory, for example `- [Snapshot](./page-2026-08-25T09-14-22-104Z.yml)`.")).IsEmpty();
+
+        // An ordinary link is still seen — without this the emptiness above is
+        // satisfied by a blanking step that ate the line.
+        //
+        // ⚠️ The targets below name an ASSET extension deliberately, and the
+        // first draft did not: with `DECISIONS.md` in them, these three literals
+        // were themselves read as links by the very scan they are about, and
+        // `EveryRelativeLinkResolvesToSomethingThatExists` named all three —
+        // correctly, because `DECISIONS.md` does not resolve from this
+        // directory. An asset extension is in `NotThisRepositorysKind`, so the
+        // real scan skips it, and no fragment is used because the fragment scan
+        // does not apply that filter.
+        await Assert.That(targets("see [Shot](example.png) for the rest")).IsEquivalentTo(["example.png"]);
+
+        // And a link on the same line as a code span, which is the common shape
+        // in this repository's prose and the one a cruder fix would destroy.
+        await Assert.That(targets("the `session` argument is in [Shot](example.png)")).IsEquivalentTo(["example.png"]);
+
+        // An unpaired backtick blanks nothing, so a fence line or a stray cannot
+        // hide a real link behind it.
+        await Assert.That(targets("a stray ` and then [Shot](example.png)")).IsEquivalentTo(["example.png"]);
+    }
+
+    /// <summary>One inline code span, opening and closing backtick required.</summary>
+    [GeneratedRegex(@"`[^`]*`")]
+    private static partial Regex InlineCodeSpan();
+
     /// <summary>Every relative link target in the repository, with where it was written.</summary>
     /// <returns>The file, the whole line, the 1-based line number, and the target with any anchor removed.</returns>
     private static async Task<List<(FileInfo File, string Line, int Number, string Target)>> LinksAsync()
@@ -398,7 +506,7 @@ internal sealed partial class DocumentationLinkTests
 
             for (var index = 0; index < lines.Length; index++)
             {
-                foreach (var match in MarkdownLink().Matches(lines[index]).Cast<Match>())
+                foreach (var match in MarkdownLink().Matches(OutsideCodeSpans(lines[index])).Cast<Match>())
                 {
                     var target = match.Groups["target"].Value;
 
@@ -459,7 +567,7 @@ internal sealed partial class DocumentationLinkTests
 
             for (var index = 0; index < lines.Length; index++)
             {
-                foreach (var match in MarkdownLink().Matches(lines[index]).Cast<Match>())
+                foreach (var match in MarkdownLink().Matches(OutsideCodeSpans(lines[index])).Cast<Match>())
                 {
                     var target = match.Groups["target"].Value;
 

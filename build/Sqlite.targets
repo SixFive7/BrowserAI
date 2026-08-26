@@ -1,0 +1,188 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project>
+
+  <!--
+    SQLITE IS COMPILED FROM VENDORED SOURCE AND LINKED INTO THE EXECUTABLE.
+
+    The requirement is one file: BrowserAI.exe and no library beside it. Under
+    NativeAOT that is four lines of MSBuild, and it costs one thing: nobody
+    publishes a win-x64 static SQLite on NuGet, so the .lib is built here from
+    the amalgamation in third-party/sqlite. That absence is measured rather than
+    assumed and it is upstream's own open request, SQLitePCL.raw issue 657; the
+    drift row in drift-check.json carries the watch, and the day a win-x64
+    e_sqlite3.lib ships inside SourceGear.sqlite3 this whole file is deleted and
+    NativeLibrary points into the restored package instead.
+
+    WHAT MAKES THE STATIC LINK HAPPEN is the pair of items below and nothing
+    else. DirectPInvoke switches the module from the default lazy binding to a
+    call bound at compile time, and NativeLibrary hands ILC's link.exe an
+    archive to resolve the entry point out of. Neither has any effect outside a
+    publish: both are read by the ILC build integration, which is imported under
+    PublishAot only, so `dotnet build` and `dotnet test` leave them as inert
+    items and the module name falls back to an ordinary runtime load.
+
+    THE MODULE IS NAMED e_sqlite3 RATHER THAN sqlite3, and the archive's own
+    name has nothing to do with it. Resolution is by entry-point symbol through
+    the linker, so a sqlite3.lib satisfies a declaration naming e_sqlite3 as
+    long as sqlite3_libversion exists in some input. The name is chosen so that
+    the same declarations bind against the loose e_sqlite3.dll that every
+    package in this ecosystem ships, which is what a CoreCLR test host would
+    need; picking our own name would orphan that.
+
+    ITEMS AT EVALUATION TIME, NOT INSIDE THE TARGET. DirectPInvoke is consumed
+    by IlcCompile and NativeLibrary by SetupOSSpecificProps, and both of those
+    run BEFORE LinkNative, so an ItemGroup inside the target below would be
+    written after the only two readers had already looked. That is why the
+    library path has to be computable during evaluation, and why it is composed
+    out of BaseIntermediateOutputPath (set by Microsoft.Common.props, which the
+    SDK imports above this file) rather than IntermediateOutputPath (set by
+    Microsoft.Common.CurrentVersion.targets, which the SDK imports below it and
+    which is therefore EMPTY here, silently, producing a relative path that
+    lands the archive in the project root).
+  -->
+
+  <PropertyGroup>
+    <SqliteAmalgamationDirectory>$(MSBuildThisFileDirectory)..\third-party\sqlite\</SqliteAmalgamationDirectory>
+
+    <!-- Path.Combine rather than string concatenation: BaseIntermediateOutputPath
+         is `obj\` by default and may be set absolute, and a naive join would
+         then produce a path with two roots in it. RID-scoped because the
+         archive is architecture-specific and an x64 one left behind would link
+         silently into an arm64 publish. -->
+    <SqliteBuildDirectory>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)', 'sqlite', '$(RuntimeIdentifier)'))</SqliteBuildDirectory>
+    <SqliteObject>$(SqliteBuildDirectory)\sqlite3.obj</SqliteObject>
+    <SqliteLibrary>$(SqliteBuildDirectory)\sqlite3.lib</SqliteLibrary>
+
+    <!--
+      SQLITE.ORG'S RECOMMENDED SET, MINUS SQLITE_THREADSAFE=0.
+
+      Every one of these comes from sqlite.org/compile.html's "Recommended
+      Compile-time Options", and the one deliberate deviation is the one that
+      would be a correctness bug rather than a size choice: THREADSAFE=0 is
+      correct only where every call is provably on one thread, and this process
+      serves an async message loop with a background sweep, a background update
+      check and an idle timer in it. The default serialized mode is kept.
+
+      SQLITE_OMIT_AUTOINIT is in the set and it has a consequence a caller has
+      to know: sqlite3_initialize() is no longer called for you by
+      sqlite3_open_v2 and friends, so whoever opens the first connection must
+      call it. It does NOT affect sqlite3_libversion, which reads a string
+      constant and touches no global state, which is why the single
+      declaration this build has is safe with the flag on.
+
+      SQLITE_OMIT_DECLTYPE is taken because the interop here is hand-written and
+      never asks for a column's declared type. It would have to come back out if
+      Microsoft.Data.Sqlite were ever put on top, because SqliteDataRecord calls
+      sqlite3_column_decltype.
+
+      NOT /Zi, and this is not a preference. A .lib compiled with /Zi carries a
+      reference to a PDB the linker is not given, link.exe raises LNK4099, and
+      TreatWarningsAsErrors turns the publish red on a missing debug file rather
+      than on a defect. /Z7 embeds the same information in the object and is the
+      flag to reach for if debug info is ever wanted.
+
+      /MT matches what ILC's own C shim compile uses, and ILC forces the
+      Universal CRT dynamic at link (/NODEFAULTLIB:libucrt.lib /DEFAULTLIB:ucrt.lib),
+      so the two flavours mesh rather than colliding.
+    -->
+    <SqliteCompileOptions>/nologo /c /MT /O2</SqliteCompileOptions>
+    <SqliteCompileDefinitions>/DSQLITE_DQS=0 /DSQLITE_DEFAULT_MEMSTATUS=0 /DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 /DSQLITE_LIKE_DOESNT_MATCH_BLOBS /DSQLITE_MAX_EXPR_DEPTH=0 /DSQLITE_OMIT_DECLTYPE /DSQLITE_OMIT_DEPRECATED /DSQLITE_OMIT_PROGRESS_CALLBACK /DSQLITE_OMIT_SHARED_CACHE /DSQLITE_OMIT_AUTOINIT /DSQLITE_USE_ALLOCA /DSQLITE_STRICT_SUBTYPE=1</SqliteCompileDefinitions>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <DirectPInvoke Include="e_sqlite3" />
+    <NativeLibrary Include="$(SqliteLibrary)" />
+  </ItemGroup>
+
+  <!--
+    THE TOOLCHAIN IS FOUND THE WAY ILC FINDS IT, and that is the whole reason
+    this step adds no prerequisite. NativeAOT cannot publish at all without the
+    "Desktop development with C++" workload, because ILC's final step is a native
+    link, and cl.exe, link.exe and lib.exe all ship in the same VC component. So
+    the machine that can run the publish already has the compiler; what is
+    needed is only to find it the same way.
+
+    ILC runs findvcvarsall.bat, which asks vswhere for
+    Microsoft.VisualStudio.Component.VC.Tools.x86.x64 and then reads back
+    link.exe's directory and %LIB%. That script is not reusable here for one
+    reason: it echoes LIB and NOT INCLUDE, and a cl.exe with no INCLUDE cannot
+    find stdio.h. So the same vswhere query is made here and vcvarsall.bat is
+    called directly, which sets PATH, INCLUDE and LIB together.
+
+    Reading ILC's own private $(_CppToolsDirectory) was the other candidate and
+    was rejected: it is an underscore-prefixed property of a file whose header
+    says not to modify it, it carries no INCLUDE either, and depending on it
+    would make this target break on an ILC refactor with no message naming the
+    cause.
+  -->
+  <Target Name="LocateTheVisualCppToolchainForSqlite" Condition="'$(PublishAot)' == 'true'">
+
+    <PropertyGroup>
+      <_SqliteVsWhere>$(MSBuildProgramFiles32)\Microsoft Visual Studio\Installer\vswhere.exe</_SqliteVsWhere>
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(_SqliteVsWhere)')"
+           Text="vswhere.exe is not at '$(_SqliteVsWhere)', so the C compiler that builds the vendored SQLite amalgamation cannot be located. It is installed by the Visual Studio Installer, which a NativeAOT publish already requires: see https://aka.ms/nativeaot-prerequisites and install the 'Desktop development with C++' workload." />
+
+    <Exec Command="&quot;$(_SqliteVsWhere)&quot; -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="Low"
+          EchoOff="true"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_SqliteVsInstallations" />
+      <Output TaskParameter="ExitCode" PropertyName="_SqliteVsWhereExitCode" />
+    </Exec>
+
+    <PropertyGroup>
+      <!-- ConsoleOutput joins lines with a semicolon when it is captured into a
+           property. -latest returns one installation, and taking the first is
+           what makes a machine with several behave like ILC's own script. -->
+      <_SqliteVcVarsAll Condition="'$(_SqliteVsInstallations)' != ''">$(_SqliteVsInstallations.Split(';')[0])\VC\Auxiliary\Build\vcvarsall.bat</_SqliteVcVarsAll>
+    </PropertyGroup>
+
+    <Error Condition="'$(_SqliteVsWhereExitCode)' != '0' or '$(_SqliteVsInstallations)' == ''"
+           Text="vswhere found no Visual Studio installation carrying Microsoft.VisualStudio.Component.VC.Tools.x86.x64 (exit code $(_SqliteVsWhereExitCode)), so the vendored SQLite amalgamation cannot be compiled. This is the same component ILC requires to link the publish at all, so a publish would fail immediately afterwards for the same reason: install the 'Desktop development with C++' workload." />
+
+    <Error Condition="!Exists('$(_SqliteVcVarsAll)')"
+           Text="vswhere named '$(_SqliteVsInstallations.Split(';')[0])' as the Visual C++ installation and there is no vcvarsall.bat at '$(_SqliteVcVarsAll)'. The installation is present and incomplete; repair the 'Desktop development with C++' workload." />
+  </Target>
+
+  <!--
+    INCREMENTAL ON THE SOURCE AND ON THIS FILE. The compile is about twelve
+    seconds on the reference machine and the amalgamation changes when a human
+    swaps it, so Inputs/Outputs makes it run once. This file is one of the
+    inputs deliberately: a change to the flags is a change to the archive, and
+    without it a re-published binary would carry the previous build's options
+    while every signal read green.
+
+    BeforeTargets="LinkNative" is what actually gates this to a publish: that
+    target exists only when the ILC integration is imported, and `dotnet build`
+    never invokes it. The PublishAot condition is belt and braces and says the
+    intent out loud.
+  -->
+  <Target Name="CompileTheVendoredSqliteAmalgamation"
+          Condition="'$(PublishAot)' == 'true'"
+          BeforeTargets="LinkNative"
+          DependsOnTargets="LocateTheVisualCppToolchainForSqlite"
+          Inputs="$(SqliteAmalgamationDirectory)sqlite3.c;$(SqliteAmalgamationDirectory)sqlite3.h;$(MSBuildThisFileFullPath)"
+          Outputs="$(SqliteLibrary)">
+
+    <Error Condition="!Exists('$(SqliteAmalgamationDirectory)sqlite3.c')"
+           Text="The vendored SQLite amalgamation is not at '$(SqliteAmalgamationDirectory)sqlite3.c'. It is committed source rather than a download: restore it from git, or re-fetch the archive named in drift-check.json and check its SHA3-256 against sqlite.org's own PRODUCT line before extracting." />
+
+    <MakeDir Directories="$(SqliteBuildDirectory)" />
+
+    <!-- `call`, and it is load-bearing: Exec runs this through a temporary .cmd,
+         and a .bat invoked from a .cmd without `call` transfers control and
+         never comes back, so the compile would silently not happen and the link
+         would fail somewhere else entirely. -->
+    <Exec Command="call &quot;$(_SqliteVcVarsAll)&quot; x64 &gt;nul &amp;&amp; cl $(SqliteCompileOptions) $(SqliteCompileDefinitions) /Fo&quot;$(SqliteObject)&quot; &quot;$(SqliteAmalgamationDirectory)sqlite3.c&quot; &amp;&amp; lib /nologo /out:&quot;$(SqliteLibrary)&quot; &quot;$(SqliteObject)&quot;"
+          EchoOff="true"
+          StandardOutputImportance="Low" />
+
+    <Error Condition="!Exists('$(SqliteLibrary)')"
+           Text="The SQLite compile reported success and produced no archive at '$(SqliteLibrary)'." />
+  </Target>
+
+</Project>
