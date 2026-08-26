@@ -88,9 +88,14 @@ internal sealed class SessionToolTests
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.ProfileFolderName));
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.OutputFolderName));
         await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", SessionLayout.DownloadsFolderName));
-        await Assert.That(text).Contains(Path.Combine(run.Root, "alpha", "browserai.log"));
         await Assert.That(text).Contains("browser: chromium");
         await Assert.That(text).DoesNotContain("mode: ");
+
+        // ⚠️ AND THE ONE PATH IT MUST NO LONGER CARRY. `log:` named
+        // `<session-dir>rowserai.log` on every init answer, and the file is
+        // gone -- so an answer that still named it would send whoever read it to
+        // a path that does not exist.
+        await Assert.That(text).DoesNotContain("browserai.log");
     }
 
     [Test]
@@ -152,9 +157,13 @@ internal sealed class SessionToolTests
         var record = SessionLock.ReadRecord(SessionPath.Resolve(moved));
         await Assert.That(record?.Directory).IsEqualTo(moved);
 
-        // And it was logged, in the session's own log, which is the half a
-        // caller cannot see and an operator needs.
-        await Assert.That(run.MovedSessionLog).Contains("Session directory moved");
+        // And the repair is a STATEMENT in the record rather than only a note in
+        // the answer, which is the half a caller cannot see and a later reader
+        // needs: the directory field carries both paths, with the instant each
+        // was recorded.
+        await Assert.That(record!.DirectoryHistory.Count).IsGreaterThanOrEqualTo(2);
+        await Assert.That(record.DirectoryHistory[0].Value).IsNotEqualTo(moved);
+        await Assert.That(record.DirectoryHistory[^1].Value).IsEqualTo(moved);
 
         // The copy: resumed, in one call, with no flag.
         var copied = run.Text("resumeCopy");
@@ -273,7 +282,7 @@ internal sealed class SessionToolTests
         var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments, Environment.SpecialFolderOption.DoNotVerify);
 
         await Assert.That(run.IsError("destroyDocuments")).IsTrue();
-        await Assert.That(run.Text("destroyDocuments")).Contains(SessionLayout.LockFileName);
+        await Assert.That(run.Text("destroyDocuments")).Contains(SessionLayout.DataFileName);
 
         // The refusal is a read, so nothing was touched -- said out loud,
         // because this is the assertion that would matter most if it failed.
@@ -356,7 +365,7 @@ internal sealed class SessionToolTests
         // Collapsing them sent half the callers to a tool that would refuse them
         // on the next turn with row 4.
         await Assert.That(run.IsError("unknownSession")).IsTrue();
-        await Assert.That(run.Text("unknownSession")).Contains("there is no 'browserai.json' there");
+        await Assert.That(run.Text("unknownSession")).Contains($"there is no '{SessionLayout.DataFileName}' there");
         await Assert.That(run.Text("unknownSession")).Contains(SessionToolSurface.Init);
         await Assert.That(run.Text("unknownSession")).Contains(SessionToolSurface.List);
 
@@ -365,21 +374,46 @@ internal sealed class SessionToolTests
         await Assert.That(run.Text("strandedSession")).Contains(SessionToolSurface.Resume);
     }
 
+    /// <summary>
+    /// A session's diagnostics carry the session on stderr, and what the session
+    /// <b>did</b> is in its own record beside the guard.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// <c>ASessionWritesItsOwnLogBesideItsLockFile</c>, reading
+    /// <c>&lt;session-dir&gt;\browserai.log</c>).</b> That file is gone. Both
+    /// halves of what it proved are still here and are now in two places: the
+    /// scope, which is what makes ~100 interleaved processes readable, is on
+    /// stderr where the console provider always also wrote it; and the calls
+    /// themselves are in <c>browserai.data</c>, which outlives the process the
+    /// way a log file did and which <c>browserai_catch_up</c> can read.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ASessionWritesItsOwnLogBesideItsLockFile()
+    public async Task ASessionsRecordsCarryItsDirectoryAndItsCallsAreInItsOwnRecord()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
         var run = await SessionRun.SharedAsync();
+        var alpha = Path.Combine(run.Root, "alpha");
 
-        // §E puts it at <session-dir>\browserai.log. It was deliberately not
-        // created at step 10, because nothing wrote to it and a file written by
-        // nothing is a mechanism that only looks like one.
         await Assert.That(run.SessionLog).Contains("Session lock acquired");
-        await Assert.That(run.SessionLog).Contains(Path.Combine(run.Root, "alpha"));
+        await Assert.That(run.SessionLog).Contains(alpha);
 
-        // The scope is what makes ~100 interleaved processes readable, and it is
-        // on the session's own records as well as the process log's.
-        await Assert.That(run.SessionLog).Contains("{session=");
+        // ⚠️ The scope is what makes ~100 interleaved processes readable, and it
+        // is rendered by whatever sink carries it: the deleted
+        // `FileLoggerProvider` wrote it as `{session=…}`, and the console
+        // formatter writes `=> session=…` once `IncludeScopes` is on. What is
+        // asserted is the scope, not either spelling of it.
+        await Assert.That(run.SessionLog).Contains("session=");
+        await Assert.That(run.SessionLog).Contains($"session={alpha}");
+
+        // And the durable half: the session's own calls, in its own record, in
+        // order — which is what a log file used to be opened for.
+        var log = RecordedSession.LogOf(alpha);
+
+        await Assert.That(log.Count).IsGreaterThan(0);
+        await Assert.That(log[0].Tool).IsEqualTo(SessionToolSurface.Init);
+        await Assert.That(log[0].Why).IsEqualTo("the first session's purpose");
     }
 }

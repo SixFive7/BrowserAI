@@ -449,6 +449,74 @@ internal sealed class SessionDestroyTests
         await Assert.That(SessionManager.TruncationNote(cap + 5)).Contains("5 more are not named here");
     }
 
+    /// <summary>
+    /// A directory holding the record format this build does not read is
+    /// refused by <c>browserai_destroy</c>, in the maintainer's own words.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The tool that deletes trees must not delete one whose contents it
+    /// cannot recognise.</b> <c>browserai_destroy</c> is safe because it refuses
+    /// any directory that is not a BrowserAI session — that is the whole of what
+    /// stops it being aimed at <c>Documents\</c> — and a directory holding a
+    /// <c>browserai.json</c> is a BrowserAI session, just not one this build can
+    /// open. Neither <i>not a session</i> nor <i>damaged</i> is true of it.
+    /// </para>
+    /// <para>
+    /// <b>The sentence is asserted verbatim because it is a promise about who
+    /// does the work.</b> Every other refusal in this product names a recovery
+    /// BrowserAI can perform; this one names one it cannot, and the honest form
+    /// of that is to say so in the first person rather than to offer a tool that
+    /// will refuse in turn.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADirectoryHoldingTheOldRecordIsRefusedAndDestroySaysToRemoveItYourself()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "an-old-format-session");
+        var location = SessionPath.Resolve(directory);
+
+        SessionLayout.Create(location);
+
+        var legacy = Path.Combine(directory, SessionLayout.LegacyRecordFileName);
+
+        await File.WriteAllTextAsync(legacy, """{"schemaVersion": 4, "purpose": [], "log": []}""");
+
+        var answer = await rig.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = SessionToolSurface.Destroy,
+            ["arguments"] = new JsonObject
+            {
+                ["directory"] = directory,
+                ["why"] = "trying to clean up a session this build cannot read",
+            },
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        var text = TextOf(answer);
+
+        // ⚠️ THE MAINTAINER'S WORDING, VERBATIM.
+        await Assert.That(text).Contains("I cannot clean this up — remove the entire directory yourself.");
+
+        // With the format as the reason rather than damage, and no converter
+        // offered.
+        await Assert.That(text).Contains(SessionLayout.LegacyRecordFileName);
+        await Assert.That(text).Contains("There is no converter");
+
+        // ⚠️ AND NOTHING WAS TOUCHED. A refusal that had already started
+        // deleting would leave the caller with half a directory and a sentence
+        // telling them to remove the rest.
+        await Assert.That(File.Exists(legacy)).IsTrue();
+        await Assert.That(Directory.Exists(Path.Combine(directory, SessionLayout.ProfileFolderName))).IsTrue();
+        await Assert.That(File.Exists(location.LockFile)).IsFalse();
+        await Assert.That(File.Exists(location.DataFile)).IsFalse();
+    }
+
     /// <summary>Indented lines shaped like the ones <c>TreeDelete</c> produces.</summary>
     /// <param name="count">How many.</param>
     /// <returns>The lines.</returns>

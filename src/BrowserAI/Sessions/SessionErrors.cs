@@ -54,10 +54,15 @@ internal static class SessionErrors
     /// context.
     /// </summary>
     /// <remarks>
-    /// Shorter than <see cref="LockRecord.PurposeMaximumLength"/> on purpose: the
-    /// record keeps what an agent wrote, and a refusal quotes enough of it to
-    /// identify the session without handing an unbounded span of somebody else's
-    /// text to a model that asked a different question.
+    /// ⚠️ <b>It is the last length cap in this product, and it survived because
+    /// it is a cap on an ANSWER (2026-08-26, previously "shorter than
+    /// <c>LockRecord.PurposeMaximumLength</c> on purpose").</b> The record had a
+    /// 2,000-character cap on a purpose and a 400-character cap on a <c>why</c>,
+    /// and both are gone: the record keeps whatever an agent wrote, at whatever
+    /// length. What this bounds is how much of somebody else's text a refusal
+    /// hands to a model that asked a different question — which is a decision
+    /// about a sentence rather than about a file, and is why removing every cap
+    /// from the record did not touch it.
     /// </remarks>
     public const int ReplayedPurposeLength = 300;
 
@@ -115,20 +120,20 @@ internal static class SessionErrors
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool that was refused.</param>
-    /// <param name="lockFile">The session record that could not be written.</param>
-    /// <param name="detail">What the filesystem said.</param>
+    /// <param name="record">The session record that could not be written.</param>
+    /// <param name="detail">What the store said.</param>
     /// <returns>The refusal.</returns>
-    public static string SessionLogCouldNotBeWritten(string tool, string lockFile, string detail) =>
-        $"'{tool}' was NOT forwarded to the browser, because its entry in '{lockFile}' could not be written ({detail}). Nothing reached the page and nothing was changed. "
+    public static string SessionLogCouldNotBeWritten(string tool, string record, string detail) =>
+        $"'{tool}' was NOT forwarded to the browser, because its row in '{record}' could not be written ({detail}). Nothing reached the page and nothing was changed. "
         + "Every call this session makes is recorded in that file in order, and a call BrowserAI cannot record is one whose absence nobody would ever see — so it is refused instead. "
-        + "If another call on this same session is in flight, wait for it and call again; if the file itself cannot be written, the volume is full or the directory has become read-only, and no call on this session will work until that is fixed.";
+        + "If the file itself cannot be written, the volume is full, the directory has become read-only, or the record has been damaged — and no call on this session will work until that is fixed.";
 
     /// <summary>Row 2 — the path is not a session at all.</summary>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The path the caller named.</param>
     /// <returns>The refusal.</returns>
     public static string SessionNamesNoSession(string tool, string path) =>
-        $"No BrowserAI session at '{path}' — there is no '{SessionLayout.LockFileName}' there — so '{tool}' was not run and nothing was changed. "
+        $"No BrowserAI session at '{path}' — there is no '{SessionLayout.DataFileName}' there — so '{tool}' was not run and nothing was changed. "
         + $"Call {SessionToolSurface.Init} with directory='{path}' to create one, or {SessionToolSurface.List} with a directory to see the sessions beneath it.";
 
     /// <summary>
@@ -923,15 +928,24 @@ internal static class SessionErrors
     /// instructions"</i> — arrives in the second model's context indistinguishable
     /// from the server addressing it. Naming it as something a previous session
     /// recorded, quoting it, and capping its length is what makes it legible as
-    /// data. The strip is <see cref="LockRecord.SanitisePurpose"/>'s, so a purpose
-    /// that reached the file before this build did is still flattened on the way
-    /// out.
+    /// data. The strip is <see cref="RecordText.Sanitise"/>'s, so a purpose that
+    /// reached the record before this build did is still cleaned on the way out.
+    /// </remarks>
+    /// <remarks>
+    /// ⚠️ <b>Line breaks are folded here and nowhere else, and the cap survived
+    /// the removal of every other cap.</b> A stored purpose may be multi-line
+    /// since 2026-08-26; a <i>replay</i> may not, because this frame is one
+    /// quoted sentence and a newline inside the quotes is what would let a
+    /// paragraph of somebody else's text read as the server's own lines. Both
+    /// this and <see cref="ReplayedPurposeLength"/> are caps on an <b>answer</b>
+    /// rather than on the record, which is why removing the record's caps did
+    /// not touch them.
     /// </remarks>
     /// <param name="purpose">The recorded text.</param>
     /// <returns>One framed sentence.</returns>
     public static string Recorded(string? purpose)
     {
-        var text = LockRecord.SanitisePurpose(purpose ?? string.Empty);
+        var text = RecordText.Sanitise(purpose ?? string.Empty).Replace('\n', ' ');
 
         if (text.Length is 0)
         {

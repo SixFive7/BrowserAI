@@ -143,13 +143,14 @@ internal sealed class SessionIndexTests
         index.Record(path);
         lease.Acquired!.Dispose();
 
-        // The directory survives its lock file, which is what a destroy leaves
-        // behind if the caller keeps the folder.
+        // The directory survives both of its files, which is what a destroy
+        // leaves behind if the caller keeps the folder.
         File.Delete(path.LockFile);
+        File.Delete(path.DataFile);
 
         var followed = index.Follow();
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.NotASession);
-        await Assert.That(followed[0].Problem).Contains(SessionLayout.LockFileName);
+        await Assert.That(followed[0].Problem).Contains(SessionLayout.DataFileName);
 
         var sweep = index.Sweep();
 
@@ -166,24 +167,34 @@ internal sealed class SessionIndexTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The absence is real and is nobody's fault.</b> A record arrives by
-    /// <c>MoveFileEx</c> with <c>MOVEFILE_REPLACE_EXISTING</c>; a rename over a
-    /// file with an open handle is refused, so the writer sits in its retry
-    /// loop, and between the pending delete completing and the next attempt
-    /// landing the name <c>browserai.json</c> does not resolve. Measured 2026-08-18
-    /// and recorded in the [hazard index](../../HAZARDS.md#hazard-index).
-    /// <c>SessionIndex</c> read that instant as <i>never was a session</i>, which
-    /// is a **removable** state, and dropped a live session out of the only
-    /// inventory there is.
+    /// <b>The absence is real and is nobody's fault.</b> A guard arrives by
+    /// <c>MoveFileEx</c> with <c>MOVEFILE_REPLACE_EXISTING</c>, and the store
+    /// beside it is created after that — so between the moment the temp file
+    /// exists and the moment the store does, a directory that IS being taken
+    /// holds neither of the two files that say so. <c>SessionIndex</c> read that
+    /// instant as <i>never was a session</i>, which is a **removable** state,
+    /// and dropped a live session out of the only inventory there is. Measured
+    /// 2026-08-18 and recorded in the
+    /// [hazard index](../../HAZARDS.md#hazard-index).
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The window narrowed with the cutover and did not close (2026-08-26,
+    /// previously "a rename over a file with an open handle is refused, so the
+    /// writer sits in its retry loop … the name <c>browserai.json</c> does not
+    /// resolve").</b> That window opened on <b>every forwarded call</b>, because
+    /// the record was rewritten whole each time. Nothing rewrites either file
+    /// now, so what is left is the first acquisition of a directory — once per
+    /// session rather than once per call — and the discriminator is unchanged
+    /// because the shape on disk is.
     /// </para>
     /// <para>
     /// <b>The window is not raced for here, and it does not need to be.</b> What
-    /// the window produces on disk is exactly this: a directory with no
-    /// <c>browserai.json</c> and a <c>browserai.json.new-…</c> beside it. Composing that
-    /// state directly tests the discriminator rather than the scheduler, and the
-    /// name comes from <c>SessionLayout.NewLockFileName</c> — the same helper the
-    /// durable write uses, so a rename of the convention cannot leave this test
-    /// passing against a pattern nothing produces.
+    /// it produces on disk is exactly this: a directory with neither file and a
+    /// <c>browserai.lock.new-…</c> beside them. Composing that state directly
+    /// tests the discriminator rather than the scheduler, and the pattern comes
+    /// from <c>SessionLayout.NewLockFilePattern</c> — the same constant the
+    /// durable write's name is built from, so a rename of the convention cannot
+    /// leave this test passing against a pattern nothing produces.
     /// </para>
     /// <para>
     /// <b>The second arm is what stops the fix being "never sweep anything".</b>
@@ -203,9 +214,10 @@ internal sealed class SessionIndexTests
         index.Record(path);
         lease.Acquired!.Dispose();
 
-        // Exactly what the window leaves on disk: the name unbound, the durable
-        // write's temp file beside it.
-        var temp = Path.Combine(path.FullPath, SessionLayout.NewLockFileName());
+        // Exactly what the window leaves on disk: neither file bound, the
+        // durable write's temp file beside them.
+        var temp = Path.Combine(path.FullPath, $"{SessionLayout.LockFileName}.new-{Guid.NewGuid():N}");
+        File.Delete(path.DataFile);
         File.Move(path.LockFile, temp);
 
         var followed = index.Follow();
@@ -345,8 +357,21 @@ internal sealed class SessionIndexTests
         await Assert.That(log).DoesNotContain("Could not write the session index entry");
     }
 
+    /// <summary>
+    /// An entry whose record cannot be read is kept, because nothing else can
+    /// ever restore it.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The corruption moved with the record (2026-08-26, previously a
+    /// misspelled key in <c>browserai.json</c>).</b> The record is a database
+    /// now, so what a damaged one looks like is a file whose header SQLite will
+    /// not accept — and the entry state it produces is the same one, for the
+    /// same reason: a session nobody can open is a session nobody can
+    /// re-record.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AnEntryWhoseLockFileCannotBeParsedIsKeptBecauseNothingElseCanRestoreIt()
+    public async Task AnEntryWhoseRecordCannotBeReadIsKeptBecauseNothingElseCanRestoreIt()
     {
         using var scratch = ScratchDirectory.Create("index-corrupt");
         var (index, path) = NewIndex(scratch, "session");
@@ -355,11 +380,14 @@ internal sealed class SessionIndexTests
         index.Record(path);
         lease.Acquired!.Dispose();
 
-        var original = await File.ReadAllTextAsync(path.LockFile);
-        await File.WriteAllTextAsync(path.LockFile, original.Replace(@"""purpose""", @"""purpse""", StringComparison.Ordinal));
+        var original = await File.ReadAllBytesAsync(path.DataFile);
 
-        // THIS IS THE MEASUREMENT THE KEEP RESTS ON. A session whose browserai.json
-        // cannot be parsed is refused by TryAcquire, so there is no init and no
+        // Not a database, and not an empty file either: an empty one would be
+        // created afresh rather than refused, which is a different state.
+        await File.WriteAllBytesAsync(path.DataFile, System.Text.Encoding.UTF8.GetBytes("this is not a database at all, it is a note"));
+
+        // THIS IS THE MEASUREMENT THE KEEP RESTS ON. A session whose record
+        // cannot be read is refused by TryAcquire, so there is no init and no
         // resume that would ever re-assert its index entry. Removing the entry
         // would make a directory that still exists permanently invisible to the
         // only inventory there is.
@@ -371,7 +399,7 @@ internal sealed class SessionIndexTests
         var followed = index.Follow();
         await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.LockUnreadable);
         await Assert.That(followed[0].Record).IsNull();
-        await Assert.That(followed[0].Problem).Contains("purpse");
+        await Assert.That(followed[0].Problem).Contains(SessionLayout.DataFileName);
 
         var sweep = index.Sweep();
 
@@ -381,7 +409,7 @@ internal sealed class SessionIndexTests
 
         // And once the file is repaired, the entry is an ordinary session again
         // without anyone re-recording it.
-        await File.WriteAllTextAsync(path.LockFile, original);
+        await File.WriteAllBytesAsync(path.DataFile, original);
         await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
     }
 

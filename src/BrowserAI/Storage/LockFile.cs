@@ -93,12 +93,42 @@ internal static class LockFile
     /// <see cref="SessionStore"/>, so the window a rename opens is paid once per
     /// acquisition rather than once per call.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The two halves are also callable separately, and one caller does
+    /// that on purpose.</b> Acquisition has to be able to say <i>the guard WAS
+    /// written and could not then be held</i>, which is a different sentence
+    /// from <i>nothing was changed</i> — and one of them is false at the moment
+    /// it is said if the two failures share a <c>catch</c>. That exact
+    /// conflation shipped once, in the record this file replaces.
+    /// </para>
     /// </remarks>
     /// <param name="path">The lock file.</param>
     /// <param name="holder">Who is taking it.</param>
     /// <returns>The hold, which the caller keeps for the session's life.</returns>
     /// <exception cref="IOException">The write, the rename or the hold failed.</exception>
     public static LockFileHold TakeAndWrite(string path, LockFileHolder holder)
+    {
+        Write(path, holder);
+
+        // ⚠️ WAITED OUT RATHER THAN BELIEVED, AND ONLY HERE. The caller holds
+        // the per-directory gate and the file on disk names this process, so no
+        // second owner can exist -- becoming one means passing through the gate.
+        // A sharing violation on this line is therefore somebody's transient
+        // probe handle, which is what `browserai_list` opens for the length of
+        // one `FileStream` construction and cannot stop opening: detecting an
+        // owner and blocking one are the same capability. Believing it once cost
+        // a lock (CI run 32203064556 attempt 1, against the record this file
+        // replaces).
+        return RenameWindow.WaitOutWhereNoOwnerIsPossible(() => Hold(path));
+    }
+
+    /// <summary>
+    /// Writes the holder record into place, durably, and takes nothing.
+    /// </summary>
+    /// <param name="path">The lock file.</param>
+    /// <param name="holder">Who is taking it.</param>
+    /// <exception cref="IOException">The write or the rename failed; nothing was changed.</exception>
+    public static void Write(string path, LockFileHolder holder)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(holder);
@@ -122,8 +152,6 @@ internal static class LockFile
         {
             TryDelete(temporary);
         }
-
-        return Hold(path);
     }
 
     /// <summary>
@@ -262,7 +290,13 @@ internal static class LockFile
     /// </remarks>
     /// <param name="holder">Who is taking the directory.</param>
     /// <returns>The bytes.</returns>
-    private static byte[] Serialise(LockFileHolder holder)
+    /// <remarks>
+    /// ⚠️ <b>Internal because the record's own <c>holder</c> history uses the
+    /// same bytes.</b> The lock file says who has the directory now and the
+    /// history says who has ever had it; one spelling for both is what stops
+    /// the two disagreeing about an acquisition they both describe.
+    /// </remarks>
+    internal static byte[] Serialise(LockFileHolder holder)
     {
         var buffer = new ArrayBufferWriter<byte>();
 

@@ -12,6 +12,7 @@ using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
+using BrowserAI.Storage;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
 
@@ -286,12 +287,13 @@ internal sealed class SessionManager : IAsyncDisposable
                 ? SessionErrors.SessionNamesNoSession(tool, location.FullPath)
                 : SessionErrors.SessionNotOpen(tool, location.FullPath);
         }
-        catch (LockFileException failure)
+        catch (SessionRecordException failure)
         {
-            // A browserai.json that cannot be read is still a session, and saying so
-            // is more useful than reporting it as absent: the recovery is to fix
-            // or destroy the directory, never to init over it.
-            return $"'{location.FullPath}' holds a '{SessionLayout.LockFileName}' this build cannot read, so '{tool}' was not run and nothing was changed. {failure.Message}";
+            // A record that cannot be read is still a session, and saying so is
+            // more useful than reporting it as absent: the recovery is to fix or
+            // destroy the directory, never to init over it. The old format
+            // arrives here too, with its own sentence.
+            return $"'{location.FullPath}' holds a record this build cannot read, so '{tool}' was not run and nothing was changed. {failure.Message}";
         }
     }
 
@@ -393,7 +395,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             return new ToolOutcome(failure.Message, IsError: true);
         }
-        catch (LockFileException failure)
+        catch (SessionRecordException failure)
         {
             return new ToolOutcome(failure.Message, IsError: true);
         }
@@ -506,12 +508,12 @@ internal sealed class SessionManager : IAsyncDisposable
                     Browser = browser,
                     Purpose = purpose,
 
-                    // ⚠️ THE PURPOSE IS THE FIRST ENTRY OF THE LOG, and `init`
+                    // ⚠️ THE PURPOSE IS THE FIRST ROW OF THE LOG, and `init`
                     // has no `why` to put there instead. Two mandatory free-text
                     // fields on one call gets one thoughtful answer and one
                     // restatement, so the purpose -- which IS the reason the
-                    // session exists -- is what entry zero says.
-                    Entry = Entry(SessionToolSurface.Init, purpose, arguments),
+                    // session exists -- is what row one says.
+                    Entry = new SessionCall(SessionToolSurface.Init, purpose),
 
                     // `init` means MAKE a session here. A directory that already
                     // carries a record has to be resumed instead, and this is the
@@ -572,7 +574,19 @@ internal sealed class SessionManager : IAsyncDisposable
             if (_live.TryGetValue(location.Key, out var already))
             {
                 SessionToolLog.Why(already.Logger, SessionToolSurface.Resume, why);
-                already.Lock.Append(Entry(SessionToolSurface.Resume, why, arguments));
+
+                // ⚠️ THE ROW IS WRITTEN `in-flight` AND SETTLED, exactly as a
+                // forwarded call's is, because one outcome vocabulary across
+                // every row is what lets `browserai_catch_up` say "no answer was
+                // recorded" without having to know which tool wrote which row.
+                var row = already.Lock.Append(SessionToolSurface.Resume, why);
+
+                if (appended is not null)
+                {
+                    already.Lock.AppendPurpose(RecordText.Sanitise(appended));
+                }
+
+                already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                 return new ToolOutcome(
                     Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
@@ -615,9 +629,15 @@ internal sealed class SessionManager : IAsyncDisposable
                 movedFrom = Directory.Exists(record.Directory) ? null : record.Directory;
             }
 
-            var purpose = appended is null
-                ? record.Purpose
-                : $"{record.Purpose} | {appended}";
+            // ⚠️ THE CONCATENATION DIED HERE (2026-08-26, previously
+            // `$"{record.Purpose} | {appended}"`). Every field of the record is
+            // an ordered list of statements, so a resume that says what the
+            // session is now for adds a ROW -- and `Compose`'s dedup means a
+            // resume that says nothing adds none. The old shape built value N
+            // out of the whole of value N-1, which grew quadratically (57.6 KiB
+            // at 50 resumes, 860 KiB at 200) and, at the 2,000-character cap,
+            // silently truncated the sentence the caller had just written.
+            var purpose = appended is null ? record.Purpose : RecordText.Sanitise(appended);
 
             // Ownership moves here, by the mechanism `init` documents.
             var held = claim;
@@ -629,7 +649,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 {
                     Browser = record.Browser,
                     Purpose = purpose,
-                    Entry = Entry(SessionToolSurface.Resume, why, arguments),
+                    Entry = new SessionCall(SessionToolSurface.Resume, why),
                 },
                 headed,
                 tracing ?? false,
@@ -670,14 +690,24 @@ internal sealed class SessionManager : IAsyncDisposable
     /// directory walk opens no file inside it.
     /// </para>
     /// <para>
-    /// ⚠️ ***Corrected 2026-08-24 (previously "Read-only, and it takes no
-    /// lock").*** It now takes one, briefly: <see cref="InUse"/> goes through
-    /// <see cref="SessionLock.ProbeLivenessUnderTheGate"/>, which acquires this
-    /// directory's own gate at a <b>zero</b> timeout. The property the sentence
-    /// was protecting is intact and is what the new wording says — an acquire
-    /// that never waits cannot be refused into a failure, only into an
-    /// <c>UNKNOWN</c> line — and it is why the timeout is the load-bearing half
-    /// rather than the lock.
+    /// ⚠️ ***Corrected 2026-08-26 (previously "It now takes one, briefly:
+    /// `InUse` goes through `SessionLock.ProbeLivenessUnderTheGate`, which
+    /// acquires this directory's own gate at a zero timeout").*** It takes
+    /// nothing again, and the sentence above is true without a caveat. The gate
+    /// was needed because the record was rewritten on every forwarded call, so a
+    /// bare probe could catch a busy session mid-rewrite and read it as free.
+    /// The guard is written once now and never rewritten, so
+    /// <see cref="SessionLock.ProbeLiveness"/> — one <c>CreateFile</c> — is
+    /// sound on its own.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is NOT quite side-effect-free, and that is the one caveat left.</b>
+    /// A read against a crashed holder's uncheckpointed write-ahead log recovers
+    /// that log, and building the index leaves a <c>-shm</c> beside the store in
+    /// a directory this call only asked to look at. Where it may not create that
+    /// file the read is refused instead, which is the right way round: answering
+    /// with a session's history as of its last checkpoint would be a confident
+    /// wrong answer.
     /// </para>
     /// <para>
     /// <b>The log is printed newest-last and truncated from the FRONT.</b> A
@@ -691,59 +721,214 @@ internal sealed class SessionManager : IAsyncDisposable
     private ToolOutcome CatchUp(JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, SessionToolSurface.SessionParameter), SessionToolSurface.SessionParameter);
+        var asked = Number(arguments, SessionToolSurface.PageParameter);
 
         var record = SessionLock.ReadRecord(location)
             ?? throw new SessionToolException(
-                $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to catch up on. "
+                $"'{location.FullPath}' has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session and there is nothing to catch up on. "
                 + $"Call {SessionToolSurface.List} with a directory to see the sessions beneath it, or {SessionToolSurface.Init} to create one here.");
 
-        var contents = SessionInventory.Of(location);
+        var total = record.LogLength;
+        var pages = total is 0 ? 1 : (int)((total + PageSize - 1) / PageSize);
+        var page = (int)(asked ?? 1);
+
+        if (page < 1 || page > pages)
+        {
+            throw new SessionToolException(
+                $"'{SessionToolSurface.PageParameter}' = {page.ToString(CultureInfo.InvariantCulture)} is outside this session's log, which is "
+                + $"{total.ToString(CultureInfo.InvariantCulture)} entr(ies) over {pages.ToString(CultureInfo.InvariantCulture)} page(s) of {PageSize.ToString(CultureInfo.InvariantCulture)}. "
+                + $"Pages are numbered from the OLDEST end, so page 1 is where the session started and page {pages.ToString(CultureInfo.InvariantCulture)} is what happened most recently. Nothing was changed.");
+        }
+
+        var skip = (long)(page - 1) * PageSize;
+
+        IReadOnlyList<SessionLogRow> rows;
+
+        try
+        {
+            using var store = SessionStore.OpenForReading(location.DataFile);
+
+            rows = SessionRecordReader.Log(store, skip, PageSize);
+        }
+        catch (SqliteException refused)
+        {
+            throw new SessionToolException(
+                $"'{location.DataFile}' could not be read for page {page.ToString(CultureInfo.InvariantCulture)}: {refused.Message}");
+        }
+
         var now = DateTimeOffset.Now;
         var text = new StringBuilder();
 
-        _ = text
-            .Append("Session: ").Append(location.FullPath).Append('\n')
-            .Append("  browser: ").Append(record.Browser).Append('\n')
-            .Append("  created: ").Append(Stamp(record.Created)).Append("   (").Append(Age(now - record.Created)).Append(" ago)\n")
-            .Append("  last touched: ").Append(Stamp(record.LastUsed)).Append("   (").Append(Age(now - record.LastUsed)).Append(" ago)\n")
-            .Append("  ").Append(InUse(location)).Append('\n')
-            .Append("  ").Append(SessionErrors.Recorded(record.Purpose)).Append('\n');
+        // ⚠️ THE VOLATILE HALF IS ON PAGE 1 AND NOWHERE ELSE, and that is not
+        // tidiness. The inventory is a fresh directory walk and the in-use line
+        // is a fresh probe, so repeating them would let two pages of one answer
+        // disagree about one session in one minute -- about information that has
+        // nothing to do with the page being fetched. The log half is stable by
+        // construction: rows are only ever appended, and numbering from the
+        // OLDEST end means an append can change the last page and no other.
+        if (page is 1)
+        {
+            _ = text
+                .Append("Session: ").Append(location.FullPath).Append('\n')
+                .Append("  browser: ").Append(record.Browser).Append('\n')
+                .Append("  created: ").Append(Stamp(record.Created)).Append("   (").Append(Age(now - record.Created)).Append(" ago)\n")
+                .Append("  last touched: ").Append(Stamp(record.LastUsed)).Append("   (").Append(Age(now - record.LastUsed)).Append(" ago)\n")
+                .Append("  ").Append(InUse(location)).Append('\n')
+                .Append("  ").Append(SessionErrors.Recorded(record.Purpose)).Append('\n');
+        }
 
-        _ = text.Append('\n').Append("WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n");
+        _ = text.Append('\n')
+            .Append("WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n")
+            .Append("  page ").Append(page.ToString(CultureInfo.InvariantCulture))
+            .Append(" of ").Append(pages.ToString(CultureInfo.InvariantCulture))
+            .Append(", entries ").Append((total is 0 ? 0 : skip + 1).ToString(CultureInfo.InvariantCulture))
+            .Append('–').Append((skip + rows.Count).ToString(CultureInfo.InvariantCulture))
+            .Append(" of ").Append(total.ToString(CultureInfo.InvariantCulture)).Append('\n');
 
-        if (record.Log.Count is 0)
+        if (rows.Count is 0)
         {
             _ = text.Append("  (nothing: this session's record carries no entries at all, which means no browser call was ever forwarded through it)\n");
         }
         else
         {
-            if (record.LogIsAtTheCap)
+            var number = skip;
+
+            foreach (var row in rows)
             {
-                _ = text.Append("  ⚠️ the log is at its cap of ").Append(LockRecord.MaximumLogEntries.ToString(CultureInfo.InvariantCulture))
-                    .Append(" entries, so entries between the first and the most recent MAY have been dropped. The first entry is never dropped.\n");
-            }
-
-            var elided = record.Log.Count > LoggedEntriesShown ? record.Log.Count - LoggedEntriesShown : 0;
-
-            if (elided is not 0)
-            {
-                _ = text.Append("  … ").Append(elided.ToString(CultureInfo.InvariantCulture))
-                    .Append(" earlier entries are not printed here; they are in ").Append(location.LockFile).Append('\n');
-            }
-
-            foreach (var entry in record.Log.Skip(elided))
-            {
-                _ = text.Append("  ").Append(Stamp(entry.At)).Append("  ").Append(entry.Tool).Append('\n')
-                    .Append("      why: ").Append(entry.Why).Append('\n');
-
-                if (entry.Arguments.Count is not 0)
-                {
-                    _ = text.Append("      with: ")
-                        .Append(string.Join(", ", entry.Arguments.Select(argument => $"{argument.Name}={argument.Value}")))
-                        .Append('\n');
-                }
+                number++;
+                Render(text, number, row);
             }
         }
+
+        if (page < pages)
+        {
+            _ = text.Append("  → ").Append(pages - page).Append(" more page(s). The next is ")
+                .Append(SessionToolSurface.CatchUp).Append("(session='").Append(location.FullPath)
+                .Append("', ").Append(SessionToolSurface.PageParameter).Append('=').Append(page + 1)
+                .Append("). Page numbers count from the OLDEST entry, so a page you have already read never changes when the session goes on working.\n");
+        }
+        else if (pages > 1)
+        {
+            _ = text.Append("  → this is the last page; it is the only one that can change while the session is live.\n");
+        }
+
+        if (page is 1)
+        {
+            AppendWhatIsHereNow(text, location, now);
+            _ = text.Append(HowItGotHere(record));
+        }
+
+        return new ToolOutcome(text.ToString(), IsError: false);
+    }
+
+    /// <summary>
+    /// How many log entries one <c>browserai_catch_up</c> page carries.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A PAGE SIZE, NOT A TRUNCATION — and that is the whole of the
+    /// change (2026-08-26, previously <c>LoggedEntriesShown = 40</c>).</b> The
+    /// old constant printed the newest forty entries of a record that held up to
+    /// 250 and elided the rest with a sentence naming the file, so the tool that
+    /// exists to answer <i>what was I doing here</i> showed 13–40 % of what the
+    /// record held and the remainder was reachable only by opening a JSON file
+    /// by hand. Nothing is elided now; everything is reachable, a page at a
+    /// time.
+    /// </para>
+    /// <para>
+    /// <b>Numbered from the OLDEST end, which is what makes a page stable.</b>
+    /// The log is append-only and nothing evicts, so entry <i>i</i> names the
+    /// same entry forever and an append can only ever change the last page.
+    /// Numbering from the newest end — the shape the old truncation used —
+    /// shifts every boundary on every call, so page 2 of a live session would be
+    /// a different set of entries each time it was fetched.
+    /// </para>
+    /// </remarks>
+    private const int PageSize = 100;
+
+    /// <summary>Renders one log row into the answer.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A stale <c>in-flight</c> row says <i>no answer was recorded</i>, which
+    /// is the true statement.</b> The row was written before the call was
+    /// forwarded; if nothing settled it, the call hung, the child died or the
+    /// process was killed — and a reader that saw a bare tool name with no
+    /// outcome would have to guess which. A <c>false</c> there would be a lie
+    /// and a <c>true</c> would be worse.
+    /// </para>
+    /// <para>
+    /// <b>Only a failure carries a payload, and it is printed.</b> A successful
+    /// call's answer went back to the caller byte-identical and is not stored;
+    /// a failure's is, because it is the one thing a later reader cannot
+    /// reconstruct.
+    /// </para>
+    /// </remarks>
+    /// <param name="text">Where it goes.</param>
+    /// <param name="number">Its position in the whole log, counting from the oldest.</param>
+    /// <param name="row">The row.</param>
+    private static void Render(StringBuilder text, long number, SessionLogRow row)
+    {
+        _ = text.Append("  ").Append(number.ToString(CultureInfo.InvariantCulture)).Append(". ")
+            .Append(Stamp(row.At)).Append("  ").Append(row.Tool);
+
+        _ = row.Outcome switch
+        {
+            SessionStore.Successful => text.Append("   ✓").Append(Took(row)),
+            SessionStore.Failed => text.Append("   ✗ FAILED").Append(Took(row)),
+            _ => text.Append("   — no answer was recorded: the row was written before the call was forwarded and nothing settled it, so the call hung, the child died, or the process ended first"),
+        };
+
+        _ = text.Append('\n');
+
+        Indented(text, "      why: ", row.Why);
+
+        if (row.Failure is { Length: > 0 } failure)
+        {
+            Indented(text, "      it failed with: ", failure);
+        }
+    }
+
+    /// <summary>How long a settled call took, as a clause, or nothing.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The clause.</returns>
+    private static string Took(SessionLogRow row) =>
+        row.SettledAt is { } settled
+            ? $" after {Math.Max(0, (settled - row.At).TotalSeconds).ToString("F2", CultureInfo.InvariantCulture)}s"
+            : string.Empty;
+
+    /// <summary>
+    /// Writes free text under a label, with every line after the first indented
+    /// to match.
+    /// </summary>
+    /// <remarks>
+    /// <b>A <c>why</c> may be multi-line since the caps were removed</b>, and an
+    /// unindented second line reads as a new entry to the model this answer is
+    /// written for. The sanitiser has already dropped every control character
+    /// except <c>\n</c>, so this is the only place line breaks have to be
+    /// handled at all.
+    /// </remarks>
+    /// <param name="text">Where it goes.</param>
+    /// <param name="label">The label, which sets the indent.</param>
+    /// <param name="value">The text.</param>
+    private static void Indented(StringBuilder text, string label, string value)
+    {
+        var indent = new string(' ', label.Length);
+        var first = true;
+
+        foreach (var line in value.Split('\n'))
+        {
+            _ = text.Append(first ? label : indent).Append(line).Append('\n');
+            first = false;
+        }
+    }
+
+    /// <summary>The directory as it is right now, walked at the moment of asking.</summary>
+    /// <param name="text">Where it goes.</param>
+    /// <param name="location">The session directory.</param>
+    /// <param name="now">The instant the ages are against.</param>
+    private static void AppendWhatIsHereNow(StringBuilder text, SessionPath location, DateTimeOffset now)
+    {
+        var contents = SessionInventory.Of(location);
 
         _ = text.Append('\n').Append("WHAT IS HERE NOW — the directory, walked just now. This is what is true; it does not know why any of it exists.\n");
 
@@ -751,52 +936,61 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             _ = text.Append("  ⚠️ the directory could not be read (").Append(failure)
                 .Append("), so this half of the answer is UNKNOWN rather than empty. Do not read it as 'nothing here'.\n");
+
+            return;
         }
-        else
+
+        _ = text
+            .Append("  total: ").Append(Sizes.Describe(contents.Bytes)).Append(" in ")
+            .Append(contents.Files.ToString(CultureInfo.InvariantCulture)).Append(" file(s)\n")
+            .Append("  ").Append(OutputSize(location)).Append('\n');
+
+        if (contents.LastWritten is { } written)
         {
-            _ = text
-                .Append("  total: ").Append(Sizes.Describe(contents.Bytes)).Append(" in ")
-                .Append(contents.Files.ToString(CultureInfo.InvariantCulture)).Append(" file(s)\n");
-
-            if (contents.LastWritten is { } written)
-            {
-                _ = text.Append("  last file written: ").Append(Stamp(written.ToLocalTime()))
-                    .Append("   (").Append(Age(now - written)).Append(" ago — a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n");
-            }
-
-            foreach (var kind in contents.Kinds)
-            {
-                _ = text.Append("  ").Append(kind).Append('\n');
-            }
-
-            _ = text.Append(contents.CookieStore is { } store
-                ? $"  ⚠️ CREDENTIALS: the profile holds a cookie store at '{store}'. This session may be signed in to something, whether or not any cookie tool appears above — cookies arrive from navigation. {SessionToolSurface.Destroy} is what removes it.\n"
-                : "  no cookie store in the profile, so nothing has signed in through this session yet.\n");
-
-            foreach (var archive in contents.Archives)
-            {
-                _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(archive.RelativePath).Append("' is an HTTP Archive (")
-                    .Append(Sizes.Describe(archive.Bytes))
-                    .Append("). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n");
-            }
+            _ = text.Append("  last file written: ").Append(Stamp(written.ToLocalTime()))
+                .Append("   (").Append(Age(now - written)).Append(" ago — a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n");
         }
 
-        _ = text.Append(HowItGotHere(record));
+        foreach (var kind in contents.Kinds)
+        {
+            _ = text.Append("  ").Append(kind).Append('\n');
+        }
 
-        return new ToolOutcome(text.ToString(), IsError: false);
+        _ = text.Append(contents.CookieStore is { } store
+            ? $"  ⚠️ CREDENTIALS: the profile holds a cookie store at '{store}'. This session may be signed in to something, whether or not any cookie tool appears above — cookies arrive from navigation. {SessionToolSurface.Destroy} is what removes it.\n"
+            : "  no cookie store in the profile, so nothing has signed in through this session yet.\n");
+
+        foreach (var archive in contents.Archives)
+        {
+            _ = text.Append("  ⚠️ PLAINTEXT CREDENTIALS: '").Append(archive.RelativePath).Append("' is an HTTP Archive (")
+                .Append(Sizes.Describe(archive.Bytes))
+                .Append("). A HAR records every request and response including headers, so every bearer token and session cookie that crossed the wire is in it in clear text. Treat the file as a secret and delete it when you are done.\n");
+        }
     }
 
     /// <summary>
-    /// How many log entries <c>browserai_catch_up</c> prints, newest last.
+    /// What the session has written to <c>output\</c>, and who is responsible
+    /// for removing it.
     /// </summary>
     /// <remarks>
-    /// <b>The record keeps 250 and the answer prints 40, and the gap is
-    /// deliberate.</b> This string lands in a model's context, and 250 entries
-    /// of three lines each is most of a context window spent on a question that
-    /// was <i>what were we doing here</i>. The elision is stated and the file is
-    /// named, so a caller that wants the rest knows where it is.
+    /// <b>Reported and never acted on — the maintainer's decision, 2026-08-25.</b>
+    /// Nothing in BrowserAI deletes an artifact, ever: not on a schedule, not at
+    /// a size, not when a session closes. What a caller gets instead is the
+    /// number, on both of the tools that describe a session, so that retention
+    /// is a decision somebody takes rather than one the server takes quietly on
+    /// their behalf. <c>browserai_destroy</c> is the whole of the deletion
+    /// story.
     /// </remarks>
-    private const int LoggedEntriesShown = 40;
+    /// <param name="location">The session directory.</param>
+    /// <returns>The line.</returns>
+    private static string OutputSize(SessionPath location)
+    {
+        var output = Path.Combine(location.FullPath, SessionLayout.OutputFolderName);
+        var (bytes, files) = SessionLayout.SizeAndFiles(output);
+
+        return $"output: {Sizes.Describe(bytes)} in {files.ToString(CultureInfo.InvariantCulture)} file(s) — "
+            + $"BrowserAI never deletes any of it, on any schedule or at any size; {SessionToolSurface.Destroy} is what removes a session and everything under it.";
+    }
 
     /// <summary>A duration in the largest unit that does not round to zero.</summary>
     /// <param name="span">How long.</param>
@@ -830,6 +1024,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"{session.FullPath}\n"
                 + $"  browser: {record.Browser}   size on disk: {Megabytes(size)}\n"
                 + $"  created: {Stamp(record.Created)}   last used: {Stamp(record.LastUsed)}\n"
+                + $"  {OutputSize(session)}\n"
                 + $"  {InUse(session)}\n"
                 + $"  {SessionErrors.Recorded(record.Purpose)}");
         }
@@ -856,21 +1051,28 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <c>browserai_destroy</c>.
     /// </para>
     /// <para>
-    /// <b>Through the pre-gate probe, under this directory's own gate at zero
-    /// timeout, and never the process-liveness check.</b>
-    /// <see cref="SessionLock.ProbeLivenessUnderTheGate"/> asks the kernel about
-    /// the file; the process check asks for a handle on a peer, which a token may
-    /// not be able to open and which names a pid Windows may already have reused.
+    /// <b>Through the lock probe, and never the process-liveness check.</b>
+    /// <see cref="SessionLock.ProbeLiveness"/> asks the kernel about
+    /// <c>browserai.lock</c>; the process check asks for a handle on a peer,
+    /// which a token may not be able to open and which names a pid Windows may
+    /// already have reused. <b>It never opens the record</b> — a database open
+    /// is orders of magnitude dearer, it can create a file in a directory nobody
+    /// asked it to touch, and the newest holder statement cannot answer this
+    /// question anyway.
     /// </para>
     /// <para>
-    /// ⚠️ ***Corrected 2026-08-24 (previously "Through the pre-gate probe and
-    /// never the process-liveness check. `SessionLock.ProbeLiveness` asks the
-    /// kernel about the file").*** The bare probe is a sound ownership test and
-    /// an unsound freedom test: a rewrite drops the ownership handle and takes it
-    /// back with the gate held throughout, so a busy session's record is
-    /// periodically present and unheld and this printed <i>no</i> about it. The
-    /// gate is what separates <i>nobody has this</i> from <i>somebody is
-    /// mid-rewrite</i>, and the second is <c>UNKNOWN</c> rather than <c>no</c>.
+    /// ⚠️ ***Corrected 2026-08-26 (previously "under this directory's own gate
+    /// at zero timeout … the gate is what separates nobody has this from
+    /// somebody is mid-rewrite").*** The gate is gone from this path and the
+    /// defect it was closing is gone with the file it was about. Between
+    /// 2026-08-20 and 2026-08-24 the listing read a bare probe's *not held* as
+    /// free and printed <i>in use: no</i> about a session another agent was
+    /// driving, because every forwarded call rewrote the record and dropped the
+    /// ownership handle to do it. Nothing rewrites the guard: the only window
+    /// left is between the rename and the first hold at acquisition, inside the
+    /// per-directory gate, and what is seen there is *free* about a directory
+    /// somebody is in the middle of taking — a momentary truth that corrects
+    /// itself.
     /// </para>
     /// <para>
     /// <b>Three answers, and the third one is the reason this is not a
@@ -941,15 +1143,15 @@ internal sealed class SessionManager : IAsyncDisposable
             return "in use: YES — this BrowserAI process is driving it right now.";
         }
 
-        var answer = SessionLock.ProbeLivenessUnderTheGate(session);
+        var answer = SessionLock.ProbeLiveness(session);
 
         return answer.State switch
         {
             SessionLiveness.Held =>
-                $"in use: YES — something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the record inside it can still name a previous holder, so this does not say which process.",
+                $"in use: YES — something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the guard names whoever took the directory, so this does not say which process.",
 
             SessionLiveness.NotHeld =>
-                $"in use: no — nothing held '{session.LockFile}', asked with this directory's own gate held, so it is not a session caught mid-rewrite. It is still a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
+                $"in use: no — nothing held '{session.LockFile}'. It is a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
 
             _ =>
                 $"in use: UNKNOWN — {answer.Why} Treat it as possibly in use; this is not the same answer as 'no'.",
@@ -976,9 +1178,21 @@ internal sealed class SessionManager : IAsyncDisposable
 
         // The single check that makes it safe to hand a model a tool that
         // deletes trees: it cannot be aimed at Documents\.
+        // ⚠️ BEFORE THE READ, BECAUSE THE READ CANNOT ANSWER IT. A directory
+        // holding the old record is intact and is a session -- just not one this
+        // build can open -- so the honest answer is neither "not a session" nor
+        // "damaged", and this tool must not delete a tree it cannot recognise
+        // the contents of. The sentence is the maintainer's, verbatim.
+        if (SessionLayout.OldFormatRefusal(location) is { } notThisFormat)
+        {
+            return new ToolOutcome(
+                $"{notThisFormat}\n\nI cannot clean this up — remove the entire directory yourself.",
+                IsError: true);
+        }
+
         var record = SessionLock.ReadRecord(location)
             ?? throw new SessionToolException(
-                $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and {SessionToolSurface.Destroy} will not touch it. "
+                $"'{location.FullPath}' has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session and {SessionToolSurface.Destroy} will not touch it. "
                 + "This refusal is what makes the tool safe: it deletes session directories and nothing else. Nothing was changed.");
 
         var taken = SessionLock.TryAcquire(
@@ -1014,17 +1228,16 @@ internal sealed class SessionManager : IAsyncDisposable
         // call. A destroy that silently left half a tree would be the founding
         // failure shape.
         //
-        // This pass runs with browserai.json STILL HELD, so it removes everything
-        // except browserai.json and the directory above it. Its failure list is
+        // This pass runs with browserai.lock and browserai.data STILL OPEN, so it
+        // removes everything except those two and the directory above them. Its failure list is
         // discarded because those two are in it by construction and neither is
         // news; the pass below is the one whose survivors the caller is told
         // about, and it re-tries anything this one could not take.
         TreeDelete.Remove(location.FullPath, []);
 
         // Release and finish inside one hold of the per-directory gate, so the
-        // instant in which browserai.json is unheld and still on disk is an instant
-        // no peer's create-or-take can be inside. The gate is held across two
-        // unlinks in the ordinary case -- everything else is already gone.
+        // instant in which browserai.lock is unheld and still on disk is an
+        // instant no peer's create-or-take can be inside.
         held.ReleaseAndDelete(() => TreeDelete.Remove(location.FullPath, failures));
 
         _index.Forget(location);
@@ -1079,21 +1292,23 @@ internal sealed class SessionManager : IAsyncDisposable
     private ToolOutcome SetPurpose(JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, "session"), "session");
-        var purpose = LockRecord.SanitisePurpose(Required(arguments, "purpose"));
+        var purpose = RecordText.Sanitise(Required(arguments, "purpose"));
         var why = Why(arguments, SessionToolSurface.SetPurpose);
 
         if (_live.TryGetValue(location.Key, out var live))
         {
             var previous = live.Lock.Record.Purpose;
 
-            // ⚠️ ONE REWRITE, not two. The purpose statement and the log entry
-            // are the same change to the same file: written separately, a reader
-            // could open `browserai.json` between them and find a purpose whose
-            // explanation had not arrived yet.
-            live.Lock.Rewrite(record => Repurpose(record, purpose) with
-            {
-                Log = LockRecord.AppendLog(record.Log, Entry(SessionToolSurface.SetPurpose, why, arguments)),
-            });
+            // ⚠️ THE ROW FIRST AND THE STATEMENT SECOND, and the ordering is the
+            // one property this used to buy with a single rewrite. Both are
+            // appends now, so there is no "one write" to make them atomic in --
+            // and a reader that lands between them finds a purpose change whose
+            // explanation has ALREADY arrived, which is the harmless order. The
+            // reverse would show a purpose nothing accounts for.
+            var row = live.Lock.Append(SessionToolSurface.SetPurpose, why);
+
+            live.Lock.AppendPurpose(purpose);
+            live.Lock.Settle(row, SessionStore.Successful, failure: null);
 
             SessionToolLog.Why(live.Logger, SessionToolSurface.SetPurpose, why);
             SessionToolLog.PurposeChanged(_logger, location.FullPath, previous, purpose);
@@ -1103,7 +1318,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         var recorded = SessionLock.ReadRecord(location)
             ?? throw new SessionToolException(
-                $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and has no purpose to set. Nothing was changed.");
+                $"'{location.FullPath}' has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session and has no purpose to set. Nothing was changed.");
 
         var taken = SessionLock.TryAcquire(
             location,
@@ -1111,7 +1326,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 Browser = recorded.Browser,
                 Purpose = purpose,
-                Entry = Entry(SessionToolSurface.SetPurpose, why, arguments),
+                Entry = new SessionCall(SessionToolSurface.SetPurpose, why),
             },
             _logger);
 
@@ -1120,13 +1335,14 @@ internal sealed class SessionManager : IAsyncDisposable
             return new ToolOutcome($"The purpose of '{location.FullPath}' was not changed. {taken.Message}", IsError: true);
         }
 
+        held.SettleOpening(SessionStore.Successful, failure: null);
         held.Dispose();
 
-        // THE PROCESS LOG, because a closed session has no log of its own open
-        // to write into -- SessionLogging is created by OpenAsync and disposed
-        // when the session is torn down. The line carries the directory for that
-        // reason: it lands in a machine-wide file beside every other session's,
-        // where the session's own log would not have needed saying.
+        // THE PROCESS LOG, because a closed session has no logging stack of its
+        // own -- SessionLogging is created by OpenAsync and disposed when the
+        // session is torn down. The line carries the directory for that reason:
+        // it lands in a machine-wide file beside every other session's, where a
+        // scoped logger would not have needed saying.
         SessionToolLog.WhyForClosedSession(_logger, SessionToolSurface.SetPurpose, location.FullPath, why);
         SessionToolLog.PurposeChanged(_logger, location.FullPath, recorded.Purpose, purpose);
 
@@ -1652,83 +1868,19 @@ internal sealed class SessionManager : IAsyncDisposable
                 continue;
             }
 
-            if (ProcessLiveness.IsAlive(record.Holder.ProcessId, record.Holder.ProcessCreatedFileTime))
+            // ⚠️ THE GUARD, NOT THE RECORD'S PID. The newest holder statement
+            // says who took the directory, which is a different question from
+            // whether anybody still has it -- and the kernel answers the second
+            // one without opening a process handle a token may not be allowed to
+            // open, and without naming a pid Windows may already have reused.
+            if (SessionLock.ProbeLiveness(session).State is SessionLiveness.Held)
             {
-                lines.Add($"  {session.FullPath} — held by PID {record.Holder.ProcessId.ToString(CultureInfo.InvariantCulture)} since {Stamp(record.LastUsed)}");
+                lines.Add($"  {session.FullPath} — held by another process since {Stamp(record.LastUsed)}");
             }
         }
 
         return lines;
     }
-
-    /// <summary>
-    /// Builds one log entry from a call's own arguments.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Every argument the caller sent, in the order it sent them</b>, minus
-    /// the two BrowserAI injected — <c>session</c>, which is the directory the
-    /// file itself lives in, and <c>why</c>, which is the entry's own field. A
-    /// log that repeated both on every entry would be a third of its own size.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>And, for <see cref="SessionToolSurface.Init"/> alone,
-    /// <c>purpose</c> — because on that one call it IS the <c>why</c>.</b>
-    /// <c>init</c> takes no separate <see cref="SessionToolSurface.WhyParameter"/>,
-    /// so the same string was written twice into one entry and printed twice by
-    /// <c>browserai_catch_up</c>: once in full under <c>why:</c> and once under
-    /// <c>with: purpose=…</c> cut at
-    /// <see cref="LockRecord.ArgumentValueMaximumLength"/> characters with
-    /// <c>(+N more characters)</c> after it. <b>That is not an aesthetic
-    /// defect.</b> The second copy is a different, shorter string sitting
-    /// directly beneath the first, and a reader — or a model — has no way to
-    /// tell a truncated restatement from a second value that genuinely
-    /// disagrees with the one above it.
-    /// </para>
-    /// <para>
-    /// <b>It is narrowed to <c>init</c> and must stay narrowed.</b> On
-    /// <see cref="SessionToolSurface.Resume"/> and
-    /// <see cref="SessionToolSurface.SetPurpose"/> the caller sends
-    /// <c>purpose</c> <i>and</i> <c>why</c> and they say different things — one
-    /// standing, one disposable — so both belong in the entry, and dropping
-    /// either would lose the fact that the purpose moved.
-    /// </para>
-    /// <para>
-    /// <b>What happens to a value is
-    /// <see cref="LoggedArgument.Of"/>'s decision</b>, and it is documented
-    /// there rather than here: two names are never stored, a non-scalar becomes
-    /// a shape, and everything else is cut at 200 characters.
-    /// </para>
-    /// </remarks>
-    /// <param name="tool">The tool being called.</param>
-    /// <param name="why">What the caller said it was for. For <c>init</c>, the purpose.</param>
-    /// <param name="arguments">The call's arguments, as they arrived.</param>
-    /// <returns>The entry to append.</returns>
-    internal static LogEntry Entry(string tool, string why, JsonObject? arguments)
-    {
-        var recorded = new List<LoggedArgument>();
-        var purposeIsTheWhy = string.Equals(tool, SessionToolSurface.Init, StringComparison.Ordinal);
-
-        foreach (var (name, value) in arguments ?? [])
-        {
-            if (name is SessionToolSurface.SessionParameter or SessionToolSurface.WhyParameter)
-            {
-                continue;
-            }
-
-            if (purposeIsTheWhy && name is SessionToolSurface.PurposeParameter)
-            {
-                continue;
-            }
-
-            recorded.Add(LoggedArgument.Of(name, value));
-        }
-
-        return new LogEntry(DateTimeOffset.Now, tool, LockRecord.SanitiseWhy(why), recorded);
-    }
-
-    private static LockRecord Repurpose(LockRecord record, string purpose) =>
-        record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
 
     private async Task<ToolOutcome> OpenAsync(
         SessionPath location,
@@ -1756,13 +1908,11 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            // The session's own log is opened FIRST, before the lock, so that
-            // taking the lock is one of the things it records. Every line about
-            // this directory then lands beside its browserai.json, where whoever is
-            // debugging this session will look, as well as in the machine-wide
-            // process log. An earlier version acquired first and logged the
-            // acquisition to the process log alone, which left the session's own
-            // file starting mid-story.
+            // The session's logging stack is built FIRST, before the lock, so
+            // that taking the lock is one of the things it records at the level
+            // this call asked for. An earlier version acquired first and logged
+            // the acquisition at the process-wide level, which left a `debug`
+            // session's records starting mid-story.
             logging = _environment.OpenSessionLog(location.FullPath, debug ? LogLevel.Debug : LogLevel.Information);
             var sessionLogger = logging.Factory.CreateLogger<SessionManager>();
 
@@ -1781,7 +1931,7 @@ internal sealed class SessionManager : IAsyncDisposable
             acquired = held;
 
             // The family comes from the session's own record rather than from a
-            // constant: `resume` reads it out of browserai.json, and a profile
+            // constant: `resume` reads it out of the record, and a profile
             // belongs to the browser that made it.
             var config = BrowserConfiguration.ForSession(location, headed, request.Browser, tracing, run);
             var configFile = Path.Combine(
@@ -1833,6 +1983,13 @@ internal sealed class SessionManager : IAsyncDisposable
 
             // Everything above is now owned by the dictionary.
             handedOver = true;
+
+            // ⚠️ THE ROW THE ACQUISITION WROTE IS SETTLED HERE AND NOWHERE
+            // EARLIER. It was written `in-flight` before the child was launched,
+            // which is the same ordering every forwarded call uses and for the
+            // same reason: a launch that hangs still leaves a record of what the
+            // directory was for.
+            held.SettleOpening(SessionStore.Successful, failure: null);
             _index.Record(location);
             SessionToolLog.Opened(sessionLogger, location.FullPath, headed, createdHere);
 
@@ -1856,12 +2013,14 @@ internal sealed class SessionManager : IAsyncDisposable
             // reads the family out of browserai.json, because `init` could not record
             // Firefox at all.
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, collision);
+            Failed(acquired, collision);
 
             return new ToolOutcome(collision.Message, IsError: true);
         }
         catch (Exception failure) when (failure is not OperationCanceledException)
         {
             SessionToolLog.CouldNotOpen(_logger, location.FullPath, failure);
+            Failed(acquired, failure);
 
             return new ToolOutcome(
                 SessionErrors.BrowserRuntimeDidNotStart(location.FullPath, $"{failure.GetType().Name}: {failure.Message}"),
@@ -1902,6 +2061,23 @@ internal sealed class SessionManager : IAsyncDisposable
             }
         }
     }
+
+    /// <summary>
+    /// Records that the call which took the directory did not end well, on the
+    /// row it wrote before it tried.
+    /// </summary>
+    /// <remarks>
+    /// <b>It runs before the lock is disposed and the failure payload is the
+    /// exception with its stack.</b> The row is the only durable evidence that
+    /// an <c>init</c> was attempted here at all — the session never opened, so
+    /// there is no live session to ask — and a caller resuming the directory
+    /// tomorrow meets *this browser would not start, and here is what it said*
+    /// rather than a purpose with nothing behind it.
+    /// </remarks>
+    /// <param name="acquired">The lock, if one was taken.</param>
+    /// <param name="failure">What went wrong.</param>
+    private static void Failed(SessionLock? acquired, Exception failure) =>
+        acquired?.SettleOpening(SessionStore.Failed, Encoding.UTF8.GetBytes(failure.ToString()));
 
     private string Describe(
         LiveSession session,
@@ -1944,7 +2120,6 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("  profile: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.ProfileFolderName)).Append('\n')
             .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName)).Append('\n')
             .Append("  downloads: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.DownloadsFolderName)).Append('\n')
-            .Append("  log: ").Append(session.Logging.Path).Append('\n')
             .Append("  artifact index: ").Append(Path.Combine(session.Location.FullPath, ArtifactRouter.IndexFileName))
             .Append(" — pass a plain 'filename' such as login.png on any tool that takes one; BrowserAI files it by kind under output\\ and tells you the full path.\n")
             .Append("  purpose: ").Append(record.Purpose).Append('\n')
@@ -2060,15 +2235,15 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private static string? Existing(SessionPath location)
     {
-        LockRecord? record;
+        SessionRecord? record;
 
         try
         {
             record = SessionLock.ReadRecord(location);
         }
-        catch (LockFileException failure)
+        catch (SessionRecordException failure)
         {
-            return $"'{location.FullPath}' already holds a '{SessionLayout.LockFileName}', and it cannot be read: {failure.Message} "
+            return $"'{location.FullPath}' already holds a BrowserAI record, and it cannot be read: {failure.Message} "
                 + $"{SessionToolSurface.Init} will not overwrite a session record it does not understand.";
         }
 
@@ -2221,12 +2396,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>This block is what replaced <c>acknowledgeCopy</c>.</b> A resumed copy
     /// used to be refused until the caller passed a flag, because taking it over
-    /// overwrote the only evidence that it was a copy. Under schema 2 nothing is
-    /// overwritten: the <c>directory</c> field still carries the original path
-    /// beside the new one, with the instant each was recorded, so the resume can
-    /// simply <i>tell</i> the model where the directory has been and let it act
-    /// on that. A confirmation flag whose entire content can be returned as fact
-    /// is a question that did not need asking.
+    /// overwrote the only evidence that it was a copy. Nothing is overwritten:
+    /// the <c>directory</c> field still carries the original path beside the new
+    /// one, with the instant each was recorded, so the resume can simply
+    /// <i>tell</i> the model where the directory has been and let it act on
+    /// that. A confirmation flag whose entire content can be returned as fact is
+    /// a question that did not need asking.
     /// </para>
     /// <para>
     /// <b>Only fields that moved are printed.</b> An ordinary session has one
@@ -2234,32 +2409,33 @@ internal sealed class SessionManager : IAsyncDisposable
     /// nothing to read until there is something to say.
     /// </para>
     /// <para>
-    /// <b>A field at its cap says so.</b> The trim keeps the first statement and
-    /// the most recent <see cref="LockRecord.MaximumStatementsPerField"/> − 1,
-    /// dropping out of the middle — so a full list may be missing statements, and
-    /// the sentence says <i>may</i> because the record cannot tell whether a trim
-    /// has actually happened.
+    /// ⚠️ <b>The "at the cap" hedge is gone with the cap (2026-08-26).</b> The
+    /// old record kept 32 statements per field and trimmed out of the middle, so
+    /// every list of that length had to be printed with <i>statements between
+    /// the first and these may have been dropped</i> — a sentence that could not
+    /// say whether anything actually had been. Nothing evicts now, so what is
+    /// printed is the whole history and there is nothing to hedge.
     /// </para>
     /// </remarks>
-    /// <param name="record">The record read from <c>browserai.json</c>.</param>
+    /// <param name="record">The record read from <c>browserai.data</c>.</param>
     /// <returns>The block, or an empty string when nothing has changed.</returns>
-    private static string HowItGotHere(LockRecord record)
+    private static string HowItGotHere(SessionRecord record)
     {
         var fields = new List<string>();
 
-        line(fields, LockJson.Directory, record.DirectoryHistory, static value => $"'{value}'");
-        line(fields, LockJson.Browser, record.BrowserHistory, static value => value);
-        line(fields, LockJson.Purpose, record.PurposeHistory, static value => value);
-        line(fields, LockJson.BrowserAiVersion, record.BrowserAiVersionHistory, static value => value);
+        line(fields, RecordFields.Directory, record.DirectoryHistory, static value => $"'{value}'");
+        line(fields, RecordFields.Browser, record.BrowserHistory, static value => value);
+        line(fields, RecordFields.Purpose, record.PurposeHistory, static value => value);
+        line(fields, RecordFields.BrowserAiVersion, record.BrowserAiVersionHistory, static value => value);
         line(
             fields,
-            LockJson.Holder,
+            RecordFields.Holder,
             record.HolderHistory,
             static holder => $"PID {holder.ProcessId.ToString(CultureInfo.InvariantCulture)}{(holder.ClientProcessName is { } client ? $" started by {client}" : string.Empty)}");
 
         return fields.Count is 0
             ? string.Empty
-            : "  how this session got here — every field of browserai.json is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
+            : "  how this session got here — every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
                 + string.Join(string.Empty, fields);
 
         static void line<T>(List<string> into, string name, IReadOnlyList<Statement<T>> statements, Func<T, string> render)
@@ -2269,11 +2445,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 return;
             }
 
-            var capped = LockRecord.IsAtTheCap(statements)
-                ? $" (at the {LockRecord.MaximumStatementsPerField.ToString(CultureInfo.InvariantCulture)}-statement cap, so statements between the first and these may have been dropped)"
-                : string.Empty;
-
-            into.Add($"    {name}{capped}: "
+            into.Add($"    {name}: "
                 + string.Join(" → ", statements.Select(statement => $"{Stamp(statement.At)} {render(statement.Value)}"))
                 + "\n");
         }
@@ -2388,6 +2560,39 @@ internal sealed class SessionManager : IAsyncDisposable
         return string.IsNullOrWhiteSpace(text)
             ? throw new SessionToolException($"'{name}' was given as an empty string, which names nothing. Give it a value or leave it out.")
             : text;
+    }
+
+    /// <summary>
+    /// A whole number an argument carried, or <see langword="null"/> when it
+    /// carried none.
+    /// </summary>
+    /// <remarks>
+    /// <b>A named refusal for every wrong shape, never a parse that happens to
+    /// work.</b> <c>"3"</c> is a string and is refused rather than coerced:
+    /// a schema says <c>integer</c>, and a server that quietly accepts the
+    /// string form teaches a model that the schema is advisory. A fraction is
+    /// refused for the same reason — page 1.5 is not a page.
+    /// </remarks>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="name">The argument.</param>
+    /// <returns>The number.</returns>
+    private static long? Number(JsonObject? arguments, string name)
+    {
+        if (arguments?[name] is not { } value || value.GetValueKind() is JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (value.GetValueKind() is not JsonValueKind.Number)
+        {
+            throw new SessionToolException(
+                $"'{name}' must be a whole number, and it arrived as {value.GetValueKind()}. Nothing was changed.");
+        }
+
+        return value.GetValue<JsonElement>().TryGetInt64(out var number)
+            ? number
+            : throw new SessionToolException(
+                $"'{name}' must be a whole number, and it arrived as '{value.GetValue<JsonElement>().GetRawText()}'. Nothing was changed.");
     }
 
     private static bool? Flag(JsonObject? arguments, string name)

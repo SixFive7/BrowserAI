@@ -338,7 +338,7 @@ internal sealed class SessionIndex
     /// permanently invisible to the only inventory there is, which is this
     /// project's founding failure shape rather than a tidy index.
     /// <b>Both are asserted</b>, by
-    /// <c>SessionIndexTests.AnEntryWhoseLockFileCannotBeParsedIsKeptBecauseNothingElseCanRestoreIt</c>
+    /// <c>SessionIndexTests.AnEntryWhoseRecordCannotBeReadIsKeptBecauseNothingElseCanRestoreIt</c>
     /// and
     /// <c>SessionIndexTests.AnEntryOnAVolumeThatIsNotMountedIsKeptRatherThanSwept</c>
     /// — named here because a distinction this paragraph argues for and nothing
@@ -625,7 +625,7 @@ internal sealed class SessionIndex
                     Record = record,
                 };
         }
-        catch (Exception failure) when (failure is LockFileException or IOException or UnauthorizedAccessException)
+        catch (Exception failure) when (failure is SessionRecordException or IOException or UnauthorizedAccessException)
         {
             // There IS a browserai.json and it cannot be acted on. That is a session
             // in trouble, and the pointer is the only thing that can lead anyone
@@ -707,7 +707,7 @@ internal sealed class SessionIndex
                 Pointer = pointer,
                 Session = session,
                 State = SessionIndexEntryState.RecordInFlight,
-                Problem = $"'{session.FullPath}' has no '{SessionLayout.LockFileName}' and could not be listed to find out why ({failure.Message})",
+                Problem = $"'{session.FullPath}' has no '{SessionLayout.DataFileName}' and could not be listed to find out why ({failure.Message})",
             };
         }
 
@@ -719,7 +719,7 @@ internal sealed class SessionIndex
                 Pointer = pointer,
                 Session = session,
                 State = SessionIndexEntryState.NotASession,
-                Problem = $"'{session.FullPath}' exists but has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session",
+                Problem = $"'{session.FullPath}' exists but has no '{SessionLayout.DataFileName}', so it is not a BrowserAI session",
             }
             : new SessionIndexEntry
             {
@@ -728,7 +728,7 @@ internal sealed class SessionIndex
                 Pointer = pointer,
                 Session = session,
                 State = SessionIndexEntryState.RecordInFlight,
-                Problem = $"'{session.FullPath}' holds no '{SessionLayout.LockFileName}' at this instant and '{Path.GetFileName(inFlight[0])}' is beside it, so another BrowserAI is replacing the record right now",
+                Problem = $"'{session.FullPath}' holds no '{SessionLayout.DataFileName}' at this instant and '{Path.GetFileName(inFlight[0])}' is beside it, so another BrowserAI is inside create-or-take on it right now",
             };
     }
 
@@ -899,7 +899,7 @@ internal sealed record SessionIndexEntry
     /// every other state — including <see cref="SessionIndexEntryState.LockUnreadable"/>,
     /// where a lock file exists and could not be parsed.
     /// </summary>
-    public LockRecord? Record { get; init; }
+    public SessionRecord? Record { get; init; }
 
     /// <summary>Why this is not a readable session, when it is not.</summary>
     public string? Problem { get; init; }

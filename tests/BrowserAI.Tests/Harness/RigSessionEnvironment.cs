@@ -492,39 +492,24 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
     private SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
     {
-        // The product's own session log, into the session's own directory: the
-        // file is one of the two §C allows at a session root, and a rig that
-        // faked it would leave `ASessionWritesItsOwnLogBesideItsLockFile`
-        // covering a thing this layer never exercises.
+        // ⚠️ NO FILE (2026-08-26, previously a real `SessionLogFile` in the
+        // session's own directory). `browserai.log` is gone: the product's own
+        // session stack is stderr at the level the call asked for, and the rig
+        // adds the suite's two providers on top of it. What used to be asserted
+        // by reading that file is asserted from `browserai.data` now, which is
+        // where every refusal and every call the session made actually lands.
 #pragma warning disable CA2000 // Ownership moves into the SessionLogging below, which this rig disposes; the rule's dataflow does not follow the transfer.
-        var file = new SessionLogFile(sessionDirectory);
-#pragma warning restore CA2000
-
-        SessionLogging logging;
-
-        try
+        var logging = new SessionLogging(LoggerFactory.Create(builder =>
         {
-#pragma warning disable CA2000 // Ownership moves into the SessionLogging below, which this rig disposes.
-            var factory = LoggerFactory.Create(builder =>
+            _ = builder.SetMinimumLevel(minimumLevel);
+            _ = builder.AddProvider(new TUnitLoggerProvider());
+
+            if (_sessionRecords is { } records)
             {
-                _ = builder.SetMinimumLevel(minimumLevel);
-                _ = builder.AddProvider(new FileLoggerProvider(file));
-                _ = builder.AddProvider(new TUnitLoggerProvider());
-
-                if (_sessionRecords is { } records)
-                {
-                    _ = builder.AddProvider(records);
-                }
-            });
+                _ = builder.AddProvider(records);
+            }
+        }));
 #pragma warning restore CA2000
-
-            logging = new SessionLogging(factory, file);
-        }
-        catch
-        {
-            file.Dispose();
-            throw;
-        }
 
         lock (_gate)
         {

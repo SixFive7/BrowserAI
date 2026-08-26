@@ -292,7 +292,8 @@
       "browserai.testprobe": {
         "type": "Project",
         "dependencies": {
-          "BrowserAI": "[1.0.0, )"
+          "BrowserAI": "[1.0.0, )",
+          "SourceGear.sqlite3": "[*, )"
         }
       },
       "Microsoft.Extensions.Logging": {

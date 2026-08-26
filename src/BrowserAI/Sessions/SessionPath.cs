@@ -54,6 +54,7 @@ internal sealed class SessionPath
         MutexName = LockScopes.PerDirectoryPrefix + Hash[..LockScopes.PerDirectoryHashLength];
         IndexKey = Hash;
         LockFile = Path.Combine(fullPath, SessionLayout.LockFileName);
+        DataFile = Path.Combine(fullPath, SessionLayout.DataFileName);
     }
 
     /// <summary>
@@ -85,8 +86,22 @@ internal sealed class SessionPath
     /// </summary>
     public string IndexKey { get; }
 
-    /// <summary>The absolute path of <c>browserai.json</c> inside this directory.</summary>
+    /// <summary>The absolute path of <c>browserai.lock</c> inside this directory.</summary>
+    /// <remarks>
+    /// <b>The guard, and only the guard.</b> It is what a liveness probe opens
+    /// and what a holder keeps; nothing about what the session <i>did</i> is in
+    /// it. That is <see cref="DataFile"/>.
+    /// </remarks>
     public string LockFile { get; }
+
+    /// <summary>The absolute path of <c>browserai.data</c> inside this directory.</summary>
+    /// <remarks>
+    /// <b>Derived here rather than composed at each call site</b>, for the
+    /// reason every other name on this type is: two spellings of one path is
+    /// how two components come to read different files while both report
+    /// success.
+    /// </remarks>
+    public string DataFile { get; }
 
     /// <summary>Canonicalises a directory the caller named.</summary>
     /// <param name="directory">

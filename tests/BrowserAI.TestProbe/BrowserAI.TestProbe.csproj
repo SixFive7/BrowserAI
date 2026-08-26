@@ -33,6 +33,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      The native SQLite this probe loads, for the same reason the test host
+      references it and with the same limits. Nothing here calls into it by
+      name: the product's own [LibraryImport] declarations bind the module
+      e_sqlite3, which under a publish is a symbol linked into the binary and
+      under CoreCLR is a DLL that has to exist beside the exe. This probe drives
+      SessionLock, and since the cutover SessionLock opens a database — so
+      without this every probe mode that takes a session dies on
+      `DllNotFoundException` and reports as a race that nobody won. Versions
+      live in Directory.Packages.props and nowhere else.
+    -->
+    <PackageReference Include="SourceGear.sqlite3" />
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
   </ItemGroup>
 

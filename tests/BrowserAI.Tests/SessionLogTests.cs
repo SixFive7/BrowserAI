@@ -1,15 +1,18 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The one time-ordered log inside <c>browserai.json</c>: what goes in it, in
-/// what order, and what happens to a value nobody should write down.
+/// The one time-ordered log inside <c>browserai.data</c>: what goes in it, in
+/// what order, what outcome each row carries, and what a row keeps when it
+/// fails.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -19,11 +22,17 @@ namespace BrowserAI.Tests;
 /// and will not.
 /// </para>
 /// <para>
-/// <b>The argument policy is asserted against real upstream parameter names.</b>
-/// <c>LoggedArgument.WithheldNames</c> is two strings, and two strings typed into
-/// a product are two strings that stop matching upstream the day it renames one —
-/// so the names are checked against the committed <c>tools/list</c> snapshot,
-/// which the build regenerates from the resolved payload and diffs on every run.
+/// ⚠️ <b>Three things this file used to hold are gone with the shape they were
+/// about (2026-08-26).</b> The <c>arguments</c> array and its policy —
+/// withheld names, <c>&lt;object, N keys&gt;</c>, the 200-character cut — went
+/// with the decision to drop arguments from the record entirely; the cap and
+/// its middle-trim went with the decision that there are no caps; and
+/// <c>ARefusedCallLeavesNoEntry</c> <b>inverted</b>, because a refused call is
+/// now recorded. That last one is the interesting migration: the property it
+/// was protecting was <i>the log says what the session DID</i>, and with
+/// <c>browserai.log</c> deleted the record is the only place a refusal survives
+/// at all — so <i>the agent reached for a tool this build will not forward</i>
+/// became replay rather than diagnostics.
 /// </para>
 /// </remarks>
 internal sealed class SessionLogTests
@@ -66,13 +75,13 @@ internal sealed class SessionLogTests
             ["why"] = "watching where the redirect goes now that the cause is known",
         });
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+        var log = RecordedSession.LogOf(directory);
 
         // ⚠️ THE CLAIM: one list, in the order the things happened, with the
         // human's decision sitting between the calls that led to it and the
         // calls that followed. Two arrays merged by timestamp would satisfy
         // every other assertion in this file and fail this one.
-        await Assert.That(record.Log.Select(entry => entry.Tool).ToArray())
+        await Assert.That(log.Select(entry => entry.Tool).ToArray())
             .IsEquivalentTo([
                 SessionToolSurface.Init,
                 "browser_navigate",
@@ -80,38 +89,52 @@ internal sealed class SessionLogTests
                 "browser_navigate",
             ]);
 
-        // init's entry carries the PURPOSE, because init has no `why` — and the
+        // init's row carries the PURPOSE, because init has no `why` — and the
         // purpose is why the session exists.
-        await Assert.That(record.Log[0].Why).IsEqualTo("reproducing the checkout 500 on staging");
+        await Assert.That(log[0].Why).IsEqualTo("reproducing the checkout 500 on staging");
 
-        // Every other entry carries its own `why`, unmodified.
-        await Assert.That(record.Log[1].Why).IsEqualTo("establishing that the page loads at all");
-        await Assert.That(record.Log[2].Why).IsEqualTo("the 500 turned out to be a redirect loop");
-        await Assert.That(record.Log[3].Why).IsEqualTo("watching where the redirect goes now that the cause is known");
+        // Every other row carries its own `why`, unmodified.
+        await Assert.That(log[1].Why).IsEqualTo("establishing that the page loads at all");
+        await Assert.That(log[2].Why).IsEqualTo("the 500 turned out to be a redirect loop");
+        await Assert.That(log[3].Why).IsEqualTo("watching where the redirect goes now that the cause is known");
 
         // Non-decreasing in time, which is what makes "in order" a fact about
-        // the file rather than about the order things were appended.
-        foreach (var (earlier, later) in record.Log.Zip(record.Log.Skip(1)))
+        // the record rather than about the order things were appended.
+        foreach (var (earlier, later) in log.Zip(log.Skip(1)))
         {
             await Assert.That(earlier.At).IsLessThanOrEqualTo(later.At);
         }
 
-        // The arguments are there, minus the two BrowserAI injected: `session`
-        // is the directory the file itself lives in, and `why` is the entry's
-        // own field.
-        await Assert.That(record.Log[1].Arguments.Select(argument => argument.Name).ToArray()).IsEquivalentTo(["url"]);
-        await Assert.That(record.Log[1].Arguments[0].Value).IsEqualTo("data:text/html,before");
+        // ⚠️ AND THE ROW ID IS THE ORDER, which is what makes a page stable: the
+        // ids are strictly increasing, so entry i names the same entry forever
+        // and an append can only ever change the last page.
+        foreach (var (earlier, later) in log.Zip(log.Skip(1)))
+        {
+            await Assert.That(earlier.Id).IsLessThan(later.Id);
+        }
 
-        // And the purpose change is legible from the entry alone rather than
-        // only from the record's own purpose history.
-        await Assert.That(record.Log[2].Arguments.Single(argument => argument.Name == "purpose").Value)
-            .IsEqualTo("tracking the checkout redirect loop on staging");
+        // Every row settled, and none of them stored a payload for succeeding.
+        foreach (var entry in log)
+        {
+            await Assert.That(entry.Outcome).IsEqualTo(SessionStore.Successful);
+            await Assert.That(entry.SettledAt).IsNotNull();
+            await Assert.That(entry.Failure).IsNull();
+        }
+
+        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
 
         // The record's standing purpose moved, and the previous one is kept —
         // which is the half `why` is NOT: one is durable and one is disposable.
+        // The purpose change is dated, so its position in the stream survives
+        // the loss of the `arguments` array that used to carry it.
         await Assert.That(record.Purpose).IsEqualTo("tracking the checkout redirect loop on staging");
         await Assert.That(record.PurposeHistory.Select(statement => statement.Value).ToArray())
             .IsEquivalentTo(["reproducing the checkout 500 on staging", "tracking the checkout redirect loop on staging"]);
+
+        var moved = record.PurposeHistory[^1].At;
+
+        await Assert.That(moved).IsGreaterThanOrEqualTo(log[1].At);
+        await Assert.That(moved).IsLessThanOrEqualTo(log[3].At);
     }
 
     [Test]
@@ -136,35 +159,48 @@ internal sealed class SessionLogTests
             ["why"] = "picking this up after the overnight run stopped",
         });
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+        var log = RecordedSession.LogOf(directory);
 
-        await Assert.That(record.Log.Select(entry => entry.Tool).ToArray())
+        await Assert.That(log.Select(entry => entry.Tool).ToArray())
             .IsEquivalentTo([SessionToolSurface.Init, SessionToolSurface.Resume]);
 
-        await Assert.That(record.Log[^1].Why).IsEqualTo("picking this up after the overnight run stopped");
+        await Assert.That(log[^1].Why).IsEqualTo("picking this up after the overnight run stopped");
+        await Assert.That(log[^1].Outcome).IsEqualTo(SessionStore.Successful);
     }
 
     /// <summary>
-    /// A refused call leaves no entry, and the refusal is in the session's own
-    /// text log instead.
+    /// A refused call is recorded, as a <c>failed</c> row carrying the refusal
+    /// the caller was given.
     /// </summary>
     /// <remarks>
-    /// <b>This is the log's own definition, asserted.</b> It records what the
-    /// session <i>did</i>, so that <c>browserai_catch_up</c> can hold it against
-    /// what the directory <i>holds</i>; an entry for a call that never reached a
-    /// browser would make the log a record of intent, which is a different and
-    /// less useful object.
+    /// <para>
+    /// ⚠️ <b>THIS TEST INVERTED (2026-08-26, previously
+    /// <c>ARefusedCallLeavesNoEntry</c>).</b> Its old reasoning was that the log
+    /// records what the session <i>did</i>, so a row for a call that never
+    /// reached a browser would make it a record of intent — and it pointed the
+    /// reader at the session's own text log for <i>what was attempted and
+    /// refused</i>. <b>That file is gone.</b> With it gone, the choice is
+    /// between recording the refusal here and losing it: <i>the agent reached
+    /// for a tool this build will not forward</i> is a fact about the session,
+    /// and it is exactly the fact a reader most wants when a session did
+    /// nothing.
+    /// </para>
+    /// <para>
+    /// <b>Written and settled in one go, with no in-flight window.</b> Nothing
+    /// was forwarded, so there is no instant at which the answer is unknown —
+    /// which is what distinguishes a refusal from a call that hung.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ARefusedCallLeavesNoEntry()
+    public async Task ARefusedCallIsRecordedAsAFailedRowCarryingTheRefusal()
     {
         await using var sessions = RigSessionEnvironment.Create(child =>
             child.Tools[SessionToolPolicy.AnnotateTool] = new FakeToolBehaviour());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        var before = SessionLock.ReadRecord(SessionPath.Resolve(rig.Session!))!.Log.Count;
+        var before = RecordedSession.LogOf(rig.Session!).Count;
 
         var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject
         {
@@ -174,144 +210,177 @@ internal sealed class SessionLogTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
-        var after = SessionLock.ReadRecord(SessionPath.Resolve(rig.Session!))!.Log;
+        var after = RecordedSession.LogOf(rig.Session!);
+        var row = after.Single(entry => entry.Tool == SessionToolPolicy.AnnotateTool);
 
-        await Assert.That(after.Count).IsEqualTo(before);
-        await Assert.That(after.Any(entry => entry.Tool == SessionToolPolicy.AnnotateTool)).IsFalse();
+        await Assert.That(after.Count).IsEqualTo(before + 1);
+        await Assert.That(row.Why).IsEqualTo("reaching for a tool this server does not advertise");
+
+        // Failed, settled, and carrying what the caller was told rather than a
+        // summary of it.
+        await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
+        await Assert.That(row.SettledAt).IsNotNull();
+        await Assert.That(row.Failure).IsEqualTo(TextOf(refused));
     }
 
     /// <summary>
-    /// What happens to a value that is large, structured, or something a person
-    /// typed.
-    /// </summary>
-    /// <param name="name">The parameter's name.</param>
-    /// <param name="value">The value, as JSON.</param>
-    /// <param name="expected">Exactly what is stored.</param>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    [Arguments("url", "\"https://example.test/\"", "https://example.test/")]
-    [Arguments("submit", "true", "true")]
-    [Arguments("index", "12", "12")]
-    [Arguments("fields", "[{\"a\":1},{\"b\":2},{\"c\":3}]", "<array, 3 items>")]
-    [Arguments("headers", "{\"Authorization\":\"Bearer x\"}", "<object, 1 keys>")]
-    [Arguments("value", "\"the-session-cookie\"", "<withheld, 18 characters>")]
-    [Arguments("text", "\"hunter2\"", "<withheld, 7 characters>")]
-    [Arguments("element", "null", "<null>")]
-    public async Task OneArgumentIsStoredExactlyAsThePolicySays(string name, string value, string expected)
-    {
-        var stored = LoggedArgument.Of(name, JsonNode.Parse(value));
-
-        await Assert.That(stored.Name).IsEqualTo(name);
-        await Assert.That(stored.Value).IsEqualTo(expected);
-    }
-
-    /// <summary>
-    /// A long value is cut with a count rather than stored whole or dropped.
+    /// A call the child answers with an error is a <c>failed</c> row, not a
+    /// successful one.
     /// </summary>
     /// <remarks>
-    /// <b>A <c>browser_evaluate</c> body is the case this exists for.</b> A log
-    /// that embedded one would be the session's transcript; a log that dropped
-    /// it would not say what the call was reaching for. The first two hundred
-    /// characters plus a count is the summary.
+    /// <b>Upstream answers a tool error inside an ordinary JSON-RPC result</b>,
+    /// so a navigation that timed out and a navigation that worked are the same
+    /// shape at the transport. Reading them the same way would put
+    /// <i>successful</i> beside every timeout in the record, which is the
+    /// confident-wrong-answer class this repository keeps closing — a reader
+    /// would see <c>browser_navigate</c> with a <c>why</c> and could not tell a
+    /// load from a failure.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ALongValueIsCutWithACountOfWhatWasLeftOut()
+    public async Task AChildErrorIsAFailedRowAndItsPayloadIsWhatTheChildSaid()
     {
-        var body = "async (page) => { " + new string('x', 500) + " }";
-        var stored = LoggedArgument.Of("function", JsonValue.Create(body));
-
-        await Assert.That(stored.Value).StartsWith("async (page) => {");
-        await Assert.That(stored.Value).Contains("more characters)");
-        await Assert.That(stored.Value.Length)
-            .IsLessThan(LockRecord.ArgumentValueMaximumLength + 40);
-
-        // The count is of what the CALLER sent, not of what survived the flatten
-        // — a reader has to be able to tell a 500-character script from a
-        // 50,000-character one.
-        await Assert.That(stored.Value).Contains((body.Length - LockRecord.ArgumentValueMaximumLength).ToString(System.Globalization.CultureInfo.InvariantCulture));
-
-        // A short one is untouched, which is the control: a cut that always
-        // fired would satisfy everything above.
-        await Assert.That(LoggedArgument.Of("function", JsonValue.Create("() => 1")).Value).IsEqualTo("() => 1");
-    }
-
-    /// <summary>
-    /// Every withheld name is a real parameter on a real upstream tool.
-    /// </summary>
-    /// <remarks>
-    /// <b>The positive control this list cannot do without.</b> A withhold-list
-    /// that matched nothing would read as a policy and be one in name only, and
-    /// nothing else in the suite would notice: a value that should have been
-    /// withheld and was not looks exactly like a value that was allowed. Read
-    /// off the committed snapshot, so an upstream rename arrives as a snapshot
-    /// diff first and a red build second.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task EveryWithheldNameIsARealUpstreamParameter()
-    {
-        var carriers = UpstreamSurface.ToolsCarryingParameter();
-        var offenders = new List<string>();
-
-        foreach (var withheld in LoggedArgument.WithheldNames)
-        {
-            var tools = carriers.GetValueOrDefault(withheld, []);
-
-            if (tools.Count is 0)
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools["browser_navigate"] = new FakeToolBehaviour
             {
-                offenders.Add($"'{withheld}' is withheld and no upstream tool declares a parameter by that name");
-            }
-        }
+                // The bytes the child sends, verbatim: an ordinary JSON-RPC
+                // RESULT carrying `isError`, which is how upstream reports a
+                // tool failure and is exactly why the outcome cannot be read
+                // off the transport alone.
+                RawResult = """{"content":[{"type":"text","text":"TimeoutError: page.goto: Timeout 30000ms exceeded."}],"isError":true}""",
+            },
+            opensDefaultSession: false);
 
-        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        // And the named tools, individually, because a count is satisfied by the
-        // wrong tool as easily as by the right one. These four are the reason
-        // the list is what it is: three set a stored credential and one types
-        // what a person would have typed.
-        await Assert.That(carriers["value"]).Contains("browser_cookie_set");
-        await Assert.That(carriers["value"]).Contains("browser_localstorage_set");
-        await Assert.That(carriers["value"]).Contains("browser_sessionstorage_set");
-        await Assert.That(carriers["text"]).Contains("browser_type");
+        var directory = Path.Combine(sessions.Root, "child-error");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "a session whose navigation fails",
+        });
+
+        _ = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,never",
+            ["session"] = directory,
+            ["why"] = "loading a page that will not load",
+        });
+
+        var row = RecordedSession.LogOf(directory).Single(entry => entry.Tool is "browser_navigate");
+
+        await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
+        await Assert.That(row.SettledAt).IsNotNull();
+        await Assert.That(row.Failure).IsNotNull();
+        await Assert.That(row.Failure!).Contains("Timeout 30000ms exceeded");
+
+        // And the control, on the same session: a call that worked stores no
+        // payload at all. Without this a version that stored every answer would
+        // pass every assertion above.
+        var init = RecordedSession.LogOf(directory).Single(entry => entry.Tool == SessionToolSurface.Init);
+
+        await Assert.That(init.Outcome).IsEqualTo(SessionStore.Successful);
+        await Assert.That(init.Failure).IsNull();
     }
 
     /// <summary>
-    /// The log is capped, and the trim keeps entry zero.
+    /// The row is on disk, readable by another process, <b>while the call is
+    /// still outstanding</b> — and it settles only when the answer arrives.
     /// </summary>
     /// <remarks>
-    /// <b>Entry zero is <c>browserai_init</c></b> — the only statement of why
-    /// the directory exists. A trim at the front would lose it, and lose it
-    /// silently, which is the same defect the statement trim was written to
-    /// avoid.
+    /// <para>
+    /// ⚠️ <b>THIS IS THE ORDERING PROPERTY, AND IT IS WHY THE ROW IS WRITTEN
+    /// BEFORE THE FORWARD RATHER THAN AFTER.</b> A navigation that hangs, a
+    /// child that dies, a process that is killed — the calls anybody
+    /// investigates — leave exactly this row and nothing else. A row written on
+    /// the way back would be missing from all three, which is the shape the
+    /// comment above the old append existed to prevent: *a log line written on
+    /// the way back would be missing from exactly the calls anybody
+    /// investigates*.
+    /// </para>
+    /// <para>
+    /// <b>Read from a second connection, not from the session's own.</b> The
+    /// claim is that the row is <i>durable and visible</i> at that instant, not
+    /// that some object in this process is holding it — and a reader in another
+    /// process is what <c>browserai_catch_up</c> against a live session
+    /// actually is.
+    /// </para>
+    /// <para>
+    /// <b>The child is held open rather than delayed.</b>
+    /// <c>FakeToolBehaviour.HoldUntil</c> keeps the call outstanding without
+    /// blocking the child's read loop, so nothing here depends on how long a
+    /// machine takes: the release is a <c>TaskCompletionSource</c> this test
+    /// sets, and the only duration is the suite's own in-process hang detector.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheLogIsCappedAndTheTrimKeepsTheFirstEntry()
+    public async Task ARowIsOnDiskAndInFlightWhileTheCallIsStillOutstanding()
     {
-        var at = new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero);
-        IReadOnlyList<LogEntry> log = [new LogEntry(at, SessionToolSurface.Init, "why this session exists", [])];
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        foreach (var index in Enumerable.Range(1, LockRecord.MaximumLogEntries + 50))
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools["browser_navigate"] = new FakeToolBehaviour { HoldUntil = release.Task },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "in-flight-before-forward");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
-            log = LockRecord.AppendLog(log, new LogEntry(at.AddSeconds(index), "browser_navigate", $"call {index}", []));
+            ["directory"] = directory,
+            ["purpose"] = "a session whose call is watched while it is outstanding",
+        });
+
+        var call = CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["url"] = "data:text/html,held",
+            ["session"] = directory,
+            ["why"] = "a call that is watched while it is still outstanding",
+        });
+
+        try
+        {
+            // The child really did receive it, so "in flight" is a fact rather
+            // than a call that never left. Bounded by the suite's own hang
+            // detector and by nothing this test invented.
+            var arrived = Stopwatch.StartNew();
+
+            while (!sessions.SessionChildren.Any(child => child.ToolCallsReceived.Contains("browser_navigate")))
+            {
+                await Assert.That(arrived.Elapsed).IsLessThan(TestDefaults.InProcessHang)
+                    .Because("the held call never reached the child, so nothing below is about an outstanding call");
+
+                await Task.Delay(10);
+            }
+
+            // ⚠️ THE CLAIM. Another connection, reading the file on disk, sees
+            // the row with what the call was for and no answer.
+            var pending = RecordedSession.LogOf(directory).Single(row => row.Tool is "browser_navigate");
+
+            await Assert.That(pending.Outcome).IsEqualTo(SessionStore.InFlight);
+            await Assert.That(pending.Why).IsEqualTo("a call that is watched while it is still outstanding");
+            await Assert.That(pending.SettledAt).IsNull();
+            await Assert.That(pending.Failure).IsNull();
+        }
+        finally
+        {
+            release.SetResult();
         }
 
-        await Assert.That(log.Count).IsEqualTo(LockRecord.MaximumLogEntries);
+        _ = await call;
 
-        // The first entry survived, and it is the init one.
-        await Assert.That(log[0].Tool).IsEqualTo(SessionToolSurface.Init);
-        await Assert.That(log[0].Why).IsEqualTo("why this session exists");
+        // And it settles when the answer arrives, with the instant it settled at
+        // — which is what makes a duration derivable and what tells a stale row
+        // from a finished one.
+        var settled = RecordedSession.LogOf(directory).Single(row => row.Tool is "browser_navigate");
 
-        // The newest survived too, so the trim came out of the middle.
-        await Assert.That(log[^1].Why).IsEqualTo($"call {LockRecord.MaximumLogEntries + 50}");
-
-        // A record holding a full log says so, which is what every answer that
-        // reads one turns into "may have had entries elided".
-        var record = LockRecordTests.SampleWith(log);
-
-        await Assert.That(record.LogIsAtTheCap).IsTrue();
-        await Assert.That(LockRecordTests.SampleWith([.. log.Take(2)]).LogIsAtTheCap).IsFalse();
+        await Assert.That(settled.Outcome).IsEqualTo(SessionStore.Successful);
+        await Assert.That(settled.SettledAt).IsNotNull();
+        await Assert.That(settled.SettledAt!.Value).IsGreaterThanOrEqualTo(settled.At);
+        await Assert.That(settled.Failure).IsNull();
     }
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
@@ -320,4 +389,8 @@ internal sealed class SessionLogTests
             ["name"] = tool,
             ["arguments"] = arguments,
         });
+
+    private static string TextOf(JsonObject result) =>
+        string.Concat((result["content"]?.AsArray() ?? [])
+            .Select(block => (string?)block?["text"] ?? string.Empty));
 }

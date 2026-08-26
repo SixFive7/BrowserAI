@@ -175,8 +175,8 @@ internal static class SessionProbe
                 ["taken"] = result?.Taken ?? false,
                 ["message"] = result?.Message,
                 ["failure"] = failure,
-                ["holderPid"] = result?.Holder?.Holder.ProcessId,
-                ["holderCreatedFileTime"] = result?.Holder?.Holder.ProcessCreatedFileTime,
+                ["holderPid"] = result?.Guard?.ProcessId,
+                ["holderCreatedFileTime"] = result?.Guard?.ProcessCreatedFileTime,
                 ["holderRunning"] = result?.HolderRunning ?? false,
                 ["gateWasAbandoned"] = result?.Acquired?.GateWasAbandoned ?? false,
                 ["elapsedMilliseconds"] = elapsed.TotalMilliseconds,
@@ -491,8 +491,8 @@ internal static class SessionProbe
     }
 
     /// <summary>
-    /// Holds the directory and rewrites its record over and over, so a reader in
-    /// another process can be shown never to see a torn file.
+    /// Holds the directory and appends to its record over and over, so a reader
+    /// in another process can be shown never to see it half-written or absent.
     /// </summary>
     /// <param name="directory">The session directory.</param>
     /// <param name="readyPath">Written once the lock is held.</param>
@@ -536,19 +536,13 @@ internal static class SessionProbe
                 {
                     var round = i;
 
-                    // Schema 2: the purpose is a list of timestamped statements
-                    // and `lastUsed` is derived from them, so a rewrite appends
-                    // rather than assigning two fields. The value differs on
-                    // every round on purpose -- Append is a no-op when it does
-                    // not, and a probe that rewrote the same purpose a hundred
-                    // times would produce no renames for the reader to race.
-                    held.Rewrite(current => current with
-                    {
-                        PurposeHistory = LockRecord.Append(
-                            current.PurposeHistory,
-                            $"rewrite {round.ToString(CultureInfo.InvariantCulture)}",
-                            DateTimeOffset.Now),
-                    });
+                    // The purpose is a list of timestamped statements and
+                    // `lastUsed` is derived from them, so a change appends a row
+                    // rather than assigning a field. The value differs on every
+                    // round on purpose: a reader has to be able to tell that
+                    // what it saw changed under it, and a hundred identical
+                    // purposes would prove nothing.
+                    held.AppendPurpose($"rewrite {round.ToString(CultureInfo.InvariantCulture)}");
 
                     completed++;
                 }

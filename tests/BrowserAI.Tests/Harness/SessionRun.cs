@@ -42,11 +42,19 @@ internal sealed record SessionRun
     /// <summary>Whether the browser really wrote into the session's own profile directory.</summary>
     public required bool ProfileWasUsed { get; init; }
 
-    /// <summary>Everything the first session's own <c>browserai.log</c> held while it ran.</summary>
+    /// <summary>
+    /// Everything the first BrowserAI wrote to stderr while its first session
+    /// was open.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously "everything the first session's
+    /// own <c>browserai.log</c> held").</b> There is no such file: a session's
+    /// logging stack is stderr at the level the call asked for, and everything
+    /// about the session's own calls is in <c>browserai.data</c> instead. Both
+    /// halves of what that file used to prove are still asserted — the scope on
+    /// stderr, and the calls in the record.
+    /// </remarks>
     public required string SessionLog { get; init; }
-
-    /// <summary>Everything the moved session's own log held after it was resumed.</summary>
-    public required string MovedSessionLog { get; init; }
 
     /// <summary>Whether the destroyed session's <c>browserai.json</c> is gone.</summary>
     public required bool DestroyedLockFileIsGone { get; init; }
@@ -291,7 +299,10 @@ internal sealed record SessionRun
                 ["debug"] = true,
             }).ConfigureAwait(false);
 
-            var sessionLog = ReadSharing(Path.Combine(alpha, "browserai.log"));
+            // Read here rather than at the end, so that what is captured is what
+            // the session's own records looked like WHILE it was open -- which
+            // is the window the scope assertion is about.
+            var sessionLog = client.StandardErrorSoFar();
 
             answers["initGamma"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
@@ -439,8 +450,6 @@ internal sealed record SessionRun
             ["why"] = "the suite exercising this call",
         }).ConfigureAwait(false);
 
-        var movedLog = ReadSharing(Path.Combine(moved, "browserai.log"));
-
         _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang).ConfigureAwait(false);
 
         return new SessionRun
@@ -449,7 +458,6 @@ internal sealed record SessionRun
             Answers = answers,
             ProfileWasUsed = first.ProfileWasUsed,
             SessionLog = first.SessionLog,
-            MovedSessionLog = movedLog,
             DestroyedLockFileIsGone = first.DestroyedLockFileIsGone,
             HeldFileSurvivedTheDestroy = first.HeldFileSurvivedTheDestroy,
         };

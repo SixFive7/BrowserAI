@@ -116,6 +116,22 @@ internal static partial class Sqlite
     /// <summary><c>SQLITE_CANTOPEN</c> — the file could not be opened or created.</summary>
     public const int CannotOpen = 14;
 
+    /// <summary>
+    /// <c>SQLITE_IOERR</c> — the operating system refused an operation on one of
+    /// the database's files.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>It is a family rather than a code, and one member of it is
+    /// transient.</b> Most of the extended codes under it are real disk faults;
+    /// the ones this product meets in practice are the shared-memory arms —
+    /// a reader mapping or locking the wal-index of a database whose holder is
+    /// in the middle of dying, so its handles are closing while the reader is
+    /// opening. That one ends on its own, which is why
+    /// <see cref="Sessions.SessionLock.ReadRecord"/> waits it out rather than
+    /// reporting a session unreadable.
+    /// </remarks>
+    public const int IoError = 10;
+
     /// <summary><c>SQLITE_MISUSE</c> — this library was used wrongly, not the database.</summary>
     /// <remarks>
     /// ⚠️ <b>It is not what an uninitialised library answers, and assuming it

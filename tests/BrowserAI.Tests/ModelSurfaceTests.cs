@@ -89,7 +89,7 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.Resume,
             ["directory", "purpose", "why", "headed", "debug", "tracing", "captureNetwork", "viewport", "locale", "timezone", "ignoreHTTPSErrors"],
             ["directory", "why"]),
-        (SessionToolSurface.CatchUp, ["session"], ["session"]),
+        (SessionToolSurface.CatchUp, ["session", "page"], ["session"]),
         (SessionToolSurface.List, ["directory"], ["directory"]),
         (SessionToolSurface.Destroy, ["directory", "why"], ["directory", "why"]),
         (SessionToolSurface.SetPurpose, ["session", "purpose", "why"], ["session", "purpose", "why"]),

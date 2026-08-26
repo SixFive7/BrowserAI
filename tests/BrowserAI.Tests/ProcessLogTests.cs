@@ -296,11 +296,34 @@ internal sealed partial class ProcessLogTests
 
         var consoleCallSites = CountOf(source, "AddConsole(");
         var pinned = CountOf(source, "LogToStandardErrorThreshold = LogLevel.Trace");
-        var fileProviders = CountOf(source, "new FileLoggerProvider(");
 
         await Assert.That(consoleCallSites).IsGreaterThan(0);
         await Assert.That(pinned).IsEqualTo(consoleCallSites);
-        await Assert.That(fileProviders).IsGreaterThanOrEqualTo(consoleCallSites);
+
+        // ⚠️ THE SECOND CLAIM NARROWED WITH THE THING IT WAS ABOUT (2026-08-26,
+        // previously `fileProviders >= consoleCallSites` over the whole file).
+        // There are two stacks in here and only one of them still owns a file.
+        // The PROCESS stack pairs its console with a FileLoggerProvider over
+        // RollingFileWriter, so no machine-wide record exists only in a queue
+        // whose drain nobody measured -- that is unchanged and is asserted
+        // below. The SESSION stack has no file at all since `browserai.log` was
+        // deleted, and it does not need one: what a session did is in
+        // `browserai.data`, an INSERT per call, which is durable in a way a log
+        // file never was and which `browserai_catch_up` can read back.
+        var split = source.IndexOf("SessionLogging OpenSessionLog", StringComparison.Ordinal);
+
+        // Not vacuous: a scan that failed to find the second stack would report
+        // the first one's providers twice.
+        await Assert.That(split).IsGreaterThan(0);
+
+        var processStack = source[..split];
+        var sessionStack = source[split..];
+
+        await Assert.That(CountOf(processStack, "AddConsole(")).IsEqualTo(1);
+        await Assert.That(CountOf(processStack, "new FileLoggerProvider(")).IsEqualTo(1);
+
+        await Assert.That(CountOf(sessionStack, "AddConsole(")).IsEqualTo(1);
+        await Assert.That(CountOf(sessionStack, "new FileLoggerProvider(")).IsEqualTo(0);
 
         // And nowhere else in the product builds a logging stack, so counting
         // one file is counting all of them.
@@ -514,15 +537,25 @@ internal sealed partial class ProcessLogTests
             ProcessLogProbe.Wrote(mine, marker);
         }
 
-        var beside = await File.ReadAllTextAsync(Path.Combine(session, "browserai.log"));
         var shared = ProbeProcess.ReadProcessLog(scratch.Path);
-
-        await Assert.That(beside).Contains(marker, StringComparison.Ordinal);
 
         // The positive control for the line below: the shared file exists, is
         // readable, and holds this run's records.
         await Assert.That(shared).Contains("the machine's own record", StringComparison.Ordinal);
+
+        // ⚠️ THE CLAIM, AND IT IS NOW THE WHOLE OF THE TEST (2026-08-26,
+        // previously the marker was also required to be in
+        // `<session-dir>\browserai.log`). There is no such file: a session's
+        // stack is stderr alone. What has not changed, and is the reason the
+        // duplicate was removed in the first place, is that a session's records
+        // must not go to the file every BrowserAI on the machine queues at --
+        // that duplicate was the bulk of the shared file's traffic, from ~100
+        // processes at once.
         await Assert.That(shared).DoesNotContain(marker, StringComparison.Ordinal);
+
+        // And the session directory gained no file for it, which is what makes
+        // the deletion real rather than a rename.
+        await Assert.That(Directory.EnumerateFiles(session).Select(Path.GetFileName).ToArray()).IsEmpty();
     }
 
     /// <summary>

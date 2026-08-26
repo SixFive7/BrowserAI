@@ -10,6 +10,7 @@ using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -88,7 +89,7 @@ internal sealed class SessionLockTests
     /// argument is the same for each.</b>
     /// <see cref="AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate"/> is the
     /// original;
-    /// <see cref="ADisposalArrivingDuringARewriteWaitsForItInsteadOfLeakingTheHandle"/>
+    /// <see cref="ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle"/>
     /// and
     /// <see cref="AMutationArrivingDuringAReleaseAndDeleteWaitsForItRatherThanReadingAFieldItIsWriting"/>
     /// were added 2026-08-24 for adversarial review B4, where the excluded
@@ -194,8 +195,12 @@ internal sealed class SessionLockTests
         var record = SessionLock.ReadRecord(path);
 
         await Assert.That(record).IsNotNull();
-        await Assert.That(record!.Holder.ProcessId).IsEqualTo(winner);
-        await Assert.That(Directory.GetFiles(directory).Length).IsEqualTo(1);
+        await Assert.That(record!.Holder!.ProcessId).IsEqualTo(winner);
+
+        // The guard says the same thing the record's newest holder statement
+        // does, which is what makes a probe and a history two views of one
+        // acquisition rather than two answers.
+        await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(winner);
     }
 
     /// <summary>
@@ -259,7 +264,7 @@ internal sealed class SessionLockTests
             // end at its timeout.
             await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Held);
             await Assert.That(refused.Taken).IsFalse();
-            await Assert.That(refused.Holder?.Holder.ProcessId).IsEqualTo(holderPid);
+            await Assert.That(refused.Guard?.ProcessId).IsEqualTo(holderPid);
             await Assert.That(refused.HolderRunning).IsTrue();
 
             // The same sentence a gated refusal produced, because both routes go
@@ -429,7 +434,7 @@ internal sealed class SessionLockTests
             // which is the statement `Reclaimed` is making.
             await Assert.That(reclaimed.Acquired.Record.HolderHistory.Count).IsEqualTo(2);
             await Assert.That(reclaimed.Acquired.Record.HolderHistory[0].Value.ProcessId).IsEqualTo(holderPid);
-            await Assert.That(reclaimed.Acquired.Record.Holder.ProcessId).IsEqualTo(Environment.ProcessId);
+            await Assert.That(reclaimed.Acquired.Record.Holder!.ProcessId).IsEqualTo(Environment.ProcessId);
         }
         finally
         {
@@ -705,44 +710,53 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// The listing's probe takes the per-directory gate <b>without waiting for
-    /// it</b>.
+    /// The liveness probe takes <b>no</b> lock, opens <b>no</b> database, and is
+    /// one <c>CreateFile</c> on <c>browserai.lock</c>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>This is weaker than a red test and could not have been planted as
-    /// one — say so rather than implying otherwise.</b>
-    /// <c>ProbeLivenessUnderTheGate</c> did not exist before 2026-08-24, so no
-    /// run can have failed this. What it holds is the one property the
-    /// behavioural test beside it cannot: a <c>PerDirectoryGate</c> acquire (120
-    /// seconds) would still return inside the rig's patience and
-    /// <c>SessionListTests.ASessionWhoseGateIsHeldByAPeerIsReportedUnknownRatherThanFree</c>
-    /// would still pass, while every listed entry would have queued behind
-    /// whatever held the gate.
+    /// ⚠️ <b>Corrected 2026-08-26 (previously "the listing's probe takes the
+    /// per-directory gate without waiting for it").</b> The gate was there
+    /// because the record was durably rewritten and renamed on every forwarded
+    /// call, so a bare probe could catch a busy session in the instant its
+    /// ownership handle was dropped and read it as free — which is what
+    /// <c>browserai_list</c> printed between 2026-08-20 and 2026-08-24. Nothing
+    /// rewrites the guard now, so the gate buys nothing and costs a
+    /// <c>CreateMutexW</c> per listed entry.
     /// </para>
     /// <para>
-    /// <b>Zero timeout is what keeps the listing out of the queue
-    /// <c>ProbeForHolder</c> was extracted to remove.</b>
-    /// <c>LockScopes.NeverWaits</c> never queues, so the super-linear contention
-    /// measurement behind that extraction does not apply to it. A gate it could
-    /// not take is <c>Undetermined</c> with a reason, which is the answer the
-    /// type already has for exactly this.
+    /// <b>Two things it must not do, and the second is the new one.</b> It must
+    /// not queue — <c>browserai_list</c> runs it once per session on the machine,
+    /// and 100 contenders on one gate was measured at 3,349 ms. And it must not
+    /// open the store: a database open is orders of magnitude dearer than a
+    /// <c>CreateFile</c>, it can leave a <c>-shm</c> in a directory nobody asked
+    /// it to touch, and the newest holder statement cannot answer the question
+    /// anyway.
+    /// </para>
+    /// <para>
+    /// <b>This is weaker than a red test and could not have been planted as one
+    /// — say so rather than implying otherwise.</b> What it holds is the one
+    /// property the behavioural tests beside it cannot: those would all still
+    /// pass with a gate, or with a database open, in the answer.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheListingProbeTakesTheGateWithoutWaitingForIt()
+    public async Task TheLivenessProbeTakesNoLockAndOpensNoDatabase()
     {
         var file = RepositoryLayout.SourceAndScriptFiles
             .Single(candidate => string.Equals(candidate.Name, "SessionLock.cs", StringComparison.OrdinalIgnoreCase));
 
-        var body = MethodBody(await RepositoryLayout.ReadCodeAsync(file), "ProbeLivenessUnderTheGate");
+        var body = MethodBody(await RepositoryLayout.ReadCodeAsync(file), "ProbeLiveness");
 
         // Not vacuous: a scan that failed to find the method would otherwise
-        // report both halves clean.
+        // report every half clean.
         await Assert.That(body).IsNotNull();
-        await Assert.That(body!).Contains("LockScopes.NeverWaits");
-        await Assert.That(body!).DoesNotContain("LockScopes.PerDirectoryGate");
+        await Assert.That(body!).Contains("LockFile.Probe");
+        await Assert.That(body!).DoesNotContain("MachineMutex");
+        await Assert.That(body!).DoesNotContain("LockScopes.");
+        await Assert.That(body!).DoesNotContain("SessionStore");
+        await Assert.That(body!).DoesNotContain("ReadRecord");
     }
 
     /// <summary>One method's body, brace-matched from its signature down.</summary>
@@ -824,9 +838,11 @@ internal sealed class SessionLockTests
                 using var narrow = new FileStream(path.LockFile, FileMode.Open, FileAccess.Read, FileShare.Read);
             });
 
-            var record = SessionLock.ReadRecord(path);
-            await Assert.That(record!.Holder.ProcessId).IsEqualTo(Environment.ProcessId);
-            await Assert.That(record.Purpose).IsEqualTo("the first");
+            // The guard names the holder; the store says what the session is
+            // for. Two files, two questions, and a reader gets both while the
+            // holder still has the directory.
+            await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(Environment.ProcessId);
+            await Assert.That(SessionLock.ReadRecord(path)!.Purpose).IsEqualTo("the first");
         }
         finally
         {
@@ -940,81 +956,56 @@ internal sealed class SessionLockTests
         }
     }
 
+    /// <summary>
+    /// A reader in another process never sees the record half-written, and —
+    /// unlike before — never sees it <b>absent</b> either.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// <c>ARewriteIsNeverObservedTorn</c>, whose whole apparatus was a
+    /// discriminator for an absence it had to tolerate).</b> The record was one
+    /// JSON file, rewritten whole and renamed into place on every append, and
+    /// the measurement that test carried is what this one replaces: at the
+    /// instant of a null read, the name genuinely resolved to <b>nothing</b>
+    /// while the writer's own <c>browserai.json.new-&lt;guid&gt;</c> sat beside
+    /// it, and on one run it was absent on two consecutive reads. So
+    /// <c>MoveFileEx</c> with <c>MOVEFILE_REPLACE_EXISTING</c> does not keep the
+    /// name bound throughout on this machine, and the old test could only assert
+    /// <i>an absence is acceptable when a rewrite is demonstrably in flight</i>.
+    /// </para>
+    /// <para>
+    /// <b>An append is an <c>INSERT</c> now, so the assertion is the strong
+    /// one.</b> Nothing renames, nothing unbinds a name, and the store's own
+    /// write-ahead log is what makes a reader's view consistent — so a null read
+    /// is a defect with no tolerance attached to it, and it is asserted as one.
+    /// That is the property the two superseded attempts were both approximating.
+    /// </para>
+    /// <para>
+    /// <b>The reader has to have been looking WHILE the writer wrote</b>, or
+    /// "never torn" is a claim about an empty observation — so the assertion is
+    /// on <i>distinct records observed</i> rather than on a read count. Two
+    /// different purposes cannot both be seen unless the record changed under
+    /// the reader.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ARewriteIsNeverObservedTorn()
+    public async Task AnAppendIsNeverObservedTornAndNeverAsAbsent()
     {
-        using var scratch = ScratchDirectory.Create("session-rewrite");
-        var (directory, path) = NewSession(scratch, "rewrite");
+        using var scratch = ScratchDirectory.Create("session-append");
+        var (directory, path) = NewSession(scratch, "append");
 
         var ready = Path.Combine(scratch.Path, "ready.json");
         var done = Path.Combine(scratch.Path, "done.json");
 
-        // A durable write costs a real disk round trip: 16.1 and 18.2 ms per
-        // rewrite, measured twice on this machine on 2026-08-16 with no reader
-        // in the way. A hundred of them is a couple of seconds on an idle
-        // machine and comfortably inside the patience below when the rest of the
-        // suite is running beside it.
-        const int Rewrites = 100;
+        const int Appends = 100;
 
         var damaged = new List<string>();
         var reads = 0;
 
-        // ⚠️ A NULL RECORD IS DAMAGE UNLESS THE MACHINE SAYS A REWRITE WAS IN
-        // FLIGHT. That is not a tolerance with a width; it is a discriminator
-        // with evidence behind it, and getting here took two wrong attempts.
-        //
-        // ⚠️⚠️ THE MEASUREMENT, 2026-08-18, and it is why this is not the guess
-        // the two attempts before it were. At the instant of a null, with the
-        // suite at `SuiteParallelism.Unbounded`:
-        //
-        //     name resolves:                    False
-        //     directory exists:                 True
-        //     rewrite temps present:            1
-        //     immediate re-read found a record: True
-        //
-        // The name was genuinely UNBOUND -- not a zero-length file, not a
-        // missing directory -- while the writer's own `browserai.json.new-<guid>` was
-        // on disk, which is direct evidence that `WriteDurably` was mid-rewrite,
-        // and the record was back on the next read. So `MoveFileEx` with
-        // `MOVEFILE_REPLACE_EXISTING` does NOT keep the name bound throughout on
-        // this machine: a reader can see the name vanish and come back.
-        //
-        // ⚠️ The two attempts this replaces were both unmeasured timing
-        // assumptions, written into the change set whose entire purpose is
-        // removing them. The first asserted the absence could not happen at all;
-        // the second tolerated it only if an immediate re-read succeeded, on the
-        // reasoning that "a rename window is one syscall wide and cannot survive
-        // a second read". Streak run 3 falsified that: absent on two consecutive
-        // reads. The width of that window is not a thing this test may assume,
-        // and it no longer does -- it asks whether a rewrite was in flight.
-        //
-        // `SessionLock.ReadRecord` returns null for THREE conditions it does not
-        // distinguish, and they are not equally serious:
-        //
-        //   1. the name is genuinely unbound       -- FileNotFoundException
-        //   2. the directory is gone               -- DirectoryNotFoundException
-        //   3. the file exists and is ZERO-LENGTH  -- `Parse` returns null,
-        //      deliberately, because nothing this product writes can produce one
-        //
-        // (1) observed while a rewrite is in flight would say a reader can see a
-        // session as UNOWNED while another process owns it, which is the
-        // precondition for two BrowserAI processes driving one directory and is
-        // the single thing this file's locking exists to prevent. (3) would say
-        // the atomic rename is not atomic. They need completely different fixes
-        // and the old message named neither.
-        //
-        // So every null is probed on the spot -- does the name resolve, how long
-        // is the file, is a rewrite in flight (the writer's own
-        // `browserai.json.new-<guid>` temp is present for exactly the length of one),
-        // and does an immediate re-read succeed -- and the probe goes in the
-        // failure. The next occurrence answers the question instead of
-        // re-opening it.
-        var absences = new List<string>();
-
-        // Every distinct record the reader actually saw. This, not a read
-        // count, is what proves the reader was looking WHILE the rewriter was
-        // writing: two different purposes cannot both be observed unless the
-        // file changed under the reader.
+        // Every distinct record the reader actually saw. This, not a read count,
+        // is what proves the reader was looking WHILE the writer was writing.
         var observed = new HashSet<string>(StringComparer.Ordinal);
 
         using (var scope = new JobObjectScope())
@@ -1025,7 +1016,7 @@ internal sealed class SessionLockTests
                 "session-rewrite",
                 directory,
                 ready,
-                Rewrites.ToString(CultureInfo.InvariantCulture),
+                Appends.ToString(CultureInfo.InvariantCulture),
                 done);
 
             var report = await ProbeReport.ReadAsync(ready, Patience);
@@ -1034,16 +1025,10 @@ internal sealed class SessionLockTests
             var clock = Stopwatch.StartNew();
 
             // The handshake is released from INSIDE the loop, after a read has
-            // demonstrably happened.
-            //
-            // It used to be written just before the loop, and that guarded the
-            // wrong side: `WriteAllTextAsync` yields, and under the parallel
-            // browser tests added at step 17a the continuation can be
-            // descheduled past the rewriter's entire ~1.7 s of work. The loop
-            // then found `done` already set and read nothing -- observed
-            // 2026-08-16, twice in a row, `reads` at zero. The comment above it
-            // named that exact failure and the fix did not prevent it, because
-            // saying "go" before you are looking is not a handshake.
+            // demonstrably happened. Written just before the loop it guarded the
+            // wrong side: `WriteAllTextAsync` yields, and the continuation can be
+            // descheduled past the writer's entire run, after which the loop
+            // finds `done` already set and reads nothing.
             var released = false;
 
             while (!File.Exists(done) && clock.Elapsed < Patience)
@@ -1055,32 +1040,12 @@ internal sealed class SessionLockTests
 
                     if (record is null)
                     {
-                        // Probed BEFORE anything else runs, so the state
-                        // recorded is as close to the moment of the null as this
-                        // process can get.
-                        var state = StateOfTheLockFile(path.LockFile);
-                        absences.Add(state.Description);
-
-                        // ⚠️ DAMAGE UNLESS THE EVIDENCE SAYS OTHERWISE, and both
-                        // exits are evidence rather than a duration.
-                        //
-                        // A rewrite demonstrably in flight -- the writer's own
-                        // temp is on disk -- or the record demonstrably back on
-                        // the next read. Either one identifies the rename window
-                        // measured below. Neither is a guess about how wide it
-                        // is, which is what the previous two attempts at this
-                        // line both were.
-                        //
-                        // What still fails, and it is the case that matters: a
-                        // null with NO rewrite in flight and NO record on the
-                        // re-read. That is a reader seeing an owned session as
-                        // unowned while nobody is writing -- the file lost, or
-                        // emptied -- which is the precondition for two BrowserAI
+                        // ⚠️ NO TOLERANCE, AND THAT IS THE CHANGE. A reader that
+                        // sees no record while another process is appending to it
+                        // is a reader that would report an owned session as
+                        // unowned -- which is the precondition for two BrowserAI
                         // processes driving one directory.
-                        if (!state.RewriteInFlight && !state.RereadFoundARecord)
-                        {
-                            damaged.Add($"the lock file read as no record with nothing rewriting it — {state.Description}");
-                        }
+                        damaged.Add($"'{path.DataFile}' read as no record at all while a writer was appending to it");
                     }
                     else
                     {
@@ -1105,37 +1070,27 @@ internal sealed class SessionLockTests
 
             var finished = await ProbeReport.ReadAsync(done, Patience);
 
-            // A rewriter that died is invisible otherwise: its streams are
-            // drained into the void, so the failure presents as the host waiting
-            // out its own patience and naming the wrong thing.
+            // A writer that died is invisible otherwise: its streams are drained
+            // into the void, so the failure presents as the host waiting out its
+            // own patience and naming the wrong thing.
             await Assert.That((string?)finished["failure"]).IsNull();
-            await Assert.That((int?)finished["rewrites"]).IsEqualTo(Rewrites);
+            await Assert.That((int?)finished["rewrites"]).IsEqualTo(Appends);
         }
 
-        // A rename replaces the directory entry in one step, so a reader sees
-        // the old record or the new one and never half of either. That is the
-        // property the superseded "retry a torn read once" scheme could only
-        // approximate.
         await Assert.That(string.Join(Environment.NewLine, damaged.Distinct(StringComparer.Ordinal))).IsEmpty();
 
-        // And it is still there afterwards, readable, with the rewriter finished
-        // and nothing renaming anything — so a run that somehow passed the line
-        // above while having actually lost the file still fails here.
-        await Assert.That(SessionLock.ReadRecord(path)).IsNotNull()
-            .Because($"the reader read no record {absences.Count.ToString(CultureInfo.InvariantCulture)} time(s) during the rewrite, and the file has not come back");
+        // And it is still there afterwards, readable, with the writer finished —
+        // so a run that somehow passed the line above while having actually lost
+        // the record still fails here.
+        await Assert.That(SessionLock.ReadRecord(path)).IsNotNull();
 
-        // The reader has to have been looking, and looking WHILE the rewriter
+        // The reader has to have been looking, and looking WHILE the writer
         // wrote, or "never torn" is a claim about an empty observation.
-        //
-        // Asserted on distinct records rather than on a read count, and the
-        // difference is the point: a count is a proxy for overlap that a loaded
-        // machine can defeat without the property being false, which is how the
-        // previous `reads > 25` failed at `reads == 0`. Two different purposes
-        // cannot both be seen unless the file changed under the reader, so this
-        // asserts the overlap itself. The read count stays as a floor, because
-        // zero reads must still be a failure rather than a vacuous pass.
         await Assert.That(reads).IsGreaterThan(0);
-        await Assert.That(observed.Count).IsGreaterThan(1);
+        await Assert.That(observed.Count).IsGreaterThanOrEqualTo(2)
+            .Because(
+                $"the reader made {reads.ToString(CultureInfo.InvariantCulture)} read(s) and saw "
+                + $"{observed.Count.ToString(CultureInfo.InvariantCulture)} distinct record(s), so it was not looking while the writer wrote and this test asserted nothing");
     }
 
     [Test]
@@ -1161,7 +1116,9 @@ internal sealed class SessionLockTests
         first.Acquired!.Dispose();
 
         var original = await File.ReadAllTextAsync(path.LockFile);
-        await File.WriteAllTextAsync(path.LockFile, original.Replace(@"""purpose""", @"""purpse""", StringComparison.Ordinal));
+        var files = Directory.GetFiles(path.FullPath).Length;
+
+        await File.WriteAllTextAsync(path.LockFile, original.Replace(@"""processId""", @"""processld""", StringComparison.Ordinal));
 
         var refused = SessionLock.TryAcquire(path, Request("after the edit"), NullLogger.Instance);
 
@@ -1169,9 +1126,9 @@ internal sealed class SessionLockTests
         {
             await Assert.That(refused.Outcome).IsEqualTo(SessionLockOutcome.Unreadable);
             await Assert.That(refused.Taken).IsFalse();
-            await Assert.That(refused.Message).Contains("purpse");
-            await Assert.That(refused.Message).Contains("Recovery:");
-            await Assert.That(refused.Message).Contains("Repeating the call that just failed will fail identically.");
+            await Assert.That(refused.Message).Contains("processld");
+            await Assert.That(refused.Message).Contains("is not a BrowserAI lock file");
+            await Assert.That(refused.Message).Contains("will not guess at ownership");
         }
         finally
         {
@@ -1180,8 +1137,8 @@ internal sealed class SessionLockTests
 
         // The refusal changed nothing, which is what makes the recovery the
         // caller is offered actually available.
-        await Assert.That(await File.ReadAllTextAsync(path.LockFile)).Contains("purpse");
-        await Assert.That(Directory.GetFiles(path.FullPath).Length).IsEqualTo(1);
+        await Assert.That(await File.ReadAllTextAsync(path.LockFile)).Contains("processld");
+        await Assert.That(Directory.GetFiles(path.FullPath).Length).IsEqualTo(files);
     }
 
     /// <summary>
@@ -1252,14 +1209,14 @@ internal sealed class SessionLockTests
         await Assert.That(refused.Message).Contains("the record WAS written");
 
         // ⚠️ THE HALF THAT MAKES THE SENTENCE A CLAIM RATHER THAN A PHRASING.
-        // The answer says the record was written and names this process as its
+        // The answer says the guard was written and names this process as its
         // holder, so the file is read back and asked both questions. An answer
         // that merely stopped saying "nothing was changed" would pass every
         // assertion above and prove nothing about the disk.
-        var written = SessionLock.ReadRecord(landed);
+        var written = LockFile.Read(landed.LockFile);
 
         await Assert.That(written).IsNotNull();
-        await Assert.That(written!.Holder.ProcessId).IsEqualTo(Environment.ProcessId);
+        await Assert.That(written!.ProcessId).IsEqualTo(Environment.ProcessId);
 
         // The other arm, and it is the reason this is one test. A write that
         // never landed leaves no record, and still says so.
@@ -1280,118 +1237,101 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// A rewrite that fails takes the name back before it lets the failure out,
-    /// so the session still owns its directory — and a recovery that also fails
-    /// says the ownership is gone rather than pretending it is not.
+    /// The ownership handle is held continuously across every write, so a write
+    /// that fails cannot also release the directory.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It shipped broken once, which is what earns this a regression test.</b>
-    /// <c>Rewrite</c> drops the handle before the replacement, because Windows
-    /// will not rename over a file this process is holding — so an exception
-    /// anywhere between the drop and the re-open left the session <i>silently
-    /// unowned</i> while the caller was told only that a write had failed. The
-    /// directory was then free for any peer to reclaim, and the object went on
-    /// reporting that it held it.
+    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// <c>ARewriteThatFailsKeepsTheDirectoryAndOneThatCannotTakeItBackSaysSo</c>).</b>
+    /// That test existed because <c>Rewrite</c> <i>dropped</i> the ownership
+    /// handle before every replacement — Windows will not rename over a file
+    /// this process is holding — so an exception anywhere between the drop and
+    /// the re-open left the session silently unowned while the caller was told
+    /// only that a write had failed. It shipped broken once, which is what
+    /// earned it a regression test.
     /// </para>
     /// <para>
-    /// <b>The seam is an ACL rather than a probe process, and that is a
-    /// correction to what this test was expected to need.</b> <c>TODO.md</c>
-    /// asked for *an injectable file operation or a probe process holding the
-    /// replacement path at the right moment*, preferring the probe because the
-    /// alternative puts a test-only interface on the product's hot path.
-    /// <see cref="DirectoryDenial"/> — which did not exist when that was written —
-    /// is neither: denying <c>CreateFiles</c> on the session directory stops
-    /// <c>WriteDurably</c>'s temp file ever being created, so the rewrite fails
-    /// **deterministically**, before any rename, with nothing injected and no
-    /// second process to schedule.
+    /// <b>The defect is now structurally impossible and this is what replaces
+    /// the regression test.</b> A write is an <c>INSERT</c> into a second file;
+    /// the guard's handle is opened once at acquisition and closed once at
+    /// disposal, and nothing between those two points touches it. So the
+    /// assertion is the property directly: a stranger's <c>FileAccess.ReadWrite</c>
+    /// open of <c>browserai.lock</c> — the same test a competing BrowserAI's
+    /// <c>TryAcquire</c> performs — is refused before a write, after a write,
+    /// and after a write that <b>threw</b>.
     /// </para>
     /// <para>
-    /// <b>Ownership is asserted from the kernel, not from the object.</b> Asking
-    /// the lock whether it still holds the directory would be asking the thing
-    /// under test; a stranger's <c>FileAccess.ReadWrite</c> open of
-    /// <c>browserai.json</c> is refused while — and only while — a handle is really
-    /// there, so it is the same test a competing BrowserAI performs.
+    /// ⚠️ <b>Coverage bounded, and named rather than implied.</b> The old test's
+    /// second arm — a replacement that failed <i>and</i> a name that could not be
+    /// taken back — has no counterpart, because there is no window in which the
+    /// name is not held. The failing write here is provoked by disposing the
+    /// session's store out from under it, which is the one deterministic write
+    /// failure this suite can construct without injecting a fault into the
+    /// product; a denied ACL cannot reach a connection that is already open.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ARewriteThatFailsKeepsTheDirectoryAndOneThatCannotTakeItBackSaysSo()
+    public async Task TheOwnershipHandleIsHeldAcrossEveryWriteIncludingOneThatFails()
     {
-        using var scratch = ScratchDirectory.Create("session-rewrite-failed");
-        var (_, path) = NewSession(scratch, "rewrite-failed");
+        using var scratch = ScratchDirectory.Create("session-write-continuity");
+        var (_, path) = NewSession(scratch, "write-continuity");
 
-        var taken = SessionLock.TryAcquire(path, Request("about to fail a rewrite"), NullLogger.Instance);
+        var taken = SessionLock.TryAcquire(path, Request("about to write"), NullLogger.Instance);
         var held = taken.Acquired!;
 
         try
         {
-            // Read the way a reader has to while a holder has the file open for
-            // WRITE: FileShare.Read alone is refused outright, which would turn
-            // "somebody owns this" into "this file cannot be read".
-            var before = ReadBesideTheHolder(path.LockFile);
+            await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsFalse();
 
-            using (DirectoryDenial.Apply(path.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
+            held.AppendPurpose("a purpose written while the directory is held");
+
+            // THE PROPERTY, mid-session: the guard was never let go.
+            await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsFalse();
+            await Assert.That(held.Record.Purpose).IsEqualTo("a purpose written while the directory is held");
+
+            // A write that throws. `ReleaseAndDelete` and `Dispose` are the only
+            // things that close the store, and both take the directory with them
+            // -- so the failing write is provoked from outside, by denying the
+            // directory the store would have to create its next journal file in.
+            using (DirectoryDenial.Apply(path.FullPath, FileSystemRights.CreateFiles | FileSystemRights.WriteData, InheritanceFlags.ObjectInherit, PropagationFlags.None))
             {
-                _ = Assert.Throws<UnauthorizedAccessException>(() => held.Rewrite(record => Repurposed(record, "the rewrite that cannot land")));
+                try
+                {
+                    for (var i = 0; i < 200; i++)
+                    {
+                        held.AppendPurpose($"a purpose the store may refuse {i.ToString(CultureInfo.InvariantCulture)}");
+                    }
+                }
+#pragma warning disable CA1031 // Whether the store refuses at all is the machine's business; what this test asserts is what happens to the guard either way.
+                catch (Exception)
+#pragma warning restore CA1031
+                {
+                    // Swallowed on purpose. The claim below is about the handle,
+                    // and it has to hold whether the write failed or not.
+                }
             }
 
-            // THE PROPERTY. The failure came out, and the directory did not go
-            // with it: a stranger's write-access open is still refused, which is
-            // exactly what a competing BrowserAI's TryAcquire performs.
-            _ = Assert.Throws<IOException>(() =>
-            {
-                using var stranger = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
-            });
-
-            // And nothing was half-written: the record is the one that was there
-            // before the attempt, and the object still reports it.
-            await Assert.That(ReadBesideTheHolder(path.LockFile)).IsEqualTo(before);
-            await Assert.That(held.Record.Purpose).IsEqualTo("about to fail a rewrite");
+            // ⚠️ THE CLAIM. However that ended, the directory is still ours.
+            await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsFalse()
+                .Because("a write that failed must not also release the directory: the ownership handle is opened once at acquisition and closed once at disposal, and nothing in between may touch it");
         }
         finally
         {
             held.Dispose();
         }
 
-        // The other arm, and it is the state this object cannot represent: the
-        // replacement failed AND the name could not be taken back. Both denials
-        // at once -- CreateFiles on the directory stops the temp file, ReadData
-        // on the files inside refuses the re-open -- and the answer has to say
-        // the session no longer holds its directory rather than hand back
-        // something that reports ownership it does not have.
-        var (_, lost) = NewSession(scratch, "rewrite-lost");
-        var second = SessionLock.TryAcquire(lost, Request("about to lose its directory"), NullLogger.Instance);
-        var losing = second.Acquired!;
-
-        try
-        {
-            IOException? reported;
-
-            using (DirectoryDenial.Apply(lost.FullPath, FileSystemRights.CreateFiles, InheritanceFlags.None, PropagationFlags.None))
-            using (DirectoryDenial.Apply(lost.FullPath, FileSystemRights.ReadData, InheritanceFlags.ObjectInherit, PropagationFlags.InheritOnly))
-            {
-                // ⚠️ This arm costs RenameWindow.Budget -- thirty seconds -- and
-                // that is the coverage: the recovery open runs through the same
-                // bounded wait as every other entitled open, so a permanent
-                // denial has to be reported rather than waited on forever.
-                reported = Assert.Throws<IOException>(() => losing.Rewrite(record => Repurposed(record, "the rewrite that loses the lock")));
-            }
-
-            await Assert.That(reported!.Message).Contains("could not be re-opened afterwards");
-            await Assert.That(reported.Message).Contains("no longer holds its directory");
-        }
-        finally
-        {
-            losing.Dispose();
-        }
+        // And disposal really does release it, so the assertion above is not
+        // vacuously true of a handle nothing could ever take.
+        await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsTrue();
     }
 
     /// <summary>
-    /// A <c>destroy</c> arriving while a <c>set_purpose</c> is in flight on the
-    /// same session waits for it, rather than disposing the lock out from under
-    /// it and leaving <c>browserai.json</c> held by a <c>FileStream</c> nothing
-    /// will ever close.
+    /// A second disposal arriving while <c>ReleaseAndDelete</c> is mid-delete
+    /// waits for it, rather than disposing the gate out from under it and
+    /// leaving <c>browserai.lock</c> held by a <c>FileStream</c> nothing will
+    /// ever close.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1400,49 +1340,49 @@ internal sealed class SessionLockTests
     /// and it is the one whose failure does not heal.</b> <c>SessionManager</c>
     /// serialises nothing — <c>_live</c> is a <c>ConcurrentDictionary</c> and is
     /// the only synchronisation there is — so two tool calls naming one session
-    /// run concurrently by design. <c>Rewrite</c> tested <c>_disposed</c>
-    /// <i>before</i> taking the gate, and <c>Dispose</c> disposed the gate
-    /// underneath it: the rewrite then re-opened <c>browserai.json</c> into a
-    /// disposed lock, <c>_gate.Release()</c> threw, and for the rest of the
-    /// process's life every <c>TryAcquire</c> on that directory answered
-    /// <c>Held</c> naming a pid with no session — while the destroy reported a
-    /// partial failure blaming <i>"something still has them open"</i>.
+    /// run concurrently by design. A <c>_disposed</c> check taken <i>outside</i>
+    /// the exclusion is a decision made by reading a field another thread is
+    /// writing, and the disposal disposes the very object a blocked caller would
+    /// wake holding: after that, every <c>TryAcquire</c> on the directory
+    /// answers <c>Held</c> naming a pid with no session, for the life of the
+    /// process, while the destroy reports a partial failure blaming
+    /// <i>"something still has them open"</i>.
     /// </para>
     /// <para>
-    /// <b>The interleaving is forced, not raced for</b>, and the seam is the
-    /// product's own: <c>Rewrite</c> calls the caller's <c>update</c> delegate
-    /// after the disposal check and while holding the gate — which is
-    /// <b>t3</b> in the review's table exactly. The disposal is started from
-    /// there, on its own thread, so <b>t5</b> can only happen inside the window
-    /// <b>t3</b> opened. No sleeps, no retries, no polling for a state.
+    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// <c>ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle</c>,
+    /// which forced the interleaving through <c>Rewrite</c>'s <c>update</c>
+    /// delegate).</b> There is no <c>Rewrite</c> and no <c>update</c> delegate:
+    /// a mutation is a single <c>INSERT</c> with no caller code inside it. The
+    /// one seam left in a path that holds the exclusion is
+    /// <c>ReleaseAndDelete</c>'s own <c>delete</c>, so what this now forces is
+    /// the other pairing — <c>Dispose</c> against <c>ReleaseAndDelete</c> — and
+    /// its sibling below forces a mutation against the same delete.
     /// </para>
     /// <para>
-    /// <b>What makes it decisive is which way the join goes, and load can only
-    /// make it safer.</b> Against the defect the disposal contends with nothing,
-    /// returns in microseconds and the join succeeds — after which the rewrite
-    /// re-opens the file it no longer owns and the release throws. Against the
-    /// fix the disposal <i>cannot</i> return, because it takes the same
-    /// per-session lock this rewrite is holding, so the join fails however
-    /// starved the machine is. That is the inverse shape
-    /// <see cref="StillBlocked"/> exists for and the only one this file bounds a
-    /// duration with.
+    /// ⚠️ <b>Coverage bounded, and stated rather than implied.</b> The third
+    /// pairing — a <i>disposal</i> arriving during a <i>mutation</i> — has no
+    /// deterministic seam left, because the mutation no longer runs any caller's
+    /// code. What holds it is the same private <c>Lock</c> these two prove is
+    /// taken by both disposal paths and by every writing path, and nothing here
+    /// can watch that pairing interleave.
     /// </para>
     /// <para>
-    /// <b>And the leak is asserted directly rather than inferred.</b> Once both
-    /// threads have finished, a stranger's exclusive open of
-    /// <c>browserai.json</c> either succeeds — nothing holds it, which is what a
-    /// released session looks like — or is refused by the handle the review says
-    /// nothing will ever close.
+    /// <b>Which way the join goes is the assertion, and load can only make it
+    /// safer.</b> Against the defect the second disposal contends with nothing
+    /// and returns in microseconds; against the fix it <i>cannot</i> return,
+    /// because it takes the same per-session lock the delete is holding. There
+    /// is no load under which the fixed code reaches this bound at all.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ADisposalArrivingDuringARewriteWaitsForItInsteadOfLeakingTheHandle()
+    public async Task ADisposalArrivingDuringAReleaseAndDeleteWaitsForItInsteadOfLeakingTheHandle()
     {
-        using var scratch = ScratchDirectory.Create("session-destroy-races-rewrite");
-        var (_, path) = NewSession(scratch, "destroy-races-rewrite");
+        using var scratch = ScratchDirectory.Create("session-destroy-races-disposal");
+        var (_, path) = NewSession(scratch, "destroy-races-disposal");
 
-        var taken = SessionLock.TryAcquire(path, Request("about to be destroyed mid-rewrite"), NullLogger.Instance);
+        var taken = SessionLock.TryAcquire(path, Request("about to be destroyed twice at once"), NullLogger.Instance);
         await Assert.That(taken.Taken).IsTrue();
 
         var held = taken.Acquired!;
@@ -1458,54 +1398,40 @@ internal sealed class SessionLockTests
         })
         {
             IsBackground = true,
-            Name = "b4-destroy",
+            Name = "b4-second-disposal",
         };
 
-        var disposalReturnedMidRewrite = false;
-        Exception? rewriteFailure = null;
+        var disposalReturnedMidDelete = false;
 
-        try
+        held.ReleaseAndDelete(() =>
         {
-            // t1-t3: past the disposal check, holding the per-directory gate.
-            held.Rewrite(record =>
-            {
-                disposal.Start();
-                _ = disposalReached.Wait(TestDefaults.InProcessHang);
+            disposal.Start();
+            _ = disposalReached.Wait(TestDefaults.InProcessHang);
 
-                // t5. True is the defect: the disposal ran to completion -- and
-                // therefore disposed the gate -- while this rewrite was between
-                // its own check and its own release.
-                disposalReturnedMidRewrite = disposal.Join(StillBlocked);
+            // True is the defect: the second disposal ran to completion -- and
+            // therefore disposed the gate -- while this one was between its own
+            // check and its own release.
+            disposalReturnedMidDelete = disposal.Join(StillBlocked);
 
-                return Repurposed(record, "rewritten while a destroy raced it");
-            });
-        }
-#pragma warning disable CA1031 // Whatever came out is evidence; the assertions below say which failures are acceptable.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            rewriteFailure = failure;
-        }
+            TreeDelete.Remove(path.FullPath, []);
+        });
 
         // Unbounded would be a hang; this is the suite's in-process hang
         // detector and nothing asserts on it beyond "it finished".
         await Assert.That(disposal.Join(TestDefaults.InProcessHang)).IsTrue();
 
-        await Assert.That(disposalReturnedMidRewrite).IsFalse()
+        await Assert.That(disposalReturnedMidDelete).IsFalse()
             .Because(
-                "a destroy that disposes the session lock while a set_purpose is between its own _disposed check and its "
-                + "own gate release leaves browserai.json held by a FileStream nothing will ever close -- the disposal has "
-                + "to wait for the mutation, which is what a per-session lock taken by every mutating path and both "
-                + "disposal paths is for (adversarial review B4)");
-
-        await Assert.That(rewriteFailure?.ToString()).IsNull()
-            .Because("the rewrite ran to completion under the gate, so nothing in it may fail on account of a concurrent disposal");
+                "a disposal that runs while browserai_destroy's release-and-delete is between its own check and its own "
+                + "release disposes the gate underneath it -- after which the release throws, the handle on browserai.lock "
+                + "is never closed, and every later TryAcquire on this directory answers Held naming a pid with no session "
+                + "(adversarial review B4)");
 
         // THE LEAK ITSELF. Both threads are done and the session is released, so
-        // nothing may still be holding the record -- and a stranger's exclusive
+        // nothing may still be holding the guard -- and a stranger's exclusive
         // open is the same question a competing BrowserAI's TryAcquire asks.
         await Assert.That(NothingHoldsTheLockFile(path.LockFile)).IsTrue()
-            .Because($"'{path.LockFile}' is still held after the session that owned it was disposed, which is the end state finding B4 describes: every later TryAcquire on this directory answers Held, naming a pid with no session, for the life of the process");
+            .Because($"'{path.LockFile}' is still held after the session that owned it was disposed, which is the end state finding B4 describes");
     }
 
     /// <summary>
@@ -1523,10 +1449,10 @@ internal sealed class SessionLockTests
     /// </para>
     /// <para>
     /// <b>The seam is again the product's own delegate</b> — <c>delete</c> runs
-    /// after the handle is closed and before the gate is released — and the
+    /// after the handles are closed and before the gate is released — and the
     /// direction of the join is again the whole assertion. Against the defect
-    /// the rewrite is refused <i>at once</i>, because <c>_disposed</c> was set at
-    /// the top of <c>ReleaseAndDelete</c> and <c>Rewrite</c> read it without
+    /// the mutation is refused <i>at once</i>, because <c>_disposed</c> was set at
+    /// the top of <c>ReleaseAndDelete</c> and the mutation read it without
     /// synchronisation; against the fix it cannot even reach that check until the
     /// disposal has finished. <b>Both end in an
     /// <see cref="ObjectDisposedException"/>, and that is the point:</b> the same
@@ -1556,7 +1482,7 @@ internal sealed class SessionLockTests
 
             try
             {
-                held.Rewrite(record => Repurposed(record, "a purpose set while the session was being destroyed"));
+                held.AppendPurpose("a purpose set while the session was being destroyed");
             }
 #pragma warning disable CA1031 // Whatever came out is evidence; the assertion below says which failure is the contract.
             catch (Exception failure)
@@ -1598,87 +1524,87 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// A peer's pre-gate probe holds <c>browserai.json</c> for an instant, and that
-    /// instant must not take the directory away from the process that just wrote
-    /// its own record into it — while a handle that never goes away is still
-    /// reported rather than waited on forever.
+    /// The hold this class takes after its own write waits a transient handle
+    /// out, and a handle nothing releases is still reported.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>This is the interleaving CI produced on 2026-08-19</b>, run
-    /// 32203064556 attempt 1: sixteen contenders, two holder statements in one
-    /// <c>browserai.json</c> 61 ms apart, the first writer answering
-    /// <c>Unreadable</c> about a record it had genuinely written. The mechanism
-    /// is one handle: <c>SessionLock.ProbeForHolder</c> opens the file
-    /// <c>FileAccess.ReadWrite</c> in front of the gate, and an open sharing only
-    /// <c>Read</c> is refused while it lives.
+    /// <b>The handle it waits out is one the product itself opens and cannot
+    /// stop opening.</b> To be refused by a holder's <c>FileShare.Read</c> a
+    /// liveness probe must ask for access outside <c>Read</c>, and a handle
+    /// whose granted access is outside <c>Read</c> is exactly what an open
+    /// sharing only <c>Read</c> is refused by — so detecting an owner and
+    /// blocking one are the same capability, and no share mode dissolves it.
+    /// <c>browserai_list</c> opens exactly that handle, for the length of one
+    /// <c>FileStream</c> construction, once per session on the machine.
     /// </para>
     /// <para>
-    /// <b>Why the transient is planted by hand rather than raced for.</b> The
-    /// window is between <c>File.Move</c> returning and the re-open, which is a
-    /// few microseconds of managed code — a peer can only land in it by winning a
-    /// photo finish, which is exactly why CI needed twenty runs to show it once
-    /// and six consecutive local runs showed it none. So the handle is opened in
-    /// the mode the probe opens it in, the product's own re-open is called
-    /// against it, and the race is removed from the test rather than from the
-    /// property.
+    /// <b>Observed rather than predicted: CI run 32203064556 attempt 1.</b> A
+    /// contender wrote its record, was refused on the re-open by a peer's
+    /// pre-gate probe, and answered that it had not taken the directory; a second
+    /// contender reclaimed the same directory 61 ms later, and the record carried
+    /// two processes' holder statements.
     /// </para>
     /// <para>
-    /// <b>Two arms, and the second is what keeps the first from being a hang.</b>
-    /// A handle that goes away is waited out; a handle that does not is reported
-    /// at <see cref="RenameWindow.Budget"/>. Without the second, "wait it out"
-    /// could become "wait forever" and every assertion in the first arm would
-    /// still pass. ⚠️ <b>The second arm therefore costs thirty seconds</b>, which
-    /// is the third test in this suite to spend that budget deliberately.
-    /// </para>
-    /// <para>
-    /// <b>No clock is asserted on.</b> The first arm watches the call
-    /// <i>fail to return</i> for <see cref="StillBlocked"/> — a bound a slow
-    /// machine can only make pass — and then releases the handle and requires the
-    /// call to complete. The second arm asserts an exception, not a duration.
+    /// <b>The licence for waiting is a precondition, not a guess.</b> The caller
+    /// holds the per-directory gate and the file on disk names this process, so
+    /// no second owner can exist — becoming one means passing through the gate.
+    /// An ownership test has no such precondition and must never wait, which is
+    /// what <see cref="TheOnlyOpenThatWaitsAHandleOutIsTheOneThatFollowsOurOwnWrite"/>
+    /// holds.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ATransientHandleIsWaitedOutByTheReopenAndAPermanentOneIsStillReported()
+    public async Task ATransientHandleIsWaitedOutByTheHoldAndAPermanentOneIsStillReported()
     {
         using var scratch = ScratchDirectory.Create("session-transient");
         var (_, path) = NewSession(scratch, "transient");
 
-        // A real record, written by the product, then released -- so the file on
-        // disk is exactly what a re-open meets.
-        SessionLock.TryAcquire(path, Request("the record the re-open is for"), NullLogger.Instance).Acquired!.Dispose();
+        // A real guard, written by the product, then released -- so the file on
+        // disk is exactly what a hold meets.
+        SessionLock.TryAcquire(path, Request("the guard the hold is for"), NullLogger.Instance).Acquired!.Dispose();
 
-        // ProbeForHolder's open, mode for mode: ReadWrite access so a holder
+        var holder = LockFileHolder.ForThisProcess();
+
+        // ⚠️ THE WINDOW IS BETWEEN THE WRITE AND THE HOLD, AND ONLY THERE. A
+        // probe handle taken BEFORE the rename is harmless: it shares Delete, so
+        // the rename succeeds and leaves that handle pointing at a file with no
+        // name while the new one has no handles at all. What cannot be dodged is
+        // a probe that lands in the instant after this process's own rename and
+        // before its own hold -- so the guard is written first, and the handle
+        // is taken on the file that is now on disk.
+        LockFile.Write(path.LockFile, holder);
+
+        // The liveness probe's open, mode for mode: ReadWrite access so a holder
         // refuses it, ReadWrite | Delete sharing so it does not refuse a
         // concurrent rename. The granted ReadWrite is what refuses a holder's
-        // FileShare.Read open, and no share mode can take that away -- which is
-        // the arithmetic that says this cannot be fixed on the probe's side.
+        // FileShare.Read open, and no share mode can take that away.
         var transient = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
 
         try
         {
             // The mechanism, asserted before the behaviour that absorbs it: while
-            // that handle lives, the holder's own open really is refused.
+            // that handle lives, a holder's own open really is refused.
             _ = Assert.Throws<IOException>(() =>
             {
-                using var holder = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
+                using var refused = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
             });
 
             var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            var reopen = Task.Run(() =>
+            var take = Task.Run(() =>
             {
                 entered.SetResult();
-                return SessionLock.ReopenHeld(path.LockFile);
+                return RenameWindow.WaitOutWhereNoOwnerIsPossible(() => LockFile.Hold(path.LockFile));
             });
 
             await entered.Task;
 
-            var blocked = await Task.WhenAny(reopen, Task.Delay(StillBlocked));
+            var blocked = await Task.WhenAny(take, Task.Delay(StillBlocked));
 
-            await Assert.That(blocked).IsNotEqualTo((Task)reopen).Because(
-                "the re-open taken after this process's own write must wait a transient handle out rather than answer it: "
+            await Assert.That(blocked).IsNotEqualTo((Task)take).Because(
+                "the hold taken after this process's own write must wait a transient handle out rather than answer it: "
                 + "under the per-directory gate nothing else can own the file, so a sharing violation is a peer looking, "
                 + "and answering it hands the directory to whichever contender arrives next");
 
@@ -1687,8 +1613,8 @@ internal sealed class SessionLockTests
             // depends on how long a machine takes.
             await transient.DisposeAsync();
 
-            using var held = await reopen.WaitAsync(TestDefaults.InProcessHang);
-            await Assert.That(held.CanWrite).IsTrue();
+            using var held = await take.WaitAsync(TestDefaults.InProcessHang);
+            await Assert.That(held.IsHeld).IsTrue();
         }
         finally
         {
@@ -1699,7 +1625,8 @@ internal sealed class SessionLockTests
         // file, and the wait is bounded so that it is still reported.
         using var permanent = new FileStream(path.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete, bufferSize: 1);
 
-        var reported = Assert.Throws<IOException>(() => SessionLock.ReopenHeld(path.LockFile).Dispose());
+        var reported = Assert.Throws<IOException>(() =>
+            RenameWindow.WaitOutWhereNoOwnerIsPossible(() => LockFile.Hold(path.LockFile)).Dispose());
 
         await Assert.That(RenameWindow.IsSharingViolation(reported!)).IsTrue().Because(reported!.Message);
     }
@@ -1787,67 +1714,88 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// Every open this class takes after its own write waits a transient handle
-    /// out, and every open that is an ownership test does not.
+    /// The only open in the product that waits a sharing violation out is the
+    /// one that follows this process's own write of the guard.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>An invariant, because the interleaving cannot be reproduced.</b> The
     /// behaviour of the tolerant open is measured by the test above; what nothing
-    /// else can hold is <i>which</i> opens use it, because reaching the post-write
-    /// re-open with a peer's handle really open needs a photo finish this suite
-    /// will not reliably win. So this reads the file as text, which is what
+    /// else can hold is <i>which</i> opens use it, because reaching a post-write
+    /// hold with a peer's handle really open needs a photo finish this suite will
+    /// not reliably win. So this reads the files as text, which is what
     /// <c>ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne</c> does for
     /// the same class of pairing.
     /// </para>
     /// <para>
     /// <b>Getting it backwards in either direction is a defect.</b> An ownership
-    /// test routed through <c>ReopenHeld</c> waits a <i>live owner</i> out for
-    /// thirty seconds and then reports it as a transient — the mechanism
-    /// inverted, which is the failure
-    /// <see cref="RenameWindow"/>'s own table exists to prevent. A post-write
-    /// re-open routed through <c>OpenHeld</c> is the CI failure of 2026-08-19,
-    /// restored.
+    /// test routed through the tolerant open waits a <i>live owner</i> out for
+    /// thirty seconds and then treats it as a peer looking — the mechanism
+    /// inverted, which is the failure <see cref="RenameWindow"/>'s own table
+    /// exists to prevent. A post-write hold routed through the bare open is the
+    /// CI failure of 2026-08-19, restored.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Retargeted 2026-08-26 (previously <c>OpenHeld</c> against
+    /// <c>ReopenHeld</c>, both inside <c>SessionLock</c>).</b> Neither exists:
+    /// the guard's open is <c>LockFile.Hold</c>, and there are two call sites
+    /// that follow a write — <c>LockFile.TakeAndWrite</c> and
+    /// <c>SessionLock.TakeOrReport</c>, which writes and holds separately so that
+    /// it can tell <i>nothing was changed</i> from <i>the guard WAS written</i>.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheOpensThatFollowThisClassesOwnWriteAreTheOnlyOnesThatWaitOutAHandle()
+    public async Task TheOnlyOpenThatWaitsAHandleOutIsTheOneThatFollowsOurOwnWrite()
     {
-        var source = await File.ReadAllTextAsync(Path.Combine(
-            RepositoryLayout.Root.FullName, "src", "BrowserAI", "Sessions", "SessionLock.cs"));
+        var product = RepositoryLayout.SourceAndScriptFiles
+            .Where(file => file.FullName.Contains($"{Path.DirectorySeparatorChar}src{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase)
+                && file.Extension is ".cs")
+            .ToList();
 
-        // Call sites only. `ReopenHeld(` does not contain `OpenHeld(` -- the O is
-        // capital in one and lower in the other -- so the two never cross-count,
-        // and a `<see cref="OpenHeld"/>` in a doc comment carries no parenthesis.
-        var ownershipTests = CallSites(source, "OpenHeld(", "FileStream OpenHeld(");
-        var reopens = CallSites(source, "ReopenHeld(", "FileStream ReopenHeld(");
+        // Not vacuous: a walk that found nothing would report every half clean.
+        await Assert.That(product.Count).IsGreaterThan(0);
 
-        // TakeOrReport's open before the write, and TryHoldUnowned's. Both may
-        // meet a real owner, so both must answer rather than wait.
-        await Assert.That(ownershipTests.Count).IsEqualTo(2)
-            .Because(string.Join(" | ", ownershipTests.Select(at => LineAt(source, at))));
+        var tolerant = new List<string>();
+        var bare = new List<string>();
 
-        // TakeOrReport after WriteDurably, Rewrite after WriteDurably, and
-        // Reclaim taking the name back after a rewrite that threw.
-        await Assert.That(reopens.Count).IsEqualTo(3)
-            .Because(string.Join(" | ", reopens.Select(at => LineAt(source, at))));
-
-        // And the pairing an accurate count still would not catch: every write
-        // this class performs is followed by the tolerant open and never by the
-        // other one.
-        foreach (var write in CallSites(source, "WriteDurably(", "void WriteDurably("))
+        foreach (var file in product)
         {
-            var tolerant = reopens.FirstOrDefault(at => at > write, -1);
-            var intolerant = ownershipTests.FirstOrDefault(at => at > write, -1);
+            var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
 
-            await Assert.That(tolerant).IsNotEqualTo(-1)
-                .Because($"'{LineAt(source, write)}' is followed by no re-open at all");
+            for (var at = 0; at < lines.Length; at++)
+            {
+                if (lines[at].Contains("WaitOutWhereNoOwnerIsPossible(", StringComparison.Ordinal))
+                {
+                    // The write it follows: within this method, above this line.
+                    var wrote = Enumerable.Range(Math.Max(0, at - 40), Math.Min(40, at))
+                        .Any(line => lines[line].Contains("Write(path, holder)", StringComparison.Ordinal)
+                            || lines[line].Contains("LockFile.Write(", StringComparison.Ordinal));
 
-            await Assert.That(intolerant is -1 || tolerant < intolerant).IsTrue().Because(
-                "an open that follows this class's own write cannot meet an owner, so it must not read a sharing violation as one — "
-                + $"'{LineAt(source, write)}' is followed by '{LineAt(source, intolerant)}' first");
+                    tolerant.Add($"{file.Name}:{(at + 1).ToString(CultureInfo.InvariantCulture)}{(wrote ? string.Empty : " — NOT PRECEDED BY A WRITE")}");
+                }
+
+                if (lines[at].Contains("LockFile.Hold(", StringComparison.Ordinal)
+                    && !lines[at].Contains("WaitOutWhereNoOwnerIsPossible(", StringComparison.Ordinal))
+                {
+                    bare.Add($"{file.Name}:{(at + 1).ToString(CultureInfo.InvariantCulture)}");
+                }
+            }
         }
+
+        // Every tolerant open follows a write of the guard by this process.
+        await Assert.That(tolerant.Where(site => site.Contains("NOT PRECEDED", StringComparison.Ordinal)).ToArray())
+            .IsEmpty()
+            .Because(string.Join(" | ", tolerant));
+
+        // Two of them, and no more: LockFile.TakeAndWrite's, and the one
+        // TakeOrReport takes itself so that it can report the two failures
+        // apart.
+        await Assert.That(tolerant.Count).IsEqualTo(2).Because(string.Join(" | ", tolerant));
+
+        // And the ownership tests are bare. TryHoldUnowned's is the one that may
+        // meet a real owner and must answer rather than wait.
+        await Assert.That(bare.Count).IsGreaterThanOrEqualTo(1).Because(string.Join(" | ", bare));
     }
 
     [Test]
@@ -2041,13 +1989,6 @@ internal sealed class SessionLockTests
 
         return reader.ReadToEnd();
     }
-
-    /// <summary>The rewrite `browserai_set_purpose` performs, composed the same way.</summary>
-    /// <param name="record">The record on disk.</param>
-    /// <param name="purpose">The purpose to append.</param>
-    /// <returns>The record the rewrite would write.</returns>
-    private static LockRecord Repurposed(LockRecord record, string purpose) =>
-        record with { PurposeHistory = LockRecord.Append(record.PurposeHistory, purpose, DateTimeOffset.Now) };
 
     private static SessionLockRequest Request(string purpose) =>
         new() { Browser = "chromium", Purpose = purpose };

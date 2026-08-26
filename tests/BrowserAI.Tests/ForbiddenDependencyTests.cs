@@ -113,9 +113,17 @@ internal sealed class ForbiddenDependencyTests
         // of there being no native package in its graph.
         var native = Mentioning("SourceGear.sqlite3").ToList();
 
-        await Assert.That(native.Count).IsEqualTo(2);
+        // ⚠️ THREE SINCE 2026-08-26 (previously two). The test PROBE opens
+        // sessions too, and since the cutover a session is a database — so a
+        // CoreCLR probe with no `e_sqlite3.dll` beside it dies on
+        // `DllNotFoundException` and reports as a race that nobody won, which is
+        // exactly what sixteen contenders did. The count is asserted rather than
+        // bounded because the thing that must never happen is a FOURTH one under
+        // `src\`, and a `>=` would not see it.
+        await Assert.That(native.Count).IsEqualTo(3);
         await Assert.That(native.Any(line => line.StartsWith("Directory.Packages.props", StringComparison.Ordinal))).IsTrue();
         await Assert.That(native.Any(line => line.Contains("BrowserAI.Tests.csproj", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(native.Any(line => line.Contains("BrowserAI.TestProbe.csproj", StringComparison.Ordinal))).IsTrue();
         await Assert.That(native.Any(line => line.Contains($"src{Path.DirectorySeparatorChar}BrowserAI", StringComparison.Ordinal))).IsFalse();
     }
 

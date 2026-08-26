@@ -97,8 +97,8 @@ internal sealed class ProcessLog : IDisposable
     }
 
     /// <summary>
-    /// Builds one session's logging stack: its own file beside <c>browserai.json</c>,
-    /// and stderr.
+    /// Builds one session's logging stack: stderr, at a level this session
+    /// chose.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -114,6 +114,16 @@ internal sealed class ProcessLog : IDisposable
     /// path. What answers *what were the other ninety-five doing* is now the
     /// session index and the per-session files it names, not one file a hundred
     /// writers queue at.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected again 2026-08-26 (previously "anything attributable to a
+    /// session goes to that session's own log").</b> There is no session log
+    /// file any more: <c>browserai.log</c> is gone and this stack is stderr
+    /// alone. Nothing was lost by deleting it — every record it held was
+    /// already going to stderr through the console provider beside it, and
+    /// everything about the session's own calls, refusals included, is in
+    /// <c>browserai.data</c>, which outlives the process the way a log file
+    /// did and which <c>browserai_catch_up</c> can read.
     /// </para>
     /// <para>
     /// ⚠️ <b>This reduces the shared file's write rate; it does not dissolve the
@@ -133,39 +143,35 @@ internal sealed class ProcessLog : IDisposable
     /// registration.
     /// </para>
     /// </remarks>
-    /// <param name="sessionDirectory">The session directory the log file goes in.</param>
+    /// <param name="sessionDirectory">The session directory these records are about.</param>
     /// <param name="minimumLevel">The level for this session alone.</param>
     /// <returns>The session's logging stack. Dispose it when the session ends.</returns>
     public static SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
     {
         ArgumentNullException.ThrowIfNull(sessionDirectory);
 
-        var file = new SessionLogFile(sessionDirectory);
-
-        try
-        {
-            // CA2000 is disabled for this one statement and nothing else.
-            // Ownership moves into the returned SessionLogging, whose Dispose
-            // calls Factory.Dispose -- the same transfer Create() above makes and
-            // the rule accepts there. The difference the rule reacts to is that
-            // SessionLogging is not the type this method belongs to, which is not
-            // a difference in ownership.
+        // CA2000 is disabled for this one statement and nothing else.
+        // Ownership moves into the returned SessionLogging, whose Dispose calls
+        // Factory.Dispose -- the same transfer Create() above makes and the rule
+        // accepts there. The difference the rule reacts to is that
+        // SessionLogging is not the type this method belongs to, which is not a
+        // difference in ownership.
 #pragma warning disable CA2000
-            var factory = LoggerFactory.Create(builder =>
-            {
-                _ = builder.SetMinimumLevel(minimumLevel);
-                _ = builder.AddProvider(new FileLoggerProvider(file));
-                _ = builder.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
-            });
-#pragma warning restore CA2000
-
-            return new SessionLogging(factory, file);
-        }
-        catch
+        return new SessionLogging(LoggerFactory.Create(builder =>
         {
-            file.Dispose();
-            throw;
-        }
+            _ = builder.SetMinimumLevel(minimumLevel);
+
+            // ⚠️ SCOPES ON, AND THIS IS WHAT THE DELETED FILE USED TO CARRY.
+            // The scope is `session=<directory>` and it is what makes ~100
+            // interleaved processes readable at all; it reached the old
+            // `browserai.log` through `FileLoggerProvider`, which implements
+            // `ISupportExternalScope`. With that file gone, stderr is the only
+            // destination a session's diagnostics have, and the console
+            // formatter drops scopes unless it is told not to.
+            _ = builder.AddSimpleConsole(options => options.IncludeScopes = true);
+            _ = builder.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
+        }));
+#pragma warning restore CA2000
     }
 
     /// <inheritdoc />
@@ -205,24 +211,23 @@ internal sealed class ProcessLog : IDisposable
     }
 }
 
-/// <summary>One session's logging stack, and the file it owns.</summary>
+/// <summary>One session's logging stack.</summary>
 /// <param name="factory">Where every component of that session takes its logger from.</param>
-/// <param name="file">The session's own log file.</param>
-internal sealed class SessionLogging(ILoggerFactory factory, SessionLogFile file) : IDisposable
+/// <remarks>
+/// ⚠️ <b>It owns no file since 2026-08-26 (previously it also owned
+/// <c>&lt;session-dir&gt;\browserai.log</c> and published its path).</b> The
+/// type survives the deletion because what it really carries is *a factory
+/// scoped to one session at one level*, which is what the <c>debug</c> argument
+/// on <c>browserai_init</c> buys and what a bare <c>ILoggerFactory</c> would
+/// not say.
+/// </remarks>
+internal sealed class SessionLogging(ILoggerFactory factory) : IDisposable
 {
     /// <summary>The factory for this session.</summary>
     public ILoggerFactory Factory { get; } = factory;
 
-    /// <summary>The file this session's records are appended to.</summary>
-    public string Path { get; } = file.Path;
-
     /// <inheritdoc />
-    public void Dispose()
-    {
-        // The factory first: it disposes the provider that owns the file.
-        Factory.Dispose();
-        file.Dispose();
-    }
+    public void Dispose() => Factory.Dispose();
 }
 
 /// <summary>Source-generated log messages for the crash path.</summary>

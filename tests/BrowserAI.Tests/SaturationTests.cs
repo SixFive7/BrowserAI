@@ -1068,7 +1068,7 @@ internal sealed partial class SaturationTests
             {
                 var record = SessionLock.ReadRecord(SessionPath.Resolve(session));
 
-                return record?.Holder.ProcessId ?? 0;
+                return record?.Holder?.ProcessId ?? 0;
             }
 #pragma warning disable CA1031 // A lock that cannot be read answers zero, which fails the assertion with the pid it should have named.
             catch (Exception)

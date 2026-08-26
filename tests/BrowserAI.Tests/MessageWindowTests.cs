@@ -87,6 +87,44 @@ internal sealed class MessageWindowTests
         await Assert.That(MessageWindows.TitleOf(window)).IsEqualTo(name);
     }
 
+    /// <summary>
+    /// The two title APIs agree about every message window on this machine —
+    /// where "disagree" means the two <i>APIs</i> disagree, not that the window
+    /// changed between two reads of it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It flaked once in five full runs on 2026-08-26, and the flake was
+    /// the test measuring something other than its own claim.</b>
+    /// <c>GetWindowTextW</c> answered a title for a Chromium window while
+    /// <c>InternalGetWindowText</c> answered empty for the same handle — the
+    /// suite's own concurrent slice session tearing its browser down between the
+    /// two calls. <b>A window that vanished or was renamed between two reads is
+    /// not an API disagreement</b>, and the old shape could not tell the two
+    /// apart because it read each handle exactly once per API.
+    /// </para>
+    /// <para>
+    /// <b>The fix is a second probe in the reverse order, and it is a
+    /// discriminator rather than a retry.</b> The four reads are
+    /// <c>documented, fallback, fallback, documented</c>: a genuine API
+    /// disagreement is <i>stable</i>, so both APIs answer the same thing twice
+    /// and the pair still differs; a window moving under the read changes at
+    /// least one of the two, which is a fact about the window and is counted as
+    /// one. <b>It is not a retry-until-green loop:</b> there is no loop, no
+    /// clock, and a stable disagreement fails on the second probe exactly as it
+    /// did on the first. It is also not a weakening — the assertion is still
+    /// <i>zero divergences</i>, over strictly more evidence per window.
+    /// </para>
+    /// <para>
+    /// <b>The positive control is our own window, and it is what stops the
+    /// discriminator swallowing everything.</b> A planted window that nothing is
+    /// tearing down must read stably on all four calls; an implementation that
+    /// classified every divergence as movement would still have to produce a
+    /// stable named window here, and the count of moving windows is reported
+    /// beside any failure rather than hidden.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheTwoTitleApisAgreeOnEveryMessageWindowOnThisMachine()
     {
@@ -100,6 +138,7 @@ internal sealed class MessageWindowTests
 
         var walk = MessageWindows.Walk(SingletonClass);
         var divergences = new List<string>();
+        var moved = new List<string>();
         var named = 0;
 
         foreach (var window in walk.Windows)
@@ -112,20 +151,56 @@ internal sealed class MessageWindowTests
                 named++;
             }
 
-            if (!string.Equals(documented, fallback, StringComparison.Ordinal))
+            if (string.Equals(documented, fallback, StringComparison.Ordinal))
             {
-                divergences.Add($"{window.Handle:X}: GetWindowTextW='{documented}' InternalGetWindowText='{fallback}'");
+                continue;
+            }
+
+            // ⚠️ REVERSED ON PURPOSE. Reading the same API first both times
+            // would let a window that is changing monotonically -- a title being
+            // cleared during teardown -- look stable to whichever call happened
+            // to run after the change.
+            var fallbackAgain = MessageWindows.InternalWindowText(window.Handle);
+            var documentedAgain = MessageWindows.WindowText(window.Handle);
+
+            var stable = string.Equals(documented, documentedAgain, StringComparison.Ordinal)
+                && string.Equals(fallback, fallbackAgain, StringComparison.Ordinal);
+
+            var evidence = $"{window.Handle:X}: GetWindowTextW='{documented}'/'{documentedAgain}' InternalGetWindowText='{fallback}'/'{fallbackAgain}'";
+
+            if (stable)
+            {
+                divergences.Add(evidence);
+            }
+            else
+            {
+                moved.Add(evidence);
             }
         }
 
-        await Assert.That(string.Join(Environment.NewLine, divergences)).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, divergences)).IsEmpty()
+            .Because($"{moved.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} window(s) changed under the read and were not counted as API disagreements");
+
         await Assert.That(walk.Truncated).IsFalse();
 
         // Not vacuous in either direction: the walk found windows, and at least
         // one of them was named -- ours.
         await Assert.That(walk.Windows.Count).IsGreaterThan(0);
         await Assert.That(named).IsGreaterThan(0);
-        await Assert.That(walk.Windows.Any(window => string.Equals(MessageWindows.WindowText(window.Handle), name, StringComparison.Ordinal))).IsTrue();
+
+        // ⚠️ THE POSITIVE CONTROL FOR THE DISCRIMINATOR. Our own window is not
+        // being torn down, so all four reads of it agree -- which is what a
+        // window the two APIs really do agree about looks like, and what an
+        // implementation that classified every divergence as movement could not
+        // produce.
+        var ours = walk.Windows
+            .Where(window => string.Equals(MessageWindows.WindowText(window.Handle), name, StringComparison.Ordinal))
+            .ToList();
+
+        await Assert.That(ours.Count).IsEqualTo(1);
+        await Assert.That(MessageWindows.InternalWindowText(ours[0].Handle)).IsEqualTo(name);
+        await Assert.That(MessageWindows.WindowText(ours[0].Handle)).IsEqualTo(name);
+        await Assert.That(MessageWindows.InternalWindowText(ours[0].Handle)).IsEqualTo(name);
     }
 
     [Test]

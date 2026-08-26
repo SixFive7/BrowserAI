@@ -409,6 +409,23 @@ internal sealed class SessionStore : IDisposable
     /// <exception cref="SqliteException">SQLite refused.</exception>
     public long LogLength() => _database.QueryInt64("SELECT COUNT(*) FROM log;") ?? 0;
 
+    /// <summary>When the newest call was made, or <see langword="null"/> for a log with nothing in it.</summary>
+    /// <remarks>
+    /// <b>The <c>at</c> of the newest row rather than the newest <c>at</c>.</b>
+    /// Rows are written in call order and <c>id</c> is that order, so ordering
+    /// by the timestamp column would sort by a string whose value comes from a
+    /// clock the caller can move — and *when did anything last happen here* is
+    /// the one field a listing prints for every session.
+    /// </remarks>
+    /// <returns>The stamp, as it is stored.</returns>
+    /// <exception cref="SqliteException">SQLite refused.</exception>
+    public string? NewestLogAt()
+    {
+        using var statement = _database.Prepare("SELECT at FROM log ORDER BY id DESC LIMIT 1;");
+
+        return statement.Step() ? statement.TextAt(0) : null;
+    }
+
     /// <summary>The journal mode this connection's database is in.</summary>
     /// <returns>The mode, lower case, as SQLite reports it.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>

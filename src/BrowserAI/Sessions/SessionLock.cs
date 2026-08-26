@@ -4,122 +4,82 @@
 using System.Diagnostics;
 using System.Globalization;
 using BrowserAI.Hosting;
-using BrowserAI.Interop;
+using BrowserAI.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// Ownership of one session directory: the open handle on <c>browserai.json</c> that
-/// proves it, and the record inside that says who and why.
+/// Ownership of one session directory: the open handle on
+/// <c>browserai.lock</c> that proves it, and the <c>browserai.data</c> store
+/// beside it that says what the session has done.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The handle is the lock.</b> <c>browserai.json</c> is held
-/// <c>FileAccess.ReadWrite, FileShare.Read</c> — a second BrowserAI asking for
-/// write access is refused by the kernel, while any reader can still say who
-/// holds it and why. The OS releases the handle when the holder dies, however it
-/// dies, so <i>stale</i> and <i>alive</i> are distinguishable without guessing.
+/// <b>Two files, two questions, and neither answers the other's.</b>
+/// <c>browserai.lock</c> says <i>who owns this directory</i>: it is held
+/// <c>FileAccess.ReadWrite, FileShare.Read</c>, so a second BrowserAI asking
+/// for write access is refused by the kernel while every reader is admitted,
+/// and the OS releases it when the holder dies however it dies.
+/// <c>browserai.data</c> says <i>what happened here</i>, and readers go to it
+/// directly — which is why the guard never has to admit anybody to itself.
+/// </para>
+/// <para>
+/// ⚠️ <b>THE LOCK IS WRITTEN ONCE, AT ACQUISITION, AND NEVER AGAIN — and that
+/// single change dissolves two hazards at once.</b> The record this replaces
+/// was durably rewritten and renamed on <i>every forwarded call</i>, so its
+/// name was unbound for milliseconds at a time: a prober landing there had to
+/// answer <i>undetermined</i> rather than <i>free</i>, and a peer's transient
+/// handle could refuse the writer's own re-open. Nothing rewrites this file, so
+/// an absence is an absence, the per-call unheld window is gone, and the only
+/// rename left is the one inside the per-directory gate at acquisition.
 /// </para>
 /// <para>
 /// <b>Acquisition never waits.</b> On contention this returns immediately with
 /// the holder's pid, its start time, when the lock was taken and the recorded
-/// purpose. Whether to retry, and for how long, is the calling model's decision:
-/// BrowserAI cannot know what a wait costs its caller, and a timer inside the
-/// server converts a fact the agent could act on into an unexplained delay. The
-/// one wait in this file is the per-directory gate, which is held for
-/// milliseconds around create-or-take.
+/// purpose. Whether to retry, and for how long, is the calling model's
+/// decision: BrowserAI cannot know what a wait costs its caller, and a timer
+/// inside the server converts a fact the agent could act on into an unexplained
+/// delay. The one wait in this file is the per-directory gate, which is held
+/// for milliseconds around create-or-take.
 /// </para>
 /// <para>
-/// ⚠️ <b>"Immediately" was not true of a contender until 2026-08-18, and the gap
-/// was the gate.</b> A loser took the per-directory mutex too — behind every peer
-/// naming the same directory — purely to discover the file was held and read a
-/// name out of it. <see cref="ProbeForHolder"/> now answers that question in
-/// front of the gate, because the sharing violation is the kernel's answer and
-/// the mutex never made it more true. <b>It refuses; it never acquires.</b>
-/// Anything the probe cannot settle falls through to the gate unchanged, and the
-/// reason that constraint is absolute is written out at
-/// <see cref="ProbeForHolder"/>.
+/// ⚠️ <b>The pre-gate probe is a sound ownership test and an unsound freedom
+/// test, and the whole design is that asymmetry.</b> A sharing violation is the
+/// kernel's answer and no mutex ever made it more true, so a probe that can say
+/// <i>held, by X</i> may refuse immediately. Anything else — a lock file that
+/// opened, no lock file at all, a denied open — <b>must</b> fall through to the
+/// unchanged <see cref="MachineMutex.Create"/> →
+/// <c>Acquire(PerDirectoryGate)</c> → <c>TakeOrReport</c> path.
+/// [The adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
+/// D, is why the constraint is absolute: with the gate skipped on the free path
+/// the rename retry loop becomes the serialiser, and a retry loop is not a lock
+/// — it hands the name to whoever happens to be retrying when the incumbent
+/// lets go.
 /// </para>
 /// <para>
-/// <b>Two requirements collide here, and the collision is real.</b> The
-/// paragraph above makes the <i>open handle</i> the lock. Durability makes the
-/// <i>atomic rename</i> the way the record is put in place: a plain write returns
-/// once the bytes are in the file-system cache, so a power loss between the write
-/// and the flush leaves a file the writer believes it wrote — and <c>browserai.json</c>
-/// is the one file whose loss cannot be reconstructed, because it is the entire
-/// ownership guard. So it is written <c>WriteThrough</c>, flushed with
-/// <c>Flush(true)</c>, and moved over the previous copy. <b>Measured 2026-08-16: a
-/// rename cannot replace a file whose
-/// handle is open, under any share mode.</b> Not <c>FileShare.Read</c>, not
-/// <c>Read | Delete</c>, not <c>ReadWrite | Delete</c> — all three fail
-/// identically, with <c>ERROR_ACCESS_DENIED</c> rather than the sharing
-/// violation one would expect, because <c>MoveFileEx</c> asks for DELETE on the
-/// destination. So there is no share mode that dissolves the collision, and the
-/// resolution has to be close → rename → re-open, performed <b>entirely inside
-/// the per-directory mutex</b>. That is exactly what the mutex is for: every
-/// BrowserAI takes it before create-or-take, so the instants in which nobody
-/// holds the name are instants in which nobody else can <i>take</i> it. See
-/// <c>SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen</c>,
-/// which walks all three share modes on every run.
+/// <b>An append is an <c>INSERT</c>, not a rewrite.</b> A forwarded call adds
+/// one row to <c>browserai.data</c> in autocommit; a purpose change adds one
+/// row to <c>statements</c>. Neither takes the per-directory gate, because
+/// neither replaces a file — the gate exists to make create-or-take atomic and
+/// nothing else in this class needs it any more.
 /// </para>
 /// <para>
-/// ⚠️ <b>Corrected 2026-08-19 (previously "instants in which nobody else can
-/// look").</b> A peer can look, and does: <see cref="ProbeForHolder"/> runs in
-/// front of the gate by design, so it opens <c>browserai.json</c> inside that gap and
-/// its handle — held for one <c>FileStream</c> construction — refuses the gate
-/// holder's own re-open. <b>Nobody else can take it, which is the property the
-/// gate was for; nobody else can look was never true and the design never needed
-/// it.</b> The re-open therefore goes through <see cref="ReopenHeld"/>, which
-/// waits a transient handle out because under the gate no owner can be behind
-/// it.
-/// </para>
-/// <para>
-/// <b>Two callers on one session are the design, so this object is
-/// thread-safe about its own lifetime.</b> Nothing above
-/// <c>SessionManager</c> serialises tool calls, so a
-/// <c>browserai_set_purpose</c> and a <c>browserai_destroy</c> naming the same
-/// directory arrive at one instance concurrently. Every mutating path and
-/// <b>both</b> disposal paths therefore hold <see cref="_inProcess"/> for their
-/// whole body — which is where the reasoning lives, and which is
+/// <b>Two callers on one session are the design, so this object is thread-safe
+/// about its own lifetime.</b> Nothing above <c>SessionManager</c> serialises
+/// tool calls, so a <c>browserai_set_purpose</c> and a
+/// <c>browserai_destroy</c> naming the same directory arrive at one instance
+/// concurrently. Every writing path and <b>both</b> disposal paths hold
+/// <see cref="_inProcess"/> for their whole body — which is
 /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md)
-/// rather than defensive programming.
-/// </para>
-/// <para>
-/// <b>The error code is load-bearing, not trivia.</b> <c>ERROR_ACCESS_DENIED</c>
-/// surfaces as <c>UnauthorizedAccessException</c>, which is <i>not</i> an
-/// <c>IOException</c> — so the rename retry below catches both, and a version
-/// that caught only <c>IOException</c> would not retry the case that actually
-/// happens.
+/// rather than defensive programming, and which is also what serialises the
+/// <c>INSERT</c>-then-<c>last_insert_rowid</c> pair on one SQLite connection.
 /// </para>
 /// </remarks>
 internal sealed class SessionLock : IDisposable
 {
     /// <summary>
-    /// How long the atomic rename keeps retrying before giving up.
-    /// </summary>
-    /// <remarks>
-    /// <b>Measured 2026-08-16, and it replaced a budget that was too small.</b>
-    /// Five attempts over 150 ms — the shape the C# prior art on this machine
-    /// uses — was observed exhausting under full-suite load, with
-    /// <c>ERROR_ACCESS_DENIED</c> on the destination while another process held
-    /// <c>browserai.json</c> open for reading in a tight loop. Something briefly
-    /// holding the destination is a live condition rather than a bug (a
-    /// concurrent reader, a virus scanner opening a file that was just created),
-    /// so the answer is a budget generous enough to outlast it — and a bound, so
-    /// that a permanent condition is still reported rather than waited on
-    /// forever.
-    /// <para>
-    /// ⚠️ <b>Read from <see cref="RenameWindow.Budget"/> since 2026-08-18, not
-    /// re-declared.</b> The number has not changed; what changed is that the
-    /// reader side of this same rename now waits the same amount, and two
-    /// literals here could drift apart while one cannot.
-    /// </para>
-    /// </remarks>
-    private static readonly TimeSpan MoveBudget = RenameWindow.Budget;
-
-    /// <summary>
-    /// The in-process half of the same exclusion: every mutating path and
+    /// The in-process half of the same exclusion: every writing path and
     /// <b>both</b> disposal paths hold this for their whole body.
     /// </summary>
     /// <remarks>
@@ -128,71 +88,53 @@ internal sealed class SessionLock : IDisposable
     /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// which is the one finding in that review whose failure does not heal.</b>
     /// <c>SessionManager</c> serialises nothing — its <c>_live</c> is a
-    /// <c>ConcurrentDictionary</c> and is the only synchronisation there is — so
-    /// two tool calls naming one session run concurrently by design. Before
-    /// this, <see cref="Rewrite"/> tested <see cref="_disposed"/> and *then* took
-    /// <see cref="_gate"/>, while <see cref="Dispose"/> disposed
-    /// <see cref="_gate"/> underneath it. A <c>browserai_destroy</c> landing in
-    /// that window left the rewrite re-opening <c>browserai.json</c> into a
-    /// disposed lock and <c>_gate.Release()</c> throwing — after which
-    /// <b>every</b> <see cref="TryAcquire"/> on that directory answered
-    /// <c>Held</c>, naming a pid with no session, for the life of the process,
-    /// while the destroy reported a partial failure blaming <i>"something still
-    /// has them open"</i>.
+    /// <c>ConcurrentDictionary</c> and is the only synchronisation there is —
+    /// so two tool calls naming one session run concurrently by design. A
+    /// <see cref="_disposed"/> check <i>outside</i> the exclusion is a decision
+    /// taken by reading a field another thread is writing, and narrowing that
+    /// window does not close it: the disposal disposes the very object a
+    /// blocked writer would wake holding.
     /// </para>
     /// <para>
-    /// <b>A tighter <see cref="_disposed"/> check would not have done, and the
-    /// review says so in as many words.</b> Taking <see cref="_gate"/> before the
-    /// check narrows the window and does not close it: the disposal disposes
-    /// <see cref="_gate"/> itself, so a rewrite blocked on it wakes holding a
-    /// disposed object. A check that races is still a race; what closes it is
-    /// something the disposal has to take and cannot destroy.
+    /// ⚠️ <b>It carries a second job since the store arrived.</b> A
+    /// <c>SQLite</c> connection is one connection: <see cref="Append"/> is an
+    /// <c>INSERT</c> followed by <c>last_insert_rowid</c>, and two threads
+    /// interleaving there would hand one call the other's row id — after which
+    /// a settle lands on somebody else's entry. The pair is atomic because it
+    /// runs in here.
     /// </para>
     /// <para>
     /// <b>It is not a fourth lock scope.</b> <see cref="LockScopes"/> names the
-    /// machine-wide scopes — three named kernel objects, in one place — and this
-    /// is a private field with no name, no kernel object and no reach outside
-    /// this instance, so <c>SessionLockTests.TheThreeScopesAreNamedInOnePlaceAndAllOfThemAreGlobal</c>
-    /// and <c>.TheProductCreatesNamedKernelObjectsInExactlyOnePlace</c> are both
-    /// untouched by it. What it serialises is <b>one object's</b> callers; what
-    /// <see cref="_gate"/> serialises is the machine's.
-    /// </para>
-    /// <para>
-    /// <b>The order is always this one, then <see cref="_gate"/>.</b>
-    /// <see cref="Rewrite"/> and <see cref="ReleaseAndDelete"/> both take them
-    /// that way round and nothing takes them the other way, so there is no
-    /// lock-ordering cycle to construct. Every delegate this class invokes —
-    /// <c>update</c> and <c>delete</c> — runs inside both, which is what makes a
-    /// caller's callback part of the critical section rather than a hole in it.
-    /// </para>
-    /// <para>
-    /// <b>What it costs, stated rather than discovered.</b> A disposal now waits
-    /// for an in-flight rewrite instead of racing it, and a rewrite runs
-    /// <c>WriteThrough</c> plus a rename under <see cref="_gate"/> — so
-    /// <c>LiveSession.DisposeAsync</c> can block for as long as one of those
-    /// takes. That is the whole point: the alternative is the two overlapping,
-    /// which is the defect.
+    /// machine-wide scopes — three named kernel objects, in one place — and
+    /// this is a private field with no name, no kernel object and no reach
+    /// outside this instance.
     /// </para>
     /// </remarks>
     private readonly Lock _inProcess = new();
 
     private readonly MachineMutex _gate;
+    private readonly LockFileHold _hold;
+    private readonly SessionStore _store;
     private readonly IDisposable? _logScope;
     private readonly ILogger _logger;
-    private FileStream _held;
+    private long _opening;
     private int _disposed;
 
     private SessionLock(
         SessionPath location,
         MachineMutex gate,
-        FileStream held,
-        LockRecord record,
+        LockFileHold hold,
+        SessionStore store,
+        SessionRecord record,
+        long opening,
         bool gateWasAbandoned,
         ILogger logger)
     {
+        _opening = opening;
         Location = location;
         _gate = gate;
-        _held = held;
+        _hold = hold;
+        _store = store;
         Record = record;
         GateWasAbandoned = gateWasAbandoned;
         _logger = logger;
@@ -205,8 +147,15 @@ internal sealed class SessionLock : IDisposable
     /// <summary>The canonicalised directory this lock owns.</summary>
     public SessionPath Location { get; }
 
-    /// <summary>The record currently on disk.</summary>
-    public LockRecord Record { get; private set; }
+    /// <summary>The record as it stood when this lock last wrote a statement.</summary>
+    /// <remarks>
+    /// <b>Refreshed when a statement is appended and not when a log row is.</b>
+    /// A statement changes what the session <i>is</i> — its purpose, its
+    /// directory — and every answer this product composes reads those; a log
+    /// row changes only how much of a log there is, which is counted at the
+    /// moment somebody asks.
+    /// </remarks>
+    public SessionRecord Record { get; private set; }
 
     /// <summary>
     /// Whether the per-directory mutex was found abandoned when this lock was
@@ -214,8 +163,8 @@ internal sealed class SessionLock : IDisposable
     /// </summary>
     /// <remarks>
     /// Surfaced rather than swallowed. The acquisition itself was never in
-    /// doubt; what an abandoned mutex reports is that the protected state may be
-    /// torn, and that is the only warning the OS gives.
+    /// doubt; what an abandoned mutex reports is that the protected state may
+    /// be torn, and that is the only warning the OS gives.
     /// </remarks>
     public bool GateWasAbandoned { get; }
 
@@ -228,8 +177,8 @@ internal sealed class SessionLock : IDisposable
     /// <returns>The outcome, the lock when there is one, and a sentence for the caller.</returns>
     /// <remarks>
     /// Synchronous, and that is not an oversight: a named mutex is owned by the
-    /// thread that waited on it, and a continuation resuming elsewhere makes the
-    /// release throw about "an unsynchronized block of code".
+    /// thread that waited on it, and a continuation resuming elsewhere makes
+    /// the release throw about "an unsynchronized block of code".
     /// </remarks>
     public static SessionLockResult TryAcquire(SessionPath location, SessionLockRequest request, ILogger logger)
     {
@@ -244,9 +193,18 @@ internal sealed class SessionLock : IDisposable
                 $"'{location.FullPath}' does not exist. A session directory is created by BrowserAI, never assumed: create the directory, or name one that is already a session.");
         }
 
+        // ⚠️ BEFORE THE PROBE, BEFORE THE GATE, AND BEFORE ANYTHING IS WRITTEN.
+        // A directory holding the old record is not a session this build can
+        // take, and taking it would put a `browserai.lock` beside a
+        // `browserai.json` that still claims to be the guard.
+        if (SessionLayout.OldFormatRefusal(location) is { } notThisFormat)
+        {
+            return new SessionLockResult(SessionLockOutcome.NotThisFormat, notThisFormat);
+        }
+
         // ⚠️ IN FRONT OF THE GATE, NEVER INSTEAD OF IT. Everything below this
         // line is unchanged, and that is the design rather than caution -- see
-        // ProbeForHolder.
+        // this type's own remarks.
         if (ProbeForHolder(location, logger) is { } refusal)
         {
             return refusal;
@@ -293,19 +251,7 @@ internal sealed class SessionLock : IDisposable
                 // processes released together against one directory, 73 refusals
                 // of 796 arrived here purely because each peer enters this gate
                 // in turn to discover the file is held. Waiting longer was the
-                // whole remedy. A refusal that misdiagnoses the machine is worse
-                // than a bare one, because the model reading it acts on the
-                // diagnosis -- so this now names both possibilities and neither
-                // is presented as established.
-                //
-                // ⚠️ And "every process naming it queues here" stopped being true
-                // when ProbeForHolder was added: a peer that can name the holder
-                // is refused in front of this gate and never creates the mutex,
-                // so what queues here is only processes that intend to TAKE the
-                // directory and found it unheld a moment ago. That makes reaching
-                // this line a much stronger signal than it used to be, and the
-                // sentence says so rather than keeping a diagnosis the code can
-                // no longer support.
+                // whole remedy.
                 return new SessionLockResult(
                     SessionLockOutcome.Busy,
                     $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
@@ -348,113 +294,156 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
-    /// Appends one entry to this session's log, under the per-directory gate.
+    /// Appends one <c>in-flight</c> row and answers with its id.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It is a whole-record durable write, on every forwarded browser
-    /// call.</b> <see cref="Rewrite"/> closes the handle, writes a temp file
-    /// <c>WriteThrough</c>, flushes it to disk, renames it over
-    /// <c>browserai.json</c> and re-opens — so a busy session pays that per call.
-    /// That is the cost of the maintainer's decision to keep the log inside the
-    /// record rather than in a sibling append-only file, and it is stated here
-    /// rather than discovered: an append-only sibling would have been an
-    /// <c>O(entry)</c> write with no rename at all.
+    /// ⚠️ <b>It is written BEFORE the call it describes is forwarded, and that
+    /// ordering is the property rather than an implementation detail.</b> A
+    /// navigation that hangs, a child that dies, a process that is killed — the
+    /// calls anybody investigates — still left a row saying what they were for.
+    /// A row written on the way back would be missing from exactly those.
     /// </para>
     /// <para>
-    /// <b>It throws rather than swallowing.</b> A log entry that could not be
-    /// written is exactly the kind of loss this record exists to prevent, so the
-    /// caller decides — and the caller is <c>BrowserProxy</c>, which refuses the
-    /// call rather than forwarding one it could not record.
+    /// <b>It throws rather than swallowing.</b> A call BrowserAI could not
+    /// record is not forwarded: the whole point of one time-ordered log is that
+    /// reading it back tells you what the session did, and a gap nobody is told
+    /// about is worse than a refusal somebody can act on.
+    /// </para>
+    /// <para>
+    /// <b>An <c>INSERT</c>, in autocommit, with no gate and no rename.</b> The
+    /// record this replaces paid a whole-file <c>WriteThrough</c> plus a rename
+    /// per call — 3.94 ms at 1 KB rising to 13.62 ms at 400 KB, with the record
+    /// absent-and-unheld for the whole window
+    /// ([HAZARDS](../../../HAZARDS.md#hazard-index)).
     /// </para>
     /// </remarks>
-    /// <param name="entry">What the session just did.</param>
-    /// <exception cref="IOException">The gate could not be taken, or the record could not be written.</exception>
-    public void Append(LogEntry entry)
+    /// <param name="tool">The tool name, verbatim, whatever the caller said.</param>
+    /// <param name="why">What the caller said the call was for.</param>
+    /// <returns>The row's id, for the settle that follows.</returns>
+    /// <exception cref="SqliteException">The row could not be written.</exception>
+    /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
+    public long Append(string tool, string why)
     {
-        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(tool);
+        ArgumentNullException.ThrowIfNull(why);
 
-        Rewrite(record => record with { Log = LockRecord.AppendLog(record.Log, entry) });
-    }
-
-    /// <summary>
-    /// Rewrites the record durably, keeping ownership across the replacement.
-    /// </summary>
-    /// <param name="update">Produces the next record from the current one.</param>
-    /// <exception cref="IOException">The gate could not be taken, or the record could not be replaced.</exception>
-    public void Rewrite(Func<LockRecord, LockRecord> update)
-    {
-        ArgumentNullException.ThrowIfNull(update);
-
-        // ⚠️ THE DISPOSAL CHECK IS INSIDE THIS LOCK AND MUST STAY THERE. Outside
-        // it, the check and the acquisition below are two steps with a window
-        // between them, and the object guarding the critical section is disposed
-        // by the other thread inside that window -- which is B4, and which is why
-        // "test _disposed more carefully" is not a fix. See _inProcess.
         lock (_inProcess)
         {
             ObjectDisposedException.ThrowIf(_disposed is not 0, this);
 
-            if (_gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
+            return _store.AppendLog(
+                SessionRecordReader.Stamp(DateTimeOffset.Now),
+                RecordText.Sanitise(tool),
+                RecordText.Sanitise(why),
+                SessionStore.InFlight);
+        }
+    }
+
+    /// <summary>
+    /// Settles a row that was written before its call was forwarded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A failure payload only on failure.</b> A call that succeeded stores
+    /// nothing beyond the fact and the instant: the child's own answer is the
+    /// caller's, has already been returned byte-identical, and putting a copy
+    /// of it in the record would make the record the traffic rather than the
+    /// reasons.
+    /// </para>
+    /// <para>
+    /// <b>A settle after the session is gone is dropped, not thrown.</b>
+    /// <c>browserai_destroy</c> tears a session down while calls may still be
+    /// in flight — that is the tool working — and an exception on the way back
+    /// from the child would replace the child's own answer with a complaint
+    /// about bookkeeping.
+    /// </para>
+    /// </remarks>
+    /// <param name="id">The row from <see cref="Append"/>.</param>
+    /// <param name="outcome">
+    /// <see cref="SessionStore.Successful"/> or <see cref="SessionStore.Failed"/>.
+    /// </param>
+    /// <param name="failure">Why it failed, or <see langword="null"/> when it did not.</param>
+    public void Settle(long id, string outcome, byte[]? failure)
+    {
+        lock (_inProcess)
+        {
+            if (_disposed is not 0)
             {
-                throw new IOException($"Could not take '{_gate.Name}' to rewrite '{Location.LockFile}'.");
+                return;
             }
 
             try
             {
-                var next = update(Record);
-
-                // The same close/rename/re-open as acquisition, and for the same
-                // reason: an atomic rename cannot replace a file we are holding, and
-                // the gate is what makes the gap unobservable.
-                //
-                // ⚠️ "Unobservable" is a claim about readers that TAKE THE GATE, and
-                // between 2026-08-20 and 2026-08-24 one reader did not:
-                // `browserai_list`'s liveness line called the bare probe and read
-                // this gap as `NotHeld`, i.e. as a session nobody has. It now goes
-                // through `ProbeLivenessUnderTheGate`. Any new reader of this file
-                // that is not under this gate re-opens that defect.
-                _held.Dispose();
-
-                try
+                if (!_store.Settle(id, outcome, SessionRecordReader.Stamp(DateTimeOffset.Now), failure))
                 {
-                    WriteDurably(Location.LockFile, next);
-                    _held = ReopenHeld(Location.LockFile);
-                    Record = next;
-                }
-                catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-                {
-                    // A FAILED REWRITE MUST NOT ALSO RELEASE THE LOCK, and without
-                    // this it did: the handle is dropped before the replacement, so
-                    // an exception on the way through left the session silently
-                    // unowned while the caller was told only that a write failed.
-                    // Take the name back before letting the failure out.
-                    SessionLog.CouldNotWriteLockFile(_logger, Location.LockFile, failure);
-                    _held = Reclaim(Location.LockFile, failure);
-                    throw;
+                    SessionLog.OutcomeLanded(_logger, id, Location.FullPath);
                 }
             }
-            finally
+            catch (SqliteException refused)
             {
-                _gate.Release();
+                // The answer is already on its way back to the caller. What is
+                // lost is the outcome of one row, which `browserai_catch_up`
+                // renders as "no answer was recorded" -- a true statement about
+                // the record rather than a failed call.
+                SessionLog.OutcomeNotRecorded(_logger, id, Location.FullPath, refused);
             }
         }
     }
 
-    private static FileStream Reclaim(string lockFile, Exception cause)
+    /// <summary>
+    /// Settles the row the acquisition itself wrote, once, whichever way the
+    /// call that took the directory ended.
+    /// </summary>
+    /// <remarks>
+    /// <b>An acquisition is a call like any other and it can fail after its row
+    /// exists.</b> <c>browserai_init</c> writes its purpose before the browser
+    /// is launched — deliberately, so a launch that hangs still left a record of
+    /// what the directory was for — and the launch is exactly the part that
+    /// hangs. Settling here is what stops a session whose child never started
+    /// reading back as a call still in flight for the rest of the directory's
+    /// life.
+    /// </remarks>
+    /// <param name="outcome">How the opening call ended.</param>
+    /// <param name="failure">Why it failed, or <see langword="null"/> when it did not.</param>
+    public void SettleOpening(string outcome, byte[]? failure)
     {
-        try
+        var id = Interlocked.Exchange(ref _opening, 0);
+
+        if (id is not 0)
         {
-            return ReopenHeld(lockFile);
+            Settle(id, outcome, failure);
         }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+    }
+
+    /// <summary>
+    /// Says what this session is now for, by adding a statement rather than by
+    /// replacing one.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This is what killed the concatenation.</b> A resume with a purpose
+    /// used to build the next value out of the whole of the previous one —
+    /// <c>$"{record.Purpose} | {appended}"</c> — which grew quadratically and,
+    /// at the 2,000-character cap, silently dropped the tail of the sentence a
+    /// caller had just written. A row is a row; "current" means the newest.
+    /// </remarks>
+    /// <param name="purpose">What the session is for, sanitised by the caller.</param>
+    /// <exception cref="SqliteException">The statement could not be written.</exception>
+    /// <exception cref="ObjectDisposedException">This lock has been released.</exception>
+    public void AppendPurpose(string purpose)
+    {
+        ArgumentNullException.ThrowIfNull(purpose);
+
+        lock (_inProcess)
         {
-            // Both the replacement and the recovery failed, which is the one
-            // state this object cannot represent. Say so rather than hand back
-            // something that reports ownership it does not have.
-            throw new IOException(
-                $"'{lockFile}' could not be rewritten ({cause.Message}) and could not be re-opened afterwards ({failure.Message}), so this session no longer holds its directory. Destroy the session and create it again.",
-                failure);
+            ObjectDisposedException.ThrowIf(_disposed is not 0, this);
+
+            _store.Append(new StoredStatement(
+                RecordFields.Purpose,
+                SessionRecordReader.Stamp(DateTimeOffset.Now),
+                purpose));
+
+            Record = SessionRecordReader.Read(_store);
         }
     }
 
@@ -465,38 +454,37 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>This exists because <c>browserai_destroy</c>'s destructive act has to
-    /// happen while the directory is still ours, and its last two nodes cannot
-    /// be removed while it is.</b> Windows will not unlink a file this process
-    /// is holding open, so <c>browserai.json</c> — and therefore the directory above
-    /// it — can only go after the handle does. The instant between is exactly
-    /// the instant a peer's <see cref="TryAcquire"/> reclaims the directory and
-    /// launches a browser into a tree that is about to be deleted. Every
-    /// BrowserAI takes the per-directory gate before create-or-take, so holding
-    /// it across the release makes that instant unobservable — the same
-    /// mechanism, for the same reason, that makes <see cref="Rewrite"/>'s
-    /// close/rename/re-open gap unobservable.
+    /// happen while the directory is still ours, and its last nodes cannot be
+    /// removed while it is.</b> Windows will not unlink a file this process is
+    /// holding open, so <c>browserai.lock</c> — and therefore the directory
+    /// above it — can only go after the handle does. The instant between is
+    /// exactly the instant a peer's <see cref="TryAcquire"/> reclaims the
+    /// directory and launches a browser into a tree that is about to be
+    /// deleted. Every BrowserAI takes the per-directory gate before
+    /// create-or-take, so holding it across the release makes that instant
+    /// unobservable.
     /// </para>
     /// <para>
     /// ⚠️ <b>Added 2026-08-18 (previously the caller released the lock and then
-    /// walked the tree for a size before deleting it).</b> The comment defending
-    /// that release said <i>"the lock has done its job the moment ownership is
-    /// proven"</i>, which is the defect stated as a justification: ownership was
-    /// proven for an instant and the destructive act happened outside it, with a
-    /// full recursive walk of a Chromium profile in between. Found by
+    /// walked the tree for a size before deleting it).</b> The comment
+    /// defending that release said <i>"the lock has done its job the moment
+    /// ownership is proven"</i>, which is the defect stated as a
+    /// justification. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// A1.
     /// </para>
     /// <para>
     /// <b>A gate that could not be taken narrows the window rather than
     /// abandoning the delete.</b> Refusing here would leave a directory whose
-    /// record claims a holder that has finished with it, and a session nobody
+    /// guard names a holder that has finished with it, and a session nobody
     /// destroys is worse than the race this closes.
     /// </para>
     /// </remarks>
     /// <param name="delete">
-    /// Removes what is left. It runs <b>after</b> the handle is closed and
-    /// <b>before</b> the gate is released, so it may unlink <c>browserai.json</c>
-    /// and no peer can be inside create-or-take while it does.
+    /// Removes what is left. It runs <b>after</b> the handles are closed and
+    /// <b>before</b> the gate is released, so it may unlink
+    /// <c>browserai.lock</c> and <c>browserai.data</c> and no peer can be
+    /// inside create-or-take while it does.
     /// </param>
     /// <exception cref="ObjectDisposedException">This lock has already been released.</exception>
     public void ReleaseAndDelete(Action delete)
@@ -504,8 +492,8 @@ internal sealed class SessionLock : IDisposable
         ArgumentNullException.ThrowIfNull(delete);
 
         // Both disposal paths take this, not just Dispose: a per-session lock
-        // that covered only one of them would close half of B4 and leave the half
-        // that unlinks the directory. See _inProcess.
+        // that covered only one of them would close half of B4 and leave the
+        // half that unlinks the directory. See _inProcess.
         lock (_inProcess)
         {
             ObjectDisposedException.ThrowIf(Interlocked.Exchange(ref _disposed, 1) is not 0, this);
@@ -516,7 +504,11 @@ internal sealed class SessionLock : IDisposable
             {
                 SessionLog.Released(_logger, Location.FullPath);
 
-                _held.Dispose();
+                // The store first: closing the last connection checkpoints and
+                // removes the write-ahead log, so what the delete below meets is
+                // one file rather than three.
+                _store.Dispose();
+                _hold.Dispose();
                 delete();
             }
             finally
@@ -533,17 +525,14 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
-    /// Releases the directory. <c>browserai.json</c> stays: the holder record
-    /// outliving the holder is what makes a stale lock a sentence rather than a
-    /// refusal.
+    /// Releases the directory. Both files stay: a guard that outlives its
+    /// holder is what makes a stale lock a sentence rather than a refusal, and
+    /// the record is the whole of what the session did.
     /// </summary>
     public void Dispose()
     {
-        // ⚠️ IT WAITS FOR AN IN-FLIGHT MUTATION RATHER THAN RACING ONE. Disposing
-        // _gate underneath a rewrite that is holding it is B4: the release then
-        // throws, the re-opened handle on browserai.json is never closed, and every
-        // later TryAcquire on this directory answers Held naming a pid with no
-        // session. See _inProcess.
+        // ⚠️ IT WAITS FOR AN IN-FLIGHT WRITE RATHER THAN RACING ONE. Disposing
+        // _gate underneath a writer that is holding it is B4. See _inProcess.
         lock (_inProcess)
         {
             if (Interlocked.Exchange(ref _disposed, 1) is not 0)
@@ -553,7 +542,8 @@ internal sealed class SessionLock : IDisposable
 
             SessionLog.Released(_logger, Location.FullPath);
 
-            _held.Dispose();
+            _store.Dispose();
+            _hold.Dispose();
             _logScope?.Dispose();
             _gate.Dispose();
         }
@@ -569,34 +559,35 @@ internal sealed class SessionLock : IDisposable
     /// <see cref="TryAcquire"/>.</b> The rule it implements is race R1 —
     /// <i>the sweep may only kill a browser whose directory lock it can itself
     /// acquire, and it holds that lock for the whole kill</i> — which is what
-    /// stops one process sweeping away a browser that a second process, mid-
-    /// <c>init</c> on the same directory, has just launched.
-    /// If <c>browserai.json</c> cannot be opened for write, someone owns the
-    /// directory, and the sweep skips it unconditionally.
-    /// <c>StraySweepTests</c> carries one test per race, this one included.
+    /// stops one process sweeping away a browser that a second process,
+    /// mid-<c>init</c> on the same directory, has just launched.
     /// </para>
     /// <para>
-    /// <b>But "whose lock we can acquire" must not mean <see cref="TryAcquire"/>,
-    /// and that distinction is the whole reason this method exists.</b> A sweep is
-    /// not opening a session, and <see cref="TryAcquire"/> would rewrite
-    /// <c>browserai.json</c> with the sweeper as holder — overwriting a crashed
-    /// session's own record, its purpose and its history with a janitor's. That
-    /// record is the one piece of evidence about what the stray was, and a
-    /// janitor is the last party that should be destroying it.
+    /// <b>But "whose lock we can acquire" must not mean
+    /// <see cref="TryAcquire"/>, and that distinction is the whole reason this
+    /// method exists.</b> A sweep is not opening a session, and
+    /// <see cref="TryAcquire"/> would write a new <c>browserai.lock</c> naming
+    /// the sweeper and add a holder row to the crashed session's own history. A
+    /// janitor is the last party that should be editing the evidence.
+    /// </para>
+    /// <para>
+    /// <b>It opens the guard and never the store.</b> The question is *is this
+    /// directory ours to act on*, which the kernel answers on one
+    /// <c>CreateFile</c>; opening the record would tell the sweep nothing it
+    /// acts on and would create a <c>-shm</c> in a directory it is only
+    /// visiting.
     /// </para>
     /// <para>
     /// <b>The per-directory gate is taken and released around the open, and the
     /// file handle outlives it.</b> The gate exists to make create-or-take
-    /// atomic, and it must not be held across a process kill; the handle is what
-    /// keeps the directory ours meanwhile, because a concurrent
-    /// <see cref="TryAcquire"/> opens the same file <c>FileAccess.ReadWrite</c>
-    /// and is refused by the kernel while we hold it.
+    /// atomic, and it must not be held across a process kill; the handle is
+    /// what keeps the directory ours meanwhile.
     /// </para>
     /// <para>
-    /// <b>A directory with no <c>browserai.json</c>, an unparseable one, or one held
-    /// by somebody else all answer the same way: not ours to act on.</b> Every
-    /// one of those is a refusal to kill, which is the only direction this
-    /// method is allowed to be wrong in.
+    /// <b>A directory with no <c>browserai.lock</c>, one holding the old format,
+    /// or one held by somebody else all answer the same way: not ours to act
+    /// on.</b> Every one of those is a refusal to kill, which is the only
+    /// direction this method is allowed to be wrong in.
     /// </para>
     /// </remarks>
     /// <param name="location">The canonicalised session directory.</param>
@@ -630,19 +621,19 @@ internal sealed class SessionLock : IDisposable
             // R3 again, on the per-directory gate: an abandoned mutex WAS
             // acquired. Proceeding is mandatory -- and here the abandonment
             // carries no extra warning worth acting on, because nothing is
-            // written and a torn record would be caught by the parse below.
+            // written.
             if (gate.Acquire(LockScopes.PerDirectoryGate) is MutexAcquisition.NotAcquired)
             {
                 return $"another BrowserAI is inside create-or-take on '{location.FullPath}'";
             }
 
-            FileStream? held = null;
+            LockFileHold? held = null;
 
             try
             {
                 try
                 {
-                    held = OpenHeld(location.LockFile);
+                    held = LockFile.Hold(location.LockFile);
                 }
                 catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
                 {
@@ -652,33 +643,16 @@ internal sealed class SessionLock : IDisposable
                 {
                     return $"'{location.FullPath}' is held by a live session";
                 }
-                catch (UnauthorizedAccessException failure)
+                catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
                 {
                     return $"'{location.LockFile}' could not be opened ({failure.Message})";
                 }
 
-                LockRecord? record;
-
-                try
-                {
-                    record = Parse(held, location.LockFile);
-                }
-                catch (LockFileException failure)
-                {
-                    return $"'{location.LockFile}' cannot be read ({failure.Message})";
-                }
-
-                if (record is null)
-                {
-                    return $"'{location.LockFile}' is empty, so nothing proves this directory is a BrowserAI session";
-                }
-
-                // CA2000 for the same reason TakeOrReport carries it: ownership
-                // of the handle moves into the returned hold, which the caller
-                // disposes, and the rule's dataflow cannot see a transfer into
-                // an out parameter.
+                // CA2000: ownership of the handle moves into the returned hold,
+                // which the caller disposes, and the rule's dataflow cannot see
+                // a transfer into an out parameter.
 #pragma warning disable CA2000
-                hold = new SessionDirectoryHold(location, held, record);
+                hold = new SessionDirectoryHold(location, held);
 #pragma warning restore CA2000
                 held = null;
                 return null;
@@ -696,137 +670,179 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>Reads a session's record without taking it.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>READING A SESSION DIRECTORY IS NOT SIDE-EFFECT-FREE, measured
+    /// 2026-08-26 rather than reasoned about.</b> Against a crashed holder's
+    /// uncheckpointed write-ahead log this read-only open <i>recovers</i> the
+    /// log and answers with the newest rows —
+    /// <c>SQLITE_OPEN_READONLY</c> constrains the database file and not the
+    /// directory — and building the wal-index leaves a <c>-shm</c> beside the
+    /// store in a directory the caller only asked to look at. Where the caller
+    /// may not create that file the open is refused instead, and the session
+    /// stays unreadable until somebody opens it for writing, which the next
+    /// acquisition does. That refusal is the right way round: a reader that
+    /// silently ignored the <c>-wal</c> would answer confidently with a
+    /// session's history as of its last checkpoint.
+    /// </para>
+    /// <para>
+    /// <b>It says nothing about whether anybody holds the directory</b>, and no
+    /// caller may infer that from the newest holder statement.
+    /// <see cref="ProbeLiveness"/> is that question.
+    /// </para>
+    /// </remarks>
     /// <param name="location">The canonicalised session directory.</param>
-    /// <returns>The record, or <see langword="null"/> if there is no lock file.</returns>
-    /// <exception cref="LockFileException">There is a lock file and it cannot be acted on.</exception>
-    public static LockRecord? ReadRecord(SessionPath location)
+    /// <param name="patience">
+    /// How long a transient refusal is waited out. <see cref="TimeSpan.Zero"/>
+    /// for a caller that would rather answer without the record than wait for
+    /// it.
+    /// </param>
+    /// <returns>The record, or <see langword="null"/> if there is no store.</returns>
+    /// <exception cref="SessionRecordException">There is a record and it cannot be acted on.</exception>
+    public static SessionRecord? ReadRecord(SessionPath location, TimeSpan? patience = null)
     {
         ArgumentNullException.ThrowIfNull(location);
 
-        try
+        if (SessionLayout.OldFormatRefusal(location) is { } notThisFormat)
         {
-            // ⚠️ Through RenameWindow, which is the READ side of the rename this
-            // class's own `Replace` performs. A reader that arrives while another
-            // process is replacing `browserai.json` is refused ACCESS_DENIED -- not a
-            // sharing violation -- and nothing on this path caught it. See that
-            // type's remarks for the measurement and for which callers may use it.
-            using var stream = RenameWindow.WaitOut(() =>
-                // FileShare.ReadWrite because the holder has it open for WRITE, and
-                // a reader that does not share write is refused outright -- which
-                // would turn "somebody owns this" into "this file is unreadable".
-                // FileShare.Delete because the atomic rename needs DELETE on the
-                // destination, and one reader without it blocks every rewrite.
-                new FileStream(
-                    location.LockFile,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete,
-                    bufferSize: 1));
+            throw new SessionRecordException(notThisFormat);
+        }
 
-            return Parse(stream, location.LockFile);
-        }
-        catch (FileNotFoundException)
+        if (!File.Exists(location.DataFile))
         {
             return null;
         }
-        catch (DirectoryNotFoundException)
+
+        var budget = patience ?? RenameWindow.Budget;
+        var clock = Stopwatch.StartNew();
+        var delay = 5;
+
+        while (true)
         {
-            return null;
+            try
+            {
+                using var store = SessionStore.OpenForReading(location.DataFile);
+
+                return SessionRecordReader.Read(store);
+            }
+            catch (SqliteException refused)
+            {
+                // ⚠️ TWO CODES ARE WAITED OUT AND NOTHING ELSE IS, AND THE LINE
+                // BETWEEN THEM IS WHAT MAKES THIS A WAIT RATHER THAN A RETRY
+                // LOOP. `SQLITE_BUSY` and `SQLITE_IOERR`'s shared-memory arms are
+                // what a reader meets while a holder is DYING: its handles on the
+                // `-wal` and the `-shm` are closing while this open is mapping
+                // them, and the condition ends by itself in milliseconds.
+                // Everything else is an answer: `SQLITE_NOTADB` is a file that is
+                // not ours, and `SQLITE_CANTOPEN` is a directory this process may
+                // not create the wal-index in -- which P1 pinned as a refusal on
+                // purpose, because answering from a stale checkpoint instead
+                // would be the confident-wrong-answer class this repository keeps
+                // closing. Waiting either of those out would spend the budget and
+                // then say the same thing.
+                var transient = refused.Result is Sqlite.Busy or Sqlite.IoError;
+
+                if (!transient || clock.Elapsed >= budget)
+                {
+                    throw new SessionRecordException(
+                        $"'{location.DataFile}' is there and BrowserAI could not read it: {refused.Message}",
+                        refused);
+                }
+
+                Thread.Sleep(delay);
+                delay = Math.Min(delay * 2, 100);
+            }
         }
     }
 
     /// <summary>
-    /// Answers <i>who holds this directory</i> without taking the per-directory
-    /// gate — or answers nothing at all, and lets the gate decide.
+    /// Whether anything holds a session directory at the instant of the look —
+    /// <b>held, not held, or neither</b> — without taking anything, without
+    /// opening a process handle and <b>without opening the record</b>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The problem it removes.</b> Every process that wanted to know who held
-    /// a session took <see cref="LockScopes.PerDirectoryGate"/>, losers included,
-    /// and a loser only wants to read a name so it can report it. So a refusal
-    /// waited behind the whole queue rather than behind one critical section, and
-    /// the cost is super-linear in the number of contenders: measured on an idle
+    /// <b>One <c>CreateFile</c> on <c>browserai.lock</c> and nothing else.</b>
+    /// Measured 2026-08-20 against the file this replaces, over 2,000
+    /// iterations, 3 runs: <b>0.035 ms</b> free and <b>0.049 ms</b> held — the
+    /// held arm costs more because it is a managed exception rather than a
+    /// return
+    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)).
+    /// <b>It must never consult the store.</b> A database open is orders of
+    /// magnitude dearer, it can create files in a directory nobody asked it to
+    /// touch, and the newest holder row cannot answer this question anyway.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The gate is gone from this path, and the reason is that the file it
+    /// asks about is now written once.</b> Between 2026-08-20 and 2026-08-24
+    /// <c>browserai_list</c> read a bare probe's *not held* as free and printed
+    /// <i>in use: no</i> about a session another agent was driving — because
+    /// every forwarded call rewrote the record, dropping and retaking the
+    /// ownership handle. Nothing rewrites <c>browserai.lock</c>. The only
+    /// window left is between the rename and the first hold at acquisition,
+    /// inside the per-directory gate, and what a reporting caller sees there is
+    /// *free* about a directory somebody is in the middle of taking — a
+    /// momentary truth that corrects itself rather than a stale one that does
+    /// not.
+    /// </para>
+    /// <para>
+    /// <b>The three answers are not symmetrical.</b> A sharing violation may be
+    /// read as <see cref="SessionLiveness.Held"/>; a denied open or a device
+    /// error is <see cref="SessionLiveness.Undetermined"/> and carries a
+    /// reason. <see cref="SessionLiveness.NotHeld"/> is a snapshot rather than
+    /// a claim on the directory, which is why <see cref="ProbeForHolder"/>
+    /// still falls through to the gate on it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THIS OPEN CANNOT BE MADE HARMLESS.</b> To be refused by a holder's
+    /// <c>FileShare.Read</c> the probe must ask for access outside
+    /// <c>Read</c>; a handle whose granted access is outside <c>Read</c> is
+    /// exactly what an open sharing only <c>Read</c> is refused by. Detecting
+    /// an owner and blocking one are the same capability, so no share mode
+    /// dissolves it — it is absorbed on the other side, at
+    /// <see cref="LockFile.TakeAndWrite"/>'s hold, which runs under the gate
+    /// and therefore cannot meet an owner.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The canonicalised session directory.</param>
+    /// <returns>The state, and a reason whenever it is not settled.</returns>
+    public static SessionLivenessAnswer ProbeLiveness(SessionPath location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+
+        var answer = LockFile.Probe(location.LockFile);
+
+        return answer.State switch
+        {
+            LockFileState.Held => new SessionLivenessAnswer(SessionLiveness.Held, null),
+            LockFileState.Released => new SessionLivenessAnswer(SessionLiveness.NotHeld, null),
+            LockFileState.Free => new SessionLivenessAnswer(SessionLiveness.NotHeld, null),
+            _ => new SessionLivenessAnswer(SessionLiveness.Undetermined, answer.Why),
+        };
+    }
+
+    /// <summary>
+    /// Answers <i>who holds this directory</i> without taking the
+    /// per-directory gate — or answers nothing at all, and lets the gate
+    /// decide.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The problem it removes.</b> Every process that wanted to know who
+    /// held a session took <see cref="LockScopes.PerDirectoryGate"/>, losers
+    /// included, and a loser only wants to read a name so it can report it. The
+    /// cost is super-linear in the number of contenders: measured on an idle
     /// machine, 16 contenders produced a slowest refusal of 367 ms, 100 — the
     /// charter's design point — produced 3,349 ms, and 200 reached the
-    /// then-five-second gate and came back <c>Busy</c> by queueing alone, with
-    /// nothing wrong ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)).
+    /// then-five-second gate and came back <c>Busy</c> by queueing alone
+    /// ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)).
     /// <b>The gate was being taken to answer a question the kernel had already
     /// answered.</b>
     /// </para>
     /// <para>
-    /// ⚠️ <b>THE PROBE IS A SOUND OWNERSHIP TEST AND AN UNSOUND FREEDOM TEST, and
-    /// the whole design is that asymmetry.</b> A sharing violation is the
-    /// kernel's answer and no mutex ever made it more true, so a probe that can
-    /// say <i>held, by X</i> may refuse immediately. A probe that says
-    /// <i>looks free</i> proves nothing and <b>must</b> fall through to the
-    /// unchanged <see cref="MachineMutex.Create"/> →
-    /// <c>Acquire(PerDirectoryGate)</c> → <see cref="TakeOrReport"/> below.
-    /// </para>
-    /// <para>
-    /// <b>What happens if the free path skips the gate</b>, from
-    /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
-    /// D — this was attacked before it was built, and it is why the constraint is
-    /// absolute. Two contenders both probe and both see "free". A writes its
-    /// record, renames it into place and holds it. B's rename is refused —
-    /// <c>ERROR_ACCESS_DENIED</c>, because A's handle is open — and B
-    /// <i>retries</i>, to <see cref="MoveBudget"/>. The instant anything closes
-    /// A's handle for a moment — a <see cref="Rewrite"/>, a teardown, a
-    /// <c>destroy</c> — B's next retry lands, B renames over A's record and
-    /// re-opens it. <b>B now holds <c>browserai.json</c> and A holds a valid handle to
-    /// a now-nameless file</b>, which is what a Windows rename over an open file
-    /// does to the loser; A finds out only on its next rewrite. Both report
-    /// ownership and two processes drive one profile. The mechanism underneath:
-    /// with the gate gone, <b>the rename retry loop becomes the serialiser</b>,
-    /// and a retry loop is not a lock — it hands the name to whoever happens to
-    /// be retrying when the incumbent lets go.
-    /// </para>
-    /// <para>
-    /// <b>Deliberately not through <see cref="RenameWindow"/>.</b> By that type's
-    /// own table this is the archetype of a <i>not entitled</i> caller: it exists
-    /// to find out whether something else holds the file, so waiting a refusal
-    /// out would invert the mechanism. It also cannot tell a delete-pending
-    /// destination from a permanent ACL denial — both arrive as
-    /// <see cref="UnauthorizedAccessException"/> — so it does not try: anything
-    /// that is not a sharing violation falls through and is decided under the
-    /// gate, where the window is unobservable.
-    /// </para>
-    /// <para>
-    /// <b>It short-circuits only when it can NAME the holder.</b> A read taken
-    /// outside the gate can land in the transient absence between the unlink and
-    /// the rename of a record being replaced, and come back <see langword="null"/>
-    /// about a holder that removed nothing. Rather than print that hedge, an
-    /// unreadable or absent record falls through too — under the gate that window
-    /// does not exist, and the answer costs exactly what it cost before this
-    /// method was written.
-    /// </para>
-    /// <para>
-    /// <b>The share mode is wider than a holder's, on purpose.</b>
-    /// <see cref="OpenHeld"/> asks for <c>FileShare.Read</c> because it intends to
-    /// keep the file; this asks for <c>ReadWrite | Delete</c> because it intends
-    /// to let go immediately, and a transient handle without <c>Delete</c> would
-    /// refuse a concurrent holder's rename for as long as it lived. The
-    /// <i>access</i> is what makes the test work and it is unchanged:
-    /// <c>ReadWrite</c> is refused by a holder's <c>FileShare.Read</c>, which is
-    /// the sharing violation being read as ownership.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>AND THE HANDLE IT HOLDS FOR THAT INSTANT REFUSES A GATE HOLDER'S
-    /// OWN RE-OPEN. Observed 2026-08-19, CI run 32203064556 attempt 1.</b> Widen
-    /// the share mode all you like: the <i>granted access</i> is what a
-    /// <c>FileShare.Read</c> open is refused by, and the granted access has to be
-    /// <c>ReadWrite</c> or this method cannot detect an owner at all.
-    /// <b>Detecting an owner and blocking one are the same capability</b>, so
-    /// this cannot be fixed here and is not attempted here. It is absorbed on the
-    /// other side, by <see cref="ReopenHeld"/>, at the three opens that hold the
-    /// gate and therefore cannot meet an owner. What that leaves standing is
-    /// narrower and is written down rather than fixed: an ownership test that
-    /// meets this handle — <see cref="OpenHeld"/> at <see cref="TakeOrReport"/>'s
-    /// first open — still reads it as <c>Contended</c>, which names a holder out
-    /// of a record that may be stale. It is in the
-    /// [hazard index](../../../HAZARDS.md#hazard-index), and it cannot be
-    /// discriminated from a real owner by anything cheaper than waiting, because
-    /// <see cref="TryHoldUnowned"/> holds a directory whose record names somebody
-    /// else entirely.
+    /// <b>It short-circuits only when it can NAME the holder.</b> A lock file
+    /// that is held but unreadable falls through to the gate, which reports it
+    /// better because it holds the gate while it looks.
     /// </para>
     /// </remarks>
     /// <param name="location">The canonicalised session directory.</param>
@@ -837,29 +853,24 @@ internal sealed class SessionLock : IDisposable
     /// </returns>
     private static SessionLockResult? ProbeForHolder(SessionPath location, ILogger logger)
     {
-        // ⚠️ ONE OPENER, TWO CALLERS. `ProbeLiveness` is this method's own open,
-        // extracted 2026-08-20 when `browserai_list` needed the same question
-        // answered for a session it has no intention of taking. Extracted rather
-        // than copied, because a second spelling of "held is a sharing violation
-        // and nothing else is free" is exactly how two components come to
-        // disagree about one file while both report success.
         if (ProbeLiveness(location).State is not SessionLiveness.Held)
         {
-            // Opened, absent, mid-rename or denied outright -- and this caller
-            // cannot tell those apart, nor act on any of them. The gate can.
+            // Opened, absent or denied outright -- and this caller cannot act on
+            // any of them. The gate can.
             return null;
         }
 
-        LockRecord? holder;
+        LockFileHolder? holder;
 
         try
         {
-            holder = ReadRecord(location);
+            holder = LockFile.Read(location.LockFile);
         }
-        catch (LockFileException)
+        catch (Exception failure) when (failure is InvalidDataException or IOException or UnauthorizedAccessException)
         {
-            // Damage is a real answer, but it is not "held by X", and TakeOrReport
-            // reports it better because it holds the gate while it looks.
+            // Damage is a real answer, but it is not "held by X", and
+            // TakeOrReport reports it better because it holds the gate while it
+            // looks.
             return null;
         }
 
@@ -868,218 +879,40 @@ internal sealed class SessionLock : IDisposable
             return null;
         }
 
-        SessionLog.Contended(logger, location.FullPath, holder.Holder.ProcessId);
-        return HeldBy(location, holder);
+        SessionLog.Contended(logger, location.FullPath, holder.ProcessId);
+
+        return HeldBy(location, holder, PurposeOf(location));
     }
 
     /// <summary>
-    /// Whether anything holds a session's <c>browserai.json</c> at the instant of the
-    /// look — <b>held, not held, or neither</b> — without taking anything and
-    /// without opening a process handle.
+    /// What a held session says it is for, or <see langword="null"/> when that
+    /// cannot be read.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>Added 2026-08-20 for <c>browserai_list</c>, which reported mode,
-    /// browser, purpose, dates and size and said nothing at all about whether a
-    /// session was being driven.</b> A caller could not tell an abandoned
-    /// session from one another agent is inside — which matters most in the one
-    /// moment before <c>browserai_destroy</c>. The alternative was the
-    /// process-liveness check, and this beats it on both counts: it needs no
-    /// process handle, so a token that may not open the peer cannot defeat it,
-    /// and it asks about the resource rather than about a pid that may have been
-    /// recycled.
-    /// </para>
-    /// <para>
-    /// <b>The three answers are not symmetrical, and the asymmetry is this
-    /// namespace's standing rule.</b> A sharing violation may be read as
-    /// <see cref="SessionLiveness.Held"/>; <b>nothing else may be read as
-    /// free</b>. An absent record, a mid-rename window, a denied open and a
-    /// device error are all <see cref="SessionLiveness.Undetermined"/> and carry
-    /// a reason — collapsing any of them into <i>free</i> would hand a caller a
-    /// confident wrong answer in the direction that costs a session.
-    /// <see cref="SessionLiveness.NotHeld"/> is the weakest of the three and
-    /// says so in its own summary: it is a snapshot, not a claim on the
-    /// directory, and it is why <see cref="ProbeForHolder"/> still falls through
-    /// to the gate on it.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>THIS OPEN CANNOT BE MADE HARMLESS, AND A CALLER THAT RUNS IT OVER A
-    /// WHOLE TREE IS WIDENING SOMETHING THAT WAS ALREADY WRITTEN DOWN.</b> To be
-    /// refused by a holder's <c>FileShare.Read</c> the probe must ask for access
-    /// outside <c>Read</c>; a handle whose granted access is outside <c>Read</c>
-    /// is exactly what an open sharing only <c>Read</c> is refused by. Detecting
-    /// an owner and blocking one are the same capability, so no share mode
-    /// dissolves it — see this method's own remarks on <see cref="ProbeForHolder"/>
-    /// and CI run 32203064556 attempt 1. What that leaves is a peer's
-    /// <see cref="OpenHeld"/> meeting this handle for the instant it lives and
-    /// reading it as <c>Contended</c>: a wrong <i>sentence</i>, never a wrong
-    /// owner, and it is in the [hazard index](../../../HAZARDS.md#hazard-index).
-    /// <b>What a caller must not do is report that sentence onward.</b>
-    /// <c>SessionManager.List</c> names no holder from this answer for exactly
-    /// that reason — the record on disk may name a previous one — and it does not
-    /// probe a session this process is already driving, because it knows that
-    /// one without asking the kernel.
-    /// </para>
-    /// <para>
-    /// <b>Cost: one <c>CreateFile</c> and one <c>CloseHandle</c> per call</b>,
-    /// with no directory walk, no process open and no mutex. Measured
-    /// 2026-08-20 over 2,000 iterations, 3 runs: <b>0.035 ms</b> when the file
-    /// is free and <b>0.049 ms</b> when it is held — the held arm costs more
-    /// because it is a managed exception rather than a return
-    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)).
-    /// </para>
+    /// <b>Only ever for a refusal, and never for a decision.</b> The purpose is
+    /// what makes <i>this directory is busy</i> actionable — a model reading
+    /// <i>"held by PID 8124, which is checking out the staging cart"</i> knows
+    /// whether to wait or to pick another directory. A record that cannot be
+    /// opened costs that clause and nothing else, so every failure here is
+    /// swallowed rather than propagated into an ownership answer the kernel
+    /// already settled.
     /// </remarks>
-    /// <param name="location">The canonicalised session directory.</param>
-    /// <returns>The state, and a reason whenever it is not settled.</returns>
-    public static SessionLivenessAnswer ProbeLiveness(SessionPath location)
+    /// <param name="location">The session directory.</param>
+    /// <returns>The purpose, or <see langword="null"/>.</returns>
+    private static string? PurposeOf(SessionPath location)
     {
-        ArgumentNullException.ThrowIfNull(location);
-
         try
         {
-            using var probe = new FileStream(
-                location.LockFile,
-                FileMode.Open,
-                FileAccess.ReadWrite,
-
-                // Wider than a holder's on purpose: this handle lets go
-                // immediately, and one without Delete would refuse a concurrent
-                // holder's rename for as long as it lived. The ACCESS is what
-                // makes the test work and it is ReadWrite, which is what a
-                // holder's FileShare.Read refuses.
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 1);
-
-            return new SessionLivenessAnswer(SessionLiveness.NotHeld, null);
+            // ⚠️ NO PATIENCE, AND THAT IS THE POINT OF THE PARAMETER. This runs
+            // on the contended path, in front of the gate, for a caller whose
+            // whole business is one sentence -- so a reader that waited a dying
+            // holder out here would put that wait in front of every refusal, on
+            // exactly the path the pre-gate probe exists to keep fast.
+            return ReadRecord(location, TimeSpan.Zero)?.Purpose;
         }
-        catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
+        catch (SessionRecordException)
         {
-            // The kernel's own answer to "does somebody own this", and the one
-            // answer this method is allowed to give positively.
-            return new SessionLivenessAnswer(SessionLiveness.Held, null);
-        }
-        catch (Exception failure) when (failure is FileNotFoundException or DirectoryNotFoundException)
-        {
-            // ⚠️ NOT read as free. `browserai.json`'s NAME IS UNBOUND for an instant
-            // while a peer replaces the record, and a directory whose record is
-            // being replaced is owned by whoever is replacing it. An absence is
-            // therefore a window this caller cannot see the inside of.
-            return new SessionLivenessAnswer(
-                SessionLiveness.Undetermined,
-                $"'{location.LockFile}' was not there when this looked, which is a record being replaced as often as it is a session that has gone.");
-        }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-        {
-            return new SessionLivenessAnswer(
-                SessionLiveness.Undetermined,
-                $"'{location.LockFile}' could not be opened, and the failure was not a sharing violation ({failure.Message}).");
-        }
-    }
-
-    /// <summary>
-    /// The same question as <see cref="ProbeLiveness"/>, asked from <b>inside</b>
-    /// <see cref="LockScopes.PerDirectoryGate"/> — so a record being replaced can
-    /// never be reported as a directory nobody has.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Added 2026-08-24. The bare probe is a sound ownership test and an
-    /// unsound freedom test, and <c>browserai_list</c> was reading its
-    /// <see cref="SessionLiveness.NotHeld"/> as free.</b> Since 2026-08-20 every
-    /// forwarded browser call runs <see cref="Append"/>, which is
-    /// <see cref="Rewrite"/>: the ownership handle is dropped at the top of the
-    /// replacement and taken back at the bottom, so a busy session's
-    /// <c>browserai.json</c> is periodically present and unheld. The listing landed
-    /// in that window and printed <i>in use: no</i> about a session another agent
-    /// was driving.
-    /// </para>
-    /// <para>
-    /// <b>The gate is the discriminator and it cannot be wrong.</b>
-    /// <see cref="Rewrite"/> holds it across the whole close → write → rename →
-    /// re-open; <see cref="TryHoldUnowned"/> and <c>TakeOrReport</c> take it
-    /// before they open the file at all. So <i>the gate is free</i> means no peer
-    /// is between those two states, and the probe's answer is then a fact about
-    /// ownership rather than about timing. The temp-file discriminator
-    /// <c>SessionIndex.Absent</c> uses was considered and is <b>not</b> enough
-    /// here: it covers the instant the NAME is unbound, which is strictly inside
-    /// <c>WriteDurably</c>'s <c>try</c>, and the unheld window opens before the
-    /// temp exists and closes after it has gone.
-    /// </para>
-    /// <para>
-    /// <b>Zero timeout, and that is what keeps this out of the queue.</b>
-    /// <see cref="LockScopes.NeverWaits"/>: this never waits, never queues and
-    /// therefore does not re-create the contention <see cref="ProbeForHolder"/>
-    /// was extracted to remove. A gate it could not take is
-    /// <see cref="SessionLiveness.Undetermined"/> with a reason, which is the
-    /// answer this type has for exactly this.
-    /// </para>
-    /// <para>
-    /// <b>Cost: one <c>CreateMutexW</c>, one zero-timeout
-    /// <c>WaitForSingleObject</c>, one <c>ReleaseMutex</c> and one
-    /// <c>CloseHandle</c> on top of <see cref="ProbeLiveness"/>'s own pair.</b>
-    /// The uncontended acquire alone was measured at 0.007–0.009 ms; <b>the
-    /// create/close pair is unmeasured</b> and is deliberately not guessed at
-    /// here.
-    /// </para>
-    /// <para>
-    /// <b>Acquire and release are on one thread, in one synchronous method, with
-    /// no <c>await</c> between them</b> — see <see cref="MachineMutex"/>'s own
-    /// remarks on why that is not a style preference.
-    /// </para>
-    /// </remarks>
-    /// <param name="location">The canonicalised session directory.</param>
-    /// <returns>The state, and a reason whenever it is not settled.</returns>
-    public static SessionLivenessAnswer ProbeLivenessUnderTheGate(SessionPath location)
-    {
-        ArgumentNullException.ThrowIfNull(location);
-
-        // Declared before the try and disposed unconditionally in the finally,
-        // the same shape TryAcquire and TryHoldUnowned use for the same reason.
-        MachineMutex? gate = null;
-
-        try
-        {
-            try
-            {
-                gate = MachineMutex.Create(location.MutexName);
-            }
-            catch (Exception failure)
-                when (failure is UnauthorizedAccessException
-                    or WaitHandleCannotBeOpenedException
-                    or IOException
-                    or NotSupportedException)
-            {
-                // Never fatal to a listing: this is a report, and a report that
-                // could not be produced says so rather than throwing out of the
-                // tool.
-                return new SessionLivenessAnswer(
-                    SessionLiveness.Undetermined,
-                    $"'{location.MutexName}' could not be created, so whether anything holds '{location.LockFile}' could not be settled ({failure.Message}).");
-            }
-
-            // AcquiredAbandoned IS acquired and is released below exactly as an
-            // ordinary acquisition is. What it reports -- a holder that died
-            // mid-section -- is about the record's bytes, and this call asks the
-            // kernel about the handle.
-            if (gate.Acquire(LockScopes.NeverWaits) is MutexAcquisition.NotAcquired)
-            {
-                return new SessionLivenessAnswer(
-                    SessionLiveness.Undetermined,
-                    $"another process holds '{location.MutexName}', which is the gate every take, release and record rewrite of '{location.FullPath}' runs inside — so this looked while somebody was in the middle of one.");
-            }
-
-            try
-            {
-                return ProbeLiveness(location);
-            }
-            finally
-            {
-                gate.Release();
-            }
-        }
-        finally
-        {
-            gate?.Dispose();
+            return null;
         }
     }
 
@@ -1090,103 +923,97 @@ internal sealed class SessionLock : IDisposable
         MachineMutex gate,
         bool gateWasAbandoned)
     {
-        LockRecord? previous;
-        FileStream? held = null;
+        // ⚠️ THE OWNERSHIP TEST, UNDER THE GATE. `LockFile.Read` shares write
+        // and Delete, so it CANNOT be the test: a live holder does not refuse
+        // it. The probe asks for ReadWrite, which a holder's FileShare.Read
+        // does refuse, and that sharing violation is the kernel's own answer.
+        var probe = LockFile.Probe(location.LockFile);
+
+        if (probe.State is LockFileState.Held)
+        {
+            return Contended(location, logger);
+        }
+
+        if (probe.State is LockFileState.Undetermined)
+        {
+            SessionLog.UnreadableLockFile(logger, location.LockFile, new IOException(probe.Why));
+
+            return new SessionLockResult(
+                SessionLockOutcome.Unreadable,
+                SessionErrors.LockFileCannotBeOpened(location.FullPath, location.LockFile, probe.Why ?? "the open failed", RenameWindow.Budget));
+        }
+
+        LockFileHolder? previousHolder;
+
+        try
+        {
+            previousHolder = LockFile.Read(location.LockFile);
+        }
+        catch (InvalidDataException failure)
+        {
+            // We can have the name but cannot understand the guard. Refusing is
+            // the whole point of strict parsing, so nothing is overwritten.
+            SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
+            return new SessionLockResult(SessionLockOutcome.Unreadable, failure.Message);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
+
+            return new SessionLockResult(
+                SessionLockOutcome.Unreadable,
+                SessionErrors.LockFileCannotBeOpened(location.FullPath, location.LockFile, failure.Message, RenameWindow.Budget));
+        }
+
+        SessionRecord? previous;
+
+        try
+        {
+            previous = ReadRecord(location);
+        }
+        catch (SessionRecordException failure)
+        {
+            SessionLog.UnreadableLockFile(logger, location.DataFile, failure);
+            return new SessionLockResult(SessionLockOutcome.Unreadable, failure.Message);
+        }
+
+        // ⚠️ ASKED HERE BECAUSE THE RECORD IS ALREADY READ AND THE GATE IS
+        // ALREADY HELD. `init`'s pre-gate look is ungated by construction; the
+        // same question here costs one comparison and cannot be asked at the
+        // wrong instant, because a peer taking a directory holds this gate to do
+        // it. Nothing is written and nothing is taken -- a refusal that changed
+        // the record would destroy the evidence the caller is being sent to look
+        // at.
+        if (previous is not null && request.RefuseAnExistingRecord)
+        {
+            return new SessionLockResult(
+                SessionLockOutcome.AlreadyASession,
+                SessionErrors.SessionAlreadyExists(
+                    location.FullPath,
+                    previous.Browser,
+                    previous.Created,
+                    previous.LastUsed,
+                    previous.Purpose),
+                holder: previous);
+        }
+
+        var previousRunning = previousHolder is not null && previousHolder.IsAlive();
+
+        var now = DateTimeOffset.Now;
+        var holder = LockFileHolder.ForThisProcess();
+
+        LockFileHold? hold = null;
+        SessionStore? store = null;
         SessionLock? taken = null;
 
         try
         {
             try
             {
-                held = OpenHeld(location.LockFile);
-                previous = Parse(held, location.LockFile);
-            }
-            catch (FileNotFoundException)
-            {
-                // Free, and never locked. Nothing to reclaim, nothing to report.
-                previous = null;
-            }
-            catch (IOException failure) when (RenameWindow.IsSharingViolation(failure))
-            {
-                return Contended(location, logger);
-            }
-            catch (LockFileException failure)
-            {
-                // We hold the name but cannot understand the record. Refusing is
-                // the whole point of strict parsing, so the handle is dropped
-                // rather than the file overwritten.
-                SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
-                return new SessionLockResult(SessionLockOutcome.Unreadable, failure.Message);
-            }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-            {
-                // ⚠️ THE ARM THAT USED TO BE MISSING, added 2026-08-19. The three
-                // catches above are a missing file, a sharing violation and an
-                // unparseable record; an `UnauthorizedAccessException` is not an
-                // `IOException` and is none of them, so a permanently denied
-                // `browserai.json` PROPAGATED OUT OF `TryAcquire` -- the product's
-                // primary session-opening entry point -- after `RenameWindow` had
-                // spent its whole budget waiting out a rename that was never in
-                // flight. `OpenHeld`'s remarks recorded that this had already
-                // happened once and that the wait was the answer; the wait
-                // narrows the transient window and does nothing about a
-                // permanent denial, which is the case that reaches here.
-                //
-                // The catch is deliberately wider than the exception that
-                // motivated it. Every other `IOException` shape -- a
-                // `DirectoryNotFoundException` from a directory removed between
-                // the gate and this line, a device error, a name that stopped
-                // resolving -- is the same kind of event to the caller: the
-                // record could not be read and the directory was not taken. An
-                // arm keyed only on the one exception somebody hit is how this
-                // gap was made in the first place.
-                SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
-
-                return new SessionLockResult(
-                    SessionLockOutcome.Unreadable,
-                    SessionErrors.LockFileCannotBeOpened(location.FullPath, location.LockFile, failure.Message, MoveBudget));
-            }
-
-            // ⚠️ ASKED HERE BECAUSE THE RECORD IS ALREADY READ AND THE GATE IS
-            // ALREADY HELD, added 2026-08-19. `init`'s pre-gate look is ungated
-            // by construction and can land in the instant in which browserai.json's
-            // NAME IS UNBOUND while a peer replaces the record -- it then reads
-            // null as "free, proceed" and reaches the reclaim below, which
-            // appends a browser statement and rebinds the session's family. The same question here costs one comparison and cannot be
-            // asked at the wrong instant, because a peer replacing a record
-            // holds this gate to do it.
-            //
-            // Nothing is written and nothing is taken: the handle opened above
-            // is dropped by the finally, which is the same shape the unreadable
-            // arm uses and for the same reason -- a refusal that changed the
-            // record would destroy the evidence the caller is being sent to look
-            // at.
-            if (previous is not null && request.RefuseAnExistingRecord)
-            {
-                return new SessionLockResult(
-                    SessionLockOutcome.AlreadyASession,
-                    SessionErrors.SessionAlreadyExists(
-                        location.FullPath,
-                        previous.Browser,
-                        previous.Created,
-                        previous.LastUsed,
-                        previous.Purpose),
-                    holder: previous);
-            }
-
-            var previousRunning = previous is not null
-                && ProcessLiveness.IsAlive(previous.Holder.ProcessId, previous.Holder.ProcessCreatedFileTime);
-
-            var record = Compose(location, request, previous, DateTimeOffset.Now);
-
-            // Close before renaming: Windows will not replace a file whose
-            // handle we are holding, and the gate is why the gap is safe.
-            held?.Dispose();
-            held = null;
-
-            try
-            {
-                WriteDurably(location.LockFile, record);
+                // Temp file, durable write, rename -- and this is the only rename
+                // `browserai.lock` will ever see, because everything the session
+                // goes on to say goes into the store beside it.
+                LockFile.Write(location.LockFile, holder);
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -1198,36 +1025,23 @@ internal sealed class SessionLock : IDisposable
             }
 
             // ⚠️ A SECOND CATCH RATHER THAN A SECOND STATEMENT IN THE FIRST ONE,
-            // AND THE REASON IS THE SENTENCE ABOVE. Corrected 2026-08-19
-            // (previously `WriteDurably` and this open shared one catch, which
-            // answered "nothing was changed" to both). The write is a rename of
-            // a fully-formed record over the name: once it returns, browserai.json
-            // HAS been replaced and it names this process as the holder. A
+            // AND THE REASON IS THE SENTENCE ABOVE. The write is a rename of a
+            // fully-formed guard over the name: once it returns,
+            // `browserai.lock` HAS been replaced and it names this process. A
             // failure here is therefore the one case where "nothing was changed"
             // is false at the moment it is said -- and a caller acting on it
             // reads the reclaim it meets on the next call as somebody else's
             // crashed session rather than as its own last attempt.
             //
-            // It does not try to undo the write, deliberately. Restoring
-            // `previous` means a second WriteDurably along the path that just
-            // refused us, and deleting the record when there was no previous one
-            // means a delete on the same path; either can fail in turn, and the
-            // answer would then have to describe a rollback that half happened.
-            // Naming the state exactly is cheaper and cannot make it worse: the
-            // record is stale by construction, nothing holds the directory, and
-            // the reclaim path already handles a record whose holder is alive.
-            //
-            // ⚠️ ReopenHeld AND NOT OpenHeld, ADDED 2026-08-19, AND THIS LINE IS
-            // THE ONE THE CI FAILURE WAS ABOUT. The record is on disk naming this
-            // process and the gate is held, so nothing can be the owner here --
-            // becoming one means passing through this method, which needs the
-            // gate. A refusal is therefore an ungated transient handle, and the
-            // product has exactly one ungated opener that asks for write access:
-            // ProbeForHolder, whose handle lives for the length of one
-            // FileStream construction. Believing it cost run 32203064556 a lock.
+            // It does not try to undo the write, deliberately. Restoring the
+            // previous guard means a second durable write along the path that
+            // just refused us, and deleting it means a delete on the same path;
+            // either can fail in turn, and the answer would then have to describe
+            // a rollback that half happened. Naming the state exactly is cheaper
+            // and cannot make it worse.
             try
             {
-                held = ReopenHeld(location.LockFile);
+                hold = RenameWindow.WaitOutWhereNoOwnerIsPossible(() => LockFile.Hold(location.LockFile));
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
@@ -1235,39 +1049,132 @@ internal sealed class SessionLock : IDisposable
 
                 return new SessionLockResult(
                     SessionLockOutcome.Unreadable,
-                    $"BrowserAI replaced '{location.LockFile}' and could not then re-open it ({failure.Message}), so the directory was NOT taken -- but the record WAS written, and it now names this process as the holder. "
+                    $"BrowserAI replaced '{location.LockFile}' and could not then hold it ({failure.Message}), so the directory was NOT taken -- but the record WAS written, and it now names this process as the holder. "
                     + $"Nothing holds '{location.FullPath}': call again, and the acquisition will report reclaiming it from a process that is still running, which is this one. "
-                    + $"A peer that merely looked at the file is already waited out for {MoveBudget.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s before this is said, so if the call fails the same way, something on this machine is denying that file or holding it open for longer than that.");
+                    + $"A peer that merely looked at the file is already waited out for {RenameWindow.Budget.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s before this is said, so if the call fails the same way, something on this machine is denying that file or holding it open for longer than that.");
             }
 
+            try
+            {
+                store = SessionStore.OpenForWriting(location.DataFile);
+
+                // ⚠️ ONE TRANSACTION, and this is the only explicit one in the
+                // store. The holder row and the statements saying what this
+                // session now is are one fact: a reader that saw half of it would
+                // see a session held by somebody for no reason, or a reason with
+                // no holder.
+                store.RecordAcquisition(Compose(location, request, previous, holder, now));
+            }
+            catch (SqliteException refused)
+            {
+                // ⚠️ THE GUARD IS ALREADY WRITTEN AND THIS PROCESS IS NAMED IN
+                // IT. Saying "nothing was changed" here would be false at the
+                // moment it is said. The hold is dropped, so nothing holds the
+                // directory; the next call reclaims it from a process that is
+                // still running, which is this one.
+                SessionLog.CouldNotWriteLockFile(logger, location.DataFile, refused);
+
+                return new SessionLockResult(
+                    SessionLockOutcome.Unreadable,
+                    $"BrowserAI took '{location.LockFile}' and could not then write '{location.DataFile}' ({refused.Message}), so the session was NOT opened. "
+                    + $"Nothing holds '{location.FullPath}': call again, and the acquisition will report reclaiming it from a process that is still running, which is this one. "
+                    + "Check that the volume has space, that the directory is writable, and that it is not on a filesystem without shared memory — a network share is the usual cause.");
+            }
+
+            // ⚠️ `in-flight`, AND SETTLED BY THE CALLER RATHER THAN HERE. The
+            // acquisition succeeded; what has not happened yet is the browser
+            // launch, and a row written `successful` at this line would say a
+            // session opened when what it means is that a directory was taken.
+            var opening = request.Entry is { } entry
+                ? store.AppendLog(
+                    SessionRecordReader.Stamp(now),
+                    RecordText.Sanitise(entry.Tool),
+                    RecordText.Sanitise(entry.Why),
+                    SessionStore.InFlight)
+                : 0;
+
+            var record = SessionRecordReader.Read(store);
+
             // CA2000 is disabled for this one statement and nothing else. The
-            // pattern the rule asks for is already here -- a local declared
-            // before the try, an unconditional `taken?.Dispose()` in the finally
-            // and a null assignment the instant ownership moves -- but the
-            // transfer is into the RETURNED SessionLockResult, which is a
-            // handle the caller keeps, and the rule's dataflow cannot see an
-            // ownership move into an object that is not itself disposable.
-            // Making SessionLockResult disposable to satisfy it would be worse:
-            // every caller would then hold a `using` over the result and destroy
-            // the lock it just acquired.
+            // pattern the rule asks for is already here -- locals declared
+            // before the try, unconditional disposal in the finally and null
+            // assignments the instant ownership moves -- but the transfer is
+            // into the RETURNED SessionLockResult, and the rule's dataflow
+            // cannot see an ownership move into an object that is not itself
+            // disposable.
 #pragma warning disable CA2000
-            taken = new SessionLock(location, gate, held, record, gateWasAbandoned, logger);
+            taken = new SessionLock(location, gate, hold, store, record, opening, gateWasAbandoned, logger);
 #pragma warning restore CA2000
 
-            // Ownership of the handle has moved into the lock object.
-            held = null;
+            hold = null;
+            store = null;
 
-            var result = previous is null
+            var result = previous is null && previousHolder is null
                 ? Fresh(location, logger, taken)
-                : Reclaimed(location, logger, taken, previous, previousRunning);
+                : Reclaimed(location, logger, taken, previousHolder, previous, previousRunning);
 
             taken = null;
             return result;
         }
         finally
         {
-            held?.Dispose();
+            store?.Dispose();
+            hold?.Dispose();
             taken?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// The statements one acquisition makes: a row for every field whose value
+    /// has moved, plus a holder row every time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Nothing is overwritten and nothing is invented.</b> A field whose
+    /// value has not changed gains no row, so a session opened a hundred times
+    /// still reports one <c>browser</c> statement — while <c>directory</c>
+    /// gains one the moment the tree is moved or copied, which is what lets
+    /// <c>resume</c> hand a model the provenance instead of demanding an
+    /// acknowledgement for it.
+    /// </para>
+    /// <para>
+    /// <b>The holder row is the one dedup does not bound</b>, because
+    /// <c>(pid, creationFileTime)</c> is never the same twice. That is the
+    /// point: it is a history of acquisitions, and two acquisitions by the same
+    /// process would still be two.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">Where the record is being written.</param>
+    /// <param name="request">Browser and purpose as the caller asked for them.</param>
+    /// <param name="previous">The record found on disk, or <see langword="null"/>.</param>
+    /// <param name="holder">Who is taking the directory.</param>
+    /// <param name="now">The instant every statement written by this call carries.</param>
+    /// <returns>The statements, in the order they should be stored.</returns>
+    private static List<StoredStatement> Compose(
+        SessionPath location,
+        SessionLockRequest request,
+        SessionRecord? previous,
+        LockFileHolder holder,
+        DateTimeOffset now)
+    {
+        var at = SessionRecordReader.Stamp(now);
+        var statements = new List<StoredStatement>();
+
+        add(RecordFields.Directory, location.FullPath, previous?.Directory);
+        add(RecordFields.Browser, request.Browser, previous?.Browser);
+        add(RecordFields.Purpose, RecordText.Sanitise(request.Purpose), previous?.Purpose);
+        add(RecordFields.BrowserAiVersion, BuildVersion.Current, previous?.BrowserAiVersion);
+
+        statements.Add(new StoredStatement(RecordFields.Holder, at, SessionRecordReader.WriteHolder(holder)));
+
+        return statements;
+
+        void add(string field, string value, string? current)
+        {
+            if (!string.Equals(value, current, StringComparison.Ordinal))
+            {
+                statements.Add(new StoredStatement(field, at, value));
+            }
         }
     }
 
@@ -1281,20 +1188,19 @@ internal sealed class SessionLock : IDisposable
         SessionPath location,
         ILogger logger,
         SessionLock taken,
-        LockRecord previous,
+        LockFileHolder? previousHolder,
+        SessionRecord? previous,
         bool previousRunning)
     {
-        var since = DateTimeOffset.FromFileTime(previous.Holder.ProcessCreatedFileTime);
-        SessionLog.Reclaimed(logger, location.FullPath, previous.Holder.ProcessId, previousRunning);
+        var pid = previousHolder?.ProcessId ?? previous?.Holder?.ProcessId ?? 0;
+        var created = previousHolder?.ProcessCreatedFileTime ?? previous?.Holder?.ProcessCreatedFileTime ?? 0;
+        var since = created is 0 ? previous?.TakenAt ?? DateTimeOffset.Now : DateTimeOffset.FromFileTime(created);
+
+        SessionLog.Reclaimed(logger, location.FullPath, pid, previousRunning);
 
         return new SessionLockResult(
             SessionLockOutcome.Reclaimed,
-            SessionErrors.LockReclaimed(
-                location.FullPath,
-                previous.Holder.ProcessId,
-                since,
-                previousRunning,
-                previous.Purpose),
+            SessionErrors.LockReclaimed(location.FullPath, pid, since, previousRunning, previous?.Purpose ?? string.Empty),
             taken,
             previous,
             previousRunning);
@@ -1302,13 +1208,13 @@ internal sealed class SessionLock : IDisposable
 
     private static SessionLockResult Contended(SessionPath location, ILogger logger)
     {
-        LockRecord? holder;
+        LockFileHolder? holder;
 
         try
         {
-            holder = ReadRecord(location);
+            holder = LockFile.Read(location.LockFile);
         }
-        catch (LockFileException failure)
+        catch (Exception failure) when (failure is InvalidDataException or IOException or UnauthorizedAccessException)
         {
             SessionLog.UnreadableLockFile(logger, location.LockFile, failure);
 
@@ -1317,301 +1223,62 @@ internal sealed class SessionLock : IDisposable
                 $"'{location.FullPath}' is held by another process, and its '{SessionLayout.LockFileName}' cannot be read to say which: {failure.Message}");
         }
 
-        SessionLog.Contended(logger, location.FullPath, holder?.Holder.ProcessId ?? 0);
+        SessionLog.Contended(logger, location.FullPath, holder?.ProcessId ?? 0);
 
-        if (holder is null)
-        {
-            return new SessionLockResult(
+        return holder is null
+            ? new SessionLockResult(
                 SessionLockOutcome.Held,
-                $"'{location.FullPath}' is held by another process, which removed its '{SessionLayout.LockFileName}' between the refusal and the read. Nothing was changed. Try again, or choose another directory.");
-        }
-
-        return HeldBy(location, holder);
+                $"'{location.FullPath}' is held by another process, which removed its '{SessionLayout.LockFileName}' between the refusal and the read. Nothing was changed. Try again, or choose another directory.")
+            : HeldBy(location, holder, PurposeOf(location));
     }
 
     /// <summary>
     /// The one refusal that names a live holder, written once so that the
-    /// pre-gate probe and the gated open cannot answer the same fact differently.
+    /// pre-gate probe and the gated open cannot answer the same fact
+    /// differently.
     /// </summary>
     /// <remarks>
     /// <b><c>holderRunning: true</c> is a statement about the handle, not about
     /// the pid.</b> Both call sites arrive here having just been refused by the
-    /// kernel on an open of <c>browserai.json</c>, and Windows releases a handle when
-    /// its process dies however it dies — so something is alive holding it, and
-    /// that is a stronger fact than any liveness check on the recorded
-    /// <c>(pid, creationFileTime)</c> could produce.
+    /// kernel on an open of <c>browserai.lock</c>, and Windows releases a
+    /// handle when its process dies however it dies — so something is alive
+    /// holding it, and that is a stronger fact than any liveness check on the
+    /// recorded <c>(pid, creationFileTime)</c> could produce.
     /// </remarks>
     /// <param name="location">The session directory.</param>
-    /// <param name="holder">The record read from it.</param>
+    /// <param name="holder">What the lock file says.</param>
+    /// <param name="purpose">What the record says the session is for, if it could be read.</param>
     /// <returns>The refusal.</returns>
-    private static SessionLockResult HeldBy(SessionPath location, LockRecord holder) =>
+    private static SessionLockResult HeldBy(SessionPath location, LockFileHolder holder, string? purpose) =>
         new(
             SessionLockOutcome.Held,
             SessionErrors.LockHeld(
                 location.FullPath,
-                holder.Holder.ProcessId,
-                holder.Holder.ClientProcessName,
-                DateTimeOffset.FromFileTime(holder.Holder.ProcessCreatedFileTime),
+                holder.ProcessId,
+                holder.ClientProcessName,
+                DateTimeOffset.FromFileTime(holder.ProcessCreatedFileTime),
 
-                // ⚠️ TakenAt and not LastUsed. Under schema 2 they are different
-                // instants: a `set_purpose` moves LastUsed past the moment the
-                // current holder took the directory, and this sentence says
-                // "took the lock at".
-                holder.TakenAt,
-                holder.Purpose),
-            holder: holder,
-            holderRunning: true);
+                // ⚠️ The lock file is written once, at acquisition, so its own
+                // last-write time IS when the lock was taken -- which is the
+                // instant this sentence claims. Nothing rewrites it, so it
+                // cannot drift the way `LastUsed` does.
+                TakenAt(location),
+                purpose ?? string.Empty),
+            holderRunning: true,
+            guard: holder);
 
-    /// <summary>
-    /// The next record: the previous one with a statement appended to every
-    /// field whose value has moved.
-    /// </summary>
-    /// <remarks>
-    /// <b>Nothing is overwritten and nothing is invented.</b> A field whose value
-    /// has not changed keeps the list it had, so a session that is opened a
-    /// hundred times still reports one <c>browser</c> statement — while
-    /// <c>directory</c> gains one the moment the
-    /// tree is moved or copied, which is what lets <c>resume</c> hand a model the
-    /// provenance instead of demanding an acknowledgement for it.
-    /// </remarks>
-    /// <param name="location">Where the record is being written.</param>
-    /// <param name="request">Browser and purpose as the caller asked for them.</param>
-    /// <param name="previous">The record found on disk, or <see langword="null"/> for a directory that has never been locked.</param>
-    /// <param name="now">The instant every statement written by this call carries.</param>
-    /// <returns>The record to write.</returns>
-    private static LockRecord Compose(SessionPath location, SessionLockRequest request, LockRecord? previous, DateTimeOffset now)
-    {
-        var holder = new LockHolder
-        {
-            ProcessId = Environment.ProcessId,
-            ProcessCreatedFileTime = ProcessLiveness.CreationTimeOfThisProcess(),
-            ClientProcessName = ProcessLiveness.ClientProcessName(),
-        };
-
-        return new LockRecord
-        {
-            SchemaVersion = LockRecord.CurrentSchemaVersion,
-            DirectoryHistory = LockRecord.Append(previous?.DirectoryHistory, location.FullPath, now),
-            BrowserHistory = LockRecord.Append(previous?.BrowserHistory, request.Browser, now),
-            PurposeHistory = LockRecord.Append(previous?.PurposeHistory, LockRecord.SanitisePurpose(request.Purpose), now),
-            BrowserAiVersionHistory = LockRecord.Append(previous?.BrowserAiVersionHistory, BuildVersion.Current, now),
-            HolderHistory = LockRecord.Append(previous?.HolderHistory, holder, now),
-
-            // ⚠️ AN ENTRY OR NOTHING, decided by the caller rather than here.
-            // `init` and `resume` both have something to say about why they
-            // opened the directory; `browserai_destroy` takes it in order to
-            // delete it, and an entry appended to a record that is about to be
-            // unlinked is a write nobody reads. `browserai_set_purpose` against
-            // a CLOSED session takes it too, and that one does append -- which
-            // is the whole reason this is a request field rather than a flag on
-            // the method.
-            Log = request.Entry is { } entry
-                ? LockRecord.AppendLog(previous?.Log, entry)
-                : previous?.Log ?? [],
-        };
-    }
-
-    private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
-
-    /// <summary>
-    /// Opens <c>browserai.json</c> the way a holder holds it, <b>as an ownership
-    /// test</b>: read-write, sharing only reads, so any other BrowserAI trying to
-    /// take the same directory meets a sharing violation — and so does this,
-    /// which is the answer rather than a condition to wait out.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Corrected 2026-08-19 (previously "every one of the four call sites
-    /// needs it … two of them open the file straight after this class has
-    /// renamed a new record over it").</b> There are two call sites now, not
-    /// four, and both are ownership tests: <see cref="TakeOrReport"/>'s open
-    /// before the write and <see cref="TryHoldUnowned"/>'s. The three that open
-    /// straight after this class's own rename moved to
-    /// <see cref="ReopenHeld"/>, which waits out a sharing violation as well —
-    /// they cannot meet an owner, and what they were meeting instead was a
-    /// peer's pre-gate probe.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Through <see cref="RenameWindow"/>, added 2026-08-18.</b> These open
-    /// a file another process may be renaming right now — and a delete-pending
-    /// destination refuses an open with <c>ACCESS_DENIED</c>, which
-    /// <see cref="TakeOrReport"/> did not catch: it handled the sharing
-    /// violation (which means <i>owned</i>, and must not be waited out) and a
-    /// <c>LockFileException</c>, so an <see cref="UnauthorizedAccessException"/>
-    /// propagated out of <c>TryAcquire</c> — the product's primary entry point
-    /// for opening a session.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Corrected 2026-08-19 (previously "which <c>TakeOrReport</c> does not
-    /// catch", in the present tense, a year after the wait was added).</b> It now
-    /// does: there is a fourth arm on that first open, over
-    /// <c>IOException or UnauthorizedAccessException</c>, answering
-    /// <see cref="SessionErrors.LockFileCannotBeOpened"/>. <b>The wait and the
-    /// catch are answers to two different faults and the repository had been
-    /// treating them as one.</b> This wait exists for a rename that IS in flight
-    /// and will end; a denial that is permanent — an ACL, an antivirus hold —
-    /// consumes the whole budget and then still has to be reported, and until
-    /// 2026-08-19 it was reported by throwing. The sentence above described the
-    /// gap correctly and read as though the wait had closed it.
-    /// </para>
-    /// </remarks>
-    /// <param name="lockFile">The lock file.</param>
-    /// <returns>The held handle.</returns>
-    private static FileStream OpenHeld(string lockFile) =>
-        RenameWindow.WaitOut(() => Hold(lockFile));
-
-    /// <summary>
-    /// The same open, taken by the one process that can own the file, so a
-    /// sharing violation is waited out rather than believed.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>THE DIFFERENCE FROM <see cref="OpenHeld"/> IS THE PRECONDITION, NOT
-    /// THE OPEN.</b> Both produce a holder's handle and the two
-    /// <c>FileStream</c> arguments are one method so they cannot drift. What
-    /// separates them is who may call: this needs
-    /// <c>LockScopes.PerDirectoryGate</c> held <b>and</b> a record on disk this
-    /// process has just written or is taking back after its own write failed.
-    /// Under that precondition no second owner can exist, so a refusal is an
-    /// ungated transient handle — see <see cref="RenameWindow"/>'s table, third
-    /// row, for the sharing arithmetic that says the probe cannot be made not to
-    /// produce one.
-    /// </para>
-    /// <para>
-    /// <b>Added 2026-08-19, after the interleaving stopped being a prediction.</b>
-    /// CI run 32203064556 attempt 1: contender 2652 wrote its record, was
-    /// refused on this open by a peer's pre-gate probe, and answered that it had
-    /// not taken the directory; contender 696 reclaimed the same directory 61 ms
-    /// later, and <c>browserai.json</c> carried two processes' holder statements. The
-    /// three call sites are the two post-write re-opens and
-    /// <see cref="Reclaim"/>; <c>SessionLockTests.TheOpensThatFollowThisClassesOwnWriteAreTheOnlyOnesThatWaitOutAHandle</c>
-    /// fails the build if a fourth appears or one of the three moves back.
-    /// </para>
-    /// </remarks>
-    /// <param name="lockFile">The lock file.</param>
-    /// <returns>The held handle.</returns>
-    internal static FileStream ReopenHeld(string lockFile) =>
-        RenameWindow.WaitOutWhereNoOwnerIsPossible(() => Hold(lockFile));
-
-    /// <summary>
-    /// The holder's open itself, written once so the two callers cannot come to
-    /// hold the file in different modes.
-    /// </summary>
-    /// <param name="lockFile">The lock file.</param>
-    /// <returns>The handle.</returns>
-    private static FileStream Hold(string lockFile) =>
-        new(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
-
-    private static LockRecord? Parse(FileStream stream, string path)
-    {
-        stream.Position = 0;
-
-        using var buffer = new MemoryStream();
-        stream.CopyTo(buffer);
-
-        // A zero-length browserai.json is treated as "no record" rather than as
-        // corruption. Nothing this product writes can produce one -- the record
-        // arrives by rename, fully formed -- so it means somebody else made the
-        // file, and refusing to act on an empty file would strand a directory
-        // that is in fact free.
-        return buffer.Length is 0 ? null : LockRecord.Read(buffer.GetBuffer().AsSpan(0, (int)buffer.Length), path);
-    }
-
-    private static void WriteDurably(string lockFile, LockRecord record)
-    {
-        var directory = Path.GetDirectoryName(lockFile)
-            ?? throw new IOException($"'{lockFile}' has no directory to write into.");
-
-        // The temp file must be in the target's own directory: a rename is only
-        // atomic within one volume, and only cheap within one directory.
-        var temp = Path.Combine(directory, SessionLayout.NewLockFileName());
-
-        try
-        {
-            using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 4096, FileOptions.WriteThrough))
-            {
-                // WriteThrough at open AND Flush(flushToDisk: true) on the way
-                // out. A plain Write returns once the bytes are in the
-                // filesystem cache, so a power loss between the write and the
-                // flush leaves a file the writer believes it wrote -- and
-                // browserai.json is the entire ownership guard, the one file whose
-                // loss cannot be reconstructed.
-                stream.Write(record.ToUtf8());
-                stream.Flush(flushToDisk: true);
-            }
-
-            Replace(temp, lockFile);
-        }
-        finally
-        {
-            TryDelete(temp);
-        }
-    }
-
-    private static void Replace(string temp, string lockFile)
-    {
-        var clock = Stopwatch.StartNew();
-        var delay = 5;
-        var attempts = 0;
-
-        while (true)
-        {
-            attempts++;
-
-            try
-            {
-                // File.Move(overwrite: true), never File.Replace: Replace
-                // REQUIRES the destination to exist, and the first write of a
-                // lock file is exactly the case where it does not. Move maps to
-                // MoveFileEx with MOVEFILE_REPLACE_EXISTING, which covers both,
-                // and a reader therefore sees either the old file or the new one
-                // and never a torn one.
-                File.Move(temp, lockFile, overwrite: true);
-                return;
-            }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-            {
-                // Something is holding the destination. That is a live condition
-                // rather than a bug, so it is retried -- the retry differs from
-                // the call that failed in the only way that can help here, which
-                // is that the world has had time to move on. Both types are
-                // caught deliberately: the measured failure is ACCESS_DENIED,
-                // which is NOT an IOException, so a handler for that alone would
-                // never retry the case that actually happens.
-                if (clock.Elapsed >= MoveBudget)
-                {
-                    // ⚠️ The attempt count is in the message because it is what
-                    // distinguishes the two reasons this can expire, and the
-                    // message used to assert one of them. MANY attempts means
-                    // something really is holding the file. FEW attempts over the
-                    // whole budget means this process was not being scheduled --
-                    // measured 2026-08-18 as "3 attempts over 2.3 s" against a
-                    // loop that asks for 15 ms of sleep in those three, on a
-                    // machine running the whole test suite at once. Saying
-                    // "something else is holding it open" was wrong in that case,
-                    // and the reader could not tell.
-                    throw new IOException(
-                        $"'{lockFile}' could not be replaced after {attempts.ToString(CultureInfo.InvariantCulture)} attempts over {clock.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)}s: {failure.Message} "
-                        + $"With {attempts.ToString(CultureInfo.InvariantCulture)} attempts in {MoveBudget.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)}s, either something else is holding it open or this process was starved of a thread; a low attempt count means the latter.",
-                        failure);
-                }
-
-                Thread.Sleep(delay);
-                delay = Math.Min(delay * 2, 100);
-            }
-        }
-    }
-
-    private static void TryDelete(string path)
+    /// <summary>When the guard was written, which is when the directory was taken.</summary>
+    /// <param name="location">The session directory.</param>
+    /// <returns>The instant, or now when it cannot be read.</returns>
+    private static DateTimeOffset TakenAt(SessionPath location)
     {
         try
         {
-            File.Delete(path);
+            return new DateTimeOffset(File.GetLastWriteTime(location.LockFile));
         }
-#pragma warning disable CA1031 // A temp file that will not delete is litter, never a reason to fail an acquisition that succeeded.
-        catch (Exception)
-#pragma warning restore CA1031
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
+            return DateTimeOffset.Now;
         }
     }
 }
@@ -1622,17 +1289,14 @@ internal sealed class SessionLock : IDisposable
 /// </summary>
 /// <remarks>
 /// The kernel is the whole mechanism: the handle is <c>FileAccess.ReadWrite,
-/// FileShare.Read</c>, so any other BrowserAI opening <c>browserai.json</c> to take
-/// the directory is refused while this lives. Disposing releases it and leaves
-/// the record exactly as it was found.
+/// FileShare.Read</c>, so any other BrowserAI opening <c>browserai.lock</c> to
+/// take the directory is refused while this lives. Disposing releases it and
+/// leaves the directory exactly as it was found.
 /// </remarks>
-internal sealed class SessionDirectoryHold(SessionPath location, FileStream held, LockRecord record) : IDisposable
+internal sealed class SessionDirectoryHold(SessionPath location, LockFileHold held) : IDisposable
 {
     /// <summary>The directory this hold owns.</summary>
     public SessionPath Location { get; } = location;
-
-    /// <summary>The record found there, unmodified.</summary>
-    public LockRecord Record { get; } = record;
 
     /// <inheritdoc />
     public void Dispose() => held.Dispose();
@@ -1644,22 +1308,22 @@ internal sealed record SessionLockRequest
     /// <summary>The browser family.</summary>
     public required string Browser { get; init; }
 
-    /// <summary>Free text from the calling model, capped and de-controlled on the way in.</summary>
+    /// <summary>Free text from the calling model, de-controlled on the way in.</summary>
     public required string Purpose { get; init; }
 
     /// <summary>
-    /// What to append to the session's log, or <see langword="null"/> to append
-    /// nothing.
+    /// What to record about the call that took the directory, or
+    /// <see langword="null"/> to record nothing.
     /// </summary>
     /// <remarks>
     /// <b>Null means "take the directory and say nothing", and exactly one
-    /// caller wants that:</b> <c>browserai_destroy</c>, which takes the record in
-    /// order to delete it. Every other path has something to record — <c>init</c>
-    /// its purpose, <c>resume</c> and <c>set_purpose</c> their <c>why</c> — and a
-    /// path that took the directory without saying why it did would be a gap in
-    /// the one stream this record exists to keep whole.
+    /// caller wants that:</b> <c>browserai_destroy</c>, which takes the record
+    /// in order to delete it. Every other path has something to record —
+    /// <c>init</c> its purpose, <c>resume</c> and <c>set_purpose</c> their
+    /// <c>why</c> — and a path that took the directory without saying why it
+    /// did would be a gap in the one stream this record exists to keep whole.
     /// </remarks>
-    public LogEntry? Entry { get; init; }
+    public SessionCall? Entry { get; init; }
 
     /// <summary>
     /// Whether finding a record already on disk is a <b>refusal</b> rather than
@@ -1669,34 +1333,31 @@ internal sealed record SessionLockRequest
     /// <remarks>
     /// <para>
     /// <b>Set by <c>browserai_init</c> and nothing else.</b> `init` means
-    /// <i>make a session here</i>, and a directory that already carries a record
-    /// has to be `resume`d instead — otherwise the second call silently rebinds
-    /// the session's browser family, appending a `chromium` statement to a
+    /// <i>make a session here</i>, and a directory that already carries a
+    /// record has to be `resume`d instead — otherwise the second call silently
+    /// rebinds the session's browser family, adding a `chromium` statement to a
     /// Firefox profile's history or the reverse.
     /// </para>
     /// <para>
     /// ⚠️ <b>It is asked UNDER THE GATE because the ungated ask can miss.</b>
-    /// `init`'s own pre-gate look — `SessionManager.Existing` — reads
-    /// `browserai.json` with no lock held, so it can land in the instant in which the
-    /// name is unbound while a peer replaces the record, read <see langword="null"/>
-    /// as <i>free, proceed</i>, and reach a reclaim. Under the gate the record
-    /// has already been read for the reclaim path, so the same question costs
-    /// nothing and cannot be asked at the wrong instant. Added 2026-08-19, from
-    /// the adversarial review's enumeration of ungated readers that ACT on an
-    /// absence.
-    /// </para>
-    /// <para>
-    /// <b>The pre-gate look deliberately stays.</b> It is what gives `init` one
-    /// answer for a lost session, a neatly closed one and one this very process
-    /// has open — <c>SessionErrors.SessionAlreadyExists</c>, naming the purpose,
-    /// the mode and the date. Deleting it would let <c>SessionLock.ProbeForHolder</c>
-    /// answer first for a live session with a shorter sentence about who holds
-    /// the file, which is the regression <c>SessionManager.InitAsync</c>'s own
-    /// comment records having already been made once.
+    /// `init`'s own pre-gate look — `SessionManager.Existing` — reads the store
+    /// with no lock held. Under the gate the record has already been read for
+    /// the reclaim path, so the same question costs nothing.
     /// </para>
     /// </remarks>
     public bool RefuseAnExistingRecord { get; init; }
 }
+
+/// <summary>
+/// One call, as it is recorded before anything is done about it.
+/// </summary>
+/// <param name="Tool">The tool name, verbatim, whatever the caller said.</param>
+/// <param name="Why">
+/// What the caller said it was for. For <c>browserai_init</c> this is the
+/// purpose, because that call has no separate <c>why</c> and the purpose IS the
+/// reason the session exists.
+/// </param>
+internal sealed record SessionCall(string Tool, string Why);
 
 /// <summary>
 /// Whether a session directory is being driven right now, as
@@ -1704,10 +1365,10 @@ internal sealed record SessionLockRequest
 /// </summary>
 /// <remarks>
 /// <b>Three values because a report and a decision need different things.</b>
-/// The pre-gate probe already produced all three internally and threw two of
-/// them away, because its only caller could act on one. A reader —
-/// <c>browserai_list</c> — has the opposite problem: the value it must never
-/// print is a confident <i>free</i> that was really <i>could not tell</i>.
+/// The pre-gate probe produced all three internally and threw two of them away,
+/// because its only caller could act on one. A reader — <c>browserai_list</c> —
+/// has the opposite problem: the value it must never print is a confident
+/// <i>free</i> that was really <i>could not tell</i>.
 /// </remarks>
 internal enum SessionLiveness
 {
@@ -1715,10 +1376,11 @@ internal enum SessionLiveness
     /// Nothing held it at the instant of the look.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>A snapshot and never a claim.</b> It says an open succeeded once;
-    /// it does not say the directory is free, and nothing may take a directory
-    /// on the strength of it — <see cref="SessionLock.TryAcquire"/> still settles
-    /// that under the per-directory gate.
+    /// ⚠️ <b>A snapshot and never a claim.</b> It says an open succeeded once,
+    /// or that there is no guard at all; it does not say the directory is free,
+    /// and nothing may take a directory on the strength of it —
+    /// <see cref="SessionLock.TryAcquire"/> still settles that under the
+    /// per-directory gate.
     /// </remarks>
     NotHeld,
 
@@ -1728,7 +1390,7 @@ internal enum SessionLiveness
     /// </summary>
     /// <remarks>
     /// <b>It says <i>something</i> holds the file, never <i>who</i>.</b> The
-    /// record on disk can name a previous holder, so a caller that turns this
+    /// guard on disk can name a previous holder, so a caller that turns this
     /// into "held by PID n" is publishing a sentence the probe cannot support.
     /// </remarks>
     Held,
@@ -1746,9 +1408,9 @@ internal enum SessionLiveness
 /// </summary>
 /// <param name="State">Which of the three.</param>
 /// <param name="Why">
-/// The path and the failure a diagnosis starts from. Never <see langword="null"/>
-/// for <see cref="SessionLiveness.Undetermined"/>, and always
-/// <see langword="null"/> for the other two.
+/// The path and the failure a diagnosis starts from. Never
+/// <see langword="null"/> for <see cref="SessionLiveness.Undetermined"/>, and
+/// always <see langword="null"/> for the other two.
 /// </param>
 internal readonly record struct SessionLivenessAnswer(SessionLiveness State, string? Why);
 
@@ -1758,7 +1420,7 @@ internal enum SessionLockOutcome
     /// <summary>Taken, and nothing was there before.</summary>
     Acquired,
 
-    /// <summary>Taken, and a previous holder's record was found and replaced.</summary>
+    /// <summary>Taken, and a previous holder's record was found and kept.</summary>
     Reclaimed,
 
     /// <summary>Somebody else holds it right now. The message names who.</summary>
@@ -1776,8 +1438,15 @@ internal enum SessionLockOutcome
     /// <summary>The directory does not exist.</summary>
     DirectoryMissing,
 
-    /// <summary>There is a lock file and it cannot be acted on, or cannot be written.</summary>
+    /// <summary>There is a guard or a record and it cannot be acted on, or cannot be written.</summary>
     Unreadable,
+
+    /// <summary>
+    /// The directory holds a session in a format this build does not read. It
+    /// is not damage and it is not free, and saying so with the format as the
+    /// reason is what stops a caller trying to repair a file that is intact.
+    /// </summary>
+    NotThisFormat,
 
     /// <summary>
     /// The machine-wide lock could not be created, so there is no lock and
@@ -1787,19 +1456,22 @@ internal enum SessionLockOutcome
 }
 
 /// <summary>
-/// The outcome of one attempt, with a sentence written for the model that asked.
+/// The outcome of one attempt, with a sentence written for the model that
+/// asked.
 /// </summary>
 /// <param name="outcome">What happened.</param>
 /// <param name="message">What to tell the caller.</param>
 /// <param name="acquired">The lock, when there is one.</param>
-/// <param name="holder">The previous or current holder's record, when one was read.</param>
+/// <param name="holder">The previous holder's record, when one was read.</param>
 /// <param name="holderRunning">Whether that holder's process is still alive.</param>
+/// <param name="guard">Who the guard names, when it could be read.</param>
 internal sealed class SessionLockResult(
     SessionLockOutcome outcome,
     string message,
     SessionLock? acquired = null,
-    LockRecord? holder = null,
-    bool holderRunning = false)
+    SessionRecord? holder = null,
+    bool holderRunning = false,
+    LockFileHolder? guard = null)
 {
     /// <summary>What happened.</summary>
     public SessionLockOutcome Outcome { get; } = outcome;
@@ -1811,10 +1483,23 @@ internal sealed class SessionLockResult(
     public SessionLock? Acquired { get; } = acquired;
 
     /// <summary>The record that was found, when one was.</summary>
-    public LockRecord? Holder { get; } = holder;
+    public SessionRecord? Holder { get; } = holder;
 
     /// <summary>Whether <see cref="Holder"/>'s process is still running.</summary>
     public bool HolderRunning { get; } = holderRunning;
+
+    /// <summary>
+    /// Who <c>browserai.lock</c> names, when it could be read.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Separate from <see cref="Holder"/> because they answer different
+    /// questions and are read from different files.</b> This is the guard: the
+    /// identity a refusal names, read from the file whose sharing violation
+    /// produced the refusal in the first place. <see cref="Holder"/> is the
+    /// <i>record</i> — what the session is for, when it was created — which a
+    /// contended acquisition may not be able to read at all.
+    /// </remarks>
+    public LockFileHolder? Guard { get; } = guard;
 
     /// <summary>Whether the directory was taken.</summary>
     public bool Taken => Acquired is not null;
@@ -1868,16 +1553,16 @@ internal static partial class SessionLog
         Message = "Could not create the machine-wide lock {Mutex}. No session was created; BrowserAI does not fall back to a logon-session-scoped lock.")]
     public static partial void NoMachineWideLock(ILogger logger, string mutex, Exception? failure);
 
-    /// <summary>A lock file exists and cannot be acted on.</summary>
+    /// <summary>A guard or a record exists and cannot be acted on.</summary>
     /// <param name="logger">Where it goes.</param>
-    /// <param name="path">The lock file.</param>
+    /// <param name="path">The file.</param>
     /// <param name="failure">Why.</param>
     [LoggerMessage(EventId = 6, Level = LogLevel.Error, Message = "{Path} could not be read and the session was not taken.")]
     public static partial void UnreadableLockFile(ILogger logger, string path, Exception failure);
 
-    /// <summary>The record could not be written.</summary>
+    /// <summary>The guard or the record could not be written.</summary>
     /// <param name="logger">Where it goes.</param>
-    /// <param name="path">The lock file.</param>
+    /// <param name="path">The file.</param>
     /// <param name="failure">Why.</param>
     [LoggerMessage(EventId = 7, Level = LogLevel.Error, Message = "{Path} could not be written and the session was not taken.")]
     public static partial void CouldNotWriteLockFile(ILogger logger, string path, Exception failure);
@@ -1885,6 +1570,27 @@ internal static partial class SessionLog
     /// <summary>The lock was released.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="directory">The session directory.</param>
-    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Session lock released for {Directory}; the record stays so a later reader can say who had it.")]
+    [LoggerMessage(EventId = 8, Level = LogLevel.Information, Message = "Session lock released for {Directory}; the guard stays so a later reader can say who had it.")]
     public static partial void Released(ILogger logger, string directory);
+
+    /// <summary>A settle matched no row.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="id">The row that was not there.</param>
+    /// <param name="directory">The session directory.</param>
+    [LoggerMessage(
+        EventId = 9,
+        Level = LogLevel.Warning,
+        Message = "The outcome of log row {Id} in {Directory} matched no row, so that call will read as never answered.")]
+    public static partial void OutcomeLanded(ILogger logger, long id, string directory);
+
+    /// <summary>A settle was refused by the store.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="id">The row.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 10,
+        Level = LogLevel.Warning,
+        Message = "The outcome of log row {Id} in {Directory} could not be written; the call itself was answered.")]
+    public static partial void OutcomeNotRecorded(ILogger logger, long id, string directory, Exception failure);
 }

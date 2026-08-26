@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Artifacts;
@@ -8,6 +9,7 @@ using BrowserAI.Hosting;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -411,23 +413,45 @@ internal sealed class BrowserProxy : IAsyncDisposable
     private async Task AnswerToolsCallAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
     {
         var parameters = request.Params as JsonObject;
-        var name = (parameters?["name"] as JsonValue)?.GetValue<string>();
         var arguments = parameters?["arguments"] as JsonObject;
+
+        string? name;
+        string? session;
+        string? why;
+
+        // ⚠️ F6. THREE STRINGS THE CALLER CHOOSES, KIND-CHECKED BEFORE ANYTHING
+        // READS THEM AS STRINGS. `(node as JsonValue)?.GetValue<string>()` is
+        // the shape that was here, and on `"name": 5` it does not answer null --
+        // `JsonValue` accepts a number and `GetValue<string>` throws
+        // `InvalidOperationException`, which escapes this method and reaches the
+        // caller as a bare `-32603` with the SDK's own wording. A wrong type is
+        // an ordinary caller mistake and it gets an ordinary named refusal
+        // saying which argument, what it must be and what arrived.
+        try
+        {
+            name = Text(parameters, "name");
+            session = Text(arguments, SessionToolSurface.SessionParameter);
+            why = Text(arguments, SessionToolSurface.WhyParameter);
+        }
+        catch (SessionToolException wrongKind)
+        {
+            ProxyLog.SessionMissing(_logger, "<unreadable>");
+            await RefuseAsync(caller, request.Id, wrongKind.Message, cancellationToken).ConfigureAwait(false);
+            return;
+        }
 
         if (SessionToolSurface.IsAuthored(name))
         {
-            var outcome = await _sessions.InvokeAsync(name!, arguments, cancellationToken).ConfigureAwait(false);
+            var authored = await _sessions.InvokeAsync(name!, arguments, cancellationToken).ConfigureAwait(false);
 
             await caller.SendMessageAsync(
-                new JsonRpcResponse { Id = request.Id, Result = TextResult(outcome.Text, outcome.IsError) },
+                new JsonRpcResponse { Id = request.Id, Result = TextResult(authored.Text, authored.IsError) },
                 cancellationToken).ConfigureAwait(false);
 
             return;
         }
 
         var tool = name ?? "<none>";
-        var session = (arguments?[SessionToolSurface.SessionParameter] as JsonValue)?.GetValue<string>();
-        var why = (arguments?[SessionToolSurface.WhyParameter] as JsonValue)?.GetValue<string>();
 
         // Mandatory, with no fall-through to the run's own child. Before this
         // step a call naming no session was answered by the surface child, which
@@ -481,6 +505,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         if (!decision.IsAllowed)
         {
             ProxyLog.ToolRefused(live.Logger, tool, live.Location.FullPath);
+            Refused(live, tool, why, decision.Refusal!);
             await RefuseAsync(caller, request.Id, decision.Refusal!, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -491,6 +516,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // download and answer with upstream's `npx` advice at the end of it.
         if (_sessions.ProvisioningRefusal(tool, live) is { } notYet)
         {
+            Refused(live, tool, why, notYet);
             await RefuseAsync(caller, request.Id, notYet, cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -507,6 +533,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(why))
         {
             ProxyLog.WhyMissing(live.Logger, tool, live.Location.FullPath);
+            Refused(live, tool, why, SessionErrors.WhyMissing(tool));
             await RefuseAsync(caller, request.Id, SessionErrors.WhyMissing(tool), cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -518,33 +545,39 @@ internal sealed class BrowserProxy : IAsyncDisposable
         SessionToolLog.Why(live.Logger, tool, why);
 
         // ⚠️ THE SAME ORDERING, AND HERE IT IS A REFUSAL RATHER THAN A LOG LINE.
-        // The entry goes into browserai.json under the session's own gate, and a
-        // call BrowserAI could not record is not forwarded: the whole point of
-        // one time-ordered log is that reading it back tells you what the
-        // session did, and a gap nobody is told about is worse than a refusal
-        // somebody can act on. It is also the only failure mode available --
-        // `Append` throws only when the gate cannot be taken or the record
-        // cannot be written, and neither is a thing to drive a browser through.
+        // The row goes into browserai.data as `in-flight`, and a call BrowserAI
+        // could not record is not forwarded: the whole point of one time-ordered
+        // log is that reading it back tells you what the session did, and a gap
+        // nobody is told about is worse than a refusal somebody can act on.
+        //
+        // The row's OUTCOME is settled below, on the way back. What is written
+        // here is that the call was made and what it was for -- which is
+        // everything a hung call, a dead child or a killed process ever leaves.
         //
         // Recorded from the CALLER's own arguments, before the artifact plan
         // rewrites `filename`: the log says what was asked for, and the artifact
         // index beside it says where the file landed.
+        long row;
+
         try
         {
-            live.Lock.Append(SessionManager.Entry(tool, why, arguments));
+            row = live.Lock.Append(tool, why);
         }
-        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
         {
             ProxyLog.LogEntryRefused(live.Logger, tool, live.Location.FullPath, failure);
 
             await RefuseAsync(
                 caller,
                 request.Id,
-                SessionErrors.SessionLogCouldNotBeWritten(tool, live.Lock.Location.LockFile, failure.Message),
+                SessionErrors.SessionLogCouldNotBeWritten(tool, live.Lock.Location.DataFile, failure.Message),
                 cancellationToken).ConfigureAwait(false);
 
             return;
         }
+
+        var outcome = SessionStore.InFlight;
+        byte[]? payload = null;
 
         // §F's first half, and it happens before the child hears about the call:
         // a `filename` is rewritten into the folder its generator prefix
@@ -612,6 +645,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
 
+            (outcome, payload) = Judge(answer);
+
             if (answer.Response is { } response)
             {
                 // The one answer BrowserAI rewrites rather than forwards, and the
@@ -677,6 +712,20 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
         finally
         {
+            // ⚠️ IN A `finally`, SO EVERY WAY OUT OF THIS BLOCK SETTLES THE ROW
+            // -- including the cancelled one, which is a way out the child never
+            // hears about. A call that is still `in-flight` after this has
+            // genuinely never come back: the process was killed, or it is still
+            // hanging. `browserai_catch_up` renders that as "no answer was
+            // recorded", which is the true statement and the one a reader can
+            // act on.
+            live.Lock.Settle(
+                row,
+                outcome is SessionStore.InFlight ? SessionStore.Failed : outcome,
+                outcome is SessionStore.InFlight
+                    ? Encoding.UTF8.GetBytes("The call did not reach the child, or the caller cancelled it before an answer arrived. BrowserAI never saw a result.")
+                    : payload);
+
             live.Artifacts.Release(plan);
 
             // ⚠️ ONLY FOR A CALL THAT HAD A RESERVATION, and until 2026-08-24
@@ -692,6 +741,130 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 ProxyLog.ReservationReleased(live.Logger, tool, live.Location.FullPath);
             }
         }
+    }
+
+    /// <summary>
+    /// A string argument, or a named refusal when it arrived as something else.
+    /// </summary>
+    /// <remarks>
+    /// <b>F6. The whole of it is that a wrong JSON type is a caller mistake and
+    /// not a server fault.</b> <c>-32603 Internal error</c> tells a model that
+    /// BrowserAI broke; what actually happened is that it sent a number where
+    /// the schema says string, which it can fix on the next turn if anybody
+    /// tells it. Absent stays absent — the callers below distinguish *missing*
+    /// from *wrong*, and they answer differently.
+    /// </remarks>
+    /// <param name="node">The object the argument lives in.</param>
+    /// <param name="name">The argument.</param>
+    /// <returns>The string, or <see langword="null"/> when there is none.</returns>
+    /// <exception cref="SessionToolException">It is there and it is not a string.</exception>
+    private static string? Text(JsonObject? node, string name)
+    {
+        if (node?[name] is not { } value || value.GetValueKind() is JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        return value.GetValueKind() is JsonValueKind.String
+            ? value.GetValue<string>()
+            : throw new SessionToolException(
+                $"'{name}' must be a string, and it arrived as {value.GetValueKind()}. Nothing was forwarded and nothing was changed.");
+    }
+
+    /// <summary>
+    /// Records a call this proxy refused, on the session it named.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A REFUSED CALL IS A FACT ABOUT THE SESSION AND IT IS RECORDED
+    /// (2026-08-26, previously it reached <c>browserai.log</c> and nothing
+    /// else).</b> <i>The agent reached for a tool this build will not forward</i>
+    /// is replay, not diagnostics — and with the session log file gone this
+    /// record is the only place it survives. The row is written and settled
+    /// <c>failed</c> in one go, because there was never an in-flight window:
+    /// nothing was forwarded.
+    /// </para>
+    /// <para>
+    /// <b>A refusal that could not be recorded is still a refusal.</b> The call
+    /// is not being forwarded either way, so converting a bookkeeping failure
+    /// into a second, different refusal would replace a sentence the caller can
+    /// act on with one it cannot.
+    /// </para>
+    /// </remarks>
+    /// <param name="live">The session the call named.</param>
+    /// <param name="tool">The tool name, verbatim, whatever the caller said.</param>
+    /// <param name="why">What the caller said it was for, if it said anything.</param>
+    /// <param name="refusal">What the caller is being told, which is the failure payload.</param>
+    private static void Refused(LiveSession live, string tool, string? why, string refusal)
+    {
+        try
+        {
+            var row = live.Lock.Append(tool, why ?? string.Empty);
+
+            live.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(refusal));
+        }
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
+        {
+            ProxyLog.LogEntryRefused(live.Logger, tool, live.Location.FullPath, failure);
+        }
+    }
+
+    /// <summary>
+    /// How a forwarded call ended, and what to keep about it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Failure payloads only.</b> A call that worked stores the fact and the
+    /// two instants; its answer already went back to the caller byte-identical
+    /// and a copy in the record would make the record the traffic rather than
+    /// the reasons. A call that failed stores what failed, because that is the
+    /// one thing nobody can reconstruct afterwards.
+    /// </para>
+    /// <para>
+    /// <b>Three shapes of failure and all three are kept whole.</b> The child's
+    /// own error frame goes in as the bytes it sent; a protocol failure with no
+    /// frame goes in as the exception; a transport failure goes in with its
+    /// stack trace, because <i>the pipe closed</i> without a stack is a fact
+    /// nobody can act on.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>An <c>isError</c> result is a FAILED call, not a successful one.</b>
+    /// Upstream answers a tool error inside an ordinary JSON-RPC result, so a
+    /// navigation that timed out and a navigation that worked are the same shape
+    /// at the transport. Reading them the same way would put <i>successful</i>
+    /// beside every timeout in the record — which is the confident-wrong-answer
+    /// class this repository keeps closing.
+    /// </para>
+    /// </remarks>
+    /// <param name="answer">What came back.</param>
+    /// <returns>The outcome and the payload to store with it.</returns>
+    private static (string Outcome, byte[]? Payload) Judge(ChildAnswer answer)
+    {
+        if (answer.Response is { } response)
+        {
+            if ((response.Result as JsonObject)?["isError"]?.GetValueKind() is not JsonValueKind.True)
+            {
+                return (SessionStore.Successful, null);
+            }
+
+            return (
+                SessionStore.Failed,
+                answer.Payload is { } captured
+                    ? captured.Json
+                    : Encoding.UTF8.GetBytes(response.Result?.ToJsonString() ?? "the child answered with an error and no content"));
+        }
+
+        if (answer.ProtocolFailure is { } protocolFailure)
+        {
+            return (
+                SessionStore.Failed,
+                answer.Payload is { } captured ? captured.Json : Encoding.UTF8.GetBytes(protocolFailure.ToString()));
+        }
+
+        return (
+            SessionStore.Failed,
+            Encoding.UTF8.GetBytes(
+                answer.TransportFailure?.ToString() ?? "The child answered with neither a result nor an error."));
     }
 
     /// <summary>

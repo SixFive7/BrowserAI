@@ -281,6 +281,89 @@ internal sealed class SessionPolicyTests
         }
     }
 
+    /// <summary>
+    /// A wrong JSON type on <c>name</c>, <c>session</c> or <c>why</c> is a named
+    /// refusal, and never <c>-32603 Internal error</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>F6, and the whole of it is whose fault the answer says it is.</b>
+    /// The three strings were read as
+    /// <c>(node as JsonValue)?.GetValue&lt;string&gt;()</c>, and on
+    /// <c>"name": 5</c> that does not answer <see langword="null"/> —
+    /// <c>JsonValue</c> accepts a number and <c>GetValue&lt;string&gt;</c>
+    /// throws <c>InvalidOperationException</c>, which escaped the whole handler
+    /// and reached the caller as a bare <c>-32603</c> with the SDK's own
+    /// wording. A model reading that is told BrowserAI broke; what happened is
+    /// that it sent a number where the schema says string, which it can fix on
+    /// the next turn if anybody tells it.
+    /// </para>
+    /// <para>
+    /// <b>All three, because they are read on three different lines and a fix
+    /// applied to one leaves the other two.</b> <c>name</c> is read before
+    /// anything else and decides which handler runs at all; <c>session</c> and
+    /// <c>why</c> are read out of the arguments object.
+    /// </para>
+    /// <para>
+    /// <b>The refusal is asserted as a RESULT rather than as an error frame</b>,
+    /// because that is the distinction: a JSON-RPC error is a protocol failure
+    /// and this is an answer that says no.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWrongJsonTypeOnNameSessionOrWhyIsANamedRefusalAndNeverAnInternalError()
+    {
+        // The positive control at the bottom has to reach a tool the child
+        // actually answers, or "the same three arguments, right" proves only
+        // that the double is a double.
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_snapshot"] = new FakeToolBehaviour());
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var wrongName = await rig.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = 5,
+            ["arguments"] = new JsonObject { ["session"] = rig.Session!, ["why"] = "sending a number as a tool name" },
+        });
+
+        await Assert.That((bool?)wrongName["isError"]).IsTrue();
+        await Assert.That(TextOf(wrongName)).Contains("'name' must be a string");
+        await Assert.That(TextOf(wrongName)).Contains("Number");
+        await Assert.That(TextOf(wrongName)).DoesNotContain("Internal error");
+
+        var wrongSession = await rig.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_snapshot",
+            ["arguments"] = new JsonObject { ["session"] = true, ["why"] = "sending a boolean as a session" },
+        });
+
+        await Assert.That((bool?)wrongSession["isError"]).IsTrue();
+        await Assert.That(TextOf(wrongSession)).Contains("'session' must be a string");
+        await Assert.That(TextOf(wrongSession)).Contains("True");
+
+        var wrongWhy = await rig.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_snapshot",
+            ["arguments"] = new JsonObject { ["session"] = rig.Session!, ["why"] = new JsonArray { "a", "b" } },
+        });
+
+        await Assert.That((bool?)wrongWhy["isError"]).IsTrue();
+        await Assert.That(TextOf(wrongWhy)).Contains("'why' must be a string");
+        await Assert.That(TextOf(wrongWhy)).Contains("Array");
+
+        // ⚠️ THE POSITIVE CONTROL. The same three arguments, right this time,
+        // reach the child — so a version that refused everything would pass
+        // every assertion above.
+        var accepted = await rig.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_snapshot",
+            ["arguments"] = new JsonObject { ["session"] = rig.Session!, ["why"] = "the same three arguments, right" },
+        });
+
+        await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true);
+    }
+
     [Test]
     public async Task ACallNamingNoSessionIsRefusedAndReachesNoChildAtAll()
     {

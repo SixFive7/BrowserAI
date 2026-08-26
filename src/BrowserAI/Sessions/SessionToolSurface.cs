@@ -161,6 +161,19 @@ internal static class SessionToolSurface
     public const string SessionParameter = "session";
 
     /// <summary>
+    /// <c>browserai_catch_up</c>'s optional page, counted from the OLDEST
+    /// entry.
+    /// </summary>
+    /// <remarks>
+    /// <b>Oldest-first is the whole reason a page number is stable.</b> The log
+    /// only ever grows at the newest end and nothing evicts, so under this
+    /// numbering an append can change the last page and no other — a page a
+    /// caller has already read stays the same set of entries forever. Numbering
+    /// from the newest end would shift every boundary on every call.
+    /// </remarks>
+    public const string PageParameter = "page";
+
+    /// <summary>
     /// The session's standing description, on the three tools that take one.
     /// </summary>
     /// <remarks>
@@ -482,14 +495,15 @@ internal static class SessionToolSurface
         yield return Tool(
             CatchUp,
             "Read back what a session was doing, and what is in its directory now.",
-            $"Answers two questions about one session that no other tool answers together: WHAT WAS BEING DONE HERE, from the session's own ordered log — every browser call, every purpose change, in the order they happened, with what the caller said each was for — and WHAT IS HERE NOW, from walking the directory: its age, when it was last touched, its size, and a breakdown by artifact kind. "
-            + $"CALL IT IN TWO SITUATIONS. First, when you arrive at a session you did not create — after {Resume}, or any time you are handed a directory another agent was driving — because the recorded 'purpose' says what it was FOR and this says what was actually DONE. Second, BEFORE {Destroy}, because the size and the breakdown are the only things that tell you what you are about to delete. "
-            + "THE TWO SOURCES ROUTINELY DISAGREE, AND THAT IS THE POINT. The log says what BrowserAI did; the directory says what is true. Cookies arrive from NAVIGATION rather than from tools, so a session whose log shows no cookie call at all can hold a live signed-in profile — this reports the profile's cookie store when there is one, and a log-only answer would have told you the opposite. "
-            + "It also names any HTTP Archive (.har) it finds, because a HAR is a plaintext record of every request and response including headers — every bearer token and session cookie that crossed the wire, in clear text, in a file. "
-            + "This is READ-ONLY: it changes nothing, takes no lock it can be refused by, and works on a session another BrowserAI is driving right now. It takes no 'why' for the same reason — a tool that told you what happened by adding to what happened would bury its own answer.",
+            $"Answers two questions no other tool answers together: WHAT WAS DONE HERE, from the session's own ordered log — every call, in order, with what the caller said each was for and whether it worked — and WHAT IS HERE NOW, from walking the directory: its age, its size, the size of its output, and a breakdown by kind. "
+            + $"CALL IT when you arrive at a session you did not create, after {Resume} or any time you are handed a directory another agent was driving: the recorded 'purpose' says what it was FOR and this says what was actually DONE. And BEFORE {Destroy}, because the sizes are the only thing that says what you are about to delete. "
+            + "THE TWO ROUTINELY DISAGREE, AND THAT IS THE POINT. Cookies arrive from NAVIGATION rather than from tools, so a session whose log shows no cookie call can hold a live signed-in profile — this reports the profile's cookie store when there is one, and names any HTTP Archive (.har): every request and response, headers included, in clear text. "
+            + "THE LOG IS PAGED AND NOTHING IS ELIDED: ~100 entries a page, numbered from the OLDEST entry, each page saying which it is, how many there are and the call that fetches the next. Page 1 also carries the volatile half — the walk, the in-use line, the ages — so two pages cannot disagree. "
+            + "It takes no lock it can be refused by, so it works on a session another BrowserAI is driving, and it takes no 'why'. One caveat: reading a session whose holder died recovers its write-ahead log, which can leave a small '-shm' file beside the record.",
             new JsonObject
             {
                 [SessionParameter] = Property("string", "Absolute path of the session directory to read. It need not be a session this BrowserAI opened, and it need not be closed."),
+                [PageParameter] = Property("integer", "Which page of the log to read, counting from 1 at the OLDEST entry. Leave it out for page 1. Every page names the call that fetches the next one, so you never have to work a number out; and because the numbering starts at the oldest entry, a page you have already read never changes when the session goes on working."),
             },
             [SessionParameter]);
 
@@ -507,7 +521,7 @@ internal static class SessionToolSurface
         yield return Tool(
             Destroy,
             "Delete a BrowserAI session directory and everything in it.",
-            "Closes the session's browser and deletes the whole directory — profile, output, downloads and log. "
+            "Closes the session's browser and deletes the whole directory — profile, output, downloads and record. It is the ONLY thing that ever deletes an artifact: BrowserAI removes nothing on a schedule and nothing at a size, so whatever browserai_list and browserai_catch_up report as the output size stays there until this is called. "
             + "It REFUSES any directory that does not hold a valid BrowserAI session record, which is what makes it safe: it cannot be aimed at Documents. "
             + "If another process holds the session, this reports who instead of waiting. If a file is held open, the rest is still deleted and the report names what survived.",
             new JsonObject
