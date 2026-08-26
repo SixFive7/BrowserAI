@@ -56,6 +56,33 @@ internal static class PublishedSlice
     public static bool IsAbsentAsAWhole => !System.IO.Directory.Exists(Directory);
 
     /// <summary>
+    /// Every file that goes into the published binary, and whose being newer
+    /// than it means the binary is stale.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Three kinds, and the third arrived on 2026-08-26 as a measured
+    /// gap.</b> The product's C#, the build files that decide how it is
+    /// compiled, and the source this repository vendors from elsewhere and
+    /// compiles in — which until then was watched by nothing, so a swapped
+    /// SQLite amalgamation left the binary reading as fresh and every arm
+    /// driving it asserting about a library nobody had built.
+    /// </para>
+    /// <para>
+    /// <b>A property rather than a local, so that a test can assert what is in
+    /// it.</b> A staleness check is exactly the kind of thing that silently
+    /// stops covering something: it fails loudly when it fires and says
+    /// nothing at all about what it never looked at.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<FileInfo> FreshnessInputs { get; } =
+    [
+        .. RepositoryLayout.ProductSourceFiles,
+        .. RepositoryLayout.BuildFiles,
+        .. RepositoryLayout.VendoredSourceFiles,
+    ];
+
+    /// <summary>
     /// Fails if the published binary is older than anything that goes into it.
     /// </summary>
     /// <exception cref="InvalidOperationException">The publish is stale.</exception>
@@ -63,8 +90,7 @@ internal static class PublishedSlice
     {
         var published = File.GetLastWriteTimeUtc(Executable);
 
-        var newer = RepositoryLayout.ProductSourceFiles
-            .Concat(RepositoryLayout.BuildFiles)
+        var newer = FreshnessInputs
             .Where(file => file.LastWriteTimeUtc > published)
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
             .Order(StringComparer.Ordinal)

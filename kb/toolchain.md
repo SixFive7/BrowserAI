@@ -648,3 +648,32 @@ imported *below* it. `[STABLE]`.
 inside a `BeforeTargets="LinkNative"` target writes it after the only readers
 have looked, and the publish then succeeds while binding the module lazily at
 run time. `[FLOATS]`, same package layout as above.
+
+⚠️ **`SQLITE_OMIT_AUTOINIT` without `sqlite3_initialize` is an access
+violation, not `SQLITE_MISUSE` — measured 2026-08-26.** sqlite.org says only
+that the behaviour of an entry point needing the library initialised is
+*undefined* when that flag is set, and the natural reading — that it answers a
+result code the caller can inspect — is wrong for this build. Measured against
+the published `BrowserAI.exe`, 3.53.4 compiled with the flag set, with
+`Sqlite.EnsureInitialized`'s body removed: the first `sqlite3_open_v2` **took an
+access violation**, `0xC0000005`, and the process exited `-1073741819` having
+closed its stdout before answering MCP `initialize`. No result code, no managed
+exception, nothing a `catch` can be placed in front of — a `try`/`catch` written
+to make the storage layer's startup report defensive protects against every
+failure except this one.
+
+**Two consequences worth writing down beside it.** The failure is invisible to
+`dotnet test`: a CoreCLR host binds the loose `e_sqlite3.dll` from
+`SourceGear.sqlite3`, which is built *without* `SQLITE_OMIT_AUTOINIT` and
+initialises itself, so the whole class of defect exists only in the artifact.
+And `sqlite3_libversion` is unaffected either way — it returns a string constant
+and touches no global state — so a binary can report its SQLite version
+perfectly and then die on the first open.
+
+`[MACHINE]` for the fault, because sqlite.org calls it undefined and an
+undefined behaviour is not a contract; `[STABLE]` for the requirement itself,
+which is documented. Re-establish by emptying `Sqlite.EnsureInitialized`,
+publishing, and running
+`SqliteTests.ThePublishedBinaryReportsTheStaticallyLinkedSqliteVersion` — the
+red is *"The peer closed its stdout before answering 'initialize'"* with the exit
+code beneath it.

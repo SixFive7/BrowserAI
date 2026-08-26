@@ -136,7 +136,21 @@ internal static class Program
             // before a session exists. The alternative is finding out at the
             // moment a session first writes its record, which is the worst
             // available place and the one the loose-DLL deployments hit.
-            Sqlite.Version);
+            Sqlite.Version,
+
+            // ⚠️ AND THE ONLY PLACE THE COMPILE FLAGS CAN BE CHECKED AT ALL.
+            // `PRAGMA compile_options` describes the library that is actually
+            // bound, and the two hosts this code runs under bind different
+            // ones: the published binary links the archive build/Sqlite.targets
+            // compiles from vendored source, while a CoreCLR test host loads a
+            // loose e_sqlite3.dll somebody else built with somebody else's
+            // flags. So the claim "these are the flags" is a claim about the
+            // artifact, and this is the artifact saying it. A test reads this
+            // field back off the published slice; nothing here refuses, because
+            // the record is not stored in SQLite yet and a startup that died
+            // over a storage question nothing has asked would be refusing on
+            // behalf of a phase that has not happened.
+            Sqlite.BuildReport);
 
         foreach (var (level, message, failure) in velopack)
         {
@@ -496,6 +510,17 @@ internal static partial class StartupLog
     /// compile step quietly did nothing is indistinguishable from a correct one
     /// everywhere except at a call, and this is the earliest call there is.
     /// </para>
+    /// <para>
+    /// <b>And the build field beside it is the only place the compile-time
+    /// options can be checked.</b> The version says <i>which SQLite</i>; the
+    /// options say <i>which build of it</i>, and those are separate ways to be
+    /// wrong — an archive compiled without <c>SQLITE_OMIT_AUTOINIT</c>, or with
+    /// sqlite.org's recommended <c>SQLITE_THREADSAFE=0</c> that this tree
+    /// deliberately does not take, reports the same version and behaves
+    /// differently. A test reads this field off the published binary's own
+    /// record, because the loose library a test host loads is somebody else's
+    /// build and can say nothing about the artifact.
+    /// </para>
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="version">The version derived from the git tag at build time.</param>
@@ -503,11 +528,15 @@ internal static partial class StartupLog
     /// <param name="imagePath">The binary it is running.</param>
     /// <param name="workingDirectory">Where it was started.</param>
     /// <param name="sqlite">The version of the SQLite compiled into this binary.</param>
+    /// <param name="sqliteBuild">
+    /// Whether that SQLite carries the compile-time options this tree intends,
+    /// and what is missing when it does not.
+    /// </param>
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "BrowserAI {Version} started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory} sqlite={Sqlite}")]
-    public static partial void Started(ILogger logger, string version, int processId, string imagePath, string workingDirectory, string sqlite);
+        Message = "BrowserAI {Version} started. pid={ProcessId} image={ImagePath} cwd={WorkingDirectory} sqlite={Sqlite} sqliteBuild={SqliteBuild}")]
+    public static partial void Started(ILogger logger, string version, int processId, string imagePath, string workingDirectory, string sqlite, string sqliteBuild);
 
     [LoggerMessage(
         EventId = 2,

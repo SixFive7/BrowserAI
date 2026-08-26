@@ -67,6 +67,58 @@ internal sealed class ForbiddenDependencyTests
         await Assert.That(Mentioning("TUnit").Any()).IsTrue();
     }
 
+    /// <summary>
+    /// The <c>Microsoft.Data.Sqlite</c> meta package is never referenced,
+    /// anywhere.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is the convenient one, and taking it silently downgrades the
+    /// native SQLite this repository pins in its own tree.</b> The meta package
+    /// depends on <c>SQLitePCLRaw.bundle_e_sqlite3</c>, which carries its own
+    /// pinned native build — 3.53.0 through bundle 2.1.12 when this was written
+    /// — so a reference added "for convenience" replaces the version
+    /// <c>third-party/sqlite</c> holds with an older one, and everything keeps
+    /// working. Nothing in a lock file reads as wrong; the amalgamation is
+    /// still vendored, the drift row is still accurate, and the binary is
+    /// simply not running the SQLite anybody chose.
+    /// </para>
+    /// <para>
+    /// <b>The <c>.Core</c> package is a different question and is not banned
+    /// here.</b> It carries no native library at all, so it cannot do this —
+    /// what it would cost is three managed packages and their notices in front
+    /// of a publish that fails on one ILC warning, which is a trade somebody
+    /// may legitimately want to make later. This bans the one that fails
+    /// silently, not the one that costs.
+    /// </para>
+    /// <para>
+    /// <b><c>SourceGear.sqlite3</c> is the positive control and is deliberately
+    /// present</b>, in the test project only: it is what puts an
+    /// <c>e_sqlite3.dll</c> beside a CoreCLR test host, and its version number
+    /// is the SQLite version, so the float writes today's SQLite into
+    /// <c>packages.lock.json</c> and the gap against the pin is visible for
+    /// free.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSqliteMetaPackageIsNeverReferenced()
+    {
+        await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.Data.Sqlite"))).IsEmpty();
+
+        // The control: the scan can see a SQLite package reference, so the
+        // assertion above is an absence rather than a matcher that stopped
+        // matching. This is also the reference that must never move into the
+        // product, because the publish output is a single file by construction
+        // of there being no native package in its graph.
+        var native = Mentioning("SourceGear.sqlite3").ToList();
+
+        await Assert.That(native.Count).IsEqualTo(2);
+        await Assert.That(native.Any(line => line.StartsWith("Directory.Packages.props", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(native.Any(line => line.Contains("BrowserAI.Tests.csproj", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(native.Any(line => line.Contains($"src{Path.DirectorySeparatorChar}BrowserAI", StringComparison.Ordinal))).IsFalse();
+    }
+
     /// <summary>Every build file that declares a package, and where it declares it.</summary>
     /// <remarks>
     /// <para>

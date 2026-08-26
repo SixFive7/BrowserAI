@@ -4,6 +4,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using BrowserAI.Storage;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -169,6 +170,158 @@ internal sealed partial class SqliteTests
             .Because($"BrowserAI ran as pid {run.BrowserAiProcessId} and wrote {run.ProcessLog.Split('\n').Length} record(s) to the shared process log");
     }
 
+    /// <summary>
+    /// The vendored amalgamation is part of what makes the published binary
+    /// stale.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It was not, and the gap fails in the direction nothing reports.</b>
+    /// <c>PublishedSlice.EnsureFresh</c> compared the binary's timestamp
+    /// against the product's <c>.cs</c> files and the build files, and
+    /// <c>third-party/sqlite/sqlite3.c</c> is neither — so swapping the
+    /// amalgamation and running the suite left every slice arm driving a binary
+    /// that still had the old SQLite linked into it, reading as fresh, with the
+    /// tree saying otherwise.
+    /// </para>
+    /// <para>
+    /// <b>Asserted over the corpus rather than over the check.</b> A staleness
+    /// check says nothing about what it never looked at: it is silent by
+    /// construction when it is passing, and passing is exactly what it does
+    /// when a file is outside it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheFreshnessCheckWatchesTheVendoredAmalgamation()
+    {
+        var watched = PublishedSlice.FreshnessInputs
+            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName).Replace('\\', '/'))
+            .ToList();
+
+        // The positive control: the corpus is the one that was already there,
+        // so an empty or broken enumeration cannot make the two arms below pass.
+        await Assert.That(watched).Contains("src/BrowserAI/Program.cs");
+        await Assert.That(watched).Contains("build/Sqlite.targets");
+
+        await Assert.That(watched)
+            .Contains("third-party/sqlite/sqlite3.c")
+            .Because("build/Sqlite.targets compiles that file with cl.exe and ILC links the archive into BrowserAI.exe, so it is product source by every meaning that matters and a swapped copy must make the publish stale");
+
+        await Assert.That(watched).Contains("third-party/sqlite/sqlite3.h");
+    }
+
+    /// <summary>
+    /// The options the product says it intends are the options the build
+    /// actually passes, in both directions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two spellings of one decision, and neither can be derived from the
+    /// other.</b> <c>build/Sqlite.targets</c> writes <c>cl</c> switches;
+    /// <c>Sqlite.IntendedCompileOptions</c> writes what <c>PRAGMA
+    /// compile_options</c> reports. SQLite's own <c>ctime.c</c> emits some
+    /// options with their value and some without, so
+    /// <c>SQLITE_STRICT_SUBTYPE=1</c> is reported as a bare
+    /// <c>STRICT_SUBTYPE</c> while <c>SQLITE_DQS=0</c> is reported as
+    /// <c>DQS=0</c> — a mechanical translation gets that wrong, which is why
+    /// the correspondence is asserted on the <i>names</i> and the values are
+    /// carried by the list.
+    /// </para>
+    /// <para>
+    /// <b>Both directions, because each is a different mistake.</b> A flag
+    /// added to the build and not to the list is an option the published binary
+    /// carries and no test asks about; a name in the list and not in the build
+    /// is an option the binary will never report, which would make
+    /// <see cref="TheStaticallyLinkedLibraryReportsTheIntendedBuild"/> fail
+    /// with a message about the wrong file.
+    /// </para>
+    /// <para>
+    /// <b>This arm needs nothing but the tree</b>, so a machine that cannot
+    /// publish still holds the correspondence — the same split
+    /// <see cref="ThePinnedVersionIsTheVersionOfTheVendoredSource"/> is on.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheIntendedCompileOptionsAreTheOnesTheBuildPasses()
+    {
+        var targets = await File.ReadAllTextAsync(
+            Path.Combine(RepositoryLayout.Root.FullName, "build", "Sqlite.targets"));
+
+        var passed = CompileDefinition().Matches(targets)
+            .Select(match => match.Groups["name"].Value)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        // The positive control first: a scan that stopped matching would make
+        // every comparison below true of two empty sets.
+        await Assert.That(passed.Count).IsGreaterThan(0);
+        await Assert.That(passed).Contains("OMIT_AUTOINIT");
+
+        var intended = Sqlite.IntendedCompileOptions
+            .Select(option => option.Split('=', 2)[0])
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        await Assert.That(string.Join(", ", intended))
+            .IsEqualTo(string.Join(", ", passed))
+            .Because("build/Sqlite.targets is what cl.exe is handed and Sqlite.IntendedCompileOptions is what a test asserts the published binary reports. A name in one and not the other is either a flag nothing checks or a check no flag can satisfy.");
+
+        // THREADSAFE is deliberately in neither: it is the one deviation from
+        // sqlite.org's recommended set -- taking their SQLITE_THREADSAFE=0
+        // would be the defect -- so it is asserted as a floor under every build
+        // rather than listed as an intended flag.
+        await Assert.That(passed).DoesNotContain("THREADSAFE");
+        await Assert.That(targets).DoesNotContain("/DSQLITE_THREADSAFE");
+    }
+
+    /// <summary>
+    /// The statically linked library reports the build this tree intends.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the only place the compile flags can be checked at all.</b>
+    /// <c>PRAGMA compile_options</c> describes the library that is actually
+    /// bound, and the two hosts differ: the published binary links the archive
+    /// <c>build/Sqlite.targets</c> compiles from vendored source, while this
+    /// test host loads a loose <c>e_sqlite3.dll</c> somebody else built. So the
+    /// claim is about the artifact, and the artifact is what has to say it.
+    /// </para>
+    /// <para>
+    /// <b>Read from the process log, never from stderr.</b> <c>SliceRun</c>
+    /// terminates the binary from outside on purpose, and stderr goes through a
+    /// background queue that loses whatever it still held.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It also carries the initialisation check, which nothing else
+    /// can — and that check does not fail as a wrong value.</b>
+    /// <c>SQLITE_OMIT_AUTOINIT</c> is in the flags, so a published binary that
+    /// opened a database without calling <c>sqlite3_initialize</c> first
+    /// <b>faults</b>: measured 2026-08-26, an access violation inside the first
+    /// <c>sqlite3_open_v2</c>, exit code <c>-1073741819</c>, stdout closed
+    /// before <c>initialize</c> was answered. So this arm's red for that defect
+    /// is not a field reading <c>&lt;unavailable&gt;</c> — it is the slice
+    /// failing to start at all, which is also what
+    /// <see cref="ThePublishedBinaryReportsTheStaticallyLinkedSqliteVersion"/>
+    /// reports. The DLL a test host loads is built <i>without</i> that flag and
+    /// initialises itself, so the whole class is invisible everywhere except
+    /// against the artifact.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStaticallyLinkedLibraryReportsTheIntendedBuild()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SliceRun.SharedAsync();
+
+        await Assert.That(run.ProcessLog)
+            .Contains("sqliteBuild=intended")
+            .Because($"BrowserAI ran as pid {run.BrowserAiProcessId}; anything other than 'intended' names the options the linked archive is missing -- 'missing STRICT_SUBTYPE=1' is what this printed when the intended list carried a value SQLite reports without one -- and '<unavailable' means the library was reachable and refused");
+    }
+
     /// <summary>The <c>vendored.sqlite-amalgamation</c> row of the drift check.</summary>
     /// <returns>The row.</returns>
     private static JsonElement PinnedRow()
@@ -200,4 +353,16 @@ internal sealed partial class SqliteTests
     /// <summary>Three dotted numbers, which is every SQLite release since 3.0.</summary>
     [GeneratedRegex(@"^\d+\.\d+\.\d+$")]
     private static partial Regex ThreePartVersion();
+
+    /// <summary>
+    /// One <c>cl</c> preprocessor definition in <c>build/Sqlite.targets</c>,
+    /// with the <c>SQLITE_</c> prefix and any value stripped off the capture.
+    /// </summary>
+    /// <remarks>
+    /// The prefix is required rather than optional: it is what separates a
+    /// compile-time option from every other switch the command line carries,
+    /// and <c>PRAGMA compile_options</c> reports the names without it.
+    /// </remarks>
+    [GeneratedRegex(@"/DSQLITE_(?<name>[A-Z0-9_]+)")]
+    private static partial Regex CompileDefinition();
 }

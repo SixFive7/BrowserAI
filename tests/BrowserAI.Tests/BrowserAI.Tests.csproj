@@ -31,6 +31,13 @@
          is not compiled against it. Its full reasoning, and the licence
          question that test-only use sidesteps, are in Directory.Packages.props. -->
     <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
+    <!-- The native SQLite this test host loads. Nothing here calls into it by
+         name: the product's own [LibraryImport] declarations bind the module
+         e_sqlite3, which under a publish is a symbol linked into the binary
+         and under CoreCLR is a DLL that has to exist on disk. This reference
+         is what puts it there. Its full reasoning, and the reason it must
+         never reach the product, are in Directory.Packages.props. -->
+    <PackageReference Include="SourceGear.sqlite3" />
   </ItemGroup>
 
   <!-- The upstream-review gate: four snapshots regenerated from the resolved

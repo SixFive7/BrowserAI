@@ -132,6 +132,29 @@ internal static class RepositoryLayout
     public static IReadOnlyList<FileInfo> ProductSourceFiles { get; } = SourceFilesUnder(["src"], ["*.cs"]);
 
     /// <summary>
+    /// Every file this repository vendors from somebody else and compiles into
+    /// the product.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Not <c>.cs</c>, and that is the whole reason this exists.</b>
+    /// <c>third-party/sqlite</c> holds the SQLite amalgamation, which
+    /// <c>build/Sqlite.targets</c> compiles with <c>cl.exe</c> and ILC links
+    /// into <c>BrowserAI.exe</c>. It is product source by every meaning that
+    /// matters and it is invisible to a scan anchored on an extension —
+    /// measured 2026-08-26: a swapped amalgamation left the published binary
+    /// reading as fresh, so a suite arm driving that binary would have been
+    /// asserting about SQLite nobody had compiled.
+    /// </para>
+    /// <para>
+    /// <b>Enumerated rather than named.</b> A list of two paths would go stale
+    /// the day a third file is vendored, and the failure would be the same
+    /// silent one: something compiled into the binary that nothing watches.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<FileInfo> VendoredSourceFiles { get; } = SourceFilesUnder(["third-party"], ["*"]);
+
+    /// <summary>
     /// Every hand-written source and script file in the repository, product and
     /// suite alike.
     /// </summary>

@@ -152,6 +152,45 @@
       now a question for a lawyer rather than a research task.
     -->
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="*" />
+
+    <!--
+      THE NATIVE SQLITE THE TEST HOST LOADS, AND IT IS TEST ONLY.
+
+      NOTE FOR ANYONE EDITING THIS COMMENT: no double hyphen, for the reason
+      the Velopack comment above gives at length. It has now cost this
+      repository time five times.
+
+      The product compiles SQLite from the vendored amalgamation in
+      third-party/sqlite and links it into BrowserAI.exe: build/Sqlite.targets
+      does the compile, and DirectPInvoke plus NativeLibrary make ILC's linker
+      resolve every e_sqlite3 entry point out of the archive at publish time.
+      Both of those items are read only by the ILC build integration, which is
+      imported under PublishAot, so under `dotnet test` (CoreCLR) they are
+      inert and the module name falls back to an ordinary runtime load that
+      finds nothing. This package is what puts an e_sqlite3.dll beside the
+      test host, so the suite can exercise the storage layer at all.
+
+      NEVER in the product. The publish output is a single file BECAUSE the
+      product references no native package, and the absence of a reference is
+      what keeps that true by construction rather than by anybody remembering.
+
+      NEVER the Microsoft.Data.Sqlite META package anywhere, either. It depends
+      on SQLitePCLRaw.bundle_e_sqlite3, which pins its own older native SQLite,
+      so adding it "for convenience" silently regresses the version this
+      repository pins in the tree.
+      ForbiddenDependencyTests.TheSqliteMetaPackageIsNeverReferenced asserts
+      that.
+
+      ITS VERSION NUMBER IS THE SQLITE VERSION. Eric Sink's own v3.md says the
+      first three numbers indicate the version of SQLite, so this floating
+      reference writes today's SQLite into
+      tests/BrowserAI.Tests/packages.lock.json on every re-resolve, and the gap
+      between that number and drift-check.json's pinned amalgamation is the
+      drift signal for a pin no registry can float. It lags sqlite.org by 3 to
+      30 days and skips some releases, so a gap is a prompt to look rather than
+      a defect on its own.
+    -->
+    <PackageVersion Include="SourceGear.sqlite3" Version="*" />
   </ItemGroup>
 
 </Project>
