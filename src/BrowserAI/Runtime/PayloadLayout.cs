@@ -60,12 +60,39 @@ internal sealed class PayloadLayout(string? root = null)
         Path.Combine(Root, "mcp", "node_modules", "playwright-core", "browsers.json");
 
     /// <summary>
-    /// Checks that both files exist, so an incomplete payload names itself.
+    /// Every tool BrowserAI knows of and whether it forwards a call naming one.
     /// </summary>
-    /// <exception cref="FileNotFoundException">Either file is missing.</exception>
+    /// <remarks>
+    /// <para>
+    /// <b>Inside the payload rather than beside the binary, because the verdicts
+    /// describe the <c>cli.js</c> they shipped with.</b> An update replaces the
+    /// payload wholesale, so a new binary can never read an old build's
+    /// judgements about a tool set that has moved underneath it — which is the
+    /// same property the paragraph above gives <c>browsers.json</c>, for the same
+    /// reason. Published beside the binary it would survive an update and start
+    /// describing an upstream nobody judged.
+    /// </para>
+    /// <para>
+    /// The tracked copy is at the repository root; a build target copies it here.
+    /// </para>
+    /// </remarks>
+    public string ToolVerdicts => Path.Combine(Root, Sessions.ToolVerdicts.FileName);
+
+    /// <summary>
+    /// Checks that the payload's three required files exist, so an incomplete
+    /// payload names itself.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Three since 2026-08-26 (previously two).</b> The verdicts file joins
+    /// the executable and the CLI because its absence is the same class of
+    /// failure and a worse presentation: BrowserAI denies by default, so a payload
+    /// without it does not degrade to permissive — it refuses every call, and
+    /// without this check nothing anywhere would name the missing file.
+    /// </remarks>
+    /// <exception cref="FileNotFoundException">Any of them is missing.</exception>
     public void Verify()
     {
-        foreach (var file in new[] { NodeExecutable, PlaywrightMcpCli })
+        foreach (var file in new[] { NodeExecutable, PlaywrightMcpCli, ToolVerdicts })
         {
             if (!File.Exists(file))
             {

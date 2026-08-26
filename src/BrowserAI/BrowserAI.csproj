@@ -260,6 +260,31 @@
     </ItemGroup>
   </Target>
 
+  <!--
+    The verdicts file travels INSIDE the payload, so the tracked copy at the
+    repository root is copied in on every build.
+
+    Here rather than in build/Build-Payload.ps1, and that is the whole of the
+    reason: the payload build resolves npm and downloads node, so a rule that
+    only it applied would mean editing tool-verdicts.json had no effect until
+    somebody re-ran a several-minute step, and the suite, which reads the
+    assembled payload, would go on testing yesterday's file. This runs on every
+    build, is incremental against the source, and is the ONE place the copy
+    happens; a second copier would be a second answer to "which file ships".
+
+    Conditional on payload.json for the same reason AddPayloadToPublish is: a
+    clean clone has no payload/ at all, and writing one file into a directory
+    that does not exist would manufacture a payload that is 99% missing.
+  -->
+  <Target Name="CopyToolVerdictsIntoThePayload"
+          BeforeTargets="Build"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')"
+          Inputs="$(MSBuildThisFileDirectory)..\..\tool-verdicts.json"
+          Outputs="$(MSBuildThisFileDirectory)..\..\payload\tool-verdicts.json">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\tool-verdicts.json"
+          DestinationFiles="$(MSBuildThisFileDirectory)..\..\payload\tool-verdicts.json" />
+  </Target>
+
   <Target Name="AddPayloadToPublish"
           AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="Exists('$(MSBuildThisFileDirectory)..\..\payload\payload.json')">

@@ -594,7 +594,7 @@ internal sealed class ModelSurfaceTests
         // withholds, which is one tool. Through the product's own predicate
         // rather than `- 1`, so the day the decision is reversed this follows it.
         var advertisedUpstream = UpstreamSurface.SnapshotDescriptions()
-            .Count(entry => !SessionToolPolicy.IsWithheldFromTheSurface(entry.Name));
+            .Count(entry => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(entry.Name));
 
         await Assert.That(advertisedUpstream).IsEqualTo(UpstreamSurface.SnapshotToolCount() - 1);
         await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + advertisedUpstream);
@@ -944,7 +944,7 @@ internal sealed class ModelSurfaceTests
             // now filtered out of `tools/list` entirely, so the shape of this
             // test changed with it: the withheld one must be ABSENT, and every
             // other description must be upstream's own, unchanged, to the byte.
-            if (SessionToolPolicy.IsWithheldFromTheSurface(name))
+            if (RepositoryVerdicts.Committed.IsWithheldFromTheSurface(name))
             {
                 if (advertised.ContainsKey(name))
                 {
@@ -980,7 +980,7 @@ internal sealed class ModelSurfaceTests
         // "unchanged" check above by never running one. The authored tools are
         // in that dictionary too, so the arithmetic names both halves.
         await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + upstream.Count - 1);
-        await Assert.That(advertised.ContainsKey(SessionToolPolicy.AnnotateTool)).IsFalse();
+        await Assert.That(advertised.ContainsKey(RepositoryVerdicts.TheOneDenial.Name)).IsFalse();
 
         // And nothing of the removed matrix — or of the withheld tool — survives
         // anywhere in the surface a model reads. A positive control comes first,
@@ -996,7 +996,7 @@ internal sealed class ModelSurfaceTests
             "is not one this build has classified",
             "refuses every browser tool",
             "BrowserAI refuses this",
-            SessionToolPolicy.AnnotateTool,
+            RepositoryVerdicts.TheOneDenial.Name,
         ])
         {
             await Assert.That(everyDescription).DoesNotContain(gone);
@@ -1026,7 +1026,7 @@ internal sealed class ModelSurfaceTests
         // tell from the outside which build it is talking to.
         string[] enforcement =
         [
-            "src/BrowserAI/Sessions/SessionToolPolicy.cs",
+            "src/BrowserAI/Sessions/ToolVerdicts.cs",
             "src/BrowserAI/Runtime/BrowserConfiguration.cs",
             "src/BrowserAI/Sessions/SessionErrors.cs",
             "src/BrowserAI/Proxy/BrowserProxy.cs",
@@ -1090,7 +1090,7 @@ internal sealed class ModelSurfaceTests
         // out why a call was refused.
         string[] enforcement =
         [
-            "src/BrowserAI/Sessions/SessionToolPolicy.cs",
+            "src/BrowserAI/Sessions/ToolVerdicts.cs",
             "src/BrowserAI/Runtime/BrowserConfiguration.cs",
             "src/BrowserAI/Sessions/SessionErrors.cs",
             "src/BrowserAI/Proxy/ServerInstructions.cs",
@@ -1134,11 +1134,19 @@ internal sealed class ModelSurfaceTests
         // banned the read outright would either be red today or would train the
         // next person to move the decision somewhere the scan does not look.
         // What is asserted instead is that the decision it calls is the one in
-        // SessionToolPolicy, which the four files above are closed against.
+        // ToolVerdicts, which the four files above are closed against.
+        //
+        // ⚠️ Corrected 2026-08-26 (previously `SessionToolPolicy.cs` in both
+        // lists above, and `SessionToolPolicy.Decide` here). That file is
+        // deleted: the decision is a verdicts FILE now, read at startup, and
+        // ToolVerdicts is the type that reads it. The lists are not allowed to
+        // shrink by accident -- the loop fails on a named file that is missing,
+        // which is exactly what it did when this landed -- so the replacement is
+        // named rather than the entry being dropped.
         var callSite = await RepositoryLayout.ReadCodeAsync(
             new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src/BrowserAI/Proxy/BrowserProxy.cs")));
 
-        await Assert.That(callSite).Contains("SessionToolPolicy.Decide");
+        await Assert.That(callSite).Contains("_verdicts.Decide(tool)");
     }
 
     private static void Require(List<string> missing, string rendered, string expected, string consumer)
@@ -1286,7 +1294,7 @@ internal sealed class ModelSurfaceTests
 
     private static Dictionary<string, JsonObject?> Advertised(string childToolsList)
     {
-        var rewritten = SessionToolSurface.Rewrite(JsonNode.Parse(childToolsList)!.AsObject());
+        var rewritten = SessionToolSurface.Rewrite(JsonNode.Parse(childToolsList)!.AsObject(), RepositoryVerdicts.Committed);
 
         return (rewritten["tools"]?.AsArray() ?? [])
             .ToDictionary(tool => (string)tool!["name"]!, tool => tool?.AsObject(), StringComparer.Ordinal);

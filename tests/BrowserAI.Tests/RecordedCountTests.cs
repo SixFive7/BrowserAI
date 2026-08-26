@@ -4,7 +4,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using BrowserAI.Runtime;
-using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -396,7 +395,7 @@ internal sealed partial class RecordedCountTests
         // red count second, which is the right order.
         var granted = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
         var everything = UpstreamSurface.SnapshotToolCount();
-        var withheld = granted.Count(SessionToolPolicy.IsWithheldFromTheSurface);
+        var withheld = granted.Count(RepositoryVerdicts.Committed.IsWithheldFromTheSurface);
 
         await Assert.That(int.Parse(whole.Groups["tools"].Value, CultureInfo.InvariantCulture))
             .IsEqualTo(everything)

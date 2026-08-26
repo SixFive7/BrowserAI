@@ -76,15 +76,17 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
     private readonly ChildConnection _surface;
     private readonly SessionManager _sessions;
+    private readonly ToolVerdicts _verdicts;
     private readonly ILogger _logger;
 
     private McpServer? _caller;
     private int _disposed;
 
-    private BrowserProxy(ChildConnection surface, SessionManager sessions, ILogger logger)
+    private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ILogger logger)
     {
         _surface = surface;
         _sessions = sessions;
+        _verdicts = verdicts;
         _logger = logger;
     }
 
@@ -166,7 +168,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             surface = await ChildConnection.ConnectAsync(transport, loggerFactory, "browserai-", relay, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA2000
 
-            proxy = new BrowserProxy(surface, sessions, logger);
+            proxy = new BrowserProxy(surface, sessions, environment.Verdicts, logger);
 
             // Ownership of both has moved into the proxy, which the caller now
             // owns and disposes.
@@ -379,14 +381,22 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// started with every capability any mode can have.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously "The one refusal this proxy still
+    /// makes by name is <c>browser_annotate</c>, and that is liveness rather than
+    /// permission").</b> The refusals this proxy makes by name are now whatever
+    /// <c>tool-verdicts.json</c> says they are, plus every name that file does not
+    /// carry a row for. <c>browser_annotate</c> is still the only tool this build
+    /// ships a <c>deny</c> for, and it is still liveness rather than permission —
+    /// what changed is that the sentence is a fact about the file rather than
+    /// about the code.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>Corrected 2026-08-19 (previously ", and a call its session's mode
-    /// does not permit is refused at call time instead").</b> Nothing refuses it:
-    /// the <c>(tool, mode)</c> matrix went on 2026-08-18 and the enforcement that
-    /// replaced it is the <i>child's own capability set</i> — a session without
-    /// <c>storage</c> has no cookie tools in its process, so the call is forwarded
-    /// and upstream answers that the tool does not exist. The one refusal this
-    /// proxy still makes by name is <c>browser_annotate</c>, and that is liveness
-    /// rather than permission.
+    /// does not permit is refused at call time instead").</b> The
+    /// <c>(tool, mode)</c> matrix went on 2026-08-18, and what a session's own
+    /// capability set decides is still upstream's: a session without
+    /// <c>storage</c> has no cookie tools in its process, so an allowed call is
+    /// forwarded and upstream answers that the tool does not exist.
     /// </para>
     /// </remarks>
     private async Task AnswerToolsListAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
@@ -405,7 +415,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         var result = response.Result as JsonObject ?? [];
 
         await caller.SendMessageAsync(
-            new JsonRpcResponse { Id = request.Id, Result = SessionToolSurface.Rewrite(result) },
+            new JsonRpcResponse { Id = request.Id, Result = SessionToolSurface.Rewrite(result, _verdicts) },
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -479,14 +489,23 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        // The one refusal left, and it is a LIVENESS guard rather than a
-        // permission: `browser_annotate` opens a dashboard window, has no
-        // self-timeout, and blocks until a human draws in it -- so an unattended
-        // run that called it would hang until it was killed. It is withheld from
-        // `tools/list` as well, and this is the other half of that: a model that
-        // knows the name from upstream rather than from this server can still
-        // send the call, and forwarding it is what the withholding exists to
-        // prevent.
+        // ⚠️ THE VERDICT, AND SINCE 2026-08-26 IT IS READ FROM A FILE RATHER
+        // THAN FROM A CONSTANT. `tool-verdicts.json` ships inside the payload it
+        // describes and carries a row per tool: `allow` forwards, `deny` refuses
+        // with the row's own reason, and a name with NO row is refused too --
+        // deny by default. See `ToolVerdicts` for why the default is that way
+        // round and what stops it silently costing a capability.
+        //
+        // It is still not a permission. A denial is liveness or fitness, and an
+        // unjudged name is a gap; neither is a boundary against a caller who
+        // owns the session directory and reads the profile inside it as the same
+        // user. What it buys is that a name this build has never been told about
+        // does not start a browser -- upstream creates the browser context
+        // before it looks the name up -- and that the surface a model reads
+        // carries nothing that cannot be called.
+        //
+        // Corrected 2026-08-26 (previously `SessionToolPolicy.Decide(tool)`,
+        // a denylist of exactly one name with its reasoning in a doc comment).
         //
         // Corrected 2026-08-18 (previously `Decide(tool, live.Mode)`, refusing
         // only on a mode that opens no window). The daemon lands in %TEMP% and
@@ -499,7 +518,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // against the caller, who chooses the session directory and reads the
         // profile inside it as the same user. Change control lives at the
         // release gate, in the four golden snapshots.
-        var decision = SessionToolPolicy.Decide(tool);
+        var decision = _verdicts.Decide(tool);
 
         if (!decision.IsAllowed)
         {
@@ -1139,25 +1158,42 @@ internal static partial class ProxyLog
     public static partial void SessionMissing(ILogger logger, string tool);
 
     /// <summary>
-    /// A call was refused because it would not have returned.
+    /// A call was refused by the verdict for the tool it named, or by the
+    /// absence of one.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THE FULL NAME THE CALLER SENT GOES HERE AND NOWHERE ELSE THAT A
+    /// MODEL READS.</b> An unjudged call is refused with a sentence that quotes
+    /// nothing, so this record and the session's own log row are where <i>what
+    /// did it try to call</i> survives — on stderr and in a database, neither of
+    /// which is in anybody's context window.
+    /// </para>
+    /// <para>
+    /// <b>Corrected 2026-08-26 (previously "it is not in this build's tools/list
+    /// and would have blocked until this run was killed").</b> That sentence
+    /// described <c>browser_annotate</c> and only ever could: the refusal is now
+    /// whatever <c>tool-verdicts.json</c> says, and the commonest one by far will
+    /// be a name that file has no row for at all — which has not blocked
+    /// anything and was never in any list.
+    /// </para>
+    /// <para>
     /// <b>Corrected 2026-08-18 (previously "refused by the <c>(tool, mode)</c>
     /// decision … the record that the security boundary the charter traded away
     /// for one process is actually being enforced").</b> There is no such
     /// boundary and there never was one here: the caller owns the session
-    /// directory and reads the profile inside it as the same user. What this
-    /// records now is the single liveness refusal, and Information is still the
-    /// right level — a call that was declined is a call whose absence somebody
-    /// will eventually have to explain.
+    /// directory and reads the profile inside it as the same user. Information is
+    /// still the right level — a call that was declined is a call whose absence
+    /// somebody will eventually have to explain.
+    /// </para>
     /// </remarks>
     /// <param name="logger">Where to write.</param>
-    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="tool">The tool that was refused, verbatim as the caller spelled it.</param>
     /// <param name="session">The session directory named.</param>
     [LoggerMessage(
         EventId = 9,
         Level = LogLevel.Information,
-        Message = "'{Tool}' was refused on the session at {Session}: it is not in this build's tools/list and would have blocked until this run was killed.")]
+        Message = "'{Tool}' was refused on the session at {Session}: this build's tool-verdicts.json does not allow it to be forwarded. Nothing reached the browser.")]
     public static partial void ToolRefused(ILogger logger, string tool, string session);
 
     /// <summary>

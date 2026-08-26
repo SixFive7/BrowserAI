@@ -153,14 +153,21 @@ internal sealed partial class BrowserIdleTimerTests
         // must still be is upstream's own and callable, which is what remains.
         //
         // Corrected 2026-08-18 again (previously a loop over `SessionModes.All`
-        // asking `Decide(tool, mode)`). `Decide` no longer takes a mode: the one
-        // tool it refuses is refused everywhere, so a per-mode loop here would
-        // ask the same question three times and read as coverage it is not.
-        await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool).IsAllowed).IsTrue();
+        // asking `Decide(tool, mode)`). `Decide` no longer takes a mode: what it
+        // refuses is refused everywhere, so a per-mode loop here would ask the
+        // same question three times and read as coverage it is not.
+        //
+        // ⚠️ Corrected 2026-08-26: `Decide` is `ToolVerdicts`' and reads
+        // tool-verdicts.json, which is why this asks the SHIPPED file rather
+        // than a constant -- and under deny-by-default the claim is stronger
+        // than it was. The idle timer calls this tool itself, so a build that
+        // shipped a verdicts file with no row for it would close no browser and
+        // report nothing.
+        await Assert.That(RepositoryVerdicts.Committed.Decide(LiveSession.BrowserCloseTool).IsAllowed).IsTrue();
 
         // And it is in the surface a caller sees, which is the other half of
         // "callable": the timer's own tool must not be the withheld one.
-        await Assert.That(SessionToolPolicy.IsWithheldFromTheSurface(LiveSession.BrowserCloseTool)).IsFalse();
+        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(LiveSession.BrowserCloseTool)).IsFalse();
     }
 
     /// <summary>

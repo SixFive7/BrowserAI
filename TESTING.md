@@ -1003,6 +1003,31 @@ against committed copies:
 whole point: not *"someone should look"*, but *"here is precisely what moved —
 adjudicate it."*
 
+### The verdicts file, and the tool set it is judged against
+
+**A snapshot diff says *a tool appeared*. It cannot say *and nobody has decided
+whether we forward it*** — a snapshot is a record of upstream and a verdict is a
+statement about this product, so the two cannot live in one file.
+[`tool-verdicts.json`](tool-verdicts.json) is the second half, added 2026-08-26:
+one row per tool, `allow` / `deny` / `answer`, tracked at the repository root and
+copied into the payload it describes. `ToolVerdictTests` is what makes it a gate
+rather than a note.
+
+| Arm | Catches |
+|---|---|
+| coverage, **both directions** | a tool in `tools-list.json` with no row — the Playwright bump that ADDS one; and a row naming a tool the snapshot does not carry — the bump that REMOVES one, which a one-directional check would miss for ever |
+| the doctored-file controls | the coverage comparison itself having stopped asking. A zero-disagreement answer reads identically whether the file is complete or the check is broken, so one row is removed and one invented and the *text* of each disagreement is asserted |
+| `authored` against `SessionToolSurface.Names` | one of BrowserAI's own tools added or renamed without the file following, in either direction |
+| every `deny` carries a `why` and an ISO `since` | a denial whose refusal would carry nothing a caller can act on. The `why` **is** the refusal, below BrowserAI's own first sentence |
+| `judgedAgainst` against the committed payload lock | verdicts that describe a tool set which is no longer the one shipping |
+| the malformed and missing shapes | a build serving on a file it could not read. **Deny-by-default makes this the loud case**: an empty verdict set refuses every call, so a silent fallback would present as a server that starts, advertises a full surface and then refuses everything, naming no file. Fifteen doctored shapes, each asserted to refuse *and* to name the file, with the undoctored file as the positive control |
+| the payload copy against the tracked file | the build target that copies it having silently stopped running, which would leave the product reading a file the suite never tests |
+
+**The comparison is on every build; the adjudication is release-gated** —
+[`RELEASING.md` item 4](RELEASING.md#4-the-four-snapshots-and-the-verdict-file-adjudicated).
+Moving the comparison behind the release would be a downgrade for the same reason
+the snapshot diff is not there either.
+
 Alongside them, the two things the suite already proves: **every test green**, and
 the `browser_get_config` round-trip showing every opinion BrowserAI generated
 survived into the child.

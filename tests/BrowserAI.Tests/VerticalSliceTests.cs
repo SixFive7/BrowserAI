@@ -78,15 +78,19 @@ internal sealed class VerticalSliceTests
         // modes were deleted and `network`, `pdf` and `testing` were granted for
         // the first time, so the list is ten longer.
         //
-        // ⚠️ Minus the one tool this build withholds. Corrected 2026-08-18
+        // ⚠️ Minus every tool this build withholds. Corrected 2026-08-18
         // (previously the whole union, and `Names.Count + 59`): `browser_annotate`
-        // is filtered out of `tools/list` because it blocks with no self-timeout
-        // — see SessionToolPolicy.IsWithheldFromTheSurface. The expected list is
-        // still computed from the committed snapshot rather than typed, and the
-        // filter is applied through the product's own predicate, so the day the
-        // decision is reversed this test follows it.
+        // is filtered out of `tools/list` because it blocks with no self-timeout.
+        //
+        // ⚠️ Corrected 2026-08-26 (previously "see
+        // SessionToolPolicy.IsWithheldFromTheSurface"): the withholding is a
+        // `deny` row in tool-verdicts.json now, and the predicate reads the
+        // shipped file. The expected list is still computed from the committed
+        // snapshot rather than typed, and the filter is still applied through the
+        // product's own predicate over the product's own file -- so the day the
+        // decision is reversed, in the file, this test follows it.
         var expectedUpstream = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities)
-            .Where(tool => !SessionToolPolicy.IsWithheldFromTheSurface(tool))
+            .Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool))
             .ToList();
 
         await Assert.That(string.Join(", ", run.ToolNames))
@@ -101,7 +105,7 @@ internal sealed class VerticalSliceTests
         // named individually. The list comparison above would also catch it, but
         // only as one differing string among 74: this is the assertion that says
         // what happened, and it is the off-the-wire half of the decision.
-        await Assert.That(run.ToolNames).DoesNotContain(SessionToolPolicy.AnnotateTool);
+        await Assert.That(run.ToolNames).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
 
         // ⚠️ And the ten that arrived on 2026-08-20 are in the REAL binary's
         // real answer, named individually for the same reason. This is the
@@ -116,7 +120,7 @@ internal sealed class VerticalSliceTests
         // Not vacuous — the child really does have it, so the absence above is
         // BrowserAI's filter rather than an upstream that never shipped it.
         await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities))
-            .Contains(SessionToolPolicy.AnnotateTool);
+            .Contains(RepositoryVerdicts.TheOneDenial.Name);
 
         // And every one of them gains BrowserAI's `session` parameter, asserted
         // against the REAL child's list rather than against the snapshot the

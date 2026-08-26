@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -40,10 +41,13 @@ namespace BrowserAI.Tests;
 /// left to drift from the mode table. The first is replaced below by the counts
 /// that survive, which are nearly the whole surface.</item>
 /// <item><c>AToolNobodyClassifiedIsRefusedInEveryMode</c> and
-/// <c>AnUnclassifiedToolInTheChildsListIsRefusedOverTheWire</c> — deny-by-default
-/// is gone, so the second is inverted below: a tool this build has never heard of
-/// is <i>forwarded</i>, and asserting that is what proves the removal is real
-/// rather than accidentally still in force.</item>
+/// <c>AnUnclassifiedToolInTheChildsListIsRefusedOverTheWire</c> — the
+/// <c>(tool, mode)</c> matrix is gone, so the second was inverted to assert that
+/// a tool this build had never heard of was <i>forwarded</i>. ⚠️ <b>That
+/// inversion was itself inverted on 2026-08-26</b>: deny-by-default came back as
+/// a VERDICT rather than as a permission, and
+/// <c>AToolThisBuildHasNeverJudgedIsRefusedRatherThanForwarded</c> below says why
+/// the 2026-08-18 reasoning does not reach it.</item>
 /// <item><c>AStorageToolOnAHeadlessSessionIsRefusedWithTextNamingPersistent</c> —
 /// BrowserAI no longer refuses it. A headless session's own child is launched
 /// without the <c>storage</c> capability, so the storage tools do not exist in
@@ -62,6 +66,15 @@ namespace BrowserAI.Tests;
 /// session this product configured — <c>CryptUnprotectData</c> and AES-256-GCM,
 /// no App-Bound Encryption
 /// ([kb](../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)).
+/// </para>
+/// <para>
+/// ⚠️ <b>Since 2026-08-26 the decision this class is about is a FILE.</b>
+/// <c>tool-verdicts.json</c> carries a row per tool — <c>allow</c>, <c>deny</c>
+/// with the reason a caller reads, or <c>answer</c> — and a name with no row is
+/// refused. Three arms below are about the mechanism rather than about any one
+/// tool, and they use rig copies of that file so the product's own deny set stays
+/// at exactly one; <c>ToolVerdictTests</c> owns the file itself and its agreement
+/// with the golden snapshot.
 /// </para>
 /// <para>
 /// <b>What is asserted instead is what is actually true.</b> A call names its
@@ -132,25 +145,25 @@ internal sealed class SessionPolicyTests
     public async Task ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised()
     {
         var everything = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
-        var advertised = everything.Where(tool => !SessionToolPolicy.IsWithheldFromTheSurface(tool)).ToList();
+        var advertised = everything.Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool)).ToList();
 
         // The denominators are stated before the numerator, and there are two of
         // them: a fully-capable child exposes 69 tools, BrowserAI advertises 68
         // of them, and every session permits all 68.
         await Assert.That(everything.Count).IsEqualTo(Advertises + 1);
         await Assert.That(advertised.Count).IsEqualTo(Advertises);
-        await Assert.That(advertised.Count(tool => SessionToolPolicy.Decide(tool).IsAllowed)).IsEqualTo(Advertises);
+        await Assert.That(advertised.Count(tool => RepositoryVerdicts.Committed.Decide(tool).IsAllowed)).IsEqualTo(Advertises);
 
         // The named hole, individually, because a count is satisfied by the
         // wrong tool as easily as by the right one. It is in the child's surface
         // and out of ours, which is the whole of the change.
-        await Assert.That(everything).Contains(SessionToolPolicy.AnnotateTool);
-        await Assert.That(advertised).DoesNotContain(SessionToolPolicy.AnnotateTool);
+        await Assert.That(everything).Contains(RepositoryVerdicts.TheOneDenial.Name);
+        await Assert.That(advertised).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
 
         // And the call is refused as well as unadvertised, which is the half a
         // filtered list cannot do: a model that knows the name from upstream can
         // still send it.
-        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).IsAllowed).IsFalse();
+        await Assert.That(RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.TheOneDenial.Name).IsAllowed).IsFalse();
 
         // The tools the old matrix turned on are permitted now. Asserted rather
         // than left implied: these three are the whole of what that removal
@@ -161,14 +174,46 @@ internal sealed class SessionPolicyTests
         await Assert.That(Allows("browser_get_config")).IsTrue();
     }
 
+    /// <summary>
+    /// A tool a child advertises that this build has never judged is refused,
+    /// and the child never hears about it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>INVERTED 2026-08-26 (previously
+    /// <c>AToolThisBuildHasNeverHeardOfIsForwardedRatherThanRefused</c>, whose
+    /// own comment said it was "the test that proves the removal actually
+    /// happened").</b> Deny-by-default is back, and the old claim is no longer
+    /// true of this product — so the arm asserts the new policy rather than being
+    /// deleted, because the case it covers did not go anywhere.
+    /// </para>
+    /// <para>
+    /// <b>What was removed on 2026-08-18 is still removed, and this is not it.</b>
+    /// That was a <c>(tool, mode)</c> PERMISSION matrix, deleted because it was
+    /// never a boundary against a caller who owns the session directory and reads
+    /// the profile inside it as the same user — and every word of that reasoning
+    /// still holds. A verdict is a different question: it decides whether a name
+    /// this build has never been told about is worth <b>starting a browser</b>
+    /// for. Upstream creates the browser context before it looks a tool name up,
+    /// so the forwarded call the old arm asserted would launch a browser to be
+    /// told there is nothing to run — and would echo the caller's own string back
+    /// into model-facing text on the way out. Neither is a permission and neither
+    /// was in scope on 2026-08-18.
+    /// </para>
+    /// <para>
+    /// <b>The child double would answer, which is what makes the claim real.</b>
+    /// A proxy that forwarded would visibly reach it, and the assertion below is
+    /// on the child's own call log rather than on the shape of the answer.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AToolThisBuildHasNeverHeardOfIsForwardedRatherThanRefused()
+    public async Task AToolThisBuildHasNeverJudgedIsRefusedRatherThanForwarded()
     {
-        // The inversion of the old deny-by-default arm, and it is the test that
-        // proves the removal actually happened: a child that advertises
-        // something no build of BrowserAI has ever judged has its call
-        // FORWARDED, and the answer the caller gets is the child's own.
-        await using var sessions = RigSessionEnvironment.Create();
+        const string FromTheFuture = "browser_a_tool_from_the_future";
+
+        await using var sessions = RigSessionEnvironment.Create(child => child.Tools[FromTheFuture] = new FakeToolBehaviour());
+
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             child => child.ToolsListResult =
                 """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{}}},{"name":"browser_a_tool_from_the_future","description":"A tool no build of BrowserAI has ever judged","inputSchema":{"type":"object","properties":{}}}]}""",
@@ -182,25 +227,25 @@ internal sealed class SessionPolicyTests
             ["purpose"] = "meets a tool from the future",
         });
 
-        // Sent rather than round-tripped, because the answer is the CHILD's own
-        // JSON-RPC error and a helper that threw on one would hide the finding.
-        var answer = await rig.Client.SendAsync("tools/call", new JsonObject
+        var answer = await CallAsync(rig, FromTheFuture, new JsonObject
         {
-            ["name"] = "browser_a_tool_from_the_future",
-            ["arguments"] = new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" },
+            ["session"] = directory,
+            ["why"] = "the suite exercising this call",
         });
 
-        // The child was asked, which is the whole claim. Before 2026-08-18 this
-        // never left BrowserAI.
+        // ⚠️ The child was NOT asked, which is the whole claim and the whole of
+        // what changed.
         await Assert.That(sessions.SessionChildren.Any(child =>
-            child.ToolCallsReceived.Contains("browser_a_tool_from_the_future", StringComparer.Ordinal))).IsTrue();
+            child.ToolCallsReceived.Contains(FromTheFuture, StringComparer.Ordinal))).IsFalse();
 
-        // And the answer is the double's own words rather than ours: it refuses
-        // a tool no test programmed, and that sentence is what comes back.
-        await Assert.That((string?)answer.Error?["message"])
-            .Contains("The fake child answers only tools a test programmed");
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+        await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolHasNoVerdict());
 
-        await Assert.That(answer.Envelope.ToJsonString()).DoesNotContain("does not classify");
+        // It is still ADVERTISED, because a gap is not a decision -- and the
+        // build is red about the gap on the same run, which is what bounds it.
+        var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
+
+        await Assert.That(advertised.ToJsonString()).Contains(FromTheFuture);
     }
 
     [Test]
@@ -213,7 +258,7 @@ internal sealed class SessionPolicyTests
         // makes that a real claim rather than a missing case: it answers the
         // tool happily, so a proxy that forwarded would visibly succeed here.
         await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools[SessionToolPolicy.AnnotateTool] = new FakeToolBehaviour
+            child.Tools[RepositoryVerdicts.TheOneDenial.Name] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"the human drew something"}]}""",
             });
@@ -235,13 +280,13 @@ internal sealed class SessionPolicyTests
             .Select(tool => (string?)tool?["name"] ?? string.Empty)
             .ToList();
 
-        await Assert.That(childsOwn).Contains(SessionToolPolicy.AnnotateTool);
-        await Assert.That(names).DoesNotContain(SessionToolPolicy.AnnotateTool);
+        await Assert.That(childsOwn).Contains(RepositoryVerdicts.TheOneDenial.Name);
+        await Assert.That(names).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
         await Assert.That(names.Count).IsGreaterThan(10);
 
         // And nothing of it is left in the surface for a model to read: no
         // description mentioning it, no note saying it would refuse.
-        await Assert.That(advertised.ToJsonString()).DoesNotContain(SessionToolPolicy.AnnotateTool);
+        await Assert.That(advertised.ToJsonString()).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
 
         // The call half, on a session with a window and one without, because
         // the refusal used to be keyed on exactly that and a single session
@@ -258,9 +303,9 @@ internal sealed class SessionPolicyTests
             });
 
             var callsBefore = sessions.SessionChildren.Sum(child =>
-                child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool));
+                child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.TheOneDenial.Name));
 
-            var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
+            var refused = await CallAsync(rig, RepositoryVerdicts.TheOneDenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
             var text = TextOf(refused);
 
             await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -277,7 +322,192 @@ internal sealed class SessionPolicyTests
             // Nothing reached the child: a refusal that forwarded first and hid
             // the answer would still have hung.
             await Assert.That(sessions.SessionChildren.Sum(child =>
-                child.ToolCallsReceived.Count(tool => tool == SessionToolPolicy.AnnotateTool))).IsEqualTo(callsBefore);
+                child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.TheOneDenial.Name))).IsEqualTo(callsBefore);
+        }
+    }
+
+    /// <summary>
+    /// A <c>deny</c> row in <c>tool-verdicts.json</c> is dropped from the
+    /// advertised list, refused at the door, and recorded — for a tool this
+    /// build does not actually deny.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The subject is the MECHANISM, and that is why it denies
+    /// <c>browser_navigate</c> rather than <c>browser_annotate</c>.</b> The arm
+    /// above proves the shipped judgement; this one proves the judgement is
+    /// <i>read from the file</i> — which the shipped one cannot, because a
+    /// hardcoded constant naming the same tool would satisfy every assertion
+    /// about it. A rig copy of the file is what separates the two, and it leaves
+    /// the product's own deny set at exactly one, which is the number four
+    /// documents publish.
+    /// </para>
+    /// <para>
+    /// <b>Three claims, and each is the half the others do not cover.</b> Absent
+    /// from the list, because a denied tool is dropped rather than disabled —
+    /// there is nothing for a model to read and weigh. Refused at the door,
+    /// because a model that knows the name from upstream can still send it.
+    /// Recorded, because <i>the agent reached for a tool this build will not
+    /// forward</i> is a fact about the session and the session's record is now
+    /// the only place it survives.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADenialInTheVerdictsFileIsUnadvertisedRefusedAtTheDoorAndRecorded()
+    {
+        // ⚠️ A name that is a SUBSTRING OF NO OTHER NAME, and that is not
+        // fussiness: the whole-surface assertion below is a substring search, and
+        // `browser_navigate` would fail it against `browser_navigate_back`
+        // sitting legitimately in the list. Measured over the snapshot:
+        // `browser_pdf_save` occurs exactly once in the whole tools array, which
+        // is its own name.
+        const string Denied = "browser_pdf_save";
+        const string Why = "A rig copy of the file denies this one, so the refusal below is the file talking rather than a constant.";
+
+        // The session child would answer it happily, so a proxy that forwarded
+        // would visibly succeed here rather than failing for some other reason.
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools[Denied] = new FakeToolBehaviour(),
+            verdicts: RepositoryVerdicts.Denying(Denied, Why));
+
+        // The surface child answers with upstream's own committed list, so the
+        // absence asserted below is a filter rather than a double that never had
+        // the tool.
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
+            sessions: sessions);
+
+        var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
+
+        var names = (advertised["tools"]?.AsArray() ?? [])
+            .Select(tool => (string?)tool?["name"] ?? string.Empty)
+            .ToList();
+
+        // Not vacuous: the child really does advertise it.
+        await Assert.That(rig.SurfaceChild.ToolsListResult).Contains(Denied);
+        await Assert.That(names).DoesNotContain(Denied);
+
+        // And nothing of it is left in the surface for a model to read: no
+        // description mentioning it, no note saying it would refuse.
+        await Assert.That(advertised.ToJsonString()).DoesNotContain(Denied);
+
+        var before = RecordedSession.LogOf(rig.Session!).Count;
+        var callsBefore = sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count(tool => tool == Denied));
+
+        var refused = await CallAsync(rig, Denied, new JsonObject
+        {
+            ["session"] = rig.Session!,
+            ["why"] = "reaching for a tool a rig copy of the verdicts file denies",
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        // The file's own `why` is the refusal, behind BrowserAI's own first
+        // sentence. Equality rather than Contains: a frame that swallowed the
+        // reason would still contain the frame.
+        await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolIsDenied(Denied, Why));
+
+        // Nothing reached the child.
+        await Assert.That(sessions.SessionChildren.Sum(child =>
+            child.ToolCallsReceived.Count(tool => tool == Denied))).IsEqualTo(callsBefore);
+
+        // And it is in the record, failed and settled, carrying what the caller
+        // was told rather than a summary of it.
+        var log = RecordedSession.LogOf(rig.Session!);
+        var row = log.Single(entry => entry.Tool == Denied);
+
+        await Assert.That(log.Count).IsEqualTo(before + 1);
+        await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
+        await Assert.That(row.SettledAt).IsNotNull();
+        await Assert.That(row.Failure).IsEqualTo(TextOf(refused));
+    }
+
+    /// <summary>
+    /// A tool with no verdict is refused at the door — and, unlike a denied one,
+    /// is still advertised.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>DENY BY DEFAULT, and the asymmetry with a denial is deliberate
+    /// rather than an oversight.</b> A <c>deny</c> is a decision, so the tool is
+    /// dropped from the list; a missing row is a <i>gap</i>, so the tool stays in
+    /// the list and the call is refused. Two reasons. The gap is already loud —
+    /// <c>ToolVerdictTests</c> is red on the same build — so dropping it from the
+    /// list would add nothing. And filtering on <i>absence</i> would turn a
+    /// verdicts file that failed to load into a silently empty surface, which is
+    /// the failure the loud loader exists to prevent.
+    /// </para>
+    /// <para>
+    /// <b>Both shapes of gap, because they arrive differently.</b> A name in the
+    /// child's own list that nobody judged is the Playwright bump; a name in
+    /// nobody's list is a model reaching for a tool from another server, or a
+    /// typo. Neither reaches the child, and neither is a browser upstream would
+    /// have launched before telling us the tool does not exist.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AToolWithNoVerdictIsRefusedAtTheDoorAndStillAdvertised()
+    {
+        const string Unjudged = "browser_navigate";
+        const string Nowhere = "browser_a_tool_from_the_future";
+
+        await using var sessions = RigSessionEnvironment.Create(
+            child =>
+            {
+                child.Tools[Unjudged] = new FakeToolBehaviour();
+                child.Tools[Nowhere] = new FakeToolBehaviour();
+            },
+            verdicts: RepositoryVerdicts.Without(Unjudged));
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+            child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
+            sessions: sessions);
+
+        var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
+
+        var names = (advertised["tools"]?.AsArray() ?? [])
+            .Select(tool => (string?)tool?["name"] ?? string.Empty)
+            .ToList();
+
+        // Still advertised. This is the half a reader will not expect, so it is
+        // asserted rather than left to the remark above.
+        await Assert.That(names).Contains(Unjudged);
+
+        foreach (var tool in new[] { Unjudged, Nowhere })
+        {
+            var before = RecordedSession.LogOf(rig.Session!).Count;
+            var callsBefore = sessions.SessionChildren.Sum(child => child.ToolCallsReceived.Count(received => received == tool));
+
+            var refused = await CallAsync(rig, tool, new JsonObject
+            {
+                ["session"] = rig.Session!,
+                ["why"] = "reaching for a tool this build has no verdict for",
+            });
+
+            await Assert.That((bool?)refused["isError"]).IsTrue();
+            await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolHasNoVerdict());
+
+            // ⚠️ The caller's own string is NOT in the answer. It is the one
+            // refusal whose subject is a name the caller invented, and the
+            // answer is read by a model.
+            await Assert.That(TextOf(refused)).DoesNotContain(tool);
+
+            // Nothing reached the child -- which is the whole point: upstream
+            // creates the browser context before it looks the name up.
+            await Assert.That(sessions.SessionChildren.Sum(child =>
+                child.ToolCallsReceived.Count(received => received == tool))).IsEqualTo(callsBefore);
+
+            // And the record keeps the name VERBATIM, because "what did it try
+            // to call" is exactly what a reader of the record wants and the
+            // record is not model-facing.
+            var log = RecordedSession.LogOf(rig.Session!);
+
+            await Assert.That(log.Count).IsEqualTo(before + 1);
+            await Assert.That(log[^1].Tool).IsEqualTo(tool);
+            await Assert.That(log[^1].Outcome).IsEqualTo(SessionStore.Failed);
+            await Assert.That(log[^1].Failure).IsEqualTo(TextOf(refused));
         }
     }
 
@@ -464,7 +694,7 @@ internal sealed class SessionPolicyTests
                     // than out of the batch: the call still goes over the wire,
                     // and a proxy that forwarded it anyway would show up as a
                     // surplus in that child's log.
-                    if (SessionToolPolicy.Decide(tool).IsAllowed)
+                    if (RepositoryVerdicts.Committed.Decide(tool).IsAllowed)
                     {
                         expected[directories[name]] = expected.GetValueOrDefault(directories[name]) + 1;
                     }
@@ -541,7 +771,7 @@ internal sealed class SessionPolicyTests
         // modes that refused it — one of three). The tool is withheld from the
         // surface and refused everywhere now, so it is 75, one per round per
         // session.
-        var refusedByLiveness = SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).IsAllowed
+        var refusedByLiveness = RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.TheOneDenial.Name).IsAllowed
             ? 0
             : Rounds * Concurrent.Length;
 
@@ -568,9 +798,9 @@ internal sealed class SessionPolicyTests
     /// back door, a storage tool, the annotation tool and an ordinary one.
     /// </summary>
     private static readonly string[] Probes =
-        ["browser_storage_state", "browser_run_code_unsafe", SessionToolPolicy.AnnotateTool, "browser_navigate"];
+        ["browser_storage_state", "browser_run_code_unsafe", RepositoryVerdicts.TheOneDenial.Name, "browser_navigate"];
 
-    private static bool Allows(string tool) => SessionToolPolicy.Decide(tool).IsAllowed;
+    private static bool Allows(string tool) => RepositoryVerdicts.Committed.Decide(tool).IsAllowed;
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments)
     {

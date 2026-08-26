@@ -45,6 +45,8 @@ Update the entry in [`upstream-review.json`](upstream-review.json):
 - `date` — today, ISO 8601
 - `notes` — **not optional.** What changed, what was adopted, and **what was explicitly declined and why**
 
+⚠️ **And, since 2026-08-26, a verdict for every tool the `tools-list.json` diff added, in [`tool-verdicts.json`](tool-verdicts.json).** BrowserAI **denies by default**, so a new tool with no row is a tool no call can reach — `ToolVerdictTests` is red until one exists, in both directions, and a tool upstream *removed* needs its row deleted with a note saying what went. A `deny` needs the reason a caller will read, because that `why` **is** the refusal. This is the same principle as the line below: *a decline with a reason is worth as much as an adoption*, applied one tool at a time.
+
 A decline with a reason is worth as much as an adoption: it stops the same question being re-litigated at the next bump. An empty note is a review that did not happen, and it is visible as such in the diff.
 
 If the review surfaces work that is settled in intent but not yet done, it belongs in [`TODO.md`](TODO.md). If it surfaces a new failure mode, it belongs in the plan's [hazard index](HAZARDS.md#hazard-index), and the fact behind it in the [`kb/`](kb/README.md) article that owns the topic — that list is what a reviewer checks the implementation against, and it says plainly: *if you find a new hazard, add it here*.

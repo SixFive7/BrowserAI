@@ -257,17 +257,18 @@ internal static class SessionErrors
         + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
 
     /// <summary>
-    /// Row 5 — the annotation tool, which this build does not advertise.
+    /// Row 5 — a tool this build was told not to forward.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>A liveness refusal, and the sentence has to say so.</b> This is not
-    /// a permission: nothing about <c>browser_annotate</c> reaches a credential,
-    /// and BrowserAI makes no claim to be a boundary against the agent calling
-    /// it. What it does is open the Playwright Dashboard and block until a human
-    /// draws in it, with no self-timeout — so the call would hang until the whole
-    /// run is killed. A model told "not permitted" would go looking for a
-    /// permission to acquire; a model told the call cannot return can act on it.
+    /// <b>Half of this sentence is BrowserAI's and half is
+    /// <c>tool-verdicts.json</c>'s, and the split is the whole design.</b> The
+    /// frame is ours and is the same for every denied tool: it was not run,
+    /// nothing was changed, and the name is not in this server's
+    /// <c>tools/list</c>. The reason — and what to do instead — is the row's own
+    /// <c>why</c>, because the reason is a fact about that tool and belongs in
+    /// the file a person adjudicates rather than in a C# literal beside a
+    /// constant.
     /// </para>
     /// <para>
     /// <b>It says the tool is not in the list, first.</b> The reader of this
@@ -275,6 +276,17 @@ internal static class SessionErrors
     /// certainly knows the name from <c>@playwright/mcp</c> rather than from
     /// <c>tools/list</c> — and a refusal that did not say so reads as a tool that
     /// broke rather than one that is absent, which is a retry.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-26 (previously
+    /// <c>AnnotationIsNotInTheSurface(string tool)</c>, which carried
+    /// <c>browser_annotate</c>'s whole reasoning as two literal sentences here).</b>
+    /// Those two sentences are now that tool's <c>why</c> in
+    /// <c>tool-verdicts.json</c> and reach a caller through this method's
+    /// <paramref name="why"/>, so the text a caller reads is byte-identical and
+    /// the reason has become data. What that buys is a second denial costing a
+    /// row rather than a method: the old shape could only ever describe one
+    /// tool, and it was named after it.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously
@@ -289,12 +301,43 @@ internal static class SessionErrors
     /// permit a tool the <c>(tool, mode)</c> permission matrix refused.
     /// </para>
     /// </remarks>
-    /// <param name="tool">The tool that was refused.</param>
+    /// <param name="tool">The tool that was refused, spelled as the verdicts file spells it.</param>
+    /// <param name="why">The row's own reason, which is the rest of the refusal.</param>
     /// <returns>The refusal.</returns>
-    public static string AnnotationIsNotInTheSurface(string tool) =>
+    public static string ToolIsDenied(string tool, string why) =>
         $"'{tool}' is deliberately NOT in this server's tools/list, in any session, and calling it by name does not reach the browser. It was not run and nothing was changed. "
-        + "The reason is liveness rather than security: it opens the Playwright Dashboard and waits for a human to draw, it has no self-timeout — one measured call stood silent for a full 90 s and returned only when its window was closed — and the window it opens belongs to a SECOND, non-headless browser under a detached daemon that writes outside the session directory. There is no configuration in which it runs headless. An unattended run that called it would hang until it was killed. "
-        + "To see the page, use browser_snapshot for structure or browser_take_screenshot for pixels; both return immediately. If a human really is at the keyboard and has to mark something up, take a screenshot and have them annotate the file.";
+        + why;
+
+    /// <summary>
+    /// Row 5's companion — a tool nobody has judged, which is a gap rather than
+    /// a decision.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It names no tool, and that is deliberate.</b> This is the one
+    /// refusal whose subject is a string the caller invented, and the answer is
+    /// read by a model — so quoting it back would put arbitrary caller-supplied
+    /// bytes into model-facing text for no gain. The caller already knows what it
+    /// sent; what it does not know is where to look next, and that is what the
+    /// sentence carries instead. (It is not a claim that the string is contained:
+    /// the session's own record keeps it verbatim, because <i>what did it try to
+    /// call</i> is exactly what a reader wants. What is closed here is the
+    /// <b>model-facing</b> half.)
+    /// </para>
+    /// <para>
+    /// <b>It says GAP rather than refusal, because the two have different
+    /// fixes.</b> A denied tool answers with its own reason and there is nothing
+    /// to be done about it; a tool with no verdict is one this build was never
+    /// told about — a name from another server, a typo, or an upstream tool that
+    /// arrived in a payload nobody has adjudicated yet — and <c>tools/list</c>
+    /// settles all three in one call.
+    /// </para>
+    /// </remarks>
+    /// <returns>The refusal.</returns>
+    public static string ToolHasNoVerdict() =>
+        "BrowserAI has no forwarding verdict for the tool you named, so nothing was sent to the browser and nothing was changed. "
+        + "This is a GAP rather than a decision: a tool this build was deliberately told not to forward refuses with its own reason instead of this sentence. "
+        + "Call tools/list and use a name exactly as it is spelled there — every tool in that list reaches the browser, and a name that is not in it never will, however many times it is sent.";
 
     /// <summary>Row 6 — the browser this session needs is still being provisioned.</summary>
     /// <remarks>

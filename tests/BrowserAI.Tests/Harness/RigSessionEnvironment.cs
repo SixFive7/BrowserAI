@@ -66,7 +66,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ProvisioningTimers? timers,
         TimeSpan? browserIdlePeriod,
         ManualClock? clock,
-        bool realSessionChildren)
+        bool realSessionChildren,
+        ToolVerdicts? verdicts)
     {
         Root = root;
         Clock = clock;
@@ -156,6 +157,10 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         {
             Paths = paths,
             Payload = RepositoryPayload.Layout,
+
+            // The committed file rather than the payload's copy of it: the two
+            // are the same bytes and only one of them exists on a clean clone.
+            Verdicts = verdicts ?? RepositoryVerdicts.Committed,
             Provisioner = Provisioner,
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
@@ -394,6 +399,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// in-process double. True for the one arm that has to observe an actual
     /// browser going away.
     /// </param>
+    /// <param name="verdicts">
+    /// The tool verdicts this proxy serves under. Defaults to the committed
+    /// <c>tool-verdicts.json</c>, which is what the product ships; an arm that
+    /// needs a denial or a gap the product does not have hands in a doctored
+    /// copy rather than changing what is shipped.
+    /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
         long? freeBytes = long.MaxValue,
@@ -402,8 +413,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         bool opensDefaultSession = true,
         TimeSpan? browserIdlePeriod = null,
         ManualClock? clock = null,
-        bool realSessionChildren = false) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers, browserIdlePeriod, clock, realSessionChildren)
+        bool realSessionChildren = false,
+        ToolVerdicts? verdicts = null) =>
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts)
         {
             OpensDefaultSession = opensDefaultSession,
             // A volume this environment reports as full refuses every init,
@@ -428,7 +440,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), reason);
 
     private RigSessionEnvironment(string root, string reason)
-        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null, browserIdlePeriod: null, clock: null, realSessionChildren: false)
+        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null, browserIdlePeriod: null, clock: null, realSessionChildren: false, verdicts: null)
     {
         CanOpenSessions = false;
 

@@ -162,8 +162,10 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       their items are deleted**, which is what this file's own rule asks for.
       `browser_annotate`'s window and its unbounded wait went to
       [kb](kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18),
-      cited from `SessionToolPolicy.IsWithheldFromTheSurface` — the citation moved
-      there when the refusal became a withholding — and covered by re-verification
+      cited from `browser_annotate`'s own `deny` row in `tool-verdicts.json`
+      ***(corrected 2026-08-26, previously "cited from
+      `SessionToolPolicy.IsWithheldFromTheSurface` — the citation moved there when
+      the refusal became a withholding")*** — and covered by re-verification
       row 94; the DPAPI claim that removed the permission layer went to
       [kb](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18),
       cited from all six documents that used to cite each other, and covered by

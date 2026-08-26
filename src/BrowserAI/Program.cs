@@ -269,6 +269,16 @@ internal static class Program
         {
             var payload = new PayloadLayout();
 
+            // ⚠️ READ BEFORE THE FIRST CHILD IS STARTED, AND A FAILURE HERE
+            // STOPS THE PROCESS. BrowserAI denies by default, so a payload
+            // whose verdicts file is missing or unreadable does not degrade to
+            // permissive -- it refuses every browser call, which presents as
+            // "nothing works" with no file named anywhere. Both failures name
+            // the file and what was wrong with it, and both reach the caller
+            // through the ordinary startup path rather than through a refusal
+            // per call.
+            var verdicts = Sessions.ToolVerdicts.Read(payload.ToolVerdicts);
+
             var options = ChildLaunch.Create(
                 payload,
                 paths.BrowsersDirectory,
@@ -285,6 +295,7 @@ internal static class Program
             {
                 Paths = paths,
                 Payload = payload,
+                Verdicts = verdicts,
                 Provisioner = provisioner,
                 InstanceDirectory = instance,
                 OpenSessionLog = ProcessLog.OpenSessionLog,

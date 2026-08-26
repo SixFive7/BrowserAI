@@ -1,0 +1,245 @@
+{
+  "_what_this_is": "Every tool BrowserAI knows of, and whether it forwards a call naming one. A tool absent from this file is a tool nobody has judged: a call naming it is refused at the BrowserAI door and never reaches Playwright. Regenerating the tools/list snapshot does NOT update this file -- that is the point.",
+  "_stop_before_you_edit_this_file": "UPSTREAM-REVIEW.md. Adding a row is adopting a tool, and a row removed is a capability withdrawn.",
+  "_the_three_verdicts": "allow -- forwarded to the child of the session it names, byte-identical. deny -- refused at the door AND kept out of tools/list entirely; carries why (the refusal a caller reads) and since (when it was judged). answer -- BrowserAI answers it itself; it never had a child to reach.",
+  "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
+  "schemaVersion": 1,
+  "judgedAgainst": {
+    "@playwright/mcp": "0.0.79",
+    "playwright-core": "1.63.0-alpha-2026-08-05"
+  },
+  "upstream": {
+    "browser_close": {
+      "verdict": "allow"
+    },
+    "browser_resize": {
+      "verdict": "allow"
+    },
+    "browser_get_config": {
+      "verdict": "allow"
+    },
+    "browser_console_messages": {
+      "verdict": "allow"
+    },
+    "browser_cookie_list": {
+      "verdict": "allow"
+    },
+    "browser_cookie_get": {
+      "verdict": "allow"
+    },
+    "browser_cookie_set": {
+      "verdict": "allow"
+    },
+    "browser_cookie_delete": {
+      "verdict": "allow"
+    },
+    "browser_cookie_clear": {
+      "verdict": "allow"
+    },
+    "browser_resume": {
+      "verdict": "allow"
+    },
+    "browser_highlight": {
+      "verdict": "allow"
+    },
+    "browser_hide_highlight": {
+      "verdict": "allow"
+    },
+    "browser_annotate": {
+      "verdict": "deny",
+      "why": "The reason is liveness rather than security: it opens the Playwright Dashboard and waits for a human to draw, it has no self-timeout — one measured call stood silent for a full 90 s and returned only when its window was closed — and the window it opens belongs to a SECOND, non-headless browser under a detached daemon that writes outside the session directory. There is no configuration in which it runs headless. An unattended run that called it would hang until it was killed. To see the page, use browser_snapshot for structure or browser_take_screenshot for pixels; both return immediately. If a human really is at the keyboard and has to mark something up, take a screenshot and have them annotate the file.",
+      "since": "2026-08-18"
+    },
+    "browser_handle_dialog": {
+      "verdict": "allow"
+    },
+    "browser_evaluate": {
+      "verdict": "allow"
+    },
+    "browser_file_upload": {
+      "verdict": "allow"
+    },
+    "browser_drop": {
+      "verdict": "allow"
+    },
+    "browser_find": {
+      "verdict": "allow"
+    },
+    "browser_fill_form": {
+      "verdict": "allow"
+    },
+    "browser_press_key": {
+      "verdict": "allow"
+    },
+    "browser_type": {
+      "verdict": "allow"
+    },
+    "browser_mouse_move_xy": {
+      "verdict": "allow"
+    },
+    "browser_mouse_click_xy": {
+      "verdict": "allow"
+    },
+    "browser_mouse_drag_xy": {
+      "verdict": "allow"
+    },
+    "browser_mouse_down": {
+      "verdict": "allow"
+    },
+    "browser_mouse_up": {
+      "verdict": "allow"
+    },
+    "browser_mouse_wheel": {
+      "verdict": "allow"
+    },
+    "browser_navigate": {
+      "verdict": "allow"
+    },
+    "browser_navigate_back": {
+      "verdict": "allow"
+    },
+    "browser_network_requests": {
+      "verdict": "allow"
+    },
+    "browser_network_request": {
+      "verdict": "allow"
+    },
+    "browser_network_state_set": {
+      "verdict": "allow"
+    },
+    "browser_pdf_save": {
+      "verdict": "allow"
+    },
+    "browser_route": {
+      "verdict": "allow"
+    },
+    "browser_route_list": {
+      "verdict": "allow"
+    },
+    "browser_unroute": {
+      "verdict": "allow"
+    },
+    "browser_run_code_unsafe": {
+      "verdict": "allow"
+    },
+    "browser_take_screenshot": {
+      "verdict": "allow"
+    },
+    "browser_snapshot": {
+      "verdict": "allow"
+    },
+    "browser_click": {
+      "verdict": "allow"
+    },
+    "browser_drag": {
+      "verdict": "allow"
+    },
+    "browser_hover": {
+      "verdict": "allow"
+    },
+    "browser_select_option": {
+      "verdict": "allow"
+    },
+    "browser_generate_locator": {
+      "verdict": "allow"
+    },
+    "browser_storage_state": {
+      "verdict": "allow"
+    },
+    "browser_set_storage_state": {
+      "verdict": "allow"
+    },
+    "browser_tabs": {
+      "verdict": "allow"
+    },
+    "browser_start_tracing": {
+      "verdict": "allow"
+    },
+    "browser_stop_tracing": {
+      "verdict": "allow"
+    },
+    "browser_verify_element_visible": {
+      "verdict": "allow"
+    },
+    "browser_verify_text_visible": {
+      "verdict": "allow"
+    },
+    "browser_verify_list_visible": {
+      "verdict": "allow"
+    },
+    "browser_verify_value": {
+      "verdict": "allow"
+    },
+    "browser_start_video": {
+      "verdict": "allow"
+    },
+    "browser_stop_video": {
+      "verdict": "allow"
+    },
+    "browser_video_chapter": {
+      "verdict": "allow"
+    },
+    "browser_video_show_actions": {
+      "verdict": "allow"
+    },
+    "browser_video_hide_actions": {
+      "verdict": "allow"
+    },
+    "browser_wait_for": {
+      "verdict": "allow"
+    },
+    "browser_localstorage_list": {
+      "verdict": "allow"
+    },
+    "browser_localstorage_get": {
+      "verdict": "allow"
+    },
+    "browser_localstorage_set": {
+      "verdict": "allow"
+    },
+    "browser_localstorage_delete": {
+      "verdict": "allow"
+    },
+    "browser_localstorage_clear": {
+      "verdict": "allow"
+    },
+    "browser_sessionstorage_list": {
+      "verdict": "allow"
+    },
+    "browser_sessionstorage_get": {
+      "verdict": "allow"
+    },
+    "browser_sessionstorage_set": {
+      "verdict": "allow"
+    },
+    "browser_sessionstorage_delete": {
+      "verdict": "allow"
+    },
+    "browser_sessionstorage_clear": {
+      "verdict": "allow"
+    }
+  },
+  "authored": {
+    "browserai_init": {
+      "verdict": "answer"
+    },
+    "browserai_resume": {
+      "verdict": "answer"
+    },
+    "browserai_catch_up": {
+      "verdict": "answer"
+    },
+    "browserai_list": {
+      "verdict": "answer"
+    },
+    "browserai_destroy": {
+      "verdict": "answer"
+    },
+    "browserai_set_purpose": {
+      "verdict": "answer"
+    },
+    "browserai_reinstall_browser": {
+      "verdict": "answer"
+    }
+  }
+}

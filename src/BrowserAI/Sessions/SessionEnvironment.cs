@@ -30,6 +30,22 @@ internal sealed record SessionEnvironment
     public required PayloadLayout Payload { get; init; }
 
     /// <summary>
+    /// Every tool this build knows of, and whether a call naming one is
+    /// forwarded, refused or answered here.
+    /// </summary>
+    /// <remarks>
+    /// <b>Required rather than read from <see cref="Payload"/> on demand, and for
+    /// the reason <see cref="Provisioner"/> is.</b> Loading it lazily at the door
+    /// would put a file read — and a possible failure naming a missing payload —
+    /// on the path of a call that has already been accepted; loading it here
+    /// means a process that cannot read its verdicts never starts serving.
+    /// Handing it in also lets the suite vary the file without writing one, which
+    /// is the only way an arm can plant a second denial or an unjudged name
+    /// without changing what the product ships.
+    /// </remarks>
+    public required ToolVerdicts Verdicts { get; init; }
+
+    /// <summary>
     /// First-run browser provisioning: what <c>init</c> starts and never waits
     /// for, and what <c>browserai_reinstall_browser</c> drives.
     /// </summary>

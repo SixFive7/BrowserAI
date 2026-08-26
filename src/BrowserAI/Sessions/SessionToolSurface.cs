@@ -36,11 +36,15 @@ namespace BrowserAI.Sessions;
 /// the surface is the first thing a model reads.
 /// </para>
 /// <para>
-/// <b>Exactly one upstream tool is dropped on the way through</b>, and the
-/// charter allows it in as many words: <i>filter, re-describe, inject
-/// <c>session</c></i> is in scope and renaming is not. Which one, and the
-/// measurement behind it, is
-/// <see cref="SessionToolPolicy.IsWithheldFromTheSurface"/>'s to say. What
+/// <b>Every upstream tool carrying a <c>deny</c> verdict is dropped on the way
+/// through</b>, and the charter allows it in as many words: <i>filter,
+/// re-describe, inject <c>session</c></i> is in scope and renaming is not.
+/// <i>Corrected 2026-08-26 (previously "Exactly one upstream tool is dropped …
+/// which one, and the measurement behind it, is
+/// <c>SessionToolPolicy.IsWithheldFromTheSurface</c>'s to say").</i> There is
+/// still exactly one, and it is no longer a fact about the code: which tools are
+/// dropped is <c>tool-verdicts.json</c>'s to say, and
+/// <see cref="ToolVerdicts.IsWithheldFromTheSurface"/> is how it says it. What
 /// belongs here is the shape: it is <b>dropped, not disabled</b> — no entry, no
 /// description explaining that it will refuse, nothing for a model to read and
 /// weigh. A tool that can never succeed still costs attention and description
@@ -220,11 +224,13 @@ internal static class SessionToolSurface
     /// characters included. It stays enforced because it floats with a client
     /// version this project does not control and because this is the surface this
     /// type is most exposed on: <see cref="SessionDescription"/> is injected into
-    /// every upstream tool's schema, so one string lands fifty-eight times and
-    /// the day a release does start cutting schemas, one edit becomes fifty-eight
-    /// silent truncations. <i>Corrected 2026-08-18 (previously "fifty-nine",
-    /// twice): <c>browser_annotate</c> is withheld from the surface, so it is no
-    /// longer one of the schemas this lands in.</i>
+    /// every upstream tool's schema, so one string lands sixty-eight times and
+    /// the day a release does start cutting schemas, one edit becomes sixty-eight
+    /// silent truncations. <i>Corrected 2026-08-26 (previously "fifty-eight",
+    /// which was the surface before every capability was granted to every session
+    /// on 2026-08-20; and "fifty-nine" twice before that).</i>
+    /// <c>browser_annotate</c> is denied and therefore not one of the schemas
+    /// this lands in.
     /// </remarks>
     public const int ParameterDescriptionMaximumCharacters = Proxy.ClientTruncationBudget.ParameterDescriptionCharacters;
 
@@ -290,14 +296,17 @@ internal static class SessionToolSurface
         name is not null && name.StartsWith(Prefix, StringComparison.Ordinal);
 
     /// <summary>
-    /// Rewrites the child's <c>tools/list</c> result: <c>session</c> onto every
-    /// tool, and the five authored tools in front.
+    /// Rewrites the child's <c>tools/list</c> result: <c>session</c> and
+    /// <c>why</c> onto every tool, the authored tools in front, and every
+    /// <c>deny</c> row dropped.
     /// </summary>
     /// <param name="result">The child's result, parsed but not re-serialised through any typed contract.</param>
+    /// <param name="verdicts">What this build ships a judgement for.</param>
     /// <returns>The result to answer the caller with.</returns>
-    public static JsonObject Rewrite(JsonObject result)
+    public static JsonObject Rewrite(JsonObject result, ToolVerdicts verdicts)
     {
         ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(verdicts);
 
         var rewritten = new JsonArray();
 
@@ -325,7 +334,14 @@ internal static class SessionToolSurface
                     // stops being filtered rather than being filtered by a stale
                     // spelling -- and the golden snapshot is what says the
                     // rename happened.
-                    if (SessionToolPolicy.IsWithheldFromTheSurface((definition[NameMember] as JsonValue)?.GetValue<string>()))
+                    //
+                    // ⚠️ A `deny` ROW AND NOTHING ELSE. A tool with no row at
+                    // all is still advertised and refused at the door: a denial
+                    // is a decision and an absence is a gap, and filtering on the
+                    // absence would make a verdicts file that failed to load
+                    // present as an empty surface. `ToolVerdicts` argues both
+                    // halves.
+                    if (verdicts.IsWithheldFromTheSurface((definition[NameMember] as JsonValue)?.GetValue<string>()))
                     {
                         continue;
                     }
@@ -382,8 +398,8 @@ internal static class SessionToolSurface
     // through byte for byte, which is a stronger property than "append, never
     // rewrite" and is asserted as one by
     // ModelSurfaceTests.EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll.
-    // Restoring the tool means restoring this method with it --
-    // SessionToolPolicy.IsWithheldFromTheSurface says what that would take.
+    // Restoring the tool means restoring this method with it -- the tool's own
+    // `why` in tool-verdicts.json says what that would take.
     private static void InjectSession(JsonObject tool)
     {
         if (tool[SchemaMember] is not JsonObject schema)

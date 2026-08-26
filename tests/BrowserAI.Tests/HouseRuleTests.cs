@@ -1094,9 +1094,12 @@ internal sealed partial class HouseRuleTests
     /// </para>
     /// <list type="bullet">
     /// <item>
-    /// <b>JSON has no comment syntax at all</b> — twelve tracked files, four of
-    /// them lock files nobody writes by hand. <c>drift-check.json</c> carries a
+    /// <b>JSON has no comment syntax at all</b> — thirteen tracked files, four of
+    /// them lock files nobody writes by hand. <c>drift-check.json</c>,
+    /// <c>upstream-review.json</c> and <c>tool-verdicts.json</c> carry a
     /// <c>_license</c> key instead, which is the closest the format allows.
+    /// <i>Corrected 2026-08-26 (previously "twelve"), when
+    /// <c>tool-verdicts.json</c> arrived.</i>
     /// </item>
     /// <item>
     /// <b><c>upstream-snapshots/</c> is foreign bytes</b>, exempted from

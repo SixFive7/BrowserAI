@@ -432,7 +432,10 @@ it anyway. The three things that would have to change before it could come back
 — a bounded call, a daemon inside the session's own containment, and a headless
 path that does not turn on an upstream test variable — are recorded in
 [DECISIONS](../../DECISIONS.md#licence-release-policy-and-the-tool-surface) and
-beside the code in `SessionToolPolicy.IsWithheldFromTheSurface`. Nothing about
+in the tool's own `deny` row in [`tool-verdicts.json`](../../tool-verdicts.json),
+whose `why` **is** the refusal a caller reads. *Corrected 2026-08-26 (previously
+"beside the code in `SessionToolPolicy.IsWithheldFromTheSurface`") — that type is
+deleted and the judgement is data now.* Nothing about
 this entry is superseded by that: it is the evidence the decision rests on, and
 re-implementing the feature starts by re-running it.
 

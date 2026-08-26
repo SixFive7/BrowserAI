@@ -178,7 +178,7 @@ to an intermediate version, review, land it green, then bump again.
 and the marker test's result. [`drift-check.json`](drift-check.json) stamped
 with `lastChecked` **only after a lookup actually returned a version.**
 
-### 4. The four snapshots adjudicated
+### 4. The four snapshots and the verdict file adjudicated
 
 `tools-list.json`, `cli-help.txt`, `config-schema.d.ts`, `browsers.json` —
 regenerated from the resolved payload and diffed. The mechanism is
@@ -188,6 +188,17 @@ regenerated from the resolved payload and diffed. The mechanism is
 adjudication of exactly what moved. A snapshot that changed without an
 adjudication fails the gate, so this item is answered by the suite being green —
 what is recorded here is the adjudication text, not a second assertion.
+
+⚠️ **And the verdict, per tool, for anything `tools-list.json` added, removed or
+renamed.** *Added 2026-08-26.* [`tool-verdicts.json`](tool-verdicts.json) carries
+one row per tool and BrowserAI **denies by default**, so a tool that arrived
+unadjudicated is a tool no call can reach —
+[`ToolVerdictTests`](TESTING.md#the-verdicts-file-and-the-tool-set-it-is-judged-against)
+makes that a red build in both directions on every run, and `judgedAgainst` must
+name the versions the payload lock resolves. **Evidence:** the rows added or
+removed, each with its `why`, and the `judgedAgainst` stamp. **The test can see
+that a row exists and never that a human meant it**, which is why this item is
+here and not only there — the same reason item 5 exists.
 
 A moved `browsers.json` deserves its own line in the release notes: every machine
 re-downloads the browser and re-extracts it. **Updated 2026-08-17 (previously

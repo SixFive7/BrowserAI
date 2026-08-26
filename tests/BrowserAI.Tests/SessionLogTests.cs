@@ -75,7 +75,7 @@ internal sealed class SessionLogTests
             ["why"] = "watching where the redirect goes now that the cause is known",
         });
 
-        var log = RecordedSession.LogOf(directory);
+        var log = await SettledLogOf(directory);
 
         // ⚠️ THE CLAIM: one list, in the order the things happened, with the
         // human's decision sitting between the calls that led to it and the
@@ -159,7 +159,7 @@ internal sealed class SessionLogTests
             ["why"] = "picking this up after the overnight run stopped",
         });
 
-        var log = RecordedSession.LogOf(directory);
+        var log = await SettledLogOf(directory);
 
         await Assert.That(log.Select(entry => entry.Tool).ToArray())
             .IsEquivalentTo([SessionToolSurface.Init, SessionToolSurface.Resume]);
@@ -196,13 +196,13 @@ internal sealed class SessionLogTests
     public async Task ARefusedCallIsRecordedAsAFailedRowCarryingTheRefusal()
     {
         await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools[SessionToolPolicy.AnnotateTool] = new FakeToolBehaviour());
+            child.Tools[RepositoryVerdicts.TheOneDenial.Name] = new FakeToolBehaviour());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var before = RecordedSession.LogOf(rig.Session!).Count;
 
-        var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject
+        var refused = await CallAsync(rig, RepositoryVerdicts.TheOneDenial.Name, new JsonObject
         {
             ["session"] = rig.Session!,
             ["why"] = "reaching for a tool this server does not advertise",
@@ -211,7 +211,7 @@ internal sealed class SessionLogTests
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
         var after = RecordedSession.LogOf(rig.Session!);
-        var row = after.Single(entry => entry.Tool == SessionToolPolicy.AnnotateTool);
+        var row = after.Single(entry => entry.Tool == RepositoryVerdicts.TheOneDenial.Name);
 
         await Assert.That(after.Count).IsEqualTo(before + 1);
         await Assert.That(row.Why).IsEqualTo("reaching for a tool this server does not advertise");
@@ -268,7 +268,8 @@ internal sealed class SessionLogTests
             ["why"] = "loading a page that will not load",
         });
 
-        var row = RecordedSession.LogOf(directory).Single(entry => entry.Tool is "browser_navigate");
+        var settledLog = await SettledLogOf(directory);
+        var row = settledLog.Single(entry => entry.Tool is "browser_navigate");
 
         await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
         await Assert.That(row.SettledAt).IsNotNull();
@@ -278,7 +279,7 @@ internal sealed class SessionLogTests
         // And the control, on the same session: a call that worked stores no
         // payload at all. Without this a version that stored every answer would
         // pass every assertion above.
-        var init = RecordedSession.LogOf(directory).Single(entry => entry.Tool == SessionToolSurface.Init);
+        var init = settledLog.Single(entry => entry.Tool == SessionToolSurface.Init);
 
         await Assert.That(init.Outcome).IsEqualTo(SessionStore.Successful);
         await Assert.That(init.Failure).IsNull();
@@ -375,12 +376,61 @@ internal sealed class SessionLogTests
         // And it settles when the answer arrives, with the instant it settled at
         // — which is what makes a duration derivable and what tells a stale row
         // from a finished one.
-        var settled = RecordedSession.LogOf(directory).Single(row => row.Tool is "browser_navigate");
+        var settled = (await SettledLogOf(directory)).Single(row => row.Tool is "browser_navigate");
 
         await Assert.That(settled.Outcome).IsEqualTo(SessionStore.Successful);
         await Assert.That(settled.SettledAt).IsNotNull();
         await Assert.That(settled.SettledAt!.Value).IsGreaterThanOrEqualTo(settled.At);
         await Assert.That(settled.Failure).IsNull();
+    }
+
+    /// <summary>
+    /// One session's log, once every row in it has settled.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THE SETTLE IS NOT ORDERED BEFORE THE ANSWER, and reading the row
+    /// the instant a round trip returns is a race a test loses under load.</b>
+    /// <c>BrowserProxy</c> settles in a <c>finally</c> that runs <i>after</i>
+    /// the answer has gone back to the caller — deliberately, because that
+    /// <c>finally</c> is what covers the ways out the child never hears about,
+    /// and because the arm above asserts the in-flight window is genuinely
+    /// visible to a second reader while a call is outstanding. Nothing in the
+    /// product ever promised the settle precedes the answer.
+    /// </para>
+    /// <para>
+    /// <b>Found 2026-08-26 by a full run</b>, not by review:
+    /// <c>AChildErrorIsAFailedRowAndItsPayloadIsWhatTheChildSaid</c> read
+    /// <c>in-flight</c> where it expected <c>failed</c>, on a call whose answer
+    /// the client was already holding. Four arms in this file had the same
+    /// shape and three of them had never lost.
+    /// </para>
+    /// <para>
+    /// <b>Bounded by the suite's own hang detector and by nothing this file
+    /// invented.</b> What is asserted is still that the row settles — never how
+    /// fast, which is a promptness claim and would be a defect.
+    /// </para>
+    /// </remarks>
+    /// <param name="directory">The session directory.</param>
+    /// <returns>The rows, oldest first, none of them in flight.</returns>
+    private static async Task<IReadOnlyList<SessionLogRow>> SettledLogOf(string directory)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            var log = RecordedSession.LogOf(directory);
+
+            if (log.Count > 0 && log.All(row => row.Outcome is not SessionStore.InFlight))
+            {
+                return log;
+            }
+
+            await Assert.That(waited.Elapsed).IsLessThan(TestDefaults.InProcessHang)
+                .Because($"a row this session logged never settled, so every outcome below would be about a call that never came back ({log.Count} rows)");
+
+            await Task.Delay(10);
+        }
     }
 
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>

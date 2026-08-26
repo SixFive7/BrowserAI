@@ -305,7 +305,7 @@ internal sealed class FirefoxSessionTests
     {
         // The rewrite is what a model receives, so the enum is read out of it
         // rather than off the class that declares it.
-        var rewritten = SessionToolSurface.Rewrite([]);
+        var rewritten = SessionToolSurface.Rewrite([], RepositoryVerdicts.Committed);
         var authored = (rewritten["tools"]?.AsArray() ?? [])
             .ToDictionary(tool => (string)tool!["name"]!, tool => tool!.AsObject(), StringComparer.Ordinal);
 

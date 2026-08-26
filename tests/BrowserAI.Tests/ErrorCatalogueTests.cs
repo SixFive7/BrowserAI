@@ -334,26 +334,30 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "the unattended session an annotation call would hang",
         });
 
-        var refused = await CallAsync(rig, SessionToolPolicy.AnnotateTool, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
+        var refused = await CallAsync(rig, RepositoryVerdicts.TheOneDenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         Match(
             TextOf(refused),
-            nameof(SessionErrors.AnnotationIsNotInTheSurface),
-            SessionErrors.AnnotationIsNotInTheSurface(SessionToolPolicy.AnnotateTool));
+            nameof(SessionErrors.ToolIsDenied),
+            SessionErrors.ToolIsDenied(RepositoryVerdicts.TheOneDenial.Name, RepositoryVerdicts.Committed.Find(RepositoryVerdicts.TheOneDenial.Name)!.Why!));
 
-        // And a tool this build has never heard of is FORWARDED now rather than
-        // refused, so nothing of ours is in that answer at all. Asserted here
-        // because the deleted row was the one thing that used to make it ours.
-        var unknown = await rig.Client.SendAsync("tools/call", new JsonObject
+        // ⚠️ Row 5's companion, and it was INVERTED on 2026-08-26 (previously
+        // "a tool this build has never heard of is FORWARDED now rather than
+        // refused, so nothing of ours is in that answer at all"). Deny-by-default
+        // came back as a verdict rather than as a permission -- see
+        // ToolVerdicts -- so a name with no row is refused at the door, and this
+        // is the provocation for the row that says so.
+        var unknown = await CallAsync(rig, "browser_not_a_real_tool", new JsonObject
         {
-            ["name"] = "browser_not_a_real_tool",
-            ["arguments"] = new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" },
+            ["session"] = directory,
+            ["why"] = "the suite exercising this call",
         });
 
         await Assert.That(sessions.SessionChildren.Any(child =>
-            child.ToolCallsReceived.Contains("browser_not_a_real_tool", StringComparer.Ordinal))).IsTrue();
-        await Assert.That(unknown.Envelope.ToJsonString()).DoesNotContain("does not classify");
+            child.ToolCallsReceived.Contains("browser_not_a_real_tool", StringComparer.Ordinal))).IsFalse();
+
+        Match(TextOf(unknown), nameof(SessionErrors.ToolHasNoVerdict), SessionErrors.ToolHasNoVerdict());
     }
 
     [Test]
@@ -1144,7 +1148,16 @@ internal sealed partial class ErrorCatalogueTests
         // is the opposite one. Nothing about waiting will clear an ACL that
         // denies this account, a full volume or an unwritable profile, and a
         // single row that said both would be a sentence a model cannot act on.
-        await Assert.That(rows.Count).IsEqualTo(25);
+        //
+        // ⚠️ **Corrected 2026-08-26 to 26 (previously 25).** One row split into
+        // two: `AnnotationIsNotInTheSurface` became `ToolIsDenied(tool, why)`,
+        // which composes BrowserAI's frame with the reason from that tool's row
+        // in `tool-verdicts.json`, and `ToolHasNoVerdict()`, which is the gap
+        // rather than the decision. They are two rows because they have two
+        // fixes -- a denial has none and a gap is answered by `tools/list` --
+        // and a single row that said both would be the sentence a model cannot
+        // act on that the note above already names.
+        await Assert.That(rows.Count).IsEqualTo(26);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

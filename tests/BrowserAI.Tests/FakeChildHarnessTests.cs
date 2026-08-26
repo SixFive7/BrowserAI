@@ -449,7 +449,7 @@ internal sealed class FakeChildHarnessTests
     /// <b>The claim the deleted half was really making is asserted below in the
     /// form that is now true:</b> a double-backed rig meets no refusal of ours
     /// on the tools it calls, which is a statement about
-    /// <see cref="SessionToolPolicy"/> rather than about a mode.
+    /// <see cref="ToolVerdicts"/> rather than about a mode.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -485,15 +485,20 @@ internal sealed class FakeChildHarnessTests
         // ⚠️ WHAT THE DELETED HALF WAS REALLY ASSERTING, in the form that is now
         // true: nothing of ours stands between a double and the caller. It used
         // to be a claim about which mode the rig ran under; it is now a claim
-        // about the one refusal that is left, which is keyed on the tool alone.
-        await Assert.That(SessionToolPolicy.Decide(SessionToolPolicy.AnnotateTool).Refusal).IsNotNull();
-        await Assert.That(SessionToolPolicy.IsWithheldFromTheSurface(SessionToolPolicy.AnnotateTool)).IsTrue();
+        // about the shipped verdicts file, which is keyed on the tool alone.
+        //
+        // ⚠️ Corrected 2026-08-26: under deny-by-default the second pair below
+        // is the load-bearing one. A rig whose tools had no rows would meet a
+        // refusal of OURS on every call, which is exactly what this arm says
+        // does not happen.
+        await Assert.That(RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.TheOneDenial.Name).Refusal).IsNotNull();
+        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(RepositoryVerdicts.TheOneDenial.Name)).IsTrue();
 
         // The tools that arm actually calls are permitted, so the change costs
         // it nothing. `browser_navigate` is the call under test and the close
         // tool is the product's own idle close.
-        await Assert.That(SessionToolPolicy.Decide("browser_navigate").Refusal).IsNull();
-        await Assert.That(SessionToolPolicy.Decide(LiveSession.BrowserCloseTool).Refusal).IsNull();
+        await Assert.That(RepositoryVerdicts.Committed.Decide("browser_navigate").Refusal).IsNull();
+        await Assert.That(RepositoryVerdicts.Committed.Decide(LiveSession.BrowserCloseTool).Refusal).IsNull();
     }
 
     /// <summary>

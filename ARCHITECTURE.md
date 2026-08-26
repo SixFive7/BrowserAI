@@ -170,7 +170,7 @@ The largest area, and the one everything else keys on.
 | Concern | Implemented by |
 |---|---|
 | The directory, the lock and the record | `src/BrowserAI/Sessions/{SessionPath, SessionLayout, LockRecord, SessionLock}.cs` |
-| The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, SessionToolPolicy, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20)* |
+| The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, ToolVerdicts, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20; `SessionToolPolicy.cs` 2026-08-26, into `ToolVerdicts` and the file it reads)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
@@ -440,8 +440,66 @@ window belongs to a second non-headless browser under a daemon that writes into
 charter where renaming is not, and a caller that names the tool anyway is refused
 rather than forwarded — a model knows upstream's names from everywhere except this
 server's list. *Corrected 2026-08-18 (previously "Two refusals survive …
-`browser_annotate` is refused on a mode that opens no window").* Implemented by
-`SessionToolPolicy.IsWithheldFromTheSurface` and `SessionToolSurface.Rewrite`.
+`browser_annotate` is refused on a mode that opens no window").*
+
+⚠️ ***Corrected 2026-08-26 (previously "Implemented by
+`SessionToolPolicy.IsWithheldFromTheSurface` and `SessionToolSurface.Rewrite`").***
+That type is deleted. **The judgement is a file now** —
+[`tool-verdicts.json`](tool-verdicts.json), one row per tool, shipped inside the
+payload it describes and read at startup — and the sentence above is a fact about
+what the file says rather than about what the code decides. `browser_annotate` is
+still the only `deny` this build ships, and the reasoning that was a doc comment
+beside a C# constant is now that row's own `why`, which **is** the refusal a
+caller reads. Implemented by `ToolVerdicts`, `SessionToolSurface.Rewrite` and
+`BrowserProxy.AnswerToolsCallAsync`; the section below is what the file buys that
+a constant could not.
+
+### The verdicts file, and why a tool nobody judged is refused
+
+| Concern | Implemented by |
+|---|---|
+| What this build knows of every tool, and what it does with a call naming one | [`tool-verdicts.json`](tool-verdicts.json), tracked at the repository root |
+| Reading it, and refusing to serve on one it cannot read | `src/BrowserAI/Sessions/ToolVerdicts.cs` |
+| Where it lives at run time, and an incomplete payload naming itself | `PayloadLayout.ToolVerdicts`, `PayloadLayout.Verify` |
+| Getting the tracked copy into the payload | `CopyToolVerdictsIntoThePayload`, in `src/BrowserAI/BrowserAI.csproj` |
+| The door, and the advertised list | `BrowserProxy.AnswerToolsCallAsync`, `SessionToolSurface.Rewrite` |
+| That it agrees with the golden snapshot, both directions | `ToolVerdictTests` |
+
+**Three verdicts.** `allow` forwards the call to the child of the session it
+names, byte-identical. `deny` refuses it at BrowserAI's door **and** drops the
+tool from `tools/list` entirely — dropped, not disabled, because a tool that can
+never succeed costs attention and description budget for as long as it is in the
+list — carrying the row's own `why` as the refusal and a `since` as provenance.
+`answer` is one of BrowserAI's own seven, which never had a child to reach.
+
+**DENY BY DEFAULT: a name with no row is refused too, and that is the half worth
+arguing.** It reverses a decision taken 2026-08-18 — and it reverses it for a
+reason that decision's reasoning does not reach. What went that day was a
+`(tool, mode)` **permission** matrix, removed because it was never a boundary
+against a caller who owns the session directory; every word of that still holds
+and nothing here is a permission. A verdict decides something else: whether a name
+this build has never been told about is worth **starting a browser** for. Upstream
+creates the browser context *before* it looks a tool name up — the CLI factory's
+`create` at `coreBundle.js:73101`, the name lookup at `:65533` — so a forwarded
+call naming nothing launches a browser to be told there is nothing to run, and
+answers by echoing the caller's own string into model-facing text.
+
+**What bounds the cost is a red build rather than a promise.** `ToolVerdictTests`
+compares the file with `upstream-snapshots/tools-list.json` in **both**
+directions on every run: a tool in the snapshot with no row fails, and a row
+naming a tool the snapshot does not carry fails. A Playwright bump that adds a
+tool therefore reddens the suite in the same pass that reddens the snapshot diff,
+and the two are adjudicated together — the **comparison** is on every build, the
+**adjudication** is [`RELEASING.md` item 4](RELEASING.md#4-the-four-snapshots-and-the-verdict-file-adjudicated).
+
+**An unjudged tool is still advertised; a denied one is not.** The asymmetry is
+deliberate. A denial is a decision, so there is nothing for a model to weigh; an
+absence is a gap, already loud on the same build, so dropping it would add
+nothing — and filtering on *absence* would turn a verdicts file that failed to
+load into a silently empty surface. Which is why a missing or malformed file is a
+**startup failure naming the file**, never an empty set: under deny-by-default,
+empty means refuse everything, and a silent fallback would present as a server
+that starts, advertises a full surface and then refuses every call.
 
 **Lifetime is one timer and no expiry.** A ten-minute browser-idle timer closes
 the browser and keeps the node child; the relaunch on the next call is upstream's
