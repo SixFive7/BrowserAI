@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
 
@@ -269,20 +270,61 @@ internal sealed partial class ReVerificationIndexTests
         return rows;
     }
 
+    /// <summary>
+    /// Whether a name a row cites resolves: a build script on disk, or a type
+    /// this repository owns, optionally with the member that carries the
+    /// assertion.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Harmonised with <c>HazardIndexTests.Missing</c> on 2026-08-26, on
+    /// the three axes where it had been silently narrower.</b> It searched the
+    /// <b>test assembly alone</b>, bound <b>public methods only</b> with no
+    /// inherited members, and used <c>GetMethod</c>, which throws
+    /// <c>AmbiguousMatchException</c> on an overload set. No live row depended on
+    /// any of the three and every row resolved, so this was a <b>false-red
+    /// risk</b> rather than a hole — the next person to write a re-verification
+    /// row against a private product member, a field or an overload would have
+    /// got a red build for a row that was correct. P6's rider L harmonised the
+    /// <c>previously "…"</c> clause between these two gates and left this axis
+    /// untouched with no note saying why; the note is this one, and the axis is
+    /// closed rather than described.
+    /// </para>
+    /// <para>
+    /// <b>One axis is deliberately NOT harmonised, and the direction is the
+    /// reason.</b> <c>HazardIndexTests.Missing</c> treats a type it cannot find
+    /// as <i>not ours to check</i> and passes it, because a hazard row may cite
+    /// <c>Directory.Move</c> or a phrase in prose that happens to carry a dot.
+    /// This gate's <c>Automated by</c> column names <b>a test that answers the
+    /// row</b> or the word <i>manual</i> — there is no third thing it may name —
+    /// so a type that resolves nowhere is a row claiming coverage that does not
+    /// exist, which is precisely what this class was written for. Passing it
+    /// would restore the eight rows naming test types no build had ever produced.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The name the row cites.</param>
+    /// <returns>Whether it resolves.</returns>
     private static bool Exists(string name)
     {
-        // A path is a build script; anything else is a type in this assembly,
-        // optionally with the method that carries the assertion.
+        // A path is a build script; anything else is a type in one of this
+        // repository's two assemblies, optionally with the member that carries
+        // the assertion.
         if (name.Contains('/', StringComparison.Ordinal) || name.Contains('\\', StringComparison.Ordinal))
         {
             return File.Exists(Path.Combine(RepositoryLayout.Root.FullName, name));
         }
 
         var parts = name.Split('.', 2);
-        var type = typeof(ReVerificationIndexTests).Assembly.GetTypes()
+
+        var type = HazardIndexTests.OurAssemblies
+            .SelectMany(assembly => assembly.GetTypes())
             .FirstOrDefault(candidate => string.Equals(candidate.Name, parts[0], StringComparison.Ordinal));
 
-        return type is not null && (parts.Length == 1 || type.GetMethod(parts[1]) is not null);
+        return type is not null
+            && (parts.Length == 1
+                || type.GetMember(
+                    parts[1],
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy).Length is not 0);
     }
 
     [GeneratedRegex(@"^\d+[a-z]?$")]

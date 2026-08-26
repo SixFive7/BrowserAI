@@ -388,6 +388,74 @@ internal sealed class SessionListTests
     }
 
     /// <summary>
+    /// A listing pointed at a directory that is not there says so, rather than
+    /// answering confidently that there are no sessions under it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The answer was TRUE and useless, which is why this is a clause
+    /// rather than a refusal.</b> Measured 2026-08-26 through the published
+    /// binary: <c>browserai_list</c> on <c>Q:\</c> came back <c>isError=false</c>
+    /// in 1 ms with <i>"No BrowserAI sessions under 'Q:\'. That is an answer
+    /// rather than an error"</i>. There genuinely are none. A caller that typed
+    /// the wrong letter has no way to tell that from an empty tree.
+    /// </para>
+    /// <para>
+    /// <b><c>CanonicalPath</c> knows and drops it.</b> <c>VolumeIdentity.Of</c>
+    /// answers <c>NoSuchDrive</c>, and only <c>Network</c> and
+    /// <c>Substituted</c> are acted on — justified in that file on the ground
+    /// that an absent letter <i>"falls through to the ordinary creation failure,
+    /// which already says what to do"</i>. <c>list</c> creates nothing, so for
+    /// this one door there is no such sentence.
+    /// </para>
+    /// <para>
+    /// <b>Answered with one <c>Directory.Exists</c> on the empty path only</b>,
+    /// against a root the canonicaliser has already proven local — a network
+    /// spelling and a mapped letter are both refused above it, so the 22-second
+    /// call this product is ordered around cannot be reached from here.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AListingOnADriveThatDoesNotExistSaysSoRatherThanSayingNoSessions()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // Counted down from Z through the one definition the suite has, because
+        // `DosDeviceAlias` allocates upward from E: and the two must not meet.
+        var absent = $@"{SessionIndexTests.FirstUnmountedDriveLetter()}:\";
+
+        var nowhere = await CallAsync(rig, SessionToolSurface.List, new JsonObject
+        {
+            ["directory"] = absent,
+        });
+
+        var text = TextOf(nowhere);
+
+        await Assert.That(text).Contains(absent);
+        await Assert.That(text).Contains("there is no directory at");
+
+        // A clause and not a refusal: the answer is still true, and a listing
+        // that refused would be a turn charged for a fact.
+        await Assert.That((bool?)nowhere["isError"]).IsNotEqualTo(true);
+
+        // ⚠️ THE POSITIVE CONTROL, and it is the sentence this must not have
+        // replaced. A directory that IS there and holds nothing still answers
+        // the plain empty answer, with no suggestion that the path is wrong.
+        var empty = Path.Combine(sessions.Root, "really-empty");
+        _ = Directory.CreateDirectory(empty);
+
+        var nothingHere = TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
+        {
+            ["directory"] = empty,
+        }));
+
+        await Assert.That(nothingHere).Contains("No BrowserAI sessions under");
+        await Assert.That(nothingHere).DoesNotContain("there is no directory at");
+    }
+
+    /// <summary>
     /// Creates a session directory the way a process that has since exited would
     /// have left it: a real record on disk, an index entry, and no handle.
     /// </summary>

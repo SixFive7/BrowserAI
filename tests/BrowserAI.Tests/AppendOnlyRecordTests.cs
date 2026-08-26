@@ -96,6 +96,13 @@ internal sealed partial class AppendOnlyRecordTests
     /// note, and the seal was taken afterwards — which is the only order that
     /// does not mean re-sealing a record to make a test pass.
     /// </para>
+    /// <para>
+    /// <b>The 2026-08-26 post-course-correction review is what that lesson looks
+    /// like once it has been learned</b>: it was written in <c>.work/</c> with
+    /// <b>zero</b> Markdown links, deliberately, so its link shapes were final
+    /// before it moved and it was registered byte-identical to what was handed
+    /// over. It carries no editorial note because there was no editorial change.
+    /// </para>
     /// The changelog carries exactly one released section today, and the
     /// <c>[Unreleased]</c> section — 143,210 characters of it on the day this
     /// was written — is deliberately not in the list. It is not a record of what
@@ -111,6 +118,7 @@ internal sealed partial class AppendOnlyRecordTests
         new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11022, "1a5b9733e0f023de5c0a8a5879ac20298fd7193277b88bac075838c31fea1a65"),
         new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29792, "55a40260c260d23240c069ef846929106a0a20c4ea1f34b8bf073590ec8587e1"),
         new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32404, "5f8fdaa1289f2a945a9c8ac1da91dcaf76c0067ec6aba82d8edc6a18474446d1"),
+        new("docs/reviews/2026-08-26-post-course-correction.md", 38497, "88afab61473649f812083baf9482eeb6aa60924c3b34adff4939098cbf0954cf"),
     ];
 
     /// <summary>

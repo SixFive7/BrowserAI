@@ -157,15 +157,35 @@ commit, because reverting to green is locally the cheapest correct-looking move.
 **An override leaves a trace in the release artifact.** It is not a decision that
 may be taken in a shell and forgotten: the resolved set is recorded beside the
 package ([RELEASING item 11](RELEASING.md#11-the-resolved-set-is-recorded-beside-the-artifact)),
-so the manifest states the version that was actually shipped, and the override
-is stated with it — what was held, at what version, and why. **A release whose
-manifest does not say it was overridden is a release claiming it was not.**
+so the manifest states the version that was actually shipped, and the override is
+stated with it — what was held, at what version, against what newest version, why,
+and the name of the human who took the decision. **A release whose manifest does
+not say it was overridden is a release claiming it was not.**
+
+⚠️ **That sentence was false for as long as it stood, and it is true since
+2026-08-26.** [`build/Write-ReleaseManifest.ps1`](build/Write-ReleaseManifest.ps1)
+emitted `version`, `tag`, `package`, `sha256` and the resolved versions read out
+of seven copied files, and **had no override field and no place for one** — so no
+manifest could ever say it was overridden, and by the bolded sentence's own logic
+every release claimed it was not, *including one that was*. The script takes five
+`-Override*` parameters now and always emits the key: `"override": null` for an
+ordinary release, a five-part block for a held one. **An absent key is not a
+statement; `null` is** — which is what lets a reader a year later tell *this
+release says it was not overridden* from *this manifest was written by a build
+that could not say*. A half-stated override refuses the manifest rather than
+writing one, for the same reason a missing file does.
+`ReleaseScriptTests.TheManifestStatesWhetherTheReleaseWasACrunchOverride` and
+`.AnOverrideStatedInPartRefusesTheManifestRatherThanWritingHalfAClaim`, both
+watched red — the first on the field being absent altogether, the second on
+*"A parameter cannot be found that matches parameter name 'OverriddenPackage'"*.
 
 *Written down 2026-08-26, at the maintainer's decision. Nothing enforces the
 "agents may never" half and nothing can — it is a rule about who is asking, and
 the build cannot see that. What the build does hold is the trace: the manifest is
 emitted by [`build/Write-ReleaseManifest.ps1`](build/Write-ReleaseManifest.ps1)
-and copied rather than transcribed, so the version in it is evidence.*
+and copied rather than transcribed, so the version in it is evidence — and, since
+the correction above, the override itself is a field rather than a claim about
+one.*
 
 ### Never assert a version from memory
 

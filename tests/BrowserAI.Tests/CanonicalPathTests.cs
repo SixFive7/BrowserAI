@@ -561,6 +561,95 @@ internal sealed class CanonicalPathTests
         await Assert.That(CanonicalPath.PrefixOf(@"C:\")).IsEqualTo(@"C:\");
     }
 
+    /// <summary>
+    /// <c>PathVerdict.Unestablished</c> is reachable by DEPTH alone, and the
+    /// walk limit is exactly where it starts.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the control the third verdict has never had, and the record
+    /// said it could not exist.</b> P5's could-not-check read <i>"Unestablished
+    /// unexercised (honest — unreachable without <c>Create</c> failing too)"</i>.
+    /// That is false: more non-existent levels than
+    /// <c>CanonicalPath.AncestorWalkLimit</c> exhausts the walk, <c>final</c>
+    /// comes back <see langword="null"/>, and the path is served with the
+    /// caller's own spelling — while .NET creates the tree happily, so the
+    /// session opens. Measured 2026-08-26 through the published binary with a
+    /// clean bisect: 60 levels, no note; 66 levels, the note <b>and</b> a session
+    /// that opened and was then destroyed. No ACL, no denied ancestor and no
+    /// exotic machine is needed.
+    /// </para>
+    /// <para>
+    /// <b>Both directions, at the boundary, because either one alone is
+    /// satisfiable by the wrong thing.</b> A walk that had stopped answering at
+    /// all would set the note on the shallow path too; a walk that never gave up
+    /// would set it on neither.
+    /// </para>
+    /// <para>
+    /// <b>The note quotes the ancestor the walk gave up on AND the caller's own
+    /// path, and that pairing is asserted rather than left to read well.</b> The
+    /// ancestor on its own is an intermediate path that means nothing to a
+    /// caller; the caller's own path on its own does not say how far the walk
+    /// got. It was considered as a one-or-the-other and kept as both.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheAncestorWalkGivesUpExactlyPastItsLimitAndSaysSoWhileStillAnsweringAPath()
+    {
+        using var scratch = ScratchDirectory.Create("walk-limit");
+
+        // Composed from the product's own bound. A number written here would be
+        // a second copy of it, and the arm would stop testing the boundary the
+        // day somebody moved the constant.
+        var inside = Compose(scratch.Path, CanonicalPath.AncestorWalkLimit - 2);
+        var past = Compose(scratch.Path, CanonicalPath.AncestorWalkLimit + 2);
+
+        var shallow = CanonicalPath.Of(inside, PathOrigin.Named, "directory");
+
+        await Assert.That(shallow.Refusal).IsNull();
+        await Assert.That(shallow.Unestablished).IsNull();
+        await Assert.That(shallow.Canonical).IsEqualTo(inside, StringComparison.OrdinalIgnoreCase);
+
+        var deep = CanonicalPath.Of(past, PathOrigin.Named, "directory");
+
+        // Not a refusal. The path is served with the caller's own spelling and
+        // the reason it could not be verified travels beside it -- which is the
+        // whole of what the third outcome is for.
+        await Assert.That(deep.Refusal).IsNull();
+        await Assert.That(deep.Canonical).IsEqualTo(past, StringComparison.OrdinalIgnoreCase);
+        await Assert.That(deep.Unestablished).IsNotNull();
+        await Assert.That(deep.Unestablished!).Contains("would not say what it calls");
+        await Assert.That(deep.Unestablished!).Contains(past, StringComparison.OrdinalIgnoreCase);
+
+        // The ancestor the walk gave up on, derived rather than guessed: it
+        // climbed exactly AncestorWalkLimit levels from a path two deeper, so it
+        // stopped two levels above the root.
+        await Assert.That(deep.Unestablished!)
+            .Contains(Compose(scratch.Path, CanonicalPath.AncestorWalkLimit + 2 - CanonicalPath.AncestorWalkLimit), StringComparison.OrdinalIgnoreCase);
+
+        // And the note reaches a caller rather than stopping at the verdict:
+        // `SessionManager.SpellingNote` is what puts it in an `init` answer, and
+        // that path is exercised end to end by SessionToolTests.
+        await Assert.That(SessionPath.For(deep.Canonical!).FullPath).IsEqualTo(past, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>A path with a given number of levels that do not exist.</summary>
+    /// <param name="root">An existing directory.</param>
+    /// <param name="levels">How many non-existent levels to add.</param>
+    /// <returns>The composed path.</returns>
+    private static string Compose(string root, int levels)
+    {
+        var path = root;
+
+        for (var level = 0; level < levels; level++)
+        {
+            path = Path.Combine(path, "L");
+        }
+
+        return path;
+    }
+
     private static string Named(string spelling, string argument)
     {
         var verdict = CanonicalPath.Of(spelling, PathOrigin.Named, argument);

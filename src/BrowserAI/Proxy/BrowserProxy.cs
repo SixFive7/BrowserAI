@@ -842,13 +842,31 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <see href="../../../kb/playwright/configuration.md">kb</see>).
     /// </para>
     /// <para>
-    /// <b>It does not close the bypass on its own, and the caller no longer
-    /// relies on it to.</b> An <c>isError</c> answer against a live tab carries
-    /// the page's own title and the console and snapshot pointers in the same
-    /// result, so page content can still trip this. What makes that harmless is
-    /// that the rewrite branch now runs <c>Complete</c> like every other
+    /// ⚠️ ***Corrected 2026-08-26 (previously "It does not close the bypass on
+    /// its own, and the caller no longer relies on it to … What makes that
+    /// harmless is that the rewrite branch now runs `Complete` like every other
     /// answered call: a rewritten answer is still an answer that may have
-    /// published a pointer.
+    /// published a pointer").*** <b>There is no <c>Complete</c>.</b> It went with
+    /// the artifact machinery in <c>feec42b</c>, and the rewrite branch
+    /// <c>return</c>s immediately after sending — so the acknowledged residual
+    /// risk was defended by a mechanism that no longer existed.
+    /// </para>
+    /// <para>
+    /// <b>The real bound is the scan's own narrowness, and it was nowhere
+    /// written.</b> The <c>isError</c> gate does not close the bypass on its own:
+    /// an error answer against a live tab carries the page's own title and the
+    /// console and snapshot pointers in the same result, so page content can
+    /// still reach this. What bounds the damage is what
+    /// <c>ProvisioningRemediation.Rewrite</c> will actually do. It fires only on
+    /// a block containing <c>install-browser</c>; it replaces only the anchored
+    /// regex <c>Run `[^`]*install-browser[^`]*` to install\.?</c>; and it answers
+    /// <see langword="null"/> when the replacement changed nothing, which sends
+    /// the block back untouched. <b>So a page that merely mentions the marker is
+    /// forwarded byte-identical</b>, and the worst a page can do is get
+    /// BrowserAI's own two sentences substituted for upstream's <i>exact</i>
+    /// install instruction, which is the substitution this method exists to make.
+    /// <c>ProvisioningRemediationTests.APageQuotingUpstreamsAdviceInASuccessfulAnswerIsForwardedUntouched</c>
+    /// holds the gate; the no-op return is what holds the rest.
     /// </para>
     /// </remarks>
     private JsonObject? Remediate(JsonRpcResponse response)

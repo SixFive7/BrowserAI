@@ -571,11 +571,28 @@ internal sealed class SessionLock : IDisposable
     /// janitor is the last party that should be editing the evidence.
     /// </para>
     /// <para>
-    /// <b>It opens the guard and never the store.</b> The question is *is this
-    /// directory ours to act on*, which the kernel answers on one
-    /// <c>CreateFile</c>; opening the record would tell the sweep nothing it
-    /// acts on and would create a <c>-shm</c> in a directory it is only
-    /// visiting.
+    /// <b>THIS METHOD opens the guard and never the store.</b> The question is
+    /// *is this directory ours to act on*, which the kernel answers on one
+    /// <c>CreateFile</c>; opening the record would tell it nothing it acts on and
+    /// would create a <c>-shm</c> in a directory it is only visiting.
+    /// </para>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-26 (previously "It opens the guard and never the
+    /// store", with no subject, which read as a property of the sweep).*** <b>It
+    /// is true of this method and false of the pass that calls it.</b>
+    /// <c>StraySweep.Pass</c> calls <c>SessionIndex.Sweep</c>, which follows
+    /// every entry on the machine through <see cref="ReadRecord"/> — one
+    /// <c>SessionStore.OpenForReading</c> per registered session, and the index
+    /// is machine-wide. <b>So one process start is one store open per session on
+    /// the host</b>, each leaving a <c>-shm</c> and a <c>-wal</c> in a directory
+    /// nobody named. Measured 2026-08-26 through the published binary: a second
+    /// BrowserAI that had done nothing but <c>initialize</c> — no
+    /// <c>tools/call</c> at all — put both files back beside a cleanly-closed
+    /// session's store. The sweep needs the record only for the inventory, and
+    /// the removable states it acts on are decided before it is read, so a
+    /// <c>Follow</c> that stops at the guard would remove the side effect
+    /// entirely; **that is a behaviour change and belongs to the maintainer**,
+    /// and until it is taken this paragraph is narrowed rather than the sweep.
     /// </para>
     /// <para>
     /// <b>The per-directory gate is taken and released around the open, and the

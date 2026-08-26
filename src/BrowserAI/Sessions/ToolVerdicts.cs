@@ -133,6 +133,22 @@ internal sealed class ToolVerdicts
     public IReadOnlyList<ToolVerdict> Upstream { get; }
 
     /// <summary>BrowserAI's own tools, in the file's own order.</summary>
+    /// <remarks>
+    /// ⚠️ <b>These rows have no run-time effect at all, and that is stated here
+    /// rather than left to be discovered — 2026-08-26.</b>
+    /// <c>SessionToolSurface.IsAuthored</c> short-circuits every
+    /// <c>browserai_</c> name in <c>BrowserProxy.AnswerToolsCallAsync</c> before
+    /// <see cref="Decide"/> is reached, and <c>SessionToolSurface.Rewrite</c>
+    /// advertises the authored tools from <c>SessionToolSurface.Names</c> rather
+    /// than from the file — so removing an <c>answer</c> row changes nothing a
+    /// caller can observe. <b>Their role is build-and-test-time:</b>
+    /// <c>ToolVerdictTests.TheAuthoredRowsAreExactlyTheToolsBrowserAiAnswersItself</c>
+    /// holds them identical to that surface in both directions, and
+    /// <c>build/Write-ReleaseManifest.ps1</c> copies the whole file beside the
+    /// release so a rollback can read which tools a build forwarded and which
+    /// upstream that judgement was made against. The <see cref="Upstream"/> half
+    /// is the opposite: it decides every call.
+    /// </remarks>
     public IReadOnlyList<ToolVerdict> Authored { get; }
 
     /// <summary>
@@ -331,9 +347,28 @@ internal sealed class ToolVerdicts
         }
 
         var verdicts = new List<ToolVerdict>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var row in rows.EnumerateObject())
         {
+            // ⚠️ THE SAME NAME TWICE INSIDE ONE HALF, which the both-halves
+            // check below cannot see and which JSON does not forbid. Measured
+            // 2026-08-26 on .NET 10: `JsonDocument` keeps both properties, so
+            // this loop produced two rows and the constructor's
+            // `ToFrozenDictionary` threw a bare `ArgumentException` -- reaching
+            // `Program`'s process boundary and exiting 1 with a message naming
+            // NEITHER the file NOR the row, against this type's own promise that
+            // every refusal names both. The quieter half is worse:
+            // `TryGetProperty` answers the LAST duplicate, so a doctored file
+            // could carry `allow` and `deny` for one tool and a reader that got
+            // past this point would pick one silently.
+            if (!seen.Add(row.Name))
+            {
+                throw Unreadable(
+                    origin,
+                    $"'{row.Name}' appears twice in '{member}', so one name carries two verdicts and a reader would take whichever was written second");
+            }
+
             verdicts.Add(Row(origin, member, row, authored));
         }
 

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -380,7 +381,7 @@ internal static class SessionRecordReader
 /// renderer or a prompt assembler acts on.
 /// </para>
 /// <para>
-/// <b>Four rules, and the first one is the change.</b> <c>\n</c> survives,
+/// <b>Five rules, and the first one is the change.</b> <c>\n</c> survives,
 /// because multi-line text is now allowed and a paragraph flattened into one
 /// line is a different paragraph. <c>\r</c> is dropped, so a record written on
 /// Windows and read anywhere does not carry a stray carriage return into a
@@ -389,7 +390,20 @@ internal static class SessionRecordReader
 /// <c>Cc</c> alone and those two are <c>Zl</c> and <c>Zp</c>. Every <c>Cf</c>
 /// is dropped outright: U+200B, U+202E and U+FEFF are invisible by
 /// construction, so neutralising them to a space would leave a space nobody
-/// typed where the honest answer is nothing.
+/// typed where the honest answer is nothing. An unpaired surrogate is dropped
+/// too, for the same reason: half a character is not text.
+/// </para>
+/// <para>
+/// ⚠️ <b>It enumerates RUNES, and it iterated <c>char</c> until 2026-08-26 —
+/// which meant the <c>Cf</c> rule above covered the basic plane alone.</b>
+/// <c>char.GetUnicodeCategory</c> answers <c>UnicodeCategory.Surrogate</c> for
+/// either half of a supplementary-plane character and never <c>Format</c>, so
+/// no supplementary-plane character was ever tested. Measured that day through
+/// the published binary, on one <c>browserai_init</c> purpose read back through
+/// <c>browserai_catch_up</c>: U+200B, U+202E and U+FEFF were dropped as
+/// documented, and <b>U+E0001, U+E0048, U+E0049 and U+1D173 came through
+/// whole</b> — the second and third being the invisible text "HI" in the TAG
+/// block, which is the canonical smuggling range for this class.
 /// </para>
 /// <para>
 /// <b>It applies to <c>tool</c> as well as to <c>why</c> and <c>purpose</c>.</b>
@@ -406,6 +420,12 @@ internal static class RecordText
     private const char ParagraphSeparator = '\u2029';
 
     /// <summary>Cleans free text for storage and for replay.</summary>
+    /// <remarks>
+    /// <b><see cref="Rune.DecodeFromUtf16"/> rather than
+    /// <c>MemoryExtensions.EnumerateRunes</c>.</b> The enumerator answers U+FFFD
+    /// for an unpaired surrogate and also for a genuine U+FFFD somebody typed,
+    /// and only one of those is text; decoding by hand is what tells them apart.
+    /// </remarks>
     /// <param name="text">The text as it arrived.</param>
     /// <returns>The text as it is stored.</returns>
     public static string Sanitise(string text)
@@ -413,10 +433,26 @@ internal static class RecordText
         ArgumentNullException.ThrowIfNull(text);
 
         var cleaned = new StringBuilder(text.Length);
+        var remaining = text.AsSpan();
 
-        foreach (var character in text)
+        // Declared outside the loop: a stackalloc inside one is not released
+        // until the method returns.
+        Span<char> encoded = stackalloc char[2];
+
+        while (!remaining.IsEmpty)
         {
-            switch (character)
+            var status = Rune.DecodeFromUtf16(remaining, out var rune, out var consumed);
+
+            remaining = remaining[consumed..];
+
+            // Half of a surrogate pair, which is what a truncated UTF-16 payload
+            // arrives as. Dropped rather than neutralised, like a Cf.
+            if (status is not OperationStatus.Done)
+            {
+                continue;
+            }
+
+            switch (rune.Value)
             {
                 case '\n':
                     _ = cleaned.Append('\n');
@@ -430,16 +466,91 @@ internal static class RecordText
                     break;
 
                 default:
-                    if (char.GetUnicodeCategory(character) is UnicodeCategory.Format)
+                    if (Rune.GetUnicodeCategory(rune) is UnicodeCategory.Format)
                     {
                         break;
                     }
 
-                    _ = cleaned.Append(char.IsControl(character) ? ' ' : character);
+                    if (Rune.IsControl(rune))
+                    {
+                        _ = cleaned.Append(' ');
+                        break;
+                    }
+
+                    _ = cleaned.Append(encoded[..rune.EncodeToUtf16(encoded)]);
                     break;
             }
         }
 
         return cleaned.ToString().Trim();
+    }
+
+    /// <summary>
+    /// The same text with every character a renderer acts on shown as its code
+    /// point instead of carried.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>For the half of this channel nothing sanitises: a refusal.</b>
+    /// <see cref="Sanitise"/> guards what goes into the record; a refusal goes
+    /// straight into the calling model's context — and, for a refusal at the
+    /// verdict door, into the record's failure payload — and it quotes the
+    /// caller's own path back. Measured 2026-08-26 through the published binary:
+    /// a <c>browserai_init</c> on a path carrying U+0007 answered with a message
+    /// that correctly named <c>U+0007</c> in words and then embedded the byte
+    /// itself twice.
+    /// </para>
+    /// <para>
+    /// <b>It shows rather than strips, and that is the difference from
+    /// <see cref="Sanitise"/>.</b> A caller has to be able to see which
+    /// character it typed was the problem, so nothing is dropped — it is
+    /// rendered. <c>\n</c> is escaped here and survives there, because a refusal
+    /// is one quoted sentence and a newline inside the quotes is what would let
+    /// a caller's path read as the server's own lines.
+    /// </para>
+    /// </remarks>
+    /// <param name="text">The text as it arrived.</param>
+    /// <returns>The text, safe to quote into an answer.</returns>
+    public static string Escape(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        var shown = new StringBuilder(text.Length);
+        var remaining = text.AsSpan();
+
+        Span<char> encoded = stackalloc char[2];
+
+        while (!remaining.IsEmpty)
+        {
+            var status = Rune.DecodeFromUtf16(remaining, out var rune, out var consumed);
+
+            // An unpaired surrogate has a code point worth naming: it is what a
+            // caller sees when something truncated its string.
+            if (status is not OperationStatus.Done)
+            {
+                _ = shown.Append(CultureInfo.InvariantCulture, $"<U+{(int)remaining[0]:X4}>");
+                remaining = remaining[consumed..];
+                continue;
+            }
+
+            remaining = remaining[consumed..];
+
+            if (Rune.IsControl(rune)
+                || Rune.GetUnicodeCategory(rune)
+                    is UnicodeCategory.Format
+                    or UnicodeCategory.LineSeparator
+                    or UnicodeCategory.ParagraphSeparator)
+            {
+                // The same U+XXXX spelling `CanonicalPath`'s own clauses use, in
+                // angle brackets so it reads as a substitution rather than as
+                // part of the name.
+                _ = shown.Append(CultureInfo.InvariantCulture, $"<U+{rune.Value:X4}>");
+                continue;
+            }
+
+            _ = shown.Append(encoded[..rune.EncodeToUtf16(encoded)]);
+        }
+
+        return shown.ToString();
     }
 }

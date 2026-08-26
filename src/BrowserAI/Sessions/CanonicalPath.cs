@@ -402,6 +402,13 @@ internal static class CanonicalPath
     /// A caller told nothing would get a session directory whose name is not the
     /// one it asked for, which is the two-spellings failure arriving by the other
     /// door.
+    /// <para>
+    /// ⚠️ <b>Every quoted segment goes through <see cref="RecordText.Escape"/> —
+    /// corrected 2026-08-26.</b> These clauses are interpolated into
+    /// <see cref="SessionErrors.DirectoryUnusable"/>, which is model-facing, and
+    /// the control-character clause was <i>naming</i> U+0007 in words while
+    /// <i>carrying</i> it in the quoted segment beside it.
+    /// </para>
     /// </remarks>
     private static string? UnkeepableName(string spelling)
     {
@@ -415,34 +422,36 @@ internal static class CanonicalPath
                 continue;
             }
 
+            var shown = RecordText.Escape(segment);
+
             if (segment[^1] is '.' or ' ')
             {
-                return $"'{segment}' ends with a {(segment[^1] is ' ' ? "space" : "dot")}, which Windows silently strips — "
-                    + $"so the directory would be '{segment.TrimEnd(' ', '.')}' rather than the name you asked for.";
+                return $"'{shown}' ends with a {(segment[^1] is ' ' ? "space" : "dot")}, which Windows silently strips — "
+                    + $"so the directory would be '{RecordText.Escape(segment.TrimEnd(' ', '.'))}' rather than the name you asked for.";
             }
 
             if (segment.IndexOf(':', StringComparison.Ordinal) is var stream and >= 0)
             {
-                return $"'{segment}' names an alternate data stream rather than a directory: everything after the ':' is a stream inside '{segment[..stream]}'.";
+                return $"'{shown}' names an alternate data stream rather than a directory: everything after the ':' is a stream inside '{RecordText.Escape(segment[..stream])}'.";
             }
 
             var stem = segment.IndexOf('.', StringComparison.Ordinal) is var dot and > 0 ? segment[..dot] : segment;
 
             if (Array.Exists(ReservedDeviceNames, name => string.Equals(name, stem, StringComparison.OrdinalIgnoreCase)))
             {
-                return $"'{segment}' is the reserved device name '{stem.ToUpperInvariant()}', which opens a device rather than a directory whatever follows it.";
+                return $"'{shown}' is the reserved device name '{stem.ToUpperInvariant()}', which opens a device rather than a directory whatever follows it.";
             }
 
             foreach (var character in segment)
             {
                 if (character < ' ')
                 {
-                    return $"'{segment}' contains the control character U+{((int)character).ToString("X4", CultureInfo.InvariantCulture)}, which cannot appear in a Windows file name.";
+                    return $"'{shown}' contains the control character U+{((int)character).ToString("X4", CultureInfo.InvariantCulture)}, which cannot appear in a Windows file name.";
                 }
 
                 if (character is '<' or '>' or '"' or '|' or '?' or '*')
                 {
-                    return $"'{segment}' contains '{character}', which cannot appear in a Windows file name.";
+                    return $"'{shown}' contains '{character}', which cannot appear in a Windows file name.";
                 }
             }
         }

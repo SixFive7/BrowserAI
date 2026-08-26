@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
@@ -155,6 +156,67 @@ internal sealed class SessionPathTests
         var root = Assert.Throws<ArgumentException>(() => _ = SessionPath.For(@"C:\"));
         await Assert.That(root!.Message).Contains("volume root");
 
+        // And the sentence a caller reads carries no C# parameter name. It is
+        // interpolated into `SessionErrors.DirectoryUnusable` verbatim, and
+        // `ArgumentException.Message` appends `(Parameter 'x')` whenever one is
+        // set -- so `canonical`, an identifier that means nothing to a model,
+        // was arriving in the one sentence the model has to act on.
+        await Assert.That(root.Message).DoesNotContain("(Parameter '");
+        await Assert.That(root.ParamName).IsNull();
+
         _ = Assert.Throws<ArgumentException>(() => _ = SessionPath.For("   "));
+    }
+
+    /// <summary>
+    /// A directory with no room left for the <c>output\</c> BrowserAI appends is
+    /// not a session directory, and the boundary is exact.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It is refused HERE for the same reason the volume root is</b>:
+    /// <c>browserai_list</c> is pointed at whatever a caller likes and creates
+    /// nothing, so a deep tree is a perfectly good subtree to list and never a
+    /// session directory. Putting the predicate in the canonicaliser would refuse
+    /// a listing for a limit that only applies to a directory a browser has to be
+    /// started in.
+    /// </para>
+    /// <para>
+    /// <b>The limit is <c>CreateProcessW</c>'s and not .NET's</b>, which is why
+    /// nothing caught it: .NET creates a tree of any depth happily, and the
+    /// session then failed at child launch with <i>"Could not start
+    /// '…\node.exe' in '…\output'"</i> and a recovery that told the caller to
+    /// re-provision an install that was never broken.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADirectoryWithNoRoomLeftForItsOutputFolderIsNotASessionDirectory()
+    {
+        // One character past the budget, composed from the budget rather than
+        // from a number written here.
+        var overlong = @"C:\" + new string('d', SessionPath.LongestSessionDirectory - 2);
+
+        await Assert.That(overlong.Length).IsEqualTo(SessionPath.LongestSessionDirectory + 1);
+
+        var refused = Assert.Throws<ArgumentException>(() => _ = SessionPath.For(overlong));
+
+        // The sentence names the budget and what the headroom is for, because a
+        // caller told only "too long" cannot tell how much shorter to be.
+        await Assert.That(refused!.Message).Contains(SessionPath.LongestSessionDirectory.ToString(CultureInfo.InvariantCulture));
+        await Assert.That(refused.Message).Contains(SessionLayout.OutputFolderName);
+        await Assert.That(refused.Message).DoesNotContain("(Parameter '");
+
+        // ⚠️ THE BOUNDARY, in the accepting direction, which is what makes this
+        // a budget rather than a ban on deep paths. One character shorter is a
+        // session directory, and every derived name comes off it.
+        var deepest = SessionPath.For(overlong[..^1]);
+
+        await Assert.That(deepest.FullPath.Length).IsEqualTo(SessionPath.LongestSessionDirectory);
+        await Assert.That(deepest.IndexKey.Length).IsEqualTo(64);
+
+        // And the whole point of the number: the working directory a child is
+        // started in still fits inside MAX_PATH with its terminator.
+        await Assert.That(Path.Combine(deepest.FullPath, SessionLayout.OutputFolderName).Length)
+            .IsLessThan(SessionPath.MaxPath);
     }
 }

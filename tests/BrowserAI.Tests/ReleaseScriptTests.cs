@@ -290,6 +290,113 @@ internal sealed class ReleaseScriptTests
         await Assert.That(Directory.Exists(destination)).IsFalse();
     }
 
+    /// <summary>
+    /// The manifest states whether the release was a crunch override, in both
+    /// directions — and an ordinary release says <c>null</c> rather than saying
+    /// nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>No manifest could express an override until 2026-08-26, while two
+    /// documents said one did.</b> <c>DECISIONS.md</c> put it in bold — <i>"A
+    /// release whose manifest does not say it was overridden is a release
+    /// claiming it was not"</i> — and <c>RELEASING.md</c> item 1 said the same;
+    /// the script emitted <c>version</c>, <c>tag</c>, <c>package</c>,
+    /// <c>sha256</c> and the resolved versions read out of seven copied files,
+    /// and had no field for it. By that sentence's own logic every release
+    /// claimed it was not overridden, <b>including one that was</b>.
+    /// </para>
+    /// <para>
+    /// <b>The field is always present, and that is the half that makes the claim
+    /// true.</b> An absent key is not a statement; <c>"override": null</c> is.
+    /// A reader a year later can tell <i>this release says it was not
+    /// overridden</i> from <i>this manifest was written by a build that could not
+    /// say</i>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheManifestStatesWhetherTheReleaseWasACrunchOverride()
+    {
+        using var scratch = ScratchDirectory.Create("release-manifest-override");
+        var root = await SyntheticRootAsync(scratch.Path);
+
+        var ordinary = Path.Combine(scratch.Path, "ordinary");
+
+        var (plainExit, _, _) = await RunAsync(
+            ManifestScript, "-Root", root, "-Destination", ordinary, "-Version", "0.9.1", "-Tag", "v0.9.0-3-gabc1234");
+
+        await Assert.That(plainExit).IsEqualTo(0);
+
+        var plain = await File.ReadAllTextAsync(Path.Combine(ordinary, "manifest.json"));
+
+        await Assert.That(plain).Contains("\"override\": null");
+
+        // And the overridden one, carrying every fact RELEASING.md's evidence
+        // line asks for: what was held, at what version, against what newest,
+        // why, and who decided.
+        var overridden = Path.Combine(scratch.Path, "overridden");
+
+        var (overrideExit, _, _) = await RunAsync(
+            ManifestScript,
+            "-Root", root,
+            "-Destination", overridden,
+            "-Version", "0.9.1",
+            "-Tag", "v0.9.0-3-gabc1234",
+            "-OverriddenPackage", "@playwright/mcp",
+            "-OverrideHeldAt", "0.0.700",
+            "-OverrideNewest", "0.0.777",
+            "-OverrideReason", "0.0.777 renamed browser_click and the release could not wait",
+            "-OverrideDecidedBy", "the maintainer");
+
+        await Assert.That(overrideExit).IsEqualTo(0);
+
+        var stated = await File.ReadAllTextAsync(Path.Combine(overridden, "manifest.json"));
+
+        await Assert.That(stated).DoesNotContain("\"override\": null");
+        await Assert.That(stated).Contains("\"package\": \"@playwright/mcp\"");
+        await Assert.That(stated).Contains("\"heldAt\": \"0.0.700\"");
+        await Assert.That(stated).Contains("\"newest\": \"0.0.777\"");
+        await Assert.That(stated).Contains("renamed browser_click");
+        await Assert.That(stated).Contains("\"decidedBy\": \"the maintainer\"");
+    }
+
+    /// <summary>
+    /// An override stated in part is refused, naming what is missing.
+    /// </summary>
+    /// <remarks>
+    /// <b>The same argument as the missing-file refusal, applied to the claim
+    /// rather than to the evidence.</b> A manifest saying <i>held at 0.0.700</i>
+    /// with no newest version, no reason and nobody's name reads, a year later,
+    /// exactly like a complete account of the decision — so it refuses rather
+    /// than writing one.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnOverrideStatedInPartRefusesTheManifestRatherThanWritingHalfAClaim()
+    {
+        using var scratch = ScratchDirectory.Create("release-manifest-half-override");
+        var root = await SyntheticRootAsync(scratch.Path);
+        var destination = Path.Combine(scratch.Path, "manifest");
+
+        var (exit, _, output) = await RunAsync(
+            ManifestScript,
+            "-Root", root,
+            "-Destination", destination,
+            "-Version", "0.9.1",
+            "-OverriddenPackage", "@playwright/mcp",
+            "-OverrideHeldAt", "0.0.700");
+
+        await Assert.That(exit).IsNotEqualTo(0);
+
+        // It names what is missing, because the person running this is the one
+        // who took the decision and knows all five answers.
+        await Assert.That(output).Contains("OverrideNewest");
+        await Assert.That(output).Contains("OverrideReason");
+        await Assert.That(output).Contains("OverrideDecidedBy");
+        await Assert.That(Directory.Exists(destination)).IsFalse();
+    }
+
     /// <summary>The release script emits the manifest rather than leaving it to a person.</summary>
     /// <remarks>
     /// The scan is what ties the two together: the test above proves the script

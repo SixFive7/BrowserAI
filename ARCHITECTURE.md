@@ -359,6 +359,25 @@ directory — and building the wal-index leaves a `-shm` beside the store. It is
 refused only where the caller may not create that file. **`browserai_catch_up`'s
 own description says so**, because that tool is the reader a caller reaches for.
 
+⚠️ **And the reader is not always a caller: starting the server opens the store
+of every session on the machine.** *Added 2026-08-26 — the three places this side
+effect was recorded all described a caller-initiated read of the directory the
+caller named, and none of them said this.* `Program.Main` starts the stray sweep
+in the background; one pass calls `SessionIndex.Sweep`, which follows **every**
+entry in the machine-wide index through `SessionLock.ReadRecord`, which is a
+`SessionStore.OpenForReading`. **One process start is one store open per
+registered session on the host**, each leaving a `browserai.data-shm` and a
+`browserai.data-wal` in a directory nobody named. Measured through the published
+binary: a cleanly-closed session held `[browserai.data, browserai.lock]`; a
+second BrowserAI was started and sent nothing but `initialize`, and both files
+were back. **The mechanism is unchanged and the record is what was corrected** —
+the sweep reads the record only for an inventory it does not print, and every
+removable state it acts on (`DirectoryMissing`, `VolumeMissing`, `NotASession`)
+is decided before `ReadRecord` is reached, so a `Follow` that stops at the guard
+would remove the side effect and leave `browserai_list`'s, which a caller did ask
+for, intact. That is a behaviour change, it is the maintainer's, and its status
+is in [the review index](docs/reviews/README.md).
+
 **Both answers report the session's output size, and nothing is ever
 auto-deleted.** `browserai_list` and `browserai_catch_up` state what the
 directory weighs; deletion is `browserai_destroy` and nothing else. *(Q100=e,

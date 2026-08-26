@@ -371,6 +371,54 @@ internal sealed class SessionRecordTests
     }
 
     /// <summary>
+    /// A <c>Cf</c> outside the basic plane is dropped like every other one, and
+    /// an unpaired surrogate is dropped rather than replayed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The sanitiser iterated <c>char</c> until 2026-08-26, and
+    /// <c>char.GetUnicodeCategory</c> answers <c>Surrogate</c> for either half of
+    /// a supplementary-plane character — never <c>Format</c>.</b> So the
+    /// <c>Cf</c> drop covered the basic plane alone and the whole TAG block came
+    /// through, which is the canonical invisible-text smuggling range: measured
+    /// 2026-08-26 through the published binary, U+E0001, U+E0048, U+E0049 and
+    /// U+1D173 survived a <c>purpose</c> written by one agent and read back into
+    /// another's context by <c>browserai_catch_up</c>.
+    /// </para>
+    /// <para>
+    /// <b>U+E0048 U+E0049 is the invisible text "HI"</b>, and it is here rather
+    /// than a tidier pair because it is the shape the class is actually used in.
+    /// </para>
+    /// <para>
+    /// <b>The lone surrogate needs its own decision and this is it: dropped.</b>
+    /// Half a character is not text, and turning it into a space would leave a
+    /// space nobody typed — the same argument that drops a <c>Cf</c> rather than
+    /// neutralising it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSanitiserDropsAFormatCharacterOutsideTheBasicPlaneAndAnUnpairedSurrogate()
+    {
+        // LANGUAGE TAG, two TAG letters and MUSICAL SYMBOL BEGIN BEAM: all four
+        // are Cf, all four are supplementary-plane, and all four came out the
+        // other side of the record before this.
+        await Assert.That(RecordText.Sanitise("pay\U000E0001lo\U000E0048\U000E0049ad\U0001D173more"))
+            .IsEqualTo("payloadmore");
+
+        // Half of a surrogate pair, which is what a truncated UTF-16 payload
+        // arrives as.
+        await Assert.That(RecordText.Sanitise("a\ud800b")).IsEqualTo("ab");
+        await Assert.That(RecordText.Sanitise("a\udc00b")).IsEqualTo("ab");
+
+        // ⚠️ THE POSITIVE CONTROL, and it is what stops the fix being "drop
+        // everything above the basic plane". A supplementary-plane character
+        // that is not Cf is text and survives whole, surrogate pair and all.
+        await Assert.That(RecordText.Sanitise("a\U0001F600b")).IsEqualTo("a\U0001F600b");
+        await Assert.That(RecordText.Sanitise("a\U00020BB7b")).IsEqualTo("a\U00020BB7b");
+    }
+
+    /// <summary>
     /// A multi-line <c>why</c> survives a round trip through the store, and a
     /// <c>tool</c> is recorded exactly as the caller spelled it.
     /// </summary>

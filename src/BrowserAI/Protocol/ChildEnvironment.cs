@@ -122,10 +122,26 @@ internal static class ChildEnvironment
     /// own additions is a failure rather than a regression.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// An allowlist already makes every one of these absent. Naming them is
     /// what turns "absent because nobody added it" into "absent because it is
     /// refused" — the difference between a property and an accident, and the
     /// only version of it a test can assert.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The one that had to be here and was not is
+    /// <c>PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS</c> — added
+    /// 2026-08-26.</b> <see cref="Runtime.BrowserConfiguration"/> calls
+    /// <c>allowUnrestrictedFileAccess: false</c> <i>the only containment this
+    /// product has left</i>, and that variable is the environment route that
+    /// switches it off: <c>playwright-core</c>'s <c>configFromEnv</c> maps it
+    /// onto the same key, and the merge order is config file → environment →
+    /// CLI, so it wins over the value the generator writes. It was not named on
+    /// the day that key became load-bearing, which is exactly the gap this list
+    /// exists to close. The four beside it redirect the same class of decision:
+    /// a whole different config file, the allowed output root, and two scripts
+    /// upstream loads into every page.
+    /// </para>
     /// </remarks>
     public static FrozenSet<string> Refused { get; } = new[]
     {
@@ -142,6 +158,18 @@ internal static class ChildEnvironment
         // "never pass --caps" rule does not close. A capability set to nothing is
         // a tool surface that shrank with no error anywhere.
         "PLAYWRIGHT_MCP_CAPS",
+
+        // The five that override a key the config generator writes, read out of
+        // the shipped `coreBundle.js`'s own `configFromEnv` rather than from a
+        // changelog. The first is the one the product cannot afford: it is
+        // `allowUnrestrictedFileAccess`, and turning it on gives the child every
+        // path on the machine instead of the session's own `output\`.
+        "PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS",
+        "PLAYWRIGHT_MCP_CONFIG",
+        "PLAYWRIGHT_MCP_OUTPUT_DIR",
+        "PLAYWRIGHT_MCP_INIT_SCRIPT",
+        "PLAYWRIGHT_MCP_INIT_PAGE",
+
         "PLAYWRIGHT_DOWNLOAD_HOST",
         "PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST",
         "PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST",

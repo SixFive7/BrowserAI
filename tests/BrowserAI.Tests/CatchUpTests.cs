@@ -447,6 +447,78 @@ internal sealed class CatchUpTests
     }
 
     /// <summary>
+    /// A page number outside <c>int</c> is refused, quoting the number the
+    /// caller sent.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It was narrowed with an unchecked cast until 2026-08-26, so an
+    /// out-of-range page was served as a DIFFERENT page.</b> Measured that day
+    /// through the published binary: <c>page=2</c> on a six-entry session was
+    /// correctly refused, and <c>page=4294967297</c> came back
+    /// <c>isError=false</c> reading <i>"page 1 of 1, entries 1–6 of 6"</i> —
+    /// 2^32 + 1 truncates to 1, and the range check then passed. A caller was
+    /// told it was reading the page it asked for.
+    /// </para>
+    /// <para>
+    /// <b>The mirror case is the one that makes this a refusal rather than a
+    /// clamp:</b> <c>2147483648</c> wraps to <c>-2147483648</c>, so the refusal
+    /// quoted a number the caller never sent. Both arms are here because a fix
+    /// that only widened the comparison would still misquote.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APageNumberOutsideIntIsRefusedQuotingTheNumberTheCallerSent()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "paged-past-int");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "a session asked for a page number no page could ever have",
+        });
+
+        // 2^32 + 1, which truncates to 1 -- the page that exists.
+        var wrapped = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+            [SessionToolSurface.PageParameter] = 4294967297L,
+        });
+
+        await Assert.That((bool?)wrapped["isError"]).IsTrue();
+        await Assert.That(TextOf(wrapped)).Contains("4294967297");
+        await Assert.That(TextOf(wrapped)).Contains("outside this session's log");
+
+        // int.MaxValue + 1, which wraps NEGATIVE. The refusal has to quote what
+        // arrived rather than what the cast made of it.
+        var negative = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+            [SessionToolSurface.PageParameter] = 2147483648L,
+        });
+
+        await Assert.That((bool?)negative["isError"]).IsTrue();
+        await Assert.That(TextOf(negative)).Contains("2147483648");
+        await Assert.That(TextOf(negative)).DoesNotContain("-2147483648");
+
+        // ⚠️ THE POSITIVE CONTROL. Page 1 of this session is still served, so a
+        // paging path that had started refusing everything would satisfy both
+        // arms above.
+        var page1 = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
+        {
+            ["session"] = directory,
+            [SessionToolSurface.PageParameter] = 1,
+        });
+
+        await Assert.That((bool?)page1["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(page1)).Contains("page 1 of 1");
+    }
+
+    /// <summary>
     /// A row nothing settled renders as <i>no answer was recorded</i>, and a row
     /// that failed carries what failed.
     /// </summary>

@@ -21,6 +21,13 @@
     transcribed version number is a number somebody typed, and the whole point
     of the manifest is that it is not.
 
+    AND WHETHER IT WAS A CRUNCH OVERRIDE, SINCE 2026-08-26. DECISIONS.md said in
+    bold that "a release whose manifest does not say it was overridden is a
+    release claiming it was not" while no manifest could express one -- so by
+    that sentence's own logic every release claimed it was not overridden,
+    including one that was. `override` is always emitted: null for an ordinary
+    release, a five-part block for a held one.
+
     IT REFUSES ON A MISSING FILE, NAMING IT. A manifest with six of seven files
     in it looks exactly like a complete one to whoever reads it a year later, so
     a partial manifest is worse than none. In particular payload/payload.json
@@ -53,6 +60,23 @@
     The full .nupkg. Its size and SHA-256 are recorded so the manifest names one
     exact artifact rather than a version.
 
+.PARAMETER OverriddenPackage
+    Which upstream a HUMAN held back for this release. See DECISIONS.md, "Every
+    release builds against the latest Playwright, and only a human may say
+    otherwise". All five Override* parameters go together or none does.
+
+.PARAMETER OverrideHeldAt
+    The version that actually shipped.
+
+.PARAMETER OverrideNewest
+    The newest version the resolve returned and that this release did not take.
+
+.PARAMETER OverrideReason
+    What broke.
+
+.PARAMETER OverrideDecidedBy
+    The human who took the decision. An agent may never take it.
+
 .EXAMPLE
     pwsh -File build/Write-ReleaseManifest.ps1 -Destination Releases/archive/0.1.1-manifest -Version 0.1.1
 #>
@@ -63,7 +87,12 @@ param(
     [Parameter(Mandatory = $true)][string] $Version,
     [string] $Tag,
     [string] $Channel = 'win',
-    [string] $Package
+    [string] $Package,
+    [string] $OverriddenPackage,
+    [string] $OverrideHeldAt,
+    [string] $OverrideNewest,
+    [string] $OverrideReason,
+    [string] $OverrideDecidedBy
 )
 
 Set-StrictMode -Version Latest
@@ -88,6 +117,36 @@ $wanted = [ordered]@{
     'payload.json'                                = 'payload/payload.json'
     'browsers.json'                               = 'upstream-snapshots/browsers.json'
     'tool-verdicts.json'                          = 'tool-verdicts.json'
+}
+
+# --- The crunch override, all five parts or none -----------------------------
+# DECISIONS.md says in bold that "a release whose manifest does not say it was
+# overridden is a release claiming it was not". That sentence was false for as
+# long as this script had no field for one: no manifest COULD say it, so every
+# release claimed it was not overridden, including one that was.
+#
+# THE FIELD IS ALWAYS PRESENT. An absent key is not a statement; `"override":
+# null` is, and it is what lets a reader a year later tell "this release says it
+# was not overridden" from "this manifest was written by a build that could not
+# say".
+#
+# A HALF-STATED OVERRIDE REFUSES, for the same reason a manifest holding six of
+# seven files does: a block saying "held at 0.0.700" with no newest version, no
+# reason and nobody's name reads exactly like a complete account of the decision.
+$overrideParts = [ordered]@{
+    OverriddenPackage = $OverriddenPackage
+    OverrideHeldAt    = $OverrideHeldAt
+    OverrideNewest    = $OverrideNewest
+    OverrideReason    = $OverrideReason
+    OverrideDecidedBy = $OverrideDecidedBy
+}
+
+$statedParts = @($overrideParts.GetEnumerator() | Where-Object { $_.Value })
+$blankParts = @($overrideParts.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { "-$($_.Key)" })
+
+if ($statedParts.Count -gt 0 -and $blankParts.Count -gt 0) {
+    Write-Error ("A crunch override is stated in full or not at all, and " + ($blankParts -join ', ') + " " + $(if ($blankParts.Count -eq 1) { 'is' } else { 'are' }) + " missing. DECISIONS.md requires the manifest to say what was held, at what version, against what newest version, why, and the name of the human who took the decision -- an agent may never take it. A block carrying some of those reads like a complete account of the decision to whoever opens it a year from now, so this refuses rather than writing one.")
+    exit 1
 }
 
 $missing = @()
@@ -160,13 +219,26 @@ if ($Package -and (Test-Path -LiteralPath $Package)) {
     }
 }
 
+$overrideRecord = $null
+if ($statedParts.Count -eq 5) {
+    $overrideRecord = [ordered]@{
+        package   = $OverriddenPackage
+        heldAt    = $OverrideHeldAt
+        newest    = $OverrideNewest
+        reason    = $OverrideReason
+        decidedBy = $OverrideDecidedBy
+    }
+}
+
 $manifest = [ordered]@{
     '_what_this_is' = 'The resolved set this release was cut from. RELEASING.md item 11. Copied, never transcribed: every version below was read back out of the file beside it.'
+    '_override'     = 'null means this release took the newest resolve. A block means a HUMAN held an upstream back -- DECISIONS.md, "Every release builds against the latest Playwright, and only a human may say otherwise". The key is always present, because an absent key is not a statement.'
     writtenUtc      = (Get-Date).ToUniversalTime().ToString('o')
     version         = $Version
     tag             = $Tag
     channel         = $Channel
     package         = $packageRecord
+    override        = $overrideRecord
     files           = $files
     resolved        = [ordered]@{
         nuget    = [ordered]@{

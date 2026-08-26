@@ -23,6 +23,17 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The release manifest can say whether the release was a crunch override, and
+  it always says something.** `DECISIONS.md` stated in bold that *"a release
+  whose manifest does not say it was overridden is a release claiming it was
+  not"* while no manifest could express one — so by that sentence's own logic
+  every release claimed it was not overridden, including one that was.
+  `build/Write-ReleaseManifest.ps1` takes five `-Override*` parameters and always
+  emits the key: `"override": null` for an ordinary release, a five-part block
+  for a held one. **An absent key is not a statement; `null` is.** A half-stated
+  override refuses the manifest rather than writing half an account of the
+  decision.
+
 - **The release manifest records seven files, not six: `tool-verdicts.json` is
   the seventh.** It states which tools a build forwards and which upstream
   versions that judgement was made against, so a release that cannot produce it
@@ -58,6 +69,58 @@ has been satisfied in form only.
   caller never received — and the window is a hazard row rather than a fix.
 
 ### Fixed
+
+- **A `purpose` or a `why` could carry invisible supplementary-plane text into
+  another agent's context.** `RecordText.Sanitise` iterated `char`, and
+  `char.GetUnicodeCategory` answers `Surrogate` for either half of a
+  supplementary-plane character and never `Format` — so the `Cf` drop its own
+  remarks describe covered the basic plane alone, and the whole TAG block
+  (U+E0020–U+E007F, the canonical invisible-text range) survived a round trip
+  through the record. It enumerates runes now, and a lone surrogate is dropped
+  rather than replayed.
+
+- **`browserai_catch_up` served an out-of-range `page` as a different page.**
+  The number was narrowed to `int` in an unchecked context, so 2^32 + 1 became
+  page 1 and the answer said *"page 1 of 1"* with no error at all; the mirror
+  case wrapped negative and quoted a number the caller never sent. The bound is
+  compared as a `long`, the refusal quotes what arrived, and the narrowing
+  happens only after the bound holds.
+
+- **A refusal echoed the caller's own control characters back into the model
+  reading it.** The sentence named `U+0007` in words and then carried the byte
+  twice. Every catalogue row that quotes a caller's raw spelling now renders it
+  through `RecordText.Escape`, which **shows** a code point rather than
+  stripping it — a caller has to be able to see which character was the problem.
+
+- **A refusal leaked a C# parameter name.** `browserai_init` on a volume root
+  answered *"… must be a real directory on the volume. (Parameter 'canonical')"*,
+  because `ArgumentException.Message` appends one whenever it is set and the
+  catalogue interpolates that message verbatim.
+
+- **A session directory too deep to hold its own `browserai.data` was accepted,
+  created and locked**, and then failed with a message about the browser and a
+  recovery that told the caller to re-provision an install that was never broken.
+  It is refused at the door now, naming the budget: `MAX_PATH` less the longest
+  name anything puts inside a session directory. `CreateProcessW`'s
+  `lpCurrentDirectory` bounds `output\`; SQLite's Win32 VFS bounds
+  `browserai.data-shm`, which is longer, and is what actually failed first.
+
+- **A duplicate tool name inside one half of `tool-verdicts.json` exited the
+  process with a message naming neither the file nor the row.** The loader
+  checked for a name in *both* halves and not for a name twice in *one*, so the
+  frozen dictionary threw instead. It is a named refusal now — and the quieter
+  half was worse: `TryGetProperty` answers the **last** duplicate, so a doctored
+  file could have carried two verdicts for one tool and been read silently.
+
+- **`browserai_list` on a drive letter with nothing mounted on it answered "no
+  sessions"** — true, and useless to a caller who typed the wrong letter. The
+  empty answer now says whether the directory is there at all.
+
+- **Five `PLAYWRIGHT_MCP_*` variables are refused by name rather than merely
+  absent**, `ALLOW_UNRESTRICTED_FILE_ACCESS` first among them: it switches off
+  the only containment this product has left, and the allowlist made it absent
+  by construction while `ChildEnvironment.Refused` did not name it — which is
+  exactly the difference that list exists to record.
 
 - **A suite arm that needed its own stray sweep to have run was losing the
   machine-wide gate to a real BrowserAI another test had just started**, once in

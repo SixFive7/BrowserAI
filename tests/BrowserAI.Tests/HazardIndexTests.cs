@@ -56,7 +56,17 @@ namespace BrowserAI.Tests;
 /// </remarks>
 internal sealed partial class HazardIndexTests
 {
-    private static Assembly[] OurAssemblies { get; } =
+    /// <summary>
+    /// The two assemblies this repository owns: the suite and the product.
+    /// </summary>
+    /// <remarks>
+    /// <b>Internal since 2026-08-26, so "a symbol this repository can answer
+    /// for" has one definition.</b> <c>ReVerificationIndexTests</c> asks the same
+    /// question of its own index and searched the test assembly alone, which is
+    /// one of the three axes on which the two gates had silently diverged — and
+    /// <c>CLAUDE.md</c> presents them as one class of mechanism.
+    /// </remarks>
+    internal static Assembly[] OurAssemblies { get; } =
         [typeof(HazardIndexTests).Assembly, typeof(BrowserAI.Protocol.StdioChannel).Assembly];
 
     [Test]

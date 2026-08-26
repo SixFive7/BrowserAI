@@ -48,11 +48,67 @@ internal sealed class ChildEnvironmentTests
         "PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST",
         "PLAYWRIGHT_DOWNLOAD_HOST",
         "PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST",
+        "PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS",
         "PLAYWRIGHT_MCP_CAPS",
+        "PLAYWRIGHT_MCP_CONFIG",
+        "PLAYWRIGHT_MCP_INIT_PAGE",
+        "PLAYWRIGHT_MCP_INIT_SCRIPT",
+        "PLAYWRIGHT_MCP_OUTPUT_DIR",
         "PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE",
         "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS",
         "PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST",
     ];
+
+    /// <summary>
+    /// The one variable that would switch off the only containment this product
+    /// has left, and the four beside it that redirect the child's config, its
+    /// output root or the scripts it runs.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read out of the shipped bundle rather than from a changelog</b>:
+    /// <c>playwright-core</c>'s <c>configFromEnv</c> maps every one of these onto
+    /// a config key, and the merge order is config file → environment → CLI, so
+    /// an inherited value wins over the key BrowserAI generates.
+    /// </remarks>
+    private static readonly string[] TheFiveThatOverrideAGeneratedKey =
+    [
+        "PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS",
+        "PLAYWRIGHT_MCP_CONFIG",
+        "PLAYWRIGHT_MCP_INIT_PAGE",
+        "PLAYWRIGHT_MCP_INIT_SCRIPT",
+        "PLAYWRIGHT_MCP_OUTPUT_DIR",
+    ];
+
+    /// <summary>
+    /// The five names that override a key the generator writes are refused by
+    /// name rather than merely absent.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>None of these was a hole and none of them is one now — the finding
+    /// is against the list's own stated purpose (2026-08-26).</b> The allowlist
+    /// is the child's entire block by construction, so all five were already
+    /// absent; what <c>Refused</c> exists for, in its own words, is to turn
+    /// <i>absent because nobody added it</i> into <i>absent because it is
+    /// refused</i>. <c>PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS</c> is the
+    /// one that makes the omission worth a test: it switches off
+    /// <c>allowUnrestrictedFileAccess: false</c>, which
+    /// <c>BrowserConfiguration</c> calls the only containment this product has
+    /// left, and it was not named on the day that key became load-bearing.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheVariablesThatWouldOverrideAGeneratedConfigKeyAreRefusedByName()
+    {
+        foreach (var name in TheFiveThatOverrideAGeneratedKey)
+        {
+            await Assert.That(ChildEnvironment.Refused.Contains(name)).IsTrue();
+
+            // And refused for a caller too, not only absent from the inherited
+            // set -- which is the difference between a property and an accident.
+            _ = Assert.Throws<ArgumentException>(
+                () => ChildEnvironment.Build([new KeyValuePair<string, string>(name, "1")]));
+        }
+    }
 
     [Test]
     public async Task TheRefusedNamesAreTheOnesTheDesignNames()

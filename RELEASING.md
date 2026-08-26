@@ -164,12 +164,31 @@ green is locally the cheapest correct-looking move.
 **An override leaves a trace in the release artifact.** The resolved set recorded
 at [item 11](#11-the-resolved-set-is-recorded-beside-the-artifact) states the
 version that actually shipped, copied rather than transcribed. Say what was
-held, at what version, and why, **in this item's evidence and in the changelog
-entry** — a release whose manifest does not say it was overridden is a release
-claiming it was not.
+held, at what version, and why, **in the manifest, in this item's evidence and in
+the changelog entry** — a release whose manifest does not say it was overridden is
+a release claiming it was not.
 
-**Evidence when it applies:** the held version, the newest version, the break,
-and the name of the human who took the decision. *(Added 2026-08-26.)*
+⚠️ ***Corrected 2026-08-26 (previously "in this item's evidence and in the
+changelog entry", with no manifest field to put it in).*** The sentence above
+asked the manifest to say something the manifest could not express: the script
+emitted no override field and had no place for one. It takes five parameters now
+and **always** emits the key, so an ordinary release states `"override": null`
+rather than saying nothing:
+
+```powershell
+pwsh -File build/Write-ReleaseManifest.ps1 -Destination <dir> -Version <v> `
+     -OverriddenPackage '@playwright/mcp' -OverrideHeldAt 0.0.79 `
+     -OverrideNewest 0.0.80 -OverrideReason '<what broke>' -OverrideDecidedBy '<name>'
+```
+
+All five go together or none does; a half-stated override refuses the manifest,
+because a block naming a held version and nothing else reads like a complete
+account of the decision a year later.
+
+**Evidence when it applies:** the manifest's own `override` block — which carries
+the held version, the newest version, the break and the name of the human who
+took the decision — quoted into this item beside the changelog entry.
+*(Added 2026-08-26.)*
 
 ### 2. No pin anywhere
 
@@ -575,8 +594,10 @@ the package's SHA-256 and the resolved version each copied file carries:
 | `tool-verdicts.json` | the repository root — which tools this build forwards, and the `judgedAgainst` upstream versions that judgement was made on |
 | The derived version and its tag | item 9 |
 | The full `.nupkg` and its size | item 12 |
+| `override` | item 1 — `null` unless a human held an upstream back, and then the held version, the newest one, the break and who decided |
 
-**Evidence:** the manifest's path, and the resolved version each file states.
+**Evidence:** the manifest's path, the resolved version each file states, and
+what its `override` key says.
 
 > ⚠️ **Seven since 2026-08-26** *(previously six — the row above and the word
 > "six" in `build/Write-ReleaseManifest.ps1`)*. `tool-verdicts.json` arrived at

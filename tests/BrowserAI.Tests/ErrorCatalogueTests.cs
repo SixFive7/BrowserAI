@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
@@ -1401,6 +1402,141 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>Asserts an observed refusal is exactly the catalogue row it claims.</summary>
+    /// <summary>
+    /// A refusal quotes the caller's own path without carrying its control
+    /// characters, and without a C# parameter name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Both halves were measured 2026-08-26 through the published
+    /// binary.</b> An <c>init</c> on <c>…\se&lt;U+0007&gt;ss</c> answered with a
+    /// message that correctly named <c>U+0007</c> in words and then <b>embedded
+    /// the byte twice</b>; an <c>init</c> on <c>C:\</c> answered <i>"…must be a
+    /// real directory on the volume. <b>(Parameter 'canonical')</b>"</i>.
+    /// </para>
+    /// <para>
+    /// <b>This is the same channel <c>RecordText.Sanitise</c> exists to keep
+    /// clean, on the half nothing sanitised.</b> A refusal goes straight into the
+    /// calling model's context, and — for a refusal at the verdict door — into
+    /// the record's failure payload. <c>canonical</c> is an identifier that means
+    /// nothing to a model, in the one sentence the model is supposed to act on.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARefusalEchoesNoControlCharacterAndNamesNoCSharpParameter()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var bell = Path.Combine(sessions.Root, "se\u0007ss");
+
+        var refused = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = bell,
+            ["purpose"] = "should never be created",
+        }));
+
+        // The code point is named in words -- that part was always right -- and
+        // the literal is shown rather than replayed.
+        await Assert.That(refused).Contains("U+0007");
+        await Assert.That(refused.Any(char.IsControl)).IsFalse();
+        Record(nameof(SessionErrors.DirectoryUnusable));
+
+        // A volume root, which is the one refusal composed from an
+        // ArgumentException's own Message.
+        var volumeRoot = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = @"C:\",
+            ["purpose"] = "should never be created",
+        }));
+
+        await Assert.That(volumeRoot).Contains("volume root");
+        await Assert.That(volumeRoot).DoesNotContain("(Parameter '");
+
+        // ⚠️ THE POSITIVE CONTROL, because "contains no control character" is
+        // satisfied by an empty answer and by an answer that never quoted the
+        // path at all. Both refusals name the directory the caller asked about,
+        // and the first one names the segment that was wrong.
+        await Assert.That(refused).Contains("ss");
+        await Assert.That(refused).Contains(sessions.Root);
+        await Assert.That(volumeRoot).Contains(@"C:\");
+
+        // And nothing was created, which is the half the sentence cannot claim
+        // for itself.
+        await Assert.That(Directory.Exists(bell)).IsFalse();
+    }
+
+    /// <summary>
+    /// A session directory with no room left for its own <c>output\</c> is
+    /// refused at the door, naming the budget.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It was accepted, created, locked, and then failed at child launch
+    /// with the cause unnamed (measured 2026-08-26, 70 levels).</b> The answer
+    /// was <i>"The browser runtime for '…' did not start: IOException: Could not
+    /// start '…\node.exe' in '…\output'"</i>, and the recovery it offered —
+    /// delete the directory and <c>browserai_init</c> again to re-provision — is
+    /// the wrong one: nothing is broken about the install.
+    /// </para>
+    /// <para>
+    /// <b>The mechanism is an asymmetry between two Windows limits.</b>
+    /// <c>CreateProcessW</c>'s <c>lpCurrentDirectory</c> is <c>MAX_PATH</c>-bound
+    /// while .NET's directory creation is not, so the session directory is
+    /// creatable and its <c>output\</c> is not usable as a working directory. The
+    /// tree already refuses names Windows would not keep verbatim precisely so
+    /// this class fails at the door; length was the one member of it nothing
+    /// checked.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADirectoryWithNoRoomLeftForItsOutputFolderIsRefusedAtTheDoorRatherThanAtLaunch()
+    {
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        // Composed against the real budget rather than against a number written
+        // here, so a rig root of any length reaches exactly one character past
+        // what a session directory may be.
+        var overlong = Path.Combine(sessions.Root, new string('d', 8));
+
+        while (overlong.Length <= SessionPath.LongestSessionDirectory)
+        {
+            overlong = Path.Combine(overlong, new string('d', 8));
+        }
+
+        var refused = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = overlong,
+            ["purpose"] = "should never be created",
+        }));
+
+        await Assert.That(refused).Contains("is not a usable directory path");
+        await Assert.That(refused).Contains(SessionLayout.OutputFolderName);
+        await Assert.That(refused).Contains(SessionPath.LongestSessionDirectory.ToString(CultureInfo.InvariantCulture));
+
+        // Refused at the DOOR: nothing created, nothing locked, and no browser
+        // asked to start in a directory Windows would not accept.
+        await Assert.That(Directory.Exists(overlong)).IsFalse();
+        await Assert.That(refused).DoesNotContain("did not start");
+        Record(nameof(SessionErrors.DirectoryUnusable));
+
+        // ⚠️ THE POSITIVE CONTROL. "Refused" is satisfied by a door that refuses
+        // everything, so an ordinary directory beside it still opens. The
+        // BOUNDARY -- that a path one character inside the budget is accepted --
+        // is asserted where it costs no browser,
+        // `SessionPathTests.ADirectoryWithNoRoomLeftForItsOutputFolderIsNotASessionDirectory`.
+        var ordinary = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = Path.Combine(sessions.Root, "ordinary"),
+            ["purpose"] = "the control that says this door still opens a session",
+        });
+
+        await Assert.That((bool?)ordinary["isError"]).IsNotEqualTo(true);
+    }
+
     private static void Match(string observed, string row, string expected)
     {
         if (!observed.Contains(expected, StringComparison.Ordinal))

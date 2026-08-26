@@ -729,10 +729,21 @@ internal sealed class SessionManager : IAsyncDisposable
     /// wrong answer.
     /// </para>
     /// <para>
-    /// <b>The log is printed newest-last and truncated from the FRONT.</b> A
-    /// caller arriving at a session wants the recent story; an elision is stated
-    /// rather than presented as continuity, and the record's own cap says
-    /// <i>may</i> because it cannot tell whether a trim has happened.
+    /// ⚠️ ***Corrected 2026-08-26 (previously "The log is printed newest-last
+    /// and truncated from the FRONT. A caller arriving at a session wants the
+    /// recent story; an elision is stated rather than presented as continuity,
+    /// and the record's own cap says `may` because it cannot tell whether a trim
+    /// has happened").*** Every clause of that was false of the code three lines
+    /// below it. <b>The log is printed OLDEST first, nothing is elided, and
+    /// there is no cap anywhere</b> — <see cref="SessionStore"/>'s <i>"No caps,
+    /// anywhere"</i>, held by
+    /// <c>SqliteStorageTests.NothingInTheStoreIsCappedByLengthOrByCount</c>.
+    /// What replaced the truncation is the paging below, and oldest-first is the
+    /// whole of why: rows are only ever appended, so numbering from the oldest
+    /// end means an append can change the last page and no other, and a page a
+    /// caller has already read never moves. Numbering from the newest end —
+    /// which is what "newest-last and truncated from the front" was — would
+    /// renumber every page on every call.
     /// </para>
     /// </remarks>
     /// <param name="arguments">The call's arguments.</param>
@@ -748,17 +759,28 @@ internal sealed class SessionManager : IAsyncDisposable
                 + $"Call {SessionToolSurface.List} with a directory to see the sessions beneath it, or {SessionToolSurface.Init} to create one here.");
 
         var total = record.LogLength;
-        var pages = total is 0 ? 1 : (int)((total + PageSize - 1) / PageSize);
-        var page = (int)(asked ?? 1);
+        var pages = total is 0 ? 1 : (total + PageSize - 1) / PageSize;
 
-        if (page < 1 || page > pages)
+        // ⚠️ COMPARED AS A `long` AND NARROWED ONLY AFTER THE BOUND HOLDS, and
+        // it was `(int)(asked ?? 1)` in an unchecked context until 2026-08-26 --
+        // so an out-of-range page was served as a DIFFERENT page. 2^32 + 1
+        // truncated to 1, the range check below then passed, and the answer said
+        // "page 1 of 1" to a caller who had asked for page 4,294,967,297.
+        // int.MaxValue + 1 was worse in the other direction: it wrapped
+        // NEGATIVE, so the refusal quoted a number the caller never sent.
+        var wanted = asked ?? 1;
+
+        if (wanted < 1 || wanted > pages)
         {
             throw new SessionToolException(
-                $"'{SessionToolSurface.PageParameter}' = {page.ToString(CultureInfo.InvariantCulture)} is outside this session's log, which is "
+                $"'{SessionToolSurface.PageParameter}' = {wanted.ToString(CultureInfo.InvariantCulture)} is outside this session's log, which is "
                 + $"{total.ToString(CultureInfo.InvariantCulture)} entr(ies) over {pages.ToString(CultureInfo.InvariantCulture)} page(s) of {PageSize.ToString(CultureInfo.InvariantCulture)}. "
                 + $"Pages are numbered from the OLDEST end, so page 1 is where the session started and page {pages.ToString(CultureInfo.InvariantCulture)} is what happened most recently. Nothing was changed.");
         }
 
+        // Safe now, and only now: the bound above is what makes this narrowing
+        // lossless rather than a second answer.
+        var page = (int)wanted;
         var skip = (long)(page - 1) * PageSize;
 
         IReadOnlyList<SessionLogRow> rows;
@@ -1046,6 +1068,30 @@ internal sealed class SessionManager : IAsyncDisposable
                 + $"  {OutputSize(session)}\n"
                 + $"  {InUse(session)}\n"
                 + $"  {SessionErrors.Recorded(record.Purpose)}");
+        }
+
+        // ⚠️ ON THE EMPTY ANSWER ONLY, and never above the walk. A listing that
+        // found sessions has already proved the tree is there, and `list` is the
+        // one door where an absent path produces no refusal at all: measured
+        // 2026-08-26, `browserai_list` on an unmounted drive letter answered
+        // "No BrowserAI sessions under 'Q:\'. That is an answer rather than an
+        // error" in 1 ms, which is TRUE and tells a caller who typed the wrong
+        // letter nothing. `CanonicalPath` knows -- `VolumeIdentity.Of` says
+        // `NoSuchDrive` -- and drops it, on the ground that an absent letter
+        // "falls through to the ordinary creation failure, which already says
+        // what to do". This door creates nothing, so there is no such sentence.
+        //
+        // One filesystem call, against a root the canonicaliser has already
+        // proven local: a UNC spelling and a mapped letter are both refused
+        // above, so the 22-second call this product is ordered around cannot be
+        // reached from here.
+        if (found is 0 && !Directory.Exists(root))
+        {
+            return new ToolOutcome(
+                $"No BrowserAI sessions under '{root}' — and there is no directory at '{root}' on this machine, so there could not be. "
+                + "Check the path: a drive letter with nothing mounted on it and a directory that was never created both look like this from here. "
+                + $"Call {SessionToolSurface.List} with a directory that exists to see the sessions beneath it, or {SessionToolSurface.Init} with an absolute path to create one.",
+                IsError: false);
         }
 
         return found is 0

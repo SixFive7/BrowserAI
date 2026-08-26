@@ -35,10 +35,39 @@ namespace BrowserAI.Interop;
 ///   </description></item>
 ///   <item><description>
 ///     <see cref="FinalNameOf"/> — one directory open. <b>Only ever called once
-///     <see cref="Of"/> has said the volume is local</b>, which is what keeps a
-///     bounded call bounded.
+///     <see cref="Of"/> has said the volume is local.</b>
 ///   </description></item>
 /// </list>
+/// <para>
+/// ⚠️ ***Corrected 2026-08-26 (previously step 3 ended "…which is what keeps a
+/// bounded call bounded", and the same claim was implied at
+/// <see cref="FinalNameOf"/> and <see cref="DeepestExistingFinalName"/>).***
+/// <b>The answer is bounded; the cost is not, and the code claimed both.</b>
+/// <see cref="Of"/> reads the <b>drive letter's</b> DOS device link and nothing
+/// else — it judges the volume, not the path — while
+/// <see cref="DeepestExistingFinalName"/> then issues up to its walk limit of
+/// <c>CreateFileW</c> calls along components it has judged nothing about. A
+/// directory symbolic link or a volume mount point anywhere in that chain,
+/// pointing at a share that has stopped answering, is traversed by the open, and
+/// the cost is the redirector's rather than the object manager's:
+/// <c>Directory.Exists</c> against a dead host re-measured on this machine
+/// 2026-08-26 at <b>22,157 ms</b>, per call. It runs inside
+/// <c>Sessions.CanonicalPath.FinalName</c>, which <c>SessionLock.TryAcquire</c>
+/// reaches under the per-directory gate — where the caller who named the path is
+/// not the one who waits.
+/// </para>
+/// <para>
+/// <b>Recorded rather than fixed, and the reason is written down where the
+/// decision is</b> — [the hazard index](../../../HAZARDS.md#hazard-index). The
+/// composition has <b>not</b> been measured end to end: this account can create
+/// neither a directory symlink nor a mount point, having neither
+/// <c>SeCreateSymbolicLinkPrivilege</c> nor Developer Mode, so the mechanism is
+/// read from the code and the cost from the measurement above. The cheap fix
+/// exists and is not taken: one extra open per level with
+/// <c>FILE_FLAG_OPEN_REPARSE_POINT</c>, refusing a reparse point whose target is
+/// a UNC path. What is <i>not</i> available is a watchdog, because
+/// [a clock cannot be honest here](../../../TESTING.md#every-duration-is-a-hang-detector-or-it-is-a-defect).
+/// </para>
 /// <para>
 /// <b>Why <c>QueryDosDeviceW</c> rather than only <c>GetDriveTypeW</c>.</b> They
 /// answer different questions and this product needs both. Measured 2026-08-19:
@@ -260,7 +289,10 @@ internal static partial class VolumeIdentity
     /// <para>
     /// ⚠️ <b>Never call this on a path <see cref="Of"/> has not already found
     /// local.</b> It opens a directory, and an open against an unreachable share
-    /// is the 22-second call this whole type is ordered around.
+    /// is the 22-second call this whole type is ordered around. <b>That
+    /// precondition bounds the DRIVE LETTER and nothing deeper</b> — a reparse
+    /// point in the middle of the path is traversed by this open, and the type's
+    /// own remarks carry the correction and the hazard row.
     /// </para>
     /// <para>
     /// The answer carries the <see cref="ExtendedLengthPrefix"/>; stripping it is
@@ -341,6 +373,15 @@ internal static partial class VolumeIdentity
     /// ⚠️ <b>Never call this on a path <see cref="Of"/> has not already found
     /// local</b> — it opens a directory, which is
     /// <see cref="FinalNameOf"/>'s 22-second hazard.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And <see cref="Of"/> is not sufficient, which is the correction
+    /// this walk carries — 2026-08-26.</b> It judges the drive letter; this loop
+    /// opens up to <paramref name="walkLimit"/> components nothing has judged, so
+    /// a directory symlink or a volume mount point pointing at a dead share is
+    /// followed here at the redirector's cost rather than the object manager's.
+    /// The bound on this loop is a bound on the number of syscalls, never on what
+    /// one of them may cost. See the type's own remarks and the hazard row.
     /// </para>
     /// </remarks>
     /// <param name="path">The path to resolve. Need not exist.</param>

@@ -51,7 +51,16 @@ namespace BrowserAI.Storage;
 /// <b>Two consequences, both accepted and both pinned by
 /// <c>SqliteStorageTests</c>.</b> First, reading a session directory is not a
 /// side-effect-free act — a <c>-shm</c> appears beside the store, in a
-/// directory the caller only asked to look at. Second, where the caller may
+/// directory the caller only asked to look at. ⚠️ <b>And the reader is not
+/// always a caller: starting the server does this to EVERY session on the
+/// machine</b> (added 2026-08-26 — this paragraph said <i>the caller</i> and
+/// meant it). <c>Program.Main</c> starts the stray sweep, one pass calls
+/// <c>SessionIndex.Sweep</c>, and that follows every entry in the machine-wide
+/// index through <see cref="OpenForReading"/> — so one process start is one
+/// store open, and one <c>-shm</c> and <c>-wal</c>, per registered session on
+/// the host. Measured that day through the published binary against a
+/// cleanly-closed session, with a second BrowserAI that sent nothing but
+/// <c>initialize</c>. Second, where the caller may
 /// <i>not</i> create files there, the open is refused with
 /// <c>SQLITE_CANTOPEN</c> and the session stays unreadable until somebody opens
 /// it for writing, which the next acquisition does. That refusal is the right

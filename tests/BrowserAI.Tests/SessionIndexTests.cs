@@ -856,7 +856,15 @@ internal sealed class SessionIndexTests
                     $"{Path.GetRelativePath(root, file)} {new FileInfo(file).Length} {Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file)))}")));
 
     /// <summary>The first drive letter this machine has no volume mounted on.</summary>
-    private static char FirstUnmountedDriveLetter()
+    /// <remarks>
+    /// <b>Internal since 2026-08-26, so "a letter that names nothing" has one
+    /// definition.</b> <c>SessionListTests</c> asks the same question about the
+    /// same twenty-two letters, and a second search written beside this one would
+    /// be free to pick a letter in the direction <c>DosDeviceAlias</c> allocates
+    /// from — which is the whole reason this one counts down from Z.
+    /// </remarks>
+    /// <returns>The letter.</returns>
+    internal static char FirstUnmountedDriveLetter()
     {
         var mounted = DriveInfo.GetDrives()
             .Select(drive => char.ToUpperInvariant(drive.Name[0]))

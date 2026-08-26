@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -54,6 +55,56 @@ namespace BrowserAI.Sessions;
 /// </remarks>
 internal sealed class SessionPath
 {
+    /// <summary>
+    /// Windows' own <c>MAX_PATH</c>, terminating null included.
+    /// </summary>
+    /// <remarks>
+    /// <b>It is here because one Win32 call still keeps it and .NET does not.</b>
+    /// <c>CreateProcessW</c>'s <c>lpCurrentDirectory</c> is bounded by it whatever
+    /// the process manifest says, while <c>Directory.CreateDirectory</c> is not —
+    /// so a directory can be created, locked and recorded and then be unusable as
+    /// the place a browser is started.
+    /// </remarks>
+    public const int MaxPath = 260;
+
+    /// <summary>The suffix SQLite composes from the store's own path.</summary>
+    /// <remarks>
+    /// <c>-wal</c> is the same length, so one of the two stands for both.
+    /// </remarks>
+    private const string WalIndexSuffix = "-shm";
+
+    /// <summary>
+    /// The longest a session directory may be: <see cref="MaxPath"/> less its
+    /// terminator and less the longest name anything puts directly inside it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Derived rather than written, and the derivation is what found the real
+    /// bound.</b> The obvious candidate is <c>\output</c> — the working
+    /// directory every child is started in, which is what
+    /// <c>CreateProcessW</c>'s <c>lpCurrentDirectory</c> bounds. It is not the
+    /// longest. SQLite composes <c>browserai.data-shm</c> and
+    /// <c>browserai.data-wal</c> from the store's path and its Win32 VFS is
+    /// bounded in <c>MAX_PATH</c> characters too, so the store fails first:
+    /// measured 2026-08-26, a 254-character session directory took its guard —
+    /// which .NET opens, and .NET is not bounded — and then failed the store
+    /// open with <c>SQLITE_CANTOPEN</c>, <i>"unable to open database file
+    /// (result 14)"</i>. The profile and the downloads folder are opened by .NET
+    /// alone and do not bind.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A budget, not a ban on deep paths.</b> A caller may name a
+    /// directory of any depth to <c>browserai_list</c>, which creates nothing and
+    /// starts nothing — which is why this predicate lives on this type rather
+    /// than in <see cref="CanonicalPath"/>, beside the volume-root one and for
+    /// the same reason.
+    /// </para>
+    /// </remarks>
+    public static readonly int LongestSessionDirectory =
+        MaxPath - 1 - Math.Max(
+            1 + SessionLayout.DataFileName.Length + WalIndexSuffix.Length,
+            1 + SessionLayout.OutputFolderName.Length);
+
     private SessionPath(string fullPath)
     {
         FullPath = fullPath;
@@ -134,18 +185,35 @@ internal sealed class SessionPath
     /// lets <c>list</c> ask the first and skip the second.
     /// </para>
     /// <para>
-    /// <b>The one predicate that is left is the volume root</b>, because
-    /// <c>C:\</c> is a legitimate <i>subtree</i> and never a session directory.
-    /// The trailing-separator trim survives it: this is handed canonical paths by
-    /// construction, and a caller that composes one with a separator on the end
-    /// would otherwise get a second identity for one directory.
+    /// <b>Two predicates are left: the volume root and the length</b> — because
+    /// <c>C:\</c> is a legitimate <i>subtree</i> and never a session directory,
+    /// and because a directory with no room left inside it for
+    /// <c>browserai.data</c> is one that can be created and cannot then be
+    /// opened. The trailing-separator trim survives both: this is handed
+    /// canonical paths by construction, and a caller that composes one with a
+    /// separator on the end would otherwise get a second identity for one
+    /// directory.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Neither refusal carries a <c>paramName</c>, and that is deliberate
+    /// — corrected 2026-08-26.</b> <c>SessionManager.Resolve</c> interpolates
+    /// <c>failure.Message</c> straight into
+    /// <see cref="SessionErrors.DirectoryUnusable"/>, and
+    /// <c>ArgumentException.Message</c> appends <c>(Parameter 'x')</c> whenever
+    /// one is set — so a caller naming <c>C:\</c> was answered <i>"…must be a
+    /// real directory on the volume. <b>(Parameter 'canonical')</b>"</i>,
+    /// measured through the published binary that day. <c>canonical</c> is an
+    /// internal identifier that means nothing to a model, in the one sentence
+    /// the model is supposed to act on.
     /// </para>
     /// </remarks>
     /// <param name="canonical">
     /// A directory as <see cref="CanonicalPath.Of"/> answered it.
     /// </param>
     /// <returns>The session path and every name derived from it.</returns>
-    /// <exception cref="ArgumentException">The path is empty or a volume root.</exception>
+    /// <exception cref="ArgumentException">
+    /// The path is empty, a volume root, or too long to hold a session.
+    /// </exception>
     public static SessionPath For(string canonical)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(canonical);
@@ -155,10 +223,29 @@ internal sealed class SessionPath
         // one.
         var trimmed = canonical.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-        return trimmed.Length is 0 || trimmed.EndsWith(':')
-            ? throw new ArgumentException(
-                $"'{canonical}' is a volume root rather than a session directory. A session directory must be a real directory on the volume.",
-                nameof(canonical))
-            : new SessionPath(trimmed);
+        if (trimmed.Length is 0 || trimmed.EndsWith(':'))
+        {
+            throw new ArgumentException(
+                $"'{canonical}' is a volume root rather than a session directory. A session directory must be a real directory on the volume.");
+        }
+
+        // ⚠️ AT THE DOOR, because the alternative is a launch-time surprise
+        // whose recovery is wrong. Measured 2026-08-26: a directory this long
+        // was accepted, created and locked, and the session then failed with
+        // either "Could not start '…\node.exe' in '…\output'" or a store that
+        // would not open -- and row 7's advice, delete the directory and
+        // re-provision, is the wrong recovery for a path problem.
+        if (trimmed.Length > LongestSessionDirectory)
+        {
+            throw new ArgumentException(
+                $"'{trimmed}' is {trimmed.Length.ToString(CultureInfo.InvariantCulture)} characters, and a session directory may be at most "
+                + $"{LongestSessionDirectory.ToString(CultureInfo.InvariantCulture)}. BrowserAI creates '{SessionLayout.DataFileName}' and "
+                + $"'{SessionLayout.OutputFolderName}' inside the directory you name, and Windows still bounds a database open and a child's working "
+                + $"directory at {MaxPath.ToString(CultureInfo.InvariantCulture)} characters even where .NET does not — so the directory would be "
+                + "created and the session would then fail to open, with a message about the browser rather than about the path. Name a path at least "
+                + $"{(trimmed.Length - LongestSessionDirectory).ToString(CultureInfo.InvariantCulture)} character(s) shorter.");
+        }
+
+        return new SessionPath(trimmed);
     }
 }

@@ -110,6 +110,24 @@ internal sealed class ToolVerdictTests
         await Assert.That(stale[0]).Contains("UPSTREAM-REVIEW.md");
     }
 
+    /// <summary>
+    /// The <c>answer</c> rows and the authored surface are the same seven names,
+    /// in both directions — which is the whole of what those rows do.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This test IS the <c>answer</c> half's role, and saying so is the
+    /// point of these remarks (2026-08-26).</b> Nothing at run time reads an
+    /// <c>answer</c> row: <c>SessionToolSurface.IsAuthored</c> short-circuits
+    /// every <c>browserai_</c> name before <c>ToolVerdicts.Decide</c> is reached,
+    /// and <c>SessionToolSurface.Rewrite</c> advertises the authored tools from
+    /// <c>SessionToolSurface.Names</c> rather than from the file — so deleting an
+    /// <c>answer</c> row changes nothing a caller can observe, and only this arm
+    /// would notice. That makes the rows <b>build-and-test-time data</b>, and it
+    /// is stated in <c>tool-verdicts.json</c> itself, in <c>ToolVerdicts</c>'
+    /// remarks and in <c>Sessions/CLAUDE.md</c> rather than left for a reader to
+    /// infer from a file whose other half is load-bearing at the door.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheAuthoredRowsAreExactlyTheToolsBrowserAiAnswersItself()
     {
@@ -124,6 +142,100 @@ internal sealed class ToolVerdictTests
         // share the file: the record's tool field is drawn from one set whichever
         // branch wrote it.
         await Assert.That(RepositoryVerdicts.Committed.Authored.All(row => row.Kind is ToolVerdictKind.Answer)).IsTrue();
+
+        // Not vacuous: two empty sets agree in both directions. The denominator
+        // is stated, and it is the number the surface publishes.
+        await Assert.That(authored.Count).IsEqualTo(SessionToolSurface.Names.Count);
+        await Assert.That(authored.Count).IsEqualTo(7);
+    }
+
+    /// <summary>
+    /// One tool name written twice inside <b>one</b> half of the file is a named
+    /// refusal, not a crash and not a silent last-wins read.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The loader checked for a name in BOTH halves and not for a name
+    /// twice in ONE, and the two failure modes are different (2026-08-26).</b>
+    /// Measured that day on .NET 10: <c>JsonDocument</c> keeps both properties,
+    /// so <c>Rows()</c> returned two <c>ToolVerdict</c>s and the constructor's
+    /// <c>ToFrozenDictionary</c> threw a bare <c>ArgumentException</c> — which
+    /// reached <c>Program</c>'s process boundary and exited 1 with a message
+    /// naming <b>neither the file nor the row</b>, against this type's own
+    /// promise that every refusal names both.
+    /// </para>
+    /// <para>
+    /// <b>The quieter half is the worse one.</b> <c>TryGetProperty</c> answers
+    /// the <b>last</b> duplicate, so any doctored row that does not reach the
+    /// frozen dictionary first would be read silently — one tool carrying
+    /// <c>allow</c> and <c>deny</c>, with the reader picking one and saying
+    /// nothing.
+    /// </para>
+    /// <para>
+    /// <b>Planted in the TEXT, because it cannot be planted anywhere else.</b> A
+    /// <c>JsonObject</c> cannot hold two properties under one name, so the
+    /// doctoring machinery every other malformed arm uses is structurally unable
+    /// to express this shape — which is part of why it went unnoticed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OneNameWrittenTwiceInsideOneHalfIsRefusedByNameRatherThanThrownFromADictionary()
+    {
+        const string TwiceInUpstream = """
+            {"schemaVersion":1,
+             "judgedAgainst":{"@playwright/mcp":"0.0.0"},
+             "upstream":{"browser_close":{"verdict":"allow"},
+                         "browser_close":{"verdict":"deny","why":"planted","since":"2026-08-26"}},
+             "authored":{}}
+            """;
+
+        const string TwiceInAuthored = """
+            {"schemaVersion":1,
+             "judgedAgainst":{"@playwright/mcp":"0.0.0"},
+             "upstream":{"browser_close":{"verdict":"allow"}},
+             "authored":{"browserai_list":{"verdict":"answer"},
+                         "browserai_list":{"verdict":"answer"}}}
+            """;
+
+        // ⚠️ THE FIXTURE'S OWN CONTROL. `JsonDocument` really does keep both
+        // properties -- if a future runtime started collapsing them, every
+        // assertion below would pass by asking nothing.
+        using (var raw = System.Text.Json.JsonDocument.Parse(TwiceInUpstream))
+        {
+            await Assert.That(raw.RootElement.GetProperty("upstream").EnumerateObject()
+                .Count(property => string.Equals(property.Name, "browser_close", StringComparison.Ordinal)))
+                .IsEqualTo(2);
+        }
+
+        var upstream = Assert.Throws<InvalidOperationException>(
+            () => _ = ToolVerdicts.Parse(Encoding.UTF8.GetBytes(TwiceInUpstream), "twice-in-upstream.json"));
+
+        await Assert.That(upstream!.Message).Contains("twice-in-upstream.json");
+        await Assert.That(upstream.Message).Contains("browser_close");
+        await Assert.That(upstream.Message).Contains("upstream");
+
+        var authored = Assert.Throws<InvalidOperationException>(
+            () => _ = ToolVerdicts.Parse(Encoding.UTF8.GetBytes(TwiceInAuthored), "twice-in-authored.json"));
+
+        await Assert.That(authored!.Message).Contains("twice-in-authored.json");
+        await Assert.That(authored.Message).Contains("browserai_list");
+        await Assert.That(authored.Message).Contains("authored");
+
+        // ⚠️ THE POSITIVE CONTROL, and it is what makes the two refusals about
+        // the DUPLICATE rather than about anything else in these fixtures: the
+        // same shape with one of each pair removed loads, both halves.
+        const string OnceEach = """
+            {"schemaVersion":1,
+             "judgedAgainst":{"@playwright/mcp":"0.0.0"},
+             "upstream":{"browser_close":{"verdict":"allow"}},
+             "authored":{"browserai_list":{"verdict":"answer"}}}
+            """;
+
+        var loaded = ToolVerdicts.Parse(Encoding.UTF8.GetBytes(OnceEach), "once-each.json");
+
+        await Assert.That(loaded.Upstream.Count).IsEqualTo(1);
+        await Assert.That(loaded.Authored.Count).IsEqualTo(1);
     }
 
     [Test]

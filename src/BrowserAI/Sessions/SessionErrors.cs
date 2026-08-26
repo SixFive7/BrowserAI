@@ -161,16 +161,27 @@ internal static class SessionErrors
     /// <param name="value">What arrived.</param>
     /// <returns>The refusal.</returns>
     public static string DirectoryNotAbsolute(string argument, string value) =>
-        $"'{argument}' must be an absolute local path, and '{value}' is not. There is no default: name where this session's data should live. "
+        $"'{argument}' must be an absolute local path, and '{RecordText.Escape(value)}' is not. There is no default: name where this session's data should live. "
         + "BrowserAI does not resolve a relative path, because that would silently pick a location nobody chose — a different one per process. Pass a full path such as C:\\work\\checkout-flow-bug.";
 
     /// <summary>Row 3 — the path is absolute and still unusable.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The caller's own spelling is ESCAPED and not echoed — corrected
+    /// 2026-08-26.</b> Measured that day through the published binary: an
+    /// <c>init</c> on a path carrying U+0007 answered with a message that named
+    /// <c>U+0007</c> in words and then <b>carried two literal U+0007 bytes</b>
+    /// into the calling model's context. This is the same channel
+    /// <see cref="RecordText.Sanitise"/> exists to keep clean, on the half of it
+    /// nothing sanitised; the <paramref name="why"/> clause is BrowserAI's own
+    /// prose and is not escaped, so anything it quotes is escaped where it is
+    /// composed.
+    /// </remarks>
     /// <param name="argument">Which argument was wrong.</param>
     /// <param name="value">What arrived.</param>
     /// <param name="why">What the filesystem said about it.</param>
     /// <returns>The refusal.</returns>
     public static string DirectoryUnusable(string argument, string value, string why) =>
-        $"'{argument}' = '{value}' is not a usable directory path: {why} Nothing was changed. Name an absolute path BrowserAI can create a directory at.";
+        $"'{argument}' = '{RecordText.Escape(value)}' is not a usable directory path: {why} Nothing was changed. Name an absolute path BrowserAI can create a directory at.";
 
     /// <summary>
     /// Row 3's second companion — the path is absolute, usable, and on a network
@@ -198,7 +209,7 @@ internal static class SessionErrors
     /// <param name="why">Which kind of network path it is, as a clause.</param>
     /// <returns>The refusal.</returns>
     public static string DirectoryOnANetworkPath(string argument, string value, string why) =>
-        $"'{argument}' = '{value}' is on a network path — {why} — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. "
+        $"'{argument}' = '{RecordText.Escape(value)}' is on a network path — {why} — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. "
         + "This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. "
         + "Name a directory on a local drive, such as C:\\work\\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.";
 
@@ -239,9 +250,9 @@ internal static class SessionErrors
     /// <param name="accepted">The same path with the prefix removed.</param>
     /// <returns>The refusal.</returns>
     public static string DirectorySpelledInTheDeviceNamespace(string argument, string value, string accepted) =>
-        $"'{argument}' = '{value}' is spelled in the device namespace — '\\\\.\\' is where '\\\\.\\NUL' and '\\\\.\\PhysicalDrive0' live, and it reaches past every check the filesystem would otherwise apply to a directory name. Nothing was created and nothing was changed. "
+        $"'{argument}' = '{RecordText.Escape(value)}' is spelled in the device namespace — '\\\\.\\' is where '\\\\.\\NUL' and '\\\\.\\PhysicalDrive0' live, and it reaches past every check the filesystem would otherwise apply to a directory name. Nothing was created and nothing was changed. "
         + "Every other spelling of a local directory is taken as the directory it names: BrowserAI resolves the extended-length prefix, a 'subst'ed drive letter and a junction into the filesystem's own name for the directory, and records that. This one it will not. "
-        + $"Call the same tool again with {argument}='{accepted}'.";
+        + $"Call the same tool again with {argument}='{RecordText.Escape(accepted)}'.";
 
     /// <summary>Row 4 — <c>init</c> met a directory that is already a session.</summary>
     /// <remarks>
