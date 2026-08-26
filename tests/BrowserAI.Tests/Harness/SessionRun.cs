@@ -299,11 +299,6 @@ internal sealed record SessionRun
                 ["debug"] = true,
             }).ConfigureAwait(false);
 
-            // Read here rather than at the end, so that what is captured is what
-            // the session's own records looked like WHILE it was open -- which
-            // is the window the scope assertion is about.
-            var sessionLog = client.StandardErrorSoFar();
-
             answers["initGamma"] = await CallAsync(client, SessionToolSurface.Init, new JsonObject
             {
                 ["directory"] = gamma,
@@ -330,6 +325,26 @@ internal sealed record SessionRun
             // Closed rather than killed: BrowserAI's own graceful path, and what
             // releases the session directory so the move below can happen.
             _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang).ConfigureAwait(false);
+
+            // ⚠️ DRAINED, AND AFTER THE CLOSE. *Corrected 2026-08-26 (previously
+            // `client.StandardErrorSoFar()` taken mid-run, with the comment "Read
+            // here rather than at the end, so that what is captured is what the
+            // session's own records looked like WHILE it was open -- which is the
+            // window the scope assertion is about".)* **It flaked**: the snapshot
+            // came back EMPTY on one full run of 604 and the assertion named the
+            // product for the harness's own starvation. The stderr pump is a pool
+            // work item and this suite runs ~600 tests over it, so a snapshot is a
+            // read of however much happened to have been scheduled -- which is the
+            // defect `RawStdioClient.DrainedStandardErrorAsync`'s own remarks were
+            // written about, after the same shape put CI red on 2026-08-18.
+            //
+            // **The window the old comment defended is not lost.** Every assertion
+            // over this text is a `Contains`, and end-of-file gives a SUPERSET of
+            // any mid-run snapshot: what was true of the open window is still in
+            // it. What is gained is that the read is an event rather than a
+            // duration -- everything holding the write end has exited by this
+            // line, so there is nothing left to arrive.
+            var sessionLog = await client.DrainedStandardErrorAsync().ConfigureAwait(false);
 
             return new FirstProcess
             {
