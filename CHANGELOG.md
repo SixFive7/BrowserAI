@@ -70,6 +70,42 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **Starting the server opened the SQLite store of every session on the
+  machine.** `Program.Main` starts the stray sweep, one pass followed every entry
+  in the machine-wide index through `SessionLock.ReadRecord`, and each of those
+  opens left a `browserai.data-shm` and a `browserai.data-wal` in a directory
+  nobody had named — measured through the published binary, a cleanly-closed
+  session at two files and four after a stranger sent nothing but `initialize`.
+  The sweep goes **probe-first** now: `SessionIndex` walks at a stated depth, and
+  the sweep's is the guard — one `CreateFile` on `browserai.lock`, with two file
+  checks behind it. Nothing was given up, because the record was never part of
+  the sweep's decision: the removable set is bit-identical, and the one entry
+  whose record is still read in full is the one a pass is about to act on, where
+  there is nothing to open.
+
+- **An idle browser close left no trace in the only record there is.** The timer
+  talks to the child directly, and while `browserai.log` existed the event
+  survived there; that file is gone, so an autonomous close became an
+  unexplained gap in wall-clock time followed by a silent relaunch — under a
+  heading that tells its reader *"this is what BrowserAI did"*. It writes a row
+  now, the way every forwarded call's row is written: `in-flight` before the
+  call reaches the child, settled from the child's own answer, with a `why` that
+  names the timer rather than borrowing a caller's voice. **A record that will
+  not write does not stop the close** — the one place this tree inverts that
+  rule, because there is no caller to refuse to.
+
+- **An unjudged `browserai_` name was refused without being recorded.** The
+  short-circuit in front of the verdict door was a prefix test, so
+  `browserai_zzz` never reached the door: it was refused by the session
+  manager's default arm and, having resolved no session, wrote no log row —
+  while an unjudged *upstream* name was recorded on the session it named. It is
+  an exact match against the seven authored tools now, so both are
+  deny-by-defaulted at the door and both land in the log. **The `answer` rows of
+  `tool-verdicts.json` become load-bearing at run time as a consequence**, where
+  they had been build-and-test-time data. A call with no resolvable session
+  still writes nothing and cannot; that residual is asserted rather than
+  described.
+
 - **A `purpose` or a `why` could carry invisible supplementary-plane text into
   another agent's context.** `RecordText.Sanitise` iterated `char`, and
   `char.GetUnicodeCategory` answers `Surrogate` for either half of a

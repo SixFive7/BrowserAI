@@ -478,7 +478,20 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // getting the tool surface wrong is a fact about the client, not
             // about any one session.
             ProxyLog.SessionMissing(_logger, tool);
-            await RefuseAsync(caller, request.Id, SessionErrors.SessionMissing(tool), cancellationToken).ConfigureAwait(false);
+
+            // ⚠️ A NAME IN BROWSERAI'S OWN NAMESPACE THAT IS NOT ONE OF THE SEVEN
+            // GETS THE SENTENCE THAT NAMES THEM, and this branch is the whole of
+            // what the 2026-08-26 exact-match change left behind. With a session,
+            // `browserai_zzz` now reaches the verdict door, is deny-by-defaulted
+            // and is recorded; with no session there is nothing to route to and
+            // nowhere to write a row -- and "this needs a session" would send a
+            // caller to supply one for a tool that does not exist, which is a
+            // second wasted turn rather than a recovery.
+            var refusal = SessionToolSurface.IsInTheAuthoredNamespace(name) && !SessionToolSurface.IsAuthored(name)
+                ? SessionToolSurface.NotOneOfOurs(tool)
+                : SessionErrors.SessionMissing(tool);
+
+            await RefuseAsync(caller, request.Id, refusal, cancellationToken).ConfigureAwait(false);
             return;
         }
 

@@ -295,11 +295,75 @@ internal static class SessionToolSurface
     /// <summary>The seven authored tools, in the order they are offered.</summary>
     public static IReadOnlyList<string> Names { get; } = [Init, Resume, CatchUp, List, Destroy, SetPurpose, ReinstallBrowser];
 
-    /// <summary>Whether a tool name belongs to BrowserAI rather than to the child.</summary>
+    /// <summary>Whether a tool name is one BrowserAI answers itself.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>An EXACT match against <see cref="Names"/>, and it was a
+    /// <see cref="Prefix"/> test until 2026-08-26.</b> That test stood in front
+    /// of the verdict door in <c>BrowserProxy.AnswerToolsCallAsync</c>, so any
+    /// name in the authored namespace short-circuited past it: <c>browserai_zzz</c>
+    /// landed on <c>SessionManager.InvokeAsync</c>'s default arm, was refused
+    /// with a good sentence, and <b>wrote no log row</b>, because no session had
+    /// been resolved at that point. An unjudged <i>upstream</i> name was recorded
+    /// on the session it named. Same class of caller mistake, two different
+    /// records, and nothing said so.
+    /// </para>
+    /// <para>
+    /// <b>It also makes the <c>answer</c> rows load-bearing at run time.</b> A
+    /// <c>browserai_</c> name with no row now reaches
+    /// <c>ToolVerdicts.Decide</c> and is deny-by-defaulted like anything else,
+    /// so the authored half of <c>tool-verdicts.json</c> is no longer only
+    /// build-and-test-time data.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The residual is real and is stated rather than closed:</b> a call
+    /// naming an unjudged <c>browserai_</c> name with <b>no</b> resolvable
+    /// session still writes nothing, and cannot — there is no session directory
+    /// to write it into, which is the same reason the session-missing and
+    /// unknown-session refusals go to the machine-wide log.
+    /// <c>SessionPolicyTests.AnUnjudgedAuthoredNameIsRefusedAtTheVerdictDoorAndRecordedOnItsSession</c>
+    /// asserts both halves.
+    /// </para>
+    /// </remarks>
     /// <param name="name">The tool name from a <c>tools/call</c>.</param>
     /// <returns>Whether BrowserAI answers it itself.</returns>
     public static bool IsAuthored(string? name) =>
+        name is not null && Names.Contains(name, StringComparer.Ordinal);
+
+    /// <summary>
+    /// Whether a tool name is spelled in BrowserAI's own namespace, whether or
+    /// not it is one of the tools that exist.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This is the prefix test <see cref="IsAuthored"/> used to be, kept
+    /// because one caller genuinely needs the wider question — and it is a
+    /// different question, so it has a different name.</b> A call naming
+    /// <c>browserai_zzz</c> with no session cannot be answered by the verdict
+    /// door, because there is no session to route to; what it must not be
+    /// answered with is <i>"this needs a session"</i>, which sends a caller to
+    /// supply one for a tool that does not exist. It gets
+    /// <see cref="NotOneOfOurs"/> instead, which names the seven that do.
+    /// </remarks>
+    /// <param name="name">The tool name from a <c>tools/call</c>.</param>
+    /// <returns>Whether it begins <see cref="Prefix"/>.</returns>
+    public static bool IsInTheAuthoredNamespace(string? name) =>
         name is not null && name.StartsWith(Prefix, StringComparison.Ordinal);
+
+    /// <summary>
+    /// The refusal for a name in BrowserAI's own namespace that is not one of
+    /// its tools.
+    /// </summary>
+    /// <remarks>
+    /// <b>One spelling, because two callers reach it.</b>
+    /// <c>SessionManager.InvokeAsync</c>'s default arm produces it for a name
+    /// that got past routing, and <c>BrowserProxy</c> produces it for a name that
+    /// arrived with no session at all — and a caller meeting two wordings for one
+    /// mistake would reasonably think they were two different mistakes.
+    /// </remarks>
+    /// <param name="tool">The name the caller sent.</param>
+    /// <returns>The refusal.</returns>
+    public static string NotOneOfOurs(string tool) =>
+        $"'{tool}' is not a BrowserAI session tool. The session tools are: {string.Join(", ", Names)}.";
 
     /// <summary>
     /// Rewrites the child's <c>tools/list</c> result: <c>session</c> and

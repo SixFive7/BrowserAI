@@ -221,7 +221,7 @@ internal sealed class SessionIndex
     /// is worse than no sentence when the mechanism does not hold what it says.
     /// </para>
     /// </remarks>
-    public IReadOnlyList<SessionIndexEntry> Follow() => Walk(under: null);
+    public IReadOnlyList<SessionIndexEntry> Follow() => Walk(under: null, SessionIndexDepth.Record);
 
     /// <summary>
     /// Follows only the entries that name a directory under one subtree.
@@ -311,7 +311,7 @@ internal sealed class SessionIndex
     {
         ArgumentException.ThrowIfNullOrEmpty(prefix);
 
-        return Walk(prefix);
+        return Walk(prefix, SessionIndexDepth.Record);
     }
 
     /// <summary>
@@ -347,7 +347,22 @@ internal sealed class SessionIndex
     /// </remarks>
     public SessionIndexSweep Sweep()
     {
-        var followed = Follow();
+        // ⚠️ THE GUARD AND NEVER THE STORE, and until 2026-08-26 this line was
+        // `Follow()`. The index is machine-wide and `Program.Main` starts a sweep
+        // in the background, so every BrowserAI start opened the SQLite store of
+        // every registered session on the host -- leaving a `browserai.data-shm`
+        // and a `browserai.data-wal` in directories nobody had named. Measured
+        // through the published binary: a cleanly-closed session held two files,
+        // a second BrowserAI sent nothing but `initialize`, and it held four.
+        //
+        // Nothing is lost by stopping at the guard, because the record was never
+        // part of this decision: every removable state below is settled by the
+        // directory and the guard, and the record only ever filled an inventory a
+        // sweep does not print. The one entry whose store IS opened is the one
+        // this pass is about to act on -- `ReFollow` reads it in full -- and on
+        // that entry there is nothing to open, because a removable entry is one
+        // whose `browserai.data` is absent.
+        var followed = Walk(under: null, SessionIndexDepth.Guard);
         var removed = new List<SessionIndexEntry>();
         var kept = new List<SessionIndexEntry>();
 
@@ -414,15 +429,23 @@ internal sealed class SessionIndex
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        return FollowOne(entry.EntryFile, entry.Key, under: null)!;
+        // ⚠️ IN FULL, and deliberately not at the depth the sweep walked at. This
+        // runs on one entry, immediately before that entry is acted on, and it is
+        // the only store open a sweep ever performs -- which on a removable entry
+        // is not an open at all, because a removable entry is one whose
+        // `browserai.data` is absent and `SessionLock.ReadRecord` answers that
+        // from a `File.Exists`. What it buys is that the last word before a
+        // delete comes from the reader that can see everything.
+        return FollowOne(entry.EntryFile, entry.Key, under: null, SessionIndexDepth.Record)!;
     }
 
-    /// <summary>The one walk, with the subtree filter optional.</summary>
+    /// <summary>The one walk, with the subtree filter and the depth optional.</summary>
     /// <param name="under">
     /// The prefix to keep, or <see langword="null"/> for the whole machine.
     /// </param>
+    /// <param name="depth">Whether each session's store may be opened.</param>
     /// <returns>Every entry that survived, ordered by key.</returns>
-    private List<SessionIndexEntry> Walk(string? under)
+    private List<SessionIndexEntry> Walk(string? under, SessionIndexDepth depth)
     {
         if (!Directory.Exists(Root))
         {
@@ -442,7 +465,7 @@ internal sealed class SessionIndex
                 continue;
             }
 
-            if (FollowOne(file, key, under) is { } followed)
+            if (FollowOne(file, key, under, depth) is { } followed)
             {
                 entries.Add(followed);
             }
@@ -479,7 +502,7 @@ internal sealed class SessionIndex
     private static bool IsUnder(SessionPath candidate, string prefix) =>
         (candidate.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal);
 
-    private static SessionIndexEntry? FollowOne(string file, string key, string? under)
+    private static SessionIndexEntry? FollowOne(string file, string key, string? under, SessionIndexDepth depth)
     {
         string pointer;
 
@@ -586,10 +609,10 @@ internal sealed class SessionIndex
             return null;
         }
 
-        return Locate(file, key, pointer, session);
+        return Locate(file, key, pointer, session, depth);
     }
 
-    private static SessionIndexEntry Locate(string file, string key, string pointer, SessionPath session)
+    private static SessionIndexEntry Locate(string file, string key, string pointer, SessionPath session, SessionIndexDepth depth)
     {
         if (!Directory.Exists(session.FullPath))
         {
@@ -618,6 +641,11 @@ internal sealed class SessionIndex
                     State = SessionIndexEntryState.DirectoryMissing,
                     Problem = "the directory it names no longer exists",
                 };
+        }
+
+        if (depth is SessionIndexDepth.Guard)
+        {
+            return AtTheGuard(file, key, pointer, session);
         }
 
         try
@@ -741,6 +769,89 @@ internal sealed class SessionIndex
                 State = SessionIndexEntryState.RecordInFlight,
                 Problem = $"'{session.FullPath}' holds no '{SessionLayout.DataFileName}' at this instant and '{Path.GetFileName(inFlight[0])}' is beside it, so another BrowserAI is inside create-or-take on it right now",
             };
+    }
+
+    /// <summary>
+    /// What following an entry says when the store may not be opened: the same
+    /// removable set, decided by the guard and two file checks.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The removable set is bit-identical to the record-bearing reader's, and
+    /// that is the property this method exists to keep.</b> Every state a sweep
+    /// acts on — <see cref="SessionIndexEntryState.DirectoryMissing"/>,
+    /// <see cref="SessionIndexEntryState.NotASession"/>,
+    /// <see cref="SessionIndexEntryState.Unusable"/> — is settled above this line
+    /// or by <see cref="Absent"/>, and none of them ever needed the record. What
+    /// the record decided was the difference between two states a sweep
+    /// <i>keeps</i>: <see cref="SessionIndexEntryState.Session"/> and
+    /// <see cref="SessionIndexEntryState.LockUnreadable"/>. A directory whose
+    /// <c>browserai.data</c> exists but will not parse therefore reads as
+    /// <c>Session</c> here rather than <c>LockUnreadable</c> — <b>said plainly
+    /// rather than glossed</b>, because it is the one visible difference, and it
+    /// moves nothing: both are kept, and this walk's only consumer is the sweep.
+    /// </para>
+    /// <para>
+    /// <b>The probe is the positive signal and the file check is the
+    /// fallback.</b> A held <c>browserai.lock</c> is a directory somebody is
+    /// driving <i>right now</i> — one <c>CreateFile</c>, no directory walk, no
+    /// database — and it settles the question without a stat that could race an
+    /// acquisition. Everything else falls through to the two file checks, which
+    /// are the same two the record-bearing reader makes before it opens anything.
+    /// </para>
+    /// <para>
+    /// <b>The legacy record is checked here rather than inherited.</b>
+    /// <c>SessionLock.ReadRecord</c> refuses a directory carrying the old
+    /// <c>browserai.json</c> before it opens anything, and that refusal is what
+    /// made such a directory <c>LockUnreadable</c> and therefore <b>kept</b>.
+    /// Skipping it would leave a legacy session with no <c>browserai.data</c>
+    /// reading as <see cref="SessionIndexEntryState.NotASession"/> — which is
+    /// <i>removable</i>, and would be this method silently widening the set it
+    /// was written to preserve.
+    /// </para>
+    /// </remarks>
+    /// <param name="file">The entry file.</param>
+    /// <param name="key">The entry's key.</param>
+    /// <param name="pointer">What the entry holds.</param>
+    /// <param name="session">The directory it names.</param>
+    /// <returns>The entry, with no record and no store opened.</returns>
+    private static SessionIndexEntry AtTheGuard(string file, string key, string pointer, SessionPath session)
+    {
+        if (SessionLock.ProbeLiveness(session).State is SessionLiveness.Held)
+        {
+            return new SessionIndexEntry
+            {
+                Key = key,
+                EntryFile = file,
+                Pointer = pointer,
+                Session = session,
+                State = SessionIndexEntryState.Session,
+            };
+        }
+
+        if (SessionLayout.OldFormatRefusal(session) is { } notThisFormat)
+        {
+            return new SessionIndexEntry
+            {
+                Key = key,
+                EntryFile = file,
+                Pointer = pointer,
+                Session = session,
+                State = SessionIndexEntryState.LockUnreadable,
+                Problem = notThisFormat,
+            };
+        }
+
+        return File.Exists(session.DataFile)
+            ? new SessionIndexEntry
+            {
+                Key = key,
+                EntryFile = file,
+                Pointer = pointer,
+                Session = session,
+                State = SessionIndexEntryState.Session,
+            }
+            : Absent(file, key, pointer, session);
     }
 
     private static SessionIndexEntry Unusable(string file, string key, string pointer, string why) =>
@@ -892,6 +1003,35 @@ internal enum SessionIndexEntryState
     EntryUnreadable,
 }
 
+/// <summary>
+/// How far following an entry is allowed to go: whether the session's own store
+/// may be opened.
+/// </summary>
+/// <remarks>
+/// <b>It exists because opening a store is observable from outside the process
+/// that does it.</b> A read-only open against a write-ahead-logged database
+/// builds the wal-index beside it, so following an entry leaves a
+/// <c>browserai.data-shm</c> and a <c>browserai.data-wal</c> in a directory the
+/// walk only asked to look at. That is affordable for a caller who asked about
+/// those sessions — <c>browserai_list</c>, the roll-up — and it is not
+/// affordable for the sweep, which runs on every process start, over every
+/// session on the machine, and needs nothing the record carries.
+/// </remarks>
+internal enum SessionIndexDepth
+{
+    /// <summary>
+    /// Open each session's store and carry its record. What a reporting caller
+    /// asked for.
+    /// </summary>
+    Record,
+
+    /// <summary>
+    /// Stop at the guard. No store is opened, no record is carried, and the set
+    /// of entries a sweep may remove is unchanged.
+    /// </summary>
+    Guard,
+}
+
 /// <summary>One line of the inventory, and what following it found.</summary>
 internal sealed record SessionIndexEntry
 {
@@ -915,6 +1055,14 @@ internal sealed record SessionIndexEntry
     /// every other state — including <see cref="SessionIndexEntryState.LockUnreadable"/>,
     /// where a lock file exists and could not be parsed.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>And <see langword="null"/> on a <see cref="SessionIndexEntryState.Session"/>
+    /// followed at <see cref="SessionIndexDepth.Guard"/> — 2026-08-26.</b> A walk
+    /// that may not open a store cannot carry a record, so <c>Session</c> no
+    /// longer implies one. The only caller that walks at that depth is
+    /// <see cref="SessionIndex.Sweep"/>, which reads no record; every reporting
+    /// caller walks at <see cref="SessionIndexDepth.Record"/> and still gets one.
+    /// </remarks>
     public SessionRecord? Record { get; init; }
 
     /// <summary>Why this is not a readable session, when it is not.</summary>

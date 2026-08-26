@@ -248,6 +248,105 @@ internal sealed class SessionPolicyTests
         await Assert.That(advertised.ToJsonString()).Contains(FromTheFuture);
     }
 
+    /// <summary>
+    /// An unjudged <c>browserai_</c> name reaches the verdict door and is
+    /// recorded there, like every other unjudged name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The short-circuit in front of the door was a PREFIX test until
+    /// 2026-08-26</b>, so <c>browserai_zzz</c> never reached the verdict at all:
+    /// it landed on <c>SessionManager.InvokeAsync</c>'s default arm, was refused
+    /// with a good sentence, and <b>wrote no log row</b> — because no session had
+    /// been resolved at that point. An unjudged <i>upstream</i> name was recorded
+    /// on the session it named. Same class of caller mistake, two different
+    /// records, and the difference was invisible.
+    /// </para>
+    /// <para>
+    /// <b>It is an exact match against <c>SessionToolSurface.Names</c> now</b>,
+    /// which also makes the <c>answer</c> rows of <c>tool-verdicts.json</c>
+    /// load-bearing at run time rather than build-time only: a name in the
+    /// authored namespace that nobody judged is deny-by-defaulted like anything
+    /// else.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The residual is stated rather than closed.</b> A call naming
+    /// <c>browserai_zzz</c> with <b>no</b> resolvable session still writes
+    /// nothing, and cannot: there is no session directory to write it into.
+    /// That half is asserted below too, so the boundary is a recorded property
+    /// rather than a gap somebody rediscovers.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUnjudgedAuthoredNameIsRefusedAtTheVerdictDoorAndRecordedOnItsSession()
+    {
+        const string NeverAuthored = "browserai_zzz";
+
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "unjudged-authored-name");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a browserai_ name nobody judged",
+        });
+
+        var answer = await CallAsync(rig, NeverAuthored, new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite exercising this call",
+        });
+
+        // The verdict door's own sentence, and not the session manager's "that
+        // is not a BrowserAI session tool" -- which is how this is distinguished
+        // from the arm it replaces.
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+        await Assert.That(TextOf(answer)).IsEqualTo(SessionErrors.ToolHasNoVerdict());
+
+        // And the row, which is the half that did not exist. The caller's own
+        // string is kept verbatim, because "what did it try to call" is exactly
+        // what a reader of the record wants.
+        var recorded = RecordedSession.LogOf(directory)
+            .Where(row => row.Tool == NeverAuthored)
+            .ToList();
+
+        await Assert.That(recorded.Count).IsEqualTo(1);
+        await Assert.That(recorded[0].Outcome).IsEqualTo(SessionStore.Failed);
+        await Assert.That(recorded[0].Failure!).IsEqualTo(SessionErrors.ToolHasNoVerdict());
+        await Assert.That(recorded[0].Why).IsEqualTo("the suite exercising this call");
+
+        // ⚠️ THE POSITIVE CONTROL. The seven real authored tools still
+        // short-circuit ahead of the door -- an exact match rather than no match
+        // at all -- so this is a narrowing and not a deletion.
+        var listed = await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root });
+
+        await Assert.That((bool?)listed["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(listed)).Contains(directory);
+
+        // ⚠️ THE RESIDUAL, asserted rather than described: with no session there
+        // is nowhere to write a row and the verdict door cannot be reached, so
+        // the answer is the one that names the seven tools that DO exist. It is
+        // deliberately not "this needs a session" -- that would send a caller to
+        // supply one for a tool that is not there, which is a second wasted turn
+        // rather than a recovery, and it is what this door answered for one run
+        // while the exact-match change was being made.
+        var noSession = await CallAsync(rig, NeverAuthored, new JsonObject { ["why"] = "the suite exercising this call" });
+
+        await Assert.That((bool?)noSession["isError"]).IsTrue();
+        await Assert.That(TextOf(noSession)).IsEqualTo(SessionToolSurface.NotOneOfOurs(NeverAuthored));
+        await Assert.That(RecordedSession.LogOf(directory).Count(row => row.Tool == NeverAuthored)).IsEqualTo(1);
+
+        // And an ordinary browser tool with no session still gets the
+        // session-missing sentence, so the branch above is narrow rather than a
+        // replacement.
+        var browserToolNoSession = await CallAsync(rig, "browser_navigate", new JsonObject { ["why"] = "the suite exercising this call" });
+
+        await Assert.That(TextOf(browserToolNoSession)).IsEqualTo(SessionErrors.SessionMissing("browser_navigate"));
+    }
+
     [Test]
     public async Task TheAnnotationToolIsAbsentFromTheSurfaceAndRefusedIfNamedAnyway()
     {

@@ -134,20 +134,29 @@ internal sealed class ToolVerdicts
 
     /// <summary>BrowserAI's own tools, in the file's own order.</summary>
     /// <remarks>
-    /// ⚠️ <b>These rows have no run-time effect at all, and that is stated here
-    /// rather than left to be discovered — 2026-08-26.</b>
-    /// <c>SessionToolSurface.IsAuthored</c> short-circuits every
-    /// <c>browserai_</c> name in <c>BrowserProxy.AnswerToolsCallAsync</c> before
-    /// <see cref="Decide"/> is reached, and <c>SessionToolSurface.Rewrite</c>
-    /// advertises the authored tools from <c>SessionToolSurface.Names</c> rather
-    /// than from the file — so removing an <c>answer</c> row changes nothing a
-    /// caller can observe. <b>Their role is build-and-test-time:</b>
+    /// <para>
+    /// ⚠️ ***Corrected 2026-08-26, later the same day (previously "These rows
+    /// have no run-time effect at all … `SessionToolSurface.IsAuthored`
+    /// short-circuits every `browserai_` name … before `Decide` is reached, so
+    /// removing an `answer` row changes nothing a caller can observe. Their role
+    /// is build-and-test-time").*** <b>The short-circuit is an exact match
+    /// now</b>, so a <c>browserai_</c> name with no row here reaches
+    /// <see cref="Decide"/> and is deny-by-defaulted like any other unjudged
+    /// name. Removing an <c>answer</c> row is therefore observable: that tool
+    /// stops being answered and starts being refused at the door.
+    /// </para>
+    /// <para>
+    /// <b>The build-time role is still the load-bearing one, and it is what
+    /// keeps the two in step.</b>
     /// <c>ToolVerdictTests.TheAuthoredRowsAreExactlyTheToolsBrowserAiAnswersItself</c>
-    /// holds them identical to that surface in both directions, and
+    /// holds these rows identical to <c>SessionToolSurface.Names</c> in both
+    /// directions — which is why a row cannot be removed by accident — and
     /// <c>build/Write-ReleaseManifest.ps1</c> copies the whole file beside the
     /// release so a rollback can read which tools a build forwarded and which
-    /// upstream that judgement was made against. The <see cref="Upstream"/> half
-    /// is the opposite: it decides every call.
+    /// upstream that judgement was made against. <c>SessionToolSurface.Rewrite</c>
+    /// still advertises the authored tools from <c>Names</c> rather than from the
+    /// file; the <see cref="Upstream"/> half has always decided every call.
+    /// </para>
     /// </remarks>
     public IReadOnlyList<ToolVerdict> Authored { get; }
 
@@ -299,10 +308,20 @@ internal sealed class ToolVerdicts
     /// <para>
     /// <b>An <c>answer</c> row cannot reach here and is refused rather than
     /// allowed if it ever does.</b> <c>SessionToolSurface.IsAuthored</c>
-    /// short-circuits every <c>browserai_</c> name before the door, and the loader
-    /// refuses an <c>answer</c> row whose name is not one — so the branch is
-    /// unreachable by construction, and the direction it fails in is the one that
-    /// does not forward an authored name to a child that has never heard of it.
+    /// short-circuits the seven authored names before the door, and the loader
+    /// refuses an <c>answer</c> row whose name is not one of them — so the branch
+    /// is unreachable by construction, and the direction it fails in is the one
+    /// that does not forward an authored name to a child that has never heard of
+    /// it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>An unjudged name in the authored NAMESPACE does reach here, and did
+    /// not until 2026-08-26.</b> The short-circuit was a prefix test, so
+    /// <c>browserai_zzz</c> never arrived: it was refused by the session
+    /// manager's default arm and, having resolved no session, wrote no log row,
+    /// while an unjudged <i>upstream</i> name was recorded. It is an exact match
+    /// now, so both are deny-by-defaulted here and both are recorded against the
+    /// session they named.
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool the caller named.</param>
@@ -410,9 +429,13 @@ internal sealed class ToolVerdicts
 
         if (authored && !SessionToolSurface.IsAuthored(row.Name))
         {
+            // Since 2026-08-26 this is an EXACT match rather than the prefix
+            // test it used to be, so the message names the set rather than the
+            // spelling: a `browserai_` name that is not one of the seven is a row
+            // about a tool that does not exist, which used to load.
             throw Unreadable(
                 origin,
-                $"'{member}.{row.Name}' is in '{AuthoredMember}' and is not one of BrowserAI's own tools -- those all begin '{SessionToolSurface.Prefix}'");
+                $"'{member}.{row.Name}' is in '{AuthoredMember}' and is not one of BrowserAI's own tools -- those are exactly: {string.Join(", ", SessionToolSurface.Names)}");
         }
 
         if (!authored && kind is ToolVerdictKind.Answer)

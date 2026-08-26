@@ -400,7 +400,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolSurface.Destroy => await DestroyAsync(arguments).ConfigureAwait(false),
                 SessionToolSurface.SetPurpose => SetPurpose(arguments),
                 SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(arguments, cancellationToken).ConfigureAwait(false),
-                _ => new ToolOutcome($"'{tool}' is not a BrowserAI session tool. The session tools are: {string.Join(", ", SessionToolSurface.Names)}.", IsError: true),
+                _ => new ToolOutcome(SessionToolSurface.NotOneOfOurs(tool), IsError: true),
             };
         }
         catch (SessionToolException failure)

@@ -116,7 +116,6 @@ internal sealed class SessionLock : IDisposable
     private readonly LockFileHold _hold;
     private readonly SessionStore _store;
     private readonly IDisposable? _logScope;
-    private readonly ILogger _logger;
     private long _opening;
     private int _disposed;
 
@@ -137,7 +136,7 @@ internal sealed class SessionLock : IDisposable
         _store = store;
         Record = record;
         GateWasAbandoned = gateWasAbandoned;
-        _logger = logger;
+        Logger = logger;
 
         // The session on every record written while this lock is held. The
         // provider was given scope support at build-order step 2 for this.
@@ -146,6 +145,19 @@ internal sealed class SessionLock : IDisposable
 
     /// <summary>The canonicalised directory this lock owns.</summary>
     public SessionPath Location { get; }
+
+    /// <summary>
+    /// The logger this lock's own records go to, scoped to this session.
+    /// </summary>
+    /// <remarks>
+    /// <b>Exposed 2026-08-26 for the one writer that is not a caller.</b> The
+    /// idle browser close writes a row of its own and has no caller's logger to
+    /// borrow — it runs from a timer, off any request — so a failure to record it
+    /// belongs in the same session-scoped sink as every other failure about this
+    /// store. It is deliberately not a general seam: nothing here may be used to
+    /// give the lock a second logger.
+    /// </remarks>
+    public ILogger Logger { get; }
 
     /// <summary>The record as it stood when this lock last wrote a statement.</summary>
     /// <remarks>
@@ -377,7 +389,7 @@ internal sealed class SessionLock : IDisposable
             {
                 if (!_store.Settle(id, outcome, SessionRecordReader.Stamp(DateTimeOffset.Now), failure))
                 {
-                    SessionLog.OutcomeLanded(_logger, id, Location.FullPath);
+                    SessionLog.OutcomeLanded(Logger, id, Location.FullPath);
                 }
             }
             catch (SqliteException refused)
@@ -386,7 +398,7 @@ internal sealed class SessionLock : IDisposable
                 // lost is the outcome of one row, which `browserai_catch_up`
                 // renders as "no answer was recorded" -- a true statement about
                 // the record rather than a failed call.
-                SessionLog.OutcomeNotRecorded(_logger, id, Location.FullPath, refused);
+                SessionLog.OutcomeNotRecorded(Logger, id, Location.FullPath, refused);
             }
         }
     }
@@ -502,7 +514,7 @@ internal sealed class SessionLock : IDisposable
 
             try
             {
-                SessionLog.Released(_logger, Location.FullPath);
+                SessionLog.Released(Logger, Location.FullPath);
 
                 // The store first: closing the last connection checkpoints and
                 // removes the write-ahead log, so what the delete below meets is
@@ -540,7 +552,7 @@ internal sealed class SessionLock : IDisposable
                 return;
             }
 
-            SessionLog.Released(_logger, Location.FullPath);
+            SessionLog.Released(Logger, Location.FullPath);
 
             _store.Dispose();
             _hold.Dispose();
@@ -579,20 +591,28 @@ internal sealed class SessionLock : IDisposable
     /// <para>
     /// ⚠️ ***Corrected 2026-08-26 (previously "It opens the guard and never the
     /// store", with no subject, which read as a property of the sweep).*** <b>It
-    /// is true of this method and false of the pass that calls it.</b>
-    /// <c>StraySweep.Pass</c> calls <c>SessionIndex.Sweep</c>, which follows
+    /// was true of this method and false of the pass that calls it.</b>
+    /// <c>StraySweep.Pass</c> calls <c>SessionIndex.Sweep</c>, which followed
     /// every entry on the machine through <see cref="ReadRecord"/> — one
     /// <c>SessionStore.OpenForReading</c> per registered session, and the index
-    /// is machine-wide. <b>So one process start is one store open per session on
+    /// is machine-wide. <b>So one process start was one store open per session on
     /// the host</b>, each leaving a <c>-shm</c> and a <c>-wal</c> in a directory
     /// nobody named. Measured 2026-08-26 through the published binary: a second
     /// BrowserAI that had done nothing but <c>initialize</c> — no
     /// <c>tools/call</c> at all — put both files back beside a cleanly-closed
-    /// session's store. The sweep needs the record only for the inventory, and
-    /// the removable states it acts on are decided before it is read, so a
-    /// <c>Follow</c> that stops at the guard would remove the side effect
-    /// entirely; **that is a behaviour change and belongs to the maintainer**,
-    /// and until it is taken this paragraph is narrowed rather than the sweep.
+    /// session's store.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Closed the same day, at the maintainer's decision, and the sentence
+    /// above is once again true of the whole path rather than only of this
+    /// method.</b> <c>Sweep</c> walks at <c>SessionIndexDepth.Guard</c>: the
+    /// record was never part of its decision — every removable state is settled
+    /// by the directory and the guard, and the record only ever filled an
+    /// inventory a sweep does not print. <b>A server start opens no store at
+    /// all</b>, and the one entry whose record is read in full is the one the
+    /// pass is about to act on, where there is nothing to open, because a
+    /// removable entry is one whose <c>browserai.data</c> is absent.
+    /// <c>SessionIndexTests.ASweepOpensNoSessionsStoreAndLeavesACleanlyClosedOneAtTwoFiles</c>.
     /// </para>
     /// <para>
     /// <b>The per-directory gate is taken and released around the open, and the
@@ -1610,4 +1630,24 @@ internal static partial class SessionLog
         Level = LogLevel.Warning,
         Message = "The outcome of log row {Id} in {Directory} could not be written; the call itself was answered.")]
     public static partial void OutcomeNotRecorded(ILogger logger, long id, string directory, Exception failure);
+
+    /// <summary>
+    /// The idle close's own row could not be written, and the close went ahead
+    /// anyway.
+    /// </summary>
+    /// <remarks>
+    /// <b>The opposite decision from the one at the caller's door</b>, and it is
+    /// recorded rather than implied: a forwarded call whose row will not write is
+    /// refused, because a caller can retry. Nobody asked for this close, so
+    /// declining it would leave a browser tree up for the life of the session to
+    /// protect a log line.
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 11,
+        Level = LogLevel.Warning,
+        Message = "The idle browser close for {Directory} could not be recorded; the browser was closed anyway, so the log will not show it.")]
+    public static partial void IdleCloseNotRecorded(ILogger logger, string directory, Exception failure);
 }

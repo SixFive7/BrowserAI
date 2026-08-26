@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
+using BrowserAI.Storage;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
 
@@ -70,6 +72,30 @@ internal sealed class LiveSession(
     /// rename turns the build red instead of turning the timer into a no-op.
     /// </remarks>
     public const string BrowserCloseTool = "browser_close";
+
+    /// <summary>
+    /// The <c>why</c> the idle close records, which is BrowserAI's own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It has to be self-attributing, because every other row in the log
+    /// was written by a caller.</b> <c>browserai_catch_up</c> presents the log as
+    /// <i>"WHAT WAS DONE HERE — the session's own log … This is what BrowserAI
+    /// did"</i>, and a reader meeting a <c>browser_close</c> with a caller-shaped
+    /// sentence beside it would reasonably conclude an agent had closed the
+    /// browser. This one names the timer, so the row reads as the only thing in
+    /// the log nobody asked for.
+    /// </para>
+    /// <para>
+    /// <b>The period is deliberately not interpolated.</b> It is a seam the suite
+    /// drives in milliseconds, so quoting it would put a test-shaped number into
+    /// a model-facing record on every close — and the fact a reader needs is
+    /// <i>why there is a gap here</i>, which the sentence carries without it.
+    /// </para>
+    /// </remarks>
+    public const string IdleCloseWhy =
+        "BrowserAI closed this session's browser itself: nothing had been forwarded through the session for the idle period, "
+        + "so the browser tree was released and the node child kept. Nothing was lost — the next call relaunches the browser and answers normally.";
 
     private int _disposed;
 
@@ -140,7 +166,7 @@ internal sealed class LiveSession(
     public BrowserIdleTimer Idle { get; } = new(
         location.FullPath,
         idlePeriod,
-        token => CloseBrowserAsync(child, token),
+        token => CloseBrowserAsync(child, sessionLock, token),
         logging.Factory.CreateLogger<BrowserIdleTimer>(),
         clock);
 
@@ -200,10 +226,49 @@ internal sealed class LiveSession(
     /// open it answers the same text and is not an error, so a close that races
     /// anything costs a round trip rather than a failure.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>IT WRITES A ROW, and it wrote nothing at all until 2026-08-26.</b>
+    /// The close talks to the child directly and never touched
+    /// <see cref="Lock"/>; while <c>browserai.log</c> existed the event survived
+    /// there, and P2 deleted that file — so an autonomous browser close became
+    /// invisible in the only record there is, and a reader met an unexplained gap
+    /// in wall-clock time followed by a silent relaunch.
+    /// </para>
+    /// <para>
+    /// <b>Written the way every forwarded call's row is written</b>:
+    /// <c>in-flight</c> before the call reaches the child, settled from the
+    /// child's own answer. The ordering is not decoration here either — a close
+    /// that hangs, or one whose child has died, leaves the row unsettled, which
+    /// is exactly the state <c>browserai_catch_up</c> renders as <i>"no answer
+    /// was recorded"</i>. Writing it afterwards would lose precisely the closes
+    /// anybody investigates.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A record that cannot be written does NOT stop the close, and that is
+    /// the opposite of the rule at the caller's door.</b> A forwarded call is
+    /// refused when its row will not write, because the caller can retry and a
+    /// gap nobody is told about is worse. There is no caller here and nothing to
+    /// refuse to: declining to close would leave a browser tree up for the life
+    /// of the session to protect a log line. The failure is logged and the close
+    /// proceeds.
+    /// </para>
     /// </remarks>
-    private static async Task<BrowserCloseResult> CloseBrowserAsync(ChildConnection child, CancellationToken cancellationToken)
+    private static async Task<BrowserCloseResult> CloseBrowserAsync(
+        ChildConnection child,
+        SessionLock sessionLock,
+        CancellationToken cancellationToken)
     {
         var before = child.JobProcessIds().Count;
+        long? row = null;
+
+        try
+        {
+            row = sessionLock.Append(BrowserCloseTool, IdleCloseWhy);
+        }
+        catch (Exception failure) when (failure is SqliteException or ObjectDisposedException)
+        {
+            SessionLog.IdleCloseNotRecorded(sessionLock.Logger, sessionLock.Location.FullPath, failure);
+        }
 
         var answer = await child.AskAsync(
             RequestMethods.ToolsCall,
@@ -216,13 +281,34 @@ internal sealed class LiveSession(
 
         if (answer.Response is null)
         {
-            return new BrowserCloseResult(
-                before,
-                child.JobProcessIds().Count,
-                answer.ProtocolFailure?.Message ?? answer.TransportFailure?.Message ?? "the child answered with neither a result nor an error");
+            var why = answer.ProtocolFailure?.Message
+                ?? answer.TransportFailure?.Message
+                ?? "the child answered with neither a result nor an error";
+
+            Settle(sessionLock, row, SessionStore.Failed, Encoding.UTF8.GetBytes(why));
+
+            return new BrowserCloseResult(before, child.JobProcessIds().Count, why);
         }
 
+        Settle(sessionLock, row, SessionStore.Successful, failure: null);
+
         return new BrowserCloseResult(before, child.JobProcessIds().Count, Failure: null);
+    }
+
+    /// <summary>Settles the idle close's row, when one was written.</summary>
+    /// <param name="sessionLock">The session's lock.</param>
+    /// <param name="row">The row's id, or <see langword="null"/> when none was written.</param>
+    /// <param name="outcome">One of <see cref="SessionStore"/>'s three spells.</param>
+    /// <param name="failure">What failed, or <see langword="null"/>.</param>
+    private static void Settle(SessionLock sessionLock, long? row, string outcome, byte[]? failure)
+    {
+        if (row is { } id)
+        {
+            // `SessionLock.Settle` already swallows a SQLite refusal and returns
+            // early on a disposed lock, which is the whole set of ways this can
+            // fail after the browser has been asked to close.
+            sessionLock.Settle(id, outcome, failure);
+        }
     }
 
     private void TryDeleteConfig()

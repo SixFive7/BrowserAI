@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Sessions;
+using BrowserAI.Storage;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
 
@@ -291,6 +292,120 @@ internal sealed partial class BrowserIdleTimerTests
         var toTheCaller = string.Concat(harness.Client.FramesReceived.Select(Encoding.UTF8.GetString));
 
         await Assert.That(toTheCaller).DoesNotContain(LiveSession.BrowserCloseTool);
+    }
+
+    /// <summary>
+    /// An autonomous idle close writes a row, so the session's own log says
+    /// BrowserAI closed the browser.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It wrote nothing at all until 2026-08-26, and P2 is what made that a
+    /// defect rather than a gap.</b> The close talks to the child directly and
+    /// never touched <c>Lock</c>; while <c>browserai.log</c> existed the event
+    /// survived there, and that file is gone. <c>browserai_catch_up</c> tells its
+    /// reader the log is <i>"WHAT WAS DONE HERE — the session's own log … This is
+    /// what BrowserAI did"</i>, an autonomous browser close is something
+    /// BrowserAI did, and it was invisible — so a reader saw an unexplained gap
+    /// in wall-clock time, and the next call silently relaunched a browser.
+    /// </para>
+    /// <para>
+    /// <b>The row is written the way every other row is</b>: <c>in-flight</c>
+    /// before the call is forwarded, settled from the child's own answer. That
+    /// ordering is not decoration here either — a close that hangs or meets a
+    /// dead child leaves the row unsettled, which is exactly the state
+    /// <c>catch_up</c> renders as <i>"no answer was recorded"</i>.
+    /// </para>
+    /// <para>
+    /// <b>The <c>why</c> is BrowserAI's own and it says so.</b> Every other row
+    /// carries a caller's sentence; this one has no caller, so it names the timer
+    /// and the period rather than borrowing a voice it does not have.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnIdleCloseWritesItsOwnRowSoTheLogSaysBrowserAiClosedTheBrowser()
+    {
+        var clock = new ManualClock();
+
+        await using var rig = RigSessionEnvironment.Create(
+            configure: child =>
+            {
+                child.Tools["browser_navigate"] = new FakeToolBehaviour();
+                child.Tools[LiveSession.BrowserCloseTool] = new FakeToolBehaviour();
+            },
+            browserIdlePeriod: ShortPeriod,
+            clock: clock);
+
+        await using var harness = await McpTestHarness.ThroughTheProxyAsync(sessions: rig);
+
+        var session = Path.Combine(rig.Root, "closed-by-the-timer");
+
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browserai_init",
+            ["arguments"] = new JsonObject
+            {
+                ["directory"] = session,
+                ["purpose"] = "a session left to go idle",
+            },
+        });
+
+        // One forwarded call, which is what arms the timer: a session that has
+        // never been driven has no browser to close.
+        _ = await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject { ["url"] = "data:text/html,<h1>ok</h1>", ["session"] = session, ["why"] = "the call that arms the timer" },
+        });
+
+        var child = rig.SessionChildren[^1];
+
+        await WaitUntilAsync(
+            () =>
+            {
+                clock.Advance(ShortPeriod);
+                return child.ToolCallsReceived.Contains(LiveSession.BrowserCloseTool);
+            },
+            TestDefaults.InProcessHang,
+            "the idle close never reached the child, however far the clock was moved");
+
+        // The row is settled on the way back, so the read waits for the outcome
+        // rather than for a duration -- bounded by the suite's own hang detector
+        // and by no number written here.
+        await WaitUntilAsync(
+            () => RecordedSession.LogOf(session).Any(row =>
+                row.Tool == LiveSession.BrowserCloseTool && row.Outcome != SessionStore.InFlight),
+            TestDefaults.InProcessHang,
+            "the idle close never settled its row");
+
+        var closes = RecordedSession.LogOf(session)
+            .Where(row => row.Tool == LiveSession.BrowserCloseTool)
+            .ToList();
+
+        await Assert.That(closes.Count).IsEqualTo(1);
+        await Assert.That(closes[0].Outcome).IsEqualTo(SessionStore.Successful);
+
+        // It names itself. A row whose `why` could have been written by a caller
+        // is a row that reads as a caller's call.
+        await Assert.That(closes[0].Why).Contains("idle");
+        await Assert.That(closes[0].Why).Contains("BrowserAI");
+
+        // And the reader a caller actually uses sees it, which is the whole
+        // finding: catch_up's log half is what says "this is what BrowserAI did".
+        var text = TextOf(await harness.Client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = SessionToolSurface.CatchUp,
+            ["arguments"] = new JsonObject { ["session"] = session },
+        }));
+
+        await Assert.That(text).Contains(LiveSession.BrowserCloseTool);
+
+        // ⚠️ THE POSITIVE CONTROL, and it is what stops this passing against a
+        // row written on every session: the caller's own navigation is still
+        // there beside it, and the close is not confused with it.
+        await Assert.That(text).Contains("the call that arms the timer");
+        await Assert.That(RecordedSession.LogOf(session).Count(row => row.Tool == "browser_navigate")).IsEqualTo(1);
     }
 
     /// <summary>
@@ -831,6 +946,10 @@ internal sealed partial class BrowserIdleTimerTests
     }
 
     private static bool HandleIsOurs(nint handle) => NativeHandle.IsValid(handle);
+
+    private static string TextOf(JsonObject result) =>
+        string.Concat((result["content"]?.AsArray() ?? [])
+            .Select(block => (string?)block?["text"] ?? string.Empty));
 
     private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan patience, string whatWentWrong)
     {

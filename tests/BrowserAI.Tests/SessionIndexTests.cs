@@ -823,6 +823,79 @@ internal sealed class SessionIndexTests
     private static SessionLockRequest Request(string purpose) =>
         new() { Browser = "chromium", Purpose = purpose };
 
+    /// <summary>
+    /// A sweep opens no session's store: a cleanly-closed session it passes over
+    /// is left with the two files it had.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Until 2026-08-26 every BrowserAI startup opened the SQLite store of
+    /// every session on the machine.</b> <c>Program.Main</c> starts the stray
+    /// sweep, one pass calls <see cref="SessionIndex.Sweep"/>, and that followed
+    /// every entry through <c>SessionLock.ReadRecord</c> — so one process start
+    /// was one store open per registered session, each leaving a
+    /// <c>browserai.data-shm</c> and a <c>browserai.data-wal</c> in a directory
+    /// nobody had named. Measured through the published binary: a cleanly-closed
+    /// session held two files, a second BrowserAI was started and sent nothing
+    /// but <c>initialize</c>, and it held four.
+    /// </para>
+    /// <para>
+    /// <b>This arm is the mechanism under that measurement rather than the
+    /// measurement itself</b>, and the difference is stated rather than glossed:
+    /// the composition needs a second process against the machine-wide index,
+    /// and this suite shares one app root, so an end-to-end arm would sweep every
+    /// other test's sessions and read as a flake. What is asserted here is the
+    /// property the composition rests on — <c>Sweep</c> opens no store — over a
+    /// real index and a real record.
+    /// </para>
+    /// <para>
+    /// <b>The positive control is the other walk.</b> <c>Follow</c> still carries
+    /// the record, so a sweep made blind by deleting the read would satisfy the
+    /// first assertion and fail the second.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASweepOpensNoSessionsStoreAndLeavesACleanlyClosedOneAtTwoFiles()
+    {
+        using var scratch = ScratchDirectory.Create("index-probe-first");
+        var (index, path) = NewIndex(scratch, "closed-cleanly");
+
+        // A real session, acquired and closed the way a process that has since
+        // exited would leave it: the record checkpointed, no -wal, no -shm.
+        var lease = SessionLock.TryAcquire(path, Request("a session the sweep only passes over"), NullLogger.Instance);
+        index.Record(path);
+        lease.Acquired!.Dispose();
+
+        var afterClose = Directory.GetFiles(path.FullPath).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
+
+        await Assert.That(string.Join(", ", afterClose))
+            .IsEqualTo($"{SessionLayout.DataFileName}, {SessionLayout.LockFileName}")
+            .Because("a cleanly-closed session is two files, and this arm is about what a sweep adds to them");
+
+        var sweep = index.Sweep();
+
+        // The entry is kept -- the directory is a session -- and nothing was
+        // added to it. A store open leaves the wal-index behind whether or not
+        // the sweep acts, which is what made a server start observable from
+        // another process's session directory.
+        await Assert.That(sweep.Removed.Count).IsEqualTo(0);
+        await Assert.That(sweep.Kept.Count).IsEqualTo(1);
+
+        await Assert.That(string.Join(", ", Directory.GetFiles(path.FullPath).Select(Path.GetFileName).Order(StringComparer.Ordinal)))
+            .IsEqualTo(string.Join(", ", afterClose))
+            .Because("the sweep stops at the guard, so no store is opened and no wal-index is created");
+
+        // ⚠️ THE POSITIVE CONTROL. The record-bearing walk still reads the
+        // record, so this is a sweep that stops at the guard rather than an
+        // index that stopped reading.
+        var followed = index.Follow();
+
+        await Assert.That(followed.Count).IsEqualTo(1);
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Session);
+        await Assert.That(followed[0].Record).IsNotNull();
+    }
+
     private static SessionIndex NewIndex(ScratchDirectory scratch) =>
         new(new LocalAppDataPaths(Path.Combine(scratch.Path, "appdata")), NullLogger.Instance);
 

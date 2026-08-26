@@ -738,8 +738,35 @@ internal sealed partial class HouseRuleTests
             "    }",
         ];
 
+        // ⚠️ AND THE SECOND SPELLING, BOTH DIRECTIONS. Since 2026-08-26 a caller
+        // may take the whole-machine read at a stated depth — the sweep does, so
+        // that it opens no session's store — and scope is what this gate is
+        // about. `Walk(under: null, …)` is the same scope and passes;
+        // `Walk(prefix, …)` is the regression at any depth and does not.
+        string[] atADepth =
+        [
+            "    private List<string> LiveSessions()",
+            "    {",
+            "        foreach (var entry in " + WholeMachine + ", SessionIndexDepth.Guard))",
+            "        {",
+            "        }",
+            "    }",
+        ];
+
+        string[] scopedAtADepth =
+        [
+            "    private List<string> LiveSessions()",
+            "    {",
+            "        foreach (var entry in " + WholeMachine.Replace("under: null", "prefix", StringComparison.Ordinal) + ", SessionIndexDepth.Guard))",
+            "        {",
+            "        }",
+            "    }",
+        ];
+
         await Assert.That(NotTakingTheWholeMachineRead(moved, "synthetic.cs", "private List<string> LiveSessions()").Count).IsEqualTo(1);
         await Assert.That(NotTakingTheWholeMachineRead(kept, "synthetic.cs", "private List<string> LiveSessions()")).IsEmpty();
+        await Assert.That(NotTakingTheWholeMachineRead(atADepth, "synthetic.cs", "private List<string> LiveSessions()")).IsEmpty();
+        await Assert.That(NotTakingTheWholeMachineRead(scopedAtADepth, "synthetic.cs", "private List<string> LiveSessions()").Count).IsEqualTo(1);
 
         // And a member that is not there at all is a finding rather than a pass,
         // because a renamed member would otherwise be silently unchecked.
@@ -764,9 +791,16 @@ internal sealed partial class HouseRuleTests
 
         var body = Body(lines, declared);
 
-        return body.Contains(Walk + "()", StringComparison.Ordinal)
+        // ⚠️ TWO SPELLINGS OF ONE READ, and the second arrived 2026-08-26 with
+        // the sweep going probe-first. What this gate means is that the reader's
+        // SCOPE is the whole machine; what it used to test was the single
+        // spelling that then existed. `Walk(under: null, …)` is the same scope at
+        // a shallower depth -- the sweep opens no session's store -- and reading
+        // depth as scope would have made the honest fix indistinguishable from
+        // the regression this exists to catch.
+        return body.Contains(Walk + "()", StringComparison.Ordinal) || body.Contains(WholeMachine, StringComparison.Ordinal)
             ? []
-            : [$"{file}: '{member}' no longer calls {Walk}(), so a whole-machine reader has been scoped to a subtree"];
+            : [$"{file}: '{member}' calls neither {Walk}() nor {WholeMachine}…), so a whole-machine reader has been scoped to a subtree"];
     }
 
     /// <summary>
@@ -777,6 +811,17 @@ internal sealed partial class HouseRuleTests
 
     /// <summary>The whole-machine read, composed for the same reason.</summary>
     private const string Walk = "Fol" + "low";
+
+    /// <summary>
+    /// The whole-machine read spelled as the walk itself, which is what a caller
+    /// that also chooses a depth writes.
+    /// </summary>
+    /// <remarks>
+    /// <b>The <c>under: null</c> is the load-bearing half and the depth is not.</b>
+    /// Scope is what this gate is about: <c>Walk(prefix, …)</c> is the regression,
+    /// whatever depth follows it.
+    /// </remarks>
+    private const string WholeMachine = "Wal" + "k(under: null";
 
     /// <summary>The case-fold half of a prefix derivation.</summary>
     private const string Fold = "ToUpper" + "Invariant()";
