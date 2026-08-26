@@ -179,7 +179,7 @@ internal sealed class FlatOutputTests
         // lives in the output tree permanently rather than being sorted out of
         // it, and it is the first thing an evictor would unlink.
         var config = BrowserConfiguration.ForSession(
-            SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "eviction-check")),
+            SessionPath.For(Path.Combine(ScratchRoot.Path, "eviction-check")),
             headed: false,
             SessionManager.DefaultBrowser,
             tracing: false,

@@ -472,7 +472,7 @@ internal sealed class FakeChildHarnessTests
         // `headless`. Asserted through the product's own generator rather than
         // by reading the flag back out of itself.
         var generated = BrowserConfiguration.ForSession(
-            SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"rig-headedness-{Guid.NewGuid():N}")),
+            SessionPath.For(Path.Combine(ScratchRoot.Path, $"rig-headedness-{Guid.NewGuid():N}")),
             real.DefaultSessionHeaded,
             SessionManager.DefaultBrowser,
             tracing: false,

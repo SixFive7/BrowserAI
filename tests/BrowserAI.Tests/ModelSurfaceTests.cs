@@ -362,7 +362,7 @@ internal sealed class ModelSurfaceTests
     /// <returns>The <c>capabilities</c> opinion, serialised.</returns>
     private static string CapabilitiesOf(bool headed) =>
         BrowserConfiguration.ForSession(
-            SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"capabilities-{(headed ? "headed" : "headless")}")),
+            SessionPath.For(Path.Combine(ScratchRoot.Path, $"capabilities-{(headed ? "headed" : "headless")}")),
             headed,
             SessionManager.DefaultBrowser,
             tracing: false,

@@ -679,7 +679,7 @@ internal sealed class LiveInstances : IDisposable
     /// as its canonicalisation, which made this a fourth scope wearing the
     /// first's names — and <see cref="Sessions.LockScopes"/> documents three.
     /// A session opened on the install root itself collided <b>exactly</b>, and
-    /// nothing refuses that path: <c>SessionDirectoryGuard</c> refuses network
+    /// nothing refuses that path: <c>CanonicalPath</c> refuses network
     /// paths and aliased spellings, and <c>%LOCALAPPDATA%\BrowserAI</c> is
     /// neither.
     /// </para>
@@ -714,8 +714,20 @@ internal sealed class LiveInstances : IDisposable
     /// </remarks>
     /// <param name="rootAppDir">The install root.</param>
     /// <returns>A <c>Global\</c> name.</returns>
+    /// <remarks>
+    /// ⚠️ <b>It takes the identity chain and not the canonicaliser in front of
+    /// it, and that is a decision — 2026-08-26.</b> The app root is not a
+    /// caller's string: it is this process's own, already judged against the
+    /// user's profile through the filesystem by
+    /// <see cref="Hosting.InstallRootScope"/>, which resolves both sides of that
+    /// comparison the same way <see cref="Sessions.CanonicalPath"/> would.
+    /// Asking again would be a second object-manager call and a directory open
+    /// per census for an answer already established, and it would make the live
+    /// set's gate refusable — which is a startup failure wearing an update
+    /// check's name.
+    /// </remarks>
     public static string MutexNameFor(string rootAppDir) =>
-        MutexPrefix + SessionPath.Resolve(rootAppDir).MutexName[LockScopes.PerDirectoryPrefix.Length..];
+        MutexPrefix + SessionPath.For(rootAppDir).MutexName[LockScopes.PerDirectoryPrefix.Length..];
 
     /// <summary>
     /// The live set's own prefix, so that this scope and a session's

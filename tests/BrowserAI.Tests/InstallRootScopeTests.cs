@@ -183,7 +183,7 @@ internal sealed class InstallRootScopeTests
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Deliberately not refused the way a session directory's aliased
-    /// spelling is.</b> <c>SessionDirectoryGuard</c> refuses a <c>subst</c>
+    /// spelling is.</b> <c>CanonicalPath</c> resolves a <c>subst</c>
     /// outright, because two spellings of one session directory produce two
     /// mutexes and one record. Nothing of that kind applies to the app root: the
     /// only question here is <i>where does this really live</i>, and a
@@ -325,7 +325,7 @@ internal sealed class InstallRootScopeTests
     /// filesystem before deciding would be a 22-second startup stall rather than
     /// a refusal. The wall clock is not asserted — that would be asserting the
     /// speed of the machine — but the refusal is, and it is the same ordering
-    /// `SessionDirectoryGuard` is built on.
+    /// `CanonicalPath` is built on.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]

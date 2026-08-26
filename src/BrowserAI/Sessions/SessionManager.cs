@@ -227,11 +227,24 @@ internal sealed class SessionManager : IAsyncDisposable
     public string BrowsersDirectory => _environment.Paths.BrowsersDirectory;
 
     /// <summary>The session driving a directory in this process, if there is one.</summary>
+    /// <remarks>
+    /// ⚠️ <b>THE HOT PATH, and it reads rather than resolves.</b> Every forwarded
+    /// browser call carries a <c>session</c> argument and arrives here. The value
+    /// came out of BrowserAI's own answer, so it is canonical already; asking the
+    /// volume question about it would add the object-manager call and a directory
+    /// open to a <c>browser_snapshot</c> measured at <b>4.2 ms</b>
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md)), for a question
+    /// whose answer cannot change what the dictionary lookup below returns. A
+    /// spelling that is not canonical misses the dictionary either way, because
+    /// the key was stored canonical — and when it does,
+    /// <see cref="ExplainUnknownSession"/> runs the whole sequence and is what
+    /// names the spelling to use.
+    /// </remarks>
     /// <param name="directory">The <c>session</c> argument, as it arrived.</param>
     /// <returns>The live session, or <see langword="null"/>.</returns>
     public LiveSession? Find(string? directory)
     {
-        if (directory is null)
+        if (CanonicalPath.Of(directory, PathOrigin.Read, SessionToolSurface.SessionParameter).Canonical is not { } canonical)
         {
             return null;
         }
@@ -240,9 +253,9 @@ internal sealed class SessionManager : IAsyncDisposable
 
         try
         {
-            location = Resolve(directory, "session");
+            location = SessionPath.For(canonical);
         }
-        catch (SessionToolException)
+        catch (ArgumentException)
         {
             return null;
         }
@@ -443,7 +456,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 return TheRootCouldNotBeClaimed(SessionToolSurface.Init, denial, denialDetail);
             }
 
-            var location = ResolveToOpen(Required(arguments, "directory"), "directory");
+            var named = Required(arguments, "directory");
+            var location = Resolve(named, "directory", out var verdict);
             var purpose = Required(arguments, "purpose");
             var browser = Browser(arguments, "browser", DefaultBrowser, ProvisionedBrowsers.Families);
             var headed = Flag(arguments, "headed") ?? false;
@@ -524,7 +538,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 run,
                 debug,
                 createdHere: true,
-                notes: [],
+                SpellingNote(named, location, verdict) is { } note ? [note] : [],
                 held,
                 cancellationToken).ConfigureAwait(false);
         }
@@ -551,7 +565,8 @@ internal sealed class SessionManager : IAsyncDisposable
                 return TheRootCouldNotBeClaimed(SessionToolSurface.Resume, denial, denialDetail);
             }
 
-            var location = ResolveToOpen(Required(arguments, "directory"), "directory");
+            var named = Required(arguments, "directory");
+            var location = Resolve(named, "directory", out var verdict);
             var why = Why(arguments, SessionToolSurface.Resume);
             var appended = Optional(arguments, "purpose");
             var debug = Flag(arguments, "debug") ?? false;
@@ -599,6 +614,11 @@ internal sealed class SessionManager : IAsyncDisposable
 
             var notes = new List<string>();
             string? movedFrom = null;
+
+            if (SpellingNote(named, location, verdict) is { } spelling)
+            {
+                notes.Add(spelling);
+            }
 
             // The directory is the identity; the path in browserai.json is provenance. A
             // move leaves nothing behind and a copy leaves the original standing, so
@@ -2269,17 +2289,30 @@ internal sealed class SessionManager : IAsyncDisposable
             : SessionErrors.InsufficientDisk(location.FullPath, free.Value, RequiredFreeBytes);
     }
 
+    /// <summary>
+    /// Whether a path a record carries names the directory the record was found
+    /// in.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read and not Named, because the record may have been written on
+    /// another machine.</b> A recorded path this build would not have written is
+    /// not this directory, and the move/copy test downstream settles what to do
+    /// about it by asking whether it exists — which is a filesystem call this one
+    /// is not entitled to make on a stranger's string.
+    /// </remarks>
     private static bool SamePath(string recorded, SessionPath location)
     {
+        if (CanonicalPath.Of(recorded, PathOrigin.Read, RecordFields.Directory).Canonical is not { } canonical)
+        {
+            return false;
+        }
+
         try
         {
-            return string.Equals(SessionPath.Resolve(recorded).Key, location.Key, StringComparison.Ordinal);
+            return string.Equals(SessionPath.For(canonical).Key, location.Key, StringComparison.Ordinal);
         }
-        catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (ArgumentException)
         {
-            // A recorded path this build cannot canonicalise is not this
-            // directory, and the move/copy test below settles what to do about
-            // it by asking whether it exists.
             return false;
         }
     }
@@ -2289,35 +2322,36 @@ internal sealed class SessionManager : IAsyncDisposable
     /// a case-folded prefix.
     /// </summary>
     /// <remarks>
-    /// <b>Deliberately not <see cref="SessionPath.Resolve"/>.</b> That refuses a
-    /// volume root, because a volume root is not a session directory — and a
-    /// volume root is exactly what a caller passes to <c>list</c> to see
-    /// everything. The two are different questions about the same string, and
-    /// conflating them would either break <c>list</c> or let <c>init</c> take a
-    /// whole drive.
+    /// <para>
+    /// ⚠️ <b>It goes through the same function every other door does — corrected
+    /// 2026-08-26, previously a bare <c>Path.GetFullPath</c> plus an upper-cased
+    /// prefix, with no alias resolution at all.</b> That second chain existed
+    /// because the shared one refused a volume root, and a volume root is exactly
+    /// what a caller passes to <c>list</c> to see everything. The cost of the
+    /// exception was the worst answer this product could give: a caller who
+    /// listed <c>D:\link\work</c> where the sessions live under
+    /// <c>C:\real\work</c> was told <i>"No BrowserAI sessions under '…'. That is
+    /// an answer rather than an error"</i> — confidently, wrongly, and with
+    /// nothing to correct because it was not a refusal.
+    /// </para>
+    /// <para>
+    /// <b>What made it fixable was splitting the two questions.</b>
+    /// <see cref="CanonicalPath"/> answers <i>what does the filesystem call
+    /// this</i> and has no opinion about volume roots;
+    /// <see cref="SessionPath.For"/> answers <i>may this be a session
+    /// directory</i>, which is the question <c>list</c> is not asking.
+    /// </para>
     /// </remarks>
     private static (string Root, string Prefix) Subtree(string directory)
     {
-        if (!Path.IsPathFullyQualified(directory))
+        var verdict = CanonicalPath.Of(directory, PathOrigin.Named, "directory");
+
+        if (verdict.Refusal is { } refusal)
         {
-            throw new SessionToolException(
-                $"'directory' must be an absolute path, and '{directory}' is not. There is no unscoped list: breadth is stated rather than assumed, so pass the tree you mean — a drive root to see everything.");
+            throw new SessionToolException(refusal);
         }
 
-        string full;
-
-        try
-        {
-            full = Path.GetFullPath(directory);
-        }
-        catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            throw new SessionToolException($"'directory' = '{directory}' is not a usable directory path: {failure.Message}");
-        }
-
-        var key = full.ToUpperInvariant();
-
-        return (full, key.EndsWith(Path.DirectorySeparatorChar) ? key : key + Path.DirectorySeparatorChar);
+        return (verdict.Canonical!, CanonicalPath.PrefixOf(verdict.Canonical!));
     }
 
     /// <summary>
@@ -2356,11 +2390,20 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>Every session under a root, newest use first.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The prefix comes from the one derivation — W8, closed 2026-08-26.</b>
+    /// This re-derived it: <c>ToUpperInvariant</c>, then append a separator, three
+    /// lines from a call into <see cref="SessionIndex"/>, whose own remark
+    /// forbade re-deriving the predicate in as many words. It was benign because
+    /// <paramref name="root"/> is a directory name off an already-canonical
+    /// <see cref="SessionPath"/> — and nothing said so, and nothing would have
+    /// noticed when it stopped being true.
+    /// </remarks>
+    /// <param name="root">The canonical directory the sessions sit under.</param>
+    /// <returns>The roll-up entries.</returns>
     private List<RollUpEntry> Beneath(string root)
     {
-        var prefix = root.ToUpperInvariant();
-        prefix = prefix.EndsWith(Path.DirectorySeparatorChar) ? prefix : prefix + Path.DirectorySeparatorChar;
-
+        var prefix = CanonicalPath.PrefixOf(root);
         var entries = new List<RollUpEntry>();
 
         foreach (var entry in _index.FollowUnder(prefix))
@@ -2451,70 +2494,96 @@ internal sealed class SessionManager : IAsyncDisposable
 
     private static string Stamp(DateTimeOffset moment) => moment.ToString("O", CultureInfo.InvariantCulture);
 
-    private static SessionPath Resolve(string directory, string argument)
+    /// <summary>
+    /// The throwing adapter over <see cref="CanonicalPath"/>, for the tools.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One adapter at the tool seam, and the function itself never throws.</b>
+    /// <see cref="CanonicalPath.Of"/> returns a verdict because it is also the
+    /// read path, where a refusal is an entry's <c>Problem</c> rather than an
+    /// answer and an exception per malformed index entry would be a construction
+    /// cost per session on the machine. Here it is a <see cref="SessionToolException"/>,
+    /// which is what every authored tool already answers with.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Every door takes this route since 2026-08-26 — previously
+    /// <c>init</c> and <c>resume</c> went through a second entry point
+    /// (<c>ResolveToOpen</c>) that ran the boundary refusals, and
+    /// <c>destroy</c>, <c>set_purpose</c>, <c>catch_up</c> and <c>list</c> did
+    /// not.</b> The split existed so that a session created on a share by a
+    /// build older than the refusals stayed removable. Nothing was ever
+    /// distributed, so that population is empty — and the cost of the split was
+    /// real: <c>destroy</c> on a UNC path reached <c>Directory.Exists</c> and
+    /// took <b>21 seconds</b> to answer <i>that is not a session</i>, measured
+    /// through the wire on 2026-08-26.
+    /// </para>
+    /// </remarks>
+    /// <param name="directory">The path the caller named.</param>
+    /// <param name="argument">Which argument it arrived in.</param>
+    /// <returns>The canonical session path.</returns>
+    /// <exception cref="SessionToolException">It was refused, or it is a volume root.</exception>
+    private static SessionPath Resolve(string directory, string argument) => Resolve(directory, argument, out _);
+
+    /// <inheritdoc cref="Resolve(string, string)"/>
+    /// <param name="directory">The path the caller named.</param>
+    /// <param name="argument">Which argument it arrived in.</param>
+    /// <param name="verdict">
+    /// What the function made of it, so <c>init</c> and <c>resume</c> can say in
+    /// their answer that the spelling moved.
+    /// </param>
+    private static SessionPath Resolve(string directory, string argument, out PathVerdict verdict)
     {
-        // Rejected outright, never normalised into something that happens to
-        // work. A relative path in particular must not reach GetFullPath, which
-        // would resolve it against whatever working directory this process
-        // happens to have -- a different directory per process, and never the
-        // one the caller meant.
-        if (!Path.IsPathFullyQualified(directory))
+        verdict = CanonicalPath.Of(directory, PathOrigin.Named, argument);
+
+        if (verdict.Refusal is { } refusal)
         {
-            throw new SessionToolException(SessionErrors.DirectoryNotAbsolute(argument, directory));
+            throw new SessionToolException(refusal);
         }
 
         try
         {
-            return SessionPath.Resolve(directory);
+            return SessionPath.For(verdict.Canonical!);
         }
-        catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (ArgumentException failure)
         {
             throw new SessionToolException(SessionErrors.DirectoryUnusable(argument, directory, failure.Message));
         }
     }
 
     /// <summary>
-    /// <see cref="Resolve(string, string)"/>, plus the two things a directory
-    /// this process is about to <b>open</b> may not be.
+    /// The one line an answer carries when the directory a caller named is not
+    /// the one the filesystem calls it, or when that could not be established.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// <b>A separate entry point rather than a check inside
-    /// <see cref="SessionPath.Resolve"/>, and the difference is what the path is
-    /// for.</b> <c>Resolve</c> canonicalises every path this product handles,
-    /// including ones read back out of a <c>browserai.json</c> written by another
-    /// machine and ones that are only ever compared. Refusing there would make
-    /// <see cref="SamePath"/> throw on a recorded network path, and
-    /// <c>browserai_list</c> unable to show a session it can see.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Only <c>init</c> and <c>resume</c> take this route, and
-    /// <c>destroy</c> deliberately does not.</b> Those two are the calls that
-    /// create files, take <see cref="LockScopes.PerDirectoryGate"/> and hold a
-    /// directory for a session's life. A session that predates this build on a
-    /// network path can therefore still be listed and still be destroyed — a
-    /// refusal that left a directory unremovable would be a worse trap than the
-    /// one it closes.
-    /// </para>
-    /// <para>
-    /// <b>It runs before everything.</b> Ahead of <see cref="Existing"/>, which
-    /// reads <c>browserai.json</c>; ahead of <see cref="FreeSpaceRefusal"/>, which
-    /// queries the volume; ahead of <see cref="SessionLayout.Create"/> and ahead
-    /// of the gate. Each of those is a filesystem call, which is the thing the
-    /// network half of the guard exists to keep off an unreachable share.
-    /// </para>
+    /// <b>Silent normalisation with one note, rather than a refusal or nothing at
+    /// all.</b> The refusal this replaced taught something true — <i>BrowserAI
+    /// takes only the filesystem's own spelling</i> — and charged a turn for it,
+    /// every turn, to a caller whose alias was not its own choice: a
+    /// <c>subst</c> in the user's shell, a redirected profile, a junctioned
+    /// <c>AppData</c>. The lesson survives here at no turn's cost, and on a
+    /// surface that is not scarce: a result is outside the client's truncation
+    /// budget entirely, where a tool description is not.
     /// </remarks>
-    /// <param name="directory">The path the caller named.</param>
-    /// <param name="argument">Which argument it arrived in.</param>
-    /// <returns>The canonical session path.</returns>
-    /// <exception cref="SessionToolException">It is on a network path, or an aliased spelling.</exception>
-    private static SessionPath ResolveToOpen(string directory, string argument)
+    /// <param name="named">What the caller wrote.</param>
+    /// <param name="location">What it resolved to.</param>
+    /// <param name="verdict">The verdict, for the unverified case.</param>
+    /// <returns>The note, or <see langword="null"/> when there is nothing to say.</returns>
+    private static string? SpellingNote(string named, SessionPath location, PathVerdict verdict)
     {
-        var location = Resolve(directory, argument);
+        if (verdict.Unestablished is { } unestablished)
+        {
+            return $"BrowserAI could not confirm this directory's spelling: {unestablished}.";
+        }
 
-        return SessionDirectoryGuard.Refuse(argument, location) is { } refusal
-            ? throw new SessionToolException(refusal)
-            : location;
+        // Case-insensitively, because a case difference is not an alias -- it is
+        // one session by design, and the drive letter alone re-spells on every
+        // path that came from a shell spelling it lower-case. A note on every
+        // session opened from Git Bash would be noise standing exactly where the
+        // signal goes.
+        return string.Equals(named.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), location.FullPath, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : $"The directory you named is a second spelling: the session is at '{location.FullPath}', which is what the filesystem calls it. That is the path BrowserAI records and the one to pass back.";
     }
 
     /// <summary>

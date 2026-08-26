@@ -118,12 +118,47 @@ internal static class ScratchRoot
     }
 
     private static string RepositoryScratch =>
-        System.IO.Path.Combine(RepositoryLayout.Root.FullName, ".work", "test-scratch");
+        Canonical(System.IO.Path.Combine(RepositoryLayout.Root.FullName, ".work", "test-scratch"));
 
     private static string ProfileAnchoredScratch =>
-        System.IO.Path.Combine(
+        Canonical(System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-            "BrowserAI-test-scratch");
+            "BrowserAI-test-scratch"));
+
+    /// <summary>
+    /// The filesystem's own spelling of a scratch root, so that every path this
+    /// suite composes is anchored on the spelling the product answers with.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-08-26, with the one path function.</b> Before it, a
+    /// session directory was recorded and answered with whatever spelling the
+    /// caller used; now it is recorded and answered with the one
+    /// <c>GetFinalPathNameByHandleW</c> reports, which is the drive letter
+    /// <b>upper-case, always</b> and every component as it is stored. A scratch
+    /// root carrying the invoking shell's own casing would therefore make every
+    /// ordinal comparison in this suite a property of the shell: green from
+    /// PowerShell, red from Git Bash, with no change to the product at all.
+    /// </para>
+    /// <para>
+    /// <b>It does not weaken <see cref="DriveLetterCase"/> and does not overlap
+    /// it.</b> That type re-spells a path deliberately, at the sites whose whole
+    /// subject is the spelling, including a spelling no Windows API ever returns
+    /// — so the class of defect is still driven both ways on every run. This
+    /// removes an <i>accidental</i> dependence on the shell from every other
+    /// site, which is the opposite of removing coverage.
+    /// </para>
+    /// <para>
+    /// <b>Best effort, and a failure is not fatal.</b> Before the directory
+    /// exists there is nothing to ask the filesystem about, and a root this
+    /// process cannot open is a problem the run will meet again immediately with
+    /// a better message than this could give.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The composed root.</param>
+    /// <returns>The filesystem's spelling of it, or the composed one.</returns>
+    private static string Canonical(string path) =>
+        BrowserAI.Interop.VolumeIdentity.DosSpellingOf(path, CanonicalPath.AncestorWalkLimit).Spelling ?? path;
 
     private static void EnsureReclaimed()
     {

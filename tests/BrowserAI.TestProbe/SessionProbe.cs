@@ -66,32 +66,45 @@ internal static class SessionProbe
     private static readonly TimeSpan Patience = TimeSpan.FromMinutes(30);
 
     /// <summary>
-    /// Reports every name the canonicaliser derives from one spelling of a
-    /// directory, resolved against <b>this</b> process's working directory.
+    /// Reports what the one path function makes of a spelling, from a process
+    /// whose working directory the caller chose.
     /// </summary>
     /// <remarks>
-    /// A relative spelling can only be tested from a process whose current
+    /// <para>
+    /// A relative spelling can only be judged from a process whose current
     /// directory is the one it is relative to, and the test host's is fixed.
     /// Setting <c>Environment.CurrentDirectory</c> inside a parallel test host
     /// would be a global mutation aimed at a local question.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It reports the refusal as well as the names — 2026-08-26, previously
+    /// only the derived names.</b> A relative spelling used to canonicalise
+    /// against this process's own working directory and produce an identity; it
+    /// is refused now, and a probe that could only report an identity had no way
+    /// to say so except by crashing.
+    /// </para>
     /// </remarks>
     /// <param name="spelling">Any spelling of a directory.</param>
-    /// <param name="reportPath">Where to write the derived names.</param>
+    /// <param name="reportPath">Where to write the verdict.</param>
     /// <returns>Zero.</returns>
     public static int Identity(string spelling, string reportPath)
     {
-        var path = SessionPath.Resolve(spelling);
+        var verdict = CanonicalPath.Of(spelling, PathOrigin.Named, "directory");
+        var path = verdict.Canonical is null ? null : SessionPath.For(verdict.Canonical);
 
         Write(reportPath, new JsonObject
         {
             ["spelling"] = spelling,
             ["workingDirectory"] = Environment.CurrentDirectory,
-            ["fullPath"] = path.FullPath,
-            ["key"] = path.Key,
-            ["hash"] = path.Hash,
-            ["mutexName"] = path.MutexName,
-            ["indexKey"] = path.IndexKey,
-            ["lockFile"] = path.LockFile,
+            ["canonical"] = verdict.Canonical,
+            ["refusal"] = verdict.Refusal,
+            ["unestablished"] = verdict.Unestablished,
+            ["fullPath"] = path?.FullPath,
+            ["key"] = path?.Key,
+            ["hash"] = path?.Hash,
+            ["mutexName"] = path?.MutexName,
+            ["indexKey"] = path?.IndexKey,
+            ["lockFile"] = path?.LockFile,
         });
 
         return 0;
@@ -108,7 +121,7 @@ internal static class SessionProbe
     /// <returns>Zero.</returns>
     public static int Race(string directory, string startEventName, string reportPath, string releasePath)
     {
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
 
         using (var start = EventWaitHandle.OpenExisting(startEventName))
         {
@@ -279,7 +292,7 @@ internal static class SessionProbe
     /// <returns>Zero if it never acquired, otherwise it is killed before returning.</returns>
     public static int Hold(string directory, string readyPath, string purpose)
     {
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
 
         var result = SessionLock.TryAcquire(
             path,
@@ -326,7 +339,7 @@ internal static class SessionProbe
     /// <returns>Two if the host failed to kill it.</returns>
     public static int HoldGate(string directory, string readyPath)
     {
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
 
         using var gate = MachineMutex.Create(path.MutexName);
         // Patience, not thirty seconds: this probe exists to BE the holder, and an
@@ -501,7 +514,7 @@ internal static class SessionProbe
     /// <returns>Zero.</returns>
     public static int Rewrite(string directory, string readyPath, int rewrites, string donePath)
     {
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
 
         var result = SessionLock.TryAcquire(
             path,
@@ -597,7 +610,7 @@ internal static class SessionProbe
     /// <returns>Zero.</returns>
     public static int Index(string directory, string root, string startEventName, string reportPath, int writes)
     {
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
         var paths = new LocalAppDataPaths(root);
 
         using var log = ProcessLog.Create(paths, LogLevel.Trace);

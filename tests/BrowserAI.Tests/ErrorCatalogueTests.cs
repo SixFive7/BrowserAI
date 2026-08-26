@@ -169,13 +169,19 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     [Test]
-    public async Task InitAndResumeBothRefuseANetworkPathAndAnAliasedSpelling()
+    public async Task EveryDoorRefusesANetworkPathAndTheDeviceNamespaceWhileAnAliasIsTakenAsWhatItNames()
     {
-        // Both doors, both rows, through the wire. The predicate has tests of
-        // its own in SessionDirectoryGuardTests; what this arm establishes is
-        // that the two refusals are REACHABLE -- which is the one thing the
-        // catalogue's census exists to require and the one thing a unit test of
-        // the predicate cannot say.
+        // ⚠️ EVERY DOOR, and that is the change this arm records. Until
+        // 2026-08-26 the two boundary refusals ran at `init` and `resume` only
+        // -- `destroy`, `set_purpose`, `catch_up` and `list` reached the
+        // per-directory gate, and the filesystem, with a caller-supplied path
+        // nobody had asked the volume question about. The split was taken to
+        // keep a pre-guard session on a share removable; nothing was ever
+        // distributed, so that population is empty and the rule is now one rule.
+        //
+        // What a unit test of the function cannot say is that each of these
+        // doors REACHES it, which is what the catalogue's census exists to
+        // require.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -194,57 +200,66 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.DirectoryOnANetworkPath),
             SessionErrors.DirectoryOnANetworkPath("directory", Share, "it is a UNC path"));
 
-        // And through resume, because a guard on one door is not a guard.
-        var uncResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" });
+        // And the other five doors, each with whatever else it requires, so that
+        // a refusal added to one and forgotten on another is a red build.
+        (string Tool, JsonObject Arguments)[] doors =
+        [
+            (SessionToolSurface.Resume, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" }),
+            (SessionToolSurface.Destroy, new JsonObject { ["directory"] = Share, ["why"] = "the suite exercising this call" }),
+            (SessionToolSurface.SetPurpose, new JsonObject { ["session"] = Share, ["purpose"] = "should never be recorded", ["why"] = "the suite exercising this call" }),
+            (SessionToolSurface.CatchUp, new JsonObject { ["session"] = Share }),
+            (SessionToolSurface.List, new JsonObject { ["directory"] = Share }),
+        ];
 
-        await Assert.That((bool?)uncResume["isError"]).IsTrue();
-        await Assert.That(TextOf(uncResume)).Contains("is on a network path");
+        foreach (var (tool, arguments) in doors)
+        {
+            var refused = await CallAsync(rig, tool, arguments);
 
-        // An aliased spelling, on a directory that really exists. The extended
-        // prefix is the one alias that needs no filesystem setup at all, which
-        // is why it is the one an unlucky caller reaches first.
+            await Assert.That((bool?)refused["isError"]).IsTrue();
+            await Assert.That(TextOf(refused)).Contains("is on a network path");
+        }
+
+        // The device namespace, which is the one prefix that is still refused --
+        // `\\.\NUL` and `\\.\PhysicalDrive0` name devices, and a directory
+        // argument that reaches them reaches past every check the filesystem
+        // would otherwise apply. One turn: the accepted form is the same string
+        // minus four characters.
         var real = Path.Combine(sessions.Root, "aliased");
         _ = Directory.CreateDirectory(real);
 
-        var aliasedInit = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        var device = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
-            ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
+            ["directory"] = @"\\.\" + real,
             ["purpose"] = "should never be created",
         });
 
-        await Assert.That((bool?)aliasedInit["isError"]).IsTrue();
+        await Assert.That((bool?)device["isError"]).IsTrue();
         Match(
-            TextOf(aliasedInit),
-            nameof(SessionErrors.DirectoryIsAnAliasedSpelling),
-            SessionErrors.DirectoryIsAnAliasedSpelling(
-                "directory",
-                VolumeIdentity.ExtendedLengthPrefix + real,
-                real,
-                $"'{VolumeIdentity.ExtendedLengthPrefix}' is the device-namespace prefix, which is a second spelling of an ordinary path"));
+            TextOf(device),
+            nameof(SessionErrors.DirectorySpelledInTheDeviceNamespace),
+            SessionErrors.DirectorySpelledInTheDeviceNamespace("directory", @"\\.\" + real, real));
 
-        var aliasedResume = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
-        {
-            ["why"] = "the suite exercising this call",
-            ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
-        });
-
-        await Assert.That((bool?)aliasedResume["isError"]).IsTrue();
-        await Assert.That(TextOf(aliasedResume)).Contains("is a second spelling");
-
-        // Nothing was created under either name, which is the half a refusal
-        // cannot claim for itself.
+        // Nothing was created under it, which is the half a refusal cannot claim
+        // for itself.
         await Assert.That(File.Exists(Path.Combine(real, SessionLayout.LockFileName))).IsFalse();
 
-        // The positive control, and it is load-bearing: with it, the two
-        // refusals above are about the SPELLING rather than about init being
-        // broken in this rig.
-        var accepted = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        // ⚠️ AND THE INVERTED HALF. The extended-length prefix over the same
+        // directory was a refusal until 2026-08-26 and is now taken as what it
+        // names: the session is created, and it is created at the spelling the
+        // filesystem uses rather than at the one the caller typed.
+        var aliased = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
-            ["directory"] = real,
-            ["purpose"] = "the same directory, spelled the way the filesystem spells it",
+            ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
+            ["purpose"] = "the same directory, named through the extended-length prefix",
         });
 
-        await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true);
+        await Assert.That((bool?)aliased["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(aliased)).DoesNotContain(VolumeIdentity.ExtendedLengthPrefix);
+        await Assert.That(File.Exists(Path.Combine(real, SessionLayout.LockFileName))).IsTrue();
+
+        // And the caller is told, once, rather than left to notice at the next
+        // listing that a path it never typed is what its session is called.
+        await Assert.That(TextOf(aliased)).Contains("is what the filesystem calls it");
     }
 
     [Test]
@@ -268,7 +283,7 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "a second attempt",
         });
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(original))!;
+        var record = SessionLock.ReadRecord(SessionPath.For(original))!;
 
         await Assert.That((bool?)again["isError"]).IsTrue();
         Match(
@@ -367,7 +382,7 @@ internal sealed partial class ErrorCatalogueTests
         var directory = Path.Combine(root, "held");
         _ = Directory.CreateDirectory(directory);
 
-        var location = SessionPath.Resolve(directory);
+        var location = SessionPath.For(directory);
         var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
         var request = new SessionLockRequest { Browser = "chromium", Purpose = "the session that holds the lock" };
 
@@ -444,7 +459,7 @@ internal sealed partial class ErrorCatalogueTests
         var blocked = Path.Combine(root, "blocked");
         _ = Directory.CreateDirectory(blocked);
 
-        var blockedLocation = SessionPath.Resolve(blocked);
+        var blockedLocation = SessionPath.For(blocked);
         using var squatter = new Semaphore(1, 1, blockedLocation.MutexName, out var created);
 
         await Assert.That(created).IsTrue();
@@ -485,7 +500,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // The lock was released, so a retry is possible in one turn -- which is
         // what "recoverable" means and is not implied by the sentence alone.
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory));
+        var record = SessionLock.ReadRecord(SessionPath.For(directory));
         await Assert.That(record).IsNotNull();
     }
 
@@ -530,7 +545,7 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = hostile,
         });
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
 
         // ⚠️ NOT A LENGTH ANY MORE. Every cap on the record is gone, so what
         // makes a hostile purpose safe is the character rule alone: `\n`
@@ -864,7 +879,7 @@ internal sealed partial class ErrorCatalogueTests
         using var scratch = ScratchDirectory.Create("catalogue-firefox-lock");
         using var scope = new JobObjectScope();
 
-        var session = SessionPath.Resolve(Path.Combine(scratch.Path, "firefox"));
+        var session = SessionPath.For(Path.Combine(scratch.Path, "firefox"));
         SessionLayout.Create(session);
 
         var profile = Path.Combine(session.FullPath, SessionLayout.ProfileFolderName);
@@ -901,7 +916,7 @@ internal sealed partial class ErrorCatalogueTests
         // of silence is the cost of being wrong here.
         ProcessIdentity.Terminate(holder.Id, holderCreated);
 
-        var unreadable = SessionPath.Resolve(Path.Combine(scratch.Path, "unreadable"));
+        var unreadable = SessionPath.For(Path.Combine(scratch.Path, "unreadable"));
         SessionLayout.Create(unreadable);
 
         var blocked = Path.Combine(unreadable.FullPath, SessionLayout.ProfileFolderName);

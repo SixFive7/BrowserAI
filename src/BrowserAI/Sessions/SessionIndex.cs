@@ -462,15 +462,15 @@ internal sealed class SessionIndex
     /// which is why the copy that used to live in <c>SessionManager</c> was
     /// deleted rather than left beside this one.
     /// <para>
-    /// ⚠️ <b>That is true of the PREDICATE and not of the PREFIX, and saying so
-    /// is the point of this clause.</b> <c>SessionManager.Beneath</c> still
-    /// derives the prefix on its own — <c>ToUpperInvariant</c>, then append a
-    /// separator, without <c>Subtree</c>'s <c>Path.GetFullPath</c> — so a second
-    /// spelling of a derivation is standing right next to a remark forbidding
-    /// one. It is benign today for the reason given on
-    /// <see cref="FollowUnder"/>'s parameter, it pre-dates this member, and it is
+    /// ⚠️ <b>And it is true of the PREFIX now too — corrected 2026-08-26,
+    /// previously "That is true of the PREDICATE and not of the PREFIX …
+    /// <c>SessionManager.Beneath</c> still derives the prefix on its own … it is
     /// recorded here rather than quietly fixed because collapsing it is a change
-    /// to path handling.
+    /// to path handling".</b> That change is this one. <c>Subtree</c> and
+    /// <c>Beneath</c> both call <c>CanonicalPath.PrefixOf</c>, and a tree-as-text
+    /// scan (<c>HouseRuleTests.ThePrefixIsDerivedInOnePlaceAndTheRestOfTheTreeAsksForIt</c>)
+    /// fails the build on a third derivation rather than leaving the next one to
+    /// be found by reading.
     /// </para>
     /// </remarks>
     /// <param name="candidate">The session a followed entry points at.</param>
@@ -534,21 +534,32 @@ internal sealed class SessionIndex
             return Unusable(file, key, pointer, "it is empty");
         }
 
-        // A pointer must be absolute. A relative one would resolve against
-        // whatever working directory the reader happens to have, which is a
-        // different directory per process and never the one that was recorded.
-        if (!Path.IsPathFullyQualified(pointer))
+        // ⚠️ CHECKED, NEVER RESOLVED, and this line runs once per index entry on
+        // the WHOLE MACHINE -- on every listing, every roll-up (which is every
+        // `init` and every `resume`) and every sweep. Resolving an alias here
+        // would be one directory open per entry per call, and up to 64 of them
+        // driven by a string this process did not write. It does not have to:
+        // everything this build records went through the whole sequence on the
+        // way in, so a stored path that is not canonical was not stored by this
+        // build -- and an entry like that is exactly what `Unusable` is for.
+        //
+        // What that deliberately cannot see is an alias in a path some OTHER
+        // build wrote. It is swept rather than followed, and the next `init` or
+        // `resume` on the real directory records it again, canonically.
+        var verdict = CanonicalPath.Of(pointer, PathOrigin.Read, "pointer");
+
+        if (verdict.Refusal is { } refusal)
         {
-            return Unusable(file, key, pointer, "it is not an absolute path");
+            return Unusable(file, key, pointer, refusal);
         }
 
         SessionPath session;
 
         try
         {
-            session = SessionPath.Resolve(pointer);
+            session = SessionPath.For(verdict.Canonical!);
         }
-        catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (ArgumentException failure)
         {
             return Unusable(file, key, pointer, $"it does not name a session directory ({failure.Message})");
         }

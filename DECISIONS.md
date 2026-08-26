@@ -251,14 +251,80 @@ Recorded because the research raised it from two directions and the answer is no
 
 **The price is two failure modes .NET makes *worse*, both silent, both already named above**: `Process.ExitCode` throwing after `Dispose()` (§E), and stdio encoding defaulting to CP437 with CRLF and BOM hazards (§E). Neither is hard to handle; both must be **invariants owned by a single wrapper type**, not conventions maintained by discipline. If those two are handled properly, the choice pays for itself.
 
+### One path function: normalise what is cheap, refuse what is not
+
+**Settled 2026-08-26, replacing *"Refusing network paths and aliased spellings at
+the door"* (settled 2026-08-19).** The heading is the change: an aliased spelling
+is no longer refused, it is **resolved**, and what is still refused is refused at
+**every** door rather than at two. The predicate is
+[`CanonicalPath`](src/BrowserAI/Sessions/CanonicalPath.cs).
+
+**Why the alias half inverted.** The old refusals were already computing the
+answer they declined to use. `\\?\` is four characters off the front; a `subst`
+is one `QueryDosDeviceW` whose target *is* the accepted spelling; a junction is
+one `GetFinalPathNameByHandleW` on a volume already proven local. All three were
+formatted into a sentence telling the caller to call again with that answer, so
+handing it back as a path costs **no syscall at all** and saves the caller a
+turn — every turn, for a caller whose alias is not its own choice: a `subst` in
+the user's shell, a redirected profile, a junctioned `AppData`.
+
+**Why the network half widened to every door.** The 2026-08-19 decision ran the
+refusals at `browserai_init` and `browserai_resume` only, *"because a session
+that predates this build on a network path must still be listable and still be
+removable"*. Nothing was ever distributed, so that population is empty — and the
+cost of the exception was measured on 2026-08-26, through the wire:
+`browserai_destroy` on `\\10.255.255.1\share\a-session` took **21 seconds** to
+answer *that is not a session*. **The maintainer's decision was `b`: both halves,
+everywhere, uniformly.**
+
+**The one refusal the inversion kept is `\\.\`**, and it is kept because the two
+prefixes are different objects: `\\?\` is a length-and-parsing prefix over an
+ordinary path, while `\\.\` is the device namespace, where `\\.\NUL` and
+`\\.\PhysicalDrive0` name devices. The deleted `filename` gate refused it in
+exactly those words, so this makes the directory rule agree with the filename
+rule rather than adding a rule. It names the accepted form, so it is one turn.
+
+**And the shapes Windows would silently rewrite are refused too**, which is new:
+a segment ending in a dot or a space, a reserved device name, an alternate data
+stream, a wildcard or a control character. Measured 2026-08-26 on .NET 10.0.11:
+`Path.GetFullPath(@"C:\work\sess.")` answers `C:\work\sess` and
+`Path.GetFullPath(@"C:\work\NUL")` answers `\\.\NUL`
+([kb](kb/windows/detection.md#pathgetfullpath-rewrites-three-name-shapes-rather-than-rejecting-them--measured-2026-08-26)).
+None of those fails; each hands back a directory that is not the one the caller
+asked for, which is the two-spellings failure arriving through the name.
+
+**The migration was accepted rather than mitigated.** Every derived identity is
+computed from the case-folded path, so no mutex, index key or lock file moves for
+an ordinary local directory. What moves is the **spelling** in every answer and
+every record: `GetFinalPathNameByHandleW` reports the drive letter upper-case
+always, so a session opened from a shell that spelled it `c:\` gains one
+`directory` statement on its next resume. That is the whole of what the identity
+change looks like from outside, and it is named here rather than suppressed. A
+session whose own path traverses a junction, a `subst` or a `\\?\` spelling does
+change identity: its index entry is swept rather than orphaned, and the next
+`init` or `resume` records it again.
+
+**What "normalise" costs, in the order the questions are asked.** Characters
+first, then the object manager, then one directory open per level climbed —
+because the filesystem call is the thing being defended against.
+
+**Two origins, and the axis is *may this call touch the filesystem*.** A path a
+caller named pays for the whole sequence. A path BrowserAI stored, or a stranger
+published in a window title, runs the subset that costs nothing — **zero
+syscalls by construction** — because everything this build writes is canonical
+already, and a stored path that is not was not written by this build. The index
+already knows what to do with one of those. That is what keeps the machine-wide
+read path free: it is one check per entry, not one directory open per entry.
+
 ### Refusing network paths and aliased spellings at the door
 
-**Settled 2026-08-19.** Two refusals, one shape: *refuse at the boundary rather
-than handle it everywhere*. Both take something away from a caller who may be
-using it today, which is why they are recorded here with their costs rather than
-as implementation detail. The predicate is
-[`SessionDirectoryGuard`](src/BrowserAI/Sessions/SessionDirectoryGuard.cs), and
-it runs at `browserai_init` and `browserai_resume` only.
+**Superseded 2026-08-26 by
+[the section above](#one-path-function-normalise-what-is-cheap-refuse-what-is-not).**
+The heading survives because a released
+[changelog](CHANGELOG.md) entry links to it and a released record is not
+rewritten to suit a later decision. What it said was that an aliased spelling is
+refused and that `browserai_destroy` and `browserai_list` are deliberately not
+guarded; both halves are now the other way round, and the reasons are above.
 
 **The measured problem, first half.** One `File.Exists` against a share that has
 stopped answering costs **22,210 ms**, measured 2026-08-19 — and that number is
@@ -295,22 +361,40 @@ session directories in the common case.
    operating system's own classification, so SMB, WebDAV and NFS are all covered
    without this repository maintaining a list of redirector device names.
 
-**What "aliased" means operationally**, and this is the half where what is *not*
-caught matters as much as what is:
+⚠️ **And `QueryDosDeviceW` is asked before `GetDriveTypeW`, not after —
+corrected 2026-08-26.** The 0.9 ms figure holds for a letter that is not a
+substitution and for no other. Measured that day, `subst W: V:\dir` over a `V:`
+mapped to an unroutable address: `GetDriveTypeW("W:\")` took **21,035 ms** and
+then answered `DRIVE_NO_ROOT_DIR`, while the mapping itself answered
+`DRIVE_REMOTE` in **1 ms**
+([kb](kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds--measured-2026-08-26)).
+It resolves the substitution and classifies what is at the end of it, so on that
+one shape the call the whole ordering was built around *was* the network call.
+Unwinding the substitution first means `GetDriveTypeW` is only ever asked about a
+letter that is not one — and `StraySweep`'s title guard follows the same chain,
+because a title on a letter `subst`ed onto a mapped drive is
+[processes finding 8](docs/reviews/2026-08-18-adversarial-processes.md) wearing
+one more layer.
 
-| Alias | Caught by | Cost |
+**What "an alias" means operationally**, and this is the half where what is *not*
+resolvable matters as much as what is:
+
+| Alias | Resolved by | Cost |
 |---|---|---|
-| `\?\` and `\.\` device-namespace prefixes | characters | none |
-| a `subst`ed drive letter | `QueryDosDeviceW` returns a target under `\??\` | ~0.02 ms, object manager only |
-| a junction, a directory symlink, a volume mount point | `GetFinalPathNameByHandleW` on the deepest **existing** ancestor differs from that ancestor's own spelling | ~0.07 ms, one directory open on a volume already proven local |
+| `\\?\` extended-length prefix | characters — the path is the string minus four | none |
+| `\\.\` device namespace | **not resolved — refused**, and it names the accepted form | none |
+| a `subst`ed drive letter | `QueryDosDeviceW` returns a target under `\??\`, and that target is the answer | ~0.02 ms, object manager only |
+| a junction, a directory symlink, a volume mount point | `GetFinalPathNameByHandleW` on the deepest **existing** ancestor | ~0.07 ms, one directory open on a volume already proven local |
 | an 8.3 short name | **nothing here — `Path.GetFullPath` already expanded it** | none |
+| a UNC path or a mapped drive letter | **not resolvable without a redirector, so refused** | none |
 
-**Three candidate definitions were rejected.** *A string check for the `~N`
-shape* — it would refuse a directory genuinely named `data~1`, and it cannot see
-a junction at all; the final-name test subsumes it without either fault. *A
-reparse-point walk of every component* — one `GetFileAttributes` per level to
-learn what one `GetFinalPathNameByHandleW` answers outright. *Full
-canonicalisation* — correct, and the identity rewrite above.
+**Three candidate definitions of *aliased* were rejected in 2026-08-19 and the
+argument survives the inversion.** *A string check for the `~N` shape* — it would
+refuse a directory genuinely named `data~1`, and it cannot see a junction at all.
+*A reparse-point walk of every component* — one `GetFileAttributes` per level to
+learn what one `GetFinalPathNameByHandleW` answers outright. *Refusing rather
+than resolving* — which is what shipped in 2026-08-19 and is what this decision
+replaces.
 
 **What it knowingly leaves open, stated rather than implied:**
 
@@ -330,14 +414,19 @@ canonicalisation* — correct, and the identity rewrite above.
 - **Case.** Two spellings differing only in case are one session by design, so
   the comparison is case-insensitive and `C:\A` is not an alias of `c:\a`.
 
-**What it costs a caller, and where it deliberately does not apply.** A caller
-whose sessions live on a share is refused, and told to run locally and copy
-afterwards; a caller who spells a path through `\?\` is told the spelling to use
-instead. Both refusals name the accepted form, so the next call is the same call
-with one argument replaced. **`browserai_destroy` and `browserai_list` are not
-guarded**: a session that predates this build on a network path must still be
-listable and still be removable, and a refusal that left a directory unremovable
-would be a worse trap than the one it closes.
+**What it costs a caller.** A caller whose sessions live on a share is refused,
+and told to run locally and copy afterwards. That is the only capability this
+takes away, and it is taken away at **every** door.
+
+⚠️ **Corrected 2026-08-26 (previously "**`browserai_destroy` and `browserai_list`
+are not guarded**: a session that predates this build on a network path must
+still be listable and still be removable, and a refusal that left a directory
+unremovable would be a worse trap than the one it closes").** There is no such
+session: nothing was ever distributed, so the population the exception protected
+is empty — and the exception's cost was 21 measured seconds inside a tool that
+then answered *that is not a session*. A directory on a share is now something
+BrowserAI will not create, open, list or delete; removing one is the
+filesystem's job, and the refusal does not pretend otherwise.
 
 
 ---
@@ -423,7 +512,7 @@ Two things follow, and they are design obligations rather than caveats:
 |---|---|
 | **Machine-wide lock scope** | **`Global\` only. There is no `Local\` fallback.** If the machine-wide lock cannot be created there is no lock, and therefore no session — a hard blocker surfaced to the calling LLM with the reason, not a quiet downgrade. A `Local\` degraded mode was rejected because it does not protect the **cross-login** case, which is the one that matters: [headless Chromium writes no lock file of its own](#4-exclusivity-is-keyed-on-the-wrong-thing), so BrowserAI's lock is the only protection that exists in the mode that is the default. A lock that is silently weaker than it claims is the exact failure class this project exists to eliminate — a degraded mode would report healthy while being broken. |
 | **Lock acquisition never waits** | **A fast attempt; on contention, fail immediately, naming the holder and when it was taken.** No timer, no backoff, no configurable wait. **Whether to retry, and how long, is the calling LLM's decision** — consistent with correct use being [the calling agent's responsibility](#shape-and-packaging). A wait inside BrowserAI makes that judgement once, silently, and identically for every caller, and the caller is the only party that knows whether the work is worth queueing behind. One exception, and it is not a hole in the rule: the **per-directory create-or-take gate** keeps a short bounded internal wait, because asking a model to retry a 5 ms operation would be absurd. *(**Corrected 2026-08-16 at the plan's final audit, previously "the machine-wide mutex held for milliseconds around a session-index write."** The session index takes **no lock at all** — asserted by `SessionIndexTests.TheIndexTakesNoLockAndDeletesNoDirectory`, and [locking](ARCHITECTURE.md#locking-ownership-and-the-sweep) exists partly to kill that phrasing, because a machine-wide lock on the hot path of every session start is precisely the trade the index was designed to avoid. The bounded wait is real, and it is the gate that serialises close→rename→re-open on one directory.)* |
-| **BrowserAI will not serve out of a root two Windows users could share** | **Settled 2026-08-20, in the maintainer's words: _"L1 a"_** — direction (a) of [QUESTIONS.md §12](QUESTIONS.md), refuse at startup. The predicate is **the app root is inside the current user's profile**, and it is answered through the filesystem rather than through strings: both sides go through `VolumeIdentity.DeepestExistingFinalName`, the same walk `SessionDirectoryGuard` uses on a caller's session directory, so a junction, a `subst`ed letter, an 8.3 short component and an extended-length spelling all resolve to what the filesystem calls them — and a junction *inside* the profile pointing outside it, which every string comparison accepts, is refused. **The refusal carries the remedy**: the root it found, why a shared root is unsafe, and that clearing `BROWSERAI_ROOT` restores the per-user default. It runs **before** the sweep, the live marker, the instance directory and every session, so a refused root gains nothing but a log line. **What was knowingly bought**: *outside the profile* is not the same predicate as *shared*, so a single-user install at `D:\Tools\BrowserAI` is refused for nothing — the table in §12 said so and the decision was taken anyway. **What could not be established is served with a warning, never refused**, because a background MCP server that will not start on a locked-down machine is a worse failure than the one being prevented. See [`Hosting/InstallRootScope.cs`](src/BrowserAI/Hosting/InstallRootScope.cs). |
+| **BrowserAI will not serve out of a root two Windows users could share** | **Settled 2026-08-20, in the maintainer's words: _"L1 a"_** — direction (a) of [QUESTIONS.md §12](QUESTIONS.md), refuse at startup. The predicate is **the app root is inside the current user's profile**, and it is answered through the filesystem rather than through strings: both sides go through `VolumeIdentity.DeepestExistingFinalName`, the same walk `CanonicalPath` uses on a caller's session directory, so a junction, a `subst`ed letter, an 8.3 short component and an extended-length spelling all resolve to what the filesystem calls them — and a junction *inside* the profile pointing outside it, which every string comparison accepts, is refused. **The refusal carries the remedy**: the root it found, why a shared root is unsafe, and that clearing `BROWSERAI_ROOT` restores the per-user default. It runs **before** the sweep, the live marker, the instance directory and every session, so a refused root gains nothing but a log line. **What was knowingly bought**: *outside the profile* is not the same predicate as *shared*, so a single-user install at `D:\Tools\BrowserAI` is refused for nothing — the table in §12 said so and the decision was taken anyway. **What could not be established is served with a warning, never refused**, because a background MCP server that will not start on a locked-down machine is a worse failure than the one being prevented. See [`Hosting/InstallRootScope.cs`](src/BrowserAI/Hosting/InstallRootScope.cs). |
 | **A reinstall holds the machine's browsers root** | ⚠️ **Became a READER/WRITER claim on 2026-08-20, in the maintainer's words: _"any init or resume should take a system level lock. No matter the browser type. These locks are cumulative. And reinstalling the browser should be an exclusive lock."_** Every session opens `<browsers root>\reinstall.lock` `FileAccess.Read`/`FileShare.Read` and holds it for its whole life; a reinstall opens it `FileAccess.ReadWrite`/`FileShare.Read`, which Windows refuses while any reader holds it. **The kernel is the gate and the census is only a sentence** — `SessionManager.LiveSessions` survives to name what the caller must close, and the family filter is gone, so a live Firefox session refuses a Chromium reinstall. **No intent marker, no drain, and writer starvation accepted**, all three his: _"If anything is busy then the reinstall should be refused with the list… But it should not start a drain/preventstart process of sorts. Keep it simple. Let the user solve the open sessions block."_ *Previously settled 2026-08-19: _"No reinstall if there is any session running system wide. Including any reinstall sessions."_* `browserai_reinstall_browser` takes a machine-wide claim before it looks at anything and holds it for the whole call; `browserai_init` and `browserai_resume` are refused while it is held, and so is a second reinstall. **It is a lock FILE and not a named mutex, and that is forced rather than chosen** — the claim spans a 203.8 MB download inside an `async` method and a named mutex is owned by the thread that waited on it. **Nor a named semaphore**, which does span threads: a semaphore's count is not restored when its holder dies, so one crashed reinstall would refuse every `init` on the machine until a reboot; Windows closes a file handle however the process ends. **Keyed on the browsers root**, exactly as the provisioning mutexes are, because two installations with different roots are genuinely independent. **No drain and no wait** — a reinstall that finds sessions open releases the claim and refuses at once, naming how many. See [`Runtime/MaintenanceLock.cs`](src/BrowserAI/Runtime/MaintenanceLock.cs) and [`ARCHITECTURE.md`](ARCHITECTURE.md#the-mcp-server). |
 | **Git detection** | **Out of scope. BrowserAI performs no git detection of any kind.** Considered and rejected on 2026-08-16, recorded here so it is not rediscovered as a gap. The concern was well-shaped: `storage-state` artifacts are session bearer tokens, and a session directory inside a working tree is both untracked *and* unignored — one `git add -A` from being pushed. A detector was designed (refuse, require explicit acknowledgement) and then dropped on two grounds. **Where an agent puts its data is the agent's decision**, consistent with [any path is accepted](#shape-and-packaging); and **the premise does not hold** — a browser session writes hundreds of files, so it is plainly visible in the staged list and the failure was never silent, which was the entire basis for the concern. This says nothing about this repository's own `.gitignore`, which is repository hygiene rather than a runtime feature. |
 | **A renamed session directory** | **The directory is the identity. The path recorded in `browserai.json` is provenance.** On `resume`, when the recorded path differs from the actual one: recorded path **gone** → it was *moved*, so repair the record, log it, carry on. Recorded path **still present** → it was *copied*. **⚠️ Re-answered 2026-08-18: the copy is resumed and told what it is, not refused** (*previously "so refuse and require explicit acknowledgement"*, through an `acknowledgeCopy=true` argument that is now deleted). The refusal was necessary only while `browserai.json` was a **snapshot**, because taking the copy over overwrote the one piece of evidence that it was a copy. Schema 2 made every field an ordered list of timestamped statements, so a resumed copy **appends** its path beside the original and the answer returns the whole history — which is strictly more than the refusal ever conveyed, and leaves the product with **zero confirmation flags**. **No extra identifier is needed** — the recorded path is already the discriminator, and a proposal to add a random fingerprint field is dropped. The rationale is narrower than it first looks and is worth stating exactly: **a copy corrupts nothing.** Each copy has its own profile folder, and each browser writes only to its own. What the copy inherits is an *ownership record* naming a process that may still be live against a **different** directory, which produces either a wrong refusal or a confusing takeover of another session's recorded purpose and history. **Legibility, not data loss** — the same reason `resume` exists at all. |

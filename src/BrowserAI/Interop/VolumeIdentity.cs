@@ -51,6 +51,20 @@ namespace BrowserAI.Interop;
 /// ships next), so the <i>network</i> question is asked of
 /// <c>GetDriveTypeW</c>, which is the operating system's own classification.
 /// </para>
+/// <para>
+/// ⚠️ <b>And <c>QueryDosDeviceW</c> is asked FIRST — corrected 2026-08-26,
+/// previously <c>GetDriveTypeW</c> was.</b> The 0.9 ms figure above holds for a
+/// letter that is not a substitution and for no other. Measured 2026-08-26,
+/// <c>subst W: V:\dir</c> over a <c>V:</c> mapped to an unroutable address:
+/// <c>GetDriveTypeW("W:\")</c> took <b>21,035 ms</b> and then answered
+/// <c>DRIVE_NO_ROOT_DIR</c>, while the mapped letter itself answered
+/// <c>DRIVE_REMOTE</c> in <b>1 ms</b>
+/// ([kb](../../../kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds--measured-2026-08-26)).
+/// It resolves the substitution and classifies what is at the end of it, so on
+/// that one shape the call this type is ordered around <i>was</i> the network
+/// call. Unwinding the substitution first means <c>GetDriveTypeW</c> is only
+/// ever asked about a letter that is not one.
+/// </para>
 /// </remarks>
 internal static partial class VolumeIdentity
 {
@@ -134,18 +148,32 @@ internal static partial class VolumeIdentity
         // "X:\" for GetDriveTypeW (a root path, separator required -- without it
         // the function reads the process's current directory on that drive).
         var device = path[..2];
-        var root = string.Concat(device, @"\");
 
-        var kind = GetDriveTypeW(root);
-
-        if (kind is DriveRemote)
-        {
-            return new VolumeReading(VolumeKind.Network, null);
-        }
-
-        // Deliberately asked AFTER the network question. A letter that does not
+        // ⚠️ ASKED FIRST, AND THE ORDER WAS THE OTHER WAY AROUND UNTIL
+        // 2026-08-26 — *previously `GetDriveTypeW` first, with the remark
+        // "Deliberately asked AFTER the network question. A letter that does not
         // resolve at all is reported as such rather than as an alias, because
-        // the two have completely different fixes.
+        // the two have completely different fixes."* That reasoning is still
+        // true and the order it produced was still wrong, because
+        // `GetDriveTypeW` is not the cheap call this type says it is when the
+        // letter is a substitution: it resolves the substitution and then
+        // classifies whatever is at the end of it.
+        //
+        // Measured 2026-08-26 on this machine, `subst W: V:\dir` over a `V:`
+        // mapped to an unroutable address: `GetDriveTypeW("V:\")` answers
+        // DRIVE_REMOTE in **1 ms**, and `GetDriveTypeW("W:\")` takes
+        // **21,035 ms** and then answers DRIVE_NO_ROOT_DIR — so the one call
+        // this whole type is ordered around paid the exact cost it exists to
+        // prevent, and misclassified the letter afterwards
+        // ([kb](../../../kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds--measured-2026-08-26)).
+        //
+        // `QueryDosDeviceW` reads the DOS device symbolic link and nothing else,
+        // so unwinding the substitution first means `GetDriveTypeW` is only ever
+        // asked about a letter that is NOT one — where it is the 0.9 ms call
+        // this type was written around. Every other answer is unchanged: a
+        // letter that resolves to nothing is still `NoSuchDrive`, and a letter
+        // whose target is a device is still classified by the operating system
+        // rather than by a list of redirector names kept here.
         if (QueryTarget(device) is not { } target)
         {
             return new VolumeReading(VolumeKind.NoSuchDrive, null);
@@ -156,11 +184,65 @@ internal static partial class VolumeIdentity
         // -- which is exactly what `subst` and DefineDosDevice without
         // DDD_RAW_TARGET_PATH create. A real volume's target is a device
         // (`\Device\HarddiskVolume3`). The target is carried out because it is
-        // the accepted spelling, which makes the refusal fixable in one turn
-        // without a single filesystem call.
-        return target.StartsWith(DosPathPrefix, StringComparison.Ordinal)
-            ? new VolumeReading(VolumeKind.Substituted, target[DosPathPrefix.Length..])
-            : new VolumeReading(kind is DriveNoRootDir ? VolumeKind.NoSuchDrive : VolumeKind.Local, null);
+        // the spelling the substitution stands for, which is what lets the
+        // caller re-ask every question about the target without a single
+        // filesystem call.
+        if (target.StartsWith(DosPathPrefix, StringComparison.Ordinal))
+        {
+            return new VolumeReading(VolumeKind.Substituted, target[DosPathPrefix.Length..]);
+        }
+
+        var kind = GetDriveTypeW(string.Concat(device, @"\"));
+
+        return kind switch
+        {
+            DriveRemote => new VolumeReading(VolumeKind.Network, null),
+            DriveNoRootDir => new VolumeReading(VolumeKind.NoSuchDrive, null),
+            _ => new VolumeReading(VolumeKind.Local, null),
+        };
+    }
+
+    /// <summary>
+    /// <see cref="Of"/>, following a <c>subst</c> to whatever volume is at the
+    /// end of the chain.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>For a caller that wants the kind and not the spelling.</b>
+    /// <see cref="Of"/> stops at the first hop and hands back the target,
+    /// because a caller that is going to rewrite the path needs the string;
+    /// a caller that only asks <i>is this the network</i> would otherwise have
+    /// to write this loop itself, and a letter <c>subst</c>ed onto a mapped
+    /// drive would read as local to every one that did not.
+    /// </para>
+    /// <para>
+    /// <b>Still no filesystem call anywhere in it</b> — one
+    /// <c>QueryDosDeviceW</c> per hop, plus one <c>GetDriveTypeW</c> at the end.
+    /// A chain that does not terminate inside <paramref name="chainLimit"/>
+    /// answers <see cref="VolumeKind.NoSuchDrive"/>, because there is no volume
+    /// at the end of it.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">A path in any spelling.</param>
+    /// <param name="chainLimit">How many substitution hops to follow.</param>
+    /// <returns>The kind of volume at the end of the chain.</returns>
+    public static VolumeReading Through(string path, int chainLimit)
+    {
+        var spelling = path;
+
+        for (var hop = 0; hop < chainLimit; hop++)
+        {
+            var reading = Of(spelling);
+
+            if (reading is not { Kind: VolumeKind.Substituted, SubstitutedFor: { } target })
+            {
+                return reading;
+            }
+
+            spelling = Path.Join(target, spelling.AsSpan(2));
+        }
+
+        return new VolumeReading(VolumeKind.NoSuchDrive, null);
     }
 
     /// <summary>
@@ -239,8 +321,8 @@ internal static partial class VolumeIdentity
     /// <remarks>
     /// <para>
     /// <b>One walk, two callers, because it is one discipline.</b>
-    /// <c>SessionDirectoryGuard</c> asks it to decide whether a caller's session
-    /// directory is an aliased spelling of another one;
+    /// <c>Sessions.CanonicalPath</c> asks it for the filesystem's own name for a
+    /// caller's session directory;
     /// <c>Hosting.InstallRootScope</c> asks it to decide whether this process's
     /// app root is inside the current user's profile. Both are the same
     /// question — <i>what does the filesystem call this?</i> — and a second walk

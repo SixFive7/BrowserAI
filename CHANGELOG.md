@@ -21,6 +21,40 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+### Changed
+
+- **An aliased session directory is resolved rather than refused, and the network
+  refusal now runs at every door.** `\\?\C:\work\sess`, a `subst`ed drive letter,
+  a junction, a directory symlink and a mount point are all taken as the
+  directory they name: BrowserAI records the spelling the filesystem itself uses
+  and says so once, in the `init` or `resume` answer, instead of spending a turn
+  refusing and asking the caller to type the answer back. Every one of those
+  answers was already being computed to build that refusal, so this costs no
+  syscall at all. **What is still refused is refused everywhere** — at
+  `browserai_destroy`, `browserai_set_purpose`, `browserai_catch_up` and
+  `browserai_list` as well as at `init` and `resume`: a UNC path, a mapped drive
+  letter, the `\\.\` device namespace, and a name Windows would silently rewrite
+  (a segment ending in a dot or a space, a reserved device name such as `NUL`, an
+  alternate data stream, a wildcard, a control character).
+
+  ⚠️ **Every session recorded from a shell that spelled the drive letter
+  lower-case gains one `directory` statement on its next resume, and that is the
+  whole of what this looks like from the outside.** Windows reports every path
+  with an upper-case drive letter, so `c:\work\sess` becomes `C:\work\sess` in
+  answers and in `browserai.data`. Nothing hashed moves — the identity is
+  case-folded — so no mutex, no index entry and no lock file changes for an
+  ordinary local directory. A session whose own path traverses a junction, a
+  `subst` or a `\\?\` spelling **does** change identity: its index entry is swept
+  rather than orphaned, and the next `init` or `resume` records it again.
+
+- **`browserai_list` pointed at an alias of a tree now finds the sessions under
+  it.** It had a path chain of its own — `Path.GetFullPath` plus an upper-cased
+  prefix, with no alias resolution — because the shared one refused a volume root
+  and a volume root is exactly what a caller passes to see everything. So a
+  listing of `D:\link\work` where the sessions live under `C:\real\work` answered
+  *"No BrowserAI sessions under '…'. That is an answer rather than an error"*:
+  confident, wrong, and not a refusal, so there was nothing to correct.
+
 ### Removed
 
 - **`consoleLevel`, and the four-level choice behind it.** The console level is

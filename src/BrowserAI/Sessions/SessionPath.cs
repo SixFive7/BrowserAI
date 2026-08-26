@@ -12,13 +12,14 @@ namespace BrowserAI.Sessions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>This is the one canonicalisation function.</b> The mutex name, the lock
-/// file and the session index all key on the same directory, and if any two of
-/// them normalise differently the same directory quietly acquires two
+/// <b>This is the one identity chain, and <see cref="CanonicalPath"/> is the one
+/// canonicalisation function in front of it.</b> The mutex name, the lock file,
+/// the data file and the session index all key on the same directory, and if any
+/// two of them normalise differently the same directory quietly acquires two
 /// identities — which is a lock that reports success while guarding nothing.
-/// There is deliberately no second spelling of this chain anywhere in the
-/// product, and a test asserts the three derived names agree across a trailing
-/// separator, a case change and a relative form.
+/// There is deliberately no second spelling of either half anywhere in the
+/// product, and a test asserts the derived names agree across every alias this
+/// machine can build.
 /// </para>
 /// <para>
 /// <b>You cannot put a path in a mutex name.</b> Backslashes are illegal after
@@ -35,8 +36,20 @@ namespace BrowserAI.Sessions;
 /// — that the filesystem is case-insensitive — and Windows has supported
 /// per-directory case sensitivity since 1803, so a caller whose directory sits
 /// under a case-sensitive parent would be sent to a path that does not exist.
-/// <see cref="FullPath"/> therefore keeps the caller's own casing, which is also
-/// what <c>browserai.json</c> records as the resolved path.
+/// <see cref="FullPath"/> therefore keeps the casing it was handed, which is
+/// also what <c>browserai.data</c> records as the resolved path.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-26 (previously "keeps the caller's own casing").</b>
+/// The casing it is handed is the <i>filesystem's</i> now, because
+/// <see cref="CanonicalPath"/> reads it back through
+/// <c>GetFinalPathNameByHandleW</c> — which reports every component as it is
+/// stored and the drive letter upper-case, always. Nothing hashed moves:
+/// <see cref="Key"/> case-folds, so the mutex, the index key and the lock file
+/// are the same names they were. What does move is the <i>spelling</i> in every
+/// answer and every record, for a session opened from a shell that spelled the
+/// drive letter lower-case — one <c>directory</c> statement on the next resume,
+/// and that is the whole of what the identity change looks like from outside.
 /// </para>
 /// </remarks>
 internal sealed class SessionPath
@@ -103,31 +116,49 @@ internal sealed class SessionPath
     /// </remarks>
     public string DataFile { get; }
 
-    /// <summary>Canonicalises a directory the caller named.</summary>
-    /// <param name="directory">
-    /// Any spelling of a directory: relative, trailing separator, any casing,
-    /// with <c>.</c> or <c>..</c> segments.
+    /// <summary>
+    /// Every name a session derives from a directory <see cref="CanonicalPath"/>
+    /// has already answered for.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It normalises nothing, and that is what makes the one-function rule
+    /// true rather than nearly true — 2026-08-26, previously
+    /// <c>Resolve(string directory)</c>, which was <c>Path.GetFullPath</c> plus a
+    /// trim.</b> With the normalisation here, <c>browserai_list</c> could not use
+    /// this chain at all: a listing is pointed at a volume root on purpose and a
+    /// volume root is refused below, so <c>list</c> grew a second
+    /// <c>GetFullPath</c>-plus-upper-case of its own — which is exactly the
+    /// second spelling this type's remarks forbid, and it is where the aliased
+    /// listing gave a confident wrong answer. Splitting the two questions apart
+    /// lets <c>list</c> ask the first and skip the second.
+    /// </para>
+    /// <para>
+    /// <b>The one predicate that is left is the volume root</b>, because
+    /// <c>C:\</c> is a legitimate <i>subtree</i> and never a session directory.
+    /// The trailing-separator trim survives it: this is handed canonical paths by
+    /// construction, and a caller that composes one with a separator on the end
+    /// would otherwise get a second identity for one directory.
+    /// </para>
+    /// </remarks>
+    /// <param name="canonical">
+    /// A directory as <see cref="CanonicalPath.Of"/> answered it.
     /// </param>
-    /// <returns>The canonical session path and every name derived from it.</returns>
-    /// <exception cref="ArgumentException">The path is empty, or not a rooted local path once resolved.</exception>
-    public static SessionPath Resolve(string directory)
+    /// <returns>The session path and every name derived from it.</returns>
+    /// <exception cref="ArgumentException">The path is empty or a volume root.</exception>
+    public static SessionPath For(string canonical)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(directory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(canonical);
 
-        // GetFullPath resolves a relative path against the current directory and
-        // collapses `.` and `..` without touching the filesystem, so it works
-        // for a directory that does not exist yet.
-        var full = Path.GetFullPath(directory);
-
-        // TrimEnd, then guard the root. `C:\` trims to `C:`, which is a
-        // drive-relative path meaning "the current directory on C:" -- a
-        // different thing entirely, and a silent one.
-        var trimmed = full.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // `C:\` trims to `C:`, which is a drive-relative path meaning "the
+        // current directory on C:" -- a different thing entirely, and a silent
+        // one.
+        var trimmed = canonical.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
         return trimmed.Length is 0 || trimmed.EndsWith(':')
             ? throw new ArgumentException(
-                $"'{directory}' resolves to '{full}', which is a volume root rather than a session directory. A session directory must be a real directory on the volume.",
-                nameof(directory))
+                $"'{canonical}' is a volume root rather than a session directory. A session directory must be a real directory on the volume.",
+                nameof(canonical))
             : new SessionPath(trimmed);
     }
 }

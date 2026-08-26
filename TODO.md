@@ -381,6 +381,32 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       > lines, and the trace links. They all resolve through the same two call
       > sites.
 
+- [ ] **Ask `@playwright/mcp` for a no-clobber option on output files, and for
+      names Windows will not keep verbatim to be rejected.** Both are losses
+      BrowserAI stopped preventing on 2026-08-26, when its own filename gate was
+      deleted in favour of upstream's file-access roots: the roots stop a write
+      from leaving the session and say nothing about the name inside it. The two
+      hazard rows that record the consequences stay open, and steering is what
+      this side does about them. Verified against the shipped bundle at
+      `@playwright/mcp` 0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05,
+      2026-08-26: `Response._writeFile` calls `fs.promises.writeFile` with no
+      flag, so the default `w` truncates, and the name it is handed arrives
+      unchecked from `Response.resolveClientFilename`.
+
+      **File this text, unchanged:**
+
+      > **Title:** Option for no-clobber output files and reserved name handling
+      >
+      > Two requests around output filenames, both in `Response._writeFile`:
+      >
+      > 1. The write truncates when the target exists, so a second screenshot
+      >    saved as a.png replaces the first. An option to fail on collision, or
+      >    suffix the name, would avoid silent data loss.
+      >
+      > 2. On Windows, NUL.png and names with a trailing dot or space are
+      >    accepted but stored under a different effective name. Rejecting names
+      >    the OS will not keep verbatim would make results predictable.
+
 ---
 
 ## Continuous integration
@@ -412,7 +438,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       | **A different machine — four cores, cold caches, a service window station with no interactive desktop, and a volume with 8.3 generation off.** It found four defects a developer machine structurally could not: the `browserai_destroy` survivor arm (nine local greens against three consecutive CI reds, Firefox still holding mapped files); the `SessionLock` re-open sharing violation (run `32203064556` attempt 1), whose fix is specified and deliberately not yet made; a `RenameWindow` `ERROR_SHARING_VIOLATION`; and the console-logger queue drain, which cost two red runs and is invisible on a machine fast enough to drain the queue before the kill | **Dies.** Not preservable. This row is the whole of the loss and the rest of the table is bookkeeping |
       | **A contributor's pull request, built before merge.** For a public repository this was the workflow's founding reason: 54% of this project's enforcement is a test or a release-phase check, and a pull request could break any of it with nothing to say so | **Dies.** No local substitute exists — a maintainer running the suite on his own machine cannot run it on a change he has not pulled |
       | **`BROWSERAI_EXPECTED_ABSENT`, the capability pin.** The workflow's test step was its only consumer anywhere in the repository | **Dies as a declaration; the mechanism is kept, correct and inert.** Unset means *declares nothing*, which is already the developer-machine behaviour, so `SuiteEnvironment.ReconcileDeclaredAbsence` stays right and `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared` now asserts nothing on every run. **Restoring the third arm is part of this item:** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read `build.yml` and was deleted rather than re-pointed, because a version aimed at a file that does not exist can have no positive control |
-      | **The `SessionDirectoryGuardTests` branch for a volume with 8.3 generation *off*.** CI's checkout volume had it off; this machine's system volume has it on | **Preservable locally, and nothing routine does it.** Three of this machine's four volumes do not shorten, so running the suite from one exercises the other branch. Until something does, [re-verification row 98](kb/re-verification.md) is verified on one branch per run rather than both |
+      | **The `CanonicalPathTests` branch for a volume with 8.3 generation *off*.** CI's checkout volume had it off; this machine's system volume has it on | **Preservable locally, and nothing routine does it.** Three of this machine's four volumes do not shorten, so running the suite from one exercises the other branch. Until something does, [re-verification row 98](kb/re-verification.md) is verified on one branch per run rather than both |
       | **The cold CDN download on every push** — Chromium ~203.8 MB and Firefox ~125.7 MB, uncached on purpose | **Already covered locally, at a lower cadence.** `FirstRunProvisioningTests` runs against an empty root, `FirstRunCache` asks the CDN at most once an hour, and a release run always asks it. What dies is the per-push frequency and a second, independent network path to the CDN |
       | **`dotnet restore --force-evaluate` then `--locked-mode`, and the lock-file drift report** | **Already covered locally, and more strictly.** [Release checklist item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green) runs both commands and takes both diffs with `--exit-code`, which the workflow's bare `git diff` did not |
       | **`fetch-depth: 0`, so MinVer derives a real version from tags** | **Already covered locally.** A developer clone carries its tags; `New-Release.ps1` refuses a derived `0.0.0` and names this exact fix in its own error text |

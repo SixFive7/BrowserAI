@@ -265,25 +265,34 @@ internal sealed class StraySweep
     /// <i>semantics</i>. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
     /// finding 8, and triaged on 2026-08-23 — where it was cheap because
-    /// <see cref="Interop.VolumeIdentity"/> had arrived in between for
-    /// <see cref="SessionDirectoryGuard"/>.
+    /// <see cref="Interop.VolumeIdentity"/> had arrived in between for the
+    /// session directory's own boundary refusals.
     /// </para>
     /// <para>
     /// <b>The volume question costs no filesystem call, which is the only
-    /// reason it may be asked here.</b> <c>VolumeIdentity.Of</c> is
+    /// reason it may be asked here.</b> <c>VolumeIdentity.Through</c> is
     /// <c>QueryDosDeviceW</c> and <c>GetDriveTypeW</c> — the object manager and
     /// the operating system's own classification, measured at <b>0.9 ms</b> —
     /// so this guard still cannot pay the cost it exists to prevent. A guard
     /// that opened anything would be the defect wearing the fix's name.
     /// </para>
     /// <para>
-    /// <b>Only <see cref="VolumeKind.Network"/> is refused, and that is
-    /// deliberate.</b> A <c>subst</c>ed letter is local and its filesystem calls
-    /// are local-speed; a letter naming nothing answers in 0.01 ms. Neither can
-    /// stall the pass, and refusing them would narrow what the sweep can see —
-    /// which costs a stray browser left running, the failure this whole class
-    /// exists for. The session directory guard refuses both because it is
-    /// deciding what a caller may *own*, which is a different question.
+    /// ⚠️ <b>And it follows a <c>subst</c> to whatever is at the end of it —
+    /// 2026-08-26, previously <c>VolumeIdentity.Of</c>, which stops at the first
+    /// hop.</b> A letter <c>subst</c>ed onto a mapped drive is the same defect as
+    /// finding 8 wearing one more layer: it is a rooted local drive-letter path
+    /// by every character, it is not <c>DRIVE_REMOTE</c>, and the
+    /// <c>File.Exists</c> below still costs the full <b>21 s</b> against a share
+    /// that has stopped answering.
+    /// </para>
+    /// <para>
+    /// <b>Only the network is refused, and that is deliberate.</b> A
+    /// <c>subst</c>ed letter over local storage stays admitted and its filesystem
+    /// calls are local-speed; a letter naming nothing answers in 0.01 ms. Neither
+    /// can stall the pass, and refusing them would narrow what the sweep can see
+    /// — which costs a stray browser left running, the failure this whole class
+    /// exists for. A session directory refuses more because it is deciding what a
+    /// caller may *own*, which is a different question.
     /// </para>
     /// </remarks>
     /// <param name="title">The title, exactly as the window published it.</param>
@@ -294,7 +303,7 @@ internal sealed class StraySweep
         && title[1] is ':'
         && title[2] is '\\' or '/'
         && !title.Contains('\0', StringComparison.Ordinal)
-        && VolumeIdentity.Of(title).Kind is not VolumeKind.Network;
+        && VolumeIdentity.Through(title, CanonicalPath.SubstitutionChainLimit).Kind is not VolumeKind.Network;
 
     private StraySweepResult Pass(Stopwatch clock)
     {
@@ -549,7 +558,26 @@ internal sealed class StraySweep
 
     private void Judge(StrayCandidate candidate, string title, List<StrayTermination> terminated, List<StraySpared> spared)
     {
-        if (SessionDirectoryFrom(title) is not { } directory)
+        // ⚠️ READ, AND FIRST, because this string was published by a process
+        // that is not ours and is about to decide whether something gets
+        // terminated. A title that is not already the spelling BrowserAI records
+        // is SPARED rather than resolved -- the conservative direction for a
+        // component whose worst outcome is ending something it should not, and
+        // what keeps a stranger's string from driving up to 64 directory opens.
+        //
+        // *Corrected 2026-08-26 (previously `Path.GetFullPath` inside
+        // `SessionDirectoryFrom`, then `SessionPath.Resolve` here).* That handed
+        // a foreign string to a normaliser twice, and the first of the two ran
+        // before the `File.Exists` below.
+        var verdict = CanonicalPath.Of(title, PathOrigin.Read, "title");
+
+        if (verdict.Refusal is { } refusal)
+        {
+            spared.Add(new StraySpared(candidate.ProcessId, title, refusal));
+            return;
+        }
+
+        if (SessionDirectoryFrom(verdict.Canonical!) is not { } directory)
         {
             spared.Add(new StraySpared(candidate.ProcessId, title, $"'{title}' holds no '{SessionLayout.LockFileName}', so it is not a BrowserAI session directory"));
             return;
@@ -559,9 +587,9 @@ internal sealed class StraySweep
 
         try
         {
-            location = SessionPath.Resolve(directory);
+            location = SessionPath.For(directory);
         }
-        catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
+        catch (ArgumentException failure)
         {
             spared.Add(new StraySpared(candidate.ProcessId, title, failure.Message));
             return;
@@ -634,21 +662,13 @@ internal sealed class StraySweep
     /// folder name and only to look for a lock file — it can never reach a
     /// personal Chrome profile, whose parent holds no <c>browserai.json</c> either.
     /// </remarks>
-    /// <param name="title">A title already known to be a rooted local drive-letter path.</param>
+    /// <param name="full">
+    /// A title already known to be a rooted local drive-letter path and already
+    /// checked against the spelling BrowserAI records — see the caller.
+    /// </param>
     /// <returns>The session directory, or <see langword="null"/>.</returns>
-    private static string? SessionDirectoryFrom(string title)
+    private static string? SessionDirectoryFrom(string full)
     {
-        string full;
-
-        try
-        {
-            full = Path.GetFullPath(title).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        }
-        catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            return null;
-        }
-
         if (File.Exists(Path.Combine(full, SessionLayout.LockFileName)))
         {
             return full;

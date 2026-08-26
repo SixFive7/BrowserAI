@@ -367,7 +367,7 @@ internal sealed class ReleaseScriptTests
     /// <i>"Attempting to perform the InitializeDefaultDrives operation on the
     /// 'FileSystem' provider failed"</i> to stderr at startup, and the assertion
     /// then fails for a reason no part of this repository owns. <b>Found
-    /// 2026-08-19</b>, when `SessionDirectoryGuardTests` began creating a real
+    /// 2026-08-19</b>, when `CanonicalPathTests` (then `SessionDirectoryGuardTests`) began creating a real
     /// mapped drive to prove the network refusal and this test went red beside
     /// it. <c>Everything</c> is still what the <c>Contains</c> arms read, because
     /// what those want is *did it explain itself*, and the explanation is on

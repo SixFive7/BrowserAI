@@ -177,7 +177,7 @@ internal sealed class StraySweepTests
         var (pid, created) = await PublishAsync(scope, scratch, profile);
 
         var held = SessionLock.TryAcquire(
-            SessionPath.Resolve(session),
+            SessionPath.For(session),
             new SessionLockRequest { Browser = "chromium", Purpose = "driving a checkout flow" },
             NullLogger.Instance);
 
@@ -546,7 +546,7 @@ internal sealed class StraySweepTests
         var index = new SessionIndex(paths, NullLogger.Instance);
 
         var live = Enumerable.Range(0, 8)
-            .Select(number => SessionPath.Resolve(NewSessionDirectory(scratch, $"live-{number}")))
+            .Select(number => SessionPath.For(NewSessionDirectory(scratch, $"live-{number}")))
             .ToList();
 
         // The baseline, written before anything sweeps. Without it a writer task
@@ -641,7 +641,7 @@ internal sealed class StraySweepTests
         var index = new SessionIndex(paths, NullLogger.Instance);
 
         var directory = NewSessionDirectory(scratch, "flickering");
-        var session = SessionPath.Resolve(directory);
+        var session = SessionPath.For(directory);
         index.Record(session);
 
         // The state an enumeration would capture a microsecond before an `init`
@@ -901,7 +901,7 @@ internal sealed class StraySweepTests
     /// adversarial review</a>, finding 8, and triaged 2026-08-23.</b> It was
     /// declined as expensive when it was written; what changed is that
     /// <c>VolumeIdentity</c> arrived on 2026-08-19 for
-    /// <c>SessionDirectoryGuard</c> and answers exactly this question with
+    /// <c>CanonicalPath</c> and answers exactly this question with
     /// <b>no filesystem call</b> — <c>QueryDosDeviceW</c> and
     /// <c>GetDriveTypeW</c>, measured at 0.9 ms — so the fix became a call to
     /// something already in the tree and already tested.
@@ -934,6 +934,46 @@ internal sealed class StraySweepTests
         // so this is a rule about the volume rather than a refusal of everything.
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(
             Path.Combine(Path.GetTempPath(), "profile"))).IsTrue();
+    }
+
+    /// <summary>
+    /// A letter <c>subst</c>ed onto a mapped drive is the same finding wearing
+    /// one more layer, and it was still open.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-08-26.</b> Finding 8 closed the letter that <i>is</i> the
+    /// redirector; this is the letter that stands in for one. It passes every
+    /// character test, it is not <c>DRIVE_REMOTE</c>, and the <c>File.Exists</c>
+    /// the pass performs on it costs the full <b>21 s</b> against a share that
+    /// has stopped answering — measured on this machine the same day, where
+    /// <c>GetDriveTypeW</c> through such a letter took <b>21,035 ms</b> and then
+    /// answered <c>DRIVE_NO_ROOT_DIR</c>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATitleOnALetterSubstitutedOntoAMappedDriveIsRefusedToo()
+    {
+        using var mapped = DosDeviceAlias.MappedTo(@"10.255.255.1\share");
+        using var substituted = DosDeviceAlias.Substituting(mapped.PathTo("profiles"));
+
+        var title = substituted.PathTo("profile");
+
+        // The precondition: one hop is not enough to see it. The first question
+        // answers "this letter stands in for a directory" and says nothing at
+        // all about where that directory is.
+        await Assert.That(BrowserAI.Interop.VolumeIdentity.Of(title).Kind).IsEqualTo(BrowserAI.Interop.VolumeKind.Substituted);
+
+        // ⚠️ THE CLAIM.
+        await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(title)).IsFalse();
+
+        // And the control that keeps this a rule about the network rather than
+        // about substitution: a letter standing in for a real local directory is
+        // still admitted, because refusing it would narrow what the sweep can
+        // see and cost a stray browser left running.
+        using var scratch = ScratchDirectory.Create("sweep-local-subst");
+        using var local = DosDeviceAlias.Substituting(scratch.Path);
+
+        await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(local.PathTo("profile"))).IsTrue();
     }
 
     /// <summary>
@@ -1253,7 +1293,7 @@ internal sealed class StraySweepTests
     private static string NewSessionDirectory(ScratchDirectory scratch, string label)
     {
         var directory = Path.Combine(scratch.Path, label);
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
 
         SessionLayout.Create(path);
 

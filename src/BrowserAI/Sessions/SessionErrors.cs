@@ -203,34 +203,44 @@ internal static class SessionErrors
         + "Name a directory on a local drive, such as C:\\work\\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.";
 
     /// <summary>
-    /// Row 3's third companion — the path names a real directory by a name the
-    /// filesystem does not use for it.
+    /// Row 3's third companion — the path is spelled in the device namespace.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The failure this prevents is silent and it is the worst one in the
-    /// product.</b> A session directory is simultaneously the name, the handle
-    /// and the lock, and every derived name — the mutex, the index key — comes
-    /// from the spelling. <c>Path.GetFullPath</c> resolves neither <c>\\?\</c>,
-    /// 8.3 short names, junctions, <c>subst</c> nor mapped drives, so two
-    /// spellings of one directory produce two mutexes and one <c>browserai.json</c>:
-    /// the gate stops serialising while every signal still reads healthy.
+    /// ⚠️ <b>Replaces <c>DirectoryIsAnAliasedSpelling</c> 2026-08-26 (previously
+    /// "'{argument}' = '{value}' is a second spelling of a directory the
+    /// filesystem calls something else — {why} … Call the same tool again with
+    /// {argument}='{accepted}'").</b> That row refused every alias and named the
+    /// spelling to use instead. Every alias it refused is now resolved rather
+    /// than refused — a <c>\\?\</c> prefix is four characters off the front, a
+    /// <c>subst</c> is one object-manager read, a junction is one directory open
+    /// on a volume already proven local — and each of those answers was already
+    /// being computed to build that sentence. What is left is this one shape,
+    /// and it is left deliberately rather than by omission.
     /// </para>
     /// <para>
-    /// <b>One turn to fix, by construction.</b> The refusal carries the spelling
-    /// the filesystem itself uses, so the next call is the same call with one
-    /// argument replaced — which is why the accepted form is a parameter rather
-    /// than advice about how to find it.
+    /// <b><c>\\?\</c> and <c>\\.\</c> are not one thing.</b> The first is a
+    /// length-and-parsing prefix over an ordinary path. The second is the
+    /// <i>device namespace</i>, where <c>\\.\NUL</c> and
+    /// <c>\\.\PhysicalDrive0</c> name devices rather than directories — it
+    /// reaches past every check the filesystem would otherwise apply, which is
+    /// the reason the deleted <c>filename</c> gate refused it in those same
+    /// words. A directory argument has no business there.
+    /// </para>
+    /// <para>
+    /// <b>One turn to fix, by construction.</b> The accepted form is the same
+    /// string minus four characters, so the next call is this call with one
+    /// argument replaced — which is why it is a parameter rather than advice
+    /// about how to find it.
     /// </para>
     /// </remarks>
     /// <param name="argument">Which argument carried the path.</param>
     /// <param name="value">The path, as it was given.</param>
-    /// <param name="accepted">The spelling BrowserAI will take.</param>
-    /// <param name="why">Which alias it is, as a clause.</param>
+    /// <param name="accepted">The same path with the prefix removed.</param>
     /// <returns>The refusal.</returns>
-    public static string DirectoryIsAnAliasedSpelling(string argument, string value, string accepted, string why) =>
-        $"'{argument}' = '{value}' is a second spelling of a directory the filesystem calls something else — {why}. Nothing was created and nothing was changed. "
-        + "BrowserAI takes only the filesystem's own spelling, because a session directory is also its lock: two spellings of one directory produce two locks and one record, and the lock then reports success while guarding nothing. "
+    public static string DirectorySpelledInTheDeviceNamespace(string argument, string value, string accepted) =>
+        $"'{argument}' = '{value}' is spelled in the device namespace — '\\\\.\\' is where '\\\\.\\NUL' and '\\\\.\\PhysicalDrive0' live, and it reaches past every check the filesystem would otherwise apply to a directory name. Nothing was created and nothing was changed. "
+        + "Every other spelling of a local directory is taken as the directory it names: BrowserAI resolves the extended-length prefix, a 'subst'ed drive letter and a junction into the filesystem's own name for the directory, and records that. This one it will not. "
         + $"Call the same tool again with {argument}='{accepted}'.";
 
     /// <summary>Row 4 — <c>init</c> met a directory that is already a session.</summary>

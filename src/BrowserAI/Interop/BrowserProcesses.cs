@@ -366,7 +366,7 @@ internal sealed class ImageSpellings
     /// </summary>
     /// <remarks>
     /// The same bound <c>Hosting.InstallRootScope.AncestorWalkLimit</c> and
-    /// <c>Sessions.SessionDirectoryGuard.AncestorWalkLimit</c> use, spelled again
+    /// <c>Sessions.CanonicalPath.AncestorWalkLimit</c> use, spelled again
     /// for the reason the first of those gives: they are independent budgets that
     /// happen to agree, and the walk costs one directory open per level.
     /// </remarks>

@@ -121,7 +121,7 @@ internal sealed class SessionLogTests
             await Assert.That(entry.Failure).IsNull();
         }
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
 
         // The record's standing purpose moved, and the previous one is kept —
         // which is the half `why` is NOT: one is durable and one is disposable.

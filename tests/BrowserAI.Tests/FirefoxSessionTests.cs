@@ -146,7 +146,7 @@ internal sealed class FirefoxSessionTests
         // the family back out of this file, and an answer that says firefox over
         // a record that says chromium is the failure this whole feature is
         // arranged around.
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(session));
+        var record = SessionLock.ReadRecord(SessionPath.For(session));
 
         await Assert.That(record).IsNotNull();
         await Assert.That(record!.Browser).IsEqualTo(ProvisionedBrowsers.Firefox);
@@ -368,7 +368,7 @@ internal sealed class FirefoxSessionTests
 
         await Assert.That((bool?)created["isError"]).IsFalse();
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(Path.Combine(sessions.Root, "shouty")));
+        var record = SessionLock.ReadRecord(SessionPath.For(Path.Combine(sessions.Root, "shouty")));
 
         await Assert.That(record!.Browser).IsEqualTo(ProvisionedBrowsers.Chromium);
     }

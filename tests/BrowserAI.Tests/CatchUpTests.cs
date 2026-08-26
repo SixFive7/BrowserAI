@@ -303,7 +303,7 @@ internal sealed class CatchUpTests
         await Assert.That(text).Contains("and the same 500 on the mobile checkout");
         await Assert.That(text).Contains("tracking the checkout redirect loop on staging");
 
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(directory))!;
+        var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
 
         await Assert.That(record.PurposeHistory.Select(statement => statement.Value).ToArray())
             .IsEquivalentTo([
@@ -476,7 +476,7 @@ internal sealed class CatchUpTests
         // cooperating process produces: it is what is left when a call was
         // forwarded and the process that forwarded it never returned. Writing it
         // through the store is the same thing that would be on disk afterwards.
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
 
         using (var store = SessionStore.OpenForWriting(path.DataFile))
         {

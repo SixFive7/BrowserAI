@@ -262,7 +262,7 @@ internal sealed class SessionIndexTests
         await File.WriteAllTextAsync(Path.Combine(profile, "Default", "History"), "SQLite format 3\0");
 
         var before = Manifest(profile);
-        var path = SessionPath.Resolve(profile);
+        var path = SessionPath.For(profile);
         index.Record(path);
 
         // Followed, and found not to be ours. That is the entire interaction.
@@ -291,7 +291,7 @@ internal sealed class SessionIndexTests
         var index = new SessionIndex(new LocalAppDataPaths(root), NullLogger.Instance);
 
         var directory = Path.Combine(scratch.Path, "session");
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
         SessionLayout.Create(path);
 
         var lease = SessionLock.TryAcquire(path, Request("raced for"), NullLogger.Instance);
@@ -420,7 +420,7 @@ internal sealed class SessionIndexTests
         var index = NewIndex(scratch);
 
         var absent = FirstUnmountedDriveLetter();
-        var path = SessionPath.Resolve($@"{absent}:\browserai\sessions\research");
+        var path = SessionPath.For($@"{absent}:\browserai\sessions\research");
         index.Record(path);
 
         var followed = index.Follow();
@@ -446,7 +446,7 @@ internal sealed class SessionIndexTests
         var index = NewIndex(scratch);
         _ = Directory.CreateDirectory(index.Root);
 
-        var real = SessionPath.Resolve(Path.Combine(scratch.Path, "elsewhere"));
+        var real = SessionPath.For(Path.Combine(scratch.Path, "elsewhere"));
 
         // Four ways an entry can fail to be a pointer, planted by hand because
         // this build cannot write any of them.
@@ -481,6 +481,50 @@ internal sealed class SessionIndexTests
 
         await Assert.That(sweep.Removed.Count).IsEqualTo(planted.Count);
         await Assert.That(Directory.GetFiles(index.Root).Length).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task AnEntryPointingAtASpellingThisBuildWouldNotHaveWrittenIsUnusableRatherThanFollowed()
+    {
+        // ⚠️ THE READ PATH CHECKS AND NEVER RESOLVES, and this is what that buys.
+        // An entry whose pointer is an aliased spelling is SELF-CONSISTENT --
+        // its file name really is the hash of what it holds -- so the
+        // name-is-the-hash test admits it, and following it produces a second
+        // inventory line, a second identity and a second gate for one directory.
+        // Resolving the alias here would cost one directory open per entry on
+        // the whole machine, on every listing, every roll-up and every sweep.
+        //
+        // So the pointer is checked instead: a stored path that is not the
+        // spelling this build writes was not written by this build, and the
+        // index already knows what to do with one of those.
+        using var scratch = ScratchDirectory.Create("index-non-canonical");
+        var index = NewIndex(scratch);
+        _ = Directory.CreateDirectory(index.Root);
+
+        var real = Path.Combine(scratch.Path, "a-session");
+        _ = Directory.CreateDirectory(real);
+
+        var aliased = BrowserAI.Interop.VolumeIdentity.ExtendedLengthPrefix + real;
+
+        await File.WriteAllTextAsync(Path.Combine(index.Root, SessionPath.For(aliased).IndexKey), aliased);
+
+        var followed = index.Follow();
+
+        await Assert.That(followed.Count).IsEqualTo(1);
+        await Assert.That(followed[0].State).IsEqualTo(SessionIndexEntryState.Unusable);
+        await Assert.That(followed[0].Problem!).Contains("not the spelling BrowserAI records");
+
+        // Removing it is safe for the reason every removal here is safe: the
+        // next init or resume on the real directory records it again, and this
+        // time canonically.
+        await Assert.That(index.Sweep().Removed.Count).IsEqualTo(1);
+
+        // The positive control, without which the assertion above is satisfied
+        // by an index that cannot follow anything: the same directory, spelled
+        // the way this build spells it, is followed rather than refused.
+        await File.WriteAllTextAsync(Path.Combine(index.Root, SessionPath.For(real).IndexKey), real);
+
+        await Assert.That(index.Follow()[0].State).IsNotEqualTo(SessionIndexEntryState.Unusable);
     }
 
     [Test]
@@ -539,7 +583,7 @@ internal sealed class SessionIndexTests
         await File.WriteAllTextAsync(Path.Combine(root, "index"), "not a directory");
 
         var index = new SessionIndex(new LocalAppDataPaths(root), factory.CreateLogger("BrowserAI.Tests"));
-        var path = SessionPath.Resolve(Path.Combine(scratch.Path, "session"));
+        var path = SessionPath.For(Path.Combine(scratch.Path, "session"));
         SessionLayout.Create(path);
 
         // Does not throw. An inventory line that could not be written must never
@@ -665,7 +709,7 @@ internal sealed class SessionIndexTests
 
         foreach (var (root, name) in new[] { (left, "one"), (left, "two"), (right, "three"), (right, "four") })
         {
-            var session = SessionPath.Resolve(Path.Combine(root, name));
+            var session = SessionPath.For(Path.Combine(root, name));
             SessionLayout.Create(session);
 
             var lease = SessionLock.TryAcquire(session, Request($"the session called {name}"), NullLogger.Instance);
@@ -726,8 +770,8 @@ internal sealed class SessionIndexTests
     {
         using var scratch = ScratchDirectory.Create("index-subtree-denied");
 
-        var mine = SessionPath.Resolve(Path.Combine(scratch.Path, "mine", "session"));
-        var stranger = SessionPath.Resolve(Path.Combine(scratch.Path, "stranger", "session"));
+        var mine = SessionPath.For(Path.Combine(scratch.Path, "mine", "session"));
+        var stranger = SessionPath.For(Path.Combine(scratch.Path, "stranger", "session"));
 
         SessionLayout.Create(mine);
         SessionLayout.Create(stranger);
@@ -784,7 +828,7 @@ internal sealed class SessionIndexTests
 
     private static (SessionIndex Index, SessionPath Path) NewIndex(ScratchDirectory scratch, string name)
     {
-        var path = SessionPath.Resolve(Path.Combine(scratch.Path, name));
+        var path = SessionPath.For(Path.Combine(scratch.Path, name));
         SessionLayout.Create(path);
 
         return (NewIndex(scratch), path);

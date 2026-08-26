@@ -1066,7 +1066,7 @@ internal sealed partial class SaturationTests
         {
             try
             {
-                var record = SessionLock.ReadRecord(SessionPath.Resolve(session));
+                var record = SessionLock.ReadRecord(SessionPath.For(session));
 
                 return record?.Holder?.ProcessId ?? 0;
             }

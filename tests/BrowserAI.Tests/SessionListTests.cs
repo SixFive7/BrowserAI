@@ -79,7 +79,7 @@ internal sealed class SessionListTests
 
         // The peer's handle, byte for byte what SessionLock.OpenHeld takes.
         var peer = new FileStream(
-            SessionPath.Resolve(peerHeld).LockFile,
+            SessionPath.For(peerHeld).LockFile,
             FileMode.Open,
             FileAccess.ReadWrite,
             FileShare.Read,
@@ -123,7 +123,7 @@ internal sealed class SessionListTests
         var peerBlock = BlockFor(text, peerHeld);
 
         await Assert.That(peerBlock).Contains("in use: YES — something holds ");
-        await Assert.That(peerBlock).Contains(SessionPath.Resolve(peerHeld).LockFile);
+        await Assert.That(peerBlock).Contains(SessionPath.For(peerHeld).LockFile);
 
         // ⚠️ THE TRAP, ASSERTED AS AN ABSENCE. A sharing violation says the file
         // is held and never by whom -- the record inside can name a previous
@@ -193,7 +193,7 @@ internal sealed class SessionListTests
         using var scratch = ScratchDirectory.Create("list-probe");
 
         var directory = Path.Combine(scratch.Path, "probed");
-        var location = SessionPath.Resolve(directory);
+        var location = SessionPath.For(directory);
 
         SessionLayout.Create(location);
 
@@ -290,7 +290,7 @@ internal sealed class SessionListTests
             var gate = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
 
             await Assert.That((string?)gate["acquisition"]).IsEqualTo(nameof(MutexAcquisition.Acquired));
-            await Assert.That((string?)gate["mutexName"]).IsEqualTo(SessionPath.Resolve(midTake).MutexName);
+            await Assert.That((string?)gate["mutexName"]).IsEqualTo(SessionPath.For(midTake).MutexName);
 
             text = TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
             {
@@ -314,7 +314,7 @@ internal sealed class SessionListTests
         // mutex IS acquired, which is exactly the state a killed holder leaves --
         // and the bound is the product's own constant rather than a number
         // written here.
-        using (var gate = MachineMutex.Create(SessionPath.Resolve(midTake).MutexName))
+        using (var gate = MachineMutex.Create(SessionPath.For(midTake).MutexName))
         {
             await Assert.That(gate.Acquire(LockScopes.PerDirectoryGate)).IsNotEqualTo(MutexAcquisition.NotAcquired);
             gate.Release();
@@ -323,7 +323,7 @@ internal sealed class SessionListTests
         // ⚠️ THE POSITIVE CONTROL, and it is what makes the assertion above
         // about the gate rather than about this listing always saying `no`: the
         // same session, held for real this time, reads YES.
-        var location = SessionPath.Resolve(midTake);
+        var location = SessionPath.For(midTake);
 
         using var peer = new FileStream(location.LockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read, bufferSize: 1);
 
@@ -335,6 +335,58 @@ internal sealed class SessionListTests
         await Assert.That(BlockFor(after, midTake)).Contains("in use: YES — something holds ");
     }
 
+    [Test]
+    public async Task AListingPointedAtAnAliasOfASubtreeFindsTheSessionsUnderIt()
+    {
+        // ⚠️ THE CONFIDENT WRONG ANSWER, and it is the worst shape a listing can
+        // have. `browserai_list` had a path chain of its own -- `GetFullPath`
+        // plus an upper-cased prefix, with no alias resolution at all -- because
+        // the shared one refused a volume root and a volume root is exactly what
+        // a caller passes to see everything. So a caller who listed a junction
+        // over the tree its sessions live in was told, with no error at all,
+        // "No BrowserAI sessions under '…'. That is an answer rather than an
+        // error." Nothing about that sentence is recoverable in a turn: it is
+        // not a refusal, so there is nothing to correct.
+        await using var sessions = RigSessionEnvironment.Create();
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var real = Path.Combine(sessions.Root, "real");
+        var session = Path.Combine(real, "a-session");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = session,
+            ["purpose"] = "a session listed through an alias of the tree above it",
+        });
+
+        var link = Path.Combine(sessions.Root, "link");
+        await PathAliases.JunctionAsync(link, real);
+
+        var text = TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
+        {
+            ["directory"] = link,
+        }));
+
+        // The session is found, and it is named by the spelling the filesystem
+        // uses rather than by the one the listing was pointed at -- which is the
+        // same canonical form `init` answered with, so the two tools agree about
+        // what this session is called.
+        await Assert.That(text).Contains(session, StringComparison.OrdinalIgnoreCase);
+        await Assert.That(text).DoesNotContain("No BrowserAI sessions under");
+
+        // The positive control, and it is load-bearing: a listing pointed at a
+        // tree that really holds nothing still says so. Without it the assertion
+        // above is satisfied by a listing that ignores its `directory` argument
+        // altogether.
+        var empty = Path.Combine(sessions.Root, "empty");
+        _ = Directory.CreateDirectory(empty);
+
+        await Assert.That(TextOf(await CallAsync(rig, SessionToolSurface.List, new JsonObject
+        {
+            ["directory"] = empty,
+        }))).Contains("No BrowserAI sessions under");
+    }
+
     /// <summary>
     /// Creates a session directory the way a process that has since exited would
     /// have left it: a real record on disk, an index entry, and no handle.
@@ -344,7 +396,7 @@ internal sealed class SessionListTests
     /// <param name="purpose">What the record says it was for.</param>
     private static void Plant(SessionIndex index, string directory, string purpose)
     {
-        var location = SessionPath.Resolve(directory);
+        var location = SessionPath.For(directory);
 
         SessionLayout.Create(location);
 

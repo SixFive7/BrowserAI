@@ -154,7 +154,7 @@ internal sealed class SessionToolTests
 
         // The record really was repaired, rather than the note merely being
         // printed: the file now names where the directory is.
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(moved));
+        var record = SessionLock.ReadRecord(SessionPath.For(moved));
         await Assert.That(record?.Directory).IsEqualTo(moved);
 
         // And the repair is a STATEMENT in the record rather than only a note in
@@ -187,7 +187,7 @@ internal sealed class SessionToolTests
         // The history is in the record too, ordered, and it is the WHOLE lineage:
         // this directory was created as gamma, moved to gamma-moved and copied to
         // gamma-copy, and every one of those is a dated statement.
-        var copiedRecord = SessionLock.ReadRecord(SessionPath.Resolve(copy));
+        var copiedRecord = SessionLock.ReadRecord(SessionPath.For(copy));
 
         await Assert.That(copiedRecord!.DirectoryHistory.Select(statement => statement.Value).ToArray())
             .IsEquivalentTo([gamma, moved, copy]);
@@ -201,7 +201,7 @@ internal sealed class SessionToolTests
 
         // The original is untouched by the copy having been resumed -- two
         // separate sessions now, which is the sentence the answer prints.
-        var original = SessionLock.ReadRecord(SessionPath.Resolve(moved));
+        var original = SessionLock.ReadRecord(SessionPath.For(moved));
 
         await Assert.That(original!.Directory).IsEqualTo(moved);
     }
@@ -341,7 +341,7 @@ internal sealed class SessionToolTests
         await Assert.That(text).Contains("the first session's purpose");
 
         // The history keeps both, so nothing a previous agent wrote is lost.
-        var record = SessionLock.ReadRecord(SessionPath.Resolve(Path.Combine(run.Root, "alpha")));
+        var record = SessionLock.ReadRecord(SessionPath.For(Path.Combine(run.Root, "alpha")));
 
         await Assert.That(record?.Purpose).IsEqualTo("a purpose set after the fact");
         await Assert.That(record!.PurposeHistory.Any(statement => statement.Value == "the first session's purpose")).IsTrue();

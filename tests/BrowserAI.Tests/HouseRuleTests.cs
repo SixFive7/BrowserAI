@@ -550,6 +550,93 @@ internal sealed partial class HouseRuleTests
     }
 
     /// <summary>
+    /// <b>The subtree prefix is derived in exactly one place</b> — case-fold,
+    /// then a separator — and that place is <c>CanonicalPath</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>W8, and the reason it needs a scan rather than a note.</b>
+    /// <c>SessionIndex.IsUnder</c>'s own remark says <i>"Do not re-derive it …
+    /// Two spellings of this predicate is the class of defect this repository
+    /// keeps re-finding"</i> — and <c>SessionManager.Beneath</c> was re-deriving
+    /// the prefix three lines below a call into that very member, and had been
+    /// since before the remark was written. It was benign because its input
+    /// happened to be canonical already; what makes it worth a mechanism is that
+    /// nothing said so and nothing would have noticed when it stopped being
+    /// true.
+    /// </para>
+    /// <para>
+    /// <b>The shape, and it is the shape both offenders had:</b> a case-fold
+    /// whose result is extended by a directory separator within the next few
+    /// lines. The predicate that <i>consumes</i> a prefix is deliberately not
+    /// caught — <c>IsUnder</c> composes <c>Key + separator</c> with no fold of
+    /// its own, because <see cref="BrowserAI.Sessions.SessionPath.Key"/> is
+    /// already folded — so this is a rule about deriving the prefix rather than
+    /// about the characters.
+    /// </para>
+    /// <para>
+    /// <b>What it cannot see:</b> a derivation split across more than the window
+    /// below, or one that folds through a helper rather than through
+    /// <c>ToUpperInvariant</c>. Both would be new shapes rather than the one
+    /// that was there.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePrefixIsDerivedInOnePlaceAndTheRestOfTheTreeAsksForIt()
+    {
+        var offenders = new List<string>();
+        var folds = 0;
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
+
+            folds += lines.Count(line => line.Contains(Fold, StringComparison.Ordinal));
+
+            if (string.Equals(file.Name, Home, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            foreach (var line in PrefixDerivations(lines))
+            {
+                offenders.Add(
+                    $"{Relative(file)}: line {(line + 1).ToString(CultureInfo.InvariantCulture)} case-folds a path and then extends it"
+                    + $" with a directory separator, which is a second spelling of the subtree prefix. Call {Home[..^3]}.PrefixOf instead");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, synthetic on purpose and copied from the
+        // offender as it stood on 2026-08-26. A scan whose needle stopped
+        // matching reports the tree clean, which is indistinguishable from the
+        // tree BEING clean.
+        string[] planted =
+        [
+            "        var prefix = root." + Fold + ";",
+            "        prefix = prefix.EndsWith(Path.DirectorySeparatorChar) ? prefix : prefix + Path.DirectorySeparatorChar;",
+        ];
+
+        await Assert.That(PrefixDerivations(planted).Count).IsEqualTo(1);
+
+        // The other half: the corrected shape, and the consumer that is allowed
+        // to compose a separator because it folds nothing.
+        string[] corrected =
+        [
+            "        var prefix = " + Home[..^3] + ".PrefixOf(root);",
+            "        return (candidate.Key + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.Ordinal);",
+        ];
+
+        await Assert.That(PrefixDerivations(corrected)).IsEmpty();
+
+        // Not vacuous over the tree: the fold itself is still there to be found,
+        // in the identity chain and in the provisioning gate's own digest.
+        await Assert.That(folds).IsGreaterThanOrEqualTo(3);
+    }
+
+    /// <summary>
     /// <b>The three whole-machine index readers still take the whole-machine
     /// read</b>, by name.
     /// </summary>
@@ -684,6 +771,49 @@ internal sealed partial class HouseRuleTests
 
     /// <summary>The whole-machine read, composed for the same reason.</summary>
     private const string Walk = "Fol" + "low";
+
+    /// <summary>The case-fold half of a prefix derivation.</summary>
+    private const string Fold = "ToUpper" + "Invariant()";
+
+    /// <summary>The one file a prefix derivation may live in.</summary>
+    private const string Home = "Canonical" + "Path.cs";
+
+    /// <summary>
+    /// How many lines past a case-fold the separator may appear before this
+    /// stops reading the two as one derivation.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two, because that is what the shape needs and one more than it uses.</b>
+    /// Both offenders wrote the fold and the separator on consecutive lines; a
+    /// window wide enough to span a whole method would report the identity
+    /// chain, which folds a path for a hash and never for a prefix.
+    /// </remarks>
+    private const int PrefixWindow = 2;
+
+    /// <summary>Every prefix derivation in one file's lines.</summary>
+    /// <param name="lines">The file, comment-only lines already removed.</param>
+    /// <returns>The line index of each derivation.</returns>
+    private static List<int> PrefixDerivations(string[] lines)
+    {
+        var found = new List<int>();
+
+        for (var at = 0; at < lines.Length; at++)
+        {
+            if (!lines[at].Contains(Fold, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var window = string.Join('\n', lines.Skip(at).Take(PrefixWindow + 1));
+
+            if (window.Contains("DirectorySeparatorChar", StringComparison.Ordinal))
+            {
+                found.Add(at);
+            }
+        }
+
+        return found;
+    }
 
     /// <summary>Every loop in one file's lines that walks the whole index.</summary>
     /// <param name="lines">The file, comment-only lines already removed.</param>

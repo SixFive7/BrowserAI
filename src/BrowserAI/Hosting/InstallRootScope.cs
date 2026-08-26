@@ -44,7 +44,7 @@ namespace BrowserAI.Hosting;
 /// comparison, and the second half of that is worse: a junction <i>under</i> the
 /// profile pointing at <c>D:\Shared</c> would pass one. So both sides go through
 /// <see cref="VolumeIdentity.DeepestExistingFinalName"/> — the same walk
-/// <c>Sessions.SessionDirectoryGuard</c> uses on a caller's session directory —
+/// <c>Sessions.CanonicalPath</c> uses on a caller's session directory —
 /// and the comparison is on what the filesystem itself calls each of them.
 /// </para>
 /// <para>
@@ -84,7 +84,7 @@ internal static class InstallRootScope
     /// that exists.
     /// </summary>
     /// <remarks>
-    /// The same bound <c>Sessions.SessionDirectoryGuard.AncestorWalkLimit</c>
+    /// The same bound <c>Sessions.CanonicalPath.AncestorWalkLimit</c>
     /// uses, and for the same reason: the walk costs one directory open per
     /// level. It is spelled again rather than shared across the namespace
     /// boundary because the two are independent budgets that happen to agree —

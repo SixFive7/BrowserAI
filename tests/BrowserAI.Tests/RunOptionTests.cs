@@ -181,7 +181,7 @@ internal sealed partial class RunOptionTests
     [Test]
     public async Task EveryLaunchGetsItsOwnArchiveFilenameAtTheOutputRoot()
     {
-        var session = SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"har-{Guid.NewGuid():N}"));
+        var session = SessionPath.For(Path.Combine(ScratchRoot.Path, $"har-{Guid.NewGuid():N}"));
 
         var config = BrowserConfiguration.ForSession(
             session,
@@ -224,7 +224,7 @@ internal sealed partial class RunOptionTests
     public async Task TheHardCodedOpinionsAreTheSameForEverySession(string browser, bool headed)
     {
         var opinions = BrowserConfiguration.ForSession(
-                SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"hard-coded-{browser}-{headed}")),
+                SessionPath.For(Path.Combine(ScratchRoot.Path, $"hard-coded-{browser}-{headed}")),
                 headed,
                 browser,
                 tracing: false,
@@ -322,7 +322,7 @@ internal sealed partial class RunOptionTests
     /// <returns>Dotted key to serialised value.</returns>
     private static Dictionary<string, string> OpinionsOf(RunOptions run) =>
         BrowserConfiguration.ForSession(
-                SessionPath.Resolve(Path.Combine(ScratchRoot.Path, $"run-options-{Guid.NewGuid():N}")),
+                SessionPath.For(Path.Combine(ScratchRoot.Path, $"run-options-{Guid.NewGuid():N}")),
                 headed: false,
                 SessionManager.DefaultBrowser,
                 tracing: false,
@@ -343,7 +343,7 @@ internal sealed partial class RunOptionTests
     /// <returns>The parsed config.</returns>
     private static JsonObject ConfigOf(RigSessionEnvironment sessions, string directory)
     {
-        var hash = SessionPath.Resolve(directory).Hash[..16];
+        var hash = SessionPath.For(directory).Hash[..16];
         var file = Directory.EnumerateFiles(sessions.Environment.InstanceDirectory, $"playwright-mcp-{hash}.json").Single();
 
         return JsonNode.Parse(File.ReadAllText(file))!.AsObject();

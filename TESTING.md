@@ -781,7 +781,7 @@ sized against the defect rather than against the product and is the one duration
 here a starved machine makes safer.
 
 ⚠️ **And a third case the two rows above do not cover: a property whose only
-witness is the clock.** Added 2026-08-19. `SessionDirectoryGuard` answers *is
+witness is the clock.** Added 2026-08-19. `CanonicalPath` answers *is
 this a network path* before the one call in it that opens a directory, and an
 **ordering** cannot be observed any other way — the answer is identical either
 way, twenty-two seconds apart. There is no bound that satisfies both halves of
@@ -790,7 +790,7 @@ the rule: one with headroom a 419-test run cannot reach is far above a single
 than carrying a number that would eventually go red on a busy machine and be
 "fixed" by raising it. What is asserted instead is *which branch produced the
 answer*, which is decisive about the branch and silent about the order;
-`SessionDirectoryGuardTests.TheNetworkRefusalDoesNotComeFromTheCallThatOpensThings`
+`CanonicalPathTests.TheNetworkRefusalDoesNotComeFromTheCallThatOpensThings`
 names the gap, and [the re-verification index](kb/re-verification.md) carries the
 22-second figure as a manual row. **A named gap beats a bound that measures the
 machine.**

@@ -533,7 +533,7 @@ internal sealed class SessionRecordTests
 
     private static SessionPath NewSession(ScratchDirectory scratch, string name)
     {
-        var path = SessionPath.Resolve(Path.Combine(scratch.Path, name));
+        var path = SessionPath.For(Path.Combine(scratch.Path, name));
         SessionLayout.Create(path);
 
         return path;

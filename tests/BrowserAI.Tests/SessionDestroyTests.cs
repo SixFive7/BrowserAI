@@ -123,7 +123,7 @@ internal sealed class SessionDestroyTests
         }
 
         var firstToGo = Path.Combine(directory, FirstPlantedFile);
-        var location = SessionPath.Resolve(directory);
+        var location = SessionPath.For(directory);
 
         using var stop = new CancellationTokenSource();
         var takenWhileTheTreeWasComingDown = 0;
@@ -176,7 +176,7 @@ internal sealed class SessionDestroyTests
         var released = Path.Combine(sessions.Root, "a-session-nobody-is-holding");
         _ = Directory.CreateDirectory(released);
 
-        var control = SessionPath.Resolve(released);
+        var control = SessionPath.For(released);
         var taken = SessionLock.TryAcquire(
             control,
             new SessionLockRequest
@@ -478,7 +478,7 @@ internal sealed class SessionDestroyTests
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var directory = Path.Combine(sessions.Root, "an-old-format-session");
-        var location = SessionPath.Resolve(directory);
+        var location = SessionPath.For(directory);
 
         SessionLayout.Create(location);
 

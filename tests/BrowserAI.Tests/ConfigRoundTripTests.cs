@@ -82,7 +82,7 @@ internal sealed class ConfigRoundTripTests
         foreach (var browser in ProvisionedBrowsers.Families)
         {
             var config = BrowserConfiguration.ForSession(
-                SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "generator-shape")),
+                SessionPath.For(Path.Combine(ScratchRoot.Path, "generator-shape")),
                 headed: false,
                 browser,
                 tracing: true,
@@ -182,7 +182,7 @@ internal sealed class ConfigRoundTripTests
             foreach (var headed in new[] { false, true })
             {
                 var config = BrowserConfiguration.ForSession(
-                    SessionPath.Resolve(Path.Combine(ScratchRoot.Path, "unrestricted-file-access")),
+                    SessionPath.For(Path.Combine(ScratchRoot.Path, "unrestricted-file-access")),
                     headed,
                     browser,
                     tracing: false,
@@ -246,7 +246,7 @@ internal sealed class ConfigRoundTripTests
     /// </summary>
     private static GeneratedConfig Expected(SessionRun run) =>
         BrowserConfiguration.ForSession(
-            SessionPath.Resolve(Path.Combine(run.Root, "alpha")),
+            SessionPath.For(Path.Combine(run.Root, "alpha")),
             headed: false,
             SessionManager.DefaultBrowser,
             tracing: false,

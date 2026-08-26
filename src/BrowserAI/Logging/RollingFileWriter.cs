@@ -208,7 +208,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     // provenance needs; VolumeIdentity.Of would add a syscall on every start to
     // answer a question nobody has ever been able to pose here. The
     // caller-supplied path is the SESSION directory, and that one goes through
-    // Sessions/SessionDirectoryGuard, which asks both halves.
+    // Sessions/CanonicalPath, which asks both halves.
 
     /// <summary>
     /// Writes one record into the open file, or answers <see langword="false"/>

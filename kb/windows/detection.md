@@ -439,10 +439,68 @@ it moved, so it has a re-verification row.
 > It is false as written: `GetDriveTypeW` is not a filesystem call, and it did
 > not block.
 
+## `GetDriveTypeW` through a `subst` onto a mapped drive costs the full 21 seconds — measured 2026-08-26
+
+**And it then answers `DRIVE_NO_ROOT_DIR`.** Measured 2026-08-26 on this machine,
+PowerShell 7 on .NET 10.0.11, Windows 11 Pro 26200. `[MACHINE]` for the figure,
+`[FLOATS]` for the SMB timeout behind it.
+
+`DefineDosDeviceW(DDD_RAW_TARGET_PATH, "V:", @"\Device\LanmanRedirector\;V:…\10.255.255.1\share")`
+then `DefineDosDeviceW(0, "W:", @"V:\dir")` — a `subst` standing on a mapped
+drive, both unelevated, neither establishing an SMB session by itself:
+
+| call | answer | elapsed |
+|---|---|--:|
+| `GetDriveTypeW("V:\")` — the mapping itself | `DRIVE_REMOTE` (4) | **1 ms** |
+| `GetDriveTypeW("W:\")` — the substitution over it | `DRIVE_NO_ROOT_DIR` (1) | **21,035 ms** |
+| `GetDriveTypeW("W:\")` again | `DRIVE_NO_ROOT_DIR` (1) | 0 ms |
+| `QueryDosDeviceW("W:")` | `\??\V:\dir` | object manager only |
+
+> ⚠️ **This falsifies "the object-manager half cannot pay the cost it exists to
+> prevent" for one shape, and it is the shape the guard was ordered around.**
+> `GetDriveTypeW` resolves the substitution and classifies whatever is at the end
+> of it, so on a `subst`ed letter it *is* the network call — and it then reports
+> the letter as naming nothing, so the substitution is never followed either.
+> `QueryDosDeviceW` reads the DOS device symbolic link and nothing else, which is
+> why `Interop/VolumeIdentity.Of` asks it **first** since this date and only asks
+> `GetDriveTypeW` about a letter that is not a substitution.
+
+**Re-establish** with the two `DefineDosDeviceW` calls above and a stopwatch
+around each `GetDriveTypeW`; remove both definitions with
+`DefineDosDeviceW(DDD_REMOVE_DEFINITION, letter, IntPtr.Zero)` afterwards. The
+second call is cached — take the first figure.
+
+## `Path.GetFullPath` rewrites three name shapes rather than rejecting them — measured 2026-08-26
+
+Measured 2026-08-26, PowerShell 7 on .NET 10.0.11, Windows 11 Pro 26200.
+`[FLOATS]` — a BCL and Win32 normalisation behaviour.
+
+| handed in | comes back |
+|---|---|
+| `C:\work\sess.` | `C:\work\sess` — trailing dot **stripped** |
+| `C:\work\sess ` | `C:\work\sess` — trailing space **stripped** |
+| `C:\work\NUL` | `\\.\NUL` — rewritten into the **device namespace** |
+| `C:\work\NUL.png` | unchanged |
+| `C:\work\a:b` | unchanged — an alternate data stream survives |
+| `C:\work\..\other` | `C:\other` |
+| `C:/work/x/` | `C:\work\x\` — separators converted, trailing one kept |
+| `C:work` | resolved against the process's current directory on `C:` |
+
+> ⚠️ **The first three are why the segment checks run BEFORE `GetFullPath` in
+> `Sessions/CanonicalPath` rather than after.** Nothing here fails: a caller who
+> asks for `sess.` gets a directory called `sess`, which is the two-spellings
+> failure arriving through the name instead of through the path. The `NUL` row is
+> the sharper one — a *directory* argument silently becomes a device path.
+
+**Re-establish** with `[System.IO.Path]::GetFullPath` on each row from a shell
+whose working directory is known, and print the answers verbatim.
+
 **Which alias forms `Path.GetFullPath` resolves, on .NET 10.** Measured
 2026-08-19 by round-tripping each spelling of one real directory. `[FLOATS]` —
-this is a BCL behaviour and the two `no` rows are what
-`Sessions/SessionDirectoryGuard` exists for.
+this is a BCL behaviour, and the two `no` rows are what `Sessions/CanonicalPath`
+resolves for itself. *Corrected 2026-08-26 (previously "what
+`Sessions/SessionDirectoryGuard` exists for"): that type is gone, and those forms
+are now normalised rather than refused.*
 
 | spelling | resolved by `Path.GetFullPath`? |
 |---|---|

@@ -790,7 +790,7 @@ internal sealed class FirefoxTests
 
     private static SessionPath NewSession(ScratchDirectory scratch, string label)
     {
-        var path = SessionPath.Resolve(Path.Combine(scratch.Path, label));
+        var path = SessionPath.For(Path.Combine(scratch.Path, label));
         SessionLayout.Create(path);
 
         var result = SessionLock.TryAcquire(

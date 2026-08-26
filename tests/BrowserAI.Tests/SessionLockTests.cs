@@ -1097,7 +1097,7 @@ internal sealed class SessionLockTests
     public async Task ADirectoryThatDoesNotExistIsRefusedRatherThanCreated()
     {
         using var scratch = ScratchDirectory.Create("session-missing");
-        var path = SessionPath.Resolve(Path.Combine(scratch.Path, "never-created"));
+        var path = SessionPath.For(Path.Combine(scratch.Path, "never-created"));
 
         var result = SessionLock.TryAcquire(path, Request("nowhere"), NullLogger.Instance);
 
@@ -1996,7 +1996,7 @@ internal sealed class SessionLockTests
     private static (string Directory, SessionPath Path) NewSession(ScratchDirectory scratch, string name)
     {
         var directory = Path.Combine(scratch.Path, name);
-        var path = SessionPath.Resolve(directory);
+        var path = SessionPath.For(directory);
         SessionLayout.Create(path);
 
         return (directory, path);
@@ -2091,7 +2091,7 @@ internal sealed class SessionLockTests
             temps = -1;
         }
 
-        var reread = SessionLock.ReadRecord(SessionPath.Resolve(directory)) is not null;
+        var reread = SessionLock.ReadRecord(SessionPath.For(directory)) is not null;
 
         return new LockFileState(
             temps > 0,

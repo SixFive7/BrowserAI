@@ -451,10 +451,10 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <para>
     /// <b>It used to be the same name.</b> <c>LiveInstances.MutexNameFor</c> was
-    /// <c>SessionPath.Resolve(rootAppDir).MutexName</c> — the same construction
+    /// <c>SessionPath.For(rootAppDir).MutexName</c> — the same construction
     /// and the same namespace a session's per-directory gate uses — so a session
     /// opened on <c>%LOCALAPPDATA%\BrowserAI</c> collided <i>exactly</i>, and
-    /// nothing refuses that path: <c>SessionDirectoryGuard</c> refuses network
+    /// nothing refuses that path: <c>CanonicalPath</c> refuses network
     /// paths and aliased spellings, and the install root is neither.
     /// </para>
     /// <para>
@@ -483,7 +483,7 @@ internal sealed class UpdateTests
         var paths = new LocalAppDataPaths(scratch.Path);
 
         var live = LiveInstances.MutexNameFor(paths.RootAppDir);
-        var asASession = SessionPath.Resolve(paths.RootAppDir).MutexName;
+        var asASession = SessionPath.For(paths.RootAppDir).MutexName;
 
         // ⚠️ THE CLAIM. One directory, two scopes, two names.
         await Assert.That(live).IsNotEqualTo(asASession);

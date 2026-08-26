@@ -509,29 +509,46 @@ never a poll and never a ping — and there is deliberately no close tool.
 
 ## Locking, ownership and the sweep
 
-**One canonicalisation function feeds three consumers.** `GetFullPath` →
-`TrimEnd('\')` → `ToUpperInvariant` → SHA-256 → hex produces the mutex name, the
-the record file's identity and the index key alike. `LockScopes` names the three scopes;
+**One canonicalisation function feeds one identity chain, and the chain feeds
+three consumers.** `CanonicalPath.Of` answers *what does the filesystem call
+this*; `SessionPath` then does `TrimEnd('\')` → `ToUpperInvariant` → SHA-256 →
+hex, producing the mutex name, the record file's identity and the index key
+alike. ⚠️ *Corrected 2026-08-26 (previously one function beginning with
+`GetFullPath`)* — the split is what lets `browserai_list` ask the first question
+about a volume root without asking the second, which it must not, and it is why
+that listing stopped answering *no sessions here* about a junction over the tree
+they are in. `LockScopes` names the three scopes;
 `MachineMutex` creates `Global\` names **only** and throws on anything else, with
 no `Local\` fallback anywhere and a test that fails the build if any other file in
 `src/` constructs a named waitable object.
 
-**Two spellings never reach that function, because two spellings are refused
-first.** `SessionDirectoryGuard` runs at `browserai_init` and `browserai_resume`,
-before anything is created and before the gate is taken, and answers two
-questions in a fixed order that is itself the design: *is this a network path*,
-from characters and then `GetDriveTypeW`, with **no filesystem call in either**;
-then *is this an alias*, from `QueryDosDeviceW` for a `subst` and one
-`GetFinalPathNameByHandleW` on the deepest existing ancestor for a junction,
-symlink or mount point. The order matters because the second question opens a
-directory and the first exists to ensure that open is local — a drive letter
-mapped to a dead hostname was measured at **22,210 ms for one `File.Exists`**
+**Two spellings never reach that function, because every spelling is resolved
+into one first.** ⚠️ *Corrected 2026-08-26 (previously "…because two spellings
+are refused first. `SessionDirectoryGuard` runs at `browserai_init` and
+`browserai_resume`…"). That sentence was false the day it was written*: `destroy`,
+`set_purpose`, `catch_up` and every forwarded call reached the identity chain
+without the guard, so two spellings did reach it. `Sessions/CanonicalPath` runs
+at **every** door, before anything is created and before the gate is taken, and
+asks its questions in a fixed order that is itself the design: characters, then
+the object manager (`QueryDosDeviceW`, then `GetDriveTypeW` on a letter that is
+not a substitution), then one `GetFinalPathNameByHandleW` per level climbed —
+which is the only step that opens anything, and the first two exist to ensure
+that open is local. A drive letter mapped to a dead hostname was measured at
+**22,210 ms for one `File.Exists`**
 ([kb](kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
 The Win32 half is `Interop/VolumeIdentity`; the policy half, including what it
-knowingly cannot see, is `Sessions/SessionDirectoryGuard` and
-[the decision](DECISIONS.md#refusing-network-paths-and-aliased-spellings-at-the-door).
+knowingly cannot see, is `Sessions/CanonicalPath` and
+[the decision](DECISIONS.md#one-path-function-normalise-what-is-cheap-refuse-what-is-not).
 **8.3 short names are not in that list** — `Path.GetFullPath` expands them, so
-they arrive canonical and there is nothing to refuse.
+they arrive canonical.
+
+**A path BrowserAI stored is checked and never re-resolved**, which is what keeps
+the machine-wide read path free: `SessionIndex` follows one entry per session on
+the host on every listing, every roll-up and every sweep, and resolving an alias
+there would be a directory open per entry. `PathOrigin.Read` runs the subset of
+the same questions that cost nothing, so a stored path that is not the spelling
+this build writes is `Unusable`, is swept, and is recorded again canonically by
+the next `init` or `resume`.
 
 **Acquisition never waits.** It is zero-timeout and answers contention with the
 holder's pid, start time, lock time and purpose. The one bounded wait is the

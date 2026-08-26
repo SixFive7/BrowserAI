@@ -261,7 +261,7 @@ internal sealed class ProvisioningRemediationTests
         using var scratch = ScratchDirectory.Create("remediation-canary");
 
         var browsers = Path.Combine(scratch.Path, "browsers-with-nothing-in-them");
-        var session = SessionPath.Resolve(Path.Combine(scratch.Path, "canary-session"));
+        var session = SessionPath.For(Path.Combine(scratch.Path, "canary-session"));
         var output = Path.Combine(session.FullPath, SessionLayout.OutputFolderName);
         var configFile = Path.Combine(scratch.Path, "playwright-mcp.config.json");
 

@@ -28,12 +28,18 @@ internal sealed class SessionPathTests
         var directory = Path.Combine(scratch.Path, "Session One");
         _ = Directory.CreateDirectory(directory);
 
-        var plain = SessionPath.Resolve(directory);
-        var trailing = SessionPath.Resolve(directory + Path.DirectorySeparatorChar);
-        var cased = SessionPath.Resolve(directory.ToUpperInvariant());
-        var dotted = SessionPath.Resolve(Path.Combine(scratch.Path, "elsewhere", "..", "Session One"));
+        var plain = SessionPath.For(directory);
+        var trailing = SessionPath.For(directory + Path.DirectorySeparatorChar);
+        var cased = SessionPath.For(directory.ToUpperInvariant());
 
-        SessionPath[] spellings = [plain, trailing, cased, dotted];
+        // ⚠️ THE `..` SPELLING MOVED RATHER THAN WENT — 2026-08-26, previously a
+        // fourth entry here built from `Path.Combine(scratch.Path, "elsewhere",
+        // "..", "Session One")`. This type normalises nothing now: it derives
+        // names from a path `CanonicalPath` has already answered for, so
+        // collapsing a `..` here would be the second spelling of the chain its
+        // own remarks forbid. `CanonicalPathTests` asserts that spelling, beside
+        // every other alias this machine can build.
+        SessionPath[] spellings = [plain, trailing, cased];
 
         foreach (var spelling in spellings)
         {
@@ -61,40 +67,66 @@ internal sealed class SessionPathTests
     }
 
     [Test]
-    public async Task ARelativeSpellingCanonicalisesTheSameWay()
+    public async Task ARelativeSpellingIsRefusedFromAProcessItWouldHaveResolvedIn()
     {
+        // ⚠️ INVERTED 2026-08-26, and the inversion is the point (previously
+        // "ARelativeSpellingCanonicalisesTheSameWay", which asserted that
+        // `.\Session One` from the parent directory produced the same mutex,
+        // index key and identity as the absolute spelling). It did — and that is
+        // exactly the property that must not exist. A relative path resolves
+        // against THIS process's working directory, which is a different
+        // directory per process and never the one the caller meant, and the tools
+        // have refused one for as long as they have existed. The chain underneath
+        // them resolved it anyway, so the refusal was a property of the door
+        // rather than of the path.
+        //
+        // Asserted from a process whose current directory really is the one the
+        // relative spelling would have resolved against, because that is the only
+        // arrangement in which "it was refused" is a claim about the rule rather
+        // than about the spelling failing to resolve at all. The test host's own
+        // current directory is fixed and shared by every test running in
+        // parallel.
         using var scratch = ScratchDirectory.Create("session-identity-relative");
 
         var directory = Path.Combine(scratch.Path, "Session One");
         _ = Directory.CreateDirectory(directory);
 
-        var absolute = SessionPath.Resolve(directory);
-
-        // From a process whose current directory is the parent. The host's own
-        // current directory is fixed and shared by every test running in
-        // parallel, so the relative case is answered by a process that can
-        // legitimately have a different one.
-        var run = await ProbeProcess.RunInAsync(scratch.Path, "session-identity", @".\Session One", Path.Combine(scratch.Path, "relative.json"));
+        var report = Path.Combine(scratch.Path, "relative.json");
+        var run = await ProbeProcess.RunInAsync(scratch.Path, "session-identity", @".\Session One", report);
 
         await Assert.That(run.ExitCode).IsEqualTo(0);
 
-        var report = await ProbeReport.ReadAsync(Path.Combine(scratch.Path, "relative.json"), TestDefaults.ProcessHang);
+        var relative = await ProbeReport.ReadAsync(report, TestDefaults.ProcessHang);
 
         // Case-insensitive: the child reported its own Environment.CurrentDirectory,
         // which comes back through GetCurrentDirectoryW, while `scratch.Path` is
         // composed in this process from a root carrying whatever drive-letter
         // case the invoking shell handed the test host. See DriveLetterCase.
-        await Assert.That((string?)report["workingDirectory"]).IsEqualTo(scratch.Path, StringComparison.OrdinalIgnoreCase);
-        await Assert.That((string?)report["mutexName"]).IsEqualTo(absolute.MutexName);
-        await Assert.That((string?)report["indexKey"]).IsEqualTo(absolute.IndexKey);
-        await Assert.That((string?)report["key"]).IsEqualTo(absolute.Key);
+        await Assert.That((string?)relative["workingDirectory"]).IsEqualTo(scratch.Path, StringComparison.OrdinalIgnoreCase);
+        await Assert.That((string?)relative["canonical"]).IsNull();
+        await Assert.That((string?)relative["refusal"]).Contains("must be an absolute local path");
+
+        // The positive control, in the same process and the same working
+        // directory: the absolute spelling of the very same directory is
+        // accepted, and its identity is the one this host derives. Without it,
+        // the refusal above is satisfied by a probe that refuses everything.
+        var absolute = Path.Combine(scratch.Path, "absolute.json");
+
+        await Assert.That((await ProbeProcess.RunInAsync(scratch.Path, "session-identity", directory, absolute)).ExitCode).IsEqualTo(0);
+
+        var answered = await ProbeReport.ReadAsync(absolute, TestDefaults.ProcessHang);
+
+        await Assert.That((string?)answered["refusal"]).IsNull();
+        await Assert.That((string?)answered["mutexName"]).IsEqualTo(SessionPath.For(directory).MutexName);
+        await Assert.That((string?)answered["indexKey"]).IsEqualTo(SessionPath.For(directory).IndexKey);
+        await Assert.That((string?)answered["key"]).IsEqualTo(SessionPath.For(directory).Key);
     }
 
     [Test]
     public async Task TheMutexNameIsGlobalAndCarriesNoPathSeparator()
     {
         using var scratch = ScratchDirectory.Create("session-mutex-name");
-        var path = SessionPath.Resolve(scratch.Path);
+        var path = SessionPath.For(scratch.Path);
 
         await Assert.That(path.MutexName).StartsWith(@"Global\BrowserAI-");
 
@@ -115,9 +147,14 @@ internal sealed class SessionPathTests
         // `C:\` trims to `C:`, which is a drive-relative path meaning "the
         // current directory on C:" -- a different directory that changes under
         // the caller's feet. Refused rather than silently accepted.
-        var root = Assert.Throws<ArgumentException>(() => _ = SessionPath.Resolve(@"C:\"));
+        //
+        // ⚠️ It is refused HERE and not in the canonicaliser, and the split is
+        // what makes `browserai_list` able to use one path chain: a volume root
+        // is a perfectly good subtree to list and never a session directory.
+        // CanonicalPathTests owns the other half.
+        var root = Assert.Throws<ArgumentException>(() => _ = SessionPath.For(@"C:\"));
         await Assert.That(root!.Message).Contains("volume root");
 
-        _ = Assert.Throws<ArgumentException>(() => _ = SessionPath.Resolve("   "));
+        _ = Assert.Throws<ArgumentException>(() => _ = SessionPath.For("   "));
     }
 }

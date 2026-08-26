@@ -44,5 +44,5 @@ internal static class RecordedSession
     /// <summary>Every row of one session's log, oldest first.</summary>
     /// <param name="directory">The session directory, as a path.</param>
     /// <returns>The rows.</returns>
-    public static IReadOnlyList<SessionLogRow> LogOf(string directory) => LogOf(SessionPath.Resolve(directory));
+    public static IReadOnlyList<SessionLogRow> LogOf(string directory) => LogOf(SessionPath.For(directory));
 }
