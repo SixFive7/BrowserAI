@@ -509,6 +509,136 @@ whether this exact shape comes out. *Nobody has run that.* Recorded here rather
 than in `.work/`, because the capture that produced it lives in a scratch
 directory this machine deletes.
 
+🔬 **DIRECTION (b) WAS RUN, 2026-08-27, and the verdict is REPRODUCED
+DIFFERENTLY — every element of the measured shape comes out except the exit
+code.** *"Nobody has run that"* is no longer true. The rig is at
+`.work/2026-08-27-desktop-heap`, in a scratch directory this machine deletes, so
+everything it established is written down here and in `kb/windows/processes.md`
+rather than left there.
+
+**The rig, in two sentences.** A desktop of its own is created inside `WinSta0`
+with `CreateDesktopW` — each desktop gets its own heap allocation, and
+`GetUserObjectInformationW` with `UOI_HEAPSIZE` says this one got **20,480 KB**,
+the identical figure to `WinSta0\Default`, so the interactive desktop is never
+touched — and one filler process launched onto it through
+`STARTUPINFO.lpDesktop` creates message-only windows until `CreateWindowExW`
+refuses. **Window text lives in the desktop heap**, which is what makes this
+cheap enough to run eighty times: 4,637 windows carrying a 2,048-character
+title spend the whole 20,480 KB in 2.7 seconds and 4,640 USER handles, and the
+provisioned Chromium is then launched onto that same desktop with the sweep
+test's own command line, both pipes drained to end of file, `GetPerformanceInfo`
+read at the instant it dies, and a probe already sitting on the desktop asked
+whether a `Chrome_MessageWindow` ever appeared.
+
+**Point by point against 2026-08-26 19:43** — eight launches onto a heap
+exhausted to the byte, against sixteen healthy controls on the same desktop
+before and after:
+
+| Measured in the wild | Produced by the rig | |
+|---|---|---|
+| **exit code 1** | **`0x80000003`** — `STATUS_BREAKPOINT` — 8 of 8 | ✗ |
+| nothing on stdout, nothing on stderr, both pipes at EOF | **0 bytes on each, both drained to EOF**, 8 of 8 | ✓ |
+| the log ends after `VariationsSetupComplete`, at the two `scheduler_loop_quarantine_config.cc:195` lines, 26 ms in | **the same five lines, in the same order, and nothing after them** in 6 of 8 — the other two carry one further `webrtc_event_log_manager.cc:126` line — 10 ms from its first line to its last | ✓ |
+| no message window ever created | **zero** `Chrome_MessageWindow` of any title, 8 of 8, against **five** in every one of the sixteen controls, one of them titled with the profile path | ✓ |
+| 527 processes, 289,927 handles, 63% of RAM free — every ceiling ruled out | 430 processes, 262,355 handles, 66% free — **the same clean bill of health, on a machine that is out of the one resource** | ✓ |
+
+⚠️ **The threshold is far sharper than there was any reason to expect, and the
+silence belongs to the last few kilobytes rather than to the shortage.** Three
+launches at each level:
+
+| Windows held | Free heap | What the browser did |
+|---:|---:|---|
+| 4,637 | 0 KB | **died 8 of 8** — 5 or 6 log lines, **0 bytes on both streams** |
+| 4,636 | ≈4.4 KB | died 3 of 3 — but **61 to 63 log lines and 440 bytes of stderr**, having got as far as starting its GPU child |
+| 4,635 | ≈8.8 KB | died 2 of 3, 104 to 107 log lines; the third lived |
+| 4,634 | ≈13.2 KB | **lived 3 of 3**, 676 to 678 log lines |
+| 4,632 down to 3,600 | 22 KB to 4.6 MB | lived 3 of 3 at every one of eight further levels |
+
+**So the shape recorded in the wild belongs to a heap spent to the byte and to
+nothing less.** One window of headroom already buys sixty-three log lines and a
+stderr message, which is a far more specific claim than *"the browser died when
+something was tight"*.
+
+**What is actually crashing, read from Chromium's own tree on 2026-08-27.**
+`WindowImpl::Init` in `ui/gfx/win/window_impl.cc` ends its window-creation path
+with two crash sites and no error return: a branch taken when the window is null
+**and `GetLastError` reported nothing at all**, which ends in `NOTREACHED()`, and
+`CheckWindowCreated(hwnd_, create_window_error)` after it. A `CreateWindowExW`
+that returns null therefore takes Chromium into an immediate crash rather than
+into a recovery path, and **the crash is a check, and a check does not log** —
+which is the whole of why a browser that cannot make a window says nothing
+anywhere.
+
+**And the rig measured which of the two it is, by accident.** A refusal for want
+of desktop heap does **not** reliably set a last error: filling with
+2,048-character titles, the refusing `CreateWindowExW` reported **`GetLastError`
+= 0** on both a 512 KB heap and the 20,480 KB one, while filling with
+one-character titles reported `ERROR_NOT_ENOUGH_MEMORY`. The regime that
+reproduces the wild shape is the *former*, so the site is `NOTREACHED()` on the
+no-error branch rather than the check below it. **INFERRED** — it joins a
+measured last error to a source branch read in the same session, and nothing
+here has read a stack.
+
+⚠️ **The exit code is the one thing that did not reproduce, and the rig's own
+evidence is that the exit code is the least stable part of this failure.**
+Across four exhaustion regimes and twenty-eight deaths it produced **two** codes
+and never a 1: `0x80000003` where the heap was simply full, and **`0xE0000008`**
+— Chromium's own out-of-memory exception code — in the arm where the heap was
+handed *back* while the browser was starting, which is what a real desktop's
+heap does all day. A third code in the wild is therefore consistent with
+desktop-heap exhaustion rather than evidence against it. **Said where it
+belongs rather than in a caveat: I could not establish what produces exit code
+1, and eighty launches did not produce one.**
+
+**Two further regimes, recorded because they are further from the wild shape
+rather than nearer.** A heap spent on **23,718 small windows** instead of 4,637
+large ones kills the browser earlier still — 5 of 5, `0x80000003`, and **no log
+file at all** — and there `CreateWindowExW` refuses with
+`ERROR_NO_MORE_USER_HANDLES` rather than `ERROR_NOT_ENOUGH_MEMORY`. The
+released-mid-startup arm produces the mixed codes above with 6 or 9 log lines,
+and lets the browser live outright when the release lands inside the first
+40 ms. **Only exact exhaustion by large allocations produces the five-line log.**
+
+**One fidelity note, stated because it looked like a rig artefact and is not.**
+Every launch on the rig desktop writes *"Sandbox cannot access executable …
+Access is denied"* to stderr — and so does every launch on `WinSta0\Default`,
+measured in the same session as the control. It belongs to the provisioned tree,
+not to the rig.
+
+**The recommendation changes.** Direction (a) has done its job: the trap fired,
+and what it caught is now reproducible on demand. What is left open is that the
+failure still cannot name itself when it happens, which is a different question
+from what causes it. Per open question, then:
+
+- **(a) Leave it here.** The diagnosis is recorded and the sweep test goes on
+  failing roughly once in three runs when it happens, with a message that says
+  the browser died and cannot say why.
+- **(b) Make the failure name itself.** When `WaitForAttributionAsync` finds the
+  browser gone before a message window appeared, have it attempt one
+  `CreateWindowExW` of its own and put the result in the message.
+  `ERROR_NOT_ENOUGH_MEMORY` there *is* the diagnosis, at the only moment it can
+  be taken. No new dependency, one call, and it is the only reading that
+  separates this from every other reason a browser can die.
+- **(c) Put a desktop-heap column in `MachineLoad.Describe()`.** Honest only up
+  to a point: `UOI_HEAPSIZE` reports the *size* and no API reports the *usage*,
+  so the truthful version of this collapses into (b)'s probe, run always rather
+  than only on failure.
+- **(d) Harden instead of diagnosing** — give the suite's browsers a desktop of
+  their own with a heap of their own. It removes the failure from the suite and
+  removes the suite from the population that would ever see it again, which is
+  a real loss: this test is the only place the product finds out that a machine
+  can run out of this.
+- **(e) Chase exit code 1 until it is explained.** The gap is small, and it is
+  the one thing standing between REPRODUCED DIFFERENTLY and REPRODUCED EXACTLY.
+  It is also the direction with no bounded end: it needs a wild recurrence to
+  catch with a probe attached, which is (b) again.
+
+**Recommendation: (b)**, which also serves (e) — the probe that names the cause
+on the next occurrence is the same probe that would capture the exit code beside
+it. **This entry stays open**, because what it is now open on is narrower than
+what it was opened for: not *what kills the browser* but *why the wild exit code
+was 1*.
+
 ---
 
 ## Added 2026-08-18, from the honesty pass

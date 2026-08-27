@@ -23,6 +23,28 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The silent Chromium death was reproduced on purpose, and desktop heap is the
+  cause of everything about it except its exit code.** `QUESTIONS.md` §8 had been
+  open for nine days on three sightings and one recurrence that diagnosed itself
+  down to a five-line browser log; the reproduction ran on 2026-08-27. A desktop
+  of its own inside `WinSta0` — 20,480 KB, the same allocation `WinSta0\Default`
+  gets, so the interactive desktop was never touched — filled to the byte by one
+  process, and the provisioned Chromium launched onto it with the sweep test's own
+  command line. **Eighty launches, twenty-eight deaths**: exit `0x80000003`,
+  nothing on either stream, the same five log lines in the same order ending at
+  `scheduler_loop_quarantine_config.cc:195`, no message window, and a machine
+  reporting 66% of RAM free. **The threshold is a cliff** — 4,634 windows held and
+  the browser lives 3 of 3, 4,637 and it dies 8 of 8 — so the total silence is a
+  property of the last four kilobytes rather than of the shortage. The exit code
+  is the one thing that did not come out: the wild figure was `1` and the rig
+  produced `0x80000003` and Chromium's own out-of-memory code `0xE0000008`, never
+  a `1`, which is said as an unexplained gap rather than smoothed over. The
+  measurement is in [kb](kb/windows/processes.md) with a re-establishment
+  procedure that stands without the scratch rig, the failure mode is a hazard row,
+  and the entry stays open on a narrower question than it was opened for — **not
+  what kills the browser, but why the wild exit code was 1.** Nothing in the
+  product detects or names this yet; that is a decision, and it is stated as one.
+
 - **The release manifest can say whether the release was a crunch override, and
   it always says something.** `DECISIONS.md` stated in bold that *"a release
   whose manifest does not say it was overridden is a release claiming it was

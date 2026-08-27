@@ -811,6 +811,12 @@ saturation test's own 802 produces.
 > which no documented API reports and which none of the columns above would show.
 > Recorded here as a bounded negative result rather than a diagnosis. `[MACHINE]`
 >
+> ⚠️ ***Corrected 2026-08-27 (previously the sentence ended at "none of the
+> columns above would show")*** — desktop heap was run deliberately on that date
+> and it kills a browser exactly this way; the next section carries the
+> measurement. *"No documented API reports it"* was half wrong: `UOI_HEAPSIZE`
+> reports the **size**, and it is the **usage** nothing reports.
+>
 > **To re-establish**, for each N: give every instance its own `--user-data-dir`
 > under a scratch root and start
 > `chrome.exe --headless=new --user-data-dir=<own> --no-first-run
@@ -824,6 +830,88 @@ saturation test's own 802 produces.
 > headless browser do not always go with it — 102 survived one level here. Never
 > by image name; that is [the rule](../../HAZARDS.md) a measurement does not get
 > an exception to.
+
+## Desktop heap: the ceiling nothing reports, measured
+
+**The section above named desktop heap as the surviving candidate and said no
+documented API reports it. Both halves are now qualified.** `GetUserObjectInformationW`
+with `UOI_HEAPSIZE` reports a desktop's heap **size** — it is documented, it works,
+and it is the *usage* that nothing reports. Measured 2026-08-27 against the
+provisioned `chromium-1237` (152.0.7977.8), Windows 11 26200, across **80** real
+browser launches. `[MACHINE]`
+
+**A desktop created with `CreateDesktopW` inside `WinSta0` gets 20,480 KB — the
+same allocation as `WinSta0\Default`.** So a rig desktop is the interactive
+desktop's equal in size and entirely separate in fact, which is what makes this
+measurable at all without touching the session anybody is using.
+`CreateDesktopExW` takes a heap size and honours it exactly: 512 KB and 2,048 KB
+both read back verbatim.
+
+**Window text lives in the desktop heap, and that is the lever.** A message-only
+`STATIC` window costs about **402 bytes** with a one-character title (1,289 of
+them fill 512 KB; 5,218 fill 2,048 KB) and about **4,522 bytes** with a
+2,048-character one (114 fill 512 KB; **4,637 fill 20,480 KB**) — a difference of
+almost exactly two bytes per character. One process can therefore spend a whole
+interactive-sized heap in 2.7 seconds and 4,640 USER handles, well inside the
+10,000-object per-process quota.
+
+**What a browser does when it lands on that desktop**, three launches at each
+level:
+
+| Windows held | Free heap | Chromium |
+|---:|---:|---|
+| 4,637 | 0 KB | **died 8 of 8** — exit `0x80000003`, **0 bytes on stdout and 0 on stderr**, both drained to EOF, 5 or 6 log lines, no message window |
+| 4,636 | ≈4.4 KB | died 3 of 3 — but 61 to 63 log lines and 440 bytes of stderr, having reached its GPU child |
+| 4,635 | ≈8.8 KB | died 2 of 3, 104 to 107 log lines |
+| 4,634 | ≈13.2 KB | **lived 3 of 3**, 676 to 678 log lines, five `Chrome_MessageWindow`s |
+| 4,632 down to 3,600 | 22 KB to 4.6 MB | lived 3 of 3 at each of eight further levels |
+
+> **Chromium needs on the order of ten kilobytes of free desktop heap to reach a
+> running state, and the total silence belongs to the last four of them.** One
+> window of headroom buys sixty-three log lines and a stderr message. `[MACHINE]`
+>
+> **The refusal does not reliably say why.** Filling with 2,048-character titles,
+> the `CreateWindowExW` that was refused reported `GetLastError` = **0** — on a
+> 512 KB heap and on the 20,480 KB one alike. Filling with one-character titles
+> it reported `ERROR_NOT_ENOUGH_MEMORY`; filling a 20,480 KB heap with 23,718
+> small windows across four processes it reported `ERROR_NO_MORE_USER_HANDLES`.
+> **Three different answers to one shortage**, and the least informative of them
+> is the one the failing regime gives.
+>
+> **Why the browser says nothing.** `WindowImpl::Init` in
+> `ui/gfx/win/window_impl.cc` has two crash sites on the null-window path and no
+> error return — a `NOTREACHED()` on the branch where the last error was zero,
+> and `CheckWindowCreated` after it. A check does not log, so the account of the
+> failure is a crash dump nobody collected. Read from Chromium's tree
+> 2026-08-27; **INFERRED** as to which of the two fires, on the strength of the
+> zero last error above, since nothing here read a stack.
+>
+> **The exit code is the least stable part of it.** Twenty-eight deaths produced
+> **two** codes: `0x80000003` where the heap was simply full, and `0xE0000008` —
+> Chromium's own out-of-memory exception code — in the arm where the heap was
+> handed back mid-startup. Neither is the `1` recorded from the wild, and eighty
+> launches produced no `1` at all.
+>
+> **To re-establish**, with no registry change anywhere and the interactive
+> desktop untouched: `CreateDesktopW("<name>", NULL, NULL, 0, DESKTOP_ALL, NULL)`
+> — the device argument has to be a real NULL, and a `$null` handed across from
+> PowerShell arrives as an empty string, which `CreateDesktop` reads as a display
+> device named "" and refuses with `ERROR_INVALID_PARAMETER`. Read the size back
+> with `UOI_HEAPSIZE`. Start a filler process onto it with `STARTUPINFO.lpDesktop`
+> set to `"WinSta0\\<name>"`, creating `CreateWindowExW(0, "STATIC", <2048-char
+> title>, WS_CHILD, 0,0,0,0, HWND_MESSAGE, …)` until it is refused, and start a
+> second filler to confirm the first stopped on the heap rather than on its own
+> quota — a second one that manages zero is the ceiling. Then launch the
+> provisioned `chrome.exe` onto the same desktop with the command line the
+> saturation entry above gives, reading both pipes to end of file on their own
+> threads. Ask a probe **already
+> sitting on that desktop** whether any `Chrome_MessageWindow` exists — message
+> windows are scoped to a window station and desktop, so a probe anywhere else
+> answers about somewhere else. Clean up by pid and by `CloseDesktop`, then
+> enumerate the desktops of `WinSta0` and confirm yours is not among them. The
+> rig that produced this is `.work/2026-08-27-desktop-heap/Rig.ps1` and
+> `Rig.cs`, in a scratch directory this machine deletes, which is why the
+> procedure above is written to stand without it.
 
 **A record on stderr is not durable, and a record in the process log is — the
 two diagnostic channels differ and only the file's guarantee is written down.**
