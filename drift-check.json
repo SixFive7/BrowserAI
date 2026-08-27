@@ -11,8 +11,8 @@
 
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
 
-  "lastChecked": "2026-08-26",
-  "result": "no drift",
+  "lastChecked": "2026-08-27",
+  "result": "drift: node moved v24.19.0 -> v24.20.0 (LTS Krypton, released 2026-08-26). The other four upstreams are unchanged, and so is the vendored SQLite pin. Nothing was bumped and no review marker was touched: upstream-review.json still records v24.19.0, which is what the marker test gates the release on. A confirmed move puts kb/re-verification.md in play -- see UPSTREAM-REVIEW.md.",
 
   "resolved": {
     "@playwright/mcp": {
@@ -40,10 +40,10 @@
       "how": "nuget.org, stable only. Published 2026-06-04."
     },
     "node": {
-      "resolved": "v24.19.0",
+      "resolved": "v24.20.0",
       "reviewed": "v24.19.0",
-      "drift": false,
-      "how": "nodejs.org/dist/index.json, newest entry with an lts field (Krypton, released 2026-08-03, npm 11.17.0). The Current line is deliberately not tracked."
+      "drift": true,
+      "how": "nodejs.org/dist/index.json, newest entry with an lts field (Krypton, released 2026-08-26, npm 11.19.0, v8 13.6.233.17, openssl 3.5.7, security:false). The Current line is deliberately not tracked -- it read v26.8.1 on this date. Corrected 2026-08-27 (previously \"Krypton, released 2026-08-03, npm 11.17.0\"), which described v24.19.0: same LTS line, newer patch."
     }
   },
 
@@ -54,7 +54,7 @@
       "pinned": "3.53.4",
       "resolved": "3.53.4",
       "drift": false,
-      "checked": "2026-08-26",
+      "checked": "2026-08-27",
       "vendored_at": "third-party/sqlite/sqlite3.c and third-party/sqlite/sqlite3.h, extracted from sqlite-amalgamation-3530400.zip. shell.c and sqlite3ext.h are NOT vendored: nothing here builds a shell, and sqlite3ext.h is already inlined into the amalgamation.",
       "archive": {
         "name": "sqlite-amalgamation-3530400.zip",

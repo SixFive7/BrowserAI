@@ -393,6 +393,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       > lines, and the trace links. They all resolve through the same two call
       > sites.
 
+      Filed: https://github.com/microsoft/playwright-mcp/issues/1725 (2026-08-27)
+
 - [ ] **Ask `@playwright/mcp` for a no-clobber option on output files, and for
       names Windows will not keep verbatim to be rejected.** Both are losses
       BrowserAI stopped preventing on 2026-08-26, when its own filename gate was
@@ -418,6 +420,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       > 2. On Windows, NUL.png and names with a trailing dot or space are
       >    accepted but stored under a different effective name. Rejecting names
       >    the OS will not keep verbatim would make results predictable.
+
+      Filed: https://github.com/microsoft/playwright-mcp/issues/1726 (2026-08-27)
 
 ---
 
