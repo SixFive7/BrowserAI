@@ -305,21 +305,35 @@ repair-install finding above.
 > notice, until somebody runs the procedure above.
 >
 > **The staleness marker is what this paragraph would otherwise be**, and it is
-> deliberately not stamped here — nor is it spelled in brackets anywhere above,
-> which is the second half of the same problem.
-> `RecordedCountTests.NoKnowledgeBaseArticleCarriesAStaleMarker` asserts that no
-> article under `kb/` carries the token, and it matches the token itself, so it
-> **cannot tell a stamp from a mention**: writing the bracketed form even to
-> discuss it turns the suite red. That is the trap
-> [the re-verification index](../re-verification.md) already met for the floats
-> marker and answered by narrowing the counter's scope; this counter never got
-> the same treatment, so the workaround here is the older one — say it in words.
-> Its own failure message says the sentence in [`kb/README.md`](../README.md) is
-> what has to change when an article needs the marker, but the assertion is
-> unconditional, so the guard cannot actually be satisfied with a marker
-> standing. **Both halves are defects in the guard rather than in this entry**,
-> and they are recorded here because the next person owed a re-check will meet
-> them too.
+> still not stamped here — but that is now a choice rather than a refusal by the
+> build, and the difference is the whole of the correction below.
+>
+> ✅ **Both guard defects closed 2026-08-27.**
+> `RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`
+> — *`Corrected 2026-08-27 (previously
+> "RecordedCountTests.NoKnowledgeBaseArticleCarriesAStaleMarker")`* — matches the
+> **backticked** marker rather than the bare token, so an article may spell the
+> bracketed form in prose without turning the suite red; and it holds the count
+> against the sentence in [`kb/README.md`](../README.md) rather than against zero,
+> so stamping an entry and moving that sentence pass **as a pair**. The
+> resolution its message names is now one the assertion permits, which it was not
+> before. Both narrowings were watched red and green in both directions before
+> they went in.
+>
+> ⚠️ **What this paragraph said until then, because it is why the wording above it
+> is what it is.** *Previously: the marker "is deliberately not stamped here — nor
+> is it spelled in brackets anywhere above, which is the second half of the same
+> problem", because the guard matched the token itself and so could not tell a
+> stamp from a mention, and because its assertion was unconditional while its
+> failure message named a resolution it forbade.* That is the trap
+> [the re-verification index](../re-verification.md) had already met for the
+> floats marker and answered by narrowing the counter's **scope**; scope could not
+> answer it here, because the article that has to discuss this marker is this one,
+> full of real measurements. The narrowing is by **shape** instead. The
+> say-it-in-words workaround above is left standing rather than rewritten: it is
+> still an accurate account of the figures, and re-cutting a paragraph to use a
+> mechanism the day the mechanism arrives is how a document starts being written
+> for the build.
 
 ### Sizes
 

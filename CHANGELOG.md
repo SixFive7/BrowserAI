@@ -92,6 +92,33 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The guard on the `[STALE]` marker forbade the one resolution its own failure
+  message prescribed.** `RecordedCountTests` held `kb/README.md`'s claim that no
+  article carries the marker by matching the **bare token** anywhere under `kb/`,
+  and asserting unconditionally that nothing matched. Both halves were defects.
+  It could not tell a stamp from a mention, so an article that merely *discussed*
+  the marker turned the suite red — the entry recording the update lane's owed
+  re-check had to avoid spelling the token at all, and a writer who spelled it in
+  prose reddened a run against a correct tree. And being unconditional, it made
+  the kb rule's own escape hatch — *re-run the measurement, or mark the entry* —
+  a red build, while its message told the reader that the sentence in
+  `kb/README.md` was what had to change. **Changing that sentence could not have
+  satisfied it.** Now
+  `TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`: the match is the
+  **backticked** marker, which is how the conventions table spells all five and
+  how every one of the 487 marker occurrences under `kb/` was written on the day
+  this was narrowed; and the count is held against `kb/README.md`'s published
+  clause rather than against zero, so **stamping an entry and moving that
+  sentence are one edit and pass as a pair**. Neither half passes alone. This is
+  the trap [the re-verification index](kb/re-verification.md) already met for the
+  floats marker and answered by narrowing the counter's **scope** — an answer not
+  available here, because the article that has to discuss this marker is a real
+  article full of real measurements, so the narrowing is by **shape** instead.
+  Watched in four directions before it went in: the old scan red on a planted
+  bare-token mention and the new one green on the same plant, then a synthetic
+  backticked stamp red against an unmoved claim, green with the claim moved to
+  match, and red again with the claim moved and no stamp standing.
+
 - **Starting the server opened the SQLite store of every session on the
   machine.** `Program.Main` starts the stray sweep, one pass followed every entry
   in the machine-wide index through `SessionLock.ReadRecord`, and each of those

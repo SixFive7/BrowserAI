@@ -61,6 +61,19 @@ was updated by reasoning rather than by running something is worse than no entry
 because it reads identically to one that was measured. If a re-check is owed and
 has not happened, mark it `[STALE]` rather than guessing.
 
+> **The last sentence of the `[STALE]` row above is a count, and it is asserted
+> on every build** by
+> `RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`.
+> **Stamping an entry and moving that sentence are one edit, not two:** the check
+> reads the clause — *"That no article carries one today"*, or *"That N articles
+> carry one today"* — and holds it against the articles, so a stamp with the
+> sentence unmoved is red, and so is a sentence claiming a stamp no article
+> carries. A **backticked** marker is the stamp; the bracketed token written any
+> other way is prose about the convention and counts as nothing. *Added
+> 2026-08-27, when that check stopped matching the bare token everywhere under
+> `kb/` — under which an article could not discuss this marker at all, and the
+> escape hatch this section prescribes would itself have failed the build.*
+
 ### The reference machine
 
 `[MACHINE]` entries were measured here. Nothing about this configuration is

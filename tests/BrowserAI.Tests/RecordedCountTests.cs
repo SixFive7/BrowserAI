@@ -225,30 +225,118 @@ internal sealed partial class RecordedCountTests
             .Because($"CLAUDE.md publishes {stated} `#fragment` links and the scan finds {live}. Re-measure and stamp it -- never adjust it by counting the links in a diff.");
     }
 
+    /// <summary>
+    /// The count <c>kb/README.md</c> publishes about how many articles carry a
+    /// <c>[STALE]</c> stamp is what the articles hold.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-27 (previously
+    /// <c>NoKnowledgeBaseArticleCarriesAStaleMarker</c>, which matched the bare
+    /// token anywhere under <c>kb/</c> and asserted that nothing carried it).</b>
+    /// It had two defects and the name carried the second one.
+    /// </para>
+    /// <list type="number">
+    /// <item>
+    /// <b>It could not tell a stamp from a mention.</b> An article that merely
+    /// <i>discussed</i> the marker turned the suite red, so the entry in
+    /// <c>kb/packaging/velopack.md</c> recording an owed re-check had to avoid
+    /// spelling the token at all, and a writer who spelled it in prose reddened a
+    /// run for a tree that was correct.
+    /// </item>
+    /// <item>
+    /// <b>It was unconditional</b>, so the kb rule's own escape hatch — re-run the
+    /// measurement, or mark the entry — would itself fail the build. Its failure
+    /// message said the sentence in <c>kb/README.md</c> is what has to change, and
+    /// changing that sentence could not have satisfied the assertion: <b>the
+    /// message described a resolution the mechanism did not permit.</b>
+    /// </item>
+    /// </list>
+    /// <para>
+    /// <b>The fix is the one the re-verification index already took for the floats
+    /// marker, applied on the axis this claim actually needs.</b> That gate met the
+    /// same trap and answered it by <i>scope</i> — the two pages under <c>kb/</c>
+    /// whose job is to discuss the convention are excluded, and every other file
+    /// there stamps facts. <b>Scope cannot answer it here</b>, because the article
+    /// that has to discuss this marker is a real article carrying real
+    /// measurements, and excluding it would exclude the facts too. So the
+    /// narrowing is by <i>shape</i>: the corpus is unchanged and the match is the
+    /// stamp rather than the token.
+    /// </para>
+    /// <para>
+    /// <b>The stamp is the marker in backticks, and that is measured rather than
+    /// asserted.</b> It is how <c>kb/README.md</c>'s conventions table spells
+    /// every one of the five markers, and on 2026-08-27 all 487 marker
+    /// occurrences under <c>kb/</c> — 240 <c>[FLOATS]</c>, 106 <c>[STABLE]</c>,
+    /// 108 <c>[MACHINE]</c>, 33 <c>[UNVERIFIED]</c> — were written that way,
+    /// without exception. The bracketed token written any other way is prose
+    /// <i>about</i> the convention and stamps nothing.
+    /// </para>
+    /// <para>
+    /// <b>The published claim is the anchor and the two move together.</b> A real
+    /// stamp is now resolvable exactly as the old message claimed: stamp the entry
+    /// and move the sentence, and the pair passes. Neither half passes alone — a
+    /// stamp with the sentence unmoved fails, and a sentence claiming a stamp no
+    /// article carries fails too.
+    /// </para>
+    /// <para>
+    /// <b>What this still cannot see</b>, said here rather than implied: a stamp
+    /// and a quotation of one are the same characters, so an article that wants to
+    /// quote the <i>backticked</i> form in prose is still red and still has to say
+    /// it in words. That is the older workaround, narrowed to one shape instead of
+    /// standing over every mention of the marker.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task NoKnowledgeBaseArticleCarriesAStaleMarker()
+    public async Task TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold()
     {
         // kb/README.md's own claim, in the conventions table: "That no article
         // carries one today is the healthy state, not evidence the marker is
-        // dead." It is a claim about the tree and it was held by nobody.
-        var carriers = ReVerificationIndexTests.ArticleFiles()
-            .Where(file => Stale().IsMatch(File.ReadAllText(file)))
-            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file))
-            .Order(StringComparer.Ordinal)
-            .ToList();
+        // dead." Read as the anchor rather than assumed, so the number it
+        // publishes is what the articles are held against -- and so a stamp is
+        // resolvable by moving it.
+        var definition = Path.Combine(RepositoryLayout.Root.FullName, "kb", "README.md");
+        var recorded = StaleClaim().Match(Whitespace().Replace(await File.ReadAllTextAsync(definition), " "));
 
-        await Assert.That(string.Join(Environment.NewLine, carriers))
-            .IsEmpty()
-            .Because("kb/README.md states that no article carries [STALE]. If one now does, that sentence is what has to change -- the marker is sanctioned and the article is not the defect.");
+        await Assert.That(recorded.Success)
+            .IsTrue()
+            .Because(
+                "kb/README.md's [STALE] row is this check's anchor and no longer carries the clause it is read by. "
+                + "The forms it takes are 'That no article carries one today' and 'That N articles carry one today'. "
+                + "Rewording it is what would unhook the check, so the reword fails the build instead of silencing it.");
+
+        var published = recorded.Groups["carriers"].Value is "no"
+            ? 0
+            : int.Parse(recorded.Groups["carriers"].Value, CultureInfo.InvariantCulture);
+
+        var carriers = StampedArticles(ReVerificationIndexTests.ArticleFiles()
+            .Select(file => (Path.GetRelativePath(RepositoryLayout.Root.FullName, file), File.ReadAllText(file))));
+
+        await Assert.That(carriers.Count)
+            .IsEqualTo(published)
+            .Because(
+                $"kb/README.md says {published} articles under kb/ carry a backticked [STALE] stamp; "
+                + $"{carriers.Count} do{(carriers.Count is 0 ? string.Empty : ": " + string.Join(", ", carriers))}. "
+                + "The marker is sanctioned and the article is not the defect -- stamp the entry AND move that "
+                + "sentence to the number, and the pair passes. Neither half passes alone: a stamp with the "
+                + "sentence unmoved fails here, and so does a sentence claiming a stamp no article carries.");
+
+        // ⚠️ BOTH DIRECTIONS over the shape, off synthetic articles rather than by
+        // doctoring the tree -- which is what the corpus check below could not
+        // tell apart, and what the whole correction is about. Driven through the
+        // same predicate the live count above is, so a narrowing that went too far
+        // or not far enough is red here rather than silently true of the tree.
+        await Assert.That(StampedArticles([("stamped.md", "Not re-run. `[STALE]` -- owed since 2026-08-27.")]).Count).IsEqualTo(1);
+        await Assert.That(StampedArticles([("prose.md", "The guard used to match [STALE] anywhere, so discussing it turned the suite red.")]).Count).IsEqualTo(0);
 
         // ⚠️ THE POSITIVE CONTROL, because a search that returns zero is
         // indistinguishable from a search that cannot match. CLAUDE.md states the
         // rule in as many words: prove the search can find something before
         // believing that it found nothing. kb/README.md is outside the article
-        // corpus and defines the marker, so it must match.
-        var definition = Path.Combine(RepositoryLayout.Root.FullName, "kb", "README.md");
-
-        await Assert.That(Stale().Count(await File.ReadAllTextAsync(definition))).IsGreaterThan(0);
+        // corpus and spells the marker the way an article stamps it, twice, so it
+        // must match -- and it is the file the anchor was just read out of.
+        await Assert.That(StaleStamp().Count(await File.ReadAllTextAsync(definition))).IsGreaterThan(0);
         await Assert.That(ReVerificationIndexTests.ArticleFiles().Count()).IsGreaterThan(10);
     }
 
@@ -439,6 +527,28 @@ internal sealed partial class RecordedCountTests
         row.Contains($"({article})", StringComparison.Ordinal)
         || row.Contains($"({article}#", StringComparison.Ordinal);
 
+    /// <summary>
+    /// Which of a set of articles carry a <c>[STALE]</c> stamp.
+    /// </summary>
+    /// <remarks>
+    /// <b>The whole per-article judgement, so the controls can drive both
+    /// directions through it</b> — the shape of
+    /// <c>ReVerificationIndexTests.Offenders</c>, and for the same reason: a
+    /// control that re-implements the predicate it is controlling proves only that
+    /// two copies agree. The corpus is not this method's business and is passed
+    /// in, because the one definition of what an article is lives beside the
+    /// floats count.
+    /// </remarks>
+    /// <param name="articles">Each article's name, and everything it says.</param>
+    /// <returns>The names that carry a stamp, in ordinal order.</returns>
+    private static List<string> StampedArticles(IEnumerable<(string Article, string Text)> articles) =>
+    [
+        .. articles
+            .Where(article => StaleStamp().IsMatch(article.Text))
+            .Select(article => article.Article)
+            .Order(StringComparer.Ordinal),
+    ];
+
     /// <summary>Compares one named group against a live count.</summary>
     /// <param name="disagreements">Where a mismatch is recorded.</param>
     /// <param name="predicate">The predicate, quoted before the number as CLAUDE.md requires.</param>
@@ -512,8 +622,38 @@ internal sealed partial class RecordedCountTests
     [GeneratedRegex(@"^\[`(?<article>[^`]+)`\]\(\k<article>\)$")]
     private static partial Regex HolesRow();
 
-    [GeneratedRegex(@"\[STALE\]")]
-    private static partial Regex Stale();
+    /// <summary>
+    /// The <c>[STALE]</c> marker as the kb convention stamps an entry with it:
+    /// in backticks, the way <c>kb/README.md</c>'s conventions table spells every
+    /// marker and the way all 487 marker occurrences under <c>kb/</c> were
+    /// written when this was narrowed on 2026-08-27.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Deliberately narrower than
+    /// <c>ReVerificationIndexTests.Floats</c></b>, which is still the bare token.
+    /// That counter is kept honest by its scope — it excludes the two pages whose
+    /// job is to discuss the convention — and every remaining file under
+    /// <c>kb/</c> only ever stamps with it. This one cannot take that answer: the
+    /// article that has to discuss <i>this</i> marker is an article full of real
+    /// measurements, so the narrowing had to be on shape instead.
+    /// </remarks>
+    [GeneratedRegex("`\\[STALE\\]`")]
+    private static partial Regex StaleStamp();
+
+    /// <summary>
+    /// The count <c>kb/README.md</c>'s conventions table publishes about how many
+    /// articles carry the marker, which is the anchor a real stamp moves.
+    /// </summary>
+    /// <remarks>
+    /// The clause is matched rather than the whole sentence, because the rest of
+    /// it — <i>"is the healthy state, not evidence the marker is dead"</i> — is
+    /// true of zero and false of anything else, and a writer stamping an entry has
+    /// to be free to finish the sentence honestly. <c>no</c> is spelled out
+    /// because that is how the tree reads today; the numeric branch is what a
+    /// stamp moves it to.
+    /// </remarks>
+    [GeneratedRegex(@"That (?:\*\*)?(?<carriers>no|\d+)(?:\*\*)? articles? carr(?:ies|y) one today")]
+    private static partial Regex StaleClaim();
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();

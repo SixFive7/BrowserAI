@@ -209,10 +209,23 @@ internal sealed partial class ReVerificationIndexTests
 
     /// <summary>Every knowledge-base article: the Markdown under <c>kb/</c> that stamps facts.</summary>
     /// <remarks>
+    /// <para>
     /// <b>Internal rather than private so the marker corpus has one definition.</b>
-    /// <c>RecordedCountTests</c> checks a second claim about the same corpus — that
-    /// no article carries a <c>[STALE]</c> marker — and a scan of its own would be
-    /// free to disagree with this one about which files are articles.
+    /// <c>RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold</c>
+    /// checks a second claim about the same corpus — how many articles carry a
+    /// <c>[STALE]</c> stamp, against the number
+    /// <c>kb/README.md</c> publishes — and a scan of its own would be free to
+    /// disagree with this one about which files are articles.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It shares the corpus and deliberately not the shape.</b> That check
+    /// matches the marker <i>in backticks</i> and this one matches the bare token,
+    /// because the two claims are kept honest on different axes: the floats count
+    /// is scoped away from the pages that discuss the convention, and the stale
+    /// claim cannot be, since the article that has to discuss that marker is a
+    /// real article. <i>Corrected 2026-08-27 (previously "that no article carries
+    /// a <c>[STALE]</c> marker", which was unconditional).</i>
+    /// </para>
     /// </remarks>
     internal static IEnumerable<string> ArticleFiles() =>
         MarkdownFiles(Path.Combine(RepositoryLayout.Root.FullName, "kb"))
