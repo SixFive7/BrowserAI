@@ -282,6 +282,45 @@ two versions, then install the first `Setup.exe` with
 feed directory. **Never install into `%LocalAppData%\BrowserAI`** — see the
 repair-install finding above.
 
+> ⚠️ **A re-measurement of this whole set is OWED as of 2026-08-27 and HAS NOT
+> BEEN RUN.** The [Node upstream review](../../upstream-review.json) of that day
+> adopted **v24.19.0 → v24.20.0**, and `node.exe` grew **92,825,416 → 93,381,448
+> bytes**, `+556,032`. That is precisely the trigger
+> [row 85](../re-verification.md) names — *"Node moves (it is 92,825,416 b of
+> 130,434,486)"* — so every figure below that includes the payload is now a
+> number measured against a payload this repository no longer builds.
+>
+> **Not one of them has been adjusted, and none may be.** The new shipped total
+> is not 130,434,486 plus 556,032: `vpk` recompresses, the delta is computed
+> against a different full package, and `Setup.exe` and the ratio are outputs of
+> that compression rather than sums. Arithmetic here would produce a
+> measured-looking number nobody measured, which is the one edit
+> [the kb conventions](../README.md) forbid outright.
+>
+> **Why it was not re-run rather than why it should be:** the re-establishment
+> above is two real release publishes plus an install, the row itself says
+> *manual and must be* because the suite may neither publish nor install, and
+> the batch that took the Node bump was a review-and-records batch with no
+> release in it. The figures stay exactly as they were measured, carrying this
+> notice, until somebody runs the procedure above.
+>
+> **The staleness marker is what this paragraph would otherwise be**, and it is
+> deliberately not stamped here — nor is it spelled in brackets anywhere above,
+> which is the second half of the same problem.
+> `RecordedCountTests.NoKnowledgeBaseArticleCarriesAStaleMarker` asserts that no
+> article under `kb/` carries the token, and it matches the token itself, so it
+> **cannot tell a stamp from a mention**: writing the bracketed form even to
+> discuss it turns the suite red. That is the trap
+> [the re-verification index](../re-verification.md) already met for the floats
+> marker and answered by narrowing the counter's scope; this counter never got
+> the same treatment, so the workaround here is the older one — say it in words.
+> Its own failure message says the sentence in [`kb/README.md`](../README.md) is
+> what has to change when an article needs the marker, but the assertion is
+> unconditional, so the guard cannot actually be satisfied with a marker
+> standing. **Both halves are defects in the guard rather than in this entry**,
+> and they are recorded here because the next person owed a re-check will meet
+> them too.
+
 ### Sizes
 
 | | Bytes | Note |

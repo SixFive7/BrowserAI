@@ -29,6 +29,8 @@ Registration is never allowed to fail an install, and never allowed to fail sile
 
 A **`BrowserAI-win-Portable.zip`** is published beside the installer, by the same packaging run, for anyone who would rather unpack than install. There is no installer in it to run the registration hook, so registering it is the command above against wherever it was unpacked.
 
+**A redirected user profile is not supported, and BrowserAI refuses it by design rather than half-working on it.** If `%LocalAppData%` resolves onto a UNC path or a mapped network drive — a roaming or folder-redirected profile — startup refuses the app root and says so by name; and a session directory on a network path is refused at the door for the same reason, in every spelling, including a drive letter that only resolves to a share once the filesystem is asked. The refusal is deliberate and not a restriction that can be lifted by asking: the session record is a SQLite database in WAL mode, whose shared-memory index has only ever been established on a local volume, and a refusal that names the path is a better answer than storage whose guarantees nobody has measured where you put it.
+
 **Updates are automatic and there is one track.** No beta channel. BrowserAI checks its own feed and applies an update only when no other instance is live.
 
 **The first session downloads a browser.** Chromium is provisioned once per machine, not once per update — measured at 203.8 MB down, 430.48 MiB on disk and about 12.6 s. Nothing is downloaded at spawn after that, and nothing resolves from a registry at runtime: the client runs exactly the bytes the build froze into the artifact.

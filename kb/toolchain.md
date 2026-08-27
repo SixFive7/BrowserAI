@@ -396,6 +396,15 @@ this suite, whose sizes were established one at a time first:
 `ArtifactRoutingTests` **29**, `ConfigRoundTripTests` **5**, `RunOptionTests`
 **20**. **The right answer is 95.**
 
+> ✅ **Re-established 2026-08-27 @ TUnit 1.65.63 — the grammar is UNCHANGED.**
+> Same SDK **10.0.400**, .NET **10.0.11** and `Microsoft.Testing.Platform`
+> **2.3.3**; only TUnit moved, **1.65.0 → 1.65.63**. Every arrangement below
+> behaves exactly as it did, including the decisive control. **The table's
+> absolute numbers are the 2026-08-24 ones and are left as measured** — see
+> [the re-measurement](#re-measured-2026-08-27--tunit-16563) under it for what
+> those same filters return today and why the totals moved for a reason that has
+> nothing to do with the grammar.
+
 | Filter handed to `--treenode-filter` | Discovered | What it actually selected |
 |---|--:|---|
 | `/*/*/SessionPathTests/*\|/*/*/LockRecordTests/*\|…` — six whole patterns joined by `\|` | **601** | **the entire suite**: every test in the assembly |
@@ -438,20 +447,67 @@ like. What disagreed was a **positive control on a published count**: a fragment
 scan said 794 where the stamp said 785, and only that second number made anybody
 re-run anything.
 
+#### Re-measured 2026-08-27 @ TUnit 1.65.63
+
+**The grammar did not move. Every absolute number did, and none of it is the
+grammar's doing.** Re-run on the same machine at SDK **10.0.400**, .NET
+**10.0.11**, `Microsoft.Testing.Platform` **2.3.3**, TUnit **1.65.63**
+*(previously 1.65.0)*.
+
+**Quote the predicate before the number: this is not the same six classes.**
+`LockRecordTests` and `ArtifactRoutingTests` **no longer exist in the tree** —
+`git ls-files` finds no file declaring either, and the filter naming each returns
+**0** while the identical filter shape returns non-zero for the other four, which
+is the positive control that says the zero is an absence and not a broken search.
+So the six-class figures below are four live classes and two dead ones, and they
+are *not* comparable with the 95 above.
+
+| Filter | 2026-08-24 | 2026-08-27 | Held? |
+|---|--:|--:|---|
+| *(no filter — the whole assembly)* | 601 | **640** | suite grew |
+| six whole patterns joined by `\|`, prefix repeated | 601 | **640** | ✅ **still selects the entire suite** |
+| the same six, prefix not repeated | 4 | **5** | ✅ **still the first class only** |
+| the alternation inside the class segment | 95 | **50** | ✅ still exactly the classes named |
+| the same, parenthesised (two classes) | 23 | **5** | ✅ still exactly the two named |
+
+Class by class: `SessionPathTests` **4 → 5**, `LockRecordTests` **19 → 0
+(deleted)**, `ErrorCatalogueTests` **18 → 20**, `ArtifactRoutingTests` **29 → 0
+(deleted)**, `ConfigRoundTripTests` **5 → 5**, `RunOptionTests` **20 → 20**. The
+sum of the six is **50**, and the in-segment alternation returns exactly 50 — so
+the arrangement that was right is still right.
+
+**The decisive control still holds, and it is the one that proves the `|` is not
+an OR of paths at all.** `/*/*/NoSuchClassAtAll/*` discovers **0**,
+`/*/*/AlsoNotAClass/*` discovers **0**, and the two joined by `|` discover
+**640** — the whole assembly. Two patterns that select nothing cannot OR into
+everything. Identical in shape to 2026-08-24, where the same pair produced 601.
+
 **To re-establish**, from the repository root, with a built test assembly:
 
 ```bash
 EXE=tests/BrowserAI.Tests/bin/Debug/net10.0-windows/BrowserAI.Tests.exe
 for f in '/*/*/SessionPathTests/*' \
-         '/*/*/LockRecordTests/*' \
-         '/*/*/SessionPathTests/*|/*/*/LockRecordTests/*' \
-         '/*/*/SessionPathTests|LockRecordTests/*'; do
+         '/*/*/ErrorCatalogueTests/*' \
+         '/*/*/SessionPathTests/*|/*/*/ErrorCatalogueTests/*' \
+         '/*/*/SessionPathTests|ErrorCatalogueTests/*'; do
   printf '%-52s ' "$f"
   "$EXE" --disable-logo --list-tests --treenode-filter "$f" | grep -o 'found [0-9]* test'
 done
 ```
 
-The first two are the parts, the third is the trap, the fourth is the answer.
+The first two are the parts, the third is the trap, the fourth is the answer. At
+2026-08-27 that prints **5**, **20**, **640**, **25**.
+
+⚠️ ***Corrected 2026-08-27 (previously the second class in this loop was
+`LockRecordTests`).*** That class has been deleted, so the procedure as written
+returned **5 · 0 · 640 · 5** — the fourth line, which is supposed to be *the
+answer*, had silently become indistinguishable from the first, and a reader
+running it would have seen the trap and the answer agree. **A re-establishment
+procedure that names a deleted fixture degrades into one that proves nothing**,
+and nothing was going to say so: the run exits 0 and prints four numbers either
+way. Whoever edits this next should re-check that both classes still exist before
+trusting the output.
+
 `--list-tests` is enough and costs a fifth of a second; nothing here needs a run.
 `[FLOATS]` — it is a property of `Microsoft.Testing.Platform`'s filter grammar
 and will move when that moves.

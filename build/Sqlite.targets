@@ -115,6 +115,14 @@
     says not to modify it, it carries no INCLUDE either, and depending on it
     would make this target break on an ILC refactor with no message naming the
     cause.
+
+    ACCEPTED AS DOCUMENTED-UNTESTED, 2026-08-27. None of the three Error
+    branches below has ever been executed: every machine that can publish this
+    project already carries the workload, so vswhere has never returned empty
+    here, and nothing can plant that state short of uninstalling the workload
+    the publish itself needs. The maintainer accepted the branch as untested on
+    that date rather than requiring a rig for it, so the three messages are
+    reviewed prose and not a tested path. Read them as such if one ever fires.
   -->
   <Target Name="LocateTheVisualCppToolchainForSqlite" Condition="'$(PublishAot)' == 'true'">
 
