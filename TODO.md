@@ -423,6 +423,65 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 
       Filed: https://github.com/microsoft/playwright-mcp/issues/1726 (2026-08-27)
 
+- [ ] **Watch both asks together, and be ready to move them to the monorepo.**
+      They were filed into a tracker whose owner has asked people not to use it,
+      and the call taken on 2026-08-27 was to leave them there and watch rather
+      than re-file. **One signal decides for both** — they are two instances of
+      the same judgment about the same tracker, filed four seconds apart, so
+      whatever happens to either answers the question for the other, and
+      watching them apart would only mean taking one decision twice.
+
+      **What moves them.** Either issue closed with a redirect to the monorepo;
+      or **both** left untriaged while `microsoft/playwright`'s `[MCP]:` issues
+      go on being answered and closed around them. Silence in one tracker while
+      the other moves is the same answer as a redirect, given slower.
+
+      **Where they go.** [`microsoft/playwright`](https://github.com/microsoft/playwright/issues),
+      one issue each, the ask bodies above unchanged, with **`[MCP]` as a title
+      prefix** — that is the convention there, and it is a *title* prefix rather
+      than a label:
+      [#42363](https://github.com/microsoft/playwright/issues/42363) and
+      [#42384](https://github.com/microsoft/playwright/issues/42384) both carry
+      it in the title and both carry **no labels at all**, read 2026-08-27. Then
+      close [#1725](https://github.com/microsoft/playwright-mcp/issues/1725) and
+      [#1726](https://github.com/microsoft/playwright-mcp/issues/1726) with
+      links to the new issues, so the trail leads forwards instead of stopping.
+
+      **The evidence, both ways, because it does not point one way.** For
+      moving:
+      [playwright-mcp#1664](https://github.com/microsoft/playwright-mcp/issues/1664)
+      is pinned and open — *"⚠️ Please file issues at
+      https://github.com/microsoft/playwright"*, opened 2026-06-29 by a
+      Playwright maintainer — and on 2026-08-27 that tracker held **three** open
+      issues in total: the notice and these two. And the code both asks name is
+      monorepo code already: `_computeRelativeTo` and `_writeFile` appear
+      nowhere in the shipped payload except
+      `playwright-core/lib/coreBundle.js`, which is where the MCP server's
+      `Response` module now ships — the `@playwright/mcp` package beside it is
+      `cli.js` and `index.js` over that bundle (`@playwright/mcp` 0.0.79 /
+      `playwright-core` 1.63.0-alpha-2026-08-05, read 2026-08-27). **Against
+      moving, and this is why they were filed where they were:**
+      [playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
+      is ours, filed there on 2026-08-17 — seven weeks *after* that notice — and
+      closed as fixed **9 h 52 min later** by a Playwright maintainer. A tracker
+      nobody reads does not do that, so the notice is a preference rather than a
+      wall, and a first-hand exception ten days old outweighs it until something
+      newer says otherwise. ⚠️ **Note which way #1716 cuts:** its fix landed in
+      the monorepo, as
+      [microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288),
+      so it is evidence for where the *code* lives and against where the
+      *report* has to go.
+
+      **One more to watch beside them.**
+      [microsoft/playwright#42384](https://github.com/microsoft/playwright/issues/42384)
+      — *`[MCP]:` run-test-mcp-server writes `.playwright-mcp/` artifacts to the
+      workspace root instead of the project's configured `outputDir`* — open,
+      filed 2026-08-24. It is **adjacent to the first ask and not a duplicate of
+      it**: that one is about which directory artifacts land in, ours is about
+      the form of the path a tool result names them by. It is worth watching
+      because it is the same class of report in the other tracker, so how it is
+      handled is the triage signal this item is waiting for.
+
 ---
 
 ## Continuous integration
