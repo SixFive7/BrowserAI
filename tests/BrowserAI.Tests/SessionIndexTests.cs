@@ -492,7 +492,8 @@ internal sealed class SessionIndexTests
         // name-is-the-hash test admits it, and following it produces a second
         // inventory line, a second identity and a second gate for one directory.
         // Resolving the alias here would cost one directory open per entry on
-        // the whole machine, on every listing, every roll-up and every sweep.
+        // the whole machine, on every listing, every sibling-sessions read and
+        // every sweep.
         //
         // So the pointer is checked instead: a stored path that is not the
         // spelling this build writes was not written by this build, and the

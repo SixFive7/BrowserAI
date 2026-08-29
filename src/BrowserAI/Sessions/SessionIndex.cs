@@ -229,15 +229,24 @@ internal sealed class SessionIndex
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-08-24. The filter used to run on the wrong side of the
-    /// parse</b>: <c>browserai_list</c> and the roll-up called
+    /// parse</b>: <c>browserai_list</c> and <c>SessionManager.Beneath</c> called
     /// <see cref="Follow"/> and then dropped what was not under their prefix, so
     /// every session on the machine had its record opened and strictly parsed —
     /// up to 250 log entries and all their arguments — to print the four fields
-    /// of the few that matched. The roll-up runs on every <c>init</c> and every
-    /// <c>resume</c>, so that was a session-open cost rather than a listing one,
-    /// and each of those opens inherits <c>RenameWindow</c>'s budget: one denied
-    /// or scanner-held record anywhere on the machine could add it to a call
-    /// scoped to a completely unrelated tree.
+    /// of the few that matched. <c>Beneath</c> runs on every <c>init</c> and
+    /// every <c>resume</c>, so that was a session-open cost rather than a
+    /// listing one, and each of those opens inherits <c>RenameWindow</c>'s
+    /// budget: one denied or scanner-held record anywhere on the machine could
+    /// add it to a call scoped to a completely unrelated tree.
+    /// </para>
+    /// <para>
+    /// ⚠️ *Corrected 2026-08-29 (previously the second caller was named "the
+    /// roll-up", and it ran on <c>destroy</c> too).* The per-root roll-up file
+    /// is deleted; <c>SessionManager.Beneath</c> is the same walk under the same
+    /// prefix, now feeding only the sibling-sessions line in the
+    /// <c>init</c>/<c>resume</c> answer. <b>The exposure below is unchanged on
+    /// those two doors and gone from <c>destroy</c></b>, which walked the index
+    /// solely to rewrite the file.
     /// </para>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-24, same day (previously the paragraph above ended
@@ -248,7 +257,7 @@ internal sealed class SessionIndex
     /// before it can read the pointer it filters on, so a denied or
     /// delete-pending <i>entry file</i> anywhere on the host still adds up to
     /// that budget to a <c>browserai_list</c> scoped to an unrelated tree, and to
-    /// the roll-up on every <c>init</c> and every <c>resume</c>. The number of
+    /// the sibling-sessions read on every <c>init</c> and every <c>resume</c>. The number of
     /// opens per call is unchanged; only the strict <i>parse</i> moved. A reader
     /// who took from the paragraph above that a subtree-scoped call can no longer
     /// be delayed by a stranger's file took the wrong thing.
@@ -558,8 +567,8 @@ internal sealed class SessionIndex
         }
 
         // ⚠️ CHECKED, NEVER RESOLVED, and this line runs once per index entry on
-        // the WHOLE MACHINE -- on every listing, every roll-up (which is every
-        // `init` and every `resume`) and every sweep. Resolving an alias here
+        // the WHOLE MACHINE -- on every listing, every sibling-sessions read
+        // (which is every `init` and every `resume`) and every sweep. Resolving an alias here
         // would be one directory open per entry per call, and up to 64 of them
         // driven by a string this process did not write. It does not have to:
         // everything this build records went through the whole sequence on the
@@ -1013,7 +1022,7 @@ internal enum SessionIndexEntryState
 /// builds the wal-index beside it, so following an entry leaves a
 /// <c>browserai.data-shm</c> and a <c>browserai.data-wal</c> in a directory the
 /// walk only asked to look at. That is affordable for a caller who asked about
-/// those sessions — <c>browserai_list</c>, the roll-up — and it is not
+/// those sessions — <c>browserai_list</c>, the sibling-sessions read — and it is not
 /// affordable for the sweep, which runs on every process start, over every
 /// session on the machine, and needs nothing the record carries.
 /// </remarks>

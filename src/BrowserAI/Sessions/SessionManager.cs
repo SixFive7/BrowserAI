@@ -603,7 +603,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                 return new ToolOutcome(
-                    Describe(already, ["This session is already open in this BrowserAI; nothing was changed."], RefreshRollUp(location)),
+                    Describe(already, ["This session is already open in this BrowserAI; nothing was changed."]),
                     IsError: false);
             }
 
@@ -1306,20 +1306,10 @@ internal sealed class SessionManager : IAsyncDisposable
         held.ReleaseAndDelete(() => TreeDelete.Remove(location.FullPath, failures));
 
         _index.Forget(location);
-        var rollUp = RefreshRollUp(location);
         SessionToolLog.Destroyed(_logger, location.FullPath, failures.Count);
 
         var summary =
             $"Destroyed the session at '{location.FullPath}' ({Megabytes(size)}). Its purpose was: {record.Purpose}\nYou said it was being destroyed because: {why}";
-
-        if (!rollUp.RolledUp && Path.GetDirectoryName(location.FullPath) is { Length: > 0 } parent)
-        {
-            // The destroyed session is still listed in the file until this
-            // succeeds, and a roll-up naming a directory that is gone is worse
-            // than one that is merely behind.
-            summary +=
-                $"\n\n⚠️ The roll-up at '{Path.Combine(parent, SessionRollUp.FileName)}' could not be rewritten, so it still lists this session. Nothing else depends on it: browserai_list reads BrowserAI's own index.";
-        }
 
         // ⚠️ THE SURVIVOR ARM IS `IsError: true`, CHANGED 2026-08-19 (previously
         // `IsError: false`, defended as "a destroy that removed a
@@ -2063,11 +2053,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolLog.Why(sessionLogger, SessionToolSurface.Resume, why);
             }
 
-            // One index walk, used twice: the roll-up beside the sessions and
-            // the line in this answer that names them are the same question, and
-            // walking twice is the shape that made this the slowest call in the
-            // suite.
-            return new ToolOutcome(Describe(session, notes, RefreshRollUp(location)), IsError: false);
+            return new ToolOutcome(Describe(session, notes), IsError: false);
         }
         catch (FirefoxProfileLockedException collision)
         {
@@ -2144,13 +2130,8 @@ internal sealed class SessionManager : IAsyncDisposable
     private static void Failed(SessionLock? acquired, Exception failure) =>
         acquired?.SettleOpening(SessionStore.Failed, Encoding.UTF8.GetBytes(failure.ToString()));
 
-    private string Describe(
-        LiveSession session,
-        IReadOnlyList<string> notes,
-        (List<RollUpEntry> Beneath, bool RolledUp) rollUp)
+    private string Describe(LiveSession session, IReadOnlyList<string> notes)
     {
-        var beneath = rollUp.Beneath;
-
         var record = session.Lock.Record;
         var text = new StringBuilder();
 
@@ -2209,21 +2190,19 @@ internal sealed class SessionManager : IAsyncDisposable
         // own choice rather than a boundary.
         if (Path.GetDirectoryName(session.Location.FullPath) is { Length: > 0 } root)
         {
-            var siblings = beneath.Where(entry => !string.Equals(entry.Directory, session.Location.FullPath, StringComparison.OrdinalIgnoreCase)).ToList();
+            var siblings = Beneath(root)
+                .Where(directory => !string.Equals(directory, session.Location.FullPath, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
             _ = text.Append("  other sessions under ").Append(root).Append(": ")
                 .Append(siblings.Count.ToString(CultureInfo.InvariantCulture));
 
             if (siblings.Count is not 0)
             {
-                _ = text.Append(" — ").Append(string.Join(", ", siblings.Take(10).Select(entry => Path.GetFileName(entry.Directory))));
+                _ = text.Append(" — ").Append(string.Join(", ", siblings.Take(10).Select(directory => Path.GetFileName(directory))));
             }
 
-            _ = text.Append(rollUp.RolledUp ? " (rolled up in " : " (⚠️ the roll-up at ")
-                .Append(Path.Combine(root, SessionRollUp.FileName))
-                .Append(rollUp.RolledUp
-                    ? ")\n"
-                    : " COULD NOT BE WRITTEN on this call, so it is stale or absent; the count above came from BrowserAI's own index and is current)\n");
+            _ = text.Append('\n');
         }
 
         return text.ToString();
@@ -2400,43 +2379,27 @@ internal sealed class SessionManager : IAsyncDisposable
         return (verdict.Canonical!, CanonicalPath.PrefixOf(verdict.Canonical!));
     }
 
-    /// <summary>
-    /// Rewrites the roll-up covering the root one session sits under.
-    /// </summary>
-    /// <remarks>
-    /// <b>Scoped by root and never by machine.</b> The machine-wide index is
-    /// <see cref="SessionIndex"/>'s and stays available through
-    /// <c>browserai_list</c>; this is the aggregate that sits <i>beside</i> the
-    /// sessions it covers, so an agent working in one tree meets that tree's
-    /// sessions and nobody else's.
-    /// </remarks>
-    /// <param name="location">The session whose root is rolled up.</param>
-    /// <returns>
-    /// Every session under that root, and whether the roll-up file was actually
-    /// rewritten. <b>The second half is not optional</b>: the answer this feeds
-    /// names the file by path, and naming a file that was not written is the
-    /// silent failure this product exists to remove. It read
-    /// <c>SessionRollUp.Write(root, beneath);</c> — discarding the answer
-    /// its own doc comment says the caller must carry — until 2026-08-16.
-    /// </returns>
-    private (List<RollUpEntry> Beneath, bool RolledUp) RefreshRollUp(SessionPath location)
-    {
-        var root = Path.GetDirectoryName(location.FullPath);
-
-        if (root is null or { Length: 0 })
-        {
-            // Unreachable through SessionPath, which refuses a volume root -- but
-            // this method is not the place to prove that.
-            return ([], true);
-        }
-
-        var beneath = Beneath(root);
-
-        return (beneath, SessionRollUp.Write(root, beneath));
-    }
-
     /// <summary>Every session under a root, newest use first.</summary>
     /// <remarks>
+    /// <para>
+    /// <b>Scoped by root and never by machine.</b> The machine-wide view is
+    /// <see cref="SessionIndex"/>'s and stays available through
+    /// <c>browserai_list</c>; this answers the narrower question an agent
+    /// arriving in one tree has — <i>what else is here</i> — so it meets that
+    /// tree's sessions and nobody else's.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Its one caller is the line in the <c>init</c>/<c>resume</c> answer
+    /// that names the siblings — 2026-08-29, previously two.</b> The other wrote
+    /// <c>browserai-sessions.json</c> beside the sessions, from the same walk,
+    /// and it is deleted: nothing read it, and this line already carried its
+    /// content to the only reader either had. <b>So the entries this returns are
+    /// directories and nothing else.</b> They used to carry purpose, created,
+    /// last-used and a <see cref="SessionLayout.SizeOnDisk"/> per sibling — a
+    /// recursive enumeration of every session under the root, on every session
+    /// open — and only the file printed them.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>The prefix comes from the one derivation — W8, closed 2026-08-26.</b>
     /// This re-derived it: <c>ToUpperInvariant</c>, then append a separator, three
     /// lines from a call into <see cref="SessionIndex"/>, whose own remark
@@ -2444,13 +2407,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <paramref name="root"/> is a directory name off an already-canonical
     /// <see cref="SessionPath"/> — and nothing said so, and nothing would have
     /// noticed when it stopped being true.
+    /// </para>
     /// </remarks>
     /// <param name="root">The canonical directory the sessions sit under.</param>
-    /// <returns>The roll-up entries.</returns>
-    private List<RollUpEntry> Beneath(string root)
+    /// <returns>Each session's directory, newest use first.</returns>
+    private List<string> Beneath(string root)
     {
         var prefix = CanonicalPath.PrefixOf(root);
-        var entries = new List<RollUpEntry>();
+        var entries = new List<(string Directory, DateTimeOffset LastUsed)>();
 
         foreach (var entry in _index.FollowUnder(prefix))
         {
@@ -2459,17 +2423,12 @@ internal sealed class SessionManager : IAsyncDisposable
                 continue;
             }
 
-            entries.Add(new RollUpEntry(
-                session.FullPath,
-                record.Purpose,
-                record.Created,
-                record.LastUsed,
-                SessionLayout.SizeOnDisk(session.FullPath)));
+            entries.Add((session.FullPath, record.LastUsed));
         }
 
         entries.Sort((left, right) => right.LastUsed.CompareTo(left.LastUsed));
 
-        return entries;
+        return [.. entries.Select(entry => entry.Directory)];
     }
 
     private static string Megabytes(long bytes) =>

@@ -1203,6 +1203,13 @@ report the old defence wanted to protect is still there in full: the summary, th
 tally, the listing and the truncation notice are unchanged, and the roll-up
 warning arm is untouched.
 
+> ⚠️ *Corrected 2026-08-29 (previously the sentence above ended there).* **The
+> roll-up warning arm no longer exists**, and neither does the roll-up:
+> `browserai-sessions.json` and everything that wrote it were deleted that day,
+> so `browserai_destroy`'s answer has one fewer clause than it had when this was
+> written. Nothing else in this section moved — the survivor arm, its `isError`
+> and the three sentences it names are exactly as decided here.
+
 **What implements it.** `SessionManager.DestroyAsync`'s survivor arm. Held by
 `SessionDestroyTests.ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany`,
 which asserts the flag and each of the three sentences, and by

@@ -277,8 +277,12 @@ internal sealed record ArtifactKind(string Name)
 /// A byte count in a unit that does not read as "empty" for a small one.
 /// </summary>
 /// <remarks>
-/// <b>A fourth spelling of a size, and it earns its place.</b> The three that
-/// exist are fixed-unit: <c>browserai_list</c> and the artifact roll-up print
+/// <b>A third spelling of a size, and it earns its place.</b> ⚠️ *Corrected
+/// 2026-08-29 (previously "A fourth spelling … The three that exist … are
+/// fixed-unit: <c>browserai_list</c> and the artifact roll-up print MiB to one
+/// place").* The per-root roll-up is deleted, so the enumeration is one shorter
+/// and this is the third rather than the fourth. The two that
+/// exist are fixed-unit: <c>browserai_list</c> prints
 /// MiB to one place, and the provisioner prints decimal MB because that is the
 /// unit a CDN's <c>content-length</c> is quoted in. Fixed MiB is exactly wrong
 /// for this answer — a bucket holding three screenshots prints <c>0.0 MiB</c>,

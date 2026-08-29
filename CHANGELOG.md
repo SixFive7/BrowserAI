@@ -90,6 +90,33 @@ has been satisfied in form only.
   is deliberate — settling first would risk a `successful` row for an answer the
   caller never received — and the window is a hazard row rather than a fix.
 
+### Removed
+
+- **`browserai-sessions.json`, the per-root roll-up, and every mechanism that
+  wrote it.** It was the one file this product wrote to a path the caller never
+  chose — the *parent* of the session directory it was given, so a session at
+  `C:\repo\.browserai` put it at `C:\repo\browserai-sessions.json`, unignored, in
+  somebody's repository root, against the promise in
+  [`README.md`](README.md), [`ARCHITECTURE.md`](ARCHITECTURE.md) and the
+  installer's own registration message that BrowserAI writes no per-repository
+  files. **Nothing read it**: not the product, not a script, not a hook — only a
+  test helper that parsed it back to assert what the code had just written. Its
+  content was already delivered live and current by the sibling-sessions line in
+  the `init`/`resume` answer, from the same index walk, and by `browserai_list`
+  at any scope. Gone with it: `SessionRollUp` entire, its schema version and the
+  forward-compatibility argument that only a written file could need,
+  `SessionManager.RefreshRollUp` and its three call sites, and the
+  `(rolled up in …)` / `COULD NOT BE WRITTEN` clauses those answers carried.
+  **`destroy` no longer walks the machine-wide index at all** — it followed it
+  only to rewrite this file — and the walk that stays returns directories rather
+  than a record per sibling, which drops a recursive `SizeOnDisk` enumeration per
+  session from every session open. Three promise sentences that were false became
+  true without being edited. *The feature was extracted from artifact routing on
+  2026-08-26, the day the rest of that machinery was deleted, and was never
+  chartered; the rule it broke is written down now in
+  [`DECISIONS.md`](DECISIONS.md#shape-and-packaging) so its absence is a decision
+  rather than an omission.*
+
 ### Fixed
 
 - **The suite's own reclaim pass could terminate a live run's processes with exit

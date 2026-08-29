@@ -377,7 +377,7 @@ was never part of its decision: it read one only to fill an inventory a sweep do
 not print, and every removable state it acts on — `DirectoryMissing`,
 `VolumeMissing`, `NotASession` — is settled by the directory and the guard.
 `SessionIndex` walks at a stated **depth**: `Record` for the reporting callers
-(`browserai_list`, the roll-up, the live-set read), `Guard` for the sweep, where
+(`browserai_list`, the sibling-sessions read, the live-set read), `Guard` for the sweep, where
 liveness is one `CreateFile` on `browserai.lock` and the fallback is two file
 checks. **A server start on a machine of live sessions opens no store at all**,
 and the only entry whose record is read in full is the one a pass is about to
@@ -722,7 +722,7 @@ they arrive canonical.
 
 **A path BrowserAI stored is checked and never re-resolved**, which is what keeps
 the machine-wide read path free: `SessionIndex` follows one entry per session on
-the host on every listing, every roll-up and every sweep, and resolving an alias
+the host on every listing, every sibling-sessions read and every sweep, and resolving an alias
 there would be a directory open per entry. `PathOrigin.Read` runs the subset of
 the same questions that cost nothing, so a stored path that is not the spelling
 this build writes is `Unusable`, is swept, and is recorded again canonically by
@@ -803,7 +803,7 @@ subtree filter used to run *after* `SessionIndex.Follow` had opened and strictly
 parsed each session's `browserai.json` — up to 250 log entries and all their
 arguments — and each of those opens inherits `RenameWindow`'s budget, so one
 denied or scanner-held record anywhere could add it to a call scoped somewhere
-else entirely. The roll-up did the same on **every `init` and every `resume`**.
+else entirely. The sibling-sessions read did the same on **every `init` and every `resume`**.
 `SessionIndex.FollowUnder` applies the prefix above the open instead; the
 predicate is unchanged and the reported set is identical.
 `HouseRuleTests.NoIndexWalkFiltersBySubtreeAfterFollowingTheEntry` is what keeps
@@ -819,9 +819,17 @@ reported set is identical", with the budget exposure attributed entirely to the
 against, so a subtree-scoped call still performs **one such open per index entry
 on the machine**, each carrying `RenameWindow`'s whole 30-second budget. One
 denied or delete-pending entry file anywhere on the host still adds up to that
-budget to a `browserai_list` scoped to an unrelated tree, and to the roll-up on
-every `init` and every `resume`. What is gone is the *record* open and its parse,
-which is the larger of the two and the only one this change touched.
+budget to a `browserai_list` scoped to an unrelated tree, and to the
+sibling-sessions read on every `init` and every `resume`. What is gone is the
+*record* open and its parse, which is the larger of the two and the only one this
+change touched.
+
+⚠️ ***Corrected 2026-08-29 (previously the caller named in the three paragraphs
+above was "the roll-up").*** `browserai-sessions.json` and everything that wrote
+it are deleted. The walk is unchanged and so is the exposure: `SessionManager.Beneath`
+runs it under the same prefix on every `init` and every `resume`, now for the
+sibling-sessions line in the answer alone. **What did go is `destroy`'s walk** —
+it followed the index only to rewrite that file.
 
 **The guard's write is durable and atomic, and it happens once.**
 `WriteThrough` + `Flush(flushToDisk: true)` + `File.Move(overwrite: true)`, with
@@ -971,7 +979,7 @@ space or dot is stored as Windows rewrites it rather than being refused. The
 |---|---|
 | Where the folders are | `src/BrowserAI/Sessions/SessionLayout.cs`, `src/BrowserAI/Hosting/IAppPaths.cs` |
 | The child's working directory, `outputDir` and the file-access roots | `src/BrowserAI/Sessions/SessionManager.cs`, `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
-| The per-root roll-up beside the sessions | `src/BrowserAI/Sessions/SessionRollUp.cs` |
+| What else is under this session's root, said in the `init`/`resume` answer | `src/BrowserAI/Sessions/SessionManager.cs` (`Beneath`) |
 
 **`outputMaxSize` is never written, and it matters more now than it did.**
 Upstream's `_enforceOutputBudget()` runs on every tool response and unlinks

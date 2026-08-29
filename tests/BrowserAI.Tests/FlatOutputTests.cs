@@ -35,16 +35,16 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Three things in this file are not about the absence and survive
 /// unchanged:</b> the child's working directory, upstream's output-budget
-/// eviction staying off, and the per-root roll-up. Each is a session-system fact
-/// rather than a traffic one, which is why each outlived the deletion.
+/// eviction staying off, and the sibling-sessions line an <c>init</c> answer
+/// carries. Each is a session-system fact rather than a traffic one, which is
+/// why each outlived the deletion. ⚠️ *Corrected 2026-08-29 (previously the
+/// third was "the per-root roll-up")* — <c>browserai-sessions.json</c> is
+/// deleted, and what survives of that pair is the answer line, which is where
+/// the only reader either had was ever going to read it.
 /// </para>
 /// </remarks>
 internal sealed class FlatOutputTests
 {
-    private static readonly string[] LeftRoot = ["alpha", "beta"];
-    private static readonly string[] RightRoot = ["gamma"];
-    private static readonly string[] RigRoot = ["rig-session"];
-
     /// <summary>
     /// The three directories a session is created with are the only ones
     /// BrowserAI ever makes, whatever a call writes.
@@ -210,8 +210,33 @@ internal sealed class FlatOutputTests
         }
     }
 
+    /// <summary>
+    /// The neighbours an <c>init</c> answer names are the ones under that
+    /// session's own root, and no others.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Narrowed 2026-08-29 (previously
+    /// <c>TheRollUpCoversOnlyTheRootInPlay</c>).</b> That test asserted the same
+    /// scoping twice — once off <c>browserai-sessions.json</c> beside the
+    /// sessions and once off this line — and the file is deleted, so the half
+    /// that read it went with it. <b>What is left is the half that was ever
+    /// about a caller</b>, and it is stronger than the sentences it replaces:
+    /// the roots are populated in an order that makes each <c>DoesNotContain</c>
+    /// name a session that already exists, which the old ordering did not.
+    /// </para>
+    /// <para>
+    /// <b>The upward half genuinely died with the file and is not quietly
+    /// missing.</b> A roll-up sat at a session's own root and was never
+    /// propagated to an ancestor, so the file at the rig root listed only the
+    /// rig's own session — a property of which file got rewritten. The walk
+    /// behind this line is a path-prefix read, so a root does see the sessions
+    /// nested below it, and there is nothing left to assert there.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheRollUpCoversOnlyTheRootInPlay()
+    public async Task TheSiblingSessionsLineCoversOnlyTheRootInPlay()
     {
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -220,81 +245,21 @@ internal sealed class FlatOutputTests
         var right = Path.Combine(sessions.Root, "project-right");
 
         _ = await InitAsync(rig, Path.Combine(left, "alpha"));
-        var second = await InitAsync(rig, Path.Combine(left, "beta"));
-        _ = await InitAsync(rig, Path.Combine(right, "gamma"));
-
-        await Assert.That(Beneath(left)).IsEquivalentTo(LeftRoot);
-        await Assert.That(Beneath(right)).IsEquivalentTo(RightRoot);
+        var second = TextOf(await InitAsync(rig, Path.Combine(right, "gamma")));
+        var third = TextOf(await InitAsync(rig, Path.Combine(left, "beta")));
 
         // BrowserAI is registered once and serves every repository on the host,
         // so an aggregate over everything would pull unrelated projects into
-        // whatever context happens to be open. Neither root's roll-up knows the
-        // other exists.
-        await Assert.That(Beneath(left)).DoesNotContain("gamma");
-        await Assert.That(Beneath(right)).DoesNotContain("alpha");
+        // whatever context happens to be open. Neither root's line knows the
+        // other exists, and neither reaches up to the rig's own session a level
+        // above them both.
+        await Assert.That(second).Contains("other sessions under " + right + ": 0");
+        await Assert.That(second).DoesNotContain("alpha");
+        await Assert.That(second).DoesNotContain("rig-session");
 
-        // A roll-up sits at the session's OWN root and is not propagated
-        // upwards. Refreshing every ancestor would scatter this file up a
-        // caller's tree to the drive root, which is the opposite of scoping it.
-        await Assert.That(Beneath(sessions.Root)).IsEquivalentTo(RigRoot);
-
-        // And the init that created each one said how many neighbours it had,
-        // which is the half a file on disk cannot deliver to a model.
-        await Assert.That(TextOf(second)).Contains("other sessions under " + left + ": 1");
-        await Assert.That(TextOf(second)).Contains("alpha");
-    }
-
-    /// <summary>
-    /// A roll-up that could not be written is said out loud, in the answer that
-    /// names it.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b><c>SessionRollUp.TryWrite</c>'s own doc comment is the requirement</b>
-    /// — a read-only volume or a scanner holding the file open must not turn a
-    /// session that opened into one that failed to open, and it must not be
-    /// silent either. Until 2026-08-16 the call site discarded the answer, so
-    /// <c>init</c> ended <c>(rolled up in &lt;path&gt;)</c> whether or not the
-    /// write had happened.
-    /// </para>
-    /// <para>
-    /// <b>A directory standing in for the file, rather than a second process
-    /// holding it.</b> <c>File.WriteAllBytes</c> onto a directory is refused by
-    /// Windows every time, with no timing in it, which makes this the arm that
-    /// cannot flake — and what is under test is the <i>answer</i>, not which
-    /// error produced it.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task ARollUpThatCouldNotBeWrittenIsNamedInTheAnswerRatherThanImplied()
-    {
-        await using var sessions = RigSessionEnvironment.Create();
-        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
-
-        var root = Path.Combine(sessions.Root, "project-blocked");
-        _ = Directory.CreateDirectory(Path.Combine(root, SessionRollUp.FileName));
-
-        var opened = TextOf(await InitAsync(rig, Path.Combine(root, "alpha")));
-
-        // The session opened. Only the aggregate beside it is behind.
-        await Assert.That(opened).Contains("Session ready.");
-        await Assert.That(opened).Contains(Path.Combine(root, SessionRollUp.FileName));
-        await Assert.That(opened).Contains("COULD NOT BE WRITTEN");
-    }
-
-    /// <summary>Every session directory the roll-up beneath one root lists.</summary>
-    private static IReadOnlyList<string> Beneath(string root)
-    {
-        var file = Path.Combine(root, SessionRollUp.FileName);
-
-        if (!File.Exists(file))
-        {
-            return [];
-        }
-
-        return [.. (JsonNode.Parse(File.ReadAllText(file))!["beneath"]?.AsArray() ?? [])
-            .Select(entry => Path.GetFileName((string?)entry?["directory"] ?? string.Empty))];
+        await Assert.That(third).Contains("other sessions under " + left + ": 1 — alpha");
+        await Assert.That(third).DoesNotContain("gamma");
+        await Assert.That(third).DoesNotContain("rig-session");
     }
 
     private static string DirectoriesUnder(string session) =>
