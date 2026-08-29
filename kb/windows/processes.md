@@ -306,6 +306,53 @@ polling the foreground every 250 ms for a few seconds and attributing each
 foreground window to a pid. Keep the visible-window control on **every** arm, or
 a browser that showed nothing is indistinguishable from one that behaved.
 
+### Exit code 1 is not a crash — what each way of ending a process leaves behind — measured 2026-08-29
+
+**Nothing on this machine crashes with exit code 1. A `1` means somebody called
+`TerminateProcess(handle, 1)`.** Measured 2026-08-29, Windows 11 26200, every arm
+run against a real victim process and read back with `GetExitCodeProcess`. It
+exists because a browser that exited 1 was chased for eleven days as a crash
+([question 8](../../QUESTIONS.md)), and the one measurement that would have
+retired that reading in an afternoon is this table. `[STABLE]` for the mechanisms,
+which are Windows' and .NET's own; `[MACHINE]` for nothing here.
+
+| How the process ended | Exit code |
+|---|---|
+| `TerminateProcess(handle, 1)` | **1** |
+| `taskkill /F /PID <pid>` | **1** |
+| `Stop-Process -Force`, which is .NET's `Process.Kill()` | **−1** (`0xFFFFFFFF`) |
+| the last handle to a `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` job closing, 3 of 3 | **0** |
+| `taskkill` without `/F` against a console process with no window | **ignored** — it posts `WM_CLOSE` and the process runs on |
+| a Chromium `CHECK` crash, crashpad connected and a 2,553,376-byte minidump written | `0x80000003` |
+| a Chromium killed by desktop-heap exhaustion, 37 deaths over two rigs | `0x80000003` or `0xE0000008` |
+
+> **The two rows that carry the weight are the two 1s and the job row.**
+> `taskkill /F` and a hand-rolled `TerminateProcess(h, 1)` are
+> **indistinguishable by exit code**, so a 1 says *ended from outside* and says
+> nothing whatever about by whom. And a process taken down by kill-on-job-close
+> exits **0** — it is indistinguishable from a clean shutdown, which is the
+> opposite trap: a survivor check that reads exit codes cannot tell containment
+> from a graceful exit. `[STABLE]`
+>
+> **A handled crash and an unhandled one leave the same exit code.** `chrome.exe
+> --headless=new … --crash-test` writes a real dump into the profile's
+> `Crashpad\reports` *and* exits `0x80000003`, so the presence of a crash handler
+> changes what is recorded and not what the parent reads. A healthy launch starts
+> **two** `--type=crashpad-handler` children and creates
+> `Crashpad\{reports, attachments, settings.dat}`; every one of the nine
+> desktop-heap deaths measured the same day wrote exactly one dump, so the
+> handler was connected in all of them and the code was `0x80000003` anyway.
+>
+> **To re-establish**, for each row: start a victim that will not exit on its own
+> (`pwsh -NoProfile -NonInteractive -Command "Start-Sleep -Seconds 90"`), keep the
+> process **handle** from `CreateProcessW` so the exit code is readable after
+> death — `Process.ExitCode` throws once the object is disposed — end it the row's
+> way, `WaitForSingleObject`, then `GetExitCodeProcess`. For the job row, create
+> the job with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, `AssignProcessToJobObject`
+> the victim, then `CloseHandle` the job. For the Chromium rows use the
+> provisioned `chrome.exe` with the saturation entry's command line and add
+> `--crash-test` for the crash arm. **Never by image name**, on any of them.
+
 ## Files, durable writes and deletes
 
 **`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on
@@ -891,6 +938,21 @@ level:
 > Chromium's own out-of-memory exception code — in the arm where the heap was
 > handed back mid-startup. Neither is the `1` recorded from the wild, and eighty
 > launches produced no `1` at all.
+>
+> ⚠️ **Extended 2026-08-29, and the `1` is now accounted for elsewhere.** The
+> arm this rig had never run is the other half of the dynamic: pre-fill to a
+> level the browser survives, then take the last three windows at a chosen
+> instant of its startup, so it crosses the cliff **while starting** rather than
+> before or after. Ten instants, one launch each, pre-filled to 4,634 — a level
+> re-calibrated the same day and still living 3 of 3 at 676 to 678 log lines:
+> `+0, +5, +10, +15, +20, +50, +120 ms` gave `0x80000003` with a six-line log;
+> `+30` and `+80 ms` gave `0xE0000008` with nine and ten; `+200 ms` **left the
+> browser alive** with 396 log lines and **29 crash dumps**, because by then the
+> shortage kills its child processes instead of it. **Still no `1`, at any
+> instant** — and [the terminator table](#exit-code-1-is-not-a-crash--what-each-way-of-ending-a-process-leaves-behind--measured-2026-08-29)
+> above says why there could not be one: a `1` is what `TerminateProcess(handle, 1)`
+> leaves, and nothing in this rig issues one. `[MACHINE]` for the instants, whose
+> boundaries are this machine's startup timing.
 >
 > **To re-establish**, with no registry change anywhere and the interactive
 > desktop untouched: `CreateDesktopW("<name>", NULL, NULL, 0, DESKTOP_ALL, NULL)`

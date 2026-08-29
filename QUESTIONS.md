@@ -721,6 +721,198 @@ whole reason (b) was built before (e) was chased.
 **This entry stays open on exit code 1 and nothing else.** What kills the browser
 is answered; what the wild machine did differently is not.
 
+✅ **ANSWERED 2026-08-29, and the answer is that the exit code was never
+Chromium's. `1` is what an external `TerminateProcess(handle, 1)` leaves
+behind** — the browser did not crash, and on 2026-08-26 it was not short of
+desktop heap. Direction (e) is closed **REPRODUCED EXACTLY**, and the row the
+table above could not fill is filled by a different mechanism from the one the
+rest of the table measures.
+
+**What each way of ending a process leaves as an exit code**, measured
+2026-08-29, every arm run against a real victim and read back with
+`GetExitCodeProcess`:
+
+| How it ended | Exit code |
+|---|---|
+| `TerminateProcess(handle, 1)` | **1** |
+| `taskkill /F /PID` | **1** |
+| `Stop-Process -Force`, which is .NET's `Process.Kill()` | −1 (`0xFFFFFFFF`) |
+| the last handle to a `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` job closing, 3 of 3 | **0** |
+| a Chromium `CHECK` crash, crashpad connected and a 2,553,376-byte dump written | `0x80000003` |
+| a Chromium killed by desktop heap: 28 deaths on 2026-08-27, 9 more on 2026-08-29 | `0x80000003` or `0xE0000008` |
+
+**The `CHECK`-crash row is the control that ends seed hypothesis 1**, and it was
+run first because the whole crashpad theory turns on it: `chrome.exe
+--headless=new … --crash-test` crashes the browser process on purpose, and it
+exits **`0x80000003`** *while* writing a real minidump into the profile's
+`Crashpad\reports`. **A handled crash and an unhandled one leave the same exit
+code**, so a crashpad handler cannot be what the wild machine had and the rig
+lacked. The handler is not scarce either: a healthy launch starts **two**
+`--type=crashpad-handler` children and creates `Crashpad\{reports,attachments,
+settings.dat}`, and *every one of the nine desktop-heap deaths on 2026-08-29
+wrote exactly one dump*, so on the rig the handler was connected, did capture
+the crash, and the code was `0x80000003` anyway.
+
+⚠️ **So the wild browser was ended from outside, and this tree has exactly two
+places that end anything with a 1** — `git grep` over `src/` and `tests/`,
+2026-08-29: `StrayCandidate.TryTerminate` in
+[`BrowserProcesses.cs`](src/BrowserAI/Interop/BrowserProcesses.cs) and
+`ProcessIdentity.Terminate` in
+[`ProcessIdentity.cs`](tests/BrowserAI.Tests/Harness/ProcessIdentity.cs). **The
+product's sweep is ruled out by its own design**, read from
+[`StraySweep.cs`](src/BrowserAI/Sessions/StraySweep.cs) the same day: Chromium
+attribution runs *process → profile* and the process publishes the path through
+its message window, so a browser that never published one is `Unattributable` —
+*"reported loudly and never acted on"*. The wild browser never published one;
+that is the very thing the failing test reported. **READ rather than run.**
+
+**That leaves the harness, and the reproduction is deterministic.**
+`JobObjectScope.Launch` writes every process it starts — browsers included — into
+`<repo>\.work\spawn-record.txt`, and `ScratchRoot.EnsureReclaimed` calls
+`SpawnRecord.Reclaim(SpawnRecord.Path)` on first use of a scratch root **in each
+process**, which terminates every recorded pid that is still that process with
+`TerminateProcess(handle, 1)`. Start a second `BrowserAI.Tests.exe`, launch the
+provisioned Chromium with the sweep test's own command line, append its
+`(pid, creationFileTime)` the way the harness does, and the second host kills it:
+**exit 1, 18 of 18**, across a lead sweep of nine settings.
+
+**The reclaim fires at a stable instant, which is what makes the rest of the
+signature tunable.** A warm second host empties the record at **+543 to +557 ms**
+after it starts, 4 of 4; the first, cold one took +797 ms twice. Browser age at
+the kill is therefore `R − lead`, and the age is what decides how much of the
+wild shape comes out:
+
+| Lead | Browser age at the kill | What came out |
+|---:|---:|---|
+| 0 ms | ~765 ms | exit 1, 241–242 log lines, 440 B of stderr |
+| 300–360 ms | ~230–280 ms | exit 1, 55–102 log lines, 0–440 B of stderr |
+| **400–430 ms** | **~140–175 ms** | **exit 1, 3 to 5 log lines, 0 bytes on stdout and 0 on stderr** |
+| 460–500 ms | ~40–100 ms | exit 1, no log file written yet |
+
+**Point by point against 2026-08-26 19:43, at lead 400:**
+
+| Measured in the wild | Produced by the reclaim | |
+|---|---|---|
+| **exit code 1** | **exit code 1**, 18 of 18 | ✓ |
+| nothing on stdout, nothing on stderr, both pipes at EOF | **0 bytes on each, both drained to EOF** | ✓ |
+| five log lines ending at the two `scheduler_loop_quarantine_config.cc:195` lines | **the same five lines, same files, same line numbers, same order** — 13 ms end to end against the wild's 26 on a loaded machine | ✓ |
+| no message window ever created | **zero** `Chrome_MessageWindow` for the profile | ✓ |
+| 527 processes, 289,927 handles, 63 % of RAM free — every ceiling ruled out | **nothing is wrong with the machine, and under this mechanism nothing needs to be** | ✓ |
+
+**Why the five lines are five.** A healthy browser writes its fifth line and then
+says nothing for **26 ms** before `webrtc_event_log_manager.cc:126` — measured
+2026-08-29 off a 676-line healthy log. That silent gap is the window in which a
+death leaves exactly five lines, and it is the same gap the desktop-heap rig hit
+from the other side. **Two entirely different mechanisms truncate the log in the
+same place, and the exit code is the only thing that ever separated them** —
+which is exactly why it was worth chasing.
+
+⚠️ **What this does to the desktop-heap finding: it stands as a failure mode and
+falls as the diagnosis of 2026-08-26.** Everything the 2026-08-27 rig measured is
+still true and still reproducible — the calibration was re-run on 2026-08-29 and
+came back identical, 4,634 windows of 2,048-character title filling a
+20,480 KB desktop, the browser living 3 of 3 above the cliff at 676–678 log
+lines. It is a real way for a Chromium to die silently on this machine. **It is
+not what killed the browser on 2026-08-26**, because that browser exited 1 and
+this one never does.
+
+🔬 **Seed hypothesis 2 was run and is the arm nobody had: cross the cliff *during*
+startup.** The 2026-08-27 rig could exhaust the heap before the browser started,
+or hand it back mid-startup; the missing half was to pre-fill to a level the
+browser survives and then take the last three windows at a chosen instant.
+**Prediction, written before the run: early instants give `0x80000003` and a five
+or six line log, later ones `0xE0000008` or life, and no instant gives a 1.**
+Ten instants, one launch each, pre-filled to 4,634:
+
+| Trip at | Exit | Log lines | Streams | Crash dumps |
+|---:|---|---:|---|---:|
+| +0, +5, +10, +15, +20, +50, +120 ms | `0x80000003` | 6 | 0 B / 0 B | 1 each |
+| +30, +80 ms | `0xE0000008` | 9, 10 | 0 B / 0 B | 1 each |
+| +200 ms | **lived** | 396 | 0 B / 859 B | **29** |
+
+**No instant produced a 1**, which is the prediction confirmed and the seed
+retired. The +200 ms row is the one worth keeping for itself: **a heap exhausted
+after the browser is up kills its children instead of it** — twenty-nine dumps,
+a browser still running, and a log that goes on.
+
+**Seed hypothesis 3 was not re-run, and this says so rather than implying
+coverage.** The 2026-08-27 rig already mapped the alternate sites — many small
+windows refuse with `ERROR_NO_MORE_USER_HANDLES` and kill earlier with no log
+file at all, large ones with `GetLastError` = 0 — and the gradient walked the
+heap from 0 KB to 4.6 MB. Between them those regimes produced 28 deaths and two
+exit codes. Re-running them to look for a 1 would have been the open-ended grind
+the brief forbade, once a 1 was shown to need an external terminator.
+
+⚠️ **What I could not establish, said here rather than at the end: which
+terminator fired on 2026-08-26 at 19:43.** Two produce exactly this trace —
+`taskkill /F`, which anybody or any agent may type at a shell, and the harness's
+own reclaim — and **nothing durable records either**. `SpawnRecord.Reclaim`'s
+report lives in memory on `ScratchRoot.LastPassReport` and only a *survivor*
+reaches the coverage block, so a reclaim that succeeded leaves no trace at all.
+The run's own capture survived in `.work/p6/chromium-death-evidence.txt` and
+names no second process; it does add one number, that the test failed in
+**561 ms**, which is consistent with a kill a few hundred milliseconds into a
+browser that had just been launched. **There is also an argument against the
+reclaim having been the one**: `EnsureReclaimed` does not only terminate — it
+`TreeDelete`s every directory under the scratch root — so a mid-run reclaim
+should have produced a cluster of failures rather than the single one that run
+reported. That argument is not decisive, and neither is anything else here.
+
+---
+
+### 8a. The harness can terminate a live run's browsers with exit code 1, and nothing stops it
+
+**Primer, for somebody who has not read the above.** Every process the suite
+starts is recorded in `<repo>\.work\spawn-record.txt` as `(pid, creationFileTime)`
+so that the *next* run can end what a killed run left behind. The pass that reads
+it, `ScratchRoot.EnsureReclaimed`, runs on first use of a scratch root **in each
+process** — not once per run — and it terminates every recorded pid that is still
+that process. Within one test host that is exactly right: it runs before any
+browser exists. **Across two, it is a machine-wide kill with no interlock**: a
+second harness process reading a live run's record ends that run's browsers,
+probes and slices with exit code 1, and then deletes the scratch tree they are
+using. Measured 2026-08-29: 18 of 18. `CLAUDE.md` already warns that concurrent
+suite runs eat each other and names *"a browser vanished"* as one of the shapes;
+what was not known is that the eating leaves a **1**, which is indistinguishable
+from a great many other things until somebody measures the alternatives.
+
+**One second host in the tree does not trigger it, and that is measured rather
+than assumed.** `SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease`
+starts a real `BrowserAI.Tests.exe` inside a run; with its filter it never
+touches a scratch root, so the record was not emptied and a live browser
+survived, 2 of 2. **That is one filter's behaviour, not a property of the
+mechanism** — a filter that selected anything using `ScratchDirectory` would fire
+it, and `--treenode-filter` is already documented in this repository to select
+more than it looks like it selects.
+
+**Directions.**
+
+- **(a) Leave it.** The pass is correct for the case it was written for, and the
+  hazard needs two harness processes at once, which the working rules already
+  forbid. Cost: the next occurrence looks exactly like the one that took two
+  rigs and eighty launches to not explain.
+- **(b) Make the record self-identifying.** Write the owning run's id beside each
+  line and reclaim only lines whose owner is not this run and is no longer alive.
+  A live run's rows are then invisible to a second one, and the pass keeps doing
+  its job for a run that really was killed.
+- **(c) Interlock on a machine-wide mutex the way the sweep does**, held for the
+  length of a run rather than the length of the pass, so a second harness process
+  either waits or refuses. Strongest, and it changes what "run the suite twice at
+  once" means from *undefined* to *serialised*.
+- **(d) Make the reclaim announce itself.** A pass that terminated something
+  writes it to the process log rather than to an in-memory list, so the next
+  occurrence is one grep rather than one investigation. Cheapest, diagnoses
+  rather than prevents, and composes with any of the above.
+- **(e) Stop recording browsers.** Only the job object would contain them, which
+  is what it is for. Loses the recovery the record exists for, in the one case it
+  exists for.
+
+**Recommendation: (b) with (d).** (b) removes the failure without weakening the
+recovery, and (d) is what makes the *next* surprise cheap — the whole cost of
+this question was that a forced termination looks like a crash until somebody
+measures both. **Not taken: it is a change to the harness's kill policy and it
+belongs to the maintainer.**
+
 ---
 
 ## Added 2026-08-18, from the honesty pass
