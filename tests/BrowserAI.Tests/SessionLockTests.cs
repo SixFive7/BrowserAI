@@ -866,6 +866,109 @@ internal sealed class SessionLockTests
         }
     }
 
+    /// <summary>
+    /// A process re-taking a directory it itself last held says so, rather than
+    /// reporting a reclaim from a live stranger.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It did not, and the log said the opposite of the truth on every
+    /// acquisition it ever recorded.</b> Counted 2026-08-30 over the
+    /// machine-wide process log: <b>2,081 of 2,081</b> acquisitions in it were
+    /// this shape — the guard on disk naming the very process about to take the
+    /// directory — because the only acquisitions that reach that file are
+    /// <c>destroy</c> and <c>set_purpose</c>, and both dispose the live session
+    /// and re-acquire. Every one was written <i>previous holder was PID n,
+    /// still running: True</i>, which names the one event on this path worth
+    /// waking up for and had never once happened.
+    /// </para>
+    /// <para>
+    /// <b>The outcome is deliberately not asserted here, and
+    /// <see cref="AHeldLockRefusesASecondWriterAndStillAnswersAReader"/> is
+    /// deliberately not touched.</b> That test pins
+    /// <see cref="SessionLockOutcome.Reclaimed"/> and <c>HolderRunning</c> true
+    /// for exactly this shape, and both are still the right answers: the
+    /// directory was held and it is now ours. What was wrong was the record, so
+    /// the record is the only thing that moved — and keeping the two tests apart
+    /// is what stops a later change to one of them quietly taking the other's
+    /// evidence with it.
+    /// </para>
+    /// <para>
+    /// <b>The negative arm is the load-bearing half.</b> Asserting the new
+    /// sentence is present would pass just as well if the old one were emitted
+    /// beside it, which is the shape a well-meant "log both" would take and
+    /// would leave the false sentence exactly where it was.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProcessReTakingItsOwnGuardSaysSoRatherThanReportingAReclaim()
+    {
+        using var scratch = ScratchDirectory.Create("session-self-retake");
+        var (_, path) = NewSession(scratch, "self-retake");
+
+        using var logs = new CapturingLoggerProvider();
+        var logger = logs.CreateLogger("SessionLock");
+
+        // A directory nobody has ever taken: this acquisition is Fresh, and it
+        // is the positive control for the capture itself.
+        var first = SessionLock.TryAcquire(path, Request("the first"), logger);
+
+        try
+        {
+            await Assert.That(first.Taken).IsTrue();
+            await Assert.That(first.Outcome).IsEqualTo(SessionLockOutcome.Acquired);
+            await Assert.That(logs.Records.Select(record => record.EventId.Id)).Contains(1);
+        }
+        finally
+        {
+            first.Acquired?.Dispose();
+        }
+
+        // Released. The guard stays on disk, and it names this process -- which
+        // is the whole shape: the pid and the creation FILETIME in that file are
+        // this process's own.
+        await Assert.That(File.Exists(path.LockFile)).IsTrue();
+        await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(Environment.ProcessId);
+
+        var second = SessionLock.TryAcquire(path, Request("the second"), logger);
+
+        try
+        {
+            await Assert.That(second.Taken).IsTrue();
+
+            var records = logs.Records
+                .Where(record => record.EventId.Id is 2 or 12)
+                .ToList();
+
+            // Exactly one of the two, and it is not the reclaim: re-taking our
+            // own guard is one event and a takeover is a different one.
+            await Assert.That(records.Count).IsEqualTo(1);
+            await Assert.That(records[0].EventId.Id)
+                .IsEqualTo(12)
+                .Because("a self-retake writes its own record, and writing the reclaim beside it would leave the false sentence exactly where it was");
+
+            await Assert.That(records[0].Message)
+                .Contains("re-acquired")
+                .Because("the sentence has to say what happened, not merely differ from the reclaim's");
+
+            await Assert.That(records[0].Message)
+                .Contains(Environment.ProcessId.ToString(CultureInfo.InvariantCulture))
+                .Because("the pid it names is this process's own, which is what makes the sentence checkable by a reader");
+
+            // The negative arm. `still running: True` was the whole of the false
+            // story -- true about the pid, and read by anybody scanning the log
+            // as a live stranger having its directory taken.
+            await Assert.That(logs.Logged("still running: True"))
+                .IsFalse()
+                .Because("that clause is what made 2,081 of 2,081 self-retakes read as takeovers from a live process");
+        }
+        finally
+        {
+            second.Acquired?.Dispose();
+        }
+    }
+
     [Test]
     public async Task ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen()
     {

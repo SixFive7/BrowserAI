@@ -648,6 +648,54 @@ with no permitted remedy. `ForegroundLockTests` holds the bands, the boundary
 between them and both directions of the warning; `SuiteCoverageTests` holds that
 the row reaches the block.
 
+### The run records the machine's commit charge
+
+**Added 2026-08-30, and it exists because a hazard row asked for it by name and
+nothing took it.** The six-run-gate row in [`HAZARDS.md`](HAZARDS.md#hazard-index)
+closed on 2026-08-24 against a kernel-level memory leak that was never this
+repository's — **137.4 GB committed of a 157.7 GB limit** at the worst of it —
+and it closed by naming the one reading that separates that cause from a live
+one: *the commit charge beside the run*. The sentence went into the document and
+no run ever took the reading, so for six days the question could not be asked of
+any gate this project ran. On 2026-08-29 the same shape recurred, and the reading
+did not exist for that run either.
+
+**So every run now carries a `commit charge` row**, read at both ends of the
+session through `GetPerformanceInfo` — the same figure as
+`Get-Counter '\Memory\Committed Bytes'`, which is what the hazard row names —
+with one of four states:
+
+| State | What it means |
+|---|---|
+| `HEALTHY` | Under three quarters of the limit at both ends. A hang detector reached here is evidence about the code |
+| `TIGHT` | Three quarters or more. A timing failure is not safely attributable to the change under test, and the row says so in two further lines |
+| `CRITICAL` | Nine tenths or more. Allocations fail outright in this band; *"The paging file is too small"* is what the suite reported the last time it happened, and three further lines name the hazard row |
+| `UNREADABLE` | Windows would not answer. Reported as its own state and never as a zero, because a zero would read as an idle machine |
+
+**Two readings rather than one, and the verdict is taken on the worse of them.**
+The difference between the ends is what separates *the machine was already
+loaded* from *this suite loaded it*, which are different findings with different
+owners; and a run that started `CRITICAL` and ended `HEALTHY` because whatever
+was eating the machine got reaped mid-run is a run whose timings are suspect, so
+an end-only verdict would call it healthy and lose exactly the finding the row
+exists for.
+
+⚠️ **No assertion reads the numbers, and that is
+[`MachineLoad`](tests/BrowserAI.Tests/Harness/MachineLoad.cs)'s standing rule
+rather than caution.** Every figure here is a property of whatever else the
+machine is running, so a bound on one would be a test that passes or fails
+depending on the developer's other windows. What
+`SuiteCoverageTests.TheRunReportsTheMachinesCommitChargeAndEveryBandIsExercised`
+asserts is that the row reaches the block, that each band is classified
+correctly — driven in-process from synthetic readings, because a healthy machine
+sits in one band for ever and the two bands that matter would otherwise first run
+on the day something is already wrong — and that an unreadable reading says so.
+
+**It is a row and not a `SuiteCapability`**, for `foreground lock`'s reason
+exactly: nothing anybody types makes a machine's commit charge healthy, so a
+capability would make a release from a loaded machine unreachable with no
+permitted remedy rather than telling the reader what to distrust.
+
 ## We write our own harness
 
 We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines

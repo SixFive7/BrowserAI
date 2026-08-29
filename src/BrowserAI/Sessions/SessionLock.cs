@@ -1148,7 +1148,7 @@ internal sealed class SessionLock : IDisposable
 
             var result = previous is null && previousHolder is null
                 ? Fresh(location, logger, taken)
-                : Reclaimed(location, logger, taken, previousHolder, previous, previousRunning);
+                : Reclaimed(location, logger, taken, previousHolder, previous, previousRunning, holder);
 
             taken = null;
             return result;
@@ -1221,19 +1221,80 @@ internal sealed class SessionLock : IDisposable
         return new SessionLockResult(SessionLockOutcome.Acquired, $"'{location.FullPath}' is now held by this session.", taken);
     }
 
+    /// <summary>
+    /// A directory that already had a guard, a record, or both, is now this
+    /// session's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Two records, one outcome, and the split arrived 2026-08-30.</b>
+    /// A process re-taking a directory <i>it itself</i> last held is by far the
+    /// commonest arrival here — every <c>destroy</c> and every
+    /// <c>set_purpose</c> disposes the live session and re-acquires, so the
+    /// guard on disk names this very process — and it was logged with the same
+    /// sentence as a genuine takeover: <i>previous holder was PID n, still
+    /// running: True</i>. That is true word by word and false as a whole. It
+    /// reads as <i>a live stranger's directory was taken</i>, which is the one
+    /// event on this path that would be worth waking up for, and it was the
+    /// only thing 2,081 of 2,081 machine-log acquisitions ever said.
+    /// </para>
+    /// <para>
+    /// <b>The identity is <c>(pid, creationFileTime)</c> and the pid alone is
+    /// not enough</b> — Windows reuses pids within seconds, and a stranger
+    /// wearing this process's number must read as the takeover it is. The
+    /// comparison is against the holder this acquisition just wrote rather than
+    /// against a freshly-read identity, so the two cannot disagree.
+    /// <c>ClientProcessName</c> is deliberately outside it: it is display-only,
+    /// it can be null, and a record's equality including it would make a
+    /// self-retake read as a takeover whenever the client name failed to
+    /// resolve once.
+    /// </para>
+    /// <para>
+    /// <b>Only the record splits.</b> The outcome stays
+    /// <see cref="SessionLockOutcome.Reclaimed"/> and
+    /// <c>HolderRunning</c> stays true, because both are answers about the
+    /// directory rather than about who is asking, and a caller that branches on
+    /// them is right to see no difference — the directory <i>was</i> held and
+    /// <i>is</i> now ours. The caller-facing sentence is also unchanged and
+    /// still says <i>still running but has let the directory go</i>, which for
+    /// this shape is accurate and slightly odd; it is left alone rather than
+    /// tuned, because the false story was in the log and moving the refusal text
+    /// would be a second change wearing the first one's justification.
+    /// </para>
+    /// </remarks>
+    /// <param name="location">The session directory.</param>
+    /// <param name="logger">Where the record goes.</param>
+    /// <param name="taken">The acquisition, whose ownership this transfers.</param>
+    /// <param name="previousHolder">What the guard on disk named, if it could be read.</param>
+    /// <param name="previous">The record on disk, if there was one.</param>
+    /// <param name="previousRunning">Whether the previous holder's process is alive.</param>
+    /// <param name="holder">This acquisition's own identity.</param>
+    /// <returns>The result, carrying the acquisition.</returns>
     private static SessionLockResult Reclaimed(
         SessionPath location,
         ILogger logger,
         SessionLock taken,
         LockFileHolder? previousHolder,
         SessionRecord? previous,
-        bool previousRunning)
+        bool previousRunning,
+        LockFileHolder holder)
     {
         var pid = previousHolder?.ProcessId ?? previous?.Holder?.ProcessId ?? 0;
         var created = previousHolder?.ProcessCreatedFileTime ?? previous?.Holder?.ProcessCreatedFileTime ?? 0;
         var since = created is 0 ? previous?.TakenAt ?? DateTimeOffset.Now : DateTimeOffset.FromFileTime(created);
 
-        SessionLog.Reclaimed(logger, location.FullPath, pid, previousRunning);
+        var ourOwn = previousHolder is not null
+            && previousHolder.ProcessId == holder.ProcessId
+            && previousHolder.ProcessCreatedFileTime == holder.ProcessCreatedFileTime;
+
+        if (ourOwn)
+        {
+            SessionLog.ReacquiredOurOwnGuard(logger, location.FullPath, pid);
+        }
+        else
+        {
+            SessionLog.Reclaimed(logger, location.FullPath, pid, previousRunning);
+        }
 
         return new SessionLockResult(
             SessionLockOutcome.Reclaimed,
@@ -1562,6 +1623,36 @@ internal static partial class SessionLog
         Level = LogLevel.Information,
         Message = "Session lock reclaimed for {Directory}; previous holder was PID {PreviousProcessId}, still running: {PreviousStillRunning}.")]
     public static partial void Reclaimed(ILogger logger, string directory, int previousProcessId, bool previousStillRunning);
+
+    /// <summary>
+    /// A directory was taken by the process the guard on it already named.
+    /// </summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="processId">This process's pid, which is also the guard's.</param>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Its own event rather than a parameter on
+    /// <see cref="Reclaimed"/>, because the two are different events wearing
+    /// one outcome.</b> A reclaim is <i>somebody else's directory is now
+    /// ours</i>; this is <i>we are back in a directory we never left the
+    /// machine holding</i>. Every <c>destroy</c> and every <c>set_purpose</c>
+    /// produces one, so on the machine-wide log this is not the rare case —
+    /// it is the only case, 2,081 of 2,081, and until 2026-08-30 all of them
+    /// were logged as reclaims from a live process.
+    /// </para>
+    /// <para>
+    /// <b>It does not say <c>still running</c>, and the omission is the
+    /// point.</b> The process is running: it is this one, and it is the one
+    /// writing the line. Repeating that here is what made the reclaim sentence
+    /// read as an alarm.
+    /// </para>
+    /// </remarks>
+    [LoggerMessage(
+        EventId = 12,
+        Level = LogLevel.Information,
+        Message = "Session lock re-acquired for {Directory} by the process that already held its guard, PID {ProcessId} -- this process. Nothing was taken from anybody.")]
+    public static partial void ReacquiredOurOwnGuard(ILogger logger, string directory, int processId);
 
     /// <summary>Somebody else holds the directory.</summary>
     /// <param name="logger">Where it goes.</param>

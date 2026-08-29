@@ -269,6 +269,60 @@ internal sealed class PayloadTests
         await Assert.That(bundle).Contains("getFromENV(\"PLAYWRIGHT_BROWSERS_PATH\")", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// A payload that re-resolved makes the published binary stale.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It did not, and the gap fails in the direction nothing reports.</b>
+    /// A publish copies the resolved payload beside the executable, so a
+    /// re-resolve that moved <c>@playwright/mcp</c>, <c>playwright-core</c> or
+    /// <c>node</c> left every slice arm driving a published tree carrying the
+    /// old one — reading as fresh, with the lock in the tree saying otherwise.
+    /// Found 2026-08-29 during release preparation and benign on the day, only
+    /// because that re-resolve had come back byte for byte.
+    /// </para>
+    /// <para>
+    /// <b>Asserted over the corpus rather than over the check</b>, for the same
+    /// reason as
+    /// <see cref="SqliteTests.TheFreshnessCheckWatchesTheVendoredAmalgamation"/>:
+    /// a staleness check is silent by construction about what it never looked
+    /// at, and passing is exactly what it does when a file is outside it.
+    /// </para>
+    /// <para>
+    /// <b>And over the corpus rather than over the tree, because the tree is
+    /// pruned.</b> <see cref="RepositoryLayout"/> drops any directory named
+    /// <c>payload</c> during the walk, so no corpus it produces can contain this
+    /// file however the enumeration is widened — which is why the second arm
+    /// below asserts the exact relative path rather than a pattern.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheFreshnessCheckWatchesThePayloadsProvenanceStamp()
+    {
+        var watched = PublishedSlice.FreshnessInputs
+            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName).Replace('\\', '/'))
+            .ToList();
+
+        // The positive control: the corpus is the one that was already there, so
+        // an empty or broken enumeration cannot make the arm below pass.
+        await Assert.That(watched).Contains("src/BrowserAI/Program.cs");
+        await Assert.That(watched).Contains("third-party/sqlite/sqlite3.c");
+
+        await Assert.That(watched)
+            .Contains("build/payload/package-lock.json")
+            .Because("a publish copies the resolved payload beside the executable, so a re-resolve that moved @playwright/mcp, playwright-core or node must make the publish stale -- and the lock is the committed record of exactly that resolution, while the resolved tree itself is gitignored and pruned from every walk");
+
+        // The file has to BE there for watching it to mean anything: a FileInfo
+        // for a path that does not exist has LastWriteTimeUtc of 1601 and would
+        // sit in the corpus for ever, never newer than anything, watching
+        // nothing. This is the arm that separates watched from named.
+        await Assert.That(PublishedSlice.PayloadProvenanceStamp.Exists)
+            .IsTrue()
+            .Because("a missing file never reads as newer than the binary, so a freshness input that is not there is indistinguishable from one that never fires");
+    }
+
     private static async Task<(int ExitCode, string Output)> RunAsync(string executable, string arguments)
     {
         using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo

@@ -432,6 +432,17 @@ internal static class SuiteEnvironment
         // defect, one layer out from the product.
         _ = report.Append(ForegroundLock.CoverageRow).Append('\n');
 
+        // ⚠️ WHAT THE MACHINE WAS CARRYING WHILE THIS RUN RAN, which is the one
+        // reading a closed hazard row names as the thing that separates its own
+        // cause from a live one -- and which no run had ever recorded, so the
+        // question could not be asked of any gate this project has taken. A row
+        // rather than a capability for ForegroundLock's reason: nothing anybody
+        // types makes a machine's commit charge healthy. Two readings rather
+        // than one, because the difference between them is what separates "the
+        // machine was already loaded" from "this suite loaded it". See
+        // CommitCharge, and HAZARDS.md for what asked for it.
+        _ = report.Append(CommitCharge.CoverageRow).Append('\n');
+
         _ = report.Append(rule).Append('\n');
 
         var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);

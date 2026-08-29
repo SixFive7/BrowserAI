@@ -376,6 +376,37 @@ internal sealed class BrowserContainmentTests
     /// evidence rather than from a process count that a failed launch could also
     /// produce.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>It reads the child's <c>stderr</c> and tees it to
+    /// <c>cli-stderr.log</c>, and until 2026-08-30 it did neither.</b> The
+    /// child was spawned with all three streams piped and only <c>stdout</c>
+    /// was ever read, so upstream's account of every launch that did not happen
+    /// went into a pipe nobody drained. That is the same gap
+    /// <see cref="BrowserAI.TestProbe.JobProbe"/> closed one level up on
+    /// 2026-08-17 — its comment there says a discarded stream is "the whole
+    /// difference between a diagnosable failure and a three-minute mystery" —
+    /// and it was still open one level down, which is why the 2026-08-18 dump
+    /// could name a failure and not say why. It was open again on 2026-08-29:
+    /// a Firefox arm stalled 32 s between creating its profile database and
+    /// initialising NSS and then went silent for two minutes, on a machine four
+    /// independent instruments say was quiet, and the only account of it was in
+    /// that pipe.
+    /// </para>
+    /// <para>
+    /// <b>The file goes in the scratch directory rather than through the host</b>,
+    /// because <see cref="LauncherWait.Evidence"/> already inlines every file it
+    /// finds there, truncated, into the failure message — so a tee is the whole
+    /// change and nothing on the C# side needs to know this file exists.
+    /// </para>
+    /// <para>
+    /// <b>An unread pipe is a second failure mode and this closes that too.</b>
+    /// A pipe whose reader never reads it fills, and a child writing into a full
+    /// pipe blocks in its write rather than reporting anything — so a
+    /// sufficiently chatty <c>cli.js</c> would have hung here in a way
+    /// indistinguishable from the browser stall this arm exists to catch.
+    /// Unobserved rather than hypothetical: nothing in this tree has ever
+    /// measured how much upstream writes before it comes up.
+    /// </para>
     /// </remarks>
     private const string DriverScript = """
         const cp = require('child_process');
@@ -384,9 +415,25 @@ internal sealed class BrowserContainmentTests
 
         const [readyFile, cli, configFile, browsersRoot] = process.argv.slice(2);
 
+        // Beside the ready file, which is the scratch directory the host's
+        // failure dump walks -- so this needs no wiring on the C# side at all.
+        // `dirname(readyFile)` rather than `process.cwd()`: the working
+        // directory is the launcher's choice and this is the host's.
+        const stderrLog = fs.openSync(path.join(path.dirname(readyFile), 'cli-stderr.log'), 'a');
+
         const child = cp.spawn(process.execPath, [cli, '--config', configFile, '--sandbox'], {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: browsersRoot, PLAYWRIGHT_SKIP_BROWSER_GC: '1' },
+        });
+
+        // writeSync per chunk, deliberately, and not a WriteStream. This process
+        // is killed by TerminateProcess from outside -- that is the event the
+        // whole test is about -- and a stream's buffered tail dies with it,
+        // which would lose exactly the last thing upstream said before it
+        // stopped saying anything. A synchronous write is in the OS by the time
+        // it returns.
+        child.stderr.on('data', (chunk) => {
+          try { fs.writeSync(stderrLog, chunk); } catch { /* the dump is diagnostics; losing it must never fail the run */ }
         });
 
         let buffer = '';

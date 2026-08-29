@@ -23,6 +23,56 @@ has been satisfied in form only.
 
 ### Changed
 
+- **A process re-taking a session directory it itself last held now says so,
+  instead of reporting a reclaim from a live stranger.** `destroy` and
+  `set_purpose` both dispose the live session and re-acquire, so the guard on
+  disk names the very process about to take the directory — and every one of
+  those was logged *"previous holder was PID n, still running: True"*, which is
+  true word by word and false as a whole. It names the one event on that path
+  worth waking up for, and it had never once happened: counted over the
+  machine-wide process log, **2,081 of 2,081** acquisitions in it were the
+  self-retake shape. There is a distinct record now, with its own event id and no
+  `still running` clause, taken on `(pid, creationFileTime)` so a stranger
+  wearing this process's number still reads as the takeover it is. **The outcome
+  did not move**: `Reclaimed` and `HolderRunning: true` are answers about the
+  directory rather than about who is asking, and both are still right. What was
+  wrong was the sentence.
+
+- **The suite's coverage block records the machine's commit charge**, at both
+  ends of the session. The hazard row that closed on 2026-08-24 against a
+  kernel-level leak outside this repository closed by naming the one reading that
+  separates that cause from a live one — *the commit charge beside the run* — and
+  then nothing took it, so for six days no gate could ask its own question. The
+  row reads `HEALTHY` / `TIGHT` / `CRITICAL` / `UNREADABLE`, judged on the worse
+  of the two readings, and the two loud bands say in the run's own output why the
+  run's timings are not safely attributable to the code. **No assertion reads the
+  numbers** — they are properties of whatever else the machine is running — so
+  the bands are exercised from synthetic readings and the live arm checks only
+  that the row is produced.
+
+- **The browser-containment driver reads its child's `stderr` instead of piping
+  it into a buffer nobody drains.** It spawned `cli.js` with all three streams
+  piped and read only `stdout`, so upstream's account of every launch that did
+  not happen was discarded — which is why the 2026-08-18 dump could name a
+  failure and not say why, and why the 2026-08-29 one printed
+  `child-stderr.log (0 bytes)` and nothing else. It is teed to `cli-stderr.log`
+  in the scratch directory the failure dump already walks, so no wiring was
+  needed on the host side, and written synchronously per chunk because the
+  process is killed from outside and a stream's buffered tail would die with it.
+  It closes a second failure mode nobody had measured: a pipe whose reader never
+  reads it fills, and a child blocked writing into a full pipe hangs
+  indistinguishably from the browser stall the arm exists to catch.
+
+- **A payload that re-resolved makes the published binary stale.** A publish
+  copies the resolved payload beside the executable, so a re-resolve that moved
+  `@playwright/mcp`, `playwright-core` or `node` left every slice arm driving a
+  published tree carrying the old one — reading as fresh, with the lock in the
+  tree saying otherwise. `build/payload/package-lock.json` is watched now: it is
+  the committed record of exactly that resolution, and it is watched by name
+  because the walk prunes every directory called `payload` and is blind to it by
+  construction. Found during release preparation on 2026-08-29 and benign on the
+  day, only because that re-resolve had come back byte for byte.
+
 - **The silent Chromium death was reproduced on purpose, and desktop heap is the
   cause of everything about it except its exit code.** `QUESTIONS.md` §8 had been
   open for nine days on three sightings and one recurrence that diagnosed itself
@@ -118,6 +168,20 @@ has been satisfied in form only.
   rather than an omission.*
 
 ### Fixed
+
+- **Release checklist item 8's own code fence set the release variable and did
+  nothing else the item asks for.** It handed `dotnet test` no
+  explicitly-spelled absolute path, so both halves inherited whatever spelling
+  started the shell — **the exact 2026-08-24 failure shape the bullet three above
+  it was written to close**, reproduced inside the instrument that bullet points
+  at. It set no `BROWSERAI_DRIVE_CASE`, so the `drive letter` row could report
+  only what a run happened to get and never whether that was what anyone asked
+  for. And it appended no coverage block to the log, so six release logs would
+  have carried no `release run` row, no `first-run bytes` row and no `filter` row
+  — while the two paragraphs immediately below it name that block as the check on
+  all three. The fence is now Testing's own two invocations with the release
+  variable set inside the detached shell beside the drive-case one, and the
+  previous form is quoted in place rather than deleted.
 
 - **The harness's process-log reader answered with a stranger's records, because
   it matched half an identity.** `ProcessLogRecords` is what lets a test assert

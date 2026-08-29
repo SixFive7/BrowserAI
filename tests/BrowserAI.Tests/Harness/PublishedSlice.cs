@@ -56,17 +56,58 @@ internal static class PublishedSlice
     public static bool IsAbsentAsAWhole => !System.IO.Directory.Exists(Directory);
 
     /// <summary>
+    /// The committed provenance stamp for the payload that publishes beside the
+    /// binary: <c>build/payload/package-lock.json</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Named by path, because it is the one input here that cannot be
+    /// enumerated.</b> <c>RepositoryLayout</c> prunes any directory called
+    /// <c>payload</c> during the walk — there are two of them and one carries an
+    /// unpacked <c>node_modules</c> — so every corpus that class produces is
+    /// blind to this file by construction. Naming it is not a shortcut around
+    /// the walk; it is the only way to watch a tree the walk is right to prune.
+    /// </para>
+    /// <para>
+    /// <b>The lock rather than the payload, and that is the honest input.</b>
+    /// The thing that actually goes into the publish is the resolved
+    /// <c>node_modules</c> tree, which is gitignored, is tens of thousands of
+    /// files, and whose timestamps say when <c>npm ci</c> last ran rather than
+    /// what it resolved. The lock is the committed record of exactly that
+    /// resolution: it moves when and only when the payload's resolved set moves,
+    /// and it is what the upstream review reads. Watching it means a re-resolve
+    /// that changed something makes the publish stale; it does not mean an
+    /// unpacked tree that was deleted and restored does, which is correct — that
+    /// is the same payload.
+    /// </para>
+    /// </remarks>
+    public static FileInfo PayloadProvenanceStamp { get; } = new(
+        Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "package-lock.json"));
+
+    /// <summary>
     /// Every file that goes into the published binary, and whose being newer
     /// than it means the binary is stale.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Three kinds, and the third arrived on 2026-08-26 as a measured
-    /// gap.</b> The product's C#, the build files that decide how it is
-    /// compiled, and the source this repository vendors from elsewhere and
-    /// compiles in — which until then was watched by nothing, so a swapped
-    /// SQLite amalgamation left the binary reading as fresh and every arm
-    /// driving it asserting about a library nobody had built.
+    /// <b>Four kinds, and the last two each arrived as a measured gap.</b> The
+    /// product's C#, the build files that decide how it is compiled, the source
+    /// this repository vendors from elsewhere and compiles in — which until
+    /// 2026-08-26 was watched by nothing, so a swapped SQLite amalgamation left
+    /// the binary reading as fresh and every arm driving it asserting about a
+    /// library nobody had built — and, since 2026-08-30, the payload's
+    /// provenance stamp.
+    /// </para>
+    /// <para>
+    /// <b>The fourth is the same failure one directory across.</b> A publish
+    /// copies the resolved payload beside the executable, so a payload
+    /// re-resolve that moved <c>@playwright/mcp</c>, <c>playwright-core</c> or
+    /// <c>node</c> leaves the published tree carrying the old one — and until
+    /// this row existed, reading as fresh. It was benign on the day it was
+    /// found, 2026-08-29, and only because the re-resolve had come back byte for
+    /// byte; nothing about the check made it benign. See
+    /// <see cref="PayloadProvenanceStamp"/> for why the stamp is watched and the
+    /// tree is not.
     /// </para>
     /// <para>
     /// <b>A property rather than a local, so that a test can assert what is in
@@ -80,6 +121,7 @@ internal static class PublishedSlice
         .. RepositoryLayout.ProductSourceFiles,
         .. RepositoryLayout.BuildFiles,
         .. RepositoryLayout.VendoredSourceFiles,
+        PayloadProvenanceStamp,
     ];
 
     /// <summary>

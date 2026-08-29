@@ -65,6 +65,20 @@ internal static class SuiteCoverage
     [Before(TestSession)]
     public static void ReadWhetherThisRunWasFiltered() => SuiteFilter.Take();
 
+    /// <summary>
+    /// Takes the machine's commit charge before the first test runs.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own hook rather than a second statement in the one above</b>, so
+    /// that each says what it does: the filter reading has a timing argument
+    /// behind its placement and this one has only <i>before anything has
+    /// allocated</i>. A reading taken lazily on first use would be a reading of
+    /// the suite partway through itself, which is the one thing the pair of
+    /// readings exists to be able to distinguish. See <see cref="CommitCharge"/>.
+    /// </remarks>
+    [Before(TestSession)]
+    public static void TakeTheCommitChargeReading() => CommitCharge.TakeTheStartReading();
+
     /// <summary>Writes the coverage block at the end of the session.</summary>
     [After(TestSession)]
     public static void ReportWhatThisRunExercised()
@@ -270,6 +284,22 @@ internal sealed class SuiteCoverageTests
         // ForegroundLockTests asserts what the row may contain.
         await Assert.That(summary).Contains(ForegroundLock.Title);
 
+        // Not a capability either, for the same reason, and it is the reading a
+        // closed hazard row names as the thing that separates its own cause
+        // from a live one. Until 2026-08-30 no run took it at all, so that row's
+        // question could not be asked of any gate this project has ever run.
+        await Assert.That(summary).Contains(CommitCharge.Title);
+        await Assert.That(summary)
+            .Contains(CommitCharge.StateWord(CommitCharge.Classify(CommitCharge.AtStart, CommitChargeReading.Take())).Trim())
+            .Because("the row states the band this machine is actually in, and a block that printed a number without classifying it would be an assurance the run has not earned");
+
+        // The start reading has to have been TAKEN, which is a statement about
+        // the session hook rather than about the machine: a run whose hook never
+        // fired would print "<not read>" for it and still look like a row.
+        await Assert.That(CommitCharge.AtStart.Answered)
+            .IsTrue()
+            .Because("SuiteCoverage.TakeTheCommitChargeReading is a [Before(TestSession)] hook, so by the time any test runs the start reading exists -- and a start reading that was never taken makes the start-versus-end difference, which is the whole point of taking two, unavailable");
+
         foreach (var capability in SuiteEnvironment.All)
         {
             var state = SuiteEnvironment.StateOf(capability);
@@ -374,6 +404,93 @@ internal sealed class SuiteCoverageTests
         await Assert.That(GateDriveCase.Verdict)
             .IsNotEqualTo(GateDriveVerdict.NotAsDeclared)
             .Because(GateDriveCase.Refusal(GateDriveCase.Declared, GateDriveCase.Received));
+    }
+
+    /// <summary>
+    /// The run records the machine's commit charge, and every band it could
+    /// report is exercised.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The reading exists because a closed hazard row asked for it by name
+    /// and nothing took it.</b> The six-run-gate row in
+    /// [HAZARDS.md](../../HAZARDS.md#hazard-index) closed on 2026-08-24 against a
+    /// kernel-level leak outside this repository — 137.4 GB committed of a
+    /// 157.7 GB limit — and closed by naming the one reading that would tell
+    /// that cause from a live one: <i>the commit charge beside the run</i>. It
+    /// then sat in a document, taken by nobody, so when the same shape recurred
+    /// on 2026-08-29 the reading did not exist for that run either and the row's
+    /// own question could not be asked.
+    /// </para>
+    /// <para>
+    /// <b>The pure arm is mandatory rather than thorough</b>, for
+    /// <see cref="AFilteredRunIsToldFromAFullOneFromOneThatCouldNotTellAndFromABrokenInstrument"/>'s
+    /// reason exactly: a healthy machine sits in <c>HEALTHY</c> for ever, so the
+    /// two bands that matter would otherwise be code nobody has ever run —
+    /// first exercised on the day something is already wrong, which is the worst
+    /// possible day to find out that a band prints the wrong word.
+    /// </para>
+    /// <para>
+    /// <b>No arm asserts a number the machine produced</b>, which is
+    /// <see cref="MachineLoad"/>'s standing rule: an assertion on a live commit
+    /// figure would pass or fail depending on the developer's other windows.
+    /// What is asserted is that the row is produced, that the classification is
+    /// right, and that an unreadable reading says so rather than reading as
+    /// zero bytes committed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRunReportsTheMachinesCommitChargeAndEveryBandIsExercised()
+    {
+        const ulong Limit = 100UL * 1024 * 1024 * 1024;
+
+        static CommitChargeReading at(double fraction) => new((ulong)(Limit * fraction), Limit);
+
+        // Every band, driven in-process on every ordinary run.
+        await Assert.That(CommitCharge.Classify(at(0.10), at(0.20))).IsEqualTo(CommitChargeVerdict.Healthy);
+        await Assert.That(CommitCharge.Classify(at(0.10), at(0.80))).IsEqualTo(CommitChargeVerdict.Tight);
+        await Assert.That(CommitCharge.Classify(at(0.95), at(0.10))).IsEqualTo(CommitChargeVerdict.Critical);
+        await Assert.That(CommitCharge.Classify(CommitChargeReading.NotTaken, CommitChargeReading.NotTaken))
+            .IsEqualTo(CommitChargeVerdict.Unreadable);
+
+        // ⚠️ The verdict is taken on the WORSE of the two readings and never on
+        // the last one. A run that started at 95% and ended at 10% because the
+        // thing eating the machine was reaped mid-run is a run whose timings are
+        // suspect, and an end-only verdict would call it healthy -- which is
+        // precisely the misreading the 2026-08-24 closure was arguing against.
+        await Assert.That(CommitCharge.Classify(at(0.95), at(0.10)))
+            .IsNotEqualTo(CommitCharge.Classify(at(0.10), at(0.10)))
+            .Because("a run that was critical at either end is not a healthy run, however it finished");
+
+        // A boundary is a boundary: at exactly the fraction, the harder word.
+        await Assert.That(CommitCharge.Classify(at(CommitCharge.TightFraction), at(0))).IsEqualTo(CommitChargeVerdict.Tight);
+        await Assert.That(CommitCharge.Classify(at(CommitCharge.CriticalFraction), at(0))).IsEqualTo(CommitChargeVerdict.Critical);
+
+        // An unreadable reading must never read as zero committed, which is the
+        // one wrong answer that would look healthy.
+        var unreadable = CommitCharge.RowFor(CommitChargeReading.NotTaken, CommitChargeReading.NotTaken);
+
+        await Assert.That(unreadable).Contains("<not read>");
+        await Assert.That(unreadable).Contains("DID NOT ANSWER");
+        await Assert.That(CommitChargeReading.NotTaken.Answered).IsFalse();
+
+        // A limit of zero is unreadable rather than infinitely full: the
+        // division that would produce the percentage is the one thing here that
+        // could throw or produce an infinity, and it is the shape a partially
+        // populated struct takes.
+        await Assert.That(new CommitChargeReading(1, 0).Answered).IsFalse();
+
+        // And the two loud bands say why they are loud, in the run's own output.
+        await Assert.That(CommitCharge.RowFor(at(0.95), at(0.95))).Contains("HAZARDS.md");
+        await Assert.That(CommitCharge.RowFor(at(0.80), at(0.80))).Contains("quieter machine");
+
+        // The live arm, which asserts the row is produced and never what it says.
+        await Assert.That(CommitCharge.CoverageRow).Contains(CommitCharge.Title);
+        await Assert.That(CommitCharge.CoverageRow).Contains("Committed Bytes");
+        await Assert.That(CommitCharge.CoverageRow)
+            .DoesNotContain("<unreadable>")
+            .Because("GetPerformanceInfo answering is the premise of the whole row, and a machine where it does not is one this run cannot say anything about");
     }
 
     /// <summary>

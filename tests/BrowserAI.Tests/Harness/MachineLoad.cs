@@ -74,6 +74,41 @@ internal static partial class MachineLoad
                 + "The nearest thing to a reading is DesktopHeapProbe, which tries the allocation instead of asking about it, and which the attribution failure prints directly beneath this block>");
     }
 
+    /// <summary>
+    /// The machine's commit charge and its limit, in bytes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Here rather than in <see cref="CommitCharge"/>, because there is one
+    /// declaration of <c>GetPerformanceInfo</c> in this assembly and there
+    /// should stay one.</b> Two <c>[LibraryImport]</c>s naming one export are
+    /// two chances to disagree about <c>DllImportSearchPath</c>, and the second
+    /// one always works — the module is already loaded by the time it runs.
+    /// </para>
+    /// <para>
+    /// <b>This is the same figure as <c>Get-Counter '\Memory\Committed
+    /// Bytes'</c></b>, which is what [the hazard row that asks for
+    /// it](../../../HAZARDS.md#hazard-index) names: <c>CommitTotal</c> and
+    /// <c>CommitLimit</c> are counts of pages, so both are multiplied by the
+    /// system page size here rather than by an assumed 4,096.
+    /// </para>
+    /// </remarks>
+    /// <returns>The pair in bytes, or <see langword="null"/> when Windows would not answer.</returns>
+    public static (ulong Committed, ulong Limit)? ReadCommitCharge()
+    {
+        var information = default(PerformanceInformation);
+        information.Size = (uint)Marshal.SizeOf<PerformanceInformation>();
+
+        if (!GetPerformanceInfo(ref information, information.Size))
+        {
+            return null;
+        }
+
+        var page = (ulong)information.PageSize;
+
+        return ((ulong)information.CommitTotal * page, (ulong)information.CommitLimit * page);
+    }
+
     private static string Mib(nuint pages, double pageSize) =>
         (pages * pageSize / (1024 * 1024)).ToString("F0", CultureInfo.InvariantCulture);
 

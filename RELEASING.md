@@ -426,16 +426,49 @@ before this and nobody had re-read the number:*
   `release run  no` while looking exactly like one that did:
 
   ```powershell
-  $log = ".work\suite\release-$(Get-Date -Format yyyyMMdd-HHmmss).log"
-  Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $PWD `
-      -ArgumentList '-NoProfile','-Command',
-      "`$env:BROWSERAI_RELEASE_RUN = '1'; dotnet test 2>&1 | Tee-Object -LiteralPath '$log'"
+  $root = (Get-Location).Path
+  $root = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)   # C:\… — forced
+  $log  = ".work\suite\release-ps-$(Get-Date -Format yyyyMMdd-HHmmss).log"
+  $run  = "`$env:BROWSERAI_RELEASE_RUN='1'; `$env:BROWSERAI_DRIVE_CASE='upper';" +
+          " dotnet test '$root\BrowserAI.slnx' 2>&1 | Tee-Object -LiteralPath '$log';" +
+          " Get-Content .work\suite-coverage.txt | Add-Content -LiteralPath '$log'"
+  Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $root `
+      -ArgumentList '-NoProfile','-Command',$run
   ```
 
   ```bash
-  log=.work/suite/release-$(date +%Y%m%d-%H%M%S).log
-  nohup bash -c "BROWSERAI_RELEASE_RUN=1 dotnet test 2>&1 | tee $log" >/dev/null 2>&1 </dev/null &
+  root=$(cygpath -m "$PWD")                                              # C:/…
+  root="$(printf %s "${root:0:1}" | tr 'A-Z' 'a-z')${root:1}"            # c:/… — forced
+  log=.work/suite/release-bash-$(date +%Y%m%d-%H%M%S).log
+  nohup bash -c "BROWSERAI_RELEASE_RUN=1 BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&1 | tee $log
+                 cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
   ```
+
+  ⚠️ ***Corrected 2026-08-30 (previously a PowerShell block reading `$log =
+  ".work\suite\release-$(Get-Date -Format yyyyMMdd-HHmmss).log"` then
+  `Start-Process pwsh … -WorkingDirectory $PWD -ArgumentList '-NoProfile',
+  '-Command', "`$env:BROWSERAI_RELEASE_RUN = '1'; dotnet test 2>&1 | Tee-Object
+  -LiteralPath '$log'"`, and a bash block reading `nohup bash -c
+  "BROWSERAI_RELEASE_RUN=1 dotnet test 2>&1 | tee $log" >/dev/null 2>&1
+  </dev/null &`).*** Those two set the release variable correctly and did
+  nothing else this item asks for. Neither handed `dotnet test` an
+  **explicitly-spelled absolute path**, so both inherited whatever spelling
+  started the shell — **the exact 2026-08-24 failure shape the bullet three
+  above this one was written to close**, reproduced inside the instrument that
+  bullet points at. Neither set `BROWSERAI_DRIVE_CASE`, so
+  `SuiteCoverageTests.TheRunReportsTheDriveLetterSpellingItActuallyReceived` had
+  nothing to check the run against and the `drive letter` row could report only
+  what the run happened to get, never whether that was what anyone asked for.
+  And neither appended `.work\suite-coverage.txt` to the log, so **six release
+  logs would have carried no coverage block at all** — no `release run` row, no
+  `first-run bytes` row, no `filter` row — while the two paragraphs immediately
+  below name the coverage block as the check on all three. Taken literally this
+  fence produced six undeclared-drive runs whose evidence was missing from its
+  own logs. The blocks above are now [Testing's own two
+  invocations](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
+  with the release variable set inside the detached shell beside the drive-case
+  one; the log names carry `-ps-` and `-bash-` so that six logs in one directory
+  say which shell produced each.
 
   **The coverage block's `release run` row is the check on this**, and it is why
   it exists: it says `YES` or `no` in every run, so a release cut from a run that
