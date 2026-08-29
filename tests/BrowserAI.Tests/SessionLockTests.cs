@@ -872,15 +872,19 @@ internal sealed class SessionLockTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>It did not, and the log said the opposite of the truth on every
-    /// acquisition it ever recorded.</b> Counted 2026-08-30 over the
-    /// machine-wide process log: <b>2,081 of 2,081</b> acquisitions in it were
-    /// this shape — the guard on disk naming the very process about to take the
-    /// directory — because the only acquisitions that reach that file are
-    /// <c>destroy</c> and <c>set_purpose</c>, and both dispose the live session
-    /// and re-acquire. Every one was written <i>previous holder was PID n,
-    /// still running: True</i>, which names the one event on this path worth
-    /// waking up for and had never once happened.
+    /// ⚠️ <b>It did not, and the log said the opposite of the truth on very
+    /// nearly every acquisition it recorded.</b> Counted 2026-08-30 over the
+    /// machine-wide process log, <b>with the predicate quoted</b>: since the
+    /// 2026-08-26 logging cutover that file holds <b>8,423</b> <c>Session lock
+    /// reclaimed</c> lines, <b>8,418</b> of them carrying <c>still running:
+    /// True</c>, and <b>zero</b> <c>Session lock acquired</c> lines — in the two
+    /// 2026-08-29 files alone, <b>2,081 of 2,081</b>. The reason is structural:
+    /// the only acquisitions that reach that file are <c>destroy</c> and
+    /// <c>set_purpose</c>, and both dispose the live session and re-acquire, so
+    /// the guard on disk names the very process about to take the directory.
+    /// Every one of them was written <i>previous holder was PID n, still
+    /// running: True</i>, which names the one event on this path worth waking up
+    /// for and had happened five times in eight thousand.
     /// </para>
     /// <para>
     /// <b>The outcome is deliberately not asserted here, and
@@ -961,7 +965,7 @@ internal sealed class SessionLockTests
             // as a live stranger having its directory taken.
             await Assert.That(logs.Logged("still running: True"))
                 .IsFalse()
-                .Because("that clause is what made 2,081 of 2,081 self-retakes read as takeovers from a live process");
+                .Because("that clause is what made 8,418 of 8,423 reclaim records read as takeovers from a live process when all but five of them were this process re-taking its own guard");
         }
         finally
         {

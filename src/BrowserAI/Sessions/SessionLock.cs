@@ -1235,8 +1235,15 @@ internal sealed class SessionLock : IDisposable
     /// sentence as a genuine takeover: <i>previous holder was PID n, still
     /// running: True</i>. That is true word by word and false as a whole. It
     /// reads as <i>a live stranger's directory was taken</i>, which is the one
-    /// event on this path that would be worth waking up for, and it was the
-    /// only thing 2,081 of 2,081 machine-log acquisitions ever said.
+    /// event on this path that would be worth waking up for, and it is what
+    /// nearly every record in that file says. <b>Counted 2026-08-30, predicate
+    /// quoted:</b> of the <b>8,423</b> <c>Session lock reclaimed</c> lines the
+    /// machine-wide log has carried since the 2026-08-26 logging cutover,
+    /// <b>8,418</b> carry <c>still running: True</c>, against <b>zero</b>
+    /// <c>Session lock acquired</c> lines in the same window — and in the two
+    /// 2026-08-29 files alone it is <b>2,081 of 2,081</b>. The five that do not
+    /// are genuine reclaims from a holder that had died, which is what makes the
+    /// discriminator worth having rather than vacuous.
     /// </para>
     /// <para>
     /// <b>The identity is <c>(pid, creationFileTime)</c> and the pid alone is
@@ -1637,9 +1644,10 @@ internal static partial class SessionLog
     /// one outcome.</b> A reclaim is <i>somebody else's directory is now
     /// ours</i>; this is <i>we are back in a directory we never left the
     /// machine holding</i>. Every <c>destroy</c> and every <c>set_purpose</c>
-    /// produces one, so on the machine-wide log this is not the rare case —
-    /// it is the only case, 2,081 of 2,081, and until 2026-08-30 all of them
-    /// were logged as reclaims from a live process.
+    /// produces one, so on the machine-wide log this is not the rare case — it
+    /// is very nearly the only case, and until 2026-08-30 every one of them was
+    /// logged as a reclaim from a live process. The figures, with the predicate
+    /// quoted, are in <see cref="Reclaimed"/>'s own remarks.
     /// </para>
     /// <para>
     /// <b>It does not say <c>still running</c>, and the omission is the

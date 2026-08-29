@@ -29,9 +29,12 @@ has been satisfied in form only.
   disk names the very process about to take the directory — and every one of
   those was logged *"previous holder was PID n, still running: True"*, which is
   true word by word and false as a whole. It names the one event on that path
-  worth waking up for, and it had never once happened: counted over the
-  machine-wide process log, **2,081 of 2,081** acquisitions in it were the
-  self-retake shape. There is a distinct record now, with its own event id and no
+  worth waking up for, and it had happened five times in eight thousand. Counted
+  2026-08-30 over the machine-wide process log, predicate quoted: since the
+  2026-08-26 logging cutover that file holds **8,423** `Session lock reclaimed`
+  lines, **8,418** of them carrying `still running: True`, and **zero**
+  `Session lock acquired` lines — in the two 2026-08-29 files alone it is
+  **2,081 of 2,081**. There is a distinct record now, with its own event id and no
   `still running` clause, taken on `(pid, creationFileTime)` so a stranger
   wearing this process's number still reads as the takeover it is. **The outcome
   did not move**: `Reclaimed` and `HolderRunning: true` are answers about the
