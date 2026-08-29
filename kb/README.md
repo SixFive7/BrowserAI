@@ -54,7 +54,7 @@ Every entry carries a marker and a date:
 | **`[STABLE]`** | A Windows or protocol fact that upstream cannot move. Re-verify only on a Windows major version. |
 | **`[MACHINE]`** | Measured on the reference machine described below, and not established anywhere else. The number is real; its generality is not claimed. Never act on one as if it were universal. |
 | **`[UNVERIFIED]`** | Inferred, not observed. Says so, and says why it was not observed. |
-| **`[STALE]`** | A re-check is owed and has not happened. The sanctioned alternative to guessing, and the only honest way to leave an entry whose measurement could not be re-run. That no article carries one today is the healthy state, not evidence the marker is dead. |
+| **`[STALE]`** | A re-check is owed and has not happened. The sanctioned alternative to guessing, and the only honest way to leave an entry whose measurement could not be re-run. That **1** article carries one today is the marker doing its job rather than a fault: [`packaging/velopack.md`](packaging/velopack.md)'s update-lane figures are owed a re-measurement that needs two real release publishes, and they say so at the head of the entry instead of reading as current. |
 
 **Never edit a result without re-running the measurement.** An entry whose number
 was updated by reasoning rather than by running something is worse than no entry,
@@ -73,6 +73,14 @@ has not happened, mark it `[STALE]` rather than guessing.
 > 2026-08-27, when that check stopped matching the bare token everywhere under
 > `kb/` — under which an article could not discuss this marker at all, and the
 > escape hatch this section prescribes would itself have failed the build.*
+>
+> **Exercised for the first time 2026-08-29**, when the velopack update-lane
+> entry took the stamp its own paragraph had spent two days explaining it could
+> not take, and the count above moved from *no* to *1* in the same commit. **The
+> stamp was watched red against the unmoved sentence first** — the failure named
+> the stamping article and named the resolution, which is precisely what the
+> superseded guard could not do — and the other direction is held by that check's
+> own synthetic controls rather than by doctoring this file.
 
 ### The reference machine
 

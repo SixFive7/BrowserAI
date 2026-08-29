@@ -666,6 +666,92 @@ internal sealed class StraySweepTests
         await Assert.That(attributed.WindowOwner).IsEqualTo(browser.Id);
     }
 
+    /// <summary>
+    /// R5's diagnostic half: when a launched browser is found gone before it
+    /// published a window, the failure takes a desktop-heap reading of its own
+    /// and puts it in the message.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is direction (b) of [question 8](../../QUESTIONS.md), built
+    /// 2026-08-27 after the maintainer chose (e).</b> A desktop heap spent to the
+    /// byte kills a Chromium before it creates a single window — measured over
+    /// eighty launches on a rig built to exhaust one — and every instrument this
+    /// suite owns reports the machine as healthy while it happens, because
+    /// <c>UOI_HEAPSIZE</c> gives a desktop heap's <i>size</i> and no API on
+    /// Windows reports its <i>usage</i>. The only reading that separates this
+    /// from every other reason a browser can die is to try the allocation
+    /// yourself, on the same desktop, at the instant of the death.
+    /// </para>
+    /// <para>
+    /// <b>What this arm asserts is that the reading is taken and carried, not
+    /// what it says.</b> The verdict is a property of whatever else is on the
+    /// developer's desktop, which is the same reason
+    /// <see cref="MachineLoad"/> is barred from every assertion in this
+    /// repository — so what is held here is that the message names the probe and
+    /// exactly one of its sanctioned verdicts. On a machine with a working
+    /// desktop that verdict is
+    /// <see cref="DesktopHeapProbe.NotDesktopHeapVerdict"/>, and a run that
+    /// produced <see cref="DesktopHeapProbe.ExhaustedVerdict"/> instead would be
+    /// a true reading of a machine in trouble rather than a red test.
+    /// </para>
+    /// <para>
+    /// <b>The death is provoked rather than waited for, and it needs no browser.</b>
+    /// The probe executable with no arguments at all falls through its own
+    /// dispatch to <c>Usage()</c>, writes nothing anywhere and is gone —
+    /// so the branch under test is reached deterministically, on the first pass
+    /// of the loop, without a provisioned Chromium and without the desktop this
+    /// arm is about being touched. It is the probe's <b>own</b> build output
+    /// rather than <see cref="PlantedProbe.ExecutablePath"/>, so no sweep
+    /// anywhere can see it as a candidate and this arm needs no place in the
+    /// serialised key.
+    /// </para>
+    /// <para>
+    /// <b>Watched red before the probe existed</b>, 2026-08-29: with the
+    /// diagnostic block removed from <c>WaitForAttributionAsync</c> the message
+    /// carried the exit code, the streams, the log and the machine and said
+    /// nothing at all about a window, and this arm failed on the first assertion
+    /// below.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task ABrowserGoneBeforeItsWindowAppearedIsAskedWhetherTheDesktopHeapWasSpent()
+    {
+        using var scratch = ScratchDirectory.Create("attribution-died-early");
+        using var scope = new JobObjectScope();
+
+        var browser = scope.Launch(ProbeExecutable, scratch.Path);
+        var created = ProcessIdentity.CreationTimeOf(browser.Id);
+
+        // Gone before the attribution loop is entered, so the branch is taken on
+        // its first iteration and nothing in this arm depends on a timing.
+        await WaitUntilGoneAsync(browser.Id, created);
+
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => _ = await WaitForAttributionAsync(
+                ProbeExecutable,
+                Path.Combine(scratch.Path, SessionLayout.ProfileFolderName),
+                browser,
+                created,
+                scope,
+                Path.Combine(scratch.Path, "chrome_debug.log")));
+
+        await Assert.That(failure!.Message)
+            .Contains(DesktopHeapProbe.Heading)
+            .Because(
+                "a browser found dead before its window appeared is the one moment a desktop-heap reading can be "
+                + "taken at all, and a message without it says only that the process is gone.");
+
+        // Exactly one verdict, because a block that named two would mean the
+        // probe reported a reading it did not take.
+        await Assert.That(DesktopHeapProbe.Verdicts.Count(failure.Message.Contains)).IsEqualTo(1);
+
+        // And the rest of the account is still there: this is an addition to the
+        // message rather than a replacement for it.
+        await Assert.That(failure.Message).Contains("exited before it published a message window");
+        await Assert.That(failure.Message).Contains("--- the machine at that instant ---");
+    }
+
     /// <summary>R6: the index is enumerated while entries are being written.</summary>
     [Test]
     public async Task EntriesWrittenWhileTheIndexIsBeingSweptAreNeverLost()
@@ -1561,7 +1647,8 @@ internal sealed class StraySweepTests
             if (!ProcessIdentity.IsAlive(browserId, browserCreated))
             {
                 // ⚠️ With the browser's exit code, its own account of itself, its
-                // log file and the state of the machine it died on.
+                // log file, the state of the machine it died on, and one
+                // CreateWindowExW of our own.
                 //
                 // Added 2026-08-17 with the exit code and the streams, because
                 // this message fired once in five fully parallel runs and said
@@ -1573,13 +1660,25 @@ internal sealed class StraySweepTests
                 // stderr, and the failure is suspected to be a resource ceiling
                 // rather than anything about this test, so what the machine was
                 // carrying at that instant is the measurement.
+                //
+                // ⚠️ Extended again 2026-08-29 with `DesktopHeapProbe`, which is
+                // direction (b) of QUESTIONS.md's question 8 and the wild-side
+                // instrument for direction (e) the maintainer chose on
+                // 2026-08-27. The 2026-08-18 extension above named a ceiling and
+                // then could not read it: desktop heap is the one resource
+                // `MachineLoad` says outright that it cannot see, and it is the
+                // one a deliberate rig then reproduced this exact death from.
+                // Trying the allocation is the only reading there is, and THIS
+                // is the only instant it can be taken — a heap that was full
+                // when the browser died is commonly not full a second later.
                 throw new InvalidOperationException(
                     $"The browser (pid {browserId}) exited before it published a message window for '{profile}'. "
                     + "That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one."
                     + $"{Environment.NewLine}--- exit code: {browser.TryReadExitCode()?.ToString(CultureInfo.InvariantCulture) ?? "<unreadable>"} ---"
                     + $"{Environment.NewLine}--- what it wrote ---{Environment.NewLine}{scope.SaidBy(browserId)}"
                     + $"{Environment.NewLine}--- its own log ({chromiumLog}) ---{Environment.NewLine}{ChromiumLog(chromiumLog)}"
-                    + $"{Environment.NewLine}--- the machine at that instant ---{Environment.NewLine}{MachineLoad.Describe()}");
+                    + $"{Environment.NewLine}--- the machine at that instant ---{Environment.NewLine}{MachineLoad.Describe()}"
+                    + $"{Environment.NewLine}{DesktopHeapProbe.Describe()}");
             }
 
             using (var scan = BrowserProcesses.ScanFor([image]))

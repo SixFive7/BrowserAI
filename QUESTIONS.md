@@ -639,6 +639,88 @@ it. **This entry stays open**, because what it is now open on is narrower than
 what it was opened for: not *what kills the browser* but *why the wild exit code
 was 1*.
 
+✅ **The maintainer chose (e), 2026-08-27: chase exit code 1 until it is
+explained** — over the recommendation, which was (b). The two are not
+alternatives and the choice says which is the subject: **(b) is (e)'s
+instrument** and the entry above already said so, so (b) was built anyway, and
+what (e) adds is a second, bounded effort aimed at the one number that would not
+come out.
+
+🔬 **THE PROBE IS BUILT, 2026-08-29.** `Harness/DesktopHeapProbe`, printed by
+`StraySweepTests.WaitForAttributionAsync` in the branch that finds a launched
+browser gone before any message window appeared — which is the branch the wild
+failure takes, and the only instant at which this reading exists: a heap that was
+full when the browser died is commonly not full a second later, because the
+windows that filled it belong to processes that come and go.
+
+**One `CreateWindowExW`, and the deliberate choices in it.** The class is the
+system-global `STATIC` rather than one of our own, so the probe really is one
+call — a `RegisterClassExW` would be a second desktop-heap allocation taken
+*before* the one being measured, able to fail first and for the same reason,
+which would put a second failure mode inside a diagnostic written to remove one.
+The title is **2,048 characters**, which is the rig's own regime rather than a
+round number: window text lives in the desktop heap, so the title length *is* the
+size of the allocation, and the table above shows a heap with one window of
+headroom (≈4.4 KB) still killing a browser — a probe that asked for the smallest
+possible allocation would report a clean create on a desktop that is already
+killing browsers. The window is destroyed immediately, because a diagnostic that
+leaked one would consume the resource it was written to measure.
+
+**Four readings, and the third is the one this entry's own measurement forced.**
+
+| What the call did | Verdict | What the message says |
+|---|---|---|
+| created the window | `NOT DESKTOP HEAP` | the heap had room for the allocation an exhausted one refuses a starting Chromium, **so whatever killed the browser it was not this** — which is information, because it retires the one ceiling none of the other figures can see |
+| refused, `ERROR_NOT_ENOUGH_MEMORY` (8) | `DESKTOP HEAP EXHAUSTED, named by the refusal` | *that is the diagnosis*, at the only moment it can be taken |
+| refused, **`GetLastError` = 0** | `DESKTOP HEAP EXHAUSTED, and the refusal named nothing` | **read as the diagnosis rather than as a gap**, and the message says why in place: a refusal for want of desktop heap does not reliably set a last error, and with a 2,048-character title it reported 0 on both a 512 KB heap and the 20,480 KB one while one-character titles reported `ERROR_NOT_ENOUGH_MEMORY` — and the long-title regime is the one that reproduces the wild shape |
+| refused, `ERROR_NO_MORE_USER_HANDLES` (1158) | `DESKTOP HEAP EXHAUSTED, named by the refusal` | out of USER handles rather than heap bytes — the many-small-windows regime, 23,718 against 4,637, which kills earlier still and with no log file at all |
+
+Anything else refused reports `REFUSED FOR SOMETHING ELSE` and names the number
+against those three signatures; a probe that could not run at all reports
+`READING NOT TAKEN` rather than a clean bill of health. **The zero is this call's
+own answer and not a stale one** — on .NET, and unlike .NET Framework, the error
+information is cleared to 0 before a `SetLastError` callee is invoked, so a 0
+afterwards is what *this* call set. That is stated in the type, because the whole
+third row rests on it, and it is stated as **read rather than run**: the
+behaviour is Microsoft's documented one, verified 2026-08-29, and the generated
+stub is not emitted to disk in this build so nothing here has looked at it.
+
+**Planted red, 2026-08-29**, before the probe was wired in:
+`StraySweepTests.ABrowserGoneBeforeItsWindowAppearedIsAskedWhetherTheDesktopHeapWasSpent`
+provokes the branch with the test probe run with no arguments at all — it falls
+through its own dispatch to `Usage()`, writes nothing and is gone, so the branch
+is taken on the first pass of the loop with no browser and no rig — and the
+message came back carrying the exit code, the streams, the log and the machine
+and saying nothing whatever about a window. **What the arm asserts is that the
+reading was taken, never what it says**: the verdict is a property of the
+developer's other windows, which is the same bar `MachineLoad` is held to, so it
+requires the heading and *exactly one* of the five verdicts.
+
+⚠️ **Two limits, said here rather than left to be assumed away.** The probe reads
+the desktop *this thread* is on — the desktop a suite-launched browser inherits
+today, and silently the wrong one if direction (d) is ever taken and browsers get
+a desktop of their own. And it is one sample: a heap refilled between the death
+and the probe reads clean, which is a false negative it cannot tell from a
+healthy machine.
+
+📋 **The rig chase is commissioned and has not been run.** It is the other half
+of (e) and it is deliberately a separate batch, because it launches browsers and
+this one held the suite gate. **Seed hypotheses, in the order they were argued:**
+*crashpad* — the handler is itself a process creation that may need desktop heap,
+and a handled exception exits differently from an unhandled one, so the Crashpad
+directories in a wild profile against a rig one are the first thing to compare;
+*wild-desktop dynamics* — the interactive desktop's heap is being handed back and
+taken all day, and the rig's is exhausted and static, which is already known to
+change the exit code, since the released-mid-startup arm produced `0xE0000008`;
+*alternate exhaustion points* — `RegisterClassExW` refusing rather than
+`CreateWindowExW`; and *GPU-child-first death*, since the 4,636-window level got
+as far as starting one. **It ends when its enumerable regimes are exhausted,
+with a report** — and the unbounded tail is the armed probe above, which is the
+whole reason (b) was built before (e) was chased.
+
+**This entry stays open on exit code 1 and nothing else.** What kills the browser
+is answered; what the wild machine did differently is not.
+
 ---
 
 ## Added 2026-08-18, from the honesty pass

@@ -482,6 +482,56 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       because it is the same class of report in the other tracker, so how it is
       handled is the triage signal this item is waiting for.
 
+- [ ] **Watch two upstream moves that would make the network service ask for a
+      sandbox our provisioned tree cannot give it — and file the third ask only
+      if one of them lands.** Measured 2026-08-29 and recorded in
+      [kb](kb/playwright/configuration.md#the-network-service-runs-unsandboxed-and-the-cause-is---disable-field-trial-config-rather-than-anything-about-our-tree--measured-2026-08-29):
+      the browser's network service runs unsandboxed at Medium integrity because
+      `--disable-field-trial-config` — the first element of upstream's
+      `chromiumSwitches` — turns off the field-trial config that would enable
+      `NetworkServiceSandbox`, so nothing ever attempts it. **Nothing was
+      changed and nothing was filed**, at the maintainer's decision on
+      2026-08-29: an ACL grant today changes nothing observable, and an ask
+      about a path upstream never takes would be closed as by-design and would
+      spend a report we may want later.
+
+      **What arms it, and where each becomes visible.**
+
+      1. **`--disable-field-trial-config` leaving `chromiumSwitches`.** Visible
+         in **the payload bundle diff at the next upstream review** — the array
+         is in `playwright-core/lib/coreBundle.js`, which is a golden-snapshot
+         input, so a `playwright-core` bump that dropped it could not land
+         silently. Re-verification [row 121](kb/re-verification.md) is the
+         instrument; this item is what it points at.
+      2. **Chromium enabling the network-service sandbox by default**, which
+         would make the switch irrelevant. Visible as **behaviour rather than as
+         a diff**: the `sandbox\policy\win\sandbox_win.cc:804` refusal and the
+         `network_service_instance_impl.cc:650` restart start appearing in a
+         directly-launched browser's stderr, and a session gains a startup blip
+         it did not have. It arrives with a Chromium revision, so the
+         `playwright-core` bump that carries a new revision is when to look.
+
+      **What fires then, both halves at once.** The ACL grant at provisioning
+      becomes live and **its evidence is already in hand**: two ACEs,
+      `ALL APPLICATION PACKAGES` and `ALL RESTRICTED APPLICATION PACKAGES`,
+      `(OI)(CI)(RX)` on the browsers root, which is exactly what the
+      `Program Files` control carries and what the forced-sandbox arm's
+      capability SID matched verbatim. The regression test becomes writable at
+      the same moment and not before — today it could only assert that an ACE
+      exists, which is a weaker claim than the one anybody wants. And the
+      **third upstream ask goes to
+      [`microsoft/playwright`](https://github.com/microsoft/playwright/issues)**
+      rather than to the MCP tracker, `[MCP]`-prefixed only if it turns out to
+      be an MCP-layer question, which on the evidence it is not: the switch is
+      `playwright-core`'s.
+
+      **Why this is a watch and not a fix.** The outcome is not
+      BrowserAI-specific — stock Chrome's own default on this machine is the
+      same unsandboxed network service — and the mechanism is upstream's
+      unconditional flag rather than anything this product does. What is ours is
+      the *latent* half, and it stays latent until one of the two triggers
+      above. The hazard row that records it is `open` and carries its evidence.
+
 ---
 
 ## Continuous integration

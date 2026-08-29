@@ -85,6 +85,13 @@ contradicting upstream intent — and it means the default posture is unsandboxe
 > therefore sandboxed on both sides of the change — which is why this is a
 > re-verification row rather than a defect. The half that does invert is the
 > config-file key, which starts working; nothing in this product sets it.
+>
+> ⚠️ **"Sandboxed" here does not include the network service, and that is a
+> different mechanism entirely** — see
+> [the entry below](#the-network-service-runs-unsandboxed-and-the-cause-is---disable-field-trial-config-rather-than-anything-about-our-tree--measured-2026-08-29).
+> Passing `--sandbox` gets a sandboxed renderer, storage service and GPU child
+> and leaves the network service at Medium integrity, because upstream's own
+> `chromiumSwitches` turns off the field-trial config that would have enabled it.
 
 **`--storage-state` together with `--user-data-dir` is a silent no-op** — exit 0,
 empty stderr, no state applied, and nothing anywhere says the option was dropped.
@@ -169,6 +176,133 @@ life — a hardcoded literal in 0.0.78's bundle, never read from config — and 
 then removed outright in 0.0.79, where passing it produces `error: unknown
 option` and exit 1. The two failure classes are asymmetric and both are live: a
 **CLI flag fails loudly**, a **JSON config key fails silently**.
+
+### The network service runs unsandboxed, and the cause is `--disable-field-trial-config` rather than anything about our tree — measured 2026-08-29
+
+**`--sandbox` gets you a sandboxed browser and a sandboxed renderer, storage and
+GPU child. It does not get you a sandboxed *network* service, and nothing
+anywhere says so.** Measured 2026-08-29 through the published binary, on a real
+session with a real navigation, by reading process tokens by pid — `@playwright/mcp`
+0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05, Chromium revision 1237,
+Windows 11 Pro 26200.
+
+**The mechanism, and it is not a failure.** `chromiumSwitches` in the shipped
+bundle begins with `--disable-field-trial-config` — literally its first element,
+read verbatim out of
+`payload/mcp/node_modules/playwright-core/lib/coreBundle.js` — and it is passed
+unconditionally. That switch turns off the field-trial testing config, which is
+what enables `NetworkServiceSandbox` in an *unbranded* Chromium; a build applying
+it says so in its own verbose log, `variations_field_trial_creator.cc:603]
+Applying FieldTrialTestingConfig`. With the switch present the sandbox is
+therefore **never attempted**: no attempt, no failure, no fallback, and no
+diagnostic. **This is upstream behaviour on every platform, not a property of
+this tree** — and the same outcome is stock Chrome's default, so it is not
+BrowserAI-specific either.
+
+**The tokens, which is the only evidence that settles it.** Six processes of one
+live product session, read for `TokenIsAppContainer`, `TokenIsSandboxed`,
+`TokenIsRestricted`, integrity and restricted SIDs:
+
+| Process | AppContainer | Sandboxed | Restricted | Integrity | Restricted SIDs |
+|---|---:|---:|---:|---|---|
+| browser root `chrome.exe` | 0 | 0 | 0 | Medium `S-1-16-8192` | 0 |
+| **network service** | **0** | **0** | **0** | **Medium `S-1-16-8192`** | **0** |
+| renderer | 0 | 1 | 1 | Untrusted `S-1-16-0` | 1 — `S-1-0-0` (NULL SID) |
+| storage service | 0 | 1 | 1 | Untrusted `S-1-16-0` | 1 — `S-1-0-0` (NULL SID) |
+| GPU process | 0 | 1 | 1 | Low `S-1-16-4096` | 5, incl. `NT AUTHORITY\RESTRICTED` |
+| `node.exe` (the payload child) | 0 | 0 | 0 | Medium `S-1-16-8192` | 0 |
+
+The network service's own command line carries `--service-sandbox-type=none`.
+⚠️ **The token fields above are the capture verbatim; the role column is the
+measuring pass's own assignment** — the capture recorded pids and token fields
+and no product-side process tree survived it, so the roles are re-derivable only
+by re-running the procedure below, and are stated as the pass's rather than as
+the artefact's.
+
+**The positive control, which is what makes the zeros mean something.** Stock
+Google Chrome 152.0.7977.65 out of `C:\Program Files`, given
+`--disable-field-trial-config --enable-features=NetworkServiceSandbox`, produced
+a network service with `--service-sandbox-type=network`, `TokenIsAppContainer`
+**1**, `TokenIsSandboxed` **1**, AppContainer number 34, package SID
+`S-1-15-2-3750051434-…-2070849743`, Low integrity and **nine** capability SIDs —
+a genuine AppContainer, on the same machine, in the same session, minutes apart.
+So the reading instrument can see a sandboxed network service; it did not see
+one on the product path because there was not one.
+
+**Six arms, and each answers something the others cannot.** All launched
+headless, stderr captured, the network service found by descent from the pid the
+launcher started and never by image name:
+
+| Arm | `sandbox_win.cc` error | Network service |
+|---|---|---|
+| provisioned tree, plain | **present** | `sbx=none`, Medium — sandbox *attempted and failed* |
+| provisioned tree `+ --disable-field-trial-config` | **absent** | `sbx=none`, Medium — sandbox *never attempted* |
+| provisioned tree `+` that switch `+ --enable-features=NetworkServiceSandbox` | **present** | `sbx=none`, Medium — attempt forced back on, fails again |
+| provisioned tree with the **product's own 45 flags**, captured verbatim from the live session's browser command line | **none at all — zero `ERROR:` lines of any kind** | `sbx=none`, Medium |
+| stock Chrome, plain | absent | `sbx=none`, Medium — **the same outcome by default** |
+| stock Chrome `+` both switches | absent | `sbx=network`, **AppContainer** |
+
+⚠️ **The fourth arm corrects an inference rather than confirming it.** Before it
+was run, the absence of any sandbox complaint on the product path was explained
+by `playwright-core` routing the browser's stderr into its own
+`RecentLogsCollector` — a reason that was established and an observation that was
+never made. The arm shows there is **nothing to route**: with the product's real
+flag list the browser emits no error line at all, because the sandbox is not
+attempted. Routing may well also be true; it is not the explanation.
+
+**The latent half, and it is the half worth writing down.** Were the sandbox ever
+attempted on this tree, it would fail — which is what arms one and three show
+directly. Chromium's network-service AppContainer runs an `AccessCheck` of
+`chrome.exe` for `GENERIC_READ | GENERIC_EXECUTE` as the package identity, and a
+tree under `%LOCALAPPDATA%` grants neither `ALL APPLICATION PACKAGES` nor
+`ALL RESTRICTED APPLICATION PACKAGES`. The browser says so in one line and then
+carries on:
+
+```
+[…:ERROR:sandbox\policy\win\sandbox_win.cc:804] Sandbox cannot access executable
+C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe.
+Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)
+[…:ERROR:content\browser\network_service_instance_impl.cc:650] Network service crashed
+or was terminated, restarting service.
+```
+
+The restart is Chromium's own
+`kRestartNetworkServiceUnsandboxedForFailedLaunch`, and the session then runs
+with an unsandboxed network service for its whole life, with full functional
+recovery and nothing persisted. **Counted rather than assumed: the restart line
+appears once in the plain arm and twice in the forced arm** — a failed launch
+that is retried before it is given up on, which is not what "restarting service"
+on its own suggests.
+
+⚠️ **This ACL premise is measured on direct launches only.** Arms one and three
+are `Probe-Chromium`-style direct launches of the provisioned executable; the
+product path never reaches the `AccessCheck` at all, so nothing here has observed
+the failure *through* `@playwright/mcp`. The ACEs themselves were re-confirmed on
+2026-08-29 — three bare entries and no package SID on the BrowserAI browsers
+root, identical on Playwright's own `ms-playwright` root, and the `Program Files`
+control carrying the package ACE whose SID the forced arm's capability list
+matches verbatim. **BrowserAI writes no ACL anywhere**, so this is a property of
+where a per-user install puts a browser and not of anything this product does to
+it.
+
+**Nothing was changed and both halves are watched rather than fixed** — see
+[the hazard row](../../HAZARDS.md#hazard-index) and
+[the watch item](../../TODO.md#upstream-asks). Granting the two ACEs today would
+change nothing observable, and a regression test for it would assert against a
+launch that never attempts the sandbox.
+
+**Re-establish** by launching the provisioned `chrome.exe` directly with
+`--headless --enable-logging=stderr --v=1`, once plain and once with
+`--disable-field-trial-config`, and grepping each stderr for
+`sandbox_win.cc`: **present then absent is the whole finding**, and the plain arm
+is the positive control without which the absent one is indistinguishable from a
+capture that missed it. Then find the network service by walking descendants of
+the pid you started and matching
+`--utility-sub-type=network.mojom.NetworkService` on the command line — never by
+image name — and read its token. **For the second control, do the same with a
+`Program Files` Chrome and `--enable-features=NetworkServiceSandbox` added**: a
+run in which no arm ever produces `TokenIsAppContainer = 1` proves nothing about
+sandboxing and only that the reader cannot see it. `[FLOATS]`
 
 ## Defaults that are not what they look like
 

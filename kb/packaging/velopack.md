@@ -282,8 +282,8 @@ two versions, then install the first `Setup.exe` with
 feed directory. **Never install into `%LocalAppData%\BrowserAI`** — see the
 repair-install finding above.
 
-> ⚠️ **A re-measurement of this whole set is OWED as of 2026-08-27 and HAS NOT
-> BEEN RUN.** The [Node upstream review](../../upstream-review.json) of that day
+> ⚠️ `[STALE]` **A re-measurement of this whole set is OWED as of 2026-08-27 and
+> HAS NOT BEEN RUN.** The [Node upstream review](../../upstream-review.json) of that day
 > adopted **v24.19.0 → v24.20.0**, and `node.exe` grew **92,825,416 → 93,381,448
 > bytes**, `+556,032`. That is precisely the trigger
 > [row 85](../re-verification.md) names — *"Node moves (it is 92,825,416 b of
@@ -304,9 +304,16 @@ repair-install finding above.
 > release in it. The figures stay exactly as they were measured, carrying this
 > notice, until somebody runs the procedure above.
 >
-> **The staleness marker is what this paragraph would otherwise be**, and it is
-> still not stamped here — but that is now a choice rather than a refusal by the
-> build, and the difference is the whole of the correction below.
+> ✅ **Stamped 2026-08-29** — *previously "**The staleness marker is what this
+> paragraph would otherwise be**, and it is still not stamped here — but that is
+> now a choice rather than a refusal by the build, and the difference is the
+> whole of the correction below."* The choice is taken: the marker is at the head
+> of this notice, where a reader meets it before the figures rather than after
+> them. **It is one edit with the sentence in [`kb/README.md`](../README.md)**,
+> which now publishes *one* article carrying a stamp instead of none — neither
+> half passes alone, which is the pairing the correction below built. **Nothing
+> below was adjusted and nothing was re-measured**: the stamp is a statement
+> about what is owed, not a substitute for running it.
 >
 > ✅ **Both guard defects closed 2026-08-27.**
 > `RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`

@@ -36,7 +36,11 @@ namespace BrowserAI.Tests.Harness;
 /// a window station object fails in exactly the way being investigated, and
 /// there is no documented API that reports desktop-heap usage — it is readable
 /// only with a kernel debugger extension. So a launch failure with these numbers
-/// all healthy does not exonerate the machine.
+/// all healthy does not exonerate the machine. <b>Since 2026-08-29 there is a
+/// reading for it</b>, and it is not a column here: <see cref="DesktopHeapProbe"/>
+/// <i>tries</i> the allocation rather than asking about it, which can only be
+/// done at the instant of a failure and is therefore taken at the failure site
+/// instead of on every describe.
 /// </para>
 /// </remarks>
 internal static partial class MachineLoad
@@ -66,7 +70,8 @@ internal static partial class MachineLoad
             $"  commit limit:     {Mib(information.CommitLimit, page)} MiB",
             $"  commit peak:      {Mib(information.CommitPeak, page)} MiB",
             $"  processors:       {Environment.ProcessorCount.ToString(CultureInfo.InvariantCulture)}",
-            "  desktop heap:     <not readable without a kernel debugger; a Chromium that cannot create a window object fails this way and none of the figures above would show it>");
+            "  desktop heap:     <usage not readable without a kernel debugger; a Chromium that cannot create a window object fails this way and none of the figures above would show it. "
+                + "The nearest thing to a reading is DesktopHeapProbe, which tries the allocation instead of asking about it, and which the attribution failure prints directly beneath this block>");
     }
 
     private static string Mib(nuint pages, double pageSize) =>
