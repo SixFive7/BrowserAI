@@ -119,6 +119,32 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The harness's process-log reader answered with a stranger's records, because
+  it matched half an identity.** `ProcessLogRecords` is what lets a test assert
+  *the product recorded X* against the durable file rather than against stderr,
+  and it selected a writer by matching `  pid=<n>@` — the pid alone, with the
+  creation FILETIME behind the `@` read past and never compared. The type's own
+  remarks had said in as many words that a bare pid does not identify a writer;
+  the method's name, `ForPid`, was the accurate description of what it did. The
+  log is machine-wide and kept for thirty days, and Windows reuses pids well
+  inside that window, so the scope was answerable by whoever last wore the
+  number: **demonstrated live on 2026-08-29**, a read scoped to the running test
+  host's own pid came back holding records written on 2026-08-24 by a different
+  process wearing it. The reader takes `(pid, creationFileTime)` now and matches
+  both halves plus the separator that ends them, so a FILETIME that merely
+  *begins* with the right one is not a match either. **The pid-only entry point
+  is gone rather than caveated**, because a reader that can be handed half an
+  identity will be, and neither of the two callers had to be taught anything —
+  both already held the identity they were asking about. **The red was planted
+  rather than watched live, and that is a property of the subject rather than a
+  shortcut**: whether this machine's log holds a stranger wearing this run's pid
+  depends on the box and on the last thirty days, so a live arm would pass by
+  matching nothing on most machines and go red only by luck. The control hands
+  the reader a directory of three records differing in nothing but the FILETIME
+  and, with the old marker restored, it returned all three; the planted lines go
+  through the same header expression the file's live arms use, so the control
+  cannot outlive the record format it is written against.
+
 - **The suite's own reclaim pass could terminate a live run's processes with exit
   code 1, machine-wide, and left no record that it had.** `.work\spawn-record.txt`
   is how a killed run's leftovers are named for the next one, and the pass that

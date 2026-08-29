@@ -381,9 +381,11 @@ internal sealed partial class ProcessLogTests
     /// same reader answering about the same log.
     /// </para>
     /// <para>
-    /// <b>Scoped to this pid</b>, through <see cref="ProcessLogRecords"/>: the
-    /// log is machine-wide and every BrowserAI on the box appends to it, so an
-    /// unscoped read is answerable by somebody else's history.
+    /// <b>Scoped to this host's whole identity</b> — <c>(pid, creationFileTime)</c>,
+    /// through <see cref="ProcessLogRecords"/>: the log is machine-wide and every
+    /// BrowserAI on the box appends to it, so an unscoped read is answerable by
+    /// somebody else's history, and a pid-scoped one by a stranger who wore this
+    /// number inside the log's thirty-day window.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -421,7 +423,9 @@ internal sealed partial class ProcessLogTests
 
         await Assert.That(acted[0]).StartsWith("terminated ").Because(string.Join(" | ", acted));
 
-        var records = ProcessLogRecords.ForPid(Environment.ProcessId);
+        var records = ProcessLogRecords.For(
+            Environment.ProcessId,
+            ProcessIdentity.CreationTimeOf(Environment.ProcessId));
 
         // Every question the next investigation will ask, answered in the line
         // it will find: which process, whose it was, what it was handed, and on
@@ -434,6 +438,98 @@ internal sealed partial class ProcessLogTests
         // And the pass that ended nothing is nowhere in it.
         await Assert.That(records).DoesNotContain(silent);
     }
+
+    /// <summary>
+    /// A record wearing this pid but a different creation time belongs to a
+    /// stranger, and the reader does not return it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Taken 2026-08-29, at the maintainer's decision.</b>
+    /// <see cref="ProcessLogRecords"/> matched
+    /// <c>"  pid=&lt;n&gt;@"</c> — the pid alone, with the creation FILETIME
+    /// behind the <c>@</c> read past and never compared — while its own remarks
+    /// said a bare pid does not identify a writer. The log is machine-wide and
+    /// kept for thirty days, and Windows reuses pids well inside that window, so
+    /// the scope was answerable by whoever last wore the number. <b>Demonstrated
+    /// live</b> while the reclaim test above was being planted red: a read scoped
+    /// to the live test host's pid came back holding records written on 2026-08-24
+    /// by somebody else.
+    /// </para>
+    /// <para>
+    /// <b>Planted, because it cannot be planted live.</b> Whether the machine's
+    /// real log happens to hold a stranger wearing this run's pid is a property of
+    /// the box and of the last thirty days, not of the reader — so a live arm
+    /// passes by matching nothing on most machines and would only ever go red by
+    /// luck. What is handed to the reader instead is a directory holding three
+    /// records that differ in nothing but the FILETIME.
+    /// </para>
+    /// <para>
+    /// <b>Three arms, and each fails differently.</b> Ours must come back, which
+    /// is the positive control that keeps an empty result from reading as a pass;
+    /// the stranger's must not, which is the defect; and one whose FILETIME merely
+    /// <i>begins</i> with ours must not either, which is what the marker's
+    /// trailing separator is for and what a naive prefix match would return.
+    /// <b>Watched red</b> by restoring the pid-only marker: arms two and three
+    /// both come back and each names its own record.
+    /// </para>
+    /// <para>
+    /// <b>The planted lines go through <see cref="WriterHeader"/></b>, the same
+    /// expression this file's live arms use, so this cannot quietly become an
+    /// assertion about a record shape nothing writes any more.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARecordWearingThisPidWithAnotherCreationTimeIsAStrangersAndIsNotReturned()
+    {
+        using var scratch = ScratchDirectory.Create("processlog-identity");
+
+        var directory = Directory.CreateDirectory(new LocalAppDataPaths(scratch.Path).LogDirectory).FullName;
+
+        // Odd, so it could never be a real Windows pid -- those are multiples of
+        // four -- which is what keeps a planted line provably planted.
+        const int Pid = 4243;
+        const long Ours = 133_000_000_000_000_000L;
+        const long Stranger = 133_900_000_000_000_000L;
+
+        // Nineteen digits against our eighteen, and the first eighteen are ours:
+        // the line a match without a trailing separator would collect.
+        const long StrangerSharingOurPrefix = 1_330_000_000_000_000_000L;
+
+        var ours = Record(Pid, Ours, "ours");
+        var stranger = Record(Pid, Stranger, "a stranger's");
+        var prefix = Record(Pid, StrangerSharingOurPrefix, "a stranger sharing our prefix");
+
+        // The control on the control: these are the shape FileLoggerProvider
+        // actually writes, at the start of the line, rather than three strings
+        // that merely look like records.
+        foreach (var planted in new[] { ours, stranger, prefix })
+        {
+            await Assert.That(WriterHeader().Match(planted).Index).IsEqualTo(0).Because(planted);
+        }
+
+        await File.WriteAllTextAsync(
+            Path.Combine(directory, "browserai-20260829.log"),
+            string.Join('\n', ours, stranger, prefix) + "\n");
+
+        var read = ProcessLogRecords.In(directory, Pid, Ours);
+
+        await Assert.That(read).Contains("ours");
+        await Assert.That(read).DoesNotContain("a stranger's");
+        await Assert.That(read).DoesNotContain("a stranger sharing our prefix");
+    }
+
+    /// <summary>
+    /// One whole record, in the form <see cref="FileLoggerProvider"/> writes it.
+    /// </summary>
+    /// <param name="processId">The pid half of the writer's identity.</param>
+    /// <param name="createdFileTime">The creation-time half.</param>
+    /// <param name="message">What the record says.</param>
+    /// <returns>The line.</returns>
+    private static string Record(int processId, long createdFileTime, string message) => string.Create(
+        System.Globalization.CultureInfo.InvariantCulture,
+        $"2026-08-29T20:00:00.0000000Z  made=2026-08-29T20:00:00.0000000Z  INFO   pid={processId}@{createdFileTime}  BrowserAI  {message}");
 
     /// <summary>
     /// Starts a probe that holds a session and stays up, and answers with the

@@ -240,7 +240,7 @@ internal sealed record SliceRun(
             browserAi,
             survivors,
             standardError,
-            ProcessLogRecords.ForPid(browserAi),
+            ProcessLogRecords.For(browserAi, browserAiCreated),
             session);
     }
 

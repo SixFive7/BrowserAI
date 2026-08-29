@@ -1004,8 +1004,16 @@ this loses one.
 > form *"the product recorded X"* must read the process log, not stderr, whenever
 > the process is killed rather than shut down. A developer's machine drains that
 > queue before the kill and stderr looks complete, so the defect is invisible
-> until the suite meets a smaller machine. `ProcessLogRecords.ForPid` is the
-> reader, and it is scoped to one pid because the log is machine-wide.
+> until the suite meets a smaller machine. `ProcessLogRecords.For` is the
+> reader, and it is scoped to one process's whole identity — `(pid,
+> creationFileTime)` — because the log is machine-wide.
+> *Corrected 2026-08-29 (previously "`ProcessLogRecords.ForPid` is the reader,
+> and it is scoped to one pid because the log is machine-wide").* Scoping to the
+> pid alone left the second half of the identity read past and never compared,
+> and the log is kept thirty days: **demonstrated live on 2026-08-29, a read
+> scoped to a live test host's pid came back holding records written on
+> 2026-08-24 by a different process wearing that number.** The pid-only entry
+> point is gone rather than caveated.
 > `[STABLE]` for the asymmetry, which follows from the two sinks' designs;
 > `[MACHINE]` for the observation that four cores under 431 tests is enough to
 > expose it.
