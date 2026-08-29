@@ -103,9 +103,20 @@ internal static class ScratchRoot
     /// the reclaim below can delete the whole thing without ever being one
     /// mistake away from a developer's real browsers, sessions and log. The
     /// repository's own rule — everything the suite writes goes in
-    /// <c>.work\</c> — is deliberately broken here and nowhere else, because the
-    /// property under test is <i>where the app root is</i> and no directory
-    /// inside the repository can have it.
+    /// <c>.work\</c> — is deliberately broken here, because the property under
+    /// test is <i>where the app root is</i> and no directory inside the
+    /// repository can have it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-08-29 (previously "is deliberately broken here and
+    /// nowhere else").</b> There is a second place since the reclaim began
+    /// announcing what it terminated: <see cref="SpawnRecord"/> writes that to
+    /// the machine's process log under <c>%LocalAppData%\BrowserAI\logs</c>. Two
+    /// rather than one, and the count is the whole of the change — the reason
+    /// stands, and so does the rule that a third needs the same argument. Worth
+    /// saying plainly: the suite's own published slices have always written
+    /// there, which is why <see cref="ProcessLogRecords"/> exists to read them
+    /// back, so what moved is that the <i>harness</i> writes there too.
     /// </para>
     /// </remarks>
     public static string ProfileScratch

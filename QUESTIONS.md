@@ -871,6 +871,13 @@ reclaim having been the one**: `EnsureReclaimed` does not only terminate — it
 should have produced a cluster of failures rather than the single one that run
 reported. That argument is not decisive, and neither is anything else here.
 
+✅ **Addendum 2026-08-29: this stays unanswered for 2026-08-26 and stops being
+answerable-in-principle-only for the next one.** With 8a's (b) and (d) taken, a
+reclaim that fires writes a `WARN` naming the pid, the exit code and the record it
+honoured, and the desktop-heap probe already names the heap at the instant of the
+death — so on the next occurrence the two candidates below separate themselves,
+and silence on both leaves only a `taskkill /F` somebody typed.
+
 ---
 
 ### 8a. The harness can terminate a live run's browsers with exit code 1, and nothing stops it
@@ -925,6 +932,114 @@ recovery, and (d) is what makes the *next* surprise cheap — the whole cost of
 this question was that a forced termination looks like a crash until somebody
 measures both. **Not taken: it is a change to the harness's kill policy and it
 belongs to the maintainer.**
+
+✅ **ANSWERED 2026-08-29: (b) with (d), the recommendation, taken by the
+maintainer.** Both halves landed in one change, in the harness only — no product
+file moved, so nothing about a published BrowserAI is different.
+
+**(b) Every row of the record now names its owner.** A row was
+`<pid> <createdFileTime>`; it is now
+`<pid>@<createdFileTime> <ownerPid>@<ownerCreatedFileTime>` — the second field is
+the identity of the process that started the first one and holds the job object
+containing it. The pass asks two questions in order: *is the owner still here*,
+and only then *is the subject still that process*. A row whose owner is this
+process, or any process still running, is left alone **and written back
+verbatim**; everything else is judged exactly as it was before.
+
+⚠️ **The rewrite is half of the fix and not tidiness.** A pass that spared the
+process and still blanked the file would leave the live run with nothing naming
+its own children — so the day that run really was killed, the recovery this whole
+mechanism exists for would be gone, and the second harness process would have
+destroyed it while behaving impeccably.
+
+**What "owner" means, because the obvious reading is wrong.** A *run* is not a
+process: `dotnet test` starts a test host, and this suite starts a second
+`BrowserAI.Tests.exe` inside itself, so there is no one pid whose death means the
+run is over. The owner of a row is therefore **the process that started the
+recorded process**, which is the process whose job object contains it and whose
+exit closes that job. Both properties fall out of that one definition — while the
+owner lives, containment has not failed and the subject is somebody else's
+business; once the owner dies its job closed, so anything of its still running is
+an orphan and ending it is precisely the job this record exists for. **A run
+spanning three processes writes three owners and each is judged on its own, which
+is stronger than a per-run token**: a token would keep a row alive because some
+unrelated process of the same run happened to be.
+
+**And an identity rather than a run id because a run id cannot be asked whether
+it is alive.** The pass has exactly one question and only the operating system can
+answer it. `(pid, creationFileTime)` is answerable, is this repository's standing
+identity for a process — the pair `browserai.lock` and every process-log record
+already spell — and cannot be impersonated by a recycled pid. A GUID would have
+needed a live marker to become a liveness question again, and that marker would
+have carried the same staleness problem one level down.
+
+**A row this build cannot read is reported and dropped, never acted on.** The only
+rows in that class are ones written before the owner column existed: they name a
+subject with nobody accountable for it, and terminating on one would be the
+machine-wide kill again with an extra step. The cost is a single leftover from a
+record file that predates today, in a gitignored scratch directory.
+
+**(d) A pass that ended something says so in the process log.** One `WARN` record
+per terminated process, under the category `BrowserAI.Tests.SpawnRecordReclaim`,
+naming the subject, the exit code **read from the constant the call actually
+hands it** rather than written at the message, the owner it found gone, and the
+record file it was honouring. A pass that ended nothing writes nothing — every run
+of this suite runs this pass, so announcing the no-ops would put a line in the
+machine's log on every start and the one grep would stop being one.
+
+**It goes to the process log rather than to a file of the harness's own**, because
+that is the machine-wide, durable, thirty-day record of what processes on this box
+did; it sits outside the scratch tree the same pass is about to delete; and the
+suite's own published slices already write there, which is why
+`ProcessLogRecords` exists to read them back. Two consequences are worth saying
+rather than leaving to be found: the suite now writes outside the repository in
+**two** places rather than one, and the two comments that claimed otherwise carry
+the correction.
+
+**Three reds, each watched on this tree.** *A row owned by a live process
+survives* — `ARowOwnedByALiveProcessSurvivesAReclaimRunFromSomewhereElse`, watched
+red with the owner gate removed, and the failure is the measured behaviour
+verbatim: `terminated 84972@… : left over from a previous run owned by 9016@…`
+while 9016 was still running. *A row whose owner is gone is still reclaimed* —
+`ARowWhoseOwnerIsGoneIsStillReclaimed`, whose owner is a real process that was
+started and then killed, watched red with the owner check inverted, at which point
+the pre-existing subject test goes red beside it. *The announcement lands and only
+when it should* — `ATerminatingPassAnnouncesItselfInTheProcessLogAndAPassThatEndedNothingStaysSilent`,
+watched red **both ways**: once with the announcement suppressed, once with the
+no-op pass announcing, the two record paths being what tells them apart. The
+victims are probes rather than browsers, which is not a weakening — what the old
+pass did to a browser it did through `TerminateProcess` on a pid read out of a
+file, and that is the same call against the same kind of handle whatever the image
+is.
+
+**What this closes.** The failure is gone in the direction that mattered: a live
+run's rows are invisible to a second harness process, and the recovery is
+untouched. The caveat two paragraphs above — *one second host in the tree does not
+trigger it, and that is one filter's behaviour rather than a property* — is now
+moot rather than lucky, because whatever that host selects, the outer host is
+alive and its rows are not the child's to act on. This was also demonstrated
+against live data on the way in: a red-plant run's own reclaim announced two
+terminations honouring `.work\spawn-record.txt`, naming the dead host that had
+owned them.
+
+**What it narrows, which is the point of taking (d) at all.** A future silent
+death in the wild now self-distinguishes. The desktop-heap probe names the heap at
+the instant of the death; the reclaim names itself in the process log when it is
+the one that fired; and **silence on both narrows further** — it excludes the two
+mechanisms that between them account for every 26 ms five-line death anybody has
+reproduced, and leaves a `taskkill /F` typed by a person or an agent as the
+remaining candidate, which is a much smaller question than the one this entry
+opened with.
+
+⚠️ **What was not taken, and what is still true.** (c) — the machine-wide
+interlock — was not taken, so *"run the suite twice at once"* is still undefined
+rather than serialised, and everything `CLAUDE.md` says about two suites sharing
+an app root still holds: they sweep each other's browsers, race each other's index
+and interleave in one log. One residual belongs to (b) itself and is named in the
+code: **the rewrite is not atomic against a concurrent append**, so a live run can
+lose the single row it wrote inside that window. That is a strictly smaller loss
+than the whole file, which is what the pass used to take, and (c) is what would
+close it.
 
 ---
 

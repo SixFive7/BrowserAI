@@ -164,6 +164,15 @@ internal sealed partial class ProcessLogTests
     /// did, and a test that rewrote it would be arranging state for whatever
     /// runs next.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Every row here is owned by a process that is provably gone, and that
+    /// is deliberate (2026-08-29).</b> Since the owner column exists, a row is
+    /// only ever judged on its subject once its owner has been shown not to be
+    /// running — so a test about the <i>subject</i> check has to get past the
+    /// owner check first. The three arms that follow are unchanged in what they
+    /// assert; the owner is arranged, not asserted. The owner check has its own
+    /// tests either side of this one.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -188,16 +197,21 @@ internal sealed partial class ProcessLogTests
 
             await Assert.That(ProcessIdentity.IsAlive(started.Id, created)).IsTrue();
 
+            // 2147483646 is not a multiple of four, so Windows can never have
+            // issued it as a pid: an owner spelled with it is provably not
+            // running, whatever else is on this machine.
+            var ownedByNobody = $"{int.MaxValue - 1}@{created}";
+
             await File.WriteAllLinesAsync(record,
             [
-                $"{started.Id} {created}",
+                $"{started.Id}@{created} {ownedByNobody}",
 
                 // The pid is real and running; the creation time is not its own.
                 // Nothing may happen to it.
-                $"{Environment.ProcessId} {mine + 1}",
+                $"{Environment.ProcessId}@{mine + 1} {ownedByNobody}",
 
                 // A pid that named a process once and does not now.
-                $"{int.MaxValue - 1} {created}",
+                $"{int.MaxValue - 1}@{created} {ownedByNobody}",
             ]);
 
             var report = SpawnRecord.Reclaim(record);
@@ -223,6 +237,231 @@ internal sealed partial class ProcessLogTests
         // test-owned file cannot show: every process this run has launched went
         // through the same call.
         await Assert.That(SpawnRecord.Path).EndsWith("spawn-record.txt");
+    }
+
+    /// <summary>
+    /// A row whose owner is still running survives a reclaim run from somewhere
+    /// else, and so does the process it names.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the 18-of-18, in one test.</b> Measured 2026-08-29 and
+    /// written up as [QUESTIONS §8a](../../QUESTIONS.md): the reclaim pass runs
+    /// on first use of a scratch root <i>in each process</i>, and it used to
+    /// terminate every recorded pid that was still that process — so a second
+    /// harness process reading a <b>live</b> run's record ended that run's
+    /// browsers, probes and slices with exit code 1 and then deleted the scratch
+    /// tree they were using. Eighteen launches, eighteen kills, and the shape it
+    /// left behind was point-for-point the silent Chromium death that had cost
+    /// two rigs and eighty launches to not explain.
+    /// </para>
+    /// <para>
+    /// <b>The victim is a probe rather than a browser, and that is not a
+    /// weakening.</b> What the old pass did to a browser it did through
+    /// <c>TerminateProcess</c> on a pid it read out of a file, which is the same
+    /// call against the same kind of handle whatever the image is. A browser here
+    /// would cost seconds and a provisioned tree to assert nothing extra.
+    /// </para>
+    /// <para>
+    /// <b>Both halves of (b) are asserted, because the row matters as much as the
+    /// process.</b> A pass that spared the process and still blanked the file
+    /// would leave the live run with nothing naming its own children — so the day
+    /// that run really was killed, the recovery this whole mechanism exists for
+    /// would be gone. The row must be written back verbatim.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARowOwnedByALiveProcessSurvivesAReclaimRunFromSomewhereElse()
+    {
+        using var scratch = ScratchDirectory.Create("spawn-record-live-owner");
+        var record = Path.Combine(scratch.Path, "spawn-record.txt");
+
+        using var scope = new JobObjectScope();
+
+        // The owner stands in for the other harness process, mid-run. It has to
+        // be a real live process that is NOT this one: this process is spared by
+        // the identity comparison alone, so using it would leave the liveness
+        // half of the check unexercised.
+        var (ownerId, ownerCreated) = await HeldProbeAsync(scope, scratch.Path, "owner");
+
+        // And this is what that run started -- the row the second pass reads.
+        var (victimId, victimCreated) = await HeldProbeAsync(scope, scratch.Path, "victim");
+
+        var row = $"{victimId}@{victimCreated} {ownerId}@{ownerCreated}";
+        await File.WriteAllLinesAsync(record, [row]);
+
+        var report = SpawnRecord.Reclaim(record);
+
+        // THE ASSERTION, and it is a process rather than a message: with the
+        // owner column absent this process is dead here, exit code 1, 18 times
+        // out of 18.
+        await Assert.That(ProcessIdentity.IsAlive(victimId, victimCreated)).IsTrue()
+            .Because(string.Join(" | ", report));
+
+        await Assert.That(report.Count).IsEqualTo(1).Because(string.Join(" | ", report));
+        await Assert.That(report[0]).StartsWith("left alone ");
+
+        // The owner is untouched as well: the pass acts on subjects, and a row
+        // it declined must not have cost the run that wrote it anything at all.
+        await Assert.That(ProcessIdentity.IsAlive(ownerId, ownerCreated)).IsTrue();
+
+        // And the row is still there, byte for byte, for the owner's own next
+        // run to honour.
+        await Assert.That((await File.ReadAllTextAsync(record)).Trim()).IsEqualTo(row);
+    }
+
+    /// <summary>
+    /// A row whose owner is gone is still reclaimed — which is the job the pass
+    /// exists for, and the thing the owner column must not cost it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The owner here was alive and was killed</b>, rather than being a number
+    /// that never named anything, because that is the case the recovery is
+    /// <i>for</i>: a run cut short by a failed assertion taking its host with it,
+    /// a debugger detached, a session limit. Its job object closed when it died,
+    /// so anything of its still running is an orphan and nothing else on the
+    /// machine will ever end it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARowWhoseOwnerIsGoneIsStillReclaimed()
+    {
+        using var scratch = ScratchDirectory.Create("spawn-record-dead-owner");
+        var record = Path.Combine(scratch.Path, "spawn-record.txt");
+
+        using var scope = new JobObjectScope();
+
+        var (ownerId, ownerCreated) = await HeldProbeAsync(scope, scratch.Path, "owner");
+        var (orphanId, orphanCreated) = await HeldProbeAsync(scope, scratch.Path, "orphan");
+
+        // The run dies. Waited out rather than assumed, because TerminateProcess
+        // only asks and a pass that read the owner a millisecond early would be
+        // asserting the opposite of what this test is about.
+        ProcessIdentity.Terminate(ownerId, ownerCreated);
+
+        await Assert.That(ProcessIdentity.WaitUntilGone(ownerId, ownerCreated, TestDefaults.ProcessHang))
+            .IsTrue();
+
+        await File.WriteAllLinesAsync(record,
+            [$"{orphanId}@{orphanCreated} {ownerId}@{ownerCreated}"]);
+
+        var report = SpawnRecord.Reclaim(record);
+
+        await Assert.That(report.Count).IsEqualTo(1).Because(string.Join(" | ", report));
+        await Assert.That(report[0]).StartsWith("terminated ");
+        await Assert.That(ProcessIdentity.IsAlive(orphanId, orphanCreated)).IsFalse();
+
+        // Acted on, so dropped: a row that has been honoured must not be read
+        // again by the next pass, when its pid may belong to somebody else.
+        await Assert.That(await File.ReadAllTextAsync(record)).IsEmpty();
+    }
+
+    /// <summary>
+    /// A pass that ended something says so in the process log, naming the
+    /// process, the exit code and the record it was honouring — and a pass that
+    /// ended nothing says nothing at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Direction (d) of [QUESTIONS §8a](../../QUESTIONS.md), taken
+    /// 2026-08-29.</b> The pass's whole account of itself used to be
+    /// <see cref="ScratchRoot.LastPassReport"/>, an in-memory list of which only
+    /// a <i>survivor</i> reached the coverage block — so a reclaim that succeeded
+    /// left no trace anywhere. That is the reason nothing can say which
+    /// terminator fired on 2026-08-26, and the reason an exit code of 1 was worth
+    /// two rigs.
+    /// </para>
+    /// <para>
+    /// <b>Both directions in one run, against one read of one file.</b> A test
+    /// that only watched the record appear would pass just as well against a pass
+    /// that announced unconditionally, which would put a line in the machine's
+    /// log on every start of every run and take the grep with it. The two record
+    /// paths differ, so the presence of one and the absence of the other are the
+    /// same reader answering about the same log.
+    /// </para>
+    /// <para>
+    /// <b>Scoped to this pid</b>, through <see cref="ProcessLogRecords"/>: the
+    /// log is machine-wide and every BrowserAI on the box appends to it, so an
+    /// unscoped read is answerable by somebody else's history.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATerminatingPassAnnouncesItselfInTheProcessLogAndAPassThatEndedNothingStaysSilent()
+    {
+        using var scratch = ScratchDirectory.Create("spawn-record-announce");
+        var silent = Path.Combine(scratch.Path, "ended-nothing.txt");
+        var loud = Path.Combine(scratch.Path, "ended-something.txt");
+
+        using var scope = new JobObjectScope();
+
+        var (ownerId, ownerCreated) = await HeldProbeAsync(scope, scratch.Path, "owner");
+        var (orphanId, orphanCreated) = await HeldProbeAsync(scope, scratch.Path, "orphan");
+
+        ProcessIdentity.Terminate(ownerId, ownerCreated);
+
+        await Assert.That(ProcessIdentity.WaitUntilGone(ownerId, ownerCreated, TestDefaults.ProcessHang))
+            .IsTrue();
+
+        // A pass with nothing to end: an owner that is gone and a subject that is
+        // gone with it, which is what the healthy machine's record looks like.
+        await File.WriteAllLinesAsync(silent,
+            [$"{int.MaxValue - 1}@{ownerCreated} {ownerId}@{ownerCreated}"]);
+
+        var quiet = SpawnRecord.Reclaim(silent);
+
+        await Assert.That(quiet.Count).IsEqualTo(1).Because(string.Join(" | ", quiet));
+        await Assert.That(quiet[0]).StartsWith("skipped ");
+
+        await File.WriteAllLinesAsync(loud,
+            [$"{orphanId}@{orphanCreated} {ownerId}@{ownerCreated}"]);
+
+        var acted = SpawnRecord.Reclaim(loud);
+
+        await Assert.That(acted[0]).StartsWith("terminated ").Because(string.Join(" | ", acted));
+
+        var records = ProcessLogRecords.ForPid(Environment.ProcessId);
+
+        // Every question the next investigation will ask, answered in the line
+        // it will find: which process, whose it was, what it was handed, and on
+        // whose authority.
+        await Assert.That(records).Contains($"{orphanId}@{orphanCreated}");
+        await Assert.That(records).Contains($"{ownerId}@{ownerCreated}");
+        await Assert.That(records).Contains($"exit code {ProcessIdentity.TerminationExitCode}");
+        await Assert.That(records).Contains(loud);
+
+        // And the pass that ended nothing is nowhere in it.
+        await Assert.That(records).DoesNotContain(silent);
+    }
+
+    /// <summary>
+    /// Starts a probe that holds a session and stays up, and answers with the
+    /// identity a spawn-record row would name it by.
+    /// </summary>
+    /// <remarks>
+    /// <b>Waited for its own report rather than for a duration</b>, so the
+    /// identity below is read from a process that has finished starting. The
+    /// scope's job takes it down if an assertion throws before the test does.
+    /// </remarks>
+    /// <param name="scope">The job that owns it.</param>
+    /// <param name="scratch">Where its session and its report go.</param>
+    /// <param name="label">What it stands in for, in the directory names.</param>
+    /// <returns>Its pid and creation time.</returns>
+    private static async Task<(int ProcessId, long Created)> HeldProbeAsync(
+        JobObjectScope scope,
+        string scratch,
+        string label)
+    {
+        var probe = Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe");
+        var session = Directory.CreateDirectory(Path.Combine(scratch, $"{label}-session")).FullName;
+        var ready = Path.Combine(scratch, $"{label}-ready.json");
+
+        var started = scope.Launch(probe, AppContext.BaseDirectory, "session-hold-gate", session, ready);
+
+        _ = await ProbeReport.ReadAsync(ready, TestDefaults.ProcessHang);
+
+        return (started.Id, ProcessIdentity.CreationTimeOf(started.Id));
     }
 
     [Test]

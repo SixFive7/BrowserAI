@@ -92,6 +92,36 @@ has been satisfied in form only.
 
 ### Fixed
 
+- **The suite's own reclaim pass could terminate a live run's processes with exit
+  code 1, machine-wide, and left no record that it had.** `.work\spawn-record.txt`
+  is how a killed run's leftovers are named for the next one, and the pass that
+  reads it runs on first use of a scratch root **in each process** rather than once
+  per run. A row named its subject and nothing else, so a second harness process
+  reading a live run's record ended that run's browsers, probes and slices — and
+  then `TreeDelete`d the scratch tree they were using. **Reproduced 18 of 18 on
+  2026-08-29**, and it is the mechanism that finally explained an exit code chased
+  for eleven days as a crash: nothing on this machine crashes with a 1, and the
+  kill leaves silent pipes, five browser log lines and no message window, which is
+  the same shape a desktop heap spent to the byte leaves. **A row now names its
+  owner** — the identity of the process that started the recorded process and holds
+  the job object containing it — and the pass terminates a subject only when that
+  owner is neither this process nor any process still running, checked by pid *and*
+  creation time so a recycled pid cannot impersonate a dead owner. **Owner is not
+  "the run"**, deliberately: a run spans `dotnet test`, a test host and sometimes a
+  second `BrowserAI.Tests.exe`, so there is no one pid whose death ends it, whereas
+  there is always exactly one process whose exit closes the job containing a given
+  child. Rows the pass declines are **written back verbatim** rather than the file
+  being emptied, because sparing the process and blanking the record would take the
+  recovery with it. **And the pass says what it did**: one `WARN` per terminated
+  process in the machine's process log, naming the identity, the owner it found
+  gone, the record it was honouring and the exit code read from the constant the
+  call hands it — silent when it ended nothing, since every run runs this pass.
+  Three tests, each watched red: the kill with the owner gate removed, the recovery
+  with the owner check inverted, and the announcement **both ways** — suppressed,
+  and firing on a pass that ended nothing. The machine-wide interlock was
+  considered and **not** taken, so two concurrent suite runs remain undefined in
+  every other respect; [`QUESTIONS.md`](QUESTIONS.md) §8a records what that leaves.
+
 - **The guard on the `[STALE]` marker forbade the one resolution its own failure
   message prescribed.** `RecordedCountTests` held `kb/README.md`'s claim that no
   article carries the marker by matching the **bare token** anywhere under `kb/`,

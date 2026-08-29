@@ -329,7 +329,12 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 > **The two rows that carry the weight are the two 1s and the job row.**
 > `taskkill /F` and a hand-rolled `TerminateProcess(h, 1)` are
 > **indistinguishable by exit code**, so a 1 says *ended from outside* and says
-> nothing whatever about by whom. And a process taken down by kill-on-job-close
+> nothing whatever about by whom. *Since 2026-08-29 one of the two `TerminateProcess`
+> callers on this machine names itself*: the suite's own spawn-record reclaim
+> writes a `WARN` to the process log under `BrowserAI.Tests.SpawnRecordReclaim`
+> for every process it ends, so a 1 found here can be attributed by one grep or
+> shown not to be the harness's — see [QUESTIONS.md](../../QUESTIONS.md) §8a. That
+> narrows the reading; it does not change the table, which is about Windows. And a process taken down by kill-on-job-close
 > exits **0** — it is indistinguishable from a clean shutdown, which is the
 > opposite trap: a survivor check that reads exit codes cannot tell containment
 > from a graceful exit. `[STABLE]`

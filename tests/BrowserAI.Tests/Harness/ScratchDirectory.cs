@@ -10,11 +10,22 @@ namespace BrowserAI.Tests.Harness;
 /// A disposable directory under the repository's own gitignored scratch root.
 /// </summary>
 /// <remarks>
-/// Everything the suite writes lands under <c>.work\</c>, per this
-/// repository's own rules, and never in <c>%TEMP%</c> or beside the product's
-/// real <c>%LocalAppData%\BrowserAI</c>. Deletion is best-effort: a directory a
-/// previous run left behind is reclaimed by the sweep in
-/// <see cref="ScratchRoot"/> rather than failing the run that finds it.
+/// <para>
+/// Every directory the suite creates for test data lands under <c>.work\</c>,
+/// per this repository's own rules, and never in <c>%TEMP%</c>. Deletion is
+/// best-effort: a directory a previous run left behind is reclaimed by the sweep
+/// in <see cref="ScratchRoot"/> rather than failing the run that finds it.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-08-29 (previously "Everything the suite writes lands
+/// under <c>.work\</c> … and never in <c>%TEMP%</c> or beside the product's real
+/// <c>%LocalAppData%\BrowserAI</c>").</b> The second half was never true of what
+/// the suite <i>starts</i> — a published slice writes its records into the real
+/// process log, which is what <see cref="ProcessLogRecords"/> reads — and since
+/// 2026-08-29 it is not true of the harness either: <see cref="SpawnRecord"/>
+/// announces a reclaim it performed to that same log. The two places outside the
+/// repository are named on <see cref="ScratchRoot.ProfileScratch"/>.
+/// </para>
 /// </remarks>
 internal sealed class ScratchDirectory : IDisposable
 {

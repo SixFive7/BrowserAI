@@ -180,19 +180,36 @@ The reclaim pass runs before anything else and is idempotent:
   creationFileTime)`** from its own spawn record — never by image name, which is
   the rule `NeverByImageNameTests` enforces and which applies to test code with no
   exception. A PID whose creation time no longer matches is skipped, not killed.
-  `SpawnRecord` is the record: `.work\spawn-record.txt`, one line per process the
-  harness starts, appended by `JobObjectScope.Launch` and `ProbeProcess`, read and
-  emptied by the pass before it touches the tree — a live process is what holds
-  the files a delete cannot take, so the other order reports a locked file and
-  names the wrong cause. ⚠️ *Written 2026-08-19; before that **nothing wrote a
-  record**, so this bullet had no input and the pass quietly did nothing while
-  reading as though it did.* It terminates the process it named rather than a
-  tree, because `Process.Kill(entireProcessTree: true)` is banned repository-wide;
-  a grandchild is the job object's business.
+  `SpawnRecord` is the record: `.work\spawn-record.txt`, one row per process the
+  harness starts, appended by `JobObjectScope.Launch` and `ProbeProcess`, read by
+  the pass before it touches the tree — a live process is what holds the files a
+  delete cannot take, so the other order reports a locked file and names the wrong
+  cause. ⚠️ *Written 2026-08-19; before that **nothing wrote a record**, so this
+  bullet had no input and the pass quietly did nothing while reading as though it
+  did.* It terminates the process it named rather than a tree, because
+  `Process.Kill(entireProcessTree: true)` is banned repository-wide; a grandchild
+  is the job object's business.
   `ProcessLogTests.TheSpawnRecordEndsAPreviousRunsProcessAndSkipsARecycledPid`
   drives all three cases, and the middle one is **this test host's own pid with a
   deliberately wrong creation time** — a reclaim that regressed to matching on the
   number alone would end the run rather than fail it.
+
+  ⚠️ **Corrected 2026-08-29 (previously "one line per process the harness starts …
+  read and *emptied* by the pass").** A row also names its **owner** — the identity
+  of the process that started the recorded process and holds the job object
+  containing it — and the pass terminates a subject only when that owner is
+  neither this process nor any process still running. Rows it declines are written
+  back verbatim, so the file is rewritten rather than emptied. **The previous
+  behaviour was a machine-wide kill with no interlock**: the pass runs on first use
+  of a scratch root *in each process*, so a second harness process reading a live
+  run's record ended that run's browsers, probes and slices with exit code 1 and
+  then deleted the tree they were using — measured 18 of 18, and the reason
+  [`QUESTIONS.md`](QUESTIONS.md) §8a exists. **The pass also announces what it
+  ends**: one `WARN` per terminated process in the machine's process log, naming
+  the identity, the owner it found gone, the exit code and the record it was
+  honouring; a pass that ended nothing stays silent. This does *not* make two
+  concurrent suite runs safe — see [the working rules](CLAUDE.md) — it makes them
+  stop killing each other's processes.
 - **The scratch root is deleted with the routine that survives a locked file**
   (`TreeDelete`), because the common leftover is a session directory a browser
   has not finished letting go of, and a delete that fails whole here fails the run

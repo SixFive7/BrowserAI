@@ -48,6 +48,29 @@ internal static partial class ProcessIdentity
     private const uint WaitTimeout = 0x00000102;
 
     /// <summary>
+    /// The exit code <see cref="Terminate"/> hands the process it ends.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One rather than zero, so a survivor check cannot mistake a terminated
+    /// process for one that shut down cleanly.</b> That is the reason it was
+    /// chosen and it is still the reason it stands.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is public since 2026-08-29 because something now has to say it
+    /// out loud.</b> The number was a literal in one expression below, and the
+    /// whole cost of
+    /// [QUESTIONS §8a](../../../QUESTIONS.md) was that a browser
+    /// which died wearing this exit code was indistinguishable from a browser
+    /// that crashed — for two rigs and eighty launches. The reclaim pass now
+    /// announces what it did, and an announcement that spelled <c>1</c> at the
+    /// message rather than reading it from the call would be a second copy of a
+    /// number that must never disagree with the first.
+    /// </para>
+    /// </remarks>
+    public const int TerminationExitCode = 1;
+
+    /// <summary>
     /// Whether the recorded process is still running — not merely whether
     /// something holds its pid.
     /// </summary>
@@ -117,8 +140,10 @@ internal static partial class ProcessIdentity
         }
 
         // Exit code 1 rather than 0, so a survivor check cannot mistake a
-        // terminated process for one that shut down cleanly.
-        if (!TerminateProcess(handle, 1))
+        // terminated process for one that shut down cleanly. Named rather than
+        // written here, because the reclaim's announcement quotes the same
+        // constant: see TerminationExitCode.
+        if (!TerminateProcess(handle, TerminationExitCode))
         {
             throw new Win32Exception(Marshal.GetLastPInvokeError(), $"Could not terminate process {processId}.");
         }
