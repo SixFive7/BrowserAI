@@ -782,14 +782,27 @@ after it starts, 4 of 4; the first, cold one took +797 ms twice. Browser age at
 the kill is therefore `R − lead`, and the age is what decides how much of the
 wild shape comes out:
 
-| Lead | Browser age at the kill | What came out |
-|---:|---:|---|
-| 0 ms | ~765 ms | exit 1, 241–242 log lines, 440 B of stderr |
-| 300–360 ms | ~230–280 ms | exit 1, 55–102 log lines, 0–440 B of stderr |
-| **400–430 ms** | **~140–175 ms** | **exit 1, 3 to 5 log lines, 0 bytes on stdout and 0 on stderr** |
-| 460–500 ms | ~40–100 ms | exit 1, no log file written yet |
+| Lead | Browser age at the kill | Log lines | Stderr |
+|---:|---:|---:|---:|
+| 0 ms | ~765 ms, twice | 241, 242 | 440 B, 440 B |
+| 300 ms | 485, 392 ms | 102, 63 | 440 B, 440 B |
+| 340 ms | 304, 332 ms | 56, 58 | 440 B, 440 B |
+| 360 ms | 271, 219 ms | 55, 13 | 440 B, **0** |
+| 380 ms | 197, 187 ms | 20, 9 | 287 B, **0** |
+| **400 ms** | **176, 174 ms** | 14, **5** | 287 B, **0** |
+| **430 ms** | **142, 139 ms** | **3**, **5** | **0**, **0** |
+| 460 ms | 97, 104 ms | 0, 0 | 0, 0 |
+| 500 ms | 57, 38 ms | 0, 0 | 0, 0 |
 
-**Point by point against 2026-08-26 19:43, at lead 400:**
+**Every one of those eighteen exited 1.** The wild shape — five lines and
+nothing on either stream — came out of **two** of them, one at lead 400 and one
+at lead 430, and the neighbouring launches at the same leads gave 14 and 3 lines:
+the target is a ~26 ms window and the jitter of a process start straddles it.
+**Said plainly rather than averaged away**: the exit code is deterministic at
+every lead, and the log length is not.
+
+**Point by point against 2026-08-26 19:43, taking the lead-400 launch that
+landed in the window:**
 
 | Measured in the wild | Produced by the reclaim | |
 |---|---|---|
