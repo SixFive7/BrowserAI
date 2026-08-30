@@ -23,6 +23,54 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The failure dump could not read the files it exists to inline, and the one
+  run that needed it printed three sharing violations instead.**
+  `LauncherWait.Evidence` walks the launcher's scratch tree and reads every file
+  into the failure message — with `File.ReadAllText`, which asks
+  `FileShare.Read`. Windows checks a reader's share mode against the accesses a
+  live writer already holds, so a reader that does not permit writing is refused
+  **however permissive the writer was**: node's `fs.openSync` shares read, write
+  and delete precisely so that a log can be tailed while it is written, and the
+  reader lost to it anyway. On the 2026-08-30 release gate's sixth run — the
+  Firefox stall this instrument had been armed for two hours earlier — all three
+  capture files came back `(unreadable: … used by another process)`, and the
+  scratch tree was then deleted as designed. It opens
+  `FileShare.ReadWrite | FileShare.Delete` now, and **the byte count comes off
+  the handle**: the old dump printed whatever the directory enumeration had
+  cached, and watching the red proved that number wrong as well as unmeasured —
+  `(0 bytes)` against 63 real ones, character for character the line the gate
+  printed. A file nothing can open still reads `(unreadable: …)` and now carries
+  **no length at all**, because nothing measured one. Both arms of
+  `LauncherEvidenceTests` were watched red against the old body. **The driver
+  closes its `cli-stderr.log` tee once the child it was teeing ends**, and that
+  is the smaller half and is written down as the smaller half: the launcher
+  kills the driver with `TerminateProcess`, where no handler of any kind runs,
+  and a browser that never comes up never ends its child — so on the failure
+  worth diagnosing the file is still open when the dump reads it, which is why
+  the reader is where the fix had to go. The close is on `'close'` rather than
+  `'exit'`, because `'exit'` fires while `stderr` may still have chunks to
+  deliver and the tidy-up would drop the last thing upstream said.
+
+- **The six-run-gate hazard row is `open` again, on the condition it wrote for
+  itself.** It closed 2026-08-24 against a kernel-level memory leak on this
+  machine — a cause outside this repository entirely — and because it closed on
+  a cause rather than on a test it was required to name what would re-open it:
+  the same shape, inside a gate run, with nothing external to explain it, **on a
+  machine whose memory is healthy**, with the commit charge beside the run named
+  as the one reading that separates the two. The 2026-08-30 release gate met
+  every clause. Run 6 of six went **647 total, 1 failed** on the same Firefox
+  containment arm at **3 m 03 s** — Playwright's own `initializeServer` budget
+  and not one of ours — while the harness had spent 3 minutes of a 30-minute
+  one; containment held with 0 escapees and all 8 processes in the job; and the
+  commit-charge row that landed two hours earlier read **HEALTHY, 49.9 % →
+  51.1 % of 141,229 MiB**, against **137.4 GB of a 157.7 GB limit** in the
+  instance the leak explains. **The 2026-08-24 diagnosis is not withdrawn** — it
+  still accounts for its own instance, and what the healthy reading falsifies is
+  that cause applying to this recurrence. It is the first row in the hazard
+  index ever to cross back: rows that are `open` 44 → 45, `closed` 147 → 146,
+  and rows that are `open` while carrying `—` still 0. A row that re-opens
+  because its closure was written to be falsifiable is that closure working.
+
 - **A process re-taking a session directory it itself last held now says so,
   instead of reporting a reclaim from a live stranger.** `destroy` and
   `set_purpose` both dispose the live session and re-acquire, so the guard on

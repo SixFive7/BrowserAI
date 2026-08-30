@@ -834,6 +834,59 @@ the rename's does. Reproduce:
 the refusal **and** that a concurrent reader is still admitted — the second half
 being what a share mode narrow enough to fix the first would have broken.
 
+### Reading a file somebody is still writing: the reader's own share mode is what refuses it — measured 2026-08-30
+
+**`File.ReadAllText` cannot read a file that has a live writer, and the writer's
+permissiveness has nothing to do with it.** A share mode is a statement about
+what *other* handles may do, and Windows checks it in **both** directions: the
+opener's requested access must be permitted by every existing handle's share
+mode, **and** the opener's own share mode must permit every access those handles
+already hold. `File.ReadAllText` opens `FileAccess.Read, FileShare.Read`. A
+writer holds `GENERIC_WRITE`. `FileShare.Read` does not include
+`FILE_SHARE_WRITE`, so the second check fails and the open is refused with
+`ERROR_SHARING_VIOLATION` — *"the process cannot access the file … because it is
+being used by another process"* — **even when the writer shared everything**.
+
+That last clause is the trap, and it is worth spelling out because the natural
+reading of a sharing violation is *the other process is being restrictive*.
+Node's `fs.openSync` goes through libuv, which asks for
+`FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE` indiscriminately and
+says so in a comment — deliberately, to match POSIX, so that a file can be read
+and deleted while it is open. A .NET reader still loses to it. **The fix is
+entirely on the reader**: `FileShare.ReadWrite | FileShare.Delete`, which permits
+the writer to go on writing and permits whoever owns the tree to delete it out
+from under the read.
+
+⚠️ **And the length a directory enumeration reports for such a file can be
+`0` while the file holds data.** `FileInfo.Length` is the size the enumeration
+carried when it produced that `FileInfo` — cached, never re-read — and NTFS
+updates a directory entry lazily while a handle is open. Measured 2026-08-30
+through `DirectoryInfo.EnumerateFiles("*")`, a file holding **63** bytes written
+and flushed behind a live writer's handle reported **0**; the same file queried
+by its own exact name in a separate probe minutes earlier reported **63**. So
+*which* enumeration shape hits the stale entry is **not established here**, and
+nothing should rely on either outcome — the only trustworthy size for a file
+somebody is holding is `stream.Length` off a handle you opened yourself.
+
+`[STABLE]` for both Windows behaviours. Reproduce with
+`LauncherEvidenceTests.AFileALiveWriterIsHoldingComesBackReadableAndAtItsTrueLength`,
+whose companion arm holds the other end — a file opened `FileShare.None` by
+anybody is unreadable to a reader sharing everything, which is the correct
+answer and must stay one. The wider version, against a real `node` writer rather
+than a `FileStream`, is two files and four lines: hold the log open with
+`fs.openSync(path, 'a')` and `fs.writeSync`, then try `File.ReadAllText` and the
+share mode above from another process and compare.
+
+**Where this cost something:** `LauncherWait.Evidence` inlines every file in the
+launcher's scratch tree into a containment failure, because that tree is deleted
+when the test unwinds. It read with `File.ReadAllText`. On the 2026-08-30
+release gate's sixth run — a Firefox stall the driver's `stderr` tee had been
+armed for two hours earlier — all three capture files came back
+`(unreadable: … used by another process)` with `(0 bytes)` beside each, and the
+tree was then removed. **Every file such a dump is written to read is one
+somebody is still holding, by construction**: it is taken at the moment a launch
+did *not* happen.
+
 ## Saturation: the 100-process design point
 
 **80 concurrent headless Chromium instances start cleanly on this machine, and

@@ -113,6 +113,124 @@ internal sealed class BrowserContainmentTests
     public async Task AFirefoxTreeIsContainedAndItsProfileDeletesCleanly() =>
         await RunAsync("firefox", BrowserAiPaths.FirefoxExecutable);
 
+    /// <summary>
+    /// The driver lets go of <c>cli-stderr.log</c> when the child it was teeing
+    /// ends, so the one failure it can see itself does not leave the file held.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It lives in this class because <see cref="DriverScript"/> does</b>, and
+    /// it is the only test here that starts no browser: the child is a dozen
+    /// lines of JavaScript that answers two frames and leaves. What it drives is
+    /// the driver, in the tree shape the arms above use, with the browser taken
+    /// out — so a change to the tee is caught in seconds rather than by a
+    /// containment run.
+    /// </para>
+    /// <para>
+    /// <b>The observation is a plain <c>File.ReadAllText</c>, deliberately.</b>
+    /// That asks for <c>FileShare.Read</c>, which a live writer refuses, so the
+    /// read succeeding <i>is</i> the measurement that nothing is holding the
+    /// file. It is also the exact call
+    /// <see cref="LauncherWait.Evidence"/> used to make and no longer does —
+    /// the two halves of this pair meet here, and this one asserts the half the
+    /// other cannot: a reader that shares everything can no longer tell a closed
+    /// file from a held one.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The liveness assertion is not decoration.</b> A driver that died
+    /// would release the handle too, and then a green here would be saying
+    /// nothing at all. It is read after the wait rather than before it, so the
+    /// case it exists for — the driver dying <i>during</i> the wait — is the case
+    /// it catches.
+    /// </para>
+    /// <para>
+    /// <b>Watched red 2026-08-30 against the committed driver</b>, twice over.
+    /// Through this arm, with the two handlers below deleted: <b>1 of 1 failed at
+    /// 10 m 00.4 s</b>, the whole of <see cref="TeardownPatience"/>, reporting
+    /// <i>"the driver was still holding … with the child it was teeing long
+    /// gone"</i>. And by hand outside the suite, which is where the shape was
+    /// established first: the same child, the same four arguments,
+    /// <c>File.ReadAllText</c> refused for the whole wait with <i>"because it is
+    /// being used by another process"</i> while the driver stayed alive — and the
+    /// enumerated length of that held file read <b>0</b> against 61 real bytes,
+    /// the same phantom the 2026-08-29 dump printed, arriving here out of the
+    /// driver's own tee.
+    /// </para>
+    /// <para>
+    /// <b>What this cannot reach is the failure the arms above are about</b>, and
+    /// no test can: the launcher kills the driver with <c>TerminateProcess</c>,
+    /// where no handler runs, and a browser that stalls forever never ends its
+    /// child at all. On both of those the file is still open when the dump reads
+    /// it. That is why the reader was fixed and why this is the smaller half.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDriversStderrTeeIsClosedOnceTheChildItWasTeeingIsGone()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        using var scratch = ScratchDirectory.Create("containment-driver-tee");
+
+        var readyFile = Path.Combine(scratch.Path, "ready.json");
+        var driver = Path.Combine(scratch.Path, "drive-a-browser.js");
+        var child = Path.Combine(scratch.Path, "a-child-that-answers-and-leaves.js");
+        var tee = Path.Combine(scratch.Path, "cli-stderr.log");
+
+        await File.WriteAllTextAsync(driver, DriverScript);
+        await File.WriteAllTextAsync(child, ChildThatAnswersAndLeaves);
+
+        using var scope = new JobObjectScope();
+
+        var launched = scope.Launch(
+            RepositoryPayload.Layout.NodeExecutable,
+            scratch.Path,
+            driver,
+            readyFile,
+            child,
+            // The child ignores both, and they are passed anyway because the
+            // driver's argv is the contract under test.
+            Path.Combine(scratch.Path, "playwright-mcp.config.json"),
+            BrowserAiPaths.BrowsersDirectory);
+
+        var created = ProcessIdentity.CreationTimeOf(launched.Id);
+
+        // The driver writes this once it has an answer, which is also when the
+        // child leaves -- so reaching it means the round trip happened rather
+        // than the child having failed to start.
+        await LauncherWait.ForDoneAsync(readyFile, TeardownPatience, scratch.Path, launched.Id, created);
+
+        var waited = Stopwatch.StartNew();
+        string? teed = null;
+
+        while (waited.Elapsed < TeardownPatience)
+        {
+            try
+            {
+                teed = await File.ReadAllTextAsync(tee);
+                break;
+            }
+            catch (IOException)
+            {
+                await Task.Delay(100);
+            }
+        }
+
+        await Assert.That(ProcessIdentity.IsAlive(launched.Id, created))
+            .IsTrue()
+            .Because(
+                "the driver is gone, so whether it closed the tee is not what this measured"
+                + Environment.NewLine + LauncherWait.Evidence(scratch.Path));
+
+        await Assert.That(teed)
+            .IsNotNull()
+            .Because(
+                $"the driver was still holding '{tee}' after {waited.Elapsed.TotalSeconds:F1} s, with the child it was teeing long gone"
+                + Environment.NewLine + LauncherWait.Evidence(scratch.Path));
+
+        await Assert.That(teed).Contains(TeeSentinel).Because(teed);
+    }
+
     private static async Task RunAsync(string browser, string expectedExecutable)
     {
         // ⚠️ The cost of the alternative, stated rather than hidden: on a machine
@@ -407,6 +525,17 @@ internal sealed class BrowserContainmentTests
     /// Unobserved rather than hypothetical: nothing in this tree has ever
     /// measured how much upstream writes before it comes up.
     /// </para>
+    /// <para>
+    /// <b>Added 2026-08-30: the tee is closed on the one failure this process
+    /// can see itself, and the comment beside it says why that is the smaller
+    /// half.</b> When the child ends, the handle goes; when the launcher kills
+    /// this process from outside — which is the event the arms above are about —
+    /// nothing runs at all, so the file is still open when
+    /// <see cref="LauncherWait.Evidence"/> reads it. That is why the pair
+    /// exists and why the reader, not the writer, carries the weight of it. Held
+    /// by
+    /// <see cref="TheDriversStderrTeeIsClosedOnceTheChildItWasTeeingIsGone"/>.
+    /// </para>
     /// </remarks>
     private const string DriverScript = """
         const cp = require('child_process');
@@ -421,6 +550,29 @@ internal sealed class BrowserContainmentTests
         // directory is the launcher's choice and this is the host's.
         const stderrLog = fs.openSync(path.join(path.dirname(readyFile), 'cli-stderr.log'), 'a');
 
+        // Closing is NOT about flushing -- writeSync below already put every
+        // chunk in the OS, which is what makes them another process's to read.
+        // What it buys is the handle going away, so the directory entry carries
+        // the true size and nothing is holding a file in a tree somebody is
+        // about to delete.
+        //
+        // ⚠️ It cannot cover the path this test is actually about, and that is
+        // stated here because it is where the decision was made. The launcher
+        // kills this process with TerminateProcess from outside -- that is the
+        // event the whole test is about -- and no 'exit' handler, no finally and
+        // no signal handler runs then; a browser that stalls and never comes up
+        // reaches none of these events either. So on the failure worth
+        // diagnosing this file IS still open when the host reads it, which is
+        // why LauncherWait.Evidence has to be able to open a file somebody is
+        // holding, and why THAT half is the load-bearing one and this is the
+        // tidy-up.
+        let teeOpen = true;
+        function closeTee() {
+          if (!teeOpen) return;
+          teeOpen = false;
+          try { fs.closeSync(stderrLog); } catch { /* a close that fails must no more fail the run than a write that does */ }
+        }
+
         const child = cp.spawn(process.execPath, [cli, '--config', configFile, '--sandbox'], {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: browsersRoot, PLAYWRIGHT_SKIP_BROWSER_GC: '1' },
@@ -433,8 +585,26 @@ internal sealed class BrowserContainmentTests
         // stopped saying anything. A synchronous write is in the OS by the time
         // it returns.
         child.stderr.on('data', (chunk) => {
+          // The flag is not belt and braces: a closed fd number is handed
+          // straight to the next open, so a late chunk would be written into
+          // whatever file inherited it.
+          if (!teeOpen) return;
           try { fs.writeSync(stderrLog, chunk); } catch { /* the dump is diagnostics; losing it must never fail the run */ }
         });
+
+        // ⚠️ 'close' and not 'exit'. 'exit' fires while stderr may still have
+        // buffered chunks to deliver; 'close' fires once the child is gone AND
+        // its stdio streams are done. Closing on 'exit' would drop the last
+        // thing upstream said into an EBADF in the catch above -- the one line
+        // worth having, lost by the tidy-up meant to preserve it.
+        child.on('close', closeTee);
+
+        // Re-thrown rather than swallowed. With no listener at all this event
+        // crashes the driver, which is the honest fast failure: the launcher
+        // sees the driver gone and says so. A listener that merely returned
+        // would trade a loud death for a quiet hang, so this one adds the close
+        // and leaves the death exactly where it was.
+        child.on('error', (failure) => { closeTee(); throw failure; });
 
         let buffer = '';
         const pending = new Map();
@@ -488,6 +658,61 @@ internal sealed class BrowserContainmentTests
           fs.writeFileSync(readyFile, JSON.stringify({ navigated, answer: text.slice(0, 400), childPid: child.pid }));
           setInterval(() => {}, 1e9);
         })();
+        """;
+
+    /// <summary>
+    /// What the stand-in child writes to <c>stderr</c>, and the only thing
+    /// <see cref="TheDriversStderrTeeIsClosedOnceTheChildItWasTeeingIsGone"/>
+    /// looks for in the tee.
+    /// </summary>
+    private const string TeeSentinel = "a child that answers and leaves: the account a stall would have taken with it";
+
+    /// <summary>
+    /// A stand-in for <c>cli.js</c> that says one thing on <c>stderr</c>, answers
+    /// the frames the driver sends, and leaves.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is not a fake MCP server and must not become one.</b> All the driver
+    /// needs to reach its ready file is a reply carrying the id it sent; nothing
+    /// here reads a method or a parameter beyond deciding which frame is the last
+    /// one, and <see cref="FakePlaywrightChild"/> is where a real double lives.
+    /// </para>
+    /// <para>
+    /// <b><c>fs.writeSync(2, …)</c> rather than <c>process.stderr.write</c>:</b>
+    /// stderr on a pipe is asynchronous in node and <c>process.exit</c> does not
+    /// wait for it, so the sentinel would be racing the exit below. That is the
+    /// driver's own reasoning about its tee, one level further down.
+    /// </para>
+    /// <para>
+    /// <b>The exit rides the write callback</b>, which fires once the reply is in
+    /// the OS, so leaving cannot truncate the answer the driver is waiting on.
+    /// That is a completion signal and not a delay — there is no duration
+    /// anywhere in this script, which is what keeps the arm above a hang detector
+    /// rather than a race.
+    /// </para>
+    /// </remarks>
+    private const string ChildThatAnswersAndLeaves = $$"""
+        const fs = require('fs');
+
+        fs.writeSync(2, '{{TeeSentinel}}\n');
+
+        let buffer = '';
+        process.stdin.on('data', (chunk) => {
+          buffer += chunk.toString('utf8');
+          let index;
+          while ((index = buffer.indexOf('\n')) >= 0) {
+            const line = buffer.slice(0, index).trim();
+            buffer = buffer.slice(index + 1);
+            if (!line) continue;
+            let message;
+            try { message = JSON.parse(line); } catch { continue; }
+            if (!message.id) continue;
+            const last = message.method === 'tools/call';
+            const reply = JSON.stringify({ jsonrpc: '2.0', id: message.id, result: { ok: true } }) + '\n';
+            process.stdout.write(reply, () => { if (last) process.exit(0); });
+          }
+        });
         """;
 
     /// <summary>The config the driven child is started with.</summary>
