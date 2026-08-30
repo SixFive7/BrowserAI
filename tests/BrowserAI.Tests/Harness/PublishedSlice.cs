@@ -1,7 +1,65 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
+
 namespace BrowserAI.Tests.Harness;
+
+/// <summary>
+/// What a run may say about whether the binary it drove belongs to the tree it
+/// was reading.
+/// </summary>
+internal enum PublishFreshnessVerdict
+{
+    /// <summary>
+    /// Nothing was compared, because there was no published binary to compare
+    /// anything against.
+    /// </summary>
+    NotEstablished,
+
+    /// <summary>The binary is at least as new as every input that goes into it.</summary>
+    Fresh,
+
+    /// <summary>At least one input is newer than the binary.</summary>
+    Stale,
+}
+
+/// <summary>
+/// The comparison <see cref="PublishedSlice.EnsureFresh"/> performs, as data.
+/// </summary>
+/// <remarks>
+/// <b>A record so that the guard's refusal and the run's coverage row are two
+/// renderings of one reading rather than two comparisons.</b> The failure this
+/// closes is not that the check was wrong — it was right every time — but that
+/// it said nothing when it passed, so the only sentence available to a reader
+/// with a staleness suspicion was one nobody had measured.
+/// </remarks>
+/// <param name="Published">The published binary's modification time, or <see langword="null"/> when there is none.</param>
+/// <param name="Newest">The newest input's modification time, or <see langword="null"/>.</param>
+/// <param name="NewestInput">That input's repository-relative path, or <see langword="null"/>.</param>
+/// <param name="Inputs">How many inputs were compared.</param>
+/// <param name="Newer">Every input newer than the binary, repository-relative and ordered.</param>
+/// <param name="Absence">Why nothing could be compared, or <see langword="null"/> when something was.</param>
+internal sealed record PublishFreshnessReading(
+    DateTime? Published,
+    DateTime? Newest,
+    string? NewestInput,
+    int Inputs,
+    IReadOnlyList<string> Newer,
+    string? Absence)
+{
+    /// <summary>A reading that established nothing, and why.</summary>
+    /// <param name="why">What was missing.</param>
+    /// <returns>The reading.</returns>
+    public static PublishFreshnessReading Establishing(string why) => new(null, null, null, 0, [], why);
+
+    /// <summary>
+    /// How much newer the binary is than the newest input, negative when it is
+    /// older, or <see langword="null"/> when nothing was compared.
+    /// </summary>
+    public TimeSpan? Margin =>
+        Published is { } published && Newest is { } newest ? published - newest : null;
+}
 
 /// <summary>
 /// The published NativeAOT binary, and the payload beside it.
@@ -146,14 +204,21 @@ internal static class PublishedSlice
     /// <see cref="FreshnessInputs"/>: <b>0 of 95 inputs newer than the binary</b>.
     /// </para>
     /// <para>
-    /// <b>What made the misreading available is that this check says nothing when
-    /// it passes.</b> It throws or it is silent, and the run's coverage block
-    /// carries a <c>published slice</c> row that reports <c>PRESENT</c> — which is
-    /// a claim about existence and not about freshness. So a log full of green
-    /// runs offers no sentence to check a staleness suspicion against, and the
-    /// nearest thing to hand is a commit date. Making the run state its own
+    /// <b>What made the misreading available is that this check used to say
+    /// nothing when it passed.</b> It threw or it was silent, and the run's
+    /// coverage block carried a <c>published slice</c> row reporting
+    /// <c>PRESENT</c> — a claim about existence and not about freshness. So
+    /// twelve green logs offered no sentence to check a staleness suspicion
+    /// against, and the nearest thing to hand was a commit date.
+    /// ***Corrected 2026-08-30 (previously "Making the run state its own
     /// freshness margin is a change to the coverage block rather than to this
-    /// method, and it is not made here.
+    /// method, and it is not made here.")*** — it is made now, and it is made
+    /// here rather than beside the block: <see cref="Measure"/> is the one
+    /// comparison, <see cref="RefusalFor"/> renders it as this method's refusal
+    /// and <see cref="RowFor"/> renders it as the run's
+    /// <c>publish freshness</c> row, so the sentence in the log and the sentence
+    /// in the exception cannot come to disagree. See
+    /// [Testing](../../../TESTING.md#the-run-states-the-publish-freshness-it-established).
     /// </para>
     /// <para>
     /// <b>Timestamps rather than content, and that is forced rather than
@@ -169,23 +234,290 @@ internal static class PublishedSlice
     /// <c>Get-FileHash</c>.
     /// </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">The publish is stale.</exception>
+    /// <exception cref="InvalidOperationException">The publish is stale, or there is nothing to compare.</exception>
     public static void EnsureFresh()
     {
+        var reading = Measure();
+
+        if (Judge(reading) is not PublishFreshnessVerdict.Fresh)
+        {
+            throw new InvalidOperationException(RefusalFor(reading));
+        }
+    }
+
+    /// <summary>The label the <c>publish freshness</c> row carries in the coverage block.</summary>
+    public const string FreshnessTitle = "publish freshness";
+
+    /// <summary>The word a run prints when the binary is newer than everything in it.</summary>
+    public const string FreshState = "FRESH";
+
+    /// <summary>The word a run prints when something that goes into the binary is newer than it.</summary>
+    public const string StaleState = "STALE";
+
+    /// <summary>The word a run prints when there was nothing to compare.</summary>
+    public const string NotEstablishedState = "NOT ESTABLISHED";
+
+    /// <summary>
+    /// The comparison, taken now, in one pass over
+    /// <see cref="FreshnessInputs"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One pass producing both answers, because they are one question asked
+    /// twice.</b> <i>Is anything newer than the binary?</i> is what
+    /// <see cref="EnsureFresh"/> refuses on; <i>what is the newest thing, and by
+    /// how much did the binary beat it?</i> is what the coverage row states. A
+    /// second enumeration for the row would be a second implementation free to
+    /// ask a subtly different question — which is exactly how the corpus scan
+    /// came to disagree with <c>git ls-files</c> by 520 files while its own
+    /// remark said the two matched.
+    /// </para>
+    /// <para>
+    /// <b>The absence is gated on the executable and not on
+    /// <see cref="IsPresent"/>, and the difference is deliberate.</b> The
+    /// comparison needs the binary's timestamp and nothing else, so a publish
+    /// whose payload is missing still has an answerable freshness question and
+    /// gets a real answer here. That its tier is broken is a different sentence
+    /// and the block already carries it: <c>published slice</c> reads
+    /// <c>PARTIAL</c>, and
+    /// <see cref="SuiteCoverageTests.NothingThisRunLacksIsHalfInstalled"/> fails
+    /// the run. Each row answers its own question rather than borrowing another's
+    /// verdict.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The input side is the snapshot the run started with, not a fresh
+    /// stat, and that is a property of <see cref="FreshnessInputs"/> rather than
+    /// a choice made here.</b> Those <see cref="FileInfo"/> instances are created
+    /// once when <c>RepositoryLayout</c> initialises and cache their timestamps,
+    /// so an edit made <i>while</i> the suite is running is invisible to this
+    /// comparison — as it always has been. It is stated rather than fixed
+    /// because the row must report what the guard compared: a row that re-stat'd
+    /// while the guard did not would be the two-implementations defect wearing
+    /// the clothes of an improvement.
+    /// </para>
+    /// </remarks>
+    /// <returns>What this run can say about the binary it would drive.</returns>
+    public static PublishFreshnessReading Measure()
+    {
+        if (!File.Exists(Executable))
+        {
+            return PublishFreshnessReading.Establishing(
+                IsAbsentAsAWhole
+                    ? $"nothing has been published: there is no directory at '{Directory}'"
+                    : $"the publish directory exists and the binary is not in it: '{Executable}' is missing");
+        }
+
         var published = File.GetLastWriteTimeUtc(Executable);
 
-        var newer = FreshnessInputs
-            .Where(file => file.LastWriteTimeUtc > published)
-            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
-            .Order(StringComparer.Ordinal)
-            .ToList();
+        FileInfo? newest = null;
+        var newer = new List<string>();
 
-        if (newer.Count is not 0)
+        foreach (var file in FreshnessInputs)
         {
-            throw new InvalidOperationException(
-                $"The published binary at '{Executable}' is older than {newer.Count} source file(s), so this test would prove nothing about the code in the tree. Run: {PublishCommand}"
-                + Environment.NewLine + string.Join(Environment.NewLine, newer));
+            var stamp = file.LastWriteTimeUtc;
+
+            if (newest is null || stamp > newest.LastWriteTimeUtc)
+            {
+                newest = file;
+            }
+
+            if (stamp > published)
+            {
+                newer.Add(Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName));
+            }
         }
+
+        newer.Sort(StringComparer.Ordinal);
+
+        return new PublishFreshnessReading(
+            published,
+            newest?.LastWriteTimeUtc,
+            newest is null ? null : Path.GetRelativePath(RepositoryLayout.Root.FullName, newest.FullName),
+            FreshnessInputs.Count,
+            newer,
+            Absence: null);
+    }
+
+    /// <summary>What this run's own reading amounts to.</summary>
+    public static PublishFreshnessVerdict Verdict => Judge(Measure());
+
+    /// <summary>The coverage block's row for this run.</summary>
+    public static string CoverageRow => RowFor(Measure());
+
+    /// <summary>
+    /// What a reading amounts to, as a pure function of it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Pure for <see cref="SuiteEnvironment.Decide"/>'s reason exactly.</b>
+    /// A healthy tree publishes and then runs, so <c>STALE</c> is a state this
+    /// machine reaches perhaps once a fortnight — and a rendering first exercised
+    /// on the day it matters is the same dead-mechanism defect the coverage block
+    /// exists to remove, one layer in.
+    /// </remarks>
+    /// <param name="reading">The reading.</param>
+    /// <returns>Fresh, stale, or nothing established.</returns>
+    public static PublishFreshnessVerdict Judge(PublishFreshnessReading reading)
+    {
+        ArgumentNullException.ThrowIfNull(reading);
+
+        // Driven by the same list EnsureFresh refuses on rather than by the sign
+        // of the margin: a file stamped to the millisecond OF the publish is not
+        // newer than it, and the two would part company at exactly that tick.
+        return reading.Absence is not null || reading.Published is null || reading.Newest is null
+            ? PublishFreshnessVerdict.NotEstablished
+            : reading.Newer.Count is 0 ? PublishFreshnessVerdict.Fresh : PublishFreshnessVerdict.Stale;
+    }
+
+    /// <summary>
+    /// The sentence <see cref="EnsureFresh"/> refuses with, for a reading.
+    /// </summary>
+    /// <remarks>
+    /// <b>A function of the reading so that a refusal can be driven without
+    /// arranging a stale publish.</b> The alternative is a test that edits a
+    /// source file to provoke one, which would leave the tree needing a
+    /// re-publish to go green again — and the guard's message is the thing a
+    /// developer reads at the worst moment, so it is worth exercising on every
+    /// ordinary run.
+    /// </remarks>
+    /// <param name="reading">The reading.</param>
+    /// <returns>The refusal, naming the command that resolves it.</returns>
+    public static string RefusalFor(PublishFreshnessReading reading)
+    {
+        ArgumentNullException.ThrowIfNull(reading);
+
+        if (Judge(reading) is PublishFreshnessVerdict.NotEstablished)
+        {
+            return $"There is no published binary to test against — {reading.Absence} — so this test would prove nothing about the code in the tree. Run: {PublishCommand}";
+        }
+
+        return $"The published binary at '{Executable}' is older than {reading.Newer.Count.ToString(CultureInfo.InvariantCulture)} source file(s), so this test would prove nothing about the code in the tree. Run: {PublishCommand}"
+            + Environment.NewLine + string.Join(Environment.NewLine, reading.Newer);
+    }
+
+    /// <summary>
+    /// The coverage block's row for a reading.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This row exists because a check that is silent on success leaves a
+    /// suspicion nothing to be checked against.</b> On 2026-08-30 a gate runner
+    /// noticed the published binary was stamped 01:14:16 and that commit
+    /// <c>56383c9</c> was dated 01:20:40 touching a product source file, and
+    /// reported that four gate sets — twelve full runs — had driven a stale
+    /// binary. The suspicion was reasonable, the arithmetic was right, and the
+    /// conclusion was false: a commit's date is when <c>git commit</c> ran and
+    /// never a working-tree file's timestamp, and the file in question was
+    /// stamped 01:12:22.665, comfortably before the publish. Dissolving it took
+    /// an investigation. <b>One line in twelve green logs would have killed it
+    /// instantly</b>, and there was no such line to read.
+    /// </para>
+    /// <para>
+    /// <b>Milliseconds, deliberately.</b> The whole of that misreading turned on
+    /// a gap of one minute 53.8 seconds; a row printed to the second would have
+    /// answered it, and a row printed to the minute would have made it worse. The
+    /// timestamps are UTC and say so, because the two figures put side by side
+    /// that day were a local-time file stamp and a commit date, and nothing in
+    /// either sentence named a zone.
+    /// </para>
+    /// <para>
+    /// <b>The margin is stated rather than left to be subtracted.</b> A reader
+    /// with a suspicion has two timestamps and a hypothesis; what settles it is
+    /// the difference and its sign, so the row carries the word — <i>newer</i> or
+    /// <i>OLDER</i> — as well as the number.
+    /// </para>
+    /// <para>
+    /// <b>It is a row and not a <see cref="SuiteCapability"/>, and the reason is
+    /// the opposite of <see cref="CommitCharge"/>'s.</b> That one is not a
+    /// capability because nothing anybody types would make it green; this one is
+    /// not a capability because <see cref="SuiteCapability.PublishedSlice"/>
+    /// already <i>is</i> one and reports the artefact's existence. Freshness is a
+    /// second question about the same artefact, and the two were conflated by a
+    /// reader who had only the first — which is how this row came to be written.
+    /// </para>
+    /// </remarks>
+    /// <param name="reading">The reading.</param>
+    /// <returns>The row, and a warning beneath it in the band that needs one.</returns>
+    public static string RowFor(PublishFreshnessReading reading)
+    {
+        ArgumentNullException.ThrowIfNull(reading);
+
+        var verdict = Judge(reading);
+        var row = "  " + FreshnessTitle.PadRight(20) + StateWord(verdict) + "  " + Witness(reading, verdict);
+
+        // ⚠️ The second block appears only in the band where the run's own
+        // results are worthless, for the reason ForegroundLock's does: a state
+        // word without its consequence is an assurance a reader has to assemble,
+        // and a stale publish means every slice arm in the run refused rather
+        // than ran.
+        return verdict is not PublishFreshnessVerdict.Stale
+            ? row
+            : row + "\n"
+                + "      ⚠️  THE PUBLISHED BINARY IS OLDER THAN THE SOURCE THAT GOES INTO IT, so every\n"
+                + "      slice arm in this run refused rather than proving anything about the code in\n"
+                + $"      the tree. Run: {PublishCommand}";
+    }
+
+    /// <summary>The state word the block prints, padded to the width the other rows use.</summary>
+    /// <param name="verdict">The verdict.</param>
+    /// <returns>The padded word.</returns>
+    public static string StateWord(PublishFreshnessVerdict verdict) => verdict switch
+    {
+        PublishFreshnessVerdict.Fresh => FreshState + "    ",
+        PublishFreshnessVerdict.Stale => StaleState + "    ",
+        _ => NotEstablishedState,
+    };
+
+    /// <summary>The sentence beside the state, which is where the numbers live.</summary>
+    /// <param name="reading">The reading.</param>
+    /// <param name="verdict">Its verdict.</param>
+    /// <returns>The witness.</returns>
+    public static string Witness(PublishFreshnessReading reading, PublishFreshnessVerdict verdict)
+    {
+        ArgumentNullException.ThrowIfNull(reading);
+
+        if (verdict is PublishFreshnessVerdict.NotEstablished)
+        {
+            return $"{reading.Absence} — nothing was compared, so no line in this log says whether a binary matches the tree";
+        }
+
+        var inputs = reading.Inputs.ToString(CultureInfo.InvariantCulture);
+        var margin = Humanise(reading.Margin!.Value);
+        var direction = verdict is PublishFreshnessVerdict.Stale ? "OLDER than" : "newer than";
+
+        var sentence =
+            $"exe {Stamp(reading.Published)} is {margin} {direction} the newest of {inputs} inputs"
+            + $" ({reading.NewestInput}, {Stamp(reading.Newest)})";
+
+        return verdict is PublishFreshnessVerdict.Stale
+            ? sentence + $" · {reading.Newer.Count.ToString(CultureInfo.InvariantCulture)} of {inputs} are newer · the comparison PublishedSlice.EnsureFresh refused on"
+            : sentence + " · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30";
+    }
+
+    /// <summary>A modification time, in UTC, to the millisecond that settled the misreading.</summary>
+    /// <param name="stamp">The timestamp.</param>
+    /// <returns>The text.</returns>
+    public static string Stamp(DateTime? stamp) =>
+        stamp is { } value
+            ? value.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture)
+            : "<none>";
+
+    /// <summary>A margin in the largest unit that leaves a number a reader can hold.</summary>
+    /// <param name="span">The margin, whose sign is carried by the row's own words.</param>
+    /// <returns>The text.</returns>
+    public static string Humanise(TimeSpan span)
+    {
+        var absolute = span.Duration();
+
+        return absolute switch
+        {
+            { TotalDays: >= 1 } =>
+                $"{((int)absolute.TotalDays).ToString(CultureInfo.InvariantCulture)}d{absolute.Hours.ToString("D2", CultureInfo.InvariantCulture)}h{absolute.Minutes.ToString("D2", CultureInfo.InvariantCulture)}m",
+            { TotalHours: >= 1 } =>
+                $"{((int)absolute.TotalHours).ToString(CultureInfo.InvariantCulture)}h{absolute.Minutes.ToString("D2", CultureInfo.InvariantCulture)}m{absolute.Seconds.ToString("D2", CultureInfo.InvariantCulture)}s",
+            { TotalMinutes: >= 1 } =>
+                $"{((int)absolute.TotalMinutes).ToString(CultureInfo.InvariantCulture)}m{absolute.Seconds.ToString("D2", CultureInfo.InvariantCulture)}s",
+            _ => $"{absolute.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)}s",
+        };
     }
 
     /// <summary>

@@ -265,6 +265,14 @@ internal sealed class SuiteCoverageTests
         // say which. FirstRunCacheTests asserts what the row may contain.
         await Assert.That(summary).Contains("first-run bytes");
 
+        // Not a capability either, and it is the SECOND question about the
+        // artefact the first row reports. `published slice PRESENT` is a claim
+        // about existence; until 2026-08-30 nothing in a green log said whether
+        // that binary belonged to the tree the run was reading, and the nearest
+        // sentence to hand turned out to be a commit date.
+        await Assert.That(summary).Contains(PublishedSlice.FreshnessTitle);
+        await Assert.That(summary).Contains(PublishedSlice.StateWord(PublishedSlice.Verdict).Trim());
+
         // Not a capability either, and the only row here that reports what the
         // SHELL handed this run rather than what the machine holds.
         await Assert.That(summary).Contains("drive letter");
@@ -491,6 +499,176 @@ internal sealed class SuiteCoverageTests
         await Assert.That(CommitCharge.CoverageRow)
             .DoesNotContain("<unreadable>")
             .Because("GetPerformanceInfo answering is the premise of the whole row, and a machine where it does not is one this run cannot say anything about");
+    }
+
+    /// <summary>
+    /// The run states the freshness its own publish check established, and a
+    /// stale reading renders as staleness rather than as a pass.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The row exists because a check that is silent on success gives a
+    /// suspicion nothing to be checked against.</b>
+    /// <see cref="PublishedSlice.EnsureFresh"/> has compared the published binary
+    /// against every input that goes into it since the beginning, and it threw or
+    /// it said nothing — so twelve green gate logs carried no sentence about
+    /// freshness at all. On 2026-08-30 a gate runner with a staleness suspicion
+    /// reached for the nearest figure to hand, a <b>commit date</b>, put
+    /// <c>56383c9</c>'s 01:20:40 beside the binary's 01:14:16 and reported four
+    /// gate sets — twelve full runs — as having driven a stale binary. Every
+    /// reading in that account was true and the conclusion was false: the file the
+    /// commit touched was stamped 01:12:22.665, before the publish, and
+    /// <c>git commit</c> records when it ran rather than touching a working-tree
+    /// file. Dissolving it took an investigation that one printed line would have
+    /// ended.
+    /// </para>
+    /// <para>
+    /// <b>The synthetic arm is mandatory rather than thorough</b>, for
+    /// <see cref="TheRunReportsTheMachinesCommitChargeAndEveryBandIsExercised"/>'s
+    /// reason exactly: a healthy tree publishes and then runs, so <c>STALE</c> is
+    /// a state this machine reaches perhaps once a fortnight and the rendering
+    /// that matters would otherwise first run on a day somebody is already
+    /// confused. Both directions are driven here — a stale reading must carry the
+    /// word, the sign and the warning, and a fresh one must carry none of them.
+    /// </para>
+    /// <para>
+    /// <b>And the live arm ties the row to the guard rather than to a second
+    /// enumeration.</b> The row and the refusal are two renderings of one
+    /// <see cref="PublishedSlice.Measure"/>, so a run whose block says
+    /// <c>FRESH</c> while its slice arms refuse is impossible by construction —
+    /// which is a claim worth an assertion precisely because the construction is
+    /// the whole of the guarantee. A second walk asking a subtly different
+    /// question is how the corpus scan came to disagree with <c>git ls-files</c>
+    /// by 520 files under a remark saying the two matched.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRunStatesThePublishFreshnessItEstablished()
+    {
+        var published = new DateTime(2026, 8, 30, 2, 3, 58, 876, DateTimeKind.Utc);
+        const string Newest = @"src\BrowserAI\Sessions\SessionLock.cs";
+
+        var fresh = new PublishFreshnessReading(
+            published,
+            published - new TimeSpan(2, 51, 36),
+            Newest,
+            Inputs: 95,
+            Newer: [],
+            Absence: null);
+
+        var stale = new PublishFreshnessReading(
+            published,
+            published + new TimeSpan(1, 2, 0),
+            Newest,
+            Inputs: 95,
+            Newer: [Newest, @"third-party\sqlite\sqlite3.c"],
+            Absence: null);
+
+        var nothing = PublishFreshnessReading.Establishing(
+            "nothing has been published: there is no directory at 'X'");
+
+        await Assert.That(PublishedSlice.Judge(fresh)).IsEqualTo(PublishFreshnessVerdict.Fresh);
+        await Assert.That(PublishedSlice.Judge(stale)).IsEqualTo(PublishFreshnessVerdict.Stale);
+        await Assert.That(PublishedSlice.Judge(nothing)).IsEqualTo(PublishFreshnessVerdict.NotEstablished);
+
+        // ⚠️ THE BOUNDARY THE GUARD ACTUALLY USES. EnsureFresh refuses on `>`
+        // and never on `>=`, so an input stamped to the millisecond OF the
+        // publish is not newer than it. The verdict is taken on the same list
+        // the guard refuses on rather than on the sign of the row's own margin,
+        // which is what keeps the two from parting company at exactly this tick.
+        var tie = fresh with { Newest = published };
+
+        await Assert.That(tie.Margin).IsEqualTo(TimeSpan.Zero);
+        await Assert.That(PublishedSlice.Judge(tie)).IsEqualTo(PublishFreshnessVerdict.Fresh);
+
+        // The three words are three words, and none is another's prefix, so a
+        // reader of one log can tell them apart.
+        var words = new[] { PublishFreshnessVerdict.Fresh, PublishFreshnessVerdict.Stale, PublishFreshnessVerdict.NotEstablished }
+            .Select(verdict => PublishedSlice.StateWord(verdict).Trim())
+            .ToList();
+
+        await Assert.That(words.Distinct(StringComparer.Ordinal).Count()).IsEqualTo(3);
+        await Assert.That(words.Count(word => words.Exists(other => other != word && other.StartsWith(word, StringComparison.Ordinal))))
+            .IsEqualTo(0);
+
+        // The passing row, which is the one that did not exist and is the whole
+        // point: the two timestamps, the margin, its direction, the input it was
+        // taken against and how many there were.
+        var freshRow = PublishedSlice.RowFor(fresh);
+
+        await Assert.That(freshRow).Contains(PublishedSlice.FreshnessTitle);
+        await Assert.That(freshRow).Contains(PublishedSlice.FreshState);
+        await Assert.That(freshRow).Contains("2026-08-30T02:03:58.876Z");
+        await Assert.That(freshRow).Contains("2026-08-29T23:12:22.876Z");
+        await Assert.That(freshRow).Contains("2h51m36s newer than the newest of 95 inputs");
+        await Assert.That(freshRow).Contains(Newest);
+
+        await Assert.That(freshRow)
+            .DoesNotContain("⚠️")
+            .Because("a passing row states a margin and claims nothing more; the warning belongs to the band where the run's own results are worthless");
+
+        // ⚠️ THE OTHER DIRECTION, which is the arm a rendering bug would show up
+        // in. A stale reading must read as staleness -- the word, the sign, the
+        // count and the command -- and must not read as a pass.
+        var staleRow = PublishedSlice.RowFor(stale);
+
+        await Assert.That(staleRow).Contains(PublishedSlice.StaleState);
+        await Assert.That(staleRow).Contains("1h02m00s OLDER than the newest of 95 inputs");
+        await Assert.That(staleRow).Contains("2 of 95 are newer");
+        await Assert.That(staleRow).Contains("THE PUBLISHED BINARY IS OLDER THAN THE SOURCE");
+        await Assert.That(staleRow).Contains(PublishedSlice.PublishCommand);
+
+        await Assert.That(staleRow)
+            .DoesNotContain(PublishedSlice.FreshState)
+            .Because("the two states are told apart by a reader scanning one log for a word, so a stale row carrying the passing word would be worse than no row at all");
+
+        // A run with no binary says so rather than reporting a comparison it
+        // never made -- the shape of honesty every other row in this block owes
+        // its existence to.
+        var absentRow = PublishedSlice.RowFor(nothing);
+
+        await Assert.That(absentRow).Contains(PublishedSlice.NotEstablishedState);
+        await Assert.That(absentRow).Contains("nothing has been published");
+        await Assert.That(absentRow).Contains("nothing was compared");
+        await Assert.That(absentRow).DoesNotContain(PublishedSlice.FreshState);
+
+        // And the refusals, driven from readings rather than by arranging a
+        // stale publish -- which would leave this tree needing a re-publish to
+        // go green again, on the one message a developer reads at the worst
+        // possible moment.
+        await Assert.That(PublishedSlice.RefusalFor(stale)).Contains("older than 2 source file(s)");
+        await Assert.That(PublishedSlice.RefusalFor(stale)).Contains(@"third-party\sqlite\sqlite3.c");
+        await Assert.That(PublishedSlice.RefusalFor(stale)).Contains(PublishedSlice.PublishCommand);
+        await Assert.That(PublishedSlice.RefusalFor(nothing)).Contains("There is no published binary");
+        await Assert.That(PublishedSlice.RefusalFor(nothing)).Contains(PublishedSlice.PublishCommand);
+
+        // ⚠️ THE LIVE ARM: the row reaches the block. This is the assertion that
+        // goes red when the row is taken out of Summary(), which is the state
+        // every gate log this project has ever produced was in.
+        var summary = SuiteEnvironment.Summary();
+
+        await Assert.That(summary).Contains(PublishedSlice.FreshnessTitle);
+        await Assert.That(summary).Contains(PublishedSlice.StateWord(PublishedSlice.Verdict).Trim());
+
+        // ⚠️ AND THE ROW IS THE GUARD'S OWN COMPARISON. EnsureFresh refuses
+        // exactly the readings this row declines to spell FRESH; asserted rather
+        // than left to the construction, because the construction is the entire
+        // guarantee and nothing else would notice it being replaced.
+        var refused = false;
+
+        try
+        {
+            PublishedSlice.EnsureFresh();
+        }
+        catch (InvalidOperationException)
+        {
+            refused = true;
+        }
+
+        await Assert.That(refused)
+            .IsEqualTo(PublishedSlice.Verdict is not PublishFreshnessVerdict.Fresh)
+            .Because("the row and the refusal are two renderings of one reading, so a run whose block says FRESH while its slice arms refuse -- or the reverse -- would mean the row had grown an enumeration of its own");
     }
 
     /// <summary>

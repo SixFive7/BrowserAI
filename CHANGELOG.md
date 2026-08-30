@@ -23,6 +23,31 @@ has been satisfied in form only.
 
 ### Changed
 
+- **Every run now states the publish freshness it established, instead of only
+  refusing when it did not.** `PublishedSlice.EnsureFresh` has compared the
+  published NativeAOT binary against every input that goes into it since the
+  beginning, and it did exactly two things: it threw, or it said nothing — while
+  the coverage block's `published slice` row reported `PRESENT`, which is a claim
+  about existence. So twelve green gate logs carried no sentence about whether
+  the binary they drove belonged to the tree they were reading, and on 2026-08-30
+  a gate runner with a staleness suspicion reached for the nearest figure to
+  hand: **a commit date**. Commit `56383c9`'s **01:20:40**, touching
+  `src/BrowserAI/Sessions/SessionLock.cs`, went beside the binary's
+  **01:14:16.500**, and four gate sets — twelve full runs — were reported as
+  having driven a stale binary while passing the check. **Every reading in that
+  account was true and the conclusion was false**: that file's own timestamp was
+  **01:12:22.665**, before the publish, and `git commit` records when it ran
+  rather than touching a working-tree file. Dissolving it took an investigation
+  that one printed line would have ended. A `publish freshness` row now sits
+  directly below the capability rows, reading `FRESH`, `STALE` or
+  `NOT ESTABLISHED`, with both modification times in **UTC to the millisecond** —
+  the misreading turned on a gap of one minute 53.8 seconds, and the two figures
+  put side by side that day were a local-time file stamp and a commit date with
+  no zone named in either. **The row and the guard are one comparison and not
+  two:** `Measure` walks the inputs once, `RefusalFor` renders that reading as the
+  exception and `RowFor` renders it as the row, and the live arm asserts the tie
+  in both directions rather than leaving it to the construction.
+
 - **The six-run-gate hazard closed on the condition it wrote for itself, hours
   after re-opening on the condition it wrote for itself.** That row closed on
   2026-08-24 on a cause rather than on a test, so it was obliged to name what

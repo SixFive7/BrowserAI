@@ -365,6 +365,19 @@ internal static class SuiteEnvironment
             }
         }
 
+        // ⚠️ WHETHER THE BINARY THE ROW ABOVE FOUND BELONGS TO THIS TREE, which
+        // the `published slice` row does not say and never did: PRESENT is a
+        // claim about existence. PublishedSlice.EnsureFresh has compared the
+        // publish against every input since the beginning and was silent on
+        // success, so twelve green gate logs carried no sentence a staleness
+        // suspicion could be checked against -- and on 2026-08-30 a gate runner
+        // reached for the nearest thing to hand, a COMMIT DATE, and reported
+        // four gate sets as having driven a stale binary. Every reading was
+        // right and the conclusion was false, and dissolving it took an
+        // investigation. It sits here rather than at the end of the block
+        // because the reader who needs it is the one looking at the row above.
+        _ = report.Append(PublishedSlice.CoverageRow).Append('\n');
+
         _ = report.Append("  ")
             .Append("release run".PadRight(20))
             .Append(IsReleaseRun ? "YES" : "no ")

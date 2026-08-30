@@ -696,6 +696,75 @@ exactly: nothing anybody types makes a machine's commit charge healthy, so a
 capability would make a release from a loaded machine unreachable with no
 permitted remedy rather than telling the reader what to distrust.
 
+### The run states the publish freshness it established
+
+**Added 2026-08-30, and it exists because a check that is silent on success
+leaves a suspicion with nothing to be checked against.**
+`PublishedSlice.EnsureFresh` has compared the published NativeAOT binary against
+every input that goes into it since the beginning, and it did exactly two things:
+it threw, or it said nothing. The coverage block's `published slice` row reports
+`PRESENT`, which is a claim about **existence** and not about freshness. So
+twelve green gate logs carried no sentence about whether the binary they drove
+belonged to the tree they were reading.
+
+**On 2026-08-30 a gate runner went looking for one and reached for the nearest
+figure to hand: a commit date.** It put commit `56383c9`'s **01:20:40**, which
+touched `src/BrowserAI/Sessions/SessionLock.cs`, beside the published binary's
+`LastWriteTime` of **01:14:16.500**, and reported that four gate sets — twelve
+full runs — had driven a stale binary while passing the check. **Every reading in
+that account was true and the conclusion was false.** `SessionLock.cs`'s own
+timestamp was **01:12:22.665**, one minute 53.8 seconds *before* the publish;
+`git commit` records when it ran and never touches a working-tree file. The batch
+edited, published, gated and then committed, which is the order its own commit
+message says it took. Dissolving it took an investigation, and **one line in
+those twelve logs would have ended it in a second.**
+
+**So every run now carries a `publish freshness` row**, immediately below the
+capability rows the reader with that suspicion is already looking at, in one of
+three states:
+
+| State | What it means |
+|---|---|
+| `FRESH` | The binary is at least as new as every input. The row states its modification time, the newest input's time and name, how many inputs were compared, and the margin between them |
+| `STALE` | At least one input is newer. The row states the margin the other way round, how many inputs are newer, and three further lines saying that every slice arm in the run refused rather than ran, with the publish command |
+| `NOT ESTABLISHED` | There was no binary to compare anything against. Nothing was measured and the row says so, rather than printing a margin against a timestamp Windows returns for a file that does not exist |
+
+⚠️ **The row and the guard are one comparison, not two.**
+`PublishedSlice.Measure` walks the inputs once; `RefusalFor` renders that reading
+as the exception `EnsureFresh` throws and `RowFor` renders the same reading as
+this row. A second enumeration for the row would be free to ask a subtly
+different question, which is precisely how the corpus scan came to disagree with
+`git ls-files` by 520 files under a remark asserting that the two matched.
+`SuiteCoverageTests.TheRunStatesThePublishFreshnessItEstablished` asserts the tie
+live, in both directions: the guard refuses exactly the readings the row declines
+to spell `FRESH`.
+
+**Timestamps are UTC to the millisecond, and both halves are deliberate.** The
+whole of the misreading turned on a gap of one minute 53.8 seconds, so a row
+printed to the minute would have made it worse rather than better; and the two
+figures put side by side that day were a local-time file stamp and a commit date,
+with nothing in either sentence naming a zone.
+
+**The `STALE` rendering is exercised from synthetic readings**, for the
+`commit charge` bands' reason: a healthy tree publishes and then runs, so a real
+`STALE` arrives perhaps once a fortnight and the rendering that matters would
+otherwise first run on a day somebody is already confused. The refusal text is
+driven the same way — arranging a genuinely stale publish inside a test would
+leave the tree needing a re-publish to go green again.
+
+**Its absence is gated on the executable and not on the whole capability.** A
+publish whose payload is missing still has an answerable freshness question and
+gets a real answer; that its tier is broken is a different sentence, and
+`published slice PARTIAL` plus `NothingThisRunLacksIsHalfInstalled` already carry
+it. Each row answers its own question rather than borrowing another's verdict.
+
+**It is a row and not a `SuiteCapability`, and the reason is the opposite of
+`commit charge`'s.** That one is not a capability because nothing anybody types
+would turn it green. This one is not a capability because `published slice`
+**already is one** and reports the artefact's existence — freshness is a second
+question about the same artefact, and the two were conflated by a reader who had
+only the first.
+
 ## We write our own harness
 
 We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines
