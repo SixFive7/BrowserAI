@@ -23,6 +23,62 @@ has been satisfied in form only.
 
 ### Changed
 
+- **The six-run-gate hazard closed on the condition it wrote for itself, hours
+  after re-opening on the condition it wrote for itself.** That row closed on
+  2026-08-24 on a cause rather than on a test, so it was obliged to name what
+  would re-open it; the 2026-08-30 release gate produced that exact shape and it
+  re-opened; and the re-opening named in turn what would close it — *the
+  quiet-machine gate the maintainer has ordered coming back green, six for six,
+  with the repaired tee never needed*. That gate ran at `5237e9d` on a machine
+  measured quiet by process path at seven instants, and came back **651 of 651
+  in every one of the six runs, nothing failed and nothing skipped**, at
+  1 m 53.316 s, 1 m 49.647 s, 2 m 08.276 s, 2 m 09.551 s, 2 m 02.417 s and
+  2 m 05.281 s, with `initializeServer` occurring **zero** times across the six
+  logs. **The product was held constant across both gates:** the slice these
+  runs drove is the same file the failing run drove, because nothing under
+  `src/`, `build/` or `third-party/` moved between `56383c9` and `5237e9d`.
+  **What the closure does not establish is a cause.** The maintainer's Firefox
+  went away in the same act as another repository's suite and the load the two
+  made together; the commit charge reads 34.2 % to 35.1 % against the failing
+  gate's 49.5 % to 51.2 % and returned HEALTHY on both, so it separates this
+  band from the 2026-08-24 kernel leak and separates nothing inside it. **And
+  one clean set of six against a shape seen at one in six is about one
+  flake-lifetime** — the row says so in its own cell rather than leaving a
+  reader to work it out, and the re-opener it names is unchanged. The recorded
+  same-slot observation is downgraded rather than dropped: both stalls were the
+  sixth run from Git Bash, and this set's sixth run from Git Bash was green, so
+  two for two is now two of three. `open` falls to 44 and `closed` rises to 147,
+  which are the figures that stood before the row crossed the other way the same
+  morning — **the first row in this table to move twice in one day, and the
+  first to return to a status it had already left.**
+
+- **A stale-publish alarm that was a commit date read as a file timestamp, and
+  the finding now sits where the substitution gets made.** A gate runner put the
+  published binary's `LastWriteTime` of 01:14:16.500 beside commit `56383c9`'s
+  date of 01:20:40, saw that commit touching
+  `src/BrowserAI/Sessions/SessionLock.cs`, and reported that four gate sets —
+  twelve full runs — had driven a stale binary while passing
+  `PublishedSlice.EnsureFresh`. **Every part of that reading is true and the
+  conclusion is false.** Both sides of the comparison are modification times,
+  `git commit` records when it ran and never touches a working-tree file, and
+  `SessionLock.cs`'s own timestamp was 01:12:22.665 — one minute 53.8 seconds
+  *before* the publish. The batch edited, published, gated and committed in that
+  order, which is the order its own commit message says it took. Re-measured
+  over the whole freshness corpus on 2026-08-30: **0 of 95 inputs newer than the
+  binary**. **What made the misreading available is that the check is silent
+  when it passes** — it throws or it says nothing at all, and the coverage
+  block's `published slice PRESENT` row is a claim about existence rather than
+  about freshness — so a log full of green runs offers no sentence to check a
+  staleness suspicion against, and the nearest thing to hand is a commit date.
+  Both halves are written into the doc comment on `EnsureFresh`. Making a run
+  state its own freshness margin is a change to the coverage block rather than
+  to that method, and it is deliberately not made here. **A third paragraph
+  records why the check is on timestamps at all**, which the file had never
+  said: two publishes of an identical input set, taken on 2026-08-30 with
+  nothing between them, produced binaries of the same length and **different
+  SHA-256** — so a content hash cannot answer *is this binary from this source*
+  for this toolchain, and the modification times are what is left.
+
 - **A hazard row the parser could not read left both tallies in the same
   instant, and nothing said so.** `HazardIndex.Rows` keeps a pipe-leading line
   only when it splits into exactly eight fields, and discards every other one in

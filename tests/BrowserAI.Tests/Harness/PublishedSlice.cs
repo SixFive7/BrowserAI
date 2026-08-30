@@ -127,6 +127,48 @@ internal static class PublishedSlice
     /// <summary>
     /// Fails if the published binary is older than anything that goes into it.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Both sides of this comparison are file modification times, and a
+    /// commit's date is neither of them.</b> It reads as pedantry until somebody
+    /// makes the substitution, and on 2026-08-30 somebody did: a gate runner put
+    /// the published binary's <c>LastWriteTime</c> of <b>01:14:16.500</b> beside
+    /// commit <c>56383c9</c>'s date of <b>01:20:40</b>, saw the commit touching
+    /// <c>src/BrowserAI/Sessions/SessionLock.cs</c> six minutes after the
+    /// publish, and reported that four subsequent gate sets — twelve full runs —
+    /// had driven a stale binary while passing this check. <b>Every part of that
+    /// reading is true and the conclusion is false.</b> <c>SessionLock.cs</c>'s
+    /// own timestamp was <b>01:12:22.665</b>, one minute 53.8 seconds
+    /// <i>before</i> the publish; <c>git commit</c> records when it ran and never
+    /// touches a working-tree file. The batch edited, published, gated and then
+    /// committed, in that order, which is the order its own commit message says
+    /// it took. Re-measured the same day over the whole of
+    /// <see cref="FreshnessInputs"/>: <b>0 of 95 inputs newer than the binary</b>.
+    /// </para>
+    /// <para>
+    /// <b>What made the misreading available is that this check says nothing when
+    /// it passes.</b> It throws or it is silent, and the run's coverage block
+    /// carries a <c>published slice</c> row that reports <c>PRESENT</c> — which is
+    /// a claim about existence and not about freshness. So a log full of green
+    /// runs offers no sentence to check a staleness suspicion against, and the
+    /// nearest thing to hand is a commit date. Making the run state its own
+    /// freshness margin is a change to the coverage block rather than to this
+    /// method, and it is not made here.
+    /// </para>
+    /// <para>
+    /// <b>Timestamps rather than content, and that is forced rather than
+    /// chosen.</b> The obvious stronger check — hash the inputs, hash the
+    /// binary, refuse a binary that does not belong to them — has no binary
+    /// half to compare against here. Measured 2026-08-30: two publishes of an
+    /// <i>identical</i> input set, nothing in <see cref="FreshnessInputs"/>
+    /// touched between them, produced binaries of the same length
+    /// (<c>19,186,688</c> bytes) and <b>different SHA-256</b>. So a content hash
+    /// cannot answer <i>is this binary from this source</i> for this toolchain,
+    /// and the modification times are what is left. Re-establish it by running
+    /// <see cref="PublishCommand"/> twice with no edit between and comparing
+    /// <c>Get-FileHash</c>.
+    /// </para>
+    /// </remarks>
     /// <exception cref="InvalidOperationException">The publish is stale.</exception>
     public static void EnsureFresh()
     {
