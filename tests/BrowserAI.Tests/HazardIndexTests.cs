@@ -153,6 +153,72 @@ internal sealed partial class HazardIndexTests
         await Assert.That(named.Count(name => name.Contains("Tests.", StringComparison.Ordinal))).IsGreaterThan(30);
     }
 
+    [Test]
+    public async Task EveryLineOfTheTableSplitsIntoTheFieldsTheParserReads()
+    {
+        // The one failure this table's counting mechanism cannot describe.
+        //
+        // `HazardIndex.Rows` keeps a pipe-leading line only when it splits into
+        // exactly `Fields`, and drops every other one WITHOUT SAYING SO -- which
+        // is right for the header, the separator and the three-column table
+        // above the index, and catastrophic for a row somebody wrote a bare `|`
+        // into. That row leaves the `open` tally and the `closed` tally in the
+        // same instant, so it never shows up as a state that needs adjudicating;
+        // the only trace is `RecordedCountTests` reporting that a number moved,
+        // and a number moving is what a legitimate edit looks like too. It cost
+        // a real row on 2026-08-30: `FileShare.ReadWrite | FileShare.Delete`,
+        // written into an evidence cell to say what a fix had opened the file
+        // with, split the line into nine fields and deleted the row that the
+        // same commit had just re-opened.
+        //
+        // So this arm is not about pipes. It is the assertion that the parser's
+        // silence is only ever spent on lines that are not rows.
+        var table = HazardIndex.TableLines();
+
+        var offenders = table
+            .Select(line => (line.Line, Cells: HazardIndex.SplitRow(line.Text)))
+            .Where(line => line.Cells.Length != HazardIndex.Fields)
+            .Select(line => $"HAZARDS.md:{line.Line}: splits into {line.Cells.Length} fields, not {HazardIndex.Fields}, so HazardIndex.Rows() drops it in silence and the row is in NEITHER tally — first cell: {Excerpt(line.Cells.ElementAtOrDefault(1)?.Trim() ?? string.Empty)} — a literal '|' written into a cell is the usual cause: escape it as '\\|', which this parser and Markdown both read as one pipe, or quote the value differently, or reword the cell so it does not need one");
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // Everything above passes vacuously against a region that was never
+        // found -- a renamed header cell returns nothing and reports nothing
+        // wrong with it.
+        await Assert.That(table.Count).IsGreaterThan(130)
+            .Because($"the hazard table is found by its header's first cell reading '{HazardIndex.HeaderCell}', and only {table.Count} lines were walked from it");
+
+        // And the two enumerations agree. They are deliberately different walks
+        // -- Rows() scans the whole file, TableLines() walks the contiguous run
+        // below the header -- sharing only the split, so this equality is the
+        // half that catches a skip the field count cannot see: a row whose Area
+        // cell is empty or all dashes splits into eight and is dropped anyway,
+        // and a row written with a leading space ends the region early and takes
+        // every row below it out of the guard.
+        await Assert.That(table.Count - 2).IsEqualTo(HazardIndex.Rows().Count)
+            .Because($"the table region is {table.Count} lines, which is {table.Count - 2} after its header and separator, and HazardIndex.Rows() returns {HazardIndex.Rows().Count} — the difference is lines the parser dropped without saying which");
+
+        // The positive control, because every real line in this file splits into
+        // eight and a check that can only ever come back empty is
+        // indistinguishable from one that cannot look. The content is the
+        // 2026-08-30 mistake verbatim.
+        const string BareRow = "| Sessions and locking | **A dump could not read a live writer's file** | — | — | closed 2026-08-30 | `LauncherWait.Evidence` opens FileShare.ReadWrite | FileShare.Delete |";
+
+        await Assert.That(HazardIndex.SplitRow(BareRow).Length).IsNotEqualTo(HazardIndex.Fields)
+            .Because("the line the guard exists for has to be a line the guard can see");
+
+        // And the control on the advice. Telling an author to write `\|` is only
+        // honest if the parser then reads the row -- otherwise the fix moves a
+        // silently-skipped row to a differently-silently-skipped row.
+        var escaped = HazardIndex.SplitRow(BareRow.Replace(
+            "FileShare.ReadWrite | FileShare.Delete",
+            @"FileShare.ReadWrite \| FileShare.Delete",
+            StringComparison.Ordinal));
+
+        await Assert.That(escaped.Length).IsEqualTo(HazardIndex.Fields);
+        await Assert.That(escaped[6].Trim()).IsEqualTo("`LauncherWait.Evidence` opens FileShare.ReadWrite | FileShare.Delete");
+    }
+
     /// <summary>Every symbol a row's evidence cell names, brace groups expanded.</summary>
     /// <param name="evidenceIncludingHistory">The <c>How we proved it</c> cell, corrections and all.</param>
     /// <returns>Each <c>Type.Member</c> the cell claims exists.</returns>

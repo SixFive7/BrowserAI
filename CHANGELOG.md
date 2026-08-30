@@ -23,6 +23,40 @@ has been satisfied in form only.
 
 ### Changed
 
+- **A hazard row the parser could not read left both tallies in the same
+  instant, and nothing said so.** `HazardIndex.Rows` keeps a pipe-leading line
+  only when it splits into exactly eight fields, and discards every other one in
+  silence — which is right for the header, for the separator and for the
+  three-column table above the index explaining what each column is for, and
+  catastrophic for a row somebody wrote a bare `|` into. On 2026-08-30
+  `FileShare.ReadWrite | FileShare.Delete`, written into an evidence cell to
+  record what the fix below had opened a file with, split its line into nine
+  fields and deleted the row the same commit had just re-opened. **That is the
+  one failure this table's counting mechanism cannot describe**: a dropped line
+  is absent from the `open` tally and the `closed` tally at once, so
+  `RecordedCountTests` can only ever see that a number moved, never which row
+  went missing. **The red established it is worse than that.** With the guard
+  stashed and the offending row planted, all nine tests of the two classes that
+  read this table passed — the tally included — because a row that arrives
+  malformed never registers in either direction, so no number moves at all and
+  there is nothing left to disagree with.
+  `HazardIndexTests.EveryLineOfTheTableSplitsIntoTheFieldsTheParserReads` now
+  names the line, the field count, the leading cell and the three ways out, and
+  **the escape it recommends was made true rather than suggested**:
+  `HazardIndex.SplitRow` reads `\|` as GitHub-Flavoured Markdown's own literal
+  pipe, so the same planted row written that way parses into eight fields and is
+  *counted* — which is the second red, the tally going to 46 `open` against a
+  published 45. Without it the advice would have moved the row from one silent
+  skip to another. **The guard is a second walk of the table rather than a second
+  reading of it**: `HazardIndex.TableLines` follows the contiguous run of
+  pipe-leading lines below the header, `Rows` scans the whole file, the two share
+  the split and nothing else, and their counts are asserted equal — which is the
+  half that catches a skip the field count cannot see, such as a row whose `Area`
+  cell is all dashes, or one written with a leading space that ends the region
+  early and takes every row below it out of the guard's sight. **No hazard row
+  was added, by that file's own precedent**: a row records a blind spot, and a
+  test closes it.
+
 - **The failure dump could not read the files it exists to inline, and the one
   run that needed it printed three sharing violations instead.**
   `LauncherWait.Evidence` walks the launcher's scratch tree and reads every file
