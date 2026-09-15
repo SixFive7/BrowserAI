@@ -277,7 +277,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(loop).IsGreaterThan(-1);
 
         var publishLoop = script.IndexOf(
-            "        Write-Host \"Publishing the $($publish.What) (NativeAOT) to $PackDir ...\"",
+            "        Write-Host \"Publishing the $($publish.What) (NativeAOT) to $stage ...\"",
             StringComparison.Ordinal);
 
         await Assert.That(publishLoop).IsGreaterThan(-1);
@@ -300,6 +300,13 @@ internal sealed class ReleaseScriptTests
 
         // And the pack refuses a directory holding one of the two.
         await Assert.That(script).Contains("so the $($publish.What) is missing and there is nothing releasable to pack");
+
+        // ⚠️ EACH PUBLISH STAGES INTO A DIRECTORY OF ITS OWN and is copied in
+        // afterwards. Measured 2026-09-15: two publishes with `-o` pointed at one
+        // directory produced a pack directory holding the server and NOT the
+        // app, while leaving the app's `.pdb` behind so it looked populated.
+        await Assert.That(script).Contains("$stage = Join-Path $root 'artifacts' (\"publish-\" + [System.IO.Path]::GetFileNameWithoutExtension($publish.Exe))");
+        await Assert.That(script).Contains("Copy-Item -Path (Join-Path $stage '*') -Destination $PackDir -Recurse -Force");
     }
 
     [Test]

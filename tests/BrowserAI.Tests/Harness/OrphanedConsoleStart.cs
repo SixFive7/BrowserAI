@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using BrowserAI.Updates;
@@ -191,7 +192,32 @@ internal sealed class OrphanedConsoleStart : IDisposable
             return;
         }
 
-        ProcessIdentity.Terminate(ProcessId, CreatedFileTime);
+        try
+        {
+            ProcessIdentity.Terminate(ProcessId, CreatedFileTime);
+        }
+        catch (Win32Exception) when (!IsAlive())
+        {
+            // ⚠️ THE ONE RACE THIS TEARDOWN CANNOT AVOID, and swallowing it is
+            // bounded by a re-read rather than by the exception type.
+            //
+            // The product this rig starts is a BrowserAI with nobody to serve,
+            // and since 2026-09-15 that process EXITS ON ITS OWN in about half a
+            // second -- which is the whole point of the arms that use this rig.
+            // So the check above can be true and the process gone by the time
+            // `TerminateProcess` reaches it, and Windows then answers ACCESS
+            // DENIED for a pid that no longer names anything. Measured
+            // 2026-09-15 on a full run: `Could not terminate process 109176`,
+            // from the teardown, on an arm whose assertions had all passed.
+            //
+            // ⚠️ The filter is `!IsAlive()` and not the error code, so this
+            // swallows exactly one thing: a failure to kill something that is
+            // already dead. A terminate that failed while the process is STILL
+            // THERE still throws, which is the case that would leave an orphan
+            // holding a node child past the run.
+            return;
+        }
+
         _ = ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, TestDefaults.ProcessHang);
     }
 

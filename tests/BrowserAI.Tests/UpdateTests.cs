@@ -1155,9 +1155,27 @@ internal sealed class UpdateTests
         await Assert.That(startup).Contains(".SetAutoApplyOnStartup(false)");
 
         var program = await RepositoryLayout.ReadCodeAsync(ProductFile("Program.cs"));
-        var velopack = program.IndexOf("VelopackStartup.Run(", StringComparison.Ordinal);
+
+        // ⚠️ RE-POINTED 2026-09-15 (previously `VelopackStartup.Run(`). The one
+        // call became two on the day the product became two binaries: the SERVER
+        // registers no lifecycle callback at all, because Velopack invokes all
+        // four hooks on the main exe and the main exe is the configuration app.
+        // Two methods rather than a flag, so what is asserted here is the one
+        // the server is supposed to be calling -- naming the other would be an
+        // arm that passed while the server was serving hooks it must not serve.
+        var velopack = program.IndexOf("VelopackStartup.RunWithoutLifecycleHooks(", StringComparison.Ordinal);
 
         await Assert.That(velopack).IsGreaterThan(-1);
+        await Assert.That(program).DoesNotContain("VelopackStartup.RunAndServeLifecycleHooks(");
+
+        // And the configuration app is the one that DOES serve them, which is
+        // the other half of the same claim and is invisible from this file
+        // alone: an arm holding only the negative above would stay green for a
+        // product in which nobody served a hook at all.
+        var app = await RepositoryLayout.ReadCodeAsync(
+            new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Program.cs")));
+
+        await Assert.That(app).Contains("VelopackStartup.RunAndServeLifecycleHooks(");
 
         var late = new List<string>();
 
