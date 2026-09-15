@@ -964,6 +964,22 @@ process started until a visible `#32770` owned by it appeared: **243.2 ms**,
 at a fixed 2.5 s wait and agreed at 500 ms when polled — the window arrives when
 the shell gets round to it, and a fixed wait measures the wait.
 
+**The window is class `#32770` and the process owns no other visible one.**
+`#32770` is the Windows dialog class and a task dialog is a dialog; the only
+other top-level windows the process owns are `IME` and `MSCTFIME UI`, both
+invisible, which every GUI process on this machine carries. `WM_CLOSE` posted to
+the dialog exits the process **0**.
+
+**`TASKDIALOGCONFIG` is 160 bytes and `TASKDIALOG_BUTTON` is 12, on x64.**
+Both are `#pragma pack(1)` in the Windows headers, which is the whole trap: the
+natural C# layout pads every pointer to eight bytes and produces **184** bytes
+for the same fields — measured as the positive control — and Windows then reads
+a 184-byte structure as though it were the 160-byte one, field by field, with no
+diagnostic at all. Checked against Microsoft's own metadata through `CsWin32`,
+size **and** all 22 field offsets, because a size that agrees says nothing about
+a field that moved: two swapped pointers leave the total unchanged and turn the
+window title into the instruction.
+
 ### `<consoleAllocationPolicy>detached</consoleAllocationPolicy>` — TRIED, AND DROPPED because its benefit could not be established
 
 **Measured 2026-09-15 on the server's own manifest, then removed.** The element

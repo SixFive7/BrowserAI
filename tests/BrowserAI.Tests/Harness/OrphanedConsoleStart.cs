@@ -196,26 +196,41 @@ internal sealed class OrphanedConsoleStart : IDisposable
         {
             ProcessIdentity.Terminate(ProcessId, CreatedFileTime);
         }
-        catch (Win32Exception) when (!IsAlive())
+        catch (Win32Exception failure)
         {
-            // ⚠️ THE ONE RACE THIS TEARDOWN CANNOT AVOID, and swallowing it is
-            // bounded by a re-read rather than by the exception type.
+            // ⚠️ THE ONE RACE THIS TEARDOWN CANNOT AVOID, and what bounds the
+            // swallow is a re-read rather than an error code.
             //
             // The product this rig starts is a BrowserAI with nobody to serve,
-            // and since 2026-09-15 that process EXITS ON ITS OWN in about half a
-            // second -- which is the whole point of the arms that use this rig.
-            // So the check above can be true and the process gone by the time
-            // `TerminateProcess` reaches it, and Windows then answers ACCESS
-            // DENIED for a pid that no longer names anything. Measured
-            // 2026-09-15 on a full run: `Could not terminate process 109176`,
-            // from the teardown, on an arm whose assertions had all passed.
+            // and since 2026-09-15 that process EXITS ON ITS OWN in about half
+            // a second — which is the whole point of the arms that use this rig.
+            // So the liveness check above can be true and the process already on
+            // its way out by the time `TerminateProcess` reaches it, and Windows
+            // answers a failure for a pid that is mid-teardown. Measured twice
+            // on 2026-09-15, on two full runs, on an arm whose assertions had
+            // all passed: `Could not terminate process 109176`, then `82304`.
             //
-            // ⚠️ The filter is `!IsAlive()` and not the error code, so this
-            // swallows exactly one thing: a failure to kill something that is
-            // already dead. A terminate that failed while the process is STILL
-            // THERE still throws, which is the case that would leave an orphan
-            // holding a node child past the run.
-            return;
+            // ⚠️ An instantaneous `!IsAlive()` filter was tried first and was
+            // NOT enough — the process was still in the table when the filter
+            // ran, so the exception escaped and the arm was red again. The
+            // question is not *is it gone now* but *does it go*, so this waits,
+            // bounded by the suite's own hang detector rather than by a number
+            // invented here.
+            //
+            // What is NOT swallowed: a terminate that failed against a process
+            // that then stays. That is the case which would leave an orphan
+            // holding a node child past the run, and it throws with the original
+            // failure attached.
+            if (ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, TestDefaults.ProcessHang))
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"Process {ProcessId} could not be terminated and is still running: {failure.Message} "
+                + "It is a BrowserAI started with no client, so it is holding a node child and a job object, "
+                + "and it will outlive this run.",
+                failure);
         }
 
         _ = ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, TestDefaults.ProcessHang);

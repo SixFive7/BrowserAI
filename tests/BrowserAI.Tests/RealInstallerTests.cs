@@ -579,6 +579,70 @@ internal sealed partial class RealInstallerTests
         await Assert.That(moved).IsEqualTo(1);
     }
 
+    /// <summary>
+    /// The packed release carries both executables and names the configuration
+    /// app as its main one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Read out of the package rather than out of the script that wrote
+    /// it.</b> <c>ReleaseScriptTests</c> holds what
+    /// <c>build/New-Release.ps1</c> passes; this holds what came out the other
+    /// end, and the two are different claims — a `vpk` that silently ignored an
+    /// argument would satisfy the first and fail this.
+    /// </para>
+    /// <para>
+    /// <b><c>mainExe</c> is the field that decides five things</b>: which binary
+    /// <c>Setup.exe</c> starts after a non-silent install, what the root stub is
+    /// called, what <c>Update.exe start</c> launches, which binary every hook
+    /// runs on, and what the Start Menu shortcut points at. Naming the
+    /// console-subsystem server there is the defect the whole two-binary design
+    /// exists to remove, and it would present as a terminal window on somebody
+    /// else's screen.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePackedReleaseNamesTheAppAsItsMainExeAndCarriesBothBinaries()
+    {
+        _ = SuiteEnvironment.RequirePackagedRelease();
+
+        var package = ReleaseLayout.FullPackage(test: false);
+
+        await Assert.That(package is null ? "no shipping .nupkg" : string.Empty).IsEmpty();
+
+        using var archive = await ZipFile.OpenReadAsync(package!.FullName);
+
+        var nuspec = archive.Entries.SingleOrDefault(entry => entry.FullName.EndsWith(".nuspec", StringComparison.Ordinal));
+
+        await Assert.That(nuspec is null ? "no .nuspec in the package" : string.Empty).IsEmpty();
+
+        string text;
+
+        using (var stream = await nuspec!.OpenAsync())
+        using (var reader = new StreamReader(stream))
+        {
+            text = await reader.ReadToEndAsync();
+        }
+
+        await Assert.That(text).Contains($"<mainExe>{RegistrationTarget.AppFileName}</mainExe>");
+        await Assert.That(text).DoesNotContain($"<mainExe>{RegistrationTarget.ServerFileName}</mainExe>");
+        await Assert.That(text).Contains("<shortcutLocations>StartMenuRoot</shortcutLocations>");
+
+        // Both binaries, at the root of the application directory. The stub is
+        // a third file and is Velopack's, not ours.
+        var app = archive.Entries.Select(entry => entry.FullName).ToList();
+
+        foreach (var executable in new[] { RegistrationTarget.AppFileName, RegistrationTarget.ServerFileName })
+        {
+            await Assert.That(app).Contains($"lib/app/{executable}");
+        }
+
+        // And the payload the server needs is in there with them, which is what
+        // makes the package an install rather than two executables.
+        await Assert.That(app).Contains("lib/app/payload/payload.json");
+    }
+
     /// <summary>Every entry of one package, keyed on its name with the id removed.</summary>
     /// <param name="archive">The package.</param>
     /// <param name="id">The pack id to take out of the names.</param>
