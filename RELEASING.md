@@ -57,6 +57,84 @@ The sequence, in order, no step skippable:
 
 **What manual does not mean.** It does not mean the suite runs when someone remembers. Steps 1–4 are the ordinary build and run on every build, whether or not a release is in view. Manual governs step 5 alone.
 
+#### The order the last six steps are executed in — and it is not the numbering
+
+⚠️ ***Corrected 2026-09-15 by addition (previously this section ended at "Manual
+governs step 5 alone", and the checklist's numbering was the only order
+recorded anywhere).*** Items 8–13 are **numbered** in the order a reader needs
+them and **executed** in the order below, and on 2026-09-15 a release attempt
+ran them in the numbered order and stopped twice on failures that were artifacts
+of the order rather than defects in anything:
+
+1. **Pack for the gate, first.** [Item 8](#8-run-everything)'s skipped count must
+   be zero, and two arms — the real-installer one and the notice check that reads
+   the packed `.nupkg` — are capability-gated on a pack existing in `Releases/`.
+   With no pack they report *skipped*, and `BROWSERAI_RELEASE_RUN=1` turns each
+   into a failure. So the pack exists before the gate runs, and it is a
+   gate artifact rather than the artifact that ships.
+2. **[Item 8](#8-run-everything), at the pre-stamp content.** The gate runs
+   against the release content **minus** the changelog stamp, the seal and any
+   correction that depends on the release having happened. That delta is what
+   this checklist already accepts — see [item 10](#10-the-changelogs-unreleased-section-is-not-empty),
+   whose whole output is a stamp.
+3. **[Item 10](#10-the-changelogs-unreleased-section-is-not-empty): stamp, and
+   seal in the same commit.**
+4. **[Item 9](#9-the-version-is-derived-and-000-is-refused): create the tag**, on
+   the commit the gate was run at plus the stamp.
+5. **Clean re-pack.** `Releases/` is cleared of everything that is not this
+   release — the archive stays — and `New-Release.ps1` is run again, so the feed
+   it writes holds the rows this release actually publishes.
+6. **Publish**, and then **verify the feed over HTTP**.
+
+**The two reds that established this, both of them 2026-09-15 gate run 1, and
+both green on the very next run once the order was fixed:**
+
+- **`ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt`** —
+  `Expected 0 but found 1`. Item 10's stamp moves every entry under the new
+  version's heading and leaves `## [Unreleased]` **empty by construction**, so
+  the check refuses. It can only be green **before** the stamp. *(Since
+  2026-09-15 that arm also accepts an empty section on the one commit the tag is
+  exactly at — which narrows the window this ordering has to protect, and does
+  not remove it: the tag is created at step 4, after the gate.)*
+- **`UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest`** —
+  `Expected 200 but found 404`. Deleting the `v1.0.0` tag to move it turned the
+  only published release into a **Draft**, so
+  `releases/latest/download/releases.win.json` resolved to nothing. Verified
+  outside the suite: `curl` → **404**, `gh release list` → one entry, *Draft*.
+  It can only be green while **some** release is published.
+
+**They cannot both be green in the window the numbered order puts item 8 in** —
+one needs pre-stamp, the other needs a live release — which is the proof that
+the numbering is a reading order and this is the running one.
+
+⚠️ **The cost of getting it wrong is outward-facing and was paid.** The public
+download and update feed answered **404 for about twenty minutes**, 12:05Z–12:25:34Z
+on 2026-09-15. *The end of that window is measured to the second; the start is a
+bound rather than a measurement* — GitHub's event feed carries no `DeleteEvent`
+for a tag, so the earliest independent artefact is the release commit reaching
+`origin` at 12:04:10Z with the tag deleted immediately after.
+
+**Two things the re-pack step turns on, recorded here because both were assumed
+wrongly on the day:**
+
+- **`build/Test-ReleaseVersion.ps1` REFUSES an equal version.** `$candidate -eq
+  $highest` is an explicit refusal — *"already the newest release on this
+  channel. Republishing a version over itself would leave two packages claiming
+  one version"* — and `ReleaseScriptTests` holds it in both directions. The rule
+  is *monotonic **or** an explicit rollback republish*, and **equal is neither**.
+  It answered `monotonic` for 1.0.0 on 2026-09-15 only because the **local**
+  `Releases/releases.win.json` still held 0.1.3 as its highest `Full`; a re-pack
+  after the feed is correct will not get that answer twice. Nothing in this
+  repository ever claimed otherwise — the belief that it did was carried in a
+  briefing, not in the tree, and this paragraph exists so the next reader does
+  not have to re-derive it.
+- **A `Releases/` holding older artifacts produces a feed nobody can publish.**
+  On 2026-09-15 `vpk` wrote **seven** rows into `releases.win.json` — the two new
+  1.0.0 rows and five stale `BrowserAI` 0.1.x ones — six of which name files that
+  would not be uploaded. The published August feed held **exactly one** row,
+  which is the shape a feed should have.
+
+
 
 ### Evidence, and what does not count
 
@@ -363,6 +441,11 @@ All five layers, including the two marked *mandatory before release*. **Not a
 subset, not "the fast ones", not "the ones related to this change".** The layers,
 their cadences and the enumerated tests are in [Testing](TESTING.md) — this item
 does not restate them.
+
+⚠️ **This item is numbered 8 and is executed third**, after a pack exists and
+before the stamp and the tag — see
+[the order the last six steps are executed in](#the-order-the-last-six-steps-are-executed-in--and-it-is-not-the-numbering).
+Run in the numbered order it goes red on two things that are not defects.
 
 Five things to record rather than assume, because each is easy to skim past.
 *Corrected 2026-08-24 (previously "Three things") — the list had reached four
@@ -698,7 +781,9 @@ live **outside** a test run, and both must be true at release time:
   strict direction and the client accepts a rollback the build refuses to emit —
   a pipeline that has made rolling back impossible while every component
   individually supports it, which is a real and observed state rather than a
-  hypothetical one.
+  hypothetical one. ⚠️ **Equal is neither of the two**, and the re-pack step is
+  where that bites — see
+  [the order the last six steps are executed in](#the-order-the-last-six-steps-are-executed-in--and-it-is-not-the-numbering).
 
 **Evidence:** the archived package path, and the validation rule's text.
 

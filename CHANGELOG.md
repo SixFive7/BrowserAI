@@ -21,6 +21,133 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+### Fixed
+
+- ⚠️ **A suite race the packed release let loose, and the arm holding the
+  variable was not the arm that went red.** `RealInstallerTests` opens an
+  `EnvironmentScope` over `BROWSERAI_ROOT` and `CLAUDE_CONFIG_DIR` — both
+  **process-wide**, because the readers are executables the suite composes no
+  command line for — and carried `[NotInParallel]` on the MCP client's key. A
+  key holds an arm apart from the arms carrying the **same key**; the readers of
+  a process-wide variable are **every child every other arm starts**, which hold
+  no key, open no scope and cannot be enumerated. On the 2026-09-15 release
+  gate, run 1 of 6: `FileAccessRootTests` (×2) and `FirefoxSessionTests`
+  launched browsers inside that window, their children read the override, saw an
+  **empty** scratch data root, correctly reported first use of Chromium, began a
+  **203.8 MB** provisioning download into the installer arm's own scratch root
+  and refused the call. Three red arms, none of them the one that opened the
+  scope, and **the release stopped at checklist item 8**. It had never fired
+  before because the arm needs a pack in `Releases/` to run at all, and this was
+  the second full suite in which it did. **The honest denominator is 1 red in 2
+  live runs; that is not a rate and is not offered as one.** The fix is the
+  keyless `[NotInParallel]` — *runs beside nothing at all* — applied uniformly
+  to **every arm in a file that constructs a scope**, which is
+  `RealInstallerTests` and `RegistrationTests`, both on the class so a later arm
+  inherits it rather than having to remember it.
+
+- ⚠️ **The same race had a second face, it passed, and nothing would have said
+  so.** While three foreign children wrote a browser into the installer arm's
+  data root, that arm was asserting the root **byte-identical** — and passing,
+  because it hashed only the four files it had planted. It now reads the whole
+  tree after each install and after the uninstall, and names anything that is
+  neither planted nor written by the install itself: `mcp-registration.json` at
+  the root and the hook's own rolled `logs\browserai-{yyyyMMdd}-{nnn}.log`,
+  matched on that real shape rather than on `browserai-*.log`, which would have
+  exempted the arm's own planted marker and let any foreign log through. Planted
+  red by dropping `browsers\chromium-1244\chrome.exe` into the root between the
+  install and the assertion: *"(35 bytes) is in the data root and neither this
+  arm nor the install put it there"*.
+
+- ⚠️ **Both halves of the fix were then watched against a live
+  reproduction of the race, which is stronger evidence than either plant.** One
+  full suite run on 2026-09-15 with the keyed attributes deliberately put back
+  came home **5 red**: the three original arms
+  (`FileAccessRootTests.AWriteOutsideTheSessionIsRefusedAndOneInsideItLands`,
+  `.EveryPointerARealChildPublishesResolvesBecauseNothingMovesIt`,
+  `FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy`)
+  with the **identical** message, naming a 203.8 MB download into
+  `real-install-data-1665c0ba…\browsers\chromium-1244`; the new scan, naming the
+  keyed arm; and **the installer arm itself**, whose data-root assertion listed
+  **sixteen** foreign files — `browsers\reinstall.lock`, three `index\` entries,
+  three `instances\{pid}-{guid}\` directories with their `instance.live` and two
+  Playwright configuration files each, and three `live\` markers. Under the old
+  hash-what-was-planted check that same directory read *unchanged*. **The race
+  is reproducible by putting the key back and is not reproducible on demand**:
+  it needs one arm's few-second window to overlap another arm's browser launch,
+  and it did not fire on the first of the two full runs that had the arm live.
+
+### Added
+
+- **`HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing`**
+  — a tree-as-text scan holding that every arm in a file under `tests/` that
+  constructs an `EnvironmentScope` carries `[NotInParallel]` **with no key**. A
+  keyed one does not satisfy it. **The file is the unit rather than the arm**,
+  deliberately: the scope is usually opened through a helper — this repository's
+  is a private factory returning one, reached by a target-typed `new(` that a
+  scan looking for `new EnvironmentScope(` walks straight past — so an
+  arm-by-arm rule would need call graphs out of text, and the arm that forgets
+  is by definition the one nobody classified. **Watched red twice against the
+  real tree**: with the keyed attribute of this morning restored, naming
+  `RealInstallerTests`' arm; and with `RegistrationTests`' class attribute
+  removed, naming all **20** of its arms one by one. Synthetic keyed, absent,
+  keyless-on-the-arm, keyless-on-the-class, through-a-factory and no-scope
+  controls run on every pass. **This is the assertable half of a race no timing
+  test can plant** — the race needs one arm's few-second window to overlap
+  another arm's browser launch, which is a scheduler outcome rather than a call,
+  and a test that provoked it by timing would be the promptness claim
+  `NoAssertionBoundsAMeasuredDurationWithANumberItInvented` forbids. It sits
+  where `EveryRawHandleThatOutlivesItsExpressionIsRefCounted` sits and makes the
+  same weaker claim in the same words: the attribute is *there*, never that the
+  sandbox is correct. **It is not a second exception to the rule that a
+  behaviour change is watched red** — the scan itself was.
+
+### Changed
+
+- ⚠️ **`ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt` was
+  red on every release commit, by construction, and it was the check rather than
+  the tree that was wrong.** Stamping a release moves every entry under the new
+  version's heading and leaves `## [Unreleased]` **empty** — so the guard against
+  a changelog nobody wrote was firing on the output of the step that writes one,
+  and stayed red on `master` until the next change landed. It now accepts an
+  empty section **iff the newest dated section's version is exactly the tag at
+  HEAD** — `git describe --tags --exact-match` semantics, distance zero, so one
+  commit past the release loses the exemption; `## [1.0.0] - …` against `v1.0.0`,
+  the heading bare and the tag carrying the `v`, which is the sibling arm's rule
+  read from the other end. A tag at HEAD naming some *other* version is a
+  disagreement rather than an exemption and stays red, and the accepted refusal
+  still has to be the empty-section one **and** the entries have to have moved
+  rather than vanished. **Without git there is no exemption**: an export makes
+  exactly the demand this arm made before, which is the direction that can only
+  get stricter. Decided by the maintainer as Q183a. **Watched both ways on this
+  tree**: red today at `97661d4`, whose `[Unreleased]` is empty and which the
+  `v1.0.0` tag does not point at — *"the tag exactly at HEAD is 'none', and the
+  newest dated section is '1.0.0'"* — and green with a throwaway tag at HEAD and
+  the heading aligned to it. Four synthetic controls run unconditionally rather
+  than inside the branch they describe, which would have made them unfailable on
+  every day but one.
+
+- ⚠️ **[`RELEASING.md`](RELEASING.md#the-release-gate) states the order of the
+  last six steps, because running them in the checklist's numeric order is not
+  the same as running them in an order that can be green.** Corrected by
+  addition after a release attempt in which items 9 and 10 preceded item 8 and
+  **both of the resulting reds were artifacts of that order rather than defects**:
+  stamping the changelog empties `[Unreleased]`, which the changelog check then
+  refused, and replacing the `v1.0.0` tag turned the only published release into
+  a **Draft**, which took
+  `releases/latest/download/releases.win.json` to **404** — *"about 20 minutes,
+  and the start of that window is a bound rather than a measurement"*. The order
+  recorded is: pack for the gate → **item 8 at the pre-stamp content** → item 10
+  stamp and seal → item 9 tag → **clean re-pack** → publish → feed verified.
+  Two facts the sequence turns on are recorded with it: `Test-ReleaseVersion.ps1`
+  **refuses** an equal version rather than calling it monotonic, so a re-pack
+  must be a new version or an explicit rollback republish; and a `Releases/`
+  still holding older artifacts makes `vpk` write **seven** rows into a feed
+  whose published shape is one.
+
+- **[`README.md`](README.md#status)'s test-count sentence, re-measured with a
+  release pack present**, which is the arrangement in which the two pack-gated
+  arms run rather than skip.
+
 ## [1.0.0] - 2026-09-15
 
 ### Changed

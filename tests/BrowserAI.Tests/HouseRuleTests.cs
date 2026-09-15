@@ -8,8 +8,9 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// Seven rules from <c>CLAUDE.md</c> that were held by habit alone — two until
-/// 2026-08-17, four until 2026-08-23 and one until 2026-08-24.
+/// Eight rules from <c>CLAUDE.md</c> that were held by habit alone — two until
+/// 2026-08-17, four until 2026-08-23, one until 2026-08-24 and one until
+/// 2026-09-15.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -32,6 +33,16 @@ namespace BrowserAI.Tests;
 /// <see cref="EveryRawHandleThatOutlivesItsExpressionIsRefCounted"/> is the
 /// assertable part of a fix that could not be planted red, and it is a weaker
 /// claim than the others make.
+/// </para>
+/// <para>
+/// <b>The eighth, added 2026-09-15, is the only one a release gate found
+/// rather than a person.</b>
+/// <see cref="EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/> is
+/// the rule a doc comment had already stated and stated wrongly — it asked for
+/// a shared <i>key</i>, which holds an arm apart from the arms carrying the same
+/// key and from nothing else, while the readers of a process-wide environment
+/// variable are every child every other arm starts. Three arms went red for a
+/// download nobody could see the cause of, and the release stopped at item 8.
 /// </para>
 /// <para>
 /// <b>The seventh, added 2026-08-24, is the one the other six rest on.</b>
@@ -445,6 +456,267 @@ internal sealed partial class HouseRuleTests
         // Not vacuous over the tree: the two real escapes as of 2026-08-23.
         await Assert.That(escapes).IsGreaterThanOrEqualTo(2);
     }
+
+    /// <summary>
+    /// <b>Every arm in a test file that overrides a process-wide environment
+    /// variable carries <c>[NotInParallel]</c> with no key</b> — which in TUnit
+    /// means it runs beside nothing at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A key is the wrong instrument, and the reason is the reader.</b>
+    /// <c>Environment.SetEnvironmentVariable(name, value)</c> is process scope,
+    /// and every child any arm in the suite starts inherits the block — so the
+    /// readers of a scoped variable are not the other arms that scope it, they
+    /// are <i>all of them</i>, and they hold no key, open no scope and cannot be
+    /// enumerated. <b>Measured on the 2026-09-15 release gate, run 1:</b> the
+    /// real-installer arm, correctly <c>[NotInParallel]</c> on the MCP client's
+    /// group, held <c>BROWSERAI_ROOT</c> at an empty scratch data root for a few
+    /// seconds; three arms in two other classes launched product children in that
+    /// window, the children read the override, correctly reported first use of
+    /// Chromium, began a <b>203.8 MB</b> provisioning download into the installer
+    /// arm's scratch root and refused the call. Three red arms, none of them the
+    /// one that opened the scope, and the release stopped.
+    /// </para>
+    /// <para>
+    /// <b>The file is the unit, not the arm, and that is deliberate.</b> The
+    /// scope is usually opened through a helper — this repository's is a private
+    /// factory method returning one — so an arm-by-arm rule would have to resolve
+    /// call graphs out of text, and the arm that forgets is by definition the one
+    /// nobody classified. A file that constructs one is a file whose arms run
+    /// alone. <c>[NotInParallel]</c> on the class satisfies it in one line and is
+    /// what a new arm inherits.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This is the assertable half of a race no timing test can plant, and
+    /// it is not a new exception to the rule that a behaviour change is watched
+    /// red.</b> <b>The scan itself was planted red</b>, against this tree's own
+    /// <c>RealInstallerTests</c> as it stood on 2026-09-15 — the keyed attribute
+    /// the race was measured through — and against synthetic keyed, absent and
+    /// keyless controls. <b>And once against a live reproduction</b>: a full
+    /// suite run with the keyed attributes put back went red on all three of the
+    /// original arms with the original message, on this scan naming the keyed
+    /// arm, and on the installer arm's own data-root assertion naming sixteen
+    /// foreign files — five reds, three of them the race and two of them the
+    /// halves of the fix seeing it. What cannot be planted is the <i>race</i>
+    /// <b>on demand</b>: it needs one
+    /// arm's few-second window to overlap another arm's browser launch, which is a
+    /// scheduler outcome rather than a call, and a test that provoked it by timing
+    /// would be the promptness claim
+    /// <see cref="NoAssertionBoundsAMeasuredDurationWithANumberItInvented"/>
+    /// forbids. This sits where
+    /// <see cref="EveryRawHandleThatOutlivesItsExpressionIsRefCounted"/> sits and
+    /// makes the same weaker claim in the same words: it holds that the attribute
+    /// is <i>there</i>, never that the sandbox is correct.
+    /// </para>
+    /// <para>
+    /// <b>What it reads is the spelling, which is stricter than TUnit's semantics
+    /// and is said rather than implied.</b> The trimmed line must be exactly the
+    /// keyless attribute; <c>[NotInParallel(Order = 1)]</c> carries no key either
+    /// and would still be reported. An attribute written on the same line as the
+    /// member, or a key composed at run time, is outside it — the same line-based
+    /// limit every scan in this file has.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing()
+    {
+        var offenders = new List<string>();
+        var files = 0;
+
+        foreach (var file in RepositoryLayout.SourceFilesUnder(["tests"], ["*.cs"]))
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+
+            if (!OverridesTheEnvironment(code))
+            {
+                continue;
+            }
+
+            files++;
+            offenders.AddRange(Offences(code).Select(arm =>
+                $"{Relative(file)}: {arm} — this file constructs a scope over a PROCESS-wide environment"
+                + " variable, and every child every other arm starts inherits it, so the arm has to carry"
+                + $" a keyless {Exclusive} rather than a key or nothing"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE CONTROLS, synthetic because the tree is clean and a clean tree
+        // is indistinguishable from a scan whose needles stopped matching. The
+        // construction is rebuilt from pieces so that this file does not put
+        // itself in scope.
+        var construction = "        using var sandbox = new " + Sandbox + "(name, value);";
+        string[] armAndBody = ["    [Test]", "    public async Task AnArmThatScopesOne()", "    {", construction, "    }"];
+
+        // Keyed: the exact shape the race was measured through, and it does not
+        // satisfy the rule.
+        string[] keyed = ["internal sealed class Synthetic", "{", "    [NotInParallel(Group)]", .. armAndBody, "}"];
+
+        await Assert.That(OverridesTheEnvironment(string.Join('\n', keyed))).IsTrue();
+        await Assert.That(Offences(string.Join('\n', keyed)).Count).IsEqualTo(1);
+
+        // Absent: nothing at all.
+        string[] absent = ["internal sealed class Synthetic", "{", .. armAndBody, "}"];
+
+        await Assert.That(Offences(string.Join('\n', absent)).Count).IsEqualTo(1);
+
+        // Keyless on the arm, and keyless on the class — the form this repository
+        // uses. Both satisfy it.
+        string[] onTheArm = ["internal sealed class Synthetic", "{", "    " + Exclusive, .. armAndBody, "}"];
+        string[] onTheClass = [Exclusive, "internal sealed class Synthetic", "{", .. armAndBody, "}"];
+
+        await Assert.That(Offences(string.Join('\n', onTheArm))).IsEmpty();
+        await Assert.That(Offences(string.Join('\n', onTheClass))).IsEmpty();
+
+        // And the target-typed construction a factory method uses, which is the
+        // shape a scan looking only for `new Sandbox(` would walk straight past.
+        string[] throughAFactory =
+        [
+            "internal sealed class Synthetic",
+            "{",
+            .. armAndBody,
+            "    private static " + Sandbox + " PointItAt(string directory) => new(Variable, directory);",
+            "}",
+        ];
+
+        await Assert.That(OverridesTheEnvironment(string.Join('\n', throughAFactory))).IsTrue();
+        await Assert.That(Offences(string.Join('\n', throughAFactory)).Count).IsEqualTo(1);
+
+        // The other half of it: a file that opens no scope is not examined at
+        // all -- an ordinary arm carrying no attribute is the normal state of
+        // every other test file here -- so this is a rule about the scope
+        // rather than about parallelism.
+        string[] noScope = ["internal sealed class Synthetic", "{", "    [Test]", "    public async Task AnOrdinaryArm()", "    {", "    }", "}"];
+
+        await Assert.That(OverridesTheEnvironment(string.Join('\n', noScope))).IsFalse();
+        await Assert.That(Offences(string.Join('\n', noScope))).IsEmpty();
+
+        // Not vacuous over the tree: the two files that construct one as of
+        // 2026-09-15 -- the real-installer arm, and the registration arms.
+        await Assert.That(files).IsGreaterThanOrEqualTo(2);
+    }
+
+    /// <summary>The keyless attribute, which in TUnit runs an arm beside nothing at all.</summary>
+    private const string Exclusive = "[NotInParallel]";
+
+    /// <summary>The harness type, composed so this file does not match its own scan.</summary>
+    private const string Sandbox = "Environment" + "Scope";
+
+    /// <summary>The whole rule, for one file: nothing to say unless it opens a scope.</summary>
+    /// <remarks>
+    /// <b>The guard is inside the rule rather than beside it</b>, so the controls
+    /// below exercise what the scan applies rather than a piece of it. Watched
+    /// red on exactly that distinction: with the two halves separate, the
+    /// no-scope control reported the ordinary unserialised arm that every other
+    /// test file in this repository has.
+    /// </remarks>
+    /// <param name="code">The file's text, comment-only lines already blanked.</param>
+    /// <returns>One description per uncovered arm; empty for a file with no scope in it.</returns>
+    private static List<string> Offences(string code) =>
+        OverridesTheEnvironment(code) ? Unserialised(code) : [];
+
+    /// <summary>Whether a test file constructs a process-wide environment scope.</summary>
+    /// <remarks>
+    /// <b>Two shapes, because the second is the one in this tree.</b> A direct
+    /// <c>new Sandbox(</c>, and a target-typed <c>new(</c> on a line that names
+    /// the type — which is how a factory method returning one is written, and
+    /// which a scan looking only for the first would miss entirely.
+    /// </remarks>
+    /// <param name="code">The file's text, comment-only lines already blanked.</param>
+    /// <returns><see langword="true"/> when the file constructs one.</returns>
+    private static bool OverridesTheEnvironment(string code) =>
+        code.Split('\n').Any(line =>
+            line.Contains("new " + Sandbox + "(", StringComparison.Ordinal)
+            || (line.Contains(Sandbox, StringComparison.Ordinal) && line.Contains("new(", StringComparison.Ordinal)));
+
+    /// <summary>The arms in a file that are not held apart from the whole suite.</summary>
+    /// <param name="code">The file's text, comment-only lines already blanked.</param>
+    /// <returns>One description per uncovered arm; empty when the class carries it.</returns>
+    private static List<string> Unserialised(string code)
+    {
+        var lines = code.Split('\n');
+        var uncovered = new List<string>();
+
+        // On the class: the attribute, then whatever else the type carries, then
+        // the declaration. One line covers every arm below it.
+        if (lines.Index().Any(entry => entry.Item.Trim() is Exclusive && DeclaresAType(lines, entry.Index + 1)))
+        {
+            return [];
+        }
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (lines[index].Trim() is not "[Test]")
+            {
+                continue;
+            }
+
+            var (first, last) = AttributeBlock(lines, index);
+
+            if (!Enumerable.Range(first, last - first + 1).Any(line => lines[line].Trim() is Exclusive))
+            {
+                uncovered.Add(Member(lines, last));
+            }
+        }
+
+        return uncovered;
+    }
+
+    /// <summary>Whether a type declaration follows, past any further attributes.</summary>
+    /// <param name="lines">The file's lines.</param>
+    /// <param name="from">The line after the attribute.</param>
+    /// <returns><see langword="true"/> when the next declaration is a type.</returns>
+    private static bool DeclaresAType(string[] lines, int from)
+    {
+        for (var index = from; index < lines.Length; index++)
+        {
+            var line = lines[index].Trim();
+
+            if (line.Length is 0 || line.StartsWith('['))
+            {
+                continue;
+            }
+
+            return line.Contains(" class ", StringComparison.Ordinal)
+                || line.Contains(" record ", StringComparison.Ordinal)
+                || line.Contains(" struct ", StringComparison.Ordinal);
+        }
+
+        return false;
+    }
+
+    /// <summary>The contiguous run of attribute lines one attribute sits in.</summary>
+    /// <param name="lines">The file's lines.</param>
+    /// <param name="at">A line holding an attribute.</param>
+    /// <returns>The first and last line of the run.</returns>
+    private static (int First, int Last) AttributeBlock(string[] lines, int at)
+    {
+        var first = at;
+        var last = at;
+
+        while (first > 0 && lines[first - 1].Trim().StartsWith('['))
+        {
+            first--;
+        }
+
+        while (last + 1 < lines.Length && lines[last + 1].Trim().StartsWith('['))
+        {
+            last++;
+        }
+
+        return (first, last);
+    }
+
+    /// <summary>The member an attribute block belongs to, for the failure message.</summary>
+    /// <param name="lines">The file's lines.</param>
+    /// <param name="last">The last line of the attribute block.</param>
+    /// <returns>The declaration, trimmed, or the line number when there is none.</returns>
+    private static string Member(string[] lines, int last) =>
+        last + 1 < lines.Length && lines[last + 1].Trim().Length > 0
+            ? lines[last + 1].Trim()
+            : $"the arm declared at line {(last + 1).ToString(CultureInfo.InvariantCulture)}";
 
     /// <summary>
     /// <b>No index walk follows every entry on the machine and then throws away

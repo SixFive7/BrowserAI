@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Registration;
 using BrowserAI.Tests.Harness;
@@ -45,12 +46,35 @@ namespace BrowserAI.Tests;
 /// installed.
 /// </para>
 /// <para>
-/// <b>It shares the MCP client's serialisation key</b>
-/// (<see cref="RegistrationTests.ClientGroup"/>), because the hooks start the
-/// real client and that variable is process-wide.
+/// ⚠️ <b><c>[NotInParallel]</c> with no key, which in TUnit means this runs
+/// beside nothing at all.</b> <i>Corrected 2026-09-15 (previously
+/// <c>[NotInParallel(RegistrationTests.ClientGroup)]</c>, "it shares the MCP
+/// client's serialisation key … because the hooks start the real client and
+/// that variable is process-wide").</i> A key serialises this arm against the
+/// other arms holding the <b>same</b> key, and the readers of a process-wide
+/// environment variable are not those arms — <b>they are every arm in the suite
+/// that launches a product child</b>, none of which opens a scope and none of
+/// which can be enumerated. Measured on the 2026-09-15 release gate, run 1:
+/// while this arm held <c>BROWSERAI_ROOT</c> at its own empty scratch data root,
+/// three children launched by <c>FileAccessRootTests</c> (×2) and
+/// <c>FirefoxSessionTests</c> inherited it, correctly reported first use, started
+/// a <b>203.8 MB</b> provisioning download into this arm's scratch root and
+/// refused the call — three red arms, none of them this one, and the gate
+/// stopped. The key was the defect; exclusivity is the fix, and
+/// <see cref="HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>
+/// is what keeps the next file from re-learning it.
+/// </para>
+/// <para>
+/// <b>The second face of the same race was silent, and closing it is the other
+/// half of this arm.</b> <see cref="Unchanged"/> hashed only the files this arm
+/// planted, so the foreign download landing elsewhere in the same root passed
+/// unnoticed — a byte-identical claim being made about a directory another test
+/// was writing into. It now reads the whole tree and names anything that is
+/// neither planted nor written by the install itself.
 /// </para>
 /// </remarks>
-internal sealed class RealInstallerTests
+[NotInParallel]
+internal sealed partial class RealInstallerTests
 {
     /// <summary>
     /// A second install over the same root destroys the install root and leaves
@@ -58,7 +82,6 @@ internal sealed class RealInstallerTests
     /// </summary>
     /// <returns>The assertion task.</returns>
     [Test]
-    [NotInParallel(RegistrationTests.ClientGroup)]
     public async Task InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical()
     {
         var setup = SuiteEnvironment.RequireReleaseInstaller();
@@ -96,7 +119,7 @@ internal sealed class RealInstallerTests
         // is pointed: <root>\current\BrowserAI.exe, never the stub beside it.
         await Assert.That(File.Exists(Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe"))).IsTrue();
 
-        await Unchanged(planted);
+        await Unchanged(dataRoot.Path, planted);
 
         // The hook wrote its record into the DATA root, which is the other half
         // of the same decision: it is still there after an install that deleted
@@ -118,7 +141,7 @@ internal sealed class RealInstallerTests
 
         // ⚠️ THE CLAIM. A silent uninstall keeps the data root, and every byte of
         // it is the byte that was planted.
-        await Unchanged(planted);
+        await Unchanged(dataRoot.Path, planted);
     }
 
     /// <summary>Plants files whose content is their own name, and records their hashes.</summary>
@@ -147,7 +170,45 @@ internal sealed class RealInstallerTests
         return planted;
     }
 
-    private static async Task Unchanged(IReadOnlyList<(string Path, string Sha256)> planted)
+    /// <summary>
+    /// The data root holds the planted files, byte for byte, and nothing but
+    /// them and what the install itself wrote.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The whole tree, not just the planted paths, and the difference is a
+    /// measured one.</b> <i>Corrected 2026-09-15 (previously the hash loop
+    /// alone).</i> Hashing what this arm planted answers *"was anything of mine
+    /// touched"* and cannot answer *"is this still my directory"* — and on the
+    /// 2026-09-15 release gate it was not: three children of other arms had
+    /// inherited <c>BROWSERAI_ROOT</c> and were writing a 203.8 MB Chromium
+    /// download into <c>browsers\chromium-1244</c> while this arm reported the
+    /// root byte-identical. It passed, and nothing would have said so.
+    /// </para>
+    /// <para>
+    /// <b>Watched red against a live reproduction rather than only a plant.</b>
+    /// A full suite run on 2026-09-15 with the keyed attribute deliberately put
+    /// back reproduced the race and this assertion named <b>sixteen</b> foreign
+    /// files in the data root: <c>browsers\reinstall.lock</c>, three
+    /// <c>index\</c> entries, three <c>instances\{pid}-{guid}\</c> directories
+    /// carrying <c>instance.live</c> and two Playwright configuration files
+    /// each, and three <c>live\</c> markers — every one of them written by
+    /// another arm's product child that had inherited <c>BROWSERAI_ROOT</c>. The
+    /// hash loop alone had reported that same directory unchanged.
+    /// </para>
+    /// <para>
+    /// <b>What the install is entitled to leave, named rather than globbed
+    /// loosely:</b> <c>mcp-registration.json</c> at the root, which the hook
+    /// writes and which the assertion above requires; and the hook's own rolled
+    /// process log, <c>logs\browserai-{yyyyMMdd}-{nnn}.log</c>, matched on its
+    /// real shape so that a foreign file dropped into <c>logs\</c> under some
+    /// other name is still an offence. Everything else is named with its size.
+    /// </para>
+    /// </remarks>
+    /// <param name="dataRoot">The scratch data root.</param>
+    /// <param name="planted">Each planted path and the SHA-256 it held.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task Unchanged(string dataRoot, IReadOnlyList<(string Path, string Sha256)> planted)
     {
         var moved = new List<string>();
 
@@ -168,6 +229,39 @@ internal sealed class RealInstallerTests
         }
 
         await Assert.That(string.Join(Environment.NewLine, moved)).IsEmpty();
+
+        var known = planted
+            .Select(entry => entry.Path)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var foreign = Directory.EnumerateFiles(dataRoot, "*", SearchOption.AllDirectories)
+            .Where(path => !known.Contains(path))
+            .Where(path => !WrittenByTheInstall(dataRoot, path))
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .Select(path => $"{Path.GetRelativePath(dataRoot, path)} ({new FileInfo(path).Length} bytes) is in the data root and neither this arm nor the install put it there")
+            .ToList();
+
+        await Assert.That(string.Join(Environment.NewLine, foreign)).IsEmpty();
+    }
+
+    /// <summary>Whether a file in the data root is one the install itself wrote.</summary>
+    /// <param name="dataRoot">The scratch data root.</param>
+    /// <param name="path">A file somewhere beneath it.</param>
+    /// <returns><see langword="true"/> when the install is entitled to have left it.</returns>
+    private static bool WrittenByTheInstall(string dataRoot, string path)
+    {
+        var relative = Path.GetRelativePath(dataRoot, path);
+
+        if (string.Equals(relative, RegistrationRecord.FileName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var segments = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        return segments.Length is 2
+            && segments[0].Equals("logs", StringComparison.OrdinalIgnoreCase)
+            && RolledProcessLog().IsMatch(segments[1]);
     }
 
     private static string Hash(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
@@ -226,4 +320,15 @@ internal sealed class RealInstallerTests
             await Task.Delay(250);
         }
     }
+
+    /// <summary>The hook's own rolled process log: <c>browserai-{yyyyMMdd}-{nnn}.log</c>.</summary>
+    /// <remarks>
+    /// The shape <c>RollingFileWriter</c> composes, rather than
+    /// <c>browserai-*.log</c>. The looser glob would also match this arm's own
+    /// planted <c>browserai-planted.log</c> — which is checked by hash above and
+    /// must not be exempted here — and would let any foreign file called
+    /// <c>browserai-anything.log</c> through.
+    /// </remarks>
+    [GeneratedRegex(@"^browserai-\d{8}-\d{3}\.log$", RegexOptions.IgnoreCase)]
+    private static partial Regex RolledProcessLog();
 }

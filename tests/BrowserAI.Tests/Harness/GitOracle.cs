@@ -7,8 +7,8 @@ using System.Globalization;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// What git says this repository holds, for the one test that needs a second
-/// opinion about <see cref="RepositoryLayout"/>'s own walk.
+/// What git says about this repository: the files it holds, and the tag that is
+/// exactly at HEAD.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -17,8 +17,11 @@ namespace BrowserAI.Tests.Harness;
 /// <see cref="RepositoryLayout"/> walks the disk rather than shelling out — and
 /// that objection does not reach this type, because nothing here is asked unless
 /// git answers. Absent, <see cref="SuiteCapability.Git"/> reads ABSENT in the
-/// coverage block and the one arm that reads this skips loudly, exactly as every
-/// other absent capability does.
+/// coverage block and <see cref="RepositoryFilesAsync"/>'s one reader skips
+/// loudly, exactly as every other absent capability does.
+/// <see cref="TagExactlyAtHeadAsync"/>'s reader does not skip and must not:
+/// absent git it reads <see langword="null"/>, which is <i>no tag here</i>, and
+/// the claim it guards only gets weaker — see the remark on that member.
 /// </para>
 /// <para>
 /// ⚠️ <b>This exists because the walk's own remark was false by 520 files while
@@ -107,6 +110,40 @@ internal static class GitOracle
                 // the walk's side of the comparison anyway.
                 .Where(path => !path.EndsWith('/')),
         ];
+    }
+
+    /// <summary>The tag that is exactly at HEAD, if HEAD carries one.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b><c>git describe --tags --exact-match</c>, which is the whole of the
+    /// question.</b> Distance zero or nothing: <c>--exact-match</c> makes a
+    /// commit one past the tag an <i>error</i> rather than a
+    /// <c>v1.0.0-1-g&lt;sha&gt;</c> string somebody then has to parse the
+    /// distance out of. Today's tree is the case that matters — <c>v1.0.0</c>
+    /// sits on <c>0455ca7</c> and HEAD is 215 commits past it, and this answers
+    /// <see langword="null"/> for that as firmly as it does for an untagged
+    /// repository.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A refusal and an absence are the same answer here, deliberately.</b>
+    /// No git, no repository, HEAD not tagged and a git that started and then
+    /// declined all read <see langword="null"/> — <i>this commit is not a
+    /// release</i>. The one reader uses it to <b>relax</b> a requirement, so
+    /// every one of those states leaves the stricter claim standing; there is no
+    /// arrangement in which failing to reach git turns a red into a green.
+    /// </para>
+    /// </remarks>
+    /// <returns>The tag name as git spells it, or <see langword="null"/>.</returns>
+    public static async Task<string?> TagExactlyAtHeadAsync()
+    {
+        if (!IsAvailable)
+        {
+            return null;
+        }
+
+        var (exitCode, output, _) = await RunAsync("describe", "--tags", "--exact-match");
+
+        return exitCode is 0 && output.Trim() is { Length: > 0 } tag ? tag : null;
     }
 
     private static async Task<bool> ProbeAsync()

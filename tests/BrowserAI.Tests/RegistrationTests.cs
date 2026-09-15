@@ -31,7 +31,29 @@ namespace BrowserAI.Tests;
 /// path this test registered, and that path carries a GUID, so it cannot be
 /// there by coincidence.
 /// </para>
+/// <para>
+/// ⚠️ <b><c>[NotInParallel]</c> with no key, on the class, which in TUnit means
+/// these arms run beside nothing at all.</b> <i>Corrected 2026-09-15 (previously
+/// a <c>ClientGroup</c> key on the two arms that open a scope: "they both write
+/// one process-wide environment variable — <c>CLAUDE_CONFIG_DIR</c> — and
+/// then start a process that reads it. Two at once would each register into the
+/// other's scratch directory … every member writes the same variable and
+/// nothing else in the suite starts the client".)</i> Every sentence of that was
+/// true and the conclusion did not follow: a key holds an arm apart from the
+/// arms carrying the <b>same key</b>, and a process-wide variable is read by
+/// <b>every child any arm in the suite starts</b> — none of which holds a key,
+/// and none of which can be enumerated. The measured failure is
+/// <see cref="RealInstallerTests"/>' — the sibling member of the old group,
+/// whose <c>BROWSERAI_ROOT</c> reached three unrelated arms' browsers. The same
+/// hazard is here: a <c>claude</c> CLI started by anything else during the
+/// window would read this scratch configuration directory. <b>The class carries
+/// it rather than the two arms</b>, so an arm added later inherits the rule
+/// instead of having to remember it, and
+/// <see cref="HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>
+/// fails the build if this file ever loses it.
+/// </para>
 /// </remarks>
+[NotInParallel]
 internal sealed class RegistrationTests
 {
     /// <summary>
@@ -42,29 +64,6 @@ internal sealed class RegistrationTests
 
     /// <summary>The file the client keeps its user-scoped configuration in.</summary>
     private const string ConfigFileName = ".claude.json";
-
-    /// <summary>The group the real-client arms serialise on.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>They both write one process-wide environment variable —
-    /// <c>CLAUDE_CONFIG_DIR</c> — and then start a process that reads it.</b> Two
-    /// at once would each register into the other's scratch directory, and the
-    /// loser would assert against a file the winner wrote. That is shared mutable
-    /// state with no per-test channel: the client is an external executable and
-    /// the variable is the only way to reach it.
-    /// </para>
-    /// <para>
-    /// <b>Re-justified 2026-08-17, when the suite went to unbounded
-    /// parallelism</b> and every constraint in it had to say why it existed.
-    /// This one survives on its own terms: every member writes the same variable
-    /// and nothing else in the suite starts the client. ⚠️ <b>Re-counted
-    /// 2026-09-15: three members, previously "exactly two".</b> The third is
-    /// <c>RealInstallerTests</c>, which runs a real <c>Setup.exe</c> whose hooks
-    /// start the client — the case the old sentence predicted in its last clause,
-    /// arriving. It is <c>internal</c> for that reason rather than private.
-    /// </para>
-    /// </remarks>
-    internal const string ClientGroup = "mcp-client-cli";
 
     // ---- What is registered: never the execution stub -----------------------
 
@@ -708,7 +707,6 @@ internal sealed class RegistrationTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    [NotInParallel(ClientGroup)]
     public async Task TheClientStillSaysWhatTheExitCodesCannot()
     {
         var client = SuiteEnvironment.RequireClientCommandLine();
@@ -757,7 +755,6 @@ internal sealed class RegistrationTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    [NotInParallel(ClientGroup)]
     public async Task TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched()
     {
         _ = SuiteEnvironment.RequireClientCommandLine();
@@ -897,9 +894,12 @@ internal sealed class RegistrationTests
     /// <b>Process-wide, because that is the only channel there is.</b> The child
     /// inherits this process's environment block, and the alternative — an
     /// environment overlay on the product's own command runner — would be a seam
-    /// that exists for no reason but this test. The arms that use it are
+    /// that exists for no reason but this test. It is restored however the test
+    /// ends, and the whole class is <c>[NotInParallel]</c> with no key —
+    /// <i>corrected 2026-09-15 (previously "The arms that use it are
     /// <c>[NotInParallel]</c> on one group so they cannot overwrite each other's
-    /// value, and it is restored however the test ends.
+    /// value")</i>, because overwriting each other's value was never the only
+    /// way this goes wrong: any child of any arm reads it too.
     /// </remarks>
     /// <param name="directory">The scratch configuration directory.</param>
     /// <returns>The scope that restores whatever was there before.</returns>
