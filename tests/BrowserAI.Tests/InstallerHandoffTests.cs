@@ -34,14 +34,21 @@ namespace BrowserAI.Tests;
 /// exits while leaving a console attached.
 /// </para>
 /// <para>
-/// <b>What is not asserted here, said plainly:</b> no test in this suite starts
+/// ⚠️ <b>Corrected 2026-09-15 (previously "no test in this suite starts
 /// BrowserAI with a real console. It cannot — every launch site in the tree is
-/// required to set <c>CreateNoWindow</c>
-/// (<c>HouseRuleTests.EveryProcessLaunchInTheTreeSuppressesTheConsoleWindow</c>),
-/// and a test that allocated a console would put a window over whatever is on
-/// screen. So the console half of the second rule is covered by the pure
-/// decision and by the wiring scan below, and the end-to-end evidence for it is
-/// the 2026-09-14 probe rather than a run of this suite.
+/// required to set <c>CreateNoWindow</c> … and a test that allocated a console
+/// would put a window over whatever is on screen. So the console half of the
+/// second rule is covered by the pure decision and by the wiring scan below,
+/// and the end-to-end evidence for it is the 2026-09-14 probe rather than a run
+/// of this suite").</b> The two premises were right and the conclusion was
+/// wrong, and <b>the gap cost a shipped release</b>: v1.0.0 went out, the first
+/// non-silent install produced the exact shape this paragraph said could not be
+/// tested, and six green runs of this suite said nothing about it.
+/// <c>CreateNoWindow</c> does not suppress the console — it suppresses the
+/// console's <b>window</b> — so a windowless <c>cmd.exe</c> hands a child a real
+/// console handle with nothing on screen. <see cref="OrphanedConsoleStart"/> is
+/// that rig, and the two end-to-end arms below are what the paragraph said were
+/// impossible.
 /// </para>
 /// </remarks>
 internal sealed class InstallerHandoffTests
@@ -243,6 +250,118 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(StandardInput.IsAConsole()).IsEqualTo(first);
         await Assert.That(StandardInput.IsAConsole()).IsEqualTo(first);
+    }
+
+    /// <summary>
+    /// A launcher that is gone and a console standard input: the product exits,
+    /// with and without the installer's own variable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the arm that was missing on 2026-09-15, and it was watched red
+    /// against the published v1.0.0 build.</b> The product decided correctly —
+    /// <c>Startup[72]</c> then <c>Startup[9]</c>, 0.53 s in — and then did not
+    /// exit: alive sixty seconds later holding a <c>node.exe</c>, with the log
+    /// ending at the <i>is exiting</i> line and <c>instances\</c> and
+    /// <c>live\</c> still under the root, so the <c>finally</c> had not run
+    /// either. Evidence: <c>.work/2026-09-15-fix/repro-red-3.txt</c>. The cause
+    /// was <c>JsonLinesTransport.DisposeAsync</c> awaiting a read loop parked on
+    /// a console that nothing can wake.
+    /// </para>
+    /// <para>
+    /// <b>Both arms, because the variable is not the trigger.</b> Velopack's
+    /// post-install launch sets <c>VELOPACK_FIRSTRUN=true</c>, and the real
+    /// install on 2026-09-15 nevertheless reached the no-client decision rather
+    /// than the installer exit — so something between the launch and the read
+    /// unset it, and the exit may not depend on it. The stub
+    /// <c>BrowserAI.exe</c> in an install root reaches the app through
+    /// <c>Update.exe start</c>, which is console-bearing and does not set the
+    /// variable at all, so the variable-less arm is the one that covers a person
+    /// double-clicking the thing the installer put on their machine.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The arm asserts which decision was taken, not merely that the
+    /// process went.</b> The rig's launcher dies about three hundred times
+    /// faster than the product takes to ask about it, but the question is a
+    /// race in principle — and a build in which the launcher were still
+    /// watchable would exit for the ordinary reason and pass while testing
+    /// nothing.
+    /// </para>
+    /// </remarks>
+    /// <param name="startedByTheInstaller">Whether Velopack's variable is set.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole(bool startedByTheInstaller)
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        using var root = ScratchDirectory.CreateUnderProfile("orphan-console");
+        using var run = OrphanedConsoleStart.Begin(root.Path, startedByTheInstaller, TestDefaults.ProcessHang);
+
+        await Assert.That(run.Started).IsTrue();
+
+        // The decision first, so that a failure names which one was taken.
+        var decision = startedByTheInstaller
+            ? "started by the installer"
+            : "no client to serve and is exiting";
+
+        await Assert.That(run.WaitUntilItSays(decision, TestDefaults.ProcessHang)).IsTrue();
+
+        // And then the exit, which is the thing v1.0.0 did not do.
+        await Assert.That(run.WaitForExit(TestDefaults.ProcessHang)).IsTrue();
+    }
+
+    /// <summary>
+    /// A run with nobody to serve starts no child, sweeps nothing, checks no
+    /// feed and creates nothing but its log.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The ordering is the property, and it was the second finding of
+    /// 2026-09-15.</b> The real install's orphan had already started its
+    /// <c>playwright-mcp</c> child <b>506 ms before</b> it worked out that there
+    /// was nobody to serve — and had swept the machine and opened the update
+    /// lane as well — so the run that had least reason to cost anything cost the
+    /// most, and left a second orphan behind when it hung.
+    /// </para>
+    /// <para>
+    /// <b>Asserted on the records the product already writes</b>, which is the
+    /// same shape
+    /// <see cref="ThePublishedBinaryStartedByTheInstallerExitsBeforeItCreatesAnything"/>
+    /// uses: each of the three sentences is one step the old order took, and
+    /// <c>instances\</c> is what proves no child was started, because a child's
+    /// working directory is inside it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        using var root = ScratchDirectory.CreateUnderProfile("orphan-costs");
+        using var run = OrphanedConsoleStart.Begin(root.Path, startedByTheInstaller: false, TestDefaults.ProcessHang);
+
+        await Assert.That(run.Started).IsTrue();
+        await Assert.That(run.WaitUntilItSays("no client to serve and is exiting", TestDefaults.ProcessHang)).IsTrue();
+
+        var said = run.Records();
+
+        await Assert.That(said).DoesNotContain("playwright-mcp[surface]: started");
+        await Assert.That(said).DoesNotContain("Stray sweep:");
+        await Assert.That(said).DoesNotContain("Checking for updates at");
+
+        // ⚠️ AND NOTHING WAS CREATED. `live\`, `instances\` and `index\` are
+        // each a step the old order took before it discovered there was nobody
+        // there.
+        var created = Directory.EnumerateFileSystemEntries(root.Path)
+            .Select(Path.GetFileName)
+            .Where(name => !string.Equals(name, "logs", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        await Assert.That(string.Join(", ", created)).IsEmpty();
     }
 
     /// <summary>Reads a log file the writer may still hold open.</summary>

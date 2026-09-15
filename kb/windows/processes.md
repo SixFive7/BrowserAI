@@ -249,6 +249,55 @@ console-subsystem child twice with the flag set and unset, and diff
 `EnumWindows` over visible top-level windows around each launch. Read the class
 names rather than filtering for one, or the measurement answers zero both times.
 
+### A read parked on standard input is woken by neither cancelling it nor disposing the stream — measured 2026-09-15
+
+**Measured 2026-09-15 on Windows 11 Pro 26200 with .NET 10**, against
+`Console.OpenStandardInput()` behind a `System.IO.Pipelines.PipeReader`, with the
+read allowed to park for 1.5 s first. Probe and output:
+`.work/2026-09-15-fix/consoleprobe/`. `[FLOATS]`
+
+| stdin | `GetConsoleMode` succeeds | `cts.Cancel()` completed it within 3 s | `stream.Dispose()` completed it within 3 s |
+|---|---|---|---|
+| a windowless console | **yes** | **no** — still `WaitingForActivation` | **no** — still `WaitingForActivation` |
+| a redirected pipe nobody writes to | no | **no** | **no** |
+
+**The stream type is the same either way** —
+`System.ConsolePal+WindowsConsoleStream`, for a console and for a pipe — and so
+is the answer. What differs between the two is only whether end-of-file ever
+arrives: a client closes its end of a pipe, and nothing ever closes a console.
+
+**Three things follow, and the third is the one that cost a release.**
+
+- **Cancellation cannot reach it.** `Stream`'s base `ReadAsync` checks the token
+  once and then queues a blocking `Read` to the thread pool, so once the syscall
+  is entered the token is a value nobody reads again.
+- **Disposing the stream does not close the handle.** `WindowsConsoleStream`'s
+  disposal drops its copy of the handle and leaves the console input handle open,
+  which is correct — it is a standard handle it does not own — and means the
+  parked `ReadFile` has nothing to fail against.
+- **So anything that `await`s that read has made its own completion conditional
+  on the peer.** BrowserAI's caller-facing transport did exactly that in v1.0.0:
+  `DisposeAsync` closed its own end and then awaited the read loop, which is
+  sound for the child leg (this process owns the pipe and the child's exit closes
+  it) and unreachable for the caller leg. A post-install start has a console
+  nobody writes to, so the process stood for 215 s holding a browser server.
+
+**Abandoning the read is safe, and that is the other half of the measurement.**
+The parked read sits on a thread-pool thread, which is a background thread: the
+same probe returned from `Main` without awaiting it and **the process exited
+anyway**, on both arms. So a teardown that gives up on such a read leaks a pooled
+buffer and no process lifetime.
+
+**To re-establish it:** park a `PipeReader.ReadAsync` on
+`Console.OpenStandardInput()`, wait for the read to be genuinely in flight, then
+cancel the token and dispose the stream in turn, reporting the task's status
+after each with a bound. Run it twice — once with stdin inherited from a
+`cmd.exe` started with `CreateNoWindow` (a console with no window), once with
+stdin redirected to a pipe nothing writes to — because a measurement taken only
+on the console arm cannot tell a console-specific behaviour from a general one.
+Write the report to a file rather than to stdout: on the console arm there is
+nowhere for stdout to go that anybody will read.
+
 ### `SW_SHOWNOACTIVATE` keeps a headed Chromium off the foreground, and Firefox never takes it — measured 2026-08-24
 
 **`CREATE_NO_WINDOW` and the show-window flag answer two different questions, and

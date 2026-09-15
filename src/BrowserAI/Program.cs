@@ -208,6 +208,50 @@ internal static class Program
             return 0;
         }
 
+        // ⚠️ AND THE GENERAL CASE IMMEDIATELY AFTER IT, BEFORE ANYTHING COSTS
+        // ANYTHING -- moved here 2026-09-15. Everything below this line spends
+        // something: the root judgement walks the filesystem, the sweep
+        // enumerates every process on the machine, the live marker takes a
+        // machine-wide mutex, the instance directory is created and the child
+        // spawn provisions 768 MB on a first run.
+        //
+        // The measured cost of deciding late is not hypothetical. On the first
+        // non-silent install of v1.0.0 the playwright-mcp child was started
+        // 506 ms BEFORE this question was asked -- the sweep and the update
+        // check ran before it too -- so the run with the least reason to cost
+        // anything cost the most, and left a second orphan behind when it did
+        // not exit. The installer exit above had been placed here for exactly
+        // this reason and this one had not, which is how the general case went
+        // on paying for a conversation nobody was having.
+        //
+        // ⚠️ THE WATCH IS ATTACHED HERE RATHER THAN MERELY ASKED ABOUT. Whether
+        // a handle can be held on the launcher is half the decision, and a
+        // predicate beside the watcher would be a second source of truth about
+        // the same OpenProcess -- two answers, one of them not the watch this
+        // process actually holds. What the watch DOES when it fires is
+        // registered further down, once there is a transport to close; the
+        // cancellation is the whole of it until then, and `server.RunAsync` is
+        // handed the same token.
+        using var stopping = new CancellationTokenSource();
+
+        using var client = ClientLivenessWatcher.ForParentProcess(stopping.Cancel, logger);
+
+        // ⚠️ NEITHER TEARDOWN MECHANISM CAN EVER FIRE, SO THERE IS NOBODY
+        // THERE -- 2026-09-14, measured. Both halves have to be true at once
+        // and each on its own is ordinary: a watch that could not attach is
+        // routine when a client starts BrowserAI through a wrapper, and a
+        // console stdin is routine when a developer runs this by hand from a
+        // terminal that is still sitting there. Together they are the shape
+        // the installer's own start produced -- the launcher pid already
+        // exited, and stdin bound to a console that will never EOF -- and what
+        // came of it was a server plus a node child alive until the machine was
+        // rebooted, serving nobody, with a terminal window on the desktop.
+        if (client is null && StandardInput.IsAConsole())
+        {
+            StartupLog.NoClientToServe(logger, ProcessLiveness.ParentProcessId());
+            return 0;
+        }
+
         // ⚠️ BEFORE EVERYTHING THAT CREATES STATE, and that ordering is the
         // whole value of the check: below this line come the sweep, the live
         // marker, the instance directory and every session. A root two Windows
@@ -340,11 +384,6 @@ internal static class Program
                 OpenSessionLog = ProcessLog.OpenSessionLog,
             };
 
-            // Declared before the watcher below so that it is disposed after it:
-            // a watch that fired into a disposed source would report a teardown
-            // failure while the process was already tearing down.
-            using var stopping = new CancellationTokenSource();
-
             var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment).ConfigureAwait(false);
 
             // `await using var x = …` awaits its DisposeAsync on the captured
@@ -364,10 +403,12 @@ internal static class Program
             var server = McpServer.Create(transport, proxy.ServerOptions(), log.Factory);
             await using var serverScope = server.ConfigureAwait(false);
 
-            // ⚠️ The second of the two teardown mechanisms, and neither is a
-            // close tool. stdin EOF is the backstop; this covers what EOF
-            // cannot — a client that started BrowserAI through a wrapper, so the
-            // pipe outlives the process that owns the conversation. It is an
+            // ⚠️ WHAT THE WATCH ATTACHED ABOVE ACTUALLY DOES, wired here because
+            // this is the first moment there is a conversation to end. The watch
+            // itself is the second of the two teardown mechanisms, and neither
+            // is a close tool: stdin EOF is the backstop, and this covers what
+            // EOF cannot — a client that started BrowserAI through a wrapper, so
+            // the pipe outlives the process that owns the conversation. It is an
             // OpenProcess handle, never a ping: `ping` was removed at protocol
             // revision 2026-07-28, and a handle is an event rather than a poll.
             //
@@ -379,37 +420,16 @@ internal static class Program
             // about the child leg, and it is just as true here. Closing the
             // channel is what produces the end-of-input this process would have
             // seen if the client had closed its end, so there is one shutdown
-            // path rather than two. The cancellation is kept because a
-            // caller-supplied token must still be honoured where it can be.
+            // path rather than two.
             //
-            // Declared after the transport so that it is disposed BEFORE it, and
-            // a client that cannot be watched is a warning rather than a refusal
-            // to start.
-            using var client = ClientLivenessWatcher.ForParentProcess(
-                () =>
-                {
-                    stopping.Cancel();
-                    _ = EndTheConversationAsync(transport, logger);
-                },
-                logger);
-
-            // ⚠️ NEITHER TEARDOWN MECHANISM CAN EVER FIRE, SO THERE IS NOBODY
-            // THERE -- 2026-09-14, measured. Both halves have to be true at once
-            // and each on its own is ordinary: a watch that could not attach is
-            // routine when a client starts BrowserAI through a wrapper, and a
-            // console stdin is routine when a developer runs this by hand from a
-            // terminal that is still sitting there. Together they are the shape
-            // the installer's own start produced -- the launcher pid already
-            // exited, and stdin bound to a console that will never EOF -- and
-            // what came of it was a server plus a node child alive until the
-            // machine was rebooted, serving nobody, with a terminal window on
-            // the desktop. Exiting here is a clean shutdown: the disposals below
-            // take the child, its browsers and its job with them.
-            if (client is null && StandardInput.IsAConsole())
-            {
-                StartupLog.NoClientToServe(logger, ProcessLiveness.ParentProcessId());
-                return 0;
-            }
+            // ⚠️ A registration rather than a second closure, and that is what
+            // closes the window the move above would otherwise have opened: a
+            // client that dies during startup cancels the token before this line
+            // runs, and `Register` on an already-cancelled token invokes the
+            // callback synchronously, here, instead of dropping it. Disposed
+            // before the transport because it is declared after it.
+            using var closeOnDeparture = stopping.Token.Register(
+                () => _ = EndTheConversationAsync(transport, logger));
 
             StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
 
@@ -425,11 +445,7 @@ internal static class Program
                     new VelopackUpdateClient(feed),
                     live,
                     updateLogger,
-                    () =>
-                    {
-                        stopping.Cancel();
-                        _ = EndTheConversationAsync(transport, logger);
-                    })
+                    stopping.Cancel)
                     .StartInBackground(BuildVersion.Current, InstallLocation.IsInstalled, stopping.Token);
             }
 

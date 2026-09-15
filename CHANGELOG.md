@@ -23,6 +23,53 @@ has been satisfied in form only.
 
 ### Fixed
 
+- ⛔ **BrowserAI 1.0.0 did not exit when it had nobody to serve, and every
+  non-silent install ended with an orphaned server, an orphaned browser process
+  and a terminal window on the user's screen.** The decision was right and
+  unreachable: `Program.Main` logged *"BrowserAI has no client to serve and is
+  exiting"* 1.89 s into the first run and then stood for **213.6 s** more, 10
+  threads, 224 handles, holding a `node.exe` and a `conhost.exe`, until it was
+  killed by pid. The cause was one `await` —
+  `JsonLinesTransport.DisposeAsync` closed its own end of the channel and then
+  waited for its read loop, on the strength of a comment that said closing the
+  peer wakes a read blocked in a syscall. That is true of the **child** leg,
+  where this process owns the pipe and the child's exit closes it, and false of
+  the **caller** leg, where the other end of stdin belongs to whoever started
+  us. Measured on .NET 10 against `Console.OpenStandardInput()`: once a read has
+  parked, **neither cancelling the token nor disposing the stream completes
+  it** — 3 s each, both still `WaitingForActivation`, with a console stdin and
+  with a pipe stdin alike ([kb](kb/windows/processes.md#a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream--measured-2026-09-15)).
+  `ShutdownPeerAsync` now **answers** whether closing the peer ends the read, and
+  a loop the peer will never end is **abandoned** rather than awaited: safe,
+  because the parked read is on a thread-pool thread and does not hold the
+  process open — measured by returning from `Main` with one parked and watching
+  the process exit anyway. A loop that has already finished is still awaited,
+  whoever the peer is, so the ordinary shutdown is unchanged and a read loop that
+  faulted is still reported. Two arms, both watched red first:
+  `DirectStdioServerTransportTests.DisposingDoesNotWaitForAReadTheCallerWillNeverEnd`
+  in process (red at 5 m 00 s, the whole of `TestDefaults.InProcessHang`), and
+  `InstallerHandoffTests.ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole`
+  over the published binary (red at 10 m 00 s, the whole of
+  `TestDefaults.ProcessHang`).
+
+- ⚠️ **A run with nobody to serve started a browser server first and worked out
+  that nobody was there 506 ms later.** On the same install, the
+  `playwright-mcp` child was launched, the machine-wide stray sweep ran and the
+  update lane opened **before** the no-client question was asked — so the run
+  with the least reason to cost anything cost the most, and left a second orphan
+  behind when it did not exit. The decision now sits immediately after the
+  installer exit, before the root judgement, the sweep, the live marker, the
+  instance directory and the child. The watch itself is attached there rather
+  than a second predicate being asked beside it, because two answers about one
+  `OpenProcess` is two sources of truth; what it *does* is registered on the same
+  cancellation token once there is a transport to close, and
+  `CancellationToken.Register` on an already-cancelled token runs the callback
+  there and then, which closes the window the move would otherwise have opened.
+  `InstallerHandoffTests.ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog`
+  asserts the product's own records name no child, no sweep and no feed check,
+  and that `logs\` is the only thing under the root; watched red against v1.0.0,
+  which named all three.
+
 - ⚠️ **A suite race the packed release let loose, and the arm holding the
   variable was not the arm that went red.** `RealInstallerTests` opens an
   `EnvironmentScope` over `BROWSERAI_ROOT` and `CLAUDE_CONFIG_DIR` — both

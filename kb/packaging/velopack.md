@@ -835,6 +835,72 @@ scratch directory first, because the install hook registers with the real client
 by name, and export the Add/Remove key for the pack id, because the uninstall
 deletes it.
 
+### Re-measured 2026-09-15 against the published v1.0.0, and the paragraph above was half wrong
+
+**Everything above about the window and the launcher held; the paragraph headed
+*What BrowserAI does about it, since 2026-09-15* did not.** Measured
+2026-09-15 @ Velopack 1.2.0, BrowserAI 1.0.0, Windows 11 Pro 26200, on the
+maintainer's own machine, installing the **published** `BrowserAI-win-Setup.exe`
+from GitHub Releases with no `--installto` and no `--silent`. Evidence:
+`.work/2026-09-15-install/setup.log` (lines 44 and 51),
+`.work/2026-09-15-install/install-observe.jsonl`, and the product's own log at
+`%LocalAppData%\BrowserAI\logs\browserai-20260915-000.log`. `[FLOATS]`
+
+| | 2026-09-14 | 2026-09-15 |
+|---|---|---|
+| App-start creation flags | 1024 | **1024** — confirmed |
+| Hook creation flags | 134,218,752 | **134,218,752** — confirmed |
+| The window | Windows Terminal, titled with the exe path | **`CASCADIA_HOSTING_WINDOW_CLASS`, 1506x1490**, visible 16:36:40.884 until the kill ~215 s later |
+| `Setup.exe` at the moment the app looked | gone, 44 ms | **gone** — `OpenProcess` → `ERROR_INVALID_PARAMETER` |
+| The app's own verdict | *no client-liveness watch* | `Startup[72]` then `Startup[9]`, **1.89 s** after start |
+| What happened next | served nobody until reboot | **did not exit either**: alive **213.6 s** past its own *is exiting* line, 10 threads, 224 handles, holding `node.exe` and `conhost.exe` |
+
+⚠️ **`VELOPACK_FIRSTRUN` did not reach the branch that reads it, and why is
+unresolved.** The product logged `Startup[72]`/`Startup[9]` — the *general*
+no-client decision — rather than `Startup[8]`, the installer exit, which sits
+thirty lines earlier in `Main`. The same binary **does** take `Startup[8]`, in
+0.313 s, when the variable is set on a start it is not installed for (measured
+the same day through the orphan rig, `.work/2026-09-15-fix/repro-firstrun.txt`),
+so the read is not broken. What runs in between is `VelopackApp.Run()`, which is
+the only code with the opportunity; **that it clears the variable is INFERRED and
+has not been measured**, and it is recorded here as an open question rather than
+as a fact. Nothing depends on the answer: see the next paragraph.
+
+**So the exit may never key on the variable alone, and this is a second reason
+rather than a restatement of the first.** The stub `BrowserAI.exe` that Velopack
+leaves in the install root reaches the app through `Update.exe start`
+(`start_windows_impl.rs:122-131`), which is console-bearing and sets no
+`VELOPACK_FIRSTRUN` at all — so a person double-clicking the thing the installer
+put on their machine arrives in exactly the shape the installer's own start
+arrives in, with no variable to recognise it by. The decision that has to carry
+both is *launcher gone or unopenable **and** stdin is a console*.
+
+⚠️ **Self-update passes `--norestart` today**
+(`Updates/VelopackUpdateClient.cs`), so an applied update does not produce a
+second console-bearing start. That is one argument away from a regression rather
+than a property of the design.
+
+**What was wrong in the product, and it was not the decision.** The decision was
+correct and the *exit* was not reachable: `JsonLinesTransport.DisposeAsync`
+awaited a read loop parked on the console (see
+[the read nothing wakes](../windows/processes.md#a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream--measured-2026-09-15)),
+and the child, the sweep and the update check had all already run because the
+question was asked 506 ms too late. Both are fixed 2026-09-15 and both now carry
+an end-to-end arm over the published binary,
+`InstallerHandoffTests.ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole`
+and `.ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog`.
+
+**How to re-establish it.** Start the published binary with a launcher that is
+already gone and a standard input that is a console, which needs neither an
+installer nor a window: `cmd.exe /c start /b "" cmd.exe /c start /b "" "<exe>"`,
+with the outer `cmd` started `CreateNoWindow` so the console it allocates has no
+window, and **nothing redirected** — redirecting any stream makes .NET set
+`STARTF_USESTDHANDLES` and hand the child the *caller's* standard input instead.
+Two `start /b`s rather than one, because a process handle keeps a dead pid
+openable and the test host's own handle on a single intermediate is enough to
+make the launcher watchable. `BrowserAI.Tests.Harness.OrphanedConsoleStart` is
+that rig.
+
 ## Distribution: MSIX and code signing
 
 **MSIX is disqualified on evidence.** A package cannot re-register while any
