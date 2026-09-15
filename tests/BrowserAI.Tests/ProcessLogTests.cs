@@ -626,8 +626,7 @@ internal sealed partial class ProcessLogTests
         // benign. What makes that true is a pairing, and a pairing is exactly
         // what a later edit breaks.
         var source = await RepositoryLayout.ReadCodeAsync(
-            new FileInfo(Path.Combine(
-                RepositoryLayout.Root.FullName, "src", "BrowserAI", "Logging", "ProcessLog.cs")));
+            RepositoryLayout.ProductFile("Logging", "ProcessLog.cs"));
 
         var consoleCallSites = CountOf(source, "AddConsole(");
         var pinned = CountOf(source, "LogToStandardErrorThreshold = LogLevel.Trace");

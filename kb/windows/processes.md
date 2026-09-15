@@ -460,7 +460,7 @@ survived was an empty directory. `Directory.Move(path, aside)` was refused with
 `IOException` **and the contents untouched**, and succeeded the moment the holder
 exited. So a working-directory lock is a liveness signal for a *rename* and not
 for a *delete*, and BrowserAI's instance sweep claims by renaming
-([`TreeDelete`](../../src/BrowserAI/Runtime/TreeDelete.cs)). ⚠️ **The first
+([`TreeDelete`](../../src/BrowserAI.Core/Runtime/TreeDelete.cs)). ⚠️ **The first
 arm of this measurement was run against a `cmd /c ping` holder and is not
 evidence**: killing `cmd.exe` leaves `ping.exe` alive holding the same cwd, so the
 "holder is dead" half never tested what it claimed. Re-established with a

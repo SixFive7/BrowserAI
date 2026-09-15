@@ -244,6 +244,54 @@ internal static class RepositoryLayout
     /// code is left visible, because that is where a suppression comment beside
     /// a violation would be.
     /// </remarks>
+    /// <summary>
+    /// A product source file, found in whichever of the product's projects
+    /// holds it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-09-15, when the product stopped being one project.</b>
+    /// Fifteen arms composed <c>src\BrowserAI\&lt;relative path&gt;</c> by hand,
+    /// and the library split turned five of them into
+    /// <c>FileNotFoundException</c> — which is the good half of that failure:
+    /// the bad half is the arm that would have gone on reading a file that had
+    /// been superseded rather than moved. One resolver means the next move is a
+    /// named refusal here rather than fifteen edits, and a file that is in no
+    /// project at all is a failure that says so.
+    /// </para>
+    /// <para>
+    /// <b>The order is the search order and it is deliberate</b>: the server
+    /// first, because it is the project that was there before the split, then
+    /// the library, then the configuration app. Nothing ambiguous can arise —
+    /// two projects holding the same relative path would be two files with the
+    /// same name in the same namespace, which does not compile.
+    /// </para>
+    /// </remarks>
+    /// <param name="segments">The path relative to the project directory.</param>
+    /// <returns>The file.</returns>
+    public static FileInfo ProductFile(params string[] segments)
+    {
+        ArgumentNullException.ThrowIfNull(segments);
+
+        var candidates = ProductProjectDirectories
+            .Select(project => new FileInfo(Path.Combine([Root.FullName, "src", project, .. segments])))
+            .ToList();
+
+        return candidates.FirstOrDefault(candidate => candidate.Exists)
+            ?? throw new FileNotFoundException(
+                $"No product project holds '{Path.Combine(segments)}'. Looked in "
+                + string.Join(", ", ProductProjectDirectories)
+                + ". Either the file was renamed, in which case update the caller, or it was deleted, "
+                + "in which case delete what asserts about it.",
+                candidates[0].FullName);
+    }
+
+    /// <summary>
+    /// The product's project directories under <c>src\</c>, server first.
+    /// </summary>
+    private static readonly string[] ProductProjectDirectories =
+        ["BrowserAI", "BrowserAI.Core", "BrowserAI.App"];
+
     /// <param name="file">The file to read.</param>
     /// <returns>The file's text with comment-only lines blanked.</returns>
     public static async Task<string> ReadCodeAsync(FileInfo file)

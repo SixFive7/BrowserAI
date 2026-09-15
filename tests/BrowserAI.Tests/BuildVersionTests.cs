@@ -214,22 +214,44 @@ internal sealed partial class BuildVersionTests
             }
         }
 
-        // Versioning the test project buys nothing: no artifact is cut from it
-        // and no caller ever sees its version. Two projects deriving a version
-        // is two things that can disagree.
-        await Assert.That(references.Keys.Order(StringComparer.Ordinal)).IsEquivalentTo(["src/BrowserAI/BrowserAI.csproj"]);
+        // ⚠️ THREE PROJECTS SINCE 2026-09-15, and the old sentence is kept
+        // because it still says why this arm exists (previously: "Versioning
+        // the test project buys nothing: no artifact is cut from it and no
+        // caller ever sees its version. TWO PROJECTS DERIVING A VERSION IS TWO
+        // THINGS THAT CAN DISAGREE", asserted as `src/BrowserAI` alone).
+        //
+        // Three projects derive one now, and that is stronger rather than
+        // weaker: all three read the SAME git tag through the SAME prefix, so
+        // they cannot disagree unless somebody changes a prefix -- which is
+        // exactly what the last assertion in this method refuses. What the old
+        // arrangement would have produced instead is a library stamped 1.0.0 by
+        // the SDK's default while the executables carried the real number, and
+        // BuildVersion reads the informational version off the LIBRARY, so both
+        // exes would have reported 1.0.0 to every client, forever. That is the
+        // hourly-restart shape from the other direction.
+        //
+        // The test project is still excluded and still for the original reason.
+        var shipped = new[]
+        {
+            "src/BrowserAI.Core/BrowserAI.Core.csproj",
+            "src/BrowserAI/BrowserAI.csproj",
+        };
+
+        await Assert.That(references.Keys.Order(StringComparer.Ordinal)).IsEquivalentTo(shipped);
 
         // Build-time only. Without this it would be a runtime dependency of a
         // NativeAOT binary, for a package that exists to run `git describe`.
-        await Assert.That(references["src/BrowserAI/BrowserAI.csproj"]).IsEqualTo("all");
+        foreach (var project in shipped)
+        {
+            await Assert.That(references[project]).IsEqualTo("all");
+        }
 
         // The house prefix, unanimous across every tagged repository in this
         // estate. It is a tag prefix rather than a version, which is why it can
-        // live in a project file at all.
-        await Assert.That(prefixes).IsEquivalentTo(new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["src/BrowserAI/BrowserAI.csproj"] = "v",
-        });
+        // live in a project file at all -- and with more than one project
+        // deriving a number, it is also the thing that makes them agree.
+        await Assert.That(prefixes.Keys.Order(StringComparer.Ordinal)).IsEquivalentTo(shipped);
+        await Assert.That(prefixes.Values.Distinct(StringComparer.Ordinal)).IsEquivalentTo(["v"]);
     }
 
     [Test]

@@ -104,7 +104,7 @@ internal interface IAppPaths
     /// <para>
     /// Outside the install root for the reason the log is — a repair install
     /// and an uninstall both empty that root, and the index is
-    /// [the only inventory of session directories there is](../Sessions/SessionIndex.cs).
+    /// [the only inventory of session directories there is](../../BrowserAI/Sessions/SessionIndex.cs).
     /// Losing it would not lose a session, because every entry is re-asserted on
     /// the next <c>init</c> or <c>resume</c>, but it would make every session a
     /// caller had forgotten the path of invisible until they used it again.

@@ -357,7 +357,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// <para>
     /// 128 bits of a SHA-256, exactly as
-    /// [the per-directory gate](../Sessions/SessionPath.cs) does it, and
+    /// [the per-directory gate](../../BrowserAI.Core/Sessions/SessionPath.cs) does it, and
     /// <c>Global\</c> because there is no <c>Local\</c> fallback anywhere in this
     /// product: a logon-session-scoped name would let a Remote Desktop session and
     /// the console session install into one directory at once, each reporting

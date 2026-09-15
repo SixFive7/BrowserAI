@@ -53,7 +53,7 @@ assumed and nothing on `PATH` is used.
 | Building the payload: Node, the vendored `node_modules`, the provenance stamp | `build/Build-Payload.ps1`, `build/payload/{package.json, package-lock.json}`, the publish-only payload copy in `src/BrowserAI/BrowserAI.csproj` |
 | Finding the payload at run time | `src/BrowserAI/Runtime/PayloadLayout.cs` |
 | Composing the child's configuration and command line | `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
-| First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune, TreeDelete}.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
+| First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune}.cs`, `src/BrowserAI.Core/Runtime/TreeDelete.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
 
 **The configuration is generated, never hand-held.** `BrowserConfiguration` writes
 `browserName`, an explicit `chrome-for-testing` channel, `headless` from the
@@ -134,7 +134,7 @@ a run that exits 0 without it is a failure whose partial tree is removed.
 |---|---|
 | The proxy itself: filters, forwarding, the two methods it serves | `src/BrowserAI/Proxy/{BrowserProxy, ChildConnection, ServerInstructions}.cs` |
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
-| Registering BrowserAI with the client | `src/BrowserAI/Registration/{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs` |
+| Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs` |
 
 **The protocol version is split deliberately.** `McpServerOptions.ProtocolVersion`
 is `null` upward — whatever the caller asks for — while `McpClientOptions.
@@ -218,12 +218,12 @@ The largest area, and the one everything else keys on.
 
 | Concern | Implemented by |
 |---|---|
-| The directory, the guard and the record | `src/BrowserAI/Sessions/{CanonicalPath, SessionPath, SessionLayout, SessionLock, SessionRecord}.cs` over `src/BrowserAI/Storage/{LockFile, SessionStore}.cs` *(`LockRecord.cs` and the whole `browserai.json` serialisation were deleted 2026-08-26; `SessionDirectoryGuard.cs` the same day, into `CanonicalPath`)* |
+| The directory, the guard and the record | `src/BrowserAI/Sessions/{CanonicalPath, SessionLock, SessionRecord}.cs`, `src/BrowserAI.Core/Sessions/{SessionPath, SessionLayout}.cs` over `src/BrowserAI/Storage/{LockFile, SessionStore}.cs` *(`LockRecord.cs` and the whole `browserai.json` serialisation were deleted 2026-08-26; `SessionDirectoryGuard.cs` the same day, into `CanonicalPath`)* |
 | The two files themselves, and the SQLite they rest on | `src/BrowserAI/Storage/` — [its own rules](src/BrowserAI/Storage/CLAUDE.md) |
 | The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, ToolVerdicts, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20; `SessionToolPolicy.cs` 2026-08-26, into `ToolVerdicts` and the file it reads)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |
-| Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
+| Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and — since 2026-08-20 — `src/BrowserAI.Core/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
 ⚠️ **DELETED 2026-08-26, and the paragraph it replaces is summarised rather
@@ -907,9 +907,9 @@ answers about whatever file it is handed and is never actionable alone.
 | The two custom transports | `src/BrowserAI/Protocol/{DirectStdioClientTransport, ChildProcessSession, DirectStdioServerTransport, JsonLines, JsonLinesTransport, VerbatimPayload, ChildLink, ChildEnvironment}.cs` |
 | stdout ownership | `src/BrowserAI/Protocol/StdioChannel.cs`, `src/BrowserAI/BannedSymbols.txt` |
 | stderr classification | `src/BrowserAI/Protocol/StandardErrorClassifier.cs` and its pinned reference copy |
-| Logging — one machine-wide file under a cross-process write gate | `src/BrowserAI/Logging/`, `src/BrowserAI/Interop/NativeFile.cs` *(the per-session file went 2026-08-26)* |
-| Where files live, installed or not | `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths, BuildVersion}.cs`, `src/BrowserAI/Updates/InstallLocation.cs` |
-| Refusing to serve out of a root two users could share — **both roots**, the data one and the install one, since 2026-09-15 | `src/BrowserAI/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state, with `Updates.InstallLocation.RootAppDir` as the second argument and `null` when this process is not an install |
+| Logging — one machine-wide file under a cross-process write gate | `src/BrowserAI.Core/Logging/`, `src/BrowserAI.Core/Interop/NativeFile.cs` *(the per-session file went 2026-08-26)* |
+| Where files live, installed or not | `src/BrowserAI.Core/Hosting/{IAppPaths, LocalAppDataPaths, BuildVersion}.cs`, `src/BrowserAI.Core/Updates/InstallLocation.cs` |
+| Refusing to serve out of a root two users could share — **both roots**, the data one and the install one, since 2026-09-15 | `src/BrowserAI.Core/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state, with `Updates.InstallLocation.RootAppDir` as the second argument and `null` when this process is not an install |
 
 ⚠️ ***Corrected 2026-08-26 (previously "Anything attributable to a session is
 written to that session's own `browserai.log` and to nothing else; the
@@ -992,7 +992,7 @@ space or dot is stored as Windows rewrites it rather than being refused. The
 
 | Concern | Implemented by |
 |---|---|
-| Where the folders are | `src/BrowserAI/Sessions/SessionLayout.cs`, `src/BrowserAI/Hosting/IAppPaths.cs` |
+| Where the folders are | `src/BrowserAI.Core/Sessions/SessionLayout.cs`, `src/BrowserAI.Core/Hosting/IAppPaths.cs` |
 | The child's working directory, `outputDir` and the file-access roots | `src/BrowserAI/Sessions/SessionManager.cs`, `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
 | What else is under this session's root, said in the `init`/`resume` answer | `src/BrowserAI/Sessions/SessionManager.cs` (`Beneath`) |
 
@@ -1008,7 +1008,7 @@ door and `ChildEnvironmentTests` holds the environment one.
 
 | Concern | Implemented by |
 |---|---|
-| The update lane | `src/BrowserAI/Updates/{InstallLocation, UpdateFeed, UpdateConfiguration, IUpdateClient, VelopackUpdateClient, UpdateService, LiveInstances, VelopackStartup}.cs` |
+| The update lane | `src/BrowserAI.Core/Updates/{InstallLocation, UpdateFeed, UpdateConfiguration, IUpdateClient, VelopackUpdateClient, UpdateService, LiveInstances, VelopackStartup}.cs` |
 | Packing, versioning and the resolved-set manifest | `build/{New-Release.ps1, Test-ReleaseVersion.ps1, Write-ReleaseManifest.ps1, Get-ReleaseNotes.ps1}` |
 
 Per-user to `%LocalAppData%`, never `--msi`, `--shortcuts None`.

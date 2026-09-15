@@ -97,8 +97,21 @@ internal sealed class InteropLayoutTests
     /// </summary>
     private static Type Nested(string owner, string nested)
     {
-        var ownerType = typeof(JobObject).Assembly
-            .GetType($"BrowserAI.Interop.{owner}", throwOnError: true)!;
+        // ⚠️ TWO ASSEMBLIES SINCE 2026-09-15, and the search is over both. The
+        // library split put NativeFile in BrowserAI.Core and left JobObject and
+        // JobLauncher in the server, so a resolve rooted in one assembly threw
+        // TypeLoadException for the other. The failure below names the member
+        // rather than the assembly on purpose: which binary a struct is compiled
+        // into is not a property this oracle is about, and pinning it here would
+        // turn the next move into a red for a reason that has nothing to do
+        // with Windows' layout.
+        var ownerType =
+            typeof(JobObject).Assembly.GetType($"BrowserAI.Interop.{owner}", throwOnError: false)
+            ?? typeof(NativeFile).Assembly.GetType($"BrowserAI.Interop.{owner}", throwOnError: false)
+            ?? throw new InvalidOperationException(
+                $"Neither product assembly declares BrowserAI.Interop.{owner}, so the oracle cannot "
+                + "check the structs it nests. Either the type was renamed, in which case update this "
+                + "test, or it was deleted, in which case delete its rows.");
 
         return ownerType.GetNestedType(nested, BindingFlags.NonPublic)
             ?? throw new InvalidOperationException(

@@ -1456,7 +1456,7 @@ internal sealed class UpdateTests
     }
 
     private static FileInfo ProductFile(params string[] segments) =>
-        new(Path.Combine([RepositoryLayout.Root.FullName, "src", "BrowserAI", .. segments]));
+        RepositoryLayout.ProductFile(segments);
 
     /// <summary>
     /// How the data seam is composed, spelled once so the scan and the failure
