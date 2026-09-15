@@ -310,7 +310,7 @@ internal sealed class InstallerHandoffTests
         await Assert.That(run.WaitUntilItSays(decision, TestDefaults.ProcessHang)).IsTrue();
 
         // And then the exit, which is the thing v1.0.0 did not do.
-        await Assert.That(run.WaitForExit(TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
     }
 
     /// <summary>

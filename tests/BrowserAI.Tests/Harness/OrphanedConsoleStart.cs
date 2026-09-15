@@ -130,12 +130,21 @@ internal sealed class OrphanedConsoleStart : IDisposable
             : string.Empty;
 
     /// <summary>Waits for the product to exit on its own.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Not called <c>WaitForExit</c>, and the name is the point.</b>
+    /// <c>ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne</c> is a
+    /// tree-as-text scan for the timed <c>Process.WaitForExit</c> overload, which
+    /// returns without draining the async readers and truncates stderr silently.
+    /// A method of that name on another type reads identically to it, so the
+    /// scan reported this one — correctly, in the sense that it could not
+    /// know. Renaming keeps the scan sharp rather than teaching it an exception.
+    /// </remarks>
     /// <param name="patience">
     /// A hang detector, never a budget: the thing being caught is a process that
     /// is never going to exit at all.
     /// </param>
     /// <returns><see langword="true"/> when it went.</returns>
-    public bool WaitForExit(TimeSpan patience) =>
+    public bool WaitUntilItExits(TimeSpan patience) =>
         !Started || ProcessIdentity.WaitUntilGone(ProcessId, CreatedFileTime, patience);
 
     /// <summary>Whether the product is still running.</summary>
