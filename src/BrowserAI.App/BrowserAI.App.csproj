@@ -1,0 +1,93 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    THE CONFIGURATION APP, AND THE VELOPACK MAIN EXECUTABLE.
+
+    It exists because of one measured fact: a non-silent Setup.exe finishes by
+    starting the main exe with CREATE_UNICODE_ENVIRONMENT and nothing else, and
+    a console-subsystem binary started that way from a windowless parent is
+    given a console. On this machine that was a 1506x1490 Windows Terminal
+    window on the user's screen, serving nobody, for 215 seconds. Nothing
+    suppresses that start: 36 vpk options, 16 manifest fields, 7 environment
+    variables and every hook return were enumerated and none of them does.
+
+    A Windows-subsystem binary is never allocated a console at all, so making
+    the main exe a window application removes the whole class rather than
+    hiding one instance of it. That the window is then USEFUL is the second
+    decision and it followed the first.
+
+    WHY NOT WPF OR WINFORMS. Neither is supported under NativeAOT: the SDK
+    disables trimming for both, which PublishAot requires
+    (Learn: dotnet/core/deploying/trimming/incompatibilities). That includes
+    System.Windows.Forms.TaskDialog, which is a wrapper over the same Win32
+    entry point this project calls directly.
+  -->
+
+  <PropertyGroup>
+    <!-- Windows subsystem. This single property is what stops a console from
+         ever existing, and it is the whole reason this project exists. -->
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>BrowserAI.App</RootNamespace>
+    <!-- The name a person sees, the Start Menu entry, the root stub, the icon
+         and all four Velopack hooks. -->
+    <AssemblyName>BrowserAI</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\BrowserAI.ico</ApplicationIcon>
+    <!-- Required by [LibraryImport]. Every use is a P/Invoke declaration under
+         Interop\, never hand-written unsafe code. The one exception is the
+         function pointer the task dialog callback is taken as, which the
+         runtime requires to be written in an unsafe context. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Version">
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Native compilation">
+    <PublishAot>true</PublishAot>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Velopack" />
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The stdout ban reaches this assembly too. It does not own a protocol
+         channel, but it is packed beside one and the rule has no per-project
+         exception. -->
+    <AdditionalFiles Include="..\BrowserAI\BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BrowserAI.Core\BrowserAI.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BrowserAI.Tests" />
+  </ItemGroup>
+
+  <!--
+    A BUILD THAT DOES NOT KNOW WHAT IT IS MUST NOT PRODUCE A BINARY.
+
+    (No double hyphen anywhere in this comment: one makes MSBuild fail to load
+    the file, and the error then names a different project entirely.)
+  -->
+  <Target Name="RefuseAVersionDerivedFromNoTag" AfterTargets="MinVer">
+    <Error Condition="'$(MinVerVersion)' == ''"
+           Text="MinVer produced no version at all, so this build cannot say what it is. Check that the MinVer package restored and that this project is inside a git working tree." />
+    <Error Condition="$(MinVerVersion.StartsWith('0.0.0'))"
+           Text="This build derived the version $(MinVerVersion) from git, and a version beginning 0.0.0 means MinVer found no '$(MinVerTagPrefix)*' tag to count from. A binary that does not know what it is cannot be rolled back to or bisected against, so the build is refused rather than stamped. Fetch the tags: 'git fetch --tags', or on a CI checkout set fetch-depth to 0 (a shallow clone carries no tags and fails exactly here)." />
+  </Target>
+
+</Project>

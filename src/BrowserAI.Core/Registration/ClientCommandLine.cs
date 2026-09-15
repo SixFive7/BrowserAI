@@ -115,7 +115,11 @@ internal sealed class ClientCommandLine : IRegistrationCommand
     }
 
     /// <inheritdoc />
-    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget)
+    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget) =>
+        Run(executable, arguments, budget, workingDirectory: null);
+
+    /// <inheritdoc />
+    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory)
     {
         ArgumentException.ThrowIfNullOrEmpty(executable);
         ArgumentNullException.ThrowIfNull(arguments);
@@ -127,8 +131,13 @@ internal sealed class ClientCommandLine : IRegistrationCommand
             RedirectStandardOutput = true,
             RedirectStandardError = true,
 
-            // Never the inherited one. See the remarks.
-            WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
+            // Never the inherited one unless the caller named one. See the
+            // remarks, and the interface: a project-scope registration is
+            // written where the client is run, so for that one call the
+            // directory IS the argument.
+            WorkingDirectory = workingDirectory is { Length: > 0 }
+                ? workingDirectory
+                : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
         };
 
         foreach (var argument in arguments)

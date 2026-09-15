@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-FileCopyrightText: 2026 Jori Huisman
+  SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+-->
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+
+  <assemblyIdentity version="1.0.0.0" name="BrowserAI.app" />
+
+  <!--
+    ⚠️ THE ONE ENTRY WITHOUT WHICH THIS APPLICATION HAS NO WINDOW AT ALL.
+
+    TaskDialogIndirect lives in the version 6 comctl32, which is side-by-side
+    and is NOT the one a process gets by default: without this dependency the
+    loader binds version 5, the export is absent, and the call fails at run time
+    with no compile-time signal whatever. It is the classic failure of this
+    whole approach, and it presents as "the app starts and nothing happens".
+  -->
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+          type="win32"
+          name="Microsoft.Windows.Common-Controls"
+          version="6.0.0.0"
+          processorArchitecture="*"
+          publicKeyToken="6595b64144ccf1df"
+          language="*" />
+    </dependentAssembly>
+  </dependency>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <!--
+        The same reason the server declares it: this application reads and
+        writes paths under a data root whose depth nobody constrains, and it
+        opens Explorer at them.
+      -->
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+      <!--
+        Per-monitor v2. A dialog that is blurry on the monitor it was not opened
+        on is the first thing a person sees of this product, and the task dialog
+        scales correctly only when the process says it can.
+      -->
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          asInvoker, never elevation. BrowserAI installs per-user to
+          %LocalAppData% precisely so that nothing it does needs a UAC prompt,
+          and this application edits one user's own configuration.
+        -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compat.v1">
+    <application>
+      <!-- Windows 10 and 11. Declaring it is what makes the OS report its real
+           version rather than 6.2, which matters to anything that branches on
+           it. -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+
+</assembly>

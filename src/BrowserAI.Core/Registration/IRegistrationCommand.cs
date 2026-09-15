@@ -44,7 +44,28 @@ internal interface IRegistrationCommand
     /// <param name="arguments">The argument vector, passed one element at a time.</param>
     /// <param name="budget">How long it may take before it is abandoned.</param>
     /// <returns>What happened. Never throws.</returns>
-    CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget);
+    CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget) =>
+        Run(executable, arguments, budget, workingDirectory: null);
+
+    /// <summary>
+    /// Runs the client in a named working directory.
+    /// </summary>
+    /// <param name="executable">The client, absolute.</param>
+    /// <param name="arguments">The argument vector, one element at a time.</param>
+    /// <param name="budget">How long it may take.</param>
+    /// <param name="workingDirectory">
+    /// Where to run it, or <see langword="null"/> for the safe default.
+    /// </param>
+    /// <returns>What happened.</returns>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-09-15, and the directory is not a convenience: it is the
+    /// ONLY thing that decides where a project-scope registration lands.</b>
+    /// <c>claude mcp add --scope project</c> writes <c>.mcp.json</c> into the
+    /// directory it was run in and nowhere else, so a call that did not set one
+    /// would write into the default below — the user profile — and report
+    /// success about a file in the wrong place.
+    /// </remarks>
+    CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory);
 }
 
 /// <summary>What one invocation of the client did.</summary>

@@ -51,6 +51,11 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// <summary>Every argument vector this double was given, in order.</summary>
     public List<IReadOnlyList<string>> Invocations { get; } = [];
 
+    /// <summary>
+    /// The working directory each invocation was given, in the same order.
+    /// </summary>
+    public List<string?> Directories { get; } = [];
+
     /// <summary>What is registered, by server name, valued by the command.</summary>
     public Dictionary<string, string> Registered { get; } = new(StringComparer.Ordinal);
 
@@ -61,9 +66,22 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     public string? Locate(string executableName) => Executable;
 
     /// <inheritdoc />
-    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget)
+    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget) =>
+        Run(executable, arguments, budget, workingDirectory: null);
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>The working directory is RECORDED rather than ignored</b>, because
+    /// for a project-scope registration it is the only thing that decides where
+    /// the file lands, and a double that dropped it would let an arm assert a
+    /// successful write into a directory nobody named.
+    /// </remarks>
+    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory)
     {
         ArgumentNullException.ThrowIfNull(arguments);
+
+        Directories.Add(workingDirectory);
+
         Invocations.Add([.. arguments]);
 
         if (Throws)

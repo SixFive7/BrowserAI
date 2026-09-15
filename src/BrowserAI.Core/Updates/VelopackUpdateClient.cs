@@ -112,4 +112,44 @@ internal sealed class VelopackUpdateClient : IUpdateClient
         // what guarantees the session locks are released before the swap.
         _manager.WaitExitThenApplyUpdates(info.TargetFullRelease, silent: true, restart: false);
     }
+
+    /// <summary>
+    /// Applies a downloaded update and starts the application again afterwards.
+    /// </summary>
+    /// <param name="candidate">What was downloaded.</param>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The opposite of <see cref="ApplyAfterThisProcessExits"/>, and the
+    /// two must never be confused.</b> The SERVER never restarts: a restart
+    /// there would start a process no client is speaking to, and with the
+    /// configuration app as the main executable it would put a window on the
+    /// screen in the middle of somebody's session. The configuration APP always
+    /// restarts, because a window that vanished mid-click with nothing to say it
+    /// had succeeded is the same defect from the other side.
+    /// </para>
+    /// <para>
+    /// <b>It is Velopack's own pattern for a foreground application</b>, and the
+    /// restarted process is started with <c>VELOPACK_RESTART</c> in its
+    /// environment, which is how the window that comes back knows to say
+    /// <i>Updated to …</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Whatever is under the install root is killed either way.</b>
+    /// Velopack's apply ends in <c>force_stop_package</c>, which matches image
+    /// path and not name, so a server serving a session goes with it. That is
+    /// what the warning beside the button says out loud rather than leaving to
+    /// be discovered.
+    /// </para>
+    /// </remarks>
+    public void ApplyAndRestart(UpdateCandidate candidate)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+
+        if (candidate.Native is not UpdateInfo info)
+        {
+            throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it.");
+        }
+
+        _manager.WaitExitThenApplyUpdates(info.TargetFullRelease, silent: true, restart: true);
+    }
 }

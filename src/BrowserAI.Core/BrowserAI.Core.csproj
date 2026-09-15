@@ -97,7 +97,10 @@
       surface would owe XML documentation and semantic versioning to nobody.
     -->
     <InternalsVisibleTo Include="BrowserAI.Server" />
-    <InternalsVisibleTo Include="BrowserAI.App" />
+    <!-- The configuration app's ASSEMBLY name, which is BrowserAI and not
+         BrowserAI.App: the project is named for what it is and the assembly for
+         what a person launches. An InternalsVisibleTo names the assembly. -->
+    <InternalsVisibleTo Include="BrowserAI" />
     <InternalsVisibleTo Include="BrowserAI.Tests" />
     <InternalsVisibleTo Include="BrowserAI.TestProbe" />
   </ItemGroup>
