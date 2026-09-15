@@ -705,11 +705,24 @@ live **outside** a test run, and both must be true at release time:
 ### 13. Third-party notices ship
 
 Redistribution obligations attach at **first installer handoff**, independent of
-BrowserAI's own licence. ⚠️ **That handoff has not happened yet** — *corrected
-2026-08-24, and it strengthens this item rather than relaxing it*: `v1.0.0` is a
-tag and a packed artifact in a gitignored `Releases/`, and nothing has been given
-to anyone. This checklist is what makes the first handoff correct rather than a
-record of one already made. Verified against
+BrowserAI's own licence. ⚠️ **That handoff happened on 2026-08-17 and this item
+said it had not.** *Corrected 2026-09-15 (previously "**That handoff has not
+happened yet** — *corrected 2026-08-24, and it strengthens this item rather than
+relaxing it*: `v1.0.0` is a tag and a packed artifact in a gitignored
+`Releases/`, and nothing has been given to anyone. This checklist is what makes
+the first handoff correct rather than a record of one already made.")* — a
+non-draft release has carried `BrowserAI-win-Setup.exe` and
+`BrowserAI-1.0.0-full.nupkg` at
+[`releases/tag/v1.0.0`](https://github.com/SixFive7/BrowserAI/releases/tag/v1.0.0)
+since 2026-08-17T01:54Z, so the obligations below have been live for a month.
+**The 2026-08-24 correction read the tag and the gitignored directory and did not
+read GitHub**, which is the failure shape this whole file is about: a claim
+re-derived from the two places that could not see the answer, and re-stamped as
+verified. What this checklist makes correct is therefore the handoff it is
+**about to** perform; **whether the 2026-08-17 artifact carried the six notices
+below was not re-checked when this correction was written**, and the only honest
+thing to record is that nobody has looked. The evidence line at the foot of this
+item is still about the package this run publishes. Verified against
 [README → Third-party components](README.md#third-party-components):
 
 - **Node's full `LICENSE`** — it aggregates OpenSSL, ICU, V8, zlib and c-ares

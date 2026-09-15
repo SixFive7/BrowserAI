@@ -21,7 +21,32 @@ has been satisfied in form only.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-15
+
 ### Changed
+
+- ⚠️ **Three documents said this product had never been distributed, and it had
+  been publicly downloadable for a month.** `CLAUDE.md`, [`README.md`](README.md#status)
+  and [`RELEASING.md` item 13](RELEASING.md#13-third-party-notices-ship) each
+  carried a dated 2026-08-24 correction reading *"nothing has been distributed"*
+  / *"that handoff has not happened yet"*. A **non-draft** GitHub release has
+  stood at `v1.0.0` since 2026-08-17T01:54Z carrying `BrowserAI-win-Setup.exe`,
+  `BrowserAI-1.0.0-full.nupkg` and `releases.win.json`, downloaded **1**, **0**
+  and **687** times — that last one an installed BrowserAI polling its feed
+  rather than a person. **All three were corrected by addition**, because a
+  reader who learned the old sentence has to learn it was reviewed and found
+  wrong rather than find it quietly gone. **The 2026-08-24 correction was
+  derived from `git tag --list` and a gitignored `Releases/`** — the two places
+  that cannot see a GitHub release — which is how a claim gets re-checked,
+  re-stamped and left wrong, and it is why the replacement sentences name
+  `gh release view v1.0.0` as their oracle instead. **The half that was
+  load-bearing survives, narrowed**: a download is not an install, so every
+  design argument reasoned from *"sessions exist in the wild"* is still
+  reasoning past the evidence, and no session in the wild has been observed.
+  **Redistribution obligations attached on 2026-08-17 rather than today**, and
+  whether the artifact published that day carried the six notices
+  `ThirdPartyNoticeTests` enumerates **was not re-checked** — nobody has looked,
+  which is recorded here rather than resolved by reasoning.
 
 - ⚠️ **One of the two WebMCP tools upstream added is refused, and the other is
   not.** `@playwright/mcp` 0.0.81 added `browser_webmcp_list` and

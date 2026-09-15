@@ -103,14 +103,24 @@ internal sealed partial class AppendOnlyRecordTests
     /// before it moved and it was registered byte-identical to what was handed
     /// over. It carries no editorial note because there was no editorial change.
     /// </para>
-    /// The changelog carries exactly one released section today, and the
-    /// <c>[Unreleased]</c> section — 143,210 characters of it on the day this
-    /// was written — is deliberately not in the list. It is not a record of what
-    /// shipped until a release stamps it.
+    /// <para>
+    /// <b>The changelog carries two released sections</b>, and the
+    /// <c>[Unreleased]</c> section is deliberately not in the list: it is not a
+    /// record of what shipped until a release stamps it. <i>Corrected 2026-09-15
+    /// (previously "The changelog carries exactly one released section today,
+    /// and the <c>[Unreleased]</c> section — 143,210 characters of it on the day
+    /// this was written — is deliberately not in the list.")</i> — the 1.0.0 cut
+    /// of 2026-09-15 stamped 236,567 characters of unreleased work into a
+    /// released section and sealed it in the same commit, which is the ordering
+    /// [the release checklist](../../RELEASING.md#10-the-changelogs-unreleased-section-is-not-empty)
+    /// requires and the reason that section is now the largest record here by
+    /// two orders of magnitude.
+    /// </para>
     /// </remarks>
     private static readonly Seal[] Sealed =
     [
         new("CHANGELOG.md#0.1.0", 3850, "4e939d92358aaefda03d33dff615bbc14209a52f35be7bf8d2985a54f4c3f7ac"),
+        new("CHANGELOG.md#1.0.0", 236567, "c8163746de730fa28ed8da12ef92fe95f88483fec1594d9147cd0f73df54d912"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea"),
