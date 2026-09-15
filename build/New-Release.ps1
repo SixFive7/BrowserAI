@@ -133,7 +133,32 @@ $PSStyle.OutputRendering = 'PlainText'
 $ErrorView = 'NormalView'
 
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+
+# ⚠️ TWO PROJECTS PUBLISH INTO ONE PACK DIRECTORY -- 2026-09-15. BrowserAI ships
+# as two binaries: the configuration app, which is the Velopack main exe and
+# what a person launches, and the MCP server, which is what a client starts. The
+# app is FIRST because it is the smaller of the two and its ILC pass is the one
+# most likely to be broken by a change to the interop layer; a release that is
+# going to fail should fail on the cheap half.
+#
+# Each entry names the project, the file it produces and whether it carries the
+# payload -- the last of those only so that a reader can see why the sizes
+# differ by two orders of magnitude.
 $project = Join-Path $root 'src' 'BrowserAI' 'BrowserAI.csproj'
+$appProject = Join-Path $root 'src' 'BrowserAI.App' 'BrowserAI.App.csproj'
+$publishes = @(
+    @{ Project = $appProject; Exe = 'BrowserAI.exe';        What = 'configuration app' }
+    @{ Project = $project;    Exe = 'BrowserAI.Server.exe'; What = 'MCP server' }
+)
+
+# The icon every artifact carries: the Setup stub, the Add/Remove entry, the
+# Start Menu shortcut and both executables.
+#
+# ⚠️ IT IS A PLACEHOLDER UNTIL THE MAINTAINER CHOOSES. Ten candidates were
+# drawn on 2026-09-15 and candidate 1 is copied in so that the packaging is
+# complete and exercised; the winner replaces this ONE FILE and nothing else
+# changes. RELEASING.md carries a pre-cut check that says so.
+$icon = Join-Path $root 'assets' 'BrowserAI.ico'
 if (-not $OutputDir) { $OutputDir = Join-Path $root 'Releases' }
 if (-not $ArchiveDir) { $ArchiveDir = Join-Path $OutputDir 'archive' }
 
@@ -304,88 +329,111 @@ if (-not $SkipPublish) {
     # Globbed on the framework moniker rather than spelled, because the moniker
     # moves with the SDK and a path that stopped matching would silently restore
     # the incremental pass this exists to prevent.
-    foreach ($native in Get-ChildItem -Path (Join-Path $root 'src' 'BrowserAI' 'obj' 'Release') -Filter 'native' -Recurse -Directory -ErrorAction SilentlyContinue) {
-        Write-Host "Removing ILC intermediates at $($native.FullName) so the publish cannot reuse last run's native object."
-        Remove-Item -LiteralPath $native.FullName -Recurse -Force
+    # ⚠️ BOTH PROJECTS' INTERMEDIATES. A per-project sweep that only knew about
+    # one of them would leave the other's IlcCompile skippable, and HALT-A would
+    # then read a log for a compilation that did not happen -- for exactly one
+    # of the two binaries, which is the version of this defect that is hardest
+    # to notice.
+    foreach ($publish in $publishes) {
+        $obj = Join-Path (Split-Path -Parent $publish.Project) 'obj' 'Release'
+
+        foreach ($native in Get-ChildItem -Path $obj -Filter 'native' -Recurse -Directory -ErrorAction SilentlyContinue) {
+            Write-Host "Removing ILC intermediates at $($native.FullName) so the publish cannot reuse last run's native object."
+            Remove-Item -LiteralPath $native.FullName -Recurse -Force
+        }
     }
 
-    $ilcLog = Join-Path $root '.work' 'release-publish.log'
-    $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ilcLog)
+    $null = New-Item -ItemType Directory -Force -Path (Join-Path $root '.work')
 
-    Write-Host "Publishing (NativeAOT) to $PackDir ..."
+    # ⚠️ HALT-A RUNS ONCE PER PUBLISH, AND THAT IS THE WHOLE REASON THIS IS A
+    # LOOP -- 2026-09-15. Two binaries are linked into one release, each by its
+    # own ILC pass, and a scan that only read one of the two logs would ship a
+    # binary nobody had checked while reporting that ILC's output was clean.
+    foreach ($publish in $publishes) {
+        $ilcLog = Join-Path $root '.work' ("release-publish-" + [System.IO.Path]::GetFileNameWithoutExtension($publish.Exe) + ".log")
 
-    # ⚠️ THE BINARY AND THE PACKAGE MUST CARRY THE SAME VERSION. When the caller
-    # names one, the publish is told the same number, so the manifest `vpk`
-    # stamps and the attribute MinVer stamps cannot disagree. A build packed at
-    # one version and compiled at another is exactly the state that made a fleet
-    # download the binary it was already running, hourly, forever.
-    $publishArgs = @($project, '-c', 'Release', '-r', 'win-x64', '--self-contained', '-o', $PackDir, '-v:normal')
-    if ($PSBoundParameters.ContainsKey('PackVersion')) {
-        $publishArgs += "-p:MinVerVersionOverride=$PackVersion"
+        Write-Host "Publishing the $($publish.What) (NativeAOT) to $PackDir ..."
+
+        # ⚠️ THE BINARY AND THE PACKAGE MUST CARRY THE SAME VERSION. When the
+        # caller names one, the publish is told the same number, so the manifest
+        # `vpk` stamps and the attribute MinVer stamps cannot disagree. A build
+        # packed at one version and compiled at another is exactly the state
+        # that made a fleet download the binary it was already running, hourly,
+        # forever.
+        $publishArgs = @($publish.Project, '-c', 'Release', '-r', 'win-x64', '--self-contained', '-o', $PackDir, '-v:normal')
+        if ($PSBoundParameters.ContainsKey('PackVersion')) {
+            $publishArgs += "-p:MinVerVersionOverride=$PackVersion"
+        }
+
+        # -v:normal, because ILC's own console output is what is being read and
+        # a quieter verbosity drops it. Redirected to a file rather than
+        # streamed: a grandchild that inherits the pipe keeps it open after the
+        # command has exited, and the declared timeout then never fires.
+        & dotnet publish @publishArgs *>&1 | Tee-Object -FilePath $ilcLog | Out-Null
+        $publishExit = $LASTEXITCODE
+
+        $ilc = Get-Content -LiteralPath $ilcLog
+
+        if ($publishExit -ne 0) {
+            Write-Error "The publish of the $($publish.What) failed with exit code $publishExit. Its output is in $ilcLog."
+            exit 1
+        }
+
+        # ⚠️ AND ILC ACTUALLY RAN, WHICH IS THE PREMISE OF EVERY LINE BELOW. A
+        # skipped `IlcCompile` leaves a log with nothing of ILC's in it, and the
+        # complaint scan then reports clean about a compilation that did not
+        # happen. Its own script so that the refusal can be watched against a
+        # log that shows a skipped pass -- a positive control this script cannot
+        # give itself.
+        & (Join-Path $PSScriptRoot 'Test-IlcFullPass.ps1') -Log $ilcLog
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "The publish log for the $($publish.What) shows no full ILC pass, so the checks below would be reading a compilation that did not happen."
+            exit 1
+        }
+
+        # THE CHECK NO MSBUILD PROPERTY CAN MAKE. An always-throwing method is
+        # not a diagnostic, so it has no code, no severity, and nothing to treat
+        # as an error -- it is a line of console text and nothing else.
+        # ⚠️ THE DIAGNOSTIC CODE ALONE IS NOT A MATCH, and getting that wrong is
+        # a check that never goes green. At -v:normal the log contains csc's
+        # full command line, which carries `/nowarn:...,IL2121,...` -- so a bare
+        # `\bIL[0-9]{4}\b` matches a SUPPRESSION LIST and fails every publish.
+        # Measured 2026-08-16 on the first run of this script. The severity word
+        # is what makes it a diagnostic rather than an argument.
+        $ilcComplaints = $ilc | Where-Object {
+            $_ -match 'will always throw' -or
+            $_ -match '(?i)\b(warning|error)\s+IL[0-9]{4}\b' -or
+            $_ -match '\bAOT analysis warning\b' -or
+            $_ -match '\bTrim analysis warning\b'
+        }
+
+        if ($ilcComplaints) {
+            Write-Error ("ILC's output for the $($publish.What) is not empty, and a publish that emits any of these can still exit 0 with an artifact:`n" +
+                ($ilcComplaints -join "`n") + "`nFull output: $ilcLog")
+            exit 1
+        }
+
+        Write-Host "ILC output for the $($publish.What) is clean ($($ilc.Count) lines read, 0 complaints)."
     }
-
-    # -v:normal, because ILC's own console output is what is being read and a
-    # quieter verbosity drops it. Redirected to a file rather than streamed:
-    # a grandchild that inherits the pipe keeps it open after the command has
-    # exited, and the declared timeout then never fires.
-    & dotnet publish @publishArgs *>&1 | Tee-Object -FilePath $ilcLog | Out-Null
-    $publishExit = $LASTEXITCODE
-
-    $ilc = Get-Content -LiteralPath $ilcLog
-
-    if ($publishExit -ne 0) {
-        Write-Error "The publish failed with exit code $publishExit. Its output is in $ilcLog."
-        exit 1
-    }
-
-    # ⚠️ AND ILC ACTUALLY RAN, WHICH IS THE PREMISE OF EVERY LINE BELOW. A
-    # skipped `IlcCompile` leaves a log with nothing of ILC's in it, and the
-    # complaint scan then reports clean about a compilation that did not happen.
-    # Its own script so that the refusal can be watched against a log that shows
-    # a skipped pass -- a positive control this script cannot give itself.
-    & (Join-Path $PSScriptRoot 'Test-IlcFullPass.ps1') -Log $ilcLog
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "The publish log shows no full ILC pass, so the checks below would be reading a compilation that did not happen."
-        exit 1
-    }
-
-    # THE CHECK NO MSBUILD PROPERTY CAN MAKE. An always-throwing method is not a
-    # diagnostic, so it has no code, no severity, and nothing to treat as an
-    # error -- it is a line of console text and nothing else.
-    # ⚠️ THE DIAGNOSTIC CODE ALONE IS NOT A MATCH, and getting that wrong is a
-    # check that never goes green. At -v:normal the log contains csc's full
-    # command line, which carries `/nowarn:...,IL2121,...` -- so a bare
-    # `\bIL[0-9]{4}\b` matches a SUPPRESSION LIST and fails every publish.
-    # Measured 2026-08-16 on the first run of this script. The severity word is
-    # what makes it a diagnostic rather than an argument.
-    $ilcComplaints = $ilc | Where-Object {
-        $_ -match 'will always throw' -or
-        $_ -match '(?i)\b(warning|error)\s+IL[0-9]{4}\b' -or
-        $_ -match '\bAOT analysis warning\b' -or
-        $_ -match '\bTrim analysis warning\b'
-    }
-
-    if ($ilcComplaints) {
-        Write-Error ("ILC's output is not empty, and a publish that emits any of these can still exit 0 with an artifact:`n" +
-            ($ilcComplaints -join "`n") + "`nFull output: $ilcLog")
-        exit 1
-    }
-
-    Write-Host "ILC output is clean ($($ilc.Count) lines read, 0 complaints)."
 
     # The guard borrowed from the product that hit this, and it is stronger than
     # an assertion on the entry assembly's own attribute: a referenced project
     # carrying a decorated string is linked into this same binary and nothing
-    # else would say so.
-    $binary = Join-Path $PackDir 'BrowserAI.exe'
+    # else would say so. Both binaries, because both link the same shared
+    # library and either of them could carry the string.
+    $text = ''
 
-    if (-not (Test-Path -LiteralPath $binary)) {
-        Write-Error "The publish produced no $binary."
-        exit 1
+    foreach ($publish in $publishes) {
+        $binary = Join-Path $PackDir $publish.Exe
+
+        if (-not (Test-Path -LiteralPath $binary)) {
+            Write-Error "The publish produced no $binary."
+            exit 1
+        }
+
+        $bytes = [System.IO.File]::ReadAllBytes($binary)
+        $text += [System.Text.Encoding]::Unicode.GetString($bytes) + "`n" + [System.Text.Encoding]::ASCII.GetString($bytes) + "`n"
     }
-
-    $bytes = [System.IO.File]::ReadAllBytes($binary)
-    $text = [System.Text.Encoding]::Unicode.GetString($bytes) + "`n" + [System.Text.Encoding]::ASCII.GetString($bytes)
 
     # `<version core>+<sha>` is the shape the SDK produces, in both the `+` and
     # the `.`-separated forms.
@@ -412,19 +460,26 @@ if (-not $SkipPublish) {
     $ours = $decorated | Where-Object { $_ -like "$PackVersion+*" -or $_ -like "$PackVersion.*" }
 
     if ($ours) {
-        Write-Error ("The linked binary reports THIS build's version in decorated form:`n" +
+        Write-Error ("A linked binary reports THIS build's version in decorated form:`n" +
             ($ours -join "`n") + "`nThe updater MATCHES the served version against the reported one, so a decorated copy can never equal it -- this is the hourly restart loop a shipped product ran fleet-wide. Find the project that set SourceRevisionId; IncludeSourceRevisionInInformationalVersion is false repository-wide in Directory.Build.props.")
         exit 1
     }
 
-    Write-Host "No decorated version string for $PackVersion in the linked binary ($($decorated.Count) third-party decorations present and inert)."
+    Write-Host "No decorated version string for $PackVersion in either linked binary ($($decorated.Count) third-party decorations present and inert)."
 } else {
     Write-Warning "-SkipPublish: the ILC output check and the decorated-version-string scan did NOT run for this pack."
 }
 
-if (-not (Test-Path -LiteralPath (Join-Path $PackDir 'BrowserAI.exe'))) {
-    Write-Error "There is no BrowserAI.exe in $PackDir, so there is nothing to pack."
-    exit 1
+# ⚠️ BOTH, and by name. A pack directory holding the app without the server is
+# an installer that puts a window on somebody's Start Menu and registers nothing
+# a client can start -- and RegistrationTarget refuses precisely that layout at
+# install time, so the failure would be a successful install that says it could
+# not find its own server.
+foreach ($publish in $publishes) {
+    if (-not (Test-Path -LiteralPath (Join-Path $PackDir $publish.Exe))) {
+        Write-Error "There is no $($publish.Exe) in $PackDir, so the $($publish.What) is missing and there is nothing releasable to pack."
+        exit 1
+    }
 }
 
 # --- 6. Pack -------------------------------------------------------------------
@@ -439,15 +494,32 @@ $packArgs = @(
     '--packAuthors', 'Jori Huisman'
     '--channel', $Channel
     '--outputDir', $OutputDir
-    # ⚠️ NEVER the execution stub. The stub is compiled
-    # `#![windows_subsystem = "windows"]` and returns in 59 ms while the app
-    # runs on, so an MCP client registered against it sees its server die
-    # instantly. Registration names <root>\current\BrowserAI.exe directly;
-    # --mainExe is what makes that path exist and be the one Update.exe starts.
+    # The icon on the Setup stub, the Add/Remove entry and the shortcut. See
+    # $icon above for why it is a placeholder today.
+    '--icon', $icon
+    # ⚠️ THE CONFIGURATION APP, AND NEVER THE SERVER -- 2026-09-15. This one
+    # name decides five things at once: which binary Setup.exe starts after a
+    # non-silent install, which one the root stub and `Update.exe start` launch,
+    # which one all four hooks run on, what the root stub is called, and what
+    # the shortcut points at. A console-subsystem binary in this slot is given a
+    # console by the post-install start and puts a terminal window on the user's
+    # screen; nothing suppresses that start, so the answer is a binary that can
+    # never be given a console.
+    #
+    # ⚠️ NEVER the execution stub, which is a different file: the stub sits at
+    # <root>\BrowserAI.exe, is compiled `#![windows_subsystem = "windows"]` and
+    # returns in 59 ms. Registration names <root>\current\BrowserAI.Server.exe,
+    # composed from the app's own directory and checked for the console
+    # subsystem before it is written.
     '--mainExe', 'BrowserAI.exe'
-    # No Desktop or Start Menu entry: this is a background stdio server that a
-    # human never launches. The default is Desktop,StartMenuRoot.
-    '--shortcuts', 'None'
+    # ⚠️ A START MENU ENTRY, since 2026-09-15 (previously 'None', "this is a
+    # background stdio server that a human never launches"). That sentence was
+    # true of the only binary there was; it is false of the one this name now
+    # points at. The entry is how a person reaches the configuration app again
+    # after the install, and without it the app could only ever be seen once.
+    # StartMenuRoot and not the default Desktop,StartMenuRoot: a desktop icon
+    # for a thing somebody opens twice a year is clutter.
+    '--shortcuts', 'StartMenuRoot'
     # ⚠️ --msi is NOT passed, ever. --msi PerMachine installs to Program Files
     # and makes the updater self-elevate, and a UAC prompt cannot be answered by
     # a background MCP server. Per-user to %LocalAppData% is the whole design.

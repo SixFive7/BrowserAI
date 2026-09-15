@@ -115,12 +115,26 @@ internal sealed record AppState
 
     /// <summary>Whether the <i>unregister</i> action is offered.</summary>
     /// <remarks>
+    /// <para>
     /// <b>Only for an entry we wrote.</b> A foreign one is never removed — that
     /// is somebody else's install and removing it would be this product
     /// uninstalling another.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And never over a configuration that could not be read</b>, which
+    /// this did not check until a test constructed the combination. The reader
+    /// answers <see cref="RegistrationOwnership.Absent"/> whenever it fails, so
+    /// today the two cannot co-occur and the guard is unreachable — which is
+    /// exactly the kind of guard that stops being unreachable when somebody
+    /// makes the reader smarter. It is here because the symmetry is the
+    /// invariant: <b>no action is offered on top of a state nobody
+    /// established</b>, and <see cref="MayRegister"/> already said so.
+    /// </para>
     /// </remarks>
     public bool MayUnregister =>
-        ClientFound && UserScope.Ownership is RegistrationOwnership.OursAndPresent;
+        ClientFound
+        && UserScope.Unreadable is null
+        && UserScope.Ownership is RegistrationOwnership.OursAndPresent;
 
     /// <summary>Reads the whole state.</summary>
     /// <param name="commands">The seam over starting the client.</param>

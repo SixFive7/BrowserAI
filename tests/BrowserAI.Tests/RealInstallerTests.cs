@@ -146,6 +146,192 @@ internal sealed partial class RealInstallerTests
         await Assert.That(realKeyAfter).IsEqualTo(realKeyBefore);
     }
 
+    /// <summary>
+    /// The installed main executable opens one task dialog, owns no console
+    /// window, and closes when it is asked to.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the arm the whole two-binary design was cut for.</b> A
+    /// non-silent <c>Setup.exe</c> finishes by starting the main executable with
+    /// <c>CREATE_UNICODE_ENVIRONMENT</c> and nothing else, and on 2026-09-15
+    /// that put a <b>1506×1490 Windows Terminal window</b> on the user's screen,
+    /// serving nobody, for 215 seconds. The window is gone because the main
+    /// executable is a Windows-subsystem binary now, and what this asserts is
+    /// the visible half of that: one dialog, and nothing else.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It installs SILENTLY and launches the binary itself, deliberately.</b>
+    /// A non-silent install would put a progress dialog on the maintainer's
+    /// screen and hand the start to Velopack — which is the very thing whose
+    /// flags cannot be influenced from here. Launching the same file the same
+    /// way, from a parent with no window, exercises the property under test and
+    /// nothing else.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The console check is BY PID, and that is weaker than it looks —
+    /// said here rather than left to be discovered.</b> With the default
+    /// terminal set to Windows Terminal, a console allocated to a process shows
+    /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
+    /// scanning for <c>ConsoleWindowClass</c> is exactly what reported a clean
+    /// screen while two windows were on it. So this arm does not claim to detect
+    /// a console by looking for its window. What carries that guarantee is
+    /// <c>TaskDialogLayoutTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>,
+    /// which reads the subsystem out of the binary — the cause rather than the
+    /// symptom. The by-pid check below is kept because it is free and because it
+    /// would catch the one case the subsystem cannot: this process calling
+    /// <c>AllocConsole</c> itself.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow()
+    {
+        var setup = SuiteEnvironment.RequireReleaseInstaller();
+
+        using var installRoot = ScratchDirectory.CreateUnderProfile("real-install-window");
+        using var dataRoot = ScratchDirectory.CreateUnderProfile("real-install-window-data");
+        using var clientConfig = ScratchDirectory.Create("real-install-window-client");
+        using var logs = ScratchDirectory.Create("real-install-window-logs");
+
+        using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
+        {
+            [RegistrationTests.ConfigDirectoryVariable] = clientConfig.Path,
+            [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
+        });
+
+        try
+        {
+            await Assert.That(await RunAsync(
+                setup, ["--silent", "--log", Path.Combine(logs.Path, "setup.log"), "--installto", installRoot.Path]))
+                .IsEqualTo(0);
+
+            var app = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+
+            await Assert.That(File.Exists(app)).IsTrue();
+
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo(app)
+                {
+                    UseShellExecute = false,
+
+                    // The house rule, and it is not decorative here: this arm
+                    // runs from a parent that has a console, so an omission
+                    // would be invisible in a suite run and visible on the
+                    // maintainer's screen.
+                    CreateNoWindow = true,
+                    WorkingDirectory = installRoot.Path,
+                },
+            };
+
+            await Assert.That(process.Start()).IsTrue();
+
+            try
+            {
+                var dialog = await WaitForTheDialogAsync(process.Id);
+
+                await Assert.That(dialog).IsNotEqualTo(nint.Zero);
+
+                var owned = TopLevelWindows.All()
+                    .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id)
+                    .Select(TopLevelWindows.ClassNameOf)
+                    .ToList();
+
+                // Exactly one VISIBLE top-level window, and it is the dialog.
+                // The invisible ones are the input-method windows every GUI
+                // process on this machine carries.
+                var visible = TopLevelWindows.All()
+                    .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id && TopLevelWindows.IsVisible(window))
+                    .Select(TopLevelWindows.ClassNameOf)
+                    .ToList();
+
+                await Assert.That(string.Join(", ", visible)).IsEqualTo(TaskDialogWindowClass);
+
+                // And no console window of its own. See the remarks for exactly
+                // how much this does and does not prove.
+                await Assert.That(owned.Where(name =>
+                        name is "ConsoleWindowClass" or "CASCADIA_HOSTING_WINDOW_CLASS" or "PseudoConsoleWindow"))
+                    .IsEmpty();
+
+                await Assert.That(TopLevelWindows.Close(dialog)).IsTrue();
+
+                await Assert.That(await WaitForExitAsync(process)).IsTrue();
+                await Assert.That(process.ExitCode).IsEqualTo(0);
+            }
+            finally
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill();
+                }
+            }
+
+            var update = Path.Combine(installRoot.Path, "Update.exe");
+
+            await Assert.That(File.Exists(update)).IsTrue();
+            await Assert.That(await RunAsync(update, ["--uninstall", "--silent"])).IsEqualTo(0);
+            await WaitOutTheDeferredRemoval(Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName));
+        }
+        finally
+        {
+            await ReclaimAsync(installRoot.Path);
+        }
+    }
+
+    /// <summary>The window class a task dialog is.</summary>
+    /// <remarks>
+    /// <c>#32770</c> is the Windows dialog class, and a task dialog is a dialog.
+    /// It is spelled once here so the assertion and the failure message cannot
+    /// say different things.
+    /// </remarks>
+    private const string TaskDialogWindowClass = "#32770";
+
+    /// <summary>
+    /// Waits for the dialog to appear, polling rather than sleeping once.
+    /// </summary>
+    /// <remarks>
+    /// <b>A single sleep is what made this flake by hand.</b> Two runs of the
+    /// same probe on 2026-09-15 disagreed at a fixed 2.5 s and agreed at 500 ms
+    /// when polled, because the window arrives whenever the shell gets round to
+    /// it. The bound is a hang detector and not a promptness claim.
+    /// </remarks>
+    private static async Task<nint> WaitForTheDialogAsync(int processId)
+    {
+        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            foreach (var window in TopLevelWindows.All())
+            {
+                if (TopLevelWindows.ProcessIdOf(window) == processId
+                    && TopLevelWindows.IsVisible(window)
+                    && string.Equals(TopLevelWindows.ClassNameOf(window), TaskDialogWindowClass, StringComparison.Ordinal))
+                {
+                    return window;
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
+        }
+
+        return nint.Zero;
+    }
+
+    /// <summary>Waits for a process to exit, bounded.</summary>
+    private static async Task<bool> WaitForExitAsync(Process process)
+    {
+        try
+        {
+            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>The body of the arm, so the reclaim below can be a finally.</summary>
     /// <param name="setup">The test-id installer.</param>
     /// <param name="installRoot">The scratch install root.</param>
@@ -175,9 +361,29 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(setupLog).Contains("Renaming existing directory");
 
-        // The install root really was replaced, and the binary is where a client
-        // is pointed: <root>\current\BrowserAI.exe, never the stub beside it.
-        await Assert.That(File.Exists(Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe"))).IsTrue();
+        // The install root really was replaced, and BOTH binaries are inside
+        // current\ — the configuration app, which is what the stub beside that
+        // directory points at, and the MCP server, which is what a client is
+        // actually given.
+        //
+        // ⚠️ Widened 2026-09-15 (previously the app's name alone, with the
+        // comment "the binary is where a client is pointed:
+        // <root>\current\BrowserAI.exe, never the stub beside it"). That
+        // sentence named the right file for the wrong reason from the day the
+        // names swapped: a client is pointed at the SERVER, composed from the
+        // app's directory and refused if it is not there — so an install with
+        // one of the two would register nothing and say so, which is a failure
+        // this arm would otherwise have watched happen and called a pass.
+        foreach (var executable in new[] { RegistrationTarget.AppFileName, RegistrationTarget.ServerFileName })
+        {
+            await Assert.That(File.Exists(
+                Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, executable))).IsTrue();
+        }
+
+        // And the registration the hook wrote names the SERVER.
+        var written = await File.ReadAllTextAsync(RegistrationRecord.PathFor(dataRoot.Path));
+
+        await Assert.That(written).Contains(RegistrationTarget.ServerFileName);
 
         await Unchanged(dataRoot.Path, planted);
 

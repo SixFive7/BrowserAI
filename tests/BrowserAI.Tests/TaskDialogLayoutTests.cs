@@ -1,0 +1,226 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Runtime.InteropServices;
+using BrowserAI.App.Interop;
+using BrowserAI.Runtime;
+using BrowserAI.Tests.Harness;
+using W = Windows.Win32;
+
+namespace BrowserAI.Tests;
+
+/// <summary>
+/// The two hand-written task dialog structures, against Microsoft's own
+/// metadata — and the subsystem each shipped executable declares.
+/// </summary>
+/// <remarks>
+/// <para>
+/// ⚠️ <b><c>TASKDIALOGCONFIG</c> is <c>#pragma pack(1)</c>, and that is the one
+/// fact this whole file exists for.</b> The natural C# layout pads every pointer
+/// to eight bytes and produces a 184-byte structure that Windows reads as though
+/// it were the 160-byte one: every field after the first mismatch means
+/// something else, and the failure is not a diagnostic — the call returns
+/// <c>E_INVALIDARG</c>, or renders a dialog whose title is its content. That is
+/// the classic way to get the raw task dialog wrong, and it is checked against
+/// the vendor rather than against the last person who read the header.
+/// </para>
+/// <para>
+/// <b>The literal is written out as well as compared</b>, for the same reason
+/// <c>InteropLayoutTests</c> does it: comparing only the two would move both
+/// sides at once if a future <c>CsWin32</c> generated a different shape, and
+/// report agreement. 160 and 12 are the numbers this repository measured on
+/// 2026-09-15, on x64.
+/// </para>
+/// </remarks>
+internal sealed class TaskDialogLayoutTests
+{
+    /// <summary>
+    /// The configuration structure is the size Windows says, and the constant
+    /// the marshalling reads is that size too.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDialogConfigurationIsPackedTheWayWindowsPacksIt()
+    {
+        var ours = Marshal.SizeOf<TaskDialogInterop.TaskDialogConfig>();
+        var windows = Marshal.SizeOf<W.UI.Controls.TASKDIALOGCONFIG>();
+
+        await Assert.That(ours).IsEqualTo(TaskDialogInterop.ConfigSize);
+        await Assert.That(ours).IsEqualTo(windows);
+        await Assert.That(ours).IsEqualTo(160);
+
+        // ⚠️ The positive control for the claim above: a naturally packed
+        // version of the same fields is a DIFFERENT size, so this arm is
+        // capable of failing. Without it, a `Pack = 1` silently dropped from
+        // the declaration would have to be caught by the 160 alone — which it
+        // would be, but nothing would say why the number was chosen.
+        await Assert.That(Marshal.SizeOf<NaturallyPacked>()).IsNotEqualTo(ours);
+    }
+
+    /// <summary>One button is the size Windows says.</summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OneButtonIsTheSizeWindowsSaysItIs()
+    {
+        var ours = Marshal.SizeOf<TaskDialogInterop.TaskDialogButton>();
+
+        await Assert.That(ours).IsEqualTo(TaskDialogInterop.ButtonSize);
+        await Assert.That(ours).IsEqualTo(Marshal.SizeOf<W.UI.Controls.TASKDIALOG_BUTTON>());
+        await Assert.That(ours).IsEqualTo(12);
+    }
+
+    /// <summary>
+    /// Every field sits where Windows puts it, not merely the total.
+    /// </summary>
+    /// <remarks>
+    /// <b>A size that agrees says nothing about a field that moved</b>: two
+    /// pointers swapped leave the total unchanged and turn the window title into
+    /// the instruction. The offsets are read out of both structures by name, so
+    /// this is the assertion that would catch a reordering.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryFieldSitsWhereWindowsPutsIt()
+    {
+        (string Ours, string Windows)[] fields =
+        [
+            (nameof(TaskDialogInterop.TaskDialogConfig.Size), "cbSize"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Parent), "hwndParent"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Instance), "hInstance"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Flags), "dwFlags"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.CommonButtons), "dwCommonButtons"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.WindowTitle), "pszWindowTitle"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.MainInstruction), "pszMainInstruction"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Content), "pszContent"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.ButtonCount), "cButtons"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Buttons), "pButtons"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.DefaultButton), "nDefaultButton"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.RadioButtonCount), "cRadioButtons"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.RadioButtons), "pRadioButtons"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.DefaultRadioButton), "nDefaultRadioButton"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.VerificationText), "pszVerificationText"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.ExpandedInformation), "pszExpandedInformation"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.ExpandedControlText), "pszExpandedControlText"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.CollapsedControlText), "pszCollapsedControlText"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Footer), "pszFooter"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Callback), "pfCallback"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.CallbackData), "lpCallbackData"),
+            (nameof(TaskDialogInterop.TaskDialogConfig.Width), "cxWidth"),
+        ];
+
+        // Not empty, and not a subset somebody trimmed: the two unions are the
+        // only fields deliberately absent from the list.
+        await Assert.That(fields.Length).IsEqualTo(22);
+
+        foreach (var (ours, windows) in fields)
+        {
+            await Assert.That(Marshal.OffsetOf<TaskDialogInterop.TaskDialogConfig>(ours))
+                .IsEqualTo(Marshal.OffsetOf<W.UI.Controls.TASKDIALOGCONFIG>(windows));
+        }
+    }
+
+    /// <summary>
+    /// The configuration app is a Windows-subsystem binary and the server is a
+    /// console one, read out of the executables themselves.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the property the whole two-binary design rests on.</b> A
+    /// non-silent <c>Setup.exe</c> starts the main executable with
+    /// <c>CREATE_UNICODE_ENVIRONMENT</c> and nothing else; a console-subsystem
+    /// binary started that way from a windowless parent is given a console, and
+    /// on this machine that was a Windows Terminal window over the user's work
+    /// serving nobody for 215 seconds. A Windows-subsystem binary is never
+    /// allocated one.
+    /// </para>
+    /// <para>
+    /// <b>The server's half matters just as much and in the other direction.</b>
+    /// A client speaks to it over stdio, and
+    /// <c>RegistrationTarget</c> refuses to register a file at the server's name
+    /// that is not a console binary — so a server accidentally built
+    /// <c>WinExe</c> would install fine and register nothing.
+    /// </para>
+    /// <para>
+    /// <b>Read off the Debug outputs, which always exist</b>, because the
+    /// subsystem comes from <c>OutputType</c> and is identical in every
+    /// configuration. The published AOT binaries are checked the same way when
+    /// they are present, which is what would catch a link that did not honour
+    /// it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheAppIsAWindowBinaryAndTheServerIsAConsoleOne()
+    {
+        await Assert.That(PeSubsystem.Of(Built("BrowserAI.App", "BrowserAI.exe")))
+            .IsEqualTo(PeSubsystem.WindowsGui);
+
+        await Assert.That(PeSubsystem.Of(Built("BrowserAI", "BrowserAI.Server.exe")))
+            .IsEqualTo(PeSubsystem.WindowsCui);
+
+        if (File.Exists(PublishedSlice.Executable))
+        {
+            await Assert.That(PeSubsystem.Of(PublishedSlice.Executable)).IsEqualTo(PeSubsystem.WindowsCui);
+        }
+
+        if (File.Exists(PublishedSlice.AppExecutable))
+        {
+            await Assert.That(PeSubsystem.Of(PublishedSlice.AppExecutable)).IsEqualTo(PeSubsystem.WindowsGui);
+        }
+    }
+
+    /// <summary>
+    /// Where a project's Debug build puts its executable.
+    /// </summary>
+    private static string Built(string project, string executable)
+    {
+        var path = Path.Combine(
+            RepositoryLayout.Root.FullName, "src", project, "bin", "Debug", "net10.0-windows", executable);
+
+        return File.Exists(path)
+            ? path
+            : throw new FileNotFoundException(
+                $"'{path}' is not there, so this arm cannot read the subsystem of a binary this repository builds on every run. "
+                + "Either the project was renamed, in which case update this test, or the build did not produce an executable, "
+                + "which is a defect rather than a reason to skip.",
+                path);
+    }
+
+    /// <summary>
+    /// The same fields with the default packing, as the control for the claim
+    /// that <c>Pack = 1</c> is what makes the size right.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately <b>not</b> the real declaration with the attribute removed:
+    /// a copy cannot be used by mistake, and a reader meeting it here is meeting
+    /// a fixture rather than a second definition of a shipped type.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NaturallyPacked
+    {
+        public uint Size;
+        public nint Parent;
+        public nint Instance;
+        public uint Flags;
+        public uint CommonButtons;
+        public nint WindowTitle;
+        public nint MainIcon;
+        public nint MainInstruction;
+        public nint Content;
+        public uint ButtonCount;
+        public nint Buttons;
+        public int DefaultButton;
+        public uint RadioButtonCount;
+        public nint RadioButtons;
+        public int DefaultRadioButton;
+        public nint VerificationText;
+        public nint ExpandedInformation;
+        public nint ExpandedControlText;
+        public nint CollapsedControlText;
+        public nint FooterIcon;
+        public nint Footer;
+        public nint Callback;
+        public nint CallbackData;
+        public uint Width;
+    }
+}

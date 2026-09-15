@@ -48,7 +48,6 @@ internal sealed partial class BuildConfigurationTests
     private static readonly string[] TrimSuppressionOff = ["false"];
 
     /// <summary>The manifest the product project must attach.</summary>
-    private static readonly string[] TheManifest = ["app.manifest"];
 
     /// <summary>The one long-path setting the manifest may carry.</summary>
     private static readonly string[] LongPathAware = ["true"];
@@ -383,29 +382,97 @@ internal sealed partial class BuildConfigurationTests
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
+    /// <summary>
+    /// Both shipped executables carry a manifest, and both manifests say the
+    /// same two things.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Widened 2026-09-15 to every project that attaches one</b>
+    /// (previously <c>src/BrowserAI</c> alone, which was every project there
+    /// was). A second executable arriving with no manifest, or with one that
+    /// asked for elevation, is exactly the shape of thing that is invisible
+    /// until somebody installs it: this product is per-user to
+    /// <c>%LocalAppData%</c> precisely so that nothing it does can raise a UAC
+    /// prompt, and a manifest is the only place that can be undone.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheApplicationManifestIsLongPathAwareAndNeverAsksForElevation()
+    public async Task EveryApplicationManifestIsLongPathAwareAndNeverAsksForElevation()
     {
-        var project = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "BrowserAI.csproj"));
+        var manifests = new List<string>();
 
-        var attached = project.Descendants()
-            .Where(element => element.Name.LocalName is "ApplicationManifest")
-            .Select(element => element.Value)
+        foreach (var file in RepositoryLayout.ProjectFiles)
+        {
+            var project = XDocument.Load(file.FullName);
+
+            foreach (var attached in project.Descendants().Where(element => element.Name.LocalName is "ApplicationManifest"))
+            {
+                await Assert.That(attached.Value).IsEqualTo("app.manifest");
+
+                manifests.Add(Path.Combine(file.DirectoryName!, attached.Value));
+            }
+        }
+
+        // Both executables, and the library is not one. A count that silently
+        // fell to one would be this arm checking half of what it claims to.
+        await Assert.That(manifests.Count).IsEqualTo(2);
+
+        foreach (var path in manifests)
+        {
+            var manifest = XDocument.Load(path);
+
+            await Assert.That(manifest.Descendants()
+                .Where(element => element.Name.LocalName is "longPathAware")
+                .Select(element => element.Value))
+                .IsEquivalentTo(LongPathAware);
+
+            await Assert.That(manifest.Descendants()
+                .Where(element => element.Name.LocalName is "requestedExecutionLevel")
+                .Select(element => element.Attribute("level")?.Value ?? "<no level attribute>"))
+                .IsEquivalentTo(AsInvoker);
+        }
+    }
+
+    /// <summary>
+    /// The configuration app declares the version 6 common controls, without
+    /// which it has no window at all.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This is the one entry whose absence has no compile-time
+    /// signal.</b> <c>TaskDialogIndirect</c> is exported only by the
+    /// side-by-side version 6 <c>comctl32</c>; with no dependency the loader
+    /// binds version 5, the export is not there, and the call fails at run time
+    /// — presenting as <i>the application starts and nothing happens</i>. It is
+    /// the classic failure of this whole approach, which is why it is asserted
+    /// rather than left to the one manual check that would find it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheConfigurationAppDeclaresTheVersionSixCommonControls()
+    {
+        var manifest = XDocument.Load(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "app.manifest"));
+
+        var identities = manifest.Descendants()
+            .Where(element => element.Name.LocalName is "assemblyIdentity"
+                && element.Attribute("name")?.Value is "Microsoft.Windows.Common-Controls")
             .ToList();
 
-        await Assert.That(attached).IsEquivalentTo(TheManifest);
+        await Assert.That(identities.Count).IsEqualTo(1);
+        await Assert.That(identities[0].Attribute("version")?.Value).IsEqualTo("6.0.0.0");
+        await Assert.That(identities[0].Attribute("publicKeyToken")?.Value).IsEqualTo("6595b64144ccf1df");
+        await Assert.That(identities[0].Attribute("type")?.Value).IsEqualTo("win32");
 
-        var manifest = XDocument.Load(Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));
+        // And it is the SERVER that does not need one, which is worth asserting
+        // rather than assuming: a dependency there would be a side-by-side load
+        // for a binary that never draws anything.
+        var server = XDocument.Load(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));
 
-        await Assert.That(manifest.Descendants()
-            .Where(element => element.Name.LocalName is "longPathAware")
-            .Select(element => element.Value))
-            .IsEquivalentTo(LongPathAware);
-
-        await Assert.That(manifest.Descendants()
-            .Where(element => element.Name.LocalName is "requestedExecutionLevel")
-            .Select(element => element.Attribute("level")?.Value ?? "<no level attribute>"))
-            .IsEquivalentTo(AsInvoker);
+        await Assert.That(server.Descendants()
+                .Any(element => element.Name.LocalName is "assemblyIdentity"
+                    && element.Attribute("name")?.Value is "Microsoft.Windows.Common-Controls"))
+            .IsFalse();
     }
 
     /// <summary>One <c>global.json</c> entry, or a legible stand-in for an absent one.</summary>

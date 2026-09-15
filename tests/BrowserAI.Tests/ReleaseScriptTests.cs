@@ -175,8 +175,27 @@ internal sealed class ReleaseScriptTests
         // makes the updater self-elevate.
         await Assert.That(passed).DoesNotContain("--msi");
 
+        // ⚠️ THE MAIN EXE IS THE CONFIGURATION APP AND THE NAME IS UNCHANGED,
+        // which is exactly why this line needs the comment: `BrowserAI.exe`
+        // meant the server until 2026-09-15 and means the app from that day.
+        // One name decides which binary Setup.exe starts after a non-silent
+        // install, which one the stub and `Update.exe start` launch, which one
+        // all four hooks run on, and what the shortcut points at.
         await Assert.That(passed).Contains("'--mainExe', 'BrowserAI.exe'");
-        await Assert.That(passed).Contains("'--shortcuts', 'None'");
+
+        // ⚠️ Corrected 2026-09-15 (previously "'--shortcuts', 'None'", with the
+        // reason "this is a background stdio server that a human never
+        // launches"). True of the only binary there was; false of the one the
+        // name above now points at. Without an entry the configuration app
+        // could be seen exactly once, on the install that started it.
+        await Assert.That(passed).Contains("'--shortcuts', 'StartMenuRoot'");
+
+        // Never the default Desktop,StartMenuRoot: a desktop icon for something
+        // opened twice a year is clutter, and the default is what arrives if
+        // the argument is ever dropped rather than changed.
+        await Assert.That(passed).DoesNotContain("Desktop");
+
+        await Assert.That(passed).Contains("'--icon', $icon");
 
         // And nothing anywhere in the script hands start arguments to the
         // installer: `Setup.exe -- <args>` panics with a downcast failure and
@@ -221,6 +240,68 @@ internal sealed class ReleaseScriptTests
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
+    /// <summary>
+    /// Both binaries are published into one pack directory, each behind its own
+    /// ILC gate, and neither may be missing when the pack runs.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>HALT-A once per publish is the whole point of the loop.</b> Two
+    /// binaries are linked into one release by two ILC passes, and a scan that
+    /// read one of the two logs would ship a binary nobody had checked while
+    /// reporting that ILC's output was clean — which is the same defect the
+    /// full-pass check exists for, one level up.
+    /// </para>
+    /// <para>
+    /// <b>The intermediates sweep is asserted with it</b>, because the two are
+    /// one mechanism: <c>IlcCompile</c> is skippable when its object file is
+    /// newer than its inputs, and a skipped pass leaves a log with nothing of
+    /// ILC's in it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task BothBinariesArePublishedIntoOnePackDirectoryEachBehindItsOwnIlcGate()
+    {
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        await Assert.That(script).Contains("$appProject = Join-Path $root 'src' 'BrowserAI.App' 'BrowserAI.App.csproj'");
+        await Assert.That(script).Contains("Exe = 'BrowserAI.exe'");
+        await Assert.That(script).Contains("Exe = 'BrowserAI.Server.exe'");
+
+        // The publish, the full-pass refusal and the complaint scan are all
+        // inside one loop over $publishes, so neither binary can be the one
+        // nobody read a log for.
+        var loop = script.IndexOf("foreach ($publish in $publishes) {", StringComparison.Ordinal);
+
+        await Assert.That(loop).IsGreaterThan(-1);
+
+        var publishLoop = script.IndexOf(
+            "        Write-Host \"Publishing the $($publish.What) (NativeAOT) to $PackDir ...\"",
+            StringComparison.Ordinal);
+
+        await Assert.That(publishLoop).IsGreaterThan(-1);
+
+        var body = script[publishLoop..];
+        var gate = body.IndexOf("Test-IlcFullPass.ps1", StringComparison.Ordinal);
+        var complaints = body.IndexOf("$ilcComplaints = $ilc", StringComparison.Ordinal);
+        var end = body.IndexOf("\n    }", StringComparison.Ordinal);
+
+        await Assert.That(gate).IsGreaterThan(-1);
+        await Assert.That(complaints).IsGreaterThan(gate);
+        await Assert.That(end).IsGreaterThan(complaints);
+
+        // One log per binary, named for it. A single shared name would leave
+        // the second publish overwriting the first's evidence.
+        await Assert.That(script).Contains("[System.IO.Path]::GetFileNameWithoutExtension($publish.Exe)");
+
+        // Both intermediates directories, or one IlcCompile stays skippable.
+        await Assert.That(script).Contains("$obj = Join-Path (Split-Path -Parent $publish.Project) 'obj' 'Release'");
+
+        // And the pack refuses a directory holding one of the two.
+        await Assert.That(script).Contains("so the $($publish.What) is missing and there is nothing releasable to pack");
+    }
+
     [Test]
     public async Task ThePackIdIsTheInstallDirectoryAndTheDownloadsAreRenamedBack()
     {

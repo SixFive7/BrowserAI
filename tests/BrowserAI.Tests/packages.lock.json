@@ -280,6 +280,14 @@
           "TUnit.Core": "1.67.0"
         }
       },
+      "BrowserAI": {
+        "type": "Project",
+        "dependencies": {
+          "BrowserAI.Core": "[1.0.0, )",
+          "Microsoft.Extensions.Logging": "[*, )",
+          "Velopack": "[*, )"
+        }
+      },
       "browserai.core": {
         "type": "Project",
         "dependencies": {

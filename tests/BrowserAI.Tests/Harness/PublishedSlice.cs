@@ -89,7 +89,25 @@ internal static class PublishedSlice
         "src", "BrowserAI", "bin", "Release", "net10.0-windows", "win-x64", "publish");
 
     /// <summary>The published binary.</summary>
-    public static string Executable { get; } = Path.Combine(Directory, "BrowserAI.exe");
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-09-15 (previously <c>BrowserAI.exe</c>).</b> That name
+    /// belongs to the configuration app now — see <see cref="AppExecutable"/> —
+    /// and this is the MCP server, which is what every slice arm drives over
+    /// stdio.
+    /// </remarks>
+    public static string Executable { get; } = Path.Combine(Directory, "BrowserAI.Server.exe");
+
+    /// <summary>Where the configuration app's own publish lands.</summary>
+    /// <remarks>
+    /// <b>A different directory, because it is a different project.</b> The
+    /// release script publishes both into one pack directory; an ordinary
+    /// <c>dotnet publish</c> of each puts them under their own project. Nothing
+    /// in the suite drives this binary over a protocol — it has no protocol —
+    /// so it is here only for what can be read off the file itself.
+    /// </remarks>
+    public static string AppExecutable { get; } = Path.Combine(
+        RepositoryLayout.Root.FullName,
+        "src", "BrowserAI.App", "bin", "Release", "net10.0-windows", "win-x64", "publish", "BrowserAI.exe");
 
     /// <summary>The payload that must sit beside it for a child to start.</summary>
     public static string PayloadMarker { get; } = Path.Combine(Directory, "payload", "payload.json");

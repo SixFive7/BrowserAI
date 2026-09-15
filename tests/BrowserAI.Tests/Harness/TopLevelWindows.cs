@@ -80,6 +80,31 @@ internal static partial class TopLevelWindows
         }
     }
 
+    /// <summary>Whether a window is visible.</summary>
+    /// <param name="window">The window.</param>
+    /// <returns>Whether Windows would draw it.</returns>
+    /// <remarks>
+    /// <b>Every GUI process on this machine owns invisible top-level windows</b>
+    /// — the input-method ones, <c>IME</c> and <c>MSCTFIME UI</c> — so an
+    /// assertion about "the windows a process has" that did not filter on this
+    /// would be an assertion about the input stack.
+    /// </remarks>
+    public static bool IsVisible(nint window) => IsWindowVisible(window);
+
+    /// <summary>Asks a window to close, without waiting for it.</summary>
+    /// <param name="window">The window.</param>
+    /// <returns>Whether the message was posted.</returns>
+    /// <remarks>
+    /// <b>Posted rather than sent.</b> A send would run the dialog's own message
+    /// handling on the calling thread's behalf and block until it finished,
+    /// which from a test host is a deadlock waiting to happen; a post returns
+    /// immediately and the process exits on its own.
+    /// </remarks>
+    public static bool Close(nint window) => PostMessageW(window, WmClose, nint.Zero, nint.Zero);
+
+    /// <summary><c>WM_CLOSE</c>.</summary>
+    private const uint WmClose = 0x0010;
+
     [UnmanagedCallersOnly]
     private static int Collect(nint window, nint parameter)
     {
@@ -99,4 +124,14 @@ internal static partial class TopLevelWindows
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("user32.dll", SetLastError = true)]
     private static partial uint GetWindowThreadProcessId(nint window, out uint processId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindowVisible(nint window);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("user32.dll", EntryPoint = "PostMessageW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool PostMessageW(nint window, uint message, nint wParam, nint lParam);
 }

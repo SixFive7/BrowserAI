@@ -49,6 +49,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
+    <!-- The configuration app. Referenced for two reasons: the suite asserts on
+         its interop layout and its dialog content without opening a window, and
+         RealInstallerTests needs the binary on disk to launch. Its assembly is
+         named BrowserAI, so it lands beside the test host under that name and
+         the server lands as BrowserAI.Server. -->
+    <ProjectReference Include="..\..\src\BrowserAI.App\BrowserAI.App.csproj" />
     <!-- Referenced so it is built and copied beside the test host, which is
          how TestProbe finds it. Nothing here calls into its types. -->
     <ProjectReference Include="..\BrowserAI.TestProbe\BrowserAI.TestProbe.csproj" />
