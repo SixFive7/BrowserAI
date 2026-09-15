@@ -919,6 +919,82 @@ openable and the test host's own handle on a single intermediate is enough to
 make the launcher watchable. `BrowserAI.Tests.Harness.OrphanedConsoleStart` is
 that rig.
 
+## Two binaries in one pack, measured end to end — 2026-09-15
+
+**Measured 2026-09-15 @ Velopack 1.2.0, `vpk` 1.2.0, SDK 10.0.400, ILC 10.0.12,
+win-x64, Windows 11 Pro 26200.** Evidence: `.work/2026-09-15-app/pack2.log` and
+the feed under `.work/2026-09-15-app/packfeed/`. `[FLOATS]`
+
+**A second executable is an ordinary payload file.** It is signed with the rest,
+it gets no stub of its own — the root stub is named after `--mainExe` — and
+`CompatUtil.Verify` is a no-op for an AOT binary, so nothing inspects it. The
+pack ran clean with both present.
+
+| | Bytes |
+|---|--:|
+| `BrowserAI.exe` — the configuration app, Windows subsystem | **10,382,848** |
+| `BrowserAI.Server.exe` — the MCP server, console subsystem | **19,180,032** |
+| the payload beside them | **108 MiB** |
+| pack directory, everything on disk | **261,460,220** |
+| shipped bytes (the same, less the two `.pdb`s) | **143,406,536** |
+| `BrowserAI.app-<v>-full.nupkg` | **54,853,873** |
+| `BrowserAI.exe` — the installer, after the rename | **59,353,329** |
+| `BrowserAI.zip` — the portable archive | **54,824,804** |
+| compression ratio, package against shipped | **0.3825** |
+
+⚠️ **The ratio is not comparable with the 0.51 in `build/New-Release.ps1`'s own
+comment**, which is from 2026-08-16 and was taken over a much smaller payload.
+This is the number the script printed on the first two-binary run; re-measure it
+by running the script rather than by adjusting it.
+
+**The configuration app costs 4,693,726 bytes of installer** — 59,353,329 against
+the 54,659,603 `v1.0.0` was packed at — which is 8.6%, against a 10,382,848-byte
+binary. LZMA2 compresses a second AOT binary well because it shares most of its
+runtime with the first.
+
+### The app opens its window in 155–243 ms, and the window is 556 × 426
+
+Measured 2026-09-15 over three runs of the **published** binary, launched with no
+window from PowerShell, polling `EnumWindows` continuously from the moment the
+process started until a visible `#32770` owned by it appeared: **243.2 ms**,
+**167.8 ms**, **154.8 ms**. The first is the cold one. `GetWindowRect` reported
+**556 × 426** device pixels every time, on a per-monitor-v2 process.
+
+**Poll rather than sleep once.** Two by-hand probes of the same binary disagreed
+at a fixed 2.5 s wait and agreed at 500 ms when polled — the window arrives when
+the shell gets round to it, and a fixed wait measures the wait.
+
+### `<consoleAllocationPolicy>detached</consoleAllocationPolicy>` — TRIED, AND DROPPED because its benefit could not be established
+
+**Measured 2026-09-15 on the server's own manifest, then removed.** The element
+is from *Learn: windows/console/console-allocation-policy*, floors at Windows 11
+24H2 / build 26100, and this machine is 26200.
+
+- **It survives ILC and reaches the binary.** With the element in
+  `src/BrowserAI/app.manifest`, the published `BrowserAI.Server.exe` carried
+  `consoleAllocationPolicy` **twice** (the open and close tags) beside
+  `longPathAware`'s two — so `ApplicationManifest` embedding is confirmed a
+  second time, for a 2024-schema element.
+- **It costs nothing in terminal visibility, measured both ways.** From a Git
+  Bash terminal, `BrowserAI.Server.exe --sweep` printed its startup record, the
+  `BROWSERAI_ROOT` override warning, the client-watch line and the sweep summary,
+  and exited 0 — identically with and without the element.
+- ⚠️ **The benefit could not be established, and the rig said so rather than
+  reporting a success.** A `DETACHED_PROCESS` `pwsh` starting the server, polled
+  at 100 ms for six seconds for any visible `ConsoleWindowClass`,
+  `CASCADIA_HOSTING_WINDOW_CLASS` or `PseudoConsoleWindow`, saw **zero** new
+  windows — and so did the **control arm**, a binary carrying no such element.
+  A zero from a rig whose positive control does not fire is not evidence.
+
+**So the line was removed.** Keeping a manifest element whose benefit was never
+observed, on a binary that no installer launches any more — the configuration app
+is `--mainExe` now — would be a change with nothing behind it, and it would owe a
+hazard row for its OS floor. **To re-establish it**, the rig needs a parent that
+provably has no console of its own and a child that provably outlives the poll;
+neither was separated here. The candidates are that the intermediate detached
+`pwsh` is itself given a console the child then joins, or that a `--sweep` run is
+over before the window is mapped.
+
 ## Distribution: MSIX and code signing
 
 **MSIX is disqualified on evidence.** A package cannot re-register while any

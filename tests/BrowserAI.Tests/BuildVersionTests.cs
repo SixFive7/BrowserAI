@@ -233,6 +233,7 @@ internal sealed partial class BuildVersionTests
         // The test project is still excluded and still for the original reason.
         var shipped = new[]
         {
+            "src/BrowserAI.App/BrowserAI.App.csproj",
             "src/BrowserAI.Core/BrowserAI.Core.csproj",
             "src/BrowserAI/BrowserAI.csproj",
         };

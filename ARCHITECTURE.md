@@ -130,10 +130,50 @@ a run that exits 0 without it is a failure whose partial tree is removed.
 
 ## The MCP server
 
+⚠️ **TWO EXECUTABLES SINCE 2026-09-15, AND ONE LIBRARY.** *(Previously one, and
+every path in this document that reads `src/BrowserAI/…` for a moved file has
+been re-pointed rather than left dangling.)*
+
+| Binary | What it is | Who starts it |
+|---|---|---|
+| `BrowserAI.Server.exe` | The MCP server this whole document is about: console subsystem, stdio, no window on any path | A **client**, by the absolute path in its own configuration. No installer ever launches it |
+| `BrowserAI.exe` | The **configuration app**: Windows subsystem, one task dialog, `--report` for a headless status file | `Setup.exe` after a non-silent install, the root stub, `Update.exe start`, the Start Menu — and all four Velopack hooks run on it |
+| `BrowserAI.Core.dll` | Neither, and linked into both: the data root, the registration, the update feed, the live census, the log | — |
+
+**The cut is where it is for a measured reason.** Velopack starts `--mainExe`
+after a non-silent install with `CREATE_UNICODE_ENVIRONMENT` and nothing else,
+and nothing suppresses that start; a console-subsystem binary started that way
+from a windowless parent is given a console, which on this machine is a Windows
+Terminal window over the user's work. A Windows-subsystem binary is never
+allocated one, so the main exe is the app. **One name decides five things** —
+the post-install start, the root stub's name, what `Update.exe start` launches,
+what every hook runs on, and what the shortcut points at — which is why the
+familiar name went to the binary a person launches.
+
+**What the library does NOT hold is the point of the cut**: no proxy, no
+sessions, no browsers, no storage. None of it is reachable from a configuration
+dialog, and linking it into a second AOT binary would pay for the SQLite static
+library, the MCP SDK and the whole session machinery to compile a window that
+shows a version number. Measured after the split: the server is **19,180,032
+bytes** and the app **10,382,848**.
+
+**The configuration app is a member of the [live-instance census](#updates) for
+as long as its window is open**, and that is not bookkeeping: Velopack's
+`run_hook` ends in `force_stop_package`, which kills every process whose **image
+path** is under the install root — the name is never consulted — so an update
+applied by a *server* while the window is open would take the window with it,
+mid-click. The server's lane defers while the census is non-empty; the app's own
+apply is `restart: true`, which is the opposite, and the button says what that
+costs.
+
 | Concern | Implemented by |
 |---|---|
 | The proxy itself: filters, forwarding, the two methods it serves | `src/BrowserAI/Proxy/{BrowserProxy, ChildConnection, ServerInstructions}.cs` |
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
+| The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ConfigurationDialog, StatusReport}.cs` |
+| The task dialog, the folder picker and Explorer | `src/BrowserAI.App/Interop/{TaskDialogInterop, ShellInterop}.cs`, `src/BrowserAI.App/Ui/TaskDialogPage.cs` |
+| Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/McpRegistryView.cs` |
+| Telling a console binary from a window one | `src/BrowserAI.Core/Runtime/PeSubsystem.cs` |
 | Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs` |
 
 **The protocol version is split deliberately.** `McpServerOptions.ProtocolVersion`

@@ -352,7 +352,24 @@ if (-not $SkipPublish) {
     foreach ($publish in $publishes) {
         $ilcLog = Join-Path $root '.work' ("release-publish-" + [System.IO.Path]::GetFileNameWithoutExtension($publish.Exe) + ".log")
 
-        Write-Host "Publishing the $($publish.What) (NativeAOT) to $PackDir ..."
+        # ⚠️ EACH PUBLISH GETS ITS OWN DIRECTORY AND IS COPIED IN AFTERWARDS,
+        # AND THAT IS NOT TIDINESS -- MEASURED 2026-09-15. Publishing both
+        # projects with `-o` pointed at one directory produced a directory
+        # holding `BrowserAI.Server.exe` and NOT `BrowserAI.exe`: the second
+        # publish removed the first's executable, while leaving its `.pdb`
+        # behind. What caught it was the both-present check below, which is the
+        # only reason this is a paragraph rather than an installer that starts a
+        # Start Menu entry pointing at nothing.
+        #
+        # Diagnosed no further than that on purpose. A publish that cleans its
+        # output directory is entitled to; what is not defensible is two
+        # publishes sharing one, and separating them removes the question rather
+        # than answering it.
+        $stage = Join-Path $root 'artifacts' ("publish-" + [System.IO.Path]::GetFileNameWithoutExtension($publish.Exe))
+
+        if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+
+        Write-Host "Publishing the $($publish.What) (NativeAOT) to $stage ..."
 
         # ⚠️ THE BINARY AND THE PACKAGE MUST CARRY THE SAME VERSION. When the
         # caller names one, the publish is told the same number, so the manifest
@@ -360,7 +377,7 @@ if (-not $SkipPublish) {
         # packed at one version and compiled at another is exactly the state
         # that made a fleet download the binary it was already running, hourly,
         # forever.
-        $publishArgs = @($publish.Project, '-c', 'Release', '-r', 'win-x64', '--self-contained', '-o', $PackDir, '-v:normal')
+        $publishArgs = @($publish.Project, '-c', 'Release', '-r', 'win-x64', '--self-contained', '-o', $stage, '-v:normal')
         if ($PSBoundParameters.ContainsKey('PackVersion')) {
             $publishArgs += "-p:MinVerVersionOverride=$PackVersion"
         }
@@ -414,6 +431,13 @@ if (-not $SkipPublish) {
         }
 
         Write-Host "ILC output for the $($publish.What) is clean ($($ilc.Count) lines read, 0 complaints)."
+
+        # Into the one directory `vpk` packs. Copied rather than published here,
+        # for the reason above.
+        $null = New-Item -ItemType Directory -Force -Path $PackDir
+        Copy-Item -Path (Join-Path $stage '*') -Destination $PackDir -Recurse -Force
+
+        Write-Host "Copied the $($publish.What) into $PackDir."
     }
 
     # The guard borrowed from the product that hit this, and it is stronger than

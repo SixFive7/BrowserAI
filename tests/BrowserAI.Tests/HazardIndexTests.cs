@@ -57,17 +57,34 @@ namespace BrowserAI.Tests;
 internal sealed partial class HazardIndexTests
 {
     /// <summary>
-    /// The two assemblies this repository owns: the suite and the product.
+    /// The assemblies this repository owns: the suite, and every binary the
+    /// product ships.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Internal since 2026-08-26, so "a symbol this repository can answer
     /// for" has one definition.</b> <c>ReVerificationIndexTests</c> asks the same
     /// question of its own index and searched the test assembly alone, which is
     /// one of the three axes on which the two gates had silently diverged — and
     /// <c>CLAUDE.md</c> presents them as one class of mechanism.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>FOUR since 2026-09-15 (previously two, "the suite and the
+    /// product").</b> The product is three assemblies now — the server, the
+    /// configuration app and the library they share — and a row naming a symbol
+    /// in either of the two new ones would have read as a row naming a symbol
+    /// that does not exist. Each is reached through a type that is certain to
+    /// stay in it, so a file moving between them does not silently drop an
+    /// assembly from this list.
+    /// </para>
     /// </remarks>
     internal static Assembly[] OurAssemblies { get; } =
-        [typeof(HazardIndexTests).Assembly, typeof(BrowserAI.Protocol.StdioChannel).Assembly];
+    [
+        typeof(HazardIndexTests).Assembly,
+        typeof(BrowserAI.Protocol.StdioChannel).Assembly,
+        typeof(BrowserAI.Registration.RegistrationTarget).Assembly,
+        typeof(BrowserAI.App.AppState).Assembly,
+    ];
 
     [Test]
     public async Task EveryRowThatNamesASymbolNamesOneThatExists()

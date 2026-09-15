@@ -433,6 +433,14 @@ reviewed pairs plus `ReVerificationIndexTests`' result.
 
 ### 7. Build clean
 
+⚠️ **THE ICON IS A PLACEHOLDER AND THIS IS THE PRE-CUT CHECK FOR IT.** *Added
+2026-09-15.* `assets/BrowserAI.ico` is candidate 1 of the ten drawn that day and
+is wired into both executables, the Setup stub, the Add/Remove entry and the
+Start Menu shortcut. **Before a release is cut, confirm with the maintainer that
+the icon in the tree is the one he chose.** It is one file and nothing else
+changes with it; nothing in the build can tell a chosen icon from a placeholder,
+which is exactly why this is a line a person reads.
+
 NativeAOT publish, analyzers at error severity. **A warning-as-error is a red
 build**, and a severity is never weakened to make code pass. ILC output empty.
 `UseSystemResourceKeys` never set — it strips the exception messages this project
@@ -441,10 +449,22 @@ exists to be able to read.
 **Evidence:** the publish command, its exit code, and the warning count, which is
 zero — **plus the two things an exit code does not establish**:
 
-- **ILC's own output, read and reported empty.** `build/New-Release.ps1` prints
-  `ILC output is clean (<n> lines read, 0 complaints)`; that line is the
-  evidence, and the publish's exit code is not, because the failure this exists
-  for exited 0 with an artifact on disk.
+- **ILC's own output, read and reported empty — ONCE PER BINARY.** ⚠️ *Widened
+  2026-09-15: there are two executables now, linked by two ILC passes, and the
+  script prints a line for each.* `build/New-Release.ps1` prints
+  `ILC output for the configuration app is clean (<n> lines read, 0 complaints)`
+  and `ILC output for the MCP server is clean (<n> lines read, 0 complaints)`;
+  **both lines are the evidence and one of them is not enough**, because a scan
+  that read one of the two logs would ship a binary nobody had checked while
+  reporting that ILC's output was clean. The publish's exit code is not evidence
+  at all, because the failure this exists for exited 0 with an artifact on disk.
+  Measured on the first two-binary run: **94** lines for the app and **388** for
+  the server, 0 complaints in each.
+- **Both executables are in the pack directory.** The script refuses by name
+  when one is missing, and that refusal has already earned itself: publishing
+  both with `-o` pointed at one directory left the server and deleted the app,
+  leaving the app's `.pdb` behind so the directory looked populated. Each
+  publish stages into `artifacts\publish-<exe stem>` and is copied in.
 - **`UseSystemResourceKeys` unset**, quoted from `Directory.Build.props`.
 
 > **Corrected 2026-08-16 on the first run of this checklist (previously: "the

@@ -505,6 +505,33 @@ while the parent was still running. The parent rewrote it at its own session end
 so the copy a gate log appends was never wrong — but anyone reading the file
 during that window got the child's.
 
+
+## Two executables, and what each half of the suite can see
+
+*Added 2026-09-15.* BrowserAI ships two binaries and a library, and the suite
+reaches them three different ways — worth stating once, because "the product" is
+no longer one thing.
+
+| What | How the suite reaches it | What it cannot see |
+|---|---|---|
+| `BrowserAI.Server.exe` | The **published slice**: a real NativeAOT publish driven over stdio. `PublishedSlice.Executable` moved to this name on 2026-09-15 | Nothing new. This is the half that was always covered |
+| `BrowserAI.exe`, the configuration app | Three ways, and none of them is "open the window and look". `ConfigurationAppTests` asserts every sentence, link and button as a pure function of an `AppState`; `TaskDialogLayoutTests` holds the interop structures against Microsoft's metadata and reads the PE subsystem out of both binaries; `RealInstallerTests` installs a real pack and asserts the window's **shape** — one visible top-level window, class `#32770`, no console window, exit 0 on `WM_CLOSE` | **That Windows draws it correctly.** Nothing here can see a layout, a truncation or an icon. The maintainer looking at it once is the only thing that can, and that is stated rather than implied |
+| `BrowserAI.Core` | Directly, through `InternalsVisibleTo`. Its types are `internal` and the suite asserts on them exactly as it did when they were in the server | Nothing new |
+
+⚠️ **The `--report` path exists because of the second row.** A window application
+whose only entry point opens a window is one nothing can assert anything about,
+so the app has a headless mode that writes the same state the dialog renders. A
+report that disagreed with the screen is a red rather than a support artifact
+nobody can trust — which is what makes it worth having two consumers of one type
+rather than two renderings of one idea.
+
+⚠️ **The console check in the installer arm is BY PID and is weaker than it
+looks.** With the default terminal set to Windows Terminal, a console allocated
+to a process shows up as a window owned by *Windows Terminal's* process — which
+is exactly what reported a clean screen while two windows were on it. What
+carries that guarantee is the subsystem read out of the binary, the cause rather
+than the symptom.
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and

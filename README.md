@@ -17,15 +17,41 @@ Why it exists, and every settled decision with the argument that settled it, is 
 
 1. Download **`BrowserAI.exe`** from [the latest release](https://github.com/SixFive7/BrowserAI/releases/latest) and run it — it is the installer. *(Named `BrowserAI-win-Setup.exe` until 2026-09-15.)* It installs **per user** into `%LocalAppData%\BrowserAI.app` and needs no elevation. Your data — the browsers it downloads, the index of your session directories and its log — goes in `%LocalAppData%\BrowserAI` **beside** it, and stays there across an update, a reinstall and an uninstall. Uninstalling asks before deleting it; a silent uninstall keeps it.
 2. That is the whole installation. The installer's own hook registers BrowserAI with Claude Code by running the client's supported command, `claude mcp add --scope user`, so it is available in every repository on the machine. The uninstaller removes the registration again.
-3. Restart the client so it picks up the new server.
+3. **A small BrowserAI window opens when the install finishes**, and there is a **BrowserAI** entry in your Start Menu that opens it again whenever you want it. It shows the installed version, where BrowserAI is installed and where its data lives, and whether it is registered with Claude Code — and it is the only place you need for the four things you might want to do: check for updates, register or unregister *for all your Claude Code projects*, register *in a specific project*, and open the logs. **It changes nothing unless you click something**; opening it is safe.
+4. Restart the client so it picks up the new server. **Claude Code reads its MCP configuration when a session starts, so sessions you already have open will not see BrowserAI until they are restarted.**
 
 **If registration did not happen** — the client was not on `PATH`, or it is not Claude Code — BrowserAI writes `mcp-registration.json` into `%LocalAppData%\BrowserAI` carrying the exact command to run by hand. It is this:
 
 ```
-claude mcp add browserai --scope user -- "<install root>\current\BrowserAI.exe"
+claude mcp add browserai --scope user -- "<install root>\current\BrowserAI.Server.exe"
 ```
 
+⚠️ ***The file name changed on 2026-09-15 (previously `current\BrowserAI.exe`).***
+BrowserAI ships as two programs now, in one installer: **`BrowserAI.Server.exe`**
+is the MCP server, which is what Claude Code starts and what the command above
+names, and **`BrowserAI.exe`** is the small window described in step 3. If you
+have an older registration it still names the old path; **updating repairs it**,
+and so does clicking *Register for all my Claude Code projects* in the window.
+
 Registration is never allowed to fail an install, and never allowed to fail silently: every outcome writes a log record *and* that file.
+
+### Registering BrowserAI in one project rather than for all of them
+
+The window's **Register in a project…** asks for a folder and writes a
+`.mcp.json` at its root — the file Claude Code reads for project-scoped servers.
+**It is meant to be committed**: a teammate who clones the repository is then
+offered BrowserAI without configuring anything, and **Claude Code will ask each
+of them to approve the server once**, the first time they open a session there.
+The command written into it is portable —
+`${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe`, which Claude Code
+expands on each machine — so it is right on every teammate's machine and not
+just on the one that wrote it. *(If you installed BrowserAI somewhere other than
+the default location, the entry gets that absolute path instead and the window
+tells you why.)*
+
+This is an addition rather than a replacement: registering for **all** your
+projects is still one entry in your own configuration with no file in any
+repository, and that is still what the installer does for you.
 
 A **`BrowserAI.zip`** is published beside the installer, by the same packaging run, for anyone who would rather unpack than install. *(Named `BrowserAI-win-Portable.zip` until 2026-09-15.)* There is no installer in it to run the registration hook, so registering it is the command above against wherever it was unpacked.
 

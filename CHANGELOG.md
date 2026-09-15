@@ -199,6 +199,93 @@ has been satisfied in form only.
 
 ### Added
 
+- ⛔ **BrowserAI ships as two executables from this release, and the reason is a
+  window nothing could suppress.** A non-silent `Setup.exe` finishes by starting
+  the main executable itself, through `shared::start_package`, with
+  `CREATE_UNICODE_ENVIRONMENT` **and nothing else** — `show_window = true` is
+  hardcoded at `util_windows.rs:106` — and the stub and `Update.exe start` launch
+  it with no flags at all. A console-subsystem binary started that way from a
+  windowless parent is given a console, and on this machine the default terminal
+  turns that into a **1506×1490 Windows Terminal window** over the user's work,
+  serving nobody. **Nothing suppresses it**: 36 `vpk` options, 16 manifest
+  fields, 7 environment variables and every hook return were enumerated and only
+  `--silent` skips the start, as a side effect of hiding every dialog and
+  answering yes to every prompt. A **Windows-subsystem** binary is never
+  allocated a console at all (*Learn: windows/console/creation-of-a-console*), so
+  the main executable is now one. That the window is then **useful** was the
+  second decision and it followed the first.
+
+- **`BrowserAI.exe` is the configuration app** — the Velopack main executable,
+  the root stub, the Start Menu entry, the icon, and the owner of all four
+  installer hooks. It is deliberately very small: it shows the installed version,
+  where the install and the data live as links that open Explorer, what is
+  registered with Claude Code, and it offers five things, each behind **one
+  explicit click** — check for updates (and then install one), register for all
+  your Claude Code projects, unregister, register in a project you pick, and open
+  the logs. **Nothing runs on open except reading state**, and a first run shows
+  what happened rather than asking anything.
+
+- **The two scopes are offered in OutlookAI's words, because two products in one
+  estate describing one mechanism differently is how a person learns it twice.**
+  *"For all my Claude Code projects"* is user scope — one entry in
+  `~/.claude.json`, available in every repository, no file in any of them.
+  *"Register in a project…"* is a folder picker and a committed `.mcp.json` at
+  that folder's root, written with `claude mcp add --scope project` run **in that
+  directory**, because that is the only thing that decides where the file lands.
+  The command written there is **portable** —
+  `${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe`, which Claude Code
+  expands itself — and only when that form expands to the install this process is
+  running out of; a non-default install root gets its absolute path and the
+  person is told why. Both actions are followed by the restart hint verbatim, and
+  the project one adds that Claude Code will ask for approval once per project.
+
+- **`BrowserAI.exe --report <path>` writes a JSON status report and exits.** It
+  is a support artifact — the file somebody attaches when they say *it is not
+  working* — and it is the configuration app's **testable non-interactive path**:
+  a window application whose only entry point opens a window is one nothing can
+  assert about. It renders the same `AppState` the dialog does, so a report that
+  disagreed with the screen would be a red rather than a discovery.
+
+- **`BrowserAI.Core`**, the library both executables link: the data root, the
+  registration, the update feed, the live-instance census and the log. 33 files
+  moved into it verbatim, namespaces unchanged. What did **not** move is the
+  proxy, the sessions, the browsers and the storage layer — none of it reachable
+  from a configuration dialog, and linking it into a second AOT binary would pay
+  for the SQLite static library, the MCP SDK and the whole session machinery to
+  compile a window that shows a version number. Two edges were turned around to
+  make the cut acyclic and both are recorded where they landed:
+  `LocalAppDataPaths.RootVariable` owns `BROWSERAI_ROOT` and `Program` aliases
+  it, and `Sessions.SessionLayout` owns the session file names and
+  `Storage.LockFile` / `Storage.SessionStore` alias them.
+
+- **`Runtime/PeSubsystem`** — eight bytes read at three documented offsets, no
+  Win32 — and **`TaskDialogLayoutTests`**, which holds the hand-written
+  `TASKDIALOGCONFIG` against Microsoft's own metadata through `CsWin32`: 160
+  bytes, 22 fields compared by offset, with a naturally packed copy of the same
+  fields as the positive control at 184. **A size that agrees says nothing about
+  a field that moved** — two swapped pointers leave the total unchanged and turn
+  the window title into the instruction.
+
+- **`RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`**
+  — the arm the whole design was cut for. It installs silently into a scratch
+  root, launches `current\BrowserAI.exe` from a parent with no window, and holds
+  that the process owns **exactly one visible top-level window**, of class
+  `#32770`, no console window of its own, and exits **0** on `WM_CLOSE`. It polls
+  rather than sleeping once: two runs of the same probe by hand disagreed at a
+  fixed 2.5 s and agreed at 500 ms when polled. ⚠️ **The console half is by pid
+  and that is weaker than it looks, and the remark says so**: with the default
+  terminal set to Windows Terminal a console shows up as a window owned by
+  *Windows Terminal's* process, which is exactly what reported a clean screen
+  while two windows were on it. What carries that guarantee is the subsystem read
+  out of the binary — the cause rather than the symptom.
+
+- **`ConfigurationAppTests`**, which asserts every sentence, link and button of
+  the dialog without opening one, and **`BuildConfigurationTests.TheConfigurationAppDeclaresTheVersionSixCommonControls`**,
+  which refuses an app manifest without `Microsoft.Windows.Common-Controls`
+  6.0.0.0. ⚠️ **That is the one entry whose absence has no compile-time signal at
+  all**: the loader binds `comctl32` version 5, `TaskDialogIndirect` is not
+  exported, and the application starts and nothing happens.
+
 - **`HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing`**
   — a tree-as-text scan holding that every arm in a file under `tests/` that
   constructs an `EnvironmentScope` carries `[NotInParallel]` **with no key**. A
@@ -223,6 +310,82 @@ has been satisfied in form only.
   behaviour change is watched red** — the scan itself was.
 
 ### Changed
+
+- ⛔ **The MCP server is `BrowserAI.Server.exe`, and every registration written
+  before this release names a file that is no longer there.** The names swapped
+  because Velopack derives the root stub, the Start Menu shortcut, the icon and
+  all four hook invocations from `--mainExe` and from nothing else, so whichever
+  binary a person launches has to be the one named there. **The update hook
+  repairs its own stale entry**: an entry named `browserai` whose command is
+  under our install root and names a file that is gone is re-pointed at
+  `current\BrowserAI.Server.exe`; one that still resolves is left exactly as it
+  is, arguments and all; and one whose command is **not** under our install root
+  is another BrowserAI's — reported with its location and never adopted,
+  overwritten or removed. Left alone, an entry naming `current\BrowserAI.exe`
+  after an update is a file the client can still launch, and launching it shows a
+  window.
+
+- ⛔ **`RegistrationTarget` composes the server's path instead of copying its
+  own, and the guarantee that replaces the old one is two checks and a
+  refusal.** It used to register `Environment.ProcessPath` verbatim, so *"the
+  registered path and the running binary cannot disagree: they are the same
+  string"*. The hooks run in the configuration app now, so what a client is given
+  is the app's directory plus the server's name — and a composed path is a guess
+  until something checks it. The sibling **must exist**, and its PE optional
+  header **must declare the console subsystem**; either failing is a refusal
+  naming the file, in the process log and in `mcp-registration.json`. ⚠️ **A name
+  check would not have done**: a file called `BrowserAI.Server.exe` that is
+  really the configuration app passes every check an extension can make and fails
+  at the worst possible moment — a client starts it expecting stdio, a window
+  appears, and the client waits forever for a handshake a dialog will never send.
+
+- ⚠️ **The configuration app clears `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART`
+  from its own environment, and this is a defect the two-binary design
+  creates.** The installer starts the app with `VELOPACK_FIRSTRUN=true`; a child
+  inherits its parent's environment block; so clicking *Register* would start
+  `claude.exe` carrying it, and anything **that** process started — including
+  `BrowserAI.Server.exe` — would carry it too. The server exits 0 on that
+  variable deliberately, because a server the installer started has no client. It
+  would then have exited 0 for a client that really was there, on first run,
+  presenting as *failed to connect* with nothing in any log to say why. Cleared
+  once after being read, rather than filtered at each launch site: there is more
+  than one place this process starts something, and a filter that has to be
+  remembered at each of them is the shape of the defect rather than its fix.
+
+- **The configuration app is a member of the live-instance census for as long as
+  its window is open.** Velopack's `run_hook` ends in `force_stop_package`, which
+  kills every process whose **image path** is under the install root — the name
+  is never consulted — so an update applied by a *server* while the window is
+  open would take the window with it, mid-click. The server's update lane defers
+  while the census is non-empty and this marker is what makes it non-empty. The
+  app's own apply is the opposite of the server's lane: `restart: true`, which is
+  Velopack's pattern for a foreground application, and the button says in so many
+  words that Claude Code sessions using BrowserAI lose the server until they are
+  restarted.
+
+- **`build/New-Release.ps1` publishes both projects into one pack directory, and
+  HALT-A runs once per publish.** The loop is the point: two binaries are linked
+  into one release by two ILC passes, and a scan that read one of the two logs
+  would ship a binary nobody had checked while reporting that ILC's output was
+  clean. One log per binary, named for it; both `obj\Release` trees swept, or one
+  `IlcCompile` stays skippable and leaves a log with nothing of ILC's in it; the
+  decorated-version scan reads both binaries; and the pack refuses a directory
+  holding one of the two.
+
+- ⚠️ **`--shortcuts StartMenuRoot`, corrected from `None`.** The old reason —
+  *"this is a background stdio server that a human never launches"* — was true of
+  the only binary there was and is false of the one `--mainExe` now names.
+  Without an entry the configuration app could be seen exactly once, on the
+  install that started it. Never the default `Desktop,StartMenuRoot`: a desktop
+  icon for something opened twice a year is clutter, and the test refuses
+  `Desktop` so a dropped argument cannot restore it.
+
+- **`assets/BrowserAI.ico` is wired into the pack and into both executables** —
+  the Setup stub, the Add/Remove entry, the Start Menu shortcut and Explorer.
+  ⚠️ **It is a placeholder.** Ten candidates were drawn on 2026-09-15 and
+  candidate 1 is in the tree so that the packaging is complete and exercised; the
+  chosen one replaces **that one file** and nothing else changes.
+  [`RELEASING.md`](RELEASING.md) carries a pre-cut check that says so.
 
 - ⚠️ **`ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt` was
   red on every release commit, by construction, and it was the check rather than
