@@ -890,6 +890,24 @@ an end-to-end arm over the published binary,
 `InstallerHandoffTests.ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole`
 and `.ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog`.
 
+**What the fixed run costs, measured through the same rig on the same day.**
+Against a published slice of this tree carrying both fixes — commit `4da72a3`;
+⚠️ *its own log line says `BrowserAI 1.0.0` because MinVer derived the version
+from the tag the publish was made at, and it is NOT the released v1.0.0* — on
+Windows 11 Pro 26200:
+
+| | v1.0.0 as published | this tree |
+|---|--:|--:|
+| Launcher start → the no-client decision | 0.531 s | **0.312 s** |
+| The decision → the process gone | never (60 s observed here, 213.6 s on the real install) | **0.006 s** |
+| Launcher start → the process gone | never | **0.317 s** |
+| Under the data root afterwards | `instances\`, `live\`, `logs\` | **`logs\` alone** |
+| Children left behind | `node.exe`, `conhost.exe` | **none** |
+
+The 0.219 s the decision moved earlier is the stray sweep, the live-marker mutex
+and the `playwright-mcp` child that a run with nobody to serve no longer pays
+for; the 0.006 s is the whole of what the exit now costs.
+
 **How to re-establish it.** Start the published binary with a launcher that is
 already gone and a standard input that is a console, which needs neither an
 installer nor a window: `cmd.exe /c start /b "" cmd.exe /c start /b "" "<exe>"`,
