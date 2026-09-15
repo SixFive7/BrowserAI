@@ -700,6 +700,27 @@ $manifest = & (Join-Path $PSScriptRoot 'Write-ReleaseManifest.ps1') `
 
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
+# --- 9. The GitHub release body, generated from the section being cut ----------
+# ⚠️ GENERATED RATHER THAN CUT -- 2026-09-15. The body used to be the stamped
+# section itself, truncated at whichever heading boundary fell nearest GitHub's
+# 125,000-character field: 110,225 characters of the middle of an argument, with
+# a permalink line stuck on at the cut. It is a document produced by hand at
+# publish time, so nothing could reproduce it and nothing could check it.
+#
+# It goes beside the manifest for the same reason the manifest exists: it is
+# part of the account of what was released, and a body written somewhere nobody
+# looks is the hand-made one wearing a script. New-ReleaseNotes.ps1 refuses a
+# section it cannot read and says which SHAPE it produced -- folded, or headlines
+# alone when the folded one does not fit -- and that sentence belongs in the
+# release record rather than only on the screen of whoever ran this.
+$bodyFile = Join-Path $manifestDir "$downloadId-$PackVersion-release-body.md"
+$bodyReport = & (Join-Path $PSScriptRoot 'New-ReleaseNotes.ps1') `
+    -Version $PackVersion -Destination $bodyFile
+
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+$bodyShape = ($bodyReport | Select-Object -Last 1)
+
 [pscustomobject]@{
     Version          = $PackVersion
     Channel          = $Channel
@@ -715,4 +736,6 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
     Portable         = $portable
     Manifest         = (Join-Path $OutputDir "releases.$Channel.json")
     ResolvedSet      = ($manifest | Select-Object -Last 1)
+    ReleaseBody      = $bodyFile
+    ReleaseBodyShape = $bodyShape
 }

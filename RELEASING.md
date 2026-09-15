@@ -758,8 +758,82 @@ one thing nothing protects. Add a `new("CHANGELOG.md#<version>", …)` line to
 character count and digest to use. See
 [the release gate](TESTING.md#the-dated-records-are-append-only).
 
+⚠️ **For the 2026-09-15 re-ship of `1.0.0`, the stamp step is a MERGE rather
+than a new section, and both halves of that sentence matter.** The version being
+cut already has a section — it was stamped on 2026-09-15 and published — so
+`Get-ReleaseNotes.ps1 -StampVersion 1.0.0` **refuses**, correctly: *"already has
+a section for 1.0.0. Cutting the same version twice would leave two sections
+claiming the same tag."* The entries that accumulated under `## [Unreleased]`
+after that stamp were merged into the existing `1.0.0` groups **by hand**,
+`[Unreleased]` was left empty, and the section was re-sealed. **From the next
+release onwards the step is what this item says it is** — a new section, stamped
+by the command — and nothing about the script changed to permit the merge. A
+re-ship of a version that has already shipped is the one case this refusal is
+in the way of, and a human moving entries between two headings is a smaller
+mechanism than a flag that lets the script write into a released section.
+
+**An empty `## [Unreleased]` is legal while a release is being cut**, and since
+2026-09-15 `ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt`
+knows it: the section may be empty when the tag at HEAD names the newest dated
+section **or** when nothing under `src/` or `tests/` has landed since the
+changelog was last written. The second clause is what covers the interval this
+checklist occupies — stamped, gate running, tag not yet placed — which the first
+one cannot describe, and it expires the moment a product or test change lands
+without an entry.
+
 **Evidence:** the unreleased section's contents, moved under the version being
 cut, and the seal line added beside it.
+
+### The release body is generated, and its rendering is checked before it is published
+
+**The GitHub release body is not the changelog section.** It was, until
+2026-09-15, and the result is on the record: 236,567 characters do not fit in a
+field that holds 125,000, so the body was the section cut at a heading boundary
+— 110,225 characters ending mid-argument, opening with four warning icons, with
+a permalink line added at the cut.
+
+**It is generated now**, from the same section, by
+[`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1), which
+[`build/New-Release.ps1`](build/New-Release.ps1) runs as its last step and
+writes beside the release manifest:
+
+```
+pwsh -File build/New-ReleaseNotes.ps1 -Version <the version item 9 recorded> -Destination <a path>
+```
+
+Each entry becomes its one-line headline with its own icon, and its detail is
+folded into a `<details><summary>read more</summary>` block nested inside the
+list item. The footer carries the palette legend — read out of the changelog
+rather than written twice — and a link to the section at the tag, whose anchor
+is computed by the same slug rule `DocumentationLinkTests` applies to every
+relative link in the repository.
+
+⚠️ **THE SIZE GUARD CHANGES THE DOCUMENT, so read what the script says.** Over
+the limit — 125,000 characters, GitHub's, a `[FLOATS]` fact — the folded shape
+is abandoned for **headlines alone plus the footer**, and the detail is then not
+in the release body at all. The script prints which shape it produced and how
+large it is, and for `1.0.0` it produces the second: folded is **280,063**
+characters against a limit of 125,000, and headlines alone is **19,340**.
+
+**Check the rendering before publishing, against GitHub's own renderer:**
+
+```
+gh api -X POST markdown -f mode=gfm -F text=@<the body file> > <an html file>
+```
+
+The `<details>` must land **inside** an `<li>` and the headline must be a
+`<strong>`; a fold that escaped its list item renders as a stray block between
+entries, and no test in this repository can see it. *(The leading slash is
+omitted from `markdown` deliberately: Git Bash rewrites `/markdown` into a
+filesystem path and `gh` reports an endpoint under `C:/Program Files/Git`.)*
+Evidence for the 2026-09-15 cut is in `.work/2026-09-15-notes/rendered-0.1.0.html`.
+
+**The preamble is checked by a person, not by the test.**
+`ChangelogTests.TheNewestReleasedSectionOpensWithAPreamble` holds that the
+section opens with a paragraph; whether that paragraph says what this release is
+for, to somebody who has never seen the project, is a reading.
+
+**Evidence:** the shape and size the script reported, and the rendered HTML.
 
 ### 11. The resolved set is recorded beside the artifact
 

@@ -733,3 +733,61 @@ publishing, and running
 `SqliteTests.ThePublishedBinaryReportsTheStaticallyLinkedSqliteVersion` — the
 red is *"The peer closed its stdout before answering 'initialize'"* with the exit
 code beneath it.
+
+## `gh`, for a release body: the size limit is carried rather than measured, and the rendering is checkable — 2026-09-15
+
+**BrowserAI cuts a GitHub release body at 125,000 characters, and that number
+has no source in this repository.** It arrived with the 2026-09-15 release, where
+the stamped `1.0.0` section — 236,567 characters — was cut at a heading boundary
+to **110,225** plus a permalink line, on the stated grounds that it was over
+GitHub's limit. GitHub's own REST documentation for *Create a release* was read
+on 2026-09-15 and **says nothing about a maximum at all**: the `body` parameter
+is documented as *"Text describing the contents of the tag."* and no length is
+given. So the number is an **assumption this project acts on**, and it is written
+down here as one rather than left to read like a measurement in
+[`build/New-ReleaseNotes.ps1`](../build/New-ReleaseNotes.ps1)'s parameter list.
+
+`[FLOATS]` — it is GitHub's field and they may move it, in either direction.
+
+**Nothing here tested it, and the reason is worth stating**: testing it means
+publishing a release with an over-length body and reading the refusal, and the
+only repository this project may publish to is the real one. A scratch
+repository would answer it for the price of creating one.
+
+**What the number is used for is bounded, which is why acting on it is safe
+while it is unverified.** Over the limit, `New-ReleaseNotes.ps1` produces
+headlines alone instead of headlines plus folded detail, and says which shape it
+produced; if the real limit is larger, the only cost is a shorter release page
+than GitHub would have accepted, and the folded body is one parameter away.
+Measured on the 1.0.0 section: **280,063** characters folded against **19,340**
+as headlines alone.
+
+### The body's rendering is checkable without publishing anything
+
+`gh api -X POST markdown -f mode=gfm -F text=@<file>` returns the HTML GitHub
+itself would render, so the shape a release body depends on can be asserted
+before it is published rather than looked at afterwards. Measured 2026-09-15 @
+`gh` on this machine, over a generated body:
+
+```
+<li>
+<p>✨ <strong>Browser automation for AI agents on Windows, as one MCP server that brings its own everything.</strong></p>
+<details><summary>read more</summary>
+<p>BrowserAI ships its own Node runtime and its own <code class="notranslate">@playwright/mcp</code>, …</p>
+</details>
+</li>
+```
+
+Both properties hold: the `<details>` is **inside** the `<li>` rather than a
+sibling after it, and the headline is a `<strong>`. What makes the difference is
+the two-space indent and the blank line on each side of the `<summary>` line —
+without the indent the HTML block ends the list, and without the blank lines the
+Markdown inside the fold is rendered as literal text.
+
+⚠️ **Omit the leading slash from the endpoint under Git Bash.** `gh api -X POST
+/markdown` fails with *"invalid API endpoint: \"C:/Program Files/Git/markdown\".
+Your shell might be rewriting URL paths as filesystem paths"* — MSYS2 path
+conversion rewrites the argument before `gh` ever sees it, and `gh`'s own error
+message is the thing that says so. `markdown` without the slash works in both
+shells. `[STABLE]` for the rewriting, which is MSYS2's documented behaviour;
+the endpoint itself is GitHub's.

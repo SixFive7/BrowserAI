@@ -146,6 +146,53 @@ internal static class GitOracle
         return exitCode is 0 && output.Trim() is { Length: > 0 } tag ? tag : null;
     }
 
+    /// <summary>
+    /// Whether anything under <paramref name="within"/> has changed since the
+    /// last commit that touched <paramref name="path"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two questions of git, and the pair is the point.</b>
+    /// <c>log -1 --format=%H -- &lt;path&gt;</c> is the commit that last wrote the
+    /// file, and <c>diff --name-only &lt;that&gt;..HEAD -- &lt;within&gt;</c> is what
+    /// has landed since. The answer is <i>has work outrun the record of it</i>,
+    /// which is a question no single git command asks.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b><see langword="null"/> is <i>could not ask</i> and is never
+    /// <i>no</i>.</b> No git, no repository, a path git has never seen, a
+    /// command that failed: every one of those answers <see langword="null"/>,
+    /// and the one reader uses this to <b>relax</b> a requirement, so each of
+    /// them leaves the stricter claim standing.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The file whose last commit starts the range.</param>
+    /// <param name="within">The paths to look for changes under.</param>
+    /// <returns>
+    /// <see langword="true"/> when something changed, <see langword="false"/>
+    /// when nothing did, <see langword="null"/> when git could not answer.
+    /// </returns>
+    public static async Task<bool?> AnythingChangedSinceTheLastCommitTouchingAsync(string path, params string[] within)
+    {
+        ArgumentNullException.ThrowIfNull(within);
+
+        if (!IsAvailable)
+        {
+            return null;
+        }
+
+        var (found, commit, _) = await RunAsync("log", "-1", "--format=%H", "--", path);
+
+        if (found is not 0 || commit.Trim() is not { Length: > 0 } sha)
+        {
+            return null;
+        }
+
+        var (diffed, changed, _) = await RunAsync([.. new[] { "diff", "--name-only", sha + "..HEAD", "--" }, .. within]);
+
+        return diffed is 0 ? changed.Trim().Length > 0 : null;
+    }
+
     private static async Task<bool> ProbeAsync()
     {
         try
