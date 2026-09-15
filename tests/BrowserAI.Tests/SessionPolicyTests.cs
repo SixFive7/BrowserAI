@@ -108,16 +108,19 @@ internal sealed class SessionPolicyTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-20 to 68 of 68, one row (previously three rows,
-    /// 58 / 58 / 58 of 58, one per session mode; 58 / 59 / 59 of 59 before that,
-    /// and 41 / 41 / 58 before that, measured 2026-08-16 against the five-class
-    /// permission matrix).</b> Session modes were deleted, so there is one row
-    /// rather than three; and every capability is now granted to every session,
-    /// which put ten previously-unreachable tools into the surface —
-    /// <c>network</c>'s four, <c>pdf</c>'s one and <c>testing</c>'s five. Of the
-    /// 69 tools a fully-capable child exposes, BrowserAI's <c>tools/list</c>
-    /// carries <b>68</b>: <c>browser_annotate</c> is withheld, and it is the only
-    /// one.
+    /// ⚠️ <b>Corrected 2026-09-15 to 70 of 70 (previously 68 of 68, corrected
+    /// 2026-08-20 from three rows, 58 / 58 / 58 of 58, one per session mode;
+    /// 58 / 59 / 59 of 59 before that, and 41 / 41 / 58 before that, measured
+    /// 2026-08-16 against the five-class permission matrix).</b> Session modes
+    /// were deleted, so there is one row rather than three; and every capability
+    /// is now granted to every session, which put ten previously-unreachable
+    /// tools into the surface — <c>network</c>'s four, <c>pdf</c>'s one and
+    /// <c>testing</c>'s five. The 2026-09-15 move is upstream's rather than
+    /// ours: <c>@playwright/mcp</c> 0.0.80 added
+    /// <c>browser_start_recording</c> and <c>browser_stop_recording</c>, both
+    /// judged <c>allow</c>. Of the 71 tools a fully-capable child exposes,
+    /// BrowserAI's <c>tools/list</c> carries <b>70</b>:
+    /// <c>browser_annotate</c> is withheld, and it is still the only one.
     /// </para>
     /// <para>
     /// <b>Written down rather than derived, for the reason the old table was:</b>
@@ -126,7 +129,7 @@ internal sealed class SessionPolicyTests
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 68;
+    private const int Advertises = 70;
 
     /// <summary>
     /// The three sessions the concurrency arm drives at once.
@@ -148,8 +151,8 @@ internal sealed class SessionPolicyTests
         var advertised = everything.Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool)).ToList();
 
         // The denominators are stated before the numerator, and there are two of
-        // them: a fully-capable child exposes 69 tools, BrowserAI advertises 68
-        // of them, and every session permits all 68.
+        // them: a fully-capable child exposes 71 tools, BrowserAI advertises 70
+        // of them, and every session permits all 70.
         await Assert.That(everything.Count).IsEqualTo(Advertises + 1);
         await Assert.That(advertised.Count).IsEqualTo(Advertises);
         await Assert.That(advertised.Count(tool => RepositoryVerdicts.Committed.Decide(tool).IsAllowed)).IsEqualTo(Advertises);
@@ -246,6 +249,20 @@ internal sealed class SessionPolicyTests
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
 
         await Assert.That(advertised.ToJsonString()).Contains(FromTheFuture);
+
+        // ⚠️ AND THE REFUSAL HAS TO SURVIVE THE TWO LINES ABOVE, which is
+        // what this asserts and what the sentence did not do until 2026-09-15.
+        // The name IS in tools/list -- the assertion immediately above is the
+        // proof -- and the refusal used to answer "every tool in that list
+        // reaches the browser, and a name that is not in it never will". Read
+        // against the list a caller can see, that is an instruction to send the
+        // same name again, and a model that believes it retries until something
+        // else stops it. Asserted as LITERALS rather than against
+        // SessionErrors.ToolHasNoVerdict(), because comparing a sentence to the
+        // method that produces it cannot tell true from false; these two say the
+        // caller is told not to retry, and that the disproved clause is gone.
+        await Assert.That(TextOf(answer)).Contains("retrying it will fail");
+        await Assert.That(TextOf(answer)).DoesNotContain("every tool in that list reaches the browser");
     }
 
     /// <summary>

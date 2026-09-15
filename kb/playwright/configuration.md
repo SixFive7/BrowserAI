@@ -36,11 +36,19 @@ wrong value is a hard failure rather than an opinion that never arrives.
 > failing to start. `[FLOATS]`
 
 
-**`chromiumSandbox: true` in a config file is discarded.** With it set
+**`chromiumSandbox: true` in a config file is honoured.** `Corrected 2026-09-14
+@ @playwright/mcp 0.0.80 / playwright-core 1.63.0-alpha-2026-08-31 (previously
+"**`chromiumSandbox: true` in a config file is discarded.** With it set
 explicitly, the browser and every child still ran `--no-sandbox`. Only the CLI
-`--sandbox` flag enabled it. `validateBrowserConfig` *intends*
-`chromiumSandbox = true` on non-Linux, so this is upstream behaviour
-contradicting upstream intent — and it means the default posture is unsandboxed.
+`--sandbox` flag enabled it. `validateBrowserConfig` *intends* `chromiumSandbox
+= true` on non-Linux, so this is upstream behaviour contradicting upstream
+intent — and it means the default posture is unsandboxed.")` **The fix predicted
+below arrived, and the prediction was right in both halves.** Measured on the
+0.0.79 → 0.0.80 review by the same arm that used to assert the defect: with
+`chromiumSandbox: true` in a hand-written config and **no** flag, **0** of the
+live browser's processes carried `--no-sandbox`, where the same measurement
+returned 6 against the previous pin. Upstream's intent and upstream's behaviour
+now agree, and the default posture on this path is sandboxed.
 
 > `Verified 2026-08-16 @ @playwright/mcp 0.0.79 / playwright-core
 > 1.63.0-alpha-2026-08-05.` Re-measured three ways from the resolved browser
@@ -65,8 +73,22 @@ contradicting upstream intent — and it means the default posture is unsandboxe
 > future config key upstream reads *after* the CLI merge would work, and this one
 > never can. `[FLOATS]`
 >
-> ⚠️ **Fixed upstream 2026-08-17, and not yet in a version this build
-> resolves.** [microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)
+> ⚠️ **Fixed upstream 2026-08-17, and IN the version this build resolves since
+> 2026-09-14.** *Corrected 2026-09-14 (previously "and not yet in a version this
+> build resolves"), and the paragraph below it that began "**Everything measured
+> above still describes the shipped tree**" is now historical rather than
+> current — it is kept because it is what made the arrival recognisable.*
+> `@playwright/mcp` 0.0.80 pins `playwright-core` 1.63.0-alpha-2026-08-31, and
+> the normaliser is **gone from the shipped bundle**: diffing
+> `coreBundle.js` between the two alphas, the single line
+> `options.sandbox = options.sandbox === true ? void 0 : false;` is the only
+> removal inside `decorateMCPCommand`'s action, and everything downstream of it
+> — `configFromCLIOptions`, `validateBrowserConfig`'s non-Linux branch and the
+> launcher's `if (options.chromiumSandbox !== true) chromeArguments.push("--no-sandbox")`
+> — is byte-identical. **The outcome was then measured rather than deduced from
+> that**, which matters because the commander semantics in between are exactly
+> the part nobody should reason about: see the corrected headline above.
+> [microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)
 > — *fix(mcp): do not clobber chromiumSandbox from the config file* — deletes the
 > normaliser named above outright (`options.sandbox = options.sandbox === true ?
 > undefined : false`, four lines, zero additions) and adds two tests citing
@@ -563,12 +585,39 @@ the suite. [HAZARDS](../../HAZARDS.md#hazard-index) carries the row.
 ## Environment, merge order and startup output
 
 **The merge order is config file → environment → CLI**, and `@playwright/mcp`
-reads **40** `PLAYWRIGHT_MCP_*` variables in its config env mapping — `BROWSER`,
+reads **41** `PLAYWRIGHT_MCP_*` variables in its config env mapping — `BROWSER`,
 `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`,
-`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 30 more. **The real total
-is 42**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN`
+`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 31 more. **The real total
+is 43**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN`
 are read *outside* that mapping. An allowlist test must derive the count from the
 resolved bundle and never carry a literal.
+
+⚠️ **`Corrected 2026-09-14 @ playwright-core 1.63.0-alpha-2026-08-31 (previously
+"reads **40** … **The real total is 42**")`. Re-measured rather than
+incremented, and the old bundle was the positive control**: the same predicate —
+distinct `PLAYWRIGHT_MCP_*` names matched as `e.PLAYWRIGHT_MCP_…` for the
+mapping, every distinct occurrence for the total — run over
+1.63.0-alpha-2026-08-05's own `coreBundle.js` returned **40 + 2 = 42**, which is
+the figure this paragraph had carried since it was written, so the counter was
+answering the same question before it was believed about the new one. Against
+1.63.0-alpha-2026-08-31 it returns **41 + 2 = 43**. The single addition is
+**`PLAYWRIGHT_MCP_CODEGEN`**, read inside the mapping as
+`if (e.PLAYWRIGHT_MCP_CODEGEN) options.codegen = enumParser("--codegen",
+["none","typescript","python","java","csharp"], e.PLAYWRIGHT_MCP_CODEGEN)`; the
+two outside the mapping are unchanged. **Nothing in BrowserAI needed a change**,
+and that is [the allowlist](../../src/BrowserAI/Protocol/ChildEnvironment.cs)
+holding rather than luck — a variable nobody named is absent from a child by
+construction, which is the whole reason that list is an allowlist. It was
+deliberately **not** added to `ChildEnvironment.Refused`, which names variables
+that redirect a decision the config generator already took; the code-generation
+language for recorded actions is not one.
+
+**`--codegen`'s own default moved in the same version and the rendered help did
+not.** The option's description string went from a literal `"typescript"` to an
+interpolated `${defaultCodegenLanguage}` — and `cli-help.txt`, regenerated from
+the resolved payload, is **byte-identical across the bump**, which is what says
+the interpolation still evaluates to `typescript`. The snapshot is the
+measurement here; reading the template would have said nothing.
 
 **`capabilities` replaces, it does not merge.** `mergeConfig` spreads defined
 overrides, so passing `--caps` on the command line **silently wipes** the config

@@ -23,6 +23,51 @@ has been satisfied in form only.
 
 ### Changed
 
+- ⚠️ **Every machine re-provisions its browser on first run after this.** The
+  `@playwright/mcp` 0.0.79 → 0.0.80 review moved the pinned revisions: **Chromium
+  1237 → 1243** (152.0.7977.8 → 153.0.8010.12) and **Firefox 1539 → 1542**
+  (153.0 → 155.0). Nothing in the payload changed — browsers are provisioned on
+  first run, not built into the installer — but the first session after
+  upgrading downloads again, measured at **203.8 MB in 23.6 s** on the gate
+  machine, because a cached tree holding 1237 is refused rather than reused.
+  **A rollback re-downloads too**, which is the half that is easy to leave out:
+  going back to a build pinning 1237 finds 1243 on disk and fetches 1237 again.
+  The old revision does not accumulate — `RevisionPrune` removes it on the next
+  successful provision — so the cost is bandwidth and one slow first call, not
+  disk.
+
+- **`@playwright/mcp` 0.0.80, `playwright-core` 1.63.0-alpha-2026-08-31 and Node
+  v24.21.0 adopted.** Upstream's own tree changed in nothing but packaging
+  between 0.0.79 and 0.0.80 — `tests/` and `config.d.ts` are byte-identical —
+  so the whole of it is the Playwright roll. Of the four golden snapshots,
+  `cli-help.txt` and `config-schema.d.ts` did not move a byte; `tools-list.json`
+  gained two tools and `browsers.json` the revisions above. Node stayed on the
+  Krypton LTS line, with OpenSSL 3.5.8 the only component that moved with it.
+  The adjudication, the declines and every re-verification row are in
+  [`upstream-review.json`](upstream-review.json).
+
+- **Upstream now honours `chromiumSandbox` from a config file**, having deleted
+  the CLI-stage line that always overwrote it
+  ([microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)).
+  **BrowserAI's behaviour is unchanged** and deliberately so: it passes
+  `--sandbox` on the command line, so its browsers were sandboxed before the fix
+  and are sandboxed after it. What changed is that the flag is no longer the
+  *only* thing that works — it is now belt and braces, and it stays, because
+  moving the decision into the config file would rest this product's security
+  posture on a default that has just been measured to move. This repository had
+  carried the pending fix, its mechanism and its predicted outcome since
+  2026-08-17, and both halves of the prediction held.
+
+- **Every source and test project re-resolved.** `Microsoft.Extensions`,
+  `Microsoft.DotNet.ILCompiler` and `Microsoft.NET.ILLink.Tasks` 10.0.11 →
+  10.0.12, **MinVer 7.0.0 → 8.0.0**, and in the test projects TUnit 1.65.68 →
+  1.67.0, `Microsoft.Testing.Platform` 2.3.3 → 2.4.0 and CsWin32 0.3.321 →
+  0.3.333. The NativeAOT publish under the new ILCompiler is clean — **zero
+  warnings and zero ILC, trim or AOT complaints**. MinVer 8's one breaking
+  change is that `MinVerDefaultPreReleasePhase` now errors instead of warning;
+  this tree has never set it, and the derived version keeps its shape exactly
+  (`1.0.1-alpha.0.206` from `v1.0.0-206-g5f12649`).
+
 - **Every run now states the publish freshness it established, instead of only
   refusing when it did not.** `PublishedSlice.EnsureFresh` has compared the
   published NativeAOT binary against every input that goes into it since the
@@ -305,6 +350,63 @@ has been satisfied in form only.
   no answer was recorded about a call that has just been answered. The ordering
   is deliberate — settling first would risk a `successful` row for an answer the
   caller never received — and the window is a hazard row rather than a fix.
+
+- **`browser_start_recording` and `browser_stop_recording` are judged `allow`,
+  and the advertised surface goes 68 → 70.** The two tools `@playwright/mcp`
+  0.0.80 added were withheld from nothing — an unjudged tool is advertised and
+  then refused, so the surface had already grown and the door had not. They were
+  measured before they were judged: `browser_start_recording` returns in
+  **40–46 ms** and arms a recorder rather than waiting for a human, every other
+  tool answers normally while a recording is live, and `browser_stop_recording`
+  returns Playwright code — so the liveness shape that withholds
+  `browser_annotate` does not reach them. `browser_annotate` is still the only
+  withheld tool. `judgedAgainst` moves to `@playwright/mcp` 0.0.80 /
+  `playwright-core` 1.63.0-alpha-2026-08-31.
+
+- ⚠️ **The server instructions were telling models something false about
+  screenshots, and the correction hands them a lever they did not have.**
+  The `fullPage` sentence said an image *"is downscaled to that ceiling"*.
+  Upstream deleted `scaleImageToFitMessage`, so **nothing downscales an inline
+  image at any size** — measured through a raw child at three viewports, both
+  page shapes and three encodings, with the inline block byte-identical to the
+  file in every case and a `fullPage` shot of a 20,016 px document coming back at
+  1280x20016. Cost follows pixels with no ceiling anywhere. The new sentence says
+  that, and says the thing the old one never mentioned: **passing `filename`
+  returns a link and no inline image at all**, which costs zero image tokens.
+  The 1,568 px bound in the vertical slice is now the viewport on both sides, and
+  asserts byte-identity rather than a ceiling.
+
+- ⚠️ **The refusal for an unjudged tool used to tell the caller to send it
+  again.** It ended *"every tool in that list reaches the browser, and a name
+  that is not in it never will"* — and an unjudged name **is** in `tools/list`,
+  because only a `deny` row is filtered out. Read against a list the caller can
+  see its own name in, that is an instruction to retry, and a model that believes
+  it retries until something else stops it. It now says that being listed is not
+  being judged, that retrying will fail the same way until a human adjudicates
+  it, and not to retry. The `deny` refusal is unchanged. The state is unreachable
+  in a release — an unjudged tool is a red build — so the window this sentence is
+  read in is exactly the one between an upstream roll and its adjudication.
+
+- **`build/Build-Payload.ps1` sets `PLAYWRIGHT_SKIP_BROWSER_GC=1`, which the
+  product has always set and the script never did.** Rebuilding the payload for
+  the 0.0.80 review ran upstream's stale-browser collector and it **deleted
+  `firefox-1539`** — a complete provisioned tree nothing in that script installs.
+  `ChildEnvironment.Forced` has protected every child since it was written; this
+  was the second place that starts an upstream process, kept by habit in one of
+  the two.
+
+- **Two upstream asks were transferred by upstream itself, and the watch item
+  that was reserving that decision has fired.** `playwright-mcp#1725` is now
+  [playwright#42497](https://github.com/microsoft/playwright/issues/42497) —
+  open, triaged, with a maintainer's PR open and set to close it — and
+  `playwright-mcp#1726` is now
+  [playwright#42496](https://github.com/microsoft/playwright/issues/42496),
+  **closed `not_planned`**. The two Q128 hazard rows that were steering toward
+  that second one keep their status and lose their recorded upstream exit; both
+  say so in place. A third ask was filed in the monorepo the same day:
+  [playwright#42717](https://github.com/microsoft/playwright/issues/42717), a
+  `webp` screenshot past 16,383 px coming back as a zero-byte image with
+  `isError: false`.
 
 ### Removed
 

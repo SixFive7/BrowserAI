@@ -350,15 +350,42 @@ internal static class SessionErrors
     /// fixes.</b> A denied tool answers with its own reason and there is nothing
     /// to be done about it; a tool with no verdict is one this build was never
     /// told about — a name from another server, a typo, or an upstream tool that
-    /// arrived in a payload nobody has adjudicated yet — and <c>tools/list</c>
-    /// settles all three in one call.
+    /// arrived in a payload nobody has adjudicated yet.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>REWRITTEN 2026-09-15, because the last sentence pointed the caller
+    /// straight back at the tool it had just refused.</b> <i>Previously: "Call
+    /// tools/list and use a name exactly as it is spelled there — every tool in
+    /// that list reaches the browser, and a name that is not in it never will,
+    /// however many times it is sent", with the paragraph above ending
+    /// "… and <c>tools/list</c> settles all three in one call".</i> <b>It is only
+    /// a <c>deny</c> row that is filtered out of <c>tools/list</c>; an UNJUDGED
+    /// name is advertised</b>, because a gap is not a decision — so of the three
+    /// cases that sentence claimed to settle, it settled the two that do not
+    /// happen in a shipped build and misdirected the one that does. Read against
+    /// a list the caller can see its own name in, <i>every tool in that list
+    /// reaches the browser</i> reads as <i>send it again</i>, and a model that
+    /// believes it retries until something else stops it. The new text tells it
+    /// the truth instead: listed is not judged, this will not start working on
+    /// its own, do not retry.
+    /// </para>
+    /// <para>
+    /// <b>The state is unreachable in a release and the sentence still matters.</b>
+    /// A payload carrying an unjudged tool is a red build — <c>ToolVerdictTests</c>
+    /// compares the file against the golden snapshot in both directions — the
+    /// verdicts ship inside the payload, and <c>judgedAgainst</c> is asserted
+    /// against the payload lock, so the only window in which a caller can meet
+    /// this refusal is the one between an upstream roll and its adjudication.
+    /// That window is where an agent is driving the product while a human decides,
+    /// which is exactly when an instruction to retry forever costs the most.
     /// </para>
     /// </remarks>
     /// <returns>The refusal.</returns>
     public static string ToolHasNoVerdict() =>
         "BrowserAI has no forwarding verdict for the tool you named, so nothing was sent to the browser and nothing was changed. "
         + "This is a GAP rather than a decision: a tool this build was deliberately told not to forward refuses with its own reason instead of this sentence. "
-        + "Call tools/list and use a name exactly as it is spelled there — every tool in that list reaches the browser, and a name that is not in it never will, however many times it is sent.";
+        + "The name may well be in tools/list — being listed is not the same as being judged — so retrying it will fail in exactly this way until a human adjudicates it. "
+        + "Do not retry. Use a different tool, or stop and report that this one does not work in this build.";
 
     /// <summary>Row 6 — the browser this session needs is still being provisioned.</summary>
     /// <remarks>

@@ -39,11 +39,25 @@ process they did not exist at all.
 
 ### The per-capability breakdown, counted
 
-**Measured 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
-1.63.0-alpha-2026-08-05.** Re-establish it by regenerating the snapshot:
-`pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept`, which reads
-`browserTools` from the resolved bundle and cross-checks every number against a
-real `tools/list`. `[FLOATS]`
+**Re-measured 2026-09-14 @ `@playwright/mcp` 0.0.80 / `playwright-core`
+1.63.0-alpha-2026-08-31** — *previously "Measured 2026-08-16 @ `@playwright/mcp`
+0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05"*. Re-establish it by
+regenerating the snapshot: `pwsh -File build/Update-UpstreamSnapshots.ps1
+-Accept`, which reads `browserTools` from the resolved bundle and cross-checks
+every number against a real `tools/list`. `[FLOATS]`
+
+⚠️ **What moved, and it is one capability.** `devtools` went **11 → 13** when
+the `playwright-core` roll inside `@playwright/mcp` 0.0.80 added
+`browser_start_recording` and `browser_stop_recording`; **every other
+capability's count is unchanged to the tool, not one surviving tool's schema
+changed, and nothing was renamed or removed** — asserted by diffing the two
+accepted snapshots entry by entry rather than by reading the changelog. The
+totals move with it: internal registry **78 → 80**, exposable maximum **69 →
+71**, and the `devtools`-alone surface **35 → 37**. `skillOnly` is still **9**
+and the default surface is still **24**. ⚠️ **These are upstream's numbers, so
+they are unaffected by the verdict those two tools are still awaiting** — what
+BrowserAI itself advertises is a different figure and lives in
+[`DECISIONS.md`](../../DECISIONS.md).
 
 | Capability | Tools it carries | Of those, `skillOnly` | Surface with it alone |
 |---|---|---|---|
@@ -58,8 +72,8 @@ real `tools/list`. `[FLOATS]`
 | `storage` | 17 | 0 | 41 |
 | `testing` | 5 | 0 | 29 |
 | `vision` | 6 | 0 | 30 |
-| `devtools` | 11 | 0 | 35 |
-| **all twelve** | **78** | **9** | **69** |
+| `devtools` | 13 | 0 | 37 |
+| **all twelve** | **80** | **9** | **71** |
 
 **The `core` family is unconditional, and that is why every column above starts
 at 24.** `filteredTools(config)` is
@@ -78,9 +92,9 @@ and the property is `tool.skillOnly` on the registry entry rather than anything
 on the schema. `[FLOATS]`
 
 **What BrowserAI's own capability sets expose, measured over the wire rather
-than added up:** `config` + `vision` + `devtools` gives **42**, adding `storage`
-gives **59**, and adding `network`, `pdf` and `testing` on top of that gives
-**69** — the whole exposable surface, which is what
+than added up:** `config` + `vision` + `devtools` gives **44**, adding `storage`
+gives **61**, and adding `network`, `pdf` and `testing` on top of that gives
+**71** — the whole exposable surface, which is what
 [every session now gets](../../ARCHITECTURE.md#sessions). The first two are the
 same numbers the `createConnection` experiment below produced from two
 connections in one process, which is a second, independent route to them.
@@ -259,18 +273,23 @@ feature"*. `[FLOATS]`
 
 ### What a BrowserAI session permits, after its own filtering
 
-**Re-measured 2026-08-20 @ `@playwright/mcp` 0.0.79 / `playwright-core`
-1.63.0-alpha-2026-08-05: 68 of 69, one row.** ⚠️ **Corrected 2026-08-20
-(previously three rows, 58 / 58 / 58 of 58, headed "What BrowserAI's own modes
-permit"; corrected twice on 2026-08-18 before that — from 41 / 41 / 58 to
-58 / 59 / 59 of 59, and then to 58 / 58 / 58 of 58).** **Session modes were
-deleted and every capability is granted to every session**, so there is one row
-rather than three and the denominator moved from the 59-tool union to the whole
-69-tool exposable surface: `network`, `pdf` and `testing` reached a child for the
-first time and brought ten tools with them. Upstream's own per-capability
-surfaces are 42 and 69 above; this is what survives BrowserAI's own decision, out
-of the **68-tool surface** it advertises to every caller — 69 minus the one it
-withholds. Re-establish by running
+**Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.80 / `playwright-core`
+1.63.0-alpha-2026-08-31: 70 of 71, one row.** ⚠️ **Corrected 2026-09-15
+(previously "Re-measured 2026-08-20 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05: 68 of 69, one row"; corrected 2026-08-20 from three rows,
+58 / 58 / 58 of 58, headed "What BrowserAI's own modes permit"; corrected twice on
+2026-08-18 before that — from 41 / 41 / 58 to 58 / 59 / 59 of 59, and then to
+58 / 58 / 58 of 58).** **Session modes were deleted and every capability is
+granted to every session**, so there is one row rather than three and the
+denominator moved from the 59-tool union to the whole exposable surface:
+`network`, `pdf` and `testing` reached a child for the first time and brought ten
+tools with them. **The 2026-09-15 move is upstream's and not a decision taken
+here**: `@playwright/mcp` 0.0.80 added `browser_start_recording` and
+`browser_stop_recording` to `devtools`, both were judged `allow`, and both
+numerator and denominator moved by two while the one withheld tool stayed one.
+Upstream's own per-capability surfaces are 44 and 71 above; this is what survives
+BrowserAI's own decision, out of the **70-tool surface** it advertises to every
+caller — 71 minus the one it withholds. Re-establish by running
 `SessionPolicyTests.ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`,
 which computes the surface from the committed snapshot, applies the product's own
 withholding predicate, and asks its decision function about every name that
@@ -278,9 +297,9 @@ survives. `[FLOATS]`
 
 | Session | Advertised | Permitted | Refused, and why |
 |---|---:|---:|---|
-| any | **68** | **68** | nothing it advertises |
+| any | **70** | **70** | nothing it advertises |
 
-**The 69th tool is `browser_annotate`, and it is not refused conditionally — it
+**The 71st tool is `browser_annotate`, and it is not refused conditionally — it
 is not offered at all.** It is filtered out of `tools/list` in every session, and
 a caller that names it anyway is refused wherever it is named, because the daemon
 lands in `%TEMP%` and outlives its parent on a headed run exactly as it does on a
@@ -471,16 +490,45 @@ that key and its child-environment allowlist does not pass
 `PLAYWRIGHT_MCP_IMAGE_RESPONSES`, so the gate is open in every session this
 product opens.** `[FLOATS]`
 
-⚠️ **One divergence, deliberate and recorded rather than fixed.** Upstream passes
-the bytes through `scaleImageToFitMessage` first, which shrinks anything over
-**1,568 px on a side or ~1.15 MP** and *returns the buffer untouched otherwise*
-(`shrink = min(1568/w, 1568/h, sqrt(1.15·1024·1024/pixels))`, and `shrink > 1`
-returns early). BrowserAI appends what is on disk, so for an image inside that
-budget the two are byte-identical and for a larger one — a `fullPage` screenshot
-of a long page — BrowserAI sends the unscaled original where upstream would have
+⚠️ **THERE IS NO SCALER UPSTREAM ANY MORE, and nothing downscales an inline
+image at any size.** `Corrected 2026-09-14 @ playwright-core
+1.63.0-alpha-2026-08-31 (previously "**One divergence, deliberate and recorded
+rather than fixed.** Upstream passes the bytes through
+`scaleImageToFitMessage` first, which shrinks anything over **1,568 px on a
+side or ~1.15 MP** and *returns the buffer untouched otherwise* (`shrink =
+min(1568/w, 1568/h, sqrt(1.15·1024·1024/pixels))`, and `shrink > 1` returns
+early). BrowserAI appends what is on disk, so for an image inside that budget
+the two are byte-identical and for a larger one — a `fullPage` screenshot of a
+long page — BrowserAI sends the unscaled original where upstream would have
 sent a shrunk copy. Re-implementing the scaler would mean decoding and
-resampling PNG, JPEG and WebP inside the proxy, which is the scope boundary's own
-example of what this product must not grow. `[FLOATS]`
+resampling PNG, JPEG and WebP inside the proxy, which is the scope boundary's
+own example of what this product must not grow.")` **The function is gone from
+the bundle** — 0 occurrences, and the constant `1568` with it — and the
+rewritten screenshot backend no longer imports `imageUtils` or `webp` at all:
+the image block is pushed straight from the capture. The divergence this
+paragraph existed to record therefore closed by upstream converging on
+BrowserAI rather than the other way round, and the note about not growing a
+resampler is now moot rather than wrong.
+
+**Measured end to end rather than read off the diff**, against the resolved
+payload under node v24.21.0 and `chromium-1243`, at the 1920×1080 default: the
+inline block is **byte-identical to the file on disk — 22,186 b, 1920×1080,
+`identical bytes: true`**. The comparable figures from 2026-08-26, at the same
+viewport and with the scaler still in place, were **9,379 b on disk against
+379,731 b inline**, the inline copy being a *re-encode* of a *downscaled*
+image. So an inline screenshot is now **larger in pixels and very much smaller
+in bytes** — and ⚠️ **token cost follows pixels, not bytes**, per the patch
+formula below, so this is a cost *increase* per screenshot however much the
+wire traffic fell. `[FLOATS]`
+
+⚠️ **A model-facing sentence is now false and has deliberately not been
+touched.** The server `instructions` say a `fullPage` screenshot *"leaves at
+full document height and is downscaled to that ceiling"*. There is no ceiling
+and no downscaling. Correcting it — or deciding instead to bound the viewport,
+or to do BrowserAI's own downscale — is a product decision that has not been
+taken, and
+`VerticalSliceTests.AScreenshotComesBackInlineAsWellAsAsAFileWithALegibleName`
+is **left red on its 1,568 bound** so that it cannot be forgotten.
 
 ### What it costs
 
@@ -512,6 +560,61 @@ path in BrowserAI's own note, `base64 characters` from `content[].data`, and the
 frame sizes from the raw response. `VerticalSliceTests.AScreenshotComesBackInlineAsWellAsAsAFileWithALegibleName`
 does exactly this against the real child and prints the first three columns on a
 passing run.
+
+### A WebP screenshot past 16,383 px comes back as zero bytes, with `isError: false` — measured 2026-09-14
+
+**Measured 2026-09-14 @ `@playwright/mcp` 0.0.80 / `playwright-core`
+1.63.0-alpha-2026-08-31, on the RAW CHILD with no BrowserAI process on the
+path.** `browser_take_screenshot` with `type: "webp"` over a document taller
+than **16,383 px** returns an **empty inline image and a zero-byte file**, and
+reports success. The bracket was measured rather than reasoned from the format's
+specification, one pixel either side:
+
+| Document height | `type` | Inline bytes | File bytes | `isError` |
+|---:|---|---:|---:|---|
+| 16,383 px | `webp` | **12,284** — a valid VP8X, 1280×16383 | 12,284 | `false` |
+| 16,384 px | `webp` | **0** | **0** | `false` |
+| 16,384 px | `png` | 137,816 | 137,816 | `false` |
+| 16,384 px | `jpeg` | 768,991 | 768,991 | `false` |
+
+**It is upstream's and not this product's**, which is why the measurement was
+re-taken against `node.exe` driving `@playwright/mcp/cli.js` directly over a
+`127.0.0.1` page server, with BrowserAI nowhere in the path. **And it is not one
+browser's**: the same zero came back from the provisioned `chromium-1243`
+(153.0.8010.12) and from the machine's own Google Chrome (153.0.8010.37), with a
+live pid-tree walk recording which binary each run actually drove — without that
+walk the two runs are indistinguishable, because upstream's default browser
+selection is not the provisioned tree. Artifacts: `.work/2026-09-14-webp-ask/`.
+
+⚠️ **The `mimeType` is still `image/webp` and the answer still reads as a
+success**, which is the whole of why this is worth a row rather than a note: a
+caller gets a link to a file, a content block of the right type, and nothing at
+all inside it. A model has no way to tell this from a screenshot of a blank
+page.
+
+**BrowserAI is on the path for the consequence and not for the cause.** It
+forwards `browser_take_screenshot` byte for byte and neither sets nor defaults
+`type`, so only a caller that asks for `webp` on a very tall page reaches this —
+and the two defaults that would otherwise walk into it do not: the viewport is
+1080 px tall and `fullPage` is off unless asked for. Nothing here refuses the
+call, and nothing should: refusing on the arguments would be guessing at a
+document height the proxy has not seen.
+
+**Reported upstream** as
+[microsoft/playwright#42717](https://github.com/microsoft/playwright/issues/42717),
+2026-09-14, with the ask body recorded in
+[TODO](../../TODO.md#upstream-asks).
+[PR #42721](https://github.com/microsoft/playwright/pull/42721) is open against
+it, by a non-maintainer, and is not an outcome yet.
+
+**How to re-establish.** Serve a page whose document is exactly 16,383 px tall
+and one exactly 16,384 px tall, drive `node.exe` against
+`@playwright/mcp/cli.js` over stdio, and call `browser_take_screenshot` with
+`fullPage: true` and each of `webp`, `png` and `jpeg` at both heights. Read the
+inline block's length from `content[].data` and the file's from disk, and assert
+the WebP pair straddles the boundary — **the 16,383 arm is the positive control
+and it is not optional**, because a zero-byte result at one height alone cannot
+tell a format limit from a broken rig. `[FLOATS]`
 
 ## Artifacts and output-directory behaviour
 

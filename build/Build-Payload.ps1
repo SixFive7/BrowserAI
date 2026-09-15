@@ -117,16 +117,36 @@ Copy-Item -LiteralPath (Join-Path $sourceDir 'package.json') -Destination $mcpDi
 # is absolute for the reason in the parameter help; the skip flag means an
 # install script cannot quietly pull ~200 MB during `npm install`.
 #
-# Both stay set for the rest of the script, including the explicit
-# install-browser call below, and that is deliberate. Measured 2026-08-16
+# All three stay set for the rest of the script, including the explicit
+# install-browser call below, and that is deliberate. *(Was "Both" until
+# 2026-09-15, when the third arrived.)* Measured 2026-08-16
 # @ playwright-core 1.63.0-alpha-2026-08-05: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
 # gates only `installBrowsersForNpmInstall` and `ensureConfiguredBrowserInstalled`
 # -- with it set, `install-browser` against an empty root still downloaded. So
 # leaving it set costs nothing today, and if upstream ever extends it to the
 # explicit path this script fails loudly on the chrome.exe assertion instead of
 # producing a payload with no browser behind it.
+#
+# PLAYWRIGHT_SKIP_BROWSER_GC is here for a failure that HAPPENED rather than one
+# that might: on 2026-09-14, rebuilding the payload for the 0.0.79 -> 0.0.80
+# review, the install-browser call below ran upstream's stale-browser collector
+# and it DELETED firefox-1539 -- a complete, provisioned Firefox tree that
+# nothing in this script installs and nothing here had asked it to touch. The
+# collector removes any registry directory not referenced by a `.links` entry,
+# so against a root that holds more than this script put there, its blast radius
+# is every browser some other tool provisioned.
+#
+# The product has been protected from exactly this since it was written --
+# ChildEnvironment.Forced sets PLAYWRIGHT_SKIP_BROWSER_GC=1 on every child -- and
+# this script was not, which is the whole of the defect: one habit kept in one of
+# the two places that start an upstream process. Set to the same value, spelled
+# the same way, for the same reason. Nothing enforces the pairing; RevisionPrune
+# is what discharges the pruning obligation skipping the GC creates, and it is
+# the product's, so a payload build that strands an old revision here is a
+# scratch tree rather than a user's disk.
 $env:PLAYWRIGHT_BROWSERS_PATH = $BrowsersPath
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
+$env:PLAYWRIGHT_SKIP_BROWSER_GC = '1'
 
 Push-Location $mcpDir
 try {

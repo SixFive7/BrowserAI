@@ -260,12 +260,19 @@ internal static class BrowserConfiguration
     /// layout is designed for.
     /// </para>
     /// <para>
-    /// ⚠️ <b>What arrives is what is set, unscaled, and that is specific to this
-    /// product.</b> Upstream's <c>scaleImageToFitMessage</c> never runs here —
-    /// BrowserAI's image handling diverges before it — so a caller that asks for
+    /// ⚠️ <b>What arrives is what is set, unscaled.</b> A caller that asks for
     /// 2560×1440 gets 2560×1440 worth of tokens rather than something downscaled
     /// on the way out. The argument exists and the description says what it
-    /// costs.
+    /// costs. <i>Corrected 2026-09-15 (previously "… and that is specific to
+    /// this product. Upstream's <c>scaleImageToFitMessage</c> never runs here —
+    /// BrowserAI's image handling diverges before it — so …").</i> <b>The
+    /// conclusion is unchanged and the reason for it is gone</b>: it was specific
+    /// to this product while upstream had a scaler BrowserAI diverged before, and
+    /// <c>playwright-core</c> 1.63.0-alpha-2026-08-31 deleted
+    /// <c>scaleImageToFitMessage</c> outright — so nothing downscales an image
+    /// anywhere in the path, for anybody, and this is no longer a divergence at
+    /// all. Measured 2026-09-14 through a raw child: the inline block is
+    /// byte-identical to the file at every viewport tested.
     /// </para>
     /// </remarks>
     public static ViewportSize DefaultViewport { get; } = new(1920, 1080);
@@ -850,10 +857,13 @@ internal sealed record ViewportSize(int Width, int Height)
     /// </summary>
     /// <remarks>
     /// <b>4,096, and it is about tokens rather than about the browser.</b> A
-    /// screenshot arrives unscaled — upstream's <c>scaleImageToFitMessage</c>
-    /// never runs here — so a viewport past this is an image the API refuses
-    /// rather than shrinks, and the failure lands on the call after the one that
-    /// set it.
+    /// screenshot arrives unscaled — nothing in the path downscales one — so a
+    /// viewport past this is an image the API refuses rather than shrinks, and
+    /// the failure lands on the call after the one that set it. <i>Corrected
+    /// 2026-09-15 (previously "upstream's <c>scaleImageToFitMessage</c> never
+    /// runs here"), which named a divergence that no longer exists: upstream
+    /// deleted that function, so the unscaled arrival is now everybody's
+    /// behaviour rather than this product's.</i>
     /// </remarks>
     public const int Largest = 4096;
 

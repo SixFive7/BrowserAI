@@ -395,6 +395,22 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 
       Filed: https://github.com/microsoft/playwright-mcp/issues/1725 (2026-08-27)
 
+      ⚠️ **TRANSFERRED BY UPSTREAM, and the watch item below fired on it.**
+      *Added 2026-09-14; the line above is left standing because it is where the
+      trail starts.* It is now
+      [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497),
+      retitled *"[MCP] Option for absolute paths in tool result links"* — **the
+      move was upstream's own doing rather than ours**, which is the one outcome
+      the watch item's options did not name. **OPEN and TRIAGED**: `dgozman`
+      asked for a repro on 2026-09-02 and again on 2026-09-03, a second reporter
+      joined the same day, and
+      [PR #42673](https://github.com/microsoft/playwright/pull/42673)
+      — *"feat(mcp): add `--file-paths=absolute` for absolute paths in tool
+      results"*, by `pavelfeldman`, +67/-6 over 7 files — is **open and
+      configured to close it**. Read 2026-09-15: still open, `mergeable_state`
+      unstable, last touched 2026-09-14. **The ask is being implemented**, so
+      what is owed here is adoption rather than advocacy.
+
 - [ ] **Ask `@playwright/mcp` for a no-clobber option on output files, and for
       names Windows will not keep verbatim to be rejected.** Both are losses
       BrowserAI stopped preventing on 2026-08-26, when its own filename gate was
@@ -423,7 +439,123 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 
       Filed: https://github.com/microsoft/playwright-mcp/issues/1726 (2026-08-27)
 
-- [ ] **Watch both asks together, and be ready to move them to the monorepo.**
+      ⚠️ **TRANSFERRED BY UPSTREAM AND THEN DECLINED.** *Added 2026-09-14.*
+      It is now
+      [microsoft/playwright#42496](https://github.com/microsoft/playwright/issues/42496),
+      retitled *"[MCP] Option for no-clobber output files and reserved name
+      handling"*, and `dgozman` **closed it `not_planned` on 2026-09-08** after
+      two comments. **This ask is answered, and the answer is no.** The two
+      hazard rows it was steering for keep their `open` status and lose their
+      recorded closure path; both say so in their own evidence now. Nothing here
+      is to be re-filed: a second report of a declined request is noise, and the
+      rows already state what this side does instead.
+
+- [ ] **Ask `@playwright/mcp` to stop returning an empty image when a WebP
+      screenshot exceeds WebP's own dimension limit.** `browser_take_screenshot`
+      with `type: "webp"` and `fullPage: true` over a document taller than
+      **16,383 px** returns a zero-length inline image **and** writes a
+      zero-byte file, with `isError: false` — a silent success that produces
+      nothing. The bracket is exact: **16,383 px gives a valid 12,284-byte
+      VP8X at 1280x16383, and 16,384 px gives 0 bytes**, with `png` (137,816 B)
+      and `jpeg` (768,991 B) both fine at the same height. Measured 2026-09-14
+      **on the raw child with no BrowserAI process on the path**, and reproduced
+      on both binaries the child will drive — the provisioned `chromium-1243`
+      153.0.8010.12 and the machine's own Google Chrome 153.0.8010.37 — with a
+      live pid-tree walk recording which one each run actually drove. Evidence:
+      `.work/2026-09-14-webp-ask/`; the measurement is in
+      [kb](kb/playwright/tools-and-artifacts.md#a-webp-screenshot-past-16383-px-comes-back-as-zero-bytes-with-iserror-false--measured-2026-09-14)
+      and the consequence in [HAZARDS](HAZARDS.md#hazard-index). A duplicate
+      search was run over both trackers with the term-AND REST API after a
+      phrase-matching flaw in the first pass was exposed by its own controls;
+      the nearest neighbour is
+      [microsoft/playwright#13496](https://github.com/microsoft/playwright/issues/13496)
+      (2022, closed), which is PNG tiling above 16,384 px in **headed** mode and
+      a different defect.
+
+      **File this text, unchanged:**
+
+      > **Title:** [MCP] WebP screenshot above 16383 px returns an empty image
+      >
+      > browser_take_screenshot with type webp and fullPage on a document taller
+      > than 16383 px returns an empty image and writes a zero-byte file, with no
+      > error. 16383 px works, 16384 px does not. png and jpeg are fine at the
+      > same heights.
+      >
+      > This looks like the WebP dimension limit surfacing as success. An error,
+      > or a fallback to png above the limit, would make the result honest.
+      >
+      > Seen with @playwright/mcp 0.0.80, playwright-core
+      > 1.63.0-alpha-2026-08-31, Chromium 153.0.8010.12, Windows 11.
+
+      Filed: https://github.com/microsoft/playwright/issues/42717 (2026-09-14)
+
+      **Filed in the monorepo with an `[MCP]` title prefix**, which is where the
+      watch item below had already decided asks go — and by the time this one was
+      posted the watch item's signal had fired for a second reason, so it was
+      never a judgement call. The posted body is byte-identical to the draft
+      above (sha256 `9011ed28b20db5e0…`, re-read from the live issue 2026-09-15),
+      and the ask text carries **zero non-ASCII bytes**, checked with a control
+      that planted U+2014 and U+00A0 and found them.
+
+      ⚠️ **Somebody has already opened a fix, 2026-09-15.**
+      [PR #42721](https://github.com/microsoft/playwright/pull/42721) —
+      *"fix(screenshot): error when webp dimensions exceed 16383px limit"*, by
+      `mohanram-dev`, who commented that it *"validat[es] WebP's 16,383px
+      specification limit across render scales and guard[s] against silent
+      0-byte screenshot buffers"* — is open and configured to close #42717. It is
+      **not** by a Playwright maintainer, so it is a proposal rather than an
+      outcome; what settles this item is a released `playwright-core` in which
+      16,384 px webp errors instead of succeeding, which the drift check will
+      surface and the review will measure.
+
+- [x] **Watch both asks together, and be ready to move them to the monorepo.**
+      ⚠️ **THE SIGNAL FIRED, 2026-09-14, and upstream took the decision this
+      item was reserving.** *Everything below this paragraph is left exactly as
+      it was written on 2026-08-27, because the reasoning is what makes the
+      outcome readable — what follows here is the answer arriving, not a
+      correction of the question.* **Both issues were TRANSFERRED to
+      `microsoft/playwright` by upstream itself**, which is neither of the two
+      shapes the "What moves them" paragraph below anticipated: not a close with
+      a redirect, and not silence. So the move happened and nothing on this side
+      had to do it — no re-filing, and nothing to close behind us, because a
+      transfer carries the thread and redirects the old URL. **#1725 →
+      [#42497](https://github.com/microsoft/playwright/issues/42497)**, open,
+      triaged, with [PR #42673](https://github.com/microsoft/playwright/pull/42673)
+      open and set to close it. **#1726 →
+      [#42496](https://github.com/microsoft/playwright/issues/42496)**, closed
+      `not_planned` 2026-09-08. Each ask's own entry above carries its tracking
+      line.
+
+      **What the answer settles, beyond these two.** The tracker question is
+      decided by upstream's own action rather than by the balance of evidence
+      below: **asks go to `microsoft/playwright` with an `[MCP]` title prefix**,
+      which is how the third ask was filed on the same day without this item
+      having to be re-read. The "one signal decides for both" premise held
+      exactly as written — one transfer event answered both — while the
+      *outcomes* diverged, which is the distinction that premise was actually
+      making: it was about where a report belongs, never about whether a report
+      is accepted.
+
+      **What is left to watch, and it is a different question.**
+      [PR #42673](https://github.com/microsoft/playwright/pull/42673) shipping.
+      When it lands in a released `@playwright/mcp`, the
+      [daily drift check](CLAUDE.md#the-daily-drift-check) surfaces the version,
+      [the review](UPSTREAM-REVIEW.md) adopts `--file-paths=absolute` — a CLI
+      flag, a `filePaths` config key and `PLAYWRIGHT_MCP_FILE_PATHS`, so the
+      `cli-help.txt` and `config-schema.d.ts` snapshots both move and the
+      environment allowlist gets a name to judge — and the first ask resolves.
+      Until then nothing here is owed: the ask is being implemented by upstream
+      and advocacy would only repeat it.
+
+      **And what the declined one costs.** #42496 was the recorded closure path
+      for the two Q128 hazard rows — reused-filename overwrite, and Windows
+      names stored under a different effective name. **That path is gone.** The
+      rows stay `open`, the steering stands, and both now say in their own
+      evidence that upstream declined rather than that upstream has not answered
+      yet. Nothing is re-filed.
+
+      *The record as it stood on 2026-08-27 follows, unchanged.*
+
       They were filed into a tracker whose owner has asked people not to use it,
       and the call taken on 2026-08-27 was to leave them there and watch rather
       than re-file. **One signal decides for both** — they are two instances of

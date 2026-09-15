@@ -6,8 +6,8 @@
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
   "schemaVersion": 1,
   "judgedAgainst": {
-    "@playwright/mcp": "0.0.79",
-    "playwright-core": "1.63.0-alpha-2026-08-05"
+    "@playwright/mcp": "0.0.80",
+    "playwright-core": "1.63.0-alpha-2026-08-31"
   },
   "upstream": {
     "browser_close": {
@@ -109,6 +109,12 @@
       "verdict": "allow"
     },
     "browser_pdf_save": {
+      "verdict": "allow"
+    },
+    "browser_start_recording": {
+      "verdict": "allow"
+    },
+    "browser_stop_recording": {
       "verdict": "allow"
     },
     "browser_route": {

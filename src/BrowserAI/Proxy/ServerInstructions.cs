@@ -59,19 +59,33 @@ namespace BrowserAI.Proxy;
 /// </para>
 /// <para>
 /// <b>The <c>fullPage</c> line, added 2026-08-20, is here for the same reason
-/// and is a cost fact rather than a warning.</b> BrowserAI diverges from
-/// upstream before <c>scaleImageToFitMessage</c> and appends what is on disk, so
-/// <b>what the viewport renders is what the model receives</b>
-/// ([kb](../../../kb/playwright/tools-and-artifacts.md#what-it-costs)). Measured
-/// 2026-08-20: a viewport shot at the 1920x1080 default arrives as
-/// <b>2,691 visual tokens</b>; the same page with <c>fullPage: true</c> over a
-/// 3,637 px document leaves as 1920x3637, which is
-/// <c>⌈1920/28⌉ × ⌈3637/28⌉ =</c> <b>8,970</b>, and the API downscales that to
-/// its per-image ceiling of <b>4,784</b>. The break-even is a document about
-/// 1,960 px tall, so <i>every full-page shot of a page long enough to want one</i>
-/// costs the maximum — which is why the sentence says "any page worth using it
-/// on" rather than "always": on a page that does not scroll the two are the same
-/// image.
+/// and is a cost fact rather than a warning.</b> <b>Nothing downscales an image
+/// on the way back</b> — not BrowserAI, which appends what is on disk, and since
+/// <c>playwright-core</c> 1.63.0-alpha-2026-08-31 not upstream either, which
+/// deleted <c>scaleImageToFitMessage</c> outright
+/// ([kb](../../../kb/playwright/tools-and-artifacts.md#what-it-costs)).
+/// </para>
+/// <para>
+/// ⚠️ <b>REWRITTEN 2026-09-15, because the sentence had become false.</b>
+/// <i>Previously: "'fullPage: true' costs the per-image token maximum on any
+/// page worth using it on: it leaves at full document height and is downscaled
+/// to that ceiling", justified as — measured 2026-08-20 — a 1920x1080 viewport
+/// shot arriving as <b>2,691 visual tokens</b> against <c>fullPage: true</c>
+/// over a 3,637 px document leaving as 1920x3637 =
+/// <c>⌈1920/28⌉ × ⌈3637/28⌉</c> = <b>8,970</b>, downscaled to a per-image
+/// ceiling of <b>4,784</b>, break-even at about 1,960 px.</i> <b>Both halves of
+/// that were wrong to tell a model.</b> The first half made a ceiling sound like
+/// a cap on what the call costs, when what it caps is what one image can be
+/// billed as; the second told the model the image it receives has been shrunk,
+/// which is the opposite of what happens. <b>Measured 2026-09-14</b> through a
+/// raw child at three viewports, both page shapes and three encodings
+/// (<c>.work/2026-09-14-probes/m2c/</c>): the inline block is
+/// <b>byte-identical to the file in every case</b>, and bytes follow pixels with
+/// no ceiling anywhere — a <c>fullPage</c> shot of a 20,016 px document came
+/// back as 1280x20016 and 3,724,372 bytes. <b>What replaced the ceiling is the
+/// lever the old sentence never mentioned</b>: passing <c>filename</c>
+/// suppresses the inline image entirely, so the answer is a link to a file on
+/// disk and the image costs nothing at all until something opens it.
 /// </para>
 /// <para>
 /// ⚠️ <b>Two clauses were cut on 2026-08-26 to pay for the browser-installation
@@ -135,7 +149,7 @@ internal static class ServerInstructions
 
         Every session gets every tool. Nothing is chosen at init that a later call has to live with: 'headed: true' opens a window, 'tracing: true' records the session, and both are per-run rather than bound to the directory.
 
-        'fullPage: true' costs the per-image token maximum on any page worth using it on: it leaves at full document height and is downscaled to that ceiling.
+        'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image at all.
 
         Browsers are managed by BrowserAI — never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.
 

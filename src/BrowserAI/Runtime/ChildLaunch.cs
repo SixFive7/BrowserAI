@@ -19,7 +19,9 @@ namespace BrowserAI.Runtime;
 /// with an <b>empty</b> browsers directory, where <c>initialize</c>,
 /// <c>tools/list</c> and <c>browser_navigate</c> all succeeded. And
 /// <c>--sandbox</c> goes on the command line, never <c>chromiumSandbox</c> in the
-/// config file, because the config key parses, validates and is discarded
+/// config file — originally because the config key parsed, validated and was
+/// discarded, and since 2026-09-14 because an explicit argument is worth more
+/// than a default that has been measured to move
 /// ([kb](../../../kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like)).
 /// Provisioning, modes, sessions and artifact routing all live elsewhere.
 /// </remarks>
@@ -31,28 +33,40 @@ internal static class ChildLaunch
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It cannot be a config key, and that is measured rather than
-    /// remembered.</b> Re-measured 2026-08-16 against <c>@playwright/mcp</c>
-    /// 0.0.79 by reading the resolved browser command line of a live Chromium,
-    /// three ways: with nothing set, <c>--no-sandbox</c> is present; with
-    /// <c>"chromiumSandbox": true</c> in the config file and no flag, it is
-    /// <b>still</b> present; with this flag, it is absent from the browser and
-    /// from every one of its children.
-    /// </para>
-    /// <para>
-    /// The mechanism, also measured: upstream declares both <c>--sandbox</c> and
+    /// ⚠️ <b>Corrected 2026-09-14 @ <c>@playwright/mcp</c> 0.0.80 /
+    /// <c>playwright-core</c> 1.63.0-alpha-2026-08-31: it is no longer the
+    /// <i>only</i> thing that does, and this flag was deliberately kept
+    /// anyway.</b> <i>Previously: "<b>It cannot be a config key, and that is
+    /// measured rather than remembered.</b> Re-measured 2026-08-16 against
+    /// <c>@playwright/mcp</c> 0.0.79 … with <c>"chromiumSandbox": true</c> in
+    /// the config file and no flag, it is <b>still</b> present", and "The
+    /// mechanism, also measured: upstream declares both <c>--sandbox</c> and
     /// <c>--no-sandbox</c>, and commander gives <c>sandbox</c> a default of
-    /// <see langword="false"/> rather than leaving it undefined — so the CLI
-    /// stage, which merges <i>last</i>, always defines
-    /// <c>launchOptions.chromiumSandbox</c> and always overwrites the config
-    /// file's value. <c>validateBrowserConfig</c>'s non-Linux
-    /// <c>chromiumSandbox = true</c> branch is therefore unreachable on this
-    /// path, which is why upstream's intent and upstream's behaviour disagree.
+    /// <see langword="false"/> … which is why upstream's intent and upstream's
+    /// behaviour disagree."</i> Upstream deleted the normaliser that produced
+    /// that disagreement
+    /// ([microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)),
+    /// and the config key now works. Measured on that review: with the key
+    /// alone and no flag, <b>0</b> of the live browser's processes carried
+    /// <c>--no-sandbox</c>, against <b>6</b> on the previous pin.
     /// </para>
     /// <para>
-    /// <b>Only the browser's own command line proves this.</b> The config key
-    /// parses, validates, and is discarded — a test that asserts on what we
-    /// wrote asserts on nothing.
+    /// <b>What did not change is what this constant is for.</b> Re-measured
+    /// 2026-08-16 and re-confirmed by the whole-slice arm on 2026-09-14: with
+    /// this flag, <c>--no-sandbox</c> is absent from the browser and from every
+    /// one of its children. <b>The flag stays on the command line and the
+    /// generator still omits the key</b> — the sandbox now rests on an explicit
+    /// argument <i>and</i> on upstream's default agreeing with it, rather than
+    /// on the default alone. Moving it into the config file would make this
+    /// product's security posture depend on a default that has just been
+    /// measured to move, which is a decision rather than a tidy-up and has not
+    /// been taken.
+    /// </para>
+    /// <para>
+    /// <b>Only the browser's own command line proves any of this.</b> A test
+    /// that asserts on what we wrote asserts on nothing — which is precisely
+    /// how the upstream change was caught: by
+    /// <c>SandboxFlagTests</c> reading a live Chromium, not by a changelog.
     /// </para>
     /// </remarks>
     public const string SandboxFlag = "--sandbox";

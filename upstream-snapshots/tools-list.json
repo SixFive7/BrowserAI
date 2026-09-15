@@ -3,13 +3,13 @@
   "_regenerate": "pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept",
   "_before_you_accept_a_change": "UPSTREAM-REVIEW.md. Accepting a diff here is adopting an upstream version.",
   "resolvedFrom": {
-    "@playwright/mcp": "0.0.79",
-    "playwright-core": "1.63.0-alpha-2026-08-05",
-    "node": "v24.20.0"
+    "@playwright/mcp": "0.0.80",
+    "playwright-core": "1.63.0-alpha-2026-08-31",
+    "node": "v24.21.0"
   },
   "serverInfo": {
     "name": "Playwright",
-    "version": "1.63.0-alpha-2026-08-05"
+    "version": "1.63.0-alpha-2026-08-31"
   },
   "serverCapabilities": {
     "tools": {}
@@ -24,8 +24,8 @@
     }
   },
   "counts": {
-    "internalRegistry": 78,
-    "exposedMaximum": 69,
+    "internalRegistry": 80,
+    "exposedMaximum": 71,
     "defaultSurface": 24,
     "skillOnly": 9
   },
@@ -102,6 +102,8 @@
       "browser_highlight",
       "browser_hide_highlight",
       "browser_annotate",
+      "browser_start_recording",
+      "browser_stop_recording",
       "browser_start_tracing",
       "browser_stop_tracing",
       "browser_start_video",
@@ -1276,6 +1278,38 @@
       },
       "annotations": {
         "title": "Save as PDF",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "browser_start_recording",
+      "description": "Start recording actions that the user performs in the browser as Playwright code. Use it when the user wants to demonstrate a flow manually. Call browser_stop_recording when the user says they are done to retrieve the recorded actions.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "title": "Start recording user actions",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "browser_stop_recording",
+      "description": "Stop the recording started with browser_start_recording and return the recorded actions as Playwright code.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "title": "Stop recording user actions",
         "readOnlyHint": true,
         "destructiveHint": false,
         "openWorldHint": true

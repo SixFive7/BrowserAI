@@ -187,6 +187,49 @@ separate from .NET's**, and can fail *before* the managed app exists: before
 > `IsWow64Process2` is now dynamically loaded with an error path. Shipped binaries
 > are MinOS 6.0, 32-bit PE32 GUI; no `vpk pack` option sets `os_min_version`.
 
+## Two installs of one app id share one uninstall key — measured 2026-09-14
+
+**Measured 2026-09-14 @ Velopack 1.2.0**, on this machine, by accident. The app
+id is `BrowserAI`, and Velopack writes **one** Add/Remove Programs entry per id
+per user:
+
+```
+HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI
+```
+
+**The key is named for the id and not for the location.** A probe installed a
+second BrowserAI into `C:\Users\jori\AppData\Local\BrowserAI-probe-ed175a83`
+with `--installto`, and the entry that had pointed at the release candidate in
+`AppData\Local\BrowserAI-rc` since 2026-09-06 — `InstallLocation`,
+`DisplayIcon`, `UninstallString` and `QuietUninstallString` all naming that root
+— was rewritten to point at the probe. **Then the probe's uninstall DELETED the
+key**, and with it the only Add/Remove entry the release candidate had ever had.
+The probe had exported the key first and restored it byte-identical afterwards,
+so nothing was actually lost; the export had been taken as a precaution against
+a different risk, and this is the one it caught. Evidence:
+`.work/2026-09-14-firstrun/arp-before.reg`, `arp-after.reg` — identical after
+the restore — and `probe-root.txt`.
+
+⚠️ **So two installs of one app id per user are not a supported shape**, and
+nothing in the installer says so. `--installto` changes where the files land and
+nothing else: the id is a global name in Velopack's model, the second install
+does not notice that the name is taken, and the *first* uninstall to run removes
+the entry for both. The files under the other root are untouched — what is lost
+is the machine's only record of how to remove them.
+
+**What is NOT affected, and the distinction matters.** The update lane preserves
+the id by construction, so install-then-update is one install throughout and
+never meets this. What meets it is exactly what a maintainer does when testing a
+release candidate beside a real install, and what a user does if they ever
+install a second copy somewhere else.
+
+**How to re-establish.** Export the key above. Install a second copy with
+`--installto <scratch>`, re-read it — `InstallLocation` will name the scratch
+root — and then uninstall the second copy and ask for the key again: it is gone.
+Restore from the export. **Take the export first and verify the restore by
+hashing both**: without it this measurement removes a real install's uninstall
+entry, and the measurement is the damage. `[FLOATS]`
+
 ## The restart handover race, and why `Update.exe` is the answer
 
 Read 2026-08-16 from the application-restart notes of a shipping in-house
@@ -282,13 +325,30 @@ two versions, then install the first `Setup.exe` with
 feed directory. **Never install into `%LocalAppData%\BrowserAI`** — see the
 repair-install finding above.
 
-> ⚠️ `[STALE]` **A re-measurement of this whole set is OWED as of 2026-08-27 and
-> HAS NOT BEEN RUN.** The [Node upstream review](../../upstream-review.json) of that day
-> adopted **v24.19.0 → v24.20.0**, and `node.exe` grew **92,825,416 → 93,381,448
+> ⚠️ `[STALE]` **A re-measurement of this whole set is OWED as of 2026-08-27,
+> was OWED AGAIN on 2026-09-14, and HAS NOT BEEN RUN either time.** The
+> [Node upstream review](../../upstream-review.json) of 2026-08-27 adopted
+> **v24.19.0 → v24.20.0**, and `node.exe` grew **92,825,416 → 93,381,448
 > bytes**, `+556,032`. That is precisely the trigger
 > [row 85](../re-verification.md) names — *"Node moves (it is 92,825,416 b of
 > 130,434,486)"* — so every figure below that includes the payload is now a
 > number measured against a payload this repository no longer builds.
+>
+> **The 2026-09-14 review moved it a second time, and moved the other half of
+> the payload too.** Adopting **v24.20.0 → v24.21.0** with
+> **`@playwright/mcp` 0.0.79 → 0.0.80** took `node.exe` to **93,580,104 bytes**
+> (`+198,656` on the day, `+754,688` since the figures below were taken) and the
+> `payload\mcp` tree the other way, **18,997,245 → 18,623,990** (`-373,255`) —
+> both read off `payload/payload.json`, which the payload build writes from the
+> files it just produced. The published `BrowserAI.exe` is **19,186,688 bytes**
+> against the **17,853,952** recorded below, which is a third input moving. **So
+> the gap is now three-sided and wider, not narrower**, and the table below is
+> further from true than when it was first marked.
+>
+> **Still not one figure has been adjusted, and the arithmetic is even less
+> available than it was**: the two payload halves moved in *opposite*
+> directions, so even a reader tempted to add a delta has no single delta to
+> add.
 >
 > **Not one of them has been adjusted, and none may be.** The new shipped total
 > is not 130,434,486 plus 556,032: `vpk` recompresses, the delta is computed

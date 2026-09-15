@@ -16,19 +16,38 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The config key reads fine and does nothing.</b> Upstream's
-/// <c>validateBrowserConfig</c> intends <c>chromiumSandbox = true</c> on
-/// non-Linux, and the browser still runs <c>--no-sandbox</c> — upstream
-/// behaviour contradicting upstream intent, which means the default posture is
-/// unsandboxed and a config key is not a fix. Only the CLI flag works.
+/// ⚠️ <b>Corrected 2026-09-14 @ <c>playwright-core</c>
+/// 1.63.0-alpha-2026-08-31. Upstream has fixed it, and this test is how that
+/// was found.</b> <i>Previously: "<b>The config key reads fine and does
+/// nothing.</b> Upstream's <c>validateBrowserConfig</c> intends
+/// <c>chromiumSandbox = true</c> on non-Linux, and the browser still runs
+/// <c>--no-sandbox</c> — upstream behaviour contradicting upstream intent,
+/// which means the default posture is unsandboxed and a config key is not a
+/// fix. Only the CLI flag works."</i> The MCP CLI's action stage used to
+/// normalise its own option with
+/// <c>options.sandbox = options.sandbox === true ? void 0 : false</c> before
+/// anything else ran, so an absent <c>--sandbox</c> became an explicit
+/// <c>false</c> that outranked the config file; that line is <b>gone</b> from
+/// the rolled bundle, and <c>chromiumSandbox: true</c> in a config file is now
+/// honoured with no flag at all.
 /// </para>
 /// <para>
-/// <b>Both arms are needed, and the second is the one that ages.</b> The first
-/// asserts what BrowserAI ships. The second asserts that the upstream defect is
-/// still there, so the day upstream fixes it this test goes red and the flag
-/// stops being load-bearing on purpose rather than by accident. Without it,
-/// "we pass <c>--sandbox</c>" would keep passing forever whether or not it was
-/// still the only thing that worked.
+/// <b>Both arms are needed, and the second is the one that ages — it aged.</b>
+/// The first asserts what BrowserAI ships. The second used to assert that the
+/// upstream defect was still there, so that the day upstream fixed it this test
+/// would go red and the flag would stop being load-bearing on purpose rather
+/// than by accident. <b>That is exactly what happened</b>, on the
+/// 0.0.79 → 0.0.80 review, and the arm now asserts the fixed behaviour so that
+/// a regression the other way is equally loud.
+/// </para>
+/// <para>
+/// ⚠️ <b>BrowserAI's own behaviour did not change and was deliberately left
+/// alone.</b> <see cref="ChildLaunch.SandboxFlag"/> still goes on the command
+/// line and the generator still omits the key, which the first arm proves
+/// unchanged — and that is now belt and braces rather than the only thing that
+/// works. Dropping the flag on the strength of upstream's new default is a
+/// decision nobody has taken: it would make the sandbox depend on a default
+/// that has just been shown to move.
 /// </para>
 /// </remarks>
 internal sealed class SandboxFlagTests
@@ -86,7 +105,7 @@ internal sealed class SandboxFlagTests
     }
 
     [Test]
-    public async Task TheConfigKeyIsStillDiscardedByUpstream()
+    public async Task TheConfigKeyIsHonouredByUpstreamNow()
     {
         SuiteEnvironment.RequireRepositoryPayload();
 
@@ -140,14 +159,33 @@ internal sealed class SandboxFlagTests
 
         await Assert.That((bool?)navigate["result"]?["isError"] is true).IsFalse();
 
-        var unsandboxed = client.JobProcessIds()
+        var browserProcesses = client.JobProcessIds()
             .Where(processId => ProcessCommandLine.ImagePathOf(processId) is { } path
                 && path.StartsWith(BrowserAiPaths.BrowsersDirectory, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // ⚠️ THE NON-VACUOUSNESS GUARD IS NEW AND IS NOT TIDINESS. While this
+        // arm asserted `unsandboxed > 0`, a browser that never started failed it
+        // for free. Asserting zero inverts that: with no browser running,
+        // "nothing carries --no-sandbox" is true of nothing at all, and the arm
+        // would report the fix it is looking for on a machine where the
+        // navigate silently did nothing.
+        await Assert.That(browserProcesses.Count).IsGreaterThan(0);
+
+        var unsandboxed = browserProcesses
             .Count(processId => ProcessCommandLine.Of(processId)?.Contains(NoSandbox, StringComparison.Ordinal) is true);
 
-        // Still discarded. If this ever returns zero, upstream has fixed it and
-        // the note in kb/playwright/configuration.md is the thing to correct.
-        await Assert.That(unsandboxed).IsGreaterThan(0);
+        // ⚠️ Corrected 2026-09-14 @ playwright-core 1.63.0-alpha-2026-08-31
+        // (previously `await Assert.That(unsandboxed).IsGreaterThan(0)`, with
+        // "Still discarded. If this ever returns zero, upstream has fixed it and
+        // the note in kb/playwright/configuration.md is the thing to correct").
+        // It returned zero on the 0.0.79 -> 0.0.80 review -- 0 of the browser's
+        // processes carried --no-sandbox with the config key alone and no flag --
+        // so upstream HAS fixed it, the kb note has been corrected, and the
+        // assertion now reads the other way. A return to the old behaviour is
+        // red here rather than quiet, which is the same property the arm always
+        // had, pointed at the fact that is now true.
+        await Assert.That(unsandboxed).IsEqualTo(0);
     }
 
     /// <summary>

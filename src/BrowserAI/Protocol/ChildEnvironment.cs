@@ -12,12 +12,31 @@ namespace BrowserAI.Protocol;
 /// <remarks>
 /// <para>
 /// <b>It has to be an allowlist rather than a strip-list.</b> Upstream reads
-/// <b>42</b> <c>PLAYWRIGHT_MCP_*</c> variables, two of them outside its own
+/// <b>43</b> <c>PLAYWRIGHT_MCP_*</c> variables, two of them outside its own
 /// config mapping, and the merge order is config file → environment → CLI — so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
 /// error anywhere. Naming what may pass makes the next variable upstream adds
 /// absent by default; naming what may not makes it present, and nothing says
 /// so.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-09-14 @ <c>playwright-core</c>
+/// 1.63.0-alpha-2026-08-31 (previously "<b>42</b> … variables").</b>
+/// <b>Re-measured rather than incremented</b>, with the old bundle as the
+/// positive control: distinct <c>PLAYWRIGHT_MCP_*</c> names read out of
+/// <c>coreBundle.js</c> came back <b>40 in the <c>e.PLAYWRIGHT_MCP_*</c> config
+/// mapping plus 2 outside it = 42</b> on 1.63.0-alpha-2026-08-05, which is
+/// exactly the figure this sentence carried, and <b>41 + 2 = 43</b> on the
+/// version that now ships. The one addition is <c>PLAYWRIGHT_MCP_CODEGEN</c>,
+/// inside the mapping; the two outside it are still
+/// <c>PLAYWRIGHT_MCP_PING_TIMEOUT_MS</c> and
+/// <c>PLAYWRIGHT_MCP_EXTENSION_TOKEN</c>. <b>Nothing here needed a code
+/// change, and that is the allowlist working rather than luck</b> — the new
+/// variable is absent from a child by construction because it was never named
+/// in <see cref="InheritedWhenSet"/>. It is deliberately <i>not</i> added to
+/// <see cref="Refused"/>: that list names the variables that redirect a
+/// decision the config generator already took, and the code-generation
+/// language for recorded actions is not one of them.
 /// </para>
 /// <para>
 /// <b><c>ProcessStartInfo.Environment</c> arrives pre-populated with the

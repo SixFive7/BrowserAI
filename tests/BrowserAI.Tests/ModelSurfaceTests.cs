@@ -352,9 +352,13 @@ internal sealed class ModelSurfaceTests
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
 
         // Not vacuous: the surface really is bigger than it was, and by exactly
-        // the ten. 58 was the advertised count on 2026-08-19.
+        // the ten. 58 was the advertised count on 2026-08-19, and that sentence
+        // stays true — what moves the base to 60 is @playwright/mcp 0.0.80,
+        // which added browser_start_recording and browser_stop_recording, both
+        // judged `allow` on 2026-09-15. The ten are still the ten: the addend is
+        // the capability grant, and the base is whatever upstream ships.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(58 + TheNewlyGrantedTen.Length);
+            .IsEqualTo(60 + TheNewlyGrantedTen.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
@@ -493,27 +497,37 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// <b>Both halves, because either one alone is the wrong fix.</b> Upstream's
     /// <c>browser_take_screenshot</c> description explains what <c>fullPage</c>
-    /// does and cannot know what it costs here — BrowserAI diverges before
-    /// <c>scaleImageToFitMessage</c>, so the unscaled image is what the model
-    /// receives. The instinctive repair is to append a sentence to that
-    /// description, and the append path was <b>deleted</b> on 2026-08-18 so that
-    /// every upstream description passes through byte for byte. So this asserts
-    /// the sentence is in the <c>instructions</c> <i>and</i> that the tool's own
-    /// description is still upstream's bytes: a future edit that moves it onto
-    /// the tool fails here rather than passing on the half it satisfied.
+    /// does and cannot know what it costs here — nothing downscales the image on
+    /// the way back, so what the page renders is what the model receives. The
+    /// instinctive repair is to append a sentence to that description, and the
+    /// append path was <b>deleted</b> on 2026-08-18 so that every upstream
+    /// description passes through byte for byte. So this asserts the sentence is
+    /// in the <c>instructions</c> <i>and</i> that the tool's own description is
+    /// still upstream's bytes: a future edit that moves it onto the tool fails
+    /// here rather than passing on the half it satisfied.
     /// </para>
     /// <para>
-    /// <b>Measured 2026-08-20, which is why the line exists at all.</b> A
-    /// viewport shot at the 1920x1080 default arrives as <b>2,691 visual
-    /// tokens</b>; <c>fullPage: true</c> over a 3,637 px document leaves as
-    /// 1920x3637 = <b>8,970</b>, and the API downscales that to its per-image
-    /// ceiling of <b>4,784</b>. Break-even is a document about 1,960 px tall, so
-    /// every full-page shot of a page long enough to want one costs the maximum.
+    /// ⚠️ <b>Re-measured 2026-09-14 and the required phrases changed with it.</b>
+    /// <i>Previously: "Measured 2026-08-20 … a viewport shot at the 1920x1080
+    /// default arrives as 2,691 visual tokens; <c>fullPage: true</c> over a
+    /// 3,637 px document leaves as 1920x3637 = 8,970, and the API downscales
+    /// that to its per-image ceiling of 4,784. Break-even is a document about
+    /// 1,960 px tall, so every full-page shot of a page long enough to want one
+    /// costs the maximum", with the phrases <c>maximum</c> and <c>ceiling</c>.</i>
+    /// Upstream deleted <c>scaleImageToFitMessage</c>, and a raw child measured
+    /// at three viewports, both page shapes and three encodings returned an
+    /// inline block <b>byte-identical to the file every time</b>, with bytes
+    /// following pixels and no ceiling anywhere — a <c>fullPage</c> shot of a
+    /// 20,016 px document came back at 1280x20016. The sentence that told a model
+    /// its image had been shrunk to a ceiling was therefore false in the
+    /// direction that costs money.
     /// </para>
     /// <para>
     /// <b>The phrases are asserted rather than the whole sentence.</b> Wording is
     /// the maintainer's to tune; what must survive a re-draft is that the model
-    /// is told the parameter's name and that the cost is a ceiling it reaches.
+    /// is told the parameter's name, that there is <b>no</b> ceiling, and that
+    /// <c>filename</c> is the way to pay nothing — which is the actionable half
+    /// and the half the old sentence never had.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -552,8 +566,8 @@ internal sealed class ModelSurfaceTests
     private static readonly string[] RequiredFullPageCostPhrases =
     [
         "'fullPage: true'",
-        "maximum",
-        "ceiling",
+        "no ceiling",
+        "'filename'",
     ];
 
     [Test]

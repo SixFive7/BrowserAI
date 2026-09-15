@@ -3,7 +3,7 @@
 
   "_the_test_entry_is_not_a_version": "TUnit is MTP-only. The MTP mode of 'dotnet test' is opted into here and nowhere else (.NET 10 SDK and later; Microsoft Learn, looked up 2026-08-16). Without it 'dotnet test' runs the VSTest path and errors out against an MTP v2 test project.",
 
-  "_provenance": "Floor recorded 2026-08-16 against the SDK installed on this machine (10.0.302, dotnet --list-sdks). Raising it is a decision; a machine with a newer SDK needs no change here, because rollForward already takes it.",
+  "_provenance": "Floor recorded 2026-08-16 against the SDK then installed on this machine. Raising it is a decision; a machine with a newer SDK needs no change here, because rollForward already takes it. Corrected 2026-09-14 (previously \"against the SDK installed on this machine (10.0.302, dotnet --list-sdks)\") -- that clause named the floor and the installed SDK as one number, and they have not been the same number since this machine moved on. Re-read 2026-09-14: `dotnet --list-sdks` reports 10.0.401 and nothing else, `dotnet --version` agrees, and the newest Microsoft.NETCore.App is 10.0.12. rollForward=latestMajor took it with no edit here, which is the property this entry exists to record -- and taking it is what re-resolved the Microsoft.Extensions / ILCompiler / ILLink family from 10.0.11 to 10.0.12. THE FLOOR BELOW IS DELIBERATELY UNMOVED: it is the version a machine must have at least, not the version this one happens to run, and raising it would refuse machines nothing has found a reason to refuse.",
 
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
 

@@ -243,8 +243,18 @@ internal sealed class UpstreamSnapshotTests
         // that survive are the two ends of the range this helper has to
         // reproduce -- upstream's default with nothing configured, and the whole
         // exposable surface with everything granted.
-        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(42);
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(69);
+        //
+        // ⚠️ Corrected 2026-09-14 @ playwright-core 1.63.0-alpha-2026-08-31
+        // (previously 42 and 69). RE-COUNTED OFF THE ACCEPTED SNAPSHOT RATHER
+        // THAN INCREMENTED, and the whole of the move is in one capability:
+        // `devtools` went 11 -> 13 when upstream added `browser_start_recording`
+        // and `browser_stop_recording`, and every other capability's count is
+        // unchanged to the tool. Both numbers here are properties of the
+        // SNAPSHOT and not of `tool-verdicts.json` -- they are what a
+        // fully-capable child exposes, before this product withholds anything --
+        // so they do not move again when those two tools are finally judged.
+        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(44);
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(71);
     }
 
     private static JsonDocument ReadToolsList() =>

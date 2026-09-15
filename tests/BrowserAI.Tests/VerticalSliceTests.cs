@@ -96,15 +96,21 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 68 of 69 is what DECISIONS records
+        // Stated as a number as well, because 70 of 71 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
-        // say so. *(Corrected 2026-08-20, previously 58 of 59.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 68);
+        // say so. *(Corrected 2026-09-15, previously 68 of 69 -- @playwright/mcp
+        // 0.0.80 added browser_start_recording and browser_stop_recording and
+        // both were judged `allow`; corrected 2026-08-20 before that, previously
+        // 58 of 59.)*
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 70);
 
         // ⚠️ And the withheld tool is absent from the REAL binary's real answer,
         // named individually. The list comparison above would also catch it, but
-        // only as one differing string among 74: this is the assertion that says
-        // what happened, and it is the off-the-wire half of the decision.
+        // only as one differing string in a list of 77: this is the assertion
+        // that says what happened, and it is the off-the-wire half of the
+        // decision. *(Corrected 2026-09-15, previously "among 74" -- the list is
+        // the 7 authored names plus the advertised upstream ones, which was 75
+        // when that number was written and is 77 now.)*
         await Assert.That(run.ToolNames).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
 
         // ⚠️ And the ten that arrived on 2026-08-20 are in the REAL binary's
@@ -288,25 +294,31 @@ internal sealed class VerticalSliceTests
             .IsEquivalentTo(new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A });
 
         // ⚠️ THE INLINE HALF IS UPSTREAM'S OWN IMAGE SINCE 2026-08-26, AND IT IS
-        // NOT THE FILE'S BYTES. *Corrected that day (previously "exactly one
-        // image block, and its bytes are the file's bytes — not merely the same
-        // length", asserting `inline.SequenceEqual(run.ScreenshotBytes)`).* That
-        // was true while BrowserAI produced the block itself, by reading the
-        // file back off disk, because it had taken upstream's own block away by
-        // always supplying a `filename`. It supplies none now, so the block is
-        // the one upstream sends — and upstream puts its bytes through
+        // THE FILE'S IMAGE AGAIN SINCE 2026-09-15 — for a different reason than
+        // it was before. *Corrected 2026-09-15 (previously "AND IT IS NOT THE
+        // FILE'S BYTES … upstream puts its bytes through
         // `scaleImageToFitMessage` first, which shrinks anything over 1,568 px
-        // on a side and re-encodes.
-        //
-        // **Measured here rather than assumed, because the divergence is the
-        // finding.** The two are different images and the difference is not the
-        // direction anybody guesses: at the 1920x1080 default the file is the
+        // on a side and re-encodes … at the 1920x1080 default the file is the
         // full capture and the inline block is scaled DOWN in pixels while being
         // several times LARGER in bytes — 9,379 on disk against 379,731 inline
-        // on 2026-08-26, because a re-encode is not Chromium's own encoder. So
-        // what is asserted is the property that survives: the block is a PNG,
-        // and it is within upstream's stated ceiling on both sides while the
-        // file is not.
+        // on 2026-08-26, because a re-encode is not Chromium's own encoder",
+        // asserting `Math.Max(inlineWidth, inlineHeight) <= 1568`; and corrected
+        // 2026-08-26 before that, previously asserting
+        // `inline.SequenceEqual(run.ScreenshotBytes)` because BrowserAI produced
+        // the block itself by reading the file back off disk.)*
+        //
+        // BrowserAI still supplies no `filename`, so the block is still the one
+        // upstream sends — what changed is upstream: `playwright-core`
+        // 1.63.0-alpha-2026-08-31 DELETED `scaleImageToFitMessage`, so there is
+        // no scaler left anywhere in the path and the block is the capture at
+        // its own size.
+        //
+        // **Measured here rather than assumed, because the sameness is now the
+        // finding.** The bound below WAS 1,568 and was watched red at exactly
+        // this line, receiving 1920 — which is the viewport, which is the point.
+        // What is asserted now is the viewport on both sides: the file is the
+        // capture and the block is the same capture, and neither has been
+        // touched on the way to the caller.
         var images = content.Where(block => (string?)block?["type"] is "image").ToList();
 
         await Assert.That(images.Count).IsEqualTo(1);
@@ -326,18 +338,21 @@ internal sealed class VerticalSliceTests
         await Assert.That(fileWidth).IsEqualTo(BrowserConfiguration.DefaultViewport.Width);
         await Assert.That(fileHeight).IsEqualTo(BrowserConfiguration.DefaultViewport.Height);
 
-        // The block is upstream's, inside upstream's own ceiling on both sides.
-        // ⚠️ 1,568 is UPSTREAM's constant and not one invented here — it is the
-        // bound `scaleImageToFitMessage` applies, and a change to it shows up as
-        // this assertion rather than as an image nobody compared.
-        await Assert.That(Math.Max(inlineWidth, inlineHeight)).IsLessThanOrEqualTo(1568);
+        // ⚠️ THE BLOCK IS THE VIEWPORT, and the dimensions are read from the
+        // PNG rather than taken from the argument that asked for them. The
+        // product constant is the bound — never a number written here — so a
+        // viewport default that moved would move this assertion with it, which
+        // is the property the old literal 1,568 could not have.
+        await Assert.That(inlineWidth).IsEqualTo(BrowserConfiguration.DefaultViewport.Width);
+        await Assert.That(inlineHeight).IsEqualTo(BrowserConfiguration.DefaultViewport.Height);
 
-        // Not vacuous: it really is a scaled version of the same capture rather
-        // than a placeholder — same aspect ratio to within a rounded pixel, and
-        // genuinely smaller than the file it stands for.
-        await Assert.That(inlineWidth).IsLessThan(fileWidth);
-        await Assert.That(Math.Abs(((double)inlineWidth / inlineHeight) - ((double)fileWidth / fileHeight)))
-            .IsLessThan(0.01);
+        // Not vacuous, and this is the stronger half: the block is not merely
+        // the same SIZE as the file, it is the same BYTES. Nothing re-encoded
+        // it, which is what "no scaler anywhere in the path" actually means and
+        // what a dimension check alone would let a re-encode walk past.
+        await Assert.That(inlineWidth).IsEqualTo(fileWidth);
+        await Assert.That(inlineHeight).IsEqualTo(fileHeight);
+        await Assert.That(inline).IsEquivalentTo(run.ScreenshotBytes);
 
         // ⚠️ AND NOTHING OF OURS IS IN THE ANSWER. *Corrected 2026-08-26
         // (previously "the note that names the file is still there, after the
