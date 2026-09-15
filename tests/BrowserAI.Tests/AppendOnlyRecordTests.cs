@@ -143,7 +143,7 @@ internal sealed partial class AppendOnlyRecordTests
     private static readonly Seal[] Sealed =
     [
         new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0"),
-        new("CHANGELOG.md#1.0.0", 281695, "1f465fe73c6e315638c2b87c8768c5e30b26b35257309cd436c23ef86498835c"),
+        new("CHANGELOG.md#1.0.0", 281709, "6ac6a8b636ca14f847aecc779d0c74a830899f17c7b09f21efa52264ab753114"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea"),

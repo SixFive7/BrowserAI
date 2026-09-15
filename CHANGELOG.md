@@ -39,10 +39,10 @@ release body; nothing else depends on it.
 ## [1.0.0] - 2026-09-15
 
 **BrowserAI is a Windows MCP server that gives an AI agent a real browser —
-Chromium or Firefox — and brings its own copy of everything that needs, so
-there is nothing to install alongside it.** This is the first
-production-worthy version. It replaces the build of the same number published
-on 2026-08-17, which was downloadable for a month, was never installed
+Chromium or Firefox — and brings its own copy of everything it needs, so there
+is nothing to install alongside it.** This is the first production-worthy
+version. It replaces the build of the same number published on 2026-08-17,
+which was downloadable for a month, is not known to have been installed
 anywhere but the maintainer's own machine, and did not exit when it had nobody
 to serve. The release holds two executables — `BrowserAI.Server.exe`, the MCP
 server your client starts, and `BrowserAI.exe`, a small configuration app that
