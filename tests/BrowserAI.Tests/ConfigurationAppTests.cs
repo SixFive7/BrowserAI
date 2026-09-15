@@ -392,6 +392,83 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
+    /// A folder that could not be turned into a path is not a cancel.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Three outcomes, because two of them used to be one.</b> The picker
+    /// answered <see langword="null"/> both when the person closed it and when
+    /// <c>SHGetPathFromIDListW</c> refused the chosen item — and the caller read
+    /// both as a cancel, so the second closed the picker, wrote nothing and said
+    /// nothing at all. The buffer was <c>MAX_PATH</c>, so any folder past 260
+    /// characters took that path. <i>Split 2026-09-16.</i>
+    /// </para>
+    /// <para>
+    /// <b>Over constructed inputs, because nothing here can open a modal
+    /// window.</b> <c>Decide</c> is the whole of what the picker makes of the two
+    /// shell answers, and the P/Invokes around it are the part no run can reach.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFolderThatCouldNotBeTurnedIntoAPathIsNotACancel()
+    {
+        // Nothing chosen: a cancel, with nothing to say about it.
+        await Assert.That(ShellInterop.Decide(chosen: false, resolved: false, null).Outcome)
+            .IsEqualTo(FolderPickOutcome.Cancelled);
+
+        // Chosen and resolved: the path, verbatim.
+        var picked = ShellInterop.Decide(chosen: true, resolved: true, @"C:\projects	hing");
+
+        await Assert.That(picked.Outcome).IsEqualTo(FolderPickOutcome.Picked);
+        await Assert.That(picked.Path).IsEqualTo(@"C:\projects	hing");
+        await Assert.That(picked.Reason).IsNull();
+
+        // Chosen and NOT resolved: a failure that carries a sentence, and never
+        // a cancel.
+        var broke = ShellInterop.Decide(chosen: true, resolved: false, null);
+
+        await Assert.That(broke.Outcome).IsEqualTo(FolderPickOutcome.Failed);
+        await Assert.That(broke.Path).IsNull();
+        await Assert.That(broke.Reason).IsNotNull();
+        await Assert.That(broke.Reason!).Contains("path");
+
+        // Chosen, reported as resolved, and empty: the same, because a folder
+        // with no path is not a folder anything can be written into.
+        var empty = ShellInterop.Decide(chosen: true, resolved: true, string.Empty);
+
+        await Assert.That(empty.Outcome).IsEqualTo(FolderPickOutcome.Failed);
+        await Assert.That(empty.Reason).IsNotNull();
+    }
+
+    /// <summary>
+    /// The host reports the window a modal child has to be owned by.
+    /// </summary>
+    /// <remarks>
+    /// <b>The value the folder picker is now given.</b> It is zero before
+    /// <c>TDN_DIALOG_CREATED</c> and after the dialog closes, and the window in
+    /// between — which is what makes
+    /// <see cref="HouseRuleTests.EveryFolderPickerIsOwnedByTheDialogThatOpenedIt"/>
+    /// a statement about a real value rather than about a spelling.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheHostReportsTheWindowAModalChildMustBeOwnedBy()
+    {
+        using var host = new TaskDialogHost(
+            () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
+            _ => ClickOutcome.Stay,
+            _ => { },
+            _ => { });
+
+        await Assert.That(host.Window).IsEqualTo(nint.Zero);
+
+        _ = host.Dispatch(4321, TaskDialogInterop.Notification.Created, 0, 0);
+
+        await Assert.That(host.Window).IsEqualTo((nint)4321);
+    }
+
+    /// <summary>
     /// A state with the given registration, and everything else read from this
     /// machine.
     /// </summary>

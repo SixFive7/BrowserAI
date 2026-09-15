@@ -303,9 +303,22 @@ internal sealed class ConfigurationSession(
 
     private ClickOutcome RegisterInProject()
     {
-        var folder = ShellInterop.PickFolder(0, "Choose the folder to register BrowserAI in. A .mcp.json is written at its root, to be committed with the project.");
+        // ⚠️ OWNED BY THE DIALOG. An unowned modal disables nothing, so the task
+        // dialog underneath stays live: its command links can be clicked while
+        // the picker is up, which re-enters this handler and can navigate the
+        // page out from under a modal child. The window is zero only before the
+        // dialog is created, which is before any command can arrive.
+        var picked = ShellInterop.PickFolder(
+            _host?.Window ?? 0,
+            "Choose the folder to register BrowserAI in. A .mcp.json is written at its root, to be committed with the project.");
 
-        if (folder is not { Length: > 0 })
+        if (picked.Outcome is FolderPickOutcome.Failed)
+        {
+            _note = picked.Reason;
+            return ClickOutcome.Rerender;
+        }
+
+        if (picked.Outcome is not FolderPickOutcome.Picked || picked.Path is not { Length: > 0 } folder)
         {
             return ClickOutcome.Stay;
         }

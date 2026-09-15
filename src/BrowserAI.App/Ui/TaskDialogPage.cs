@@ -81,7 +81,6 @@ internal sealed class TaskDialogHost : IDisposable
     private readonly List<nint> _allocated = [];
 
     private GCHandle _self;
-    private nint _window;
 
     /// <summary>Creates a host for one dialog.</summary>
     /// <param name="page">Produces the page to show, called again on every re-render.</param>
@@ -110,6 +109,19 @@ internal sealed class TaskDialogHost : IDisposable
         _onFailure = onFailure;
     }
 
+    /// <summary>
+    /// The dialog's window while it is up, and zero otherwise.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A modal child needs an owner and this is the only place that has
+    /// one.</b> A picker opened with a zero owner is not modal to this dialog:
+    /// the dialog's command links stay live underneath it, so a second click
+    /// re-enters the command handler and can navigate the page while a modal
+    /// child is on top of it. <i>Exposed 2026-09-16</i>, when the picker was
+    /// found to be passing zero because this was private.
+    /// </remarks>
+    public nint Window { get; private set; }
+
     /// <summary>Shows the dialog and returns when it closes.</summary>
     /// <returns>The <c>HRESULT</c> the entry point answered.</returns>
     public unsafe int Show()
@@ -127,7 +139,7 @@ internal sealed class TaskDialogHost : IDisposable
         }
         finally
         {
-            _window = 0;
+            Window = 0;
 
             if (_self.IsAllocated)
             {
@@ -155,7 +167,7 @@ internal sealed class TaskDialogHost : IDisposable
         // discarded record and no native memory at all.
         var page = _page();
 
-        if (_window is 0)
+        if (Window is 0)
         {
             return;
         }
@@ -176,7 +188,7 @@ internal sealed class TaskDialogHost : IDisposable
         try
         {
             Marshal.StructureToPtr(config, buffer, fDeleteOld: false);
-            _ = TaskDialogInterop.SendMessageW(_window, TaskDialogInterop.Message.NavigatePage, 0, buffer);
+            _ = TaskDialogInterop.SendMessageW(Window, TaskDialogInterop.Message.NavigatePage, 0, buffer);
         }
         finally
         {
@@ -195,7 +207,7 @@ internal sealed class TaskDialogHost : IDisposable
     {
         ArgumentNullException.ThrowIfNull(content);
 
-        if (_window is 0)
+        if (Window is 0)
         {
             return;
         }
@@ -205,7 +217,7 @@ internal sealed class TaskDialogHost : IDisposable
         try
         {
             _ = TaskDialogInterop.SendMessageW(
-                _window, TaskDialogInterop.Message.SetElementText, TaskDialogInterop.Element.Content, text);
+                Window, TaskDialogInterop.Message.SetElementText, TaskDialogInterop.Element.Content, text);
         }
         finally
         {
@@ -348,7 +360,7 @@ internal sealed class TaskDialogHost : IDisposable
         switch (notification)
         {
             case TaskDialogInterop.Notification.Created:
-                _window = window;
+                Window = window;
                 return TaskDialogInterop.Ok;
 
             case TaskDialogInterop.Notification.HyperlinkClicked:

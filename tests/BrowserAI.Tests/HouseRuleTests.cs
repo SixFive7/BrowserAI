@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
 
@@ -1792,6 +1793,147 @@ internal sealed partial class HouseRuleTests
             .Where(file => !Relative(file).StartsWith("upstream-snapshots", StringComparison.OrdinalIgnoreCase))
             .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
+
+    /// <summary>
+    /// The call this scan is about — through the type name, so the picker's own
+    /// declaration is not read as a call site that forgot its owner.
+    /// </summary>
+    private const string PickerCall = "ShellInterop.PickFolder(";
+
+    /// <summary>
+    /// Every folder picker this tree opens is owned by the dialog's own window.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A modal dialog with a zero owner is modal to nothing.</b>
+    /// <c>SHBrowseForFolderW</c> disables its owner while it is up; given zero
+    /// it disables nothing, so the task dialog underneath stays live. Its command
+    /// links can then be clicked while the picker is on top — which re-enters
+    /// <c>OnCommand</c>, and a <c>TDM_NAVIGATE_PAGE</c> issued from there
+    /// rebuilds the page out from under a modal child. It also means the picker
+    /// can end up behind the dialog, where a person cannot find it and the
+    /// application looks hung.
+    /// </para>
+    /// <para>
+    /// <b>A tree-as-text scan, because the defect is an ARGUMENT.</b> Nothing an
+    /// analyzer can express says <i>this parameter may not be a literal zero</i>,
+    /// and no test here can open a modal window to observe the consequence. What
+    /// is assertable is that the owner passed is the dialog's window, which is
+    /// what <c>TaskDialogHost.Window</c> exists for. <i>Added 2026-09-16, after
+    /// the call site was found passing <c>0</c> because that member was
+    /// private.</i>
+    /// </para>
+    /// <para>
+    /// <b>What it cannot see:</b> whether the window it names is the right one,
+    /// or whether it is zero at the moment of the call. It holds that the owner
+    /// is read from a dialog rather than written as a constant, which is the
+    /// assertable half.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryFolderPickerIsOwnedByTheDialogThatOpenedIt()
+    {
+        var offenders = new List<string>();
+        var sites = 0;
+
+        // ⚠️ src/ ONLY, like the raw-handle scan: the rule is about the product,
+        // and this file's own needle and its synthetic controls are literal call
+        // sites that would otherwise report themselves.
+        foreach (var file in RepositoryLayout.SourceAndScriptFiles.Where(
+            file => file.Extension is ".cs" && Relative(file).StartsWith("src", StringComparison.OrdinalIgnoreCase)))
+        {
+            var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
+
+            foreach (var (number, owner) in PickerOwners(lines))
+            {
+                sites++;
+
+                if (!owner.Contains("Window", StringComparison.Ordinal))
+                {
+                    offenders.Add(
+                        $"{Relative(file)}:{number.ToString(CultureInfo.InvariantCulture)}: the folder picker is opened with owner '{owner}',"
+                        + " which is not a dialog window — an unowned modal leaves the task dialog's command links live underneath it");
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // Not vacuous: there is a picker in this tree and it was read.
+        await Assert.That(sites).IsGreaterThan(0);
+
+        // ⚠️ THE CONTROLS, synthetic, in both directions. A scan whose needle
+        // stopped matching reports the tree clean and is indistinguishable from
+        // a tree that is clean, so the exact shape the call site carried until
+        // 2026-09-16 is planted here and must be reported.
+        string[] unowned = ["        var picked = " + PickerCall + "0, \"Choose a folder.\");"];
+
+        await Assert.That(PickerOwners(unowned).Count).IsEqualTo(1);
+        await Assert.That(PickerOwners(unowned)[0].Owner).IsEqualTo("0");
+
+        string[] owned = ["        var picked = " + PickerCall + "_host?.Window ?? 0, \"Choose a folder.\");"];
+
+        await Assert.That(PickerOwners(owned).Count).IsEqualTo(1);
+        await Assert.That(PickerOwners(owned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
+
+        // And the WRAPPED shape of each, which is what the real call site is.
+        string[] wrappedUnowned = ["        var picked = " + PickerCall, "            0,", "            \"Choose a folder.\");"];
+
+        await Assert.That(PickerOwners(wrappedUnowned).Count).IsEqualTo(1);
+        await Assert.That(PickerOwners(wrappedUnowned)[0].Owner).IsEqualTo("0");
+
+        string[] wrappedOwned = ["        var picked = " + PickerCall, "            _host?.Window ?? 0,", "            \"Choose a folder.\");"];
+
+        await Assert.That(PickerOwners(wrappedOwned).Count).IsEqualTo(1);
+        await Assert.That(PickerOwners(wrappedOwned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
+    }
+
+    /// <summary>How many lines of a wrapped call are read looking for its first argument.</summary>
+    private const int PickerArgumentLines = 4;
+
+    /// <summary>Every folder-picker call in some lines, and the owner each passes.</summary>
+    /// <remarks>
+    /// <b>The call is read across lines</b>, because the real one wraps: a
+    /// scanner that read only the line carrying the call would see an empty
+    /// first argument and report a perfectly owned call as unowned. That is not
+    /// hypothetical — it is what this answered the moment the fix made the call
+    /// three lines long.
+    /// </remarks>
+    /// <param name="lines">The file, as lines.</param>
+    /// <returns>The one-based line number and the first argument, verbatim.</returns>
+    private static List<(int Number, string Owner)> PickerOwners(string[] lines)
+    {
+        var found = new List<(int, string)>();
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var at = lines[index].IndexOf(PickerCall, StringComparison.Ordinal);
+
+            if (at < 0)
+            {
+                continue;
+            }
+
+            var rest = new StringBuilder(lines[index][(at + PickerCall.Length)..]);
+
+            for (var next = index + 1;
+                 next < lines.Length
+                     && next <= index + PickerArgumentLines
+                     && rest.ToString().IndexOf(',', StringComparison.Ordinal) < 0;
+                 next++)
+            {
+                _ = rest.Append(' ').Append(lines[next]);
+            }
+
+            var argument = rest.ToString();
+            var comma = argument.IndexOf(',', StringComparison.Ordinal);
+
+            found.Add((index + 1, (comma < 0 ? argument : argument[..comma]).Trim()));
+        }
+
+        return found;
+    }
 
     private static string Relative(FileInfo file) =>
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);

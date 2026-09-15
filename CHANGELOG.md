@@ -38,6 +38,22 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **The folder picker is owned by the dialog, and an unresolvable folder
+  is no longer a silent cancel.** Two defects in one button. The picker was
+  opened with a **zero owner**, because the dialog's window was private — so it
+  was modal to nothing: the task dialog's command links stayed live underneath
+  it, a second click re-entered the command handler, and a `TDM_NAVIGATE_PAGE`
+  from there rebuilds the page out from under a modal child. `TaskDialogHost`
+  exposes its window now and the picker is given it. Separately,
+  `SHGetPathFromIDListW` has **no length parameter** — it assumes `MAX_PATH` and
+  answers `FALSE` for anything longer — and the path was being written into the
+  same 260-character buffer the shell was given for the display name. The picker
+  then answered `null`, which the caller read as *cancelled*, so choosing a deep
+  folder closed the picker, wrote nothing and said nothing. The call is
+  `SHGetPathFromIDListEx` into a 32,768-character buffer, and the answer is three
+  states rather than a nullable string: picked, cancelled, or failed with a
+  sentence the dialog puts in its note.
+
 - 🐛 **A click that throws no longer takes the whole window with it.**
   Every action the configuration app offers runs inside the task dialog's
   `[UnmanagedCallersOnly]` callback, and **an exception out of one of those is a
