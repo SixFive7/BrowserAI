@@ -742,11 +742,25 @@ internal static class SuiteEnvironment
     /// The packed release this run can read, or <see langword="null"/>.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Deliberately not a search of <c>.work/</c>.</b> Only the release
     /// script's own output directory counts, because a package left behind by an
     /// older run predates whatever is being asserted about it — and a stale
     /// artefact that satisfies a notice check is the same shape of false green
     /// as the degraded run.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The name is composed from the pack id rather than typed —
+    /// 2026-09-15, and the literal it replaced had just gone stale.</b> The id
+    /// became <c>BrowserAI.app</c> that day (it is what Velopack derives the
+    /// install directory from), so <c>vpk</c> now writes
+    /// <c>BrowserAI.app-&lt;version&gt;-full.nupkg</c> and the old
+    /// <c>BrowserAI-*-full.nupkg</c> pattern would have matched **only packages
+    /// from the previous layout** — present on a machine that had packed one
+    /// before, absent on every machine that packs one after. That is the stale
+    /// artefact this remark already warned about, arriving through the file name
+    /// instead of through the directory.
+    /// </para>
     /// </remarks>
     /// <returns>The newest full package, or <see langword="null"/>.</returns>
     public static string? PackagedRelease()
@@ -756,10 +770,10 @@ internal static class SuiteEnvironment
             return File.Exists(named) ? named : null;
         }
 
-        var releases = new DirectoryInfo(Path.Combine(RepositoryLayout.Root.FullName, "Releases"));
+        var releases = new DirectoryInfo(ReleaseLayout.Directory);
 
         return releases.Exists
-            ? releases.EnumerateFiles("BrowserAI-*-full.nupkg", SearchOption.AllDirectories)
+            ? releases.EnumerateFiles($"{ReleaseLayout.PackId}-*-full.nupkg", SearchOption.AllDirectories)
                 .OrderByDescending(file => file.LastWriteTimeUtc)
                 .FirstOrDefault()?.FullName
             : null;
@@ -843,7 +857,7 @@ internal static class SuiteEnvironment
         SuiteCapability.Git => GitOracle.IsAvailable
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
             : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",
-        _ => PackagedRelease() ?? Path.Combine(RepositoryLayout.Root.FullName, "Releases", "BrowserAI-<version>-full.nupkg"),
+        _ => PackagedRelease() ?? Path.Combine(ReleaseLayout.Directory, $"{ReleaseLayout.PackId}-<version>-full.nupkg"),
     };
 
     private static string RemedyFor(SuiteCapability capability) => capability switch
