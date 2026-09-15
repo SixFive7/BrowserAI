@@ -80,7 +80,15 @@ namespace BrowserAI.Storage;
 internal sealed class SessionStore : IDisposable
 {
     /// <summary>The store's file name inside a session directory.</summary>
-    public const string DataFileName = "browserai.data";
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-09-15 (previously the literal itself).</b> The
+    /// literal is <see cref="Sessions.SessionLayout.DataFileName"/> and this is
+    /// an alias for it, for the reason
+    /// <see cref="LockFile.FileName"/> gives: the layout moved into
+    /// <c>BrowserAI.Core</c> and this layer did not, so the one spelling had to
+    /// move to the side that is linked rather than the side that links.
+    /// </remarks>
+    public const string DataFileName = Sessions.SessionLayout.DataFileName;
 
     /// <summary>
     /// The schema this build writes and the only one it reads.

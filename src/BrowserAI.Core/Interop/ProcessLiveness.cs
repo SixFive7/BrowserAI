@@ -216,7 +216,7 @@ internal static partial class ProcessLiveness
     /// <para>
     /// <b>Read once and used for two different things.</b>
     /// <see cref="ClientProcessName"/> turns it into a display string for
-    /// <c>browserai.lock</c>; <see cref="ClientLivenessWatcher"/> opens a handle on it
+    /// <c>browserai.lock</c>; <c>ClientLivenessWatcher</c> opens a handle on it
     /// so BrowserAI is told when the client goes. Neither matches a name, and
     /// neither terminates anything.
     /// </para>

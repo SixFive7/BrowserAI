@@ -38,7 +38,7 @@ namespace BrowserAI.Sessions;
 /// <c>browserai.data</c> — including, since the same day, the refusals that used
 /// to reach only the file. What the layout still provides is the half that is
 /// real from the moment a directory is claimed: every log record written while a
-/// lock is held carries the session, through <see cref="SessionLock"/>'s logging
+/// lock is held carries the session, through <c>SessionLock</c>'s logging
 /// scope.
 /// </para>
 /// </remarks>
@@ -57,9 +57,20 @@ internal static class SessionLayout
     /// 400 KB, with the name unbound for every one of those windows. They are
     /// two files now: this one says <i>who owns this directory</i> and is
     /// written once, and <see cref="DataFileName"/> says <i>what happened
-    /// here</i>. The name is <see cref="Storage.LockFile.FileName"/> rather
-    /// than a second literal, because two spellings of one file name is how a
-    /// prober and a holder come to look at different files.
+    /// here</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-09-15 (previously "the name is
+    /// <c>Storage.LockFile.FileName</c> rather than a second literal, because
+    /// two spellings of one file name is how a prober and a holder come to look
+    /// at different files").</b> The one-literal rule is unchanged and the
+    /// direction is reversed: the literal is <b>here</b> and
+    /// <c>Storage.LockFile.FileName</c> aliases it. This layout moved into
+    /// <c>BrowserAI.Core</c> so that the live-instance census can name a mutex
+    /// after an install root, and the storage layer stayed in the server, which
+    /// links the library rather than being linked by it. An alias pointing the
+    /// old way would have been a reference the compiler refuses. Still one
+    /// spelling; only its owner changed.
     /// </para>
     /// <para>
     /// <b>There is no compatibility read and no migration.</b> A directory
@@ -67,10 +78,10 @@ internal static class SessionLayout
     /// reason — see <see cref="OldFormatRefusal"/>.
     /// </para>
     /// </remarks>
-    public const string LockFileName = Storage.LockFile.FileName;
+    public const string LockFileName = "browserai.lock";
 
     /// <summary>Ours. Everything the session has said and done.</summary>
-    public const string DataFileName = Storage.SessionStore.DataFileName;
+    public const string DataFileName = "browserai.data";
 
     /// <summary>
     /// The record this build does not read, named so that meeting one is an
@@ -96,7 +107,7 @@ internal static class SessionLayout
     /// acquisition is in flight right now</i>, which is the difference between
     /// dropping an entry and keeping it.
     /// </remarks>
-    public const string NewLockFilePattern = Storage.LockFile.TemporaryFilePattern;
+    public const string NewLockFilePattern = $"{LockFileName}.new-*";
 
     /// <summary>
     /// Why a directory holding the old record is not a session this build can

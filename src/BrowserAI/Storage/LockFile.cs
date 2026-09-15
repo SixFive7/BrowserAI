@@ -53,7 +53,17 @@ namespace BrowserAI.Storage;
 internal static class LockFile
 {
     /// <summary>The lock file's name inside a session directory.</summary>
-    public const string FileName = "browserai.lock";
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-09-15 (previously the literal itself).</b> The
+    /// literal is <see cref="Sessions.SessionLayout.LockFileName"/> and this is
+    /// an alias for it. Still one spelling of the name, as it has been since
+    /// 2026-08-26; what changed is which side owns it. The layout moved into
+    /// <c>BrowserAI.Core</c> with the live-instance census that needs it, this
+    /// storage layer stayed in the server, and the server links the library
+    /// rather than the other way round — so the alias had to point this way or
+    /// not compile.
+    /// </remarks>
+    public const string FileName = Sessions.SessionLayout.LockFileName;
 
     /// <summary>
     /// What a temporary lock file being renamed into place is called.
@@ -63,7 +73,7 @@ internal static class LockFile
     /// an interrupted acquisition has something to match. It shares the prefix
     /// deliberately: a stray beside <see cref="FileName"/> reads as what it is.
     /// </remarks>
-    public const string TemporaryFilePattern = $"{FileName}.new-*";
+    public const string TemporaryFilePattern = Sessions.SessionLayout.NewLockFilePattern;
 
     /// <summary>The <c>processId</c> property of the holder record.</summary>
     private const string ProcessIdProperty = "processId";

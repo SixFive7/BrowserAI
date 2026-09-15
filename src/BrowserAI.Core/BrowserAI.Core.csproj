@@ -1,0 +1,123 @@
+<!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
+<!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    THE HALF BOTH EXECUTABLES NEED, AND NOTHING ELSE.
+
+    BrowserAI ships as two binaries from 2026-09-15: BrowserAI.Server.exe, the
+    MCP server a client starts over stdio, and BrowserAI.exe, the configuration
+    app the installer launches and the Start Menu points at. What they share is
+    not "utilities": it is one data root, one registration with the Claude Code
+    CLI, one update feed and one live-instance census. Two copies of any of
+    those would be two answers to the same question, and the first one to drift
+    would be the one nobody was reading.
+
+    WHERE THE CUT IS. This library owns the paths, the registration, the
+    updates, the log and the Win32 pieces those three need. It does NOT own the
+    proxy, the sessions, the browsers or the storage layer: none of that is
+    reachable from a configuration dialog, and linking it into a second AOT
+    binary would pay for the SQLite static library, the MCP SDK and the whole
+    session machinery to compile a window that shows a version number.
+
+    TWO EDGES HAD TO BE TURNED AROUND to make the cut acyclic, and both are
+    recorded where they landed rather than here: LocalAppDataPaths now owns the
+    name of the data-root environment variable (Program aliases it), and
+    Sessions.SessionLayout now owns the session file names (Storage.LockFile and
+    Storage.SessionStore alias them). Nothing else changed shape.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <RootNamespace>BrowserAI</RootNamespace>
+    <AssemblyName>BrowserAI.Core</AssemblyName>
+    <!--
+      Required by [LibraryImport]. The source generator emits unsafe marshalling
+      stubs and the build fails with SYSLIB1062 without this. Not a licence to
+      hand-write unsafe code: every use is a P/Invoke declaration under Interop\.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Version">
+    <!--
+      THE VERSION IS DERIVED FROM THE NEAREST GIT TAG AND IS TYPED NOWHERE.
+
+      MinVer reads `git describe` at build time, exactly as it does for the two
+      executables. It is declared here as well as there because BuildVersion
+      reads the informational version off THIS assembly, so a library with no
+      MinVer would report 1.0.0 to both exes forever while they each carried the
+      real number.
+    -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Native compilation">
+    <!--
+      A LIBRARY CANNOT SET PublishAot; it sets IsAotCompatible, which turns on
+      the same three analyzers and makes an AOT-hostile call a build error HERE
+      rather than a publish error in whichever executable happens to reach it
+      first. Both consumers publish NativeAOT, so anything this library cannot
+      do under ILC is a defect of this library.
+    -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <!-- ProcessLog's stderr sink. The console provider writes to stderr here,
+         never stdout: that channel belongs to JSON-RPC and the banned-symbol
+         list refuses System.Console outright. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Velopack" />
+    <!-- Build-time only. PrivateAssets="all" keeps it out of the dependency
+         graph entirely, so nothing ships and ILC never sees it. -->
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The product's own bans, read by the same analyzer that reads the
+         repository-wide file Directory.Build.props supplies. The stdout ban has
+         to reach this assembly too: it is linked into the server, whose stdout
+         is the JSON-RPC channel. -->
+    <AdditionalFiles Include="..\BrowserAI\BannedSymbols.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Everything here is internal. The two executables and the suite see it
+      through these grants rather than by promoting a hundred types to public:
+      the cut was made to stop duplication, not to publish an API, and a public
+      surface would owe XML documentation and semantic versioning to nobody.
+    -->
+    <InternalsVisibleTo Include="BrowserAI" />
+    <InternalsVisibleTo Include="BrowserAI.App" />
+    <InternalsVisibleTo Include="BrowserAI.Tests" />
+    <InternalsVisibleTo Include="BrowserAI.TestProbe" />
+  </ItemGroup>
+
+  <!--
+    A BUILD THAT DOES NOT KNOW WHAT IT IS MUST NOT PRODUCE A BINARY.
+
+    The same refusal the executables carry, for the same reason and with the
+    same remedy: this assembly is where BuildVersion reads the number from, so
+    a 0.0.0 here would be a 0.0.0 reported by both exes no matter what their own
+    MinVer found.
+
+    (No double hyphen anywhere in this comment: one makes MSBuild fail to load
+    the file, and the error then names a different project entirely.)
+  -->
+  <Target Name="RefuseAVersionDerivedFromNoTag" AfterTargets="MinVer">
+    <Error Condition="'$(MinVerVersion)' == ''"
+           Text="MinVer produced no version at all, so this build cannot say what it is. Check that the MinVer package restored and that this project is inside a git working tree." />
+    <Error Condition="$(MinVerVersion.StartsWith('0.0.0'))"
+           Text="This build derived the version $(MinVerVersion) from git, and a version beginning 0.0.0 means MinVer found no '$(MinVerTagPrefix)*' tag to count from. A binary that does not know what it is cannot be rolled back to or bisected against, so the build is refused rather than stamped. Fetch the tags: 'git fetch --tags', or on a CI checkout set fetch-depth to 0 (a shallow clone carries no tags and fails exactly here)." />
+  </Target>
+
+</Project>

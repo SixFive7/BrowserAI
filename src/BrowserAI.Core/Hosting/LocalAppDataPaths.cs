@@ -71,7 +71,43 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
         FolderName);
 
     /// <summary>
-    /// The data root <see cref="Program.AppRootVariable"/> names, or
+    /// The one environment variable BrowserAI reads about <b>itself</b>, and it
+    /// moves the <b>data</b> root.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It exists for one thing the suite otherwise cannot do: an empty
+    /// browsers root.</b> First-run provisioning can only be proven against a
+    /// root where nothing has ever been installed, and the alternative — deleting
+    /// the developer's own <c>%LocalAppData%\BrowserAI\browsers</c> mid-suite —
+    /// would destroy 430 MiB and break every other browser test running beside
+    /// it. <see cref="IAppPaths"/> deliberately does not resolve relative to the
+    /// binary, so moving the executable does not move the root either.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Moved here 2026-09-15 from <c>Program.AppRootVariable</c>, which is
+    /// now an alias for it.</b> The move is what makes the cut to
+    /// <c>BrowserAI.Core</c> acyclic: this class reads the variable and lives in
+    /// the library, and <c>Program</c> lives in an executable that the library
+    /// may not see. There are now <b>two</b> executables that resolve a data
+    /// root — the server and the configuration app — so a constant owned by
+    /// either one of them would have been owned by the wrong one.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Narrowed 2026-09-15 (previously "it moves the whole app root").</b>
+    /// It moves the data root and <b>never the install root</b>, which is
+    /// Velopack's to choose and which this process only ever reads.
+    /// </para>
+    /// <para>
+    /// <b>Never silent.</b> A BrowserAI running against a root nobody expects
+    /// would look exactly like one that lost its sessions, so an override is
+    /// logged at Warning on the way past.
+    /// </para>
+    /// </remarks>
+    public const string RootVariable = "BROWSERAI_ROOT";
+
+    /// <summary>
+    /// The data root <see cref="RootVariable"/> names, or
     /// <see langword="null"/> when it names nothing usable.
     /// </summary>
     /// <remarks>
@@ -94,7 +130,7 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// </remarks>
     /// <returns>The override, or <see langword="null"/>.</returns>
     public static string? Overridden() =>
-        Environment.GetEnvironmentVariable(Program.AppRootVariable) is { Length: > 0 } value
+        Environment.GetEnvironmentVariable(RootVariable) is { Length: > 0 } value
         && Path.IsPathFullyQualified(value)
             ? value
             : null;

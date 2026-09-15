@@ -89,7 +89,7 @@ namespace BrowserAI.Runtime;
 /// concurrent processes might still be reading, which is why it refuses while
 /// any session has a live browser — and refusing is not the same as being safe,
 /// because a leaked handle from a crashed run answers to nobody.
-/// <see cref="InstanceDirectory"/> is the third: the same just-held-a-browser
+/// <c>InstanceDirectory</c> is the third: the same just-held-a-browser
 /// race, on a path taken at every clean exit and every startup sweep.
 /// </para>
 /// <para>
@@ -97,7 +97,7 @@ namespace BrowserAI.Runtime;
 /// arrives with the update path").</b> It shipped and it never
 /// arrived, because the swap is <c>force_stop_package</c> — upstream's own
 /// binary, which does not call into this. The third caller was
-/// <see cref="InstanceDirectory"/> all along, and it was using the framework
+/// <c>InstanceDirectory</c> all along, and it was using the framework
 /// primitive: found by [the plan's final audit](../../../TODO.md), which is exactly
 /// the outcome the paragraph below predicts.
 /// </para>

@@ -14,7 +14,7 @@ namespace BrowserAI.Hosting;
 /// <b>Why a shared root is unsafe, measured rather than reasoned.</b>
 /// <c>%LocalAppData%</c> gives every Windows user their own browsers directory,
 /// session index and log. ⚠️ <b>Corrected 2026-09-15 (previously
-/// "<see cref="Program.AppRootVariable"/> <b>and the installer's install-to
+/// "<see cref="LocalAppDataPaths.RootVariable"/> <b>and the installer's install-to
 /// flag</b> both defeat that", and the list above also named the <c>live\</c>
 /// marker directory).</b> The installer's flag cannot defeat it any more: the
 /// data root is a constant and the flag moves the install root, which this
@@ -133,7 +133,7 @@ internal static class InstallRootScope
     /// there ends it, because a process that may not keep its browsers where it
     /// resolved them has nothing to say about where its binary lives. Only then
     /// is the install root judged, and only when there is one: an uninstalled
-    /// BrowserAI has no install root, and <see cref="Program"/> passes
+    /// BrowserAI has no install root, and <c>Program</c> passes
     /// <see langword="null"/> rather than substituting the data root — which
     /// would judge the same path twice and produce a second refusal saying the
     /// same thing in the wrong words.
@@ -378,8 +378,8 @@ internal static class InstallRootScope
         + "A process that never joined creates no marker, so it is invisible to the other user's census; that census answers 'nothing else is running', and applying an update then terminates every process under the install root, including the other user's browsers and whatever they were driving. "
         + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
         + (which is JudgedRoot.Install
-            ? $"Recovery: install BrowserAI inside '{profile}' — the default location, or 'Setup.exe --installto <a directory under that profile>'. {Program.AppRootVariable} cannot help here: it moves the data root and never the install root. "
-            : $"Recovery: clear {Program.AppRootVariable} and start BrowserAI again — with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
+            ? $"Recovery: install BrowserAI inside '{profile}' — the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
+            : $"Recovery: clear {LocalAppDataPaths.RootVariable} and start BrowserAI again — with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
         + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
 }
 

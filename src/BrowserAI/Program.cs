@@ -57,6 +57,15 @@ internal static class Program
     /// differently would be offering to delete a directory nobody used.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-09-15 (previously the declaration itself).</b> The
+    /// literal moved to <see cref="LocalAppDataPaths.RootVariable"/> and this is
+    /// an alias for it. Two executables resolve a data root now — the server and
+    /// the configuration app — and the class that reads the variable lives in
+    /// the library both of them link, which an executable's own constant cannot.
+    /// The name is unchanged, and every existing reader still compiles against
+    /// this spelling.
+    /// </para>
+    /// <para>
     /// <b>Never silent.</b> A BrowserAI running against a root nobody expects
     /// would look exactly like one that lost its sessions, so an override is
     /// logged at Warning on the way past. A relative value is ignored rather than
@@ -64,7 +73,7 @@ internal static class Program
     /// is refused: it would land somewhere nobody chose and report nothing.
     /// </para>
     /// </remarks>
-    public const string AppRootVariable = "BROWSERAI_ROOT";
+    public const string AppRootVariable = LocalAppDataPaths.RootVariable;
 
     /// <summary>
     /// Runs one stray sweep synchronously and exits, instead of serving stdio.

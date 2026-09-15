@@ -25,7 +25,7 @@ namespace BrowserAI.Registration;
 /// </para>
 /// <para>
 /// <b>It is <see cref="Process"/> rather than
-/// <see cref="Interop.JobLauncher"/>, and the difference is deliberate.</b> The
+/// <c>Interop.JobLauncher</c>, and the difference is deliberate.</b> The
 /// job object exists so that a long-lived child and every grandchild it spawns
 /// die with BrowserAI. This process lives for ~650 ms, spawns nothing, and runs
 /// inside a hook that is about to exit — and

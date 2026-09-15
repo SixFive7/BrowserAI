@@ -148,7 +148,7 @@ internal static class LockScopes
     /// ⚠️ <b>And it was smaller than a wait taken INSIDE it, which is incoherent
     /// on its face.</b> <c>SessionLock.OpenHeld</c> and
     /// <c>SessionLock.ReadRecord</c> both run under this gate and both go through
-    /// <see cref="RenameWindow"/>, whose budget has been <b>30 s</b> since
+    /// <c>RenameWindow</c>, whose budget has been <b>30 s</b> since
     /// 2026-08-18. One entitled reader legitimately waiting out a rename window
     /// therefore held this gate six times longer than its own timeout, turning
     /// every peer's correct <i>"held by PID n"</i> into a wrong <i>"something is
@@ -187,7 +187,7 @@ internal static class LockScopes
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 to one hundred and twenty seconds (previously
-    /// sixty, described as "twice <see cref="RenameWindow.Budget"/>").</b> Twice
+    /// sixty, described as "twice <c>RenameWindow.Budget</c>").</b> Twice
     /// the budget was the wrong comparison, and it was the comparison the test
     /// encoded: <b>one hold of this gate contains
     /// <see cref="RenameWindowWaitsInsideTheGate"/> of them in series</b>, so the
@@ -203,7 +203,7 @@ internal static class LockScopes
     public static TimeSpan PerDirectoryGate => TimeSpan.FromSeconds(120);
 
     /// <summary>
-    /// How many <see cref="RenameWindow.Budget"/>-bounded waits one hold of
+    /// How many <c>RenameWindow.Budget</c>-bounded waits one hold of
     /// <see cref="PerDirectoryGate"/> can contain, <b>in series</b>.
     /// </summary>
     /// <remarks>
@@ -251,7 +251,7 @@ internal static class LockScopes
     /// <para>
     /// <b>Five seconds is right HERE and was wrong there, and the difference is
     /// the section, not the taste.</b> The per-directory gate is held across a
-    /// durable write, a rename, a re-open and a <see cref="RenameWindow"/> wait;
+    /// durable write, a rename, a re-open and a <c>RenameWindow</c> wait;
     /// this one is held across creating one <c>.live</c> file, or one directory
     /// enumeration. A hundred processes starting at once queue about 200 ms here
     /// against 3.3 s there. And the consequences differ: expiring here means

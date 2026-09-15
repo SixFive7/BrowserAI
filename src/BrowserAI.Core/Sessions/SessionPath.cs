@@ -13,7 +13,7 @@ namespace BrowserAI.Sessions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>This is the one identity chain, and <see cref="CanonicalPath"/> is the one
+/// <b>This is the one identity chain, and <c>CanonicalPath</c> is the one
 /// canonicalisation function in front of it.</b> The mutex name, the lock file,
 /// the data file and the session index all key on the same directory, and if any
 /// two of them normalise differently the same directory quietly acquires two
@@ -43,7 +43,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-26 (previously "keeps the caller's own casing").</b>
 /// The casing it is handed is the <i>filesystem's</i> now, because
-/// <see cref="CanonicalPath"/> reads it back through
+/// <c>CanonicalPath</c> reads it back through
 /// <c>GetFinalPathNameByHandleW</c> — which reports every component as it is
 /// stored and the drive letter upper-case, always. Nothing hashed moves:
 /// <see cref="Key"/> case-folds, so the mutex, the index key and the lock file
@@ -96,7 +96,7 @@ internal sealed class SessionPath
     /// ⚠️ <b>A budget, not a ban on deep paths.</b> A caller may name a
     /// directory of any depth to <c>browserai_list</c>, which creates nothing and
     /// starts nothing — which is why this predicate lives on this type rather
-    /// than in <see cref="CanonicalPath"/>, beside the volume-root one and for
+    /// than in <c>CanonicalPath</c>, beside the volume-root one and for
     /// the same reason.
     /// </para>
     /// </remarks>
@@ -168,7 +168,7 @@ internal sealed class SessionPath
     public string DataFile { get; }
 
     /// <summary>
-    /// Every name a session derives from a directory <see cref="CanonicalPath"/>
+    /// Every name a session derives from a directory <c>CanonicalPath</c>
     /// has already answered for.
     /// </summary>
     /// <remarks>
@@ -198,7 +198,7 @@ internal sealed class SessionPath
     /// ⚠️ <b>Neither refusal carries a <c>paramName</c>, and that is deliberate
     /// — corrected 2026-08-26.</b> <c>SessionManager.Resolve</c> interpolates
     /// <c>failure.Message</c> straight into
-    /// <see cref="SessionErrors.DirectoryUnusable"/>, and
+    /// <c>SessionErrors.DirectoryUnusable</c>, and
     /// <c>ArgumentException.Message</c> appends <c>(Parameter 'x')</c> whenever
     /// one is set — so a caller naming <c>C:\</c> was answered <i>"…must be a
     /// real directory on the volume. <b>(Parameter 'canonical')</b>"</i>,
@@ -208,7 +208,7 @@ internal sealed class SessionPath
     /// </para>
     /// </remarks>
     /// <param name="canonical">
-    /// A directory as <see cref="CanonicalPath.Of"/> answered it.
+    /// A directory as <c>CanonicalPath.Of</c> answered it.
     /// </param>
     /// <returns>The session path and every name derived from it.</returns>
     /// <exception cref="ArgumentException">

@@ -283,9 +283,18 @@
       "browserai": {
         "type": "Project",
         "dependencies": {
+          "BrowserAI.Core": "[1.0.0, )",
           "Microsoft.Extensions.Logging": "[*, )",
           "Microsoft.Extensions.Logging.Console": "[*, )",
           "ModelContextProtocol": "[*, )",
+          "Velopack": "[*, )"
+        }
+      },
+      "browserai.core": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Logging": "[*, )",
+          "Microsoft.Extensions.Logging.Console": "[*, )",
           "Velopack": "[*, )"
         }
       },

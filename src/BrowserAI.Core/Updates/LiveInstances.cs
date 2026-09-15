@@ -181,7 +181,7 @@ internal sealed record LiveMarkerReclaim
 /// </para>
 /// <para>
 /// <b>The handle is the mechanism, exactly as it is for a session directory</b>
-/// (<see cref="Sessions.SessionLock"/>). Each run creates one file and holds it
+/// (<c>Sessions.SessionLock</c>). Each run creates one file and holds it
 /// <c>FileAccess.ReadWrite, FileShare.Read</c>: another process asking for write
 /// access is refused by the kernel, and a process that was killed, crashed or
 /// was terminated by a job object releases it anyway. A pid file would need a
@@ -451,7 +451,7 @@ internal sealed class LiveInstances : IDisposable
     /// <para>
     /// <b>Both call sites take the same gate as a join and a census, and both
     /// skip instantly when it is held.</b> One process reclaims and the rest
-    /// move on — the same discipline <see cref="Sessions.StraySweep"/> already
+    /// move on — the same discipline <c>Sessions.StraySweep</c> already
     /// applies machine-wide, reused rather than reinvented. The timeout is
     /// <see cref="LockScopes.NeverWaits"/> and not
     /// <see cref="LockScopes.LiveInstanceGate"/> precisely because this may run
@@ -461,8 +461,8 @@ internal sealed class LiveInstances : IDisposable
     /// </para>
     /// <para>
     /// <b>A marker is stale only when it is NOT HELD. Existence is not
-    /// held-ness</b> — the same rule <see cref="Runtime.MaintenanceLock"/> and
-    /// <see cref="Sessions.SessionLock"/> state about their own files, and for
+    /// held-ness</b> — the same rule <c>Runtime.MaintenanceLock</c> and
+    /// <c>Sessions.SessionLock</c> state about their own files, and for
     /// the same reason: a crashed holder leaves the file behind, so existence
     /// means <i>somebody died here once</i> and never <i>somebody is working
     /// now</i>. Held-ness is a sharing violation on an open this file's own
@@ -606,7 +606,7 @@ internal sealed class LiveInstances : IDisposable
     /// </para>
     /// <para>
     /// <b>Why this exists beside the copy inside
-    /// <see cref="Sessions.StraySweep"/>, which also runs at startup.</b> The
+    /// <c>Sessions.StraySweep</c>, which also runs at startup.</b> The
     /// sweep can decline to run for reasons that have nothing to do with
     /// markers: another process holds <see cref="LockScopes.Sweep"/>, or the
     /// payload manifest its factory reads is broken. Neither of those should
@@ -724,7 +724,7 @@ internal sealed class LiveInstances : IDisposable
     /// caller's string: it is this process's own, already judged against the
     /// user's profile through the filesystem by
     /// <see cref="Hosting.InstallRootScope"/>, which resolves both sides of that
-    /// comparison the same way <see cref="Sessions.CanonicalPath"/> would.
+    /// comparison the same way <c>Sessions.CanonicalPath</c> would.
     /// Asking again would be a second object-manager call and a directory open
     /// per census for an answer already established, and it would make the live
     /// set's gate refusable — which is a startup failure wearing an update

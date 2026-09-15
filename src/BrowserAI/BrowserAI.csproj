@@ -165,6 +165,14 @@
   <Import Project="..\..\build\Sqlite.targets" />
 
   <ItemGroup>
+    <!-- The half this executable shares with the configuration app: the data
+         root, the registration with the Claude Code CLI, the update feed, the
+         live-instance census and the log. BrowserAI.Core's types are internal
+         and reach this assembly through an InternalsVisibleTo declared there. -->
+    <ProjectReference Include="..\BrowserAI.Core\BrowserAI.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- The suite asserts on internals by design: the point of the app-paths
          seam and the stdio wrapper is that they are testable, and exporting
          them publicly to achieve that would be a worse trade. -->
