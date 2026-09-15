@@ -20,15 +20,20 @@ scope; renaming, or composing new tools out of several upstream calls, is not.
 
 ## The shape, in one pass
 
-A client starts one `BrowserAI.exe` and talks MCP to it over stdio. That process
-serves **one** MCP server upward and holds **N** children downward, one per open
-session. Each child is a `node.exe` running the vendored `@playwright/mcp`, in
-its own job object, against its own session directory.
+A client starts one `BrowserAI.Server.exe` and talks MCP to it over stdio. That
+process serves **one** MCP server upward and holds **N** children downward, one
+per open session. Each child is a `node.exe` running the vendored
+`@playwright/mcp`, in its own job object, against its own session directory.
+
+⚠️ *The name changed on 2026-09-15 (previously `BrowserAI.exe`), and it changed
+because the product became two programs rather than because anything about this
+diagram did. `BrowserAI.exe` is [the configuration app](#the-mcp-server), which
+a person launches and no client ever does.*
 
 ```
-MCP client ──stdio──> BrowserAI.exe ──stdio──> node.exe + @playwright/mcp ──> browser
-                        (one server)             (one child per session,
-                                                  one job object each)
+MCP client ──stdio──> BrowserAI.Server.exe ──stdio──> node.exe + @playwright/mcp ──> browser
+                        (one server)                   (one child per session,
+                                                        one job object each)
 ```
 
 The session directory is the identity, the handle and the lock. Everything else —
@@ -1051,11 +1056,16 @@ door and `ChildEnvironmentTests` holds the environment one.
 | The update lane | `src/BrowserAI.Core/Updates/{InstallLocation, UpdateFeed, UpdateConfiguration, IUpdateClient, VelopackUpdateClient, UpdateService, LiveInstances, VelopackStartup}.cs` |
 | Packing, versioning and the resolved-set manifest | `build/{New-Release.ps1, Test-ReleaseVersion.ps1, Write-ReleaseManifest.ps1, Get-ReleaseNotes.ps1}` |
 
-Per-user to `%LocalAppData%`, never `--msi`, `--shortcuts None`.
-`SetAutoApplyOnStartup(false)` is the **first line** of `Main`, before logging,
-because that call also serves the installer's own hooks. `--mainExe
-BrowserAI.exe` so that registration names `current\BrowserAI.exe` and never the
-execution stub beside it.
+Per-user to `%LocalAppData%`, never `--msi`. ⚠️ **`--shortcuts StartMenuRoot`
+since 2026-09-15** *(previously `None`, "this is a background stdio server that a
+human never launches")* — true of the only binary there was, false of the one
+`--mainExe` now names. `SetAutoApplyOnStartup(false)` is the **first line** of
+both `Main`s, before logging; in the configuration app that call also serves the
+installer's four hooks, and in the server it deliberately serves none.
+⚠️ **`--mainExe BrowserAI.exe` names the CONFIGURATION APP** *(previously the
+server, under the same file name)*, and registration names
+`current\BrowserAI.Server.exe` — composed from the app's own directory, checked
+for the console subsystem, and never the execution stub beside `current\`.
 
 **The channel reaches Velopack through `UpdateOptions.ExplicitChannel` and nowhere
 else.** `UpdateFeed.Create` *refuses* the three shapes that 404 silently: a base

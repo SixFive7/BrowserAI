@@ -641,12 +641,22 @@ is a feed that 404s on the first update.
 `ReleaseScriptTests.ThePackIdIsTheInstallDirectoryAndTheDownloadsAreRenamedBack`
 holds every half, with the two package names as the control.
 
-⚠️ **`BrowserAI.exe` now names two different files, and the difference matters
-when reading any other line in this article.** The **download** is the
-self-extracting installer, ~53.5 MB, which exists only until it has been run. The
-**installed binary** is `<install root>\current\BrowserAI.exe`, ~17.9 MB, which
-is what `--mainExe` names, what registration points a client at, and what the
-sizes table below means. Nothing in Velopack relates the two: the Setup stub
+⚠️ **`BrowserAI.exe` names THREE different files, and the difference matters
+when reading any other line in this article.** *Corrected 2026-09-15 (previously
+"two different files … the installed binary is `<install root>\current\BrowserAI.exe`,
+~17.9 MB, which is what `--mainExe` names, what registration points a client at,
+and what the sizes table below means").* The **download** is the self-extracting
+installer, 59,353,329 bytes as of 2026-09-15, which exists only until it has been
+run. The **stub** is `<install root>\BrowserAI.exe`, 392,704 bytes, which
+Velopack writes and names after `--mainExe`. The **installed main executable** is
+`<install root>\current\BrowserAI.exe`, which is what `--mainExe` names and what
+the stub, `Update.exe start`, the Start Menu shortcut and all four hooks reach —
+and since 2026-09-15 that is the **configuration app**, 10,382,848 bytes, not the
+server. ⚠️ **Registration does NOT point a client at it any more**: it names
+`<install root>\current\BrowserAI.Server.exe`, 19,180,032 bytes, composed from
+the app's own directory and refused unless its PE header says console subsystem.
+Every size in the table below predates the split and is about the single binary
+that was there then. Nothing in Velopack relates the two: the Setup stub
 locates its payload from the bundle appended to itself and never from its own
 filename, which is why renaming it is safe at all.
 

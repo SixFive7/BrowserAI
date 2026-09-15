@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Registration;
 using BrowserAI.Tests.Harness;
+using BrowserAI.Updates;
 
 namespace BrowserAI.Tests;
 
@@ -254,10 +255,31 @@ internal sealed partial class RealInstallerTests
                         name is "ConsoleWindowClass" or "CASCADIA_HOSTING_WINDOW_CLASS" or "PseudoConsoleWindow"))
                     .IsEmpty();
 
+                // ⚠️ AND IT IS IN THE LIVE-INSTANCE CENSUS WHILE THE WINDOW IS
+                // OPEN, which is what stops a server's update lane applying an
+                // update out from under somebody who is reading the dialog:
+                // Velopack's apply ends in `force_stop_package`, which kills by
+                // image path under the install root and would take the window
+                // with it, mid-click.
+                //
+                // Asserted from OUTSIDE the process, on the marker file it holds
+                // — the same file `LiveInstances.Census` counts — because the
+                // census is a property of the directory rather than of any one
+                // process's opinion of itself.
+                var live = LiveInstances.DirectoryUnder(installRoot.Path);
+
+                await Assert.That(Directory.Exists(live)).IsTrue();
+                await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsTrue();
+
                 await Assert.That(TopLevelWindows.Close(dialog)).IsTrue();
 
                 await Assert.That(await WaitForExitAsync(process)).IsTrue();
                 await Assert.That(process.ExitCode).IsEqualTo(0);
+
+                // And it leaves the census on the way out. The marker is
+                // released by the handle closing, so this is a property of the
+                // process ending rather than of any cleanup it performs.
+                await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsFalse();
             }
             finally
             {
