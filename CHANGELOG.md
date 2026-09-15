@@ -23,6 +23,33 @@ has been satisfied in form only.
 
 ### Changed
 
+- ⚠️ **BrowserAI's data moved out of the install directory, and the installer's
+  own name changed with it.** The program installs into
+  `%LocalAppData%\BrowserAI.app`; the browsers it downloads, the index of your
+  session directories, its log and its registration record live in
+  `%LocalAppData%\BrowserAI` **beside** it. The download is still
+  `BrowserAI-win-Setup.exe`. **Why:** `Setup.exe` renames a non-empty install
+  directory aside and deletes it — which is what running the installer a second
+  time does — and uninstalling empties it, so under the old layout a repair
+  install cost 768 MB of browsers and every session's entry in the index.
+  **What you have to do: nothing, and there is nothing to migrate** — this is the
+  first release, and no build carrying the old layout has ever been distributed.
+
+- **Uninstalling now asks whether to delete your data, and keeps it by
+  default.** The prompt names the directory and how much it holds; *No* is the
+  default and an unattended uninstall — `QuietUninstallString`, `winget`, any
+  script passing `--silent` — keeps without asking. An update never asks and
+  never touches it. Reinstalling finds everything exactly as it was.
+
+- **BrowserAI no longer keeps running when the installer starts it.** A
+  non-silent install finishes by launching the program, which left a server and
+  a browser-server child running until the machine was rebooted, serving nobody,
+  with a console window on screen (measured 2026-09-14). It now writes one log
+  line and exits before starting anything. The same applies in general: a
+  BrowserAI whose launcher has gone **and** whose input is a console rather than
+  a pipe has no way of ever being told the conversation is over, so it exits
+  cleanly instead of waiting for ever.
+
 - ⚠️ **Every machine re-provisions its browser on first run after this.** The
   `@playwright/mcp` 0.0.79 → 0.0.80 review moved the pinned revisions: **Chromium
   1237 → 1243** (152.0.7977.8 → 153.0.8010.12) and **Firefox 1539 → 1542**

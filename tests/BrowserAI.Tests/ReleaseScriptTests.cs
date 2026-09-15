@@ -184,6 +184,64 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
+    /// The pack id is what chooses the install directory, and the installer is
+    /// renamed back to the name a person downloads.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Velopack derives the install location from the pack id and from
+    /// nothing else</b> — <c>%LocalAppData%\&lt;packId&gt;</c>, immovable at
+    /// 1.2.0: there is no flag for it and an id may not carry a path. So the id
+    /// is the only lever there is, and it is what puts the install root at
+    /// <c>BrowserAI.app</c> <i>beside</i> the data root at <c>BrowserAI</c>
+    /// rather than on top of it. That matters because <c>Setup.exe</c> renames a
+    /// non-empty install root aside and deletes it, and uninstall empties it —
+    /// which, under the old layout, took 768 MB of provisioned browsers and the
+    /// session index with it.
+    /// </para>
+    /// <para>
+    /// <b>The rename back is asserted with it, because the two are one
+    /// decision.</b> A suffix that exists to answer a question about directories
+    /// has no business on a file a person downloads from a releases page. Exactly
+    /// one artefact is renamed: the <c>.nupkg</c>s keep the id, because Velopack
+    /// resolves those by name out of <c>releases.&lt;channel&gt;.json</c> and a
+    /// rename there is a feed that 404s on the first update.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePackIdIsTheInstallDirectoryAndTheInstallerIsRenamedBack()
+    {
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        await Assert.That(script).Contains("$packId = 'BrowserAI.app'");
+        await Assert.That(script).Contains("$downloadId = 'BrowserAI'");
+
+        // The id reaches vpk, so the install root really is derived from it.
+        var start = script.IndexOf("$packArgs = @(", StringComparison.Ordinal);
+        var end = script.IndexOf("\n)", start, StringComparison.Ordinal);
+
+        await Assert.That(script[start..end]).Contains("'--packId', $packId");
+
+        // The rename, and the refusal that stops it being a silent no-op: an
+        // installer that was not produced must fail the release rather than
+        // leave the previous run's file in place under the right name.
+        await Assert.That(script).Contains("$packedSetup = Join-Path $OutputDir \"$packId-$Channel-Setup.exe\"");
+        await Assert.That(script).Contains("$setup = Join-Path $OutputDir \"$downloadId-$Channel-Setup.exe\"");
+        await Assert.That(script).Contains("Move-Item -LiteralPath $packedSetup -Destination $setup -Force");
+        await Assert.That(script).Contains("there is no installer to rename or to publish");
+
+        // The human-facing manifest directory goes the same way.
+        await Assert.That(script).Contains("$manifestDir = Join-Path $ArchiveDir \"$downloadId-$PackVersion-manifest\"");
+
+        // And the feed-internal packages do NOT: these two are the control, and
+        // a sweep that renamed everything would fail here rather than in the
+        // field on somebody's first update.
+        await Assert.That(script).Contains("$full = Join-Path $OutputDir \"$packId-$PackVersion-full.nupkg\"");
+        await Assert.That(script).Contains("$delta = Join-Path $OutputDir \"$packId-$PackVersion-delta.nupkg\"");
+    }
+
+    /// <summary>
     /// The resolved-set manifest is emitted, holds the seven files item 11
     /// names, and states the version each one carries.
     /// </summary>

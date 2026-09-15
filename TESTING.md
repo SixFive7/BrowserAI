@@ -381,6 +381,19 @@ the class of defect is red from either shell whoever runs it. What is forced her
 is the **gate's claim about itself**: that its two halves are two instruments.
 Different guarantees, and the first cannot stand in for the second.
 
+⚠️ **They differ in a second dimension nobody had measured, found 2026-09-15 by a
+test that asserted the wrong thing.** A test host started by
+`Start-Process pwsh -WindowStyle Hidden` inherits a **console** standard input;
+one started by `nohup bash -c … | tee` inherits a **pipe**. The arm that noticed
+was red from PowerShell and green from Git Bash on the same tree, and it was
+rewritten — a suite cannot assert either value without asserting a property of
+whoever started it (`InstallerHandoffTests.TheConsoleQuestionIsRepeatableAndHasNoSideEffect`
+carries the reading). It matters because the product now asks that question at
+teardown: a BrowserAI whose launcher is gone **and** whose stdin is a console has
+no signal that can ever arrive. Neither gate half can produce that pair — the
+launcher is alive in both — which is exactly why the arm cannot be a value
+assertion.
+
 ### The run says whether it was filtered, and a release may not be
 
 **A filtered run is a CORRECT run.** Every number it prints is true of what it
@@ -1314,7 +1327,14 @@ fatal, and it is reported as **skipped rather than passed** so the run's summary
 cannot be mistaken for a healthy one. That is the gate working. **Zero skipped is
 a release requirement**: [release checklist item 8](RELEASING.md#the-release-gate)
 demands it, and it is met by cutting from a machine that has every capability
-present. *Previously this paragraph also recorded that a GitHub runner skipped
+present. ⚠️ **Two of those capabilities are produced by the release
+script and by nothing else** — the packed `.nupkg`, and, since 2026-09-15, the
+real `Setup.exe` the installer arm runs twice over one install root — so *every
+capability present* means **pack first, then run the gate**. The installer
+capability has one more way of being absent, and it is a refusal rather than a
+gap: it reads ABSENT when this machine already has an Add/Remove entry for the
+pack id, because installing under `--installto` would repoint that entry at a
+scratch directory and the uninstall that follows would delete it. *Previously this paragraph also recorded that a GitHub runner skipped
 exactly 4 — `EveryNoticeIsInsideThePackedRelease` for the missing packed `.nupkg`,
 and `TheClientIsLocatedByFileNameAndNeverAsAShim`,
 `TheClientStillSaysWhatTheExitCodesCannot` and

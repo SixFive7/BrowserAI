@@ -52,9 +52,19 @@ internal sealed record RegistrationTarget
     public required string Command { get; init; }
 
     /// <summary>
-    /// The install root — the directory <b>containing</b> <c>current\</c>, which
-    /// is where everything that outlives an update lives.
+    /// The install root — the directory <b>containing</b> <c>current\</c>.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-09-15 (previously "which is where everything that
+    /// outlives an update lives").</b> Nothing that outlives an update lives
+    /// there any more, and nothing may: <c>Setup.exe</c> renames a non-empty
+    /// install root aside and deletes it, and uninstall empties it. State lives
+    /// in the data root (<see cref="Hosting.IAppPaths"/>), which is a sibling.
+    /// What this property is <i>for</i> is unchanged and is smaller than the old
+    /// sentence claimed: it is the second half of the one judgement this type
+    /// makes about an image path, so a caller that resolved a command can say
+    /// which install it came out of without splitting the string again.
+    /// </remarks>
     public required string InstallRoot { get; init; }
 
     /// <summary>
@@ -108,7 +118,7 @@ internal sealed record RegistrationTarget
 
         if (root is not { Length: > 0 })
         {
-            refusal = $"'{imagePath}' is inside a '{CurrentDirectoryName}' directory with no parent, so there is no install root beside it to hold the log and the registration record.";
+            refusal = $@"'{imagePath}' is inside a '{CurrentDirectoryName}' directory with no parent, so it is not an installed layout: an installed BrowserAI runs out of '<install root>\{CurrentDirectoryName}\BrowserAI.exe'.";
             return false;
         }
 

@@ -19,11 +19,18 @@ namespace BrowserAI.Registration;
 /// one answer in it, and its <c>outcome</c> is the whole finding.
 /// </para>
 /// <para>
-/// <b>It is a sibling of <c>current\</c>, never a child.</b> An update replaces
-/// that directory wholesale, so a record written inside it would be deleted by
-/// the event most likely to have produced the line somebody came to read — the
-/// same rule <see cref="Hosting.IAppPaths"/> states for the log, the browsers and
-/// the session index.
+/// ⚠️ <b>It is in the DATA root, outside the install root entirely — corrected
+/// 2026-09-15 (previously "It is a sibling of <c>current\</c>, never a child. An
+/// update replaces that directory wholesale, so a record written inside it would
+/// be deleted by the event most likely to have produced the line somebody came
+/// to read").</b> The <c>current\</c> half was right and too narrow: a sibling
+/// of <c>current\</c> is still inside the install root, which <c>Setup.exe</c>
+/// renames aside and deletes on a repair install and which uninstall empties.
+/// Those are the two events a person is most likely to be reading this file
+/// after — <i>the reinstall did not fix it</i> and <i>did the uninstall
+/// unregister me?</i> — and under the old layout the file was gone by the time
+/// they looked. Same rule as the log, the browsers and the session index
+/// (<see cref="Hosting.IAppPaths"/>), now with the same root.
 /// </para>
 /// <para>
 /// <b>Nothing reads it back.</b> It is written for a person and for the suite,
@@ -39,16 +46,16 @@ internal static class RegistrationRecord
     /// <summary>The schema this build writes.</summary>
     public const int CurrentSchemaVersion = 1;
 
-    /// <summary>The record's file name, directly under the install root.</summary>
+    /// <summary>The record's file name, directly under the data root.</summary>
     public const string FileName = "mcp-registration.json";
 
-    /// <summary>Where the record for an install root lives.</summary>
-    /// <param name="installRoot">The directory containing <c>current\</c>.</param>
+    /// <summary>Where the record lives.</summary>
+    /// <param name="dataRoot">The data root, <see cref="Hosting.IAppPaths.RootAppDir"/>.</param>
     /// <returns>The record's absolute path.</returns>
-    public static string PathFor(string installRoot)
+    public static string PathFor(string dataRoot)
     {
-        ArgumentException.ThrowIfNullOrEmpty(installRoot);
-        return Path.Combine(installRoot, FileName);
+        ArgumentException.ThrowIfNullOrEmpty(dataRoot);
+        return Path.Combine(dataRoot, FileName);
     }
 
     /// <summary>Serialises a pass exactly as it is written to disk.</summary>
@@ -99,17 +106,17 @@ internal static class RegistrationRecord
     }
 
     /// <summary>Writes the record, replacing whatever was there.</summary>
-    /// <param name="installRoot">The directory containing <c>current\</c>.</param>
+    /// <param name="dataRoot">The data root, <see cref="Hosting.IAppPaths.RootAppDir"/>.</param>
     /// <param name="report">What the pass concluded.</param>
     /// <param name="intent">Which lifecycle event ran it.</param>
     /// <param name="version">The BrowserAI version the hook was given.</param>
     /// <param name="when">When it ran.</param>
     /// <returns>The path written.</returns>
-    public static string Write(string installRoot, RegistrationReport report, RegistrationIntent intent, string version, DateTimeOffset when)
+    public static string Write(string dataRoot, RegistrationReport report, RegistrationIntent intent, string version, DateTimeOffset when)
     {
-        var path = PathFor(installRoot);
+        var path = PathFor(dataRoot);
 
-        _ = Directory.CreateDirectory(installRoot);
+        _ = Directory.CreateDirectory(dataRoot);
         File.WriteAllBytes(path, ToUtf8(report, intent, version, when));
 
         return path;

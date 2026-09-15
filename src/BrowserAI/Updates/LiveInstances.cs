@@ -259,7 +259,11 @@ internal sealed class LiveInstances : IDisposable
     /// <summary>
     /// Announces this process, and keeps announcing it until disposal or death.
     /// </summary>
-    /// <param name="paths">The app-paths seam.</param>
+    /// <param name="installRoot">
+    /// The install root this process runs out of — the directory containing
+    /// <c>current\</c>. <b>Never the data root</b>: see the remarks on
+    /// <see cref="DirectoryUnder"/>.
+    /// </param>
     /// <param name="logger">Where a failure is reported.</param>
     /// <returns>The registration, or <see langword="null"/> if one could not be made.</returns>
     /// <remarks>
@@ -268,13 +272,13 @@ internal sealed class LiveInstances : IDisposable
     /// that cannot prove it is alone must not happen anyway. So this returns
     /// null and logs rather than throwing.
     /// </remarks>
-    public static LiveInstances? Join(IAppPaths paths, ILogger logger)
+    public static LiveInstances? Join(string installRoot, ILogger logger)
     {
-        ArgumentNullException.ThrowIfNull(paths);
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var directory = paths.LiveInstanceDirectory;
-        var mutexName = MutexNameFor(paths.RootAppDir);
+        var directory = DirectoryUnder(installRoot);
+        var mutexName = MutexNameFor(installRoot);
 
         try
         {
@@ -476,15 +480,15 @@ internal sealed class LiveInstances : IDisposable
     /// all could not pass either half.
     /// </para>
     /// </remarks>
-    /// <param name="paths">The app-paths seam, for the directory and the gate's name.</param>
+    /// <param name="installRoot">The install root, for the directory and the gate's name.</param>
     /// <param name="logger">Where the pass is recorded. Never <c>stdout</c>.</param>
     /// <returns>What the pass found and what it removed.</returns>
-    public static LiveMarkerReclaim ReclaimStaleMarkers(IAppPaths paths, ILogger logger)
+    public static LiveMarkerReclaim ReclaimStaleMarkers(string installRoot, ILogger logger)
     {
-        ArgumentNullException.ThrowIfNull(paths);
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var directory = paths.LiveInstanceDirectory;
+        var directory = DirectoryUnder(installRoot);
 
         if (!Directory.Exists(directory))
         {
@@ -492,7 +496,7 @@ internal sealed class LiveInstances : IDisposable
             return new LiveMarkerReclaim { Outcome = LiveMarkerReclaimOutcome.Ran };
         }
 
-        var mutexName = MutexNameFor(paths.RootAppDir);
+        var mutexName = MutexNameFor(installRoot);
 
         // Declared before the try and disposed unconditionally in the finally:
         // the pattern the rest of this product uses around a named object
@@ -609,11 +613,11 @@ internal sealed class LiveInstances : IDisposable
     /// cost a machine its marker reclaim, and this path shares none of it.
     /// </para>
     /// </remarks>
-    /// <param name="paths">The app-paths seam.</param>
+    /// <param name="installRoot">The install root the markers are kept under.</param>
     /// <param name="logger">Where a failure is reported.</param>
-    public static void StartReclaimInBackground(IAppPaths paths, ILogger logger)
+    public static void StartReclaimInBackground(string installRoot, ILogger logger)
     {
-        ArgumentNullException.ThrowIfNull(paths);
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
         ArgumentNullException.ThrowIfNull(logger);
 
         var thread = new Thread(() =>
@@ -622,7 +626,7 @@ internal sealed class LiveInstances : IDisposable
             {
                 // ReclaimStaleMarkers logs its own census, so nothing is logged
                 // here: a second line would be the same fact twice.
-                _ = ReclaimStaleMarkers(paths, logger);
+                _ = ReclaimStaleMarkers(installRoot, logger);
             }
 #pragma warning disable CA1031 // The whole purpose of this method: nothing a reclaim can do may end the process.
             catch (Exception failure)
@@ -630,7 +634,7 @@ internal sealed class LiveInstances : IDisposable
             {
                 try
                 {
-                    UpdateLog.CouldNotReclaimLiveMarkers(logger, paths.LiveInstanceDirectory, failure);
+                    UpdateLog.CouldNotReclaimLiveMarkers(logger, DirectoryUnder(installRoot), failure);
                 }
 #pragma warning disable CA1031 // A logger that throws must not defeat the catch-all that was reporting through it.
                 catch (Exception)
@@ -712,7 +716,7 @@ internal sealed class LiveInstances : IDisposable
     /// rather than a different one.
     /// </para>
     /// </remarks>
-    /// <param name="rootAppDir">The install root.</param>
+    /// <param name="installRoot">The install root, never the data root.</param>
     /// <returns>A <c>Global\</c> name.</returns>
     /// <remarks>
     /// ⚠️ <b>It takes the identity chain and not the canonicaliser in front of
@@ -726,8 +730,43 @@ internal sealed class LiveInstances : IDisposable
     /// set's gate refusable — which is a startup failure wearing an update
     /// check's name.
     /// </remarks>
-    public static string MutexNameFor(string rootAppDir) =>
-        MutexPrefix + SessionPath.For(rootAppDir).MutexName[LockScopes.PerDirectoryPrefix.Length..];
+    public static string MutexNameFor(string installRoot) =>
+        MutexPrefix + SessionPath.For(installRoot).MutexName[LockScopes.PerDirectoryPrefix.Length..];
+
+    /// <summary>The folder the markers live in, directly under an install root.</summary>
+    public const string DirectoryName = "live";
+
+    /// <summary>
+    /// Where the markers for one install root are, and the one place that folder
+    /// name is spelled.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The INSTALL root, and this is the one thing in the product that is
+    /// still keyed to it — 2026-09-15.</b> Everything else moved to the data
+    /// root at <c>%LocalAppData%\BrowserAI</c> that day
+    /// (<see cref="Hosting.IAppPaths"/>); this did not, and the reason is that
+    /// the census asks a question <i>about</i> the install root.
+    /// <c>force_stop_package</c> terminates every process whose image path is
+    /// under that root, so <i>am I the last one?</i> means <i>is any other
+    /// process running out of this install?</i> — and a set keyed to the data
+    /// root would answer about processes a different install root's apply would
+    /// not touch, and would miss the ones it would.
+    /// </para>
+    /// <para>
+    /// <b>An uninstalled process passes its data root</b>, because there is no
+    /// install root to ask about and the two were the same thing until this date.
+    /// That keeps the suite's scratch roots working exactly as they did: what
+    /// <c>BROWSERAI_ROOT</c> moves is still one self-consistent set of markers.
+    /// </para>
+    /// </remarks>
+    /// <param name="installRoot">The install root.</param>
+    /// <returns>The marker directory.</returns>
+    public static string DirectoryUnder(string installRoot)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
+        return Path.Combine(installRoot, DirectoryName);
+    }
 
     /// <summary>
     /// The live set's own prefix, so that this scope and a session's

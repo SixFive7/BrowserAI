@@ -360,10 +360,10 @@ internal sealed class StraySweepTests
         using var scratch = ScratchDirectory.Create("sweep-live-markers");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
+        _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
 
-        var stale = Path.Combine(paths.LiveInstanceDirectory, "4242-nobody-is-there.live");
-        var held = Path.Combine(paths.LiveInstanceDirectory, "1234-held-by-a-peer.live");
+        var stale = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "4242-nobody-is-there.live");
+        var held = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "1234-held-by-a-peer.live");
 
         await File.WriteAllTextAsync(stale, string.Empty);
 
@@ -374,7 +374,7 @@ internal sealed class StraySweepTests
         try
         {
             var result = await OnItsOwnThreadAsync(() =>
-                new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run(GatePatience));
+                new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths.RootAppDir).Run(GatePatience));
 
             await Assert.That(result.Outcome).IsEqualTo(StraySweepOutcome.Ran);
             await Assert.That(result.LiveMarkers).IsNotNull();
@@ -397,7 +397,7 @@ internal sealed class StraySweepTests
         // The other half of the control: nothing about that marker made it
         // un-reclaimable except the handle.
         var second = await OnItsOwnThreadAsync(() =>
-            new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths).Run(GatePatience));
+            new StraySweep([], index: null, NullLogger.Instance, profileLockImages: null, paths.RootAppDir).Run(GatePatience));
 
         await Assert.That(second.LiveMarkers!.Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(held)).IsFalse();

@@ -185,11 +185,11 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-live");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        using var first = LiveInstances.Join(paths, NullLogger.Instance);
+        using var first = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
         await Assert.That(first).IsNotNull();
         await Assert.That(first!.AmIAlone()).IsTrue();
 
-        var second = LiveInstances.Join(paths, NullLogger.Instance);
+        var second = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
         await Assert.That(second).IsNotNull();
 
         await Assert.That(first.AmIAlone()).IsFalse();
@@ -218,11 +218,11 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-live-stale");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
-        var abandoned = Path.Combine(paths.LiveInstanceDirectory, "4242-deadbeef.live");
+        _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
+        var abandoned = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "4242-deadbeef.live");
         await File.WriteAllTextAsync(abandoned, string.Empty);
 
-        using var live = LiveInstances.Join(paths, NullLogger.Instance);
+        using var live = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         await Assert.That(live!.AmIAlone()).IsTrue();
         await Assert.That(File.Exists(abandoned)).IsFalse();
@@ -235,8 +235,8 @@ internal sealed class UpdateTests
     [Test]
     public async Task TheLiveSetIsKeyedOnTheInstallRootWithTheOneCanonicalisation()
     {
-        var name = LiveInstances.MutexNameFor(@"C:\Users\x\AppData\Local\BrowserAI");
-        var other = LiveInstances.MutexNameFor(@"c:\users\x\appdata\local\browserai\");
+        var name = LiveInstances.MutexNameFor(@"C:\Users\x\AppData\Local\BrowserAI.app");
+        var other = LiveInstances.MutexNameFor(@"c:\users\x\appdata\local\browserai.app\");
 
         await Assert.That(name).StartsWith(LockScopes.PerDirectoryPrefix);
         await Assert.That(name).IsEqualTo(other);
@@ -271,13 +271,13 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-three-valued");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        using var first = LiveInstances.Join(paths, NullLogger.Instance);
+        using var first = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         await Assert.That(first!.Census().State).IsEqualTo(Liveness.Alone);
         await Assert.That(first.Census().Why).IsNull();
         await Assert.That(first.AmIAlone()).IsTrue();
 
-        var second = LiveInstances.Join(paths, NullLogger.Instance);
+        var second = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
         var crowded = first.Census();
 
         await Assert.That(crowded.State).IsEqualTo(Liveness.NotAlone);
@@ -294,7 +294,7 @@ internal sealed class UpdateTests
 
         await Assert.That(undetermined.State).IsEqualTo(Liveness.Undetermined);
         await Assert.That(undetermined.Why).IsNotNull();
-        await Assert.That(undetermined.Why!).Contains(paths.LiveInstanceDirectory);
+        await Assert.That(undetermined.Why!).Contains(LiveInstances.DirectoryUnder(paths.RootAppDir));
         await Assert.That(first.AmIAlone()).IsFalse();
     }
 
@@ -325,10 +325,10 @@ internal sealed class UpdateTests
 
         // Joined BEFORE the denial: this process's own marker has to be created,
         // and the denial below is what stops a marker being opened at all.
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
         await Assert.That(mine!.Census().State).IsEqualTo(Liveness.Alone);
 
-        var stranger = Path.Combine(paths.LiveInstanceDirectory, "4242-cannot-be-read.live");
+        var stranger = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "4242-cannot-be-read.live");
         await File.WriteAllTextAsync(stranger, string.Empty);
 
         LivenessAnswer answer;
@@ -344,14 +344,14 @@ internal sealed class UpdateTests
         // the file readable -- which is what makes this an unanswered question
         // rather than a directory that vanished.
         using (DirectoryDenial.Apply(
-            paths.LiveInstanceDirectory,
+            LiveInstances.DirectoryUnder(paths.RootAppDir),
             FileSystemRights.WriteData,
             InheritanceFlags.ObjectInherit,
             PropagationFlags.InheritOnly))
         {
             answer = mine.Census();
             aloneWhileTheMarkerCouldNotBeRead = mine.AmIAlone();
-            reclaim = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+            reclaim = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
         }
 
         await Assert.That(answer.State).IsEqualTo(Liveness.Undetermined);
@@ -365,7 +365,7 @@ internal sealed class UpdateTests
         // The positive control: with the denial lifted the same marker is
         // reclaimed and the same census is Alone, so the two answers above came
         // from the ACL and not from something structural about this directory.
-        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance).Reclaimed).IsEqualTo(1);
+        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance).Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(stranger)).IsFalse();
         await Assert.That(mine.Census().State).IsEqualTo(Liveness.Alone);
     }
@@ -407,10 +407,10 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-live-reclaim");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
+        _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
 
-        var held = Path.Combine(paths.LiveInstanceDirectory, "1234-held-by-a-peer.live");
-        var stale = Path.Combine(paths.LiveInstanceDirectory, "4242-nobody-is-there.live");
+        var held = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "1234-held-by-a-peer.live");
+        var stale = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "4242-nobody-is-there.live");
 
         await File.WriteAllTextAsync(stale, string.Empty);
 
@@ -418,7 +418,7 @@ internal sealed class UpdateTests
 
         try
         {
-            var first = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+            var first = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
 
             await Assert.That(first.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
             await Assert.That(first.Held).IsEqualTo(1);
@@ -436,7 +436,7 @@ internal sealed class UpdateTests
 
         // The other half of the control: nothing about that file made it
         // un-reclaimable except the handle, and the handle is gone.
-        var second = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+        var second = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
 
         await Assert.That(second.Outcome).IsEqualTo(LiveMarkerReclaimOutcome.Ran);
         await Assert.That(second.Held).IsEqualTo(0);
@@ -480,10 +480,17 @@ internal sealed class UpdateTests
     public async Task TheLiveSetsGateCannotCollideWithASessionOpenedOnTheInstallRoot()
     {
         using var scratch = ScratchDirectory.Create("update-live-namespace");
-        var paths = new LocalAppDataPaths(scratch.Path);
 
-        var live = LiveInstances.MutexNameFor(paths.RootAppDir);
-        var asASession = SessionPath.For(paths.RootAppDir).MutexName;
+        // ⚠️ AN INSTALL ROOT, SPELLED AS ONE -- 2026-09-15. It used to be
+        // `new LocalAppDataPaths(scratch.Path).RootAppDir`, which is the DATA
+        // root, and the two were the same directory until the layout split. The
+        // live set is keyed to the install root because that is the set
+        // force_stop_package terminates, so a scratch install root is what this
+        // arm is about and the data seam does not appear in it at all.
+        var installRoot = scratch.Path;
+
+        var live = LiveInstances.MutexNameFor(installRoot);
+        var asASession = SessionPath.For(installRoot).MutexName;
 
         // ⚠️ THE CLAIM. One directory, two scopes, two names.
         await Assert.That(live).IsNotEqualTo(asASession);
@@ -498,8 +505,7 @@ internal sealed class UpdateTests
         // live set -- which is the property the old name did have.
         using var other = ScratchDirectory.Create("update-live-namespace-other");
 
-        await Assert.That(LiveInstances.MutexNameFor(new LocalAppDataPaths(other.Path).RootAppDir))
-            .IsNotEqualTo(live);
+        await Assert.That(LiveInstances.MutexNameFor(other.Path)).IsNotEqualTo(live);
     }
 
     /// <summary>
@@ -547,8 +553,8 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-live-contended");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        _ = Directory.CreateDirectory(paths.LiveInstanceDirectory);
-        var stale = Path.Combine(paths.LiveInstanceDirectory, "4242-nobody-is-there.live");
+        _ = Directory.CreateDirectory(LiveInstances.DirectoryUnder(paths.RootAppDir));
+        var stale = Path.Combine(LiveInstances.DirectoryUnder(paths.RootAppDir), "4242-nobody-is-there.live");
         await File.WriteAllTextAsync(stale, string.Empty);
 
         using var taken = new ManualResetEventSlim(false);
@@ -581,7 +587,7 @@ internal sealed class UpdateTests
         holder.Start();
         taken.Wait();
 
-        var skipped = LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance);
+        var skipped = LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance);
 
         release.Set();
         holder.Join();
@@ -610,7 +616,7 @@ internal sealed class UpdateTests
 
         // The positive control: the same call, the same directory, nothing
         // holding the gate. A skip that was really a no-op would fail here.
-        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths, NullLogger.Instance).Reclaimed).IsEqualTo(1);
+        await Assert.That(LiveInstances.ReclaimStaleMarkers(paths.RootAppDir, NullLogger.Instance).Reclaimed).IsEqualTo(1);
         await Assert.That(File.Exists(stale)).IsFalse();
     }
 
@@ -623,8 +629,8 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-staged");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
-        using var other = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+        using var other = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         var client = new ScriptedUpdateClient();
         var shutdowns = 0;
@@ -665,7 +671,7 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-undetermined");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         // Left the set: this process is no longer a member of the thing it is
         // being asked about, which is undetermined and is not "not alone".
@@ -712,8 +718,8 @@ internal sealed class UpdateTests
 
         using var provider = new CapturingLoggerProvider();
 
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
-        using var other = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+        using var other = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         _ = await new UpdateService(
             new ScriptedUpdateClient(),
@@ -730,7 +736,7 @@ internal sealed class UpdateTests
         // And the other arm: a census that could not be taken is a permanent
         // block rather than a queue, and the line says so and says why.
         using var undetermined = new CapturingLoggerProvider();
-        var lost = LiveInstances.Join(paths, NullLogger.Instance);
+        var lost = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         lost!.Dispose();
 
@@ -760,7 +766,7 @@ internal sealed class UpdateTests
         using var scratch = ScratchDirectory.Create("update-applies");
         var paths = new LocalAppDataPaths(scratch.Path);
 
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         var client = new ScriptedUpdateClient();
         var shutdowns = 0;
@@ -779,7 +785,7 @@ internal sealed class UpdateTests
     {
         using var scratch = ScratchDirectory.Create("update-nothing");
         var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         var client = new ScriptedUpdateClient { Candidate = null };
         var shutdowns = 0;
@@ -800,7 +806,7 @@ internal sealed class UpdateTests
     {
         using var scratch = ScratchDirectory.Create("update-failing");
         var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         var client = new ScriptedUpdateClient { CheckFailure = new HttpRequestException("404") };
         var shutdowns = 0;
@@ -834,7 +840,7 @@ internal sealed class UpdateTests
     {
         using var scratch = ScratchDirectory.Create("update-stall");
         var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         var client = new ScriptedUpdateClient { ProgressSteps = 40, DelayPerStep = TimeSpan.FromMilliseconds(25) };
         var service = new UpdateService(client, mine, NullLogger.Instance, () => { });
@@ -933,7 +939,7 @@ internal sealed class UpdateTests
     {
         using var scratch = ScratchDirectory.Create("update-shutdown");
         var paths = new LocalAppDataPaths(scratch.Path);
-        using var mine = LiveInstances.Join(paths, NullLogger.Instance);
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         using var stopping = new CancellationTokenSource();
         var client = new ScriptedUpdateClient { ProgressSteps = 200, DelayPerStep = TimeSpan.FromMilliseconds(20) };
@@ -1015,11 +1021,35 @@ internal sealed class UpdateTests
 
         var late = new List<string>();
 
-        foreach (var after in new[] { "InstallLocation.RootAppDir", "new LocalAppDataPaths(", "ProcessLog.Create(", "Environment.GetEnvironmentVariable(" })
+        // ⚠️ RE-TARGETED 2026-09-15, AND THE PRESENCE CHECK IS THE HALF THAT WAS
+        // MISSING. Two of these four moved that day: `InstallLocation.RootAppDir`
+        // stopped feeding the data root and now resolves the live-marker census's
+        // install root instead, and the environment read moved inside
+        // `LocalAppDataPaths.Overridden` so that a hook and `Main` cannot answer
+        // it differently. The loop below used to skip a name it could not find,
+        // so either move would have left this arm green while guarding nothing —
+        // which is what "must not silently lose an arm" means. A name that is no
+        // longer in Program.cs is now a red test that says so, and whoever moves
+        // one next has to re-point it deliberately.
+        string[] afterTheVelopackCall =
+        [
+            "InstallLocation.RootAppDir",
+            "new LocalAppDataPaths(",
+            "ProcessLog.Create(",
+            "LocalAppDataPaths.Overridden(",
+        ];
+
+        foreach (var after in afterTheVelopackCall)
         {
             var at = program.IndexOf(after, StringComparison.Ordinal);
 
-            if (at >= 0 && at < velopack)
+            if (at < 0)
+            {
+                late.Add($"'{after}' is no longer in Program.cs at all, so this arm is guarding nothing. Re-point it at whatever took its place — the property is that every startup step runs AFTER VelopackStartup.Run, which also serves the installer's fast-exit hooks.");
+                continue;
+            }
+
+            if (at < velopack)
             {
                 late.Add($"'{after}' now runs BEFORE VelopackStartup.Run, which also serves the installer's fast-exit hooks");
             }
@@ -1150,6 +1180,120 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
+    /// <b>No path BrowserAI keeps data in resolves under an install root</b> —
+    /// not under the one Velopack creates for this pack id, and not under one
+    /// <c>--installto</c> chose.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The install root is destroyed twice over, by design.</b>
+    /// <c>Setup.exe</c> renames a non-empty root aside and deletes it on success
+    /// — a repair or overwrite install is exactly that path — and uninstall
+    /// calls <c>remove_dir_contents</c> on the whole root
+    /// ([kb](../../kb/packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
+    /// Until 2026-09-15 every member of <see cref="IAppPaths"/> was a child of
+    /// that root, so a re-run of the installer cost 768 MB of provisioned
+    /// browsers and the session index with them. The <c>current\</c> swap that
+    /// this seam was originally written against is the <i>weaker</i> of the two
+    /// reasons and is still true; these are the ones that bite.
+    /// </para>
+    /// <para>
+    /// <b>Two halves, and the first is the one that could be planted red.</b>
+    /// The scan pins the rule that makes the second half true — a
+    /// <see cref="LocalAppDataPaths"/> may only be composed from nothing or from
+    /// the override, never from a located install root — and it fails against the
+    /// wiring that shipped before this date, where <c>Program</c> passed
+    /// <c>InstallLocation.RootAppDir</c> and the registration hook passed the
+    /// grandparent of its own image path. The second half is the standing
+    /// invariant stated directly: it costs nothing and it is what a reader came
+    /// here for.
+    /// </para>
+    /// <para>
+    /// <b>Never derive the data root from the install root or from the image
+    /// path.</b> Both are available and both are wrong: the portable zip has no
+    /// install root at all, and a hook's image path is
+    /// <c>&lt;root&gt;\current\BrowserAI.exe</c> — so a data root derived from it
+    /// moves with <c>--installto</c>, and the uninstall hook would then offer to
+    /// delete a directory the running product never used.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoDataPathResolvesUnderAnyInstallRoot()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+            var at = code.IndexOf(Composition, StringComparison.Ordinal);
+
+            while (at >= 0)
+            {
+                var close = code.IndexOf(')', at + Composition.Length);
+                var argument = close > 0 ? code[(at + Composition.Length)..close].Trim() : "<unterminated>";
+
+                // Case-insensitively, because the local a call site reads it into
+                // is `overridden` and the member it comes from is `Overridden`.
+                if (argument.Length is not 0 && !argument.Contains("overridden", StringComparison.OrdinalIgnoreCase))
+                {
+                    offenders.Add(
+                        $"{file.Name} composes the data seam as '{Composition}{argument})'. The data root is a constant that only {Program.AppRootVariable} moves, so the argument may be nothing at all or the override and nothing else — an install root reaching it puts the browsers, the session index and the log inside a directory Setup.exe renames aside and deletes.");
+                }
+
+                at = code.IndexOf(Composition, at + Composition.Length, StringComparison.Ordinal);
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // And the invariant itself, against the root this build would really
+        // use and three install roots it could really have: the default for this
+        // pack id, the maintainer's own release-candidate root, and an
+        // --installto somewhere else entirely.
+        var paths = new LocalAppDataPaths();
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
+
+        string[] installRoots =
+        [
+            Path.Combine(local, "BrowserAI.app"),
+            Path.Combine(local, "BrowserAI-rc"),
+            @"D:\Tools\BrowserAI.app",
+        ];
+
+        (string Name, string Value)[] data =
+        [
+            (nameof(IAppPaths.RootAppDir), paths.RootAppDir),
+            (nameof(IAppPaths.LogDirectory), paths.LogDirectory),
+            (nameof(IAppPaths.BrowsersDirectory), paths.BrowsersDirectory),
+            (nameof(IAppPaths.IndexDirectory), paths.IndexDirectory),
+            (nameof(IAppPaths.InstanceRoot), paths.InstanceRoot),
+        ];
+
+        var inside = new List<string>();
+
+        foreach (var root in installRoots)
+        {
+            foreach (var (name, value) in data)
+            {
+                var prefix = root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
+                if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                    || value.Equals(root, StringComparison.OrdinalIgnoreCase))
+                {
+                    inside.Add($"IAppPaths.{name} resolves to '{value}', which is inside the install root '{root}'.");
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, inside)).IsEmpty();
+
+        // The five members are the whole seam, so a sixth arriving under the
+        // install root would pass the loop above by not being in it.
+        await Assert.That(typeof(IAppPaths).GetProperties().Length).IsEqualTo(data.Length);
+    }
+
+    /// <summary>
     /// The release script archives the full <c>.nupkg</c>, and refuses when
     /// there is none to archive.
     /// </summary>
@@ -1173,6 +1317,12 @@ internal sealed class UpdateTests
 
     private static FileInfo ProductFile(params string[] segments) =>
         new(Path.Combine([RepositoryLayout.Root.FullName, "src", "BrowserAI", .. segments]));
+
+    /// <summary>
+    /// How the data seam is composed, spelled once so the scan and the failure
+    /// message cannot drift apart.
+    /// </summary>
+    private const string Composition = "new LocalAppDataPaths(";
 
     /// <summary>
     /// A scripted <see cref="IUpdateClient"/>: everything the service asks for,
