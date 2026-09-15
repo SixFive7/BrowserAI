@@ -420,7 +420,11 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(File.Exists(NotesScript)).IsTrue();
 
-        var call = script.IndexOf("New-ReleaseNotes.ps1", StringComparison.Ordinal);
+        // The INVOCATION, never the first mention of the name: the comment above
+        // it names the script too, and a window measured from a comment is a
+        // window that moves whenever somebody explains themselves at more or
+        // less length.
+        var call = script.IndexOf("& (Join-Path $PSScriptRoot 'New-ReleaseNotes.ps1')", StringComparison.Ordinal);
         await Assert.That(call).IsGreaterThan(-1);
 
         // The version it packs, never one it works out again: two derivations of
@@ -430,10 +434,34 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(invocation).Contains("-Version $PackVersion");
         await Assert.That(invocation).Contains("-Destination");
-        await Assert.That(invocation).Contains("$manifestDir");
+
+        // The destination is named a few lines above the call rather than on it,
+        // so the step is read as a whole: what matters is that the body lands
+        // where the manifest does and not that one expression carries both.
+        var step = script[Math.Max(0, call - 400)..Math.Min(script.Length, call + 600)];
+
+        await Assert.That(step).Contains("$manifestDir");
 
         // And a failure stops the release rather than leaving it bodyless.
         await Assert.That(invocation).Contains("if ($LASTEXITCODE -ne 0) { exit 1 }");
+
+        // ⚠️ AND IT IS SKIPPED FOR A PRE-RELEASE VERSION, which is not a defect
+        // in the guard but the whole reason this branch exists. `New-Release.ps1`
+        // is run twice for every release the suite is part of: once on a real
+        // version, and once on `1.0.1-alpha.0.19` or whatever MinVer derives, to
+        // produce the pack the capability-gated arms install. The second has no
+        // changelog section and never will, and a body step that refused it
+        // would make the release script unusable for the thing it is used for
+        // most. Found by running it: the pack succeeded and the body step exited
+        // 1 naming a section nobody had written.
+        // Scoped to the lines immediately above the call rather than to the
+        // whole file: the pre-release SUFFIX is already tested four hundred
+        // lines earlier, for a different reason, and a whole-file search would
+        // pass on that one and assert nothing about this step.
+        var guard = script[Math.Max(0, call - 400)..call];
+
+        await Assert.That(guard).Contains("if ($PackVersion -match '-')");
+        await Assert.That(guard).Contains("else");
 
         // Reported, so the shape the size guard chose is in the release record
         // rather than only on somebody's screen.

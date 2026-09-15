@@ -713,13 +713,30 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
 # section it cannot read and says which SHAPE it produced -- folded, or headlines
 # alone when the folded one does not fit -- and that sentence belongs in the
 # release record rather than only on the screen of whoever ran this.
-$bodyFile = Join-Path $manifestDir "$downloadId-$PackVersion-release-body.md"
-$bodyReport = & (Join-Path $PSScriptRoot 'New-ReleaseNotes.ps1') `
-    -Version $PackVersion -Destination $bodyFile
+#
+# ⚠️ NOT FOR A PRE-RELEASE VERSION, and that is the branch this script is run
+# down most often rather than an edge case. Every gate that installs a real
+# installer needs a pack, and a pack is made by running THIS script on whatever
+# MinVer derives from a commit past the tag -- `1.0.1-alpha.0.19` today. No such
+# version has a changelog section and none ever will, so demanding one would
+# make the release script unusable for the thing it is used for most. Found by
+# running it: the pack succeeded and this step exited 1 naming a section nobody
+# had written.
+$bodyFile = $null
+$bodyShape = $null
 
-if ($LASTEXITCODE -ne 0) { exit 1 }
+if ($PackVersion -match '-') {
+    Write-Host "No release body for ${PackVersion}: it carries a pre-release suffix, so there is no changelog section for it and this pack is not a release."
+}
+else {
+    $bodyFile = Join-Path $manifestDir "$downloadId-$PackVersion-release-body.md"
+    $bodyReport = & (Join-Path $PSScriptRoot 'New-ReleaseNotes.ps1') `
+        -Version $PackVersion -Destination $bodyFile
 
-$bodyShape = ($bodyReport | Select-Object -Last 1)
+    if ($LASTEXITCODE -ne 0) { exit 1 }
+
+    $bodyShape = ($bodyReport | Select-Object -Last 1)
+}
 
 [pscustomobject]@{
     Version          = $PackVersion

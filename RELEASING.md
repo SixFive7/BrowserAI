@@ -78,7 +78,17 @@ of the order rather than defects in anything:
    this checklist already accepts — see [item 10](#10-the-changelogs-unreleased-section-is-not-empty),
    whose whole output is a stamp.
 3. **[Item 10](#10-the-changelogs-unreleased-section-is-not-empty): stamp, and
-   seal in the same commit.**
+   seal in the same commit.** ⚠️ **For the 2026-09-15 re-ship of `1.0.0` the
+   stamp is a MERGE into the existing section rather than a new one** — the
+   version already has a section and `Get-ReleaseNotes.ps1 -StampVersion 1.0.0`
+   refuses, correctly, so the entries that accumulated under `[Unreleased]` after
+   the first cut were moved into the `1.0.0` groups by hand and the section was
+   re-sealed. **From the next release onwards this step is a NEW section stamped
+   by the command**, and nothing about the script changed to allow the merge.
+   The body is generated here too — see
+   [the body step](#the-release-body-is-generated-and-its-rendering-is-checked-before-it-is-published),
+   which is what a release page now shows instead of the section cut at a
+   heading boundary.
 4. **[Item 9](#9-the-version-is-derived-and-000-is-refused): create the tag**, on
    the commit the gate was run at plus the stamp.
 5. **Clean re-pack.** `Releases/` is cleared of everything that is not this
@@ -109,7 +119,14 @@ both green on the very next run once the order was fixed:**
   the check refuses. It can only be green **before** the stamp. *(Since
   2026-09-15 that arm also accepts an empty section on the one commit the tag is
   exactly at — which narrows the window this ordering has to protect, and does
-  not remove it: the tag is created at step 4, after the gate.)*
+  not remove it: the tag is created at step 4, after the gate.)* ⚠️ **Narrowed
+  again later the same day, and this time the window is closed rather than
+  reduced:** the arm also accepts an empty section when **nothing under `src/` or
+  `tests/` has landed since the changelog was last written**, which is true for
+  the whole of steps 3 to 6 — stamp, tag, re-pack, publish — and stops being true
+  the moment a product or test change lands without an entry. The ordering above
+  still stands and is still worth following, but a gate run taken *after* the
+  stamp is no longer red for that reason.
 - **`UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest`** —
   `Expected 200 but found 404`. Deleting the `v1.0.0` tag to move it turned the
   only published release into a **Draft**, so

@@ -1043,6 +1043,89 @@ Start at [`README.md`](README.md).
 
 ### Changed
 
+- 📦 **A pack built for the gate is not a release, so it is not given a release body.** `New-Release.ps1`
+  is run twice for every release the suite is part of: once on the version being
+  cut, and once on whatever MinVer derives from a commit past the tag —
+  `1.0.1-alpha.0.19` today — to produce the pack the capability-gated arms
+  install. **No pre-release version has a changelog section and none ever
+  will**, so the body step is skipped for one, out loud, instead of refusing.
+  Found by running the script rather than by reading it: the pack succeeded and
+  the new step exited 1 naming a section nobody had written. The stale
+  single-binary pack in `Releases/` was replaced in the same pass — it carried
+  `BrowserAI.exe` at 19,221,504 bytes, which is the SERVER under the old name,
+  and both real-installer arms were red against it — and the pack now holds
+  `BrowserAI.exe` at 10,382,848 and `BrowserAI.Server.exe` at 19,181,568, which
+  is the two-binary layout the installer arms assert.
+
+- ✅ **An empty `[Unreleased]` is legal while a release is being cut, not only once it is tagged.** A
+  release is not a commit — it is a stamp, then a gate, then a tag — and the
+  exemption added earlier on 2026-09-15 keyed on the tag being **exactly at
+  HEAD**, which is true only at the end of that. So
+  `ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt` was red
+  through every step before it, which is exactly where a release stands while
+  somebody is running the six-run gate. The second way in is the rule the first
+  was standing in for: **nothing has landed that the changelog has not been
+  written for**, read from git as `src/` and `tests/` against the last commit
+  that touched `CHANGELOG.md`. A docs-only or release-machinery commit during a
+  cut leaves it standing; the first product or test change after it takes it
+  away and demands an entry again. Without git there is no exemption, which is
+  the safe direction and the answer the arm gave before any of this.
+
+- 📦 **The GitHub release body is generated from the section rather than cut out of it.** The
+  published v1.0.0 body was the stamped section truncated at a heading boundary
+  — **110,225 characters** ending mid-argument, opening with four warning icons,
+  with a permalink line stuck on at the cut — because 236,567 characters do not
+  fit in a field that holds 125,000.
+  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1) reads the entry
+  shape above and emits each headline as a line with its detail folded behind a
+  `read more`, a footer carrying the palette legend read out of the changelog
+  itself, and a link to the section at the tag whose anchor is computed by the
+  **same slug rule** every relative link in this repository is checked with.
+  [`build/New-Release.ps1`](build/New-Release.ps1) runs it last and writes the
+  body beside the release manifest, so the body travels with the evidence
+  instead of being produced by hand at publish time.
+
+  ⚠️ **The size guard changes the document, and for 1.0.0 it is the branch
+  taken**: folded is **280,063** characters, headlines alone is **19,340**, and
+  the script says which shape it produced. The limit itself is a number this
+  project carries and nobody here has established — GitHub's own documentation
+  for *Create a release* states no maximum — which
+  [kb](kb/toolchain.md#gh-for-a-release-body-the-size-limit-is-carried-rather-than-measured-and-the-rendering-is-checkable--2026-09-15)
+  says in as many words, with a re-verification row naming the experiment that
+  was deliberately not run. The rendering is checked against GitHub's own
+  renderer before publishing — `gh api -X POST markdown -f mode=gfm` — which
+  confirms the two properties the fold depends on: the `<details>` inside the
+  `<li>`, the headline a `<strong>`.
+
+  Planted red, each against its own mutation: with the fold removed the body arm
+  failed on the whole document; with the guard removed the fallback arm read
+  *"is FOLDED: 291 characters against a limit of 400"*; with the slug stripping
+  underscores the anchor arm failed on the `one_off` heading **alone**, its
+  other two arguments staying green.
+
+- 📝 **Every entry in this changelog is an icon, a one-sentence headline and a fold.** **236
+  entries re-shaped**, 1.0.0 and 0.1.0 alike, into `- <icon> **Headline.** <the
+  whole of what happened>`. Nothing was rewritten: where a headline is new, the
+  sentence it replaces is the first thing in the detail, word for word, with its
+  bold markers dropped because the bold is the headline's now — checked
+  mechanically over every entry rather than by reading. The groups are the
+  Keep-a-Changelog set in its fixed order, **once each**: the 1.0.0 section
+  carried `Changed` four times, `Added` three, `Fixed` three and `Removed`
+  three, one run per batch that landed, so a reader looking for what was removed
+  had to find three lists of it. Everything that had accumulated under
+  `[Unreleased]` merges into those groups, because it all ships in the 1.0.0
+  re-ship, and the section opens with a preamble written for somebody who has
+  never seen the project.
+
+  **The palette is a legend at the top and the icon is chosen for what the entry
+  IS**, not for the group it sits under — twelve icons, approved as written.
+  Five arms hold the shape, each with synthetic controls the tree can never
+  produce: no icon, an icon outside the palette, a headline nobody made bold, a
+  headline of two sentences, and one a single character over budget. **The
+  100-character budget is chosen rather than measured and says so**: where
+  GitHub wraps is a question about a browser's layout at a font size, and the
+  markdown API returns HTML rather than a line box.
+
 - 📦 **The production-feed check reads the body, because a 200 was measured
   carrying the wrong one.** For
   about two minutes after the 2026-09-15 release replaced its assets,
@@ -3080,6 +3163,44 @@ Start at [`README.md`](README.md).
   MiB**.
 
 ### Fixed
+
+- 🐛 **A launcher that had exited but whose pid still opened was read as a live client.** `ClientLivenessWatcher`
+  treated `OpenProcess` succeeding as *there is somebody there*. Windows keeps a
+  process object for as long as any handle anywhere names it — the console host
+  holds one for a process that ran in a console — so a launcher that was already
+  gone went on answering, the watch attached to an already-signalled handle, and
+  `Program.Main` was told the client could be watched: **the no-client fast exit
+  was skipped for a corpse**, and the run swept the machine, took the live
+  marker and served nobody. The fix is one question after the identity pairing —
+  `WaitForSingleObject(handle, 0)` — and an already-signalled handle takes the
+  same path as a pid that cannot be opened at all, under a record of its own
+  (`Startup[76]`) so the log says which of the two routes it took; a wait that
+  cannot be interpreted is read as neither. Measured through the one-launcher
+  rig: the launcher is gone **30 ms before** the product writes its first
+  record, the decision lands at **0.116 s**, and the data root afterwards holds
+  `logs\` alone.
+
+  ⚠️ **It was found as a flake, and what made it one was that the machine
+  decided the condition.**
+  `InstallerHandoffTests.ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog`
+  went red once in four full runs on 2026-09-15, at the whole of
+  `TestDefaults.ProcessHang`, and the hazard row written that morning said no
+  rig could close it. `OrphanedConsoleStart` now produces either shape on
+  request — `LauncherCorpse.Freed` for a pid nothing holds,
+  `LauncherCorpse.Openable` for one the test host keeps a handle on — so the arm
+  is deterministic: planted against the published pre-fix binary it failed
+  **every** time in under 400 ms rather than once in four. Both arms wait for
+  *either* decision now, so losing that race is a named failure in a second
+  instead of ten minutes of silence.
+
+  Three arms, all watched red first:
+  `ProcessLivenessTests.AWatchIsRefusedWhenThePidOpensAndItsProcessHasAlreadyExited`
+  (*"Expected to be null but found BrowserAI.Interop.ClientLivenessWatcher"*,
+  254 ms),
+  `InstallerHandoffTests.ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe`
+  and `.ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog` (both
+  *'received "Watching the MCP client"'*). Green after the fix, and 8 of 8
+  filtered runs of the class since.
 
 - 🐛 **BrowserAI 1.0.0 did not exit when it had nobody to serve, and every install left orphans.** BrowserAI
   1.0.0 did not exit when it had nobody to serve, and every non-silent install

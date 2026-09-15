@@ -104,6 +104,29 @@ internal sealed partial class AppendOnlyRecordTests
     /// over. It carries no editorial note because there was no editorial change.
     /// </para>
     /// <para>
+    /// ⚠️ <b>BOTH CHANGELOG SEALS WERE LIFTED ONCE, ON 2026-09-15, AT THE
+    /// MAINTAINER'S EXPLICIT INSTRUCTION (Q193), AND RE-TAKEN AT THE END OF THE
+    /// SAME BATCH.</b> <c>Corrected 2026-09-15 (previously sealed at
+    /// <c>CHANGELOG.md#1.0.0</c> 236,567 characters / <c>c8163746…</c> and
+    /// <c>CHANGELOG.md#0.1.0</c> 3,850 characters / <c>4e939d92…</c>)</c>. Every
+    /// entry in both sections was re-shaped into
+    /// <c>- &lt;icon&gt; **Headline.** &lt;the rest&gt;</c> for the 1.0.0 re-ship, and
+    /// the entries that had accumulated under <c>[Unreleased]</c> were merged
+    /// into 1.0.0's groups, so the prefix of each record moved by construction.
+    /// </para>
+    /// <para>
+    /// <b>What the lift does NOT mean, said here because this is where somebody
+    /// will read it next time.</b> The rule is unchanged and the warning above
+    /// stands: <i>re-sealing a record to make this test pass is rewriting
+    /// history with an extra step.</i> What made this one legitimate is that a
+    /// human ordered the re-shaping in advance, in writing, and that <b>no fact
+    /// was rewritten</b> — where a headline is new, the sentence it replaces is
+    /// the first thing in its own detail, word for word, and that was checked
+    /// over all 236 entries mechanically rather than by reading. <b>A second
+    /// lift is not a precedent; it is another decision, and it belongs to
+    /// whoever owns the rule.</b>
+    /// </para>
+    /// <para>
     /// <b>The changelog carries two released sections</b>, and the
     /// <c>[Unreleased]</c> section is deliberately not in the list: it is not a
     /// record of what shipped until a release stamps it. <i>Corrected 2026-09-15
@@ -119,8 +142,8 @@ internal sealed partial class AppendOnlyRecordTests
     /// </remarks>
     private static readonly Seal[] Sealed =
     [
-        new("CHANGELOG.md#0.1.0", 3850, "4e939d92358aaefda03d33dff615bbc14209a52f35be7bf8d2985a54f4c3f7ac"),
-        new("CHANGELOG.md#1.0.0", 236567, "c8163746de730fa28ed8da12ef92fe95f88483fec1594d9147cd0f73df54d912"),
+        new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0"),
+        new("CHANGELOG.md#1.0.0", 281695, "1f465fe73c6e315638c2b87c8768c5e30b26b35257309cd436c23ef86498835c"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea"),
