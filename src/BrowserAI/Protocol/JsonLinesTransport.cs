@@ -162,21 +162,56 @@ internal abstract class JsonLinesTransport : TransportBase
             // syscall; cancellation alone does not, which is the SDK's own
             // finding and the reason this is a separate step rather than a
             // token.
-            await ShutdownPeerAsync().ConfigureAwait(false);
+            //
+            // ⚠️ AND ONLY A TRANSPORT THAT OWNS THE PEER CAN DO IT, which is
+            // why this now answers rather than returning. Corrected 2026-09-15
+            // (previously "await ShutdownPeerAsync(); await _readLoop;"): the
+            // sentence above is true of the child leg, where this process owns
+            // the pipe and closing it really does produce end-of-file, and
+            // FALSE of the caller leg, where the other end of stdin belongs to
+            // somebody else. Measured on .NET 10 against
+            // Console.OpenStandardInput(): once a read has parked, neither
+            // cancelling the token nor disposing the stream completes it --
+            // 3 s each, both still WaitingForActivation, with a console stdin
+            // and with a pipe stdin alike.
+            var woken = await ShutdownPeerAsync().ConfigureAwait(false);
 
-            try
+            // ⚠️ ABANDONED RATHER THAN AWAITED, and that is what makes this
+            // process's exit independent of its caller. A caller-facing read
+            // parked on a console never returns, so awaiting it made the exit
+            // conditional on a client -- and an installer is not a client. That
+            // shipped as v1.0.0 and left a server, a node child and a terminal
+            // window standing for 215 s on the first non-silent install.
+            //
+            // Nothing is leaked by giving up on it: the read is parked on a
+            // thread-pool thread, which is a background thread and does not
+            // keep the process alive. Measured the same day, by returning from
+            // Main with one parked and watching the process exit anyway.
+            //
+            // A loop that has already ended is still awaited, whoever the peer
+            // is -- that is the ordinary shutdown, where the client closed its
+            // end first -- so the record of a read loop that faulted is not
+            // lost to this.
+            if (woken || _readLoop.IsCompleted)
             {
-                await _readLoop.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected: the token above is what ended the loop.
-            }
+                try
+                {
+                    await _readLoop.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected: the token above is what ended the loop.
+                }
 #pragma warning disable CA1031 // Teardown reports and continues; nothing above this can act on the difference.
-            catch (Exception ex)
+                catch (Exception ex)
 #pragma warning restore CA1031
+                {
+                    TransportLog.ReadLoopFailedDuringShutdown(Log, Name, ex);
+                }
+            }
+            else
             {
-                TransportLog.ReadLoopFailedDuringShutdown(Log, Name, ex);
+                TransportLog.ReadLoopAbandoned(Log, Name);
             }
         }
         finally
@@ -233,10 +268,27 @@ internal abstract class JsonLinesTransport : TransportBase
     protected abstract ValueTask WriteFrameAsync(ReadOnlyMemory<byte> utf8Payload, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Closes whatever the read loop is blocked on, so that it observes EOF.
+    /// Closes whatever the read loop is blocked on, and answers whether closing
+    /// it actually ends the read.
     /// </summary>
-    /// <returns>A task that completes once the peer has been closed.</returns>
-    protected abstract ValueTask ShutdownPeerAsync();
+    /// <remarks>
+    /// <para>
+    /// <b>The answer is about ownership, never about timing.</b> A transport
+    /// that started the peer owns the handle the loop is parked on, and closing
+    /// it produces end-of-file; a transport whose peer is somebody else's
+    /// process owns only its own end, and closing that wakes nothing at all.
+    /// </para>
+    /// <para>
+    /// <b><see langword="false"/> is not a failure and must not be reported as
+    /// one.</b> It is the ordinary state of the caller-facing leg, and what it
+    /// buys is an exit that does not depend on the caller.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// <see langword="true"/> when the read loop will now end on its own,
+    /// <see langword="false"/> when it has to be abandoned.
+    /// </returns>
+    protected abstract ValueTask<bool> ShutdownPeerAsync();
 
     /// <summary>
     /// Marks the transport connected and starts reading frames from
@@ -553,4 +605,23 @@ internal static partial class TransportLog
         Level = LogLevel.Error,
         Message = "{Transport}: could not answer an unparseable frame, so its sender is left waiting.")]
     public static partial void ParseErrorNotAnswered(ILogger logger, string transport, Exception exception);
+
+    /// <summary>
+    /// The read loop was left parked rather than waited for, because the peer
+    /// is not this process's to close.
+    /// </summary>
+    /// <remarks>
+    /// <b>Information rather than Warning: this is the ordinary end of the
+    /// caller-facing leg</b>, and the record exists because the alternative is a
+    /// teardown whose only trace of the decision is the absence of an
+    /// end-of-stream line. The thread it leaves parked is a thread-pool thread
+    /// and does not keep the process alive.
+    /// </remarks>
+    /// <param name="logger">Where to log.</param>
+    /// <param name="transport">The transport that gave up on its own read.</param>
+    [LoggerMessage(
+        EventId = 15,
+        Level = LogLevel.Information,
+        Message = "{Transport}: the read loop was abandoned rather than awaited — the peer owns the other end of it, so closing this end cannot wake it and nothing may wait on a read that will never return.")]
+    public static partial void ReadLoopAbandoned(ILogger logger, string transport);
 }

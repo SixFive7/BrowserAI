@@ -158,7 +158,14 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     }
 
     /// <inheritdoc />
-    protected override async ValueTask ShutdownPeerAsync()
+    /// <remarks>
+    /// <b><see langword="true"/>, because this transport owns the peer.</b> It
+    /// started the child, it holds the write end of the child's stdin, and the
+    /// job object below it is the guarantee: closing stdin ends the child,
+    /// the child's exit closes the pipe this loop reads, and the read then
+    /// returns end-of-file on its own.
+    /// </remarks>
+    protected override async ValueTask<bool> ShutdownPeerAsync()
     {
         // Closing stdin is the graceful path and the only one upstream
         // recognises: `@playwright/mcp`'s exit watchdog hooks stdin close and
@@ -177,6 +184,11 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         {
             TransportLog.ChildExited(_logger, Name, ProcessId, exitCode);
         }
+
+        // The child is gone either way by this point -- gracefully above, or
+        // through its job -- so its end of the pipe is closed and the read loop
+        // is on its way out of its own accord.
+        return true;
     }
 
     private async Task TerminateThroughTheJobAsync()

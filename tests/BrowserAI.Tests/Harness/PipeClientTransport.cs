@@ -74,9 +74,19 @@ internal sealed class PipeChildSession : JsonLinesTransport
     }
 
     /// <inheritdoc />
-    protected override async ValueTask ShutdownPeerAsync() =>
+    /// <remarks>
+    /// <b><see langword="true"/>, for the same reason the real child's leg
+    /// answers it.</b> The double on the other end of this pipe reads to
+    /// end-of-file and closes its own write end when it sees one, so closing
+    /// this end really does end the read loop.
+    /// </remarks>
+    protected override async ValueTask<bool> ShutdownPeerAsync()
+    {
         // Closing this end is the graceful path here for the same reason
         // closing stdin is against a real child: it is the only signal the peer
         // gets that the conversation is over.
         await _toChild.DisposeAsync();
+
+        return true;
+    }
 }

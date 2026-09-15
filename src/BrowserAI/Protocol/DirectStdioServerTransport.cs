@@ -72,9 +72,23 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
     }
 
     /// <inheritdoc />
-    protected override ValueTask ShutdownPeerAsync()
+    /// <remarks>
+    /// ⚠️ <b>Always <see langword="false"/>, and it is a statement about who
+    /// owns the wire rather than a caveat.</b> The other end of this process's
+    /// standard input belongs to whoever started it. Disposing the stream on
+    /// this side closes nothing the caller holds — and for a console standard
+    /// input it does not even close a handle: measured 2026-09-15 on .NET 10,
+    /// <c>Console.OpenStandardInput()</c> hands back a
+    /// <c>WindowsConsoleStream</c> whose disposal leaves the console handle
+    /// open, and a read already parked on it is completed by neither the
+    /// disposal nor a cancellation.
+    /// </remarks>
+    protected override ValueTask<bool> ShutdownPeerAsync()
     {
+        // Still done, and for the half it can do: stdout belongs to the
+        // protocol, so nothing that could write to it may outlive the session.
         _channel.Dispose();
-        return ValueTask.CompletedTask;
+
+        return ValueTask.FromResult(false);
     }
 }

@@ -174,6 +174,149 @@ internal sealed class DirectStdioServerTransportTests
     /// A server transport with both ends in hand: a pipe standing in for the
     /// caller's stdin and a buffer standing in for stdout.
     /// </summary>
+    /// <summary>
+    /// Disposing the caller-facing transport does not wait for a read the caller
+    /// is never going to end.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the shipped defect of v1.0.0, reduced to the one object
+    /// that caused it.</b> <c>JsonLinesTransport.DisposeAsync</c> cancelled its
+    /// token, closed its own end of the channel and then awaited the read loop
+    /// — on the strength of a comment that said <i>"closing the peer's end is
+    /// what actually wakes a read blocked in a syscall"</i>. That is true of the
+    /// child leg, where this process owns the pipe; it is false of the caller
+    /// leg, where the other end of stdin belongs to somebody else. Measured
+    /// 2026-09-15 on .NET 10 against <c>Console.OpenStandardInput()</c>: after a
+    /// read has parked, neither cancelling the token nor disposing the stream
+    /// completes it — <b>3 s each, both still <c>WaitingForActivation</c>, with
+    /// a console stdin and with a pipe stdin alike</b>
+    /// (<c>.work/2026-09-15-fix/consoleprobe/probe-console-a.txt</c>).
+    /// </para>
+    /// <para>
+    /// <b>So the exit was conditional on the client, and the installer is not a
+    /// client.</b> A post-install start gets a console nobody writes to; the
+    /// read parked, the await never returned, and the process stood for 215
+    /// seconds holding a browser server and a terminal window until it was
+    /// killed by pid.
+    /// </para>
+    /// <para>
+    /// <b>Abandoning the loop is safe, and that was measured rather than
+    /// assumed.</b> The parked read sits on a thread-pool thread, which is a
+    /// background thread: the same probe returned from <c>Main</c> without
+    /// awaiting it and the process exited anyway.
+    /// </para>
+    /// <para>
+    /// <b>The double is a stream rather than a console</b>, because this suite
+    /// may not allocate one and does not need to: what the transport is parked
+    /// on is a <c>Read</c> that has not returned, and a console is only one way
+    /// to arrange that. The end-to-end console shape is
+    /// <c>InstallerHandoffTests.ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task DisposingDoesNotWaitForAReadTheCallerWillNeverEnd()
+    {
+        using var caller = new ParkedStream();
+        using var answers = new MemoryStream();
+
+        var transport = new DirectStdioServerTransport(StdioChannel.Over(caller, answers));
+
+        // The disposal below IS the measurement, so this second one is only what
+        // CA2000 asks for: DisposeAsync is interlocked and the second call
+        // returns at once, including on the path where the first never did.
+        await using var ownership = transport.ConfigureAwait(false);
+
+        // On the event rather than on a clock: the loop has to be genuinely
+        // inside the read before disposal means anything at all.
+        await Assert.That(caller.WaitUntilParked(Patience)).IsTrue();
+
+        var released = true;
+
+        try
+        {
+            await transport.DisposeAsync().AsTask().WaitAsync(Patience);
+        }
+        catch (TimeoutException)
+        {
+            released = false;
+        }
+
+        await Assert.That(released).IsTrue();
+
+        // Let the abandoned read go, so the pool thread is not held for the rest
+        // of the run.
+        caller.Release();
+    }
+
+    /// <summary>
+    /// A stream whose <c>Read</c> parks until it is released, the way a console
+    /// standard input parks until somebody types.
+    /// </summary>
+    /// <remarks>
+    /// <b>Disposing it does not release the read</b>, deliberately: that is the
+    /// property <c>Console.OpenStandardInput()</c> has and the one the defect
+    /// rested on. A double that unblocked on <c>Dispose</c> would make the
+    /// broken transport pass.
+    /// </remarks>
+    private sealed class ParkedStream : Stream
+    {
+        private readonly ManualResetEventSlim _parked = new(initialState: false);
+        private readonly ManualResetEventSlim _released = new(initialState: false);
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        /// <summary>Waits until a read is actually parked inside this stream.</summary>
+        /// <param name="patience">A hang detector, never a budget.</param>
+        /// <returns>Whether one is.</returns>
+        public bool WaitUntilParked(TimeSpan patience) => _parked.Wait(patience);
+
+        /// <summary>Lets the parked read return end-of-stream.</summary>
+        public void Release() => _released.Set();
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            _parked.Set();
+            _released.Wait();
+
+            return 0;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _parked.Dispose();
+                _released.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+    }
+
     private sealed class ServerRig : IAsyncDisposable
     {
         private readonly Pipe _input = new();
