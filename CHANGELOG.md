@@ -38,6 +38,27 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🔒 **Neither an install nor an uninstall touches a `browserai` entry it did
+  not write.** Three sentences in this codebase said
+  BrowserAI *"neither adopts, overwrites nor deletes"* an entry belonging to
+  another install — `RegistrationOwnership`'s own summary,
+  `AppState.MayRemove`'s remark, and the registration row in
+  [`DECISIONS.md`](DECISIONS.md) — and **one intent out of three was keeping
+  them.** `Repair`, the update hook's path, read the client's configuration and
+  refused what it did not own; `Reassert`, the **install** hook's, ran
+  `mcp remove` and then `mcp add` with no check at all, and `Remove`, the
+  **uninstall** hook's, ran `mcp remove` unconditionally. So installing this
+  BrowserAI beside another one deleted that one's registration and wrote its own
+  over the top, and uninstalling this one deleted the other's outright.
+  `McpRegistrar.Apply` now reads `McpRegistryView.User` before **every** intent
+  and takes the two refusals — a configuration nobody could read, and an entry
+  outside this install root — in one place for all three. Absent, ours-and-stale
+  and ours-and-present behave exactly as they did. There is no exit code on that
+  path and that is deliberate: these run inside Velopack fast-exit callbacks,
+  where a non-zero result fails somebody's install, so what carries the outcome
+  is `isWhatWasAskedFor: false` in `mcp-registration.json` with the foreign path
+  named in the detail, plus a warning in the installer's own log.
+
 - 📦 **The suite's installer is titled `BrowserAI (suite)` and no longer
   owns the real Start Menu entry.** The two packs were split by pack id on
   2026-09-15 to stop the suite's installer arm rewriting and then deleting the

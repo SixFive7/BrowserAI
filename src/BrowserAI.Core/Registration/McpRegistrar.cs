@@ -174,16 +174,30 @@ internal static class McpRegistrar
                 return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
             }
 
+            // ⚠️ READ BEFORE EVERY INTENT, AND NOT ONLY BEFORE AN UPDATE —
+            // 2026-09-16. Until this day the install hook ran `mcp remove` and
+            // then `mcp add` with no check at all, and the uninstall hook ran
+            // `mcp remove` unconditionally — so installing BrowserAI OVERWROTE
+            // another BrowserAI's registration and uninstalling it DELETED one.
+            // Three sentences in this codebase said that never happens
+            // (RegistrationOwnership's own summary, AppState.MayRemove, and the
+            // registration row in DECISIONS.md), and one intent out of three was
+            // keeping them.
+            var view = (existing ?? (root => McpRegistryView.User(root)))(target.InstallRoot);
+
+            // Unreadable and Foreign answer the same way whatever was asked, so
+            // they are decided once rather than three times. Everything below
+            // this line is about a registration that is ABSENT or OURS.
+            if (NotOursToTouch(logger, client, command, intent, view) is { } notOurs)
+            {
+                return notOurs;
+            }
+
             return intent switch
             {
                 RegistrationIntent.Uninstall => Remove(commands, logger, client, command),
                 RegistrationIntent.Install => Reassert(commands, logger, client, command),
-                _ => Repair(
-                    commands,
-                    logger,
-                    client,
-                    command,
-                    (existing ?? (root => McpRegistryView.User(root)))(target.InstallRoot)),
+                _ => Repair(commands, logger, client, command, view),
             };
         }
 #pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds -- never an exception into the installer.
@@ -226,7 +240,9 @@ internal static class McpRegistrar
     /// reported and never touched</b>: an entry named <c>browserai</c> whose
     /// command is not under our install root belongs to another BrowserAI, and
     /// adopting it would be an update of one product silently re-pointing
-    /// another.
+    /// another. <i>Since 2026-09-16 that last judgement is taken in
+    /// <see cref="NotOursToTouch"/> and applies to every intent</i>, so this
+    /// method only ever meets the two that are ours and the one that is nothing.
     /// </para>
     /// <para>
     /// <b>Ours is decided by the install root and not by the file name</b>, so a
@@ -240,14 +256,8 @@ internal static class McpRegistrar
         string command,
         RegistrationView existing)
     {
-        if (existing.Unreadable is { } unreadable)
-        {
-            // Never treated as "nothing is registered": that reading would make
-            // an unreadable file into a licence to write one.
-            RegistrationLog.Refused(logger, unreadable);
-            return new RegistrationReport(RegistrationStatus.Refused, unreadable, client, command);
-        }
-
+        // Unreadable and Foreign never reach here: Apply decides both before it
+        // picks an intent, because the answer is the same for all three.
         switch (existing.Ownership)
         {
             case RegistrationOwnership.Absent:
@@ -257,15 +267,6 @@ internal static class McpRegistrar
                 RegistrationLog.Repairing(logger, existing.Command ?? "<none>", command);
                 _ = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
                 return Add(commands, logger, client, command);
-
-            case RegistrationOwnership.Foreign:
-                var foreign =
-                    $"Another BrowserAI is registered at '{existing.Command}', which is not under this install root. "
-                    + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{McpClientRegistration.ServerName}' entry it did not write. "
-                    + $"If this install is the one you want, unregister the other and register this one: {McpClientRegistration.ManualCommandFor(command)}";
-
-                RegistrationLog.Refused(logger, foreign);
-                return new RegistrationReport(RegistrationStatus.Refused, foreign, client, existing.Command);
 
             default:
                 RegistrationLog.AlreadyRegistered(logger, McpClientRegistration.ServerName, command);
@@ -278,9 +279,88 @@ internal static class McpRegistrar
     }
 
     /// <summary>
-    /// An install: remove whatever is there, then add. The newest install is the
-    /// authority on where BrowserAI is.
+    /// The two states in which no intent may act: a configuration nobody could
+    /// read, and an entry this install did not write.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Shared by all three intents since 2026-09-16.</b> It was
+    /// <see cref="Repair"/>'s alone, which meant an <i>install</i> overwrote a
+    /// foreign entry and an <i>uninstall</i> deleted one — the exact two things
+    /// <see cref="RegistrationOwnership"/> says this product never does. The
+    /// wording is unchanged for the intents that write, so a person who has met
+    /// this message before meets the same one; the uninstall's closing sentence
+    /// differs because <i>register this one instead</i> is not advice about an
+    /// uninstall.
+    /// </para>
+    /// <para>
+    /// <b>Nothing runs.</b> The refusal is returned before any client command is
+    /// started, so the verb list a double records is empty — which is how the
+    /// suite tells <i>refused</i> from <i>tried and failed</i>.
+    /// </para>
+    /// <para>
+    /// <b>There is no exit code on this path and that is by design</b>: these run
+    /// inside Velopack fast-exit callbacks, where a non-zero result fails
+    /// somebody's install. What carries the outcome instead is
+    /// <c>mcp-registration.json</c> — <c>isWhatWasAskedFor</c> is
+    /// <see langword="false"/> for a refusal and the detail names the foreign
+    /// path — and a warning-level line in the installer's own log.
+    /// </para>
+    /// </remarks>
+    /// <param name="logger">Where the refusal is reported.</param>
+    /// <param name="client">The client executable that was found.</param>
+    /// <param name="command">What this install would have registered.</param>
+    /// <param name="intent">Which lifecycle event asked.</param>
+    /// <param name="existing">What is registered already.</param>
+    /// <returns>The refusal, or <see langword="null"/> when the caller may act.</returns>
+    private static RegistrationReport? NotOursToTouch(
+        ILogger logger,
+        string client,
+        string command,
+        RegistrationIntent intent,
+        RegistrationView existing)
+    {
+        if (existing.Unreadable is { } unreadable)
+        {
+            // Never treated as "nothing is registered": that reading would make
+            // an unreadable file into a licence to write one -- or, on an
+            // uninstall, into a licence to delete one.
+            RegistrationLog.Refused(logger, unreadable);
+            return new RegistrationReport(RegistrationStatus.Refused, unreadable, client, command);
+        }
+
+        if (existing.Ownership is not RegistrationOwnership.Foreign)
+        {
+            return null;
+        }
+
+        var advice = intent is RegistrationIntent.Uninstall
+            ? "That entry belongs to the other install, and removing it is for that install to do."
+            : $"If this install is the one you want, unregister the other and register this one: {McpClientRegistration.ManualCommandFor(command)}";
+
+        var foreign =
+            $"Another BrowserAI is registered at '{existing.Command}', which is not under this install root. "
+            + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{McpClientRegistration.ServerName}' entry it did not write. "
+            + advice;
+
+        RegistrationLog.Refused(logger, foreign);
+        return new RegistrationReport(RegistrationStatus.Refused, foreign, client, existing.Command);
+    }
+
+    /// <summary>
+    /// An install: remove whatever <b>of ours</b> is there, then add. The newest
+    /// install is the authority on where <i>this</i> BrowserAI is, and on
+    /// nothing else.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-09-16 (previously "remove whatever is there, then
+    /// add. The newest install is the authority on where BrowserAI is").</b>
+    /// That sentence was true of the code and false of the product: <i>whatever
+    /// is there</i> included another BrowserAI's entry, and this method deleted
+    /// it and wrote its own over the top. <see cref="Apply"/> now refuses a
+    /// foreign entry before this is reached, so the remaining states really are
+    /// the ones the sentence assumed — absent, or ours.
+    /// </remarks>
     private static RegistrationReport Reassert(IRegistrationCommand commands, ILogger logger, string client, string command)
     {
         // Deliberately unexamined. "Nothing to remove" is the ordinary case on a

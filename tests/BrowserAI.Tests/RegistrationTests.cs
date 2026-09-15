@@ -245,13 +245,13 @@ internal sealed class RegistrationTests
         // registered. It is not a question this arm is asking.
         var seen = WhatTheDoubleHolds(client);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger).Status)
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger, seen).Status)
             .IsEqualTo(RegistrationStatus.Registered);
 
         await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, client, logger, seen).Status)
             .IsEqualTo(RegistrationStatus.AlreadyRegistered);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger).Status)
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger, seen).Status)
             .IsEqualTo(RegistrationStatus.Registered);
 
         await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, client, logger, seen).Status)
@@ -266,16 +266,28 @@ internal sealed class RegistrationTests
     }
 
     /// <summary>
-    /// An install re-points an existing registration; an update leaves one
-    /// alone.
+    /// An install re-points a registration of ours; an update leaves one alone;
+    /// neither touches one that is not ours.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>The only judgement that differs between the two intents, and both
     /// directions cost something real.</b> Re-pointing on every update would
     /// silently delete arguments a user added to their own registration;
     /// never re-pointing would leave a stale path after a
     /// <c>Setup.exe --installto</c> elsewhere, which is a registration that
     /// launches nothing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Widened 2026-09-16</b> <i>(previously "An install re-points an
+    /// existing registration", asserted over an entry outside this install
+    /// root).</i> <b>Existing</b> was doing two jobs in that sentence. An entry
+    /// under this install root is ours and is re-pointed; an entry anywhere else
+    /// is another BrowserAI's, and an install that re-pointed it was one product
+    /// overwriting another's configuration. Both halves are asserted here now,
+    /// and the wider statement of the rule is
+    /// <see cref="NeitherAnInstallNorAnUninstallTouchesAnEntryThisInstallDidNotWrite"/>.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -305,12 +317,35 @@ internal sealed class RegistrationTests
         await Assert.That(update.Detail).Contains("Another BrowserAI is registered at");
         await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Stale);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, app, client, logger).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+        // ⚠️ AND SO DOES AN INSTALL, since 2026-09-16. *Corrected 2026-09-16
+        // (previously this asserted `Registered` and that the entry had been
+        // re-pointed at `server`.)* That WAS the behaviour and it was the defect:
+        // `Reassert` ran `mcp remove` and then `mcp add` without reading anything,
+        // so installing this BrowserAI deleted another BrowserAI's registration
+        // and wrote its own over the top. The re-pointing half of this arm's name
+        // is asserted below, where the entry really is ours.
+        var refusedInstall = McpRegistrar.Apply(RegistrationIntent.Install, app, client, logger, WhatTheDoubleHolds(client));
 
-        // An install removes before it adds; an update that refused ran nothing.
-        await Assert.That(client.Verbs).IsEquivalentTo(RemoveAdd);
+        await Assert.That(refusedInstall.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(refusedInstall.Detail).Contains("Another BrowserAI is registered at");
+        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Stale);
+
+        // Nothing ran on either intent, because both refused.
+        await Assert.That(client.Verbs).IsEmpty();
+
+        // ---- and the re-pointing this arm is named for, over an entry that IS
+        // ours: same install root, a file that is no longer there.
+        var ours = new FakeClientCommandLine();
+        var gone = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.old");
+
+        ours.Registered[McpClientRegistration.ServerName] = gone;
+
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, app, ours, logger, WhatTheDoubleHolds(ours)).Status)
+            .IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(ours.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+
+        // An install removes before it adds.
+        await Assert.That(ours.Verbs).IsEquivalentTo(RemoveAdd);
     }
 
     /// <summary>
@@ -416,6 +451,146 @@ internal sealed class RegistrationTests
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Refused);
         await Assert.That(report.Detail).Contains("unknown");
         await Assert.That(client.Verbs).IsEmpty();
+    }
+
+    /// <summary>
+    /// An install and an uninstall refuse a foreign entry the way an update
+    /// does, and behave exactly as they did over every other state.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-16, after a review found the ownership check on one
+    /// intent out of three.</b> <c>Repair</c> read the client's file and refused
+    /// what it did not write; <c>Reassert</c> (the install hook) ran
+    /// <c>mcp remove</c> and then <c>mcp add</c> with no check at all, and
+    /// <c>Remove</c> (the uninstall hook) ran <c>mcp remove</c> unconditionally.
+    /// So installing BrowserAI <b>overwrote</b> another BrowserAI's registration
+    /// and uninstalling it <b>deleted</b> one — which is the exact thing
+    /// <see cref="RegistrationOwnership"/>'s own summary, <c>AppState.MayRemove</c>
+    /// and the registration row in <c>DECISIONS.md</c> all say this product never
+    /// does. Those three sentences were kept true rather than narrowed.
+    /// </para>
+    /// <para>
+    /// <b>Over constructed inputs, like the update arm above.</b> What is
+    /// registered already is handed in, so each arm is about the judgement and
+    /// not about whatever the machine's own <c>~/.claude.json</c> holds.
+    /// </para>
+    /// <para>
+    /// <b>The states that must NOT have changed are asserted beside the one that
+    /// did</b> — absent, ours-and-present and ours-and-stale all still reassert
+    /// on install and still unregister on uninstall. A refusal that fired on
+    /// everything would satisfy the foreign arm alone.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NeitherAnInstallNorAnUninstallTouchesAnEntryThisInstallDidNotWrite()
+    {
+        using var install = ScratchDirectory.Create("registration-ownership");
+        using var elsewhere = ScratchDirectory.Create("registration-ownership-foreign");
+
+        var app = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+
+        _ = InstalledLayout.Create(elsewhere.Path);
+
+        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
+        var (logger, _) = Capture();
+
+        // ---- somebody else's, on install: reported, and nothing runs --------
+        var installing = new FakeClientCommandLine();
+        installing.Registered[McpClientRegistration.ServerName] = theirs;
+
+        var overwritten = McpRegistrar.Apply(
+            RegistrationIntent.Install, app, installing, logger, WhatTheDoubleHolds(installing));
+
+        await Assert.That(overwritten.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(overwritten.Detail).Contains("Another BrowserAI is registered at");
+        await Assert.That(overwritten.Detail).Contains(theirs);
+        await Assert.That(overwritten.Command).IsEqualTo(theirs);
+        await Assert.That(overwritten.IsWhatWasAskedFor).IsFalse();
+        await Assert.That(installing.Registered[McpClientRegistration.ServerName]).IsEqualTo(theirs);
+        await Assert.That(installing.Verbs).IsEmpty();
+
+        // ---- somebody else's, on uninstall: the same ------------------------
+        var uninstalling = new FakeClientCommandLine();
+        uninstalling.Registered[McpClientRegistration.ServerName] = theirs;
+
+        var spared = McpRegistrar.Apply(
+            RegistrationIntent.Uninstall, app, uninstalling, logger, WhatTheDoubleHolds(uninstalling));
+
+        await Assert.That(spared.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(spared.Detail).Contains("Another BrowserAI is registered at");
+        await Assert.That(spared.Detail).Contains(theirs);
+        await Assert.That(spared.Command).IsEqualTo(theirs);
+        await Assert.That(spared.IsWhatWasAskedFor).IsFalse();
+        await Assert.That(uninstalling.Registered[McpClientRegistration.ServerName]).IsEqualTo(theirs);
+        await Assert.That(uninstalling.Verbs).IsEmpty();
+
+        // ---- nothing registered: an install still adds ----------------------
+        var fresh = new FakeClientCommandLine();
+
+        await Assert.That(McpRegistrar.Apply(
+            RegistrationIntent.Install, app, fresh, logger, WhatTheDoubleHolds(fresh)).Status)
+            .IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(fresh.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+        await Assert.That(fresh.Verbs).IsEquivalentTo(RemoveAdd);
+
+        // ---- ours and present: an install still reasserts -------------------
+        var ours = new FakeClientCommandLine();
+        ours.Registered[McpClientRegistration.ServerName] = server;
+
+        await Assert.That(McpRegistrar.Apply(
+            RegistrationIntent.Install, app, ours, logger, WhatTheDoubleHolds(ours)).Status)
+            .IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(ours.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+        await Assert.That(ours.Verbs).IsEquivalentTo(RemoveAdd);
+
+        // ---- ours and stale: an install still re-points ---------------------
+        var staleCommand = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.old");
+        var stale = new FakeClientCommandLine();
+        stale.Registered[McpClientRegistration.ServerName] = staleCommand;
+
+        await Assert.That(McpRegistrar.Apply(
+            RegistrationIntent.Install, app, stale, logger, WhatTheDoubleHolds(stale)).Status)
+            .IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(stale.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+
+        // ---- ours and present: an uninstall still removes -------------------
+        var removing = new FakeClientCommandLine();
+        removing.Registered[McpClientRegistration.ServerName] = server;
+
+        await Assert.That(McpRegistrar.Apply(
+            RegistrationIntent.Uninstall, app, removing, logger, WhatTheDoubleHolds(removing)).Status)
+            .IsEqualTo(RegistrationStatus.Unregistered);
+        await Assert.That(removing.Registered.ContainsKey(McpClientRegistration.ServerName)).IsFalse();
+
+        // ---- nothing registered: an uninstall says so -----------------------
+        var nothing = new FakeClientCommandLine();
+
+        await Assert.That(McpRegistrar.Apply(
+            RegistrationIntent.Uninstall, app, nothing, logger, WhatTheDoubleHolds(nothing)).Status)
+            .IsEqualTo(RegistrationStatus.NothingToUnregister);
+
+        // ---- and a file nobody could read acts on nothing, either way -------
+        foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Uninstall })
+        {
+            var blind = new FakeClientCommandLine();
+            blind.Registered[McpClientRegistration.ServerName] = server;
+
+            var refused = McpRegistrar.Apply(
+                intent, app, blind, logger,
+                _ => new RegistrationView(
+                    RegistrationScope.User,
+                    "<constructed>",
+                    null,
+                    RegistrationOwnership.Absent,
+                    "'<constructed>' is not readable JSON, so what is registered there is unknown."));
+
+            await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
+            await Assert.That(refused.Detail).Contains("unknown");
+            await Assert.That(blind.Verbs).IsEmpty();
+        }
     }
 
     /// <summary>
@@ -542,14 +717,14 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("registration-uninstall");
         var command = InstalledLayout.Create(install.Path);
 
-        _ = McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger);
+        _ = McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger, WhatTheDoubleHolds(client));
 
-        var removed = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger);
+        var removed = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger, WhatTheDoubleHolds(client));
 
         await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
         await Assert.That(client.Registered).IsEmpty();
 
-        var again = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger);
+        var again = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger, WhatTheDoubleHolds(client));
 
         await Assert.That(again.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
         await Assert.That(again.IsWhatWasAskedFor).IsTrue();
@@ -605,7 +780,7 @@ internal sealed class RegistrationTests
         var refused = new FakeClientCommandLine { Always = new CommandOutcome(2, "some other failure", TimedOut: false, null) };
         var (logger, log) = Capture();
 
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, command, refused, logger);
+        var report = McpRegistrar.Apply(RegistrationIntent.Install, command, refused, logger, WhatTheDoubleHolds(refused));
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(report.IsWhatWasAskedFor).IsFalse();
@@ -615,13 +790,13 @@ internal sealed class RegistrationTests
         await Assert.That(log.Records.Any(record => record.Level is LogLevel.Error)).IsTrue();
 
         var hanging = new FakeClientCommandLine { Always = new CommandOutcome(-1, string.Empty, TimedOut: true, null) };
-        var stalled = McpRegistrar.Apply(RegistrationIntent.Install, command, hanging, logger);
+        var stalled = McpRegistrar.Apply(RegistrationIntent.Install, command, hanging, logger, WhatTheDoubleHolds(hanging));
 
         await Assert.That(stalled.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(stalled.Detail).Contains("did not finish within 10s");
 
         var dead = new FakeClientCommandLine { Always = new CommandOutcome(-1, string.Empty, TimedOut: false, "Access is denied") };
-        var unstartable = McpRegistrar.Apply(RegistrationIntent.Install, command, dead, logger);
+        var unstartable = McpRegistrar.Apply(RegistrationIntent.Install, command, dead, logger, WhatTheDoubleHolds(dead));
 
         await Assert.That(unstartable.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(unstartable.Detail).Contains("Access is denied");
@@ -643,7 +818,7 @@ internal sealed class RegistrationTests
 
         using var install = ScratchDirectory.Create("registration-throwing");
 
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, InstalledLayout.Create(install.Path), client, logger);
+        var report = McpRegistrar.Apply(RegistrationIntent.Install, InstalledLayout.Create(install.Path), client, logger, WhatTheDoubleHolds(client));
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(report.Detail).Contains("asked to throw");
@@ -699,6 +874,16 @@ internal sealed class RegistrationTests
     {
         using var install = ScratchDirectory.Create("registration-hook");
         using var data = ScratchDirectory.Create("registration-hook-data");
+
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("registration-hook-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var command = InstalledLayout.Create(install.Path);
         var client = new FakeClientCommandLine();
@@ -772,6 +957,16 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("registration-hook-failed");
         using var data = ScratchDirectory.Create("registration-hook-failed-data");
 
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("registration-hook-failed-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
+
         var command = InstalledLayout.Create(install.Path);
         var client = new FakeClientCommandLine { Executable = null };
 
@@ -809,6 +1004,16 @@ internal sealed class RegistrationTests
     {
         using var install = ScratchDirectory.Create("uninstall-silent");
         using var data = ScratchDirectory.Create("uninstall-silent-data");
+
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("uninstall-silent-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
@@ -858,6 +1063,16 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("uninstall-keep");
         using var data = ScratchDirectory.Create("uninstall-keep-data");
 
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("uninstall-keep-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
+
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
         var questions = new List<string>();
@@ -906,6 +1121,16 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("uninstall-remove");
         using var data = ScratchDirectory.Create("uninstall-remove-data");
 
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("uninstall-remove-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
+
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
 
@@ -948,6 +1173,16 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("upgrade-keeps");
         using var data = ScratchDirectory.Create("upgrade-keeps-data");
 
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("upgrade-keeps-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
+
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
         var asked = 0;
@@ -988,6 +1223,16 @@ internal sealed class RegistrationTests
     {
         using var install = ScratchDirectory.Create("uninstall-unused");
         using var data = ScratchDirectory.Create("uninstall-unused-data");
+
+        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
+        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // over what is registered already, and the registrar now reads it on
+        // EVERY intent -- so without this the hook asks about the maintainer's
+        // own ~/.claude.json, finds an entry foreign to this scratch install
+        // root, and refuses. The read is the product's; the file it reads is
+        // this arm's.
+        using var clientConfig = ScratchDirectory.Create("uninstall-unused-data-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var asked = 0;
@@ -1234,13 +1479,20 @@ internal sealed class RegistrationTests
     /// the registrar would otherwise read off the real client's file.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Every arm driving <see cref="RegistrationIntent.Update"/> through a
-    /// double has to pass this.</b> The registrar's default reads the client's
-    /// own user-scope configuration, which on this machine is the maintainer's —
-    /// so an arm without the seam asks a question about whatever happens to be
-    /// registered there, and answers it differently on a different machine.
-    /// Nothing enforces this; the failure it prevents is a red that moves with
-    /// the environment, which is the worst kind to diagnose.
+    /// ⚠️ <b>Every arm driving <see cref="McpRegistrar.Apply"/> through a double
+    /// has to pass this — every intent, not just
+    /// <see cref="RegistrationIntent.Update"/>.</b> <i>Widened 2026-09-16
+    /// (previously "Every arm driving <c>RegistrationIntent.Update</c> through a
+    /// double")</i>: until that day only an update read the client's file, so an
+    /// install or an uninstall without the seam happened to be deterministic. It
+    /// is not any more, and the six arms that relied on it went red the moment
+    /// the read moved — against the maintainer's own registration, which is
+    /// foreign to every scratch install root. The registrar's default reads the
+    /// client's own user-scope configuration, which on this machine is the
+    /// maintainer's, so an arm without the seam asks a question about whatever
+    /// happens to be registered there and answers it differently on a different
+    /// machine. Nothing enforces this; the failure it prevents is a red that
+    /// moves with the environment, which is the worst kind to diagnose.
     /// </remarks>
     private static Func<string, RegistrationView> WhatTheDoubleHolds(FakeClientCommandLine client) =>
         root =>
