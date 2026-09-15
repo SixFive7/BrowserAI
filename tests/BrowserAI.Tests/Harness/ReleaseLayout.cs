@@ -85,14 +85,53 @@ internal static partial class ReleaseLayout
     /// and that was with no real install present to lose.
     /// </para>
     /// <para>
-    /// <b>The id is the only delta</b>, and
+    /// <b>The id and the title are the delta</b>, and
     /// <c>ReleaseScriptTests.TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn</c>
-    /// holds that the second pack is the first one's argument list with the id
-    /// and the output directory replaced. What the arm exercises is therefore the
-    /// same code path under a name that cannot collide with anybody's install.
+    /// holds that the second pack is the first one's argument list with the id,
+    /// the title and the output directory replaced. What the arm exercises is
+    /// therefore the same code path under names that cannot collide with
+    /// anybody's install. <i>Corrected 2026-09-16 (previously "The id is the only
+    /// delta … with the id and the output directory replaced")</i> — see
+    /// <see cref="TestPackTitle"/> for what a shared title did to the Start Menu.
     /// </para>
     /// </remarks>
     public static string TestPackId { get; } = ReadVariable("testPackId");
+
+    /// <summary>What the shipping pack calls itself.</summary>
+    /// <remarks>
+    /// The Start Menu shortcut is named for this and never for the id, so it is
+    /// the second thing that has to differ between the two packs.
+    /// </remarks>
+    public static string PackTitle { get; } = ReadVariable("packTitle");
+
+    /// <summary>
+    /// What the <b>suite's</b> pack calls itself, which is never what the
+    /// shipping one does.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Velopack names the Start Menu shortcut after the TITLE, not after
+    /// the pack id</b> (<c>shortcuts.rs</c>, read at 1.2.0: the link file is
+    /// <c>&lt;title&gt;.lnk</c>), shortcut creation is not gated on a silent
+    /// install, and the uninstall removes shortcuts by target. Two packs sharing
+    /// one title therefore share one <c>.lnk</c>: the suite's installer arm
+    /// rewrote <c>%APPDATA%\…\Start Menu\Programs\BrowserAI.lnk</c> to point at
+    /// its scratch root, and its uninstall then deleted it — destroying a real
+    /// install's Start Menu entry exactly the way the shared pack id destroyed
+    /// the real Add/Remove entry. <i>Found 2026-09-16 by review, after the id
+    /// split had been made and the title had been left behind.</i>
+    /// </remarks>
+    public static string TestPackTitle { get; } = ReadVariable("testPackTitle");
+
+    /// <summary>
+    /// The per-user Start Menu directory the shortcuts land in.
+    /// </summary>
+    /// <remarks>
+    /// <c>Environment.SpecialFolder.Programs</c> — the same directory Velopack
+    /// writes to for a per-user install, which is the only kind this product
+    /// does.
+    /// </remarks>
+    public static string StartMenuPrograms { get; } =
+        Environment.GetFolderPath(Environment.SpecialFolder.Programs);
 
     /// <summary>What the suite's own installer is called.</summary>
     /// <remarks>

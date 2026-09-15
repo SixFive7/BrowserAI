@@ -192,14 +192,42 @@ $downloadId = 'BrowserAI'
 # a run killed part-way leaves it gone with nothing to restore it. Measured on
 # this machine: no `BrowserAI.app` key after six installer-arm runs.
 #
-# The id is the ONLY delta. The test pack is built from the same publish
-# directory, at the same version, on the same channel, with the same `--mainExe`
-# and the same `--shortcuts` -- `$testPackArgs` below is `$packArgs` with two
-# elements replaced -- so what the arm exercises is the same code path under a
-# name that cannot collide with anybody's install. Nothing published ever
+# The id and the TITLE are the delta. The test pack is built from the same
+# publish directory, at the same version, on the same channel, with the same
+# `--mainExe` and the same `--shortcuts` -- `$testPackArgs` below is `$packArgs`
+# with three elements replaced -- so what the arm exercises is the same code path
+# under names that cannot collide with anybody's install. Nothing published ever
 # carries it: it is packed into a directory of its own and the resolved-set
 # manifest names the seven files it always named.
+#
+# *Corrected 2026-09-16 (previously "The id is the ONLY delta ... with two
+# elements replaced")* -- it was not the only one, and the half that was missing
+# is the one the Start Menu reads. See $testPackTitle below.
 $testPackId = 'BrowserAI.app.test'
+
+# What the pack calls itself. Read out of here by the suite, and used below
+# rather than typed into $packArgs, so that the two packs' titles cannot drift
+# apart from the variables the suite compares.
+$packTitle = 'BrowserAI'
+
+# ⚠️ AND THE SUITE'S PACK IS CALLED SOMETHING ELSE -- 2026-09-16. This is the
+# SECOND name that has to differ, and it was missed when the id was split.
+# Velopack names the Start Menu shortcut after the TITLE and never after the id
+# (shortcuts.rs, read at 1.2.0: the link file is `<title>.lnk`), shortcut
+# creation is NOT gated on `--silent` (install.rs), and the uninstall removes
+# shortcuts BY TARGET. So two packs under one title share one `.lnk`: the
+# suite's installer arm rewrote
+# `%APPDATA%\Microsoft\Windows\Start Menu\Programs\BrowserAI.lnk` to point at its
+# scratch root, and its own uninstall then deleted it -- destroying a real
+# install's Start Menu entry exactly the way the shared pack id destroyed the
+# real Add/Remove entry. Same defect, same fix, one file later.
+#
+# `BrowserAI (suite)` and not `BrowserAI.app.test`: a title is what a human sees
+# in a Start Menu, so if one of these ever does survive a run it should say what
+# it is. It also appears in nothing else in the package, which is what lets
+# RealInstallerTests licence it to differ without licensing every binary that
+# carries the word BrowserAI.
+$testPackTitle = 'BrowserAI (suite)'
 
 # What the suite's installer is called. `test-installer` rather than anything
 # resembling `BrowserAI.exe`: these two files sit one directory below the ones a
@@ -514,7 +542,7 @@ $packArgs = @(
     '--packId', $packId
     '--packVersion', $PackVersion
     '--packDir', $PackDir
-    '--packTitle', 'BrowserAI'
+    '--packTitle', $packTitle
     '--packAuthors', 'Jori Huisman'
     '--channel', $Channel
     '--outputDir', $OutputDir
@@ -619,10 +647,18 @@ if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
 # or a workflow runs over `Releases/` for the artifacts to upload cannot pick one
 # up, and neither can `ReleaseLayout` when it is pointed at the real feed.
 #
-# `$testPackArgs` is `$packArgs` with exactly two elements replaced: the id and
-# the output directory. Built rather than retyped, so a packing decision added
-# above reaches both packs and the suite cannot end up exercising an installer
-# built differently from the one that ships.
+# `$testPackArgs` is `$packArgs` with exactly three elements replaced: the id,
+# the TITLE and the output directory. Built rather than retyped, so a packing
+# decision added above reaches both packs and the suite cannot end up exercising
+# an installer built differently from the one that ships.
+#
+# ⚠️ THE TITLE IS THE THIRD ONE AND IT WAS NOT ALWAYS THERE. *Corrected
+# 2026-09-16 (previously "with exactly two elements replaced: the id and the
+# output directory")* -- that was true of the code and wrong about the machine:
+# the id decides the Add/Remove key and the install directory, and the TITLE
+# decides the Start Menu shortcut's file name. Two elements left the two packs
+# sharing one `.lnk`, which the suite's own uninstall then deleted. See
+# $testPackTitle above.
 $testOutputDir = Join-Path $OutputDir 'test-pack'
 $null = New-Item -ItemType Directory -Force -Path $testOutputDir
 
@@ -630,6 +666,7 @@ $testPackArgs = @()
 for ($i = 0; $i -lt $packArgs.Count; $i++) {
     switch ($packArgs[$i]) {
         '--packId'    { $testPackArgs += $packArgs[$i]; $testPackArgs += $testPackId;    $i++; continue }
+        '--packTitle' { $testPackArgs += $packArgs[$i]; $testPackArgs += $testPackTitle; $i++; continue }
         '--outputDir' { $testPackArgs += $packArgs[$i]; $testPackArgs += $testOutputDir; $i++; continue }
         default       { $testPackArgs += $packArgs[$i] }
     }

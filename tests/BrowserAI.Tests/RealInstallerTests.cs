@@ -49,8 +49,20 @@ namespace BrowserAI.Tests;
 /// real install's entry — measured on this machine as <i>no `BrowserAI.app` key
 /// after six installer-arm runs</i>, and that was with no real install present
 /// to lose. <c>build/New-Release.ps1</c> packs a second installer from the same
-/// publish, at the same version, on the same channel, with the id and the output
-/// directory as the only deltas.
+/// publish, at the same version, on the same channel, with the id, the title and
+/// the output directory as the only deltas.
+/// </para>
+/// <para>
+/// ⚠️ <b>And the TITLE, which is the same defect one file later — 2026-09-16.</b>
+/// <i>Corrected 2026-09-16 (previously "with the id and the output directory as
+/// the only deltas")</i>: Velopack names the Start Menu shortcut
+/// <c>&lt;packTitle&gt;.lnk</c> rather than <c>&lt;packId&gt;.lnk</c>, does not
+/// gate shortcut creation on <c>--silent</c>, and removes shortcuts by target at
+/// uninstall — so the id split left the two packs still sharing one
+/// <c>BrowserAI.lnk</c>, which this arm repointed at its scratch root and its own
+/// uninstall then deleted. The suite's pack is titled <c>BrowserAI (suite)</c>,
+/// and the arm reads the user's Start Menu before and after for the same reason
+/// it reads the Add/Remove key.
 /// </para>
 /// <para>
 /// ⚠️ <b>Everything it touches is scratch, and the sandbox is not a
@@ -127,6 +139,16 @@ internal sealed partial class RealInstallerTests
         // absent afterwards.
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
 
+        // ⚠️ AND THE START MENU, for exactly the same reason — 2026-09-16.
+        // Velopack names a shortcut `<packTitle>.lnk` and removes shortcuts by
+        // TARGET at uninstall, so a test pack sharing the shipping title
+        // rewrites the real install's `.lnk` to point at this scratch root and
+        // then deletes it. The Add/Remove half of that was found and split by
+        // the pack id; this half survived the split and is read here for the
+        // same reason the key is: an unread claim about somebody's Start Menu is
+        // not a claim.
+        var startMenuBefore = ReadStartMenuShortcuts();
+
         try
         {
             await InstallTwiceAndUninstall(setup, installRoot, dataRoot, logs, planted);
@@ -145,7 +167,80 @@ internal sealed partial class RealInstallerTests
         var realKeyAfter = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
 
         await Assert.That(realKeyAfter).IsEqualTo(realKeyBefore);
+
+        var startMenuAfter = ReadStartMenuShortcuts();
+
+        // Nothing under the SHIPPING title may point into this arm's scratch
+        // root — which is what a shared title produced, and what is asserted
+        // rather than reasoned about.
+        var repointed = startMenuAfter
+            .Where(shortcut => Mentions(shortcut.Value, installRoot.Path))
+            .Select(shortcut => shortcut.Key)
+            .Order(StringComparer.Ordinal);
+
+        await Assert.That(string.Join(", ", repointed)).IsEmpty();
+
+        // The suite's own shortcut does not outlive the suite's own uninstall.
+        await Assert.That(startMenuAfter.ContainsKey($"{ReleaseLayout.TestPackTitle}.lnk")).IsFalse();
+
+        // And the set is what it was, byte for byte — the strongest form of
+        // "the real install's Start Menu entry was not touched", and the one
+        // that keeps meaning something on a machine that acquires one.
+        await Assert.That(Describe(startMenuAfter)).IsEqualTo(Describe(startMenuBefore));
     }
+
+    /// <summary>
+    /// Every <c>BrowserAI*.lnk</c> directly under the per-user Start Menu
+    /// programs directory, with its bytes.
+    /// </summary>
+    /// <remarks>
+    /// <b>The bytes rather than a resolved target, deliberately.</b> Resolving a
+    /// shortcut means <c>IShellLink</c>, which means COM on the test host for a
+    /// question a substring answers: a <c>.lnk</c> embeds its target path
+    /// literally, so <see cref="Mentions"/> over the file finds a shortcut
+    /// pointing into a scratch root without any of that. It is also what makes
+    /// the before/after comparison a byte comparison rather than a comparison of
+    /// two things COM was asked about.
+    /// </remarks>
+    /// <returns>The file name of each, and its content.</returns>
+    private static Dictionary<string, byte[]> ReadStartMenuShortcuts()
+    {
+        var found = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+        var programs = ReleaseLayout.StartMenuPrograms;
+
+        if (!Directory.Exists(programs))
+        {
+            return found;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(programs, "BrowserAI*.lnk", SearchOption.TopDirectoryOnly))
+        {
+            try
+            {
+                found[Path.GetFileName(file)] = File.ReadAllBytes(file);
+            }
+#pragma warning disable CA1031 // A shortcut that cannot be read is recorded as unreadable rather than vanishing from the comparison.
+            catch (IOException)
+#pragma warning restore CA1031
+            {
+                found[Path.GetFileName(file)] = Encoding.UTF8.GetBytes("<unreadable>");
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>A shortcut set as one comparable string, so a failure names what moved.</summary>
+    /// <param name="shortcuts">What <see cref="ReadStartMenuShortcuts"/> found.</param>
+    /// <returns>One line per shortcut: its name and the SHA-256 of its bytes.</returns>
+    private static string Describe(Dictionary<string, byte[]> shortcuts) =>
+        shortcuts.Count == 0
+            ? "<none>"
+            : string.Join(
+                "\n",
+                shortcuts
+                    .OrderBy(shortcut => shortcut.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(shortcut => $"{shortcut.Key}\t{Convert.ToHexString(SHA256.HashData(shortcut.Value))}"));
 
     /// <summary>
     /// The installed main executable opens one task dialog, owns no console
@@ -474,6 +569,30 @@ internal sealed partial class RealInstallerTests
             }
         }
 
+        // ⚠️ THE SHORTCUT, BY TARGET AND NEVER BY NAME — 2026-09-16. A `.lnk`
+        // that names this scratch root is one this arm's installer wrote and
+        // cannot be anybody's; a `.lnk` matched on its name alone could be the
+        // maintainer's, and deleting that is the defect this whole split exists
+        // to stop. The read happens before the tree goes, which is why the paths
+        // are gathered first and removed after.
+        foreach (var (name, bytes) in ReadStartMenuShortcuts())
+        {
+            if (!Mentions(bytes, installRoot))
+            {
+                continue;
+            }
+
+            try
+            {
+                File.Delete(Path.Combine(ReleaseLayout.StartMenuPrograms, name));
+            }
+#pragma warning disable CA1031 // A cleanup on the failure path reports nothing and must replace no finding.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+            }
+        }
+
         _ = ScratchDirectory.RemoveTree(installRoot);
 
         try
@@ -549,6 +668,18 @@ internal sealed partial class RealInstallerTests
     /// one.
     /// </para>
     /// <para>
+    /// ⚠️ <b>The suite pack's TITLE joins that rule and the shipping pack's
+    /// deliberately does not — 2026-09-16.</b> The two packs differ in a second
+    /// name since the Start Menu split (<see cref="ReleaseLayout.TestPackTitle"/>),
+    /// so an entry carrying it has to be allowed to differ. But the shipping
+    /// title is <c>BrowserAI</c>, which appears in every binary in the package:
+    /// admitting it would exempt everything and turn this arm into an assertion
+    /// that two files exist. <c>BrowserAI (suite)</c> appears in nothing else, so
+    /// it is the half that can safely be a licence. The control below is the
+    /// proof: two entries that both say <c>BrowserAI</c> and differ elsewhere are
+    /// still reported.
+    /// </para>
+    /// <para>
     /// <b>The comparison is watched in both directions over synthetic archives</b>,
     /// because a real pair that happens to agree is indistinguishable from a
     /// comparison that stopped looking.
@@ -577,7 +708,7 @@ internal sealed partial class RealInstallerTests
         await Assert.That(string.Join(", ", left.Keys.Except(right.Keys).Order(StringComparer.Ordinal))).IsEmpty();
         await Assert.That(string.Join(", ", right.Keys.Except(left.Keys).Order(StringComparer.Ordinal))).IsEmpty();
 
-        var (differing, offenders) = Compare(left, right, ReleaseLayout.PackId, ReleaseLayout.TestPackId);
+        var (differing, offenders) = Compare(left, right);
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
@@ -593,12 +724,28 @@ internal sealed partial class RealInstallerTests
         var named = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"id is {ReleaseLayout.PackId}") };
         var namedToo = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"id is {ReleaseLayout.TestPackId}") };
 
-        var (_, caught) = Compare(plain, doctored, ReleaseLayout.PackId, ReleaseLayout.TestPackId);
+        var (_, caught) = Compare(plain, doctored);
         await Assert.That(caught.Count).IsEqualTo(1);
 
-        var (moved, spared) = Compare(named, namedToo, ReleaseLayout.PackId, ReleaseLayout.TestPackId);
+        var (moved, spared) = Compare(named, namedToo);
         await Assert.That(spared.Count).IsEqualTo(0);
         await Assert.That(moved).IsEqualTo(1);
+
+        // ⚠️ THE TITLE HALF OF THE CONTROL, in both directions. The suite's
+        // title exempts; the shipping title — which every binary in the package
+        // carries — must not, or the rule above licences everything.
+        var titled = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"called {ReleaseLayout.PackTitle}") };
+        var titledToo = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"called {ReleaseLayout.TestPackTitle}") };
+
+        var (retitled, allowed) = Compare(titled, titledToo);
+        await Assert.That(allowed.Count).IsEqualTo(0);
+        await Assert.That(retitled).IsEqualTo(1);
+
+        var underShippingTitle = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"{ReleaseLayout.PackTitle} says see") };
+        var underShippingTitleToo = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"{ReleaseLayout.PackTitle} says sea") };
+
+        var (_, stillCaught) = Compare(underShippingTitle, underShippingTitleToo);
+        await Assert.That(stillCaught.Count).IsEqualTo(1);
     }
 
     /// <summary>
@@ -686,19 +833,35 @@ internal sealed partial class RealInstallerTests
     }
 
     /// <summary>
+    /// The strings whose presence licenses an entry to differ between the two
+    /// packs.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The shipping TITLE is deliberately not in here.</b> It is
+    /// <c>BrowserAI</c>, which every binary in the package carries, so admitting
+    /// it would exempt every entry and leave an arm that asserts nothing. The
+    /// suite's title appears in nothing but the metadata the rename touches,
+    /// which is why that one is safe. See
+    /// <c>TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears</c>, whose
+    /// control holds both halves.
+    /// </remarks>
+    private static readonly string[] Licensed =
+    [
+        ReleaseLayout.PackId,
+        ReleaseLayout.TestPackId,
+        ReleaseLayout.TestPackTitle,
+    ];
+
+    /// <summary>
     /// Compares two packages' entries and reports the ones that differ without
-    /// mentioning either id.
+    /// mentioning either id or the suite pack's title.
     /// </summary>
     /// <param name="left">The shipping package's entries.</param>
     /// <param name="right">The test package's entries.</param>
-    /// <param name="id">The shipping pack id.</param>
-    /// <param name="testId">The test pack id.</param>
     /// <returns>How many entries differed, and which of those are offences.</returns>
     private static (int Differing, List<string> Offenders) Compare(
         Dictionary<string, byte[]> left,
-        Dictionary<string, byte[]> right,
-        string id,
-        string testId)
+        Dictionary<string, byte[]> right)
     {
         var differing = 0;
         var offenders = new List<string>();
@@ -712,11 +875,11 @@ internal sealed partial class RealInstallerTests
 
             differing++;
 
-            if (!Mentions(bytes, id) && !Mentions(bytes, testId) && !Mentions(other, id) && !Mentions(other, testId))
+            if (!Array.Exists(Licensed, text => Mentions(bytes, text) || Mentions(other, text)))
             {
                 offenders.Add(
-                    $"{name} differs ({bytes.Length} vs {other.Length} bytes) and neither copy mentions '{id}' or '{testId}',"
-                    + " so the two packs did not come from one publish");
+                    $"{name} differs ({bytes.Length} vs {other.Length} bytes) and neither copy mentions any of"
+                    + $" '{string.Join("', '", Licensed)}', so the two packs did not come from one publish");
             }
         }
 

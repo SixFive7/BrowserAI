@@ -36,6 +36,25 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+### Fixed
+
+- 📦 **The suite's installer is titled `BrowserAI (suite)` and no longer
+  owns the real Start Menu entry.** The two packs were split by pack id on
+  2026-09-15 to stop the suite's installer arm rewriting and then deleting the
+  real install's Add/Remove entry — and the **title** was left shared, which is
+  the name Velopack actually gives the shortcut (`shortcuts.rs`, read at 1.2.0:
+  the link file is `<title>.lnk`, never `<packId>.lnk`). Shortcut creation is
+  not gated on `--silent`, and the uninstall removes shortcuts **by target**, so
+  the arm wrote `%APPDATA%\Microsoft\Windows\Start Menu\Programs\BrowserAI.lnk`
+  pointing at its own scratch root over the real install's entry, and its
+  uninstall then deleted it. `build/New-Release.ps1` now replaces **three**
+  elements rather than two when it builds the second pack — the id, the title
+  and the output directory — and the arm reads the user's Start Menu before and
+  after for the same reason it already read the Add/Remove key: nothing under
+  the shipping title may point into the scratch root, `BrowserAI (suite).lnk`
+  may not outlive its own uninstall, and the whole set must be byte-identical
+  across the run.
+
 ## [1.0.0] - 2026-09-15
 
 **BrowserAI is a Windows MCP server that gives an AI agent a real browser —

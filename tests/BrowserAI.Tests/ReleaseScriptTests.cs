@@ -682,7 +682,21 @@ internal sealed class ReleaseScriptTests
         // pointed at unrelated packages by an edit to one of them.
         await Assert.That(ReleaseLayout.TestPackId).IsEqualTo(ReleaseLayout.PackId + ".test");
 
-        // The second pack is the first one's arguments with two elements
+        // ⚠️ AND THE TITLE, which is a SECOND name and not a cosmetic one:
+        // Velopack names the Start Menu shortcut `<title>.lnk` and the uninstall
+        // removes shortcuts by target, so two packs under one title share one
+        // `.lnk` and the suite's uninstall deletes the real install's entry.
+        // Both literals are asserted here rather than only their inequality,
+        // because "they differ" is satisfied by renaming the shipping one.
+        await Assert.That(script).Contains("$packTitle = 'BrowserAI'");
+        await Assert.That(script).Contains("$testPackTitle = 'BrowserAI (suite)'");
+        await Assert.That(ReleaseLayout.TestPackTitle).IsNotEqualTo(ReleaseLayout.PackTitle);
+
+        // And the arg list takes the title from the variable, so replacing the
+        // variable really does replace what vpk is handed.
+        await Assert.That(script).Contains("'--packTitle', $packTitle");
+
+        // The second pack is the first one's arguments with three elements
         // replaced, and nothing else.
         var built = script.IndexOf("$testPackArgs = @()", StringComparison.Ordinal);
 
@@ -692,6 +706,8 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(loop).Contains("'--packId'");
         await Assert.That(loop).Contains("$testPackId");
+        await Assert.That(loop).Contains("'--packTitle'");
+        await Assert.That(loop).Contains("$testPackTitle");
         await Assert.That(loop).Contains("'--outputDir'");
         await Assert.That(loop).Contains("$testOutputDir");
 
