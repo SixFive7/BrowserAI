@@ -77,6 +77,7 @@ internal sealed class TaskDialogHost : IDisposable
     private readonly Func<TaskDialogPage> _page;
     private readonly Func<int, ClickOutcome> _onCommand;
     private readonly Action<string> _onLink;
+    private readonly Action<Exception> _onFailure;
     private readonly List<nint> _allocated = [];
 
     private GCHandle _self;
@@ -86,15 +87,27 @@ internal sealed class TaskDialogHost : IDisposable
     /// <param name="page">Produces the page to show, called again on every re-render.</param>
     /// <param name="onCommand">What a command link does. Never called for the close button.</param>
     /// <param name="onLink">What a hyperlink does.</param>
-    public TaskDialogHost(Func<TaskDialogPage> page, Func<int, ClickOutcome> onCommand, Action<string> onLink)
+    /// <param name="onFailure">
+    /// What to do with an exception out of one of the three above.
+    /// <b>It is expected to record the failure where a person will meet it</b> —
+    /// the process log, and the note the next page carries — because this host
+    /// re-renders straight afterwards and shows whatever that produced.
+    /// </param>
+    public TaskDialogHost(
+        Func<TaskDialogPage> page,
+        Func<int, ClickOutcome> onCommand,
+        Action<string> onLink,
+        Action<Exception> onFailure)
     {
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(onCommand);
         ArgumentNullException.ThrowIfNull(onLink);
+        ArgumentNullException.ThrowIfNull(onFailure);
 
         _page = page;
         _onCommand = onCommand;
         _onLink = onLink;
+        _onFailure = onFailure;
     }
 
     /// <summary>Shows the dialog and returns when it closes.</summary>
@@ -134,6 +147,14 @@ internal sealed class TaskDialogHost : IDisposable
     /// </remarks>
     public unsafe void Rerender()
     {
+        // ⚠️ THE PAGE IS PRODUCED BEFORE THE WINDOW IS CHECKED, deliberately.
+        // The factory is the caller's code and it is one of the three things
+        // that can throw into the dialog's callback, so it has to be REACHABLE
+        // -- and therefore assertable -- whether or not a window is up. Nothing
+        // is allocated until Build runs, so the windowless path costs one
+        // discarded record and no native memory at all.
+        var page = _page();
+
         if (_window is 0)
         {
             return;
@@ -145,7 +166,7 @@ internal sealed class TaskDialogHost : IDisposable
         var outgoing = _allocated.ToArray();
         _allocated.Clear();
 
-        var config = Build(_page());
+        var config = Build(page);
 
         config.Callback = (nint)(delegate* unmanaged<nint, uint, nint, nint, nint, int>)&Callback;
         config.CallbackData = GCHandle.ToIntPtr(_self);
@@ -296,6 +317,13 @@ internal sealed class TaskDialogHost : IDisposable
     /// marshalling, so a <see cref="bool"/> anywhere here is a runtime failure
     /// rather than a compile error.
     /// </summary>
+    /// <remarks>
+    /// <b>It resolves the instance and forwards; every decision is in
+    /// <see cref="Dispatch"/>.</b> The split is what makes the callback path
+    /// assertable without a window — an <c>[UnmanagedCallersOnly]</c> method
+    /// cannot be called from managed code at all, so a dispatch written inside
+    /// this one is a dispatch nothing can exercise until Windows exercises it.
+    /// </remarks>
     [UnmanagedCallersOnly]
     private static int Callback(nint window, uint notification, nint wParam, nint lParam, nint reference)
     {
@@ -304,14 +332,37 @@ internal sealed class TaskDialogHost : IDisposable
             return TaskDialogInterop.Ok;
         }
 
+        return host.Dispatch(window, notification, wParam, lParam);
+    }
+
+    /// <summary>
+    /// One notification, decided.
+    /// </summary>
+    /// <param name="window">The dialog's window, as Windows reports it.</param>
+    /// <param name="notification">Which notification this is.</param>
+    /// <param name="wParam">Its first argument.</param>
+    /// <param name="lParam">Its second argument.</param>
+    /// <returns>What the notification requires: <c>S_OK</c> or <c>S_FALSE</c>.</returns>
+    internal int Dispatch(nint window, uint notification, nint wParam, nint lParam)
+    {
         switch (notification)
         {
             case TaskDialogInterop.Notification.Created:
-                host._window = window;
+                _window = window;
                 return TaskDialogInterop.Ok;
 
             case TaskDialogInterop.Notification.HyperlinkClicked:
-                host._onLink(Marshal.PtrToStringUni(lParam) ?? string.Empty);
+                try
+                {
+                    _onLink(Marshal.PtrToStringUni(lParam) ?? string.Empty);
+                }
+#pragma warning disable CA1031 // The reverse P/Invoke boundary -- see Failed. Anything at all is better here than terminating the process.
+                catch (Exception failure)
+#pragma warning restore CA1031
+                {
+                    return Failed(failure, TaskDialogInterop.Ok);
+                }
+
                 return TaskDialogInterop.Ok;
 
             case TaskDialogInterop.Notification.ButtonClicked:
@@ -324,13 +375,38 @@ internal sealed class TaskDialogHost : IDisposable
                     return TaskDialogInterop.Ok;
                 }
 
-                switch (host._onCommand(id))
+                ClickOutcome outcome;
+
+                try
+                {
+                    outcome = _onCommand(id);
+                }
+#pragma warning disable CA1031 // Same boundary.
+                catch (Exception failure)
+#pragma warning restore CA1031
+                {
+                    // S_FALSE: the dialog stays open, which is what lets the
+                    // person read what went wrong.
+                    return Failed(failure, TaskDialogInterop.False);
+                }
+
+                switch (outcome)
                 {
                     case ClickOutcome.Close:
                         return TaskDialogInterop.Ok;
 
                     case ClickOutcome.Rerender:
-                        host.Rerender();
+                        try
+                        {
+                            Rerender();
+                        }
+#pragma warning disable CA1031 // Same boundary. This is the PAGE FACTORY throwing.
+                        catch (Exception failure)
+#pragma warning restore CA1031
+                        {
+                            return Failed(failure, TaskDialogInterop.False);
+                        }
+
                         return TaskDialogInterop.False;
 
                     default:
@@ -340,5 +416,72 @@ internal sealed class TaskDialogHost : IDisposable
             default:
                 return TaskDialogInterop.Ok;
         }
+    }
+
+    /// <summary>
+    /// Records a failure that would otherwise have crossed the unmanaged
+    /// boundary, and puts it where the person clicking can read it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>An exception out of an <c>[UnmanagedCallersOnly]</c> method is a
+    /// <c>FailFast</c>.</b> The runtime cannot unwind into native frames, so the
+    /// process is terminated where it stands: the window vanishes mid-click with
+    /// no dialog, no log line and no exit code anything could read. Three calls
+    /// reachable from a click could produce one today —
+    /// <c>Directory.CreateDirectory</c> for the log directory,
+    /// <c>Path.Combine</c> outside the registry reader's own <c>try</c> when
+    /// <c>CLAUDE_CONFIG_DIR</c> holds an invalid path, and
+    /// <c>Path.GetFullPath</c> on a project directory. <i>Added 2026-09-16.</i>
+    /// </para>
+    /// <para>
+    /// <b>Reported once, then shown once.</b> The reporter belongs to the caller
+    /// — it writes the process log and sets the note the next page carries — and
+    /// the re-render that follows is what puts that note on screen. If the
+    /// re-render <i>itself</i> throws then the page factory is the broken thing,
+    /// so the content is replaced outright with the message instead; that path
+    /// reports nothing further, because a reporter called twice for one click
+    /// reads as two failures.
+    /// </para>
+    /// <para>
+    /// <b>Nothing in here may throw</b>, the reporter included: this is the last
+    /// managed frame before native code.
+    /// </para>
+    /// </remarks>
+    /// <param name="failure">What was thrown.</param>
+    /// <param name="result">What the notification requires this callback to return.</param>
+    /// <returns><paramref name="result"/>.</returns>
+    private int Failed(Exception failure, int result)
+    {
+        try
+        {
+            _onFailure(failure);
+        }
+#pragma warning disable CA1031 // A reporter that throws must not be the thing that terminates the process.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
+
+        try
+        {
+            Rerender();
+        }
+#pragma warning disable CA1031 // The page factory is what threw. Fall back to the content alone.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            try
+            {
+                SetContent($"Something went wrong and BrowserAI has changed nothing: {failure.Message}");
+            }
+#pragma warning disable CA1031 // Last resort: there is nowhere left to say this.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+            }
+        }
+
+        return result;
     }
 }

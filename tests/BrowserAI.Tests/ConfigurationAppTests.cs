@@ -3,6 +3,8 @@
 
 using System.Text.Json;
 using BrowserAI.App;
+using BrowserAI.App.Interop;
+using BrowserAI.App.Ui;
 using BrowserAI.Registration;
 using BrowserAI.Tests.Harness;
 
@@ -299,6 +301,94 @@ internal sealed class ConfigurationAppTests
         await Assert.That(found!.Scope).IsEqualTo(RegistrationScope.Project);
         await Assert.That(found.Command).IsEqualTo("x");
         await Assert.That(found.File).IsEqualTo(McpRegistryView.ProjectConfigFile(Path.Combine(scratch.Path, "a")));
+    }
+
+    /// <summary>
+    /// Nothing a click does can throw out of the dialog's callback.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>An exception crossing an <c>[UnmanagedCallersOnly]</c> boundary is
+    /// a <c>FailFast</c>, not an exception.</b> The runtime cannot unwind into
+    /// native frames, so the process is terminated where it stands: no dialog,
+    /// no log line, no exit code a person or a script could read — the window
+    /// simply vanishes mid-click. Every action this app offers runs inside that
+    /// callback, and three of them could reach one today:
+    /// <c>Directory.CreateDirectory</c> for the log directory,
+    /// <c>Path.Combine</c> outside the reader's own <c>try</c> when
+    /// <c>CLAUDE_CONFIG_DIR</c> holds an invalid path, and
+    /// <c>Path.GetFullPath</c> on a project directory.
+    /// </para>
+    /// <para>
+    /// <b>Assertable because the dispatch is not the unmanaged method.</b>
+    /// <c>Callback</c> resolves the instance and forwards to
+    /// <c>Dispatch</c>, which is ordinary managed code — an
+    /// <c>[UnmanagedCallersOnly]</c> method cannot be called from C# at all, so
+    /// a dispatch written inside one is a dispatch no test can ever reach.
+    /// </para>
+    /// <para>
+    /// <b>No window is ever created here.</b> Every arm runs with
+    /// <c>_window</c> at zero, where <c>Rerender</c> and <c>SetContent</c> both
+    /// return before they call Windows — so this is the callback's decisions and
+    /// nothing else.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NothingAClickDoesCanThrowOutOfTheDialogsCallback()
+    {
+        var reported = new List<string>();
+
+        using var host = new TaskDialogHost(
+            () => throw new InvalidOperationException("the page factory threw"),
+            _ => throw new InvalidOperationException("the command threw"),
+            _ => throw new InvalidOperationException("the link threw"),
+            failure => reported.Add(failure.Message));
+
+        // A hyperlink whose handler throws: reported, and the notification's own
+        // answer is still given.
+        await Assert.That(host.Dispatch(0, TaskDialogInterop.Notification.HyperlinkClicked, 0, 0))
+            .IsEqualTo(TaskDialogInterop.Ok);
+
+        // A command link whose handler throws: reported, and S_FALSE keeps the
+        // dialog open rather than closing it on a failure nobody saw.
+        await Assert.That(host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.OpenLogs, 0))
+            .IsEqualTo(TaskDialogInterop.False);
+
+        await Assert.That(reported).IsEquivalentTo(["the link threw", "the command threw"]);
+
+        // And the third one: a handler that succeeds and asks for a re-render,
+        // over a page factory that throws. The factory runs before the window
+        // check, so this is the same failure the real one would be.
+        reported.Clear();
+
+        using var rerendering = new TaskDialogHost(
+            () => throw new InvalidOperationException("the page factory threw"),
+            _ => ClickOutcome.Rerender,
+            _ => { },
+            failure => reported.Add(failure.Message));
+
+        await Assert.That(rerendering.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.Register, 0))
+            .IsEqualTo(TaskDialogInterop.False);
+
+        // Once, not twice: the report is made, and the attempt to show it must
+        // not report its own failure again.
+        await Assert.That(reported).IsEquivalentTo(["the page factory threw"]);
+
+        // The control: a host whose delegates do not throw reports nothing, so
+        // the arms above fail for their own reason rather than because the
+        // reporter fires on every notification.
+        reported.Clear();
+
+        using var quiet = new TaskDialogHost(
+            () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
+            _ => ClickOutcome.Stay,
+            _ => { },
+            failure => reported.Add(failure.Message));
+
+        await Assert.That(quiet.Dispatch(0, TaskDialogInterop.Notification.HyperlinkClicked, 0, 0))
+            .IsEqualTo(TaskDialogInterop.Ok);
+        await Assert.That(reported).IsEmpty();
     }
 
     /// <summary>

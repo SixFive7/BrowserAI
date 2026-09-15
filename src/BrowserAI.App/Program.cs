@@ -216,7 +216,8 @@ internal sealed class ConfigurationSession(
         using var host = new TaskDialogHost(
             () => ConfigurationDialog.Page(_state, occasion, _note, _available),
             OnCommand,
-            OnLink);
+            OnLink,
+            OnFailure);
 
         _host = host;
 
@@ -257,6 +258,25 @@ internal sealed class ConfigurationSession(
             default:
                 return ClickOutcome.Stay;
         }
+    }
+
+    /// <summary>
+    /// What a click did that it was not supposed to be able to do.
+    /// </summary>
+    /// <remarks>
+    /// %s <b>This is the reporting half of the dialog's exception boundary.</b>
+    /// Everything this app does runs inside a reverse P/Invoke, where an escaped
+    /// exception is a <c>FailFast</c> — no window, no record, nothing. The host
+    /// catches, hands it here, and then re-renders, so the note this sets is
+    /// what the person meets. The log line is the other half and is the one a
+    /// support artifact will carry. <i>Added 2026-09-16.</i>
+    /// </remarks>
+    /// <param name="failure">What was thrown.</param>
+    private void OnFailure(Exception failure)
+    {
+        AppLog.ClickFailed(logger, failure);
+
+        _note = $"Something went wrong and BrowserAI has changed nothing: {failure.Message}";
     }
 
     private void OnLink(string href)
@@ -452,4 +472,13 @@ internal static partial class AppLog
         Level = LogLevel.Warning,
         Message = "Velopack reported a problem: {Message}")]
     public static partial void VelopackProblem(ILogger logger, string message, Exception? failure);
+
+    /// <summary>A click threw where an escaped exception would have killed the process.</summary>
+    /// <param name="logger">Where the record goes.</param>
+    /// <param name="failure">What was thrown.</param>
+    [LoggerMessage(
+        EventId = 6005,
+        Level = LogLevel.Error,
+        Message = "A click in the configuration window threw. Nothing was changed and the window is still open.")]
+    public static partial void ClickFailed(ILogger logger, Exception failure);
 }

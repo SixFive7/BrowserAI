@@ -38,6 +38,24 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A click that throws no longer takes the whole window with it.**
+  Every action the configuration app offers runs inside the task dialog's
+  `[UnmanagedCallersOnly]` callback, and **an exception out of one of those is a
+  `FailFast`, not an exception**: the runtime cannot unwind into native frames,
+  so the process is terminated where it stands — the window vanishes mid-click
+  with no dialog, no log line and no exit code anything could read. Three calls
+  reachable from a click could produce one: `Directory.CreateDirectory` for the
+  log directory, `Path.Combine` outside the registry reader's own `try` when
+  `CLAUDE_CONFIG_DIR` holds an invalid path, and `Path.GetFullPath` on a picked
+  project directory. The three delegate invocations are now inside one
+  `try`/`catch`, which records the failure to the process log, puts it in the
+  dialog's note, re-renders, and returns the `S_OK`/`S_FALSE` the notification
+  requires — so the window stays open and says what happened. The dispatch was
+  lifted out of the unmanaged entry point to make any of this assertable:
+  `Callback` resolves the instance and forwards to `Dispatch`, because an
+  `[UnmanagedCallersOnly]` method cannot be called from C# at all and a decision
+  written inside one is a decision no test can ever reach.
+
 - 🔒 **Neither an install nor an uninstall touches a `browserai` entry it did
   not write.** Three sentences in this codebase said
   BrowserAI *"neither adopts, overwrites nor deletes"* an entry belonging to
