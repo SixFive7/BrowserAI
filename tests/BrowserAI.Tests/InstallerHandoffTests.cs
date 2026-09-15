@@ -302,14 +302,80 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(run.Started).IsTrue();
 
-        // The decision first, so that a failure names which one was taken.
+        // The decision first, so that a failure names which one was taken —
+        // and waiting for the OTHER outcome as well, so that a lost race is a
+        // named failure in a second rather than a ten-minute one that says only
+        // that a sentence never arrived.
         var decision = startedByTheInstaller
             ? "started by the installer"
             : "no client to serve and is exiting";
 
-        await Assert.That(run.WaitUntilItSays(decision, TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, decision, "Watching the MCP client"))
+            .IsEqualTo(decision);
 
         // And then the exit, which is the thing v1.0.0 did not do.
+        await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+    }
+
+    /// <summary>
+    /// A launcher that has <b>exited and whose pid still opens</b> is nobody to
+    /// serve too, and the product says which of the two it saw.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the flake of 2026-09-15, turned into a property.</b>
+    /// <see cref="ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog"/>
+    /// went red once in four full runs — at the full
+    /// <c>TestDefaults.ProcessHang</c>, waiting for a record that was never
+    /// going to arrive — because the launcher's pid happened to still be
+    /// openable when the product looked. <c>OpenProcess</c> succeeding was read
+    /// as <i>there is somebody there</i>, the fast exit was skipped, and the
+    /// product went on to serve nobody.
+    /// </para>
+    /// <para>
+    /// <b>A corpse that opens is not a rig artefact.</b> Windows keeps a process
+    /// object for as long as any handle anywhere names it, and for a launcher
+    /// that ran in a console the console host is one such holder — so the
+    /// installer's own <c>Setup.exe</c> leaves either shape behind depending on
+    /// nothing the product can see. <see cref="LauncherCorpse.Openable"/>
+    /// produces it deterministically, by keeping the handle in the test host.
+    /// </para>
+    /// <para>
+    /// <b>Asserted on WHICH of the two it saw</b>, not merely that it exited.
+    /// The two routes to <i>nobody to serve</i> are a pid that cannot be opened
+    /// and a pid that opens onto a corpse, and a build that took the first
+    /// branch here would be passing while testing the other rig.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        using var root = ScratchDirectory.CreateUnderProfile("orphan-corpse");
+
+        using var run = OrphanedConsoleStart.Begin(
+            root.Path,
+            startedByTheInstaller: false,
+            TestDefaults.ProcessHang,
+            LauncherCorpse.Openable);
+
+        await Assert.That(run.Started).IsTrue();
+
+        // ⚠️ EITHER OUTCOME, so that losing this decision costs a second rather
+        // than ten minutes. Both sentences are written by the same few lines of
+        // the product, so whichever arrives is the decision it took.
+        var seen = run.WaitUntilItSaysOneOf(
+            TestDefaults.ProcessHang,
+            "has already exited",
+            "Watching the MCP client");
+
+        await Assert.That(seen).IsEqualTo("has already exited");
+
+        // And the decision that follows from it, which is the one the installer
+        // incident was about.
+        await Assert.That(run.WaitUntilItSays("no client to serve and is exiting", TestDefaults.ProcessHang)).IsTrue();
         await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
     }
 
@@ -342,10 +408,26 @@ internal sealed class InstallerHandoffTests
         SuiteEnvironment.RequirePublishedSlice();
 
         using var root = ScratchDirectory.CreateUnderProfile("orphan-costs");
-        using var run = OrphanedConsoleStart.Begin(root.Path, startedByTheInstaller: false, TestDefaults.ProcessHang);
+
+        // ⚠️ THE OPENABLE CORPSE, deliberately — 2026-09-15. This arm used to
+        // take whichever shape the machine happened to produce, and on the one
+        // full run of four in which the launcher's pid was still openable it
+        // sat at the full TestDefaults.ProcessHang waiting for a record the
+        // product had decided not to write. Both shapes are nobody to serve;
+        // this one is the shape the rig can guarantee.
+        using var run = OrphanedConsoleStart.Begin(
+            root.Path,
+            startedByTheInstaller: false,
+            TestDefaults.ProcessHang,
+            LauncherCorpse.Openable);
 
         await Assert.That(run.Started).IsTrue();
-        await Assert.That(run.WaitUntilItSays("no client to serve and is exiting", TestDefaults.ProcessHang)).IsTrue();
+
+        await Assert.That(run.WaitUntilItSaysOneOf(
+            TestDefaults.ProcessHang,
+            "no client to serve and is exiting",
+            "Watching the MCP client"))
+            .IsEqualTo("no client to serve and is exiting");
 
         var said = run.Records();
 

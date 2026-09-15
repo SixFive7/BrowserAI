@@ -924,10 +924,48 @@ installer nor a window: `cmd.exe /c start /b "" cmd.exe /c start /b "" "<exe>"`,
 with the outer `cmd` started `CreateNoWindow` so the console it allocates has no
 window, and **nothing redirected** — redirecting any stream makes .NET set
 `STARTF_USESTDHANDLES` and hand the child the *caller's* standard input instead.
-Two `start /b`s rather than one, because a process handle keeps a dead pid
-openable and the test host's own handle on a single intermediate is enough to
-make the launcher watchable. `BrowserAI.Tests.Harness.OrphanedConsoleStart` is
-that rig.
+Two `start /b`s rather than one **when the shape being reproduced is a pid that
+will not open at all**: a process handle keeps a dead pid openable, and the test
+host's own handle on a single intermediate is enough to leave one.
+`BrowserAI.Tests.Harness.OrphanedConsoleStart` is that rig, and it now produces
+either shape on request — `LauncherCorpse.Freed` for the two-level launch above,
+`LauncherCorpse.Openable` for one level with the handle held.
+
+⚠️ **Corrected 2026-09-15, later the same day (previously the paragraph above
+said only "Two `start /b`s rather than one, because a process handle keeps a
+dead pid openable and the test host's own handle on a single intermediate is
+enough to make the launcher watchable").** That sentence was true and the
+conclusion drawn from it — *therefore the rig must avoid the openable corpse* —
+was wrong in the expensive direction. **Nothing makes Windows free a pid on
+request**: the console host holds a handle to a process that ran in a console,
+so the installer's own `Setup.exe` leaves either shape behind depending on
+nothing anybody controls, and the second full run of the day met the openable one
+and sat at the whole of `TestDefaults.ProcessHang`. **It is the product that
+decides now** — an opened parent that has already exited is nobody to serve, on
+the same path as one that cannot be opened, under a record of its own so the log
+says which route it took.
+
+**Re-measured 2026-09-15 through the one-launcher rig, the shape the fix is
+about**, on the same machine and against a published slice of this tree carrying
+it (`1.0.1-alpha.0.16`, `BROWSERAI_ROOT` pointed at an empty scratch root,
+`VELOPACK_FIRSTRUN` removed):
+
+| | openable corpse, one launcher |
+|---|--:|
+| Launcher start → launcher gone | 0.085 s |
+| Launcher start → the product's first record | 0.114 s |
+| Launcher start → the no-client decision | **0.116 s** |
+| The decision → the process gone | ≤ 0.050 s, polled at 2 ms |
+| Under the data root afterwards | **`logs\` alone** |
+
+**The launcher is gone 30 ms before the product writes its first record**, which
+is what the shape was always going to do and is *not* what decided the earlier
+red — a launcher still running at the parent read is a race this rig has never
+been measured to lose. The 0.116 s is smaller than the 0.312 s above for a reason
+that is the rig rather than the product: one `cmd` start on the path instead of
+two. Re-establish it with `.work/2026-09-15-notes/Measure-Corpse.ps1`, or read
+the four records the run leaves: `Startup[1]`, `Startup[4]`, `Startup[76]` — the
+new one — and `Startup[9]`.
 
 ## Two binaries in one pack, measured end to end — 2026-09-15
 

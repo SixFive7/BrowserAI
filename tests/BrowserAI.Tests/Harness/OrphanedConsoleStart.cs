@@ -47,16 +47,31 @@ namespace BrowserAI.Tests.Harness;
 /// (see <see cref="ProcessLogRecords"/>).
 /// </para>
 /// <para>
-/// <b>Two <c>start /b</c>s rather than one, because a handle keeps a dead pid
-/// openable.</b> While anything holds a process handle the kernel keeps the
-/// process object, and <c>OpenProcess</c> succeeds on the corpse — so a rig in
-/// which the test host itself launched the product's parent produced a
-/// <i>watchable</i> launcher and the product shut down cleanly, measured
-/// 2026-09-15 at <c>.work/2026-09-15-fix/repro-red-2.txt</c>. The outer
-/// <c>cmd</c> starts an inner one and exits; the inner starts the product and
-/// exits; nothing anywhere holds a handle to the inner one, so its pid is freed
-/// and <c>OpenProcess</c> answers <c>ERROR_INVALID_PARAMETER</c> — exactly what
-/// the installer's <c>Setup.exe</c> leaves behind.
+/// <b>A dead launcher comes in two shapes and the caller picks one</b> — see
+/// <see cref="LauncherCorpse"/>. While anything holds a process handle the
+/// kernel keeps the process object and <c>OpenProcess</c> succeeds on the
+/// corpse, so <i>"the launcher is gone"</i> and <i>"its pid no longer opens"</i>
+/// are two different sentences and the product meets both.
+/// <see cref="LauncherCorpse.Freed"/> uses two <c>start /b</c>s so that nothing
+/// anywhere holds the inner one — the installer's shape, where
+/// <c>OpenProcess</c> answers <c>ERROR_INVALID_PARAMETER</c>;
+/// <see cref="LauncherCorpse.Openable"/> uses one and the test host keeps the
+/// handle, which is the shape <c>Setup.exe</c> leaves behind whenever the
+/// console host is still holding the object.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-09-15 (previously "Two <c>start /b</c>s rather than
+/// one, because a handle keeps a dead pid openable … a rig in which the test
+/// host itself launched the product's parent produced a <i>watchable</i>
+/// launcher and the product shut down cleanly, measured 2026-09-15 at
+/// <c>.work/2026-09-15-fix/repro-red-2.txt</c>").</b> That measurement was real
+/// and the conclusion drawn from it was that the openable corpse had to be
+/// designed <i>out</i> of the rig. It could not be: nothing makes Windows free
+/// a pid on request, and the second full run of the day found the product
+/// meeting an openable corpse anyway and serving nobody for ten minutes on the
+/// strength of it. The product decides it now — an opened parent that has
+/// already exited is nobody to serve — and this rig produces the shape on
+/// purpose rather than avoiding it.
 /// </para>
 /// <para>
 /// <b>The environment is stated rather than inherited for one name.</b>
@@ -70,6 +85,12 @@ internal sealed class OrphanedConsoleStart : IDisposable
 {
     private readonly string _executable;
     private readonly string _appRoot;
+
+    /// <summary>
+    /// The launcher, kept undisposed in <see cref="LauncherCorpse.Openable"/> so
+    /// that its handle — and with it its pid — outlives the process.
+    /// </summary>
+    private Process? _launcher;
 
     private OrphanedConsoleStart(string executable, string appRoot)
     {
@@ -105,14 +126,22 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// <param name="patience">
     /// A hang detector for the start, never a budget. Nothing may assert on it.
     /// </param>
+    /// <param name="corpse">
+    /// Which of the two dead-launcher shapes to produce. Defaults to
+    /// <see cref="LauncherCorpse.Freed"/>, which is the installer's.
+    /// </param>
     /// <returns>The started rig, whether or not the product wrote anything.</returns>
-    public static OrphanedConsoleStart Begin(string appRoot, bool startedByTheInstaller, TimeSpan patience)
+    public static OrphanedConsoleStart Begin(
+        string appRoot,
+        bool startedByTheInstaller,
+        TimeSpan patience,
+        LauncherCorpse corpse = LauncherCorpse.Freed)
     {
         ArgumentNullException.ThrowIfNull(appRoot);
 
         var rig = new OrphanedConsoleStart(PublishedSlice.Executable, appRoot);
 
-        rig.Launch(startedByTheInstaller);
+        rig.Launch(startedByTheInstaller, corpse);
         rig.WaitUntilItSaysWhoItIs(patience);
 
         return rig;
@@ -176,6 +205,50 @@ internal sealed class OrphanedConsoleStart : IDisposable
         return Records().Contains(sentence, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Waits until the product's records say <b>one</b> of several things, and
+    /// reports which.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It exists so that a lost race fails in a second instead of in ten
+    /// minutes.</b> The decision under test has exactly two outcomes and both
+    /// are written down — <i>no client to serve</i> or <i>watching the
+    /// client</i> — so an arm that waits only for the one it expects spends the
+    /// whole of <c>TestDefaults.ProcessHang</c> learning nothing, which is
+    /// precisely what the 2026-09-15 flake cost. Waiting for either and
+    /// asserting which arrived turns the same failure into a named one.
+    /// </para>
+    /// <para>
+    /// <b>It is not a shortcut around the hang detector.</b> When the product
+    /// says neither, this still runs out the full patience and answers
+    /// <see langword="null"/> — a product that writes nothing at all is a hang
+    /// and is reported as one.
+    /// </para>
+    /// </remarks>
+    /// <param name="patience">A hang detector, never a budget.</param>
+    /// <param name="sentences">The alternatives, in no particular order.</param>
+    /// <returns>Whichever appeared, or <see langword="null"/>.</returns>
+    public string? WaitUntilItSaysOneOf(TimeSpan patience, params string[] sentences)
+    {
+        ArgumentNullException.ThrowIfNull(sentences);
+
+        var deadline = Stopwatch.StartNew();
+
+        while (true)
+        {
+            var said = Records();
+            var seen = sentences.FirstOrDefault(sentence => said.Contains(sentence, StringComparison.Ordinal));
+
+            if (seen is not null || deadline.Elapsed >= patience)
+            {
+                return seen;
+            }
+
+            Thread.Sleep(PollInterval);
+        }
+    }
+
     /// <inheritdoc />
     /// <remarks>
     /// ⚠️ <b>By identity, never by image name</b> — the repository-wide rule.
@@ -186,6 +259,25 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// outliving the run; its job object takes the child with it.
     /// </remarks>
     public void Dispose()
+    {
+        try
+        {
+            TerminateTheProduct();
+        }
+        finally
+        {
+            // ⚠️ LAST. This handle is the whole of LauncherCorpse.Openable: it
+            // is what keeps the launcher's pid answering OpenProcess, and
+            // releasing it before the product has gone would let Windows hand
+            // that number to somebody else while a BrowserAI still names it as
+            // its client.
+            _launcher?.Dispose();
+            _launcher = null;
+        }
+    }
+
+    /// <summary>Terminates the product, if it is still there.</summary>
+    private void TerminateTheProduct()
     {
         if (!IsAlive())
         {
@@ -244,7 +336,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// </remarks>
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(50);
 
-    private void Launch(bool startedByTheInstaller)
+    private void Launch(bool startedByTheInstaller, LauncherCorpse corpse)
     {
         var environment = PublishedSlice.InheritedEnvironment();
 
@@ -261,10 +353,17 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
         var start = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"))
         {
-            // The inner `start /b` is what makes the product's parent a pid
-            // nothing holds a handle to. The outer one is what gives both of
-            // them the windowless console.
-            Arguments = $"/c start /b \"\" cmd.exe /c start /b \"\" \"{_executable}\"",
+            // Freed: the INNER `start /b` is what makes the product's parent a
+            // pid nothing holds a handle to, and the outer one is what gives
+            // both of them the windowless console.
+            //
+            // Openable: one level, because the launcher this rig keeps a handle
+            // on has to BE the product's parent. `start` is an internal command
+            // of cmd, so cmd itself calls CreateProcess and cmd itself is the
+            // parent.
+            Arguments = corpse is LauncherCorpse.Freed
+                ? $"/c start /b \"\" cmd.exe /c start /b \"\" \"{_executable}\""
+                : $"/c start /b \"\" \"{_executable}\"",
             WorkingDirectory = _appRoot,
             UseShellExecute = false,
 
@@ -281,13 +380,30 @@ internal sealed class OrphanedConsoleStart : IDisposable
             start.Environment[name] = value;
         }
 
-        using var launcher = Process.Start(start)
+        var launcher = Process.Start(start)
             ?? throw new InvalidOperationException("cmd.exe did not start.");
 
-        // Waited for, so that by the time an arm reads anything the outer
-        // launcher is already gone. The inner one exits a syscall later and is
-        // held by nothing, which is the whole point of the arrangement.
-        launcher.WaitForExit();
+        if (corpse is LauncherCorpse.Freed)
+        {
+            // Waited for, so that by the time an arm reads anything the outer
+            // launcher is already gone. The inner one exits a syscall later and
+            // is held by nothing, which is the whole point of the arrangement.
+            using (launcher)
+            {
+                launcher.WaitForExit();
+            }
+
+            return;
+        }
+
+        // ⚠️ KEPT, AND THE KEEPING IS THE MECHANISM. `Process` holds the handle
+        // it was started with until it is disposed, and a held handle is what
+        // stops the kernel releasing the process object — so this pid answers
+        // OpenProcess for as long as this rig lives, and answers it about a
+        // process that has exited. Disposing it here, as `using` would, is the
+        // one thing that would turn this mode back into the other one.
+        _launcher = launcher;
+        _launcher.WaitForExit();
     }
 
     private void WaitUntilItSaysWhoItIs(TimeSpan patience)
@@ -388,4 +504,42 @@ internal sealed class OrphanedConsoleStart : IDisposable
             && int.TryParse(line.AsSpan(digits, at - digits), NumberStyles.None, CultureInfo.InvariantCulture, out processId)
             && long.TryParse(line.AsSpan(at + 1, closes - at - 1), NumberStyles.None, CultureInfo.InvariantCulture, out created);
     }
+}
+
+internal enum LauncherCorpse
+{
+    /// <summary>
+    /// The launcher's pid is <b>freed</b>: nothing anywhere holds a handle to
+    /// it, so <c>OpenProcess</c> answers <c>ERROR_INVALID_PARAMETER</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The installer's own shape</b>, and the one the 2026-09-14 incident
+    /// was measured in: <c>Setup.exe</c> starts the app and exits, and nothing
+    /// is left holding the number. Reached with two <c>start /b</c>s, so that
+    /// the process which is the product's parent is one this rig never had a
+    /// handle on.
+    /// </remarks>
+    Freed,
+
+    /// <summary>
+    /// The launcher's pid <b>still opens</b>, and the process behind it has
+    /// exited.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Equally real, and it is what the product actually meets.</b> A pid is
+    /// kept alive by any handle anywhere — the console host holds one for a
+    /// process that ran in a console — so a launcher that is gone may still be
+    /// openable for as long as the kernel is holding the object. Nothing about
+    /// that is exotic and nothing about it is up to the rig.
+    /// </para>
+    /// <para>
+    /// <b>Here it is up to the rig, which is the point.</b> The test host starts
+    /// the launcher itself and keeps the <c>Process</c> — and its handle — for
+    /// the whole life of the rig, so the corpse is openable <i>by
+    /// construction</i> rather than by luck. That is what makes the arms over
+    /// this mode deterministic where the 2026-09-15 flake was a coin toss.
+    /// </para>
+    /// </remarks>
+    Openable,
 }

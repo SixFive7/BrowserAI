@@ -140,6 +140,97 @@ internal sealed partial class ProcessLivenessTests
         await Assert.That(self).IsNotNull();
     }
 
+    /// <summary>
+    /// A pid that <b>opens</b> and whose process has <b>already exited</b> is
+    /// nobody to watch — the same answer as a pid that cannot be opened at all,
+    /// arriving by a different route.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A corpse stays openable for as long as anything holds a handle to
+    /// it</b>, and for a launcher that ran in a console something does. So
+    /// <i>"OpenProcess succeeded"</i> is not <i>"there is somebody there"</i>,
+    /// and reading it that way is what made
+    /// <c>InstallerHandoffTests.ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog</c>
+    /// fail once in four full runs on 2026-09-15: the watch attached to a dead
+    /// launcher, the no-client fast exit was skipped on the strength of it, and
+    /// the product then served nobody for the whole of
+    /// <c>TestDefaults.ProcessHang</c>.
+    /// </para>
+    /// <para>
+    /// <b>The identity pairing runs first and is not what this asks.</b> A
+    /// recycled pid belongs to a stranger and is refused by
+    /// <see cref="ProcessLiveness.StartedNoLaterThanThisProcess"/>; this pid is
+    /// the real launcher, correctly identified, and gone.
+    /// </para>
+    /// <para>
+    /// <b>Nothing here races anything.</b> The job scope owns a
+    /// <c>SafeProcessHandle</c> for the whole life of what it launched, which is
+    /// what keeps the pid openable after the exit; the process is waited for,
+    /// and only then asked about.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWatchIsRefusedWhenThePidOpensAndItsProcessHasAlreadyExited()
+    {
+        using var scope = new JobObjectScope();
+        using var logs = new CapturingLoggerProvider();
+        using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(logs));
+
+        var cmd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
+        var corpse = scope.Launch(cmd, Path.GetTempPath(), "/c", "exit");
+        var created = ProcessIdentity.CreationTimeOf(corpse.Id);
+
+        await Assert.That(await corpse.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+
+        var fired = 0;
+
+        // The recorded-pair route: the caller has a creation time beside the
+        // pid, it matches, and the process is still gone.
+        using var recorded = ClientLivenessWatcher.ForProcess(
+            corpse.Id,
+            created,
+            () => Interlocked.Increment(ref fired),
+            factory.CreateLogger("corpse"));
+
+        await Assert.That(recorded).IsNull();
+
+        // And the parent route, which is the one that matters: the pid arrives
+        // from InheritedFromUniqueProcessId with no creation time beside it.
+        using var asAParent = ClientLivenessWatcher.ForProcess(
+            corpse.Id,
+            recordedCreation: null,
+            () => Interlocked.Increment(ref fired),
+            factory.CreateLogger("corpse-as-parent"));
+
+        await Assert.That(asAParent).IsNull();
+
+        // ⚠️ NOT MERELY NULL: nothing was armed either. A watcher built over an
+        // already-signalled handle fires on the line that registers it, so a
+        // build that returned one would have run the teardown callback as well
+        // — and against a real client that is every session's browser.
+        await Assert.That(Volatile.Read(ref fired)).IsEqualTo(0);
+
+        // The refusal is said out loud, and says WHICH of the two it saw: 76 is
+        // "opened, and already gone", where 72 is "could not be opened".
+        await Assert.That(logs.Records.Any(record => record.EventId.Id is 76)).IsTrue();
+        await Assert.That(logs.Records.Any(record => record.EventId.Id is 72)).IsFalse();
+
+        // The positive control, on the same route and the same call: a process
+        // that is actually there is still watched. Without it a build that
+        // refused every watch would pass this arm.
+        var live = scope.Launch(cmd, Path.GetTempPath());
+
+        using var watched = ClientLivenessWatcher.ForProcess(
+            live.Id,
+            ProcessIdentity.CreationTimeOf(live.Id),
+            () => { },
+            factory.CreateLogger("live"));
+
+        await Assert.That(watched).IsNotNull();
+    }
+
     [Test]
     public async Task EveryProcessHandleOpenedInTheProductIsPairedWithACreationTimeRead()
     {

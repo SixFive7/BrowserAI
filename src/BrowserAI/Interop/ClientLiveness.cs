@@ -59,6 +59,12 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// </summary>
     private const uint Synchronize = 0x00100000;
 
+    /// <summary>The wait was satisfied: for a process handle, it has exited.</summary>
+    private const uint WaitObject0 = 0x00000000;
+
+    /// <summary>The wait timed out: for a process handle, it is still running.</summary>
+    private const uint WaitTimeout = 0x00000102;
+
     private readonly ManualResetEvent _signal;
     private readonly RegisteredWaitHandle _registration;
     private readonly Action _onExit;
@@ -146,6 +152,18 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// one.</b> A second open would put a second recycling window between the
     /// proof and the use, which is the window being closed.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>And a pid that opens is not a process that is still there — 2026-09-15.</b>
+    /// The identity pairing answers <i>is this the launcher</i> and nothing
+    /// else; a corpse keeps answering <c>OpenProcess</c> for as long as any
+    /// handle anywhere names it. A watch attached to one fires on the line that
+    /// registers it, which is not merely useless: it tells
+    /// <c>Program.Main</c> that the client <i>can</i> be watched, so the
+    /// no-client fast exit is skipped and BrowserAI sweeps the machine and
+    /// starts a node child for nobody. It is refused here, under a record of its
+    /// own, and the caller sees the same <see langword="null"/> a pid that will
+    /// not open produces.
+    /// </para>
     /// </remarks>
     /// <param name="processId">The client's pid.</param>
     /// <param name="recordedCreation">
@@ -199,6 +217,50 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
         {
             _ = CloseHandle(handle);
             ClientLivenessLog.ClientPidIsNotTheClient(logger, processId);
+            return null;
+        }
+
+        // ⚠️ AND A PID THAT OPENS IS NOT A PROCESS THAT IS STILL THERE — added
+        // 2026-09-15. Windows keeps the process object for as long as ANY handle
+        // anywhere names it, so a launcher that has exited goes on answering
+        // OpenProcess while somebody holds one; for a launcher that ran in a
+        // console, the console host is such a holder. The identity pairing above
+        // says this IS the launcher and says nothing about whether it is alive.
+        //
+        // Read as a client, a corpse is worse than a pid that cannot be opened
+        // at all, because it is worse in the direction of doing MORE: the watch
+        // attaches to an already-signalled handle, `Program.Main`'s "can I be
+        // watched" question answers YES, the no-client fast exit is skipped, and
+        // BrowserAI goes on to sweep the machine, take the live marker and start
+        // a node child for a conversation nobody is having. Measured 2026-09-15:
+        // one full run in four met this and served nobody for ten minutes.
+        //
+        // So it takes the SAME path as a pid that will not open -- no watcher,
+        // and Program.Main's console test decides -- and says which of the two
+        // it saw, because the two are different things that happen to end the
+        // same way.
+        var alive = WaitForSingleObject(handle, 0);
+
+        if (alive is WaitObject0)
+        {
+            _ = CloseHandle(handle);
+            ClientLivenessLog.ClientHasAlreadyExited(logger, processId);
+            return null;
+        }
+
+        if (alive is not WaitTimeout)
+        {
+            // A FAILED WAIT IS NEVER INTERPRETED -- the rule ProcessLiveness
+            // states. It is not read as alive and not read as gone: it is an
+            // identity that could not be established, which is the same answer
+            // as a handle whose times could not be read, and it goes out under
+            // the same record with what Windows said. Read before CloseHandle
+            // can replace it with its own.
+            var unknown = new Win32Exception(Marshal.GetLastPInvokeError()).Message;
+
+            _ = CloseHandle(handle);
+            ClientLivenessLog.ClientCannotBeWatched(logger, processId, unknown);
+
             return null;
         }
 
@@ -287,6 +349,13 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
         out long lpKernelTime,
         out long lpUserTime);
 
+    // The liveness half of the same handle. SYNCHRONIZE is asked for at the
+    // OpenProcess above precisely so this can be asked; without it this returns
+    // WAIT_FAILED, which is the one answer that is never interpreted.
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
+
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -342,6 +411,15 @@ internal static partial class ClientLivenessLog
         Level = LogLevel.Error,
         Message = "The MCP client, pid {ProcessId}, exited and asking BrowserAI to stop threw. stdin EOF and the job object are what remain.")]
     public static partial void TeardownFailed(ILogger logger, int processId, Exception failure);
+
+    /// <summary>The pid opens and the process behind it has already exited.</summary>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="processId">The client's pid.</param>
+    [LoggerMessage(
+        EventId = 76,
+        Level = LogLevel.Warning,
+        Message = "The process that started BrowserAI, pid {ProcessId}, could be opened and has already exited, so there is no client-liveness watch. A dead pid goes on answering OpenProcess for as long as anything anywhere still holds a handle to it — the console host does, for a launcher that ran in a console — so this is the same 'nobody to watch' as a pid that cannot be opened at all, arriving by the other route. Teardown falls back to stdin EOF alone.")]
+    public static partial void ClientHasAlreadyExited(ILogger logger, int processId);
 
     /// <summary>The pid opened is not the process it was supposed to be.</summary>
     /// <param name="logger">Where it goes.</param>
