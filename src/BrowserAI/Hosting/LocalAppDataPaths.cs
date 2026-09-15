@@ -4,7 +4,8 @@
 namespace BrowserAI.Hosting;
 
 /// <summary>
-/// The layout under an install root: which folder each kind of state lives in.
+/// The data root and the layout under it: which folder each kind of state lives
+/// in.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -12,33 +13,94 @@ namespace BrowserAI.Hosting;
 /// prompt cannot be answered by a background MCP server.
 /// </para>
 /// <para>
-/// <b>Corrected 2026-08-16 (previously "The pre-Velopack implementation of
-/// <see cref="IAppPaths"/>: <c>%LocalAppData%\BrowserAI</c>, computed rather
-/// than located … step 19's swap changes where the answer comes from and not
-/// what it is").</b> The second half was right and the first was the wrong
-/// shape: this class is not pre-Velopack and was not replaced. **It never
-/// computed the root in the installed case** — it takes one. What step 19 added
-/// is <see cref="Updates.InstallLocation"/>, which *locates* that root from
-/// <c>VelopackLocator.Current.RootAppDir</c> when this process is an installed
-/// one. Everything below is a folder name and stays true either way.
+/// ⚠️ <b>Corrected 2026-09-15 (previously "The layout under an install root …
+/// It never computed the root in the installed case — it takes one. What step 19
+/// added is <see cref="Updates.InstallLocation"/>, which <i>locates</i> that root
+/// … when this process is an installed one").</b> It computes it again, and that
+/// is the whole of the layout decision taken this date: <b>the data root is the
+/// constant <c>%LocalAppData%\BrowserAI</c></b> and the install root is
+/// <c>%LocalAppData%\BrowserAI.app</c>, a sibling rather than a parent. The
+/// locator no longer feeds this class at all. The reason is in
+/// <see cref="IAppPaths"/>: an install root is a directory the installer
+/// destroys, twice over and by design.
+/// </para>
+/// <para>
+/// <b>The constructor still takes a root, and the one thing that supplies one is
+/// <see cref="Overridden"/>.</b> The suite needs an <i>empty</i> browsers root
+/// to prove first-run provisioning against, and a stdio server has no channel
+/// but the environment — so <c>BROWSERAI_ROOT</c> survives, scoped to the data
+/// root and to nothing else. It never moves the install root, which is Velopack's
+/// to choose.
 /// </para>
 /// <para>
 /// <b>Never <c>AppContext.BaseDirectory</c>.</b> An installed BrowserAI runs out
-/// of <c>&lt;root&gt;\current\</c>, which an update replaces wholesale, so every
-/// path below is a sibling of <c>current\</c> and none is a child of it.
+/// of <c>&lt;install root&gt;\current\</c>, which an update replaces wholesale —
+/// and the install root above it is renamed aside and deleted by a repair
+/// install and emptied by an uninstall. Nothing below resolves into either.
 /// </para>
 /// </remarks>
 /// <param name="rootAppDir">
-/// The installation root. Tests pass a scratch directory; an installed process
-/// passes what the locator reported; an uninstalled one passes nothing and gets
-/// <c>%LocalAppData%\BrowserAI</c>, which is where Velopack would have put it.
+/// The data root. Tests pass a scratch directory and so does the override;
+/// everything else passes nothing and gets <c>%LocalAppData%\BrowserAI</c>.
 /// </param>
 internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
 {
-    /// <inheritdoc />
-    public string RootAppDir { get; } = rootAppDir ?? Path.Combine(
+    /// <summary>
+    /// The folder <c>%LocalAppData%</c> holds BrowserAI's data in, spelled once.
+    /// </summary>
+    /// <remarks>
+    /// <b>It is deliberately the plain name, and the installer took the suffixed
+    /// one.</b> The data outlives every install: naming it for the product and
+    /// the install root for the application is the way round that leaves a
+    /// person's browsers, sessions and logs where they expect them across an
+    /// uninstall, a reinstall and a version that renames itself.
+    /// </remarks>
+    public const string FolderName = "BrowserAI";
+
+    /// <summary>
+    /// The data root every process resolves when nothing overrides it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Reachable without a locator, which is what a Velopack hook needs.</b>
+    /// A fast-exit callback has no <c>VelopackLocator</c> it may pay for and no
+    /// business deriving a data root from its own image path — see
+    /// <see cref="IAppPaths"/> for why that derivation is the wrong one.
+    /// </remarks>
+    public static string Default { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-        "BrowserAI");
+        FolderName);
+
+    /// <summary>
+    /// The data root <see cref="Program.AppRootVariable"/> names, or
+    /// <see langword="null"/> when it names nothing usable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Read here rather than at each entry point</b>, because there is more
+    /// than one: <c>Program.Main</c> serves stdio, and
+    /// <c>Registration.HookRegistration</c> runs inside an installer callback
+    /// that never reaches <c>Main</c>'s body. Two readers would eventually
+    /// answer differently, and the one that would matter is the uninstall hook —
+    /// it offers to delete the data root, and a root it resolved differently
+    /// from the running product is a root nobody was using.
+    /// </para>
+    /// <para>
+    /// <b>A relative value is ignored rather than resolved</b>, for the reason a
+    /// relative <c>PLAYWRIGHT_BROWSERS_PATH</c> is refused: it would land
+    /// somewhere nobody chose and report nothing. Never cached — the suite sets
+    /// this variable in-process around a scope and expects the next read to see
+    /// it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The override, or <see langword="null"/>.</returns>
+    public static string? Overridden() =>
+        Environment.GetEnvironmentVariable(Program.AppRootVariable) is { Length: > 0 } value
+        && Path.IsPathFullyQualified(value)
+            ? value
+            : null;
+
+    /// <inheritdoc />
+    public string RootAppDir { get; } = rootAppDir ?? Default;
 
     /// <inheritdoc />
     public string LogDirectory => Path.Combine(RootAppDir, "logs");
@@ -51,7 +113,4 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
 
     /// <inheritdoc />
     public string InstanceRoot => Path.Combine(RootAppDir, "instances");
-
-    /// <inheritdoc />
-    public string LiveInstanceDirectory => Path.Combine(RootAppDir, "live");
 }

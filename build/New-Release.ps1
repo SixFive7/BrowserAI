@@ -137,7 +137,22 @@ $project = Join-Path $root 'src' 'BrowserAI' 'BrowserAI.csproj'
 if (-not $OutputDir) { $OutputDir = Join-Path $root 'Releases' }
 if (-not $ArchiveDir) { $ArchiveDir = Join-Path $OutputDir 'archive' }
 
-$packId = 'BrowserAI'
+# ⚠️ THE PACK ID IS THE INSTALL DIRECTORY -- 2026-09-15. Velopack derives the
+# default install location from it and nothing else: `%LocalAppData%\<packId>`,
+# immovable at 1.2.0 (there is no flag that changes it, and an id cannot carry a
+# path). So the id is what puts the install root at
+# `%LocalAppData%\BrowserAI.app`, beside the data root at
+# `%LocalAppData%\BrowserAI` rather than on top of it -- which is the whole
+# preservation decision, because Setup.exe renames a non-empty install root
+# aside and DELETES it, and uninstall empties it.
+$packId = 'BrowserAI.app'
+
+# What a human downloads is still called BrowserAI. `vpk` names its output after
+# the pack id, so the installer arrives as `BrowserAI.app-win-Setup.exe` and is
+# renamed back below. The feed-internal `.nupkg` names are NOT renamed: Velopack
+# resolves them by id out of `releases.<channel>.json`, and a rename there is a
+# feed that 404s on the first update.
+$downloadId = 'BrowserAI'
 
 # --- 1. vpk and Velopack must agree ------------------------------------------
 # The tool is global, so it is outside packages.lock.json and nothing else in
@@ -367,6 +382,41 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# --- 6b. The download is called BrowserAI, not BrowserAI.app -------------------
+# ⚠️ ADDED 2026-09-15 WITH THE PACK-ID RENAME, and it is deliberately the ONLY
+# artifact renamed. `vpk` names everything after the pack id; the id is what
+# chooses the install directory, so it had to become `BrowserAI.app`, and the
+# file a person downloads must not inherit a suffix that exists to answer a
+# question about directories. The `.nupkg`s keep the id: Velopack resolves those
+# by name out of `releases.<channel>.json`, and a rename there is a feed that
+# 404s on the first update.
+$packedSetup = Join-Path $OutputDir "$packId-$Channel-Setup.exe"
+$setup = Join-Path $OutputDir "$downloadId-$Channel-Setup.exe"
+
+if (-not (Test-Path -LiteralPath $packedSetup)) {
+    Write-Error "vpk did not produce $packedSetup, so there is no installer to rename or to publish."
+    exit 1
+}
+
+Move-Item -LiteralPath $packedSetup -Destination $setup -Force
+Write-Host "Renamed the installer to $(Split-Path -Leaf $setup)."
+
+# And the asset manifest goes with it, because it is read by machines: a file
+# name in there that nothing on disk answers to is a lie in a machine-readable
+# file, which is worse than an inconvenient name.
+$assets = Join-Path $OutputDir "assets.$Channel.json"
+
+if (Test-Path -LiteralPath $assets) {
+    $assetText = Get-Content -LiteralPath $assets -Raw
+    $renamed = $assetText.Replace("$packId-$Channel-Setup.exe", "$downloadId-$Channel-Setup.exe")
+
+    if ($renamed -ne $assetText) {
+        # LF and no BOM, like every other file this repository writes.
+        [System.IO.File]::WriteAllText($assets, ($renamed -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
+        Write-Host "Rewrote the installer's name in $(Split-Path -Leaf $assets)."
+    }
+}
+
 # --- 7. Archive the full package ----------------------------------------------
 $null = New-Item -ItemType Directory -Force -Path $ArchiveDir
 $full = Join-Path $OutputDir "$packId-$PackVersion-full.nupkg"
@@ -397,7 +447,10 @@ $deltaSize = if (Test-Path -LiteralPath $delta) { (Get-Item -LiteralPath $delta)
 # can drive it. It refuses on a missing file and that refusal must stop the
 # release -- an artifact that cannot state what went into it is not releasable,
 # and a manifest holding five of six files reads exactly like a complete one.
-$manifestDir = Join-Path $ArchiveDir "$packId-$PackVersion-manifest"
+# Named for the download rather than for the pack id: this directory is read by
+# a person looking for what went into a release, and `BrowserAI.app-1.0.0-manifest`
+# reads as a directory belonging to the installer rather than to the release.
+$manifestDir = Join-Path $ArchiveDir "$downloadId-$PackVersion-manifest"
 $manifest = & (Join-Path $PSScriptRoot 'Write-ReleaseManifest.ps1') `
     -Root $root -Destination $manifestDir -Version $PackVersion -Channel $Channel -Package $full
 
@@ -414,7 +467,7 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
     FullPackage      = $full
     DeltaPackage     = if ($deltaSize) { $delta } else { $null }
     Archived         = (Join-Path $ArchiveDir (Split-Path -Leaf $full))
-    Setup            = (Join-Path $OutputDir "$packId-$Channel-Setup.exe")
+    Setup            = $setup
     Manifest         = (Join-Path $OutputDir "releases.$Channel.json")
     ResolvedSet      = ($manifest | Select-Object -Last 1)
 }

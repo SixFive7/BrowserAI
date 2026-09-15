@@ -47,6 +47,20 @@ internal static partial class ProcessLiveness
     private const uint WaitTimeout = 0x00000102;
     private const int ProcessBasicInformationClass = 0;
 
+    /// <summary>
+    /// <c>ProcessCommandLineInformation</c>: a <c>UNICODE_STRING</c> holding the
+    /// command line of another process, answered since Windows 8.1 for a handle
+    /// carrying only <see cref="ProcessQueryLimitedInformation"/>.
+    /// </summary>
+    /// <remarks>
+    /// The alternative is a PEB walk with <c>ReadProcessMemory</c> and 32/64-bit
+    /// pointer arithmetic, which is a great deal more code to be wrong in for the
+    /// same answer.
+    /// </remarks>
+    private const int ProcessCommandLineInformationClass = 60;
+
+    private const int StatusInfoLengthMismatch = unchecked((int)0xC0000004);
+
     /// <summary>This process's creation time, to be recorded beside its pid.</summary>
     /// <returns>A Windows FILETIME.</returns>
     /// <exception cref="Win32Exception">The query failed.</exception>
@@ -234,6 +248,101 @@ internal static partial class ProcessLiveness
         return status < 0 ? 0 : (int)information.InheritedFromUniqueProcessId;
     }
 
+    /// <summary>
+    /// The command line of the process that started this one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It exists for one question, asked inside a Velopack hook: was the
+    /// uninstall silent?</b> Velopack keeps that flag in an atomic inside
+    /// <c>Update.exe</c> and passes nothing to the hook it starts — not an
+    /// argument and not an environment variable, read out of 1.2.0's own
+    /// <c>dialogs.rs</c> and <c>run_hook</c> — so the parent's own command line
+    /// is the only place the answer exists. <c>Update.exe --uninstall</c> and
+    /// <c>Update.exe --uninstall --silent</c> are two different registry values
+    /// (<c>UninstallString</c> and <c>QuietUninstallString</c>) and the
+    /// difference is whether anybody is there to answer a question.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The same recycled-pid rule as <see cref="ClientProcessName"/>, and
+    /// for the same reason.</b> The pid comes from a field the kernel never
+    /// invalidates, so the handle is proven to have started no later than this
+    /// process before anything is read off it. Reading a stranger's command line
+    /// would answer a question about somebody else's process, and the answer
+    /// decides whether a directory is deleted.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// The command line, or <see langword="null"/> when it cannot be read.
+    /// Every caller must treat <see langword="null"/> as <i>unknown</i> rather
+    /// than as an answer.
+    /// </returns>
+    public static string? ParentCommandLine()
+    {
+        try
+        {
+            var parent = ParentProcessId();
+
+            if (parent <= 0)
+            {
+                return null;
+            }
+
+            using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)parent);
+
+            if (handle.IsInvalid)
+            {
+                return null;
+            }
+
+            if (!StartedNoLaterThanThisProcess(handle.DangerousGetHandle(), out _))
+            {
+                return null;
+            }
+
+            var line = CommandLineOf(handle);
+            GC.KeepAlive(handle);
+
+            return line;
+        }
+#pragma warning disable CA1031 // Inside an installer callback. An unreadable parent is 'unknown', which every caller already has to handle.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            return null;
+        }
+    }
+
+    private static unsafe string? CommandLineOf(SafeProcessHandle handle)
+    {
+        // The documented two-call shape: ask with nothing, be told the size, ask
+        // again. A fixed guess would truncate a long command line into something
+        // that still parses, which is the one failure mode a caller could not see.
+        var status = NtQueryInformationProcess(handle.DangerousGetHandle(), ProcessCommandLineInformationClass, null, 0, out var needed);
+
+        if (status != StatusInfoLengthMismatch || needed <= 0)
+        {
+            return null;
+        }
+
+        var buffer = new byte[needed];
+
+        fixed (byte* start = buffer)
+        {
+            if (NtQueryInformationProcess(handle.DangerousGetHandle(), ProcessCommandLineInformationClass, start, needed, out _) < 0)
+            {
+                return null;
+            }
+
+            // UNICODE_STRING: USHORT Length, USHORT MaximumLength, PWSTR Buffer,
+            // with the characters written into the same allocation behind it.
+            var length = *(ushort*)start;
+            var text = *(char**)(start + sizeof(nint));
+
+            return length is 0 || text is null ? null : new string(text, 0, length / sizeof(char));
+        }
+    }
+
     private static unsafe string? ImagePathOf(SafeProcessHandle handle)
     {
         // MAX_PATH is not the limit here -- the app manifest is longPathAware
@@ -306,6 +415,15 @@ internal static partial class ProcessLiveness
         IntPtr processHandle,
         int processInformationClass,
         out ProcessBasicInformation processInformation,
+        int processInformationLength,
+        out int returnLength);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("ntdll.dll")]
+    private static unsafe partial int NtQueryInformationProcess(
+        IntPtr processHandle,
+        int processInformationClass,
+        byte* processInformation,
         int processInformationLength,
         out int returnLength);
 }

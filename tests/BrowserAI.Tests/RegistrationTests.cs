@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Hosting;
 using BrowserAI.Registration;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ internal sealed class RegistrationTests
     /// The client's configuration-directory override, which is what makes a real
     /// registration testable without writing into the user's own file.
     /// </summary>
-    private const string ConfigDirectoryVariable = "CLAUDE_CONFIG_DIR";
+    internal const string ConfigDirectoryVariable = "CLAUDE_CONFIG_DIR";
 
     /// <summary>The file the client keeps its user-scoped configuration in.</summary>
     private const string ConfigFileName = ".claude.json";
@@ -55,14 +56,15 @@ internal sealed class RegistrationTests
     /// <para>
     /// <b>Re-justified 2026-08-17, when the suite went to unbounded
     /// parallelism</b> and every constraint in it had to say why it existed.
-    /// This one survives on its own terms: the key has exactly two members, both
-    /// of them write the same variable, and nothing else in the suite starts the
-    /// client. Note what does <i>not</i> follow — the variable is set for the
-    /// whole process while these run, so a third test that started the client
-    /// would have to join this key rather than get its own.
+    /// This one survives on its own terms: every member writes the same variable
+    /// and nothing else in the suite starts the client. ⚠️ <b>Re-counted
+    /// 2026-09-15: three members, previously "exactly two".</b> The third is
+    /// <c>RealInstallerTests</c>, which runs a real <c>Setup.exe</c> whose hooks
+    /// start the client — the case the old sentence predicted in its last clause,
+    /// arriving. It is <c>internal</c> for that reason rather than private.
     /// </para>
     /// </remarks>
-    private const string ClientGroup = "mcp-client-cli";
+    internal const string ClientGroup = "mcp-client-cli";
 
     // ---- What is registered: never the execution stub -----------------------
 
@@ -318,29 +320,48 @@ internal sealed class RegistrationTests
     // ---- The state a person can find ---------------------------------------
 
     /// <summary>
-    /// The hook writes its outcome where a person looking for it will find it,
-    /// beside <c>current\</c> rather than inside it.
+    /// The hook writes its outcome where a person looking for it will find it:
+    /// in the <b>data</b> root, and nothing at all under the install root.
     /// </summary>
     /// <remarks>
-    /// <b>Inside <c>current\</c> the record would be deleted by the event most
-    /// likely to have produced the line somebody came to read</b> — an update
-    /// replaces that directory wholesale. Same rule as the log, the browsers and
-    /// the session index.
+    /// <para>
+    /// ⚠️ <b>Re-pointed 2026-09-15 (previously "beside <c>current\</c> rather
+    /// than inside it … an update replaces that directory wholesale").</b> The
+    /// right rule, aimed one level too low. A sibling of <c>current\</c> is still
+    /// inside the install root, and the two events a person reads this file
+    /// after are the two that empty it: a repair install, which renames the root
+    /// aside and deletes it, and an uninstall. The assertion is the stronger one
+    /// now — the record and the log are not under the install root at all, and
+    /// the hook leaves that root untouched.
+    /// </para>
+    /// <para>
+    /// <b>The data root is a scratch directory here, and it has to be.</b> The
+    /// product resolves a constant under <c>%LocalAppData%</c>; a test that let
+    /// it do so would write a registration record into the developer's own data
+    /// root — which is why the overload the suite drives takes the seam rather
+    /// than defaulting it.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheHookWritesItsOutcomeBesideCurrentAndIntoTheProcessLog()
+    public async Task TheHookWritesItsOutcomeIntoTheDataRootAndNothingUnderTheInstallRoot()
     {
         using var install = ScratchDirectory.Create("registration-hook");
+        using var data = ScratchDirectory.Create("registration-hook-data");
 
         var command = Path.Combine(install.Path, "current", "BrowserAI.exe");
         var client = new FakeClientCommandLine();
 
-        var report = HookRegistration.Run(RegistrationIntent.Install, "9.9.9", command, client);
+        var report = HookRegistration.Run(
+            RegistrationIntent.Install,
+            "9.9.9",
+            command,
+            client,
+            new LocalAppDataPaths(data.Path)).Registration;
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
 
-        var record = Path.Combine(install.Path, RegistrationRecord.FileName);
+        var record = Path.Combine(data.Path, RegistrationRecord.FileName);
 
         await Assert.That(File.Exists(record)).IsTrue();
         await Assert.That(record.Contains(@"\current\", StringComparison.OrdinalIgnoreCase)).IsFalse();
@@ -355,7 +376,7 @@ internal sealed class RegistrationTests
         // The hook's own log is written inside the hook, because VelopackApp.Run
         // exits the process when it has served one -- anything merely buffered
         // is discarded at that exit.
-        var logs = Directory.EnumerateFiles(Path.Combine(install.Path, "logs"), "*.log").ToList();
+        var logs = Directory.EnumerateFiles(Path.Combine(data.Path, "logs"), "*.log").ToList();
 
         await Assert.That(logs).IsNotEmpty();
 
@@ -363,6 +384,15 @@ internal sealed class RegistrationTests
 
         await Assert.That(text).Contains("Velopack Install hook running for BrowserAI 9.9.9");
         await Assert.That(text).Contains($"Registered '{McpClientRegistration.ServerName}'");
+
+        // ⚠️ THE HALF THAT IS RED AGAINST THE OLD LAYOUT: the install root the
+        // image path names is a directory Setup.exe renames aside and deletes,
+        // and the hook leaves nothing whatever in it.
+        var underTheInstall = Directory.EnumerateFileSystemEntries(install.Path)
+            .Select(Path.GetFileName)
+            .ToList();
+
+        await Assert.That(string.Join(", ", underTheInstall)).IsEmpty();
     }
 
     /// <summary>
@@ -373,18 +403,295 @@ internal sealed class RegistrationTests
     public async Task AFailedRegistrationIsRecordedRatherThanLeavingTheInstallSilent()
     {
         using var install = ScratchDirectory.Create("registration-hook-failed");
+        using var data = ScratchDirectory.Create("registration-hook-failed-data");
 
         var command = Path.Combine(install.Path, "current", "BrowserAI.exe");
         var client = new FakeClientCommandLine { Executable = null };
 
-        var report = HookRegistration.Run(RegistrationIntent.Install, "9.9.9", command, client);
+        var report = HookRegistration.Run(
+            RegistrationIntent.Install,
+            "9.9.9",
+            command,
+            client,
+            new LocalAppDataPaths(data.Path)).Registration;
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
 
-        var written = await File.ReadAllTextAsync(Path.Combine(install.Path, RegistrationRecord.FileName));
+        var written = await File.ReadAllTextAsync(Path.Combine(data.Path, RegistrationRecord.FileName));
 
         await Assert.That(written).Contains("\"outcome\": \"ClientNotFound\"");
         await Assert.That(written).Contains("claude mcp add browserai --scope user");
+    }
+
+    // ---- The data root at uninstall -----------------------------------------
+
+    /// <summary>
+    /// A silent uninstall keeps the data root and never puts a window on
+    /// anybody's screen.
+    /// </summary>
+    /// <remarks>
+    /// <b>Both halves, and the second is the one that would break a scripted
+    /// uninstall.</b> A dialog inside <c>Update.exe --uninstall --silent</c> is a
+    /// 60-second stall ending in the hook being killed — so the assertion is not
+    /// only that the directory survived, it is that the question was never
+    /// asked at all.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASilentUninstallKeepsTheDataRootAndNeverAsks()
+    {
+        using var install = ScratchDirectory.Create("uninstall-silent");
+        using var data = ScratchDirectory.Create("uninstall-silent-data");
+
+        var paths = new LocalAppDataPaths(data.Path);
+        var planted = PlantADataRoot(paths);
+        var asked = 0;
+
+        var outcome = HookRegistration.Run(
+            RegistrationIntent.Uninstall,
+            "9.9.9",
+            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            new FakeClientCommandLine(),
+            paths,
+            silent: true,
+            ask: _ =>
+            {
+                asked++;
+                return true;
+            });
+
+        // Nothing was registered with the double first, so the registration half
+        // reports that there was nothing to remove -- which is still what was
+        // asked for, and is the half this arm does not judge.
+        await Assert.That(outcome.Registration.IsWhatWasAskedFor).IsTrue();
+        await Assert.That(asked).IsEqualTo(0);
+
+        await Assert.That(outcome.Disposal).IsNotNull();
+        await Assert.That(outcome.Disposal!.Choice).IsEqualTo(DataRootChoice.Keep);
+        await Assert.That(outcome.Disposal.Asked).IsFalse();
+
+        await Assert.That(File.Exists(planted)).IsTrue();
+        await Assert.That(Directory.Exists(paths.BrowsersDirectory)).IsTrue();
+    }
+
+    /// <summary>
+    /// The prompt's default is <i>keep</i>: an answer of no leaves everything
+    /// exactly where it was.
+    /// </summary>
+    /// <remarks>
+    /// <b>The question is asserted as well as the answer</b>, because a prompt
+    /// that did not name the directory or say what it holds is a prompt answered
+    /// by habit. The size is the whole of what makes it a real question: saying
+    /// yes means a ~768 MB download next time.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUninstallAnsweredNoKeepsTheDataRootAndTheQuestionNamedIt()
+    {
+        using var install = ScratchDirectory.Create("uninstall-keep");
+        using var data = ScratchDirectory.Create("uninstall-keep-data");
+
+        var paths = new LocalAppDataPaths(data.Path);
+        var planted = PlantADataRoot(paths);
+        var questions = new List<string>();
+
+        var outcome = HookRegistration.Run(
+            RegistrationIntent.Uninstall,
+            "9.9.9",
+            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            new FakeClientCommandLine(),
+            paths,
+            silent: false,
+            ask: message =>
+            {
+                questions.Add(message);
+                return false;
+            });
+
+        await Assert.That(questions.Count).IsEqualTo(1);
+        await Assert.That(questions[0]).Contains(data.Path);
+        await Assert.That(questions[0]).Contains("KB");
+        await Assert.That(questions[0]).Contains("Delete it as well?");
+
+        await Assert.That(outcome.Disposal!.Choice).IsEqualTo(DataRootChoice.Keep);
+        await Assert.That(outcome.Disposal.Asked).IsTrue();
+        await Assert.That(outcome.Disposal.Bytes).IsGreaterThan(0);
+
+        await Assert.That(File.Exists(planted)).IsTrue();
+    }
+
+    /// <summary>
+    /// An answer of yes removes the data root, through <c>TreeDelete</c>, with
+    /// nothing left behind — the hook's own open log included.
+    /// </summary>
+    /// <remarks>
+    /// <b>The log is the interesting node and it is why the removal is split
+    /// from the decision.</b> The hook writes its process log inside the data
+    /// root, so a delete performed while that file was open would leave exactly
+    /// one directory standing — the one holding the record of the decision. The
+    /// product closes the log first; this asserts the consequence rather than
+    /// the arrangement.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUninstallAnsweredYesRemovesTheWholeDataRootIncludingTheHooksOwnLog()
+    {
+        using var install = ScratchDirectory.Create("uninstall-remove");
+        using var data = ScratchDirectory.Create("uninstall-remove-data");
+
+        var paths = new LocalAppDataPaths(data.Path);
+        var planted = PlantADataRoot(paths);
+
+        var outcome = HookRegistration.Run(
+            RegistrationIntent.Uninstall,
+            "9.9.9",
+            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            new FakeClientCommandLine(),
+            paths,
+            silent: false,
+            ask: _ => true);
+
+        await Assert.That(outcome.Registration.IsWhatWasAskedFor).IsTrue();
+        await Assert.That(outcome.Disposal!.Choice).IsEqualTo(DataRootChoice.Remove);
+
+        await Assert.That(string.Join(Environment.NewLine, outcome.Disposal.Failures)).IsEmpty();
+        await Assert.That(File.Exists(planted)).IsFalse();
+        await Assert.That(Directory.Exists(paths.LogDirectory)).IsFalse();
+        await Assert.That(Directory.Exists(data.Path)).IsFalse();
+    }
+
+    /// <summary>
+    /// An update never asks about the data root and never touches it — which is
+    /// the founding promise of separating the two directories at all.
+    /// </summary>
+    /// <remarks>
+    /// <b>By construction rather than by care, and this is what holds the
+    /// construction.</b> Only <see cref="RegistrationIntent.Uninstall"/> reaches
+    /// the disposal; an install and an update come back with no disposal report
+    /// at all, so there is no path on which a wrong answer could delete
+    /// somebody's browsers mid-upgrade.
+    /// </remarks>
+    /// <param name="intent">The lifecycle event that is not an uninstall.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(RegistrationIntent.Install)]
+    [Arguments(RegistrationIntent.Update)]
+    public async Task AnUpgradeNeverAsksAboutTheDataRootAndNeverTouchesIt(RegistrationIntent intent)
+    {
+        using var install = ScratchDirectory.Create("upgrade-keeps");
+        using var data = ScratchDirectory.Create("upgrade-keeps-data");
+
+        var paths = new LocalAppDataPaths(data.Path);
+        var planted = PlantADataRoot(paths);
+        var asked = 0;
+
+        var outcome = HookRegistration.Run(
+            intent,
+            "9.9.9",
+            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            new FakeClientCommandLine(),
+            paths,
+            silent: false,
+            ask: _ =>
+            {
+                asked++;
+                return true;
+            });
+
+        await Assert.That(outcome.Disposal).IsNull();
+        await Assert.That(asked).IsEqualTo(0);
+        await Assert.That(File.Exists(planted)).IsTrue();
+        await Assert.That(Directory.Exists(paths.BrowsersDirectory)).IsTrue();
+    }
+
+    /// <summary>
+    /// A data root holding nothing but this hook's own log is not worth a
+    /// question.
+    /// </summary>
+    /// <remarks>
+    /// <b>The install hook creates the data root itself</b> — it opens a log
+    /// there — so by the time an uninstall runs, the directory always exists.
+    /// Asking about a few kilobytes of log and a registration record, which are
+    /// the two files somebody reads <i>after</i> an uninstall, would be a modal
+    /// window with nothing in it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUninstallOfABrowserAiThatNeverRanAsksNothing()
+    {
+        using var install = ScratchDirectory.Create("uninstall-unused");
+        using var data = ScratchDirectory.Create("uninstall-unused-data");
+
+        var paths = new LocalAppDataPaths(data.Path);
+        var asked = 0;
+
+        var outcome = HookRegistration.Run(
+            RegistrationIntent.Uninstall,
+            "9.9.9",
+            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            new FakeClientCommandLine(),
+            paths,
+            silent: false,
+            ask: _ =>
+            {
+                asked++;
+                return true;
+            });
+
+        await Assert.That(asked).IsEqualTo(0);
+        await Assert.That(outcome.Disposal!.Choice).IsEqualTo(DataRootChoice.Keep);
+        await Assert.That(outcome.Disposal.Asked).IsFalse();
+
+        // The record survives, which is the point of not asking: it is what a
+        // person reads when a client still shows BrowserAI after an uninstall.
+        await Assert.That(File.Exists(RegistrationRecord.PathFor(data.Path))).IsTrue();
+    }
+
+    /// <summary>
+    /// Silence is read off the parent's command line, by token, and an unknown
+    /// parent is silent.
+    /// </summary>
+    /// <remarks>
+    /// <b>Velopack passes the hook nothing</b> — not a flag, not an environment
+    /// variable — so <c>Update.exe</c>'s own command line is the only place the
+    /// answer exists. Windows keeps the two shapes apart in the registry:
+    /// <c>UninstallString</c> is <c>Update.exe --uninstall</c> and
+    /// <c>QuietUninstallString</c> is the same with <c>--silent</c>. The last two
+    /// arguments are the controls that matter: a path containing <c>-s</c> is not
+    /// the flag, and an unreadable parent must read as silent, because the
+    /// consequence of the other answer is a modal window nobody is there to
+    /// close.
+    /// </remarks>
+    /// <param name="commandLine">What the parent was started with.</param>
+    /// <param name="silent">What that means.</param>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    [Arguments(@"""C:\Users\x\AppData\Local\BrowserAI.app\Update.exe"" --uninstall", false)]
+    [Arguments(@"""C:\Users\x\AppData\Local\BrowserAI.app\Update.exe"" --uninstall --silent", true)]
+    [Arguments(@"""C:\Users\x\AppData\Local\BrowserAI.app\Update.exe"" --uninstall -s", true)]
+    [Arguments(@"""C:\Users\x\AppData\Local\BrowserAI.app\Update.exe"" --uninstall --SILENT", true)]
+    [Arguments(@"C:\tools\update-server\Update.exe --uninstall", false)]
+    [Arguments(null, true)]
+    public async Task SilenceIsReadOffTheParentsCommandLineByToken(string? commandLine, bool silent) =>
+        await Assert.That(DataRootDisposal.IsSilent(commandLine)).IsEqualTo(silent);
+
+    /// <summary>
+    /// Plants what a used BrowserAI leaves behind: a browsers tree, an index and
+    /// a file to watch.
+    /// </summary>
+    /// <param name="paths">The scratch data seam.</param>
+    /// <returns>The planted file's path.</returns>
+    private static string PlantADataRoot(LocalAppDataPaths paths)
+    {
+        _ = Directory.CreateDirectory(paths.BrowsersDirectory);
+        _ = Directory.CreateDirectory(paths.IndexDirectory);
+
+        var planted = Path.Combine(paths.BrowsersDirectory, "chromium-0000", "chrome.exe");
+
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(planted)!);
+        File.WriteAllText(planted, "not really a browser, but it is 768 MB in spirit");
+
+        return planted;
     }
 
     // ---- The real client ----------------------------------------------------
@@ -597,19 +904,4 @@ internal sealed class RegistrationTests
     /// <param name="directory">The scratch configuration directory.</param>
     /// <returns>The scope that restores whatever was there before.</returns>
     private static EnvironmentScope PointTheClientAt(string directory) => new(ConfigDirectoryVariable, directory);
-
-    private sealed class EnvironmentScope : IDisposable
-    {
-        private readonly string _name;
-        private readonly string? _previous;
-
-        public EnvironmentScope(string name, string value)
-        {
-            _name = name;
-            _previous = Environment.GetEnvironmentVariable(name);
-            Environment.SetEnvironmentVariable(name, value);
-        }
-
-        public void Dispose() => Environment.SetEnvironmentVariable(_name, _previous);
-    }
 }

@@ -1427,6 +1427,11 @@ listing's cost was already the walk. `[MACHINE]`
 
 ## Two users and one install root — what spans users and what does not — measured 2026-08-20
 
+⚠️ **Re-scoped 2026-09-15: the data root is a constant now, so the installer's
+install-to flag can no longer move it — what it moves is the install root, and the
+live-instance markers measured below went with that root. The ACL reading is
+unchanged; the path it was taken at is `<install root>\live\`.**
+
 `%LocalAppData%` separates users. `BROWSERAI_ROOT` and the installer's
 install-to flag both defeat that, and two users then share one browsers
 directory, one session index and one live-marker directory. This section is what

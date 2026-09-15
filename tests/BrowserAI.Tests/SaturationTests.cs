@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using BrowserAI.Interop;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
+using BrowserAI.Updates;
 
 namespace BrowserAI.Tests;
 
@@ -593,7 +594,7 @@ internal sealed partial class SaturationTests
             }
         }
 
-        foreach (var file in Enumerate(paths.LiveInstanceDirectory, directories: false))
+        foreach (var file in Enumerate(LiveInstances.DirectoryUnder(paths.RootAppDir), directories: false))
         {
             if (ours.Contains(PidPrefixOf(Path.GetFileName(file))))
             {

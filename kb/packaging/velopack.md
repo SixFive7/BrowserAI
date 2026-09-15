@@ -40,6 +40,16 @@ warning. `[FLOATS]`
 
 Spike 2026-08-15. `[FLOATS]`
 
+⚠️ **BrowserAI stopped keeping state under the install root on 2026-09-15, and
+the three caveats below are why.** The install root is
+`%LocalAppData%\BrowserAI.app` — Velopack derives it from the pack id and
+nothing else, and the id is the only lever: there is no flag for the install
+directory at 1.2.0 and an id may not carry a path. The data root is the constant
+`%LocalAppData%\BrowserAI` beside it. So *siblings of `current\` survive an
+update and a rollback* is still true and is no longer what the product relies
+on: what it relies on is that a repair install and an uninstall cannot reach the
+browsers, the session index or the log at all.
+
 **`RootAppDir` is the directory containing `Update.exe` — the parent of
 `current\`.** Across update *and* rollback, a sibling directory accumulated all 7
 hook stamps including the original install's, and a 5 MB payload file kept its
@@ -197,6 +207,17 @@ per user:
 HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI
 ```
 
+⚠️ **The id moved to `BrowserAI.app` on 2026-09-15** (the pack-id rename that
+chooses the install directory), so the key this product writes is now
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app`.
+**The measurement below is unchanged** — it is about ids in Velopack's model, not
+about this id — and it has one incidental consequence worth recording: the
+release candidate installed as `BrowserAI` and a v1.0.0 installed as
+`BrowserAI.app` are two ids, so they no longer share an entry. The suite's own
+real-installer arm refuses to run at all when a key for its id already exists
+(`ReleaseLayout.ARealInstallIsRegistered`), because `--installto` would repoint
+that entry and its uninstall would delete it.
+
 **The key is named for the id and not for the location.** A probe installed a
 second BrowserAI into `C:\Users\jori\AppData\Local\BrowserAI-probe-ed175a83`
 with `--installto`, and the entry that had pointed at the release candidate in
@@ -323,7 +344,11 @@ two versions, then install the first `Setup.exe` with
 `--silent --installto <scratch>` and run
 `<scratch>\current\BrowserAI.exe` with `BROWSERAI_UPDATE_FEED` pointed at the
 feed directory. **Never install into `%LocalAppData%\BrowserAI`** — see the
-repair-install finding above.
+repair-install finding above. *Re-stated 2026-09-15: that directory is the DATA
+root now, and the default install location is `%LocalAppData%\BrowserAI.app`, so
+the accident this sentence warns about is no longer reachable by default — only
+by typing `--installto` and naming the data root, which would hand the whole of
+it to `install.rs`'s rename-and-delete.*
 
 > ⚠️ `[STALE]` **A re-measurement of this whole set is OWED as of 2026-08-27,
 > was OWED AGAIN on 2026-09-14, and HAS NOT BEEN RUN either time.** The
@@ -598,6 +623,16 @@ timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
 `RELEASES`. **It does not prune** — after 5 versions all 5 fulls and 4 deltas
 remained and the feed advertised all of them.
 
+⚠️ **Every one of those names carries the pack id, which is also the install
+directory — so the download is renamed after the pack, 2026-09-15.**
+`build/New-Release.ps1` moves `BrowserAI.app-win-Setup.exe` to
+`BrowserAI-win-Setup.exe` and rewrites that one name in `assets.{channel}.json`,
+and it renames the human-facing manifest directory under `Releases\archive\` the
+same way. **The `.nupkg`s are deliberately left alone**: Velopack resolves those
+by name out of `releases.{channel}.json`, so renaming one is a feed that 404s on
+the first update. `ReleaseScriptTests.ThePackIdIsTheInstallDirectoryAndTheInstallerIsRenamedBack`
+holds both halves, with the two package names as the control.
+
 **`vpk` rejects 4-part version numbers** — semver2, three parts only.
 
 **And the assembly version does not follow it: a 4-part assembly version renders
@@ -726,6 +761,59 @@ Two smaller ones: **Desktop and Start Menu shortcuts are created by default**
 (`--shortcuts` defaults to `Desktop,StartMenuRoot`), and
 `%LOCALAPPDATA%\velopack\` is created unconditionally, **not removed by
 uninstall**, with non-installed runs writing to a machine-shared `velopack.log`.
+
+## A non-silent install starts the app in a console window, and nobody is on the other end of it — measured 2026-09-14
+
+**Measured 2026-09-14 @ Velopack 1.2.0**, end to end, against a real install of
+this product. Evidence: `.work/2026-09-14-firstrun/` (`setup.log`,
+`observe.jsonl`, `tree.jsonl`, `uninstall.log`). `[FLOATS]`
+
+**`Setup.exe` without `--silent` finishes by starting the app itself**, through
+`shared::start_package`, and that call passes `show_window = true`
+(`util_windows.rs`). `process_win.rs` turns that into the creation flags:
+
+```rust
+let flags = if show_window { CREATE_UNICODE_ENVIRONMENT } else { CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT };
+```
+
+so a **console-subsystem** binary launched this way gets a real console. Observed
+from a windowless launcher: flags **1024** for the app start against
+**134,218,752** for a hook, a Windows Terminal window titled with the full
+executable path, and a `PseudoConsoleWindow` owned by our own pid.
+
+**Three facts in one:**
+
+| | |
+|---|---|
+| The window | The app's stdin is that console. It never reports end-of-file, because there is no writer to close it |
+| The launcher | `Setup.exe` exited **44 ms** later, so the pid the app inherits is already dead by the time it looks |
+| The consequence | BrowserAI's client-liveness watch could not attach (`OpenProcess` → `ERROR_INVALID_PARAMETER`), warned that teardown fell back to stdin EOF alone, and then **served nobody until the machine was rebooted** — 254 s observed, killed only by the uninstall |
+
+**`VELOPACK_FIRSTRUN=true` is how the app can know.** `shared::start_package`
+inserts it into a copy of its own environment block for that one start, with the
+literal value `true` (`constants.rs: HOOK_ENV_FIRSTRUN`). It is **not** passed to
+hooks, and it is inherited by anything the started app spawns. Velopack's own
+`OnFirstRun` callback is not a substitute: it runs inside `VelopackApp.Run()`,
+before the app has a log, and it does not exit.
+
+**What BrowserAI does about it, since 2026-09-15.** `Program.Main` exits 0 on
+`VELOPACK_FIRSTRUN=true` before the sweep, the live marker, the instance
+directory and the child — one log line and a window that flickers. And in
+general, a run whose launcher cannot be opened **and** whose stdin is a console
+has no teardown signal that can ever arrive, so it exits cleanly rather than
+serving nobody: both halves have to hold, because each on its own is ordinary.
+⚠️ **The upstream half cannot be fixed from here** — there is no window or
+no-start option on `Setup.exe`'s command line, and `--silent` skips the start
+only as a side effect of hiding every dialog and answering yes to every prompt.
+It is filed as [velopack/velopack#1056](https://github.com/velopack/velopack/issues/1056).
+
+**How to re-establish.** Launch `Setup.exe` from a windowless parent (a detached
+`pwsh` with no console, as `.work/2026-09-14-firstrun/launch-detached.ps1` does),
+without `--silent`, against a scratch `--installto`, and watch the process tree
+and the top-level windows. ⚠️ **Sandbox it**: point `CLAUDE_CONFIG_DIR` at a
+scratch directory first, because the install hook registers with the real client
+by name, and export the Add/Remove key for the pack id, because the uninstall
+deletes it.
 
 ## Distribution: MSIX and code signing
 

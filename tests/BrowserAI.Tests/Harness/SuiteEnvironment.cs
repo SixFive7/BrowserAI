@@ -51,6 +51,22 @@ internal enum SuiteCapability
     ClientCommandLine,
 
     /// <summary>
+    /// A real <c>Setup.exe</c> packed from this tree's own layout, which is the
+    /// only thing that can install anything.
+    /// </summary>
+    /// <remarks>
+    /// <b>A capability rather than an assumption because the suite may not run
+    /// the release script.</b> Packing takes a NativeAOT publish and <c>vpk</c>,
+    /// and the one arm that needs an installer needs it for a question nothing
+    /// else can answer: whether <c>Setup.exe</c>'s rename-and-delete of a
+    /// non-empty install root leaves the data root alone. Absent, that arm skips
+    /// loudly; under <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is correct —
+    /// a release whose installer has never been run against a second install is
+    /// one whose whole preservation claim is unexercised.
+    /// </remarks>
+    ReleaseInstaller,
+
+    /// <summary>
     /// A git that can answer questions about the tree this run is reading.
     /// </summary>
     /// <remarks>
@@ -239,6 +255,17 @@ internal static class SuiteEnvironment
     /// <param name="test">The calling test, filled in by the compiler.</param>
     public static void RequireGit([CallerMemberName] string test = "") =>
         Require(SuiteCapability.Git, test);
+
+    /// <summary>
+    /// A <c>Setup.exe</c> packed from this tree's layout, or a skip.
+    /// </summary>
+    /// <param name="test">The calling test, filled in by the compiler.</param>
+    /// <returns>The installer's path.</returns>
+    public static string RequireReleaseInstaller([CallerMemberName] string test = "")
+    {
+        Require(SuiteCapability.ReleaseInstaller, test);
+        return ReleaseLayout.SetupExecutable;
+    }
 
     /// <summary>The MCP client's own command line, or a skip.</summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
@@ -690,6 +717,14 @@ internal static class SuiteEnvironment
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
+        // No Partial state for this one either. An installer packed under
+        // another id is not a half-installed capability -- it is somebody else's
+        // artefact wearing the same file name, and the answer to both is the
+        // same command.
+        SuiteCapability.ReleaseInstaller => ReleaseLayout.HasCurrentInstaller()
+            ? CapabilityState.Present
+            : CapabilityState.AbsentAsAWhole,
+
         // No Partial state here either, for the same reason and one more: git
         // either answers "this is a work tree" or it does not, and the two ways
         // of not answering — no git on PATH, and a directory that is not a
@@ -707,11 +742,25 @@ internal static class SuiteEnvironment
     /// The packed release this run can read, or <see langword="null"/>.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Deliberately not a search of <c>.work/</c>.</b> Only the release
     /// script's own output directory counts, because a package left behind by an
     /// older run predates whatever is being asserted about it — and a stale
     /// artefact that satisfies a notice check is the same shape of false green
     /// as the degraded run.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The name is composed from the pack id rather than typed —
+    /// 2026-09-15, and the literal it replaced had just gone stale.</b> The id
+    /// became <c>BrowserAI.app</c> that day (it is what Velopack derives the
+    /// install directory from), so <c>vpk</c> now writes
+    /// <c>BrowserAI.app-&lt;version&gt;-full.nupkg</c> and the old
+    /// <c>BrowserAI-*-full.nupkg</c> pattern would have matched **only packages
+    /// from the previous layout** — present on a machine that had packed one
+    /// before, absent on every machine that packs one after. That is the stale
+    /// artefact this remark already warned about, arriving through the file name
+    /// instead of through the directory.
+    /// </para>
     /// </remarks>
     /// <returns>The newest full package, or <see langword="null"/>.</returns>
     public static string? PackagedRelease()
@@ -721,10 +770,10 @@ internal static class SuiteEnvironment
             return File.Exists(named) ? named : null;
         }
 
-        var releases = new DirectoryInfo(Path.Combine(RepositoryLayout.Root.FullName, "Releases"));
+        var releases = new DirectoryInfo(ReleaseLayout.Directory);
 
         return releases.Exists
-            ? releases.EnumerateFiles("BrowserAI-*-full.nupkg", SearchOption.AllDirectories)
+            ? releases.EnumerateFiles($"{ReleaseLayout.PackId}-*-full.nupkg", SearchOption.AllDirectories)
                 .OrderByDescending(file => file.LastWriteTimeUtc)
                 .FirstOrDefault()?.FullName
             : null;
@@ -792,6 +841,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => "Chromium",
         SuiteCapability.ProvisionedFirefox => "Firefox",
         SuiteCapability.ClientCommandLine => "client CLI",
+        SuiteCapability.ReleaseInstaller => "release installer",
         SuiteCapability.Git => "git",
         _ => "packed release",
     };
@@ -803,10 +853,11 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => BrowserAiPaths.ExpectedChromiumExecutable,
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
         SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
+        SuiteCapability.ReleaseInstaller => ReleaseLayout.Witness(),
         SuiteCapability.Git => GitOracle.IsAvailable
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
             : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",
-        _ => PackagedRelease() ?? Path.Combine(RepositoryLayout.Root.FullName, "Releases", "BrowserAI-<version>-full.nupkg"),
+        _ => PackagedRelease() ?? Path.Combine(ReleaseLayout.Directory, $"{ReleaseLayout.PackId}-<version>-full.nupkg"),
     };
 
     private static string RemedyFor(SuiteCapability capability) => capability switch
@@ -816,6 +867,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => "Provision it: BrowserAI downloads it on first use, or run the suite once with a payload present.",
         SuiteCapability.ProvisionedFirefox => "Provision it: BrowserAI downloads it on first use of a Firefox session.",
         SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{McpClientRegistration.ClientExecutable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
+        SuiteCapability.ReleaseInstaller => $"Run: pwsh -File build/New-Release.ps1, or set {ReleaseLayout.FeedVariable} to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed.",
         SuiteCapability.Git => "Install git and run the suite from a checkout rather than from an export. Nothing is written: the only command asked for is 'git ls-files'.",
         _ => $"Run: pwsh -File build/New-Release.ps1, or set {ReleasePackageVariable} to a packed .nupkg.",
     };

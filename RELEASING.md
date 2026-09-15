@@ -413,6 +413,31 @@ before this and nobody had re-read the number:*
   The tool-permission policy was removed — it was never a boundary against the
   caller — and the golden snapshot was doing this job all along, over the schemas
   as well as the names.
+- ⚠️ **Pack before you run this item, not after — added 2026-09-15.** Two
+  capabilities are produced by `build/New-Release.ps1` and by nothing else — the
+  packed `.nupkg` the notice check reads, and, since the install layout split,
+  the real `Setup.exe` that
+  `RealInstallerTests.InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical`
+  installs twice over one root. Under `BROWSERAI_RELEASE_RUN=1` an absent
+  capability is a **failing test** rather than a skip, so a release gate run on a
+  tree that has never been packed fails for want of an artefact rather than for
+  anything about the code. Run [item 7's publish and pack](#7-build-clean)
+  first; the gate then exercises the installer that is about to be published.
+  ⚠️ **And the installer arm refuses to run at all when an Add/Remove entry for
+  the pack id already exists**, because `--installto` would repoint that entry
+  and the uninstall would delete it — so a machine carrying a real install of
+  this build reports the capability ABSENT, with the key named in the coverage
+  block, and the release run fails. Uninstall it first, or cut the release from a
+  machine that does not have one.
+
+  **A pack into a scratch directory counts**, if the gate is being run before the
+  real one exists: `BROWSERAI_RELEASE_FEED` points the arm at any directory
+  holding a packed `BrowserAI-win-Setup.exe` beside its `releases.win.json`. That
+  is how the layout change of 2026-09-15 was exercised on the day it landed —
+  `build/New-Release.ps1 -SkipPublish -PackDir <publish> -OutputDir <scratch>
+  -AllowPreRelease`, then the arm against that directory — and it is the same two
+  files the capability reads out of `Releases/`.
+
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
   **Run the suite with `BROWSERAI_RELEASE_RUN=1` set**, which is what makes this

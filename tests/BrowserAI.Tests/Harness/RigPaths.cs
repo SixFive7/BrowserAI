@@ -48,7 +48,4 @@ internal sealed class RigPaths(string rootAppDir, string browsersDirectory) : IA
 
     /// <inheritdoc />
     public string InstanceRoot => _scratch.InstanceRoot;
-
-    /// <inheritdoc />
-    public string LiveInstanceDirectory => _scratch.LiveInstanceDirectory;
 }

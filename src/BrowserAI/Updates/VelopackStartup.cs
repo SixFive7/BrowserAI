@@ -118,6 +118,44 @@ internal static class VelopackStartup
     }
 
     /// <summary>
+    /// The variable Velopack sets on the one start it performs itself: the app
+    /// launch at the end of an install.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read out of 1.2.0's own source rather than guessed</b>
+    /// (<c>constants.rs</c>: <c>HOOK_ENV_FIRSTRUN</c>, and
+    /// <c>shared::start_package</c>, which inserts it with the literal value
+    /// <c>"true"</c> into a copy of its own environment block). Velopack also
+    /// offers <c>OnFirstRun</c>, and that callback is <b>not</b> a substitute:
+    /// it runs inside <see cref="Run"/>, before this process has a log, and it
+    /// does not exit — so a server started by the installer went on to serve
+    /// nobody exactly as if the callback had not been registered.
+    /// </remarks>
+    public const string FirstRunVariable = "VELOPACK_FIRSTRUN";
+
+    /// <summary>
+    /// Whether this process is the post-install start Velopack performs itself.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The value is compared rather than merely present.</b> Velopack writes
+    /// <c>true</c> and nothing else, and an environment block that carried the
+    /// name with some other value would be somebody else's variable — the safe
+    /// reading of which is <i>this is an ordinary start</i>, because the
+    /// consequence of <see langword="true"/> is refusing to serve.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is inherited by children.</b> A BrowserAI started by the
+    /// installer passes this variable to everything it spawns; nothing it spawns
+    /// is a BrowserAI, so that costs nothing today, and a future path that
+    /// re-launched this binary from inside itself would have to clear it.
+    /// </para>
+    /// </remarks>
+    /// <returns>Whether the installer started this process.</returns>
+    public static bool StartedByTheInstaller() =>
+        string.Equals(Environment.GetEnvironmentVariable(FirstRunVariable), "true", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// The one sentence Velopack writes at <c>Warn</c> when the locator found no
     /// install, matched by its leading clause.
     /// </summary>
@@ -210,12 +248,27 @@ internal static class VelopackStartup
     /// </remarks>
     private static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
     {
-        var report = HookRegistration.Run(intent, version);
+        var outcome = HookRegistration.Run(intent, version);
+        var report = outcome.Registration;
 
         log(
             report.IsWhatWasAskedFor ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
             $"BrowserAI {version} — MCP registration ({intent}): {report.Status}. {report.Detail}",
             null);
+
+        // ⚠️ THE ONE PLACE THE DATA ROOT'S FATE IS RECORDED IN A FILE THAT
+        // SURVIVES IT. BrowserAI's own log is inside the directory being decided
+        // about, so on a removal it goes with it; the installer's log is outside
+        // and is the file somebody opens when they want to know what an uninstall
+        // did. Never higher than Information: keeping data is the default and
+        // removing it was asked for, so neither is a problem.
+        if (outcome.Disposal is { } disposal)
+        {
+            log(
+                disposal.Failures.Count is 0 ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
+                $"BrowserAI {version} — data root ({disposal.DataRoot}): {disposal.Choice}. asked={disposal.Asked} bytes={disposal.Bytes} nodesLeftBehind={disposal.Failures.Count}",
+                null);
+        }
     }
 
     /// <summary>

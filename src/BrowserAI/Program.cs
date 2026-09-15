@@ -31,7 +31,7 @@ internal static class Program
 {
     /// <summary>
     /// The one environment variable BrowserAI reads about <b>itself</b>, and it
-    /// moves the whole app root.
+    /// moves the <b>data</b> root.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -44,11 +44,17 @@ internal static class Program
     /// to the binary, so moving the executable does not move the root either.
     /// </para>
     /// <para>
-    /// <b>It is read here rather than inside
-    /// <see cref="LocalAppDataPaths"/></b>, so it stays a decision the host makes
-    /// once. Step 19 swaps that class for one over
-    /// <c>VelopackLocator.Current.RootAppDir</c> and has to decide what this
-    /// means then, visibly, rather than losing it in a replaced file.
+    /// ⚠️ <b>Narrowed 2026-09-15 (previously "it moves the whole app root" and
+    /// "it is read here rather than inside <see cref="LocalAppDataPaths"/>, so it
+    /// stays a decision the host makes once … step 19 swaps that class for one
+    /// over <c>VelopackLocator.Current.RootAppDir</c>").</b> It moves the data
+    /// root and <b>never the install root</b>, which is Velopack's to choose and
+    /// which this process only ever reads. It is also read inside
+    /// <see cref="LocalAppDataPaths.Overridden"/> now rather than here, because
+    /// <c>Main</c> is not the only entry point into this binary: a Velopack
+    /// fast-exit hook never reaches this method's body, and the uninstall hook
+    /// offers to delete the data root — so a second reader that answered
+    /// differently would be offering to delete a directory nobody used.
     /// </para>
     /// <para>
     /// <b>Never silent.</b> A BrowserAI running against a root nobody expects
@@ -102,21 +108,17 @@ internal static class Program
         var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
         VelopackStartup.Run(args ?? [], (level, message, failure) => velopack.Add((level, message, failure)));
 
-        var overridden = Environment.GetEnvironmentVariable(AppRootVariable);
-
-        // Three sources, in this order: the suite's override, the LOCATOR, and
-        // only then the computed default. The middle one is step 19's swap --
-        // an installed BrowserAI takes its root from
-        // VelopackLocator.Current.RootAppDir rather than from arithmetic on
-        // %LocalAppData%, because `Setup.exe --installto` makes those two
-        // disagree and the loser would be a log and 768 MB of browsers left
-        // beside a BrowserAI that is not running. Never AppContext.BaseDirectory,
-        // which resolves INSIDE current\ and is replaced by every update.
-        var root = overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden)
-            ? overridden
-            : InstallLocation.RootAppDir;
-
-        var paths = new LocalAppDataPaths(root);
+        // ⚠️ TWO SOURCES, NOT THREE -- 2026-09-15. The locator used to sit
+        // between these two and it is gone: an installed BrowserAI no longer
+        // takes its DATA root from VelopackLocator.Current.RootAppDir, because
+        // that root is the one Setup.exe renames aside and deletes and uninstall
+        // empties. The data root is the constant %LocalAppData%\BrowserAI and
+        // the only thing that moves it is the suite's override. Never
+        // AppContext.BaseDirectory, which resolves INSIDE current\ and is
+        // replaced by every update; never the image path, which moves with
+        // --installto. See Hosting/IAppPaths.cs for the whole argument.
+        var overridden = LocalAppDataPaths.Overridden();
+        var paths = new LocalAppDataPaths(overridden);
 
         using var log = ProcessLog.Create(paths, LogLevel.Information);
         var logger = log.Factory.CreateLogger("BrowserAI.Startup");
@@ -181,9 +183,29 @@ internal static class Program
                 BuildVersion.Current);
         }
 
-        if (overridden is { Length: > 0 } && Path.IsPathFullyQualified(overridden))
+        if (overridden is not null)
         {
             StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
+        }
+
+        // ⚠️ THE INSTALLER STARTED THIS PROCESS, AND THERE IS NOBODY ON THE
+        // OTHER END OF IT. Velopack sets VELOPACK_FIRSTRUN=true on the one start
+        // it performs itself, after an install -- and it starts the app with
+        // show_window=true, so a console-subsystem binary gets a REAL CONSOLE
+        // WINDOW on the user's screen, holding a stdin that never EOFs. Measured
+        // 2026-09-14: the server and its node child then ran until the machine
+        // was rebooted, serving nobody, while a terminal window titled with the
+        // full exe path sat on the desktop (evidence: .work/2026-09-14-firstrun/).
+        //
+        // It is here rather than three lines lower because everything below
+        // costs something a blink must not: the sweep enumerates the machine,
+        // the live marker takes a machine-wide mutex, and the child spawn
+        // provisions 768 MB on a first run. An install that produced one log
+        // line and a window that flickers is the whole of what this is for.
+        if (VelopackStartup.StartedByTheInstaller())
+        {
+            StartupLog.StartedByTheInstaller(logger, VelopackStartup.FirstRunVariable);
+            return 0;
         }
 
         // ⚠️ BEFORE EVERYTHING THAT CREATES STATE, and that ordering is the
@@ -214,16 +236,26 @@ internal static class Program
         // The measurement mode: one pass, synchronously, and nothing else -- no
         // child, no stdio, no server. See SweepArgument for its one remaining
         // caller, which is a kb re-verification row rather than the product.
+        // ⚠️ THE OTHER ROOT, AND THE ONLY THING LEFT THAT USES IT -- 2026-09-15.
+        // The live-marker census asks "is any other process running out of this
+        // INSTALL?", because that is the set an apply's force_stop_package
+        // terminates; every other path in this process works on the data root
+        // resolved above. An uninstalled BrowserAI has no install root to ask
+        // about, so it asks about its own data root -- which is what the two
+        // were before this date, and what keeps a scratch BROWSERAI_ROOT one
+        // self-consistent set of markers.
+        var installRoot = InstallLocation.RootAppDir ?? paths.RootAppDir;
+
         if (args is not null && Array.Exists(args, argument => string.Equals(argument, SweepArgument, StringComparison.Ordinal)))
         {
-            return SweepOnce(paths, log.Factory, logger);
+            return SweepOnce(paths, installRoot, log.Factory, logger);
         }
 
         // Fire-and-forget, on its own background thread, before anything that
         // can be slow. Nothing on the request path waits for it or observes it,
         // and it is deliberately never a startup gate: a BrowserAI that cannot
         // sweep is degraded, one that will not start is broken.
-        StraySweep.StartInBackground(() => CreateSweep(paths, log.Factory), logger);
+        StraySweep.StartInBackground(() => CreateSweep(paths, installRoot, log.Factory), logger);
 
         // ⚠️ TAKEN BY EVERY RUN, NOT ONLY BY ONE THAT CHECKS FOR UPDATES, and
         // held for the whole process life. It is what another instance's census
@@ -232,7 +264,7 @@ internal static class Program
         // terminates every process under the install root, including other
         // agents' browsers. Failing to join is a warning and never a refusal to
         // start; it costs this process the ability to update and nothing else.
-        using var live = LiveInstances.Join(paths, updateLogger);
+        using var live = LiveInstances.Join(installRoot, updateLogger);
 
         // ⚠️ AFTER THE JOIN AND ON ITS OWN THREAD, added 2026-08-20. Reclaim ran
         // only inside the updater's "am I alone?" path until then -- which fires
@@ -242,7 +274,7 @@ internal static class Program
         // does, at ZERO timeout, so one process reclaims and every other pays an
         // acquire and leaves. Startup never waits for it, and the marker this
         // process just created is safe by construction because it is HELD.
-        LiveInstances.StartReclaimInBackground(paths, updateLogger);
+        LiveInstances.StartReclaimInBackground(installRoot, updateLogger);
 
         // One run, one directory. It holds this run's own child — the one that
         // answers `tools/list` before any session exists — together with its
@@ -354,6 +386,24 @@ internal static class Program
                 },
                 logger);
 
+            // ⚠️ NEITHER TEARDOWN MECHANISM CAN EVER FIRE, SO THERE IS NOBODY
+            // THERE -- 2026-09-14, measured. Both halves have to be true at once
+            // and each on its own is ordinary: a watch that could not attach is
+            // routine when a client starts BrowserAI through a wrapper, and a
+            // console stdin is routine when a developer runs this by hand from a
+            // terminal that is still sitting there. Together they are the shape
+            // the installer's own start produced -- the launcher pid already
+            // exited, and stdin bound to a console that will never EOF -- and
+            // what came of it was a server plus a node child alive until the
+            // machine was rebooted, serving nobody, with a terminal window on
+            // the desktop. Exiting here is a clean shutdown: the disposals below
+            // take the child, its browsers and its job with them.
+            if (client is null && StandardInput.IsAConsole())
+            {
+                StartupLog.NoClientToServe(logger, ProcessLiveness.ParentProcessId());
+                return 0;
+            }
+
             StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
 
             // Off the message loop and after the server is up, because a
@@ -450,7 +500,7 @@ internal static class Program
     /// payload's <c>browsers.json</c>, and a payload that is absent or broken
     /// must not be able to stop BrowserAI serving.
     /// </remarks>
-    private static StraySweep CreateSweep(IAppPaths paths, ILoggerFactory factory)
+    private static StraySweep CreateSweep(IAppPaths paths, string installRoot, ILoggerFactory factory)
     {
         var payload = new PayloadLayout();
         var manifest = BrowsersManifest.Read(payload);
@@ -468,16 +518,20 @@ internal static class Program
             ProvisionedBrowsers.ExecutablesFor(ProvisionedBrowsers.Firefox, paths.BrowsersDirectory, manifest),
 
             // And the live-marker reclaim rides the same pass, for the mutex
-            // discipline this one already has.
-            paths);
+            // discipline this one already has. ⚠️ It is handed the INSTALL root
+            // while everything above it came from the DATA root: the two are
+            // siblings since 2026-09-15 and this is the one place both are in
+            // one expression, which is why the split is spelled here rather than
+            // resolved inside the sweep.
+            installRoot);
     }
 
     /// <summary>Runs one sweep and exits, for <see cref="SweepArgument"/>.</summary>
-    private static int SweepOnce(IAppPaths paths, ILoggerFactory factory, ILogger logger)
+    private static int SweepOnce(IAppPaths paths, string installRoot, ILoggerFactory factory, ILogger logger)
     {
         try
         {
-            _ = CreateSweep(paths, factory).Run();
+            _ = CreateSweep(paths, installRoot, factory).Run();
             return 0;
         }
 #pragma warning disable CA1031 // Same boundary as the background thread's: a sweep failure is a log line and an exit code, never a crash dialog.
@@ -633,4 +687,42 @@ internal static partial class StartupLog
         Level = LogLevel.Error,
         Message = "The MCP client exited and BrowserAI's protocol channel could not be closed. Shutdown continues; the job objects still take every child and browser down.")]
     public static partial void ChannelNotClosed(ILogger logger, Exception exception);
+
+    /// <summary>
+    /// The installer started this process itself, so there is nothing to serve.
+    /// </summary>
+    /// <remarks>
+    /// <b>Information rather than Warning: it is the ordinary end of an
+    /// install</b>, and the line exists because the alternative is an install
+    /// whose only trace of having started BrowserAI at all is a window that
+    /// flickered. It is also the evidence that the exit happened <i>before</i>
+    /// the sweep, the marker and the child — nothing else is recorded after it.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="variable">The variable Velopack set to say so.</param>
+    [LoggerMessage(
+        EventId = 8,
+        Level = LogLevel.Information,
+        Message = "BrowserAI was started by the installer ({Variable}=true) and there is nothing to serve: no MCP client is on the other end of this process. Exiting without starting a browser server. This is how an install ends; a client starts BrowserAI itself when it needs one.")]
+    public static partial void StartedByTheInstaller(ILogger logger, string variable);
+
+    /// <summary>
+    /// Neither teardown signal can ever arrive, so this process would serve
+    /// nobody for ever.
+    /// </summary>
+    /// <remarks>
+    /// <b>Warning, because one of the two halves is an anomaly wherever it
+    /// happens.</b> A launcher that is already gone is ordinary on its own — a
+    /// wrapper exits and leaves the pipe — and a console stdin is ordinary on its
+    /// own, when a person runs this by hand. Together they mean nothing can ever
+    /// end the conversation, which is the state measured on 2026-09-14: a server
+    /// and its node child alive until reboot.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="launcher">The pid the kernel recorded as this process's creator.</param>
+    [LoggerMessage(
+        EventId = 9,
+        Level = LogLevel.Warning,
+        Message = "BrowserAI has no client to serve and is exiting: the process that started it (pid={Launcher}) could not be opened or is gone, and standard input is a console rather than a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.")]
+    public static partial void NoClientToServe(ILogger logger, int launcher);
 }

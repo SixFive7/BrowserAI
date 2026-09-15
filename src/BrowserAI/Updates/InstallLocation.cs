@@ -33,13 +33,29 @@ namespace BrowserAI.Updates;
 /// directories on every call would still be wrong.
 /// </para>
 /// <para>
-/// <b>Why this decides the app root at all.</b> The install root is
+/// ⚠️ <b>What this decides, corrected 2026-09-15 (previously "<b>Why this
+/// decides the app root at all.</b> The install root is
 /// <c>%LocalAppData%\BrowserAI</c> by default, which is exactly what
 /// <see cref="Hosting.LocalAppDataPaths"/> would compute — but only by default.
 /// <c>Setup.exe --installto</c> moves it, and a computed root would then put the
 /// process log, the session index and the provisioned browsers beside a
 /// BrowserAI that is not running. Locating is the difference between a
-/// coincidence and a guarantee.
+/// coincidence and a guarantee").</b> It decides <b>nothing</b> about where
+/// BrowserAI's data goes, and it did decide that until this date. The argument
+/// was sound and its conclusion was upside down: following the binary guaranteed
+/// the data would be found beside it, and guaranteed the data was inside the one
+/// directory an installer destroys — <c>Setup.exe</c> renames a non-empty
+/// install root aside and deletes it, and uninstall empties it. The data root is
+/// the constant <c>%LocalAppData%\BrowserAI</c> now and the install root is
+/// <c>%LocalAppData%\BrowserAI.app</c> beside it
+/// (<see cref="Hosting.IAppPaths"/>).
+/// </para>
+/// <para>
+/// <b>What it is still read for, and it is a short list.</b> Whether this process
+/// may update itself (<see cref="IsInstalled"/>); which root the live-instance
+/// census is keyed to, because that is the set <c>force_stop_package</c>
+/// terminates by image path; and three fields reported into the log. Nothing
+/// below composes a path anything is written to.
 /// </para>
 /// </remarks>
 internal static class InstallLocation
@@ -56,6 +72,16 @@ internal static class InstallLocation
     /// The install root — the directory <b>containing</b> <c>current\</c> — or
     /// <see langword="null"/> when this process is not an installed one.
     /// </summary>
+    /// <remarks>
+    /// <b>Two readers, and neither writes into it.</b> <c>Program</c> hands it to
+    /// <see cref="LiveInstances"/> as the root the census is about, falling back
+    /// to the data root when this process is not an install and there is no such
+    /// root to ask about; and the startup log records it. ⚠️ <b>It must never
+    /// reach <see cref="Hosting.LocalAppDataPaths"/> again</b> — that is the
+    /// wiring the layout change of 2026-09-15 removed, and
+    /// <c>UpdateTests.NoDataPathResolvesUnderAnyInstallRoot</c> is the scan that
+    /// fails if it comes back.
+    /// </remarks>
     public static string? RootAppDir => Resolved.Value.RootAppDir;
 
     /// <summary>

@@ -4,7 +4,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
-using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Updates;
@@ -59,7 +58,7 @@ internal sealed class StraySweep
     private readonly IReadOnlyList<string> _images;
     private readonly HashSet<string> _profileLockImages;
     private readonly SessionIndex? _index;
-    private readonly IAppPaths? _paths;
+    private readonly string? _liveInstallRoot;
     private readonly ILogger _logger;
 
     /// <summary>Creates a sweep over one set of browser executables.</summary>
@@ -76,21 +75,28 @@ internal sealed class StraySweep
     /// <see cref="Runtime.ProvisionedBrowsers.ExecutablesFor"/>. Empty means the
     /// second path is not attempted, which costs attribution and never safety.
     /// </param>
-    /// <param name="paths">
-    /// The app-paths seam, or <see langword="null"/> to skip the live-marker
-    /// reclaim. Its only use here is
-    /// <see cref="Updates.LiveInstances.ReclaimStaleMarkers"/>, which is added to
-    /// this pass rather than given a sweeper of its own because this one is
+    /// <param name="liveInstallRoot">
+    /// The <b>install</b> root whose live-marker directory this pass also
+    /// reclaims, or <see langword="null"/> to skip that half. Its only use here
+    /// is <see cref="Updates.LiveInstances.ReclaimStaleMarkers"/>, which is added
+    /// to this pass rather than given a sweeper of its own because this one is
     /// already machine-wide, already mutex-serialised and already skips instantly
     /// when a peer holds the gate — the three properties a marker reclaim needs
     /// and the reason not to invent a second discipline for it.
+    /// ⚠️ <b>It is a different root from the one the rest of this pass works
+    /// on — 2026-09-15.</b> The browsers and the index above come from the
+    /// <i>data</i> root; the markers are keyed to the install root, because the
+    /// question they answer is which processes an apply's
+    /// <c>force_stop_package</c> would kill. The split is passed in rather than
+    /// derived here so that the seam is visible at the call site
+    /// (<c>Program.CreateSweep</c>) instead of being a fact about this file.
     /// </param>
     public StraySweep(
         IReadOnlyList<string> browserImages,
         SessionIndex? index,
         ILogger logger,
         IReadOnlyCollection<string>? profileLockImages = null,
-        IAppPaths? paths = null)
+        string? liveInstallRoot = null)
     {
         ArgumentNullException.ThrowIfNull(browserImages);
         ArgumentNullException.ThrowIfNull(logger);
@@ -98,7 +104,7 @@ internal sealed class StraySweep
         _images = browserImages;
         _profileLockImages = new HashSet<string>(profileLockImages ?? [], StringComparer.OrdinalIgnoreCase);
         _index = index;
-        _paths = paths;
+        _liveInstallRoot = liveInstallRoot;
         _logger = logger;
     }
 
@@ -442,7 +448,7 @@ internal sealed class StraySweep
             // two scopes protect different things: this one stops ninety-six
             // BrowserAIs sweeping the machine at once, that one stops a walk
             // racing a peer's join. Neither substitutes for the other.
-            LiveMarkers = _paths is null ? null : LiveInstances.ReclaimStaleMarkers(_paths, _logger),
+            LiveMarkers = _liveInstallRoot is null ? null : LiveInstances.ReclaimStaleMarkers(_liveInstallRoot, _logger),
         };
     }
 
@@ -846,9 +852,9 @@ internal sealed record StraySweepResult
     /// What the live-marker reclaim did, when one ran.
     /// </summary>
     /// <remarks>
-    /// <see langword="null"/> when the sweep was built without an
-    /// <see cref="Hosting.IAppPaths"/>, which is a sweep that had no marker
-    /// directory to be told about rather than one that declined to look.
+    /// <see langword="null"/> when the sweep was built without an install root,
+    /// which is a sweep that had no marker directory to be told about rather
+    /// than one that declined to look.
     /// </remarks>
     public LiveMarkerReclaim? LiveMarkers { get; init; }
 

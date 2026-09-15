@@ -207,7 +207,9 @@ alternatives and what a replacement must keep. The mechanism is the client's own
 of one registration available in every repository with no per-repo files. Four
 properties hold it together: it never registers the execution stub (only
 `current\`), it is idempotent because the client is not, it writes a log record
-**and** a `mcp-registration.json` beside the install root on every failure path
+**and** a `mcp-registration.json` into the **data** root on every failure path
+(*corrected 2026-09-15, previously "beside the install root"* — that directory is
+emptied by the repair install and the uninstall somebody reads the record after)
 and can never throw into the installer, and it survives an update and a rollback.
 
 ## Sessions
@@ -1007,17 +1009,59 @@ else.** `UpdateFeed.Create` *refuses* the three shapes that 404 silently: a base
 URL that already ends in the channel, an empty channel, and a channel that is not
 lower-case.
 
-**An installed process takes its root from `VelopackLocator.Current.RootAppDir`**
-through `InstallLocation` — never `AppContext.BaseDirectory`, and never arithmetic
-on `%LocalAppData%`, which is a coincidence that stops holding the moment
-`Setup.exe --installto` is used. The layout *below* the root is unchanged either
-way, which is why only the root moved.
+**Two roots, siblings, and neither is inside the other — 2026-09-15.** The
+**install** root is `%LocalAppData%\BrowserAI.app`, chosen by Velopack from the
+pack id and moved only by `Setup.exe --installto`; the **data** root is the
+constant `%LocalAppData%\BrowserAI`, moved only by `BROWSERAI_ROOT`. ⚠️
+*Corrected 2026-09-15 (previously "**An installed process takes its root from
+`VelopackLocator.Current.RootAppDir`** through `InstallLocation` — never
+`AppContext.BaseDirectory`, and never arithmetic on `%LocalAppData%`, which is a
+coincidence that stops holding the moment `Setup.exe --installto` is used").*
+That reasoning was sound and its conclusion was upside down: locating the data
+beside the binary guaranteed it would be found, and guaranteed it was inside the
+one directory the installer destroys. `Setup.exe` renames a non-empty install
+root aside and **deletes** it — which is what a repair or overwrite install *is* —
+and uninstall empties it, so every browser, the session index and the log went
+with either event. `InstallLocation` no longer feeds `LocalAppDataPaths` at all;
+never `AppContext.BaseDirectory`, and never the image path, which moves with
+`--installto` and with the portable zip.
+
+**The browsers are outside the install root now, so `force_stop_package` no
+longer reaches them — and nothing was lost by that.** It killed them by image
+path before, bypassing our teardown entirely; what takes them down now is the
+event that always did the real work: BrowserAI's own death closes the last handle
+to its job object, and `KILL_ON_JOB_CLOSE` terminates every process in it. The
+job is unnamed and its handle is not inheritable, so ours is the only handle
+there is — `JobContainmentTests.AChildInheritsThisLaunchsPipesAndNoOtherInheritableHandle`
+and `BrowserContainmentTests` hold that, every browser process is asserted to be
+inside the job with zero escapees, and
+`JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
+waits for every recorded pid to be gone after the launcher dies. An apply still
+kills the BrowserAI processes under the install root; their browsers go with them
+through the job rather than through the installer.
+
+**The one thing still keyed to the install root is the live-instance census**,
+and it is not data: `LiveInstances` asks *is any other process running out of
+this install?*, which is exactly the set `force_stop_package` terminates by image
+path. `Program` hands it `InstallLocation.RootAppDir` and hands the stray sweep
+the data root, in one expression, so the split is visible at the seam rather than
+being a fact about a file.
+
+**Uninstall asks about the data root and keeps it by default.** The
+`--veloapp-uninstall` hook runs *before* Velopack empties the install root: it
+names the directory and its size, `No` is the default, and a `--silent`
+uninstall — which is what `QuietUninstallString` and every scripted uninstall use
+— keeps without asking. Silence is read off `Update.exe`'s own command line,
+because Velopack passes a hook neither a flag nor an environment variable for it.
+An upgrade never asks and never touches it.
 
 **The apply is gated on being the last instance.** Every run takes a held
-`<root>\live\<pid>-<guid>.live` handle at startup, keyed on the same
+`<install root>\live\<pid>-<guid>.live` handle at startup, keyed on the same
 canonicalisation sessions use; the installer kills every process under the install
 root after each hook returns, so an apply that cannot prove solitude must not
-happen. Then `Update.exe apply --silent --norestart --waitPid <ownPid>` and an
+happen. *The install root is load-bearing in that sentence since 2026-09-15: it is
+the root whose processes are killed, and an uninstalled BrowserAI — which has no
+install root — announces itself under its data root instead.* Then `Update.exe apply --silent --norestart --waitPid <ownPid>` and an
 ordinary shutdown — never `Environment.Exit`.
 
 **The census is three-valued and the updater collapses it, which is the point.**
