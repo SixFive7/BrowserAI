@@ -118,6 +118,32 @@ internal static class McpClientRegistration
     public const string UserScope = "user";
 
     /// <summary>
+    /// The other scope BrowserAI writes: <c>project</c>, a <c>.mcp.json</c> at
+    /// the root of one directory.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-15, and the sentence above about it is corrected
+    /// rather than deleted (previously "<c>project</c> writes a
+    /// <c>.mcp.json</c> into the repository, which the charter rejects by
+    /// name").</b> What the charter rejects is BrowserAI <i>requiring</i> a
+    /// per-repository file in order to work — being installed once and being
+    /// available everywhere is the promise, and user scope is what keeps it. It
+    /// does not reject a person choosing to commit one: a team that wants
+    /// BrowserAI pinned in a repository, so that a teammate who clones it is
+    /// offered the server without installing anything by hand, is asking for
+    /// exactly what this scope is for.
+    /// </para>
+    /// <para>
+    /// <b>It is never written without an explicit click</b>, never written to a
+    /// directory BrowserAI chose, and the person is told what the client will do
+    /// next: a project-scoped server is approved once per project, and until
+    /// somebody approves it the entry is inert.
+    /// </para>
+    /// </remarks>
+    public const string ProjectScope = "project";
+
+    /// <summary>
     /// How long one client invocation may take before it is abandoned.
     /// </summary>
     /// <remarks>
@@ -142,7 +168,25 @@ internal static class McpClientRegistration
     /// client's own parser.
     /// </remarks>
     public static IReadOnlyList<string> AddArguments(string command) =>
-        ["mcp", "add", ServerName, "--scope", UserScope, "--", command];
+        AddArguments(command, UserScope);
+
+    /// <summary>
+    /// The arguments that register BrowserAI in a named scope.
+    /// </summary>
+    /// <param name="command">The command a client is to launch.</param>
+    /// <param name="scope"><see cref="UserScope"/> or <see cref="ProjectScope"/>.</param>
+    /// <returns>The argument vector, to be passed one element at a time.</returns>
+    /// <remarks>
+    /// ⚠️ <b>A project-scope call is the same call with a different scope and a
+    /// different WORKING DIRECTORY</b> — the client writes <c>.mcp.json</c>
+    /// where it is run, and nowhere else. The command for that scope is written
+    /// in its portable form, which is why it must reach the client as one
+    /// argument through this vector and never be spelled into a shell line:
+    /// both of this machine's shells expand <c>${…}</c> themselves, and what
+    /// would then be committed is one person's absolute path.
+    /// </remarks>
+    public static IReadOnlyList<string> AddArguments(string command, string scope) =>
+        ["mcp", "add", ServerName, "--scope", scope, "--", command];
 
     /// <summary>The arguments that remove BrowserAI from user scope.</summary>
     /// <returns>The argument vector, to be passed one element at a time.</returns>
@@ -151,8 +195,42 @@ internal static class McpClientRegistration
     /// removes the entry <i>from whichever scope it exists in</i> — so an
     /// uninstall could delete a project-scoped server somebody else configured.
     /// </remarks>
-    public static IReadOnlyList<string> RemoveArguments() =>
-        ["mcp", "remove", ServerName, "--scope", UserScope];
+    public static IReadOnlyList<string> RemoveArguments() => RemoveArguments(UserScope);
+
+    /// <summary>The arguments that remove BrowserAI from a named scope.</summary>
+    /// <param name="scope"><see cref="UserScope"/> or <see cref="ProjectScope"/>.</param>
+    /// <returns>The argument vector, to be passed one element at a time.</returns>
+    public static IReadOnlyList<string> RemoveArguments(string scope) =>
+        ["mcp", "remove", ServerName, "--scope", scope];
+
+    /// <summary>
+    /// The portable form of an installed server's path, for a committed
+    /// <c>.mcp.json</c>.
+    /// </summary>
+    /// <param name="packId">The Velopack pack id, which is the install folder.</param>
+    /// <returns>The command, with the environment reference unexpanded.</returns>
+    /// <remarks>
+    /// <para>
+    /// <b>The client expands <c>${VAR}</c> inside <c>.mcp.json</c> and this is
+    /// the only reason the form is usable.</b> A committed absolute path under
+    /// one person's user profile is wrong on every teammate's machine and right
+    /// on exactly one, which makes committing it worse than committing nothing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is only written when it expands to the install this process is
+    /// running out of.</b> A non-default install root — <c>Setup.exe</c> with an
+    /// install-to argument — does not sit under <c>%LOCALAPPDATA%</c>, and
+    /// writing this form there would commit a path that resolves to nothing on
+    /// the very machine that wrote it. That case gets its absolute path and the
+    /// person is told why.
+    /// </para>
+    /// <para>
+    /// <b>Forward slashes</b>, because JSON is where this lands and a backslash
+    /// is an escape there; the client and Windows both accept them.
+    /// </para>
+    /// </remarks>
+    public static string PortableCommandFor(string packId) =>
+        $"${{LOCALAPPDATA}}/{packId}/{RegistrationTarget.CurrentDirectoryName}/{RegistrationTarget.ServerFileName}";
 
     /// <summary>
     /// Whether a failed <c>add</c> failed only because the entry was already

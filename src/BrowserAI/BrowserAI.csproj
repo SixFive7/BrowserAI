@@ -5,7 +5,28 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <RootNamespace>BrowserAI</RootNamespace>
-    <AssemblyName>BrowserAI</AssemblyName>
+    <!--
+      ⚠️ RENAMED 2026-09-15 (previously BrowserAI). The name went to the
+      configuration app, and it had to: Velopack derives the root stub, the
+      Start Menu shortcut, the icon and all four hook invocations from the pack
+      tool's mainExe flag and from nothing else, so whichever binary a person
+      launches and Windows shows in the Start Menu has to be the one named
+      there. The
+      server is what a CLIENT starts, by an absolute path out of its own
+      configuration, so its name is only ever read by machines.
+
+      The project DIRECTORY is deliberately unchanged. Renaming it would move
+      every file in the tree's largest project and make the diff of this batch
+      unreadable, for a directory name nothing reads.
+    -->
+    <AssemblyName>BrowserAI.Server</AssemblyName>
+    <!--
+      Explorer shows a console application's icon exactly as it shows a window
+      application's, and a person who opens the install directory sees this file
+      beside the configuration app. Same icon on purpose: they are one product,
+      and two icons would say they are two.
+    -->
+    <ApplicationIcon>..\..\assets\BrowserAI.ico</ApplicationIcon>
     <!-- longPathAware. Session directories are the caller's choice and nothing
          constrains their depth, so a path crossing MAX_PATH must not become a
          mystery failure somewhere inside a browser profile tree. -->

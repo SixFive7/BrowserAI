@@ -104,18 +104,26 @@ internal static class Program
 
     private static async Task<int> Main(string[] args)
     {
-        // ⚠️ FIRST, BEFORE LOGGING AND BEFORE EVERYTHING ELSE. This call is also
-        // how the installer's own hooks are served -- `--veloapp-install` and
-        // friends, which are fast-exit callbacks with 15-60 s timeouts -- so
-        // anything placed above it runs inside every hook as well. It carries
+        // ⚠️ FIRST, BEFORE LOGGING AND BEFORE EVERYTHING ELSE. It carries
         // SetAutoApplyOnStartup(false), whose default would make this process
         // exit(0) at handshake time and relaunch detached with dead pipes.
+        //
+        // ⚠️ CORRECTED 2026-09-15 (previously "This call is also how the
+        // installer's own hooks are served -- `--veloapp-install` and friends,
+        // which are fast-exit callbacks with 15-60 s timeouts -- so anything
+        // placed above it runs inside every hook as well"). NOT ANY MORE, and
+        // not in this binary. Velopack invokes all four hooks on the main exe
+        // and on nothing else, and the main exe is the configuration app. This
+        // call registers no lifecycle callback at all, so a hook argument
+        // reaching this process by hand is served by nobody -- which is the
+        // point: registering a client's configuration from a process the
+        // installer did not start is not something this binary may do.
         //
         // Velopack's own records are buffered rather than dropped: the log
         // cannot exist yet, because WHERE it goes depends on the install root
         // this call is what establishes. They are replayed below.
         var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
-        VelopackStartup.Run(args ?? [], (level, message, failure) => velopack.Add((level, message, failure)));
+        VelopackStartup.RunWithoutLifecycleHooks(args ?? [], (level, message, failure) => velopack.Add((level, message, failure)));
 
         // ⚠️ TWO SOURCES, NOT THREE -- 2026-09-15. The locator used to sit
         // between these two and it is gone: an installed BrowserAI no longer

@@ -280,7 +280,15 @@
           "TUnit.Core": "1.67.0"
         }
       },
-      "browserai": {
+      "browserai.core": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Logging": "[*, )",
+          "Microsoft.Extensions.Logging.Console": "[*, )",
+          "Velopack": "[*, )"
+        }
+      },
+      "BrowserAI.Server": {
         "type": "Project",
         "dependencies": {
           "BrowserAI.Core": "[1.0.0, )",
@@ -290,18 +298,10 @@
           "Velopack": "[*, )"
         }
       },
-      "browserai.core": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Extensions.Logging": "[*, )",
-          "Microsoft.Extensions.Logging.Console": "[*, )",
-          "Velopack": "[*, )"
-        }
-      },
       "browserai.testprobe": {
         "type": "Project",
         "dependencies": {
-          "BrowserAI": "[1.0.0, )",
+          "BrowserAI.Server": "[1.0.0, )",
           "SourceGear.sqlite3": "[*, )"
         }
       },

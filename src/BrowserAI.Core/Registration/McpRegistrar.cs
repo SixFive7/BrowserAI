@@ -24,13 +24,23 @@ internal enum RegistrationIntent
     Install,
 
     /// <summary>
-    /// An update in place. <b>An existing entry wins:</b> <c>current\</c> is
-    /// replaced wholesale but its path does not move, so there is nothing to
-    /// correct — and a user who added arguments or environment variables to their
-    /// own registration must not have them deleted by a background update. Only
-    /// an <i>absent</i> entry is written, which self-heals a registration
-    /// somebody removed.
+    /// An update in place. <b>An existing entry of ours wins unless it names a
+    /// file that is not there.</b>
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-09-15 (previously "<c>current\</c> is replaced
+    /// wholesale but its path does not move, so there is nothing to correct …
+    /// Only an <i>absent</i> entry is written, which self-heals a registration
+    /// somebody removed").</b> The premise stopped being true the day the server
+    /// was renamed: the path inside <c>current\</c> <i>can</i> move now, and
+    /// every registration written before that day names a file the update
+    /// deleted. The half that survives is the reason — a user who added
+    /// arguments or environment variables to their own registration must not
+    /// have them deleted by a background update — so an entry of ours that still
+    /// resolves is left exactly as it is, and only one that resolves to nothing
+    /// is re-pointed. A <c>browserai</c> entry outside our install root is
+    /// somebody else's and is reported rather than touched.
+    /// </remarks>
     Update,
 
     /// <summary>An uninstall. The entry goes, and its absence is not a failure.</summary>
@@ -128,12 +138,17 @@ internal static class McpRegistrar
     /// </param>
     /// <param name="commands">The seam over starting the client.</param>
     /// <param name="logger">Where the pass reports.</param>
+    /// <param name="existing">
+    /// What is registered already, read rather than asked for. Supplied by the
+    /// suite; resolved from the client's own user-scope file when omitted.
+    /// </param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
     public static RegistrationReport Apply(
         RegistrationIntent intent,
         string? imagePath,
         IRegistrationCommand commands,
-        ILogger logger)
+        ILogger logger,
+        Func<string, RegistrationView>? existing = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(logger);
@@ -163,7 +178,12 @@ internal static class McpRegistrar
             {
                 RegistrationIntent.Uninstall => Remove(commands, logger, client, command),
                 RegistrationIntent.Install => Reassert(commands, logger, client, command),
-                _ => EnsurePresent(commands, logger, client, command),
+                _ => Repair(
+                    commands,
+                    logger,
+                    client,
+                    command,
+                    (existing ?? (root => McpRegistryView.User(root)))(target.InstallRoot)),
             };
         }
 #pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds -- never an exception into the installer.
@@ -177,6 +197,83 @@ internal static class McpRegistrar
                 $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with any client; register it by hand with: {McpClientRegistration.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>")}",
                 null,
                 imagePath);
+        }
+    }
+
+    /// <summary>
+    /// An update: repair an entry of ours that has gone stale, and touch nothing
+    /// else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-15 (previously this intent went to
+    /// <see cref="EnsurePresent"/>, which adds when absent and otherwise does
+    /// nothing at all).</b> That was right while the registered path could not
+    /// change under an update, and it stopped being right the day the server was
+    /// renamed: every registration written before that day names
+    /// <c>current\BrowserAI.exe</c>, which is now the configuration app's name
+    /// and, in an install that has been updated, a file the client can still
+    /// launch. Left alone, a person who updates gets a window instead of a
+    /// server.
+    /// </para>
+    /// <para>
+    /// <b>Four states, and only one of them writes.</b> Absent adds, because an
+    /// update of a BrowserAI somebody unregistered by hand is not an invitation
+    /// to leave them without one and that has been this hook's behaviour since
+    /// it existed. <i>Ours and present</i> is left exactly as it is, arguments
+    /// and all — a person may have added their own. <i>Ours and stale</i> is
+    /// re-pointed, which is the whole reason this method exists. <b>Foreign is
+    /// reported and never touched</b>: an entry named <c>browserai</c> whose
+    /// command is not under our install root belongs to another BrowserAI, and
+    /// adopting it would be an update of one product silently re-pointing
+    /// another.
+    /// </para>
+    /// <para>
+    /// <b>Ours is decided by the install root and not by the file name</b>, so a
+    /// second install elsewhere reads as foreign — which it is.
+    /// </para>
+    /// </remarks>
+    private static RegistrationReport Repair(
+        IRegistrationCommand commands,
+        ILogger logger,
+        string client,
+        string command,
+        RegistrationView existing)
+    {
+        if (existing.Unreadable is { } unreadable)
+        {
+            // Never treated as "nothing is registered": that reading would make
+            // an unreadable file into a licence to write one.
+            RegistrationLog.Refused(logger, unreadable);
+            return new RegistrationReport(RegistrationStatus.Refused, unreadable, client, command);
+        }
+
+        switch (existing.Ownership)
+        {
+            case RegistrationOwnership.Absent:
+                return Add(commands, logger, client, command);
+
+            case RegistrationOwnership.OursAndStale:
+                RegistrationLog.Repairing(logger, existing.Command ?? "<none>", command);
+                _ = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
+                return Add(commands, logger, client, command);
+
+            case RegistrationOwnership.Foreign:
+                var foreign =
+                    $"Another BrowserAI is registered at '{existing.Command}', which is not under this install root. "
+                    + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{McpClientRegistration.ServerName}' entry it did not write. "
+                    + $"If this install is the one you want, unregister the other and register this one: {McpClientRegistration.ManualCommandFor(command)}";
+
+                RegistrationLog.Refused(logger, foreign);
+                return new RegistrationReport(RegistrationStatus.Refused, foreign, client, existing.Command);
+
+            default:
+                RegistrationLog.AlreadyRegistered(logger, McpClientRegistration.ServerName, command);
+                return new RegistrationReport(
+                    RegistrationStatus.AlreadyRegistered,
+                    $"'{McpClientRegistration.ServerName}' is already registered at '{existing.Command}' and was left exactly as it is.",
+                    client,
+                    existing.Command);
         }
     }
 
@@ -310,6 +407,18 @@ internal static partial class RegistrationLog
         Level = LogLevel.Information,
         Message = "Removed '{Server}' from the client's user-scoped MCP servers.")]
     public static partial void Unregistered(ILogger logger, string server);
+
+    /// <summary>
+    /// An entry of ours naming a file that is not there any more, re-pointed.
+    /// </summary>
+    /// <param name="logger">Where the record goes.</param>
+    /// <param name="was">What the entry named.</param>
+    /// <param name="now">What it names now.</param>
+    [LoggerMessage(
+        EventId = 11,
+        Level = LogLevel.Information,
+        Message = "Repaired the MCP registration: it named '{Was}', which is no longer there, and now names '{Now}'.")]
+    public static partial void Repairing(ILogger logger, string was, string now);
 
     /// <summary>There was nothing registered to remove.</summary>
     /// <param name="logger">Where to write.</param>

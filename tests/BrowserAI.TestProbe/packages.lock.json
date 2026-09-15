@@ -153,21 +153,21 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.10"
         }
       },
-      "browserai": {
+      "browserai.core": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Logging": "[*, )",
+          "Microsoft.Extensions.Logging.Console": "[*, )",
+          "Velopack": "[*, )"
+        }
+      },
+      "BrowserAI.Server": {
         "type": "Project",
         "dependencies": {
           "BrowserAI.Core": "[1.0.0, )",
           "Microsoft.Extensions.Logging": "[*, )",
           "Microsoft.Extensions.Logging.Console": "[*, )",
           "ModelContextProtocol": "[*, )",
-          "Velopack": "[*, )"
-        }
-      },
-      "browserai.core": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Extensions.Logging": "[*, )",
-          "Microsoft.Extensions.Logging.Console": "[*, )",
           "Velopack": "[*, )"
         }
       },

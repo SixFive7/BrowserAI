@@ -53,6 +53,23 @@ namespace BrowserAI.Updates;
 /// to talk to.
 /// </para>
 /// <para>
+/// ⚠️ <b>THE HOOKS RUN IN THE CONFIGURATION APP AND NOT IN THE SERVER, since
+/// 2026-09-15.</b> Velopack invokes all four on <c>--mainExe</c> and on nothing
+/// else, and the main exe is <c>BrowserAI.exe</c>, which is now the
+/// configuration app. So the server calls <see cref="RunWithoutLifecycleHooks"/>
+/// and the app calls <see cref="RunAndServeLifecycleHooks"/>. They are two
+/// methods rather than a flag because the difference is a <i>capability</i>: a
+/// binary that registers no callbacks cannot serve a hook even if somebody
+/// passes it one by hand, which is the property being asserted rather than a
+/// setting being chosen.
+/// </para>
+/// <para>
+/// <b><c>VelopackApp.Run()</c> is called in both cases</b>, and that is not
+/// symmetry for its own sake: it is the call that carries
+/// <c>SetAutoApplyOnStartup(false)</c>, and the server is the binary that would
+/// be destroyed by the default.
+/// </para>
+/// <para>
 /// <b>Corrected 2026-08-16 (previously "No hook does any work. They exist to
 /// log").</b> That was true and is not any more. The reason it was true survives
 /// unchanged and still binds: the logon scheduled task
@@ -81,8 +98,8 @@ namespace BrowserAI.Updates;
 internal static class VelopackStartup
 {
     /// <summary>
-    /// Runs Velopack's startup handling. Call this before anything else in
-    /// <c>Main</c>.
+    /// Runs Velopack's startup handling and serves the four lifecycle hooks.
+    /// Call this before anything else in the configuration app's <c>Main</c>.
     /// </summary>
     /// <param name="args">The process arguments.</param>
     /// <param name="log">Where Velopack's own output goes.</param>
@@ -92,18 +109,11 @@ internal static class VelopackStartup
     /// <see cref="Registration.HookRegistration"/> directly, which is why that
     /// type carries the overload that takes an image path and a command seam.
     /// </remarks>
-    public static void Run(string[] args, Action<VelopackLogLevel, string, Exception?> log)
+    public static void RunAndServeLifecycleHooks(string[] args, Action<VelopackLogLevel, string, Exception?> log)
     {
         ArgumentNullException.ThrowIfNull(log);
 
-        VelopackApp.Build()
-
-            // ⚠️ The single most important line in this file. See the remarks.
-            .SetAutoApplyOnStartup(false)
-            .SetArgs(args ?? [])
-            .SetLogger(new DelegateVelopackLogger(log))
-            .OnFirstRun(version => log(VelopackLogLevel.Information, $"First run of BrowserAI {version}.", null))
-            .OnRestarted(version => log(VelopackLogLevel.Information, $"BrowserAI {version} restarted after an update.", null))
+        Common(args, log)
 
             // ⚠️ THE THREE THAT DO WORK. Their records are written inside the
             // callback rather than buffered, because VelopackApp.Run() exits the
@@ -118,6 +128,49 @@ internal static class VelopackStartup
     }
 
     /// <summary>
+    /// Runs Velopack's startup handling and serves no lifecycle hook at all.
+    /// </summary>
+    /// <param name="args">The process arguments.</param>
+    /// <param name="log">Where Velopack's own output goes.</param>
+    /// <remarks>
+    /// <para>
+    /// <b>What the MCP server calls.</b> Velopack never invokes a hook on this
+    /// binary — it invokes all four on the main exe, which is the configuration
+    /// app — so a callback registered here could only ever be reached by
+    /// somebody passing <c>--veloapp-install</c> to the server by hand. Serving
+    /// it would then register, unregister or repair a client's configuration
+    /// from a process the installer did not start and is not waiting for.
+    /// </para>
+    /// <para>
+    /// <b>It still calls <c>VelopackApp.Run()</c></b>, for the one line
+    /// that makes this file matter: <c>SetAutoApplyOnStartup(false)</c>. The
+    /// default applies a staged package, exits 0 and relaunches detached with no
+    /// inherited stdio, which for a stdio server is indistinguishable from a
+    /// crash at handshake time.
+    /// </para>
+    /// </remarks>
+    public static void RunWithoutLifecycleHooks(string[] args, Action<VelopackLogLevel, string, Exception?> log)
+    {
+        ArgumentNullException.ThrowIfNull(log);
+
+        Common(args, log).Run();
+    }
+
+    /// <summary>
+    /// Everything both entry points configure, which is everything except the
+    /// lifecycle callbacks.
+    /// </summary>
+    private static VelopackApp Common(string[] args, Action<VelopackLogLevel, string, Exception?> log) =>
+        VelopackApp.Build()
+
+            // ⚠️ The single most important line in this file. See the remarks.
+            .SetAutoApplyOnStartup(false)
+            .SetArgs(args ?? [])
+            .SetLogger(new DelegateVelopackLogger(log))
+            .OnFirstRun(version => log(VelopackLogLevel.Information, $"First run of BrowserAI {version}.", null))
+            .OnRestarted(version => log(VelopackLogLevel.Information, $"BrowserAI {version} restarted after an update.", null));
+
+    /// <summary>
     /// The variable Velopack sets on the one start it performs itself: the app
     /// launch at the end of an install.
     /// </summary>
@@ -127,7 +180,8 @@ internal static class VelopackStartup
     /// <c>shared::start_package</c>, which inserts it with the literal value
     /// <c>"true"</c> into a copy of its own environment block). Velopack also
     /// offers <c>OnFirstRun</c>, and that callback is <b>not</b> a substitute:
-    /// it runs inside <see cref="Run"/>, before this process has a log, and it
+    /// it runs inside the startup call above, before this process has a log,
+    /// and it
     /// does not exit — so a server started by the installer went on to serve
     /// nobody exactly as if the callback had not been registered.
     /// </remarks>
@@ -233,8 +287,8 @@ internal static class VelopackStartup
     private static string Describe(SemanticVersion? version) => version?.ToFullString() ?? "<unknown>";
 
     /// <summary>
-    /// One hook's whole body: register or unregister, and mirror the answer into
-    /// Velopack's own log as well as BrowserAI's.
+    /// One hook's whole body: register, repair or unregister, and mirror the
+    /// answer into Velopack's own log as well as BrowserAI's.
     /// </summary>
     /// <param name="intent">Which hook is running.</param>
     /// <param name="version">The version Velopack passed the callback.</param>
@@ -246,7 +300,7 @@ internal static class VelopackStartup
     /// installer's own log, which is the file somebody debugging a failed install
     /// opens first and the only one that exists before BrowserAI has ever run.
     /// </remarks>
-    private static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
+    public static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
     {
         var outcome = HookRegistration.Run(intent, version);
         var report = outcome.Registration;

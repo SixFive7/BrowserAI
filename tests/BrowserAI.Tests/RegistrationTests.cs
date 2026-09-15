@@ -3,6 +3,7 @@
 
 using BrowserAI.Hosting;
 using BrowserAI.Registration;
+using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
 using Microsoft.Extensions.Logging;
 
@@ -82,17 +83,112 @@ internal sealed class RegistrationTests
     [Test]
     public async Task TheExecutionStubIsRefusedAndTheBinaryInsideCurrentIsRegistered()
     {
-        const string Root = @"C:\Users\someone\AppData\Local\BrowserAI";
+        using var install = ScratchDirectory.Create("registration-stub");
 
-        await Assert.That(RegistrationTarget.TryResolve($@"{Root}\current\BrowserAI.exe", out var target, out _)).IsTrue();
-        await Assert.That(target!.Command).IsEqualTo($@"{Root}\current\BrowserAI.exe");
-        await Assert.That(target.InstallRoot).IsEqualTo(Root);
+        var root = install.Path;
+        var app = InstalledLayout.Create(root);
 
-        // The stub, which sits directly under the root.
-        await Assert.That(RegistrationTarget.TryResolve($@"{Root}\BrowserAI.exe", out var stub, out var refusal)).IsFalse();
+        await Assert.That(RegistrationTarget.TryResolve(app, out var target, out _)).IsTrue();
+        await Assert.That(target!.Command).IsEqualTo(InstalledLayout.ServerIn(root));
+        await Assert.That(target.InstallRoot).IsEqualTo(root);
+
+        // The stub, which sits directly under the root. It is refused on the
+        // SHAPE of its path, before anything on disk is opened, which is why
+        // this arm never has to write one.
+        await Assert.That(RegistrationTarget.TryResolve(
+            Path.Combine(root, RegistrationTarget.AppFileName), out var stub, out var refusal)).IsFalse();
         await Assert.That(stub).IsNull();
         await Assert.That(refusal).Contains("current");
         await Assert.That(refusal).Contains("59 ms");
+    }
+
+    /// <summary>
+    /// The sibling server is what a client is given, and the app that composed
+    /// it is not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The guarantee this replaces was stronger and is gone, 2026-09-15
+    /// (previously: "BrowserAI registers the executable it is itself running
+    /// from … the registered path and the running binary cannot disagree: they
+    /// are the same string").</b> The hooks run on the Velopack main exe, and
+    /// from this day the main exe is the configuration app. So the path handed
+    /// to a client is <b>composed</b> — the running image's directory plus the
+    /// server's file name — and a composed path is a guess until something
+    /// checks it.
+    /// </para>
+    /// <para>
+    /// <b>What replaces it is two checks and a refusal</b>: the file must be
+    /// there, and it must declare the console subsystem. Registering the app
+    /// under the server's name would put a window on the screen every time a
+    /// client opened a session, and the client would then wait forever for a
+    /// handshake from a process that is showing a dialog.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSiblingServerIsRegisteredRatherThanTheAppThatComposedIt()
+    {
+        using var install = ScratchDirectory.Create("registration-sibling");
+
+        var app = InstalledLayout.Create(install.Path);
+
+        await Assert.That(RegistrationTarget.TryResolve(app, out var target, out var refusal)).IsTrue();
+        await Assert.That(refusal).IsEmpty();
+        await Assert.That(target!.Command).IsEqualTo(InstalledLayout.ServerIn(install.Path));
+        await Assert.That(target.Command).IsNotEqualTo(app);
+        await Assert.That(target.InstallRoot).IsEqualTo(install.Path);
+    }
+
+    /// <summary>
+    /// A <c>current\</c> with no server in it registers nothing and says which
+    /// file it went looking for.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInstallWithNoServerBesideTheAppIsRefusedByName()
+    {
+        using var install = ScratchDirectory.Create("registration-no-server");
+
+        var app = InstalledLayout.CreateWithoutTheServer(install.Path);
+
+        await Assert.That(RegistrationTarget.TryResolve(app, out var target, out var refusal)).IsFalse();
+        await Assert.That(target).IsNull();
+        await Assert.That(refusal).Contains(RegistrationTarget.ServerFileName);
+        await Assert.That(refusal).Contains(InstalledLayout.ServerIn(install.Path));
+    }
+
+    /// <summary>
+    /// A file wearing the server's name that is not a console binary is refused,
+    /// and so is one that is not an executable at all.
+    /// </summary>
+    /// <remarks>
+    /// <b>The name is not the check and cannot be.</b> Both arms here put a file
+    /// at exactly the path the composition produces; what separates them from
+    /// the passing case is a field the linker writes, which is why
+    /// <see cref="PeSubsystem"/> reads it rather than trusting the extension.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AFileAtTheServersNameThatIsNotAConsoleBinaryIsRefused()
+    {
+        using var install = ScratchDirectory.Create("registration-wrong-subsystem");
+
+        var app = InstalledLayout.CreateWithoutTheServer(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+
+        // A second copy of the configuration app, renamed.
+        InstalledLayout.WritePortableExecutable(server, PeSubsystem.WindowsGui);
+
+        await Assert.That(RegistrationTarget.TryResolve(app, out var windows, out var windowsRefusal)).IsFalse();
+        await Assert.That(windows).IsNull();
+        await Assert.That(windowsRefusal).Contains("Windows-subsystem");
+
+        InstalledLayout.WriteSomethingThatIsNotAnExecutable(server);
+
+        await Assert.That(RegistrationTarget.TryResolve(app, out var garbage, out var garbageRefusal)).IsFalse();
+        await Assert.That(garbage).IsNull();
+        await Assert.That(garbageRefusal).Contains("no readable PE header");
     }
 
     /// <summary>A path that cannot be resolved is refused rather than guessed at.</summary>
@@ -107,8 +203,17 @@ internal sealed class RegistrationTests
         await Assert.That(relative).Contains("fully qualified");
 
         // Case is not what decides it: the directory is `current` either way.
-        await Assert.That(RegistrationTarget.TryResolve(@"C:\x\CURRENT\BrowserAI.exe", out var shouting, out _)).IsTrue();
-        await Assert.That(shouting!.InstallRoot).IsEqualTo(@"C:\x");
+        using var shoutingInstall = ScratchDirectory.Create("registration-shouting");
+        var shoutingCurrent = Directory.CreateDirectory(Path.Combine(shoutingInstall.Path, "CURRENT"));
+
+        InstalledLayout.WritePortableExecutable(
+            Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName), PeSubsystem.WindowsGui);
+        InstalledLayout.WritePortableExecutable(
+            Path.Combine(shoutingCurrent.FullName, RegistrationTarget.ServerFileName), PeSubsystem.WindowsCui);
+
+        await Assert.That(RegistrationTarget.TryResolve(
+            Path.Combine(shoutingCurrent.FullName, RegistrationTarget.AppFileName), out var shouting, out _)).IsTrue();
+        await Assert.That(shouting!.InstallRoot).IsEqualTo(shoutingInstall.Path);
     }
 
     // ---- Idempotence, which the client does not supply ----------------------
@@ -129,22 +234,35 @@ internal sealed class RegistrationTests
         var client = new FakeClientCommandLine();
         var (logger, _) = Capture();
 
-        const string Command = @"C:\install\current\BrowserAI.exe";
+        // A real layout on disk, because the command is composed from it and
+        // checked against it now. Everything else here is still a double.
+        using var install = ScratchDirectory.Create("registration-idempotence");
+        var command = InstalledLayout.Create(install.Path);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, Command, client, logger).Status)
+        // ⚠️ The update reads what the DOUBLE holds, 2026-09-15. Without the
+        // seam it reads the real client's own configuration file, and this arm
+        // would then pass or fail on what the machine happens to have
+        // registered. It is not a question this arm is asking.
+        var seen = WhatTheDoubleHolds(client);
+
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger).Status)
             .IsEqualTo(RegistrationStatus.Registered);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, Command, client, logger).Status)
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, client, logger, seen).Status)
             .IsEqualTo(RegistrationStatus.AlreadyRegistered);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, Command, client, logger).Status)
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger).Status)
             .IsEqualTo(RegistrationStatus.Registered);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, Command, client, logger).Status)
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, client, logger, seen).Status)
             .IsEqualTo(RegistrationStatus.AlreadyRegistered);
 
         await Assert.That(client.Registered.Count).IsEqualTo(1);
-        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Command);
+
+        // The SERVER, not the app the hook ran as. `command` is the image path
+        // a hook is handed; what a client is given is its sibling.
+        await Assert.That(client.Registered[McpClientRegistration.ServerName])
+            .IsEqualTo(InstalledLayout.ServerIn(install.Path));
     }
 
     /// <summary>
@@ -166,21 +284,249 @@ internal sealed class RegistrationTests
         var client = new FakeClientCommandLine();
         var (logger, _) = Capture();
 
-        client.Registered[McpClientRegistration.ServerName] = @"C:\somewhere\old\current\BrowserAI.exe";
+        using var install = ScratchDirectory.Create("registration-moved");
 
-        const string Moved = @"D:\moved\current\BrowserAI.exe";
+        // A path that no longer exists, which is exactly what an entry written
+        // by an older install looks like after the binary moved.
+        const string Stale = @"C:\somewhere\old\current\BrowserAI.Server.exe";
+        client.Registered[McpClientRegistration.ServerName] = Stale;
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, Moved, client, logger).Status)
-            .IsEqualTo(RegistrationStatus.AlreadyRegistered);
-        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(@"C:\somewhere\old\current\BrowserAI.exe");
+        var app = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
 
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, Moved, client, logger).Status)
+        // ⚠️ An update leaves it alone, and since 2026-09-15 it SAYS WHY
+        // rather than reporting it as already registered: this path is not under
+        // this install root, so it belongs to another BrowserAI and is reported
+        // with its location. Untouched either way, which is the property the
+        // name of this arm is about.
+        var update = McpRegistrar.Apply(RegistrationIntent.Update, app, client, logger, WhatTheDoubleHolds(client));
+
+        await Assert.That(update.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(update.Detail).Contains("Another BrowserAI is registered at");
+        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Stale);
+
+        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, app, client, logger).Status)
             .IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Moved);
+        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
 
-        // An install removes before it adds; an update never removes.
-        await Assert.That(client.Verbs).IsEquivalentTo(AddRemoveAdd);
+        // An install removes before it adds; an update that refused ran nothing.
+        await Assert.That(client.Verbs).IsEquivalentTo(RemoveAdd);
     }
+
+    /// <summary>
+    /// The update hook repairs an entry of ours that has gone stale, leaves one
+    /// that still resolves exactly as it is, and never touches a foreign one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The three arms are the three states an update can meet</b>, and only
+    /// one of them writes. Each is constructed rather than provoked: what is
+    /// registered already is handed in, so the arm is about the judgement rather
+    /// than about a file the client happens to have.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The foreign arm is the one that would be cheapest to get wrong.</b>
+    /// An entry named <c>browserai</c> pointing outside this install root is
+    /// another BrowserAI, and an update that adopted it would be one product
+    /// silently re-pointing another's configuration. It is reported with the
+    /// path, and the verb list proves nothing ran.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUpdateRepairsOurOwnStaleEntryAndLeavesEveryOtherKindAlone()
+    {
+        using var install = ScratchDirectory.Create("registration-repair");
+
+        var app = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var (logger, log) = Capture();
+
+        // ---- ours, and the file it names is gone: re-pointed ----------------
+        var stale = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.old");
+        var repairing = new FakeClientCommandLine();
+        repairing.Registered[McpClientRegistration.ServerName] = stale;
+
+        var repaired = McpRegistrar.Apply(
+            RegistrationIntent.Update, app, repairing, logger,
+            root => new RegistrationView(
+                RegistrationScope.User, "<constructed>", stale, McpRegistryView.Classify(stale, root), null));
+
+        await Assert.That(repaired.Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(repairing.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+        await Assert.That(log.Records.Any(record => record.Message.Contains("Repaired the MCP registration", StringComparison.Ordinal))).IsTrue();
+
+        // ---- ours, and it still resolves: untouched, arguments and all ------
+        var keeping = new FakeClientCommandLine();
+        keeping.Registered[McpClientRegistration.ServerName] = server;
+
+        var kept = McpRegistrar.Apply(
+            RegistrationIntent.Update, app, keeping, logger,
+            root => new RegistrationView(
+                RegistrationScope.User, "<constructed>", server, McpRegistryView.Classify(server, root), null));
+
+        await Assert.That(kept.Status).IsEqualTo(RegistrationStatus.AlreadyRegistered);
+        await Assert.That(keeping.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+        await Assert.That(keeping.Verbs).IsEmpty();
+
+        // ---- somebody else's: reported, and nothing runs --------------------
+        using var elsewhere = ScratchDirectory.Create("registration-repair-foreign");
+
+        _ = InstalledLayout.Create(elsewhere.Path);
+
+        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
+        var foreignClient = new FakeClientCommandLine();
+        foreignClient.Registered[McpClientRegistration.ServerName] = theirs;
+
+        var foreign = McpRegistrar.Apply(
+            RegistrationIntent.Update, app, foreignClient, logger,
+            root => new RegistrationView(
+                RegistrationScope.User, "<constructed>", theirs, McpRegistryView.Classify(theirs, root), null));
+
+        await Assert.That(foreign.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(foreign.Detail).Contains("Another BrowserAI is registered at");
+        await Assert.That(foreign.Detail).Contains(theirs);
+        await Assert.That(foreignClient.Registered[McpClientRegistration.ServerName]).IsEqualTo(theirs);
+        await Assert.That(foreignClient.Verbs).IsEmpty();
+    }
+
+    /// <summary>
+    /// A configuration file that cannot be read is never reported as nothing
+    /// being registered.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUnreadableConfigurationIsNotReadAsNothingRegistered()
+    {
+        using var install = ScratchDirectory.Create("registration-unreadable");
+
+        var app = InstalledLayout.Create(install.Path);
+        var client = new FakeClientCommandLine();
+        var (logger, _) = Capture();
+
+        var report = McpRegistrar.Apply(
+            RegistrationIntent.Update, app, client, logger,
+            _ => new RegistrationView(
+                RegistrationScope.User,
+                "<constructed>",
+                null,
+                RegistrationOwnership.Absent,
+                "'<constructed>' is not readable JSON, so what is registered there is unknown."));
+
+        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(report.Detail).Contains("unknown");
+        await Assert.That(client.Verbs).IsEmpty();
+    }
+
+    /// <summary>
+    /// The four states the reader reports, over files it wrote itself.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheReaderTellsAbsentFromOursFromStaleFromForeign()
+    {
+        using var config = ScratchDirectory.Create("registry-view");
+        using var install = ScratchDirectory.Create("registry-view-install");
+
+        _ = InstalledLayout.Create(install.Path);
+
+        var server = InstalledLayout.ServerIn(install.Path);
+        var file = Path.Combine(config.Path, McpRegistryView.UserConfigFileName);
+
+        // No file at all.
+        var absent = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
+
+        await Assert.That(absent.Ownership).IsEqualTo(RegistrationOwnership.Absent);
+        await Assert.That(absent.Unreadable).IsNull();
+
+        // Ours, present.
+        await WriteServerEntryAsync(file, server);
+
+        var ours = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
+
+        await Assert.That(ours.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
+        await Assert.That(ours.Command).IsEqualTo(server);
+
+        // Ours, stale.
+        await WriteServerEntryAsync(
+            file, Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.gone"));
+
+        await Assert.That(McpRegistryView.Read(RegistrationScope.User, file, install.Path).Ownership)
+            .IsEqualTo(RegistrationOwnership.OursAndStale);
+
+        // Somebody else's.
+        await WriteServerEntryAsync(file, Path.Combine("D:", "someone", "else", "current", RegistrationTarget.ServerFileName));
+
+        await Assert.That(McpRegistryView.Read(RegistrationScope.User, file, install.Path).Ownership)
+            .IsEqualTo(RegistrationOwnership.Foreign);
+
+        // Not readable JSON: an answer of its own, never "absent".
+        await File.WriteAllTextAsync(file, "{ this is not json");
+
+        var broken = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
+
+        await Assert.That(broken.Ownership).IsEqualTo(RegistrationOwnership.Absent);
+        await Assert.That(broken.Unreadable).IsNotNull();
+        await Assert.That(broken.Unreadable!).Contains("unknown");
+    }
+
+    /// <summary>
+    /// The portable form is what a project file gets, and it expands to the
+    /// install it was written for.
+    /// </summary>
+    /// <remarks>
+    /// <b>An absolute path under one person's profile is wrong on every
+    /// teammate's machine</b>, which makes committing one worse than committing
+    /// nothing. The expansion is asserted against this machine's own
+    /// <c>%LOCALAPPDATA%</c> so that the form cannot drift from what the client
+    /// would resolve.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheProjectScopeCommandIsPortableAndExpandsToTheDefaultInstall()
+    {
+        const string PackId = "BrowserAI.app";
+
+        var portable = McpClientRegistration.PortableCommandFor(PackId);
+
+        await Assert.That(portable).StartsWith("${LOCALAPPDATA}/");
+        await Assert.That(portable).EndsWith(RegistrationTarget.ServerFileName);
+        await Assert.That(portable).DoesNotContain(BackslashText);
+
+        var expected = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+            PackId,
+            RegistrationTarget.CurrentDirectoryName,
+            RegistrationTarget.ServerFileName);
+
+        await Assert.That(Path.GetFullPath(McpRegistryView.Expand(portable))).IsEqualTo(expected);
+
+        // A name nothing defines is left exactly as it stands rather than
+        // collapsing to an empty segment, which would silently produce a path
+        // that resolves somewhere.
+        await Assert.That(McpRegistryView.Expand("${BROWSERAI_NO_SUCH_VARIABLE}/x"))
+            .IsEqualTo("${BROWSERAI_NO_SUCH_VARIABLE}/x");
+
+        // And the scope really is the only difference in the call.
+        await Assert.That(McpClientRegistration.AddArguments("c", McpClientRegistration.ProjectScope))
+            .IsEquivalentTo(ProjectScopeAdd);
+    }
+
+    /// <summary>A single backslash, spelled once.</summary>
+    private const string BackslashText = "\\";
+
+    /// <summary>What a project-scope add looks like on the wire.</summary>
+    private static readonly string[] ProjectScopeAdd =
+        ["mcp", "add", McpClientRegistration.ServerName, "--scope", "project", "--", "c"];
+
+    private static Task WriteServerEntryAsync(string file, string command) =>
+        File.WriteAllTextAsync(
+            file,
+            "{\n  \"mcpServers\": {\n    \""
+                + McpClientRegistration.ServerName
+                + "\": {\n      \"type\": \"stdio\",\n      \"command\": "
+                + System.Text.Json.JsonSerializer.Serialize(command)
+                + ",\n      \"args\": [],\n      \"env\": {}\n    }\n  }\n}\n");
 
     /// <summary>
     /// An uninstall removes the registration, and an already-absent one is not a
@@ -193,16 +539,17 @@ internal sealed class RegistrationTests
         var client = new FakeClientCommandLine();
         var (logger, log) = Capture();
 
-        const string Command = @"C:\install\current\BrowserAI.exe";
+        using var install = ScratchDirectory.Create("registration-uninstall");
+        var command = InstalledLayout.Create(install.Path);
 
-        _ = McpRegistrar.Apply(RegistrationIntent.Install, Command, client, logger);
+        _ = McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger);
 
-        var removed = McpRegistrar.Apply(RegistrationIntent.Uninstall, Command, client, logger);
+        var removed = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger);
 
         await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
         await Assert.That(client.Registered).IsEmpty();
 
-        var again = McpRegistrar.Apply(RegistrationIntent.Uninstall, Command, client, logger);
+        var again = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger);
 
         await Assert.That(again.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
         await Assert.That(again.IsWhatWasAskedFor).IsTrue();
@@ -229,7 +576,9 @@ internal sealed class RegistrationTests
         var client = new FakeClientCommandLine { Executable = null };
         var (logger, log) = Capture();
 
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, @"C:\install\current\BrowserAI.exe", client, logger);
+        using var install = ScratchDirectory.Create("registration-no-client");
+
+        var report = McpRegistrar.Apply(RegistrationIntent.Install, InstalledLayout.Create(install.Path), client, logger);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
         await Assert.That(report.IsWhatWasAskedFor).IsTrue();
@@ -250,12 +599,13 @@ internal sealed class RegistrationTests
     [Test]
     public async Task AClientThatDoesNotDoWhatWasAskedIsNamedWithTheManualCommand()
     {
-        const string Command = @"C:\install\current\BrowserAI.exe";
+        using var install = ScratchDirectory.Create("registration-client-said-no");
+        var command = InstalledLayout.Create(install.Path);
 
         var refused = new FakeClientCommandLine { Always = new CommandOutcome(2, "some other failure", TimedOut: false, null) };
         var (logger, log) = Capture();
 
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, Command, refused, logger);
+        var report = McpRegistrar.Apply(RegistrationIntent.Install, command, refused, logger);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(report.IsWhatWasAskedFor).IsFalse();
@@ -265,13 +615,13 @@ internal sealed class RegistrationTests
         await Assert.That(log.Records.Any(record => record.Level is LogLevel.Error)).IsTrue();
 
         var hanging = new FakeClientCommandLine { Always = new CommandOutcome(-1, string.Empty, TimedOut: true, null) };
-        var stalled = McpRegistrar.Apply(RegistrationIntent.Install, Command, hanging, logger);
+        var stalled = McpRegistrar.Apply(RegistrationIntent.Install, command, hanging, logger);
 
         await Assert.That(stalled.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(stalled.Detail).Contains("did not finish within 10s");
 
         var dead = new FakeClientCommandLine { Always = new CommandOutcome(-1, string.Empty, TimedOut: false, "Access is denied") };
-        var unstartable = McpRegistrar.Apply(RegistrationIntent.Install, Command, dead, logger);
+        var unstartable = McpRegistrar.Apply(RegistrationIntent.Install, command, dead, logger);
 
         await Assert.That(unstartable.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(unstartable.Detail).Contains("Access is denied");
@@ -291,7 +641,9 @@ internal sealed class RegistrationTests
         var client = new FakeClientCommandLine { Throws = true };
         var (logger, log) = Capture();
 
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, @"C:\install\current\BrowserAI.exe", client, logger);
+        using var install = ScratchDirectory.Create("registration-throwing");
+
+        var report = McpRegistrar.Apply(RegistrationIntent.Install, InstalledLayout.Create(install.Path), client, logger);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed);
         await Assert.That(report.Detail).Contains("asked to throw");
@@ -348,8 +700,13 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("registration-hook");
         using var data = ScratchDirectory.Create("registration-hook-data");
 
-        var command = Path.Combine(install.Path, "current", "BrowserAI.exe");
+        var command = InstalledLayout.Create(install.Path);
         var client = new FakeClientCommandLine();
+
+        var before = Directory
+            .EnumerateFileSystemEntries(install.Path, "*", SearchOption.AllDirectories)
+            .Select(entry => Path.GetRelativePath(install.Path, entry))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var report = HookRegistration.Run(
             RegistrationIntent.Install,
@@ -387,11 +744,22 @@ internal sealed class RegistrationTests
         // ⚠️ THE HALF THAT IS RED AGAINST THE OLD LAYOUT: the install root the
         // image path names is a directory Setup.exe renames aside and deletes,
         // and the hook leaves nothing whatever in it.
-        var underTheInstall = Directory.EnumerateFileSystemEntries(install.Path)
-            .Select(Path.GetFileName)
-            .ToList();
+        //
+        // ⚠️ Narrowed 2026-09-15 (previously the install root was expected to be
+        // EMPTY). It is not empty any more and cannot be: the two executables
+        // have to be on disk for the composed server path to be checkable at
+        // all, so this arm builds a `current\` before it runs. What is asserted
+        // is the property that was always meant — the hook ADDS nothing — and it
+        // is taken as a difference against what was there first, so a file the
+        // hook writes anywhere under that root fails it exactly as before.
+        var afterwards = Directory
+            .EnumerateFileSystemEntries(install.Path, "*", SearchOption.AllDirectories)
+            .Select(entry => Path.GetRelativePath(install.Path, entry))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        await Assert.That(string.Join(", ", underTheInstall)).IsEmpty();
+        afterwards.ExceptWith(before);
+
+        await Assert.That(string.Join(", ", afterwards.Order(StringComparer.Ordinal))).IsEmpty();
     }
 
     /// <summary>
@@ -404,7 +772,7 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("registration-hook-failed");
         using var data = ScratchDirectory.Create("registration-hook-failed-data");
 
-        var command = Path.Combine(install.Path, "current", "BrowserAI.exe");
+        var command = InstalledLayout.Create(install.Path);
         var client = new FakeClientCommandLine { Executable = null };
 
         var report = HookRegistration.Run(
@@ -449,7 +817,7 @@ internal sealed class RegistrationTests
         var outcome = HookRegistration.Run(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
             silent: true,
@@ -497,7 +865,7 @@ internal sealed class RegistrationTests
         var outcome = HookRegistration.Run(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
             silent: false,
@@ -544,7 +912,7 @@ internal sealed class RegistrationTests
         var outcome = HookRegistration.Run(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
             silent: false,
@@ -587,7 +955,7 @@ internal sealed class RegistrationTests
         var outcome = HookRegistration.Run(
             intent,
             "9.9.9",
-            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
             silent: false,
@@ -627,7 +995,7 @@ internal sealed class RegistrationTests
         var outcome = HookRegistration.Run(
             RegistrationIntent.Uninstall,
             "9.9.9",
-            Path.Combine(install.Path, "current", "BrowserAI.exe"),
+            InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
             silent: false,
@@ -714,7 +1082,7 @@ internal sealed class RegistrationTests
         using var config = ScratchDirectory.Create("registration-wording");
         using var install = ScratchDirectory.Create("registration-wording-install");
 
-        var command = Path.Combine(install.Path, "current", "BrowserAI.exe");
+        var command = InstalledLayout.Create(install.Path);
         var commands = new ClientCommandLine();
 
         using (PointTheClientAt(config.Path))
@@ -762,7 +1130,7 @@ internal sealed class RegistrationTests
         using var config = ScratchDirectory.Create("registration-live");
         using var install = ScratchDirectory.Create("registration-live-install");
 
-        var command = Path.Combine(install.Path, "current", "BrowserAI.exe");
+        var command = InstalledLayout.Create(install.Path);
         var commands = new ClientCommandLine();
         var (logger, _) = Capture();
         var file = Path.Combine(config.Path, ConfigFileName);
@@ -777,7 +1145,13 @@ internal sealed class RegistrationTests
             var written = await File.ReadAllTextAsync(file);
 
             await Assert.That(written).Contains($"\"{McpClientRegistration.ServerName}\"");
-            await Assert.That(written).Contains(command.Replace(@"\", @"\\", StringComparison.Ordinal));
+
+            // The sibling server, JSON-escaped, and never the app that composed it.
+            var registered = InstalledLayout.ServerIn(install.Path);
+
+            await Assert.That(written).Contains(registered.Replace(@"\", @"\\", StringComparison.Ordinal));
+            await Assert.That(written).DoesNotContain(
+                command.Replace(@"\", @"\\", StringComparison.Ordinal) + "\"");
 
             // Idempotence, against the client rather than against the double.
             await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, commands, logger).Status)
@@ -842,10 +1216,44 @@ internal sealed class RegistrationTests
     // ---- Helpers ------------------------------------------------------------
 
     /// <summary>
-    /// The verbs an update-then-install produces against one client: an update
-    /// never removes, an install always does.
+    /// The verbs a refused update followed by an install produces: the update
+    /// runs nothing at all, and the install removes before it adds.
     /// </summary>
-    private static readonly string[] AddRemoveAdd = ["add", "remove", "add"];
+    /// <remarks>
+    /// ⚠️ <b>Replaces <c>AddRemoveAdd</c>, 2026-09-15</b> (previously
+    /// <c>["add", "remove", "add"]</c>, described as "an update never removes,
+    /// an install always does"). The update in that arm meets a registration
+    /// that is not under this install root, and since this day that is reported
+    /// rather than silently accepted, so the update runs no verb at all. What is
+    /// unchanged is the property the arm asserts: an update does not overwrite.
+    /// </remarks>
+    private static readonly string[] RemoveAdd = ["remove", "add"];
+
+    /// <summary>
+    /// What a <see cref="FakeClientCommandLine"/> currently holds, as the view
+    /// the registrar would otherwise read off the real client's file.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Every arm driving <see cref="RegistrationIntent.Update"/> through a
+    /// double has to pass this.</b> The registrar's default reads the client's
+    /// own user-scope configuration, which on this machine is the maintainer's —
+    /// so an arm without the seam asks a question about whatever happens to be
+    /// registered there, and answers it differently on a different machine.
+    /// Nothing enforces this; the failure it prevents is a red that moves with
+    /// the environment, which is the worst kind to diagnose.
+    /// </remarks>
+    private static Func<string, RegistrationView> WhatTheDoubleHolds(FakeClientCommandLine client) =>
+        root =>
+        {
+            var command = client.Registered.GetValueOrDefault(McpClientRegistration.ServerName);
+
+            return new RegistrationView(
+                RegistrationScope.User,
+                "<the double>",
+                command,
+                McpRegistryView.Classify(command, root),
+                null);
+        };
 
     /// <summary>
     /// Reads a log file the way everything else in this suite does — sharing

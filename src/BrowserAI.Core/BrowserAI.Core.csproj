@@ -96,7 +96,7 @@
       the cut was made to stop duplication, not to publish an API, and a public
       surface would owe XML documentation and semantic versioning to nobody.
     -->
-    <InternalsVisibleTo Include="BrowserAI" />
+    <InternalsVisibleTo Include="BrowserAI.Server" />
     <InternalsVisibleTo Include="BrowserAI.App" />
     <InternalsVisibleTo Include="BrowserAI.Tests" />
     <InternalsVisibleTo Include="BrowserAI.TestProbe" />
