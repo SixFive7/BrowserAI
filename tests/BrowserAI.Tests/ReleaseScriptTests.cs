@@ -40,6 +40,8 @@ internal sealed class ReleaseScriptTests
 
     private static string ManifestScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Write-ReleaseManifest.ps1");
 
+    private static string IlcPassScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Test-IlcFullPass.ps1");
+
     /// <summary>An empty channel accepts anything, because there is nothing to be older than.</summary>
     /// <remarks>
     /// The same 404 an unpublished channel returns is what a misconfigured feed
@@ -324,6 +326,22 @@ internal sealed class ReleaseScriptTests
         var missing = expected.Where(name => !File.Exists(Path.Combine(destination, name))).ToList();
         await Assert.That(string.Join(", ", missing)).IsEmpty();
 
+        // ⚠️ AND NOTHING ELSE — 2026-09-15, when the release script started
+        // packing a SECOND installer under a test-only id for the suite to
+        // install. That pack must never reach a release: not as an asset, not as
+        // a row in the resolved set, not as a file in the directory a person
+        // opens a year later to find out what shipped. The manifest is a fixed
+        // list of seven copies plus its own `manifest.json`, so this is what
+        // turns "it cannot get in by construction" into a red build the day
+        // somebody adds an eighth.
+        var extra = Directory.EnumerateFileSystemEntries(destination)
+            .Select(Path.GetFileName)
+            .Where(name => !expected.Contains(name, StringComparer.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        await Assert.That(string.Join(", ", extra)).IsEmpty();
+
         var manifest = await File.ReadAllTextAsync(Path.Combine(destination, "manifest.json"));
 
         await Assert.That(manifest).Contains("\"version\": \"0.9.1\"");
@@ -341,6 +359,249 @@ internal sealed class ReleaseScriptTests
         // only meaningful beside the upstream it was adjudicated on. The
         // synthetic value is one no real resolve could produce.
         await Assert.That(manifest).Contains("\"@playwright/mcp\": \"0.0.778\"");
+    }
+
+    /// <summary>
+    /// The release script forces a full ILC pass, and the check that says so can
+    /// fail.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>HALT-A had a premise nothing checked: that ILC ran.</b>
+    /// <c>IlcCompile</c> is an MSBuild target with <c>Inputs</c> and
+    /// <c>Outputs</c>, so a publish whose managed assemblies have not moved
+    /// skips it and relinks the previous run's native object. The publish
+    /// succeeds, the binary is good, and the ILC-output scan then sweeps a log
+    /// ILC never wrote — <b>a check that cannot fail, reporting clean</b>.
+    /// Measured 2026-09-15 at <c>-v:normal</c> over this project: <b>95 lines</b>
+    /// with the pass and <b>75</b> without, <c>Generating native code</c> present
+    /// in the first and absent in the second.
+    /// </para>
+    /// <para>
+    /// <b>The marker rather than the line count.</b> A count is a property of the
+    /// verbosity, the project and the SDK at once, and the one change it would
+    /// not survive is a publish that legitimately prints more — which is the
+    /// direction this is meant to tolerate. <c>Generating native code</c> is
+    /// ILC's own line and is printed when, and only when, the compilation
+    /// happens.
+    /// </para>
+    /// <para>
+    /// <b>Both directions, driven for real.</b> The refusal is the half that
+    /// matters and it is fed a log carrying the skip message — the positive
+    /// control the release script cannot give itself, because a script that
+    /// always publishes cleanly can never demonstrate its own refusal.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APublishLogWithNoIlcPassIsRefusedAndOneWithAPassIsAccepted()
+    {
+        using var scratch = ScratchDirectory.Create("release-ilc");
+
+        var full = Path.Combine(scratch.Path, "full.log");
+        var incremental = Path.Combine(scratch.Path, "incremental.log");
+
+        // The shapes MSBuild writes at -v:normal, reduced to the lines that
+        // decide. Synthetic on purpose: a fixture copied from a real publish
+        // would carry this machine's paths and this week's SDK version.
+        await File.WriteAllTextAsync(full, string.Join(
+            '\n',
+            "  Determining projects to restore...",
+            "      IlcCompile:",
+            "        Generating native code",
+            "        \"C:\\ilc\" @\"obj\\Release\\net10.0-windows\\win-x64\\native\\BrowserAI.ilc.rsp\"",
+            "  Build succeeded."));
+
+        await File.WriteAllTextAsync(incremental, string.Join(
+            '\n',
+            "  Determining projects to restore...",
+            "       Skipping target \"IlcCompile\" because all output files are up-to-date with respect to the input files.",
+            "  Build succeeded."));
+
+        var (accepted, _, acceptedOutput) = await RunAsync(IlcPassScript, "-Log", full);
+
+        await Assert.That(accepted).IsEqualTo(0);
+        await Assert.That(acceptedOutput).Contains("full pass");
+
+        var (refused, _, refusedOutput) = await RunAsync(IlcPassScript, "-Log", incremental);
+
+        await Assert.That(refused).IsNotEqualTo(0);
+        await Assert.That(refusedOutput).Contains("did not compile");
+        await Assert.That(refusedOutput).Contains("IlcCompile");
+        await Assert.That(refusedOutput).Contains("native");
+
+        // And a log that carries neither marker is refused too, rather than
+        // being read as a pass: an absent log and an incremental one are the
+        // same absence of evidence.
+        var silent = Path.Combine(scratch.Path, "silent.log");
+
+        await File.WriteAllTextAsync(silent, "  Build succeeded.");
+
+        var (quiet, _, _) = await RunAsync(IlcPassScript, "-Log", silent);
+
+        await Assert.That(quiet).IsNotEqualTo(0);
+    }
+
+    /// <summary>
+    /// The release script clears the ILC intermediates before it publishes, and
+    /// asks whether the pass happened before it reads the pass's output.
+    /// </summary>
+    /// <remarks>
+    /// <b>The order is the property.</b> Clearing <c>$PackDir</c> was already
+    /// there and is not enough: the up-to-date check is on
+    /// <c>obj\…\native\BrowserAI.obj</c>, which lives nowhere near the output
+    /// directory. There is no MSBuild property that disables that check — the
+    /// object file <i>is</i> the check — so the removal is the only lever, and a
+    /// scan is what keeps it from being deleted as a slow step nobody could
+    /// explain.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheReleaseScriptRemovesTheIlcIntermediatesAndThenRequiresAFullPass()
+    {
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        var cleared = script.IndexOf("-Filter 'native' -Recurse -Directory", StringComparison.Ordinal);
+        var published = script.IndexOf("& dotnet publish @publishArgs", StringComparison.Ordinal);
+        var checked_ = script.IndexOf("Test-IlcFullPass.ps1", StringComparison.Ordinal);
+        var scanned = script.IndexOf("$ilcComplaints = $ilc", StringComparison.Ordinal);
+
+        await Assert.That(cleared).IsGreaterThan(-1);
+        await Assert.That(published).IsGreaterThan(cleared);
+        await Assert.That(checked_).IsGreaterThan(published);
+        await Assert.That(scanned).IsGreaterThan(checked_);
+    }
+
+    /// <summary>
+    /// The suite's installer is packed under a test-only id, into a directory of
+    /// its own, and the id is the only thing that differs.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Velopack writes one Add/Remove Programs key per pack id per user,
+    /// named for the id and never for the location.</b> An install under
+    /// <c>--installto</c> still rewrites <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to
+    /// point at the scratch root, and <c>Update.exe uninstall</c> from that root
+    /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally — no comparison
+    /// against <c>InstallLocation</c> anywhere. So an installer arm packed under
+    /// the shipping id destroys a real install's entry, and a run killed
+    /// part-way leaves it gone with nothing to restore it. Measured on this
+    /// machine: no <c>BrowserAI.app</c> key after six installer-arm runs.
+    /// </para>
+    /// <para>
+    /// <b>Built rather than retyped</b>, so a packing decision added to
+    /// <c>$packArgs</c> reaches both packs. The suite would otherwise be
+    /// exercising an installer built differently from the one that ships, which
+    /// is the failure this whole arm exists to avoid rather than to introduce.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn()
+    {
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        await Assert.That(script).Contains("$testPackId = 'BrowserAI.app.test'");
+        await Assert.That(script).Contains("$testDownloadId = 'BrowserAI.test'");
+        await Assert.That(script).Contains("$testOutputDir = Join-Path $OutputDir 'test-pack'");
+
+        // The id really is the shipping id plus a suffix, so the two cannot be
+        // pointed at unrelated packages by an edit to one of them.
+        await Assert.That(ReleaseLayout.TestPackId).IsEqualTo(ReleaseLayout.PackId + ".test");
+
+        // The second pack is the first one's arguments with two elements
+        // replaced, and nothing else.
+        var built = script.IndexOf("$testPackArgs = @()", StringComparison.Ordinal);
+
+        await Assert.That(built).IsGreaterThan(-1);
+
+        var loop = script[built..script.IndexOf("Write-Host \"vpk $($testPackArgs -join ' ')\"", StringComparison.Ordinal)];
+
+        await Assert.That(loop).Contains("'--packId'");
+        await Assert.That(loop).Contains("$testPackId");
+        await Assert.That(loop).Contains("'--outputDir'");
+        await Assert.That(loop).Contains("$testOutputDir");
+
+        // And the names it lands under cannot be mistaken for release artifacts.
+        await Assert.That(script).Contains("Download = \"$testDownloadId-installer.exe\"");
+        await Assert.That(script).Contains("Download = \"$testDownloadId-portable.zip\"");
+
+        // The published artifacts are still exactly two and still named for a
+        // person, which is the half this must not have disturbed.
+        await Assert.That(script).Contains("Packed = \"$packId-$Channel-Setup.exe\";    Download = \"$downloadId$downloadSuffix.exe\"");
+    }
+
+    /// <summary>
+    /// What an Add/Remove entry is, decided from its recorded location: a real
+    /// install is never refused and a leftover of the suite's own always is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Over constructed inputs, and that is not a shortcut.</b> Planting a
+    /// real <c>HKCU\…\Uninstall\…</c> key to exercise the refusal would be the
+    /// suite doing the exact thing the refusal exists to prevent — writing an
+    /// uninstall entry outside the one its own scratch install creates. So the
+    /// classification is asserted here and the reading of the key is the single
+    /// line that touches the registry.
+    /// </para>
+    /// <para>
+    /// <b>The REAL direction is the one that matters on this machine.</b> The
+    /// maintainer has an install; a capability that judged the shipping id would
+    /// redden every run here. The capability judges the <b>test</b> id instead,
+    /// where every key is one the suite wrote, so any key that outlives a run is
+    /// a run that did not clean up — and the witness names it and the one line
+    /// that clears it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARealInstallIsNeverDanglingAndTheSuitesOwnLeftoversAlwaysAre()
+    {
+        using var scratch = ScratchDirectory.Create("release-arp");
+        var elsewhere = ScratchDirectory.Create("release-arp-real");
+
+        using (elsewhere)
+        {
+            // No key: a clean machine, and the only state that is not a verdict
+            // about a directory.
+            await Assert.That(ReleaseLayout.Judge(null, scratch.Path))
+                .IsEqualTo(ReleaseLayout.UninstallKeyState.Absent);
+
+            // A location that is gone. This is what Velopack leaves when an
+            // uninstall removed the tree and something interrupted the key's own
+            // removal — Settings then shows an entry for nothing.
+            await Assert.That(ReleaseLayout.Judge(Path.Combine(scratch.Path, "went-away"), scratch.Path))
+                .IsEqualTo(ReleaseLayout.UninstallKeyState.Dangling);
+
+            // A key with no location at all reads the same way, rather than
+            // being read as an install somewhere unknown.
+            await Assert.That(ReleaseLayout.Judge(string.Empty, scratch.Path))
+                .IsEqualTo(ReleaseLayout.UninstallKeyState.Dangling);
+
+            // A location that EXISTS and is under the suite's scratch root is
+            // still the suite's: an arm that was killed between the install and
+            // the uninstall leaves exactly this.
+            await Assert.That(ReleaseLayout.Judge(scratch.Path, scratch.Path))
+                .IsEqualTo(ReleaseLayout.UninstallKeyState.Dangling);
+
+            // ⚠️ AND THE ONE THAT MUST NOT BE REFUSED: a directory that exists
+            // and is not the suite's. On this machine that is
+            // %LocalAppData%\BrowserAI.app, and reading it as dangling would
+            // stop every run.
+            await Assert.That(ReleaseLayout.Judge(elsewhere.Path, scratch.Path))
+                .IsEqualTo(ReleaseLayout.UninstallKeyState.Real);
+        }
+
+        // The witness names the key and the command, so a machine that has to be
+        // cleaned by hand is told how in the coverage block rather than in a
+        // commit message somebody has to find.
+        await Assert.That(ReleaseLayout.TestUninstallKey).Contains(ReleaseLayout.TestPackId);
+        await Assert.That(ReleaseLayout.ClearTheLeftoverKey).Contains("reg delete");
+        await Assert.That(ReleaseLayout.ClearTheLeftoverKey).Contains(ReleaseLayout.TestUninstallKey);
+
+        // And it judges the TEST id and nothing else: the shipping id never
+        // appears in the key this capability reads.
+        await Assert.That(ReleaseLayout.TestUninstallKey.EndsWith(ReleaseLayout.PackId, StringComparison.Ordinal)).IsFalse();
     }
 
     /// <summary>

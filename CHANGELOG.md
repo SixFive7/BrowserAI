@@ -70,6 +70,80 @@ has been satisfied in form only.
   and that `logs\` is the only thing under the root; watched red against v1.0.0,
   which named all three.
 
+- ⛔ **The suite's own installer arm destroyed the maintainer's Add/Remove
+  Programs entry on every run that had a pack to install.** Velopack writes one
+  uninstall key per pack id per user, named for the id and never for the
+  location: an install under `--installto` still rewrites
+  `HKCU\…\Uninstall\BrowserAI.app` to point at the scratch root, and
+  `Update.exe uninstall` from that root calls `delete_subkey_all(<id>)`
+  **unconditionally**, with no comparison against `InstallLocation` anywhere in
+  it. Measured as *no `BrowserAI.app` key after six installer-arm runs* — with no
+  real install present to lose, which is the only reason nobody noticed.
+  `build/New-Release.ps1` now packs a **second** installer from the same publish
+  directory, at the same version, on the same channel, under `BrowserAI.app.test`
+  and into `Releases/test-pack/` — `$testPackArgs` is `$packArgs` with the id and
+  the output directory replaced, so a packing decision cannot reach one pack and
+  not the other. `RealInstallerTests` installs that one and the shipping
+  installer is never executed by the suite again; the arm reads the real key
+  before and after and asserts it byte-identical (or still absent), reclaims the
+  test id's key in a `finally`, and `ReleaseLayout.Judge` refuses the capability
+  when one survives a run — naming the key and the `reg delete` that clears it.
+  A real install is never judged: a key whose `InstallLocation` exists and is not
+  the suite's scratch root is `Real`, asserted over constructed inputs rather
+  than by writing a registry key to provoke it.
+  `RealInstallerTests.TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears`
+  compares the two `.nupkg`s entry by entry and requires every difference to
+  mention one of the two ids, with a synthetic both-directions control.
+
+- ⚠️ **The release gate's ILC check could not fail.** `IlcCompile` is an MSBuild
+  target with `Inputs` and `Outputs`, so a publish whose managed assemblies have
+  not moved skips it and relinks the previous run's native object: the publish
+  succeeds, the binary is good, and HALT-A — the scan of ILC's own console
+  output — sweeps a log ILC never wrote and reports clean. Measured 2026-09-15 at
+  `-v:normal`: **75 lines** with the pass skipped against **95** with it, and
+  **389** for the release script's own publish into a cleared output directory.
+  Clearing `$PackDir` was already there and is not enough; the up-to-date check
+  is on `obj\<config>\<tfm>\<rid>\native\BrowserAI.obj`, and no MSBuild
+  property disables it. The script now removes every
+  `obj\Release\*\win-x64\native` before publishing, and
+  `build/Test-IlcFullPass.ps1` refuses a log carrying no full pass — a separate
+  script precisely so the refusal can be driven, which
+  `ReleaseScriptTests.APublishLogWithNoIlcPassIsRefusedAndOneWithAPassIsAccepted`
+  does with a skipped log, a full log and a log carrying neither. The marker
+  rather than a line count: `Generating native code` is ILC's own line.
+
+### Changed
+
+- ⚠️ **The production-feed check reads the body, because a 200 was measured
+  carrying the wrong one.** For about two minutes after the 2026-09-15 release
+  replaced its assets, `releases/latest/download/releases.win.json` answered
+  **HTTP 200 with the previous manifest** — `Age: 2701`, while
+  `gh api .../releases/latest` was correct throughout — so a post-publish check
+  reading only the status code would have reported a feed serving a package
+  nobody could download.
+  `UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest` now
+  requires the body to name the pack id this build installs under and a version
+  no older than the first ever published under it. Its positive control is the
+  body that really was served: the August manifest, pack id `BrowserAI` at
+  1.0.0, recovered verbatim from the archived release evidence — it parses,
+  carries `Assets` and meets the version floor, and fails on the id alone.
+  [`RELEASING.md`](RELEASING.md#the-release-gate) now says the post-publish check
+  is to poll the body until it names the version just published, and that no
+  other post-publish check counts until it does.
+
+- **`RELEASING.md`: moving a tag does not draft the release; deleting one does.**
+  Corrected by addition after both halves were measured on 2026-09-15: a delete
+  drafted the only published release and the public feed answered 404 for about
+  **twenty minutes**; a `git tag -f` plus `git push --force origin refs/tags/…`
+  left the release published throughout and the feed was down for **7.7 s**,
+  which is GitHub re-resolving `releases/latest` rather than a drafting.
+
+- **`TESTING.md`: between two suite runs, wait for `.work\test-scratch` to be
+  released rather than for the first run to report.** On the 2026-09-15 release
+  gate, **137** rig directories were still handle-held after run 1 had printed
+  its summary. Nothing enforces it — it is a property of two runs, and no test
+  inside either can see the other.
+
 - ⚠️ **A suite race the packed release let loose, and the arm holding the
   variable was not the arm that went red.** `RealInstallerTests` opens an
   `EnvironmentScope` over `BROWSERAI_ROOT` and `CLAUDE_CONFIG_DIR` — both

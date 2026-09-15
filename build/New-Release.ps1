@@ -156,6 +156,32 @@ $packId = 'BrowserAI.app'
 # update.
 $downloadId = 'BrowserAI'
 
+# ⚠️ THE SUITE INSTALLS THIS ONE, AND NEVER THE ONE ABOVE -- 2026-09-15.
+# Velopack writes exactly one Add/Remove Programs key per pack id per user,
+# named for the id and never for the location (registry.rs, read at 1.2.0): an
+# install under `--installto` still rewrites
+# `HKCU\...\Uninstall\<packId>` to point at the scratch root, and
+# `Update.exe uninstall` from that root calls `delete_subkey_all(<id>)`
+# UNCONDITIONALLY, with no comparison against InstallLocation. So an installer
+# arm packed under the real id DESTROYS a real install's Add/Remove entry -- and
+# a run killed part-way leaves it gone with nothing to restore it. Measured on
+# this machine: no `BrowserAI.app` key after six installer-arm runs.
+#
+# The id is the ONLY delta. The test pack is built from the same publish
+# directory, at the same version, on the same channel, with the same `--mainExe`
+# and the same `--shortcuts` -- `$testPackArgs` below is `$packArgs` with two
+# elements replaced -- so what the arm exercises is the same code path under a
+# name that cannot collide with anybody's install. Nothing published ever
+# carries it: it is packed into a directory of its own and the resolved-set
+# manifest names the seven files it always named.
+$testPackId = 'BrowserAI.app.test'
+
+# What the suite's installer is called. `test-installer` rather than anything
+# resembling `BrowserAI.exe`: these two files sit one directory below the ones a
+# person downloads, and a name that could be mistaken for a release artifact is
+# the whole risk of packing twice.
+$testDownloadId = 'BrowserAI.test'
+
 # ⚠️ THE DOWNLOAD NAMES DROP THE CHANNEL ON THE DEFAULT CHANNEL AND KEEP IT
 # OTHERWISE -- 2026-09-15. `BrowserAI.exe` and `BrowserAI.zip` are what a person
 # should see on a releases page; `-win-Setup` and `-win-Portable` are vpk's
@@ -259,6 +285,30 @@ if (-not $PackDir) {
 if (-not $SkipPublish) {
     if (Test-Path -LiteralPath $PackDir) { Remove-Item -LiteralPath $PackDir -Recurse -Force }
 
+    # ⚠️ THE INTERMEDIATES TOO, AND CLEARING THE OUTPUT DIRECTORY IS NOT ENOUGH
+    # -- 2026-09-15. `IlcCompile` is an MSBuild target with Inputs and Outputs,
+    # and its output is `obj\<config>\<tfm>\<rid>\native\BrowserAI.obj`. A
+    # publish whose managed assemblies have not moved therefore SKIPS it --
+    # "Skipping target "IlcCompile" because all output files are up-to-date" --
+    # and produces a perfectly good binary by relinking the object file from
+    # last time. There is no property that disables that check; the object file
+    # IS the check, so removing it is the lever.
+    #
+    # Why that matters here rather than being a performance question: HALT-A,
+    # the ILC-output scan below, reads ILC's own console output. On a skipped
+    # pass there is none, so the scan sweeps a log ILC never wrote and reports
+    # clean -- a check that cannot fail. Measured 2026-09-15 on this machine at
+    # -v:normal: 95 lines with the pass, 75 without, and `Generating native
+    # code` present in the first and absent in the second.
+    #
+    # Globbed on the framework moniker rather than spelled, because the moniker
+    # moves with the SDK and a path that stopped matching would silently restore
+    # the incremental pass this exists to prevent.
+    foreach ($native in Get-ChildItem -Path (Join-Path $root 'src' 'BrowserAI' 'obj' 'Release') -Filter 'native' -Recurse -Directory -ErrorAction SilentlyContinue) {
+        Write-Host "Removing ILC intermediates at $($native.FullName) so the publish cannot reuse last run's native object."
+        Remove-Item -LiteralPath $native.FullName -Recurse -Force
+    }
+
     $ilcLog = Join-Path $root '.work' 'release-publish.log'
     $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ilcLog)
 
@@ -285,6 +335,17 @@ if (-not $SkipPublish) {
 
     if ($publishExit -ne 0) {
         Write-Error "The publish failed with exit code $publishExit. Its output is in $ilcLog."
+        exit 1
+    }
+
+    # ⚠️ AND ILC ACTUALLY RAN, WHICH IS THE PREMISE OF EVERY LINE BELOW. A
+    # skipped `IlcCompile` leaves a log with nothing of ILC's in it, and the
+    # complaint scan then reports clean about a compilation that did not happen.
+    # Its own script so that the refusal can be watched against a log that shows
+    # a skipped pass -- a positive control this script cannot give itself.
+    & (Join-Path $PSScriptRoot 'Test-IlcFullPass.ps1') -Log $ilcLog
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "The publish log shows no full ILC pass, so the checks below would be reading a compilation that did not happen."
         exit 1
     }
 
@@ -454,6 +515,55 @@ if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
     [System.IO.File]::WriteAllText($assets, ($rewritten -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
     Write-Host "Rewrote the download names in $(Split-Path -Leaf $assets)."
 }
+
+# --- 6c. The suite's installer, same publish, test id --------------------------
+# ⚠️ IT GOES IN A DIRECTORY OF ITS OWN and nothing that publishes ever looks
+# there. `Releases/test-pack/` holds the whole second pack -- installer, portable
+# archive, `.nupkg` and its own `releases.<channel>.json` -- so the glob a person
+# or a workflow runs over `Releases/` for the artifacts to upload cannot pick one
+# up, and neither can `ReleaseLayout` when it is pointed at the real feed.
+#
+# `$testPackArgs` is `$packArgs` with exactly two elements replaced: the id and
+# the output directory. Built rather than retyped, so a packing decision added
+# above reaches both packs and the suite cannot end up exercising an installer
+# built differently from the one that ships.
+$testOutputDir = Join-Path $OutputDir 'test-pack'
+$null = New-Item -ItemType Directory -Force -Path $testOutputDir
+
+$testPackArgs = @()
+for ($i = 0; $i -lt $packArgs.Count; $i++) {
+    switch ($packArgs[$i]) {
+        '--packId'    { $testPackArgs += $packArgs[$i]; $testPackArgs += $testPackId;    $i++; continue }
+        '--outputDir' { $testPackArgs += $packArgs[$i]; $testPackArgs += $testOutputDir; $i++; continue }
+        default       { $testPackArgs += $packArgs[$i] }
+    }
+}
+
+Write-Host "vpk $($testPackArgs -join ' ')"
+& vpk @testPackArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "vpk pack failed for the test pack with exit code $LASTEXITCODE, so the suite has no installer it may run."
+    exit 1
+}
+
+$testDownloads = @(
+    @{ Packed = "$testPackId-$Channel-Setup.exe";    Download = "$testDownloadId-installer.exe" }
+    @{ Packed = "$testPackId-$Channel-Portable.zip"; Download = "$testDownloadId-portable.zip" }
+)
+
+foreach ($download in $testDownloads) {
+    $packedPath = Join-Path $testOutputDir $download.Packed
+    $downloadPath = Join-Path $testOutputDir $download.Download
+
+    if (-not (Test-Path -LiteralPath $packedPath)) {
+        Write-Error "vpk did not produce $packedPath, so the suite has no installer it may run."
+        exit 1
+    }
+
+    Move-Item -LiteralPath $packedPath -Destination $downloadPath -Force
+}
+
+Write-Host "Packed the suite's own installer as $testDownloadId-installer.exe under $testOutputDir (pack id $testPackId). It is NEVER published."
 
 # --- 7. Archive the full package ----------------------------------------------
 $null = New-Item -ItemType Directory -Force -Path $ArchiveDir

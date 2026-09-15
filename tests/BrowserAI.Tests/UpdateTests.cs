@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Security.AccessControl;
+using System.Text.Json;
 using BrowserAI.Hosting;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
@@ -118,11 +119,32 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It is skipped rather than absent, and rather than faked.</b>
-    /// <see cref="UpdateConfiguration.ProductionBaseUrl"/> is <c>null</c>:
-    /// the feed will be a public GitHub repository, the maintainer has agreed to
-    /// make it public, and **nothing has been published**. There is no URL to
-    /// resolve.
+    /// ⚠️ <b>Corrected 2026-09-15 (previously "It is skipped rather than absent,
+    /// and rather than faked. <c>UpdateConfiguration.ProductionBaseUrl</c> is
+    /// <c>null</c>: the feed will be a public GitHub repository … and nothing
+    /// has been published. There is no URL to resolve").</b> There is a URL and
+    /// it resolves; the skip is gone and so is the debt it carried.
+    /// </para>
+    /// <para>
+    /// <b>A 200 is not the assertion any more, because a 200 was measured
+    /// carrying the WRONG BODY.</b> On 2026-09-15, for about two minutes after
+    /// the release assets were replaced,
+    /// <c>releases/latest/download/releases.win.json</c> answered 200 with the
+    /// <b>previous</b> manifest — <c>Age: 2701</c> on the response, the API
+    /// correct throughout — so a check that read only the status code would have
+    /// reported a feed that was serving a package nobody could download. The
+    /// body is therefore read for what it names: the pack id this build installs
+    /// under, and a version no older than the first release published under that
+    /// id.
+    /// </para>
+    /// <para>
+    /// <b>The positive control is the body that was actually served.</b> It is
+    /// the August manifest, pack id <c>BrowserAI</c> at version <c>1.0.0</c>,
+    /// recovered verbatim from the archived release evidence
+    /// (<c>Releases/archive/BrowserAI-1.0.0-manifest/release-evidence.md</c>,
+    /// where it was recorded when the id changed) rather than reconstructed — and
+    /// it fails on the id while passing every other check, which is exactly the
+    /// shape the stale response had.
     /// </para>
     /// <para>
     /// <b>A local HTTP server would satisfy this test and prove nothing</b>, which
@@ -163,7 +185,125 @@ internal sealed class UpdateTests
         using var answer = await http.GetAsync(new Uri(feed.ManifestUrl));
 
         await Assert.That((int)answer.StatusCode).IsEqualTo(200);
-        await Assert.That(await answer.Content.ReadAsStringAsync()).Contains("\"Assets\"");
+
+        var body = await answer.Content.ReadAsStringAsync();
+
+        await Assert.That(body).Contains("\"Assets\"");
+
+        // ⚠️ THE CONTENT, not the status. A 200 carrying the previous manifest
+        // is what the CDN served for about two minutes after the assets were
+        // replaced.
+        await Assert.That(string.Join(Environment.NewLine, FeedComplaints(body))).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL. The body that really was served, recovered
+        // from the archived release evidence. It parses, it carries `Assets`,
+        // its version is exactly the floor — and it names the OLD pack id, which
+        // is the one thing that tells a stale feed from a current one. Without
+        // this, a check that had stopped reading the id would report the live
+        // feed correct and pass.
+        var stale = FeedComplaints(StaleAugustManifest);
+
+        await Assert.That(stale.Count).IsEqualTo(1);
+        await Assert.That(stale[0]).Contains(FirstPackId);
+        await Assert.That(stale[0]).Contains("BrowserAI'");
+    }
+
+    /// <summary>
+    /// The feed body that was served with HTTP 200 for about two minutes after
+    /// the 2026-09-15 release replaced the assets, recorded verbatim.
+    /// </summary>
+    /// <remarks>
+    /// Recovered from <c>Releases/archive/BrowserAI-1.0.0-manifest/release-evidence.md</c>,
+    /// which is a sealed dated record, rather than reconstructed from its shape:
+    /// a control assembled by hand tests the assembler.
+    /// </remarks>
+    private const string StaleAugustManifest =
+        "{\"Assets\":[{\"PackageId\":\"BrowserAI\",\"Version\":\"1.0.0\",\"Type\":\"Full\","
+        + "\"FileName\":\"BrowserAI-1.0.0-full.nupkg\",\"SHA1\":\"3F5A924DCA12B9BA1B4BCD4C7C7AFBAE1465156E\","
+        + "\"SHA256\":\"D4BCCF54BB6F3BEF2FC8237E40307024880708053B4A43D1A54A3A4AE0ED9074\",\"Size\":49106362}]}";
+
+    /// <summary>
+    /// The pack id the first release under the current layout was published
+    /// under, and the version it carried.
+    /// </summary>
+    /// <remarks>
+    /// <b>The floor is a published fact rather than a policy</b>: 1.0.0 is the
+    /// first version ever published under <c>BrowserAI.app</c>, so a feed naming
+    /// anything older is serving something from before the layout split.
+    /// </remarks>
+    private static string FirstPackId => ReleaseLayout.PackId;
+
+    private static readonly Version FirstPublishedVersion = new(1, 0, 0);
+
+    /// <summary>
+    /// Everything wrong with a feed manifest body, as sentences.
+    /// </summary>
+    /// <remarks>
+    /// A list rather than a bool, so the live arm and the control can be the
+    /// same reading: the control asserts <i>which</i> complaint the stale body
+    /// produces, which a boolean could not distinguish from a body that was
+    /// wrong in three ways at once.
+    /// </remarks>
+    /// <param name="body">The manifest as served.</param>
+    /// <returns>One sentence per complaint; empty when the feed is current.</returns>
+    private static List<string> FeedComplaints(string body)
+    {
+        var complaints = new List<string>();
+
+        JsonDocument parsed;
+
+        try
+        {
+            parsed = JsonDocument.Parse(body);
+        }
+        catch (JsonException failure)
+        {
+            return [$"the feed did not parse as JSON: {failure.Message}"];
+        }
+
+        using (parsed)
+        {
+            if (!parsed.RootElement.TryGetProperty("Assets", out var assets) || assets.GetArrayLength() is 0)
+            {
+                return ["the feed carries no Assets, so there is nothing for an installed BrowserAI to resolve"];
+            }
+
+            var ids = new List<string>();
+            var newest = new Version(0, 0, 0);
+
+            foreach (var asset in assets.EnumerateArray())
+            {
+                if (asset.TryGetProperty("PackageId", out var id) && id.GetString() is { } named)
+                {
+                    ids.Add(named);
+                }
+
+                if (asset.TryGetProperty("Version", out var version)
+                    && Version.TryParse(version.GetString()?.Split('-')[0], out var parsedVersion)
+                    && parsedVersion is not null
+                    && parsedVersion > newest)
+                {
+                    newest = parsedVersion;
+                }
+            }
+
+            if (!ids.Contains(FirstPackId, StringComparer.OrdinalIgnoreCase))
+            {
+                complaints.Add(
+                    $"the feed names {(ids.Count is 0 ? "no package id at all" : $"'{string.Join("', '", ids)}'")}"
+                    + $" rather than '{FirstPackId}', so an installed BrowserAI would find nothing to update from"
+                    + " — which is what a stale cached response looks like");
+            }
+
+            if (newest < FirstPublishedVersion)
+            {
+                complaints.Add(
+                    $"the newest version in the feed is {newest}, older than {FirstPublishedVersion},"
+                    + " which is the first version ever published under this pack id");
+            }
+        }
+
+        return complaints;
     }
 
     // ---- The apply gate ------------------------------------------------------

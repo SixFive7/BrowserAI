@@ -264,7 +264,7 @@ internal static class SuiteEnvironment
     public static string RequireReleaseInstaller([CallerMemberName] string test = "")
     {
         Require(SuiteCapability.ReleaseInstaller, test);
-        return ReleaseLayout.SetupExecutable;
+        return ReleaseLayout.TestSetupExecutable;
     }
 
     /// <summary>The MCP client's own command line, or a skip.</summary>

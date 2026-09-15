@@ -3,7 +3,9 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
 using BrowserAI.Registration;
@@ -33,6 +35,21 @@ namespace BrowserAI.Tests;
 /// <c>Renaming existing directory</c> — because an installer that quietly
 /// skipped the destructive branch would leave the markers alone for the wrong
 /// reason and report exactly the same pass.
+/// </para>
+/// <para>
+/// ⚠️ <b>The installer this arm runs is packed under a TEST id, and the shipping
+/// one is never executed by the suite at all — 2026-09-15.</b> Velopack writes
+/// one Add/Remove Programs key per pack id per user, named for the id and never
+/// for the location: `--installto` still rewrites
+/// <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to the scratch root, and
+/// <c>Update.exe uninstall</c> from that root calls
+/// <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally, with no comparison
+/// against <c>InstallLocation</c>. So this arm under the shipping id destroys a
+/// real install's entry — measured on this machine as <i>no `BrowserAI.app` key
+/// after six installer-arm runs</i>, and that was with no real install present
+/// to lose. <c>build/New-Release.ps1</c> packs a second installer from the same
+/// publish, at the same version, on the same channel, with the id and the output
+/// directory as the only deltas.
 /// </para>
 /// <para>
 /// ⚠️ <b>Everything it touches is scratch, and the sandbox is not a
@@ -100,6 +117,49 @@ internal sealed partial class RealInstallerTests
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
         });
 
+        // ⚠️ THE REAL INSTALL'S OWN ADD/REMOVE ENTRY, READ BEFORE ANYTHING RUNS.
+        // This is the entry the shipping pack id would have had rewritten and
+        // then deleted, and the whole reason the installer this arm runs is
+        // packed under another id. Asserted rather than logged: a claim about a
+        // key nobody compared is the shape of claim this repository exists to
+        // eliminate. Absent is a perfectly good before-state and must still be
+        // absent afterwards.
+        var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
+
+        try
+        {
+            await InstallTwiceAndUninstall(setup, installRoot, dataRoot, logs, planted);
+        }
+        finally
+        {
+            // ⚠️ IN A FINALLY, so a red assertion above does not leave an
+            // install, a scratch tree and an Add/Remove entry behind for the
+            // next run to trip over. Every step reports rather than throws: this
+            // runs on the failure path, and a cleanup that throws replaces the
+            // reason the arm went red.
+            await ReclaimAsync(installRoot.Path);
+        }
+
+        // And the real entry is what it was, byte for byte — or is still absent.
+        var realKeyAfter = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
+
+        await Assert.That(realKeyAfter).IsEqualTo(realKeyBefore);
+    }
+
+    /// <summary>The body of the arm, so the reclaim below can be a finally.</summary>
+    /// <param name="setup">The test-id installer.</param>
+    /// <param name="installRoot">The scratch install root.</param>
+    /// <param name="dataRoot">The scratch data root.</param>
+    /// <param name="logs">Where Velopack's own logs go.</param>
+    /// <param name="planted">Each planted path and the SHA-256 it held.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task InstallTwiceAndUninstall(
+        string setup,
+        ScratchDirectory installRoot,
+        ScratchDirectory dataRoot,
+        ScratchDirectory logs,
+        IReadOnlyList<(string Path, string Sha256)> planted)
+    {
         // ⚠️ TWICE. The first install creates a non-empty root; the second one is
         // the one that renames it aside and deletes it.
         var first = await RunAsync(setup, ["--silent", "--log", Path.Combine(logs.Path, "setup-1.log"), "--installto", installRoot.Path]);
@@ -143,6 +203,241 @@ internal sealed partial class RealInstallerTests
         // it is the byte that was planted.
         await Unchanged(dataRoot.Path, planted);
     }
+
+    /// <summary>
+    /// Takes back whatever the arm left: the install, the scratch root, and the
+    /// Add/Remove entry <b>this</b> install created.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Best effort, and every step is independent of the one before it.</b>
+    /// This runs on the failure path — that is what it is for — so it must work
+    /// when the install half-happened, when <c>Update.exe</c> is missing, and
+    /// when the uninstall already ran. Nothing here throws and nothing here
+    /// asserts: the arm's own red is the report, and a cleanup that replaced it
+    /// with its own would hide the finding.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The key it removes is the TEST id's and only ever that.</b> It is
+    /// the one Velopack wrote for this install, under an id nothing else on the
+    /// machine uses; the shipping id's key is read by this arm and never
+    /// written. A leftover would otherwise sit in Settings pointing at a scratch
+    /// directory that is gone, and would refuse the capability on the next run —
+    /// which is correct, and is the state this exists to stop happening.
+    /// </para>
+    /// </remarks>
+    /// <param name="installRoot">The scratch install root.</param>
+    /// <returns>The reclaim.</returns>
+    private static async Task ReclaimAsync(string installRoot)
+    {
+        var update = Path.Combine(installRoot, "Update.exe");
+
+        if (File.Exists(update))
+        {
+            try
+            {
+                _ = await RunAsync(update, ["--uninstall", "--silent"]);
+                await WaitOutTheDeferredRemoval(Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName));
+            }
+#pragma warning disable CA1031 // A cleanup on the failure path reports nothing and must replace no finding.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+            }
+        }
+
+        _ = ScratchDirectory.RemoveTree(installRoot);
+
+        try
+        {
+            Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(ReleaseLayout.TestUninstallKey, throwOnMissingSubKey: false);
+        }
+#pragma warning disable CA1031 // Same: the next run's capability check is what reports a key that would not go.
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+        }
+    }
+
+    /// <summary>
+    /// One uninstall entry as a comparable string: every value, its kind and its
+    /// content, in a fixed order.
+    /// </summary>
+    /// <remarks>
+    /// <b>A string rather than a snapshot object, so the assertion's failure
+    /// message shows what moved.</b> An absent key answers <c>&lt;absent&gt;</c>
+    /// rather than empty, because a key that exists carrying nothing and a key
+    /// that does not exist are different states and this arm has to be able to
+    /// tell them apart.
+    /// </remarks>
+    /// <param name="path">The key, relative to <c>HKEY_CURRENT_USER</c>.</param>
+    /// <returns>Its contents, or <c>&lt;absent&gt;</c>.</returns>
+    private static string ReadUninstallKey(string path)
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(path);
+
+        if (key is null)
+        {
+            return "<absent>";
+        }
+
+        var read = new StringBuilder();
+
+        foreach (var name in key.GetValueNames().Order(StringComparer.Ordinal))
+        {
+            var value = key.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames);
+
+            _ = read.Append(CultureInfo.InvariantCulture, $"{name}\t{key.GetValueKind(name)}\t{value}\n");
+        }
+
+        foreach (var child in key.GetSubKeyNames().Order(StringComparer.Ordinal))
+        {
+            _ = read.Append(CultureInfo.InvariantCulture, $"[{child}]\n");
+        }
+
+        return read.ToString();
+    }
+
+    /// <summary>
+    /// The shipping pack and the suite's pack are the same package under two
+    /// names.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The arm above proves a property of an installer nobody ships, so this
+    /// is what makes that property a statement about the one that does.</b> The
+    /// two packs come from one publish directory in one script run, at the same
+    /// version and channel, with the id and the output directory as the only
+    /// arguments that differ — and <i>that</i> is a scan over the script. This is
+    /// the bytes.
+    /// </para>
+    /// <para>
+    /// <b>What may differ is named by a rule rather than by a list.</b> An entry
+    /// whose bytes differ has to <i>mention the id</i>, in UTF-8 or in UTF-16,
+    /// in one of the two packages — which is what a <c>.nuspec</c>, a Velopack
+    /// manifest and a stub's embedded metadata all do. Anything else differing
+    /// means the two packs were not built from one publish, and a list of
+    /// expected file names would have gone stale the first time upstream added
+    /// one.
+    /// </para>
+    /// <para>
+    /// <b>The comparison is watched in both directions over synthetic archives</b>,
+    /// because a real pair that happens to agree is indistinguishable from a
+    /// comparison that stopped looking.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears()
+    {
+        _ = SuiteEnvironment.RequirePackagedRelease();
+        _ = SuiteEnvironment.RequireReleaseInstaller();
+
+        var shipping = ReleaseLayout.FullPackage(test: false);
+        var mine = ReleaseLayout.FullPackage(test: true);
+
+        await Assert.That(shipping is null ? "no shipping .nupkg" : string.Empty).IsEmpty();
+        await Assert.That(mine is null ? "no test .nupkg" : string.Empty).IsEmpty();
+
+        using var a = await ZipFile.OpenReadAsync(shipping!.FullName);
+        using var b = await ZipFile.OpenReadAsync(mine!.FullName);
+
+        var left = Entries(a, ReleaseLayout.PackId);
+        var right = Entries(b, ReleaseLayout.TestPackId);
+
+        // The same files, once the id is taken out of their names.
+        await Assert.That(string.Join(", ", left.Keys.Except(right.Keys).Order(StringComparer.Ordinal))).IsEmpty();
+        await Assert.That(string.Join(", ", right.Keys.Except(left.Keys).Order(StringComparer.Ordinal))).IsEmpty();
+
+        var (differing, offenders) = Compare(left, right, ReleaseLayout.PackId, ReleaseLayout.TestPackId);
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // Not vacuous: the id is in there somewhere, so something must differ.
+        await Assert.That(differing).IsGreaterThan(0);
+
+        // ⚠️ THE CONTROL, over archives this test composes. A byte that differs
+        // in an entry naming neither id is reported; one in an entry that names
+        // an id is not. Without it, a comparison that had stopped reading would
+        // report the two packages identical and pass.
+        var plain = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes("nothing to see") };
+        var doctored = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes("nothing to sea") };
+        var named = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"id is {ReleaseLayout.PackId}") };
+        var namedToo = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"id is {ReleaseLayout.TestPackId}") };
+
+        var (_, caught) = Compare(plain, doctored, ReleaseLayout.PackId, ReleaseLayout.TestPackId);
+        await Assert.That(caught.Count).IsEqualTo(1);
+
+        var (moved, spared) = Compare(named, namedToo, ReleaseLayout.PackId, ReleaseLayout.TestPackId);
+        await Assert.That(spared.Count).IsEqualTo(0);
+        await Assert.That(moved).IsEqualTo(1);
+    }
+
+    /// <summary>Every entry of one package, keyed on its name with the id removed.</summary>
+    /// <param name="archive">The package.</param>
+    /// <param name="id">The pack id to take out of the names.</param>
+    /// <returns>The entries.</returns>
+    private static Dictionary<string, byte[]> Entries(ZipArchive archive, string id)
+    {
+        var entries = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
+        foreach (var entry in archive.Entries)
+        {
+            using var stream = entry.Open();
+            using var bytes = new MemoryStream();
+
+            stream.CopyTo(bytes);
+            entries[entry.FullName.Replace(id, "<id>", StringComparison.Ordinal)] = bytes.ToArray();
+        }
+
+        return entries;
+    }
+
+    /// <summary>
+    /// Compares two packages' entries and reports the ones that differ without
+    /// mentioning either id.
+    /// </summary>
+    /// <param name="left">The shipping package's entries.</param>
+    /// <param name="right">The test package's entries.</param>
+    /// <param name="id">The shipping pack id.</param>
+    /// <param name="testId">The test pack id.</param>
+    /// <returns>How many entries differed, and which of those are offences.</returns>
+    private static (int Differing, List<string> Offenders) Compare(
+        Dictionary<string, byte[]> left,
+        Dictionary<string, byte[]> right,
+        string id,
+        string testId)
+    {
+        var differing = 0;
+        var offenders = new List<string>();
+
+        foreach (var (name, bytes) in left.OrderBy(entry => entry.Key, StringComparer.Ordinal))
+        {
+            if (!right.TryGetValue(name, out var other) || bytes.AsSpan().SequenceEqual(other))
+            {
+                continue;
+            }
+
+            differing++;
+
+            if (!Mentions(bytes, id) && !Mentions(bytes, testId) && !Mentions(other, id) && !Mentions(other, testId))
+            {
+                offenders.Add(
+                    $"{name} differs ({bytes.Length} vs {other.Length} bytes) and neither copy mentions '{id}' or '{testId}',"
+                    + " so the two packs did not come from one publish");
+            }
+        }
+
+        return (differing, offenders);
+    }
+
+    /// <summary>Whether some bytes carry a string, in UTF-8 or in UTF-16.</summary>
+    /// <param name="bytes">The entry.</param>
+    /// <param name="text">The string.</param>
+    /// <returns>Whether it is in there.</returns>
+    private static bool Mentions(byte[] bytes, string text) =>
+        bytes.AsSpan().IndexOf(Encoding.UTF8.GetBytes(text)) >= 0
+        || bytes.AsSpan().IndexOf(Encoding.Unicode.GetBytes(text)) >= 0;
 
     /// <summary>Plants files whose content is their own name, and records their hashes.</summary>
     /// <param name="paths">The scratch data seam.</param>

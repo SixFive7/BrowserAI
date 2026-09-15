@@ -68,6 +68,40 @@ internal static partial class ReleaseLayout
     public static string DownloadId { get; } = ReadVariable("downloadId");
 
     /// <summary>
+    /// The pack id the <b>suite</b> installs, which is the shipping id plus a
+    /// suffix and is never published.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Velopack writes one Add/Remove Programs key per pack id per user,
+    /// named for the id and never for the location.</b> An install under
+    /// <c>--installto</c> still rewrites <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to
+    /// point at the scratch root, and <c>Update.exe uninstall</c> from that root
+    /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally — there is no
+    /// comparison against <c>InstallLocation</c> anywhere in it. So an installer
+    /// arm packed under the shipping id destroys a real install's entry, and a
+    /// run killed part-way leaves it gone with nothing to restore it. Measured
+    /// on this machine: no <c>BrowserAI.app</c> key after six installer-arm runs,
+    /// and that was with no real install present to lose.
+    /// </para>
+    /// <para>
+    /// <b>The id is the only delta</b>, and
+    /// <c>ReleaseScriptTests.TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn</c>
+    /// holds that the second pack is the first one's argument list with the id
+    /// and the output directory replaced. What the arm exercises is therefore the
+    /// same code path under a name that cannot collide with anybody's install.
+    /// </para>
+    /// </remarks>
+    public static string TestPackId { get; } = ReadVariable("testPackId");
+
+    /// <summary>What the suite's own installer is called.</summary>
+    /// <remarks>
+    /// Deliberately nothing that could be read as a release artifact: these two
+    /// files sit one directory below the ones a person downloads.
+    /// </remarks>
+    public static string TestDownloadId { get; } = ReadVariable("testDownloadId");
+
+    /// <summary>
     /// What the download names carry after the id, which is nothing on the
     /// default channel.
     /// </summary>
@@ -97,6 +131,36 @@ internal static partial class ReleaseLayout
     public static string FeedManifest { get; } = Path.Combine(Directory, $"releases.{Channel}.json");
 
     /// <summary>
+    /// Where the second pack lands, which nothing that publishes ever looks at.
+    /// </summary>
+    /// <remarks>
+    /// A directory of its own rather than a second file beside the first, so
+    /// that a glob over the feed directory for the artifacts to upload cannot
+    /// pick one up.
+    /// </remarks>
+    public static string TestDirectory { get; } = Path.Combine(Directory, "test-pack");
+
+    /// <summary>The installer the suite is allowed to run.</summary>
+    public static string TestSetupExecutable { get; } = Path.Combine(TestDirectory, $"{TestDownloadId}-installer.exe");
+
+    /// <summary>The feed manifest packed beside it.</summary>
+    public static string TestFeedManifest { get; } = Path.Combine(TestDirectory, $"releases.{Channel}.json");
+
+    /// <summary>The full package of each pack, or <see langword="null"/> when one is absent.</summary>
+    /// <param name="test">Whether to look for the test pack rather than the shipping one.</param>
+    /// <returns>The newest matching <c>.nupkg</c>, or <see langword="null"/>.</returns>
+    public static FileInfo? FullPackage(bool test)
+    {
+        var directory = new DirectoryInfo(test ? TestDirectory : Directory);
+
+        return directory.Exists
+            ? directory.EnumerateFiles($"{(test ? TestPackId : PackId)}-*-full.nupkg", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(file => file.LastWriteTimeUtc)
+                .FirstOrDefault()
+            : null;
+    }
+
+    /// <summary>
     /// The Add/Remove Programs key Velopack writes for this pack id, per user.
     /// </summary>
     /// <remarks>
@@ -107,26 +171,84 @@ internal static partial class ReleaseLayout
     /// </remarks>
     public const string UninstallKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
 
+    /// <summary>The key the suite's own installs write, and the only one it judges.</summary>
+    public static string TestUninstallKey { get; } = $@"{UninstallKeyPath}\{TestPackId}";
+
+    /// <summary>The one line that clears a leftover key by hand.</summary>
+    public static string ClearTheLeftoverKey { get; } = $@"reg delete ""HKCU\{TestUninstallKey}"" /f";
+
+    /// <summary>What an uninstall entry found on this machine is.</summary>
+    internal enum UninstallKeyState
+    {
+        /// <summary>No key at all, which is what a clean machine looks like.</summary>
+        Absent,
+
+        /// <summary>A key nothing answers to: its install location is gone, or it is scratch.</summary>
+        Dangling,
+
+        /// <summary>A key pointing at a directory that exists and is not the suite's.</summary>
+        Real,
+    }
+
     /// <summary>
-    /// Whether a real install of this pack id is registered on this machine.
+    /// Classifies an uninstall entry from its <c>InstallLocation</c> alone.
     /// </summary>
     /// <remarks>
-    /// <b>This is a refusal, not a diagnostic.</b> The arm that runs a real
-    /// <c>Setup.exe</c> installs under <c>--installto</c>, which is safe for the
-    /// files and <i>not</i> safe for the uninstall key: Velopack keeps one per id
-    /// per user, so an install here would repoint a real install's entry at a
-    /// scratch directory and the uninstall that follows would delete it — leaving
-    /// a real BrowserAI on the machine with no Add/Remove entry at all. So the
-    /// capability reads ABSENT on a machine that has one, the coverage block says
-    /// which key stopped it, and a release run fails rather than doing the damage
-    /// quietly.
+    /// <para>
+    /// <b>A pure function over the value, so it can be watched in both
+    /// directions without writing a registry key.</b> Planting a real
+    /// <c>HKCU</c> entry to exercise a refusal would be the suite doing the
+    /// exact thing the refusal exists to prevent, so the classification is
+    /// asserted over constructed inputs and the <i>reading</i> of the key is the
+    /// one line that touches the registry.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A key whose location exists and is not scratch is REAL and is never
+    /// refused.</b> The maintainer has one; refusing it would redden every run
+    /// on the machine this product is developed on. That is why the capability
+    /// judges the <b>test</b> id and never the shipping one — under the test id
+    /// every key is the suite's own, so any key that outlives a run is a run
+    /// that did not clean up.
+    /// </para>
     /// </remarks>
-    /// <returns>Whether an uninstall entry for this id already exists.</returns>
-    public static bool ARealInstallIsRegistered()
+    /// <param name="installLocation">The key's <c>InstallLocation</c>, or <see langword="null"/> when there is no key.</param>
+    /// <param name="scratchRoot">The root every directory the suite installs into lies under.</param>
+    /// <returns>What the entry is.</returns>
+    internal static UninstallKeyState Judge(string? installLocation, string scratchRoot)
     {
-        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"{UninstallKeyPath}\{PackId}");
+        if (installLocation is null)
+        {
+            return UninstallKeyState.Absent;
+        }
 
-        return key is not null;
+        if (installLocation.Length is 0 || !System.IO.Directory.Exists(installLocation))
+        {
+            return UninstallKeyState.Dangling;
+        }
+
+        var full = Path.GetFullPath(installLocation);
+        var root = Path.GetFullPath(scratchRoot);
+
+        return full.StartsWith(root, StringComparison.OrdinalIgnoreCase)
+            ? UninstallKeyState.Dangling
+            : UninstallKeyState.Real;
+    }
+
+    /// <summary>
+    /// The <c>InstallLocation</c> of a leftover test-id entry, or
+    /// <see langword="null"/> when there is none.
+    /// </summary>
+    /// <remarks>
+    /// <b>The empty string is a key with no location rather than no key</b>, and
+    /// the two are different: the second is a clean machine and the first is an
+    /// entry Windows will show in Settings with nothing behind it.
+    /// </remarks>
+    /// <returns>The recorded location, <c>""</c> when the key carries none, or <see langword="null"/>.</returns>
+    public static string? LeftoverTestInstallLocation()
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(TestUninstallKey);
+
+        return key is null ? null : key.GetValue("InstallLocation") as string ?? string.Empty;
     }
 
     /// <summary>
@@ -142,14 +264,14 @@ internal static partial class ReleaseLayout
     /// </remarks>
     public static bool HasCurrentInstaller()
     {
-        if (!File.Exists(SetupExecutable) || !File.Exists(FeedManifest) || ARealInstallIsRegistered())
+        if (!File.Exists(TestSetupExecutable) || !File.Exists(TestFeedManifest) || LeftoverTestInstallLocation() is not null)
         {
             return false;
         }
 
         try
         {
-            using var manifest = JsonDocument.Parse(File.ReadAllText(FeedManifest));
+            using var manifest = JsonDocument.Parse(File.ReadAllText(TestFeedManifest));
 
             if (!manifest.RootElement.TryGetProperty("Assets", out var assets))
             {
@@ -159,7 +281,7 @@ internal static partial class ReleaseLayout
             foreach (var asset in assets.EnumerateArray())
             {
                 if (asset.TryGetProperty("PackageId", out var id)
-                    && string.Equals(id.GetString(), PackId, StringComparison.OrdinalIgnoreCase))
+                    && string.Equals(id.GetString(), TestPackId, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -176,13 +298,15 @@ internal static partial class ReleaseLayout
     /// <summary>What is wrong, or what is there, in one clause for the coverage block.</summary>
     /// <returns>The witness.</returns>
     public static string Witness() =>
-        !File.Exists(SetupExecutable)
-            ? $"{SetupExecutable} (nothing has packed one)"
-            : ARealInstallIsRegistered()
-                ? $"HKCU\\{UninstallKeyPath}\\{PackId} exists, so this machine already has an install of this id — installing here would repoint its Add/Remove entry and the uninstall would delete it"
+        !File.Exists(TestSetupExecutable)
+            ? $"{TestSetupExecutable} (nothing has packed one)"
+            : LeftoverTestInstallLocation() is { } leftover
+                ? $"HKCU\\{TestUninstallKey} survived a previous run, pointing at '{(leftover.Length is 0 ? "<no InstallLocation>" : leftover)}'. "
+                    + "Every key under the TEST id is one this suite wrote, so one that outlived a run is a run that did not clean up — and Settings is showing an uninstall entry for something that is not there. "
+                    + $"Clear it with: {ClearTheLeftoverKey}"
                 : HasCurrentInstaller()
-                    ? SetupExecutable
-                    : $"{SetupExecutable} exists but {Path.GetFileName(FeedManifest)} names no package with the id '{PackId}', so it was packed under a different layout";
+                    ? TestSetupExecutable
+                    : $"{TestSetupExecutable} exists but {Path.GetFileName(TestFeedManifest)} names no package with the id '{TestPackId}', so it was packed under a different layout";
 
     private static string ReadVariable(string name)
     {

@@ -280,6 +280,25 @@ nohup bash -c "BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&
                cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
 ```
 
+⚠️ **Between two runs, wait for `.work\test-scratch` to be released rather than
+for the first run to report.** *Added 2026-09-15.* A test host that has printed
+its summary has not necessarily let go: on the 2026-09-15 release gate, **137
+rig directories were still handle-held after run 1 reported**, and the second
+run then created its own beside them, so the reclaim pass at the head of run 2
+was contending with a tree the previous host was still unwinding. The cheap
+check is the directory itself — clear it, and start the next half only once it
+is **empty**:
+
+```powershell
+while ((Get-ChildItem .work\test-scratch -Force -ErrorAction SilentlyContinue).Count -gt 0) {
+    Remove-Item .work\test-scratch\* -Recurse -Force -ErrorAction SilentlyContinue
+}
+```
+
+A directory that will not clear is the signal, not the inconvenience: something
+from the last run is still alive. **Nothing enforces this** — it is a property of
+two runs rather than of one, and no test inside either can see the other.
+
 Then poll `$log` — `Get-Content -Tail`, `tail -c`, or wait on the summary:
 
 ```bash

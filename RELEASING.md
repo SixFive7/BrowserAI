@@ -84,7 +84,21 @@ of the order rather than defects in anything:
 5. **Clean re-pack.** `Releases/` is cleared of everything that is not this
    release — the archive stays — and `New-Release.ps1` is run again, so the feed
    it writes holds the rows this release actually publishes.
-6. **Publish**, and then **verify the feed over HTTP**.
+6. **Publish**, and then **verify the feed over HTTP — by polling the BODY
+   until it names the version just published, and not before.** The status code
+   is not the check. ⚠️ ***Added 2026-09-15, measured: the release-assets CDN
+   served the PREVIOUS manifest with HTTP 200 for about two minutes after the
+   assets were replaced*** — `Age: 2701` on the response, while
+   `gh api .../releases/latest` was correct throughout, 14:16Z–14:24Z. A
+   post-publish verification taken in that window reports a feed that is serving
+   a package nobody can download, and reports it green. Poll
+   `releases/latest/download/releases.win.json` until `Version` is the new one;
+   **no other post-publish check counts until it is**, because every one of them
+   would be reading the old release.
+   `UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest` reads the
+   same body for the same two things — the pack id and a version no older than
+   the first published under it — with the August manifest as its positive
+   control.
 
 **The two reds that established this, both of them 2026-09-15 gate run 1, and
 both green on the very next run once the order was fixed:**
@@ -102,6 +116,20 @@ both green on the very next run once the order was fixed:**
   `releases/latest/download/releases.win.json` resolved to nothing. Verified
   outside the suite: `curl` → **404**, `gh release list` → one entry, *Draft*.
   It can only be green while **some** release is published.
+
+  > ⚠️ ***Corrected 2026-09-15 by addition (previously the bullet above was the
+  > whole of what this checklist said about tags and releases, and it reads as
+  > though touching the tag drafts the release).*** **MOVING a tag does not
+  > draft it; DELETING one does, and the difference is the whole cost.**
+  > Measured the same day, both halves: a **delete** (`git push origin
+  > :refs/tags/v1.0.0`) drafted the only published release and the public feed
+  > answered 404 for **about twenty minutes**; a **move**
+  > (`git tag -f v1.0.0 <sha>` then `git push --force origin refs/tags/v1.0.0`)
+  > left the release published throughout, and the feed was measured down for
+  > **7.7 s** — the window in which GitHub re-resolves `releases/latest`, not a
+  > drafting. So a re-cut at the same version moves the tag and never deletes
+  > it, and the twenty minutes is what deleting costs rather than what tagging
+  > costs.
 
 **They cannot both be green in the window the numbered order puts item 8 in** —
 one needs pre-stamp, the other needs a live release — which is the proof that
