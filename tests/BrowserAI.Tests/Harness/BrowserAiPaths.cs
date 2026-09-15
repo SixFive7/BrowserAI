@@ -33,6 +33,19 @@ namespace BrowserAI.Tests.Harness;
 /// and the members below are the default rather than "what the product used".
 /// </para>
 /// <para>
+/// ⚠️ <b>That correction narrowed on 2026-09-15, and what it narrowed to is
+/// worth stating: the override is now the ONLY way these can disagree.</b> Until
+/// that date the product also took its root from
+/// <c>VelopackLocator.Current.RootAppDir</c> when it was an installed process,
+/// so this type answered the default while an installed BrowserAI answered
+/// wherever <c>Setup.exe --installto</c> had put it — a second way to disagree
+/// that no test could see, because a test host is never an install. The data
+/// root is a constant now (<see cref="IAppPaths"/>), the locator feeds it
+/// nothing, and <c>new LocalAppDataPaths()</c> with no argument <i>is</i> what
+/// an installed BrowserAI resolves. One disagreement is left, it is the one
+/// below, and it is deliberate.
+/// </para>
+/// <para>
 /// <b>Making it honour the override was considered and deliberately not
 /// taken.</b> The override exists to hand a real BrowserAI an <i>empty</i>
 /// browsers root without deleting the developer's own, and the assertions that
@@ -50,7 +63,7 @@ internal static class BrowserAiPaths
     public static string BrowsersDirectory => Paths.BrowsersDirectory;
 
     /// <summary>
-    /// The variable that moves a published binary's whole app root, named from
+    /// The variable that moves a published binary's <b>data</b> root, named from
     /// the product rather than typed here.
     /// </summary>
     /// <remarks>
@@ -61,7 +74,7 @@ internal static class BrowserAiPaths
     public static string AppRootOverride => Program.AppRootVariable;
 
     /// <summary>
-    /// Every path the product resolves under the default app root — the same
+    /// Every path the product resolves under the default data root — the same
     /// object <see cref="BrowsersDirectory"/> comes from.
     /// </summary>
     /// <remarks>

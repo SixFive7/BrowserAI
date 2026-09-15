@@ -6,16 +6,22 @@ using BrowserAI.Interop;
 namespace BrowserAI.Hosting;
 
 /// <summary>
-/// Whether this process's app root is one only the current user can reach, and
+/// Whether this process's data root is one only the current user can reach, and
 /// the refusal when it is not.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>Why a shared root is unsafe, measured rather than reasoned.</b>
 /// <c>%LocalAppData%</c> gives every Windows user their own browsers directory,
-/// session index, log and <c>live\</c> marker directory.
-/// <see cref="Program.AppRootVariable"/> and the installer's install-to flag
-/// both defeat that, and what happens then was measured on 2026-08-20
+/// session index and log. ⚠️ <b>Corrected 2026-09-15 (previously
+/// "<see cref="Program.AppRootVariable"/> <b>and the installer's install-to
+/// flag</b> both defeat that", and the list above also named the <c>live\</c>
+/// marker directory).</b> The installer's flag cannot defeat it any more: the
+/// data root is a constant and the flag moves the install root, which this
+/// judgement does not read. The variable is what is left. The marker directory
+/// left this root the same day and is keyed to the install root — see the fourth
+/// bullet below, which is where that gap is named rather than closed. What
+/// happens when a root really is shared was measured on 2026-08-20
 /// ([kb](../../../kb/windows/detection.md#two-users-and-one-install-root--what-spans-users-and-what-does-not--measured-2026-08-20)):
 /// the <b>file</b> locks keep working across users, because a share mode is
 /// enforced by the kernel against handles and is indifferent to which token
@@ -49,7 +55,7 @@ namespace BrowserAI.Hosting;
 /// </para>
 /// <para>
 /// ⚠️ <b>It narrows the hazard rather than closing it, and the gap is named
-/// here rather than left to be rediscovered.</b> Three things it does not do:
+/// here rather than left to be rediscovered.</b> Four things it does not do:
 /// </para>
 /// <list type="bullet">
 ///   <item><description>
@@ -75,6 +81,18 @@ namespace BrowserAI.Hosting;
 ///     redirected, or a junction re-pointed, after startup moves the root under
 ///     a process that was admitted correctly.
 ///   </description></item>
+///   <item><description>
+///     ⚠️ <b>It judges the DATA root, and the live-instance census is keyed to
+///     the INSTALL root — added 2026-09-15 with the layout split.</b> So
+///     <c>Setup.exe --installto</c> can still put the markers and their
+///     <c>Global\</c> mutex somewhere two users share, and nothing here says a
+///     word about it. The damage is smaller than it was — each user's browsers,
+///     session index and log are their own now, so what an apply destroys is the
+///     other user's BrowserAI processes and, through our own job object, the
+///     browsers they were driving — and it is <b>open</b> rather than accepted:
+///     the row in <c>HAZARDS.md</c> names the three ways out and says the choice
+///     belongs to the maintainer.
+///   </description></item>
 /// </list>
 /// </remarks>
 internal static class InstallRootScope
@@ -94,10 +112,10 @@ internal static class InstallRootScope
     public const int AncestorWalkLimit = 64;
 
     /// <summary>
-    /// Judges an app root: may this process serve out of it, and what to say if
+    /// Judges a data root: may this process serve out of it, and what to say if
     /// not.
     /// </summary>
-    /// <param name="root">The app root this process resolved, absolute.</param>
+    /// <param name="root">The data root this process resolved, absolute.</param>
     /// <returns>The verdict.</returns>
     public static InstallRootVerdict Judge(string root)
     {
@@ -110,7 +128,7 @@ internal static class InstallRootScope
         if (profile is not { Length: > 0 })
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its app root '{root}' is a per-user one.");
+                $"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its data root '{root}' is a per-user one.");
         }
 
         // 1. Characters only, and first, because everything below opens a
@@ -162,7 +180,7 @@ internal static class InstallRootScope
         if (Canonical(rootFinal) is not { } resolvedAncestor)
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"The filesystem would not say what it calls '{rootExisting}', so BrowserAI cannot tell whether its app root '{root}' is inside this user's profile at '{profile}'. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
+                $"The filesystem would not say what it calls '{rootExisting}', so BrowserAI cannot tell whether its data root '{root}' is inside this user's profile at '{profile}'. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
         }
 
         var (profileFinal, profileExisting) = VolumeIdentity.DeepestExistingFinalName(profile, AncestorWalkLimit);
@@ -170,7 +188,7 @@ internal static class InstallRootScope
         if (Canonical(profileFinal) is not { } resolvedProfile)
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"The filesystem would not say what it calls this user's profile at '{profileExisting}', so BrowserAI cannot tell whether its app root '{root}' is inside it. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
+                $"The filesystem would not say what it calls this user's profile at '{profileExisting}', so BrowserAI cannot tell whether its data root '{root}' is inside it. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
         }
 
         // Whatever was trimmed off to find an existing ancestor goes back on, so
@@ -234,11 +252,11 @@ internal static class InstallRootScope
     /// <param name="why">What is wrong with the root, as a clause.</param>
     /// <returns>The whole sentence.</returns>
     private static string Sentence(string root, string profile, string why) =>
-        $"BrowserAI will not serve out of the app root '{root}': {why}. "
+        $"BrowserAI will not serve out of the data root '{root}': {why}. "
         + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the file locks span users, but the machine-wide mutexes do not — the kernel gives one no group ACE at all, so whichever user creates a name first owns it and the other cannot join the live-instance set. "
         + "A process that never joined creates no marker, so it is invisible to the other user's census; that census answers 'nothing else is running', and applying an update then terminates every process under the install root, including the other user's browsers and whatever they were driving. "
-        + $"Recovery: clear {Program.AppRootVariable} and start BrowserAI again — with no override the root is the per-user one under '{profile}', which Windows keeps separate for every account. "
-        + $"If the root was set by the installer's install-to flag, reinstall without it. Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
+        + $"Recovery: clear {Program.AppRootVariable} and start BrowserAI again — with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. Nothing else can move it: the installer chooses where the program goes and never where the data goes. "
+        + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
 }
 
 /// <summary>What <see cref="InstallRootScope.Judge"/> concluded.</summary>

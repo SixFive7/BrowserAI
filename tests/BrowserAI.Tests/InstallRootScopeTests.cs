@@ -76,7 +76,16 @@ internal sealed class InstallRootScopeTests
         await Assert.That(refusal).Contains(outside.Path);
         await Assert.That(refusal).Contains(Program.AppRootVariable);
         await Assert.That(refusal).Contains("live-instance set");
-        await Assert.That(refusal).Contains("install-to flag");
+
+        // ⚠️ AND THE REMEDY THAT IS NO LONGER THERE -- 2026-09-15. The sentence
+        // used to end "if the root was set by the installer's install-to flag,
+        // reinstall without it", and that became advice for a thing the flag
+        // cannot do: it moves the install root, and what is judged here is the
+        // data root, which only the variable above can move. Asserted as an
+        // absence as well as a presence, so putting it back is red in both
+        // directions rather than in neither.
+        await Assert.That(refusal).DoesNotContain("install-to flag");
+        await Assert.That(refusal).Contains("the installer chooses where the program goes and never where the data goes");
 
         // ⚠️ Case-insensitively, and that is not a nicety. Windows hands every
         // path back with an upper-case drive letter while a process keeps
@@ -287,7 +296,7 @@ internal sealed class InstallRootScopeTests
             ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
             : string.Empty;
 
-        await Assert.That(said).Contains("will not serve out of the app root");
+        await Assert.That(said).Contains("will not serve out of the data root");
         await Assert.That(said).Contains(Program.AppRootVariable);
 
         // ⚠️ And nothing else was created. `live\`, `instances\`, `index\` and
