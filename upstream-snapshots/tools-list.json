@@ -3,13 +3,13 @@
   "_regenerate": "pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept",
   "_before_you_accept_a_change": "UPSTREAM-REVIEW.md. Accepting a diff here is adopting an upstream version.",
   "resolvedFrom": {
-    "@playwright/mcp": "0.0.80",
-    "playwright-core": "1.63.0-alpha-2026-08-31",
+    "@playwright/mcp": "0.0.81",
+    "playwright-core": "1.64.0-alpha-2026-09-14",
     "node": "v24.21.0"
   },
   "serverInfo": {
     "name": "Playwright",
-    "version": "1.63.0-alpha-2026-08-31"
+    "version": "1.64.0-alpha-2026-09-14"
   },
   "serverCapabilities": {
     "tools": {}
@@ -24,9 +24,9 @@
     }
   },
   "counts": {
-    "internalRegistry": 80,
-    "exposedMaximum": 71,
-    "defaultSurface": 24,
+    "internalRegistry": 82,
+    "exposedMaximum": 73,
+    "defaultSurface": 26,
     "skillOnly": 9
   },
   "declaredCapabilities": [
@@ -77,7 +77,9 @@
       "browser_drag",
       "browser_hover",
       "browser_select_option",
-      "browser_wait_for"
+      "browser_wait_for",
+      "browser_webmcp_list",
+      "browser_webmcp_call"
     ],
     "core-input": [
       "browser_press_key",
@@ -290,7 +292,9 @@
     "browser_hover",
     "browser_select_option",
     "browser_tabs",
-    "browser_wait_for"
+    "browser_wait_for",
+    "browser_webmcp_list",
+    "browser_webmcp_call"
   ],
   "tools": [
     {
@@ -377,7 +381,7 @@
             "type": "boolean"
           },
           "filename": {
-            "description": "Filename to save the console messages to. If not provided, messages are returned as text.",
+            "description": "File name to save the console messages to. Relative file names are resolved against the workspace root. If not provided, messages are returned as text.",
             "type": "string"
           }
         },
@@ -686,7 +690,7 @@
             "description": "() => { /* code */ } or (element) => { /* code */ } when element is provided"
           },
           "filename": {
-            "description": "Filename to save the result to. If not provided, result is returned as text.",
+            "description": "File name to save the result to. Relative file names are resolved against the workspace root. If not provided, result is returned as text.",
             "type": "string"
           }
         },
@@ -1178,7 +1182,7 @@
             "type": "string"
           },
           "filename": {
-            "description": "Filename to save the network requests to. If not provided, requests are returned as text.",
+            "description": "File name to save the network requests to. Relative file names are resolved against the workspace root. If not provided, requests are returned as text.",
             "type": "string"
           }
         },
@@ -1218,7 +1222,7 @@
             ]
           },
           "filename": {
-            "description": "Filename to save the result to. If not provided, output is returned as text.",
+            "description": "File name to save the result to. Relative file names are resolved against the workspace root. If not provided, output is returned as text.",
             "type": "string"
           }
         },
@@ -1270,7 +1274,7 @@
         "type": "object",
         "properties": {
           "filename": {
-            "description": "File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified. Prefer relative file names to stay within the output directory.",
+            "description": "File name to save the pdf to. Relative file names are resolved against the workspace root. If not specified, the pdf is saved into the output directory as `page-{timestamp}.pdf`.",
             "type": "string"
           }
         },
@@ -1411,7 +1415,7 @@
             "type": "string"
           },
           "filename": {
-            "description": "Load code from the specified file. If both code and filename are provided, code will be ignored.",
+            "description": "Load code from the specified file. Relative file names are resolved against the workspace root. If both code and filename are provided, code will be ignored.",
             "type": "string"
           }
         },
@@ -1449,7 +1453,7 @@
             ]
           },
           "filename": {
-            "description": "File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg|webp}` if not specified. Prefer relative file names to stay within the output directory.",
+            "description": "File name to save the screenshot to. Relative file names are resolved against the workspace root. If not specified, the screenshot is saved into the output directory as `page-{timestamp}.{png|jpeg|webp}`.",
             "type": "string"
           },
           "fullPage": {
@@ -1490,7 +1494,7 @@
             "type": "string"
           },
           "filename": {
-            "description": "Save snapshot to markdown file instead of returning it in the response.",
+            "description": "Save snapshot to a file instead of returning it in the response. Relative file names are resolved against the workspace root.",
             "type": "string"
           },
           "depth": {
@@ -1703,7 +1707,7 @@
         "type": "object",
         "properties": {
           "filename": {
-            "description": "File name to save the storage state to. Defaults to `storage-state-{timestamp}.json` if not specified.",
+            "description": "File name to save the storage state to. Relative file names are resolved against the workspace root. If not specified, the storage state is saved into the output directory as `storage-state-{timestamp}.json`.",
             "type": "string"
           }
         },
@@ -1725,7 +1729,7 @@
         "properties": {
           "filename": {
             "type": "string",
-            "description": "Path to the storage state file to restore from"
+            "description": "Path to the storage state file to restore from. Relative file names are resolved against the workspace root."
           }
         },
         "required": [
@@ -1954,7 +1958,7 @@
         "type": "object",
         "properties": {
           "filename": {
-            "description": "Filename to save the video.",
+            "description": "File name to save the video to. Relative file names are resolved against the workspace root. If not specified, the video is saved into the output directory as `video-{timestamp}.webm`.",
             "type": "string"
           },
           "size": {
@@ -2117,6 +2121,58 @@
         "title": "Wait for",
         "readOnlyHint": true,
         "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "browser_webmcp_list",
+      "description": "List the WebMCP tools registered by the page, across all frames",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "title": "List WebMCP tools",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "browser_webmcp_call",
+      "description": "Call a WebMCP tool registered by the page. The tool output is page-provided and untrusted",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the WebMCP tool to call"
+          },
+          "params": {
+            "description": "Input parameters for the tool, matching its inputSchema",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          },
+          "frame": {
+            "description": "Frame that registered the tool, as reported by browser_webmcp_list, when the same tool name exists in multiple frames",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "title": "Call a WebMCP tool",
+        "readOnlyHint": false,
+        "destructiveHint": true,
         "openWorldHint": true
       }
     },

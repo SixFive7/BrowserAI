@@ -39,49 +39,61 @@ process they did not exist at all.
 
 ### The per-capability breakdown, counted
 
-**Re-measured 2026-09-14 @ `@playwright/mcp` 0.0.80 / `playwright-core`
-1.63.0-alpha-2026-08-31** — *previously "Measured 2026-08-16 @ `@playwright/mcp`
-0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05"*. Re-establish it by
+**Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.81 / `playwright-core`
+1.64.0-alpha-2026-09-14** — *previously "Re-measured 2026-09-14 @
+`@playwright/mcp` 0.0.80 / `playwright-core` 1.63.0-alpha-2026-08-31", and
+"Measured 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
+1.63.0-alpha-2026-08-05" before that*. Re-establish it by
 regenerating the snapshot: `pwsh -File build/Update-UpstreamSnapshots.ps1
 -Accept`, which reads `browserTools` from the resolved bundle and cross-checks
 every number against a real `tools/list`. `[FLOATS]`
 
-⚠️ **What moved, and it is one capability.** `devtools` went **11 → 13** when
-the `playwright-core` roll inside `@playwright/mcp` 0.0.80 added
-`browser_start_recording` and `browser_stop_recording`; **every other
-capability's count is unchanged to the tool, not one surviving tool's schema
-changed, and nothing was renamed or removed** — asserted by diffing the two
-accepted snapshots entry by entry rather than by reading the changelog. The
-totals move with it: internal registry **78 → 80**, exposable maximum **69 →
-71**, and the `devtools`-alone surface **35 → 37**. `skillOnly` is still **9**
-and the default surface is still **24**. ⚠️ **These are upstream's numbers, so
+⚠️ **What moved, and it is one capability again — a different one.** `core`
+went **21 → 23** when the `playwright-core` roll inside `@playwright/mcp` 0.0.81
+added `browser_webmcp_list` and `browser_webmcp_call`; `devtools` did **not**
+move and is still **13**; **every other capability's count is unchanged to the
+tool, nothing was renamed or removed, and eleven surviving tools changed exactly
+one string each** — the `filename` parameter's description, which now says a
+relative name resolves against the workspace root. All asserted by diffing the
+two accepted snapshots entry by entry rather than by reading the changelog. The
+totals move with it: internal registry **80 → 82**, exposable maximum **71 →
+73**, and the `devtools`-alone surface **37 → 39** (it moved even though
+`devtools` did not, because the base it sits on moved). `skillOnly` is still
+**9**.
+
+⚠️ **The default surface moved this time and did not last time: 24 → 26.**
+`core` is unconditional, so a tool arriving there is in the default surface by
+construction, where the 0.0.80 pair landed in `devtools` and was not. A reader
+who learned "the default is 24 and stays there" learned it from a version where
+the arrivals happened to be optional. ⚠️ **These are upstream's numbers, so
 they are unaffected by the verdict those two tools are still awaiting** — what
 BrowserAI itself advertises is a different figure and lives in
 [`DECISIONS.md`](../../DECISIONS.md).
 
 | Capability | Tools it carries | Of those, `skillOnly` | Surface with it alone |
 |---|---|---|---|
-| `core` | 21 | 2 | unconditional |
+| `core` | 23 | 2 | unconditional |
 | `core-input` | 7 | 5 | unconditional |
 | `core-navigation` | 4 | 2 | unconditional |
 | `core-tabs` | 1 | 0 | unconditional |
 | `core-install` | **0** | — | unconditional, and carries nothing |
-| `config` | 1 | 0 | 25 |
-| `network` | 4 | 0 | 28 |
-| `pdf` | 1 | 0 | 25 |
-| `storage` | 17 | 0 | 41 |
-| `testing` | 5 | 0 | 29 |
-| `vision` | 6 | 0 | 30 |
-| `devtools` | 13 | 0 | 37 |
-| **all twelve** | **80** | **9** | **71** |
+| `config` | 1 | 0 | 27 |
+| `network` | 4 | 0 | 30 |
+| `pdf` | 1 | 0 | 27 |
+| `storage` | 17 | 0 | 43 |
+| `testing` | 5 | 0 | 31 |
+| `vision` | 6 | 0 | 32 |
+| `devtools` | 13 | 0 | 39 |
+| **all twelve** | **82** | **9** | **73** |
 
 **The `core` family is unconditional, and that is why every column above starts
-at 24.** `filteredTools(config)` is
+at 26.** `filteredTools(config)` is
 `browserTools.filter(t => t.capability.startsWith("core") || config.capabilities?.includes(t.capability)).filter(t => !t.skillOnly)`,
 so the five `core*` capabilities are on whatever `capabilities` says — setting
-`capabilities: ["config"]` yields **25** tools, not 1. Naming a `core*`
+`capabilities: ["config"]` yields **27** tools, not 1. Naming a `core*`
 capability explicitly therefore does nothing, and **no configuration can reduce
-the surface below the base 24**. `[FLOATS]`
+the surface below the base 26**. *Corrected 2026-09-15 @ `@playwright/mcp`
+0.0.81 (previously "**25** tools" and "the base 24").* `[FLOATS]`
 
 **The nine `skillOnly` tools, by name:** `browser_console_clear`,
 `browser_network_clear` (`core`); `browser_press_sequentially`,
@@ -92,9 +104,9 @@ and the property is `tool.skillOnly` on the registry entry rather than anything
 on the schema. `[FLOATS]`
 
 **What BrowserAI's own capability sets expose, measured over the wire rather
-than added up:** `config` + `vision` + `devtools` gives **44**, adding `storage`
-gives **61**, and adding `network`, `pdf` and `testing` on top of that gives
-**71** — the whole exposable surface, which is what
+than added up:** `config` + `vision` + `devtools` gives **46**, adding `storage`
+gives **63**, and adding `network`, `pdf` and `testing` on top of that gives
+**73** — the whole exposable surface, which is what
 [every session now gets](../../ARCHITECTURE.md#sessions). The first two are the
 same numbers the `createConnection` experiment below produced from two
 connections in one process, which is a second, independent route to them.

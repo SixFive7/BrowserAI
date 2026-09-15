@@ -585,12 +585,25 @@ the suite. [HAZARDS](../../HAZARDS.md#hazard-index) carries the row.
 ## Environment, merge order and startup output
 
 **The merge order is config file → environment → CLI**, and `@playwright/mcp`
-reads **41** `PLAYWRIGHT_MCP_*` variables in its config env mapping — `BROWSER`,
+reads **42** `PLAYWRIGHT_MCP_*` variables in its config env mapping — `BROWSER`,
 `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`,
-`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 31 more. **The real total
-is 43**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` and `PLAYWRIGHT_MCP_EXTENSION_TOKEN`
-are read *outside* that mapping. An allowlist test must derive the count from the
-resolved bundle and never carry a literal.
+`CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS` and 32 more. **The real total
+is 45**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS`, `PLAYWRIGHT_MCP_EXTENSION_TOKEN` and
+`PLAYWRIGHT_MCP_PROFILE_DIR_NAME` are read *outside* that mapping. An allowlist
+test must derive the count from the resolved bundle and never carry a literal.
+
+⚠️ **`Corrected 2026-09-15 @ playwright-core 1.64.0-alpha-2026-09-14 (previously
+"reads **41** … and 31 more … **The real total is 43**", with two outside the
+mapping)`. Re-measured with the PREVIOUS bundle as the positive control, which
+returned 41 + 2 = 43 exactly as this paragraph recorded — so the predicate was
+proved able to find what was there before it was believed about what is there
+now.** `@playwright/mcp` 0.0.81 added two: `PLAYWRIGHT_MCP_IDLE_TIMEOUT` sits
+*inside* `configFromEnv` beside the other timeouts, and
+`PLAYWRIGHT_MCP_PROFILE_DIR_NAME` is read straight off `process.env` in the
+resolver that picks the `--extension` channel, which is why the *outside* set
+grew for the first time since it was recorded. Neither can reach the child:
+`ChildEnvironment` is an allowlist, so a variable nobody named is absent by
+construction.
 
 ⚠️ **`Corrected 2026-09-14 @ playwright-core 1.63.0-alpha-2026-08-31 (previously
 "reads **40** … **The real total is 42**")`. Re-measured rather than

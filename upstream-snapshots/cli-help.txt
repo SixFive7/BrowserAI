@@ -72,6 +72,12 @@ Options:
   --host <host>                         host to bind server to. Default is
                                         localhost. Use 0.0.0.0 to bind to all
                                         interfaces.
+  --idle-timeout <timeout>              close the browser after this many
+                                        milliseconds without a completed tool
+                                        call, the next tool call relaunches it.
+                                        Defaults to one hour for headless
+                                        browsers, never for headed ones, 0
+                                        disables.
   --ignore-https-errors                 ignore https errors
   --init-page <path...>                 path to TypeScript file to evaluate on
                                         Playwright page object
@@ -83,14 +89,28 @@ Options:
   --isolated                            keep the browser profile in memory, do
                                         not save it to disk.
   --image-responses <mode>              whether to send image responses to the
-                                        client. Can be "allow" or "omit",
+                                        client. Can be "allow", "omit" or
+                                        "only". With "only", a response that
+                                        carries an image consists of the image
+                                        parts alone, without the text part.
                                         Defaults to "allow".
   --no-sandbox                          disable the sandbox for all process
                                         types that are normally sandboxed.
-  --output-dir <path>                   path to the directory for output files.
+  --output-dir <path>                   path to the directory for automatically
+                                        named output files, for example a
+                                        screenshot taken without an explicit
+                                        file name. Files with an explicit name
+                                        are resolved against the workspace root
+                                        instead and are not affected by this
+                                        option.
   --output-max-size <bytes>             Threshold for evicting old output files,
                                         in bytes.
   --port <port>                         port to listen on for SSE transport.
+  --profile-dir-name <name>             name of the profile directory in the
+                                        user data dir to connect to with
+                                        --extension, for example "Profile 1".
+                                        Defaults to the last used profile that
+                                        has the extension installed.
   --proxy-bypass <bypass>               comma-separated domains to bypass proxy,
                                         for example
                                         ".com,chromium.org,.domain.com"

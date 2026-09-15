@@ -253,8 +253,21 @@ internal sealed class UpstreamSnapshotTests
         // SNAPSHOT and not of `tool-verdicts.json` -- they are what a
         // fully-capable child exposes, before this product withholds anything --
         // so they do not move again when those two tools are finally judged.
-        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(44);
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(71);
+        //
+        // ⚠️ Corrected 2026-09-15 @ playwright-core 1.64.0-alpha-2026-09-14
+        // (previously 44 and 71). RE-COUNTED OFF THE ACCEPTED SNAPSHOT AGAIN,
+        // and again the whole of the move is in ONE capability -- but a
+        // different one, and that is why neither number could be incremented
+        // from last time's reasoning: `core` went 21 -> 23 when upstream added
+        // `browser_webmcp_list` and `browser_webmcp_call`, `devtools` did NOT
+        // move and is still 13, and every other capability is unchanged to the
+        // tool. Because the two arrivals are `core` rather than `devtools`, they
+        // land in the DEFAULT surface as well (24 -> 26), which the `devtools`
+        // pair did not -- so the first number here moves for a reason the
+        // previous correction would not have predicted. Both remain properties
+        // of the SNAPSHOT rather than of `tool-verdicts.json`.
+        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(46);
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(73);
     }
 
     private static JsonDocument ReadToolsList() =>
