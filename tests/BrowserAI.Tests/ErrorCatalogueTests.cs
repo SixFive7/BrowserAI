@@ -350,13 +350,13 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "the unattended session an annotation call would hang",
         });
 
-        var refused = await CallAsync(rig, RepositoryVerdicts.TheOneDenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
+        var refused = await CallAsync(rig, RepositoryVerdicts.ADenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         Match(
             TextOf(refused),
             nameof(SessionErrors.ToolIsDenied),
-            SessionErrors.ToolIsDenied(RepositoryVerdicts.TheOneDenial.Name, RepositoryVerdicts.Committed.Find(RepositoryVerdicts.TheOneDenial.Name)!.Why!));
+            SessionErrors.ToolIsDenied(RepositoryVerdicts.ADenial.Name, RepositoryVerdicts.Committed.Find(RepositoryVerdicts.ADenial.Name)!.Why!));
 
         // ⚠️ Row 5's companion, and it was INVERTED on 2026-08-26 (previously
         // "a tool this build has never heard of is FORWARDED now rather than

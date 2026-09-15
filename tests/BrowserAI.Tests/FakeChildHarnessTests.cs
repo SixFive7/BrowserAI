@@ -491,8 +491,15 @@ internal sealed class FakeChildHarnessTests
         // is the load-bearing one. A rig whose tools had no rows would meet a
         // refusal of OURS on every call, which is exactly what this arm says
         // does not happen.
-        await Assert.That(RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.TheOneDenial.Name).Refusal).IsNotNull();
-        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(RepositoryVerdicts.TheOneDenial.Name)).IsTrue();
+        // ⚠️ Over EVERY denial since 2026-09-15 (previously `TheOneDenial`), for
+        // the reason the harness member became a list: a second row arrived and
+        // an arm written against one of them would have gone on passing while
+        // saying nothing about the other.
+        foreach (var denial in RepositoryVerdicts.TheDenials)
+        {
+            await Assert.That(RepositoryVerdicts.Committed.Decide(denial.Name).Refusal).IsNotNull();
+            await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(denial.Name)).IsTrue();
+        }
 
         // The tools that arm actually calls are permitted, so the change costs
         // it nothing. `browser_navigate` is the call under test and the close

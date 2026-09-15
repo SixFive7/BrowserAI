@@ -23,12 +23,67 @@ has been satisfied in form only.
 
 ### Changed
 
+- ⚠️ **One of the two WebMCP tools upstream added is refused, and the other is
+  not.** `@playwright/mcp` 0.0.81 added `browser_webmcp_list` and
+  `browser_webmcp_call`, both in upstream's default surface.
+  **`browser_webmcp_call` is withheld from `tools/list` and refused if a caller
+  names it anyway**, on liveness: it runs a tool the *page* supplies and waits
+  for it with no timeout at all — measured 2026-09-15 at **45,002 ms** against a
+  page whose tool never answered, where a well-behaved tool on the same page
+  answered in **521 ms** — so an unattended run that called it could hang until
+  it was killed, and any page can arrange that. **`browser_webmcp_list` is
+  allowed**: upstream bounds it at five seconds, it answers in 2 ms, and it is
+  how a caller finds out what a page offers before acting on it with the
+  ordinary tools. This is the first release to withhold more than one tool;
+  `browser_annotate` is the other, for the same reason. **What a deny does not
+  close, stated because it reaches you anyway:** upstream writes
+  `- N webmcp tools available on the page` into every tab header whose count is
+  non-zero. That line carries the count and none of the page's text.
+
+- **`@playwright/mcp` 0.0.81 and `playwright-core` 1.64.0-alpha-2026-09-14
+  adopted**, one day after 0.0.80 and reviewed the same way. All four golden
+  snapshots moved, which had never happened before. Two upstream changes worth
+  knowing about and neither visible in a schema: `checkFile` now resolves
+  symlinks before comparing, which tightens the containment BrowserAI relies on
+  and needed nothing done; and eleven tools' `filename` descriptions now say a
+  relative name resolves against the workspace root, which **reads** as a change
+  to where artifacts land and is not one — measured identical on 0.0.80 and
+  0.0.81 against a probe with the two directories pointed apart. The
+  adjudication, the declines and every re-verification row are in
+  [`upstream-review.json`](upstream-review.json).
+
+- **The generated child config now writes `timeouts.idle` explicitly**, at
+  upstream's own one-hour default. It cannot fire — BrowserAI closes an idle
+  browser after ten minutes and both timers are reset by a tool call — and it is
+  written precisely because it cannot: an omitted key records no decision and
+  cannot be read back out of a running child, so the day upstream moves its
+  default, a build here goes red instead of quietly changing behaviour. Nothing
+  a caller can observe changes.
+
+- ⚠️ **BrowserAI now refuses to start when its *install* root is outside your
+  Windows profile, as well as its data root.** The live-instance census — which
+  is what decides whether applying an update is safe — is keyed to the install
+  root, and `Setup.exe --installto` could put it somewhere two Windows users
+  share, where the machine-wide mutex behind it silently stops working and an
+  update apply then terminates the other user's browsers. The refusal names
+  **both** roots and the remedy that can move the one at fault, because
+  `BROWSERAI_ROOT` moves only the data root and `--installto` only the install
+  root. **What you have to do: nothing**, unless you deliberately install
+  outside your own profile, which is now refused rather than accepted silently.
+
+- **The release downloads are called `BrowserAI.exe` and `BrowserAI.zip`.**
+  *(Previously `BrowserAI-win-Setup.exe` and `BrowserAI.app-win-Portable.zip`.)*
+  The packaging tool names its output after the pack id, which exists to answer a
+  question about install directories and has no business on a releases page; the
+  feed-internal package names are deliberately untouched, because the updater
+  resolves those by name.
+
 - ⚠️ **BrowserAI's data moved out of the install directory, and the installer's
   own name changed with it.** The program installs into
   `%LocalAppData%\BrowserAI.app`; the browsers it downloads, the index of your
   session directories, its log and its registration record live in
-  `%LocalAppData%\BrowserAI` **beside** it. The download is still
-  `BrowserAI-win-Setup.exe`. **Why:** `Setup.exe` renames a non-empty install
+  `%LocalAppData%\BrowserAI` **beside** it. The download is called
+  `BrowserAI.exe`. **Why:** `Setup.exe` renames a non-empty install
   directory aside and deletes it — which is what running the installer a second
   time does — and uninstalling empties it, so under the old layout a repair
   install cost 768 MB of browsers and every session's entry in the index.
@@ -50,15 +105,16 @@ has been satisfied in form only.
   a pipe has no way of ever being told the conversation is over, so it exits
   cleanly instead of waiting for ever.
 
-- ⚠️ **Every machine re-provisions its browser on first run after this.** The
-  `@playwright/mcp` 0.0.79 → 0.0.80 review moved the pinned revisions: **Chromium
-  1237 → 1243** (152.0.7977.8 → 153.0.8010.12) and **Firefox 1539 → 1542**
-  (153.0 → 155.0). Nothing in the payload changed — browsers are provisioned on
+- ⚠️ **Every machine re-provisions its browser on first run after this.** Two
+  reviews in two days moved the pinned revisions twice, and what ships is the
+  second: **Chromium 1237 → 1244** (152.0.7977.8 → 154.0.8037.0) and **Firefox
+  1539 → 1544** (153.0 → 155.0) — 0.0.79 → 0.0.80 took them to 1243 and 1542,
+  and 0.0.80 → 0.0.81 took them the rest of the way. Nothing in the payload changed — browsers are provisioned on
   first run, not built into the installer — but the first session after
   upgrading downloads again, measured at **203.8 MB in 23.6 s** on the gate
   machine, because a cached tree holding 1237 is refused rather than reused.
   **A rollback re-downloads too**, which is the half that is easy to leave out:
-  going back to a build pinning 1237 finds 1243 on disk and fetches 1237 again.
+  going back to a build pinning 1237 finds 1244 on disk and fetches 1237 again.
   The old revision does not accumulate — `RevisionPrune` removes it on the next
   successful provision — so the cost is bandwidth and one slow first call, not
   disk.

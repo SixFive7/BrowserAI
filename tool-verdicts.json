@@ -6,8 +6,8 @@
   "_license": "LicenseRef-BrowserAI-FSL-1.1-MIT-5yr, Copyright 2026 Jori Huisman",
   "schemaVersion": 1,
   "judgedAgainst": {
-    "@playwright/mcp": "0.0.80",
-    "playwright-core": "1.63.0-alpha-2026-08-31"
+    "@playwright/mcp": "0.0.81",
+    "playwright-core": "1.64.0-alpha-2026-09-14"
   },
   "upstream": {
     "browser_close": {
@@ -194,6 +194,14 @@
     },
     "browser_wait_for": {
       "verdict": "allow"
+    },
+    "browser_webmcp_list": {
+      "verdict": "allow"
+    },
+    "browser_webmcp_call": {
+      "verdict": "deny",
+      "why": "The reason is liveness: it runs a tool the page itself supplies and waits for it with no timeout — one measured call stood silent for 45 s against a page whose tool never answered — so an unattended run that called it could hang until killed, and any page can arrange that. Use browser_webmcp_list to see what the page offers, then act on the page with the ordinary tools.",
+      "since": "2026-09-15"
     },
     "browser_localstorage_list": {
       "verdict": "allow"

@@ -6,8 +6,8 @@ using BrowserAI.Interop;
 namespace BrowserAI.Hosting;
 
 /// <summary>
-/// Whether this process's data root is one only the current user can reach, and
-/// the refusal when it is not.
+/// Whether this process's roots — <b>both</b> of them — are ones only the
+/// current user can reach, and the refusal when one is not.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -82,16 +82,27 @@ namespace BrowserAI.Hosting;
 ///     a process that was admitted correctly.
 ///   </description></item>
 ///   <item><description>
-///     ⚠️ <b>It judges the DATA root, and the live-instance census is keyed to
-///     the INSTALL root — added 2026-09-15 with the layout split.</b> So
+///     ⚠️ <b>CLOSED BY MECHANISM 2026-09-15, later the same day</b>
+///     <i>(previously: "It judges the DATA root, and the live-instance census is
+///     keyed to the INSTALL root — added 2026-09-15 with the layout split. So
 ///     <c>Setup.exe --installto</c> can still put the markers and their
 ///     <c>Global\</c> mutex somewhere two users share, and nothing here says a
-///     word about it. The damage is smaller than it was — each user's browsers,
-///     session index and log are their own now, so what an apply destroys is the
-///     other user's BrowserAI processes and, through our own job object, the
-///     browsers they were driving — and it is <b>open</b> rather than accepted:
-///     the row in <c>HAZARDS.md</c> names the three ways out and says the choice
-///     belongs to the maintainer.
+///     word about it … it is <b>open</b> rather than accepted: the row in
+///     <c>HAZARDS.md</c> names the three ways out and says the choice belongs to
+///     the maintainer")</i>. The maintainer took the first of those three ways
+///     out, and <b>this type now judges both roots</b>.
+///     <b>The predicate is the same one, said twice</b>: <i>inside the current
+///     user's profile</i>, resolved through
+///     <see cref="VolumeIdentity.DeepestExistingFinalName"/> on both sides, with
+///     the same UNC and mapped-drive short circuits in front of it. What differs
+///     is only the sentence — a refusal names <i>both</i> roots and the remedy
+///     that can actually move the one at fault, because
+///     <c>BROWSERAI_ROOT</c> cannot move the install root and
+///     <c>--installto</c> cannot move the data root, and a refusal naming the
+///     wrong lever is a refusal nobody can act on.
+///     <b>What it costs is the same trade §12(a) made</b>, now paid twice: a
+///     single-user install at <c>D:\Tools\BrowserAI.app</c> is refused for
+///     nothing. That is deliberate and is the first bullet above.
 ///   </description></item>
 /// </list>
 /// </remarks>
@@ -112,15 +123,81 @@ internal static class InstallRootScope
     public const int AncestorWalkLimit = 64;
 
     /// <summary>
-    /// Judges a data root: may this process serve out of it, and what to say if
-    /// not.
+    /// Judges <b>both</b> of this process's roots: may it serve, and what to say
+    /// if not.
     /// </summary>
-    /// <param name="root">The data root this process resolved, absolute.</param>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Two roots since 2026-09-15 (previously <c>Judge(string root)</c>,
+    /// the data root alone).</b> The data root is judged first and a refusal
+    /// there ends it, because a process that may not keep its browsers where it
+    /// resolved them has nothing to say about where its binary lives. Only then
+    /// is the install root judged, and only when there is one: an uninstalled
+    /// BrowserAI has no install root, and <see cref="Program"/> passes
+    /// <see langword="null"/> rather than substituting the data root — which
+    /// would judge the same path twice and produce a second refusal saying the
+    /// same thing in the wrong words.
+    /// </para>
+    /// <para>
+    /// <b><i>Could not establish</i> from either side is carried out rather than
+    /// dropped</b>, and both are carried when both could not be established:
+    /// the caller logs it and serves anyway, so losing one of the two would hide
+    /// exactly the case somebody would come looking for.
+    /// </para>
+    /// </remarks>
+    /// <param name="dataRoot">The data root this process resolved, absolute.</param>
+    /// <param name="installRoot">
+    /// The install root — the directory containing <c>current\</c> — or
+    /// <see langword="null"/> when this process is not an installed one.
+    /// </param>
     /// <returns>The verdict.</returns>
-    public static InstallRootVerdict Judge(string root)
+    public static InstallRootVerdict Judge(string dataRoot, string? installRoot)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
 
+        var data = Judge(dataRoot, JudgedRoot.Data, dataRoot, installRoot);
+
+        if (!data.MayServe)
+        {
+            return data;
+        }
+
+        // The same path judged twice would answer the same thing twice. It is
+        // compared as a string rather than through the filesystem deliberately:
+        // this is an optimisation, not a judgement, and the judgement below does
+        // its own resolving either way.
+        if (installRoot is not { Length: > 0 }
+            || string.Equals(installRoot, dataRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            return data;
+        }
+
+        var install = Judge(installRoot, JudgedRoot.Install, dataRoot, installRoot);
+
+        if (!install.MayServe)
+        {
+            return install;
+        }
+
+        return (data.Unestablished, install.Unestablished) switch
+        {
+            (null, null) => InstallRootVerdict.MayServeHere,
+            (null, not null) => install,
+            (not null, null) => data,
+            var (first, second) => InstallRootVerdict.CouldNotEstablish($"{first} {second}"),
+        };
+    }
+
+    /// <summary>
+    /// Judges one root against the profile, and composes the refusal for it.
+    /// </summary>
+    /// <param name="root">The root under judgement, absolute.</param>
+    /// <param name="which">Which of this process's roots it is.</param>
+    /// <param name="dataRoot">The data root, named in every sentence.</param>
+    /// <param name="installRoot">The install root, named in every sentence.</param>
+    /// <returns>The verdict.</returns>
+    private static InstallRootVerdict Judge(string root, JudgedRoot which, string dataRoot, string? installRoot)
+    {
         var profile = Environment.GetFolderPath(
             Environment.SpecialFolder.UserProfile,
             Environment.SpecialFolderOption.DoNotVerify);
@@ -128,7 +205,7 @@ internal static class InstallRootScope
         if (profile is not { Length: > 0 })
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its data root '{root}' is a per-user one.");
+                $"Windows reported no profile directory for this user, so BrowserAI cannot tell whether its {Noun(which)} '{root}' is a per-user one.");
         }
 
         // 1. Characters only, and first, because everything below opens a
@@ -149,8 +226,11 @@ internal static class InstallRootScope
             if (afterPrefix is null || afterPrefix.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase))
             {
                 return InstallRootVerdict.Refused(Sentence(
+                    which,
                     root,
                     profile,
+                    dataRoot,
+                    installRoot,
                     "it is a UNC path, which is storage every account that can reach the share can reach"));
             }
 
@@ -166,8 +246,11 @@ internal static class InstallRootScope
         if (VolumeIdentity.Of(probe).Kind is VolumeKind.Network)
         {
             return InstallRootVerdict.Refused(Sentence(
+                which,
                 root,
                 profile,
+                dataRoot,
+                installRoot,
                 $"drive '{probe[..2]}' is a mapped network drive, so the root is a share rather than per-user storage"));
         }
 
@@ -180,7 +263,7 @@ internal static class InstallRootScope
         if (Canonical(rootFinal) is not { } resolvedAncestor)
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"The filesystem would not say what it calls '{rootExisting}', so BrowserAI cannot tell whether its data root '{root}' is inside this user's profile at '{profile}'. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
+                $"The filesystem would not say what it calls '{rootExisting}', so BrowserAI cannot tell whether its {Noun(which)} '{root}' is inside this user's profile at '{profile}'. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
         }
 
         var (profileFinal, profileExisting) = VolumeIdentity.DeepestExistingFinalName(profile, AncestorWalkLimit);
@@ -188,7 +271,7 @@ internal static class InstallRootScope
         if (Canonical(profileFinal) is not { } resolvedProfile)
         {
             return InstallRootVerdict.CouldNotEstablish(
-                $"The filesystem would not say what it calls this user's profile at '{profileExisting}', so BrowserAI cannot tell whether its data root '{root}' is inside it. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
+                $"The filesystem would not say what it calls this user's profile at '{profileExisting}', so BrowserAI cannot tell whether its {Noun(which)} '{root}' is inside it. It is serving anyway; a root that two users share loses the live-instance census silently, and this is the one line that would say so.");
         }
 
         // Whatever was trimmed off to find an existing ancestor goes back on, so
@@ -212,8 +295,11 @@ internal static class InstallRootScope
         return inside
             ? InstallRootVerdict.MayServeHere
             : InstallRootVerdict.Refused(Sentence(
+                which,
                 root,
                 resolvedProfile,
+                dataRoot,
+                installRoot,
                 string.Equals(resolvedRoot, root, StringComparison.OrdinalIgnoreCase)
                     ? "it is outside this user's profile, so it is not storage Windows keeps per-user"
                     : $"the filesystem calls it '{resolvedRoot}', which is outside this user's profile, so it is not storage Windows keeps per-user"));
@@ -244,22 +330,76 @@ internal static class InstallRootScope
         return stripped.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase) ? null : stripped;
     }
 
+    /// <summary>The noun a sentence calls one of the two roots.</summary>
+    /// <param name="which">Which root.</param>
+    /// <returns>The noun phrase.</returns>
+    private static string Noun(JudgedRoot which) =>
+        which is JudgedRoot.Install ? "install root" : "data root";
+
     /// <summary>
     /// The refusal, which has to carry the remedy and not only the verdict.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It names BOTH roots, always, and the remedy for the one at fault
+    /// — 2026-09-15.</b> There are two roots since the layout split, they are
+    /// moved by two different levers, and <b>neither lever can move the other's
+    /// root</b>: <c>BROWSERAI_ROOT</c> moves the data root and cannot touch the
+    /// install root, <c>Setup.exe --installto</c> moves the install root and
+    /// cannot touch the data root. A refusal that named one root would be read
+    /// against whichever the reader had in mind, and a refusal that offered the
+    /// wrong lever would send them to change a setting that cannot help.
+    /// </para>
+    /// <para>
+    /// <b>The consequence clause differs because the consequences differ.</b>
+    /// A shared <i>data</i> root loses the live-instance census through the
+    /// mutex DACL; a shared <i>install</i> root loses the same census for the
+    /// same reason and costs less, because each user's browsers, session index
+    /// and log are their own now — what an apply destroys there is the other
+    /// user's processes and the browsers they were driving.
+    /// </para>
+    /// </remarks>
+    /// <param name="which">Which root is at fault.</param>
     /// <param name="root">The root as this process resolved it.</param>
     /// <param name="profile">This user's profile directory.</param>
+    /// <param name="dataRoot">The data root, named whichever is at fault.</param>
+    /// <param name="installRoot">The install root, or <see langword="null"/>.</param>
     /// <param name="why">What is wrong with the root, as a clause.</param>
     /// <returns>The whole sentence.</returns>
-    private static string Sentence(string root, string profile, string why) =>
-        $"BrowserAI will not serve out of the data root '{root}': {why}. "
+    private static string Sentence(
+        JudgedRoot which,
+        string root,
+        string profile,
+        string dataRoot,
+        string? installRoot,
+        string why) =>
+        $"BrowserAI will not serve out of the {Noun(which)} '{root}': {why}. "
         + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the file locks span users, but the machine-wide mutexes do not — the kernel gives one no group ACE at all, so whichever user creates a name first owns it and the other cannot join the live-instance set. "
         + "A process that never joined creates no marker, so it is invisible to the other user's census; that census answers 'nothing else is running', and applying an update then terminates every process under the install root, including the other user's browsers and whatever they were driving. "
-        + $"Recovery: clear {Program.AppRootVariable} and start BrowserAI again — with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. Nothing else can move it: the installer chooses where the program goes and never where the data goes. "
+        + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
+        + (which is JudgedRoot.Install
+            ? $"Recovery: install BrowserAI inside '{profile}' — the default location, or 'Setup.exe --installto <a directory under that profile>'. {Program.AppRootVariable} cannot help here: it moves the data root and never the install root. "
+            : $"Recovery: clear {Program.AppRootVariable} and start BrowserAI again — with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
         + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
 }
 
-/// <summary>What <see cref="InstallRootScope.Judge"/> concluded.</summary>
+/// <summary>Which of this process's two roots is under judgement.</summary>
+/// <remarks>
+/// <b>It exists to choose a noun and a remedy, and for nothing else.</b> The
+/// predicate is identical for both — see <see cref="InstallRootScope"/>'s
+/// fourth bullet, which says so in as many words, because a second predicate
+/// wearing one name is how two roots start being judged by two different rules.
+/// </remarks>
+internal enum JudgedRoot
+{
+    /// <summary>The data root: browsers, session index, log.</summary>
+    Data,
+
+    /// <summary>The install root: the binary, and what the live-instance census is keyed to.</summary>
+    Install,
+}
+
+/// <summary>What <see cref="InstallRootScope.Judge(string, string?)"/> concluded.</summary>
 /// <remarks>
 /// <b>Three states rather than a boolean</b>, for the reason
 /// <c>Updates.Liveness</c> has three: <i>could not establish</i> is neither of

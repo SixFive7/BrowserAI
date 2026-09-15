@@ -220,7 +220,14 @@ internal static class Program
         // refusal has. stdout is the protocol and Console is banned outright, so
         // a refusal written anywhere else would be a server that exits 1 saying
         // nothing at all.
-        var scope = InstallRootScope.Judge(paths.RootAppDir);
+        // ⚠️ BOTH ROOTS SINCE 2026-09-15, and the install root is read here
+        // rather than below because a judgement that ran after the census was
+        // keyed would be judging a root this process had already committed to.
+        // `InstallLocation` is already resolved at this point -- the Velopack
+        // log replay above reads it -- so this costs nothing, and it answers
+        // null when this process is not an install, which is what tells
+        // InstallRootScope there is no second root to judge.
+        var scope = InstallRootScope.Judge(paths.RootAppDir, InstallLocation.RootAppDir);
 
         if (scope.Unestablished is { } unestablished)
         {

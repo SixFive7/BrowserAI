@@ -263,10 +263,23 @@ internal sealed class ToolVerdictTests
         await Assert.That(string.Join(Environment.NewLine, faults)).IsEmpty();
 
         // Not vacuous, and this is also the count DECISIONS.md publishes about
-        // the surface: exactly one tool is withheld, and that is asserted here
+        // the surface: exactly two tools are withheld, and that is asserted here
         // against the FILE rather than against a C# constant, because the file
         // is now what decides.
-        await Assert.That(denied.Count).IsEqualTo(1);
+        //
+        // ⚠️ TWO since 2026-09-15 (previously 1). `browser_webmcp_call`
+        // joined `browser_annotate`, on the same liveness grounds and with a
+        // wider door: it runs a tool the PAGE supplies and waits for it with no
+        // timeout, where the annotation tool at least needed a human. The number
+        // is written here rather than derived so that a denial withdrawn in the
+        // file is a red build rather than a quiet reversal.
+        await Assert.That(denied.Count).IsEqualTo(2);
+
+        // And both of them by name, because a count of two is satisfied by the
+        // wrong pair. The dates are the file's own: one judged at the
+        // 0.0.79 surface, one at 0.0.81.
+        await Assert.That(denied.Select(row => row.Name).Order(StringComparer.Ordinal))
+            .IsEquivalentTo((string[])["browser_annotate", "browser_webmcp_call"]);
     }
 
     [Test]

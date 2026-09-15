@@ -196,13 +196,13 @@ internal sealed class SessionLogTests
     public async Task ARefusedCallIsRecordedAsAFailedRowCarryingTheRefusal()
     {
         await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools[RepositoryVerdicts.TheOneDenial.Name] = new FakeToolBehaviour());
+            child.Tools[RepositoryVerdicts.ADenial.Name] = new FakeToolBehaviour());
 
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
         var before = RecordedSession.LogOf(rig.Session!).Count;
 
-        var refused = await CallAsync(rig, RepositoryVerdicts.TheOneDenial.Name, new JsonObject
+        var refused = await CallAsync(rig, RepositoryVerdicts.ADenial.Name, new JsonObject
         {
             ["session"] = rig.Session!,
             ["why"] = "reaching for a tool this server does not advertise",
@@ -211,7 +211,7 @@ internal sealed class SessionLogTests
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
         var after = RecordedSession.LogOf(rig.Session!);
-        var row = after.Single(entry => entry.Tool == RepositoryVerdicts.TheOneDenial.Name);
+        var row = after.Single(entry => entry.Tool == RepositoryVerdicts.ADenial.Name);
 
         await Assert.That(after.Count).IsEqualTo(before + 1);
         await Assert.That(row.Why).IsEqualTo("reaching for a tool this server does not advertise");

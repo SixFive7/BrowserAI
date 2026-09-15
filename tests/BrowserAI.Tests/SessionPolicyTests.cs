@@ -72,9 +72,10 @@ namespace BrowserAI.Tests;
 /// <c>tool-verdicts.json</c> carries a row per tool — <c>allow</c>, <c>deny</c>
 /// with the reason a caller reads, or <c>answer</c> — and a name with no row is
 /// refused. Three arms below are about the mechanism rather than about any one
-/// tool, and they use rig copies of that file so the product's own deny set stays
-/// at exactly one; <c>ToolVerdictTests</c> owns the file itself and its agreement
-/// with the golden snapshot.
+/// tool, and they use rig copies of that file so the product's own deny set is
+/// left alone; <c>ToolVerdictTests</c> owns the file itself and its agreement
+/// with the golden snapshot. *(Was "stays at exactly one" until 2026-09-15, when
+/// <c>browser_webmcp_call</c> made it two.)*
 /// </para>
 /// <para>
 /// <b>What is asserted instead is what is actually true.</b> A call names its
@@ -118,9 +119,21 @@ internal sealed class SessionPolicyTests
     /// <c>testing</c>'s five. The 2026-09-15 move is upstream's rather than
     /// ours: <c>@playwright/mcp</c> 0.0.80 added
     /// <c>browser_start_recording</c> and <c>browser_stop_recording</c>, both
-    /// judged <c>allow</c>. Of the 71 tools a fully-capable child exposes,
-    /// BrowserAI's <c>tools/list</c> carries <b>70</b>:
-    /// <c>browser_annotate</c> is withheld, and it is still the only one.
+    /// judged <c>allow</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected again 2026-09-15, later the same day, to 71 of 71
+    /// (previously "Of the 71 tools a fully-capable child exposes, BrowserAI's
+    /// <c>tools/list</c> carries <b>70</b>: <c>browser_annotate</c> is withheld,
+    /// and it is still the only one").</b> <c>@playwright/mcp</c> 0.0.81 added
+    /// <c>browser_webmcp_list</c> and <c>browser_webmcp_call</c> — both
+    /// <c>core</c>, so both unconditional — taking the exposable surface from 71
+    /// to <b>73</b>. The two were judged in opposite directions: the list
+    /// <c>allow</c>, the call <c>deny</c> on liveness, because it runs a tool the
+    /// page supplies and waits for it with no timeout. So the denominator moved
+    /// by two, the numerator by one, and <b>the withheld set is two rather than
+    /// one for the first time</b> — which is why the arithmetic below reads
+    /// <c>Advertises + 2</c> and the named hole is a loop.
     /// </para>
     /// <para>
     /// <b>Written down rather than derived, for the reason the old table was:</b>
@@ -129,7 +142,20 @@ internal sealed class SessionPolicyTests
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 70;
+    private const int Advertises = 71;
+
+    /// <summary>
+    /// How many tools this build withholds, written down beside
+    /// <see cref="Advertises"/> and for the same reason.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two since 2026-09-15</b>, and it is stated rather than read off
+    /// <c>RepositoryVerdicts.Count</c> here: the pair
+    /// <c>Advertises</c> + <c>Withholds</c> is the whole claim this class makes
+    /// about the size of the surface, and reading either half out of the file
+    /// the claim is about would make it agree with itself.
+    /// </remarks>
+    private const int Withholds = 2;
 
     /// <summary>
     /// The three sessions the concurrency arm drives at once.
@@ -151,22 +177,32 @@ internal sealed class SessionPolicyTests
         var advertised = everything.Where(tool => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(tool)).ToList();
 
         // The denominators are stated before the numerator, and there are two of
-        // them: a fully-capable child exposes 71 tools, BrowserAI advertises 70
-        // of them, and every session permits all 70.
-        await Assert.That(everything.Count).IsEqualTo(Advertises + 1);
+        // them: a fully-capable child exposes 73 tools, BrowserAI advertises 71
+        // of them, and every session permits all 71.
+        await Assert.That(everything.Count).IsEqualTo(Advertises + Withholds);
         await Assert.That(advertised.Count).IsEqualTo(Advertises);
         await Assert.That(advertised.Count(tool => RepositoryVerdicts.Committed.Decide(tool).IsAllowed)).IsEqualTo(Advertises);
 
-        // The named hole, individually, because a count is satisfied by the
-        // wrong tool as easily as by the right one. It is in the child's surface
-        // and out of ours, which is the whole of the change.
-        await Assert.That(everything).Contains(RepositoryVerdicts.TheOneDenial.Name);
-        await Assert.That(advertised).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
+        // And the file agrees with the number written above, which is what stops
+        // the two constants being satisfied by a surface that lost a tool at the
+        // same moment it gained a denial.
+        await Assert.That(RepositoryVerdicts.Count).IsEqualTo(Withholds);
 
-        // And the call is refused as well as unadvertised, which is the half a
-        // filtered list cannot do: a model that knows the name from upstream can
-        // still send it.
-        await Assert.That(RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.TheOneDenial.Name).IsAllowed).IsFalse();
+        // The named holes, individually, because a count is satisfied by the
+        // wrong tool as easily as by the right one. Each is in the child's
+        // surface and out of ours, which is the whole of the change.
+        //
+        // ⚠️ A loop since 2026-09-15 (previously the single `TheOneDenial`).
+        foreach (var denial in RepositoryVerdicts.TheDenials)
+        {
+            await Assert.That(everything).Contains(denial.Name);
+            await Assert.That(advertised).DoesNotContain(denial.Name);
+
+            // And the call is refused as well as unadvertised, which is the half
+            // a filtered list cannot do: a model that knows the name from
+            // upstream can still send it.
+            await Assert.That(RepositoryVerdicts.Committed.Decide(denial.Name).IsAllowed).IsFalse();
+        }
 
         // The tools the old matrix turned on are permitted now. Asserted rather
         // than left implied: these three are the whole of what that removal
@@ -374,7 +410,7 @@ internal sealed class SessionPolicyTests
         // makes that a real claim rather than a missing case: it answers the
         // tool happily, so a proxy that forwarded would visibly succeed here.
         await using var sessions = RigSessionEnvironment.Create(child =>
-            child.Tools[RepositoryVerdicts.TheOneDenial.Name] = new FakeToolBehaviour
+            child.Tools[RepositoryVerdicts.ADenial.Name] = new FakeToolBehaviour
             {
                 RawResult = """{"content":[{"type":"text","text":"the human drew something"}]}""",
             });
@@ -396,13 +432,13 @@ internal sealed class SessionPolicyTests
             .Select(tool => (string?)tool?["name"] ?? string.Empty)
             .ToList();
 
-        await Assert.That(childsOwn).Contains(RepositoryVerdicts.TheOneDenial.Name);
-        await Assert.That(names).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
+        await Assert.That(childsOwn).Contains(RepositoryVerdicts.ADenial.Name);
+        await Assert.That(names).DoesNotContain(RepositoryVerdicts.ADenial.Name);
         await Assert.That(names.Count).IsGreaterThan(10);
 
         // And nothing of it is left in the surface for a model to read: no
         // description mentioning it, no note saying it would refuse.
-        await Assert.That(advertised.ToJsonString()).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
+        await Assert.That(advertised.ToJsonString()).DoesNotContain(RepositoryVerdicts.ADenial.Name);
 
         // The call half, on a session with a window and one without, because
         // the refusal used to be keyed on exactly that and a single session
@@ -419,9 +455,9 @@ internal sealed class SessionPolicyTests
             });
 
             var callsBefore = sessions.SessionChildren.Sum(child =>
-                child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.TheOneDenial.Name));
+                child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.ADenial.Name));
 
-            var refused = await CallAsync(rig, RepositoryVerdicts.TheOneDenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
+            var refused = await CallAsync(rig, RepositoryVerdicts.ADenial.Name, new JsonObject { ["session"] = directory, ["why"] = "the suite exercising this call" });
             var text = TextOf(refused);
 
             await Assert.That((bool?)refused["isError"]).IsTrue();
@@ -438,8 +474,87 @@ internal sealed class SessionPolicyTests
             // Nothing reached the child: a refusal that forwarded first and hid
             // the answer would still have hung.
             await Assert.That(sessions.SessionChildren.Sum(child =>
-                child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.TheOneDenial.Name))).IsEqualTo(callsBefore);
+                child.ToolCallsReceived.Count(tool => tool == RepositoryVerdicts.ADenial.Name))).IsEqualTo(callsBefore);
         }
+    }
+
+    /// <summary>
+    /// The WebMCP pair <c>@playwright/mcp</c> 0.0.81 added is judged in two
+    /// directions: the list is advertised and forwarded, the call is dropped from
+    /// the surface and refused at the door.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Named rather than left to the counts, because the two tools arrived
+    /// together and a count cannot tell which one survived.</b> The surface arm
+    /// above says 71 of 73 and would be satisfied by the opposite judgement —
+    /// list denied, call allowed — which is the one outcome that would be
+    /// actively dangerous.
+    /// </para>
+    /// <para>
+    /// <b>The reason is liveness, measured 2026-09-15 before anything was
+    /// judged.</b> <c>browser_webmcp_call</c> invokes a tool the <i>page</i>
+    /// registers and waits for it: against a page whose <c>invokeTool</c> never
+    /// settles it had not answered after 45,002 ms, where a well-behaved tool on
+    /// the same page answered in 521 ms. Upstream wraps the <i>list</i> path in a
+    /// five-second timeout and wraps the call path in nothing. That is the
+    /// <c>browser_annotate</c> shape with a wider door — any page can arrange it,
+    /// where the annotation daemon at least needed a human at a dashboard.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>What a deny does NOT close, asserted here so it is not rediscovered
+    /// as a defect.</b> Upstream's <c>renderTabHeader</c> emits
+    /// <c>- N webmcp tools available on the page</c> on every tab header whose
+    /// count is non-zero, and that line reaches the model whatever this file
+    /// says. It carries the count and none of the page's text. The refusal below
+    /// is what a model meets when it acts on that line.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheWebMcpCallIsWithheldOnLivenessAndTheWebMcpListIsNot()
+    {
+        const string Call = "browser_webmcp_call";
+        const string List = "browser_webmcp_list";
+
+        var everything = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
+
+        // Both are really upstream's, and both are really in the surface a
+        // fully-capable child exposes -- so the absence below is this build's
+        // decision rather than a bundle that never carried the tool.
+        await Assert.That(everything).Contains(Call);
+        await Assert.That(everything).Contains(List);
+
+        // The call: out of the list, refused at the door, and the refusal is the
+        // `why` the file carries rather than a sentence composed in code.
+        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(Call)).IsTrue();
+
+        var decided = RepositoryVerdicts.Committed.Decide(Call);
+
+        await Assert.That(decided.IsAllowed).IsFalse();
+
+        // The refusal is the file's own `why` behind the catalogue's standing
+        // preamble, rather than a sentence composed in code: a row edited in the
+        // file changes what a caller reads, which is the whole point of the file.
+        await Assert.That(decided.Refusal).IsEqualTo(
+            SessionErrors.ToolIsDenied(Call, RepositoryVerdicts.Committed.Find(Call)!.Why!));
+        await Assert.That(decided.Refusal!).EndsWith(RepositoryVerdicts.Committed.Find(Call)!.Why!);
+
+        // The refusal has to say WHY a caller cannot have it and WHAT to reach
+        // for instead, in the words a model acts on. A refusal that says only
+        // "denied" sends a model looking for a permission it can acquire.
+        await Assert.That(decided.Refusal!).Contains("liveness");
+        await Assert.That(decided.Refusal!).Contains("no timeout");
+        await Assert.That(decided.Refusal!).Contains(List);
+
+        // The list: advertised and forwarded. This half is what makes the arm a
+        // judgement rather than a blanket refusal of anything named webmcp.
+        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(List)).IsFalse();
+        await Assert.That(RepositoryVerdicts.Committed.Decide(List).IsAllowed).IsTrue();
+
+        // And the judgement was taken against the upstream this build resolves,
+        // which is what stops a row surviving a bump nobody re-read.
+        await Assert.That(RepositoryVerdicts.Committed.Find(Call)!.Since).IsEqualTo("2026-09-15");
     }
 
     /// <summary>
@@ -455,8 +570,9 @@ internal sealed class SessionPolicyTests
     /// <i>read from the file</i> — which the shipped one cannot, because a
     /// hardcoded constant naming the same tool would satisfy every assertion
     /// about it. A rig copy of the file is what separates the two, and it leaves
-    /// the product's own deny set at exactly one, which is the number four
-    /// documents publish.
+    /// the product's own deny set untouched, which is what four documents publish
+    /// a count of. *(Was "at exactly one" until 2026-09-15; it is two now, and
+    /// the point is unchanged — a rig copy must not move a published number.)*
     /// </para>
     /// <para>
     /// <b>Three claims, and each is the half the others do not cover.</b> Absent
@@ -887,7 +1003,7 @@ internal sealed class SessionPolicyTests
         // modes that refused it — one of three). The tool is withheld from the
         // surface and refused everywhere now, so it is 75, one per round per
         // session.
-        var refusedByLiveness = RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.TheOneDenial.Name).IsAllowed
+        var refusedByLiveness = RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.ADenial.Name).IsAllowed
             ? 0
             : Rounds * Concurrent.Length;
 
@@ -914,7 +1030,7 @@ internal sealed class SessionPolicyTests
     /// back door, a storage tool, the annotation tool and an ordinary one.
     /// </summary>
     private static readonly string[] Probes =
-        ["browser_storage_state", "browser_run_code_unsafe", RepositoryVerdicts.TheOneDenial.Name, "browser_navigate"];
+        ["browser_storage_state", "browser_run_code_unsafe", RepositoryVerdicts.ADenial.Name, "browser_navigate"];
 
     private static bool Allows(string tool) => RepositoryVerdicts.Committed.Decide(tool).IsAllowed;
 

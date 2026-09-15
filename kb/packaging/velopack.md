@@ -624,14 +624,31 @@ timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
 remained and the feed advertised all of them.
 
 ⚠️ **Every one of those names carries the pack id, which is also the install
-directory — so the download is renamed after the pack, 2026-09-15.**
-`build/New-Release.ps1` moves `BrowserAI.app-win-Setup.exe` to
-`BrowserAI-win-Setup.exe` and rewrites that one name in `assets.{channel}.json`,
-and it renames the human-facing manifest directory under `Releases\archive\` the
-same way. **The `.nupkg`s are deliberately left alone**: Velopack resolves those
-by name out of `releases.{channel}.json`, so renaming one is a feed that 404s on
-the first update. `ReleaseScriptTests.ThePackIdIsTheInstallDirectoryAndTheInstallerIsRenamedBack`
-holds both halves, with the two package names as the control.
+directory — so the downloads are renamed after the pack, 2026-09-15.**
+`build/New-Release.ps1` moves `BrowserAI.app-win-Setup.exe` to `BrowserAI.exe`
+and `BrowserAI.app-win-Portable.zip` to `BrowserAI.zip`, rewrites both names in
+`assets.{channel}.json`, and renames the human-facing manifest directory under
+`Releases\archive\` to `BrowserAI-{version}-manifest`. *(Corrected later the same
+day, previously "the download is renamed after the pack … moves
+`BrowserAI.app-win-Setup.exe` to `BrowserAI-win-Setup.exe` and rewrites that one
+name": it was one artifact and it kept vpk's `-win-Setup` vocabulary, which says
+what the tool calls the file rather than what it is.)* **The channel leaves the
+name only on the default channel** — `BrowserAI-beta.exe` otherwise — so two
+packs into one output directory still cannot overwrite each other, which is the
+one property vpk's own naming had. **The `.nupkg`s and `releases.{channel}.json`
+are deliberately left alone**: Velopack resolves those by name, so renaming one
+is a feed that 404s on the first update.
+`ReleaseScriptTests.ThePackIdIsTheInstallDirectoryAndTheDownloadsAreRenamedBack`
+holds every half, with the two package names as the control.
+
+⚠️ **`BrowserAI.exe` now names two different files, and the difference matters
+when reading any other line in this article.** The **download** is the
+self-extracting installer, ~53.5 MB, which exists only until it has been run. The
+**installed binary** is `<install root>\current\BrowserAI.exe`, ~17.9 MB, which
+is what `--mainExe` names, what registration points a client at, and what the
+sizes table below means. Nothing in Velopack relates the two: the Setup stub
+locates its payload from the bundle appended to itself and never from its own
+filename, which is why renaming it is safe at all.
 
 **`vpk` rejects 4-part version numbers** — semver2, three parts only.
 
@@ -657,8 +674,11 @@ Velopack's.
 > that **nothing reads the assembly version at all**.
 
 **`.gitignore` verdict** (closes the deferred v1 item): `/Releases/` ✅ ·
-`*-Portable.zip` ✅ · `/RELEASES` ✅ default channel only · **`Setup.exe` never
-matches** — the real name is `{id}-{channel}-Setup.exe` · **`/payload/`,
+`*-Portable.zip` ⚠️ **stopped matching on 2026-09-15**, when the portable
+archive was renamed `BrowserAI.zip` — harmless only because `/Releases/` covers
+the whole directory, which is the line actually doing the work · `/RELEASES` ✅
+default channel only · **`Setup.exe` never matches** — vpk's own name is
+`{id}-{channel}-Setup.exe` · **`/payload/`,
 `/staging/`, `/.staging/` are not vpk output at all**; they are BrowserAI's own
 build conventions and must be justified on that basis or dropped.
 

@@ -14,8 +14,9 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Two names, and the difference between them is the install layout.</b>
 /// <c>$packId</c> is <c>BrowserAI.app</c> and is what Velopack derives the
-/// install directory from; <c>$downloadId</c> is <c>BrowserAI</c> and is what
-/// the installer is renamed back to. A suite that typed either one would go on
+/// install directory from; <c>$downloadId</c> is <c>BrowserAI</c> and is what the
+/// two human-facing artifacts are renamed to — <c>BrowserAI.exe</c> and
+/// <c>BrowserAI.zip</c> on the default channel. A suite that typed either one would go on
 /// agreeing with itself after somebody changed the script, which is the one
 /// thing it must not do — the capability below is what decides whether a real
 /// installer is exercised at all.
@@ -23,9 +24,12 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>The feed manifest is read for the id rather than the installer being
 /// trusted for it.</b> <c>Releases/</c> is gitignored and accumulates: a
-/// <c>BrowserAI-win-Setup.exe</c> left there by a build from before the rename
-/// has exactly the name the current one has, and installing it would prove a
-/// property of last month's layout while reporting a pass. <c>vpk pack</c>
+/// <c>BrowserAI.exe</c> left there by a build from before the current naming has
+/// exactly the name the current one has, and installing it would prove a
+/// property of last month's layout while reporting a pass. *(Was
+/// <c>BrowserAI-win-Setup.exe</c> until 2026-09-15; the hazard is the same one,
+/// and a stale file under the NEW name is the same trap under a shorter
+/// spelling.)* <c>vpk pack</c>
 /// rewrites <c>releases.&lt;channel&gt;.json</c> on every pack, so the
 /// <c>PackageId</c> in it is the freshest statement of what the file beside it
 /// was built from.
@@ -60,11 +64,34 @@ internal static partial class ReleaseLayout
     /// <summary>The Velopack pack id, which is also the install directory's name.</summary>
     public static string PackId { get; } = ReadVariable("packId");
 
-    /// <summary>The name the installer is renamed back to.</summary>
+    /// <summary>The name the downloads are renamed to.</summary>
     public static string DownloadId { get; } = ReadVariable("downloadId");
 
+    /// <summary>
+    /// What the download names carry after the id, which is nothing on the
+    /// default channel.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The rule is the script's and the literal is read out of it —
+    /// 2026-09-15.</b> A person downloads <c>BrowserAI.exe</c> and
+    /// <c>BrowserAI.zip</c>; a channel that is not the default keeps its name so
+    /// that two packs into one output directory cannot overwrite each other,
+    /// which is the one property vpk's own <c>-win-Setup</c> naming had.
+    /// <see cref="Channel"/> is what this suite packs, and
+    /// <c>$defaultChannel</c> is what the script compares against — read from
+    /// the script for the same reason <see cref="PackId"/> is, so a suite that
+    /// typed either would go on agreeing with itself after somebody changed it.
+    /// </remarks>
+    public static string DownloadSuffix { get; } =
+        string.Equals(Channel, ReadVariable("defaultChannel"), StringComparison.Ordinal)
+            ? string.Empty
+            : $"-{Channel}";
+
     /// <summary>The installer a person downloads, if this machine has built one.</summary>
-    public static string SetupExecutable { get; } = Path.Combine(Directory, $"{DownloadId}-{Channel}-Setup.exe");
+    public static string SetupExecutable { get; } = Path.Combine(Directory, $"{DownloadId}{DownloadSuffix}.exe");
+
+    /// <summary>The portable archive published beside it.</summary>
+    public static string PortableArchive { get; } = Path.Combine(Directory, $"{DownloadId}{DownloadSuffix}.zip");
 
     /// <summary>The feed manifest <c>vpk</c> rewrites on every pack.</summary>
     public static string FeedManifest { get; } = Path.Combine(Directory, $"releases.{Channel}.json");

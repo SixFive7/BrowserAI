@@ -35,7 +35,8 @@ internal static class RepositoryVerdicts
     public static ToolVerdicts Committed { get; } = ToolVerdicts.Read(Path);
 
     /// <summary>
-    /// The one tool this build ships a <c>deny</c> for, found rather than named.
+    /// Every tool this build ships a <c>deny</c> for, found rather than named,
+    /// in the file's own order.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -47,22 +48,56 @@ internal static class RepositoryVerdicts
     /// the shipped file, which is what the product reads.
     /// </para>
     /// <para>
-    /// <b><c>Single</c> rather than <c>First</c>, deliberately.</b> Four
-    /// documents publish counts that rest on there being exactly one, and
-    /// <c>ToolVerdictTests</c> asserts it — but that arm can only fail once,
-    /// whereas a second denial arriving would silently re-point every arm below
-    /// at whichever row happened to come first. A type-initialiser failure
-    /// naming the problem is the better failure.
+    /// ⚠️ <b>A LIST since 2026-09-15 (previously <c>TheOneDenial</c>, a
+    /// <c>Single</c> that threw a type-initialiser failure on a second
+    /// row).</b> There is a second row now — <c>browser_webmcp_call</c>, denied
+    /// on the same liveness grounds as <c>browser_annotate</c> — so the shape
+    /// that was protecting the suite from a silent re-point has to become the
+    /// shape that scales with the file. <b>The protection is not dropped, it
+    /// moves</b>: the arms that assert the <i>mechanism</i> — refused at the
+    /// door, absent from <c>tools/list</c>, absent from the real binary's real
+    /// answer — now run over <i>every</i> row rather than over one, so a third
+    /// denial arriving is covered rather than ignored, and the counts those
+    /// arms state are <see cref="Count"/> rather than <c>1</c>.
+    /// </para>
+    /// <para>
+    /// <b>Empty is refused here rather than at the call site.</b> A build that
+    /// withheld nothing would make every "the withheld tool is absent" arm
+    /// below vacuously true, and a vacuous pass is the failure this whole file
+    /// exists to prevent.
     /// </para>
     /// </remarks>
-    public static ToolVerdict TheOneDenial { get; } =
+    public static IReadOnlyList<ToolVerdict> TheDenials { get; } =
         Committed.Upstream.Where(row => row.Kind is ToolVerdictKind.Deny).ToList() switch
         {
-            [var only] => only,
-            var many => throw new InvalidOperationException(
-                $"{ToolVerdicts.FileName} carries {many.Count} 'deny' rows and the suite is written against exactly one "
-                + $"({string.Join(", ", many.Select(row => row.Name))}). Every arm that says 'the withheld tool' has to say which one first."),
+            [] => throw new InvalidOperationException(
+                $"{ToolVerdicts.FileName} carries no 'deny' row at all, and every arm that asserts a withheld tool is "
+                + "absent from the surface would pass by measuring nothing. If a denial really was withdrawn, the arms "
+                + "that name one have to be withdrawn in the same change."),
+            var rows => rows,
         };
+
+    /// <summary>
+    /// How many tools this build withholds — the addend every surface count in
+    /// the suite is written against.
+    /// </summary>
+    public static int Count => TheDenials.Count;
+
+    /// <summary>
+    /// One denial, for the arms that have to drive a rig at a single tool rather
+    /// than assert over the set.
+    /// </summary>
+    /// <remarks>
+    /// <b>The oldest judgement, tie-broken by name, rather than the first row in
+    /// the file.</b> Row order follows upstream's <c>tools/list</c> order, so
+    /// "the first one" moves the day upstream reorders its own array — which is
+    /// exactly the silent re-point the <c>Single</c> this replaced was guarding
+    /// against. A date and a name are ours and do not move.
+    /// </remarks>
+    public static ToolVerdict ADenial { get; } =
+        TheDenials.OrderBy(row => row.Since, StringComparer.Ordinal)
+            .ThenBy(row => row.Name, StringComparer.Ordinal)
+            .First();
 
     /// <summary>The committed file's raw text, for an arm that doctors it.</summary>
     /// <returns>The bytes on disk, as text.</returns>
@@ -88,11 +123,13 @@ internal static class RepositoryVerdicts
     /// denial the product does not ship.
     /// </summary>
     /// <remarks>
-    /// <b>The suite cannot use <c>browser_annotate</c> for this and must not
-    /// add a second real one.</b> The advertised-tool counts this repository
-    /// publishes are asserted against <c>withheld == 1</c>, so a second shipped
-    /// denial would move four documented numbers to test one mechanism. A rig
-    /// copy tests the mechanism and leaves the product's judgement alone.
+    /// <b>The suite cannot use a shipped denial for this and must not add a
+    /// real one.</b> The advertised-tool counts this repository publishes are
+    /// asserted against <see cref="Count"/>, so a shipped denial added to test a
+    /// mechanism would move four documented numbers with it. A rig copy tests
+    /// the mechanism and leaves the product's judgement alone. *(Was "cannot use
+    /// <c>browser_annotate</c> … <c>withheld == 1</c>" until 2026-09-15, when
+    /// the second real denial landed and the count stopped being a literal.)*
     /// </remarks>
     /// <param name="tool">The tool to deny.</param>
     /// <param name="why">The refusal a caller would read.</param>

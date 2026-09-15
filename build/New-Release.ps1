@@ -147,12 +147,29 @@ if (-not $ArchiveDir) { $ArchiveDir = Join-Path $OutputDir 'archive' }
 # aside and DELETES it, and uninstall empties it.
 $packId = 'BrowserAI.app'
 
-# What a human downloads is still called BrowserAI. `vpk` names its output after
-# the pack id, so the installer arrives as `BrowserAI.app-win-Setup.exe` and is
-# renamed back below. The feed-internal `.nupkg` names are NOT renamed: Velopack
-# resolves them by id out of `releases.<channel>.json`, and a rename there is a
-# feed that 404s on the first update.
+# What a human downloads is called BrowserAI and nothing else. `vpk` names its
+# output after the pack id, so the installer arrives as
+# `BrowserAI.app-win-Setup.exe` and the portable archive as
+# `BrowserAI.app-win-Portable.zip`, and both are renamed below. The feed-internal
+# `.nupkg` names are NOT renamed: Velopack resolves them by id out of
+# `releases.<channel>.json`, and a rename there is a feed that 404s on the first
+# update.
 $downloadId = 'BrowserAI'
+
+# ⚠️ THE DOWNLOAD NAMES DROP THE CHANNEL ON THE DEFAULT CHANNEL AND KEEP IT
+# OTHERWISE -- 2026-09-15. `BrowserAI.exe` and `BrowserAI.zip` are what a person
+# should see on a releases page; `-win-Setup` and `-win-Portable` are vpk's
+# vocabulary rather than anybody's. But two channels packed into one output
+# directory would then collide and the second would silently overwrite the
+# first, which is the one property the old names had and this must not lose. So
+# a non-default channel keeps its name: `BrowserAI-beta.exe`.
+#
+# Velopack's Setup stub does not read its own filename -- verified against
+# 1.2.0's own source, which locates the package by the bundle appended to the
+# executable and never by the path it was launched from -- so renaming it is
+# safe in a way renaming a `.nupkg` is not.
+$defaultChannel = 'win'
+$downloadSuffix = if ($Channel -eq $defaultChannel) { '' } else { "-$Channel" }
 
 # --- 1. vpk and Velopack must agree ------------------------------------------
 # The tool is global, so it is outside packages.lock.json and nothing else in
@@ -382,39 +399,60 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# --- 6b. The download is called BrowserAI, not BrowserAI.app -------------------
-# ⚠️ ADDED 2026-09-15 WITH THE PACK-ID RENAME, and it is deliberately the ONLY
-# artifact renamed. `vpk` names everything after the pack id; the id is what
-# chooses the install directory, so it had to become `BrowserAI.app`, and the
-# file a person downloads must not inherit a suffix that exists to answer a
-# question about directories. The `.nupkg`s keep the id: Velopack resolves those
-# by name out of `releases.<channel>.json`, and a rename there is a feed that
-# 404s on the first update.
-$packedSetup = Join-Path $OutputDir "$packId-$Channel-Setup.exe"
-$setup = Join-Path $OutputDir "$downloadId-$Channel-Setup.exe"
+# --- 6b. The downloads are called BrowserAI.exe and BrowserAI.zip --------------
+# ⚠️ ADDED 2026-09-15 WITH THE PACK-ID RENAME and WIDENED THE SAME DAY to the
+# two HUMAN-FACING artifacts *(previously the installer alone, renamed
+# `BrowserAI.app-win-Setup.exe` -> `BrowserAI-win-Setup.exe`)*. `vpk` names
+# everything after the pack id; the id is what chooses the install directory, so
+# it had to become `BrowserAI.app`, and the files a person downloads must not
+# inherit a suffix that exists to answer a question about directories -- nor
+# vpk's own `-Setup` and `-Portable` vocabulary, which says what the tool calls
+# them rather than what they are.
+#
+# Exactly two artifacts are renamed and the feed-internal ones are the control:
+# the `.nupkg`s and `releases.<channel>.json` keep the id, because Velopack
+# resolves those by name and a rename there is a feed that 404s on the first
+# update.
+$downloads = @(
+    @{ Packed = "$packId-$Channel-Setup.exe";    Download = "$downloadId$downloadSuffix.exe"; What = 'installer'; Required = $true }
+    @{ Packed = "$packId-$Channel-Portable.zip"; Download = "$downloadId$downloadSuffix.zip"; What = 'portable archive'; Required = $true }
+)
 
-if (-not (Test-Path -LiteralPath $packedSetup)) {
-    Write-Error "vpk did not produce $packedSetup, so there is no installer to rename or to publish."
-    exit 1
+$assets = Join-Path $OutputDir "assets.$Channel.json"
+$assetText = if (Test-Path -LiteralPath $assets) { Get-Content -LiteralPath $assets -Raw } else { $null }
+$rewritten = $assetText
+
+foreach ($download in $downloads) {
+    $packedPath = Join-Path $OutputDir $download.Packed
+    $downloadPath = Join-Path $OutputDir $download.Download
+
+    if (-not (Test-Path -LiteralPath $packedPath)) {
+        if ($download.Required) {
+            Write-Error "vpk did not produce $packedPath, so there is no $($download.What) to rename or to publish."
+            exit 1
+        }
+
+        continue
+    }
+
+    Move-Item -LiteralPath $packedPath -Destination $downloadPath -Force
+    Write-Host "Renamed the $($download.What) to $(Split-Path -Leaf $downloadPath)."
+
+    # And the asset manifest goes with it, because it is read by machines: a file
+    # name in there that nothing on disk answers to is a lie in a machine-readable
+    # file, which is worse than an inconvenient name.
+    if ($null -ne $rewritten) {
+        $rewritten = $rewritten.Replace($download.Packed, $download.Download)
+    }
 }
 
-Move-Item -LiteralPath $packedSetup -Destination $setup -Force
-Write-Host "Renamed the installer to $(Split-Path -Leaf $setup)."
+$setup = Join-Path $OutputDir "$downloadId$downloadSuffix.exe"
+$portable = Join-Path $OutputDir "$downloadId$downloadSuffix.zip"
 
-# And the asset manifest goes with it, because it is read by machines: a file
-# name in there that nothing on disk answers to is a lie in a machine-readable
-# file, which is worse than an inconvenient name.
-$assets = Join-Path $OutputDir "assets.$Channel.json"
-
-if (Test-Path -LiteralPath $assets) {
-    $assetText = Get-Content -LiteralPath $assets -Raw
-    $renamed = $assetText.Replace("$packId-$Channel-Setup.exe", "$downloadId-$Channel-Setup.exe")
-
-    if ($renamed -ne $assetText) {
-        # LF and no BOM, like every other file this repository writes.
-        [System.IO.File]::WriteAllText($assets, ($renamed -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
-        Write-Host "Rewrote the installer's name in $(Split-Path -Leaf $assets)."
-    }
+if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
+    # LF and no BOM, like every other file this repository writes.
+    [System.IO.File]::WriteAllText($assets, ($rewritten -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
+    Write-Host "Rewrote the download names in $(Split-Path -Leaf $assets)."
 }
 
 # --- 7. Archive the full package ----------------------------------------------
@@ -468,6 +506,7 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
     DeltaPackage     = if ($deltaSize) { $delta } else { $null }
     Archived         = (Join-Path $ArchiveDir (Split-Path -Leaf $full))
     Setup            = $setup
+    Portable         = $portable
     Manifest         = (Join-Path $OutputDir "releases.$Channel.json")
     ResolvedSet      = ($manifest | Select-Object -Last 1)
 }

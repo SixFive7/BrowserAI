@@ -503,11 +503,16 @@ internal sealed partial class RecordedCountTests
 
         // Not vacuous, and the relationship is asserted rather than the numbers:
         // a snapshot that had lost its capability map would make the granted
-        // surface the default 24, and a policy that stopped withholding anything
+        // surface the default 26, and a policy that stopped withholding anything
         // would make the two counts equal.
+        //
+        // ⚠️ `withheld` is 2 since 2026-09-15 (previously 1): browser_webmcp_call
+        // joined browser_annotate. The number is spelled here because the
+        // sentence in DECISIONS.md publishes the DIFFERENCE and a difference is
+        // satisfied by both halves moving together.
         await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
         await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
-        await Assert.That(withheld).IsEqualTo(1);
+        await Assert.That(withheld).IsEqualTo(2);
     }
 
     /// <summary>

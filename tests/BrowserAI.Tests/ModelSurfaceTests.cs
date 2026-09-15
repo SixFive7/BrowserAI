@@ -357,8 +357,16 @@ internal sealed class ModelSurfaceTests
         // which added browser_start_recording and browser_stop_recording, both
         // judged `allow` on 2026-09-15. The ten are still the ten: the addend is
         // the capability grant, and the base is whatever upstream ships.
+        //
+        // ⚠️ The base is 61 since 2026-09-15 (previously 60): @playwright/mcp
+        // 0.0.81 added browser_webmcp_list and browser_webmcp_call, and the two
+        // were judged in OPPOSITE directions on the same day — `allow` for the
+        // list, `deny` for the call, on liveness — so upstream's pair moves this
+        // base by one rather than by two. That asymmetry is the whole reason the
+        // number is stated: a base of 62 would mean the denial had stopped
+        // withholding, and a base of 60 would mean the list had never arrived.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(60 + TheNewlyGrantedTen.Length);
+            .IsEqualTo(61 + TheNewlyGrantedTen.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
@@ -607,10 +615,15 @@ internal sealed class ModelSurfaceTests
         // ⚠️ Corrected again, later the same day: minus whatever this build
         // withholds, which is one tool. Through the product's own predicate
         // rather than `- 1`, so the day the decision is reversed this follows it.
+        //
+        // ⚠️ Corrected 2026-09-15 (previously `- 1`): it is two tools now —
+        // `browser_annotate` and `browser_webmcp_call`, both on liveness — and
+        // the subtrahend is read off the file rather than typed, so the arm
+        // states a relationship and the file states the number.
         var advertisedUpstream = UpstreamSurface.SnapshotDescriptions()
             .Count(entry => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(entry.Name));
 
-        await Assert.That(advertisedUpstream).IsEqualTo(UpstreamSurface.SnapshotToolCount() - 1);
+        await Assert.That(advertisedUpstream).IsEqualTo(UpstreamSurface.SnapshotToolCount() - RepositoryVerdicts.Count);
         await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + advertisedUpstream);
     }
 
@@ -993,8 +1006,12 @@ internal sealed class ModelSurfaceTests
         // Not vacuous: an `Advertised` that returned nothing would satisfy every
         // "unchanged" check above by never running one. The authored tools are
         // in that dictionary too, so the arithmetic names both halves.
-        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + upstream.Count - 1);
-        await Assert.That(advertised.ContainsKey(RepositoryVerdicts.TheOneDenial.Name)).IsFalse();
+        await Assert.That(advertised.Count).IsEqualTo(SessionToolSurface.Names.Count + upstream.Count - RepositoryVerdicts.Count);
+
+        foreach (var denial in RepositoryVerdicts.TheDenials)
+        {
+            await Assert.That(advertised.ContainsKey(denial.Name)).IsFalse();
+        }
 
         // And nothing of the removed matrix — or of the withheld tool — survives
         // anywhere in the surface a model reads. A positive control comes first,
@@ -1010,7 +1027,7 @@ internal sealed class ModelSurfaceTests
             "is not one this build has classified",
             "refuses every browser tool",
             "BrowserAI refuses this",
-            RepositoryVerdicts.TheOneDenial.Name,
+            .. RepositoryVerdicts.TheDenials.Select(denial => denial.Name),
         ])
         {
             await Assert.That(everyDescription).DoesNotContain(gone);

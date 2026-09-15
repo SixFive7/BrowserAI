@@ -43,7 +43,7 @@ internal sealed class InstallRootScopeTests
         // The root an uninstalled BrowserAI computes -- %LocalAppData%\BrowserAI
         // -- and the one Velopack installs to by default. If this is ever
         // refused, every BrowserAI on the machine stops starting.
-        var verdict = InstallRootScope.Judge(BrowserAiPaths.Real.RootAppDir);
+        var verdict = InstallRootScope.Judge(BrowserAiPaths.Real.RootAppDir, installRoot: null);
 
         await Assert.That(verdict.MayServe).IsTrue();
         await Assert.That(verdict.Refusal).IsNull();
@@ -67,7 +67,7 @@ internal sealed class InstallRootScopeTests
     {
         using var outside = ScratchDirectory.Create("install-root-outside");
 
-        var verdict = InstallRootScope.Judge(outside.Path);
+        var verdict = InstallRootScope.Judge(outside.Path, installRoot: null);
 
         await Assert.That(verdict.MayServe).IsFalse();
 
@@ -85,7 +85,19 @@ internal sealed class InstallRootScopeTests
         // absence as well as a presence, so putting it back is red in both
         // directions rather than in neither.
         await Assert.That(refusal).DoesNotContain("install-to flag");
-        await Assert.That(refusal).Contains("the installer chooses where the program goes and never where the data goes");
+
+        // ⚠️ The clause moved 2026-09-15, later the same day (previously "the
+        // installer chooses where the program goes and never where the data
+        // goes"). The same claim is still made and the flag is now named, because
+        // the sentence has to distinguish TWO roots and two levers: --installto
+        // moves the install root and BROWSERAI_ROOT moves this one, and neither
+        // can move the other's.
+        await Assert.That(refusal).Contains("it moves the install root and never the data root");
+
+        // And both roots are named, whichever is at fault, so a reader never has
+        // to guess which one the sentence is about.
+        await Assert.That(refusal).Contains("the data root is");
+        await Assert.That(refusal).Contains("the install root is");
 
         // ⚠️ Case-insensitively, and that is not a nicety. Windows hands every
         // path back with an upper-case drive letter while a process keeps
@@ -99,7 +111,7 @@ internal sealed class InstallRootScopeTests
     {
         using var inside = ScratchDirectory.CreateUnderProfile("install-root-inside");
 
-        var verdict = InstallRootScope.Judge(inside.Path);
+        var verdict = InstallRootScope.Judge(inside.Path, installRoot: null);
 
         await Assert.That(verdict.MayServe).IsTrue();
         await Assert.That(verdict.Unestablished).IsNull();
@@ -123,13 +135,13 @@ internal sealed class InstallRootScopeTests
         var absent = Path.Combine(inside.Path, "not", "created", "yet");
 
         await Assert.That(Directory.Exists(absent)).IsFalse();
-        await Assert.That(InstallRootScope.Judge(absent).MayServe).IsTrue();
+        await Assert.That(InstallRootScope.Judge(absent, installRoot: null).MayServe).IsTrue();
 
         using var outside = ScratchDirectory.Create("install-root-absent-outside");
 
         // And the same arm the other way, so this is not passing because
         // everything absent is accepted.
-        await Assert.That(InstallRootScope.Judge(Path.Combine(outside.Path, "not", "created", "yet")).MayServe).IsFalse();
+        await Assert.That(InstallRootScope.Judge(Path.Combine(outside.Path, "not", "created", "yet"), installRoot: null).MayServe).IsFalse();
     }
 
     /// <summary>
@@ -157,7 +169,7 @@ internal sealed class InstallRootScopeTests
         // prefix comparison would accept it.
         await Assert.That(link.StartsWith(Profile, StringComparison.OrdinalIgnoreCase)).IsTrue();
 
-        var verdict = InstallRootScope.Judge(link);
+        var verdict = InstallRootScope.Judge(link, installRoot: null);
 
         await Assert.That(verdict.MayServe).IsFalse();
         await Assert.That(verdict.Refusal!.Contains(target.Path, StringComparison.OrdinalIgnoreCase)).IsTrue();
@@ -183,7 +195,7 @@ internal sealed class InstallRootScopeTests
 
         await PathAliases.JunctionAsync(link, target.Path);
 
-        await Assert.That(InstallRootScope.Judge(link).MayServe).IsTrue();
+        await Assert.That(InstallRootScope.Judge(link, installRoot: null).MayServe).IsTrue();
     }
 
     /// <summary>
@@ -209,7 +221,7 @@ internal sealed class InstallRootScopeTests
         // of strings would have refused this.
         await Assert.That(alias.Root.StartsWith(Profile, StringComparison.OrdinalIgnoreCase)).IsFalse();
 
-        await Assert.That(InstallRootScope.Judge(alias.PathTo("app-root")).MayServe).IsTrue();
+        await Assert.That(InstallRootScope.Judge(alias.PathTo("app-root"), installRoot: null).MayServe).IsTrue();
     }
 
     /// <summary>
@@ -232,7 +244,7 @@ internal sealed class InstallRootScopeTests
 
         var shortName = PathAliases.ShortNameOf(target.Path);
 
-        await Assert.That(InstallRootScope.Judge(shortName).MayServe).IsTrue();
+        await Assert.That(InstallRootScope.Judge(shortName, installRoot: null).MayServe).IsTrue();
 
         // ⚠️ Not a skip and not a branch in the assertion: both spellings must be
         // served, and the only thing the volume's setting changes is whether the
@@ -242,7 +254,7 @@ internal sealed class InstallRootScopeTests
             $"short name {(string.Equals(shortName, target.Path, StringComparison.OrdinalIgnoreCase) ? "is not generated on this volume" : "differs from the long path")}")
             .IsNotEmpty();
 
-        await Assert.That(InstallRootScope.Judge(BrowserAI.Interop.VolumeIdentity.ExtendedLengthPrefix + target.Path).MayServe).IsTrue();
+        await Assert.That(InstallRootScope.Judge(BrowserAI.Interop.VolumeIdentity.ExtendedLengthPrefix + target.Path, installRoot: null).MayServe).IsTrue();
     }
 
     /// <summary>
@@ -340,9 +352,132 @@ internal sealed class InstallRootScopeTests
     [Test]
     public async Task AUncRootIsRefusedOnItsSpellingAlone()
     {
-        var verdict = InstallRootScope.Judge(@"\\10.255.255.1\browserai\root");
+        var verdict = InstallRootScope.Judge(@"\\10.255.255.1\browserai\root", installRoot: null);
 
         await Assert.That(verdict.MayServe).IsFalse();
         await Assert.That(verdict.Refusal!).Contains("UNC");
+    }
+
+    /// <summary>
+    /// An install root outside the profile is refused even when the data root is
+    /// perfectly per-user, and the refusal offers the lever that can move it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the arm the 2026-09-15 layout split opened and the decision of
+    /// the same day closed.</b> The data root became a constant that
+    /// <c>--installto</c> cannot touch, and the live-instance markers and their
+    /// <c>Global\</c> mutex moved to the install root — which was then judged by
+    /// nothing at all. Two users sharing one install root still lose the census
+    /// silently, and an apply's <c>force_stop_package</c> still terminates every
+    /// process under it.
+    /// </para>
+    /// <para>
+    /// <b>The data root here is deliberately a GOOD one.</b> An arm that handed
+    /// both roots something outside the profile would pass against an
+    /// implementation that never looked at the second argument at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInstallRootOutsideTheProfileIsRefusedEvenWhenTheDataRootIsNot()
+    {
+        using var good = ScratchDirectory.CreateUnderProfile("install-root-data-ok");
+        using var outside = ScratchDirectory.Create("install-root-install-outside");
+
+        // The control first: the same data root with no install root at all is
+        // served, so what the arm below catches is the second argument.
+        await Assert.That(InstallRootScope.Judge(good.Path, installRoot: null).MayServe).IsTrue();
+
+        var verdict = InstallRootScope.Judge(good.Path, outside.Path);
+
+        await Assert.That(verdict.MayServe).IsFalse();
+
+        var refusal = verdict.Refusal!;
+
+        // It names the root at fault, and it says which KIND of root that is --
+        // the whole reason the sentence is parameterised.
+        await Assert.That(refusal).Contains(outside.Path);
+        await Assert.That(refusal).Contains("install root");
+
+        // Both roots, always, because two levers move two roots and a reader has
+        // to be able to tell which sentence is about which.
+        await Assert.That(refusal).Contains(good.Path);
+
+        // The remedy that can actually move an install root, and the one that
+        // cannot -- asserted in both directions, because a refusal offering
+        // BROWSERAI_ROOT here would send somebody to change a setting that has
+        // no effect on the thing being refused.
+        await Assert.That(refusal).Contains("--installto");
+        await Assert.That(refusal).Contains("it moves the data root and never the install root");
+        await Assert.That(refusal).Contains("live-instance set");
+        await Assert.That(refusal.Contains(Profile, StringComparison.OrdinalIgnoreCase)).IsTrue();
+    }
+
+    /// <summary>
+    /// An install root inside the profile is served, and so is the ordinary
+    /// installed layout.
+    /// </summary>
+    /// <remarks>
+    /// <b>The false-positive half, for the second root.</b> Every alias arm above
+    /// is about the data root; this one is the assurance that the default
+    /// installed arrangement — <c>%LocalAppData%\BrowserAI.app</c> beside
+    /// <c>%LocalAppData%\BrowserAI</c> — is not refused by the check that was
+    /// just added, which would stop every installed BrowserAI on the machine.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstalledLayoutIsServedAndSoIsAnyInstallRootInsideTheProfile()
+    {
+        using var inside = ScratchDirectory.CreateUnderProfile("install-root-install-inside");
+
+        var scratch = InstallRootScope.Judge(BrowserAiPaths.Real.RootAppDir, inside.Path);
+
+        await Assert.That(scratch.MayServe).IsTrue();
+        await Assert.That(scratch.Refusal).IsNull();
+        await Assert.That(scratch.Unestablished).IsNull();
+
+        // The real shipped pair, composed from the product's own data root rather
+        // than spelled here: the install root Velopack puts beside it under the
+        // pack id. If this is ever refused, every installed BrowserAI stops
+        // starting.
+        var installed = BrowserAiPaths.Real.RootAppDir + ".app";
+
+        var real = InstallRootScope.Judge(BrowserAiPaths.Real.RootAppDir, installed);
+
+        await Assert.That(real.MayServe).IsTrue();
+        await Assert.That(real.Refusal).IsNull();
+    }
+
+    /// <summary>
+    /// A data root that is itself refused is reported before the install root is
+    /// looked at.
+    /// </summary>
+    /// <remarks>
+    /// <b>Order is asserted rather than left to whichever check happened to run
+    /// first.</b> A process that may not keep its browsers where it resolved them
+    /// has nothing useful to say about where its binary lives, and a refusal
+    /// naming the install root would send somebody to reinstall over a problem a
+    /// variable caused.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WhenBothRootsAreOutsideTheProfileTheDataRootIsTheOneRefused()
+    {
+        using var badData = ScratchDirectory.Create("install-root-both-data");
+        using var badInstall = ScratchDirectory.Create("install-root-both-install");
+
+        var verdict = InstallRootScope.Judge(badData.Path, badInstall.Path);
+
+        await Assert.That(verdict.MayServe).IsFalse();
+
+        var refusal = verdict.Refusal!;
+
+        await Assert.That(refusal).Contains($"will not serve out of the data root '{badData.Path}'");
+        await Assert.That(refusal).Contains(Program.AppRootVariable);
+
+        // Both are still named, so the second problem is not hidden by the first
+        // being the one refused.
+        await Assert.That(refusal).Contains(badInstall.Path);
     }
 }

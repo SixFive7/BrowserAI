@@ -432,7 +432,8 @@ before this and nobody had re-read the number:*
 
   **A pack into a scratch directory counts**, if the gate is being run before the
   real one exists: `BROWSERAI_RELEASE_FEED` points the arm at any directory
-  holding a packed `BrowserAI-win-Setup.exe` beside its `releases.win.json`. That
+  holding a packed `BrowserAI.exe` beside its `releases.win.json` *(named
+  `BrowserAI-win-Setup.exe` until 2026-09-15)*. That
   is how the layout change of 2026-09-15 was exercised on the day it landed —
   `build/New-Release.ps1 -SkipPublish -PackDir <publish> -OutputDir <scratch>
   -AllowPreRelease`, then the arm against that directory — and it is the same two

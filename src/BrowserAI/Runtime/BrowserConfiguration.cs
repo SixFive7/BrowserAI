@@ -168,6 +168,45 @@ internal static class BrowserConfiguration
     public const string Codegen = "none";
 
     /// <summary>
+    /// Upstream's own idle timeout, in milliseconds — <b>one hour</b>, written
+    /// rather than omitted.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It cannot fire, and that is why it is written down.</b>
+    /// <see cref="Sessions.BrowserIdleTimer.DefaultIdlePeriod"/> is ten minutes
+    /// and both timers are reset by the same event — a tool call — so BrowserAI's
+    /// closes the browser six times over before upstream's deadline is reached.
+    /// A key that changes nothing is exactly the kind an omission hides: with it
+    /// absent, <c>browser_get_config</c> reads back nothing, the round-trip test
+    /// has no leaf to follow, and the day upstream moves its default from an hour
+    /// to a minute the change arrives here as behaviour nobody chose. Written, it
+    /// is a leaf in <see cref="GeneratedConfig.Opinions"/>, asserted out of the
+    /// running child, and a moved default is a red build.
+    /// </para>
+    /// <para>
+    /// <b>The value is upstream's default and is deliberately not ours.</b>
+    /// Judged 2026-09-15 at <c>@playwright/mcp</c> 0.0.81, where the key arrived:
+    /// <i>"Defaults to one hour for headless browsers Playwright launched, and to
+    /// no timeout for headed or attached ones."</i> Writing it makes the headed
+    /// case carry an hour it would not otherwise have — which is still
+    /// unreachable behind ten minutes, and is the price of one value rather than
+    /// a second code path keyed on headedness.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>What <c>config.d.ts</c> says about it is about a different
+    /// program.</b> Its <i>"The CLI shuts the whole session down instead of
+    /// relaunching"</i> belongs to the <c>playwright-cli</c> daemon, which this
+    /// product does not run. Measured 2026-09-15 on the MCP stdio path BrowserAI
+    /// really uses, with <c>--idle-timeout 4000</c>: the action is
+    /// <c>browser.close()</c>, the child was still alive after twice the timeout,
+    /// and the next tool call answered normally in 354 ms. So the alarming
+    /// sentence is not a reason to omit the key.
+    /// </para>
+    /// </remarks>
+    public const int IdleTimeoutMilliseconds = 3_600_000;
+
+    /// <summary>
     /// The permissions every context is granted, hard-coded.
     /// </summary>
     /// <remarks>
@@ -382,6 +421,12 @@ internal static class BrowserConfiguration
         "console.level",
         "snapshot.boxes",
         "codegen",
+
+        // Added 2026-09-15 with the key itself. It is required here for the
+        // reason the key is written at all: the generator dropping it would
+        // otherwise remove it from both sides of the round trip and leave that
+        // comparison green.
+        "timeouts.idle",
     ];
 
     /// <summary>The config one session's child is started with.</summary>
@@ -684,6 +729,19 @@ internal static class BrowserConfiguration
             // See the constant: it strips a `### Ran Playwright code` block from
             // every response, for a feature this product does not have.
             writer.WriteString("codegen", Codegen);
+
+            // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN RATHER THAN OMITTED, AND IT
+            // CANNOT FIRE. See `IdleTimeoutMilliseconds`: BrowserAI's own timer
+            // is ten minutes and both are reset by a tool call, so upstream's
+            // hour is unreachable under the shipped configuration. The key is
+            // written anyway because an omission records no decision and
+            // `browser_get_config` cannot read back a key the file never
+            // carried -- the same argument as `allowUnrestrictedFileAccess` two
+            // blocks up, and the day upstream's default moves this is a red
+            // build rather than a behaviour change nobody chose.
+            writer.WriteStartObject("timeouts");
+            writer.WriteNumber("idle", IdleTimeoutMilliseconds);
+            writer.WriteEndObject();
 
             writer.WriteEndObject();
         }

@@ -96,22 +96,32 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 70 of 71 is what DECISIONS records
+        // Stated as a number as well, because 71 of 73 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
-        // say so. *(Corrected 2026-09-15, previously 68 of 69 -- @playwright/mcp
-        // 0.0.80 added browser_start_recording and browser_stop_recording and
-        // both were judged `allow`; corrected 2026-08-20 before that, previously
-        // 58 of 59.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 70);
+        // say so. *(Corrected 2026-09-15 a second time the same day, previously
+        // 70 of 71 -- @playwright/mcp 0.0.81 added browser_webmcp_list and
+        // browser_webmcp_call, both `core`, and they were judged in OPPOSITE
+        // directions: the list `allow`, the call `deny` on liveness. So the
+        // denominator moved by two and this number by one. Corrected earlier the
+        // same day from 68 of 69 -- 0.0.80 added browser_start_recording and
+        // browser_stop_recording and both were judged `allow`; corrected
+        // 2026-08-20 before that, previously 58 of 59.)*
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 71);
 
-        // ⚠️ And the withheld tool is absent from the REAL binary's real answer,
-        // named individually. The list comparison above would also catch it, but
-        // only as one differing string in a list of 77: this is the assertion
-        // that says what happened, and it is the off-the-wire half of the
-        // decision. *(Corrected 2026-09-15, previously "among 74" -- the list is
-        // the 7 authored names plus the advertised upstream ones, which was 75
-        // when that number was written and is 77 now.)*
-        await Assert.That(run.ToolNames).DoesNotContain(RepositoryVerdicts.TheOneDenial.Name);
+        // ⚠️ And every withheld tool is absent from the REAL binary's real
+        // answer, named individually. The list comparison above would also catch
+        // it, but only as one differing string in a list of 78: this is the
+        // assertion that says what happened, and it is the off-the-wire half of
+        // the decision. *(A loop since 2026-09-15, previously the single
+        // `TheOneDenial` -- browser_webmcp_call is the second denial and the
+        // off-the-wire half is exactly what a count would not have caught.
+        // Corrected earlier the same day from "among 74" -- the list is the 7
+        // authored names plus the advertised upstream ones, which was 75 when
+        // that number was written and is 78 now.)*
+        foreach (var denial in RepositoryVerdicts.TheDenials)
+        {
+            await Assert.That(run.ToolNames).DoesNotContain(denial.Name);
+        }
 
         // ⚠️ And the ten that arrived on 2026-08-20 are in the REAL binary's
         // real answer, named individually for the same reason. This is the
@@ -123,10 +133,14 @@ internal sealed class VerticalSliceTests
             await Assert.That(run.ToolNames).Contains(granted);
         }
 
-        // Not vacuous — the child really does have it, so the absence above is
-        // BrowserAI's filter rather than an upstream that never shipped it.
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities))
-            .Contains(RepositoryVerdicts.TheOneDenial.Name);
+        // Not vacuous — the child really does have each of them, so the absence
+        // above is BrowserAI's filter rather than an upstream that never shipped
+        // the tool.
+        foreach (var denial in RepositoryVerdicts.TheDenials)
+        {
+            await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities))
+                .Contains(denial.Name);
+        }
 
         // And every one of them gains BrowserAI's `session` parameter, asserted
         // against the REAL child's list rather than against the snapshot the

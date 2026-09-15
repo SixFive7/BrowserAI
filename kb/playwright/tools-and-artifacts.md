@@ -285,10 +285,11 @@ feature"*. `[FLOATS]`
 
 ### What a BrowserAI session permits, after its own filtering
 
-**Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.80 / `playwright-core`
-1.63.0-alpha-2026-08-31: 70 of 71, one row.** ⚠️ **Corrected 2026-09-15
-(previously "Re-measured 2026-08-20 @ `@playwright/mcp` 0.0.79 / `playwright-core`
-1.63.0-alpha-2026-08-05: 68 of 69, one row"; corrected 2026-08-20 from three rows,
+**Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.81 / `playwright-core`
+1.64.0-alpha-2026-09-14: 71 of 73, one row.** ⚠️ **Corrected 2026-09-15
+a second time the same day (previously "Re-measured 2026-09-15 @ `@playwright/mcp`
+0.0.80 / `playwright-core` 1.63.0-alpha-2026-08-31: 70 of 71, one row"; "68 of 69"
+at 0.0.79 before that; corrected 2026-08-20 from three rows,
 58 / 58 / 58 of 58, headed "What BrowserAI's own modes permit"; corrected twice on
 2026-08-18 before that — from 41 / 41 / 58 to 58 / 59 / 59 of 59, and then to
 58 / 58 / 58 of 58).** **Session modes were deleted and every capability is
@@ -299,9 +300,18 @@ tools with them. **The 2026-09-15 move is upstream's and not a decision taken
 here**: `@playwright/mcp` 0.0.80 added `browser_start_recording` and
 `browser_stop_recording` to `devtools`, both were judged `allow`, and both
 numerator and denominator moved by two while the one withheld tool stayed one.
-Upstream's own per-capability surfaces are 44 and 71 above; this is what survives
-BrowserAI's own decision, out of the **70-tool surface** it advertises to every
-caller — 71 minus the one it withholds. Re-establish by running
+⚠️ **The 0.0.81 move is upstream's in the denominator and OURS in the
+numerator, and it is the first time the two have moved by different amounts.**
+`@playwright/mcp` 0.0.81 added `browser_webmcp_list` and `browser_webmcp_call`,
+both `core` and therefore unconditional, taking the exposable surface from 71 to
+73 — and the pair was judged in opposite directions on 2026-09-15: the list
+`allow`, the call `deny`, on liveness. So the denominator moved by two, the
+advertised count by one, and **the withheld set became two for the first time
+since it existed**.
+
+Upstream's own per-capability surfaces are 46 and 73 above; this is what survives
+BrowserAI's own decision, out of the **71-tool surface** it advertises to every
+caller — 73 minus the two it withholds. Re-establish by running
 `SessionPolicyTests.ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`,
 which computes the surface from the committed snapshot, applies the product's own
 withholding predicate, and asks its decision function about every name that
@@ -309,15 +319,31 @@ survives. `[FLOATS]`
 
 | Session | Advertised | Permitted | Refused, and why |
 |---|---:|---:|---|
-| any | **70** | **70** | nothing it advertises |
+| any | **71** | **71** | nothing it advertises |
 
-**The 71st tool is `browser_annotate`, and it is not refused conditionally — it
-is not offered at all.** It is filtered out of `tools/list` in every session, and
-a caller that names it anyway is refused wherever it is named, because the daemon
-lands in `%TEMP%` and outlives its parent on a headed run exactly as it does on a
-headless one. The measurement is
-[what `browser_annotate` actually does](#what-browser_annotate-actually-does--measured-2026-08-18);
-the decision and what it would take to reverse are in
+**The two that are not there are `browser_annotate` and `browser_webmcp_call`,
+and neither is refused conditionally — neither is offered at all.**
+*(Was "The 71st tool is `browser_annotate`" until 2026-09-15.)* Each is filtered
+out of `tools/list` in every session, and a caller that names one anyway is
+refused wherever it is named.
+
+For `browser_annotate` the ground is that the daemon lands in `%TEMP%` and
+outlives its parent on a headed run exactly as it does on a headless one; the
+measurement is
+[what `browser_annotate` actually does](#what-browser_annotate-actually-does--measured-2026-08-18).
+For `browser_webmcp_call` the ground is the same word and a wider door: it runs a
+tool the **page** registers and waits for it with **no timeout at all**, measured
+2026-09-15 at **45,002 ms** against a page whose `invokeTool` never settles,
+against **521 ms** for a well-behaved tool on the same page — and the list path
+upstream wraps in `withTimeout(5000)` is the control that says the omission is on
+the call path rather than in the rig. `browser_webmcp_list` is `allow` for that
+reason: it is the bounded half of the same capability. ⚠️ **A deny does not
+fully close it**, and that is recorded rather than fixed — upstream's
+`renderTabHeader` emits `- N webmcp tools available on the page` on every tab
+header whose count is non-zero, carrying the count and none of the page's text, so
+a model is told they exist whatever `tool-verdicts.json` says.
+
+The decisions and what it would take to reverse either are in
 [DECISIONS](../../DECISIONS.md#licence-release-policy-and-the-tool-surface).
 ⚠️ *Corrected 2026-08-18 (previously "`headless` **58** — `browser_annotate`,
 whose window appears even here … `interactive` **59** — nothing; `persistent`

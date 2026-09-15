@@ -200,17 +200,27 @@ internal sealed class ReleaseScriptTests
     /// session index with it.
     /// </para>
     /// <para>
-    /// <b>The rename back is asserted with it, because the two are one
+    /// <b>The renames are asserted with it, because the two are one
     /// decision.</b> A suffix that exists to answer a question about directories
-    /// has no business on a file a person downloads from a releases page. Exactly
-    /// one artefact is renamed: the <c>.nupkg</c>s keep the id, because Velopack
+    /// has no business on a file a person downloads from a releases page, and
+    /// neither does vpk's own <c>-Setup</c> / <c>-Portable</c> vocabulary.
+    /// ⚠️ <b>Exactly TWO artefacts are renamed since 2026-09-15</b> *(previously
+    /// one, the installer, to <c>BrowserAI-win-Setup.exe</c>)*: the installer
+    /// becomes <c>BrowserAI.exe</c> and the portable archive
+    /// <c>BrowserAI.zip</c>. The <c>.nupkg</c>s keep the id, because Velopack
     /// resolves those by name out of <c>releases.&lt;channel&gt;.json</c> and a
     /// rename there is a feed that 404s on the first update.
+    /// </para>
+    /// <para>
+    /// <b>The channel leaves the name only on the default channel</b>, and that
+    /// half is asserted too: two channels packed into one output directory must
+    /// not collide, which is the one property vpk's naming had and a plain name
+    /// could lose silently.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePackIdIsTheInstallDirectoryAndTheInstallerIsRenamedBack()
+    public async Task ThePackIdIsTheInstallDirectoryAndTheDownloadsAreRenamedBack()
     {
         var script = await File.ReadAllTextAsync(ReleaseScript);
 
@@ -223,20 +233,34 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(script[start..end]).Contains("'--packId', $packId");
 
-        // The rename, and the refusal that stops it being a silent no-op: an
-        // installer that was not produced must fail the release rather than
-        // leave the previous run's file in place under the right name.
-        await Assert.That(script).Contains("$packedSetup = Join-Path $OutputDir \"$packId-$Channel-Setup.exe\"");
-        await Assert.That(script).Contains("$setup = Join-Path $OutputDir \"$downloadId-$Channel-Setup.exe\"");
-        await Assert.That(script).Contains("Move-Item -LiteralPath $packedSetup -Destination $setup -Force");
-        await Assert.That(script).Contains("there is no installer to rename or to publish");
+        // The suffix rule, and the default it is compared against. The parameter
+        // default and the literal have to agree, or the plain names would appear
+        // on a channel that is not the default one.
+        await Assert.That(script).Contains("[string] $Channel = 'win'");
+        await Assert.That(script).Contains("$defaultChannel = 'win'");
+        await Assert.That(script).Contains("$downloadSuffix = if ($Channel -eq $defaultChannel) { '' } else { \"-$Channel\" }");
 
-        // The human-facing manifest directory goes the same way.
+        // Both renames, by packed name and by download name, so neither can be
+        // dropped without this going red.
+        await Assert.That(script).Contains("Packed = \"$packId-$Channel-Setup.exe\";    Download = \"$downloadId$downloadSuffix.exe\"");
+        await Assert.That(script).Contains("Packed = \"$packId-$Channel-Portable.zip\"; Download = \"$downloadId$downloadSuffix.zip\"");
+        await Assert.That(script).Contains("Move-Item -LiteralPath $packedPath -Destination $downloadPath -Force");
+
+        // And the refusal that stops a rename being a silent no-op: an artefact
+        // that was not produced must fail the release rather than leave the
+        // previous run's file in place under the right name.
+        await Assert.That(script).Contains("so there is no $($download.What) to rename or to publish");
+        await Assert.That(script).Contains("Required = $true");
+        await Assert.That(script).DoesNotContain("Required = $false");
+
+        // The human-facing manifest directory keeps the VERSION, because it is a
+        // record rather than a download -- named for the download id and not for
+        // the pack id, and deliberately not flattened to `BrowserAI`.
         await Assert.That(script).Contains("$manifestDir = Join-Path $ArchiveDir \"$downloadId-$PackVersion-manifest\"");
 
-        // And the feed-internal packages do NOT: these two are the control, and
-        // a sweep that renamed everything would fail here rather than in the
-        // field on somebody's first update.
+        // And the feed-internal packages do NOT get renamed: these two are the
+        // control, and a sweep that renamed everything would fail here rather
+        // than in the field on somebody's first update.
         await Assert.That(script).Contains("$full = Join-Path $OutputDir \"$packId-$PackVersion-full.nupkg\"");
         await Assert.That(script).Contains("$delta = Join-Path $OutputDir \"$packId-$PackVersion-delta.nupkg\"");
     }

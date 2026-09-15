@@ -579,15 +579,28 @@ rather than forwarded — a model knows upstream's names from everywhere except 
 server's list. *Corrected 2026-08-18 (previously "Two refusals survive …
 `browser_annotate` is refused on a mode that opens no window").*
 
+⚠️ **And since 2026-09-15 a second tool is filtered out on the same
+ground**: `browser_webmcp_call`, which runs a tool the **page** registers and
+waits for it with no timeout — measured at 45,002 ms against a page whose tool
+never answered, against 521 ms for one that did. Upstream bounds the *list* path
+at five seconds and bounds the call path at nothing, so `browser_webmcp_list` is
+allowed and the call is not. It is the `browser_annotate` shape through a wider
+door: that one needed a human at a dashboard, and this one needs only a page.
+⚠️ **What the filter does not close is upstream's and is recorded rather
+than fixed**: `renderTabHeader` writes `- N webmcp tools available on the page`
+into every tab header whose count is non-zero, carrying the count and none of the
+page's text, whatever the verdicts file says.
+
 ⚠️ ***Corrected 2026-08-26 (previously "Implemented by
 `SessionToolPolicy.IsWithheldFromTheSurface` and `SessionToolSurface.Rewrite`").***
 That type is deleted. **The judgement is a file now** —
 [`tool-verdicts.json`](tool-verdicts.json), one row per tool, shipped inside the
 payload it describes and read at startup — and the sentence above is a fact about
-what the file says rather than about what the code decides. `browser_annotate` is
-still the only `deny` this build ships, and the reasoning that was a doc comment
-beside a C# constant is now that row's own `why`, which **is** the refusal a
-caller reads. Implemented by `ToolVerdicts`, `SessionToolSurface.Rewrite` and
+what the file says rather than about what the code decides. ⚠️ **`browser_annotate` was
+the only `deny` this build shipped until 2026-09-15** *(previously "is still the
+only `deny` this build ships")*; `browser_webmcp_call` is the second, and the
+reasoning that was a doc comment beside a C# constant is now each row's own
+`why`, which **is** the refusal a caller reads. Implemented by `ToolVerdicts`, `SessionToolSurface.Rewrite` and
 `BrowserProxy.AnswerToolsCallAsync`; the section below is what the file buys that
 a constant could not.
 
@@ -896,7 +909,7 @@ answers about whatever file it is handed and is never actionable alone.
 | stderr classification | `src/BrowserAI/Protocol/StandardErrorClassifier.cs` and its pinned reference copy |
 | Logging — one machine-wide file under a cross-process write gate | `src/BrowserAI/Logging/`, `src/BrowserAI/Interop/NativeFile.cs` *(the per-session file went 2026-08-26)* |
 | Where files live, installed or not | `src/BrowserAI/Hosting/{IAppPaths, LocalAppDataPaths, BuildVersion}.cs`, `src/BrowserAI/Updates/InstallLocation.cs` |
-| Refusing to serve out of a root two users could share | `src/BrowserAI/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state |
+| Refusing to serve out of a root two users could share — **both roots**, the data one and the install one, since 2026-09-15 | `src/BrowserAI/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state, with `Updates.InstallLocation.RootAppDir` as the second argument and `null` when this process is not an install |
 
 ⚠️ ***Corrected 2026-08-26 (previously "Anything attributable to a session is
 written to that session's own `browserai.log` and to nothing else; the
