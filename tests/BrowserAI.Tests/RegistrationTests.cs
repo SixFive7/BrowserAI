@@ -404,6 +404,23 @@ internal sealed class RegistrationTests
         await Assert.That(keeping.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
         await Assert.That(keeping.Verbs).IsEmpty();
 
+        // ---- ours, present, and the CONFIGURATION APP: re-pointed ----------
+        // ⚠️ Added 2026-09-16. This is the state every pre-split 1.0.0 install
+        // is in, and it is the one the update hook used to leave alone: the
+        // entry names `current\BrowserAI.exe`, which is there, and which is now
+        // the window rather than the server. A client that starts it gets a
+        // dialog and no handshake.
+        var misdirecting = new FakeClientCommandLine();
+        misdirecting.Registered[McpClientRegistration.ServerName] = app;
+
+        var corrected = McpRegistrar.Apply(
+            RegistrationIntent.Update, app, misdirecting, logger,
+            root => new RegistrationView(
+                RegistrationScope.User, "<constructed>", app, McpRegistryView.Classify(app, root), null));
+
+        await Assert.That(corrected.Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(misdirecting.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
+
         // ---- somebody else's: reported, and nothing runs --------------------
         using var elsewhere = ScratchDirectory.Create("registration-repair-foreign");
 
@@ -621,6 +638,42 @@ internal sealed class RegistrationTests
 
         await Assert.That(ours.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
         await Assert.That(ours.Command).IsEqualTo(server);
+
+        // ⚠️ OURS, PRESENT, AND THE WRONG BINARY — 2026-09-16. Every
+        // registration written before the two-binary split names
+        // `current\BrowserAI.exe`, which since 2026-09-15 is the CONFIGURATION
+        // APP. The file is there, so a classifier that asks only whether it
+        // exists answers "ours and present", the update hook leaves it exactly
+        // as it is, and the client then starts a window and waits forever for a
+        // JSON-RPC handshake from a process that is showing a dialog — with
+        // nothing in any log, because nothing failed.
+        //
+        // What makes an entry OURS is the install root. What makes it PRESENT is
+        // being the SERVER, read out of the file's own PE subsystem rather than
+        // taken from its name, which is the same discriminator
+        // RegistrationTarget uses when it composes the path in the first place.
+        var theApp = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
+
+        await Assert.That(File.Exists(theApp)).IsTrue();
+        await Assert.That(PeSubsystem.Of(theApp)).IsEqualTo(PeSubsystem.WindowsGui);
+
+        await WriteServerEntryAsync(file, theApp);
+
+        var misdirected = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
+
+        await Assert.That(misdirected.Ownership).IsEqualTo(RegistrationOwnership.OursAndStale);
+        await Assert.That(misdirected.Command).IsEqualTo(theApp);
+
+        // And a file under our root that is not a portable executable at all
+        // gets the same answer, because the question is never "is something
+        // there" — it is "may this be launched as the server".
+        var notAnExecutable = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.Server.exe.bak");
+
+        InstalledLayout.WriteSomethingThatIsNotAnExecutable(notAnExecutable);
+        await WriteServerEntryAsync(file, notAnExecutable);
+
+        await Assert.That(McpRegistryView.Read(RegistrationScope.User, file, install.Path).Ownership)
+            .IsEqualTo(RegistrationOwnership.OursAndStale);
 
         // Ours, stale.
         await WriteServerEntryAsync(

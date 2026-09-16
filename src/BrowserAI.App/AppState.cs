@@ -95,12 +95,44 @@ internal sealed record AppState
         {
             RegistrationOwnership.OursAndPresent =>
                 "Registered for all your Claude Code projects.",
-            RegistrationOwnership.OursAndStale =>
-                $"Registered, but the entry names '{UserScope.Command}', which is not there any more. Register again to repair it.",
+            RegistrationOwnership.OursAndStale => StaleSentence(),
             RegistrationOwnership.Foreign =>
                 $"Another BrowserAI is registered at '{UserScope.Command}'. Nothing here will change it.",
             _ => "Not registered for your Claude Code projects.",
         };
+    }
+
+    /// <summary>
+    /// The two ways an entry of ours can be stale, as two sentences.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-16, because one of them stopped being true.</b>
+    /// <c>OursAndStale</c> used to mean one thing — the file is gone — and the
+    /// sentence said so. Since the classifier started requiring the file to be
+    /// the <b>server</b> rather than merely present, it also covers the state
+    /// every pre-split install is in: an entry naming
+    /// <c>current\BrowserAI.exe</c>, which is there and is this very
+    /// application. Telling that person the file "is not there any more" is a
+    /// sentence they can check and find false, which is the fastest way to lose
+    /// somebody's trust in a status line.
+    /// </para>
+    /// <para>
+    /// <b>The question asked here is whether the file exists, and that is not a
+    /// second classifier.</b> Ownership has already been decided; this picks the
+    /// wording for a state that has two causes and one remedy. The expansion is
+    /// <see cref="McpRegistryView.Expand"/>'s, so the path this asks about is the
+    /// path the classifier asked about.
+    /// </para>
+    /// </remarks>
+    /// <returns>The sentence.</returns>
+    private string StaleSentence()
+    {
+        var named = UserScope.Command ?? "<none>";
+
+        return File.Exists(McpRegistryView.Expand(named))
+            ? $"Registered to the wrong binary: the entry names '{named}', which is not the MCP server. Register again to repair it."
+            : $"Registered, but the entry names '{named}', which is not there any more. Register again to repair it.";
     }
 
     /// <summary>

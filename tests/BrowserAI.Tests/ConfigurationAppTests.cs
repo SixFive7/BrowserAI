@@ -42,8 +42,7 @@ internal sealed class ConfigurationAppTests
     {
         using var install = ScratchDirectory.Create("app-state");
 
-        _ = InstalledLayout.Create(install.Path);
-
+        var app = InstalledLayout.Create(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
 
         var absent = StateFor(install.Path, server, null, RegistrationOwnership.Absent);
@@ -63,6 +62,19 @@ internal sealed class ConfigurationAppTests
         await Assert.That(stale.StatusSentence()).Contains("not there any more");
         await Assert.That(stale.MayRegister).IsTrue();
         await Assert.That(stale.MayUnregister).IsFalse();
+
+        // ⚠️ STALE AND NOT MISSING — 2026-09-16. An entry naming
+        // `current\BrowserAI.exe` in a pre-split install points at a file that
+        // IS there and is the configuration app, so "which is not there any
+        // more" would be a sentence a person could check and find false. The
+        // offer is the same one either way: registering again re-points it.
+        var wrongBinary = StateFor(install.Path, server, app, RegistrationOwnership.OursAndStale);
+
+        await Assert.That(wrongBinary.StatusSentence()).Contains("Registered to the wrong binary");
+        await Assert.That(wrongBinary.StatusSentence()).Contains(app);
+        await Assert.That(wrongBinary.StatusSentence()).DoesNotContain("not there any more");
+        await Assert.That(wrongBinary.MayRegister).IsTrue();
+        await Assert.That(wrongBinary.MayUnregister).IsFalse();
 
         // ⚠️ THE ONE THAT MUST NOT OFFER ANYTHING. A foreign entry is another
         // BrowserAI's, and neither registering over it nor removing it is this

@@ -36,14 +36,36 @@ internal enum RegistrationOwnership
     /// <summary>There is no entry of that name in that scope.</summary>
     Absent,
 
-    /// <summary>Ours, and the file it names is there.</summary>
+    /// <summary>
+    /// Ours, and the file it names is the MCP server.
+    /// </summary>
+    /// <remarks>
+    /// <b>The server, not merely a file</b> — <i>narrowed 2026-09-16, previously
+    /// "Ours, and the file it names is there".</i> The console subsystem is what
+    /// decides it, because a pre-split entry naming
+    /// <c>current\BrowserAI.exe</c> points at a file that exists and is the
+    /// configuration app.
+    /// </remarks>
     OursAndPresent,
 
     /// <summary>
-    /// Ours — the command is under our install root — but the file it names is
-    /// not there any more. This is what an entry written by an older layout
-    /// looks like after the server was renamed.
+    /// Ours — the command is under our install root — and the file it names
+    /// cannot be launched as the MCP server: it is gone, or it is not a
+    /// console-subsystem binary.
     /// </summary>
+    /// <remarks>
+    /// <b>Two causes, one state, because the action is the same</b> —
+    /// <i>widened 2026-09-16, previously "but the file it names is not there any
+    /// more. This is what an entry written by an older layout looks like after
+    /// the server was renamed".</i> That sentence described half of what an
+    /// older layout leaves behind: the other half is an entry naming
+    /// <c>current\BrowserAI.exe</c>, which after the 2026-09-15 split is the
+    /// configuration app and is still there. Both are re-pointed by
+    /// <c>McpRegistrar.Repair</c> and both make the window offer <i>Register</i>;
+    /// what differs is the sentence a person reads, which
+    /// <c>AppState.StatusSentence</c> tells apart by asking whether the file is
+    /// there at all.
+    /// </remarks>
     OursAndStale,
 
     /// <summary>
@@ -282,7 +304,26 @@ internal static class McpRegistryView
             return RegistrationOwnership.Foreign;
         }
 
-        return System.IO.File.Exists(full)
+        // ⚠️ PRESENT MEANS *THE SERVER*, NOT *A FILE* — 2026-09-16. Until this
+        // day the answer here was `File.Exists(full)`, and that was right for
+        // exactly as long as this product shipped one executable. Every
+        // registration written before the 2026-09-15 split names
+        // `current\BrowserAI.exe`, which is now the CONFIGURATION APP — so in an
+        // install that has been updated the file is there, existence answers
+        // "ours and present", `McpRegistrar.Repair` leaves it exactly as it is
+        // by design, and the client starts a window and waits forever for a
+        // handshake from a process that is showing a dialog. There is nothing in
+        // any log, because nothing failed.
+        //
+        // The subsystem is the same discriminator `RegistrationTarget` uses when
+        // it composes the path in the first place, and it is the one a rename
+        // cannot fake: subsystem 3 is always given a console and subsystem 2
+        // never is. Anything else — the app, a text file wearing the name, a
+        // file that cannot be read — is OURS AND STALE, which is the state
+        // `Repair` re-points and the state the window offers to register out of.
+        // Neither may be launched as an MCP server, and the difference between
+        // "gone" and "wrong" changes the sentence rather than the action.
+        return Runtime.PeSubsystem.IsConsole(full)
             ? RegistrationOwnership.OursAndPresent
             : RegistrationOwnership.OursAndStale;
     }

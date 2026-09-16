@@ -339,6 +339,31 @@ release body; nothing else depends on it.
   is written to disk rather than passed as a string so the reading half is
   exercised too.
 
+- 🐛 **An "ours" registration that names the wrong binary is stale, not
+  present.** `McpRegistryView.Classify` answered `OursAndPresent` for any file
+  under our install root that **existed**, and every registration written before
+  the 2026-09-15 two-binary split names `current\BrowserAI.exe` — which is now
+  the **configuration app**. So a pre-split 1.0.0 install that later updates kept
+  an entry pointing at the window: `McpRegistrar.Repair` leaves an
+  ours-and-present entry exactly as it is by design, arguments and all, so the
+  client started a dialog and waited forever for a JSON-RPC handshake a window
+  will never send. **There was nothing in any log, because nothing had failed** —
+  which is the whole reason this survived: the install works, the update works,
+  the registration is there, and the server does not answer. *Present* now means
+  *is the MCP server*, read out of the file's own PE optional header
+  (`IMAGE_SUBSYSTEM_WINDOWS_CUI`, 3) — the same discriminator
+  `RegistrationTarget` already used when it composed the path, so there is one
+  answer to the question rather than two. Anything else under our root is
+  `OursAndStale`, which `Repair` re-points and the window offers *Register* out
+  of; a file that is not a portable executable at all gets the same answer, for
+  the same reason. **The two causes stay one state because the remedy is
+  identical**, and only the sentence differs: the dialog says *"Registered to the
+  wrong binary"* when the file is there and *"which is not there any more"* when
+  it is not, because telling somebody a file is missing when they can see it is
+  the fastest way to lose their trust in a status line. Planted red over
+  constructed inputs — a Windows-subsystem binary at the registered path, then a
+  file that is not a PE — and again on the sentence.
+
 
 ## [1.0.0] - 2026-09-15
 
