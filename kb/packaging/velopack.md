@@ -1119,6 +1119,72 @@ for concurrent registrations is **untested by the only prior art available**. No
 signing: no certificate, no `--signParams`, package signature verification
 unexplored.
 
+## Setup will not install over an existing install without being told to, and on a same-version re-ship the button says "Repair" — measured 2026-09-16
+
+⚠️ **A non-silent `Setup.exe` whose target directory is not empty STOPS and asks,
+at any version, and waits indefinitely.** It is not a same-version behaviour and
+it is not a BrowserAI one. Measured 2026-09-16 @ Velopack 1.2.0 on the published
+`v1.0.0` installer, launched through `CreateProcessW` with `DETACHED_PROCESS`
+from a parent that had freed its own console: Setup read the bundle, resolved
+`Installation Directory: C:\Users\jori\AppData\Local\BrowserAI.app`, and then
+put up a `#32770` titled **`BrowserAI Setup`**, 572x201, and sat there. The log
+stops at `Using root packages directory:` until somebody answers.
+
+The dialog, read through UI Automation:
+
+```
+[Text] BrowserAI is already installed
+[Text] This application is already installed on your computer. If it is not working
+       correctly, you can try repairing it by reinstalling.
+
+       Installed at: C:\Users\jori\AppData\Local\BrowserAI.app
+[Pane] Cancel   [Pane] Open Install Directory   [Pane] Repair
+```
+
+**The trigger is the DIRECTORY, not the version** — `src/bins/src/commands/install.rs`:
+
+```rust
+// does the target directory exist and have files? (eg. already installed)
+if !shared::is_dir_empty(&root_path) {
+    let installed_version = auto_locate_app_manifest(...)...;
+    if !dialogs::show_overwrite_repair_dialog(&app.title, &app.version, &root_path, installed_version.as_ref()) {
+        error!("Directory already exists, and user cancelled overwrite.");
+        return Ok(());          // <- a CANCEL exits 0 and installs nothing
+    }
+    shared::force_stop_package(&root_path)?;     // everything under the root dies
+    fs::rename(&root_path, &renamed)?;           // old root kept aside for rollback
+}
+```
+
+**Only the affirmative button's LABEL depends on the version** —
+`l18n/src/dialogs.rs`: `Update` when what is installed is older, `Downgrade` when
+it is newer, and **`Repair` when the two are equal**, which is what a re-ship of
+the same number produces. Whichever label it wears, taking it runs the **full
+`install_impl`**: the same code path as a first install, over an emptied
+directory, with the old root renamed aside and deleted on success.
+
+**Three things follow, and the third is the one that surprises.**
+
+- **`--silent` skips the prompt entirely.** `show_overwrite_repair_dialog` returns
+  `true` before doing anything when `get_silent()`. So the suite's own installer
+  arms never meet it, and neither does any automated install.
+- **Cancel exits 0.** A caller that only reads the exit code cannot tell a
+  cancelled install from a completed one; the log's
+  `Installation completed successfully!` is the line that separates them.
+- ⚠️ **On a same-version re-ship the button a user is asked to press says
+  `Repair`.** The version number on the release page has not moved, and the
+  installer says the application is *already installed* — so the correct action
+  reads as a repair of something broken rather than as *install the new build of
+  this number*. There is nothing to configure here: it is Velopack's wording,
+  chosen from the version comparison. It is worth knowing before anybody is told
+  to "just run the installer" after a re-ship. `[FLOATS]`
+
+**Re-establish it** by running any non-silent `Setup.exe` against a root that
+already holds an install and reading the top-level windows of its pid --
+`.work/2026-09-16-release/Read-Dialog.ps1` enumerates the children and
+`Add-Type -AssemblyName UIAutomationClient` reads the task dialog's text, which
+`GetWindowTextW` cannot because the body is a `DirectUIHWND`.
+
 ## Not verified
 
 MSI/PerMachine, signing, `--runtime win7`, `autoApply=true` with a staged

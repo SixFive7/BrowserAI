@@ -36,6 +36,39 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+### Added
+
+- 📝 **Setup asks before installing over an existing install, and says
+  `Repair` on a re-ship.** Measured 2026-09-16
+  against the published `v1.0.0` installer and filed in
+  [`kb/packaging/velopack.md`](kb/packaging/velopack.md) with re-verification row
+  130. The trigger is `!is_dir_empty(&root_path)` — **the directory, not the
+  version** — so every existing user meets a `#32770` titled *"BrowserAI is
+  already installed"* that waits indefinitely; only the affirmative button's
+  label varies with the comparison (`Update` / `Downgrade` / **`Repair`** when
+  equal), and taking it runs the full install over an emptied root. Two edges
+  worth having written down: `--silent` skips the prompt entirely, which is why
+  the suite's own installer arms never meet it, and **Cancel exits 0**, so
+  nothing reading only an exit code can tell a cancelled install from a completed
+  one.
+
+### Fixed
+
+- 📦 **The release checklist now clears the suite's feed as well as the real
+  one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
+  the checklist keeps, and every gate pack writes a pre-release into it. At the
+  moment a release is cut it therefore holds versions newer than the release, and
+  `vpk` refuses it the same way it refuses one in `Releases/` — *"There is a
+  release in channel win which is equal or greater to the current version
+  1.0.0"*. Because the running order packs for the gate first, **this refused
+  every release cut, and it refused this one**: it fired *after* the real pack
+  had succeeded, so the non-zero exit named the suite's installer while the
+  release itself was already on disk. [`RELEASING.md`](RELEASING.md) item 5 is
+  corrected by addition with the file names to clear, and the better fix —
+  `New-Release.ps1` clearing its own regenerated, never-published test output —
+  is written down there as the script owner's to take rather than taken by a
+  release executor.
+
 ## [1.0.0] - 2026-09-16
 
 **BrowserAI is a Windows MCP server that gives an AI agent a real browser —

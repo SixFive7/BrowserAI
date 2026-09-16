@@ -115,6 +115,38 @@ of the order rather than defects in anything:
    `BrowserAI.zip`, are rewritten by the re-pack, so they need no separate
    step.)*
 
+   ⚠️ **AND CLEAR `Releases/test-pack/`'S CONTENTS TOO — *corrected 2026-09-16
+   by addition, the same day, after this omission stopped a cut*.** The paragraph
+   above is right that the **directory** must survive and silent about what is in
+   it, and `Releases/test-pack/` is a **second Velopack feed** with the same
+   monotonicity rule as the first. Every gate pack writes a
+   `BrowserAI.app.test-<pre-release>` into it, so at the moment a release is cut
+   it holds versions **newer** than the release — and `vpk` refuses:
+
+   ```
+   [FTL] There is a release in channel win which is equal or greater to the current
+         version 1.0.0. Please increase the current package version or remove that release.
+   New-Release.ps1 : vpk pack failed for the test pack with exit code -1, so the suite
+         has no installer it may run.
+   ```
+
+   **By the running order this refuses EVERY release**, because [step 1](#the-order-the-last-six-steps-are-executed-in--and-it-is-not-the-numbering)
+   packs for the gate and the gate pack is always a pre-release past the tag.
+   It also fails **after** the real pack has succeeded, so the exit code says the
+   release was not built when the only thing missing is the suite's own
+   installer. Delete `Releases/test-pack/*.nupkg`, its `releases.win.json`,
+   `RELEASES` and `assets.win.json`, and its two renamed downloads
+   `BrowserAI.test-installer.exe` and `BrowserAI.test-portable.zip` — all of
+   which the same run rebuilds, and none of which is ever published.
+
+   📣 **The better fix is a script change and it was deliberately not taken
+   here.** `New-Release.ps1` could clear its own test output before packing into
+   it, since that output is regenerated on every run and published on none — one
+   `Remove-Item` where this bullet is a paragraph a person has to remember. That
+   is a behaviour change to the release script, which belongs to whoever owns it
+   rather than to the executor of a release, and **`ReleaseScriptTests.AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear`
+   names four files and would need to name these too.**
+
    ⚠️ **The cut is REFUSED until this is done, and it says so — *added
    2026-09-16*.** `build/Test-ReleaseVersion.ps1` refuses a **release** candidate
    when the local feed's highest version is a **pre-release** newer than it, and
