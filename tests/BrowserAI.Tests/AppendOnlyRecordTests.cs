@@ -128,6 +128,32 @@ internal sealed partial class AppendOnlyRecordTests
     /// into 1.0.0's groups, so the prefix of each record moved by construction.
     /// </para>
     /// <para>
+    /// ⚠️ <b>AND AGAIN ON 2026-09-16, FOR THE SECOND CUT OF THE SAME
+    /// VERSION.</b> <i>Corrected 2026-09-16 (previously sealed at
+    /// <c>CHANGELOG.md#1.0.0</c> <c>281,709</c> characters /
+    /// <c>6ac6a8b6…</c> / <c>1cc93037…</c>)</i>. <c>1.0.0</c> is re-shipped in
+    /// place on 2026-09-16 at the maintainer's instruction, so the same two
+    /// edits the re-ship case requires were taken again and in one commit: the
+    /// <b>heading date</b> moved <c>2026-09-15</c> → <c>2026-09-16</c>, which is
+    /// inside the sealed prefix by construction, and the <b>twenty-two entries</b>
+    /// that had accumulated under <c>[Unreleased]</c> since the first cut — three
+    /// <c>Added</c>, one <c>Changed</c>, eighteen <c>Fixed</c> — were merged into the
+    /// matching <c>1.0.0</c> groups. The record grew <c>281,709</c> →
+    /// <c>310,215</c> characters, which is an append at the end of each group
+    /// and a one-line change at the top, and the whole prefix moves because a
+    /// seal starts at the heading.
+    /// </para>
+    /// <para>
+    /// <b>This is a SECOND lift, not a precedent that lifts are routine.</b> It
+    /// has the same authority as the first — the maintainer's instruction to
+    /// re-ship <c>1.0.0</c> so that it carries the fix — and it is narrower: no
+    /// entry was re-shaped and no sentence of the 2026-09-15 body was rewritten.
+    /// <b>A third one is another decision and belongs to whoever owns the
+    /// rule.</b> What would make it unnecessary is the ordinary case: a NEW
+    /// version, stamped by <c>Get-ReleaseNotes.ps1</c>, whose section nobody has
+    /// sealed yet.
+    /// </para>
+    /// <para>
     /// <b>What the lift does NOT mean, said here because this is where somebody
     /// will read it next time.</b> The rule is unchanged and the warning above
     /// stands: <i>re-sealing a record to make this test pass is rewriting
@@ -156,7 +182,7 @@ internal sealed partial class AppendOnlyRecordTests
     private static readonly Seal[] Sealed =
     [
         new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0", "29edb87771e3936a0b9054fe3c0159b4a6b3b8e64e6e410e99f00d7b0f0afa17"),
-        new("CHANGELOG.md#1.0.0", 281709, "6ac6a8b636ca14f847aecc779d0c74a830899f17c7b09f21efa52264ab753114", "1cc930379f8d8566a35ec11bddae4f2bc0bcc1e47a60eb1abc2f6c8cf302fdb9"),
+        new("CHANGELOG.md#1.0.0", 310215, "c2dd7dde2ffe21300987ec5088fee1277140c8f3d0f0897e484ba88182d093cd", "79e467556d0ed4db3d028e31a3f1156b3882a3cdfda9c964fe6108c35f9068e8"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94", "5cbc860979f70f949a05d326c412fc84c1e6499b73a080e7b88652b86573bcac"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa", "4605c26694310c9618949d95dee4b66a3f9dea7c8c1067ef68c7e9cda8712b09"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea", "b8bdc254fbe734137ce90b746aaa7efbce83c708a29430fb869e7eb31652c5c4"),
@@ -270,7 +296,10 @@ internal sealed partial class AppendOnlyRecordTests
     /// <para>
     /// ⚠️ <b>The failure this exists for is a DATE, and it is a step the
     /// release checklist requires.</b> A sealed record starts at its heading, so
-    /// <c>## [1.0.0] - 2026-09-15</c> is inside the 281,709 sealed characters:
+    /// <c>## [1.0.0] - 2026-09-16</c> is inside the 310,215 sealed characters
+    /// — <i>corrected 2026-09-16 (previously "<c>## [1.0.0] - 2026-09-15</c> is
+    /// inside the 281,709 sealed characters")</i>, by the second cut of the same
+    /// version doing exactly what this paragraph describes:
     /// setting the real release date at the cut breaks the seal, and the message
     /// used to say <i>REWRITTEN … a dated record says what was true when it was
     /// written</i>. That is the right sentence for a sweep and exactly the wrong
@@ -297,12 +326,24 @@ internal sealed partial class AppendOnlyRecordTests
         await Assert.That(Explain(seal, real)).IsNull();
 
         // The date at the cut: the heading line, and nothing else.
-        var redated = "## [1.0.0] - 2026-09-16" + real[real.IndexOf(TestNewline, StringComparison.Ordinal)..];
+        //
+        // ⚠️ THE DOCTORED DATE IS DERIVED FROM THE RECORD, NEVER TYPED. This
+        // doctored with the literal "2026-09-16" until 2026-09-16, when the
+        // second cut of 1.0.0 set exactly that date on the real heading -- so
+        // the doctored copy became BYTE-IDENTICAL to its subject, Explain
+        // returned null, and a control that cannot differ from what it is
+        // testing proves nothing. Watched red in that shape on the day, and the
+        // last character is flipped instead so that the two can never agree
+        // again whatever date the next cut carries.
+        var realHeading = FirstLine(real);
+        var otherHeading = realHeading[^1] == '1' ? realHeading[..^1] + '2' : realHeading[..^1] + '1';
+        var redated = otherHeading + real[real.IndexOf(TestNewline, StringComparison.Ordinal)..];
         var heading = Explain(seal, redated);
 
+        await Assert.That(otherHeading).IsNotEqualTo(realHeading);
         await Assert.That(heading).IsNotNull();
         await Assert.That(heading!).Contains("HEADING LINE");
-        await Assert.That(heading).Contains("2026-09-16");
+        await Assert.That(heading).Contains(otherHeading[(otherHeading.LastIndexOf(' ') + 1)..]);
         await Assert.That(heading).Contains("ONE commit");
         await Assert.That(heading).Contains("Re-seal it here");
 

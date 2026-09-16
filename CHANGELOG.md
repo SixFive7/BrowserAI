@@ -36,417 +36,7 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
-### Added
-
-- 📦 **BrowserAI has an icon, and it is candidate 3 of the ten drawn on
-  2026-09-15.** A globe with a reading eye, chosen by the maintainer on
-  2026-09-16 (Q196): `browser_snapshot` and `browser_take_screenshot` are the two
-  things this server does most, so an icon about perception is the honest
-  emphasis. [`assets/BrowserAI.ico`](assets/BrowserAI.ico) replaces the candidate
-  1 placeholder and is one file — both executables, the Setup stub, the
-  Add/Remove entry and the Start Menu shortcut carry it, and nothing else
-  changed. It is four entries: 16, 32 and 48 as 32-bit BGRA `BITMAPINFOHEADER`
-  DIBs with an all-zero mask, and 256 as the PNG file verbatim, which is what
-  keeps the file at 46,729 bytes instead of a third of a megabyte. **Each raster
-  is rendered natively at its own size** by headless Chromium's vector
-  rasteriser rather than downscaled from the 256. The master is persisted beside
-  it as [`assets/icon.svg`](assets/icon.svg), with
-  [`assets/icon-256.png`](assets/icon-256.png),
-  [`assets/icon-128.png`](assets/icon-128.png) — which
-  [`README.md`](README.md) now shows beside its title, the first image this
-  project has ever published — and
-  [`assets/social-preview.png`](assets/social-preview.png) at 1280×640 for the
-  repository's **Social preview** setting, which has no API and reaches the world
-  only when the maintainer drags the file into that field.
-  [`assets/README.md`](assets/README.md) records what each file is, how it was
-  made and what holds it. **Every one of them is original work**: SVG primitives
-  drawn from scratch, no `<text>`, no `<image>`, no web font, no third-party
-  mark and no glyph taken from a typeface — the social preview's lettering is
-  rasterised system text and is the one asset whose look depends on the machine
-  that rendered it.
-
-- ✅ **Every asset reference in the prose resolves, and the exclusion hiding
-  them is narrowed.**
-  `DocumentationLinkTests.NotThisRepositorysKind` takes every asset extension out
-  of the link scan, and it was justified by an assertion that the repository
-  tracked no such file — which **had already gone quiet**: `assets\BrowserAI.ico`
-  was committed on 2026-09-15 and `TheAssetExclusionHidesNothing` never saw it,
-  because `assets` was not one of the directories that arm walked. The claim was
-  true of everywhere it looked and false of the repository.
-  `EveryAssetReferenceInTheProseResolvesToTheFileItNames` now resolves every
-  image, every asset-kind link and every HTML `src` and `href` in every `.md`
-  file — the HTML half is not decoration, because an image that has to sit
-  **beside** a heading cannot be written in Markdown at all, so the one image
-  this repository publishes is an `<img>` tag a Markdown-only scan would have
-  missed entirely. `TheAssetExclusionHidesNothing` now asserts the property the
-  exclusion actually needs: that every file of an excluded kind lives in
-  `assets\`, where something resolves references to it. Planted red by pointing
-  `README.md` at a file one character away from the one that is there, and again
-  with a stray asset outside `assets\`.
-
-- ✅ **The shipped icon's shape is a gate, and its planted red is a doctored
-  file.**
-  `ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose` reads the icon
-  directory out of the bytes — four entries, the sizes in order, 32-bit in one
-  plane, a 40-byte `BITMAPINFOHEADER` declaring the **doubled** height a mask
-  entry declares, and a PNG-compressed 256 whose own `IHDR` agrees with the
-  directory — and holds the three published rasters at the sizes their names
-  claim. Not through `System.Drawing`, which answers *a 32×32 icon came back* for
-  any file with one usable entry in it: a file missing the 256 looks perfect to a
-  loader and blurred on a 4K display. **Candidate 1 had the identical directory
-  shape**, so putting it back would not have moved one assertion — a check that
-  cannot fail against the file it replaced is not evidence — so the controls take
-  the real bytes and break one property each. The arm was also watched red
-  against the real file with its entry count doctored from four to three.
-  [`RELEASING.md`](RELEASING.md) item 7 now names candidate 3 and the two files
-  that must agree, and says plainly that **nothing holds the drawing in the
-  `.ico` to be the drawing in the SVG** — that is a render comparison on every
-  build to answer a question a person answers by looking.
-
-### Changed
-
-- 📦 **The RID section a restore writes into `BrowserAI.Core`'s lock file is
-  committed, not reverted.** Q199, decided by the maintainer on 2026-09-16, the
-  third time the same diff had been met in one night. The section is the empty
-  `"net10.0-windows7.0/win-x64": {}` that an `-r win-x64` restore adds. Every
-  publish of either executable is RID-specific, and a RID-specific restore
-  records that section for every project it reaches —
-  [`src/BrowserAI/packages.lock.json`](src/BrowserAI/packages.lock.json) and
-  `BrowserAI.App` have carried theirs since they were written, and
-  `BrowserAI.Core` is the library both of them publish, so the section is **what
-  the restore genuinely resolves** rather than an artifact of one publish shape.
-  The rule it replaces was *revert it, never commit it*, kept by a person
-  remembering, and it had already failed once: the section reached `HEAD` in a
-  `git add -A` and was reverted in `ac244ff` under a sentence calling it an
-  artifact nobody asked for. **The file has two states and the last restore
-  wins** — measured 2026-09-16 *after* the decision: a RID restore writes the
-  section (`fab160c4…`), a non-RID solution restore removes it (`7f30ec57…`),
-  which is what `dotnet test` performs, and each state is byte-stable under
-  repetition of its own kind. So committing it moves which end of the oscillation
-  is the dirty one rather than ending it, and **that is still the right way
-  round**: the diff that matters is the one a commit follows, a publish is
-  followed by a release commit and a suite run is followed by reading a log. The
-  cost is named rather than hidden — `git status` shows the file modified after
-  every suite run, including all six of a release gate, and the release
-  checklist's own re-pack restores with the RID and leaves the tree clean before
-  the release commit is written. The way that would end the oscillation outright,
-  declaring the RID on `BrowserAI.Core` so every restore resolves the same set,
-  is written down in [`TESTING.md`](TESTING.md) and belongs to whoever owns the
-  build.
-  [`RELEASING.md`](RELEASING.md) item 7 and [`TESTING.md`](TESTING.md) are
-  corrected by addition, each quoting in full what it said before.
-
-### Fixed
-
-- 📝 **Six stale sentences are corrected and one new hazard is written down.** The
-  `--shortcuts None` claim in [`HAZARDS.md`](HAZARDS.md) had been false since the
-  Start Menu entry landed; [`RELEASING.md`](RELEASING.md) still told a maintainer
-  to **uninstall their working BrowserAI** before cutting a release, which stopped
-  being necessary the day the suite's pack got its own id; `kb/mcp/protocol.md`
-  named the registered path as `current\BrowserAI.exe` and said there was
-  *nothing to correct* on an update, both of which the two-binary split made
-  false; and `BrowserAI.exe --sweep` — named in the server's own source, in
-  `kb/windows/detection.md` and in re-verification row 78 — **opens a window**
-  now instead of measuring anything, so that procedure was broken rather than
-  untidy. `kb/packaging/velopack.md` gets the same treatment in two places. The
-  new hazard is residue nothing owns: every browser this product launches leaves
-  a JSON descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and **26,891 of them
-  (42.6 MiB) have accumulated since 2026-08-14** from running the suite. There is
-  no environment variable that moves that directory, so it is recorded with what
-  is owed rather than guessed at.
-
-- ✅ **The app's embedded manifest and its apartment are asserted off the binary
-  that ships.** Two properties the whole window depends on were read once, by
-  hand, and then trusted. The **`Microsoft.Windows.Common-Controls` 6.0.0.0**
-  dependency is the one whose absence makes `TaskDialogIndirect` fail at run time
-  with **no compile-time signal of any kind** — the loader binds version 5, the
-  export is absent, and it presents as *the app starts and nothing happens*. It
-  is now read out of `RT_MANIFEST` id 1 of the built and published binaries,
-  together with `longPathAware`, `PerMonitorV2` and `asInvoker`, with the server's
-  own manifest as the control so a reader that stopped finding resources cannot
-  look like a binary that declares less. And **`[STAThread]` under NativeAOT was
-  an assumption**: the folder picker's `BIF_NEWDIALOGSTYLE` silently falls back to
-  the pre-Vista dialog off an STA and the version 6 common controls expect one, so
-  `--report` now writes the apartment and an arm runs the **published** binary and
-  requires it. **Measured 2026-09-16 at .NET 10 / ILC 10.0.12: it is `STA`.** The
-  report's schema is 2.
-
-- 🐛 **The installer's own variables are cleared after Velopack has read them,
-  not before.** `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART` are cleared so that
-  no child of the configuration app inherits them — click *Register* with
-  `VELOPACK_FIRSTRUN` still set and `claude.exe` starts carrying it, and so does
-  everything it starts, including the MCP server, which exits 0 on that variable
-  by design. But the clearing ran **before** `VelopackApp.Run()`, and `Run()`
-  decides whether to invoke `OnFirstRun` and `OnRestarted` by reading exactly
-  those two variables — so both callbacks were unreachable in this binary: two
-  log lines that could never be written, with a remark beside them describing
-  behaviour that did not happen. It runs after `Run()` now and still before
-  anything is started, which the hook path never reaches at all because `Run()`
-  exits the process when it serves one.
-
-- 🔧 **The dialog's icon is loaded at the dialog's DPI instead of at the classic
-  size.** `LoadIconW` has no size parameter: it answers the 32×32 image out of
-  the group, which a Per-Monitor-V2 process then draws **stretched** — on a 200%
-  display, thirty-two pixels blown up to sixty-four, beside text that is not.
-  The icon ships larger images, so the load is `LoadIconWithScaleSize` at
-  `SM_CXICON` for the window's own DPI, with the unscaled load kept as the
-  fallback it has always been. The DPI is the window's where there is a window
-  and the system's on the first page, which is built before the window exists —
-  so a dialog dragged to a second monitor comes back at that monitor's DPI. The
-  loading call is `LoadImageW`, **not** `LoadIconWithScaleSize`: the comctl32
-  function the documentation points at for this is exported **by ordinal only**,
-  and naming it in a `LibraryImport` fails at the call with
-  `EntryPointNotFoundException` from inside `Show()` — which takes the window
-  with it. That was found by the gate, not by review: the published app exited
-  `0xC0000409` and left the reason in its own process log.
-
-- 🐛 **The release-notes generator refuses the two shapes it used to crash on or
-  drop.** An entry written above a section's first `### ` heading made
-  `$group` null and `Set-StrictMode` turned `$null.Entries.Add(…)` into *"The
-  property 'Entries' cannot be found on this object"* — a stack trace naming a
-  variable nobody reading a changelog has heard of. A paragraph written *under*
-  a group heading was worse: neither preamble nor entry, it was silently dropped
-  from the body. Both are refused now, in the script's own words, naming the
-  line. Refusing rather than carrying the paragraph is the choice: prose already
-  has a place — the section preamble, above the first heading, which the body
-  does render — and inventing a rendering for a shape nothing else reads would
-  widen the format past what `ChangelogTests` holds it to.
-
-- 🔧 **A wait on the client's handle that cannot be interpreted now records the
-  value it got.** `WaitForSingleObject` answers one of four things and only
-  `WAIT_FAILED` sets a last error; `WAIT_ABANDONED` reaches the same branch
-  carrying whatever error was left in the thread, which can read as *The
-  operation completed successfully* — a sentence that looks like a defect in the
-  logging rather than a state of the client. The record carries the raw value
-  beside the message now, under its own event id, so the two are distinguishable
-  after the fact.
-
-- ✅ **A release date set at the cut is reported as a heading change, not as a
-  rewritten record.** A sealed record starts at its own heading, so
-  `## [1.0.0] - 2026-09-15` is inside the 281,709 characters
-  `AppendOnlyRecordTests` seals — and setting the real date at the cut breaks
-  the seal. The failure said *REWRITTEN … a dated record says what was true when
-  it was written*, which is the right sentence for a sweep and exactly the wrong
-  one for the one edit [the checklist](RELEASING.md) requires: it reads as
-  *revert this*. Each seal now carries a second digest, of the same prefix
-  **without its first line**, so the test can tell the two apart and say **the
-  HEADING LINE changed and nothing else did** with the seal line to paste. A body
-  edit under an untouched heading still says *REWRITTEN*. `RELEASING.md` says the
-  same in item 10 and in the order section: the date change and the re-seal are
-  one commit.
-
-- 📦 **A release cut over a local feed still holding this machine's gate packs is
-  refused.** `Releases/` is where every gate pack lands, and a gate pack is cut
-  at whatever MinVer derives from a commit past the tag — so between releases
-  the local feed holds `1.0.1-alpha.0.19`, `1.0.1-alpha.0.2` and a manifest
-  naming them. Cutting `1.0.0` against that is *lower than the published
-  version*, and `build/Test-ReleaseVersion.ps1` called it a **rollback** and
-  advised `-RollbackRepublish` — which would have published a release into a
-  feed whose manifest and asset list name packages nobody ever released. It now
-  refuses a **release** candidate whenever the local feed's highest version is a
-  **pre-release** newer than it, and the refusal names the four files to delete
-  — `*.nupkg`, `releases.win.json`, `RELEASES`, `assets.win.json` — and the two
-  directories that must survive, `archive/` and `test-pack/`.
-  [`RELEASING.md`](RELEASING.md) step 5 says the same. The rule is narrow by
-  construction: a genuine rollback over published releases still reads as one, a
-  pre-release gate pack over the same directory is still monotonic, and so is a
-  release over only older pre-releases.
-
-- 🔧 **The update check runs off the UI thread, under the same deadline the
-  server uses.** `CheckAsync` and `DownloadAsync` were called with
-  `.GetAwaiter().GetResult()` **inside the dialog's callback**, with
-  `CancellationToken.None`. `VelopackUpdateClient` builds its `UpdateManager`
-  from a bare URL, so Velopack's own `SimpleWebSource` supplies the `HttpClient`
-  timeout — **thirty minutes** — and a feed that answered slowly froze the
-  window for that long: no repaint, no cursor, no close button. The server's
-  lane wrapped the identical calls in `UpdateService.CrashTripwire` from the day
-  it was written; this one had nothing. Both now run on the thread pool under
-  that same constant, and the dialog enables `TDF_CALLBACK_TIMER` and polls on
-  `TDN_TIMER` — so it shows *Checking for updates…*, stays fully usable, and
-  redraws itself with the answer, or with *the update check did not finish
-  within N seconds and was stopped* if the deadline passes. The deadline is
-  enforced by the poll rather than by the token, because
-  `UpdateManager.CheckForUpdatesAsync` takes no token at all: what ends is the
-  **waiting**, and the orphaned request finishes into nothing.
-
-- 🐛 **The folder picker is owned by the dialog, and an unresolvable folder
-  is no longer a silent cancel.** Two defects in one button. The picker was
-  opened with a **zero owner**, because the dialog's window was private — so it
-  was modal to nothing: the task dialog's command links stayed live underneath
-  it, a second click re-entered the command handler, and a `TDM_NAVIGATE_PAGE`
-  from there rebuilds the page out from under a modal child. `TaskDialogHost`
-  exposes its window now and the picker is given it. Separately,
-  `SHGetPathFromIDListW` has **no length parameter** — it assumes `MAX_PATH` and
-  answers `FALSE` for anything longer — and the path was being written into the
-  same 260-character buffer the shell was given for the display name. The picker
-  then answered `null`, which the caller read as *cancelled*, so choosing a deep
-  folder closed the picker, wrote nothing and said nothing. The call is
-  `SHGetPathFromIDListEx` into a 32,768-character buffer, and the answer is three
-  states rather than a nullable string: picked, cancelled, or failed with a
-  sentence the dialog puts in its note.
-
-- 🐛 **A click that throws no longer takes the whole window with it.**
-  Every action the configuration app offers runs inside the task dialog's
-  `[UnmanagedCallersOnly]` callback, and **an exception out of one of those is a
-  `FailFast`, not an exception**: the runtime cannot unwind into native frames,
-  so the process is terminated where it stands — the window vanishes mid-click
-  with no dialog, no log line and no exit code anything could read. Three calls
-  reachable from a click could produce one: `Directory.CreateDirectory` for the
-  log directory, `Path.Combine` outside the registry reader's own `try` when
-  `CLAUDE_CONFIG_DIR` holds an invalid path, and `Path.GetFullPath` on a picked
-  project directory. The three delegate invocations are now inside one
-  `try`/`catch`, which records the failure to the process log, puts it in the
-  dialog's note, re-renders, and returns the `S_OK`/`S_FALSE` the notification
-  requires — so the window stays open and says what happened. The dispatch was
-  lifted out of the unmanaged entry point to make any of this assertable:
-  `Callback` resolves the instance and forwards to `Dispatch`, because an
-  `[UnmanagedCallersOnly]` method cannot be called from C# at all and a decision
-  written inside one is a decision no test can ever reach.
-
-- 🔒 **Neither an install nor an uninstall touches a `browserai` entry it did
-  not write.** Three sentences in this codebase said
-  BrowserAI *"neither adopts, overwrites nor deletes"* an entry belonging to
-  another install — `RegistrationOwnership`'s own summary,
-  `AppState.MayRemove`'s remark, and the registration row in
-  [`DECISIONS.md`](DECISIONS.md) — and **one intent out of three was keeping
-  them.** `Repair`, the update hook's path, read the client's configuration and
-  refused what it did not own; `Reassert`, the **install** hook's, ran
-  `mcp remove` and then `mcp add` with no check at all, and `Remove`, the
-  **uninstall** hook's, ran `mcp remove` unconditionally. So installing this
-  BrowserAI beside another one deleted that one's registration and wrote its own
-  over the top, and uninstalling this one deleted the other's outright.
-  `McpRegistrar.Apply` now reads `McpRegistryView.User` before **every** intent
-  and takes the two refusals — a configuration nobody could read, and an entry
-  outside this install root — in one place for all three. Absent, ours-and-stale
-  and ours-and-present behave exactly as they did. There is no exit code on that
-  path and that is deliberate: these run inside Velopack fast-exit callbacks,
-  where a non-zero result fails somebody's install, so what carries the outcome
-  is `isWhatWasAskedFor: false` in `mcp-registration.json` with the foreign path
-  named in the detail, plus a warning in the installer's own log.
-
-- 📦 **The suite's installer is titled `BrowserAI (suite)` and no longer
-  owns the real Start Menu entry.** The two packs were split by pack id on
-  2026-09-15 to stop the suite's installer arm rewriting and then deleting the
-  real install's Add/Remove entry — and the **title** was left shared, which is
-  the name Velopack actually gives the shortcut (`shortcuts.rs`, read at 1.2.0:
-  the link file is `<title>.lnk`, never `<packId>.lnk`). Shortcut creation is
-  not gated on `--silent`, and the uninstall removes shortcuts **by target**, so
-  the arm wrote `%APPDATA%\Microsoft\Windows\Start Menu\Programs\BrowserAI.lnk`
-  pointing at its own scratch root over the real install's entry, and its
-  uninstall then deleted it. `build/New-Release.ps1` now replaces **three**
-  elements rather than two when it builds the second pack — the id, the title
-  and the output directory — and the arm reads the user's Start Menu before and
-  after for the same reason it already read the Add/Remove key: nothing under
-  the shipping title may point into the scratch root, `BrowserAI (suite).lnk`
-  may not outlive its own uninstall, and the whole set must be byte-identical
-  across the run.
-- 🐛 **Three invisible backspace bytes are gone, and one of them had silenced a
-  whole scan.** A byte search over everything git tracks found `0x08` in three
-  files, each of them a `\b` that something expanded before the file was written.
-  The expensive one was `BrowserIdleTimerTests.ClockAssignment`, whose pattern
-  asked for a **literal backspace** before `Clock` — so
-  `TheShippedClockIsTheRealOneAndNothingInTheProductReplacesIt`, the arm that
-  exists because a test clock leaking into a shipped build stops the only timer
-  in the product from ever firing and **nothing anywhere would go red**, was
-  asserting emptiness over a result set nothing could enter. The scan is
-  re-pointed and carries a positive control it is asserted against before the
-  emptiness is believed; over the product tree it still finds nothing, which is
-  now a measurement rather than an artefact. The other two were prose: a comment
-  in `SessionToolTests` and the browsers root in [`HAZARDS.md`](HAZARDS.md), both
-  reading `BrowserAI` followed by `rowsers` where `BrowserAI\browsers\` was
-  meant. The hazard row is a dated record maintained by addition and the path was
-  repaired in place, because restoring a character a tool ate is a typo-class
-  correction and not a change to what the row claims.
-
-- ✅ **No text file in the tree may carry a C0 control byte.**
-  `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` reads every file the
-  walk reaches and refuses anything below `0x20` but tab, line feed and carriage
-  return. **The byte is invisible in every editor, every diff and every review**,
-  which is why this is a mechanism rather than a habit: a reader sees the escape
-  they meant to type where the file holds one character that is not it, and a
-  regex that cannot match is a green test forever. A file of one of the prose
-  kinds is always read, NUL included; anything else is binary by git's own
-  heuristic — a NUL in the first 8,000 bytes — and is skipped, which today is
-  `assets\BrowserAI.ico` and nothing else. Both counts are asserted, so a corpus
-  quietly re-classifying itself as binary cannot empty the scan, and the control
-  is written to disk rather than passed as a string so the reading half is
-  exercised too.
-
-- 🐛 **An "ours" registration that names the wrong binary is stale, not
-  present.** `McpRegistryView.Classify` answered `OursAndPresent` for any file
-  under our install root that **existed**, and every registration written before
-  the 2026-09-15 two-binary split names `current\BrowserAI.exe` — which is now
-  the **configuration app**. So a pre-split 1.0.0 install that later updates kept
-  an entry pointing at the window: `McpRegistrar.Repair` leaves an
-  ours-and-present entry exactly as it is by design, arguments and all, so the
-  client started a dialog and waited forever for a JSON-RPC handshake a window
-  will never send. **There was nothing in any log, because nothing had failed** —
-  which is the whole reason this survived: the install works, the update works,
-  the registration is there, and the server does not answer. *Present* now means
-  *is the MCP server*, read out of the file's own PE optional header
-  (`IMAGE_SUBSYSTEM_WINDOWS_CUI`, 3) — the same discriminator
-  `RegistrationTarget` already used when it composed the path, so there is one
-  answer to the question rather than two. Anything else under our root is
-  `OursAndStale`, which `Repair` re-points and the window offers *Register* out
-  of; a file that is not a portable executable at all gets the same answer, for
-  the same reason. **The two causes stay one state because the remedy is
-  identical**, and only the sentence differs: the dialog says *"Registered to the
-  wrong binary"* when the file is there and *"which is not there any more"* when
-  it is not, because telling somebody a file is missing when they can see it is
-  the fastest way to lose their trust in a status line. Planted red over
-  constructed inputs — a Windows-subsystem binary at the registered path, then a
-  file that is not a PE — and again on the sentence.
-
-- 📦 **A release body is one shape now: a headline a line, each linked to its own
-  lines of the changelog.** The maintainer's choice (Q197 b). Every entry is
-  `- <icon> **<headline>** [read more](…/CHANGELOG.md?plain=1#L<first>-L<last>)`,
-  a line range into the source view of the changelog **as the tag carries it**,
-  which GitHub highlights exactly. The `<details>` fold is gone with the second
-  shape that came with it: the fold put the detail in the release a second time,
-  which is what made the body enormous, and over the size limit the whole
-  document silently became headlines with nothing to click. **Re-measured
-  2026-09-16 over the 1.0.0 section as it stands: folded is 288,437 characters
-  and would have fallen back to 19,780; linked is 41,288**, a third of GitHub's
-  125,000, with a range on every one of the 227 entries. The size guard survives
-  as a pathological fallback — the links are dropped and the footer's section
-  link is the only way in — and the script still says which shape it produced.
-  **The line numbers are only true of one file, so the generator refuses anything
-  else**: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
-  exists, must be at `HEAD`, or it refuses naming both commits. A dirty tree
-  elsewhere is reported rather than refused, because this runs inside
-  `New-Release.ps1` after a publish that leaves restore artifacts behind and none
-  of those can move a line number. An untracked changelog — a fixture under
-  scratch — is a state rather than a failure and the run says so. **The highlight
-  was verified on github.com in a real browser rather than assumed**: `curl`
-  cannot show it, because it is applied client-side and the served HTML carries
-  only the first 1,000 lines of a 3,682-line file. At
-  `?plain=1#L3496-L3532`, **exactly 37 elements carried a highlighted class**,
-  which is 3532 − 3496 + 1. The measurement is filed in
-  [`kb/toolchain.md`](kb/toolchain.md) beside the release-body section it belongs
-  to, with what `curl` can and cannot establish and how to re-run it, and it
-  shares re-verification row 128 rather than taking one of its own.
-
-- 📝 **A publish leaves `BrowserAI.Core`'s lock file modified, whichever publish
-  it is.** A RID-specific restore adds an empty
-  `"net10.0-windows7.0/win-x64": {}` section to
-  `src/BrowserAI.Core/packages.lock.json`. It was first seen after a standalone
-  `dotnet publish -r win-x64` and reverted in `ac244ff`; **`build/New-Release.ps1`
-  produces the identical diff**, watched on a full pack run on 2026-09-16, so
-  routing publishes through the release script does not avoid it — and publishes
-  should go through it anyway, because it is what stages each publish, reads both
-  ILC logs and refuses a missing executable by name.
-  [`RELEASING.md`](RELEASING.md) and [`TESTING.md`](TESTING.md) now say to revert
-  the diff rather than commit it, and say plainly that **nothing enforces it**: an
-  arm holding the file free of that section would be red for the whole window
-  between item 7's publish and item 8's run, which is a gate that cannot pass
-  after doing what the checklist just told it to do. The two ways it could be
-  closed — accept the section as the resolution, or restore `--locked-mode` so a
-  rewrite fails instead of happening quietly — are recorded as open. The
-  measurement is filed in [`kb/toolchain.md`](kb/toolchain.md) under the NuGet
-  section, with both publishes named and the times they were watched at.
-
-
-## [1.0.0] - 2026-09-15
+## [1.0.0] - 2026-09-16
 
 **BrowserAI is a Windows MCP server that gives an AI agent a real browser —
 Chromium or Firefox — and brings its own copy of everything it needs, so there
@@ -1450,6 +1040,71 @@ Start at [`README.md`](README.md).
   `package-lock.json`, `payload.json`, `browsers.json`, and a `manifest.json`
   stating the version, the tag, the package's SHA-256 and the resolved version
   read back out of each copy.
+
+- 📦 **BrowserAI has an icon, and it is candidate 3 of the ten drawn on
+  2026-09-15.** A globe with a reading eye, chosen by the maintainer on
+  2026-09-16 (Q196): `browser_snapshot` and `browser_take_screenshot` are the two
+  things this server does most, so an icon about perception is the honest
+  emphasis. [`assets/BrowserAI.ico`](assets/BrowserAI.ico) replaces the candidate
+  1 placeholder and is one file — both executables, the Setup stub, the
+  Add/Remove entry and the Start Menu shortcut carry it, and nothing else
+  changed. It is four entries: 16, 32 and 48 as 32-bit BGRA `BITMAPINFOHEADER`
+  DIBs with an all-zero mask, and 256 as the PNG file verbatim, which is what
+  keeps the file at 46,729 bytes instead of a third of a megabyte. **Each raster
+  is rendered natively at its own size** by headless Chromium's vector
+  rasteriser rather than downscaled from the 256. The master is persisted beside
+  it as [`assets/icon.svg`](assets/icon.svg), with
+  [`assets/icon-256.png`](assets/icon-256.png),
+  [`assets/icon-128.png`](assets/icon-128.png) — which
+  [`README.md`](README.md) now shows beside its title, the first image this
+  project has ever published — and
+  [`assets/social-preview.png`](assets/social-preview.png) at 1280×640 for the
+  repository's **Social preview** setting, which has no API and reaches the world
+  only when the maintainer drags the file into that field.
+  [`assets/README.md`](assets/README.md) records what each file is, how it was
+  made and what holds it. **Every one of them is original work**: SVG primitives
+  drawn from scratch, no `<text>`, no `<image>`, no web font, no third-party
+  mark and no glyph taken from a typeface — the social preview's lettering is
+  rasterised system text and is the one asset whose look depends on the machine
+  that rendered it.
+
+- ✅ **Every asset reference in the prose resolves, and the exclusion hiding
+  them is narrowed.**
+  `DocumentationLinkTests.NotThisRepositorysKind` takes every asset extension out
+  of the link scan, and it was justified by an assertion that the repository
+  tracked no such file — which **had already gone quiet**: `assets\BrowserAI.ico`
+  was committed on 2026-09-15 and `TheAssetExclusionHidesNothing` never saw it,
+  because `assets` was not one of the directories that arm walked. The claim was
+  true of everywhere it looked and false of the repository.
+  `EveryAssetReferenceInTheProseResolvesToTheFileItNames` now resolves every
+  image, every asset-kind link and every HTML `src` and `href` in every `.md`
+  file — the HTML half is not decoration, because an image that has to sit
+  **beside** a heading cannot be written in Markdown at all, so the one image
+  this repository publishes is an `<img>` tag a Markdown-only scan would have
+  missed entirely. `TheAssetExclusionHidesNothing` now asserts the property the
+  exclusion actually needs: that every file of an excluded kind lives in
+  `assets\`, where something resolves references to it. Planted red by pointing
+  `README.md` at a file one character away from the one that is there, and again
+  with a stray asset outside `assets\`.
+
+- ✅ **The shipped icon's shape is a gate, and its planted red is a doctored
+  file.**
+  `ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose` reads the icon
+  directory out of the bytes — four entries, the sizes in order, 32-bit in one
+  plane, a 40-byte `BITMAPINFOHEADER` declaring the **doubled** height a mask
+  entry declares, and a PNG-compressed 256 whose own `IHDR` agrees with the
+  directory — and holds the three published rasters at the sizes their names
+  claim. Not through `System.Drawing`, which answers *a 32×32 icon came back* for
+  any file with one usable entry in it: a file missing the 256 looks perfect to a
+  loader and blurred on a 4K display. **Candidate 1 had the identical directory
+  shape**, so putting it back would not have moved one assertion — a check that
+  cannot fail against the file it replaced is not evidence — so the controls take
+  the real bytes and break one property each. The arm was also watched red
+  against the real file with its entry count doctored from four to three.
+  [`RELEASING.md`](RELEASING.md) item 7 now names candidate 3 and the two files
+  that must agree, and says plainly that **nothing holds the drawing in the
+  `.ico` to be the drawing in the SVG** — that is a render comparison on every
+  build to answer a question a person answers by looking.
 
 ### Changed
 
@@ -3181,6 +2836,37 @@ Start at [`README.md`](README.md).
   rather than comparing them starts downloading the binary it is already
   running, on a loop, forever.
 
+- 📦 **The RID section a restore writes into `BrowserAI.Core`'s lock file is
+  committed, not reverted.** Q199, decided by the maintainer on 2026-09-16, the
+  third time the same diff had been met in one night. The section is the empty
+  `"net10.0-windows7.0/win-x64": {}` that an `-r win-x64` restore adds. Every
+  publish of either executable is RID-specific, and a RID-specific restore
+  records that section for every project it reaches —
+  [`src/BrowserAI/packages.lock.json`](src/BrowserAI/packages.lock.json) and
+  `BrowserAI.App` have carried theirs since they were written, and
+  `BrowserAI.Core` is the library both of them publish, so the section is **what
+  the restore genuinely resolves** rather than an artifact of one publish shape.
+  The rule it replaces was *revert it, never commit it*, kept by a person
+  remembering, and it had already failed once: the section reached `HEAD` in a
+  `git add -A` and was reverted in `ac244ff` under a sentence calling it an
+  artifact nobody asked for. **The file has two states and the last restore
+  wins** — measured 2026-09-16 *after* the decision: a RID restore writes the
+  section (`fab160c4…`), a non-RID solution restore removes it (`7f30ec57…`),
+  which is what `dotnet test` performs, and each state is byte-stable under
+  repetition of its own kind. So committing it moves which end of the oscillation
+  is the dirty one rather than ending it, and **that is still the right way
+  round**: the diff that matters is the one a commit follows, a publish is
+  followed by a release commit and a suite run is followed by reading a log. The
+  cost is named rather than hidden — `git status` shows the file modified after
+  every suite run, including all six of a release gate, and the release
+  checklist's own re-pack restores with the RID and leaves the tree clean before
+  the release commit is written. The way that would end the oscillation outright,
+  declaring the RID on `BrowserAI.Core` so every restore resolves the same set,
+  is written down in [`TESTING.md`](TESTING.md) and belongs to whoever owns the
+  build.
+  [`RELEASING.md`](RELEASING.md) item 7 and [`TESTING.md`](TESTING.md) are
+  corrected by addition, each quoting in full what it said before.
+
 ### Removed
 
 - 🗑️ **`browserai-sessions.json`, the per-root roll-up, and every mechanism that
@@ -4609,6 +4295,313 @@ Start at [`README.md`](README.md).
   question starts from. It now records the version the build was actually
   derived as. Measured on the artifact rather than reasoned about: at `v0.1.0`
   the assembly version really is `0.0.0.0`.
+
+- 📝 **Six stale sentences are corrected and one new hazard is written down.** The
+  `--shortcuts None` claim in [`HAZARDS.md`](HAZARDS.md) had been false since the
+  Start Menu entry landed; [`RELEASING.md`](RELEASING.md) still told a maintainer
+  to **uninstall their working BrowserAI** before cutting a release, which stopped
+  being necessary the day the suite's pack got its own id; `kb/mcp/protocol.md`
+  named the registered path as `current\BrowserAI.exe` and said there was
+  *nothing to correct* on an update, both of which the two-binary split made
+  false; and `BrowserAI.exe --sweep` — named in the server's own source, in
+  `kb/windows/detection.md` and in re-verification row 78 — **opens a window**
+  now instead of measuring anything, so that procedure was broken rather than
+  untidy. `kb/packaging/velopack.md` gets the same treatment in two places. The
+  new hazard is residue nothing owns: every browser this product launches leaves
+  a JSON descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and **26,891 of them
+  (42.6 MiB) have accumulated since 2026-08-14** from running the suite. There is
+  no environment variable that moves that directory, so it is recorded with what
+  is owed rather than guessed at.
+
+- ✅ **The app's embedded manifest and its apartment are asserted off the binary
+  that ships.** Two properties the whole window depends on were read once, by
+  hand, and then trusted. The **`Microsoft.Windows.Common-Controls` 6.0.0.0**
+  dependency is the one whose absence makes `TaskDialogIndirect` fail at run time
+  with **no compile-time signal of any kind** — the loader binds version 5, the
+  export is absent, and it presents as *the app starts and nothing happens*. It
+  is now read out of `RT_MANIFEST` id 1 of the built and published binaries,
+  together with `longPathAware`, `PerMonitorV2` and `asInvoker`, with the server's
+  own manifest as the control so a reader that stopped finding resources cannot
+  look like a binary that declares less. And **`[STAThread]` under NativeAOT was
+  an assumption**: the folder picker's `BIF_NEWDIALOGSTYLE` silently falls back to
+  the pre-Vista dialog off an STA and the version 6 common controls expect one, so
+  `--report` now writes the apartment and an arm runs the **published** binary and
+  requires it. **Measured 2026-09-16 at .NET 10 / ILC 10.0.12: it is `STA`.** The
+  report's schema is 2.
+
+- 🐛 **The installer's own variables are cleared after Velopack has read them,
+  not before.** `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART` are cleared so that
+  no child of the configuration app inherits them — click *Register* with
+  `VELOPACK_FIRSTRUN` still set and `claude.exe` starts carrying it, and so does
+  everything it starts, including the MCP server, which exits 0 on that variable
+  by design. But the clearing ran **before** `VelopackApp.Run()`, and `Run()`
+  decides whether to invoke `OnFirstRun` and `OnRestarted` by reading exactly
+  those two variables — so both callbacks were unreachable in this binary: two
+  log lines that could never be written, with a remark beside them describing
+  behaviour that did not happen. It runs after `Run()` now and still before
+  anything is started, which the hook path never reaches at all because `Run()`
+  exits the process when it serves one.
+
+- 🔧 **The dialog's icon is loaded at the dialog's DPI instead of at the classic
+  size.** `LoadIconW` has no size parameter: it answers the 32×32 image out of
+  the group, which a Per-Monitor-V2 process then draws **stretched** — on a 200%
+  display, thirty-two pixels blown up to sixty-four, beside text that is not.
+  The icon ships larger images, so the load is `LoadIconWithScaleSize` at
+  `SM_CXICON` for the window's own DPI, with the unscaled load kept as the
+  fallback it has always been. The DPI is the window's where there is a window
+  and the system's on the first page, which is built before the window exists —
+  so a dialog dragged to a second monitor comes back at that monitor's DPI. The
+  loading call is `LoadImageW`, **not** `LoadIconWithScaleSize`: the comctl32
+  function the documentation points at for this is exported **by ordinal only**,
+  and naming it in a `LibraryImport` fails at the call with
+  `EntryPointNotFoundException` from inside `Show()` — which takes the window
+  with it. That was found by the gate, not by review: the published app exited
+  `0xC0000409` and left the reason in its own process log.
+
+- 🐛 **The release-notes generator refuses the two shapes it used to crash on or
+  drop.** An entry written above a section's first `### ` heading made
+  `$group` null and `Set-StrictMode` turned `$null.Entries.Add(…)` into *"The
+  property 'Entries' cannot be found on this object"* — a stack trace naming a
+  variable nobody reading a changelog has heard of. A paragraph written *under*
+  a group heading was worse: neither preamble nor entry, it was silently dropped
+  from the body. Both are refused now, in the script's own words, naming the
+  line. Refusing rather than carrying the paragraph is the choice: prose already
+  has a place — the section preamble, above the first heading, which the body
+  does render — and inventing a rendering for a shape nothing else reads would
+  widen the format past what `ChangelogTests` holds it to.
+
+- 🔧 **A wait on the client's handle that cannot be interpreted now records the
+  value it got.** `WaitForSingleObject` answers one of four things and only
+  `WAIT_FAILED` sets a last error; `WAIT_ABANDONED` reaches the same branch
+  carrying whatever error was left in the thread, which can read as *The
+  operation completed successfully* — a sentence that looks like a defect in the
+  logging rather than a state of the client. The record carries the raw value
+  beside the message now, under its own event id, so the two are distinguishable
+  after the fact.
+
+- ✅ **A release date set at the cut is reported as a heading change, not as a
+  rewritten record.** A sealed record starts at its own heading, so
+  `## [1.0.0] - 2026-09-15` is inside the 281,709 characters
+  `AppendOnlyRecordTests` seals — and setting the real date at the cut breaks
+  the seal. The failure said *REWRITTEN … a dated record says what was true when
+  it was written*, which is the right sentence for a sweep and exactly the wrong
+  one for the one edit [the checklist](RELEASING.md) requires: it reads as
+  *revert this*. Each seal now carries a second digest, of the same prefix
+  **without its first line**, so the test can tell the two apart and say **the
+  HEADING LINE changed and nothing else did** with the seal line to paste. A body
+  edit under an untouched heading still says *REWRITTEN*. `RELEASING.md` says the
+  same in item 10 and in the order section: the date change and the re-seal are
+  one commit.
+
+- 📦 **A release cut over a local feed still holding this machine's gate packs is
+  refused.** `Releases/` is where every gate pack lands, and a gate pack is cut
+  at whatever MinVer derives from a commit past the tag — so between releases
+  the local feed holds `1.0.1-alpha.0.19`, `1.0.1-alpha.0.2` and a manifest
+  naming them. Cutting `1.0.0` against that is *lower than the published
+  version*, and `build/Test-ReleaseVersion.ps1` called it a **rollback** and
+  advised `-RollbackRepublish` — which would have published a release into a
+  feed whose manifest and asset list name packages nobody ever released. It now
+  refuses a **release** candidate whenever the local feed's highest version is a
+  **pre-release** newer than it, and the refusal names the four files to delete
+  — `*.nupkg`, `releases.win.json`, `RELEASES`, `assets.win.json` — and the two
+  directories that must survive, `archive/` and `test-pack/`.
+  [`RELEASING.md`](RELEASING.md) step 5 says the same. The rule is narrow by
+  construction: a genuine rollback over published releases still reads as one, a
+  pre-release gate pack over the same directory is still monotonic, and so is a
+  release over only older pre-releases.
+
+- 🔧 **The update check runs off the UI thread, under the same deadline the
+  server uses.** `CheckAsync` and `DownloadAsync` were called with
+  `.GetAwaiter().GetResult()` **inside the dialog's callback**, with
+  `CancellationToken.None`. `VelopackUpdateClient` builds its `UpdateManager`
+  from a bare URL, so Velopack's own `SimpleWebSource` supplies the `HttpClient`
+  timeout — **thirty minutes** — and a feed that answered slowly froze the
+  window for that long: no repaint, no cursor, no close button. The server's
+  lane wrapped the identical calls in `UpdateService.CrashTripwire` from the day
+  it was written; this one had nothing. Both now run on the thread pool under
+  that same constant, and the dialog enables `TDF_CALLBACK_TIMER` and polls on
+  `TDN_TIMER` — so it shows *Checking for updates…*, stays fully usable, and
+  redraws itself with the answer, or with *the update check did not finish
+  within N seconds and was stopped* if the deadline passes. The deadline is
+  enforced by the poll rather than by the token, because
+  `UpdateManager.CheckForUpdatesAsync` takes no token at all: what ends is the
+  **waiting**, and the orphaned request finishes into nothing.
+
+- 🐛 **The folder picker is owned by the dialog, and an unresolvable folder
+  is no longer a silent cancel.** Two defects in one button. The picker was
+  opened with a **zero owner**, because the dialog's window was private — so it
+  was modal to nothing: the task dialog's command links stayed live underneath
+  it, a second click re-entered the command handler, and a `TDM_NAVIGATE_PAGE`
+  from there rebuilds the page out from under a modal child. `TaskDialogHost`
+  exposes its window now and the picker is given it. Separately,
+  `SHGetPathFromIDListW` has **no length parameter** — it assumes `MAX_PATH` and
+  answers `FALSE` for anything longer — and the path was being written into the
+  same 260-character buffer the shell was given for the display name. The picker
+  then answered `null`, which the caller read as *cancelled*, so choosing a deep
+  folder closed the picker, wrote nothing and said nothing. The call is
+  `SHGetPathFromIDListEx` into a 32,768-character buffer, and the answer is three
+  states rather than a nullable string: picked, cancelled, or failed with a
+  sentence the dialog puts in its note.
+
+- 🐛 **A click that throws no longer takes the whole window with it.**
+  Every action the configuration app offers runs inside the task dialog's
+  `[UnmanagedCallersOnly]` callback, and **an exception out of one of those is a
+  `FailFast`, not an exception**: the runtime cannot unwind into native frames,
+  so the process is terminated where it stands — the window vanishes mid-click
+  with no dialog, no log line and no exit code anything could read. Three calls
+  reachable from a click could produce one: `Directory.CreateDirectory` for the
+  log directory, `Path.Combine` outside the registry reader's own `try` when
+  `CLAUDE_CONFIG_DIR` holds an invalid path, and `Path.GetFullPath` on a picked
+  project directory. The three delegate invocations are now inside one
+  `try`/`catch`, which records the failure to the process log, puts it in the
+  dialog's note, re-renders, and returns the `S_OK`/`S_FALSE` the notification
+  requires — so the window stays open and says what happened. The dispatch was
+  lifted out of the unmanaged entry point to make any of this assertable:
+  `Callback` resolves the instance and forwards to `Dispatch`, because an
+  `[UnmanagedCallersOnly]` method cannot be called from C# at all and a decision
+  written inside one is a decision no test can ever reach.
+
+- 🔒 **Neither an install nor an uninstall touches a `browserai` entry it did
+  not write.** Three sentences in this codebase said
+  BrowserAI *"neither adopts, overwrites nor deletes"* an entry belonging to
+  another install — `RegistrationOwnership`'s own summary,
+  `AppState.MayRemove`'s remark, and the registration row in
+  [`DECISIONS.md`](DECISIONS.md) — and **one intent out of three was keeping
+  them.** `Repair`, the update hook's path, read the client's configuration and
+  refused what it did not own; `Reassert`, the **install** hook's, ran
+  `mcp remove` and then `mcp add` with no check at all, and `Remove`, the
+  **uninstall** hook's, ran `mcp remove` unconditionally. So installing this
+  BrowserAI beside another one deleted that one's registration and wrote its own
+  over the top, and uninstalling this one deleted the other's outright.
+  `McpRegistrar.Apply` now reads `McpRegistryView.User` before **every** intent
+  and takes the two refusals — a configuration nobody could read, and an entry
+  outside this install root — in one place for all three. Absent, ours-and-stale
+  and ours-and-present behave exactly as they did. There is no exit code on that
+  path and that is deliberate: these run inside Velopack fast-exit callbacks,
+  where a non-zero result fails somebody's install, so what carries the outcome
+  is `isWhatWasAskedFor: false` in `mcp-registration.json` with the foreign path
+  named in the detail, plus a warning in the installer's own log.
+
+- 📦 **The suite's installer is titled `BrowserAI (suite)` and no longer
+  owns the real Start Menu entry.** The two packs were split by pack id on
+  2026-09-15 to stop the suite's installer arm rewriting and then deleting the
+  real install's Add/Remove entry — and the **title** was left shared, which is
+  the name Velopack actually gives the shortcut (`shortcuts.rs`, read at 1.2.0:
+  the link file is `<title>.lnk`, never `<packId>.lnk`). Shortcut creation is
+  not gated on `--silent`, and the uninstall removes shortcuts **by target**, so
+  the arm wrote `%APPDATA%\Microsoft\Windows\Start Menu\Programs\BrowserAI.lnk`
+  pointing at its own scratch root over the real install's entry, and its
+  uninstall then deleted it. `build/New-Release.ps1` now replaces **three**
+  elements rather than two when it builds the second pack — the id, the title
+  and the output directory — and the arm reads the user's Start Menu before and
+  after for the same reason it already read the Add/Remove key: nothing under
+  the shipping title may point into the scratch root, `BrowserAI (suite).lnk`
+  may not outlive its own uninstall, and the whole set must be byte-identical
+  across the run.
+- 🐛 **Three invisible backspace bytes are gone, and one of them had silenced a
+  whole scan.** A byte search over everything git tracks found `0x08` in three
+  files, each of them a `\b` that something expanded before the file was written.
+  The expensive one was `BrowserIdleTimerTests.ClockAssignment`, whose pattern
+  asked for a **literal backspace** before `Clock` — so
+  `TheShippedClockIsTheRealOneAndNothingInTheProductReplacesIt`, the arm that
+  exists because a test clock leaking into a shipped build stops the only timer
+  in the product from ever firing and **nothing anywhere would go red**, was
+  asserting emptiness over a result set nothing could enter. The scan is
+  re-pointed and carries a positive control it is asserted against before the
+  emptiness is believed; over the product tree it still finds nothing, which is
+  now a measurement rather than an artefact. The other two were prose: a comment
+  in `SessionToolTests` and the browsers root in [`HAZARDS.md`](HAZARDS.md), both
+  reading `BrowserAI` followed by `rowsers` where `BrowserAI\browsers\` was
+  meant. The hazard row is a dated record maintained by addition and the path was
+  repaired in place, because restoring a character a tool ate is a typo-class
+  correction and not a change to what the row claims.
+
+- ✅ **No text file in the tree may carry a C0 control byte.**
+  `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` reads every file the
+  walk reaches and refuses anything below `0x20` but tab, line feed and carriage
+  return. **The byte is invisible in every editor, every diff and every review**,
+  which is why this is a mechanism rather than a habit: a reader sees the escape
+  they meant to type where the file holds one character that is not it, and a
+  regex that cannot match is a green test forever. A file of one of the prose
+  kinds is always read, NUL included; anything else is binary by git's own
+  heuristic — a NUL in the first 8,000 bytes — and is skipped, which today is
+  `assets\BrowserAI.ico` and nothing else. Both counts are asserted, so a corpus
+  quietly re-classifying itself as binary cannot empty the scan, and the control
+  is written to disk rather than passed as a string so the reading half is
+  exercised too.
+
+- 🐛 **An "ours" registration that names the wrong binary is stale, not
+  present.** `McpRegistryView.Classify` answered `OursAndPresent` for any file
+  under our install root that **existed**, and every registration written before
+  the 2026-09-15 two-binary split names `current\BrowserAI.exe` — which is now
+  the **configuration app**. So a pre-split 1.0.0 install that later updates kept
+  an entry pointing at the window: `McpRegistrar.Repair` leaves an
+  ours-and-present entry exactly as it is by design, arguments and all, so the
+  client started a dialog and waited forever for a JSON-RPC handshake a window
+  will never send. **There was nothing in any log, because nothing had failed** —
+  which is the whole reason this survived: the install works, the update works,
+  the registration is there, and the server does not answer. *Present* now means
+  *is the MCP server*, read out of the file's own PE optional header
+  (`IMAGE_SUBSYSTEM_WINDOWS_CUI`, 3) — the same discriminator
+  `RegistrationTarget` already used when it composed the path, so there is one
+  answer to the question rather than two. Anything else under our root is
+  `OursAndStale`, which `Repair` re-points and the window offers *Register* out
+  of; a file that is not a portable executable at all gets the same answer, for
+  the same reason. **The two causes stay one state because the remedy is
+  identical**, and only the sentence differs: the dialog says *"Registered to the
+  wrong binary"* when the file is there and *"which is not there any more"* when
+  it is not, because telling somebody a file is missing when they can see it is
+  the fastest way to lose their trust in a status line. Planted red over
+  constructed inputs — a Windows-subsystem binary at the registered path, then a
+  file that is not a PE — and again on the sentence.
+
+- 📦 **A release body is one shape now: a headline a line, each linked to its own
+  lines of the changelog.** The maintainer's choice (Q197 b). Every entry is
+  `- <icon> **<headline>** [read more](…/CHANGELOG.md?plain=1#L<first>-L<last>)`,
+  a line range into the source view of the changelog **as the tag carries it**,
+  which GitHub highlights exactly. The `<details>` fold is gone with the second
+  shape that came with it: the fold put the detail in the release a second time,
+  which is what made the body enormous, and over the size limit the whole
+  document silently became headlines with nothing to click. **Re-measured
+  2026-09-16 over the 1.0.0 section as it stands: folded is 288,437 characters
+  and would have fallen back to 19,780; linked is 41,288**, a third of GitHub's
+  125,000, with a range on every one of the 227 entries. The size guard survives
+  as a pathological fallback — the links are dropped and the footer's section
+  link is the only way in — and the script still says which shape it produced.
+  **The line numbers are only true of one file, so the generator refuses anything
+  else**: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
+  exists, must be at `HEAD`, or it refuses naming both commits. A dirty tree
+  elsewhere is reported rather than refused, because this runs inside
+  `New-Release.ps1` after a publish that leaves restore artifacts behind and none
+  of those can move a line number. An untracked changelog — a fixture under
+  scratch — is a state rather than a failure and the run says so. **The highlight
+  was verified on github.com in a real browser rather than assumed**: `curl`
+  cannot show it, because it is applied client-side and the served HTML carries
+  only the first 1,000 lines of a 3,682-line file. At
+  `?plain=1#L3496-L3532`, **exactly 37 elements carried a highlighted class**,
+  which is 3532 − 3496 + 1. The measurement is filed in
+  [`kb/toolchain.md`](kb/toolchain.md) beside the release-body section it belongs
+  to, with what `curl` can and cannot establish and how to re-run it, and it
+  shares re-verification row 128 rather than taking one of its own.
+
+- 📝 **A publish leaves `BrowserAI.Core`'s lock file modified, whichever publish
+  it is.** A RID-specific restore adds an empty
+  `"net10.0-windows7.0/win-x64": {}` section to
+  `src/BrowserAI.Core/packages.lock.json`. It was first seen after a standalone
+  `dotnet publish -r win-x64` and reverted in `ac244ff`; **`build/New-Release.ps1`
+  produces the identical diff**, watched on a full pack run on 2026-09-16, so
+  routing publishes through the release script does not avoid it — and publishes
+  should go through it anyway, because it is what stages each publish, reads both
+  ILC logs and refuses a missing executable by name.
+  [`RELEASING.md`](RELEASING.md) and [`TESTING.md`](TESTING.md) now say to revert
+  the diff rather than commit it, and say plainly that **nothing enforces it**: an
+  arm holding the file free of that section would be red for the whole window
+  between item 7's publish and item 8's run, which is a gate that cannot pass
+  after doing what the checklist just told it to do. The two ways it could be
+  closed — accept the section as the resolution, or restore `--locked-mode` so a
+  rewrite fails instead of happening quietly — are recorded as open. The
+  measurement is filed in [`kb/toolchain.md`](kb/toolchain.md) under the NuGet
+  section, with both publishes named and the times they were watched at.
 
 ## [0.1.0] - 2026-08-16
 
