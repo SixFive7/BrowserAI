@@ -657,7 +657,8 @@ internal sealed class ConfigurationAppTests
     /// 32×32 image out of the group, and a Per-Monitor-V2 process then draws it
     /// <i>stretched</i> — on a 200% display, thirty-two pixels blown up to
     /// sixty-four, beside text that is not. The application icon ships larger
-    /// images and <c>LoadIconWithScaleSize</c> is what picks one.
+    /// images and <c>LoadImageW</c> at <c>IMAGE_ICON</c> with a size is what picks
+    /// one.
     /// <i>Changed 2026-09-16.</i>
     /// </para>
     /// <para>
@@ -691,13 +692,22 @@ internal sealed class ConfigurationAppTests
         await Assert.That(source).Contains("LoadImageW(");
         await Assert.That(source).Contains("TaskDialogInterop.ImageIcon");
 
-        // ⚠️ AND NEVER LoadIconWithScaleSize, which is the function the
-        // documentation points at for this and is exported from comctl32 by
-        // ORDINAL ONLY: naming it in a LibraryImport fails at the call with
-        // EntryPointNotFoundException, from inside Show(), which takes the
-        // window with it. Measured 2026-09-16 against the published binary,
-        // which exited 0xC0000409 and left the reason in the process log.
-        await Assert.That(source.Contains("LoadIconWithScaleSize", StringComparison.Ordinal)).IsFalse();
+        // ⚠️ AND NEVER A CALL TO LoadIconWithScaleSize, which is the
+        // function the documentation points at for this and is exported from
+        // comctl32 by ORDINAL ONLY: naming it in a LibraryImport fails at the
+        // call with EntryPointNotFoundException, from inside Show(), which is
+        // outside the callback's boundary and takes the window with it. Measured
+        // 2026-09-16 against the published binary, which exited 0xC0000409 and
+        // left the reason in its own process log.
+        //
+        // The CALL, not the NAME: the remark that explains why the function is
+        // not used has to be allowed to name it, or the only way to satisfy this
+        // is to delete the explanation.
+        await Assert.That(source.Contains("LoadIconWithScaleSize(", StringComparison.Ordinal)).IsFalse();
+
+        // And the control, so that predicate is not one nothing could ever
+        // match: the same shape with the name that IS used is found.
+        await Assert.That(source.Contains("LoadImageW(", StringComparison.Ordinal)).IsTrue();
         await Assert.That(source).Contains("IconSizeFor(Dpi())");
         await Assert.That(source).Contains("GetDpiForWindow");
         await Assert.That(source).Contains("LoadIconW(");

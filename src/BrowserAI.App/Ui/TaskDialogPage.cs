@@ -308,14 +308,23 @@ internal sealed class TaskDialogHost : IDisposable
     /// call it uses — 2026-09-16.</b> <c>LoadIconW</c> has no size parameter: it
     /// answers the 32×32 image out of the group, which a Per-Monitor-V2 process
     /// then draws <i>stretched</i> — on a 200% display, a 32-pixel icon blown up
-    /// to 64. The application icon ships larger images; <c>LoadIconWithScaleSize</c>
-    /// is what picks one. The DPI is the window's where there is a window and
-    /// the system's on the first page, which is built before the window exists.
+    /// to 64. The application icon ships larger images; <c>LoadImageW</c> at
+    /// <c>IMAGE_ICON</c> with a size is what picks one. The DPI is the window's
+    /// where there is a window and the system's on the first page, which is
+    /// built before the window exists.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The comctl32 call the documentation points at is exported by
+    /// ORDINAL ONLY</b>, so naming it in a <c>LibraryImport</c> throws
+    /// <c>EntryPointNotFoundException</c> at the call — from inside
+    /// <see cref="Show"/>, which is outside the callback's own boundary and takes
+    /// the window with it. Measured 2026-09-16 against the published binary,
+    /// which exited <c>0xC0000409</c>. <c>LoadImageW</c> is exported by name.
     /// </para>
     /// <para>
     /// <b>The fallback is not decoration</b>, and there are two of them now. If
-    /// <c>LoadIconWithScaleSize</c> fails, the unscaled load is exactly the
-    /// behaviour that shipped; if the SDK ever stopped writing the icon group
+    /// the sized load fails, the unscaled one is exactly the behaviour that
+    /// shipped; if the SDK ever stopped writing the icon group
     /// under the id below, that load answers zero and the dialog would render
     /// with the <i>no icon at all</i> layout — a different shape, silently. A
     /// stock icon is a visible wrong rather than an invisible one.
