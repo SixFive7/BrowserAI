@@ -342,8 +342,12 @@ moves with Node, `@playwright/mcp` and the toolchain.
 `pwsh -File build/New-Release.ps1 -PackVersion <v> -OutputDir <feed>`, twice at
 two versions, then install the first `Setup.exe` with
 `--silent --installto <scratch>` and run
-`<scratch>\current\BrowserAI.exe` with `BROWSERAI_UPDATE_FEED` pointed at the
-feed directory. **Never install into `%LocalAppData%\BrowserAI`** — see the
+`<scratch>\current\BrowserAI.Server.exe` with `BROWSERAI_UPDATE_FEED` pointed at
+the feed directory. ⚠️ *Corrected 2026-09-16 (previously
+`<scratch>\current\BrowserAI.exe`)* — since the two-binary split of 2026-09-15
+that name is the configuration app, which has no update lane of its own to
+exercise and simply opens a window; the server is what reads
+`BROWSERAI_UPDATE_FEED` and runs the pass this section measures. **Never install into `%LocalAppData%\BrowserAI`** — see the
 repair-install finding above. *Re-stated 2026-09-15: that directory is the DATA
 root now, and the default install location is `%LocalAppData%\BrowserAI.app`, so
 the accident this sentence warns about is no longer reachable by default — only
@@ -473,7 +477,7 @@ between `packages\` and the feed proves nothing.**
 |---|---|
 | `Setup.exe --silent --installto <scratch>` | Exit 0. `<root>\{BrowserAI.exe, Update.exe, current\, packages\}` |
 | Stub vs. real binary | **392,704 b** at the root against **17,853,952 b** in `current\` — landmine 3 made visible: the stub is what a registration must never name |
-| `current\sq.version` | `<version>0.9.0`, `<channel>win`, `<mainExe>BrowserAI.exe`, `<shortcutLocations>None` |
+| `current\sq.version` | `<version>0.9.0`, `<channel>win`, `<mainExe>BrowserAI.exe`, `<shortcutLocations>None` — ⚠️ **read on the day and still what that pack held; neither field describes a pack cut now.** `<mainExe>` is the same string for a different binary (the configuration app, since 2026-09-15), and `<shortcutLocations>` is `StartMenuRoot` since the same day. *Noted 2026-09-16; the row is not rewritten, because it is a measurement of a 0.9.0 pack* |
 | Update 0.9.0 → 0.9.1 | Found, `deltas=1`, **downloaded and staged in 5.7 s** from a local directory feed, applied, version moved |
 | Rollback 0.9.1 → 0.9.0 | `rollback=True`, **`deltas=0`** — a full re-download, because `packages\` had been pruned. Staged in **0.2 s** (same volume). Version moved back |
 | **Browsers beside `current\`** | **Byte-identical across both**, by SHA-256 over every file. 52,428,869 b planted at `<root>\browsers\` |

@@ -353,6 +353,47 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       move into automation. Bringing CI back is
       [its own item](#continuous-integration), and it is not this one.
 
+## Residue outside the app root
+
+- [ ] **Find out whether BrowserAI can reap the browser descriptors Playwright
+      leaves in `%LOCALAPPDATA%\ms-playwright\b\`, and whether reaping them is
+      safe.** Every browser this product launches leaves one JSON file there
+      naming the `playwrightLib` path, the window title and the whole
+      `launchOptions`, and **nothing BrowserAI runs ever removes one**. Measured
+      2026-09-16 on the maintainer's machine: **26,891 files, 44,652,496 bytes
+      (42.6 MiB)**, oldest 2026-08-14, growing by roughly a thousand a day of
+      running the suite. Every record names this repository's own payload and a
+      `downloadsPath` under `.work\test-scratch`, so today it is the **suite's**
+      residue rather than any install's — but the same code runs in the shipped
+      product, so a heavy user accumulates the same thing with their own paths in
+      it. [Hazard row](HAZARDS.md#hazard-index) ·
+      [kb](kb/playwright/tools-and-artifacts.md#every-launched-browser-leaves-a-descriptor-in-localappdatams-playwrightb-and-nothing-reaps-it--measured-2026-09-16).
+
+      ⚠️ **The cheap answer has already been checked for and is not
+      there.** The directory is `defaultCacheDirectory()` + `ms-playwright\b`,
+      and `computeDefaultCacheDirectory()` on Windows reads **`LOCALAPPDATA` and
+      nothing else** — read in `coreBundle.js` at `playwright-core`
+      1.64.0-alpha-2026-09-14. `PLAYWRIGHT_BROWSERS_PATH` does not move it and no
+      other variable does, so the suite cannot point it at scratch and this is
+      not a one-line fix.
+
+      **What to actually do.** (1) Establish whether `ServerRegistry.list()` —
+      which unlinks every descriptor it cannot connect to — is reachable from
+      anything BrowserAI already calls, or whether the MCP child could be asked
+      to run it at a point where it is about to exit anyway. (2) Establish what
+      it would reap: the unlink is keyed on *cannot connect*, which is a
+      machine-wide judgement rather than a session-scoped one, so a peer's live
+      descriptors are the thing to prove safe before anything is called. (3) If
+      neither is safe, decide whether BrowserAI removes **only the guids it
+      launched itself**, which it knows, and where that would hook — the same
+      place the session's browser is closed. **Never a wildcard sweep of somebody
+      else's cache directory**: this product's rule about never acting on a path
+      it does not own applies to a directory as much as to a process.
+
+      **A plantable test exists for the outcome, whatever it is**: a product run
+      that leaves nothing new under that directory, with the count taken before
+      and after.
+
 ## Upstream asks
 
 - [ ] **Ask `@playwright/mcp` for an option that emits absolute paths in tool

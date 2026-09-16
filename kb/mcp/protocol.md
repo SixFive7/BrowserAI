@@ -273,12 +273,21 @@ itself into the wrong file would otherwise pass every test in this table.
 | Rollback 0.9.1 → 0.9.0 (`rollback=True deltas=0`) | `AlreadyRegistered`; unchanged again | 0.67 s |
 | Uninstall | `mcpServers` is `{}` | whole uninstall **1.78 s** of a 60 s budget |
 
-**Why an update changes nothing is the finding, not an omission.** The registered
-path is `<root>\current\BrowserAI.exe`; an update replaces that directory
-wholesale and the path is identical either side, so there is nothing to correct —
-and the client's configuration lives outside the install root entirely, where no
-update can reach it. The hook still runs, and what it buys is the *repair* case: a
-registration somebody removed comes back.
+**Why an update changed nothing was the finding of the day, and both halves of
+it have since stopped being true.** ⚠️ *Corrected 2026-09-16 (previously "The
+registered path is `<root>\current\BrowserAI.exe`; an update replaces that
+directory wholesale and the path is identical either side, so there is nothing to
+correct").* The registered path is
+**`<root>\current\BrowserAI.Server.exe`** since the two-binary split of
+2026-09-15 — `BrowserAI.exe` is the configuration app now — and *"nothing to
+correct"* was the premise that split destroyed: every registration written before
+that day names a file the update deletes, and leaving it alone gives a person a
+window where they asked for a server. `McpRegistrar.Repair` exists for exactly
+that case and re-points an entry of ours that no longer resolves. The half that
+survives is the last one: the client's configuration lives outside the install
+root entirely, where no update can reach it. **The measurements in the table above
+are unchanged** — they were taken against the layout of their own date and are
+what that day's `AlreadyRegistered` cost.
 
 **A hook must write its own log inside itself.** `VelopackApp.Run()` exits the
 process once it has served a hook, so anything buffered for later replay is

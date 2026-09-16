@@ -18,8 +18,12 @@ namespace BrowserAI.Tests;
 /// is executed here for real, both ways. The <c>vpk pack</c> invocation cannot
 /// be — it needs the tool, a publish and two minutes — so what is asserted about
 /// it is that the four decisions with a blast radius are still in the file:
-/// never <c>--msi</c>, the entry executable rather than the stub, no shortcuts,
-/// and an ILC scan that looks for the one thing that is not a diagnostic.
+/// never <c>--msi</c>, the entry executable rather than the stub, a
+/// <b>Start Menu</b> entry and no desktop one, and an ILC scan that looks for
+/// the one thing that is not a diagnostic. <i>Corrected 2026-09-16 (previously
+/// "no shortcuts")</i> — <c>--shortcuts StartMenuRoot</c> has been passed since
+/// 2026-09-15, when the main executable became the configuration app and a
+/// person needed a way to open it again.
 /// </para>
 /// <para>
 /// <b>What a scan can and cannot do is stated rather than implied.</b> It cannot

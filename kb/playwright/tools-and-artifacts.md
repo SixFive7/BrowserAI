@@ -654,6 +654,40 @@ the WebP pair straddles the boundary — **the 16,383 arm is the positive contro
 and it is not optional**, because a zero-byte result at one height alone cannot
 tell a format limit from a broken rig. `[FLOATS]`
 
+## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it — measured 2026-09-16
+
+**`playwright-core` writes one JSON file per launched browser into a cache
+directory that `PLAYWRIGHT_BROWSERS_PATH` does not move**, named
+`browser@<32 hex>`, carrying the `playwrightVersion`, the absolute
+`playwrightLib` path, the window title and the whole `launchOptions` of that
+browser.
+
+**Measured on the maintainer's machine, 2026-09-16:** **26,891 files,
+44,652,496 bytes (42.6 MiB)**, oldest `2026-08-14T05:36`, newest the same
+morning — roughly a thousand files a day of running the suite. **Every one of
+them is the SUITE's**: each names a `playwrightLib` under this repository's own
+`bin\Release\…\payload\mcp\node_modules\playwright-core` and a
+`downloadsPath` under `.work\test-scratch`. None names the real install.
+`[MACHINE]`
+
+**Where it comes from, read in `coreBundle.js` at `playwright-core`
+1.64.0-alpha-2026-09-14:** `serverRegistry.ts`'s `registryDirectory()` is
+`defaultCacheDirectory() + "ms-playwright" + "b"`, and
+`computeDefaultCacheDirectory()` on Windows is **`process.env.LOCALAPPDATA`**
+and nothing else. There is no `PLAYWRIGHT_*` variable in that path at all, so a
+harness cannot point it at scratch — the only lever is `LOCALAPPDATA` itself,
+which moves every other Windows path with it.
+
+**There IS a reaper and nothing calls it.** `ServerRegistry.list()` unlinks every
+descriptor it cannot connect to. BrowserAI never calls `list()`, and a launching
+process that exits does not clean up after itself, so the sweep never happens.
+Whether BrowserAI could call it safely is **not established**: the unlink is keyed
+on *cannot connect*, which is a machine-wide judgement rather than a
+session-scoped one, so it would reap a peer's descriptors as readily as its own.
+
+Re-establish with a directory listing and a byte total over
+`%LOCALAPPDATA%\ms-playwright\b`, and read one file to see whose it is.
+
 ## Artifacts and output-directory behaviour
 
 All read from the shipped bundle or observed against a real child. `[FLOATS]`

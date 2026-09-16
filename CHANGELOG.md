@@ -38,6 +38,23 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 📝 **Six stale sentences are corrected and one new hazard is written down.** The
+  `--shortcuts None` claim in [`HAZARDS.md`](HAZARDS.md) had been false since the
+  Start Menu entry landed; [`RELEASING.md`](RELEASING.md) still told a maintainer
+  to **uninstall their working BrowserAI** before cutting a release, which stopped
+  being necessary the day the suite's pack got its own id; `kb/mcp/protocol.md`
+  named the registered path as `current\BrowserAI.exe` and said there was
+  *nothing to correct* on an update, both of which the two-binary split made
+  false; and `BrowserAI.exe --sweep` — named in the server's own source, in
+  `kb/windows/detection.md` and in re-verification row 78 — **opens a window**
+  now instead of measuring anything, so that procedure was broken rather than
+  untidy. `kb/packaging/velopack.md` gets the same treatment in two places. The
+  new hazard is residue nothing owns: every browser this product launches leaves
+  a JSON descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and **26,891 of them
+  (42.6 MiB) have accumulated since 2026-08-14** from running the suite. There is
+  no environment variable that moves that directory, so it is recorded with what
+  is owed rather than guessed at.
+
 - ✅ **The app's embedded manifest and its apartment are asserted off the binary
   that ships.** Two properties the whole window depends on were read once, by
   hand, and then trusted. The **`Microsoft.Windows.Common-Controls` 6.0.0.0**

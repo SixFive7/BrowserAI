@@ -605,12 +605,21 @@ before this and nobody had re-read the number:*
   tree that has never been packed fails for want of an artefact rather than for
   anything about the code. Run [item 7's publish and pack](#7-build-clean)
   first; the gate then exercises the installer that is about to be published.
-  ⚠️ **And the installer arm refuses to run at all when an Add/Remove entry for
-  the pack id already exists**, because `--installto` would repoint that entry
-  and the uninstall would delete it — so a machine carrying a real install of
-  this build reports the capability ABSENT, with the key named in the coverage
-  block, and the release run fails. Uninstall it first, or cut the release from a
-  machine that does not have one.
+  ⚠️ **The arm refuses to run when an Add/Remove entry for the TEST pack id
+  already exists**, because `--installto` would repoint that entry and the
+  uninstall would delete it — so a leftover of the suite's own reports the
+  capability ABSENT, with the key named in the coverage block, and the release
+  run fails. Clear that key; it is one the suite wrote.
+
+  ⚠️ *Corrected 2026-09-16 (previously "refuses to run at all when an
+  Add/Remove entry for the pack id already exists … Uninstall it first, or cut
+  the release from a machine that does not have one").* **That instruction was
+  false from the day the test id landed** and asked a maintainer to uninstall a
+  working product for no reason. The capability judges `BrowserAI.app.test`,
+  never `BrowserAI.app`, precisely so that a real install is never in the way —
+  and since 2026-09-16 the suite's pack is also **titled** `BrowserAI (suite)`,
+  so the two cannot share a Start Menu shortcut either. A release is cut from a
+  machine with a real install on it, which is the ordinary case.
 
   **A pack into a scratch directory counts**, if the gate is being run before the
   real one exists: `BROWSERAI_RELEASE_FEED` points the arm at any directory

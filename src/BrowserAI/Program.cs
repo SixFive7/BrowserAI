@@ -87,8 +87,13 @@ internal static class Program
     /// argument has exactly one caller left and it is a
     /// <i>measurement</i> rather than a product path:
     /// [re-verification row 78](../../kb/re-verification.md) says to
-    /// re-establish the sweep-pass census with <c>BrowserAI.exe --sweep</c> under
-    /// a scratch <c>BROWSERAI_ROOT</c> and read the process log. That row is the
+    /// re-establish the sweep-pass census with
+    /// <c>BrowserAI.Server.exe --sweep</c> under a scratch
+    /// <c>BROWSERAI_ROOT</c> and read the process log. ⚠️ <i>Corrected
+    /// 2026-09-16 (previously <c>BrowserAI.exe --sweep</c>)</i> — that name
+    /// belongs to the configuration app since 2026-09-15, which does not take
+    /// this argument and opens a window instead, so the procedure did not
+    /// produce a wrong number: it produced a dialog. That row is the
     /// only route to the <b>published AOT</b> column of
     /// [the table](../../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths) —
     /// the test probe is a framework-dependent Debug build and measures the

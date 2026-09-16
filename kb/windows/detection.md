@@ -180,8 +180,11 @@ misses, forward slashes miss, and a `NULL` class finds nothing at all. `[FLOATS]
 
 That is the whole pass — process enumeration, the window walk, a title read per
 window, and the index self-clean — not just the process half. Re-establish with
-`BrowserAI.exe --sweep` under a scratch `BROWSERAI_ROOT` **inside your own profile** (a root outside it has been refused at startup since 2026-08-20) and read the process
-log, or with the probe's `stray-sweep` mode.
+`BrowserAI.Server.exe --sweep` under a scratch `BROWSERAI_ROOT` **inside your own profile** (a root outside it has been refused at startup since 2026-08-20) and read the process
+log, or with the probe's `stray-sweep` mode. ⚠️ *Corrected 2026-09-16
+(previously `BrowserAI.exe --sweep`)* — that name is the configuration app since
+2026-09-15 and does not take the argument, so following the old line **opens a
+window** rather than measuring anything. The procedure was broken, not untidy.
 
 **51 of the 64 message windows are nameless, and one of the 13 named ones is not
 a path.** It is `DeviceMonitorMessageWindow`, owned by a Chromium embedder, and
