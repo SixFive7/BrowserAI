@@ -1,0 +1,12 @@
+2026-09-14T21:02:59.493Z page server http://127.0.0.1:53162
+2026-09-14T21:02:59.498Z spawn c:\Source\SixFive7\BrowserAI\payload\node\node.exe ["c:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js","--headless","--isolated","--output-dir","c:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-14-webp-ask\\raw\\output","--viewport-size","1280x720"]
+2026-09-14T21:02:59.511Z raw @playwright/mcp child pid: 80368
+2026-09-14T21:02:59.879Z initialize -> {"name":"Playwright","version":"1.63.0-alpha-2026-08-31"}
+2026-09-14T21:02:59.891Z tools/list -> 24 tools; browser_take_screenshot props: ["element","target","type","filename","fullPage","scale"]
+2026-09-14T21:03:01.004Z userAgent -> ### Result "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36" ### Ran Playwright code ```js await page.evaluate('() => navigator.userAgent'); ```
+2026-09-14T21:03:01.923Z h=16383 doc=16383 webp ->   339 ms err=false mime=image/webp inline=12284B 1280x16383 disk=12284B 1280x16383
+2026-09-14T21:03:02.679Z h=16384 doc=16384 webp ->   200 ms err=false mime=image/webp inline=0B nullxnull disk=0B nullxnull
+2026-09-14T21:03:03.115Z h=16384 doc=16384 png  ->   433 ms err=false mime=image/png inline=137816B 1280x16384 disk=137816B 1280x16384
+2026-09-14T21:03:03.369Z h=16384 doc=16384 jpeg ->   250 ms err=false mime=image/jpeg inline=768991B 1280x16384 disk=768991B 1280x16384
+2026-09-14T21:03:03.620Z raw child exited code=0
+2026-09-14T21:03:03.623Z === done ===

@@ -1,0 +1,23 @@
+JobProbe pid=75892 tag=chromium selfjob=False
+self in any job at start: False
+inner job: KILL_ON_JOB_CLOSE set (no breakaway flags)
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\probe2\node_modules\@playwright\mcp\cli.js" --config "C:\Source\SixFive7\BrowserAI\.work\jobtest\cfg-chromium.json"
+child created SUSPENDED pid=24096
+child in our job BEFORE assign: False
+child in our job AFTER assign: True
+child resumed
+initialize OK
+browser_navigate OK -> browser is up
+job pid list: assigned=6 inList=6
+# tag=chromium selfjob=False probePid=75892 rootChildPid=24096
+# jobPidListCount=6 treeCount=6
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+24096	75892	0	node.exe	134312196489095545	YES	YES	YES	
+24256	24096	1	conhost.exe	134312196489199488	YES	YES	YES	
+69656	24096	1	chrome-headless-shell.exe	134312196492979160	YES	YES	YES	
+11668	69656	2	chrome-headless-shell.exe	134312196494087471	YES	YES	YES	
+67500	69656	2	chrome-headless-shell.exe	134312196494303204	YES	YES	YES	
+76496	69656	2	chrome-headless-shell.exe	134312196494490581	YES	YES	YES	
+# ESCAPEES(in tree, not in our job)=0
+
+REPORT WRITTEN. Waiting to be killed (or --autoexit).

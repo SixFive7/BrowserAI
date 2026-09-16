@@ -1,0 +1,43 @@
+2026-09-14T20:43:29.880Z local page server on http://127.0.0.1:64652
+2026-09-14T20:43:29.896Z BrowserAI pid: 55088
+2026-09-14T20:43:30.360Z initialize -> {"name":"BrowserAI","version":"1.0.1-alpha.0.206"}
+2026-09-14T20:43:30.818Z browserai_init -> 448 ms isError=false
+2026-09-14T20:43:31.343Z navigate /dense-short.html -> 524 ms isError=undefined
+2026-09-14T20:43:31.876Z metrics[dense 1280x720] {\"dpr\":1,\"iw\":1280,\"ih\":720,\"dw\":1280,\"dh\":1512}
+2026-09-14T20:43:31.946Z SHOT DENSE viewport 1280x720 png: 61 ms err=false inline=133426B 1280x720 image/png b64=177904 disk=133426B 1280x720 identical=true
+2026-09-14T20:43:32.472Z metrics[dense 1920x1080] {\"dpr\":1,\"iw\":1920,\"ih\":1080,\"dw\":1920,\"dh\":1512}
+2026-09-14T20:43:32.561Z SHOT DENSE viewport 1920x1080 png: 85 ms err=false inline=206833B 1920x1080 image/png b64=275780 disk=206833B 1920x1080 identical=true
+2026-09-14T20:43:33.084Z metrics[dense 2560x1440] {\"dpr\":1,\"iw\":2560,\"ih\":1440,\"dw\":2560,\"dh\":1512}
+2026-09-14T20:43:33.212Z SHOT DENSE viewport 2560x1440 png: 127 ms err=false inline=281270B 2560x1440 image/png b64=375028 disk=281270B 2560x1440 identical=true
+2026-09-14T20:43:33.263Z navigate /flat-6000.html -> 49 ms isError=undefined
+2026-09-14T20:43:33.783Z metrics[flat 1280x720] {\"dpr\":1,\"iw\":1280,\"ih\":720,\"dw\":1280,\"dh\":6000}
+2026-09-14T20:43:33.819Z SHOT FLAT viewport 1280x720 png: 32 ms err=false inline=8749B 1280x720 image/png b64=11668 disk=8749B 1280x720 identical=true
+2026-09-14T20:43:34.353Z metrics[flat 1920x1080] {\"dpr\":1,\"iw\":1920,\"ih\":1080,\"dw\":1920,\"dh\":6000}
+2026-09-14T20:43:34.414Z SHOT FLAT viewport 1920x1080 png: 54 ms err=false inline=19130B 1920x1080 image/png b64=25508 disk=19130B 1920x1080 identical=true
+2026-09-14T20:43:34.947Z metrics[flat 2560x1440] {\"dpr\":1,\"iw\":2560,\"ih\":1440,\"dw\":2560,\"dh\":6000}
+2026-09-14T20:43:35.056Z SHOT FLAT viewport 2560x1440 png: 104 ms err=false inline=31664B 2560x1440 image/png b64=42220 disk=31664B 2560x1440 identical=true
+2026-09-14T20:43:35.163Z navigate /dense-6000.html -> 106 ms isError=undefined
+2026-09-14T20:43:35.696Z metrics[denseTall 1280x720] {\"dpr\":1,\"iw\":1280,\"ih\":720,\"dw\":1280,\"dh\":6000}
+2026-09-14T20:43:36.094Z SHOT DENSE fullPage 1280x720 png: 393 ms err=false inline=1116832B 1280x6000 image/png b64=1489112 disk=1116832B 1280x6000 identical=true
+2026-09-14T20:43:36.625Z metrics[denseTall 1920x1080] {\"dpr\":1,\"iw\":1920,\"ih\":1080,\"dw\":1920,\"dh\":6000}
+2026-09-14T20:43:37.067Z SHOT DENSE fullPage 1920x1080 png: 439 ms err=false inline=1159022B 1920x6000 image/png b64=1545364 disk=1159022B 1920x6000 identical=true
+2026-09-14T20:43:37.594Z metrics[denseTall 2560x1440] {\"dpr\":1,\"iw\":2560,\"ih\":1440,\"dw\":2560,\"dh\":6000}
+2026-09-14T20:43:38.116Z SHOT DENSE fullPage 2560x1440 png: 518 ms err=false inline=1188277B 2560x6000 image/png b64=1584372 disk=1188277B 2560x6000 identical=true
+2026-09-14T20:43:38.178Z navigate /flat-6000.html -> 60 ms isError=undefined
+2026-09-14T20:43:38.712Z metrics[flatTall 1280x720] {\"dpr\":1,\"iw\":1280,\"ih\":720,\"dw\":1280,\"dh\":6000}
+2026-09-14T20:43:38.925Z SHOT FLAT fullPage 1280x720 png: 210 ms err=false inline=112826B 1280x6000 image/png b64=150436 disk=112826B 1280x6000 identical=true
+2026-09-14T20:43:38.998Z navigate /dense-short.html -> 72 ms isError=undefined
+2026-09-14T20:43:39.519Z metrics[dense formats 1280x720] {\"dpr\":1,\"iw\":1280,\"ih\":720,\"dw\":1280,\"dh\":1512}
+2026-09-14T20:43:39.561Z SHOT DENSE 1280x720 jpeg: 40 ms err=false inline=354429B 1280x720 image/jpeg b64=472572 disk=354429B 1280x720 identical=true
+2026-09-14T20:43:39.647Z SHOT DENSE 1280x720 webp: 83 ms err=false inline=202800B 1280x720 image/webp b64=270400 disk=202800B 1280x720 identical=true
+2026-09-14T20:43:39.695Z SHOT DENSE 1280x720 png scale=device: 45 ms err=false inline=133426B 1280x720 image/png b64=177904 disk=133426B 1280x720 identical=true
+2026-09-14T20:43:39.764Z SHOT DENSE 1280x720 png filename=named.png: 64 ms err=false inline=NONE disk=133426B 1280x720 identical=null
+2026-09-14T20:43:39.808Z SHOT DENSE 1280x720 no-type filename=named.jpg: 38 ms err=false inline=NONE disk=354429B 1280x720 identical=null
+2026-09-14T20:43:40.034Z navigate /dense-20000.html -> 224 ms isError=undefined
+2026-09-14T20:43:40.548Z metrics[denseHuge 1280x720] {\"dpr\":1,\"iw\":1280,\"ih\":720,\"dw\":1280,\"dh\":20016}
+2026-09-14T20:43:41.925Z SHOT DENSE fullPage 1280x720 png @20000px doc: 1369 ms err=false inline=3724372B 1280x20016 image/png b64=4965832 disk=3724372B 1280x20016 identical=true
+2026-09-14T20:43:43.896Z SHOT DENSE fullPage 1280x720 jpeg @20000px doc: 1952 ms err=false inline=9886843B 1280x20016 image/jpeg b64=13182460 disk=9886843B 1280x20016 identical=true
+2026-09-14T20:43:44.225Z SHOT DENSE fullPage 1280x720 webp @20000px doc: 325 ms err=false inline=0B nullxnull image/webp b64=0 disk=0B nullxnull identical=true
+2026-09-14T20:43:44.791Z destroy -> 564 ms isError=false
+2026-09-14T20:43:44.836Z BrowserAI exited code=0
+2026-09-14T20:43:44.837Z === done ===

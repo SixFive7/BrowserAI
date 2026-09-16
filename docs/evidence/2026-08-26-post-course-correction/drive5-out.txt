@@ -1,0 +1,90 @@
+
+=== init [UNC] "\\\\server\\share\\sess"  isError=true  1ms
+   'directory' = '\\server\share\sess' is on a network path — it is a UNC path — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. Name a directory on a local drive, such as C:\work\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.
+
+=== init [extended-UNC] "\\\\?\\UNC\\server\\share\\sess"  isError=true  1ms
+   'directory' = '\\?\UNC\server\share\sess' is on a network path — it is the extended spelling of the UNC path '\\server\share\sess' — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. Name a directory on a local drive, such as C:\work\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.
+
+=== init [device namespace] "\\\\.\\C:\\p7\\sess"  isError=true  1ms
+   'directory' = '\\.\C:\p7\sess' is spelled in the device namespace — '\\.\' is where '\\.\NUL' and '\\.\PhysicalDrive0' live, and it reaches past every check the filesystem would otherwise apply to a directory name. Nothing was created and nothing was changed. Every other spelling of a local directory is taken as the directory it names: BrowserAI resolves the extended-length prefix, a 'subst'ed drive letter and a junction into the filesystem's own name for the directory, and records that. This one it will not. Call the same tool again with directory='C:\p7\sess'.
+
+=== init [extended local] "\\\\?\\C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\ext-sess"  isError=false  432ms
+   NOTE: The directory you named is a second spelling: the session is at 'C:\Source\SixFive7\BrowserAI\.work\p7\ext-sess', which is what the filesystem calls it. That is the path BrowserAI records and the one to pass back.
+   
+   Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\p7\ext-sess' on every browser tool call.
+     directory: C:\Source\SixFive7\BrowserAI\.work\p7\ext-sess
+     browser: chromium
+     profile: C:\Source\SixFive7\BrowserAI\.work\p7\ext-sess\profile
+
+=== init [relative] "p7-relative"  isError=true  1ms
+   'directory' must be an absolute local path, and 'p7-relative' is not. There is no default: name where this session's data should live. BrowserAI does not resolve a relative path, because that would silently pick a location nobody chose — a different one per process. Pass a full path such as C:\work\checkout-flow-bug.
+
+=== init [drive-relative] "C:p7-driverel"  isError=true  1ms
+   'directory' must be an absolute local path, and 'C:p7-driverel' is not. There is no default: name where this session's data should live. BrowserAI does not resolve a relative path, because that would silently pick a location nobody chose — a different one per process. Pass a full path such as C:\work\checkout-flow-bug.
+
+=== init [rooted-unqualified] "\\p7-rooted"  isError=true  0ms
+   'directory' must be an absolute local path, and '\p7-rooted' is not. There is no default: name where this session's data should live. BrowserAI does not resolve a relative path, because that would silently pick a location nobody chose — a different one per process. Pass a full path such as C:\work\checkout-flow-bug.
+
+=== init [trailing dot] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\sessdot."  isError=true  1ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\sessdot.' is not a usable directory path: 'sessdot.' ends with a dot, which Windows silently strips — so the directory would be 'sessdot' rather than the name you asked for. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [trailing space] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\sessspace "  isError=true  0ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\sessspace ' is not a usable directory path: 'sessspace ' ends with a space, which Windows silently strips — so the directory would be 'sessspace' rather than the name you asked for. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [reserved device] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\NUL"  isError=true  0ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\NUL' is not a usable directory path: 'NUL' is the reserved device name 'NUL', which opens a device rather than a directory whatever follows it. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [reserved+ext] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\NUL.png"  isError=true  1ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\NUL.png' is not a usable directory path: 'NUL.png' is the reserved device name 'NUL', which opens a device rather than a directory whatever follows it. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [alternate stream] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\sess:stream"  isError=true  0ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\sess:stream' is not a usable directory path: 'sess:stream' names an alternate data stream rather than a directory: everything after the ':' is a stream inside 'sess'. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [wildcard] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\se*ss"  isError=true  1ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\se*ss' is not a usable directory path: 'se*ss' contains '*', which cannot appear in a Windows file name. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [control char] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\se\u0007ss"  isError=true  1ms
+   'directory' = 'C:\Source\SixFive7\BrowserAI\.work\p7\se\u0007ss' is not a usable directory path: 'se\u0007ss' contains the control character U+0007, which cannot appear in a Windows file name. Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== init [nonexistent drive] "Q:\\p7-unestablished\\deeper"  isError=true  1ms
+   'Q:\p7-unestablished\deeper' could not be created (Could not find a part of the path 'Q:\p7-unestablished\deeper'.). Nothing was changed. Name a directory BrowserAI can write to.
+
+=== init [dot segments] "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\..\\p7\\sess-dots"  isError=false  426ms
+   NOTE: The directory you named is a second spelling: the session is at 'C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots', which is what the filesystem calls it. That is the path BrowserAI records and the one to pass back.
+   
+   Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots' on every browser tool call.
+     directory: C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots
+     browser: chromium
+     profile: C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots\profile
+
+=== init [forward slashes] "C:/Source/SixFive7/BrowserAI/.work/p7/sess-slash"  isError=false  397ms
+   NOTE: The directory you named is a second spelling: the session is at 'C:\Source\SixFive7\BrowserAI\.work\p7\sess-slash', which is what the filesystem calls it. That is the path BrowserAI records and the one to pass back.
+   
+   Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\p7\sess-slash' on every browser tool call.
+     directory: C:\Source\SixFive7\BrowserAI\.work\p7\sess-slash
+     browser: chromium
+     profile: C:\Source\SixFive7\BrowserAI\.work\p7\sess-slash\profile
+
+=== init [volume root] "C:\\"  isError=true  1ms
+   'directory' = 'C:\' is not a usable directory path: 'C:\' is a volume root rather than a session directory. A session directory must be a real directory on the volume. (Parameter 'canonical') Nothing was changed. Name an absolute path BrowserAI can create a directory at.
+
+=== list [volume root] "C:\\" isError=false 39ms
+   6 session(s) under 'C:\':
+   
+   C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots
+     browser: chromium   size on disk: 0.1 MiB
+
+=== list [UNC] "\\\\server\\share" isError=true 0ms
+   'directory' = '\\server\share' is on a network path — it is a UNC path — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. Name a directory on a local drive, such as C:\work\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.
+
+=== list [nonexistent drive] "Q:\\" isError=false 1ms
+   No BrowserAI sessions under 'Q:\'. That is an answer rather than an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named.
+
+=== browserai_catch_up on UNC isError=true 0ms
+   'session' = '\\server\share\sess' is on a network path — it is a UNC path — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. Name a directory on a local drive, such as C:\work\my-session. If the data has to end up on the share, run the session locally and copy it there af
+
+=== browserai_destroy on UNC isError=true 0ms
+   'directory' = '\\server\share\sess' is on a network path — it is a UNC path — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. Name a directory on a local drive, such as C:\work\my-session. If the data has to end up on the share, run the session locally and copy it there 
+
+=== browserai_set_purpose on UNC isError=true 0ms
+   'session' = '\\server\share\sess' is on a network path — it is a UNC path — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. Name a directory on a local drive, such as C:\work\my-session. If the data has to end up on the share, run the session locally and copy it there af

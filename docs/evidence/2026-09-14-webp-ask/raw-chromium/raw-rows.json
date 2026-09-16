@@ -1,0 +1,125 @@
+{
+  "facts": {
+    "childPid": 60412,
+    "serverInfo": {
+      "name": "Playwright",
+      "version": "1.63.0-alpha-2026-08-31"
+    },
+    "toolCount": 24,
+    "screenshotSchemaKeys": [
+      "element",
+      "target",
+      "type",
+      "filename",
+      "fullPage",
+      "scale"
+    ],
+    "screenshotTypeEnum": {
+      "description": "Image format for the screenshot. If unset, inferred from the filename extension, otherwise png.",
+      "type": "string",
+      "enum": [
+        "png",
+        "jpeg",
+        "webp"
+      ]
+    },
+    "userAgent": "### Result\n\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => navigator.userAgent');\n```",
+    "exitCode": 0
+  },
+  "rows": [
+    {
+      "askedHeight": 16383,
+      "docHeight": 16383,
+      "type": "webp",
+      "ms": 334,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/webp",
+      "inlineBytes": 12284,
+      "inlineDims": {
+        "fmt": "webp",
+        "w": 1280,
+        "h": 16383,
+        "sub": "VP8X"
+      },
+      "diskFile": "page-2026-09-14T21-03-38-255Z.webp",
+      "diskBytes": 12284,
+      "diskDims": {
+        "fmt": "webp",
+        "w": 1280,
+        "h": 16383,
+        "sub": "VP8X"
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-09-14T21-03-38-255Z.webp)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-09-14T21-03-38-255Z.webp\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-09-14T21-03-38-255Z.webp',\n  scale: 'css',\n  type: 'webp'\n});\n```"
+    },
+    {
+      "askedHeight": 16384,
+      "docHeight": 16384,
+      "type": "webp",
+      "ms": 191,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/webp",
+      "inlineBytes": 0,
+      "inlineDims": {
+        "fmt": "EMPTY",
+        "w": null,
+        "h": null
+      },
+      "diskFile": "page-2026-09-14T21-03-39-016Z.webp",
+      "diskBytes": 0,
+      "diskDims": {
+        "fmt": "EMPTY",
+        "w": null,
+        "h": null
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-09-14T21-03-39-016Z.webp)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-09-14T21-03-39-016Z.webp\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-09-14T21-03-39-016Z.webp',\n  scale: 'css',\n  type: 'webp'\n});\n```"
+    },
+    {
+      "askedHeight": 16384,
+      "docHeight": 16384,
+      "type": "png",
+      "ms": 401,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/png",
+      "inlineBytes": 137816,
+      "inlineDims": {
+        "fmt": "png",
+        "w": 1280,
+        "h": 16384
+      },
+      "diskFile": "page-2026-09-14T21-03-39-416Z.png",
+      "diskBytes": 137816,
+      "diskDims": {
+        "fmt": "png",
+        "w": 1280,
+        "h": 16384
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-09-14T21-03-39-416Z.png)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-09-14T21-03-39-416Z.png\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-09-14T21-03-39-416Z.png',\n  scale: 'css',\n  type: 'png'\n});\n```"
+    },
+    {
+      "askedHeight": 16384,
+      "docHeight": 16384,
+      "type": "jpeg",
+      "ms": 242,
+      "isError": false,
+      "rpcError": null,
+      "inlineMime": "image/jpeg",
+      "inlineBytes": 768991,
+      "inlineDims": {
+        "fmt": "jpeg",
+        "h": 16384,
+        "w": 1280
+      },
+      "diskFile": "page-2026-09-14T21-03-39-655Z.jpeg",
+      "diskBytes": 768991,
+      "diskDims": {
+        "fmt": "jpeg",
+        "h": 16384,
+        "w": 1280
+      },
+      "text": "### Result\n- [Screenshot of full page](output\\page-2026-09-14T21-03-39-655Z.jpeg)\n### Ran Playwright code\n```js\n// Screenshot full page and save it as output\\page-2026-09-14T21-03-39-655Z.jpeg\nawait page.screenshot({\n  fullPage: true,\n  path: 'output\\\\page-2026-09-14T21-03-39-655Z.jpeg',\n  quality: 90,\n  scale: 'css',\n  type: 'jpeg'\n});\n```"
+    }
+  ]
+}

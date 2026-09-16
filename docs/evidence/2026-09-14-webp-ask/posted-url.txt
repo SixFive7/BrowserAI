@@ -1,0 +1,1 @@
+https://github.com/microsoft/playwright/issues/42717

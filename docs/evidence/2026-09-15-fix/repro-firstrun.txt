@@ -1,0 +1,11 @@
+outer cmd pid=79100 gone at +0,054s
+product pid=117156 at +0,308s
+PRODUCT EXITED at +0,313s
+--- product alive after 25s = False
+--- log tail ---
+    2026-09-15T15:03:37.3274844Z  made=2026-09-15T15:03:37.3268991Z  INFO   pid=117156@134339582172848840  BrowserAI.Startup[1]  BrowserAI 1.0.1-alpha.0.213 started. pid=117156 image=C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe cwd=C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console2-00da59e760f54b379c5c1cf0d15f82ea sqlite=3.53.4 sqliteBuild=intended
+    2026-09-15T15:03:37.3277917Z  made=2026-09-15T15:03:37.3277661Z  WARN   pid=117156@134339582172848840  BrowserAI.Startup[4]  BROWSERAI_ROOT is set, so this BrowserAI's app root is C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console2-00da59e760f54b379c5c1cf0d15f82ea rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+    2026-09-15T15:03:37.3285009Z  made=2026-09-15T15:03:37.3284835Z  INFO   pid=117156@134339582172848840  BrowserAI.Startup[8]  BrowserAI was started by the installer (VELOPACK_FIRSTRUN=true) and there is nothing to serve: no MCP client is on the other end of this process. Exiting without starting a browser server. This is how an install ends; a client starts BrowserAI itself when it needs one.
+    
+--- root entries: logs
+root = C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console2-00da59e760f54b379c5c1cf0d15f82ea

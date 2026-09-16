@@ -1,0 +1,193 @@
+[16:32:37] [INFO] --
+[16:32:37] [INFO] Starting Velopack Updater (1.2.0)
+[16:32:37] [INFO]     Location: "C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc\\Update.exe"
+[16:32:37] [INFO]     CWD: "C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc"
+[16:32:37] [INFO]     Verbose: true
+[16:32:37] [INFO]     Silent: true
+[16:32:37] [INFO]     Root Directory: None
+[16:32:37] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-15-install\\rc-uninstall.log"
+[16:32:37] [INFO]     Context: IAmUpdateExe
+[16:32:37] [INFO] Command: Uninstall
+[16:32:37] [INFO] Auto-locating app manifest...
+[16:32:37] [INFO] Root directory 'C:\Users\jori\AppData\Local\BrowserAI-rc' writable: true
+[16:32:37] [INFO] Using root packages directory: C:\Users\jori\AppData\Local\BrowserAI-rc\packages
+[16:32:37] [INFO] Command: Uninstall
+[16:32:37] [INFO] Checking for running processes in: C:\Users\jori\AppData\Local\BrowserAI-rc
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (53236)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (25164)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (11232)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (50704)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (79392)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (56676)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (3316)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (62440)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (13756)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (67524)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (65444)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (90440)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (71396)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (104008)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (83248)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (106444)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe (117056)
+[16:32:37] [WARN] Killing process: C:\Users\jori\AppData\Local\BrowserAI-rc\current\payload\node\node.exe (57808)
+[16:32:37] [WARN] Skipping killing self: C:\Users\jori\AppData\Local\BrowserAI-rc\Update.exe (81024)
+[16:32:37] [INFO] Running --veloapp-uninstall hook...
+[16:32:37] [INFO] About to launch: 'WideString("C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc\\current"))' with arguments: WideString("\"C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc\\current\\BrowserAI.exe\" --veloapp-uninstall 1.0.1-alpha.0.206\0")
+[16:32:37] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[16:32:37] [INFO] Waiting 60000ms for process handle to exit.
+[16:32:38] [INFO] Hook executed successfully (took 747.3904ms)
+[16:32:38] [INFO] Checking for running processes in: C:\Users\jori\AppData\Local\BrowserAI-rc
+[16:32:38] [WARN] Skipping killing self: C:\Users\jori\AppData\Local\BrowserAI-rc\Update.exe (81024)
+[16:32:38] [INFO] Searching for shortcuts containing root: '"C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc"'
+[16:32:38] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Anytype.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Arduino IDE.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\BSManager.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Beyond-All-Reason.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Docker Desktop.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\ExamDiff.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\File Pilot.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\GTA2 Game Hunter.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\GitHub Desktop.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\OpenCode.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Pen.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Signal.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Slack.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Stremio.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Ubisoft Connect.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\VIVE Wireless.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Wispr Flow.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\Xgpro.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\balenaEtcher.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\cs2.exe - Shortcut.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\Desktop\\unraid.lnk"
+[16:32:38] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Ollama.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Visual Studio Code.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Wispr Flow.lnk"
+[16:32:38] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility\\LiveCaptions.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility\\Magnify.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility\\Narrator.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility\\On-Screen Keyboard.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Accessibility\\VoiceAccess.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Anytype.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Arduino IDE.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BSManager.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Balena Ltd\\balenaEtcher.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BeamMP-Launcher.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Beyond-All-Reason.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Bug Demo.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Cursor.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\DBeaver Community\\DBeaver.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\DBeaver Community\\Uninstall.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Debug Window - CHILD (from handler).lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Debug Window - STANDALONE (from Invoke).lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Debug Window Test - CHILD.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Debug Window Test - Standalone.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Discord Inc\\Discord.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Discord.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Docker Desktop.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Failed to Register Hotkeys.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\File Explorer.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\File Pilot.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Firefox Web Apps\\Kagi.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Firefox.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\GTA2 Game Hunter\\GTA2 Game Hunter.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\GTA2 Game Hunter\\GTAMP.com.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\GTA2 Game Hunter\\Uninstall.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\GitHub, Inc\\GitHub Desktop.lnk"
+[16:32:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Inno Setup 6\\Inno Setup Compiler.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Inno Setup 6\\Inno Setup Documentation (Dark).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Inno Setup 6\\Inno Setup Documentation.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Inno Setup 6\\Inno Setup Example Scripts.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Inno Setup 6\\Inno Setup FAQ.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Inno Setup 6\\Inno Setup Revision History.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\LGTV Companion (Daemon).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\LGTV Companion Updater.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\LoadRawString Bug.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Main Window (Parent).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Nightly Private Browsing.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ollama\\Ollama.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ollama.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\OpenCode.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\OpenLens.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\OpenWebStart\\OpenWebStart Settings.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Outlook.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Pen.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Photino LoadRawString Bug Demo.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Photino Test.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Photino for .NET Demo App.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\PowerToys (Preview)\\PowerToys (Preview).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Python 3.14\\IDLE (Python 3.14 64-bit).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Python 3.14\\Python 3.14 (64-bit).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Python 3.14\\Python 3.14 Manuals (64-bit).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Python 3.14\\Python 3.14 Module Docs (64-bit).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Screen Capture Debug.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Signal.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Slack Technologies Inc\\Slack.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Ollama.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Visual Studio Code.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Wispr Flow.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Stremio.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\System Tools\\Command Prompt.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\System Tools\\Control Panel.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\System Tools\\Run.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Test Error Dialog.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Test.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Total Commander\\Total Commander 64 bit.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Total Commander\\Total Commander Help.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Total Commander\\Uninstall or Repair Total Commander.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\UCC 1.0.0 (beta).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\UCC 1.0.0.0.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\UCC 1.0.0.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\UCC Coordinator.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\UCC.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ubisoft\\Ubisoft Connect\\Ubisoft Connect.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ubisoft\\Ubisoft Connect\\Uninstall.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ubisoft\\UbisoftConnect\\Ubisoft Connect.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ubisoft\\UbisoftConnect\\Uninstall.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Ubuntu\\Install RELEASE (Ubuntu).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Unified  Communications Client.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Unified Communications Client  .lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Unified Communications Client .lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Unified Communications Client v657.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Unified Communications Client.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Unraid\\Unraid USB Creator.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Visual Studio Code.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\VoIP Fabric Portal.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell\\Windows PowerShell (x86).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Windows PowerShell\\Windows PowerShell.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Wispr AI\\Wispr Flow.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Xgpro\\Xgpro.lnk"
+[16:32:39] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\ImplicitAppShortcuts\\1b86957d7d01f12c\\League of Legends.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\ImplicitAppShortcuts\\1fd9ca90ea8fbea4\\Blender 4.0.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\ImplicitAppShortcuts\\d356105fac5527ef\\Steam.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\AIMP.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\File Explorer.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Firefox.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\GitHub Desktop.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\OpenLens.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Outlook.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Remote Desktop Connection.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Remote Desktop Manager (RDM).lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Royal TS V7.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\RustDesk.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\SteamVR.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Stremio.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Tombstones\\Visual Studio 2022.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\VIVE Wireless.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Visual Studio Code.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Visual Studio.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\dupeGuru.lnk"
+[16:32:39] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\psst-gui.lnk"
+[16:32:39] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\BrowserAI-rc"'
+[16:32:44] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\Temp\\velopack_BrowserAI"'
+[16:32:44] [INFO] Removing uninstall registry keys...
+[16:32:44] [INFO] Finished successfully.
+[16:32:44] [INFO] Scheduling removal of install directory...
+[16:32:44] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "C:\Users\jori\AppData\Local\BrowserAI-rc"
+Y

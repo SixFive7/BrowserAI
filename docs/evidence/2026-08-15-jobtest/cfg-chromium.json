@@ -1,0 +1,9 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "isolated": false,
+    "userDataDir": "C:/Source/SixFive7/BrowserAI/.work/jobtest/profile-chromium",
+    "launchOptions": { "headless": true }
+  },
+  "outputDir": "C:/Source/SixFive7/BrowserAI/.work/jobtest/out"
+}

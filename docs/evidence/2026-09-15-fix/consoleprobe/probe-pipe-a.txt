@@ -1,0 +1,6 @@
+stdin stream type = System.ConsolePal+WindowsConsoleStream
+stdin is a console (GetConsoleMode) = False
+after 1.5 s the read task is WaitingForActivation
+cancel: completed within 3 s = False (status WaitingForActivation, 3007 ms)
+dispose: completed within 3 s = False (status WaitingForActivation, 3013 ms)
+exiting Main without awaiting the read task

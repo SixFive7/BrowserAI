@@ -1,0 +1,12 @@
+2026-09-14T21:04:30.108Z chromium child pid 12668
+2026-09-14T21:04:32.412Z chromium browser exes: ["C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1243\\chrome-win64\\chrome.exe"]
+2026-09-14T21:04:32.412Z chromium high entropy: ### Result "{\"brands\":[{\"brand\":\"Chromium\",\"version\":\"153\"},{\"brand\":\"Not_A Brand\",\"version\":\"8\"}],\"fullVersionList\":[{\"brand\":\"Chromium\",\"version\":\"153.0.8010.12\"},{\"brand\":\"Not_A Brand\",\"version\":\"8.0.0.0\"}],\"mobile\":false,\"platform\":\"Windows\",\"uaFullVers
+2026-09-14T21:04:32.634Z chromium exited 0
+2026-09-14T21:04:33.464Z chromium survivors under that pid after exit: 0
+2026-09-14T21:04:33.475Z default child pid 68252
+2026-09-14T21:04:35.692Z default browser exes: ["C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"]
+2026-09-14T21:04:35.694Z default high entropy: ### Result "{\"brands\":[{\"brand\":\"Google Chrome\",\"version\":\"153\"},{\"brand\":\"Not_A Brand\",\"version\":\"8\"},{\"brand\":\"Chromium\",\"version\":\"153\"}],\"fullVersionList\":[{\"brand\":\"Google Chrome\",\"version\":\"153.0.8010.37\"},{\"brand\":\"Not_A Brand\",\"version\":\"8.0.0.0\"},
+2026-09-14T21:04:35.903Z default exited 0
+2026-09-14T21:04:36.786Z default survivors under that pid after exit: 0
+2026-09-14T21:04:36.789Z === done ===
+EXIT=0

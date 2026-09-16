@@ -1,0 +1,19 @@
+outer cmd pid=65560 gone at +0,047s
+product pid=70432 at +0,304s
+launcher pid 88584 was UNOPENABLE -> no client
+'no client to serve' at +0,531s
+--- product alive after 60s = True
+    threads=11 handles=248
+    child pid=77288 node.exe
+--- log tail ---
+    2026-09-15T14:57:29.4085167Z  made=2026-09-15T14:57:29.4084943Z  INFO   pid=70432@134339578493600693  BrowserAI.Protocol.DirectStdioClientTransport[7]  playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 77288 in 'C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console2-6f279ae6c8ee4280814a8ad46ed72251\instances\70432-93376e83546c450fa06427262f6459a0'.
+    2026-09-15T14:57:29.4154956Z  made=2026-09-15T14:57:29.4154773Z  INFO   pid=70432@134339578493600693  BrowserAI.Sweep[1]  Stray sweep: outcome=Ran elapsed=16.8ms processes=494/337 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=53 titled=10 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=1 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+    2026-09-15T14:57:29.6938099Z  made=2026-09-15T14:57:29.6937756Z  INFO   pid=70432@134339578493600693  ModelContextProtocol.Client.McpClient[1434756563]  Client (BrowserAI 1.0.1-alpha.0.213) client received server '{"name":"Playwright","version":"1.64.0-alpha-2026-09-14"}' capabilities: '{"tools":{}}'.
+    2026-09-15T14:57:29.6941058Z  made=2026-09-15T14:57:29.6940953Z  INFO   pid=70432@134339578493600693  ModelContextProtocol.Client.McpClient[1017245113]  Client (BrowserAI 1.0.1-alpha.0.213) client created and connected.
+    2026-09-15T14:57:29.6941772Z  made=2026-09-15T14:57:29.6941693Z  INFO   pid=70432@134339578493600693  BrowserAI.Proxy.ChildConnection[1]  Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+    2026-09-15T14:57:29.6955912Z  made=2026-09-15T14:57:29.6955726Z  WARN   pid=70432@134339578493600693  BrowserAI.Startup[72]  A handle could not be opened on the MCP client, pid 88584 (The parameter is incorrect.), so there is no client-liveness watch. Teardown falls back to stdin EOF alone.
+    2026-09-15T14:57:29.6957117Z  made=2026-09-15T14:57:29.6956965Z  WARN   pid=70432@134339578493600693  BrowserAI.Startup[9]  BrowserAI has no client to serve and is exiting: the process that started it (pid=88584) could not be opened or is gone, and standard input is a console rather than a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.
+    
+--- root entries: instances, live, logs
+KILLING by verified pid
+root = C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console2-6f279ae6c8ee4280814a8ad46ed72251

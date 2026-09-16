@@ -690,3 +690,18 @@ downloads/
 **/output/storage-state/
 **/output/video/
 **/output/traces/
+
+###############################################################################
+# The persisted record. `docs/evidence/` is what a measurement was taken from --
+# logs, registry exports, feed manifests, machine inventories -- and several of
+# those file names collide with patterns above that exist for build output and
+# for a live session's own artifacts: `*.log` (line 153), and `releases.*.json`
+# and `assets.*.json` in the session section. Nothing under `docs/` is ever
+# produced by a build or by a running BrowserAI, so the negation is safe to make
+# whole-subtree rather than pattern by pattern.
+#
+# ⚠️ This must stay the LAST rule in this file. A negation only survives if no
+# later pattern re-matches the path, so anything appended below it silently
+# un-persists the record. `docs/evidence/README.md` says what belongs there.
+###############################################################################
+!docs/evidence/**

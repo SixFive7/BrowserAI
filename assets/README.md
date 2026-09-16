@@ -16,7 +16,7 @@ Anthropic or Claude mark, no Windows logo and no Model Context Protocol mark.
 | File | What it is | How it was made |
 |---|---|---|
 | [`icon.svg`](icon.svg) | The master, 256×256 | Hand-written |
-| [`BrowserAI.ico`](BrowserAI.ico) | What both executables, the Setup stub, the Add/Remove entry and the Start Menu shortcut carry | 16/32/48 as 32-bit BGRA `BITMAPINFOHEADER` entries and 256 as the PNG file verbatim, packed by `.work/2026-09-15-icons/Make-Ico.ps1` |
+| [`BrowserAI.ico`](BrowserAI.ico) | What both executables, the Setup stub, the Add/Remove entry and the Start Menu shortcut carry | 16/32/48 as 32-bit BGRA `BITMAPINFOHEADER` entries and 256 as the PNG file verbatim, packed by [`Make-Ico.ps1`](../docs/design/icon-candidates/Make-Ico.ps1), kept beside the ten candidates |
 | [`icon-256.png`](icon-256.png) | The master rasterised | Headless Chromium, natively at that size |
 | [`icon-128.png`](icon-128.png) | What [`../README.md`](../README.md) shows beside its title | The same, at 128 |
 | [`social-preview.png`](social-preview.png) | 1280×640, for the repository's **Social preview** setting | The same pipeline, with the icon and one line of text |
@@ -24,9 +24,10 @@ Anthropic or Claude mark, no Windows logo and no Model Context Protocol mark.
 **Each raster is rendered natively at its own size rather than downscaled from
 the 256**, by Chromium's own vector rasteriser, with `omitBackground` so the
 corners stay transparent and `deviceScaleFactor: 1` so 16 means 16. The renderer
-is `.work/2026-09-16-icon/render-assets.mjs`, which drives the Chromium already
-in this machine's `%LocalAppData%\ms-playwright` cache through `playwright-core`
-— nothing is downloaded and the product's own browsers root is not touched.
+is [`build/probes/2026-09-16-icon/render-assets.mjs`](../build/probes/2026-09-16-icon/render-assets.mjs),
+which drives the Chromium already in this machine's
+`%LocalAppData%\ms-playwright` cache through `playwright-core` — nothing is
+downloaded and the product's own browsers root is not touched.
 
 ⚠️ **The social preview is the one file here with lettering in it**, and the
 lettering is rasterised system text rather than a path: the card asks for

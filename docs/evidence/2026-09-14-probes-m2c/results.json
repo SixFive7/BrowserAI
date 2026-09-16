@@ -1,0 +1,663 @@
+[
+  {
+    "label": "DENSE viewport 1280x720 png",
+    "args": {
+      "scale": "css"
+    },
+    "ms": 61,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 177904,
+      "bytes": 133426,
+      "mime": "image/png",
+      "sha": "9cda97aa7da381c0",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-31-931Z.png",
+    "disk": {
+      "bytes": 133426,
+      "sha": "9cda97aa7da381c0",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-31-931Z.png)"
+  },
+  {
+    "label": "DENSE viewport 1920x1080 png",
+    "args": {
+      "scale": "css"
+    },
+    "ms": 85,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1920,
+      "ih": 1080,
+      "dw": 1920,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 275780,
+      "bytes": 206833,
+      "mime": "image/png",
+      "sha": "91dc38de011e0555",
+      "fmt": "png",
+      "w": 1920,
+      "h": 1080,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-32-553Z.png",
+    "disk": {
+      "bytes": 206833,
+      "sha": "91dc38de011e0555",
+      "fmt": "png",
+      "w": 1920,
+      "h": 1080,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-32-553Z.png)"
+  },
+  {
+    "label": "DENSE viewport 2560x1440 png",
+    "args": {
+      "scale": "css"
+    },
+    "ms": 127,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 2560,
+      "ih": 1440,
+      "dw": 2560,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 375028,
+      "bytes": 281270,
+      "mime": "image/png",
+      "sha": "a7d65b2278f20d94",
+      "fmt": "png",
+      "w": 2560,
+      "h": 1440,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-33-198Z.png",
+    "disk": {
+      "bytes": 281270,
+      "sha": "a7d65b2278f20d94",
+      "fmt": "png",
+      "w": 2560,
+      "h": 1440,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-33-198Z.png)"
+  },
+  {
+    "label": "FLAT viewport 1280x720 png",
+    "args": {
+      "scale": "css"
+    },
+    "ms": 32,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 11668,
+      "bytes": 8749,
+      "mime": "image/png",
+      "sha": "51e4d4144c38adae",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-33-812Z.png",
+    "disk": {
+      "bytes": 8749,
+      "sha": "51e4d4144c38adae",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-33-812Z.png)"
+  },
+  {
+    "label": "FLAT viewport 1920x1080 png",
+    "args": {
+      "scale": "css"
+    },
+    "ms": 54,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1920,
+      "ih": 1080,
+      "dw": 1920,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 25508,
+      "bytes": 19130,
+      "mime": "image/png",
+      "sha": "313af2837d47a4b3",
+      "fmt": "png",
+      "w": 1920,
+      "h": 1080,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-34-405Z.png",
+    "disk": {
+      "bytes": 19130,
+      "sha": "313af2837d47a4b3",
+      "fmt": "png",
+      "w": 1920,
+      "h": 1080,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-34-405Z.png)"
+  },
+  {
+    "label": "FLAT viewport 2560x1440 png",
+    "args": {
+      "scale": "css"
+    },
+    "ms": 104,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 2560,
+      "ih": 1440,
+      "dw": 2560,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 42220,
+      "bytes": 31664,
+      "mime": "image/png",
+      "sha": "de6609569de0f91c",
+      "fmt": "png",
+      "w": 2560,
+      "h": 1440,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-35-045Z.png",
+    "disk": {
+      "bytes": 31664,
+      "sha": "de6609569de0f91c",
+      "fmt": "png",
+      "w": 2560,
+      "h": 1440,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-35-045Z.png)"
+  },
+  {
+    "label": "DENSE fullPage 1280x720 png",
+    "args": {
+      "scale": "css",
+      "fullPage": true
+    },
+    "ms": 393,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 1489112,
+      "bytes": 1116832,
+      "mime": "image/png",
+      "sha": "1bdecdba9dced1bb",
+      "fmt": "png",
+      "w": 1280,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-36-051Z.png",
+    "disk": {
+      "bytes": 1116832,
+      "sha": "1bdecdba9dced1bb",
+      "fmt": "png",
+      "w": 1280,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-36-051Z.png)"
+  },
+  {
+    "label": "DENSE fullPage 1920x1080 png",
+    "args": {
+      "scale": "css",
+      "fullPage": true
+    },
+    "ms": 439,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1920,
+      "ih": 1080,
+      "dw": 1920,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 1545364,
+      "bytes": 1159022,
+      "mime": "image/png",
+      "sha": "e2ba1bf0f0e6c853",
+      "fmt": "png",
+      "w": 1920,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-37-029Z.png",
+    "disk": {
+      "bytes": 1159022,
+      "sha": "e2ba1bf0f0e6c853",
+      "fmt": "png",
+      "w": 1920,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-37-029Z.png)"
+  },
+  {
+    "label": "DENSE fullPage 2560x1440 png",
+    "args": {
+      "scale": "css",
+      "fullPage": true
+    },
+    "ms": 518,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 2560,
+      "ih": 1440,
+      "dw": 2560,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 1584372,
+      "bytes": 1188277,
+      "mime": "image/png",
+      "sha": "55e09e04d57b2707",
+      "fmt": "png",
+      "w": 2560,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-38-080Z.png",
+    "disk": {
+      "bytes": 1188277,
+      "sha": "55e09e04d57b2707",
+      "fmt": "png",
+      "w": 2560,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-38-080Z.png)"
+  },
+  {
+    "label": "FLAT fullPage 1280x720 png",
+    "args": {
+      "scale": "css",
+      "fullPage": true
+    },
+    "ms": 210,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 6000
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 150436,
+      "bytes": 112826,
+      "mime": "image/png",
+      "sha": "039f87c6605543e1",
+      "fmt": "png",
+      "w": 1280,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-38-918Z.png",
+    "disk": {
+      "bytes": 112826,
+      "sha": "039f87c6605543e1",
+      "fmt": "png",
+      "w": 1280,
+      "h": 6000,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-38-918Z.png)"
+  },
+  {
+    "label": "DENSE 1280x720 jpeg",
+    "args": {
+      "scale": "css",
+      "type": "jpeg"
+    },
+    "ms": 40,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 472572,
+      "bytes": 354429,
+      "mime": "image/jpeg",
+      "sha": "ea505499d864031d",
+      "fmt": "jpeg",
+      "h": 720,
+      "w": 1280
+    },
+    "diskFile": "page-2026-09-14T20-43-39-549Z.jpeg",
+    "disk": {
+      "bytes": 354429,
+      "sha": "ea505499d864031d",
+      "fmt": "jpeg",
+      "h": 720,
+      "w": 1280
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-39-549Z.jpeg)"
+  },
+  {
+    "label": "DENSE 1280x720 webp",
+    "args": {
+      "scale": "css",
+      "type": "webp"
+    },
+    "ms": 83,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 270400,
+      "bytes": 202800,
+      "mime": "image/webp",
+      "sha": "a9c9d54cfd52804c",
+      "fmt": "webp",
+      "w": 1280,
+      "h": 720,
+      "sub": "VP8X"
+    },
+    "diskFile": "page-2026-09-14T20-43-39-638Z.webp",
+    "disk": {
+      "bytes": 202800,
+      "sha": "a9c9d54cfd52804c",
+      "fmt": "webp",
+      "w": 1280,
+      "h": 720,
+      "sub": "VP8X"
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-39-638Z.webp)"
+  },
+  {
+    "label": "DENSE 1280x720 png scale=device",
+    "args": {
+      "scale": "device"
+    },
+    "ms": 45,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 177904,
+      "bytes": 133426,
+      "mime": "image/png",
+      "sha": "9cda97aa7da381c0",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-39-688Z.png",
+    "disk": {
+      "bytes": 133426,
+      "sha": "9cda97aa7da381c0",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of viewport](./page-2026-09-14T20-43-39-688Z.png)"
+  },
+  {
+    "label": "DENSE 1280x720 png filename=named.png",
+    "args": {
+      "scale": "css",
+      "filename": "named.png"
+    },
+    "ms": 64,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": null,
+    "diskFile": "named.png",
+    "disk": {
+      "bytes": 133426,
+      "sha": "9cda97aa7da381c0",
+      "fmt": "png",
+      "w": 1280,
+      "h": 720,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": null,
+    "text": "### Result\n- [Screenshot of viewport](./named.png)"
+  },
+  {
+    "label": "DENSE 1280x720 no-type filename=named.jpg",
+    "args": {
+      "scale": "css",
+      "filename": "named.jpg"
+    },
+    "ms": 38,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 1512
+    },
+    "isError": false,
+    "inline": null,
+    "diskFile": "named.jpg",
+    "disk": {
+      "bytes": 354429,
+      "sha": "ea505499d864031d",
+      "fmt": "jpeg",
+      "h": 720,
+      "w": 1280
+    },
+    "identical": null,
+    "text": "### Result\n- [Screenshot of viewport](./named.jpg)"
+  },
+  {
+    "label": "DENSE fullPage 1280x720 png @20000px doc",
+    "args": {
+      "scale": "css",
+      "fullPage": true
+    },
+    "ms": 1369,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 20016
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 4965832,
+      "bytes": 3724372,
+      "mime": "image/png",
+      "sha": "efe1305e86010ac7",
+      "fmt": "png",
+      "w": 1280,
+      "h": 20016,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "diskFile": "page-2026-09-14T20-43-41-701Z.png",
+    "disk": {
+      "bytes": 3724372,
+      "sha": "efe1305e86010ac7",
+      "fmt": "png",
+      "w": 1280,
+      "h": 20016,
+      "bitDepth": 8,
+      "colorType": 2
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-41-701Z.png)"
+  },
+  {
+    "label": "DENSE fullPage 1280x720 jpeg @20000px doc",
+    "args": {
+      "scale": "css",
+      "fullPage": true,
+      "type": "jpeg"
+    },
+    "ms": 1952,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 20016
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 13182460,
+      "bytes": 9886843,
+      "mime": "image/jpeg",
+      "sha": "f059370309f0187c",
+      "fmt": "jpeg",
+      "h": 20016,
+      "w": 1280
+    },
+    "diskFile": "page-2026-09-14T20-43-42-467Z.jpeg",
+    "disk": {
+      "bytes": 9886843,
+      "sha": "f059370309f0187c",
+      "fmt": "jpeg",
+      "h": 20016,
+      "w": 1280
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-42-467Z.jpeg)"
+  },
+  {
+    "label": "DENSE fullPage 1280x720 webp @20000px doc",
+    "args": {
+      "scale": "css",
+      "fullPage": true,
+      "type": "webp"
+    },
+    "ms": 325,
+    "pageMetrics": {
+      "dpr": 1,
+      "iw": 1280,
+      "ih": 720,
+      "dw": 1280,
+      "dh": 20016
+    },
+    "isError": false,
+    "inline": {
+      "b64chars": 0,
+      "bytes": 0,
+      "mime": "image/webp",
+      "sha": "e3b0c44298fc1c14",
+      "fmt": "unknown",
+      "w": null,
+      "h": null
+    },
+    "diskFile": "page-2026-09-14T20-43-44-219Z.webp",
+    "disk": {
+      "bytes": 0,
+      "sha": "e3b0c44298fc1c14",
+      "fmt": "unknown",
+      "w": null,
+      "h": null
+    },
+    "identical": true,
+    "text": "### Result\n- [Screenshot of full page](./page-2026-09-14T20-43-44-219Z.webp)"
+  }
+]

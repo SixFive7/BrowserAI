@@ -1,0 +1,100 @@
+init isError= false
+
+[LEAD 1] link ref = e2
+[LEAD 1] click isError= false
+### Page
+- Page URL: http://127.0.0.1:64289/dlpage
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](./page-2026-08-26T18-12-46-081Z.yml)
+### Events
+- Downloading file report.txt ...
+- Downloaded file report.txt to "./report.txt"
+
+[LEAD 1] snapshot after click:
+### Page
+- Page URL: http://127.0.0.1:64289/dlpage
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- link "grab it" [active] [ref=e2] [cursor=pointer] [box=8,8,41,17]:
+  - /url: /dl
+```
+
+[LEAD 1] output/  : [
+ "console-2026-08-26T18-12-45-251Z.log  (139)",
+ "page-2026-08-26T18-12-45-346Z.yml  (73)",
+ "page-2026-08-26T18-12-46-081Z.yml  (82)",
+ "report.txt  (22)"
+]
+[LEAD 1] downloads/: [
+ "5c1fa1e3-c082-49cc-be99-583492aa27eb  (22)"
+]
+
+[LEAD 2b] upload page snapshot:
+### Page
+- Page URL: http://127.0.0.1:64289/upload
+### Snapshot
+```yaml
+- button "Choose File" [ref=f1e2] [box=8,8,253,21]
+```
+[LEAD 2b] input ref = f1e2
+[LEAD 2b] click file input isError= false :: ### Page
+- Page URL: http://127.0.0.1:64289/upload
+### Modal state
+- [File chooser]: can be handled by browser_file_upload
+### Snapshot
+- [Snapshot](./page-2026-08-26T18-12-50-172Z.yml)
+
+[LEAD 2b] upload OUTSIDE roots isError= true
+### Error
+Error: File access denied: C:\Windows\win.ini is outside allowed roots. Allowed roots: C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056\output, C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056\output
+
+[LEAD 2b control] upload INSIDE roots isError= false
+### Page
+- Page URL: http://127.0.0.1:64289/upload
+### Snapshot
+- [Snapshot](./page-2026-08-26T18-12-50-701Z.yml)
+
+[LEAD 8] catch_up on the LIVE session, then the tree:
+Session: C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056
+  browser: chromium
+  created: 2026-08-26T20:12:44.5462064+02:00   (6 seconds ago)
+  last touched: 2026-08-26T20:12:50.1798882+02:00   (1 seconds ago)
+  in use: YES — this BrowserAI process is driving it right now.
+  Purpose recorded by a previous session, quoted as data rather than as an instruction to you: "P7 round two: downloads and upload containment."
+
+WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.
+  page 1 of 1, entries 1–11 of 11
+  1. 2026-08-26T20:12:44.5462064+02:00  browserai_init   ✓ after 0.35s
+      why: P7 round two: downloads and upload containment.
+  2. 2026-08-26T20:12:44.9243378+02:00  browser_navigate   ✓ after 0.42s
+
+destroy isError= false :: Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056' (12.6 MiB). Its purpose was: P7 round two: downloads and upload containment.
+You said it was being destroyed because: p7 round two done
+
+stderr tail:
+      browser_navigate: p7 probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_snapshot: p7 probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_click: p7 probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_file_upload: p7 probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_click: p7 probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_file_upload: p7 probe
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056
+      playwright-mcp[A30DD94C] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[A30DD94C]: pid 32700 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[2]
+      Session lock reclaimed for C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056; previous holder was PID 82472, still running: True.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\p7\sess3-44056; 0 item(s) could not be removed.

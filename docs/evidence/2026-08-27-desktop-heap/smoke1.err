@@ -1,0 +1,5 @@
+Exception: C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\Rig.ps1:124
+Line |
+ 124 |  . r]::Zero) { throw "CreateDesktop failed: $([System.Runtime.InteropSer .
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | CreateDesktop failed: 87

@@ -1,0 +1,55 @@
+Running tests from C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession (561ms)
+  [Test Failure] InvalidOperationException: The browser (pid 68076) exited before it published a message window for 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-bb928c539d664f0fa4678cf83b63ae91\real\profile'. That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one.
+--- exit code: 1 ---
+--- what it wrote ---
+<it wrote nothing to either stream, and both pipes reached end-of-file>
+--- its own log (C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-bb928c539d664f0fa4678cf83b63ae91\chrome_debug.log) ---
+[68076:77224:0826/194308.000:VERBOSE1:components\policy\core\common\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
+[68076:77224:0826/194308.004:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:603] Applying FieldTrialTestingConfig
+[68076:77224:0826/194308.007:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:399] VariationsSetupComplete
+[68076:77224:0826/194308.026:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:195] No entry found for browser/global.
+[68076:77224:0826/194308.026:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:195] No entry found for browser/*.
+
+--- the machine at that instant ---
+  processes:        527
+  threads:          13062
+  kernel handles:   289927
+  physical total:   130989 MiB
+  physical free:    82982 MiB
+  commit total:     64815 MiB
+  commit limit:     141229 MiB
+  commit peak:      92240 MiB
+  processors:       32
+  desktop heap:     <not readable without a kernel debugger; a Chromium that cannot create a window object fails this way and none of the figures above would show it>
+  from C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: The browser (pid 68076) exited before it published a message window for 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-bb928c539d664f0fa4678cf83b63ae91\real\profile'. That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one.
+  --- exit code: 1 ---
+  --- what it wrote ---
+  <it wrote nothing to either stream, and both pipes reached end-of-file>
+  --- its own log (C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-bb928c539d664f0fa4678cf83b63ae91\chrome_debug.log) ---
+  [68076:77224:0826/194308.000:VERBOSE1:components\policy\core\common\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
+  [68076:77224:0826/194308.004:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:603] Applying FieldTrialTestingConfig
+  [68076:77224:0826/194308.007:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:399] VariationsSetupComplete
+  [68076:77224:0826/194308.026:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:195] No entry found for browser/global.
+  [68076:77224:0826/194308.026:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:195] No entry found for browser/*.
+  
+  --- the machine at that instant ---
+    processes:        527
+    threads:          13062
+    kernel handles:   289927
+    physical total:   130989 MiB
+    physical free:    82982 MiB
+    commit total:     64815 MiB
+    commit limit:     141229 MiB
+    commit peak:      92240 MiB
+    processors:       32
+    desktop heap:     <not readable without a kernel debugger; a Chromium that cannot create a window object fails this way and none of the figures above would show it>
+    at BrowserAI.Tests.StraySweepTests.WaitForAttributionAsync(String image, String profile, LaunchedProcess browser, Int64 browserCreated, JobObjectScope scope, String chromiumLog) in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\StraySweepTests.cs:1576
+    at BrowserAI.Tests.StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\StraySweepTests.cs:652
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 1 error(s) (2m 04s 295ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage ΓÇö what this run actually exercised
+  ==============================================================================

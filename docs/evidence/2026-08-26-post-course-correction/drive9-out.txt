@@ -1,0 +1,6 @@
+while held : ["browserai.data","browserai.data-shm","browserai.data-wal","browserai.lock"]
+after clean close: ["browserai.data","browserai.lock"]
+reader started, before any read: ["browserai.data","browserai.data-shm","browserai.data-wal","browserai.lock"]
+catch_up isError= false :: Session: C:\Source\SixFive7\BrowserAI\.work\p7\shm-22072
+after a read-only catch_up: ["browserai.data","browserai.data-shm","browserai.data-wal","browserai.lock"]
+after a browserai_list: ["browserai.data","browserai.data-shm","browserai.data-wal","browserai.lock"]  (list isError=false)

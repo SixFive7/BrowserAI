@@ -1,0 +1,18 @@
+PID 48520 [(main)] "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\probe2\node_modules\@playwright\mcp\cli.js" --config "C:\Source\SixFive7\BrowserAI\.work\jobtest\cfg-firefox.json"
+
+PID 15180 [(main)] \??\C:\WINDOWS\system32\conhost.exe 0x4
+
+PID 77468 [(main)] C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe -no-remote -headless -profile C:/Source/SixFive7/BrowserAI/.work/jobtest/profile-firefox -juggler-pipe about:blank
+
+PID 14124 [(main)] C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe -no-remote -headless -profile C:/Source/SixFive7/BrowserAI/.work/jobtest/profile-firefox -juggler-pipe about:blank
+
+PID 19252 [contentproc] "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe" -contentproc -parentBuildID 20260723193615 -prefsHandle 3512:27957 -prefMapHandle 3516:296974 -ipcHandle 3524 -initialChannelId {db06bfe8-f5ff-46b9-a8a3-dcaf41af2615} -parentPid 14124 -appDir "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\browser" - 3 rdd
+
+PID 37812 [contentproc] "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe" -contentproc -parentBuildID 20260723193615 -prefsHandle 2600:27111 -prefMapHandle 2604:296974 -ipcHandle 2616 -initialChannelId {9cefb1bf-af57-4e73-9ced-368d4ebd3aeb} -parentPid 14124 -win32kLockedDown -appDir "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\browser" - 1 socket
+
+PID 52228 [contentproc] "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe" -contentproc -isForBrowser -prefsHandle 4180:27458 -prefMapHandle 4188:296974 -jsInitHandle 4196:156236 -parentBuildID 20260723193615 -ipcHandle 4216 -initialChannelId {f2b007fe-1793-4ee3-ab4c-dd727a8235f1} -parentPid 14124 -win32kLockedDown -appDir "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\browser" - 5 tab
+
+PID 70888 [contentproc] "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe" -contentproc -isForBrowser -prefsHandle 4000:28094 -prefMapHandle 4004:296974 -jsInitHandle 4008:156236 -parentBuildID 20260723193615 -ipcHandle 4016 -initialChannelId {fddd9891-9a57-4ea1-a180-48d84b7d570f} -parentPid 14124 -win32kLockedDown -appDir "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\browser" - 4 tab
+
+PID 78408 [contentproc] "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\firefox.exe" -contentproc -parentBuildID 20260723193615 -sandboxingKind 0 -prefsHandle 5064:44880 -prefMapHandle 5056:296974 -ipcHandle 5008 -initialChannelId {b47d7b6b-00c4-459d-8e40-c58c5648b667} -parentPid 14124 -win32kLockedDown -appDir "C:\Source\SixFive7\BrowserAI\.work\browsers\firefox-1539\firefox\browser" - 6 utility
+

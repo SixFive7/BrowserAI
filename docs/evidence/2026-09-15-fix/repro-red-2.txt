@@ -1,0 +1,21 @@
+cmd pid=85364 exited 0 after 0,059s; handle released
+product pid=70008 first seen at +0,101s
+PRODUCT EXITED at +0,644s
+--- after 45s: product alive = False
+--- log tail ---
+    2026-09-15T14:56:14.5877018Z  made=2026-09-15T14:56:14.5872039Z  INFO   pid=70008@134339577745513079  BrowserAI.Startup[1]  BrowserAI 1.0.1-alpha.0.213 started. pid=70008 image=C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe cwd=C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console-32f21c8fa2464a178120bdb44b55daa2 sqlite=3.53.4 sqliteBuild=intended
+    2026-09-15T14:56:14.5880243Z  made=2026-09-15T14:56:14.5879949Z  WARN   pid=70008@134339577745513079  BrowserAI.Startup[4]  BROWSERAI_ROOT is set, so this BrowserAI's app root is C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console-32f21c8fa2464a178120bdb44b55daa2 rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+    2026-09-15T14:56:14.6014384Z  made=2026-09-15T14:56:14.6014078Z  INFO   pid=70008@134339577745513079  BrowserAI.Protocol.DirectStdioClientTransport[7]  playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 97604 in 'C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console-32f21c8fa2464a178120bdb44b55daa2\instances\70008-157bfad28538427d9a4d48efc6fe5ec6'.
+    2026-09-15T14:56:14.6057037Z  made=2026-09-15T14:56:14.6056863Z  INFO   pid=70008@134339577745513079  BrowserAI.Sweep[1]  Stray sweep: outcome=Ran elapsed=15.5ms processes=487/330 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=53 titled=10 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=1 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+    2026-09-15T14:56:14.8872914Z  made=2026-09-15T14:56:14.8872715Z  INFO   pid=70008@134339577745513079  ModelContextProtocol.Client.McpClient[1434756563]  Client (BrowserAI 1.0.1-alpha.0.213) client received server '{"name":"Playwright","version":"1.64.0-alpha-2026-09-14"}' capabilities: '{"tools":{}}'.
+    2026-09-15T14:56:14.8874810Z  made=2026-09-15T14:56:14.8874715Z  INFO   pid=70008@134339577745513079  ModelContextProtocol.Client.McpClient[1017245113]  Client (BrowserAI 1.0.1-alpha.0.213) client created and connected.
+    2026-09-15T14:56:14.8875452Z  made=2026-09-15T14:56:14.8875378Z  INFO   pid=70008@134339577745513079  BrowserAI.Proxy.ChildConnection[1]  Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+    2026-09-15T14:56:14.8884527Z  made=2026-09-15T14:56:14.8884421Z  INFO   pid=70008@134339577745513079  BrowserAI.Startup[70]  Watching the MCP client, pid 85364, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+    2026-09-15T14:56:14.8884789Z  made=2026-09-15T14:56:14.8884433Z  INFO   pid=70008@134339577745513079  BrowserAI.Startup[73]  The MCP client, pid 85364, has exited, so BrowserAI is closing its own protocol channel — which ends the conversation exactly as stdin EOF would, without waiting for it. Every session's child, its browser and its job go down with this process.
+    2026-09-15T14:56:14.8884934Z  made=2026-09-15T14:56:14.8884806Z  INFO   pid=70008@134339577745513079  BrowserAI.Startup[2]  BrowserAI is serving stdio. childProtocol=2025-11-25
+    2026-09-15T14:56:14.8886030Z  made=2026-09-15T14:56:14.8885957Z  INFO   pid=70008@134339577745513079  ModelContextProtocol.Server.McpServer[2103773711]  Server (BrowserAI 1.0.1-alpha.0.213) message processing canceled.
+    2026-09-15T14:56:14.8886780Z  made=2026-09-15T14:56:14.8886666Z  INFO   pid=70008@134339577745513079  ModelContextProtocol.Client.McpClient[2103773711]  playwright-mcp[surface] message processing canceled.
+    2026-09-15T14:56:14.9049100Z  made=2026-09-15T14:56:14.9048798Z  INFO   pid=70008@134339577745513079  BrowserAI.Protocol.ChildProcessSession[8]  playwright-mcp[surface]: pid 97604 exited with code 0.
+    
+--- root entries: instances, live, logs
+root = C:\Users\jori\AppData\Local\BrowserAI-test-scratch\manual-console-32f21c8fa2464a178120bdb44b55daa2

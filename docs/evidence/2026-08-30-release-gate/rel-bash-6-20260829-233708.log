@@ -1,0 +1,437 @@
+Running tests from c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed AFirefoxTreeIsContainedAndItsProfileDeletesCleanly (3m 03s 689ms)
+  [Test Failure] AssertionException: Expected to be true, because the driver did not navigate. Its answer was: {"result":{"content":[{"type":"text","text":"### Error\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\nCall log:\n\u001b[2m  - <launching> C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1539\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile
+--- what the launcher left in C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12 ---
+--- child-stderr.log (0 bytes) ---
+(unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stderr.log' because it is being used by another process.)
+--- child-stdout.log (0 bytes) ---
+(unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stdout.log' because it is being used by another process.)
+--- done (2 bytes) ---
+ok
+--- drive-a-browser.js (2167 bytes) ---
+const cp = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+const [readyFile, cli, configFile, browsersRoot] = process.argv.slice(2);
+
+const child = cp.spawn(process.execPath, [cli, '--config', configFile, '--sandbox'], {
+  stdio: ['pipe', 'pipe', 'pipe'],
+  env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: browsersRoot, PLAYWRIGHT_SKIP_BROWSER_GC: '1' },
+});
+
+let buffer = '';
+const pending = new Map();
+child.stdout.on('data', (chunk) => {
+  buffer += chunk.toString('utf8');
+  let index;
+  while ((index = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, index).trim();
+    buffer = buffer.slice(index + 1);
+    if (!line) continue;
+    try {
+      const message = JSON.parse(line);
+      if (message.id && pending.has(message.id)) {
+        pending.get(message.id)(message);
+        pending.delete(message.id);
+      }
+    } catch { /* not a frame we asked for */ }
+  }
+});
+
+let nextId = 1;
+function send(method, params) {
+  const id = nextId++;
+  return new Promise((resolve) => {
+    pending.set(id, resolve);
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  });
+}
+
+(async () => {
+  await send('initialize', {
+    protocolVersion: '2025-11-25',
+    capabilities: {},
+    clientInfo: { name: 'containment-driver', version: '1' },
+  });
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+
+  const answer = await send('tools/call', {
+    name: 'browser_navigate',
+    arguments: { url: 'data:text/html,<h1>ok</h1>' },
+  });
+
+  const text = JSON.stringify(answer);
+  const navigated = !!answer.result && answer.result.isError !== true && text.includes('data:text/html');
+
+  // The driver reports what it did and nothing about the process table.
+  // Whether a browser out of BrowserAI's own root is in this job is the
+  // HOST's question, answered with the product's own image-path
+  // enumeration -- which is also the only version of that question this
+  // repository permits.
+  fs.writeFileSync(readyFile, JSON.stringify({ navigated, answer: text.slice(0, 400), childPid: child.pid }));
+  setInterval(() => {}, 1e9);
+})();
+--- playwright-mcp.config.json (653 bytes) ---
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile",
+    "launchOptions": {
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\downloads"
+    }
+  },
+  "capabilities": ["config", "vision", "devtools"],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\output",
+  "saveSession": false,
+  "console": { "level": "info" }
+}
+--- ready.json (495 bytes) ---
+{"navigated":false,"answer":"{\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - <launching> C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}
+--- report.json (2032 bytes) ---
+{"launcherPid":87560,"rootChildPid":82784,"readyMilliseconds":180768.2426,"readyPatienceMilliseconds":1800000,"limitFlags":8192,"uiRestrictions":0,"handleIsInheritable":false,"jobProcessIds":[87288,82784,13952,26076,75428,70788,91020,87044],"jobMembersTheWalkMissed":[],"escapees":0,"walk":[{"pid":13952,"parentPid":82784,"createdFileTime":134325130461855763,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":26076,"parentPid":13952,"createdFileTime":134325130468361335,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":70788,"parentPid":75428,"createdFileTime":134325130479302277,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":75428,"parentPid":26076,"createdFileTime":134325130468667827,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":82784,"parentPid":87560,"createdFileTime":134325130460594755,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87044,"parentPid":75428,"createdFileTime":134325130488392270,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87288,"parentPid":82784,"createdFileTime":134325130460827433,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":91020,"parentPid":75428,"createdFileTime":134325130485975319,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""}],"childReport":{"navigated":false,"answer":"{\u0022result\u0022:{\u0022content\u0022:[{\u0022type\u0022:\u0022text\u0022,\u0022text\u0022:\u0022### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - \u003Claunching\u003E C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}}
+but found False
+
+at Assert.That((bool?)child["navigated"]).IsTrue().Because("the driver did not navigate. Its answer was: {"result":{"content":[{"type":"text","text":"### Error\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\nCall log:\n\u001b[2m  - <launching> C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1539\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile
+--- what the launcher left in C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12 ---
+--- child-stderr.log (0 bytes) ---
+(unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stderr.log' because it is being used by another process.)
+--- child-stdout.log (0 bytes) ---
+(unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stdout.log' because it is being used by another process.)
+--- done (2 bytes) ---
+ok
+--- drive-a-browser.js (2167 bytes) ---
+const cp = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+const [readyFile, cli, configFile, browsersRoot] = process.argv.slice(2);
+
+const child = cp.spawn(process.execPath, [cli, '--config', configFile, '--sandbox'], {
+  stdio: ['pipe', 'pipe', 'pipe'],
+  env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: browsersRoot, PLAYWRIGHT_SKIP_BROWSER_GC: '1' },
+});
+
+let buffer = '';
+const pending = new Map();
+child.stdout.on('data', (chunk) => {
+  buffer += chunk.toString('utf8');
+  let index;
+  while ((index = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, index).trim();
+    buffer = buffer.slice(index + 1);
+    if (!line) continue;
+    try {
+      const message = JSON.parse(line);
+      if (message.id && pending.has(message.id)) {
+        pending.get(message.id)(message);
+        pending.delete(message.id);
+      }
+    } catch { /* not a frame we asked for */ }
+  }
+});
+
+let nextId = 1;
+function send(method, params) {
+  const id = nextId++;
+  return new Promise((resolve) => {
+    pending.set(id, resolve);
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  });
+}
+
+(async () => {
+  await send('initialize', {
+    protocolVersion: '2025-11-25',
+    capabilities: {},
+    clientInfo: { name: 'containment-driver', version: '1' },
+  });
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+
+  const answer = await send('tools/call', {
+    name: 'browser_navigate',
+    arguments: { url: 'data:text/html,<h1>ok</h1>' },
+  });
+
+  const text = JSON.stringify(answer);
+  const navigated = !!answer.result && answer.result.isError !== true && text.includes('data:text/html');
+
+  // The driver reports what it did and nothing about the process table.
+  // Whether a browser out of BrowserAI's own root is in this job is the
+  // HOST's question, answered with the product's own image-path
+  // enumeration -- which is also the only version of that question this
+  // repository permits.
+  fs.writeFileSync(readyFile, JSON.stringify({ navigated, answer: text.slice(0, 400), childPid: child.pid }));
+  setInterval(() => {}, 1e9);
+})();
+--- playwright-mcp.config.json (653 bytes) ---
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile",
+    "launchOptions": {
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\downloads"
+    }
+  },
+  "capabilities": ["config", "vision", "devtools"],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\output",
+  "saveSession": false,
+  "console": { "level": "info" }
+}
+--- ready.json (495 bytes) ---
+{"navigated":false,"answer":"{\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - <launching> C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}
+--- report.json (2032 bytes) ---
+{"launcherPid":87560,"rootChildPid":82784,"readyMilliseconds":180768.2426,"readyPatienceMilliseconds":1800000,"limitFlags":8192,"uiRestrictions":0,"handleIsInheritable":false,"jobProcessIds":[87288,82784,13952,26076,75428,70788,91020,87044],"jobMembersTheWalkMissed":[],"escapees":0,"walk":[{"pid":13952,"parentPid":82784,"createdFileTime":134325130461855763,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":26076,"parentPid":13952,"createdFileTime":134325130468361335,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":70788,"parentPid":75428,"createdFileTime":134325130479302277,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":75428,"parentPid":26076,"createdFileTime":134325130468667827,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":82784,"parentPid":87560,"createdFileTime":134325130460594755,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87044,"parentPid":75428,"createdFileTime":134325130488392270,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87288,"parentPid":82784,"createdFileTime":134325130460827433,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":91020,"parentPid":75428,"createdFileTime":134325130485975319,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""}],"childReport":{"navigated":false,"answer":"{\u0022result\u0022:{\u0022content\u0022:[{\u0022type\u0022:\u0022text\u0022,\u0022text\u0022:\u0022### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - \u003Claunching\u003E C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}}")
+  from c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be true, because the driver did not navigate. Its answer was: {"result":{"content":[{"type":"text","text":"### Error\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\nCall log:\n\u001b[2m  - <launching> C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1539\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile
+  --- what the launcher left in C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12 ---
+  --- child-stderr.log (0 bytes) ---
+  (unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stderr.log' because it is being used by another process.)
+  --- child-stdout.log (0 bytes) ---
+  (unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stdout.log' because it is being used by another process.)
+  --- done (2 bytes) ---
+  ok
+  --- drive-a-browser.js (2167 bytes) ---
+  const cp = require('child_process');
+  const fs = require('fs');
+  const path = require('path');
+  
+  const [readyFile, cli, configFile, browsersRoot] = process.argv.slice(2);
+  
+  const child = cp.spawn(process.execPath, [cli, '--config', configFile, '--sandbox'], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: browsersRoot, PLAYWRIGHT_SKIP_BROWSER_GC: '1' },
+  });
+  
+  let buffer = '';
+  const pending = new Map();
+  child.stdout.on('data', (chunk) => {
+    buffer += chunk.toString('utf8');
+    let index;
+    while ((index = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, index).trim();
+      buffer = buffer.slice(index + 1);
+      if (!line) continue;
+      try {
+        const message = JSON.parse(line);
+        if (message.id && pending.has(message.id)) {
+          pending.get(message.id)(message);
+          pending.delete(message.id);
+        }
+      } catch { /* not a frame we asked for */ }
+    }
+  });
+  
+  let nextId = 1;
+  function send(method, params) {
+    const id = nextId++;
+    return new Promise((resolve) => {
+      pending.set(id, resolve);
+      child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+    });
+  }
+  
+  (async () => {
+    await send('initialize', {
+      protocolVersion: '2025-11-25',
+      capabilities: {},
+      clientInfo: { name: 'containment-driver', version: '1' },
+    });
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+  
+    const answer = await send('tools/call', {
+      name: 'browser_navigate',
+      arguments: { url: 'data:text/html,<h1>ok</h1>' },
+    });
+  
+    const text = JSON.stringify(answer);
+    const navigated = !!answer.result && answer.result.isError !== true && text.includes('data:text/html');
+  
+    // The driver reports what it did and nothing about the process table.
+    // Whether a browser out of BrowserAI's own root is in this job is the
+    // HOST's question, answered with the product's own image-path
+    // enumeration -- which is also the only version of that question this
+    // repository permits.
+    fs.writeFileSync(readyFile, JSON.stringify({ navigated, answer: text.slice(0, 400), childPid: child.pid }));
+    setInterval(() => {}, 1e9);
+  })();
+  --- playwright-mcp.config.json (653 bytes) ---
+  {
+    "browser": {
+      "browserName": "firefox",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile",
+      "launchOptions": {
+        "headless": true,
+        "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\downloads"
+      }
+    },
+    "capabilities": ["config", "vision", "devtools"],
+    "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\output",
+    "saveSession": false,
+    "console": { "level": "info" }
+  }
+  --- ready.json (495 bytes) ---
+  {"navigated":false,"answer":"{\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - <launching> C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}
+  --- report.json (2032 bytes) ---
+  {"launcherPid":87560,"rootChildPid":82784,"readyMilliseconds":180768.2426,"readyPatienceMilliseconds":1800000,"limitFlags":8192,"uiRestrictions":0,"handleIsInheritable":false,"jobProcessIds":[87288,82784,13952,26076,75428,70788,91020,87044],"jobMembersTheWalkMissed":[],"escapees":0,"walk":[{"pid":13952,"parentPid":82784,"createdFileTime":134325130461855763,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":26076,"parentPid":13952,"createdFileTime":134325130468361335,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":70788,"parentPid":75428,"createdFileTime":134325130479302277,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":75428,"parentPid":26076,"createdFileTime":134325130468667827,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":82784,"parentPid":87560,"createdFileTime":134325130460594755,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87044,"parentPid":75428,"createdFileTime":134325130488392270,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87288,"parentPid":82784,"createdFileTime":134325130460827433,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":91020,"parentPid":75428,"createdFileTime":134325130485975319,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""}],"childReport":{"navigated":false,"answer":"{\u0022result\u0022:{\u0022content\u0022:[{\u0022type\u0022:\u0022text\u0022,\u0022text\u0022:\u0022### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - \u003Claunching\u003E C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}}
+  but found False
+  
+  at Assert.That((bool?)child["navigated"]).IsTrue().Because("the driver did not navigate. Its answer was: {"result":{"content":[{"type":"text","text":"### Error\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\nCall log:\n\u001b[2m  - <launching> C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1539\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile
+  --- what the launcher left in C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12 ---
+  --- child-stderr.log (0 bytes) ---
+  (unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stderr.log' because it is being used by another process.)
+  --- child-stdout.log (0 bytes) ---
+  (unreadable: The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\child-stdout.log' because it is being used by another process.)
+  --- done (2 bytes) ---
+  ok
+  --- drive-a-browser.js (2167 bytes) ---
+  const cp = require('child_process');
+  const fs = require('fs');
+  const path = require('path');
+  
+  const [readyFile, cli, configFile, browsersRoot] = process.argv.slice(2);
+  
+  const child = cp.spawn(process.execPath, [cli, '--config', configFile, '--sandbox'], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: browsersRoot, PLAYWRIGHT_SKIP_BROWSER_GC: '1' },
+  });
+  
+  let buffer = '';
+  const pending = new Map();
+  child.stdout.on('data', (chunk) => {
+    buffer += chunk.toString('utf8');
+    let index;
+    while ((index = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, index).trim();
+      buffer = buffer.slice(index + 1);
+      if (!line) continue;
+      try {
+        const message = JSON.parse(line);
+        if (message.id && pending.has(message.id)) {
+          pending.get(message.id)(message);
+          pending.delete(message.id);
+        }
+      } catch { /* not a frame we asked for */ }
+    }
+  });
+  
+  let nextId = 1;
+  function send(method, params) {
+    const id = nextId++;
+    return new Promise((resolve) => {
+      pending.set(id, resolve);
+      child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+    });
+  }
+  
+  (async () => {
+    await send('initialize', {
+      protocolVersion: '2025-11-25',
+      capabilities: {},
+      clientInfo: { name: 'containment-driver', version: '1' },
+    });
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
+  
+    const answer = await send('tools/call', {
+      name: 'browser_navigate',
+      arguments: { url: 'data:text/html,<h1>ok</h1>' },
+    });
+  
+    const text = JSON.stringify(answer);
+    const navigated = !!answer.result && answer.result.isError !== true && text.includes('data:text/html');
+  
+    // The driver reports what it did and nothing about the process table.
+    // Whether a browser out of BrowserAI's own root is in this job is the
+    // HOST's question, answered with the product's own image-path
+    // enumeration -- which is also the only version of that question this
+    // repository permits.
+    fs.writeFileSync(readyFile, JSON.stringify({ navigated, answer: text.slice(0, 400), childPid: child.pid }));
+    setInterval(() => {}, 1e9);
+  })();
+  --- playwright-mcp.config.json (653 bytes) ---
+  {
+    "browser": {
+      "browserName": "firefox",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\profile",
+      "launchOptions": {
+        "headless": true,
+        "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\downloads"
+      }
+    },
+    "capabilities": ["config", "vision", "devtools"],
+    "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\test-scratch\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\output",
+    "saveSession": false,
+    "console": { "level": "info" }
+  }
+  --- ready.json (495 bytes) ---
+  {"navigated":false,"answer":"{\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - <launching> C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}
+  --- report.json (2032 bytes) ---
+  {"launcherPid":87560,"rootChildPid":82784,"readyMilliseconds":180768.2426,"readyPatienceMilliseconds":1800000,"limitFlags":8192,"uiRestrictions":0,"handleIsInheritable":false,"jobProcessIds":[87288,82784,13952,26076,75428,70788,91020,87044],"jobMembersTheWalkMissed":[],"escapees":0,"walk":[{"pid":13952,"parentPid":82784,"createdFileTime":134325130461855763,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":26076,"parentPid":13952,"createdFileTime":134325130468361335,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":70788,"parentPid":75428,"createdFileTime":134325130479302277,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":75428,"parentPid":26076,"createdFileTime":134325130468667827,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":82784,"parentPid":87560,"createdFileTime":134325130460594755,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87044,"parentPid":75428,"createdFileTime":134325130488392270,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":87288,"parentPid":82784,"createdFileTime":134325130460827433,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""},{"pid":91020,"parentPid":75428,"createdFileTime":134325130485975319,"depth":0,"inOurJob":true,"inAnyJob":true,"inJobProcessIdList":true,"note":""}],"childReport":{"navigated":false,"answer":"{\u0022result\u0022:{\u0022content\u0022:[{\u0022type\u0022:\u0022text\u0022,\u0022text\u0022:\u0022### Error\\nTimeoutError: async initializeServer: Timeout 180000ms exceeded.\\nCall log:\\n\\u001b[2m  - \u003Claunching\u003E C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\BrowserAI\\\\browsers\\\\firefox-1539\\\\firefox\\\\firefox.exe -no-remote -headless -profile C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\test-scratch\\\\browser-containment-firefox-cd6413545c8c42a09b5bb996e243aa12\\\\profile","childPid":13952}}")
+    at BrowserAI.Tests.BrowserContainmentTests.RunAsync(String browser, String expectedExecutable) in c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\BrowserContainmentTests.cs:221
+    at BrowserAI.Tests.BrowserContainmentTests.AFirefoxTreeIsContainedAndItsProfileDeletesCleanly() in c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\BrowserContainmentTests.cs:114
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 1 error(s) (4m 08s 555ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage — what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  c:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+    repository payload  PRESENT  c:\Source\SixFive7\BrowserAI\payload\payload.json
+    Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+    Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe
+    packed release      PRESENT  c:\Source\SixFive7\BrowserAI\Releases\BrowserAI-0.1.3-full.nupkg
+    client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+    git                 PRESENT  git -C c:\Source\SixFive7\BrowserAI rev-parse --is-inside-work-tree said true
+    release run         YES      BROWSERAI_RELEASE_RUN is set, so a missing capability is a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CDN      downloaded 203.8 MB from the CDN because BROWSERAI_RELEASE_RUN is set, so the cache is bypassed and the CDN is asked (19.1 s). Cached 318 files / 451389838 B for the next 60 min.
+    drive letter        LOWER c:\  c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=lower and it took, so this half is a different instrument from the other
+    filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request — never this process's command line
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) — it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+  ==============================================================================
+    This run exercised every layer. No test took a degraded path.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 644
+  failed: 1
+  succeeded: 643
+  skipped: 0
+  duration: 4m 09s 087ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+==============================================================================
+BrowserAI suite coverage — what this run actually exercised
+==============================================================================
+  published slice     PRESENT  c:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  c:\Source\SixFive7\BrowserAI\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe
+  packed release      PRESENT  c:\Source\SixFive7\BrowserAI\Releases\BrowserAI-0.1.3-full.nupkg
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  git                 PRESENT  git -C c:\Source\SixFive7\BrowserAI rev-parse --is-inside-work-tree said true
+  release run         YES      BROWSERAI_RELEASE_RUN is set, so a missing capability is a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     CDN      downloaded 203.8 MB from the CDN because BROWSERAI_RELEASE_RUN is set, so the cache is bypassed and the CDN is asked (19.1 s). Cached 318 files / 451389838 B for the next 60 min.
+  drive letter        LOWER c:\  c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=lower and it took, so this half is a different instrument from the other
+  filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request — never this process's command line
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) — it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+==============================================================================
+  This run exercised every layer. No test took a degraded path.
+==============================================================================

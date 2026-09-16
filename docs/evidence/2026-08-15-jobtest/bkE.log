@@ -1,0 +1,26 @@
+JobProbe pid=71016 tag=bkE selfjob=False
+outer job: LimitFlags=0x2800 BREAKAWAY_OK KILL_ON_JOB_CLOSE
+outer job: self assigned OK
+self in any job at start: True
+inner job: LimitFlags=0x2000 KILL_ON_JOB_CLOSE
+completion port associated
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\jobtest\race.mjs" "C:\Source\SixFive7\BrowserAI\.work\jobtest\bkE.racepids.txt"
+child creation requests CREATE_BREAKAWAY_FROM_JOB
+child created SUSPENDED pid=38444
+child in our job BEFORE assign: False
+child in our job AFTER assign: True
+child resumed
+race: child pid=38444 grandchild pid=78180
+race: RESULT grandchild 78180 inOurJob=True inAnyJob=True
+walk seeds: 3 (rootPid + everInJob)
+seeds no longer alive: 0
+job pid list: assigned=3 inList=3
+# tag=bkE selfjob=True probePid=71016 rootChildPid=38444
+# jobPidListCount=3 treeCount=3
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+38444	71016	0	node.exe	134312203937418456	YES	YES	YES	
+77372	38444	1	conhost.exe	134312203937519754	YES	YES	YES	seed(job-notified)
+78180	38444	1	node.exe	134312203938108557	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0
+
+REPORT WRITTEN. Waiting to be killed (or --autoexit).

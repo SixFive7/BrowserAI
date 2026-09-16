@@ -1,0 +1,26 @@
+(a) click isError= false
+(a) BEFORE close  output/  = ["console-2026-08-26T18-14-15-396Z.log","page-2026-08-26T18-14-15-506Z.yml","page-2026-08-26T18-14-16-108Z.yml","report.txt"]
+(a) BEFORE close  downloads/= ["eeaf8176-1599-4e9d-b8e9-ed84a426ed1c"]
+(a) browser_close isError= false :: ### Result
+No open tabs. Navigate to a URL to create one.
+(a) AFTER close   output/  = ["console-2026-08-26T18-14-15-396Z.log","page-2026-08-26T18-14-15-506Z.yml","page-2026-08-26T18-14-16-108Z.yml","report.txt"]
+(a) AFTER close   downloads/= []
+
+(a) catch_up inventory:
+WHAT IS HERE NOW — the directory, walked just now. This is what is true; it does not know why any of it exists.
+  total: 12.7 MiB in 189 file(s)
+  output: 316 B in 4 file(s) — BrowserAI never deletes any of it, on any schedule or at any size; browserai_destroy is what removes a session and everything under it.
+  last file written: 2026-08-26T20:14:19.2747677+02:00   (3 seconds ago — a browser writes into the profile continuously while a page is open, so this moves when the record does not)
+  profile: 181 file(s), 12.6 MiB
+  session files: 4 file(s), 100.5 KiB
+  output (unfiled): 4 file(s), 316 B
+  ⚠️ CREDENTIALS: the profile holds a cookie store at 'profile\Default\Network\Cookies'. This session may be signed in to something, whether or not any cookie tool appears above — cookies arrive from navigation. browserai_destroy is what removes it.
+
+
+[LEAD 3] chrome.exe before = 0
+[LEAD 3] chrome.exe after handshake = 0  profile dir: ["<missing>"]
+[LEAD 3] raw child answer to an unknown tool:
+{"result":{"content":[{"type":"text","text":"### Error\nTool \"browser_zzz_not_a_tool\" not found"}],"isError":true},"jsonrpc":"2.0","id":2}
+[LEAD 3] chrome.exe after the unknown-tool call = 8 (delta 8)
+[LEAD 3] profile dir after = ["component_crx_cache","Crashpad","Default","extensions_crx_cache","first_party_sets.db","first_party_sets.db-journal","GPUPersistentCache","GrShaderCache","Last Browser","Last Version","Local State","lockfile","Safe Browsing","segmentation_platform","ShaderCache","Variations"]
+[LEAD 3] raw stderr tail:

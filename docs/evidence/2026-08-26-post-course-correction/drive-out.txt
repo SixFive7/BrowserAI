@@ -1,0 +1,349 @@
+# server on 53939  session dir C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+## initialize ok: true
+## browserai_init isError= false
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\p7\session-84496' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+  browser: chromium
+  profile: C:\Source\SixFive7\BrowserAI\.work\p7\session-84496\profile
+  output: C:\Source\SixFive7\BrowserAI\.work\p7\session-84496\output — every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.
+  downloads: C:\Source\SixFive7\BrowserAI\.work\p7\session-84496\downloads
+  purpose: P7 adversarial review: containment and download behaviour under flat output.
+  created: 2026-08-26T20:10:41.8537338+02:00   last used: 2026-08-26T20:10:41.8537338+02:00
+  viewport: 1920x1080 — a screenshot arrives at this size unscaled, so it is what one costs you
+  child protocol: 2025-11-25
+  browserProvisioning: installed — chromium 152.0.7977.8 (revision 1237) is installed at 'C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237'.
+  other sessions under C:\Source\SixFive7\BrowserAI\.work\p7: 0 (rolled up in C:\Source\SixFive7\BrowserAI\.work\p7\browserai-sessions.json)
+
+
+## [LEAD 2a] browser_navigate file:  isError= true
+### Error
+Error: Access to "file:" protocol is blocked. Attempted URL: "file:///C:/Windows/win.ini"
+
+## navigate to dlpage isError= false
+# link ref = null
+
+## snapshot after download:
+### Page
+- Page URL: http://127.0.0.1:53939/dlpage
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- link "grab it" [ref=e2] [cursor=pointer] [box=8,8,41,17]:
+  - /url: /dl
+```
+
+## [LEAD 1] session tree after download:
+browserai.data  (4096 bytes)
+browserai.data-shm  (32768 bytes)
+browserai.data-wal  (57712 bytes)
+browserai.lock  (104 bytes)
+downloads/
+output/
+output/console-2026-08-26T18-10-42-853Z.log  (139 bytes)
+output/page-2026-08-26T18-10-42-996Z.yml  (73 bytes)
+profile/
+profile/Crashpad/
+profile/Crashpad/attachments/
+profile/Crashpad/reports/
+profile/Crashpad/settings.dat  (40 bytes)
+profile/Default/
+profile/Default/Account Web Data  (77824 bytes)
+profile/Default/Account Web Data-journal  (0 bytes)
+profile/Default/Affiliation Database  (53248 bytes)
+profile/Default/Affiliation Database-journal  (0 bytes)
+profile/Default/AutofillAiModelCache/
+profile/Default/AutofillAiModelCache/LOCK  (0 bytes)
+profile/Default/AutofillAiModelCache/LOG  (0 bytes)
+profile/Default/AutofillStrikeDatabase/
+profile/Default/AutofillStrikeDatabase/LOCK  (0 bytes)
+profile/Default/AutofillStrikeDatabase/LOG  (0 bytes)
+profile/Default/BookmarkMergedSurfaceOrdering  (6 bytes)
+profile/Default/BudgetDatabase/
+profile/Default/BudgetDatabase/LOCK  (0 bytes)
+profile/Default/BudgetDatabase/LOG  (0 bytes)
+profile/Default/Cache/
+profile/Default/Cache/Cache_Data/
+profile/Default/Cache/Cache_Data/data_0  (45056 bytes)
+profile/Default/Cache/Cache_Data/data_1  (270336 bytes)
+profile/Default/Cache/Cache_Data/data_2  (8192 bytes)
+profile/Default/Cache/Cache_Data/data_3  (4202496 bytes)
+profile/Default/Cache/Cache_Data/index  (524656 bytes)
+profile/Default/Cache/No_Vary_Search/
+profile/Default/Cache/No_Vary_Search/journal.baj  (4 bytes)
+profile/Default/Cache/No_Vary_Search/snapshot.baf  (20 bytes)
+profile/Default/ClientCertificates/
+profile/Default/ClientCertificates/LOCK  (0 bytes)
+profile/Default/ClientCertificates/LOG  (0 bytes)
+profile/Default/Code Cache/
+profile/Default/Code Cache/js/
+profile/Default/Code Cache/js/index  (24 bytes)
+profile/Default/Code Cache/js/index-dir/
+profile/Default/Code Cache/js/index-dir/the-real-index  (48 bytes)
+profile/Default/Code Cache/wasm/
+profile/Default/Code Cache/wasm/index  (24 bytes)
+profile/Default/Code Cache/wasm/index-dir/
+profile/Default/Code Cache/wasm/index-dir/the-real-index  (48 bytes)
+profile/Default/DIPS  (4096 bytes)
+profile/Default/DIPS-wal  (53592 bytes)
+profile/Default/DawnGraphiteCache/
+profile/Default/DawnGraphiteCache/data_0  (8192 bytes)
+profile/Default/DawnGraphiteCache/data_1  (270336 bytes)
+profile/Default/DawnGraphiteCache/data_2  (8192 bytes)
+profile/Default/DawnGraphiteCache/data_3  (8192 bytes)
+profile/Default/DawnGraphiteCache/index  (262512 bytes)
+profile/Default/DawnWebGPUCache/
+profile/Default/DawnWebGPUCache/data_0  (8192 bytes)
+profile/Default/DawnWebGPUCache/data_1  (270336 bytes)
+profile/Default/DawnWebGPUCache/data_2  (8192 bytes)
+profile/Default/DawnWebGPUCache/data_3  (8192 bytes)
+profile/Default/DawnWebGPUCache/index  (262512 bytes)
+profile/Default/Extension Rules/
+profile/Default/Extension Rules/000003.log  (38 bytes)
+profile/Default/Extension Rules/CURRENT  (16 bytes)
+profile/Default/Extension Rules/LOCK  (0 bytes)
+profile/Default/Extension Rules/LOG  (293 bytes)
+profile/Default/Extension Rules/MANIFEST-000001  (41 bytes)
+profile/Default/Extension Scripts/
+profile/Default/Extension Scripts/000003.log  (19 bytes)
+profile/Default/Extension Scripts/CURRENT  (16 bytes)
+profile/Default/Extension Scripts/LOCK  (0 bytes)
+profile/Default/Extension Scripts/LOG  (297 bytes)
+profile/Default/Extension Scripts/MANIFEST-000001  (41 bytes)
+profile/Default/Extension State/
+profile/Default/Extension State/000003.log  (57 bytes)
+profile/Default/Extension State/CURRENT  (16 bytes)
+profile/Default/Extension State/LOCK  (0 bytes)
+profile/Default/Extension State/LOG  (293 bytes)
+profile/Default/Extension State/MANIFEST-000001  (41 bytes)
+profile/Default/Favicons  (20480 bytes)
+profile/Default/Favicons-journal  (0 bytes)
+profile/Default/GCM Store/
+profile/Default/GCM Store/000003.log  (665 bytes)
+profile/Default/GCM Store/CURRENT  (16 bytes)
+profile/Default/GCM Store/LOCK  (0 bytes)
+profile/Default/GCM Store/LOG  (283 bytes)
+profile/Default/GCM Store/MANIFEST-000001  (41 bytes)
+profile/Default/GPUCache/
+profile/Default/GPUCache/data_0  (8192 bytes)
+profile/Default/GPUCache/data_1  (270336 bytes)
+profile/Default/GPUCache/data_2  (8192 bytes)
+profile/Default/GPUCache/data_3  (8192 bytes)
+profile/Default/GPUCache/index  (262512 bytes)
+profile/Default/History  (163840 bytes)
+profile/Default/History-journal  (78488 bytes)
+profile/Default/LOCK  (0 bytes)
+profile/Default/LOG  (0 bytes)
+profile/Default/Local Storage/
+profile/Default/Local Storage/leveldb/
+profile/Default/Local Storage/leveldb/000003.log  (30 bytes)
+profile/Default/Local Storage/leveldb/CURRENT  (16 bytes)
+profile/Default/Local Storage/leveldb/LOCK  (0 bytes)
+profile/Default/Local Storage/leveldb/LOG  (305 bytes)
+profile/Default/Local Storage/leveldb/MANIFEST-000001  (41 bytes)
+profile/Default/Login Data  (40960 bytes)
+profile/Default/Login Data For Account  (40960 bytes)
+profile/Default/Login Data For Account-journal  (0 bytes)
+profile/Default/Login Data-journal  (0 bytes)
+profile/Default/Network/
+profile/Default/Network/Cookies  (20480 bytes)
+profile/Default/Network/Cookies-journal  (0 bytes)
+profile/Default/Network/Device Bound Sessions  (20480 bytes)
+profile/Default/Network/Device Bound Sessions-journal  (0 bytes)
+profile/Default/Network/NetworkDataMigrated  (0 bytes)
+profile/Default/Network/Reporting and NEL  (36864 bytes)
+profile/Default/Network/Reporting and NEL-journal  (0 bytes)
+profile/Default/Network/SCT Auditing Pending Reports  (2 bytes)
+profile/Default/Network/Trust Tokens  (36864 bytes)
+profile/Default/Network/Trust Tokens-journal  (0 bytes)
+profile/Default/Network Action Predictor  (53248 bytes)
+profile/Default/Network Action Predictor-journal  (0 bytes)
+profile/Default/PersistentOriginTrials/
+profile/Default/PersistentOriginTrials/LOCK  (0 bytes)
+profile/Default/PersistentOriginTrials/LOG  (0 bytes)
+profile/Default/PreferredApps  (33 bytes)
+profile/Default/README  (204 bytes)
+profile/Default/Segmentation Platform/
+profile/Default/Segmentation Platform/SegmentInfoDB/
+profile/Default/Segmentation Platform/SegmentInfoDB/LOCK  (0 bytes)
+profile/Default/Segmentation Platform/SegmentInfoDB/LOG  (0 bytes)
+profile/Default/Segmentation Platform/SignalDB/
+profile/Default/Segmentation Platform/SignalDB/LOCK  (0 bytes)
+profile/Default/Segmentation Platform/SignalDB/LOG  (0 bytes)
+profile/Default/Segmentation Platform/SignalStorageConfigDB/
+profile/Default/Segmentation Platform/SignalStorageConfigDB/LOCK  (0 bytes)
+profile/Default/Segmentation Platform/SignalStorageConfigDB/LOG  (0 bytes)
+profile/Default/ServerCertificate  (20480 bytes)
+profile/Default/ServerCertificate-journal  (0 bytes)
+profile/Default/Session Storage/
+profile/Default/Session Storage/000003.log  (49 bytes)
+profile/Default/Session Storage/CURRENT  (16 bytes)
+profile/Default/Session Storage/LOCK  (0 bytes)
+profile/Default/Session Storage/LOG  (293 bytes)
+profile/Default/Session Storage/MANIFEST-000001  (41 bytes)
+profile/Default/Sessions/
+profile/Default/Sessions/Session_13432241445122881  (1955 bytes)
+profile/Default/Shared Dictionary/
+profile/Default/Shared Dictionary/cache/
+profile/Default/Shared Dictionary/cache/index  (24 bytes)
+profile/Default/Shared Dictionary/cache/index-dir/
+profile/Default/Shared Dictionary/cache/index-dir/the-real-index  (48 bytes)
+profile/Default/Shared Dictionary/db  (45056 bytes)
+profile/Default/Shared Dictionary/db-journal  (0 bytes)
+profile/Default/Shortcuts  (20480 bytes)
+profile/Default/Shortcuts-journal  (0 bytes)
+profile/Default/Site Characteristics Database/
+profile/Default/Site Characteristics Database/000003.log  (40 bytes)
+profile/Default/Site Characteristics Database/CURRENT  (16 bytes)
+profile/Default/Site Characteristics Database/LOCK  (0 bytes)
+profile/Default/Site Characteristics Database/LOG  (321 bytes)
+profile/Default/Site Characteristics Database/MANIFEST-000001  (41 bytes)
+profile/Default/Sync Data/
+profile/Default/Sync Data/LevelDB/
+profile/Default/Sync Data/LevelDB/000003.log  (118 bytes)
+profile/Default/Sync Data/LevelDB/CURRENT  (16 bytes)
+profile/Default/Sync Data/LevelDB/LOCK  (0 bytes)
+profile/Default/Sync Data/LevelDB/LOG  (297 bytes)
+profile/Default/Sync Data/LevelDB/MANIFEST-000001  (41 bytes)
+profile/Default/Top Sites  (20480 bytes)
+profile/Default/Top Sites-journal  (0 bytes)
+profile/Default/Web Data  (163840 bytes)
+profile/Default/Web Data-journal  (0 bytes)
+profile/Default/WebStorage/
+profile/Default/WebStorage/QuotaManager  (40960 bytes)
+profile/Default/WebStorage/QuotaManager-journal  (8720 bytes)
+profile/Default/blob_storage/
+profile/Default/blob_storage/9a2d8f0d-b94b-46f4-b5d2-793537a1c4bb/
+profile/Default/chrome_cart_db/
+profile/Default/chrome_cart_db/LOCK  (0 bytes)
+profile/Default/chrome_cart_db/LOG  (0 bytes)
+profile/Default/commerce_subscription_db/
+profile/Default/commerce_subscription_db/LOCK  (0 bytes)
+profile/Default/commerce_subscription_db/LOG  (0 bytes)
+profile/Default/declarative_performance_observer.db  (32768 bytes)
+profile/Default/declarative_performance_observer.db-journal  (0 bytes)
+profile/Default/discount_infos_db/
+profile/Default/discount_infos_db/LOCK  (0 bytes)
+profile/Default/discount_infos_db/LOG  (0 bytes)
+profile/Default/discounts_db/
+profile/Default/discounts_db/LOCK  (0 bytes)
+profile/Default/discounts_db/LOG  (0 bytes)
+profile/Default/engine_allowlist.bf  (360 bytes)
+profile/Default/heavy_ad_intervention_opt_out.db  (16384 bytes)
+profile/Default/heavy_ad_intervention_opt_out.db-journal  (0 bytes)
+profile/Default/parcel_tracking_db/
+profile/Default/parcel_tracking_db/LOCK  (0 bytes)
+profile/Default/parcel_tracking_db/LOG  (0 bytes)
+profile/Default/shared_proto_db/
+profile/Default/shared_proto_db/000003.log  (6737 bytes)
+profile/Default/shared_proto_db/CURRENT  (16 bytes)
+profile/Default/shared_proto_db/LOCK  (0 bytes)
+profile/Default/shared_proto_db/LOG  (293 bytes)
+profile/Default/shared_proto_db/MANIFEST-000001  (41 bytes)
+profile/Default/shared_proto_db/metadata/
+profile/Default/shared_proto_db/metadata/000003.log  (880 bytes)
+profile/Default/shared_proto_db/metadata/CURRENT  (16 bytes)
+profile/Default/shared_proto_db/metadata/LOCK  (0 bytes)
+profile/Default/shared_proto_db/metadata/LOG  (311 bytes)
+profile/Default/shared_proto_db/metadata/MANIFEST-000001  (41 bytes)
+profile/Default/trusted_vault.pb  (84 bytes)
+profile/GPUPersistentCache/
+profile/GPUPersistentCache/DawnGraphiteCache/
+profile/GPUPersistentCache/DawnGraphiteCache/CX3DLBT4MCGJVI7M6OXLEG3NZYNS655X/
+profile/GPUPersistentCache/DawnGraphiteCache/CX3DLBT4MCGJVI7M6OXLEG3NZYNS655X/cache.db  (0 bytes)
+profile/GPUPersistentCache/DawnGraphiteCache/CX3DLBT4MCGJVI7M6OXLEG3NZYNS655X/cache.db-wal  (0 bytes)
+profile/GPUPersistentCache/DawnGraphiteCache/CX3DLBT4MCGJVI7M6OXLEG3NZYNS655X/cache.journal  (0 bytes)
+profile/GrShaderCache/
+profile/GrShaderCache/data_0  (45056 bytes)
+profile/GrShaderCache/data_1  (270336 bytes)
+profile/GrShaderCache/data_2  (8192 bytes)
+profile/GrShaderCache/data_3  (4202496 bytes)
+profile/GrShaderCache/f_000001  (16468 bytes)
+profile/GrShaderCache/index  (262512 bytes)
+profile/Last Browser  (168 bytes)
+profile/Last Version  (12 bytes)
+profile/Local State  (980 bytes)
+profile/Safe Browsing/
+profile/ShaderCache/
+profile/ShaderCache/data_0  (8192 bytes)
+profile/ShaderCache/data_1  (270336 bytes)
+profile/ShaderCache/data_2  (8192 bytes)
+profile/ShaderCache/data_3  (8192 bytes)
+profile/ShaderCache/index  (262512 bytes)
+profile/Variations  (86 bytes)
+profile/component_crx_cache/
+profile/extensions_crx_cache/
+profile/first_party_sets.db  (49152 bytes)
+profile/first_party_sets.db-journal  (0 bytes)
+profile/lockfile  (0 bytes)
+profile/segmentation_platform/
+profile/segmentation_platform/ukm_db  (4096 bytes)
+profile/segmentation_platform/ukm_db-wal  (90672 bytes)
+
+## upload page snapshot:
+### Page
+- Page URL: http://127.0.0.1:53939/upload
+### Snapshot
+- [Snapshot](./page-2026-08-26T18-10-46-088Z.yml)
+# input ref = null
+
+## [LEAD 3a] unjudged tool at the door isError= true
+BrowserAI has no forwarding verdict for the tool you named, so nothing was sent to the browser and nothing was changed. This is a GAP rather than a decision: a tool this build was deliberately told not to forward refuses with its own reason instead of this sentence. Call tools/list and use a name exactly as it is spelled there — every tool in that list reaches the browser, and a name that is not in it never will, however many times it is sent.
+
+## [PAGING] page=(absent) isError=false :: WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk. |   page 1 of 1, entries 1–6 of 6
+
+## [PAGING] page=1 isError=false :: WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk. |   page 1 of 1, entries 1–6 of 6
+
+## [PAGING] page=0 isError=true :: 'page' = 0 is outside this session's log, which is 6 entr(ies) over 1 page(s) of 100. Pages are numbered from the OLDEST end, so page 1 is where the session started and page 1 is what happened most recently. Nothing was changed.
+
+## [PAGING] page=-1 isError=true :: 'page' = -1 is outside this session's log, which is 6 entr(ies) over 1 page(s) of 100. Pages are numbered from the OLDEST end, so page 1 is where the session started and page 1 is what happened most recently. Nothing was changed.
+
+## [PAGING] page=2 isError=true :: 'page' = 2 is outside this session's log, which is 6 entr(ies) over 1 page(s) of 100. Pages are numbered from the OLDEST end, so page 1 is where the session started and page 1 is what happened most recently. Nothing was changed.
+
+## [PAGING] page=4294967297 isError=false :: WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk. |   page 1 of 1, entries 1–6 of 6
+
+## [PAGING] page=9223372036854776000 isError=true :: 'page' must be a whole number, and it arrived as '9223372036854776000'. Nothing was changed.
+
+## destroy isError= false
+Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\session-84496' (12.6 MiB). Its purpose was: P7 adversarial review: containment and download behaviour under flat output.
+You said it was being destroyed because: p7 review finished
+
+## stderr tail:
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\p7\session-84496 under Global\BrowserAI-0FE76FEB131DED3875EF22EA076C3B77.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+      playwright-mcp[0FE76FEB]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 25104 in 'C:\Source\SixFive7\BrowserAI\.work\p7\session-84496\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+      Client (BrowserAI 1.0.1-alpha.0.185) client received server '{"name":"Playwright","version":"1.63.0-alpha-2026-08-05"}' capabilities: '{"tools":{}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+      Client (BrowserAI 1.0.1-alpha.0.185) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+      Session open at C:\Source\SixFive7\BrowserAI\.work\p7\session-84496, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: p7 review probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: p7 review probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_snapshot: p7 review probe
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: p7 review probe
+info: BrowserAI.Sessions.LiveSession[9]
+      'browser_zzz_not_a_tool' was refused on the session at C:\Source\SixFive7\BrowserAI\.work\p7\session-84496: this build's tool-verdicts.json does not allow it to be forwarded. Nothing reached the browser.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\p7\session-84496
+      playwright-mcp[0FE76FEB] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[0FE76FEB]: pid 25104 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\p7\session-84496; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[2]
+      Session lock reclaimed for C:\Source\SixFive7\BrowserAI\.work\p7\session-84496; previous holder was PID 72048, still running: True.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\p7\session-84496; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\p7\session-84496; 0 item(s) could not be removed.

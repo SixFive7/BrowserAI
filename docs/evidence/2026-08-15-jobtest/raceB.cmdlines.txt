@@ -1,0 +1,6 @@
+PID 78048 [(main)] "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\jobtest\race.mjs" "C:\Source\SixFive7\BrowserAI\.work\jobtest\raceB.racepids.txt"
+
+PID 28204 [(main)] "C:\Program Files\nodejs\node.exe" -e "setTimeout(() => {}, 900000)"
+
+PID 77180 [(main)] \??\C:\WINDOWS\system32\conhost.exe 0x4
+

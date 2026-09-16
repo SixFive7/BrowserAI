@@ -1,0 +1,7 @@
+# tag=bkF selfjob=True probePid=75340 rootChildPid=50136
+# jobPidListCount=3 treeCount=3
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+50136	75340	0	node.exe	134312204012103067	YES	YES	YES	
+19680	50136	1	node.exe	134312204012778035	YES	YES	YES	seed(job-notified)
+78724	50136	1	conhost.exe	134312204012213640	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0

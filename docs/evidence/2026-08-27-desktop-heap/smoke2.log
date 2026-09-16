@@ -1,0 +1,15 @@
+[15:01:58.968] controller pid=80812 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\smoke2
+[15:01:58.976] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:01:58.979] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:01:58.984] machine before: processes=428 threads=11782 handles=259425 physicalFreeMiB=85746 physicalTotalMiB=130989 commitMiB=63158 commitLimitMiB=141229
+[15:01:58.988] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:01:59.001] created desktop 'WinSta0\BaiSmoke2' -- UOI_HEAPSIZE = 20480 KB
+[15:02:00.013] prober: pid=81216 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiSmoke2
+[15:02:25.803] machine at end: processes=431 threads=11853 handles=260679 physicalFreeMiB=85486 physicalTotalMiB=130989 commitMiB=63386 commitLimitMiB=141229
+[15:02:25.803] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\smoke2\results.json
+[15:02:25.803] teardown
+[15:02:27.825] CloseDesktop -> True
+[15:02:27.826] job closed
+[15:02:27.829] window stations now: WinSta0, Service-0x0-127b7b$
+[15:02:27.831] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:02:27.832] done

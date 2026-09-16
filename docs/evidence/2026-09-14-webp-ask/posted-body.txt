@@ -1,0 +1,5 @@
+browser_take_screenshot with type webp and fullPage on a document taller than 16383 px returns an empty image and writes a zero-byte file, with no error. 16383 px works, 16384 px does not. png and jpeg are fine at the same heights.
+
+This looks like the WebP dimension limit surfacing as success. An error, or a fallback to png above the limit, would make the result honest.
+
+Seen with @playwright/mcp 0.0.80, playwright-core 1.63.0-alpha-2026-08-31, Chromium 153.0.8010.12, Windows 11.

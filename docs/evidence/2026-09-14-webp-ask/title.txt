@@ -1,0 +1,1 @@
+[MCP] WebP screenshot above 16383 px returns an empty image

@@ -1,0 +1,12 @@
+{"t":0.009,"roots":["C:\\Users\\jori\\AppData\\Local/BrowserAI.app","C:\\Users\\jori\\AppData\\Local/BrowserAI"],"kind":"start","wall":"16:36:21.146"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app","t":15.637,"kind":"root+","wall":"16:36:36.760"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\packages","t":15.647,"len":0,"dir":true,"kind":"entry+","wall":"16:36:36.769"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\Update.exe","t":15.651,"len":0,"dir":false,"kind":"entry+","wall":"16:36:36.773"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current","t":15.866,"len":0,"dir":true,"kind":"entry+","wall":"16:36:36.987"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\BrowserAI.exe","t":15.866,"len":392704,"dir":false,"kind":"entry+","wall":"16:36:36.988"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI","t":16.729,"kind":"root+","wall":"16:36:37.851"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\logs","t":16.733,"len":0,"dir":true,"kind":"entry+","wall":"16:36:37.855"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\mcp-registration.json","t":19.109,"len":591,"dir":false,"kind":"entry+","wall":"16:36:40.231"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\live","t":19.991,"len":0,"dir":true,"kind":"entry+","wall":"16:36:41.113"}
+{"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\instances","t":19.997,"len":0,"dir":true,"kind":"entry+","wall":"16:36:41.119"}
+{"reason":"end","t":49.478,"kind":"stop","wall":"16:37:10.600"}

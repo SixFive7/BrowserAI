@@ -1,0 +1,7 @@
+# tag=inh selfjob=False probePid=32456 rootChildPid=55128
+# jobPidListCount=3 treeCount=3
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+55128	32456	0	node.exe	134312206404045648	YES	YES	YES	
+37416	55128	1	conhost.exe	134312206404145110	YES	YES	YES	seed(job-notified)
+76248	55128	1	node.exe	134312206404720851	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0

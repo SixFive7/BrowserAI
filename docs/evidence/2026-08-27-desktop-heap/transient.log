@@ -1,0 +1,252 @@
+[15:22:45.469] controller pid=75640 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-0
+[15:22:45.477] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:22:45.490] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:22:45.495] machine before: processes=431 threads=12045 handles=263887 physicalFreeMiB=85891 physicalTotalMiB=130989 commitMiB=62313 commitLimitMiB=141229
+[15:22:45.499] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:22:45.512] created desktop 'WinSta0\BaiT1' -- UOI_HEAPSIZE = 20480 KB
+[15:22:46.486] prober: pid=9840 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT1
+[15:22:46.488] filling 4637 windows of 2048-character title onto WinSta0\BaiT1 (20480 KB) ...
+[15:22:49.484] filler 1: pid=46628 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT1
+[15:22:49.485] machine after fill: processes=435 threads=12121 handles=265240 physicalFreeMiB=85634 physicalTotalMiB=130989 commitMiB=62568 commitLimitMiB=141229
+[15:22:50.221] cap4637#1: pid=55016 died=True exit=-536870904 elapsedMs=409 stdout=0B stderr=0B logLines=9
+[15:22:50.224] cap4637#1: message windows -> 0| | static=4637|46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;46628:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...
+[15:22:50.230] releasing the windows
+[15:22:53.250] machine at end: processes=435 threads=12125 handles=265219 physicalFreeMiB=85572 physicalTotalMiB=130989 commitMiB=62715 commitLimitMiB=141229
+[15:22:53.251] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-0\results.json
+[15:22:53.251] teardown
+[15:22:55.266] CloseDesktop -> True
+[15:22:55.267] job closed
+[15:22:55.271] window stations now: WinSta0, Service-0x0-127b7b$
+[15:22:55.274] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:22:55.274] done
+[15:22:56.116] controller pid=4080 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-20
+[15:22:56.121] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:22:56.122] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:22:56.125] machine before: processes=431 threads=11963 handles=262750 physicalFreeMiB=85536 physicalTotalMiB=130989 commitMiB=62944 commitLimitMiB=141229
+[15:22:56.127] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:22:56.138] created desktop 'WinSta0\BaiT2' -- UOI_HEAPSIZE = 20480 KB
+[15:22:56.959] prober: pid=72528 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT2
+[15:22:56.961] filling 4637 windows of 2048-character title onto WinSta0\BaiT2 (20480 KB) ...
+[15:23:00.283] filler 1: pid=44128 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT2
+[15:23:00.284] machine after fill: processes=439 threads=12030 handles=264813 physicalFreeMiB=85104 physicalTotalMiB=130989 commitMiB=63391 commitLimitMiB=141229
+[15:23:09.135] cap4637#1: pid=6924 died=False exit=57005 elapsedMs=8495 stdout=0B stderr=1156B logLines=680
+[15:23:09.137] cap4637#1: message windows -> 5|6924:DeviceMonitorMessageWindow;43872:;6924:;6924:C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-20\profile-cap4637-1;6924: | static=0|
+[15:23:09.144] releasing the windows
+[15:23:12.165] machine at end: processes=442 threads=12105 handles=265963 physicalFreeMiB=85322 physicalTotalMiB=130989 commitMiB=63042 commitLimitMiB=141229
+[15:23:12.165] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-20\results.json
+[15:23:12.166] teardown
+[15:23:14.184] CloseDesktop -> True
+[15:23:14.185] job closed
+[15:23:14.188] window stations now: WinSta0, Service-0x0-127b7b$
+[15:23:14.190] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:23:14.190] done
+[15:23:14.867] controller pid=70920 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-40
+[15:23:14.873] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:23:14.884] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:23:14.887] machine before: processes=438 threads=12040 handles=264601 physicalFreeMiB=85595 physicalTotalMiB=130989 commitMiB=62748 commitLimitMiB=141229
+[15:23:14.889] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:23:14.899] created desktop 'WinSta0\BaiT3' -- UOI_HEAPSIZE = 20480 KB
+[15:23:15.719] prober: pid=70972 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT3
+[15:23:15.722] filling 4637 windows of 2048-character title onto WinSta0\BaiT3 (20480 KB) ...
+[15:23:18.447] filler 1: pid=24036 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT3
+[15:23:18.447] machine after fill: processes=442 threads=12132 handles=266016 physicalFreeMiB=85279 physicalTotalMiB=130989 commitMiB=63126 commitLimitMiB=141229
+[15:23:27.224] cap4637#1: pid=45512 died=False exit=57005 elapsedMs=8438 stdout=0B stderr=889B logLines=676
+[15:23:27.226] cap4637#1: message windows -> 5|45512:DeviceMonitorMessageWindow;59708:;45512:;45512:C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-40\profile-cap4637-1;45512: | static=0|
+[15:23:27.230] releasing the windows
+[15:23:30.259] machine at end: processes=444 threads=12090 handles=266151 physicalFreeMiB=85231 physicalTotalMiB=130989 commitMiB=63201 commitLimitMiB=141229
+[15:23:30.259] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-40\results.json
+[15:23:30.259] teardown
+[15:23:32.273] CloseDesktop -> True
+[15:23:32.274] job closed
+[15:23:32.277] window stations now: WinSta0, Service-0x0-127b7b$
+[15:23:32.280] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:23:32.281] done
+[15:23:32.972] controller pid=54792 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-60
+[15:23:32.977] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:23:32.978] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:23:32.981] machine before: processes=438 threads=12014 handles=264524 physicalFreeMiB=85481 physicalTotalMiB=130989 commitMiB=62903 commitLimitMiB=141229
+[15:23:32.993] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:23:33.004] created desktop 'WinSta0\BaiT4' -- UOI_HEAPSIZE = 20480 KB
+[15:23:33.826] prober: pid=37048 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT4
+[15:23:33.828] filling 4637 windows of 2048-character title onto WinSta0\BaiT4 (20480 KB) ...
+[15:23:36.522] filler 1: pid=74252 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT4
+[15:23:36.523] machine after fill: processes=442 threads=12068 handles=265691 physicalFreeMiB=85262 physicalTotalMiB=130989 commitMiB=63123 commitLimitMiB=141229
+[15:23:37.231] cap4637#1: pid=60488 died=True exit=-536870904 elapsedMs=357 stdout=0B stderr=0B logLines=9
+[15:23:37.233] cap4637#1: message windows -> 0| | static=1|0:
+[15:23:37.237] releasing the windows
+[15:23:40.254] machine at end: processes=442 threads=12052 handles=265612 physicalFreeMiB=85277 physicalTotalMiB=130989 commitMiB=63118 commitLimitMiB=141229
+[15:23:40.254] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-60\results.json
+[15:23:40.254] teardown
+[15:23:42.276] CloseDesktop -> True
+[15:23:42.277] job closed
+[15:23:42.280] window stations now: WinSta0, Service-0x0-127b7b$
+[15:23:42.282] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:23:42.282] done
+[15:23:43.084] controller pid=70160 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-80
+[15:23:43.091] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:23:43.102] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:23:43.105] machine before: processes=438 threads=11998 handles=264261 physicalFreeMiB=85516 physicalTotalMiB=130989 commitMiB=62848 commitLimitMiB=141229
+[15:23:43.107] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:23:43.118] created desktop 'WinSta0\BaiT5' -- UOI_HEAPSIZE = 20480 KB
+[15:23:43.947] prober: pid=73296 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT5
+[15:23:43.949] filling 4637 windows of 2048-character title onto WinSta0\BaiT5 (20480 KB) ...
+[15:23:46.633] filler 1: pid=79468 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT5
+[15:23:46.634] machine after fill: processes=442 threads=12056 handles=265629 physicalFreeMiB=85243 physicalTotalMiB=130989 commitMiB=63142 commitLimitMiB=141229
+[15:23:47.337] cap4637#1: pid=56196 died=True exit=-2147483645 elapsedMs=353 stdout=0B stderr=0B logLines=6
+[15:23:47.339] cap4637#1: message windows -> 0| | static=1|0:
+[15:23:47.343] releasing the windows
+[15:23:50.367] machine at end: processes=442 threads=12059 handles=265627 physicalFreeMiB=85251 physicalTotalMiB=130989 commitMiB=63154 commitLimitMiB=141229
+[15:23:50.367] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-80\results.json
+[15:23:50.367] teardown
+[15:23:52.385] CloseDesktop -> True
+[15:23:52.387] job closed
+[15:23:52.390] window stations now: WinSta0, Service-0x0-127b7b$
+[15:23:52.392] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:23:52.392] done
+[15:23:53.167] controller pid=76256 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-100
+[15:23:53.173] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:23:53.174] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:23:53.187] machine before: processes=438 threads=11995 handles=264258 physicalFreeMiB=85525 physicalTotalMiB=130989 commitMiB=62891 commitLimitMiB=141229
+[15:23:53.189] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:23:53.199] created desktop 'WinSta0\BaiT6' -- UOI_HEAPSIZE = 20480 KB
+[15:23:54.019] prober: pid=75316 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT6
+[15:23:54.022] filling 4637 windows of 2048-character title onto WinSta0\BaiT6 (20480 KB) ...
+[15:23:56.742] filler 1: pid=61612 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT6
+[15:23:56.743] machine after fill: processes=442 threads=12044 handles=265497 physicalFreeMiB=85259 physicalTotalMiB=130989 commitMiB=63135 commitLimitMiB=141229
+[15:23:57.425] cap4637#1: pid=43628 died=True exit=-2147483645 elapsedMs=351 stdout=0B stderr=0B logLines=6
+[15:23:57.428] cap4637#1: message windows -> 0| | static=1|0:
+[15:23:57.433] releasing the windows
+[15:24:00.457] machine at end: processes=442 threads=12039 handles=265511 physicalFreeMiB=85250 physicalTotalMiB=130989 commitMiB=63112 commitLimitMiB=141229
+[15:24:00.457] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-100\results.json
+[15:24:00.457] teardown
+[15:24:02.478] CloseDesktop -> True
+[15:24:02.479] job closed
+[15:24:02.482] window stations now: WinSta0, Service-0x0-127b7b$
+[15:24:02.484] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:24:02.484] done
+[15:24:03.254] controller pid=54796 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-120
+[15:24:03.259] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:24:03.260] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:24:03.263] machine before: processes=438 threads=11971 handles=264212 physicalFreeMiB=85537 physicalTotalMiB=130989 commitMiB=62810 commitLimitMiB=141229
+[15:24:03.275] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:24:03.286] created desktop 'WinSta0\BaiT7' -- UOI_HEAPSIZE = 20480 KB
+[15:24:04.106] prober: pid=23424 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT7
+[15:24:04.108] filling 4637 windows of 2048-character title onto WinSta0\BaiT7 (20480 KB) ...
+[15:24:06.898] filler 1: pid=71728 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT7
+[15:24:06.899] machine after fill: processes=442 threads=12036 handles=265588 physicalFreeMiB=85266 physicalTotalMiB=130989 commitMiB=63092 commitLimitMiB=141229
+[15:24:07.621] cap4637#1: pid=46808 died=True exit=-2147483645 elapsedMs=370 stdout=0B stderr=0B logLines=6
+[15:24:07.623] cap4637#1: message windows -> 0| | static=1|0:
+[15:24:07.628] releasing the windows
+[15:24:10.659] machine at end: processes=440 threads=12028 handles=264878 physicalFreeMiB=85259 physicalTotalMiB=130989 commitMiB=63097 commitLimitMiB=141229
+[15:24:10.659] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-120\results.json
+[15:24:10.659] teardown
+[15:24:12.667] CloseDesktop -> True
+[15:24:12.668] job closed
+[15:24:12.671] window stations now: WinSta0, Service-0x0-127b7b$
+[15:24:12.673] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:24:12.674] done
+[15:24:13.512] controller pid=2364 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-150
+[15:24:13.517] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:24:13.518] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:24:13.521] machine before: processes=436 threads=11986 handles=263571 physicalFreeMiB=85516 physicalTotalMiB=130989 commitMiB=62823 commitLimitMiB=141229
+[15:24:13.523] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:24:13.545] created desktop 'WinSta0\BaiT8' -- UOI_HEAPSIZE = 20480 KB
+[15:24:14.370] prober: pid=67416 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT8
+[15:24:14.373] filling 4637 windows of 2048-character title onto WinSta0\BaiT8 (20480 KB) ...
+[15:24:17.054] filler 1: pid=77348 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT8
+[15:24:17.054] machine after fill: processes=440 threads=12049 handles=264882 physicalFreeMiB=85258 physicalTotalMiB=130989 commitMiB=63139 commitLimitMiB=141229
+[15:24:17.875] cap4637#1: pid=64156 died=True exit=-2147483645 elapsedMs=471 stdout=0B stderr=0B logLines=6
+[15:24:17.878] cap4637#1: message windows -> 0| | static=1|0:
+[15:24:17.883] releasing the windows
+[15:24:20.901] machine at end: processes=439 threads=12036 handles=264319 physicalFreeMiB=85249 physicalTotalMiB=130989 commitMiB=63126 commitLimitMiB=141229
+[15:24:20.902] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-150\results.json
+[15:24:20.902] teardown
+[15:24:22.923] CloseDesktop -> True
+[15:24:22.924] job closed
+[15:24:22.927] window stations now: WinSta0, Service-0x0-127b7b$
+[15:24:22.929] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:24:22.930] done
+[15:24:23.754] controller pid=28668 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-200
+[15:24:23.760] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:24:23.761] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:24:23.775] machine before: processes=434 threads=11965 handles=262742 physicalFreeMiB=85522 physicalTotalMiB=130989 commitMiB=62829 commitLimitMiB=141229
+[15:24:23.776] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:24:23.787] created desktop 'WinSta0\BaiT9' -- UOI_HEAPSIZE = 20480 KB
+[15:24:24.618] prober: pid=33328 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT9
+[15:24:24.620] filling 4637 windows of 2048-character title onto WinSta0\BaiT9 (20480 KB) ...
+[15:24:27.281] filler 1: pid=70724 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT9
+[15:24:27.282] machine after fill: processes=437 threads=12023 handles=263888 physicalFreeMiB=85267 physicalTotalMiB=130989 commitMiB=63141 commitLimitMiB=141229
+[15:24:28.018] cap4637#1: pid=80544 died=True exit=-536870904 elapsedMs=406 stdout=0B stderr=0B logLines=9
+[15:24:28.021] cap4637#1: message windows -> 0| | static=4637|70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...;70724:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...
+[15:24:28.027] releasing the windows
+[15:24:31.048] machine at end: processes=437 threads=11985 handles=263811 physicalFreeMiB=85235 physicalTotalMiB=130989 commitMiB=63142 commitLimitMiB=141229
+[15:24:31.049] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-200\results.json
+[15:24:31.049] teardown
+[15:24:33.065] CloseDesktop -> True
+[15:24:33.066] job closed
+[15:24:33.069] window stations now: WinSta0, Service-0x0-127b7b$
+[15:24:33.071] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:24:33.072] done
+[15:24:33.862] controller pid=79076 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-250
+[15:24:33.867] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:24:33.868] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:24:33.871] machine before: processes=433 threads=11909 handles=262452 physicalFreeMiB=85504 physicalTotalMiB=130989 commitMiB=62849 commitLimitMiB=141229
+[15:24:33.873] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:24:33.883] created desktop 'WinSta0\BaiT10' -- UOI_HEAPSIZE = 20480 KB
+[15:24:34.690] prober: pid=47536 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT10
+[15:24:34.692] filling 4637 windows of 2048-character title onto WinSta0\BaiT10 (20480 KB) ...
+[15:24:37.370] filler 1: pid=45992 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT10
+[15:24:37.371] machine after fill: processes=437 threads=11974 handles=263807 physicalFreeMiB=85245 physicalTotalMiB=130989 commitMiB=63151 commitLimitMiB=141229
+[15:24:38.111] cap4637#1: pid=51524 died=True exit=-2147483645 elapsedMs=390 stdout=0B stderr=0B logLines=6
+[15:24:38.114] cap4637#1: message windows -> 0| | static=1|0:
+[15:24:38.119] releasing the windows
+[15:24:41.147] machine at end: processes=436 threads=11966 handles=262403 physicalFreeMiB=85245 physicalTotalMiB=130989 commitMiB=63126 commitLimitMiB=141229
+[15:24:41.148] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-250\results.json
+[15:24:41.148] teardown
+[15:24:43.162] CloseDesktop -> True
+[15:24:43.163] job closed
+[15:24:43.166] window stations now: WinSta0, Service-0x0-127b7b$
+[15:24:43.168] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:24:43.169] done
+[15:24:43.948] controller pid=55444 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-300
+[15:24:43.953] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:24:43.954] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:24:43.957] machine before: processes=432 threads=11893 handles=261025 physicalFreeMiB=85517 physicalTotalMiB=130989 commitMiB=62834 commitLimitMiB=141229
+[15:24:43.958] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:24:43.969] created desktop 'WinSta0\BaiT11' -- UOI_HEAPSIZE = 20480 KB
+[15:24:44.791] prober: pid=49836 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT11
+[15:24:44.793] filling 4637 windows of 2048-character title onto WinSta0\BaiT11 (20480 KB) ...
+[15:24:47.470] filler 1: pid=81092 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT11
+[15:24:47.471] machine after fill: processes=436 threads=11957 handles=262365 physicalFreeMiB=85263 physicalTotalMiB=130989 commitMiB=63117 commitLimitMiB=141229
+[15:24:48.279] cap4637#1: pid=70192 died=True exit=-536870904 elapsedMs=461 stdout=0B stderr=0B logLines=9
+[15:24:48.281] cap4637#1: message windows -> 0| | static=1|0:
+[15:24:48.286] releasing the windows
+[15:24:51.304] machine at end: processes=437 threads=11971 handles=262660 physicalFreeMiB=85240 physicalTotalMiB=130989 commitMiB=63142 commitLimitMiB=141229
+[15:24:51.304] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-300\results.json
+[15:24:51.304] teardown
+[15:24:53.327] CloseDesktop -> True
+[15:24:53.328] job closed
+[15:24:53.331] window stations now: WinSta0, Service-0x0-127b7b$
+[15:24:53.333] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:24:53.333] done
+[15:24:54.113] controller pid=48808 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-400
+[15:24:54.119] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[15:24:54.120] host=C:\Program Files\PowerShell\7\pwsh.exe
+[15:24:54.123] machine before: processes=433 threads=11912 handles=261331 physicalFreeMiB=85486 physicalTotalMiB=130989 commitMiB=62876 commitLimitMiB=141229
+[15:24:54.135] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[15:24:54.146] created desktop 'WinSta0\BaiT12' -- UOI_HEAPSIZE = 20480 KB
+[15:24:54.967] prober: pid=16432 error=0 :: created=0 lastError=0 userObjects=3 cap=0 heapKb=20480 station=WinSta0 desktop=BaiT12
+[15:24:54.969] filling 4637 windows of 2048-character title onto WinSta0\BaiT12 (20480 KB) ...
+[15:24:57.679] filler 1: pid=68612 error=0 :: created=4637 lastError=0 userObjects=4640 cap=4637 heapKb=20480 station=WinSta0 desktop=BaiT12
+[15:24:57.680] machine after fill: processes=437 threads=11954 handles=262677 physicalFreeMiB=85205 physicalTotalMiB=130989 commitMiB=63197 commitLimitMiB=141229
+[15:24:58.573] cap4637#1: pid=70256 died=True exit=-536870904 elapsedMs=542 stdout=0B stderr=0B logLines=9
+[15:24:58.575] cap4637#1: message windows -> 0| | static=1|0:
+[15:24:58.581] releasing the windows
+[15:25:01.601] machine at end: processes=437 threads=11941 handles=262677 physicalFreeMiB=85193 physicalTotalMiB=130989 commitMiB=63179 commitLimitMiB=141229
+[15:25:01.601] RESULTS C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\trans-400\results.json
+[15:25:01.601] teardown
+[15:25:03.619] CloseDesktop -> True
+[15:25:03.620] job closed
+[15:25:03.623] window stations now: WinSta0, Service-0x0-127b7b$
+[15:25:03.625] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[15:25:03.625] done

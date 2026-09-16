@@ -1,0 +1,9 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "isolated": false,
+    "userDataDir": "C:/Source/SixFive7/BrowserAI/.work/jobtest/profile-firefox",
+    "launchOptions": { "headless": true }
+  },
+  "outputDir": "C:/Source/SixFive7/BrowserAI/.work/jobtest/out"
+}

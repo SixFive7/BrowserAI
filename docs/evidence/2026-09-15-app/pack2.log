@@ -1,0 +1,80 @@
+vpk 1.2.0 matches Velopack 1.2.0.
+Packing version 1.0.1-alpha.0.11 on channel win.
+Release validation: first.
+Removing ILC intermediates at C:\Source\SixFive7\BrowserAI\src\BrowserAI.App\obj\Release\net10.0-windows\win-x64\native so the publish cannot reuse last run's native object.
+Removing ILC intermediates at C:\Source\SixFive7\BrowserAI\src\BrowserAI\obj\Release\net10.0-windows\win-x64\native so the publish cannot reuse last run's native object.
+Publishing the configuration app (NativeAOT) to C:\Source\SixFive7\BrowserAI\artifacts\publish-BrowserAI ...
+ILC ran a full pass (94 lines read).
+ILC output for the configuration app is clean (94 lines read, 0 complaints).
+Copied the configuration app into C:\Source\SixFive7\BrowserAI\artifacts\publish-release.
+Publishing the MCP server (NativeAOT) to C:\Source\SixFive7\BrowserAI\artifacts\publish-BrowserAI.Server ...
+ILC ran a full pass (383 lines read).
+ILC output for the MCP server is clean (383 lines read, 0 complaints).
+Copied the MCP server into C:\Source\SixFive7\BrowserAI\artifacts\publish-release.
+No decorated version string for 1.0.1-alpha.0.11 in either linked binary (5 third-party decorations present and inert).
+vpk pack --packId BrowserAI.app --packVersion 1.0.1-alpha.0.11 --packDir C:\Source\SixFive7\BrowserAI\artifacts\publish-release --packTitle BrowserAI --packAuthors Jori Huisman --channel win --outputDir C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed --icon C:\Source\SixFive7\BrowserAI\assets\BrowserAI.ico --mainExe BrowserAI.exe --shortcuts StartMenuRoot
+[19:46:49 INF] Velopack CLI 1.2.0, for distributing applications.
+[19:46:50 INF] Beginning to package Velopack release 1.0.1-alpha.0.11.
+[19:46:50 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed
+[19:46:50 INF] Starting: Pre-process steps
+[19:46:50 INF] Shortcuts: StartMenuRoot
+[19:46:51 INF] Complete: Pre-process steps
+[19:46:51 INF] Starting: Code-sign application
+[19:46:51 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[19:46:51 INF] Complete: Code-sign application
+[19:46:51 INF] Starting: Building portable package
+[19:46:51 INF] Starting: Building release 1.0.1-alpha.0.11
+[19:46:57 INF] Complete: Building release 1.0.1-alpha.0.11
+[19:46:57 INF] Starting: Building setup package
+[19:46:57 INF] Complete: Building portable package
+[19:46:57 INF] Setup bundle created 'BrowserAI.app-win-Setup.exe'.
+[19:46:57 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[19:46:57 INF] Complete: Building setup package
+[19:46:57 INF] Starting: Post-process steps
+[19:46:58 INF] Complete: Post-process steps
+[19:46:58 INF] Finished in 00:00:07.4923517.
+Renamed the installer to BrowserAI.exe.
+Renamed the portable archive to BrowserAI.zip.
+Rewrote the download names in assets.win.json.
+vpk pack --packId BrowserAI.app.test --packVersion 1.0.1-alpha.0.11 --packDir C:\Source\SixFive7\BrowserAI\artifacts\publish-release --packTitle BrowserAI --packAuthors Jori Huisman --channel win --outputDir C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\test-pack --icon C:\Source\SixFive7\BrowserAI\assets\BrowserAI.ico --mainExe BrowserAI.exe --shortcuts StartMenuRoot
+[19:46:58 INF] Velopack CLI 1.2.0, for distributing applications.
+[19:46:58 INF] Beginning to package Velopack release 1.0.1-alpha.0.11.
+[19:46:58 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\test-pack
+[19:46:58 INF] Starting: Pre-process steps
+[19:46:58 INF] Shortcuts: StartMenuRoot
+[19:46:59 INF] Complete: Pre-process steps
+[19:46:59 INF] Starting: Code-sign application
+[19:46:59 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[19:46:59 INF] Complete: Code-sign application
+[19:46:59 INF] Starting: Building portable package
+[19:46:59 INF] Starting: Building release 1.0.1-alpha.0.11
+[19:47:04 INF] Complete: Building release 1.0.1-alpha.0.11
+[19:47:04 INF] Starting: Building setup package
+[19:47:04 INF] Complete: Building portable package
+[19:47:05 INF] Setup bundle created 'BrowserAI.app.test-win-Setup.exe'.
+[19:47:05 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[19:47:05 INF] Complete: Building setup package
+[19:47:05 INF] Starting: Post-process steps
+[19:47:05 INF] Complete: Post-process steps
+[19:47:05 INF] Finished in 00:00:06.3664307.
+Packed the suite's own installer as BrowserAI.test-installer.exe under C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\test-pack (pack id BrowserAI.app.test). It is NEVER published.
+Resolved-set manifest: C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\archive\BrowserAI-1.0.1-alpha.0.11-manifest (7 files + manifest.json)
+
+Version           : 1.0.1-alpha.0.11
+Channel           : win
+PackDirBytes      : 261460220
+ShippedBytes      : 143406536
+FullPackageBytes  : 54853873
+DeltaPackageBytes : 
+CompressionRatio  : 0,3825
+FullPackage       : C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\BrowserAI.app-1.0.1-alpha.0.11-full.nupk
+                    g
+DeltaPackage      : 
+Archived          : C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\archive\BrowserAI.app-1.0.1-alpha.0.11-f
+                    ull.nupkg
+Setup             : C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\BrowserAI.exe
+Portable          : C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\BrowserAI.zip
+Manifest          : C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\releases.win.json
+ResolvedSet       : C:\Source\SixFive7\BrowserAI\.work\2026-09-15-app\packfeed\archive\BrowserAI-1.0.1-alpha.0.11-manif
+                    est
+

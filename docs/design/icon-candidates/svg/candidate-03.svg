@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="c3g" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="0.55" stop-color="#10B981"/>
+      <stop offset="1" stop-color="#0E7490"/>
+    </linearGradient>
+    <clipPath id="c3clip"><circle cx="128" cy="128" r="112"/></clipPath>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="url(#c3g)"/>
+  <g clip-path="url(#c3clip)" fill="none" stroke="#ECFEFF" stroke-width="10" opacity="0.45" stroke-linecap="round">
+    <path d="M6 100 Q128 82 250 100"/>
+    <path d="M6 158 Q128 176 250 158"/>
+    <path d="M128 14 Q70 128 128 242"/>
+    <path d="M128 14 Q186 128 128 242"/>
+  </g>
+  <path d="M44 128 Q128 58 212 128 Q128 198 44 128 Z" fill="#F0FDFA"/>
+  <circle cx="128" cy="128" r="31" fill="#083344"/>
+  <circle cx="140" cy="116" r="9" fill="#ECFEFF"/>
+</svg>

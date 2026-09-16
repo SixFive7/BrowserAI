@@ -1,0 +1,152 @@
+=== [MCP-1] repo:microsoft/playwright-mcp  q=<webp screenshot empty>
+  hits=0
+=== [MCP-2] repo:microsoft/playwright-mcp  q=<16383>
+  hits=0
+=== [MCP-3] repo:microsoft/playwright-mcp  q=<16384>
+  hits=0
+=== [MCP-4] repo:microsoft/playwright-mcp  q=<webp>
+  hits=2
+   1707    merged  2026-08-05  chore: mark v0.0.79
+   1731    closed  2026-09-01  browser_take_screenshot resolves an explicit filename against the server cwd, not the ou
+=== [MCP-5] repo:microsoft/playwright-mcp  q=<zero-byte screenshot>
+  hits=0
+=== [MCP-6] repo:microsoft/playwright-mcp  q=<empty image screenshot>
+  hits=0
+=== [MCP-7] repo:microsoft/playwright-mcp  q=<fullPage dimension limit>
+  hits=0
+=== [MCP-C1] repo:microsoft/playwright-mcp  q=<screenshot>
+  hits=25
+   1731    closed  2026-09-01  browser_take_screenshot resolves an explicit filename against the server cwd, not the ou
+   1730    merged  2026-08-31  chore: mark v0.0.80
+   1741    closed  2026-09-08  docs: document manual FLUJO client setup
+   1714    closed  2026-08-16  Add context-cost badge (4,024 tokens across 24 tools)
+   1667    merged  2026-06-29  chore: mark v0.0.77
+   1666    merged  2026-06-29  chore: roll Playwright to 1.62.0-alpha-2026-06-29
+   1707    merged  2026-08-05  chore: mark v0.0.79
+   1581    closed  2026-04-30  browser_take_screenshot: image still returned as base64 in MCP response when `filename` 
+   1476    closed  2026-03-20  mcp__playwright__browser_take_screenshot save filename and path
+   1675    merged  2026-07-09  chore: mark v0.0.78
+   1390    closed  2026-02-11  browser_take_screenshot: custom filenames bypass --output-dir, save to workspace root in
+   1659    closed  2026-06-21  Proposal: Add BuyWhere MCP — E2E product testing and verification
+   1697    closed  2026-07-27  5 tools not deferrable via MCP gateway (browser_reload, browser_reset, browser_get_html,
+   1629    closed  2026-05-25  feat: add --output-ttl for automatic cleanup of expired artifacts in .playwright-mcp
+   492     closed  2025-05-29  [Feature] Add a highlighter while tracing and clicking elements for actions like (eg,cli
+   1637    closed  2026-05-30  Heads-up: unscoped npm package playwright-mcp is confusing users with official @playwrig
+   1324    closed  2026-01-22  Screenshot responses mix Markdown and JSON, breaking MCP client parsing
+   1372    closed  2026-02-06  🐛 Bug: `--output-dir` is ignored in the latest version, screenshots are saved to the 
+   1274    closed  2025-12-19  Large responses consuming context windows
+   1474    closed  2026-03-19  [Bug] RangeError: Invalid string length on Blazor WASM pages - snapshot serialization cr
+   1479    closed  2026-03-21  Security consideration: Indirect Prompt Injection via accessibility snapshots in MCP bro
+   1485    closed  2026-03-25  Audit/hardening pass 2026 03 25
+   1595    closed  2026-05-02  Explicit filename outputs ignore --output-dir and write to cwd / workspace paths
+   1382    closed  2026-02-09  Using MCP agent to observe Playwright debug browser session
+   1475    closed  2026-03-19  MCP server silently disconnects mid-session without error
+=== [MCP-C2] repo:microsoft/playwright-mcp  q=<browser_take_screenshot>
+  hits=25
+   1731    closed  2026-09-01  browser_take_screenshot resolves an explicit filename against the server cwd, not the ou
+   1730    merged  2026-08-31  chore: mark v0.0.80
+   1714    closed  2026-08-16  Add context-cost badge (4,024 tokens across 24 tools)
+   1707    merged  2026-08-05  chore: mark v0.0.79
+   1667    merged  2026-06-29  chore: mark v0.0.77
+   1666    merged  2026-06-29  chore: roll Playwright to 1.62.0-alpha-2026-06-29
+   1697    closed  2026-07-27  5 tools not deferrable via MCP gateway (browser_reload, browser_reset, browser_get_html,
+   1581    closed  2026-04-30  browser_take_screenshot: image still returned as base64 in MCP response when `filename` 
+   1390    closed  2026-02-11  browser_take_screenshot: custom filenames bypass --output-dir, save to workspace root in
+   1474    closed  2026-03-19  [Bug] RangeError: Invalid string length on Blazor WASM pages - snapshot serialization cr
+   1595    closed  2026-05-02  Explicit filename outputs ignore --output-dir and write to cwd / workspace paths
+   1476    closed  2026-03-20  mcp__playwright__browser_take_screenshot save filename and path
+   1475    closed  2026-03-19  MCP server silently disconnects mid-session without error
+   1465    closed  2026-03-15  [Bug] Extension mode loses the target tab context and starts acting on a chrome-extensio
+   1326    closed  2026-01-23  --image-responses omit does not prevent images from being returned to VS Code Copilot
+   1290    closed  2025-12-29  [Feature Request] Implement token saving measures by adding --minify-tools, --tool-allow
+   1253    closed  2025-12-10  browser_take_screenshot ignores --output-dir when filename contains path separators
+   1324    closed  2026-01-22  Screenshot responses mix Markdown and JSON, breaking MCP client parsing
+   1185    closed  2025-11-05  browser_take_screenshot causes context overflow by default
+   1186    closed  2025-11-05  browser_take_screenshot does not save to filename
+   1217    closed  2025-11-21  fix(mcp): correct screenshot media type mismatch
+   1329    closed  2026-01-23  On very large pages, the snapshot can fill the entire context
+   1211    closed  2025-11-19  Bug: Screenshot tool returns corrupted image data causing permanent API error 400
+   990     closed  2025-09-03  Codex is unable to use playwright mcp with extension?
+   1019    closed  2025-09-08  browser_take_screenshot doesn't return raw data when fullPage=True
+=== [MCP-C3] repo:microsoft/playwright-mcp  q=<absolute paths tool result links>
+  hits=0
+=== [PW-1] repo:microsoft/playwright  q=<webp screenshot empty>
+  hits=0
+=== [PW-2] repo:microsoft/playwright  q=<16383>
+  hits=1
+   16383   merged  2022-08-09  chore: set --allow-pre-commit-input flag on Android/Electron
+=== [PW-3] repo:microsoft/playwright  q=<16384 screenshot>
+  hits=0
+=== [PW-4] repo:microsoft/playwright  q=<webp dimension limit>
+  hits=0
+=== [PW-5] repo:microsoft/playwright  q=<webp fullPage>
+  hits=0
+=== [PW-6] repo:microsoft/playwright  q=<screenshot zero bytes>
+  hits=0
+=== [PW-7] repo:microsoft/playwright  q=<webp empty image>
+  hits=0
+=== [PW-C1] repo:microsoft/playwright  q=<webp screenshot>
+  hits=8
+   41849   merged  2026-07-17  chore(bidi): enable webp screenshot support
+   42043   merged  2026-07-29  docs: release notes for v1.62 Python, Java, and .NET
+   41908   merged  2026-07-21  chore(webview): mark new screenshot tests as expected failures
+   41967   merged  2026-07-23  cherry-pick(#41940): docs: release notes for v1.62
+   41940   merged  2026-07-22  docs: release notes for v1.62
+   41781   merged  2026-07-14  fix(screenshot): fix webp transparency and lossless detection, add tests
+   22984   closed  2023-05-12  [Feature] Save screenshots using `webp` format
+   31497   closed  2024-07-01  [Feature]: .Webp image support
+=== [PW-C2] repo:microsoft/playwright  q=<[MCP] Option for absolute paths in tool result links>
+  hits=1
+   42497   open    2026-08-27  [MCP] Option for absolute paths in tool result links
+=== [PW-C3] repo:microsoft/playwright  q=<fullPage screenshot>
+  hits=25
+   19861   open    2023-01-04  Is there any good solution for making fullpage screenshots on lazy load pages?
+   42372   closed  2026-08-23  chore(deps): bump azure/login from 3.0.0 to 3.0.1 in the github-actions group across 1 d
+   42650   closed  2026-09-10  chore(deps-dev): bump js-yaml from 4.3.0 to 4.3.2
+   42132   merged  2026-08-05  chore(deps): bump the github-actions group with 7 updates
+   42096   merged  2026-08-03  chore(deps): bump ip-address from 10.2.0 to 10.4.0
+   42356   closed  2026-08-21  feat(chromium): roll to r1242
+   42516   merged  2026-09-02  chore(deps-dev): bump fast-uri from 3.1.3 to 3.1.7
+   42097   merged  2026-08-03  chore(deps): bump undici
+   42225   closed  2026-08-12  chore(deps-dev): bump @hono/node-server from 1.19.14 to 1.19.17
+   42524   merged  2026-09-02  feat(firefox): roll to r1543
+   41956   merged  2026-07-23  chore(deps-dev): bump fast-uri from 3.1.3 to 3.1.4
+   42113   closed  2026-08-04  chore(deps): bump postcss from 8.5.16 to 8.5.25
+   42553   merged  2026-09-03  feat(webkit): roll to r2360
+   41983   closed  2026-07-24  chore(deps): bump postcss from 8.5.16 to 8.5.23
+   41578   merged  2026-07-01  test(click): add coverage for click after a right click
+   42170   closed  2026-08-07  chore(deps-dev): bump hono from 4.12.27 to 4.13.1
+   42038   merged  2026-07-29  feat(chromium): roll to r1236
+   41594   merged  2026-07-02  chore: move codegen and device descriptors into @isomorphic
+   42229   merged  2026-08-13  feat(firefox): roll to r1540
+   42523   merged  2026-09-02  chore(deps): bump actions/setup-java from 5.7.0 to 6.0.0 in the github-actions group acr
+   41879   merged  2026-07-20  feat(webkit): roll to r2334
+   41859   merged  2026-07-17  feat(firefox): roll to r1536
+   41367   merged  2026-06-18  fix(test): keep builtin expect matchers on base extend
+   42478   closed  2026-08-31  fix(video): embed recording start time in WebM metadata
+   42246   closed  2026-08-13  feat(chromium): roll to r1240
+=== done ===
+=== [PW-8] repo:microsoft/playwright  q=<screenshot empty file>
+  hits=0
+=== [PW-9] repo:microsoft/playwright  q=<VP8 webp maximum dimension>
+  hits=0
+=== [PW-10] repo:microsoft/playwright  q=<full page screenshot too large webp>
+  hits=0
+=== [PW-11] repo:microsoft/playwright  q=<screenshot silently empty no error>
+  hits=0
+=== [MCP-8] repo:microsoft/playwright-mcp  q=<full page screenshot large page>
+  hits=0
+=== [MCP-9] repo:microsoft/playwright-mcp  q=<screenshot returns nothing>
+  hits=0
+=== [PW-C4] repo:microsoft/playwright  q=<screenshot fails on large page>
+  hits=0
+=== [MCP-C4] repo:microsoft/playwright-mcp  q=<take screenshot type jpeg>
+  hits=0
+=== batch2 done ===
+=== [MCP-C5] repo:microsoft/playwright-mcp  q=<screenshot explicit filename server cwd>
+  hits=0
+=== [PW-C5] repo:microsoft/playwright  q=<webp transparency lossless detection>
+  hits=0
+=== [PW-C6] repo:microsoft/playwright  q=<screenshot fullPage large>
+  hits=0
+=== batch3 done ===

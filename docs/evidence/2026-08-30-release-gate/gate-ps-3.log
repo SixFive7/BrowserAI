@@ -1,0 +1,47 @@
+Running tests from C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes (1s 968ms)
+  [Test Failure] AssertionException: Expected to be equal to Installed
+but received Failed
+
+at Assert.That(status.State).IsEqualTo(ProvisioningState.Installed)
+  from C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] AssertionException: Expected to be equal to Installed
+  but received Failed
+  
+  at Assert.That(status.State).IsEqualTo(ProvisioningState.Installed)
+    at BrowserAI.Tests.ProvisioningTests.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\ProvisioningTests.cs:323
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+  Standard output
+    [Information] BrowserAI.Runtime.BrowserProvisioner[60] Provisioning chromium revision 1237 into C:\Source\SixFive7\BrowserAI\.work\test-scratch\provision-slow-but-working-321fb5ce3fc44c76826640eb180db155\browsers. init does not wait for this; browser calls are refused until it lands.
+    [Information] BrowserAI.Runtime.BrowserProvisioner[61] Extracting chromium; the download took 0 s.
+    [Error] BrowserAI.Runtime.BrowserProvisioner[65] The stall cap of 0 minutes fired while provisioning chromium; its job was closed and the partial tree removed.
+    
+  Error output
+C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 1 error(s) (1m 52s 285ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage — what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+    repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\payload\payload.json
+    Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+    Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe
+    packed release      PRESENT  C:\Source\SixFive7\BrowserAI\Releases\BrowserAI-0.1.3-full.nupkg
+    client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CACHED   seeded from a tree the CDN served 7 min ago; nothing was downloaded in this run (9.9 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+  ==============================================================================
+    This run exercised every layer. No test took a degraded path.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 505
+  failed: 1
+  succeeded: 504
+  skipped: 0
+  duration: 1m 52s 544ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)

@@ -1,0 +1,24 @@
+JobProbe pid=76788 tag=raceB selfjob=False
+self in any job at start: False
+inner job: KILL_ON_JOB_CLOSE set (no breakaway flags)
+completion port associated
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\jobtest\race.mjs" "C:\Source\SixFive7\BrowserAI\.work\jobtest\raceB.racepids.txt"
+child created SUSPENDED pid=78048
+delaying assign by 500ms (simulating Process.Start latency)
+child in our job BEFORE assign: False
+child in our job AFTER assign: True
+child resumed
+race: child pid=78048 grandchild pid=28204
+race: RESULT grandchild 28204 inOurJob=True inAnyJob=True
+walk seeds: 3 (rootPid + everInJob)
+seeds no longer alive: 0
+job pid list: assigned=3 inList=3
+# tag=raceB selfjob=False probePid=76788 rootChildPid=78048
+# jobPidListCount=3 treeCount=3
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+78048	76788	0	node.exe	134312202745632139	YES	YES	YES	
+28204	78048	1	node.exe	134312202751375008	YES	YES	YES	seed(job-notified)
+77180	78048	1	conhost.exe	134312202750816916	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0
+
+REPORT WRITTEN. Waiting to be killed (or --autoexit).

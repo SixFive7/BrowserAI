@@ -1,0 +1,24 @@
+JobProbe pid=32456 tag=inh selfjob=False
+self in any job at start: False
+WARNING: creating job handle as INHERITABLE (bad-practice control case)
+inner job: LimitFlags=0x2000 KILL_ON_JOB_CLOSE
+completion port associated
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\jobtest\race.mjs" "C:\Source\SixFive7\BrowserAI\.work\jobtest\inh.racepids.txt"
+child created SUSPENDED pid=55128
+child in our job BEFORE assign: False
+child in our job AFTER assign: True
+child resumed
+race: child pid=55128 grandchild pid=76248
+race: RESULT grandchild 76248 inOurJob=True inAnyJob=True
+walk seeds: 3 (rootPid + everInJob)
+seeds no longer alive: 0
+job pid list: assigned=3 inList=3
+# tag=inh selfjob=False probePid=32456 rootChildPid=55128
+# jobPidListCount=3 treeCount=3
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+55128	32456	0	node.exe	134312206404045648	YES	YES	YES	
+37416	55128	1	conhost.exe	134312206404145110	YES	YES	YES	seed(job-notified)
+76248	55128	1	node.exe	134312206404720851	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0
+
+REPORT WRITTEN. Waiting to be killed (or --autoexit).

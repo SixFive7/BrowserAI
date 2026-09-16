@@ -1,0 +1,767 @@
+{"t":0.001,"wall":"16:35:14.012","kind":"start","probeRoot":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app"}
+{"t":0.061,"wall":"16:35:14.072","kind":"proc+","pid":42564,"name":"node","path":"C:\\Users\\jori\\AppData\\Roaming\\Elgato\\StreamDeck\\NodeJS\\20.20.0\\node.exe","startTime":"18:05:46.038"}
+{"t":0.070,"wall":"16:35:14.081","kind":"proc+","pid":38204,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"18:05:07.145"}
+{"t":0.070,"wall":"16:35:14.082","kind":"proc+","pid":7508,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"18:05:45.092"}
+{"t":0.072,"wall":"16:35:14.083","kind":"proc+","pid":42352,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"18:05:46.056"}
+{"t":0.072,"wall":"16:35:14.083","kind":"proc+","pid":12132,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"18:05:46.056"}
+{"t":0.072,"wall":"16:35:14.083","kind":"proc+","pid":47572,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"18:06:57.674"}
+{"t":0.072,"wall":"16:35:14.083","kind":"proc+","pid":13064,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"18:07:18.519"}
+{"t":0.072,"wall":"16:35:14.083","kind":"proc+","pid":7884,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:08.109"}
+{"t":0.072,"wall":"16:35:14.083","kind":"proc+","pid":50600,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:08.928"}
+{"t":0.072,"wall":"16:35:14.084","kind":"proc+","pid":19804,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:09.030"}
+{"t":0.072,"wall":"16:35:14.084","kind":"proc+","pid":15956,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:09.538"}
+{"t":0.072,"wall":"16:35:14.084","kind":"proc+","pid":25392,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:10.236"}
+{"t":0.072,"wall":"16:35:14.084","kind":"proc+","pid":50584,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:10.256"}
+{"t":0.073,"wall":"16:35:14.084","kind":"proc+","pid":23484,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"19:16:10.911"}
+{"t":0.073,"wall":"16:35:14.084","kind":"proc+","pid":70132,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"22:25:49.151"}
+{"t":0.073,"wall":"16:35:14.084","kind":"proc+","pid":27324,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:58:45.316"}
+{"t":0.073,"wall":"16:35:14.085","kind":"proc+","pid":30588,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:58:45.441"}
+{"t":0.073,"wall":"16:35:14.085","kind":"proc+","pid":63624,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:58:45.800"}
+{"t":0.073,"wall":"16:35:14.085","kind":"proc+","pid":60272,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:58:46.547"}
+{"t":0.073,"wall":"16:35:14.085","kind":"proc+","pid":57668,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:58:46.564"}
+{"t":0.074,"wall":"16:35:14.085","kind":"proc+","pid":69508,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:58:47.371"}
+{"t":0.074,"wall":"16:35:14.085","kind":"proc+","pid":64544,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:59:04.730"}
+{"t":0.074,"wall":"16:35:14.085","kind":"proc+","pid":56404,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"12:59:10.606"}
+{"t":0.074,"wall":"16:35:14.085","kind":"proc+","pid":75704,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"14:56:56.712"}
+{"t":0.074,"wall":"16:35:14.086","kind":"proc+","pid":99376,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"15:29:40.135"}
+{"t":0.074,"wall":"16:35:14.086","kind":"proc+","pid":94972,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"15:29:50.142"}
+{"t":0.074,"wall":"16:35:14.086","kind":"proc+","pid":79312,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:06:01.701"}
+{"t":0.074,"wall":"16:35:14.086","kind":"proc+","pid":91712,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:10:55.828"}
+{"t":0.074,"wall":"16:35:14.086","kind":"proc+","pid":95740,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:10:56.576"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":79864,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:10:57.039"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":98728,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:10:57.486"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":85304,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:10:57.503"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":82780,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:10:58.472"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":48528,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:14:28.956"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":73704,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:18:02.857"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":50896,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:29:09.063"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":96552,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:34:53.400"}
+{"t":0.075,"wall":"16:35:14.086","kind":"proc+","pid":94472,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:13.053"}
+{"t":0.084,"wall":"16:35:14.095","kind":"proc+","pid":50912,"name":"OpenConsole","path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\OpenConsole.exe","startTime":"18:11:21.618"}
+{"t":0.084,"wall":"16:35:14.095","kind":"proc+","pid":82004,"name":"OpenConsole","path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\OpenConsole.exe","startTime":"15:32:27.637"}
+{"t":0.093,"wall":"16:35:14.104","kind":"proc+","pid":25328,"name":"WindowsTerminal","path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe","startTime":"18:10:17.125"}
+{"t":0.110,"wall":"16:35:14.121","kind":"proc+","pid":70988,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:24.612"}
+{"t":0.110,"wall":"16:35:14.122","kind":"proc+","pid":74816,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:24.860"}
+{"t":0.110,"wall":"16:35:14.122","kind":"proc+","pid":57280,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:25.132"}
+{"t":0.110,"wall":"16:35:14.122","kind":"proc+","pid":24836,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:25.555"}
+{"t":0.111,"wall":"16:35:14.122","kind":"proc+","pid":46040,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:25.563"}
+{"t":0.111,"wall":"16:35:14.122","kind":"proc+","pid":54972,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:35.996"}
+{"t":0.111,"wall":"16:35:14.122","kind":"proc+","pid":66060,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:36.037"}
+{"t":0.111,"wall":"16:35:14.122","kind":"proc+","pid":83512,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:37.341"}
+{"t":0.111,"wall":"16:35:14.122","kind":"proc+","pid":70524,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:39.908"}
+{"t":0.111,"wall":"16:35:14.122","kind":"proc+","pid":68048,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:39.947"}
+{"t":0.111,"wall":"16:35:14.123","kind":"proc+","pid":66332,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.102"}
+{"t":0.111,"wall":"16:35:14.123","kind":"proc+","pid":77488,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.108"}
+{"t":0.111,"wall":"16:35:14.123","kind":"proc+","pid":13504,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.114"}
+{"t":0.112,"wall":"16:35:14.123","kind":"proc+","pid":76504,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.120"}
+{"t":0.112,"wall":"16:35:14.123","kind":"proc+","pid":10392,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.126"}
+{"t":0.112,"wall":"16:35:14.123","kind":"proc+","pid":67256,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.148"}
+{"t":0.112,"wall":"16:35:14.123","kind":"proc+","pid":79812,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.154"}
+{"t":0.112,"wall":"16:35:14.123","kind":"proc+","pid":82552,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.159"}
+{"t":0.112,"wall":"16:35:14.123","kind":"proc+","pid":83516,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.165"}
+{"t":0.112,"wall":"16:35:14.124","kind":"proc+","pid":83412,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.179"}
+{"t":0.112,"wall":"16:35:14.124","kind":"proc+","pid":72064,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.184"}
+{"t":0.112,"wall":"16:35:14.124","kind":"proc+","pid":79588,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.190"}
+{"t":0.112,"wall":"16:35:14.124","kind":"proc+","pid":68700,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.196"}
+{"t":0.113,"wall":"16:35:14.124","kind":"proc+","pid":59992,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.202"}
+{"t":0.113,"wall":"16:35:14.124","kind":"proc+","pid":55580,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.208"}
+{"t":0.113,"wall":"16:35:14.124","kind":"proc+","pid":54404,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.243"}
+{"t":0.113,"wall":"16:35:14.124","kind":"proc+","pid":52700,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.249"}
+{"t":0.113,"wall":"16:35:14.124","kind":"proc+","pid":59128,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.257"}
+{"t":0.113,"wall":"16:35:14.124","kind":"proc+","pid":32204,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.263"}
+{"t":0.113,"wall":"16:35:14.125","kind":"proc+","pid":78476,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.269"}
+{"t":0.113,"wall":"16:35:14.125","kind":"proc+","pid":64196,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.410"}
+{"t":0.113,"wall":"16:35:14.125","kind":"proc+","pid":67012,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:40.508"}
+{"t":0.113,"wall":"16:35:14.125","kind":"proc+","pid":34376,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:41.871"}
+{"t":0.114,"wall":"16:35:14.125","kind":"proc+","pid":67796,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:42.404"}
+{"t":0.114,"wall":"16:35:14.125","kind":"proc+","pid":30348,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:43.538"}
+{"t":0.114,"wall":"16:35:14.125","kind":"proc+","pid":17620,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:43.695"}
+{"t":0.114,"wall":"16:35:14.125","kind":"proc+","pid":33752,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:43.702"}
+{"t":0.114,"wall":"16:35:14.125","kind":"proc+","pid":29784,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:43.709"}
+{"t":0.114,"wall":"16:35:14.125","kind":"proc+","pid":57640,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:43.944"}
+{"t":0.114,"wall":"16:35:14.126","kind":"proc+","pid":75640,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:45.071"}
+{"t":0.114,"wall":"16:35:14.126","kind":"proc+","pid":61212,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:47.205"}
+{"t":0.114,"wall":"16:35:14.126","kind":"proc+","pid":72372,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:47.926"}
+{"t":0.114,"wall":"16:35:14.126","kind":"proc+","pid":13688,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:48.359"}
+{"t":0.115,"wall":"16:35:14.126","kind":"proc+","pid":10424,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"22:25:51.398"}
+{"t":0.115,"wall":"16:35:14.126","kind":"proc+","pid":113584,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"15:43:36.054"}
+{"t":0.115,"wall":"16:35:14.126","kind":"proc+","pid":116320,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"15:45:07.039"}
+{"t":0.115,"wall":"16:35:14.126","kind":"proc+","pid":103340,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"15:53:05.590"}
+{"t":0.115,"wall":"16:35:14.126","kind":"proc+","pid":106332,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:32:16.537"}
+{"t":0.115,"wall":"16:35:14.127","kind":"proc+","pid":92412,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:34:01.214"}
+{"t":0.115,"wall":"16:35:14.127","kind":"proc+","pid":90168,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:34:18.108"}
+{"t":0.115,"wall":"16:35:14.127","kind":"proc+","pid":103104,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:34:31.704"}
+{"t":0.115,"wall":"16:35:14.127","kind":"proc+","pid":37076,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:35:02.253"}
+{"t":0.605,"wall":"16:35:14.616","kind":"proc+","pid":98892,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:14.598"}
+{"t":0.927,"wall":"16:35:14.938","kind":"proc-","pid":98892,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.321}
+{"t":2.207,"wall":"16:35:16.219","kind":"proc+","pid":8596,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:16.087"}
+{"t":2.207,"wall":"16:35:16.219","kind":"proc+","pid":102688,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:16.119"}
+{"t":2.255,"wall":"16:35:16.267","kind":"proc-","pid":8596,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.048}
+{"t":2.510,"wall":"16:35:16.522","kind":"proc-","pid":102688,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.303}
+{"t":4.087,"wall":"16:35:18.098","kind":"proc+","pid":56556,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:18.003"}
+{"t":4.355,"wall":"16:35:18.366","kind":"proc+","pid":111612,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:18.295"}
+{"t":4.355,"wall":"16:35:18.366","kind":"proc+","pid":63804,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:18.328"}
+{"t":4.403,"wall":"16:35:18.415","kind":"proc-","pid":56556,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.316}
+{"t":4.664,"wall":"16:35:18.676","kind":"proc-","pid":111612,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.310}
+{"t":4.664,"wall":"16:35:18.676","kind":"proc-","pid":63804,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.310}
+{"t":5.131,"wall":"16:35:19.143","kind":"proc+","pid":96564,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:19.018"}
+{"t":5.176,"wall":"16:35:19.188","kind":"proc-","pid":96564,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.045}
+{"t":6.228,"wall":"16:35:20.239","kind":"proc+","pid":75756,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:20.213"}
+{"t":6.488,"wall":"16:35:20.500","kind":"proc+","pid":76372,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:20.491"}
+{"t":6.489,"wall":"16:35:20.500","kind":"proc+","pid":84508,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:20.491"}
+{"t":6.543,"wall":"16:35:20.555","kind":"proc-","pid":75756,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.315}
+{"t":6.802,"wall":"16:35:20.813","kind":"proc-","pid":76372,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.313}
+{"t":7.269,"wall":"16:35:21.280","kind":"proc+","pid":80700,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:21.223"}
+{"t":7.269,"wall":"16:35:21.280","kind":"proc+","pid":110536,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:21.227"}
+{"t":7.269,"wall":"16:35:21.281","kind":"proc+","pid":90728,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:21.229"}
+{"t":7.540,"wall":"16:35:21.551","kind":"proc+","pid":94896,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:21.411"}
+{"t":7.592,"wall":"16:35:21.604","kind":"proc-","pid":80700,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":7.592,"wall":"16:35:21.604","kind":"proc-","pid":110536,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":7.592,"wall":"16:35:21.604","kind":"proc-","pid":90728,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":7.813,"wall":"16:35:21.825","kind":"proc+","pid":110364,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:21.727"}
+{"t":8.143,"wall":"16:35:22.155","kind":"proc-","pid":94896,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.604}
+{"t":8.406,"wall":"16:35:22.417","kind":"proc-","pid":84508,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.917}
+{"t":8.892,"wall":"16:35:22.903","kind":"proc+","pid":97284,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:22.760"}
+{"t":8.892,"wall":"16:35:22.904","kind":"proc+","pid":84612,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:22.831"}
+{"t":8.892,"wall":"16:35:22.904","kind":"proc+","pid":102772,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:22.831"}
+{"t":8.892,"wall":"16:35:22.904","kind":"proc+","pid":66232,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:22.832"}
+{"t":8.893,"wall":"16:35:22.904","kind":"proc+","pid":92036,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:22.832"}
+{"t":8.893,"wall":"16:35:22.904","kind":"proc+","pid":43316,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:22.832"}
+{"t":8.943,"wall":"16:35:22.955","kind":"proc-","pid":97284,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.051}
+{"t":9.709,"wall":"16:35:23.720","kind":"proc+","pid":45700,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:23.564"}
+{"t":9.709,"wall":"16:35:23.720","kind":"proc+","pid":81248,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:23.568"}
+{"t":9.767,"wall":"16:35:23.778","kind":"proc-","pid":45700,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.058}
+{"t":9.767,"wall":"16:35:23.778","kind":"proc-","pid":81248,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.058}
+{"t":9.965,"wall":"16:35:23.976","kind":"proc+","pid":92796,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:23.924"}
+{"t":10.244,"wall":"16:35:24.256","kind":"proc+","pid":97412,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:24.236"}
+{"t":10.295,"wall":"16:35:24.307","kind":"proc-","pid":92796,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.331}
+{"t":10.559,"wall":"16:35:24.570","kind":"proc-","pid":97412,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.315}
+{"t":10.816,"wall":"16:35:24.828","kind":"proc+","pid":111640,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:24.652"}
+{"t":10.974,"wall":"16:35:24.985","kind":"proc-","pid":111640,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.157}
+{"t":11.146,"wall":"16:35:25.157","kind":"proc+","pid":85120,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:25.053"}
+{"t":11.146,"wall":"16:35:25.157","kind":"proc+","pid":107312,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:25.054"}
+{"t":11.465,"wall":"16:35:25.476","kind":"proc-","pid":85120,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.319}
+{"t":11.465,"wall":"16:35:25.477","kind":"proc-","pid":107312,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.319}
+{"t":13.020,"wall":"16:35:27.031","kind":"proc+","pid":71020,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:26.949"}
+{"t":13.335,"wall":"16:35:27.347","kind":"proc-","pid":71020,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.315}
+{"t":13.549,"wall":"16:35:27.560","kind":"proc+","pid":107460,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:27.424"}
+{"t":13.549,"wall":"16:35:27.561","kind":"proc+","pid":95960,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:27.440"}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":66232,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":4.711}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":95960,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.054}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":102772,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":4.711}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":84612,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":4.711}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":92036,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":4.711}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":43316,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":4.711}
+{"t":13.604,"wall":"16:35:27.615","kind":"proc-","pid":107460,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.055}
+{"t":15.187,"wall":"16:35:29.198","kind":"proc+","pid":100292,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:29.185"}
+{"t":15.460,"wall":"16:35:29.471","kind":"proc+","pid":72984,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:29.430"}
+{"t":15.538,"wall":"16:35:29.549","kind":"proc-","pid":100292,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.351}
+{"t":15.737,"wall":"16:35:29.748","kind":"proc+","pid":102520,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:29.561"}
+{"t":15.737,"wall":"16:35:29.748","kind":"proc+","pid":86732,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:29.679"}
+{"t":15.737,"wall":"16:35:29.748","kind":"proc+","pid":101440,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:29.686"}
+{"t":16.060,"wall":"16:35:30.071","kind":"proc-","pid":101440,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":16.060,"wall":"16:35:30.071","kind":"proc-","pid":86732,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":16.060,"wall":"16:35:30.071","kind":"proc-","pid":102520,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":16.221,"wall":"16:35:30.233","kind":"proc+","pid":115488,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:30.120"}
+{"t":16.287,"wall":"16:35:30.299","kind":"proc-","pid":115488,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.066}
+{"t":16.655,"wall":"16:35:30.666","kind":"proc-","pid":72984,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.195}
+{"t":17.543,"wall":"16:35:31.555","kind":"proc+","pid":54864,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:31.405"}
+{"t":17.543,"wall":"16:35:31.555","kind":"proc+","pid":110904,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:31.483"}
+{"t":17.543,"wall":"16:35:31.555","kind":"proc+","pid":115532,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:31.500"}
+{"t":17.601,"wall":"16:35:31.612","kind":"proc-","pid":92412,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","exitCode":0,"observedLifetimeSec":17.485}
+{"t":17.985,"wall":"16:35:31.996","kind":"proc-","pid":115532,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.441}
+{"t":17.985,"wall":"16:35:31.996","kind":"proc-","pid":54864,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.442}
+{"t":17.985,"wall":"16:35:31.996","kind":"proc-","pid":110904,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.441}
+{"t":18.128,"wall":"16:35:32.139","kind":"proc+","pid":89836,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:32.021"}
+{"t":18.128,"wall":"16:35:32.139","kind":"proc+","pid":102068,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:32.028"}
+{"t":18.398,"wall":"16:35:32.409","kind":"proc+","pid":116144,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:32.377"}
+{"t":18.491,"wall":"16:35:32.502","kind":"proc-","pid":102068,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.363}
+{"t":18.491,"wall":"16:35:32.502","kind":"proc-","pid":89836,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.364}
+{"t":18.781,"wall":"16:35:32.793","kind":"proc-","pid":116144,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.384}
+{"t":19.002,"wall":"16:35:33.013","kind":"proc+","pid":77048,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:35:32.883"}
+{"t":21.288,"wall":"16:35:35.300","kind":"proc+","pid":108116,"name":"conhost","path":"?","startTime":"?"}
+{"t":21.288,"wall":"16:35:35.300","kind":"proc+","pid":66804,"name":"conhost","path":"?","startTime":"?"}
+{"t":21.349,"wall":"16:35:35.360","kind":"proc-","pid":66804,"path":"?","exitCode":-999999,"observedLifetimeSec":0.060}
+{"t":21.349,"wall":"16:35:35.360","kind":"proc-","pid":108116,"path":"?","exitCode":-999999,"observedLifetimeSec":0.060}
+{"t":21.995,"wall":"16:35:36.006","kind":"proc+","pid":93444,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:35.984"}
+{"t":22.314,"wall":"16:35:36.325","kind":"proc-","pid":93444,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.319}
+{"t":23.650,"wall":"16:35:37.662","kind":"proc+","pid":79220,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:37.436"}
+{"t":23.926,"wall":"16:35:37.938","kind":"proc+","pid":100324,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:37.891"}
+{"t":23.990,"wall":"16:35:38.002","kind":"proc-","pid":79220,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.340}
+{"t":24.249,"wall":"16:35:38.261","kind":"proc-","pid":100324,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.323}
+{"t":25.263,"wall":"16:35:39.274","kind":"proc+","pid":29864,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:39.100"}
+{"t":25.317,"wall":"16:35:39.328","kind":"proc-","pid":29864,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":-999999,"observedLifetimeSec":0.054}
+{"t":27.180,"wall":"16:35:41.191","kind":"proc+","pid":71364,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:41.030"}
+{"t":27.180,"wall":"16:35:41.191","kind":"proc+","pid":60536,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:41.031"}
+{"t":27.245,"wall":"16:35:41.256","kind":"proc-","pid":71364,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.065}
+{"t":27.245,"wall":"16:35:41.256","kind":"proc-","pid":60536,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.065}
+{"t":27.441,"wall":"16:35:41.453","kind":"proc+","pid":105352,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:41.325"}
+{"t":27.501,"wall":"16:35:41.513","kind":"proc-","pid":105352,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.060}
+{"t":27.978,"wall":"16:35:41.989","kind":"proc+","pid":35560,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:41.919"}
+{"t":27.978,"wall":"16:35:41.989","kind":"proc+","pid":64236,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:41.923"}
+{"t":28.243,"wall":"16:35:42.254","kind":"proc+","pid":89472,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:42.147"}
+{"t":28.299,"wall":"16:35:42.310","kind":"proc-","pid":64236,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.321}
+{"t":28.299,"wall":"16:35:42.310","kind":"proc-","pid":35560,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.321}
+{"t":28.791,"wall":"16:35:42.803","kind":"proc+","pid":21416,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:42.671"}
+{"t":28.791,"wall":"16:35:42.803","kind":"proc+","pid":118328,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:42.712"}
+{"t":28.854,"wall":"16:35:42.865","kind":"proc-","pid":89472,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.611}
+{"t":28.854,"wall":"16:35:42.865","kind":"proc-","pid":21416,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.063}
+{"t":29.322,"wall":"16:35:43.334","kind":"proc+","pid":95160,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:43.262"}
+{"t":29.322,"wall":"16:35:43.334","kind":"proc+","pid":81352,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:43.277"}
+{"t":29.594,"wall":"16:35:43.605","kind":"proc+","pid":89952,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:43.550"}
+{"t":29.648,"wall":"16:35:43.660","kind":"proc-","pid":81352,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.326}
+{"t":29.648,"wall":"16:35:43.660","kind":"proc-","pid":118328,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.857}
+{"t":29.648,"wall":"16:35:43.660","kind":"proc-","pid":95160,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.326}
+{"t":29.927,"wall":"16:35:43.938","kind":"proc-","pid":89952,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.333}
+{"t":30.411,"wall":"16:35:44.422","kind":"proc+","pid":94236,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:44.379"}
+{"t":30.461,"wall":"16:35:44.473","kind":"proc-","pid":110364,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":22.648}
+{"t":30.461,"wall":"16:35:44.473","kind":"proc-","pid":94236,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.050}
+{"t":30.939,"wall":"16:35:44.950","kind":"proc+","pid":32492,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:44.894"}
+{"t":31.245,"wall":"16:35:45.257","kind":"proc-","pid":32492,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.307}
+{"t":33.291,"wall":"16:35:47.302","kind":"proc+","pid":109364,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:47.057"}
+{"t":33.291,"wall":"16:35:47.303","kind":"proc+","pid":96772,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:47.142"}
+{"t":33.342,"wall":"16:35:47.353","kind":"proc-","pid":96772,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.051}
+{"t":33.555,"wall":"16:35:47.566","kind":"proc+","pid":74832,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:47.501"}
+{"t":33.603,"wall":"16:35:47.615","kind":"proc-","pid":109364,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.312}
+{"t":33.822,"wall":"16:35:47.834","kind":"proc+","pid":24892,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:47.689"}
+{"t":33.822,"wall":"16:35:47.834","kind":"proc+","pid":58484,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:47.704"}
+{"t":33.873,"wall":"16:35:47.884","kind":"proc-","pid":74832,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.318}
+{"t":33.873,"wall":"16:35:47.884","kind":"proc-","pid":24892,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.051}
+{"t":33.873,"wall":"16:35:47.884","kind":"proc-","pid":58484,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.051}
+{"t":34.083,"wall":"16:35:48.095","kind":"proc+","pid":99368,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:47.977"}
+{"t":34.128,"wall":"16:35:48.140","kind":"proc-","pid":99368,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.045}
+{"t":35.412,"wall":"16:35:49.423","kind":"proc+","pid":65496,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:49.353"}
+{"t":35.728,"wall":"16:35:49.739","kind":"proc-","pid":65496,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.316}
+{"t":35.940,"wall":"16:35:49.951","kind":"proc+","pid":77672,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:49.898"}
+{"t":35.940,"wall":"16:35:49.951","kind":"proc+","pid":89236,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:49.924"}
+{"t":36.215,"wall":"16:35:50.226","kind":"proc+","pid":73724,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:50.171"}
+{"t":36.215,"wall":"16:35:50.226","kind":"proc+","pid":118564,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:50.174"}
+{"t":36.215,"wall":"16:35:50.226","kind":"proc+","pid":90584,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:50.192"}
+{"t":36.269,"wall":"16:35:50.280","kind":"proc-","pid":89236,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.329}
+{"t":36.269,"wall":"16:35:50.280","kind":"proc-","pid":77672,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.329}
+{"t":36.477,"wall":"16:35:50.488","kind":"proc+","pid":93820,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:50.440"}
+{"t":36.526,"wall":"16:35:50.538","kind":"proc-","pid":90584,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.312}
+{"t":36.526,"wall":"16:35:50.538","kind":"proc-","pid":73724,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.312}
+{"t":36.526,"wall":"16:35:50.538","kind":"proc-","pid":118564,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.312}
+{"t":36.526,"wall":"16:35:50.538","kind":"proc-","pid":93820,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.050}
+{"t":36.741,"wall":"16:35:50.752","kind":"proc+","pid":114032,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:50.537"}
+{"t":37.524,"wall":"16:35:51.535","kind":"proc+","pid":42388,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.479"}
+{"t":37.524,"wall":"16:35:51.535","kind":"proc+","pid":109000,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.480"}
+{"t":37.524,"wall":"16:35:51.536","kind":"proc+","pid":78792,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.480"}
+{"t":37.524,"wall":"16:35:51.536","kind":"proc+","pid":101384,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.480"}
+{"t":37.524,"wall":"16:35:51.536","kind":"proc+","pid":23160,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.480"}
+{"t":37.810,"wall":"16:35:51.821","kind":"proc+","pid":22236,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.695"}
+{"t":37.810,"wall":"16:35:51.821","kind":"proc+","pid":116704,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.699"}
+{"t":38.050,"wall":"16:35:52.061","kind":"proc+","pid":109292,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:51.962"}
+{"t":38.113,"wall":"16:35:52.124","kind":"proc-","pid":116704,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.303}
+{"t":38.113,"wall":"16:35:52.124","kind":"proc-","pid":22236,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.303}
+{"t":38.113,"wall":"16:35:52.124","kind":"proc-","pid":109292,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.063}
+{"t":39.761,"wall":"16:35:53.772","kind":"proc-","pid":78792,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.236}
+{"t":39.761,"wall":"16:35:53.772","kind":"proc-","pid":23160,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.236}
+{"t":39.761,"wall":"16:35:53.772","kind":"proc-","pid":109000,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.236}
+{"t":39.761,"wall":"16:35:53.772","kind":"proc-","pid":101384,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.236}
+{"t":39.761,"wall":"16:35:53.772","kind":"proc-","pid":42388,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.237}
+{"t":40.501,"wall":"16:35:54.512","kind":"proc+","pid":3120,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:54.349"}
+{"t":40.501,"wall":"16:35:54.512","kind":"proc+","pid":111092,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:54.367"}
+{"t":40.553,"wall":"16:35:54.564","kind":"proc-","pid":111092,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.052}
+{"t":40.553,"wall":"16:35:54.564","kind":"proc-","pid":3120,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.052}
+{"t":40.770,"wall":"16:35:54.781","kind":"proc+","pid":2348,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:54.644"}
+{"t":40.842,"wall":"16:35:54.854","kind":"proc-","pid":2348,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.073}
+{"t":42.172,"wall":"16:35:56.183","kind":"proc+","pid":108856,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:56.018"}
+{"t":42.278,"wall":"16:35:56.289","kind":"proc-","pid":108856,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.106}
+{"t":42.727,"wall":"16:35:56.738","kind":"proc+","pid":117340,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:56.603"}
+{"t":42.727,"wall":"16:35:56.738","kind":"proc+","pid":117896,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:56.610"}
+{"t":42.925,"wall":"16:35:56.936","kind":"proc-","pid":117340,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.198}
+{"t":43.121,"wall":"16:35:57.132","kind":"proc+","pid":111780,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:56.965"}
+{"t":43.262,"wall":"16:35:57.274","kind":"proc-","pid":117896,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.535}
+{"t":43.262,"wall":"16:35:57.274","kind":"proc-","pid":111780,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.141}
+{"t":43.926,"wall":"16:35:57.937","kind":"proc+","pid":112776,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:57.774"}
+{"t":44.512,"wall":"16:35:58.524","kind":"proc+","pid":80372,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:58.345"}
+{"t":44.619,"wall":"16:35:58.631","kind":"proc-","pid":80372,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.107}
+{"t":44.619,"wall":"16:35:58.631","kind":"proc-","pid":112776,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.694}
+{"t":44.855,"wall":"16:35:58.866","kind":"proc+","pid":110560,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:58.735"}
+{"t":44.855,"wall":"16:35:58.867","kind":"proc+","pid":65528,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:58.756"}
+{"t":44.983,"wall":"16:35:58.994","kind":"proc-","pid":65528,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":-999999,"observedLifetimeSec":0.127}
+{"t":45.138,"wall":"16:35:59.149","kind":"proc+","pid":60428,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:59.082"}
+{"t":45.138,"wall":"16:35:59.149","kind":"proc+","pid":67664,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:59.082"}
+{"t":45.402,"wall":"16:35:59.413","kind":"proc+","pid":53544,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:59.310"}
+{"t":45.494,"wall":"16:35:59.505","kind":"proc-","pid":67664,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.356}
+{"t":45.494,"wall":"16:35:59.505","kind":"proc-","pid":60428,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.356}
+{"t":45.719,"wall":"16:35:59.730","kind":"proc-","pid":53544,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.317}
+{"t":46.182,"wall":"16:36:00.193","kind":"proc+","pid":13676,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:59.949"}
+{"t":46.182,"wall":"16:36:00.194","kind":"proc+","pid":117084,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:35:59.953"}
+{"t":46.182,"wall":"16:36:00.194","kind":"proc+","pid":96844,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:00.139"}
+{"t":46.182,"wall":"16:36:00.194","kind":"proc+","pid":88812,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:00.144"}
+{"t":46.268,"wall":"16:36:00.279","kind":"proc-","pid":88812,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.085}
+{"t":46.268,"wall":"16:36:00.279","kind":"proc-","pid":13676,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.086}
+{"t":46.268,"wall":"16:36:00.279","kind":"proc-","pid":96844,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.086}
+{"t":46.268,"wall":"16:36:00.279","kind":"proc-","pid":117084,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.086}
+{"t":46.268,"wall":"16:36:00.279","kind":"proc-","pid":110560,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.413}
+{"t":46.414,"wall":"16:36:00.426","kind":"proc+","pid":118552,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:00.286"}
+{"t":46.489,"wall":"16:36:00.500","kind":"proc-","pid":118552,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.074}
+{"t":46.689,"wall":"16:36:00.700","kind":"proc+","pid":7532,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:00.630"}
+{"t":47.003,"wall":"16:36:01.014","kind":"proc-","pid":7532,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.314}
+{"t":47.503,"wall":"16:36:01.514","kind":"proc+","pid":31508,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:01.361"}
+{"t":47.503,"wall":"16:36:01.514","kind":"proc+","pid":115224,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:01.362"}
+{"t":47.560,"wall":"16:36:01.572","kind":"proc-","pid":115224,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.057}
+{"t":47.560,"wall":"16:36:01.572","kind":"proc-","pid":31508,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.058}
+{"t":47.787,"wall":"16:36:01.798","kind":"proc+","pid":79284,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:01.701"}
+{"t":48.113,"wall":"16:36:02.125","kind":"proc-","pid":90168,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","exitCode":0,"observedLifetimeSec":47.998}
+{"t":48.388,"wall":"16:36:02.399","kind":"proc-","pid":79312,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":1,"observedLifetimeSec":48.314}
+{"t":48.388,"wall":"16:36:02.400","kind":"proc-","pid":79284,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.602}
+{"t":48.871,"wall":"16:36:02.882","kind":"proc+","pid":9236,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:02.855"}
+{"t":49.191,"wall":"16:36:03.202","kind":"proc-","pid":9236,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.320}
+{"t":49.427,"wall":"16:36:03.438","kind":"proc+","pid":84464,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:03.200"}
+{"t":49.688,"wall":"16:36:03.700","kind":"proc+","pid":89796,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:03.601"}
+{"t":49.688,"wall":"16:36:03.700","kind":"proc+","pid":81728,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:03.601"}
+{"t":49.739,"wall":"16:36:03.750","kind":"proc-","pid":84464,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.312}
+{"t":49.952,"wall":"16:36:03.963","kind":"proc+","pid":23172,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:03.830"}
+{"t":50.001,"wall":"16:36:04.013","kind":"proc-","pid":89796,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.313}
+{"t":50.002,"wall":"16:36:04.013","kind":"proc-","pid":81728,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.313}
+{"t":50.002,"wall":"16:36:04.013","kind":"proc-","pid":23172,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.050}
+{"t":52.061,"wall":"16:36:06.073","kind":"proc+","pid":80636,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:06.051"}
+{"t":52.374,"wall":"16:36:06.386","kind":"proc-","pid":80636,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.313}
+{"t":53.379,"wall":"16:36:07.391","kind":"proc+","pid":89504,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:07.289"}
+{"t":53.699,"wall":"16:36:07.710","kind":"proc-","pid":89504,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.319}
+{"t":54.207,"wall":"16:36:08.219","kind":"proc+","pid":56608,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:08.042"}
+{"t":54.207,"wall":"16:36:08.219","kind":"proc+","pid":26416,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:08.042"}
+{"t":54.253,"wall":"16:36:08.265","kind":"proc-","pid":26416,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":-999999,"observedLifetimeSec":0.046}
+{"t":54.253,"wall":"16:36:08.265","kind":"proc-","pid":56608,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":-999999,"observedLifetimeSec":0.046}
+{"t":54.810,"wall":"16:36:08.821","kind":"proc-","pid":114032,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":18.069}
+{"t":55.572,"wall":"16:36:09.583","kind":"proc+","pid":3924,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:09.500"}
+{"t":55.901,"wall":"16:36:09.913","kind":"proc-","pid":3924,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.330}
+{"t":56.409,"wall":"16:36:10.420","kind":"proc+","pid":71736,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:10.261"}
+{"t":56.409,"wall":"16:36:10.420","kind":"proc+","pid":103528,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:10.261"}
+{"t":56.450,"wall":"16:36:10.462","kind":"proc-","pid":103528,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.042}
+{"t":56.450,"wall":"16:36:10.462","kind":"proc-","pid":71736,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.042}
+{"t":56.967,"wall":"16:36:10.979","kind":"proc+","pid":85652,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:10.948"}
+{"t":57.553,"wall":"16:36:11.564","kind":"proc-","pid":85652,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.585}
+{"t":57.784,"wall":"16:36:11.795","kind":"proc+","pid":99956,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:11.693"}
+{"t":58.085,"wall":"16:36:12.096","kind":"proc-","pid":99956,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.301}
+{"t":58.571,"wall":"16:36:12.582","kind":"proc+","pid":57548,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:12.455"}
+{"t":58.571,"wall":"16:36:12.582","kind":"proc+","pid":15152,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:12.455"}
+{"t":58.878,"wall":"16:36:12.890","kind":"proc-","pid":15152,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.307}
+{"t":58.878,"wall":"16:36:12.890","kind":"proc-","pid":57548,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.307}
+{"t":59.905,"wall":"16:36:13.917","kind":"proc+","pid":117908,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:13.890"}
+{"t":60.203,"wall":"16:36:14.214","kind":"proc-","pid":117908,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.298}
+{"t":60.695,"wall":"16:36:14.707","kind":"proc+","pid":55972,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:14.648"}
+{"t":60.696,"wall":"16:36:14.707","kind":"proc+","pid":112688,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:14.668"}
+{"t":60.968,"wall":"16:36:14.979","kind":"proc+","pid":91092,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:14.864"}
+{"t":61.015,"wall":"16:36:15.027","kind":"proc-","pid":91092,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.047}
+{"t":61.015,"wall":"16:36:15.027","kind":"proc-","pid":112688,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.320}
+{"t":61.015,"wall":"16:36:15.027","kind":"proc-","pid":55972,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.320}
+{"t":61.249,"wall":"16:36:15.260","kind":"proc+","pid":87756,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:15.167"}
+{"t":61.249,"wall":"16:36:15.260","kind":"proc+","pid":103048,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:15.170"}
+{"t":61.525,"wall":"16:36:15.536","kind":"proc+","pid":9052,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:15.469"}
+{"t":61.567,"wall":"16:36:15.579","kind":"proc-","pid":103048,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.318}
+{"t":61.567,"wall":"16:36:15.579","kind":"proc-","pid":87756,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.318}
+{"t":62.078,"wall":"16:36:16.090","kind":"proc+","pid":111540,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.079"}
+{"t":62.399,"wall":"16:36:16.411","kind":"proc-","pid":111540,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.321}
+{"t":62.651,"wall":"16:36:16.662","kind":"proc+","pid":58696,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.377"}
+{"t":62.651,"wall":"16:36:16.662","kind":"proc+","pid":116080,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.377"}
+{"t":62.651,"wall":"16:36:16.662","kind":"proc+","pid":67468,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.377"}
+{"t":62.651,"wall":"16:36:16.662","kind":"proc+","pid":110780,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.378"}
+{"t":62.651,"wall":"16:36:16.662","kind":"proc+","pid":69268,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.378"}
+{"t":62.651,"wall":"16:36:16.662","kind":"proc+","pid":107292,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.440"}
+{"t":62.698,"wall":"16:36:16.709","kind":"proc-","pid":107292,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.047}
+{"t":62.902,"wall":"16:36:16.913","kind":"proc+","pid":84588,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.798"}
+{"t":62.902,"wall":"16:36:16.913","kind":"proc+","pid":116712,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.865"}
+{"t":62.902,"wall":"16:36:16.913","kind":"proc+","pid":41852,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:16.877"}
+{"t":62.949,"wall":"16:36:16.960","kind":"proc-","pid":84588,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.047}
+{"t":63.159,"wall":"16:36:17.170","kind":"proc+","pid":105724,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:17.056"}
+{"t":63.202,"wall":"16:36:17.213","kind":"proc-","pid":116712,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.300}
+{"t":63.202,"wall":"16:36:17.213","kind":"proc-","pid":41852,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.300}
+{"t":63.481,"wall":"16:36:17.492","kind":"proc-","pid":105724,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.322}
+{"t":64.567,"wall":"16:36:18.578","kind":"proc-","pid":67468,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.916}
+{"t":64.567,"wall":"16:36:18.579","kind":"proc-","pid":69268,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.917}
+{"t":64.567,"wall":"16:36:18.579","kind":"proc-","pid":110780,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.917}
+{"t":64.567,"wall":"16:36:18.579","kind":"proc-","pid":116080,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.917}
+{"t":64.567,"wall":"16:36:18.579","kind":"proc-","pid":58696,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.917}
+{"t":65.081,"wall":"16:36:19.093","kind":"proc+","pid":62756,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:19.070"}
+{"t":65.091,"wall":"16:36:19.103","kind":"proc+","pid":33716,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:19.091"}
+{"t":65.343,"wall":"16:36:19.354","kind":"proc+","pid":68244,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:19.271"}
+{"t":65.384,"wall":"16:36:19.396","kind":"proc-","pid":33716,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.293}
+{"t":65.384,"wall":"16:36:19.396","kind":"proc-","pid":62756,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.303}
+{"t":65.740,"wall":"16:36:19.751","kind":"proc-","pid":68244,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.397}
+{"t":66.198,"wall":"16:36:20.209","kind":"proc+","pid":23224,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:20.090"}
+{"t":66.198,"wall":"16:36:20.210","kind":"proc+","pid":107268,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:20.102"}
+{"t":66.495,"wall":"16:36:20.506","kind":"proc+","pid":109180,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:20.469"}
+{"t":66.581,"wall":"16:36:20.593","kind":"proc-","pid":23224,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.383}
+{"t":66.582,"wall":"16:36:20.593","kind":"proc-","pid":107268,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.383}
+{"t":66.755,"wall":"16:36:20.767","kind":"proc+","pid":115216,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:20.550"}
+{"t":66.838,"wall":"16:36:20.849","kind":"proc-","pid":115216,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.083}
+{"t":67.326,"wall":"16:36:21.338","kind":"proc+","pid":91588,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:21.327"}
+{"t":67.344,"wall":"16:36:21.355","kind":"proc+","pid":86400,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:21.337"}
+{"t":67.899,"wall":"16:36:21.910","kind":"proc+","pid":32356,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:21.827"}
+{"t":67.964,"wall":"16:36:21.975","kind":"proc-","pid":86400,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.620}
+{"t":67.964,"wall":"16:36:21.975","kind":"proc-","pid":91588,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.638}
+{"t":68.278,"wall":"16:36:22.289","kind":"proc-","pid":32356,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.379}
+{"t":69.024,"wall":"16:36:23.036","kind":"proc+","pid":83560,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:22.840"}
+{"t":69.105,"wall":"16:36:23.116","kind":"proc-","pid":83560,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.081}
+{"t":70.051,"wall":"16:36:24.062","kind":"proc+","pid":78984,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:23.870"}
+{"t":70.051,"wall":"16:36:24.062","kind":"proc+","pid":103600,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:23.870"}
+{"t":70.114,"wall":"16:36:24.125","kind":"proc-","pid":78984,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.063}
+{"t":70.114,"wall":"16:36:24.125","kind":"proc-","pid":103600,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.063}
+{"t":71.119,"wall":"16:36:25.131","kind":"proc+","pid":101056,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:24.935"}
+{"t":71.120,"wall":"16:36:25.131","kind":"proc+","pid":31348,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:24.939"}
+{"t":71.120,"wall":"16:36:25.131","kind":"proc+","pid":33420,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:25.117"}
+{"t":71.175,"wall":"16:36:25.187","kind":"proc-","pid":101056,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.056}
+{"t":71.417,"wall":"16:36:25.429","kind":"proc-","pid":33420,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.297}
+{"t":71.616,"wall":"16:36:25.627","kind":"proc+","pid":58632,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:25.593"}
+{"t":71.661,"wall":"16:36:25.672","kind":"proc-","pid":31348,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.541}
+{"t":71.912,"wall":"16:36:25.923","kind":"proc-","pid":58632,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.296}
+{"t":72.144,"wall":"16:36:26.155","kind":"proc+","pid":118060,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:26.104"}
+{"t":72.144,"wall":"16:36:26.155","kind":"proc+","pid":74384,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:26.104"}
+{"t":72.422,"wall":"16:36:26.433","kind":"proc+","pid":105368,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:26.314"}
+{"t":72.466,"wall":"16:36:26.478","kind":"proc-","pid":74384,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.322}
+{"t":72.466,"wall":"16:36:26.478","kind":"proc-","pid":118060,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.322}
+{"t":72.466,"wall":"16:36:26.478","kind":"proc-","pid":105368,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.044}
+{"t":73.242,"wall":"16:36:27.253","kind":"proc+","pid":100380,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:27.103"}
+{"t":73.511,"wall":"16:36:27.522","kind":"proc+","pid":112448,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:27.346"}
+{"t":73.571,"wall":"16:36:27.582","kind":"proc-","pid":112448,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":-999999,"observedLifetimeSec":0.060}
+{"t":73.571,"wall":"16:36:27.582","kind":"proc-","pid":100380,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.329}
+{"t":73.846,"wall":"16:36:27.857","kind":"proc-","pid":106332,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","exitCode":0,"observedLifetimeSec":73.731}
+{"t":74.324,"wall":"16:36:28.335","kind":"proc+","pid":65392,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:28.327"}
+{"t":74.324,"wall":"16:36:28.335","kind":"proc+","pid":96344,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:28.329"}
+{"t":74.585,"wall":"16:36:28.596","kind":"proc+","pid":54484,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:28.523"}
+{"t":74.638,"wall":"16:36:28.650","kind":"proc-","pid":65392,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.314}
+{"t":74.638,"wall":"16:36:28.650","kind":"proc-","pid":96344,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.314}
+{"t":74.892,"wall":"16:36:28.904","kind":"proc-","pid":54484,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.307}
+{"t":75.624,"wall":"16:36:29.635","kind":"proc+","pid":117344,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:29.420"}
+{"t":75.624,"wall":"16:36:29.635","kind":"proc+","pid":97520,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:29.533"}
+{"t":75.624,"wall":"16:36:29.635","kind":"proc+","pid":97748,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:29.565"}
+{"t":75.667,"wall":"16:36:29.679","kind":"proc-","pid":97520,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.044}
+{"t":75.942,"wall":"16:36:29.953","kind":"proc-","pid":97748,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.318}
+{"t":76.217,"wall":"16:36:30.229","kind":"proc-","pid":117344,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.594}
+{"t":76.739,"wall":"16:36:30.750","kind":"proc+","pid":97408,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:30.740"}
+{"t":77.041,"wall":"16:36:31.053","kind":"proc-","pid":97408,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.303}
+{"t":77.549,"wall":"16:36:31.560","kind":"proc+","pid":94004,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:31.405"}
+{"t":77.549,"wall":"16:36:31.560","kind":"proc+","pid":117268,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:31.472"}
+{"t":77.825,"wall":"16:36:31.836","kind":"proc+","pid":106812,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:31.766"}
+{"t":77.866,"wall":"16:36:31.877","kind":"proc-","pid":117268,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.317}
+{"t":77.866,"wall":"16:36:31.877","kind":"proc-","pid":94004,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.317}
+{"t":78.153,"wall":"16:36:32.164","kind":"proc-","pid":106812,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.328}
+{"t":78.906,"wall":"16:36:32.917","kind":"proc+","pid":43712,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:32.747"}
+{"t":78.906,"wall":"16:36:32.917","kind":"proc+","pid":30796,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:32.748"}
+{"t":78.957,"wall":"16:36:32.968","kind":"proc-","pid":30796,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.051}
+{"t":78.957,"wall":"16:36:32.969","kind":"proc-","pid":43712,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.051}
+{"t":79.725,"wall":"16:36:33.736","kind":"proc+","pid":110200,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:33.506"}
+{"t":79.773,"wall":"16:36:33.784","kind":"proc-","pid":110200,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.048}
+{"t":79.976,"wall":"16:36:33.988","kind":"proc+","pid":80356,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:33.819"}
+{"t":79.976,"wall":"16:36:33.988","kind":"proc+","pid":62392,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:33.981"}
+{"t":80.278,"wall":"16:36:34.290","kind":"proc-","pid":62392,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.302}
+{"t":80.509,"wall":"16:36:34.520","kind":"proc+","pid":111372,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:34.366"}
+{"t":80.554,"wall":"16:36:34.566","kind":"proc-","pid":80356,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.578}
+{"t":81.073,"wall":"16:36:35.084","kind":"proc+","pid":62956,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:34.921"}
+{"t":81.073,"wall":"16:36:35.084","kind":"proc+","pid":102616,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:34.925"}
+{"t":81.073,"wall":"16:36:35.084","kind":"proc+","pid":114360,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:34.975"}
+{"t":81.073,"wall":"16:36:35.084","kind":"proc+","pid":79472,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:34.976"}
+{"t":81.126,"wall":"16:36:35.137","kind":"proc-","pid":111372,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.617}
+{"t":81.300,"wall":"16:36:35.311","kind":"proc+","pid":70396,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:35.171"}
+{"t":81.300,"wall":"16:36:35.311","kind":"proc+","pid":79020,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:35.237"}
+{"t":81.342,"wall":"16:36:35.354","kind":"proc-","pid":79472,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.269}
+{"t":81.343,"wall":"16:36:35.354","kind":"proc-","pid":102616,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.270}
+{"t":81.343,"wall":"16:36:35.354","kind":"proc-","pid":114360,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.270}
+{"t":81.343,"wall":"16:36:35.354","kind":"proc-","pid":70396,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.043}
+{"t":81.343,"wall":"16:36:35.354","kind":"proc-","pid":62956,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.270}
+{"t":81.852,"wall":"16:36:35.864","kind":"proc+","pid":97128,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:35.735"}
+{"t":81.896,"wall":"16:36:35.907","kind":"proc-","pid":79020,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.596}
+{"t":82.673,"wall":"16:36:36.685","kind":"proc+","pid":108964,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:36.405"}
+{"t":82.673,"wall":"16:36:36.685","kind":"proc+","pid":103916,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:36.405"}
+{"t":82.673,"wall":"16:36:36.685","kind":"proc+","pid":111692,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:36.405"}
+{"t":82.673,"wall":"16:36:36.685","kind":"proc+","pid":91544,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:36.405"}
+{"t":82.673,"wall":"16:36:36.685","kind":"proc+","pid":117468,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:36.405"}
+{"t":82.760,"wall":"16:36:36.772","kind":"window+","hwnd":"0xD82330","class":"#32770","title":"","pid":88468,"proc":"BrowserAI","visible":false}
+{"t":82.763,"wall":"16:36:36.774","kind":"window+","hwnd":"0x9622E0","class":"IME","title":"Default IME","pid":88468,"proc":"BrowserAI","visible":false}
+{"t":82.851,"wall":"16:36:36.863","kind":"window+","hwnd":"0x291E72","class":"MSCTFIME UI","title":"MSCTFIME UI","pid":88468,"proc":"BrowserAI","visible":false}
+{"t":82.881,"wall":"16:36:36.893","kind":"window~","hwnd":"0xD82330","class":"#32770","pid":88468,"proc":"BrowserAI","visible":true}
+{"t":82.910,"wall":"16:36:36.921","kind":"proc+","pid":88468,"name":"BrowserAI","path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-15-install\\BrowserAI.exe","startTime":"16:36:36.699"}
+{"t":83.025,"wall":"16:36:37.036","kind":"proc-","pid":97128,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.172}
+{"t":83.243,"wall":"16:36:37.254","kind":"proc+","pid":68748,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:37.210"}
+{"t":83.243,"wall":"16:36:37.254","kind":"proc+","pid":67700,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:37.210"}
+{"t":83.518,"wall":"16:36:37.530","kind":"proc+","pid":111280,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:37.405"}
+{"t":83.582,"wall":"16:36:37.593","kind":"proc-","pid":67700,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.339}
+{"t":83.582,"wall":"16:36:37.593","kind":"proc-","pid":68748,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.339}
+{"t":83.694,"wall":"16:36:37.705","kind":"proc+","pid":97664,"name":"BrowserAI","path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe","startTime":"16:36:37.610"}
+{"t":83.752,"wall":"16:36:37.763","kind":"proc+","pid":35416,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:37.622"}
+{"t":83.752,"wall":"16:36:37.763","kind":"proc+","pid":92184,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:37.696"}
+{"t":83.752,"wall":"16:36:37.763","kind":"proc+","pid":15876,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:37.759"}
+{"t":83.813,"wall":"16:36:37.824","kind":"proc-","pid":111280,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.294}
+{"t":83.813,"wall":"16:36:37.824","kind":"proc-","pid":15876,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.061}
+{"t":84.527,"wall":"16:36:38.538","kind":"proc+","pid":75496,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:38.406"}
+{"t":84.527,"wall":"16:36:38.538","kind":"proc+","pid":66880,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:38.453"}
+{"t":84.527,"wall":"16:36:38.538","kind":"proc+","pid":16204,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:38.520"}
+{"t":84.527,"wall":"16:36:38.538","kind":"proc+","pid":26204,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:38.529"}
+{"t":84.581,"wall":"16:36:38.593","kind":"proc-","pid":92184,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.829}
+{"t":84.581,"wall":"16:36:38.593","kind":"proc-","pid":75496,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.055}
+{"t":84.581,"wall":"16:36:38.593","kind":"proc-","pid":16204,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":-999999,"observedLifetimeSec":0.054}
+{"t":84.581,"wall":"16:36:38.593","kind":"proc-","pid":26204,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.054}
+{"t":84.830,"wall":"16:36:38.841","kind":"proc-","pid":117468,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.157}
+{"t":84.831,"wall":"16:36:38.842","kind":"proc-","pid":91544,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.157}
+{"t":84.831,"wall":"16:36:38.842","kind":"proc-","pid":108964,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.158}
+{"t":84.831,"wall":"16:36:38.842","kind":"proc-","pid":111692,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.158}
+{"t":84.831,"wall":"16:36:38.842","kind":"proc-","pid":103916,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.158}
+{"t":85.571,"wall":"16:36:39.583","kind":"proc+","pid":118704,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:39.438"}
+{"t":85.571,"wall":"16:36:39.583","kind":"proc+","pid":115064,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:39.438"}
+{"t":85.624,"wall":"16:36:39.635","kind":"proc-","pid":115064,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.052}
+{"t":85.624,"wall":"16:36:39.635","kind":"proc-","pid":118704,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.052}
+{"t":86.245,"wall":"16:36:40.257","kind":"proc-","pid":35416,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":2.494}
+{"t":86.245,"wall":"16:36:40.257","kind":"proc-","pid":66880,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.719}
+{"t":86.246,"wall":"16:36:40.257","kind":"proc-","pid":97664,"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe","exitCode":0,"observedLifetimeSec":2.552}
+{"t":86.611,"wall":"16:36:40.622","kind":"window-","hwnd":"0xD82330","class":"#32770","title":"","pid":88468,"proc":"BrowserAI","lifetimeSec":3.570,"everVisible":true}
+{"t":86.611,"wall":"16:36:40.622","kind":"window-","hwnd":"0x9622E0","class":"IME","title":"Default IME","pid":88468,"proc":"BrowserAI","lifetimeSec":3.568,"everVisible":false}
+{"t":86.611,"wall":"16:36:40.622","kind":"window-","hwnd":"0x291E72","class":"MSCTFIME UI","title":"MSCTFIME UI","pid":88468,"proc":"BrowserAI","lifetimeSec":3.480,"everVisible":false}
+{"t":86.633,"wall":"16:36:40.645","kind":"proc+","pid":83856,"name":"BrowserAI","path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe","startTime":"16:36:40.527"}
+{"t":86.714,"wall":"16:36:40.725","kind":"proc+","pid":101720,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:40.537"}
+{"t":86.714,"wall":"16:36:40.725","kind":"proc+","pid":45572,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:40.680"}
+{"t":86.736,"wall":"16:36:40.747","kind":"proc+","pid":88512,"name":"OpenConsole","path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\OpenConsole.exe","startTime":"16:36:40.590"}
+{"t":86.839,"wall":"16:36:40.851","kind":"proc-","pid":88468,"path":"C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-15-install\\BrowserAI.exe","exitCode":0,"observedLifetimeSec":3.930}
+{"t":86.873,"wall":"16:36:40.884","kind":"window+","hwnd":"0x5B1EEC","class":"CASCADIA_HOSTING_WINDOW_CLASS","title":"Terminal","pid":25328,"proc":"WindowsTerminal","visible":true}
+{"t":86.886,"wall":"16:36:40.897","kind":"window+","hwnd":"0x2C2434","class":"PseudoConsoleWindow","title":"","pid":83856,"proc":"BrowserAI","visible":false}
+{"t":87.154,"wall":"16:36:41.165","kind":"proc-","pid":45572,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.440}
+{"t":87.201,"wall":"16:36:41.212","kind":"window~","hwnd":"0x2C2434","class":"PseudoConsoleWindow","pid":83856,"proc":"BrowserAI","visible":true}
+{"t":87.823,"wall":"16:36:41.834","kind":"proc+","pid":72456,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:41.688"}
+{"t":87.823,"wall":"16:36:41.834","kind":"proc+","pid":65036,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:41.688"}
+{"t":87.905,"wall":"16:36:41.916","kind":"proc-","pid":72456,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.082}
+{"t":87.907,"wall":"16:36:41.918","kind":"proc-","pid":65036,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.084}
+{"t":88.041,"wall":"16:36:42.053","kind":"proc+","pid":116668,"name":"node","path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\node\\node.exe","startTime":"16:36:41.859"}
+{"t":88.052,"wall":"16:36:42.064","kind":"proc+","pid":37080,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:41.912"}
+{"t":88.052,"wall":"16:36:42.064","kind":"proc+","pid":32364,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:41.952"}
+{"t":88.134,"wall":"16:36:42.145","kind":"proc-","pid":32364,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.081}
+{"t":89.159,"wall":"16:36:43.171","kind":"proc+","pid":9072,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:43.027"}
+{"t":89.261,"wall":"16:36:43.272","kind":"proc-","pid":9072,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.102}
+{"t":90.219,"wall":"16:36:44.230","kind":"proc+","pid":84128,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:44.214"}
+{"t":90.578,"wall":"16:36:44.590","kind":"proc-","pid":84128,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.359}
+{"t":91.789,"wall":"16:36:45.800","kind":"proc+","pid":110920,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:45.635"}
+{"t":91.789,"wall":"16:36:45.800","kind":"proc+","pid":5724,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:45.733"}
+{"t":91.789,"wall":"16:36:45.800","kind":"proc+","pid":108804,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:45.740"}
+{"t":91.870,"wall":"16:36:45.882","kind":"proc-","pid":108804,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.081}
+{"t":91.871,"wall":"16:36:45.883","kind":"proc-","pid":5724,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.082}
+{"t":92.034,"wall":"16:36:46.046","kind":"proc+","pid":79120,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:45.829"}
+{"t":92.281,"wall":"16:36:46.292","kind":"proc+","pid":109240,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:46.190"}
+{"t":92.281,"wall":"16:36:46.292","kind":"proc+","pid":115332,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:46.238"}
+{"t":92.281,"wall":"16:36:46.292","kind":"proc+","pid":87860,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:46.243"}
+{"t":92.337,"wall":"16:36:46.349","kind":"proc-","pid":79120,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.303}
+{"t":92.337,"wall":"16:36:46.349","kind":"proc-","pid":110920,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.548}
+{"t":92.338,"wall":"16:36:46.349","kind":"proc-","pid":87860,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.057}
+{"t":92.543,"wall":"16:36:46.555","kind":"proc+","pid":94380,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:46.440"}
+{"t":92.590,"wall":"16:36:46.601","kind":"proc-","pid":115332,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.309}
+{"t":92.591,"wall":"16:36:46.602","kind":"proc-","pid":109240,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.310}
+{"t":92.805,"wall":"16:36:46.816","kind":"proc+","pid":54704,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:46.785"}
+{"t":92.805,"wall":"16:36:46.816","kind":"proc+","pid":117964,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:46.788"}
+{"t":92.854,"wall":"16:36:46.865","kind":"proc-","pid":94380,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.311}
+{"t":93.113,"wall":"16:36:47.124","kind":"proc-","pid":54704,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.308}
+{"t":93.600,"wall":"16:36:47.612","kind":"proc+","pid":59292,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:47.514"}
+{"t":93.919,"wall":"16:36:47.930","kind":"proc-","pid":59292,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.318}
+{"t":94.391,"wall":"16:36:48.403","kind":"proc+","pid":90948,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:48.353"}
+{"t":94.447,"wall":"16:36:48.458","kind":"proc-","pid":117964,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.642}
+{"t":94.670,"wall":"16:36:48.681","kind":"proc+","pid":32988,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:48.653"}
+{"t":94.987,"wall":"16:36:48.998","kind":"proc-","pid":32988,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.317}
+{"t":94.987,"wall":"16:36:48.999","kind":"proc-","pid":90948,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.596}
+{"t":96.762,"wall":"16:36:50.774","kind":"proc+","pid":108984,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:50.655"}
+{"t":96.763,"wall":"16:36:50.774","kind":"proc+","pid":112724,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:50.671"}
+{"t":97.019,"wall":"16:36:51.031","kind":"proc+","pid":109132,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:50.870"}
+{"t":97.067,"wall":"16:36:51.078","kind":"proc-","pid":112724,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.304}
+{"t":97.067,"wall":"16:36:51.078","kind":"proc-","pid":108984,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.305}
+{"t":97.067,"wall":"16:36:51.079","kind":"proc-","pid":109132,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.048}
+{"t":98.088,"wall":"16:36:52.099","kind":"proc+","pid":102344,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:51.952"}
+{"t":98.131,"wall":"16:36:52.142","kind":"proc-","pid":102344,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.043}
+{"t":98.904,"wall":"16:36:52.916","kind":"proc+","pid":80816,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:52.858"}
+{"t":98.904,"wall":"16:36:52.916","kind":"proc+","pid":116244,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:52.876"}
+{"t":99.174,"wall":"16:36:53.185","kind":"proc+","pid":85160,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:53.101"}
+{"t":99.223,"wall":"16:36:53.234","kind":"proc-","pid":116244,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.319}
+{"t":99.223,"wall":"16:36:53.234","kind":"proc-","pid":80816,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.319}
+{"t":99.485,"wall":"16:36:53.496","kind":"proc-","pid":85160,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.311}
+{"t":99.969,"wall":"16:36:53.981","kind":"proc+","pid":117568,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:53.825"}
+{"t":99.969,"wall":"16:36:53.981","kind":"proc+","pid":97584,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:53.825"}
+{"t":99.970,"wall":"16:36:53.981","kind":"proc+","pid":87000,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:53.825"}
+{"t":99.970,"wall":"16:36:53.981","kind":"proc+","pid":29140,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:53.825"}
+{"t":99.970,"wall":"16:36:53.981","kind":"proc+","pid":88400,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:53.825"}
+{"t":100.235,"wall":"16:36:54.246","kind":"proc+","pid":112500,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:54.166"}
+{"t":100.564,"wall":"16:36:54.576","kind":"proc-","pid":112500,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.330}
+{"t":101.085,"wall":"16:36:55.096","kind":"proc+","pid":88684,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:55.086"}
+{"t":101.356,"wall":"16:36:55.368","kind":"proc+","pid":64708,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:55.314"}
+{"t":101.406,"wall":"16:36:55.417","kind":"proc-","pid":88684,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.321}
+{"t":101.664,"wall":"16:36:55.676","kind":"proc-","pid":64708,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.308}
+{"t":101.928,"wall":"16:36:55.940","kind":"proc-","pid":117568,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.959}
+{"t":101.934,"wall":"16:36:55.945","kind":"proc-","pid":87000,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.964}
+{"t":101.934,"wall":"16:36:55.946","kind":"proc-","pid":88400,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.965}
+{"t":101.934,"wall":"16:36:55.946","kind":"proc-","pid":29140,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.965}
+{"t":101.934,"wall":"16:36:55.946","kind":"proc-","pid":97584,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.965}
+{"t":102.398,"wall":"16:36:56.410","kind":"proc+","pid":105664,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:56.375"}
+{"t":102.740,"wall":"16:36:56.751","kind":"proc-","pid":105664,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.341}
+{"t":103.539,"wall":"16:36:57.550","kind":"proc+","pid":97552,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:57.344"}
+{"t":103.539,"wall":"16:36:57.551","kind":"proc+","pid":64624,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:57.361"}
+{"t":103.628,"wall":"16:36:57.639","kind":"proc-","pid":64624,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.089}
+{"t":103.629,"wall":"16:36:57.640","kind":"proc-","pid":97552,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.090}
+{"t":104.251,"wall":"16:36:58.263","kind":"window+","hwnd":"0x5D1EF8","class":"SnipOverlayRootWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","visible":false}
+{"t":104.252,"wall":"16:36:58.263","kind":"window+","hwnd":"0x3D2480","class":"Windows.UI.Core.CoreWindow","title":"DesktopWindowXamlSource","pid":109356,"proc":"SnippingTool","visible":false}
+{"t":104.265,"wall":"16:36:58.276","kind":"window+","hwnd":"0xB51E94","class":"IME","title":"Default IME","pid":109356,"proc":"SnippingTool","visible":false}
+{"t":104.670,"wall":"16:36:58.681","kind":"proc+","pid":85648,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:58.611"}
+{"t":104.801,"wall":"16:36:58.813","kind":"window+","hwnd":"0x7D213A","class":"XamlWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","visible":true}
+{"t":104.801,"wall":"16:36:58.813","kind":"window+","hwnd":"0x6425AA","class":"XamlWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","visible":true}
+{"t":104.802,"wall":"16:36:58.813","kind":"window+","hwnd":"0x25248A","class":"XamlWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","visible":true}
+{"t":104.802,"wall":"16:36:58.813","kind":"window~","hwnd":"0x5D1EF8","class":"SnipOverlayRootWindow","pid":109356,"proc":"SnippingTool","visible":true}
+{"t":104.814,"wall":"16:36:58.826","kind":"window~","hwnd":"0x202D8","class":"EdgeUiInputTopWndClass","pid":13348,"proc":"explorer","visible":false}
+{"t":104.815,"wall":"16:36:58.826","kind":"window+","hwnd":"0x2C2450","class":"MSCTFIME UI","title":"MSCTFIME UI","pid":109356,"proc":"SnippingTool","visible":false}
+{"t":104.815,"wall":"16:36:58.826","kind":"window-","hwnd":"0x3D2480","class":"Windows.UI.Core.CoreWindow","title":"DesktopWindowXamlSource","pid":109356,"proc":"SnippingTool","lifetimeSec":0.308,"everVisible":false}
+{"t":104.857,"wall":"16:36:58.869","kind":"window~","hwnd":"0x1019A","class":"EdgeUiInputTopWndClass","pid":13348,"proc":"explorer","visible":false}
+{"t":104.858,"wall":"16:36:58.869","kind":"window~","hwnd":"0x101BE","class":"EdgeUiInputTopWndClass","pid":13348,"proc":"explorer","visible":false}
+{"t":104.984,"wall":"16:36:58.995","kind":"proc-","pid":85648,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.314}
+{"t":105.719,"wall":"16:36:59.731","kind":"proc+","pid":93304,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:59.629"}
+{"t":105.719,"wall":"16:36:59.731","kind":"proc+","pid":89928,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:59.689"}
+{"t":105.823,"wall":"16:36:59.835","kind":"proc-","pid":93304,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.104}
+{"t":106.025,"wall":"16:37:00.036","kind":"proc+","pid":89344,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:36:59.840"}
+{"t":106.124,"wall":"16:37:00.136","kind":"proc-","pid":89928,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.405}
+{"t":106.125,"wall":"16:37:00.136","kind":"proc-","pid":89344,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.100}
+{"t":107.078,"wall":"16:37:01.090","kind":"window+","hwnd":"0x3D2480","class":"Windows.UI.Core.CoreWindow","title":"DesktopWindowXamlSource","pid":109356,"proc":"SnippingTool","visible":false}
+{"t":107.085,"wall":"16:37:01.096","kind":"window~","hwnd":"0x202D8","class":"EdgeUiInputTopWndClass","pid":13348,"proc":"explorer","visible":true}
+{"t":107.085,"wall":"16:37:01.096","kind":"window~","hwnd":"0x1019A","class":"EdgeUiInputTopWndClass","pid":13348,"proc":"explorer","visible":true}
+{"t":107.085,"wall":"16:37:01.097","kind":"window~","hwnd":"0x101BE","class":"EdgeUiInputTopWndClass","pid":13348,"proc":"explorer","visible":true}
+{"t":107.098,"wall":"16:37:01.110","kind":"window-","hwnd":"0x5D1EF8","class":"SnipOverlayRootWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","lifetimeSec":2.446,"everVisible":true}
+{"t":107.098,"wall":"16:37:01.110","kind":"window-","hwnd":"0xB51E94","class":"IME","title":"Default IME","pid":109356,"proc":"SnippingTool","lifetimeSec":2.433,"everVisible":false}
+{"t":107.098,"wall":"16:37:01.110","kind":"window-","hwnd":"0x7D213A","class":"XamlWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","lifetimeSec":1.895,"everVisible":true}
+{"t":107.098,"wall":"16:37:01.110","kind":"window-","hwnd":"0x6425AA","class":"XamlWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","lifetimeSec":1.895,"everVisible":true}
+{"t":107.098,"wall":"16:37:01.110","kind":"window-","hwnd":"0x25248A","class":"XamlWindow","title":"Snipping Tool Overlay","pid":109356,"proc":"SnippingTool","lifetimeSec":1.894,"everVisible":true}
+{"t":107.098,"wall":"16:37:01.110","kind":"window-","hwnd":"0x2C2450","class":"MSCTFIME UI","title":"MSCTFIME UI","pid":109356,"proc":"SnippingTool","lifetimeSec":1.883,"everVisible":false}
+{"t":107.942,"wall":"16:37:01.954","kind":"window-","hwnd":"0x3D2480","class":"Windows.UI.Core.CoreWindow","title":"DesktopWindowXamlSource","pid":109356,"proc":"SnippingTool","lifetimeSec":0.561,"everVisible":false}
+{"t":108.043,"wall":"16:37:02.054","kind":"proc+","pid":106512,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:01.896"}
+{"t":108.043,"wall":"16:37:02.054","kind":"proc+","pid":112764,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:01.943"}
+{"t":108.124,"wall":"16:37:02.136","kind":"proc-","pid":106512,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.082}
+{"t":108.291,"wall":"16:37:02.302","kind":"proc+","pid":116256,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:02.140"}
+{"t":108.351,"wall":"16:37:02.363","kind":"proc-","pid":112764,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.309}
+{"t":108.351,"wall":"16:37:02.363","kind":"proc-","pid":116256,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.061}
+{"t":108.833,"wall":"16:37:02.845","kind":"proc+","pid":104060,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:02.655"}
+{"t":108.833,"wall":"16:37:02.845","kind":"proc+","pid":108100,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:02.659"}
+{"t":109.132,"wall":"16:37:03.143","kind":"proc-","pid":104060,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.298}
+{"t":109.355,"wall":"16:37:03.366","kind":"proc+","pid":54632,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:03.203"}
+{"t":109.355,"wall":"16:37:03.366","kind":"proc+","pid":86184,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:03.226"}
+{"t":109.410,"wall":"16:37:03.421","kind":"proc-","pid":108100,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.577}
+{"t":109.410,"wall":"16:37:03.421","kind":"proc-","pid":54632,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.055}
+{"t":109.881,"wall":"16:37:03.892","kind":"proc+","pid":56852,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:03.865"}
+{"t":109.921,"wall":"16:37:03.932","kind":"proc+","pid":110644,"name":"firefox","path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe","startTime":"16:37:03.909"}
+{"t":109.931,"wall":"16:37:03.943","kind":"proc-","pid":86184,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.577}
+{"t":110.405,"wall":"16:37:04.417","kind":"proc+","pid":80412,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:04.396"}
+{"t":110.714,"wall":"16:37:04.725","kind":"proc-","pid":80412,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.309}
+{"t":110.982,"wall":"16:37:04.994","kind":"proc-","pid":56852,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.102}
+{"t":111.447,"wall":"16:37:05.459","kind":"proc+","pid":25256,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:05.436"}
+{"t":111.772,"wall":"16:37:05.783","kind":"proc-","pid":25256,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.325}
+{"t":112.504,"wall":"16:37:06.516","kind":"proc+","pid":32188,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:06.398"}
+{"t":112.505,"wall":"16:37:06.516","kind":"proc+","pid":86320,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:06.413"}
+{"t":112.765,"wall":"16:37:06.777","kind":"proc+","pid":110528,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:06.613"}
+{"t":112.811,"wall":"16:37:06.823","kind":"proc-","pid":110528,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.046}
+{"t":112.811,"wall":"16:37:06.823","kind":"proc-","pid":86320,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.307}
+{"t":112.811,"wall":"16:37:06.823","kind":"proc-","pid":32188,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.307}
+{"t":114.622,"wall":"16:37:08.634","kind":"proc+","pid":29476,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:08.474"}
+{"t":114.622,"wall":"16:37:08.634","kind":"proc+","pid":75976,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:08.478"}
+{"t":114.622,"wall":"16:37:08.634","kind":"proc+","pid":108808,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:08.625"}
+{"t":114.683,"wall":"16:37:08.694","kind":"proc-","pid":29476,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.060}
+{"t":114.863,"wall":"16:37:08.874","kind":"proc+","pid":104664,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:08.829"}
+{"t":114.910,"wall":"16:37:08.922","kind":"proc-","pid":108808,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.288}
+{"t":115.160,"wall":"16:37:09.171","kind":"proc-","pid":104664,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.297}
+{"t":115.699,"wall":"16:37:09.710","kind":"proc-","pid":75976,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":1.077}
+{"t":115.937,"wall":"16:37:09.949","kind":"proc+","pid":105512,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:09.670"}
+{"t":115.937,"wall":"16:37:09.949","kind":"proc+","pid":84948,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:09.860"}
+{"t":116.238,"wall":"16:37:10.250","kind":"proc-","pid":105512,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.301}
+{"t":116.238,"wall":"16:37:10.250","kind":"proc-","pid":84948,"path":"C:\\WINDOWS\\system32\\conhost.exe","exitCode":0,"observedLifetimeSec":0.301}
+{"t":116.475,"wall":"16:37:10.487","kind":"proc+","pid":58528,"name":"conhost","path":"C:\\WINDOWS\\system32\\conhost.exe","startTime":"16:37:10.240"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":42564,"path":"C:\\Users\\jori\\AppData\\Roaming\\Elgato\\StreamDeck\\NodeJS\\20.20.0\\node.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":38204,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":7508,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":42352,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":12132,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":47572,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":13064,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.586","kind":"proc=alive-at-end","pid":7884,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":50600,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":19804,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":15956,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":25392,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":50584,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":23484,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":70132,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":27324,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":30588,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":63624,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":60272,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":57668,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":69508,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":64544,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":56404,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":75704,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":99376,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":94972,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":91712,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":95740,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":79864,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":98728,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":85304,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":82780,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.575,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":48528,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":73704,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":50896,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":96552,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":94472,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":50912,"path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\OpenConsole.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":82004,"path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\OpenConsole.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":25328,"path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":70988,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":74816,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":57280,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":24836,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":46040,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":54972,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":66060,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":83512,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":70524,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":68048,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":66332,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":77488,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":13504,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":76504,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":10392,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":67256,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":79812,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":82552,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":83516,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":83412,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":72064,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":79588,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":68700,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":59992,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":55580,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":54404,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.587","kind":"proc=alive-at-end","pid":52700,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":59128,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":32204,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":78476,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":64196,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":67012,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":34376,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":67796,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":30348,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":17620,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":33752,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":29784,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":57640,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":75640,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":61212,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":72372,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":13688,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":10424,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":113584,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":116320,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":103340,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":37080,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":9052,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":103104,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":37076,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":101720,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":110644,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":88512,"path":"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.24.11911.0_x64__8wekyb3d8bbwe\\OpenConsole.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":77048,"path":"C:\\Program Files\\Mozilla Firefox\\firefox.exe"}
+{"t":116.576,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":109180,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.577,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":83856,"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\BrowserAI.exe"}
+{"t":116.577,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":116668,"path":"C:\\Users\\jori\\AppData\\Local\\BrowserAI.app\\current\\payload\\node\\node.exe"}
+{"t":116.577,"wall":"16:37:10.588","kind":"proc=alive-at-end","pid":58528,"path":"C:\\WINDOWS\\system32\\conhost.exe"}
+{"t":116.577,"wall":"16:37:10.588","kind":"stop","reason":"end"}

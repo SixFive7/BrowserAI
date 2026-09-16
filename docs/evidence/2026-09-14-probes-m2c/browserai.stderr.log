@@ -1,0 +1,153 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.0.1-alpha.0.206 started. pid=55088 image=c:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe cwd=c:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'c:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 23284 in 'C:\Users\jori\AppData\Local\BrowserAI\instances\55088-44822c15f90848b0bdb1a215778f51f9'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=19.3ms processes=447/295 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=49 titled=10 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.0.1-alpha.0.206) client received server '{"name":"Playwright","version":"1.63.0-alpha-2026-08-31"}' capabilities: '{"tools":{}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.0.1-alpha.0.206) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 24664, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.0.1-alpha.0.206) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.0.1-alpha.0.206), Client (q164-probe 3) method 'initialize' request handler completed in 0.1363ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session under Global\BrowserAI-0665675707E9EB3660794330890D6476.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      playwright-mcp[06656757]: started 'c:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 64396 in 'C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      Client (BrowserAI 1.0.1-alpha.0.206) client received server '{"name":"Playwright","version":"1.63.0-alpha-2026-08-31"}' capabilities: '{"tools":{}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      Client (BrowserAI 1.0.1-alpha.0.206) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      Session open at C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_resize: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_evaluate: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Q164 one-off screenshot sizing measurement ordered by the maintainer.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session
+      playwright-mcp[06656757] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[06656757]: pid 64396 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session by the process that already held its guard, PID 55088 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\2026-09-14-probes\m2c-session; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.DirectStdioServerTransport[4]
+      BrowserAI (stdio): the peer closed its end of the connection.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      playwright-mcp[surface] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[surface]: pid 23284 exited with code 0.

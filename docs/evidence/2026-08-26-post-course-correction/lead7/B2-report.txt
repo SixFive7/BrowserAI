@@ -1,0 +1,9 @@
+verdict=FILTERED
+taken=True
+sessionContext=True
+global=/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease
+session=/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease
+releaseRun=True
+decision=Refuse
+commandLineCarriesIt=True
+commandLine=C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll --disable-logo --treenode-filter /*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease

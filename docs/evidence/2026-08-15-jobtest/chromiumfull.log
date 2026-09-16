@@ -1,0 +1,27 @@
+JobProbe pid=47740 tag=chromiumfull selfjob=False
+self in any job at start: False
+inner job: KILL_ON_JOB_CLOSE set (no breakaway flags)
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\probe2\node_modules\@playwright\mcp\cli.js" --config "C:\Source\SixFive7\BrowserAI\.work\jobtest\cfg-chromium-full.json"
+child created SUSPENDED pid=37080
+child in our job BEFORE assign: False
+child in our job AFTER assign: True
+child resumed
+initialize OK
+browser_navigate OK -> browser is up
+job pid list: assigned=10 inList=10
+# tag=chromiumfull selfjob=False probePid=47740 rootChildPid=37080
+# jobPidListCount=10 treeCount=10
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+37080	47740	0	node.exe	134312196819524724	YES	YES	YES	
+7428	37080	1	conhost.exe	134312196819629210	YES	YES	YES	
+73216	37080	1	chrome.exe	134312196824988634	YES	YES	YES	
+47280	73216	2	chrome.exe	134312196827854397	YES	YES	YES	
+52612	73216	2	chrome.exe	134312196830686043	YES	YES	YES	
+56744	73216	2	chrome.exe	134312196831320220	YES	YES	YES	
+60972	73216	2	chrome.exe	134312196830323828	YES	YES	YES	
+75476	73216	2	chrome.exe	134312196830577768	YES	YES	YES	
+78332	73216	2	chrome.exe	134312196831614570	YES	YES	YES	
+59332	47280	3	chrome.exe	134312196828086548	YES	YES	YES	
+# ESCAPEES(in tree, not in our job)=0
+
+REPORT WRITTEN. Waiting to be killed (or --autoexit).

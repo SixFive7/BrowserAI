@@ -1,0 +1,14 @@
+# tag=crfinal selfjob=False probePid=23968 rootChildPid=65884
+# jobPidListCount=10 treeCount=10
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+65884	23968	0	node.exe	134312201540992420	YES	YES	YES	
+732	51328	1	chrome.exe	134312201547256604	YES	YES	YES	seed(job-notified)
+46300	51328	1	chrome.exe	134312201547257977	YES	YES	YES	seed(job-notified)
+51328	65884	1	chrome.exe	134312201544354610	YES	YES	YES	seed(job-notified)
+54712	51328	1	chrome.exe	134312201546242649	YES	YES	YES	seed(job-notified)
+60500	65884	1	conhost.exe	134312201541093524	YES	YES	YES	seed(job-notified)
+66844	51328	1	chrome.exe	134312201544682232	YES	YES	YES	seed(job-notified)
+70888	51328	1	chrome.exe	134312201546300418	YES	YES	YES	seed(job-notified)
+77584	51328	1	chrome.exe	134312201546564055	YES	YES	YES	seed(job-notified)
+78768	66844	1	chrome.exe	134312201544917158	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0

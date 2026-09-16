@@ -1,0 +1,10 @@
+[14:59:50.172] controller pid=62708 out=C:\Source\SixFive7\BrowserAI\.work\2026-08-27-desktop-heap\smoke1
+[14:59:50.180] chromium=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+[14:59:50.184] host=C:\Program Files\PowerShell\7\pwsh.exe
+[14:59:50.189] machine before: processes=432 threads=11915 handles=259940 physicalFreeMiB=85652 physicalTotalMiB=130989 commitMiB=63290 commitLimitMiB=141229
+[14:59:50.193] job object created (KILL_ON_JOB_CLOSE); every rig process is assigned to it
+[14:59:50.206] teardown
+[14:59:52.246] job closed
+[14:59:52.250] window stations now: WinSta0, Service-0x0-127b7b$
+[14:59:52.258] desktops on WinSta0: sbox_alternate_desktop_local_winstation_0x7BC8, Default
+[14:59:52.259] done

@@ -1,0 +1,29 @@
+
+=== 60 levels (path length 162) ===
+isError= false
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\p7\dw60\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\p7\dw60\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A
+  browser: chromium
+  profile: C:\Source\SixFive7\BrowserAI\.work\p7\dw60\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\profile
+destroy isError= false :: Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\dw60\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A' (0.0 MiB). Its purpose was: p7 walk-limit probe
+
+=== 66 levels (path length 174) ===
+isError= false
+NOTE: BrowserAI could not confirm this directory's spelling: the filesystem would not say what it calls 'C:\Source\SixFive7\BrowserAI\.work\p7\dw66\A\A', so 'C:\Source\SixFive7\BrowserAI\.work\p7\dw66\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A' is being taken as spelled.
+
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\p7\dw66\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\p7\dw66\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A
+destroy isError= false :: Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\dw66\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A\A' (0.0 MiB). Its purpose was: p7 walk-limit probe
+
+=== cleanup: sessions still registered under the scratch root ===
+[
+ "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\sess-dots",
+ "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\sess-slash",
+ "C:\\Source\\SixFive7\\BrowserAI\\.work\\p7\\ext-sess"
+]
+destroy C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots isError=false :: Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\sess-dots' (0.1 MiB). Its purpose was: p7 path door probe
+destroy C:\Source\SixFive7\BrowserAI\.work\p7\sess-slash isError=false :: Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\sess-slash' (0.1 MiB). Its purpose was: p7 path door probe
+destroy C:\Source\SixFive7\BrowserAI\.work\p7\ext-sess isError=false :: Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\p7\ext-sess' (0.1 MiB). Its purpose was: p7 path door probe
+
+=== after cleanup ===
+No BrowserAI sessions under 'C:\Source\SixFive7\BrowserAI\.work\p7'. That is an answer rather than an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named.

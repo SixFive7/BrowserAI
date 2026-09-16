@@ -1,0 +1,90 @@
+failed EveryNoticeIsInsideThePackedRelease (118ms)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: packed release is not available to this run, so this test would prove nothing that its name claims. C:\Source\SixFive7\BrowserAI\Releases\BrowserAI-<version>-full.nupkg. Run: pwsh -File build/New-Release.ps1, or set BROWSERAI_RELEASE_PACKAGE to a packed .nupkg. This is a release run (BROWSERAI_RELEASE_RUN is set), so it is a failure rather than a skip.
+    at BrowserAI.Tests.Harness.SuiteEnvironment.Require(SuiteCapability capability, String test) in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\Harness\SuiteEnvironment.cs:721
+    at BrowserAI.Tests.Harness.SuiteEnvironment.RequirePackagedRelease(String test) in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\Harness\SuiteEnvironment.cs:234
+    at BrowserAI.Tests.ThirdPartyNoticeTests.EveryNoticeIsInsideThePackedRelease() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\ThirdPartyNoticeTests.cs:319
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+==============================================================================
+BrowserAI suite coverage — what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe
+  packed release      ABSENT   C:\Source\SixFive7\BrowserAI\Releases\BrowserAI-<version>-full.nupkg
+      1 test FAILED for want of it: EveryNoticeIsInsideThePackedRelease
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI rev-parse --is-inside-work-tree said true
+  release run         YES      BROWSERAI_RELEASE_RUN is set, so a missing capability is a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE is unset, so nothing here pins which spelling this half of the gate was meant to receive
+  filter              FILTERED   --treenode-filter '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request — never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects — see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) — it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+==============================================================================
+  ⚠️  DEGRADED RELEASE RUN: 1 test executions could not exercise what their
+      names claim, and each is a FAILURE because this run asked to be a
+      release run. No release may be cut from this machine as it stands.
+==============================================================================
+System.AggregateException: Errors occurred while disposing static properties (AfterTestSession hook failed: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.)
+ ---> TUnit.Core.Exceptions.AfterTestSessionException: AfterTestSession hook failed: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.
+ ---> System.InvalidOperationException: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.
+   at BrowserAI.Tests.SuiteCoverage.RefuseARunThatMayNotBeARelease() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\SuiteCoverageTests.cs:line 175
+   at BrowserAI.Tests.SuiteCoverage.ReportWhatThisRunExercised() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\SuiteCoverageTests.cs:line 124
+   at TUnit.Generated.Hooks.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSessionInitializer.<>c.<global_BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_0Params_Body>b__0_0() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\obj\Debug\net10.0-windows\TUnit.Core.SourceGenerator\TUnit.Core.SourceGenerator.Generators.HookMetadataGenerator\BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.Hook.g.cs:line 24
+   at TUnit.Generated.Hooks.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSessionInitializer.global_BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_0Params_Body(TestSessionContext context, CancellationToken cancellationToken) in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\obj\Debug\net10.0-windows\TUnit.Core.SourceGenerator\TUnit.Core.SourceGenerator.Generators.HookMetadataGenerator\BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.Hook.g.cs:line 24
+   at TUnit.Engine.Helpers.HookTimeoutHelper.<CreateTimeoutHookAction>g__CreateTimeoutHookActionAsync|1_0[T](StaticHookMethod`1 hook, T context, Int32 timeoutMs, CancellationToken cancellationToken)
+   at TUnit.Engine.Services.HookExecutor.ExecuteHookWithActivityAsync[TContext](NamedHookDelegate`1 hook, TContext context, CancellationToken cancellationToken)
+   at TUnit.Engine.Services.HookExecutor.ExecuteAfterTestSessionHooksAsync(CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   --- End of inner exception stack trace ---
+   at TUnit.Engine.Services.StaticPropertyHandler.DisposeStaticPropertiesAsync(List`1 cleanupExceptions)
+   at TUnit.Engine.Scheduling.TestScheduler.ScheduleAndExecuteAsync(List`1 testList, CancellationToken cancellationToken)
+   at TUnit.Engine.TestSessionCoordinator.ExecuteTestsCore(List`1 testList, CancellationToken cancellationToken)
+   at TUnit.Engine.TestSessionCoordinator.ExecuteTests(List`1 tests, ITestExecutionFilter filter, IMessageBus messageBus, CancellationToken cancellationToken)
+   at TUnit.Engine.TestSessionCoordinator.ExecuteTests(List`1 tests, ITestExecutionFilter filter, IMessageBus messageBus, CancellationToken cancellationToken)
+   at TUnit.Engine.Framework.TestRequestHandler.HandleRunRequestAsync(TUnitServiceProvider serviceProvider, RunTestExecutionRequest request, ExecuteRequestContext context, ITestExecutionFilter testExecutionFilter)
+   at TUnit.Engine.Framework.TestRequestHandler.HandleRequestAsync(TestExecutionRequest request, TUnitServiceProvider serviceProvider, ExecuteRequestContext context, ITestExecutionFilter testExecutionFilter)
+   at TUnit.Engine.Framework.TUnitTestFramework.ExecuteRequestAsync(ExecuteRequestContext context)
+failed Unhandled exception - AggregateException: Errors occurred while disposing static properties (AfterTestSession hook failed: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.)
+  System.AggregateException: Errors occurred while disposing static properties (AfterTestSession hook failed: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.)
+    at TUnit.Engine.Services.StaticPropertyHandler.DisposeStaticPropertiesAsync(List`1 cleanupExceptions)
+    at TUnit.Engine.Scheduling.TestScheduler.ScheduleAndExecuteAsync(List`1 testList, CancellationToken cancellationToken)
+    at TUnit.Engine.TestSessionCoordinator.ExecuteTestsCore(List`1 testList, CancellationToken cancellationToken)
+    at TUnit.Engine.TestSessionCoordinator.ExecuteTests(List`1 tests, ITestExecutionFilter filter, IMessageBus messageBus, CancellationToken cancellationToken)
+    at TUnit.Engine.TestSessionCoordinator.ExecuteTests(List`1 tests, ITestExecutionFilter filter, IMessageBus messageBus, CancellationToken cancellationToken)
+    at TUnit.Engine.Framework.TestRequestHandler.HandleRunRequestAsync(TUnitServiceProvider serviceProvider, RunTestExecutionRequest request, ExecuteRequestContext context, ITestExecutionFilter testExecutionFilter)
+    at TUnit.Engine.Framework.TestRequestHandler.HandleRequestAsync(TestExecutionRequest request, TUnitServiceProvider serviceProvider, ExecuteRequestContext context, ITestExecutionFilter testExecutionFilter)
+    at TUnit.Engine.Framework.TUnitTestFramework.ExecuteRequestAsync(ExecuteRequestContext context)
+  --->  AfterTestSession hook failed: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.
+  --->  System.InvalidOperationException: BROWSERAI_RELEASE_RUN is set, so this run asked to be a release run - and the platform handed the framework a filter: '/*/*/ThirdPartyNoticeTests/EveryNoticeIsInsideThePackedRelease'. A filtered run is a correct run and every number it prints is true of what it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads because a filtered run's summary is character-for-character the shape a full one's is. Re-run without a filter, or unset the variable and stop calling it a release.
+    at BrowserAI.Tests.SuiteCoverage.RefuseARunThatMayNotBeARelease() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\SuiteCoverageTests.cs:175
+    at BrowserAI.Tests.SuiteCoverage.ReportWhatThisRunExercised() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\SuiteCoverageTests.cs:124
+    at TUnit.Generated.Hooks.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSessionInitializer.<>c.<global_BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_0Params_Body>b__0_0() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\obj\Debug\net10.0-windows\TUnit.Core.SourceGenerator\TUnit.Core.SourceGenerator.Generators.HookMetadataGenerator\BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.Hook.g.cs:24
+    at TUnit.Generated.Hooks.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSessionInitializer.global_BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_0Params_Body(TestSessionContext context, CancellationToken cancellationToken) in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\obj\Debug\net10.0-windows\TUnit.Core.SourceGenerator\TUnit.Core.SourceGenerator.Generators.HookMetadataGenerator\BrowserAI_Tests_SuiteCoverage_ReportWhatThisRunExercised_After_TestSession.Hook.g.cs:24
+    at TUnit.Engine.Helpers.HookTimeoutHelper.<CreateTimeoutHookAction>g__CreateTimeoutHookActionAsync|1_0[T](StaticHookMethod`1 hook, T context, Int32 timeoutMs, CancellationToken cancellationToken)
+    at TUnit.Engine.Services.HookExecutor.ExecuteHookWithActivityAsync[TContext](NamedHookDelegate`1 hook, TContext context, CancellationToken cancellationToken)
+    at TUnit.Engine.Services.HookExecutor.ExecuteAfterTestSessionHooksAsync(CancellationToken cancellationToken)
+Test adapter test session failure
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed! - C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  total: 2
+  failed: 2
+  succeeded: 0
+  skipped: 0
+  duration: 436ms

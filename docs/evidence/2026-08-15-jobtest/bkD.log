@@ -1,0 +1,9 @@
+JobProbe pid=68336 tag=bkD selfjob=True
+outer job: LimitFlags=0x2000 KILL_ON_JOB_CLOSE
+outer job: self assigned OK
+self in any job at start: True
+inner job: LimitFlags=0x2000 KILL_ON_JOB_CLOSE
+completion port associated
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\jobtest\race.mjs" "C:\Source\SixFive7\BrowserAI\.work\jobtest\bkD.racepids.txt"
+child creation requests CREATE_BREAKAWAY_FROM_JOB
+FATAL CreateProcessW err=5

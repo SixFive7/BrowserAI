@@ -1,0 +1,14 @@
+# tag=nest selfjob=True probePid=70024 rootChildPid=27988
+# jobPidListCount=10 treeCount=10
+PID	PPID	DEPTH	NAME	CREATED	IN_OUR_JOB	IN_ANY_JOB	IN_JOB_PIDLIST	NOTE
+27988	70024	0	node.exe	134312203545478119	YES	YES	YES	
+4988	55164	1	chrome.exe	134312203549739531	YES	YES	YES	seed(job-notified)
+10948	35848	1	chrome.exe	134312203551185587	YES	YES	YES	seed(job-notified)
+35848	27988	1	chrome.exe	134312203549180559	YES	YES	YES	seed(job-notified)
+36972	27988	1	conhost.exe	134312203545601024	YES	YES	YES	seed(job-notified)
+45136	35848	1	chrome.exe	134312203552084177	YES	YES	YES	seed(job-notified)
+55164	35848	1	chrome.exe	134312203549501077	YES	YES	YES	seed(job-notified)
+56576	35848	1	chrome.exe	134312203552085673	YES	YES	YES	seed(job-notified)
+65032	35848	1	chrome.exe	134312203551449622	YES	YES	YES	seed(job-notified)
+67652	35848	1	chrome.exe	134312203551125121	YES	YES	YES	seed(job-notified)
+# ESCAPEES(in tree, not in our job)=0

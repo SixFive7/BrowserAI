@@ -1,0 +1,102 @@
+=== [C1] q=<repo:microsoft/playwright webp transparency lossless detection>
+  total_count=1
+   PR  41781   closed  2026-07-14 yury-s           fix(screenshot): fix webp transparency and lossless detection, add tests
+=== [C2] q=<repo:microsoft/playwright-mcp screenshot explicit filename cwd>
+  total_count=3
+   ISS 1731    closed  2026-09-01 ystknsh          browser_take_screenshot resolves an explicit filename against the server cwd, no
+   ISS 1595    closed  2026-05-02 20bytes          Explicit filename outputs ignore --output-dir and write to cwd / workspace paths
+   ISS 1211    closed  2025-11-19 larbifattah      Bug: Screenshot tool returns corrupted image data causing permanent API error 40
+=== [C3] q=<repo:microsoft/playwright-mcp webp>
+  total_count=2
+   PR  1707    closed  2026-08-05 yury-s           chore: mark v0.0.79
+   ISS 1731    closed  2026-09-01 ystknsh          browser_take_screenshot resolves an explicit filename against the server cwd, no
+=== [C4] q=<repo:microsoft/playwright screenshot webp>
+  total_count=27
+   ISS 42517   closed  2026-09-02 eduardonsm       [Docs]: Fix parameter name for element screenshots in browser_take_screenshot MC
+   ISS 19861   open    2023-01-04 ghost            Is there any good solution for making fullpage screenshots on lazy load pages?
+   PR  41849   closed  2026-07-17 hbenl            chore(bidi): enable webp screenshot support
+   PR  41908   closed  2026-07-21 yury-s           chore(webview): mark new screenshot tests as expected failures
+   PR  41781   closed  2026-07-14 yury-s           fix(screenshot): fix webp transparency and lossless detection, add tests
+   PR  41152   closed  2026-06-04 yury-s           feat(screenshot): add webp output format
+   ISS 42487   closed  2026-09-01 ystknsh          [MCP]: browser_take_screenshot resolves an explicit filename against the server 
+   ISS 41417   closed  2026-05-26 fuleinist        [Feature] Add screenshot output format option (PNG/JPEG/WebP)
+   ISS 22984   closed  2023-05-12 stramel          [Feature] Save screenshots using `webp` format
+   PR  42043   closed  2026-07-29 dcrousso         docs: release notes for v1.62 Python, Java, and .NET
+   PR  42055   closed  2026-07-30 hbenl            test(bidi): unskip accept-language header websocket test
+   PR  41782   closed  2026-07-14 yury-s           docs(test): mention webp as alternative snapshot format in toHaveScreenshot
+   PR  42335   closed  2026-08-20 yury-s           fix(html-reporter): make settings and metadata controls keyboard accessible
+   PR  41967   closed  2026-07-23 dcrousso         cherry-pick(#41940): docs: release notes for v1.62
+   PR  41940   closed  2026-07-22 dcrousso         docs: release notes for v1.62
+   PR  41983   closed  2026-07-24 dependabot[bot]  chore(deps): bump postcss from 8.5.16 to 8.5.23
+   ISS 39315   closed  2026-02-18 schalkneethling  [Feature]: Support `type` with `toMatchScreenshot`
+   ISS 8161    closed  2021-08-12 aslushnikov      feat: better support for visual regression testing
+   ISS 32151   closed  2024-08-14 l9c              [Bug]: Screenshot not recorded/shown in timeline for Webkit
+   ISS 31497   closed  2024-07-01 Akhourisharma    [Feature]: .Webp image support
+   ISS 33955   closed  2024-12-11 pavelfeldman     🎅 Playwright Santa 2025 🛷 
+   ISS 31452   closed  2024-06-26 Akhourisharma    How to compare two .png images with different size using playwright with typescr
+   ISS 23518   closed  2023-06-05 GrayedFox        [BUG] Firefox refuses to fill, type, or interact with iFrame secure form
+   ISS 13385   closed  2022-04-07 janosh           [Feature]: Save screenshots as WebP and AVIF
+   ISS 10327   closed  2021-11-15 cardinalX        [BUG]
+=== [M1] q=<repo:microsoft/playwright-mcp webp screenshot empty>
+  total_count=1
+   ISS 1731    closed  2026-09-01 ystknsh          browser_take_screenshot resolves an explicit filename against the server cwd, no
+=== [M2] q=<repo:microsoft/playwright-mcp 16383>
+  total_count=0
+=== [M3] q=<repo:microsoft/playwright-mcp 16384>
+  total_count=0
+=== [M4] q=<repo:microsoft/playwright-mcp screenshot empty>
+  total_count=12
+   ISS 1731    closed  2026-09-01 ystknsh          browser_take_screenshot resolves an explicit filename against the server cwd, no
+   ISS 1474    closed  2026-03-19 zakna            [Bug] RangeError: Invalid string length on Blazor WASM pages - snapshot serializ
+   ISS 1596    closed  2026-05-02 itshahmir        [Enhancement] LLM-tolerant zod schemas for browser_evaluate / wait_for / resize
+   PR  1217    closed  2025-11-21 tarekrached      fix(mcp): correct screenshot media type mismatch
+   ISS 1138    closed  2025-10-15 ogadra           [Feature]: Use default filename when the optional `filename` parameter is an emp
+   ISS 1240    closed  2025-12-03 aakashH242       [Feature Request]: Expose output artifacts as MCP resources for remote deploymen
+   ISS 942     closed  2025-08-24 ForSite          **Bug Report: Playwright-MCP fails to start - "Browser already in use" error on 
+   ISS 544     closed  2025-06-12 icai             Screenshot Path Generation Not Following Expected Directory Structure
+   ISS 1090    closed  2025-09-29 jfaojfoj         Bug: Playwright MCP Bridge Extension Cannot Connect to MCP Server (v0.0.40)
+   ISS 913     closed  2025-08-19 Makoish          Error: ToolException( Error: No open pages available. Use the "browser_navigate"
+   ISS 108     closed  2025-04-01 AlexKomanov      browser_take_screenshot is not working
+   ISS 355     closed  2025-05-06 jmmfcoutinho     `browser_click` to start download not working properly on versions `>= 0.0.19`
+=== [M5] q=<repo:microsoft/playwright-mcp webp fullPage>
+  total_count=0
+=== [P1] q=<repo:microsoft/playwright webp screenshot empty>
+  total_count=3
+   ISS 19861   open    2023-01-04 ghost            Is there any good solution for making fullpage screenshots on lazy load pages?
+   ISS 42487   closed  2026-09-01 ystknsh          [MCP]: browser_take_screenshot resolves an explicit filename against the server 
+   PR  41152   closed  2026-06-04 yury-s           feat(screenshot): add webp output format
+=== [P2] q=<repo:microsoft/playwright webp 16383>
+  total_count=1
+   PR  16383   closed  2022-08-09 mxschmitt        chore: set --allow-pre-commit-input flag on Android/Electron
+=== [P3] q=<repo:microsoft/playwright 16384 screenshot>
+  total_count=1
+   ISS 13496   closed  2022-04-12 spartanatreyu    [BUG] Screenshot fails (sometimes silently) in headed mode when screenshot is la
+=== [P4] q=<repo:microsoft/playwright webp dimension>
+  total_count=0
+=== [P5] q=<repo:microsoft/playwright webp fullPage>
+  total_count=4
+   ISS 19861   open    2023-01-04 ghost            Is there any good solution for making fullpage screenshots on lazy load pages?
+   ISS 42517   closed  2026-09-02 eduardonsm       [Docs]: Fix parameter name for element screenshots in browser_take_screenshot MC
+   PR  41781   closed  2026-07-14 yury-s           fix(screenshot): fix webp transparency and lossless detection, add tests
+   PR  41983   closed  2026-07-24 dependabot[bot]  chore(deps): bump postcss from 8.5.16 to 8.5.23
+=== [P6] q=<repo:microsoft/playwright screenshot empty webp>
+  total_count=3
+   ISS 19861   open    2023-01-04 ghost            Is there any good solution for making fullpage screenshots on lazy load pages?
+   ISS 42487   closed  2026-09-01 ystknsh          [MCP]: browser_take_screenshot resolves an explicit filename against the server 
+   PR  41152   closed  2026-06-04 yury-s           feat(screenshot): add webp output format
+=== [P7] q=<repo:microsoft/playwright screenshot zero bytes>
+  total_count=10
+   PR  41882   closed  2026-07-20 tsushanth        fix(network): request.postData() returns null for empty string body override
+   PR  41089   closed  2026-06-02 yury-s           fix(mcp): close browser when host dies without a signal
+   ISS 39753   closed  2026-03-18 spalger          [Bug]: Playwright randomly not exitting
+   PR  41660   closed  2026-07-07 yury-s           feat(webkit): match Safari for device orientation, motion and push
+   PR  40438   closed  2026-04-27 Skn0tt           chore: skip open() under coding agents
+   PR  40474   closed  2026-04-28 microsoft-playwr feat(webkit): roll to r2285
+   PR  40686   closed  2026-05-07 dependabot[bot]  chore(deps-dev): bump hono from 4.12.14 to 4.12.18
+   ISS 36412   closed  2025-06-23 gundermanc       [Bug]: Playwright frequently fails to download Chromium
+   ISS 28081   closed  2023-11-10 mridiniveni      Uploading  Files is not working on Selenium grid 
+   ISS 16401   closed  2022-08-10 buptzwl          [Feature] Record Video with Transparent Background - omitBackground
+=== [P8] q=<repo:microsoft/playwright webp limit height>
+  total_count=1
+   ISS 22984   closed  2023-05-12 stramel          [Feature] Save screenshots using `webp` format
+=== batch5 done ===

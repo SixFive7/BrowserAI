@@ -1,0 +1,90 @@
+<h3>Added</h3>
+<ul>
+<li>
+<p>✨ <strong>Browser automation for AI agents on Windows, as one MCP server that brings its own everything.</strong></p>
+<details><summary>read more</summary>
+<p>BrowserAI ships its own Node runtime and its own <code class="notranslate">@playwright/mcp</code>, downloads its own browser on first use, and proxies JSON-RPC to it. Nothing on the machine has to be installed, on <code class="notranslate">PATH</code>, or of any particular version.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Sessions that survive the agent that made them.</strong></p>
+<details><summary>read more</summary>
+<p>A session is a directory the caller names: the browser profile, its downloads, its artifacts, its log and the lock that owns it all live inside it. Close the agent, come back tomorrow, <code class="notranslate">browserai_resume</code> the same directory, and the cookies, the logins and the local storage are still there.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Three session modes, one table.</strong></p>
+<details><summary>read more</summary>
+<p><code class="notranslate">headless</code>, <code class="notranslate">interactive</code> and <code class="notranslate">persistent</code> differ in what they may do, and the same table renders the server instructions, the tool descriptions, the refusal messages and the enforcement — so a mode cannot mean one thing to a model and another to the code.</p>
+</details>
+</li>
+<li>
+<p>🔒 <strong>Every tool call is judged against the mode of the session it names.</strong></p>
+<details><summary>read more</summary>
+<p>Deny-by-default in two dimensions: a tool nobody has classified is refused everywhere, and a mode with no policy row permits nothing.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Artifacts land inside the session, not wherever the browser felt like.</strong></p>
+<details><summary>read more</summary>
+<p>Screenshots, PDFs, downloads and traces are routed by type into folders under the session directory, never overwrite each other, and every answer says where the file went — as an absolute path and as a session-relative one.</p>
+</details>
+</li>
+<li>
+<p>🔒 <strong>A path that would escape the session is refused with a sentence saying why.</strong></p>
+<details><summary>read more</summary>
+<p>A path that would escape the session is refused with a sentence saying why, decided on the string and without touching the filesystem.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>First-run browser provisioning that does not block the conversation.</strong></p>
+<details><summary>read more</summary>
+<p><code class="notranslate">browserai_init</code> returns immediately and says a download is running; browser tools are refused with a recovery until it lands; the same child then navigates with no restart. A run that fails halfway removes its partial tree rather than leaving something that looks installed.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Firefox as well as Chromium.</strong></p>
+<details><summary>read more</summary>
+<p>Firefox as well as Chromium, including the profile-lock preflight that turns <em>"a modal dialog blocks startup for three minutes"</em> into a refusal in milliseconds.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Nothing is left running.</strong></p>
+<details><summary>read more</summary>
+<p>Every child and every browser it starts is created inside a job object, so killing BrowserAI — however abruptly — takes the whole tree with it. A stray browser from a previous crash is found on startup and ended only when the session directory that owns it is provably free.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Answers arrive exactly as the browser produced them.</strong></p>
+<details><summary>read more</summary>
+<p>The proxy splices the child's own bytes into the caller's frame rather than re-serialising, so escapes, numeric form, key order, unknown fields and unknown content types all survive unchanged.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>Failures say what happened and what to do next.</strong></p>
+<details><summary>read more</summary>
+<p>One error catalogue, written for the model that has to act on it, with every row provoked by a real condition rather than asserted to exist.</p>
+</details>
+</li>
+<li>
+<p>✨ <strong>The log is a log.</strong></p>
+<details><summary>read more</summary>
+<p>Everything outside a session goes to one rolling process log that survives updates; everything inside one goes to a log beside that session's lock. Nothing anywhere can write to the protocol channel by accident.</p>
+</details>
+</li>
+<li>
+<p>✅ <strong>Upstream cannot move underneath it silently.</strong></p>
+<details><summary>read more</summary>
+<p>Four snapshots of <code class="notranslate">@playwright/mcp</code>'s surface are regenerated from the resolved package on every build and diffed against committed copies, and the build fails with the diff itself when anything moves.</p>
+</details>
+</li>
+<li>
+<p>⬆️ <strong>Every dependency floats to latest and the build freezes what it resolved.</strong></p>
+<details><summary>read more</summary>
+<p>Every dependency floats to latest and the build freezes what it resolved, so the resolved set is recorded beside the artifact rather than remembered.</p>
+</details>
+</li>
+</ul>
+<hr>
+<p>✨ new capability · 🐛 fix · 🔧 behaviour or configuration change · 🔒 security or permissions · 🗑️ removal or deprecation · 💥 breaking, or the reader must act · 📝 documentation · ✅ tests and the gate · 📦 packaging, installer, release pipeline · ⚡ performance · ♻️ refactor with no behaviour change · ⬆️ dependency move</p>
+<p>Every entry in full, with its evidence: <a href="https://github.com/SixFive7/BrowserAI/blob/v0.1.0/CHANGELOG.md#010---2026-08-16">CHANGELOG.md</a></p>

@@ -1,0 +1,9 @@
+browserai:
+  Scope: User config (available in all your projects)
+  Status: ✔ Connected
+  Type: stdio
+  Command: C:\Users\jori\AppData\Local\BrowserAI-rc\current\BrowserAI.exe
+  Args:
+  Environment:
+
+To remove this server, run: claude mcp remove browserai -s user

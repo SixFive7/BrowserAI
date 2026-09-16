@@ -1,0 +1,11 @@
+JobProbe pid=70036 tag=crsbx2 selfjob=False
+self in any job at start: False
+inner job: KILL_ON_JOB_CLOSE set (no breakaway flags)
+CMD: "C:\Program Files\nodejs\node.exe" "C:\Source\SixFive7\BrowserAI\.work\probe2\node_modules\@playwright\mcp\cli.js" --config "C:\Source\SixFive7\BrowserAI\.work\jobtest\cfg-chromium-full-sbx.json" 1
+child created SUSPENDED pid=78084
+child in our job BEFORE assign: False
+child in our job AFTER assign: True
+child resumed
+FATAL: no initialize response. stderr:
+error: too many arguments. Expected 0 arguments but got 1: 1.
+

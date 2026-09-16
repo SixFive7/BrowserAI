@@ -1,0 +1,45 @@
+Q173a -- upstream ask for the zero-byte WebP fullPage screenshot. 2026-09-14.
+Posting agent; nothing written into the repository tree.
+
+POSTED: https://github.com/microsoft/playwright/issues/42717
+  title  [MCP] WebP screenshot above 16383 px returns an empty image
+  body   body.txt  (486 bytes, sha256 9011ed28b20db5e09505caf3d0efcfd24dc1134b32e7af1edc5c38e22d16f5c4)
+         the stored body has the SAME sha256 -- identical, GitHub added nothing at all.
+  title  title.txt (sha256 3a25b732799faa1d15668b8bc5997c40ec4c7470ef79b555abf61a282f2d3164)
+  fetched issue json: posted-issue.json / posted-body.txt
+
+WHY THE MONOREPO RATHER THAN playwright-mcp:
+  playwright-mcp#1725 -> TRANSFERRED to microsoft/playwright#42497, retitled
+     "[MCP] Option for absolute paths in tool result links", OPEN, triaged
+     (dgozman asked for a repro 2026-09-02 and again 2026-09-03; a second
+     reporter joined 2026-09-03), and PR microsoft/playwright#42673
+     "feat(mcp): add --file-paths=absolute" is open and configured to close it.
+  playwright-mcp#1726 -> TRANSFERRED to microsoft/playwright#42496, retitled
+     "[MCP] Option for no-clobber output files and reserved name handling",
+     CLOSED not_planned by dgozman 2026-09-08, 2 comments.
+  Neither number appears in playwright-mcp's own issue list any more
+  (it runs 1724 -> 1731), and GitHub redirects the old URLs -- an API read of
+  playwright-mcp#1725 returns playwright#42497.
+  microsoft/playwright holds 94 "[MCP]"-titled issues with traffic to
+  2026-09-12; playwright-mcp's non-PR issues since August are all closed and
+  are chores, bot listings and spam.
+
+STEP 1 -- RAW CHILD RE-VERIFICATION (no BrowserAI process on the path):
+  raw-child.js      node.exe + @playwright/mcp/cli.js over a 127.0.0.1 page server
+  raw/              run with upstream's default browser  -> Google Chrome 153.0.8010.37
+                    (written before the script took a browser argument)
+  raw-chromium/     run with --browser chromium          -> chromium-1243 153.0.8010.12
+  which/which.json  proves WHICH binary each run drove, by live pid-tree walk
+  Both runs: 16383 webp = 12284 B valid VP8X 1280x16383; 16384 webp = 0 bytes,
+  isError false, mimeType image/webp, zero-byte file on disk; png 137816 B and
+  jpeg 768991 B both fine at 16384.
+
+STEP 2 -- DUPLICATE SEARCH:
+  search-results.txt  first pass, gh search issues (NOTE: that path matched the
+                      whole argument as a PHRASE -- its zeros are weaker than
+                      they look; kept because it is what the controls exposed)
+  search-terms.txt    second pass, REST search API with term-AND semantics,
+                      controls first and each proven to fire
+  No duplicate on either tracker. Nearest neighbour is
+  microsoft/playwright#13496 (2022-04-12, closed completed): PNG tiling above
+  16384 px in HEADED mode -- a different defect, and png is clean here today.
