@@ -38,6 +38,22 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- ✅ **The app's embedded manifest and its apartment are asserted off the binary
+  that ships.** Two properties the whole window depends on were read once, by
+  hand, and then trusted. The **`Microsoft.Windows.Common-Controls` 6.0.0.0**
+  dependency is the one whose absence makes `TaskDialogIndirect` fail at run time
+  with **no compile-time signal of any kind** — the loader binds version 5, the
+  export is absent, and it presents as *the app starts and nothing happens*. It
+  is now read out of `RT_MANIFEST` id 1 of the built and published binaries,
+  together with `longPathAware`, `PerMonitorV2` and `asInvoker`, with the server's
+  own manifest as the control so a reader that stopped finding resources cannot
+  look like a binary that declares less. And **`[STAThread]` under NativeAOT was
+  an assumption**: the folder picker's `BIF_NEWDIALOGSTYLE` silently falls back to
+  the pre-Vista dialog off an STA and the version 6 common controls expect one, so
+  `--report` now writes the apartment and an arm runs the **published** binary and
+  requires it. **Measured 2026-09-16 at .NET 10 / ILC 10.0.12: it is `STA`.** The
+  report's schema is 2.
+
 - 🐛 **The installer's own variables are cleared after Velopack has read them,
   not before.** `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART` are cleared so that
   no child of the configuration app inherits them — click *Register* with

@@ -609,6 +609,48 @@ the product makes no check and produces no diagnostic that would name it.
 Re-establish with `Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem
 -Name LongPathsEnabled`.
 
+### `[STAThread]` is honoured under NativeAOT — measured 2026-09-16
+
+**`Main` really does run in a single-threaded apartment in a `PublishAot`
+binary.** It had been assumed since the configuration app was written and was
+never measured, and two things depend on it with **no diagnostic if it is
+wrong**: `SHBrowseForFolderW`'s `BIF_NEWDIALOGSTYLE` falls back to the pre-Vista
+dialog on a thread that is not in an STA — silently, no error, a different window
+— and the version 6 common controls a task dialog is made of expect one.
+
+Measured by running the published `BrowserAI.exe --report <path>` and reading the
+field it writes: **`"apartment": "STA"`**, at
+`Thread.CurrentThread.GetApartmentState()`, schema 2, on .NET 10 / ILC 10.0.12,
+Windows 10.0.26200. `[FLOATS]`
+
+**The suite's own host cannot answer this**, which is why the field exists at
+all: `dotnet test` runs an ordinary CoreCLR process whose apartment says nothing
+about what ILC did with the attribute.
+`TaskDialogLayoutTests.ThePublishedConfigurationAppRunsInASingleThreadedApartment`
+runs the published binary and asserts it, so the answer is re-established on
+every release gate rather than on a day somebody remembered to look.
+
+Re-establish it by hand with
+`src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe --report out.json`
+and reading `apartment`.
+
+### The embedded manifest is readable out of the built file — measured 2026-09-16
+
+**`RT_MANIFEST` at `CREATEPROCESS_MANIFEST_RESOURCE_ID` (1) carries the whole of
+`app.manifest`**, and it can be read back out of the binary with
+`LoadLibraryExW(LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE)`
+plus `FindResourceW(1, RT_MANIFEST)` — no relocation, no entry point, no imports
+resolved. `EmbeddedManifest` in the test harness is that reader, and
+`TaskDialogLayoutTests.TheAppsEmbeddedManifestDeclaresCommonControlsLongPathsAndPerMonitorV2`
+is what now holds the **`Microsoft.Windows.Common-Controls` 6.0.0.0**
+dependency — the one whose absence makes `TaskDialogIndirect` fail at run time
+with no compile-time signal, presenting as *the app starts and nothing happens* —
+along with `longPathAware`, `PerMonitorV2` and `asInvoker`.
+
+**The control is the server**, which carries a manifest of its own and declares no
+common controls: a reader that had stopped finding resources reports every
+property absent, which is indistinguishable from a binary that declares none.
+
 ## Compiling a vendored C library into the publish
 
 **The SQLite amalgamation compiles into a static library and links into

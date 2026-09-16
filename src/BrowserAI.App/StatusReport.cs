@@ -37,7 +37,11 @@ namespace BrowserAI.App;
 internal static class StatusReport
 {
     /// <summary>The schema version this build writes and reads.</summary>
-    public const int SchemaVersion = 1;
+    /// <remarks>
+    /// <b>2 since 2026-09-16</b>, when <c>apartment</c> was added. <i>Corrected
+    /// 2026-09-16 (previously <c>1</c>.)</i>
+    /// </remarks>
+    public const int SchemaVersion = 2;
 
     /// <summary>Writes the report.</summary>
     /// <param name="state">What to write.</param>
@@ -79,6 +83,18 @@ internal static class StatusReport
             writer.WriteString("product", "BrowserAI");
             writer.WriteString("version", state.Version);
             writer.WriteString("writtenAt", DateTimeOffset.Now.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+
+            // %s THE APARTMENT OF THE THREAD THAT RAN Main, AND IT IS NOT
+            // COSMETIC -- 2026-09-16. [STAThread] is an attribute the CLR reads;
+            // whether NativeAOT honours it was ASSUMED and never measured, and
+            // two things depend on it with no diagnostic if it is wrong. The
+            // folder picker's BIF_NEWDIALOGSTYLE silently falls back to the
+            // pre-Vista dialog on a thread that is not in a single-threaded
+            // apartment, and the version 6 common controls a task dialog is made
+            // of expect one. Writing it here is what lets a run off the PUBLISHED
+            // binary assert it, which is the only place the question is real --
+            // the suite's own host is not this executable.
+            writer.WriteString("apartment", Thread.CurrentThread.GetApartmentState().ToString());
 
             WriteNullable(writer, "installRoot", state.InstallRoot);
             writer.WriteString("dataRoot", state.DataRoot);
