@@ -839,11 +839,15 @@ moves.
 **It is not a property of a standalone `dotnet publish`.** It was first seen
 after one — reverted in `ac244ff` as *"a restore artifact nobody asked for rather
 than a resolution anybody reviewed"* — and **`build/New-Release.ps1` produces the
-identical diff**, watched on a full pack run at 04:05 on 2026-09-16. So it is not
-avoidable by routing publishes through the release script, and **publishes should
-still go through the release script**, for every other reason: it is the thing
-that stages each publish into `artifacts\publish-<exe stem>`, reads both ILC
-logs, refuses a missing executable by name and wires the icon into the pack.
+identical diff**, watched on a full pack run at 04:05 on 2026-09-16, as does the
+slice publish the suite itself asks for, watched at 04:33. So it is not avoidable
+by choosing one publish over the other. **A RELEASE publish should still go
+through the release script**, for every other reason: it is the thing that stages
+each publish into `artifacts\publish-<exe stem>`, reads both ILC logs, refuses a
+missing executable by name and wires the icon into the pack. **The suite's slice
+is the other publish and is meant to be direct** — it lands under
+`src\<project>\bin\`, which the release script never writes, and
+`PublishedSlice`'s own refusal prints the command.
 
 **Until somebody decides otherwise, the diff is reverted and never committed** —
 `git checkout -- src/BrowserAI.Core/packages.lock.json` — because an empty

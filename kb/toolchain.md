@@ -61,6 +61,42 @@ float and cannot restore at all. Measured 2026-08-16 on SDK **10.0.302** while
 building the skeleton. Re-establish by deleting the property and restoring.
 `[FLOATS]`
 
+### A RID-specific restore rewrites a library's lock file, whichever publish asks for it — measured 2026-09-16
+
+**`dotnet publish -r win-x64` adds an empty `"net10.0-windows7.0/win-x64": {}`
+section to a referenced library's `packages.lock.json`**, and it does it on every
+publish until that section is committed. Measured on this tree at .NET 10:
+`src/BrowserAI/packages.lock.json` and `src/BrowserAI.App/packages.lock.json`
+carry the section already, because both projects are published RID-specific;
+`src/BrowserAI.Core/packages.lock.json` did not, because it is a library that was
+never restored with a RID until the configuration app started being published
+with one.
+
+**Both publishes do it, which is the half that was got wrong first.** It was
+seen after a standalone `dotnet publish` and reverted in `ac244ff` as *"a restore
+artifact nobody asked for rather than a resolution anybody reviewed"*, and the
+first note written about it said to route publishes through
+[`build/New-Release.ps1`](../build/New-Release.ps1). That does not avoid it:
+watched at 04:05 on 2026-09-16 on a full pack run, and again at 04:33 on the
+slice publish `PublishedSlice`'s own refusal prints. The two publishes differ in
+where they put the binary — `artifacts\publish-<exe stem>` against
+`src\<project>\bin\` — and not in what restore does to the lock file.
+
+**The tree's rule is to revert it rather than commit it**, and nothing enforces
+that: an arm holding the file free of that section would be red for the whole
+window between [the publish](../RELEASING.md#7-build-clean) and
+[the run](../RELEASING.md#8-run-everything), which is a gate that cannot pass
+after doing what the checklist just told it to do. **Two ways it closes and both
+are the maintainer's**: accept the section as the honest resolution and commit
+it, or restore in locked mode so a restore that would rewrite a lock file fails
+instead of doing it quietly.
+
+No marker of its own: this is lock-file semantics under the floating-dependency
+policy, which is what [row 35](re-verification.md) already stands for — and that
+row's own re-establish procedure, *resolve and then
+`git diff --exit-code -- "**/packages.lock.json"`*, is exactly the command that
+sees this.
+
 ## npm, for a vendored payload
 
 **npm keys a lock file's root package on the empty string, and PowerShell's
@@ -833,3 +869,41 @@ conversion rewrites the argument before `gh` ever sees it, and `gh`'s own error
 message is the thing that says so. `markdown` without the slash works in both
 shells. `[STABLE]` for the rewriting, which is MSYS2's documented behaviour;
 the endpoint itself is GitHub's.
+
+### A `?plain=1#L<n>-L<m>` link highlights the range, and `curl` cannot show it — measured 2026-09-16
+
+**A release body's `read more` link is a LINE RANGE into the tagged changelog**,
+`blob/v<version>/CHANGELOG.md?plain=1#L<first>-L<last>`, and the highlight that
+makes it useful is applied **client-side from the fragment**. Three things were
+measured on this repository on 2026-09-16, against
+`blob/v1.0.0/CHANGELOG.md?plain=1#L3496-L3532`:
+
+- **`curl -sL` answers 200** (1,178,355 bytes) and the source view carries
+  per-line elements — `id="LC10"`, `data-line-number="10"` — which are what the
+  fragment addresses.
+- **Only the first 1,000 lines are in the served HTML**, against a file of 3,682.
+  The rest is rendered by the page's own code after load, so a `grep` for a line
+  past 1,000 finds nothing and says nothing about whether the link works.
+- **The fragment never appears in the HTML at all**, so no amount of reading the
+  response establishes the highlight.
+
+**So it was driven in a real browser instead**, which is the only instrument that
+can answer it: the page rendered the range — lines 3496 and 3532 both present —
+and **exactly 37 elements carried a highlighted class**, which is
+3532 − 3496 + 1. That is the whole claim: the range named is the range marked.
+
+`[FLOATS]` — the anchor form is GitHub's and the 1,000-line server-render window
+is an implementation detail of their blob view, either of which they may change
+without notice. **Re-establish it the same way**: open one such link in a browser
+and count the highlighted rows against the range. It is covered by
+[row 128](re-verification.md), which already stands for this project's readings
+of GitHub's release-body surface.
+
+⚠️ **Corrected 2026-09-16: the two sizes above this subsection were measured
+against a shape that no longer exists.** *Previously "Measured on the 1.0.0
+section: **280,063** characters folded against **19,340** as headlines alone".*
+The fold was dropped that day for one shape carrying line ranges (Q197 b).
+Re-measured over the section as it then stood: folded is **288,437**, headlines
+alone is **19,780**, and **linked is 41,288** — a third of the carried limit,
+with a range on every one of the 227 entries. The number the project acts on is
+unchanged and is still nobody's measurement.

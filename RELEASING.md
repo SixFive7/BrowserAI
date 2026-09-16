@@ -536,8 +536,14 @@ zero — **plus the two things an exit code does not establish**:
   publish stages into `artifacts\publish-<exe stem>` and is copied in.
 - **`UseSystemResourceKeys` unset**, quoted from `Directory.Build.props`.
 
-⚠️ **EVERY PUBLISH GOES THROUGH `build/New-Release.ps1`, AND IT LEAVES A LOCK
-FILE MODIFIED.** *Added 2026-09-16.* A RID-specific restore adds an empty
+⚠️ **EVERY RELEASE PUBLISH GOES THROUGH `build/New-Release.ps1`, AND IT LEAVES
+A LOCK FILE MODIFIED.** *Added 2026-09-16.* **Corrected the same day (previously
+"EVERY PUBLISH"):** the suite's own published slice is a different publish and is
+refreshed by the command `PublishedSlice`'s refusal prints —
+`dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
+--self-contained`, and the same for `BrowserAI.App` — because the release script
+stages into `artifacts\publish-<exe stem>` and never touches
+`src\<project>\bin\`. **Both leave the same diff.** A RID-specific restore adds an empty
 `"net10.0-windows7.0/win-x64": {}` section to
 [`src/BrowserAI.Core/packages.lock.json`](src/BrowserAI.Core/packages.lock.json)
 — **including the restore this script performs**, watched on a full pack run on

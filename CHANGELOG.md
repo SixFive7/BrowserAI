@@ -388,7 +388,10 @@ release body; nothing else depends on it.
   cannot show it, because it is applied client-side and the served HTML carries
   only the first 1,000 lines of a 3,682-line file. At
   `?plain=1#L3496-L3532`, **exactly 37 elements carried a highlighted class**,
-  which is 3532 − 3496 + 1.
+  which is 3532 − 3496 + 1. The measurement is filed in
+  [`kb/toolchain.md`](kb/toolchain.md) beside the release-body section it belongs
+  to, with what `curl` can and cannot establish and how to re-run it, and it
+  shares re-verification row 128 rather than taking one of its own.
 
 - 📝 **A publish leaves `BrowserAI.Core`'s lock file modified, whichever publish
   it is.** A RID-specific restore adds an empty
@@ -405,7 +408,9 @@ release body; nothing else depends on it.
   between item 7's publish and item 8's run, which is a gate that cannot pass
   after doing what the checklist just told it to do. The two ways it could be
   closed — accept the section as the resolution, or restore `--locked-mode` so a
-  rewrite fails instead of happening quietly — are recorded as open.
+  rewrite fails instead of happening quietly — are recorded as open. The
+  measurement is filed in [`kb/toolchain.md`](kb/toolchain.md) under the NuGet
+  section, with both publishes named and the times they were watched at.
 
 
 ## [1.0.0] - 2026-09-15
