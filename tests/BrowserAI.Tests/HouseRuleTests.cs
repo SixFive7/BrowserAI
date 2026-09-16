@@ -2038,6 +2038,174 @@ internal sealed partial class HouseRuleTests
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);
 
     /// <summary>
+    /// <b>No text file in the tree carries a C0 control byte</b> — nothing below
+    /// <c>0x20</c> but tab, line feed and carriage return.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-16, after three of them were found in one byte
+    /// search.</b> Two were a regex word boundary — <c>backslash-b</c>, typed
+    /// into a file through something that expanded the escape and wrote the
+    /// character it means: <c>0x08</c>, backspace. In
+    /// <see cref="BrowserIdleTimerTests.TheShippedClockIsTheRealOneAndNothingInTheProductReplacesIt"/>
+    /// that turned a scan over every product source file into one that <b>can
+    /// never match anything</b> — the pattern asked for a literal backspace
+    /// before <c>Clock</c>, so the arm asserting that no shipped file assigns the
+    /// clock seam was passing over a result set nothing could ever enter. The
+    /// third was a path in <c>HAZARDS.md</c> prose, where the browsers root
+    /// rendered as <c>BrowserAI</c> followed by <c>rowsers</c>.
+    /// </para>
+    /// <para>
+    /// <b>The failure mode is why this is a scan rather than a habit: the byte is
+    /// invisible.</b> It renders as nothing in every editor, in every diff and in
+    /// every review on GitHub. A reader sees the escape they meant to type where
+    /// the file holds one character that is not it, which is not a mistake
+    /// anybody catches by looking — and a regex that cannot match is a green test
+    /// either way.
+    /// </para>
+    /// <para>
+    /// <b>What counts as text.</b> A file of one of
+    /// <see cref="RepositoryLayout.IsLinkBearing"/>'s kinds is always read, NUL
+    /// included in what is forbidden — those are the kinds this repository writes
+    /// its prose and its code in, and a NUL in one of them is the same defect
+    /// wearing a different byte. Anything else is binary if it holds a NUL in its
+    /// first 8,000 bytes, which is git's own heuristic, and is skipped: today
+    /// that is exactly one file, <c>assets\BrowserAI.ico</c>, and both counts are
+    /// asserted so that a corpus quietly re-classifying itself as binary cannot
+    /// empty this scan.
+    /// </para>
+    /// <para>
+    /// <b>Planted red before it was trusted, twice:</b> against the three real
+    /// offenders, which it named at <c>HAZARDS.md</c> line 145,
+    /// <c>BrowserIdleTimerTests.cs</c> line 978 and <c>SessionToolTests.cs</c>
+    /// line 95; and against the synthetic control below, which is written to disk
+    /// rather than passed as a string so that the reading half is exercised too.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoTextFileInTheTreeCarriesAControlByte()
+    {
+        // The positive control first, so an emptiness that comes from a scan
+        // reading nothing is caught before the emptiness is believed. Both
+        // directions: the file with the byte is named, the file without it is
+        // not, and the message says which byte and where.
+        //
+        // The escapes are C#'s, so THIS file stays clean: the compiler makes the
+        // byte at run time and the scan below reads this file too.
+        using var scratch = ScratchDirectory.Create("control-bytes");
+
+        var planted = Path.Combine(scratch.Path, "planted.md");
+        var clean = Path.Combine(scratch.Path, "clean.md");
+
+        await File.WriteAllTextAsync(planted, "A line.\nA \bword boundary that is not one.\n");
+        await File.WriteAllTextAsync(clean, "A line.\nA \\bword boundary that is one.\n\tTabs and\r\nCRLF are not controls.\n");
+
+        var caught = ControlByteOffences(new FileInfo(planted));
+
+        await Assert.That(caught.Count).IsEqualTo(1);
+        await Assert.That(caught[0]).Contains("0x08");
+        await Assert.That(caught[0]).Contains("line 2");
+        await Assert.That(ControlByteOffences(new FileInfo(clean))).IsEmpty();
+
+        var scanned = 0;
+        var skipped = 0;
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.AllFiles)
+        {
+            if (IsBinary(file))
+            {
+                skipped++;
+                continue;
+            }
+
+            scanned++;
+            offenders.AddRange(ControlByteOffences(file));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // Not vacuous, in both halves. A prune that reached too far, or a
+        // classifier that called everything binary, would satisfy the emptiness
+        // above perfectly.
+        await Assert.That(scanned).IsGreaterThan(250);
+        await Assert.That(skipped).IsLessThan(20);
+    }
+
+    /// <summary>
+    /// Whether a file is binary, and so is not this rule's to read.
+    /// </summary>
+    /// <remarks>
+    /// <b>Git's own heuristic — a NUL in the first 8,000 bytes — and only for the
+    /// kinds this repository does not write prose in.</b> Deciding it by
+    /// extension instead would need a list that goes stale the day a new kind of
+    /// asset is committed, and a stale list here fails in the direction that
+    /// costs most: a false red on a file nobody typed.
+    /// </remarks>
+    /// <param name="file">The file.</param>
+    /// <returns>Whether to skip it.</returns>
+    private static bool IsBinary(FileInfo file)
+    {
+        if (RepositoryLayout.IsLinkBearing(file.Name))
+        {
+            return false;
+        }
+
+        var head = new byte[8000];
+        using var stream = file.OpenRead();
+        var read = stream.ReadAtLeast(head, head.Length, throwOnEndOfStream: false);
+
+        return head.AsSpan(0, read).IndexOf((byte)0) >= 0;
+    }
+
+    /// <summary>
+    /// Every C0 control byte in a file, with where it is and what it probably
+    /// was.
+    /// </summary>
+    /// <remarks>
+    /// <b>The message names the escape, because that is the fix.</b> A reader
+    /// told only "0x08 at line 978" has to work out what a backspace is doing in
+    /// a regex; one who is told it is what a word-boundary escape becomes when
+    /// something expands it has the answer already.
+    /// </remarks>
+    /// <param name="file">The file to read.</param>
+    /// <returns>One line per offending byte.</returns>
+    private static List<string> ControlByteOffences(FileInfo file)
+    {
+        var bytes = File.ReadAllBytes(file.FullName);
+        var offences = new List<string>();
+        var line = 1;
+        var column = 1;
+
+        foreach (var value in bytes)
+        {
+            if (value is 0x0A)
+            {
+                line++;
+                column = 1;
+                continue;
+            }
+
+            if (value is >= 0x20 or 0x09 or 0x0D)
+            {
+                column++;
+                continue;
+            }
+
+            offences.Add(
+                $"{Relative(file)}: byte 0x{value:X2} at line {line}, column {column}"
+                + (value is 0x08
+                    ? " — a backspace, which is what a word-boundary escape becomes when something expands it before the file is written. Whatever carries it does not mean what it reads as."
+                    : " — a C0 control byte. Nothing in this repository's text is written with one."));
+
+            column++;
+        }
+
+        return offences;
+    }
+
+    /// <summary>
     /// <b>What the suite scans is exactly what git says this repository holds</b>
     /// — no file the walk invented, and none it lost.
     /// </summary>

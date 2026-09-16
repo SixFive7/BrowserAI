@@ -118,6 +118,22 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(await File.ReadAllTextAsync(seam.FullName))
             .Contains("public TimeProvider Clock { get; init; } = TimeProvider.System;");
 
+        // ⚠️ THE POSITIVE CONTROL, added 2026-09-16, and it is the reason this
+        // arm moved at all. The pattern below carried a literal 0x08 where a
+        // word-boundary escape was meant — so it asked for a BACKSPACE before
+        // `Clock` and could not match anything in any file. The offender list
+        // below was empty by construction rather than by the product being
+        // clean, and a scan that cannot match is a green test forever. The match
+        // is therefore asserted before the emptiness is believed.
+        await Assert.That(ClockAssignment().IsMatch("            Clock = new ManualClock(),")).IsTrue();
+
+        // And the two shapes it must go on refusing. The declaration's own
+        // initialiser has `{ get; init; }` between the name and the `=`; a
+        // longer identifier ending in the seam's name is what the word boundary
+        // is there for, and it is the half that was doing nothing.
+        await Assert.That(ClockAssignment().IsMatch("    public TimeProvider Clock { get; init; } = TimeProvider.System;")).IsFalse();
+        await Assert.That(ClockAssignment().IsMatch("        var manualClock = new ManualClock();")).IsFalse();
+
         var offenders = RepositoryLayout.ProductSourceFiles
             .Where(file => ClockAssignment().IsMatch(File.ReadAllText(file.FullName)))
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
@@ -975,7 +991,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <summary>
     /// An assignment to the clock seam, as opposed to a mention of it.
     /// </summary>
-    [System.Text.RegularExpressions.GeneratedRegex(@"Clock\s*=[^=]")]
+    [System.Text.RegularExpressions.GeneratedRegex(@"\bClock\s*=[^=]")]
     private static partial System.Text.RegularExpressions.Regex ClockAssignment();
 
 }

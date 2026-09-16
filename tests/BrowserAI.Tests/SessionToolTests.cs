@@ -92,7 +92,7 @@ internal sealed class SessionToolTests
         await Assert.That(text).DoesNotContain("mode: ");
 
         // ⚠️ AND THE ONE PATH IT MUST NO LONGER CARRY. `log:` named
-        // `<session-dir>rowserai.log` on every init answer, and the file is
+        // `<session-dir>\browserai.log` on every init answer, and the file is
         // gone -- so an answer that still named it would send whoever read it to
         // a path that does not exist.
         await Assert.That(text).DoesNotContain("browserai.log");

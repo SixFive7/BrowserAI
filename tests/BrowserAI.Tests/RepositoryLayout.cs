@@ -216,6 +216,36 @@ internal static class RepositoryLayout
     ];
 
     /// <summary>
+    /// Every file the walk reaches, of every kind, filtered by nothing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same walk <see cref="LinkBearingFiles"/> is made of, before the
+    /// extension filter.</b> A rule about <i>bytes</i> rather than about prose
+    /// has no business asking what the extension is first: the defect
+    /// <see cref="HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte"/> exists
+    /// for arrived in a <c>.cs</c> file and in a <c>.md</c> file on the same day,
+    /// and nothing about it says the next one will not arrive in a
+    /// <c>.json</c>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This list is not the one
+    /// <see cref="HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds"/>
+    /// holds against git</b> — that arm compares the extension-filtered subset,
+    /// because both sides of it filter through <see cref="IsLinkBearing"/>. What
+    /// is verified against git is therefore the prose kinds; the rest of this
+    /// list is the walk's word alone. The direction of that gap is the safe one
+    /// for a scan that asserts an absence — a file the walk invents is one more
+    /// file checked, never one fewer.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<FileInfo> AllFiles { get; } =
+    [
+        .. Walk(Root, atRoot: true)
+            .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
+    ];
+
+    /// <summary>
     /// Whether a path names one of the file kinds
     /// <see cref="LinkBearingFiles"/> is made of.
     /// </summary>

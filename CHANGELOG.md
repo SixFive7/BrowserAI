@@ -240,6 +240,38 @@ release body; nothing else depends on it.
   the shipping title may point into the scratch root, `BrowserAI (suite).lnk`
   may not outlive its own uninstall, and the whole set must be byte-identical
   across the run.
+- 🐛 **Three invisible backspace bytes are gone, and one of them had silenced a
+  whole scan.** A byte search over everything git tracks found `0x08` in three
+  files, each of them a `\b` that something expanded before the file was written.
+  The expensive one was `BrowserIdleTimerTests.ClockAssignment`, whose pattern
+  asked for a **literal backspace** before `Clock` — so
+  `TheShippedClockIsTheRealOneAndNothingInTheProductReplacesIt`, the arm that
+  exists because a test clock leaking into a shipped build stops the only timer
+  in the product from ever firing and **nothing anywhere would go red**, was
+  asserting emptiness over a result set nothing could enter. The scan is
+  re-pointed and carries a positive control it is asserted against before the
+  emptiness is believed; over the product tree it still finds nothing, which is
+  now a measurement rather than an artefact. The other two were prose: a comment
+  in `SessionToolTests` and the browsers root in [`HAZARDS.md`](HAZARDS.md), both
+  reading `BrowserAI` followed by `rowsers` where `BrowserAI\browsers\` was
+  meant. The hazard row is a dated record maintained by addition and the path was
+  repaired in place, because restoring a character a tool ate is a typo-class
+  correction and not a change to what the row claims.
+
+- ✅ **No text file in the tree may carry a C0 control byte.**
+  `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` reads every file the
+  walk reaches and refuses anything below `0x20` but tab, line feed and carriage
+  return. **The byte is invisible in every editor, every diff and every review**,
+  which is why this is a mechanism rather than a habit: a reader sees the escape
+  they meant to type where the file holds one character that is not it, and a
+  regex that cannot match is a green test forever. A file of one of the prose
+  kinds is always read, NUL included; anything else is binary by git's own
+  heuristic — a NUL in the first 8,000 bytes — and is skipped, which today is
+  `assets\BrowserAI.ico` and nothing else. Both counts are asserted, so a corpus
+  quietly re-classifying itself as binary cannot empty the scan, and the control
+  is written to disk rather than passed as a string so the reading half is
+  exercised too.
+
 
 ## [1.0.0] - 2026-09-15
 
