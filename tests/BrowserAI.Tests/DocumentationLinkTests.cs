@@ -87,7 +87,7 @@ internal sealed partial class DocumentationLinkTests
     /// shows it, not necessarily into a directory the scan already reads.
     /// </summary>
     private static readonly string[] HandWrittenDirectories =
-        ["src", "tests", "build", "kb", ".claude", ".github"];
+        ["src", "tests", "build", "kb", "assets", ".claude", ".github"];
 
     [Test]
     public async Task EveryRelativeLinkResolvesToSomethingThatExists()
@@ -370,17 +370,220 @@ internal sealed partial class DocumentationLinkTests
     public async Task TheAssetExclusionHidesNothing()
     {
         // NotThisRepositorysKind is justified by a fact about the tree, not by
-        // taste, so the fact is asserted rather than remembered. The day an
-        // image is committed this goes red, and the honest fix is to delete the
-        // entry -- never to add the new file's directory to an ignore list.
-        var assets = RepositoryLayout.LinkBearingFiles
+        // taste, so the fact is asserted rather than remembered.
+        //
+        // ⚠️ THE FACT CHANGED ON 2026-09-16 AND THE OLD ONE HAD ALREADY GONE
+        // QUIET. It read "the repository tracks no file of these kinds", and its
+        // own comment said the day an image was committed this would go red.
+        // It did not: `assets\BrowserAI.ico` was committed on 2026-09-15 and
+        // this arm never saw it, because `assets` was not one of the directories
+        // Walk() looks in. The claim was true of everywhere it looked and false
+        // of the repository.
+        //
+        // What is asserted now is the property the exclusion actually needs:
+        // every file of an excluded kind lives in `assets\`, and every
+        // reference to one is resolved by
+        // EveryAssetReferenceInTheProseResolvesToTheFileItNames. An asset
+        // ANYWHERE ELSE is outside both, which is the hole this closes.
+        var directory = "assets" + Path.DirectorySeparatorChar;
+
+        var stray = RepositoryLayout.LinkBearingFiles
             .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
             .Concat(Walk())
             .Where(path => NotThisRepositorysKind.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
+            .Where(path => !path.StartsWith(directory, StringComparison.OrdinalIgnoreCase))
+            .Select(path => $"{path}: a file of a kind the link scan skips, outside the assets directory, where nothing resolves a reference to it")
+            .Order(StringComparer.Ordinal)
             .ToList();
 
-        await Assert.That(string.Join(Environment.NewLine, assets)).IsEmpty();
+        await Assert.That(string.Join(Environment.NewLine, stray)).IsEmpty();
+
+        // And the place it excuses is a real one with things in it, so the
+        // exemption above is narrow rather than vacuous.
+        var kept = Walk()
+            .Count(path => path.StartsWith(directory, StringComparison.OrdinalIgnoreCase)
+                && NotThisRepositorysKind.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase));
+
+        await Assert.That(kept).IsGreaterThan(3);
     }
+
+    /// <summary>
+    /// <b>Every reference to an asset in this repository's prose resolves to the
+    /// file it names</b> — Markdown's own image syntax, the plain links, and the
+    /// HTML <c>src</c> and <c>href</c> attributes the prose uses for layout.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-16, when this repository started carrying assets and
+    /// showing one.</b> <see cref="NotThisRepositorysKind"/> takes every asset
+    /// extension out of <see cref="EveryRelativeLinkResolvesToSomethingThatExists"/>,
+    /// and that was safe for exactly as long as the tree held no asset. It holds
+    /// five now — an icon in three forms, its master and a social preview — and
+    /// <c>README.md</c> shows one of them at the top of the page, which is the
+    /// first image this project has ever published. Without this arm the whole
+    /// set was outside every check the suite makes: a rename would have broken
+    /// the front page of the repository and nothing would have said so.
+    /// </para>
+    /// <para>
+    /// <b>Markdown files only, and the line is principled rather than
+    /// convenient.</b> A <c>.md</c> file's link is a link. A <c>.cs</c> file's
+    /// string literal is data — <c>LosslessPassthroughTests</c> carries an
+    /// upstream tool result naming a screenshot that this repository is forbidden
+    /// to rewrite, and this file carries three controls of its own. Resolving
+    /// those would be reading somebody else's document as though it were ours,
+    /// which is the same mistake <see cref="OutsideCodeSpans"/> exists to avoid
+    /// one layer down.
+    /// </para>
+    /// <para>
+    /// <b>The HTML half is not decoration.</b> An image that has to sit BESIDE a
+    /// heading cannot be written in Markdown at all — there is no width, no
+    /// height and no float in the syntax — so the one image this repository
+    /// publishes is an <c>&lt;img&gt;</c> tag, and a scan that read only the
+    /// Markdown shape would have covered everything except the file it was
+    /// written for.
+    /// </para>
+    /// <para>
+    /// <b>Planted red before it was trusted</b>, by pointing <c>README.md</c> at
+    /// a file one character away from the one that is there.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryAssetReferenceInTheProseResolvesToTheFileItNames()
+    {
+        // ⚠️ THE CONTROLS ARE BUILT AT RUN TIME FROM CHARACTER CONSTANTS, and
+        // that is the same rule this file already keeps for its regex remarks:
+        // a literal here that spelled a real reference would be read by this
+        // very scan when it reaches this file -- and, unlike a `.cs` file, a
+        // `.md` one is in the corpus. Written this way, no line below is a
+        // reference to anything.
+        const char Bang = '!';
+        const char Quote = '"';
+
+        using var scratch = ScratchDirectory.Create("asset-references");
+
+        var present = Path.Combine(scratch.Path, "there.png");
+        await File.WriteAllBytesAsync(present, [0x89, 0x50, 0x4E, 0x47]);
+
+        var document = Path.Combine(scratch.Path, "prose.md");
+
+        await File.WriteAllTextAsync(
+            document,
+            $"{Bang}[shown](there.png)\n"
+            + $"<img src={Quote}there.png{Quote} width={Quote}96{Quote}>\n"
+            + "[the master](there.png)\n"
+            + $"<a href={Quote}there.png{Quote}>a link</a>\n"
+            + $"{Bang}[missing](gone.png)\n"
+            + $"<img src={Quote}https://example.invalid/remote.png{Quote}>\n"
+            + $"[prose](RepositoryLayout.cs) and `{Bang}[quoted](quoted.png)` stay out of it\n");
+
+        var control = AssetReferences(new FileInfo(document));
+
+        // Four resolve, one does not, the absolute URL is somebody else's, the
+        // ordinary prose link belongs to the other scan, and the quoted one is
+        // not a reference at all.
+        await Assert.That(control.Select(reference => reference.Target).Order(StringComparer.Ordinal))
+            .IsEquivalentTo(["gone.png", "there.png", "there.png", "there.png", "there.png"]);
+
+        var missed = Unresolved(control);
+
+        await Assert.That(missed.Count).IsEqualTo(1);
+        await Assert.That(missed[0]).Contains("gone.png");
+
+        // ---- and now the tree ----------------------------------------------
+        var found = new List<(FileInfo File, string Line, int Number, string Target)>();
+
+        foreach (var file in RepositoryLayout.LinkBearingFiles.Where(IsMarkdown))
+        {
+            found.AddRange(AssetReferences(file));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, Unresolved(found))).IsEmpty();
+
+        // Not vacuous. The front page's own icon is one of these, so a scan that
+        // found nothing would be a scan that stopped reading rather than a tree
+        // with nothing in it.
+        await Assert.That(found.Count).IsGreaterThan(4);
+    }
+
+    /// <summary>
+    /// Every reference in one Markdown file that names a file in this repository
+    /// rather than a document: an image, an HTML attribute, or a link whose
+    /// target is one of <see cref="NotThisRepositorysKind"/>.
+    /// </summary>
+    /// <param name="file">The Markdown file to read.</param>
+    /// <returns>The file, the line, its 1-based number, and the target.</returns>
+    private static List<(FileInfo File, string Line, int Number, string Target)> AssetReferences(FileInfo file)
+    {
+        var found = new List<(FileInfo, string, int, string)>();
+        var lines = File.ReadAllLines(file.FullName);
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            // RAW text with code spans blanked, for the reason on this class: a
+            // reference somebody QUOTED is not a reference somebody MADE.
+            var line = OutsideCodeSpans(lines[index]);
+
+            var targets = ImageLink().Matches(line).Cast<Match>()
+                .Concat(HtmlReference().Matches(line).Cast<Match>())
+                .Select(match => match.Groups["target"].Value)
+                .Concat(MarkdownLink().Matches(line).Cast<Match>()
+                    .Select(match => match.Groups["target"].Value)
+                    .Where(target => NotThisRepositorysKind.Contains(
+                        Path.GetExtension(target.Split('#', 2)[0]), StringComparer.OrdinalIgnoreCase)));
+
+            foreach (var target in targets.Distinct(StringComparer.Ordinal))
+            {
+                // An absolute URL is somebody else's to keep working, exactly as
+                // it is for the link scan.
+                if (Uri.TryCreate(target, UriKind.Absolute, out _) || target.StartsWith('#'))
+                {
+                    continue;
+                }
+
+                found.Add((file, lines[index], index + 1, target.Split('#', 2)[0]));
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>Which of a set of references name nothing that is there.</summary>
+    /// <param name="references">What was found.</param>
+    /// <returns>One message per reference that does not resolve.</returns>
+    private static List<string> Unresolved(List<(FileInfo File, string Line, int Number, string Target)> references) =>
+    [
+        .. references
+            .Where(reference => !File.Exists(Path.GetFullPath(Path.Combine(
+                reference.File.DirectoryName!,
+                reference.Target.Replace('/', Path.DirectorySeparatorChar)))))
+            .Select(reference => Offence(
+                reference.File,
+                reference.Number,
+                reference.Line,
+                $"'{reference.Target}' names a file that is not there")),
+    ];
+
+    /// <summary>A Markdown image reference's target.</summary>
+    /// <remarks>
+    /// The exclamation mark is required and is the whole difference from
+    /// <see cref="MarkdownLink"/>: a link to a document is that scan's, and an
+    /// image is this one's whatever its extension.
+    /// </remarks>
+    [GeneratedRegex(@"!\[[^\]]*\]\((?<target>[^)\s]+)\)")]
+    private static partial Regex ImageLink();
+
+    /// <summary>
+    /// An HTML <c>src</c> or <c>href</c> attribute's value.
+    /// </summary>
+    /// <remarks>
+    /// <b>The attribute rather than the tag</b>, because the tags that can carry
+    /// one are not a closed set — <c>img</c>, <c>a</c>, <c>source</c>,
+    /// <c>image</c> — and a scan anchored on a tag name is one tag away from
+    /// seeing nothing.
+    /// </remarks>
+    [GeneratedRegex(@"(?:src|href)\s*=\s*(?<quote>[\x22\x27])(?<target>[^\x22\x27]+)\k<quote>")]
+    private static partial Regex HtmlReference();
 
     /// <summary>
     /// A line with every inline code span blanked, so that a link somebody

@@ -1169,4 +1169,234 @@ internal sealed class ReleaseScriptTests
         // object is disposed on the way out of the using.
         return (process.ExitCode, verdict, captured.ToString());
     }
+    /// <summary>
+    /// <b>The icon that ships is the one the maintainer chose, in the shape
+    /// Windows needs it in.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-09-16, when the icon stopped being a placeholder.</b>
+    /// <c>assets\BrowserAI.ico</c> is candidate 3 of the ten drawn on 2026-09-15
+    /// — a globe with a reading eye — chosen by the maintainer (Q196), and it is
+    /// carried by both executables, the Setup stub, the Add/Remove entry and the
+    /// Start Menu shortcut. One file, and nothing else changes with it.
+    /// </para>
+    /// <para>
+    /// <b>What is asserted is the SHAPE, not the drawing.</b> A test that the
+    /// 256 entry is a render of <c>icon.svg</c> would mean rasterising an SVG on
+    /// every build — a browser, a renderer and a pixel comparison, to answer a
+    /// question a person answers by looking. So the line that says <i>this is the
+    /// right picture</i> is
+    /// [the pre-cut check in RELEASING.md](../../RELEASING.md#7-build-clean),
+    /// and what a run can hold is that the file is a four-entry icon with the
+    /// sizes Windows asks for, 16, 32 and 48 as 32-bit DIBs and 256 as a
+    /// PNG-compressed entry, and that the master raster beside it really is
+    /// 256×256.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The planted red is a doctored file rather than the old
+    /// placeholder</b>, and that is worth saying plainly. Candidate 1, which sat
+    /// here until today, was packed by the same script and has the <b>same</b>
+    /// directory shape — four entries, the same sizes, the same payload kinds —
+    /// so swapping it back in would not move one assertion here. A check that
+    /// cannot fail against the file it replaced is not evidence, so the controls
+    /// below take the real bytes and break one property each: the entry count,
+    /// the payload kind of the 256, the bit depth of the 16, the doubled height a
+    /// mask entry declares, and the dimensions in a PNG's own header.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheShippedIconIsTheOneTheMaintainerChose()
+    {
+        var assets = Path.Combine(RepositoryLayout.Root.FullName, "assets");
+        var ico = await File.ReadAllBytesAsync(Path.Combine(assets, "BrowserAI.ico"));
+
+        await Assert.That(string.Join(Environment.NewLine, IconOffences(ico))).IsEmpty();
+
+        // The three rasters the repository publishes, each at the size its name
+        // claims. The social preview's is GitHub's own recommended size and the
+        // reason it is pinned: that setting silently letterboxes anything else.
+        await Assert.That(PngSize(await File.ReadAllBytesAsync(Path.Combine(assets, "icon-256.png")))).IsEqualTo((256, 256));
+        await Assert.That(PngSize(await File.ReadAllBytesAsync(Path.Combine(assets, "icon-128.png")))).IsEqualTo((128, 128));
+        await Assert.That(PngSize(await File.ReadAllBytesAsync(Path.Combine(assets, "social-preview.png")))).IsEqualTo((1280, 640));
+
+        // ---- the doctored-file controls ------------------------------------
+        // Each takes the real bytes and breaks exactly one property, so a check
+        // that stopped reading would fail these rather than passing everything.
+        await Assert.That(string.Join(" ", IconOffences(Doctored(ico, 4, 3)))).Contains("4 entries");
+        await Assert.That(string.Join(" ", IconOffences(Doctored(ico, EntryOffset(ico, 3), 0x42)))).Contains("is not PNG-compressed");
+        await Assert.That(string.Join(" ", IconOffences(Doctored(ico, 6 + 6, 8)))).Contains("bits per pixel");
+        await Assert.That(string.Join(" ", IconOffences(Doctored(ico, EntryOffset(ico, 0) + 8, 16)))).Contains("doubled height");
+
+        // And the raster half, which is one field in one header away from being
+        // a check that reads nothing.
+        var png = await File.ReadAllBytesAsync(Path.Combine(assets, "icon-256.png"));
+
+        await Assert.That(PngSize(Doctored(png, 19, 0xFF))).IsNotEqualTo((256, 256));
+    }
+
+    /// <summary>The four bytes every PNG opens with.</summary>
+    private static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47];
+
+    /// <summary>A copy of some bytes with one of them replaced.</summary>
+    /// <param name="bytes">The original.</param>
+    /// <param name="at">Which byte to replace.</param>
+    /// <param name="value">What to put there.</param>
+    /// <returns>The doctored copy.</returns>
+    private static byte[] Doctored(byte[] bytes, int at, byte value)
+    {
+        var copy = bytes.ToArray();
+        copy[at] = value;
+        return copy;
+    }
+
+    /// <summary>Where one directory entry's payload begins.</summary>
+    /// <param name="ico">The icon file.</param>
+    /// <param name="index">The 0-based entry.</param>
+    /// <returns>The offset.</returns>
+    private static int EntryOffset(byte[] ico, int index) =>
+        (int)BitConverter.ToUInt32(ico, 6 + (16 * index) + 12);
+
+    /// <summary>
+    /// Everything wrong with an icon file, as sentences.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read out of the bytes rather than through <c>System.Drawing</c>.</b>
+    /// The loader answers <i>a 32×32 icon came back</i> for a file with any
+    /// usable entry in it at all, which is exactly the question that does not
+    /// need asking: what a shell, a task dialog and an Add/Remove list need is
+    /// the specific sizes, and a file missing the 256 looks perfect to a loader
+    /// and blurred on a 4K display.
+    /// </remarks>
+    /// <param name="ico">The file's bytes.</param>
+    /// <returns>One line per defect.</returns>
+    private static List<string> IconOffences(byte[] ico)
+    {
+        var offences = new List<string>();
+
+        if (ico.Length < 6)
+        {
+            return ["the file is too short to carry an icon directory at all"];
+        }
+
+        if (BitConverter.ToUInt16(ico, 0) is not 0 || BitConverter.ToUInt16(ico, 2) is not 1)
+        {
+            offences.Add("the header is not 'reserved 0, type 1', so this is not an icon file");
+        }
+
+        var count = BitConverter.ToUInt16(ico, 4);
+
+        // 16, 32 and 48 are what the shell asks for at every DPI a taskbar and
+        // an Add/Remove list use; 256 is what Windows scales from above that.
+        int[] expected = [16, 32, 48, 256];
+
+        if (count != expected.Length)
+        {
+            offences.Add($"the directory declares {count} entries and this icon must carry {expected.Length} entries: {string.Join(", ", expected)}");
+            return offences;
+        }
+
+        for (var index = 0; index < count; index++)
+        {
+            var at = 6 + (16 * index);
+            var size = expected[index];
+
+            // 0 in the width and height bytes IS 256 -- the field is one byte,
+            // so 256 could not be written in it and the format spells it zero.
+            var declared = ico[at] is 0 ? 256 : ico[at];
+            var declaredHeight = ico[at + 1] is 0 ? 256 : ico[at + 1];
+
+            if (declared != size || declaredHeight != size)
+            {
+                offences.Add($"entry {index} declares {declared}x{declaredHeight} where {size}x{size} is required");
+                continue;
+            }
+
+            if (BitConverter.ToUInt16(ico, at + 4) is not 1 || BitConverter.ToUInt16(ico, at + 6) is not 32)
+            {
+                offences.Add($"entry {index} ({size}) declares {BitConverter.ToUInt16(ico, at + 6)} bits per pixel in {BitConverter.ToUInt16(ico, at + 4)} planes, and every entry here is 32-bit in one plane");
+                continue;
+            }
+
+            var length = (int)BitConverter.ToUInt32(ico, at + 8);
+            var offset = (int)BitConverter.ToUInt32(ico, at + 12);
+
+            if (offset < 0 || length < 0 || offset + length > ico.Length)
+            {
+                offences.Add($"entry {index} ({size}) points at bytes {offset}..{offset + length} and the file is {ico.Length} bytes long");
+                continue;
+            }
+
+            var payload = ico.AsSpan(offset, length);
+
+            if (size is 256)
+            {
+                // The Vista+ PNG-compressed entry, and the reason the file is
+                // 46 KB rather than 300: a 256 DIB is a quarter of a megabyte on
+                // its own.
+                if (!payload.StartsWith(PngSignature))
+                {
+                    offences.Add($"entry {index} (256) is not PNG-compressed, and a 256 written as a DIB is a quarter of a megabyte of icon");
+                    continue;
+                }
+
+                var (width, height) = PngSize(payload.ToArray());
+
+                if ((width, height) is not (256, 256))
+                {
+                    offences.Add($"entry {index}'s PNG says it is {width}x{height} and the directory says 256x256");
+                }
+
+                continue;
+            }
+
+            if (BitConverter.ToUInt32(ico, offset) is not 40)
+            {
+                offences.Add($"entry {index} ({size}) does not open with a 40-byte BITMAPINFOHEADER");
+                continue;
+            }
+
+            if (BitConverter.ToUInt16(ico, offset + 14) is not 32)
+            {
+                offences.Add($"entry {index} ({size}) declares a bit depth of {BitConverter.ToUInt16(ico, offset + 14)} in its own header, and the directory says 32");
+                continue;
+            }
+
+            // The doubled height is not a curiosity: it is how a DIB entry says
+            // it carries an AND mask after the colour rows, and a header that
+            // says `size` rather than `size * 2` makes Windows read the bottom
+            // half of the image as the mask.
+            if (BitConverter.ToInt32(ico, offset + 8) != size * 2)
+            {
+                offences.Add($"entry {index} ({size}) declares a height of {BitConverter.ToInt32(ico, offset + 8)} where a mask entry declares the doubled height {size * 2}");
+            }
+        }
+
+        return offences;
+    }
+
+    /// <summary>
+    /// What a PNG's own <c>IHDR</c> says its dimensions are.
+    /// </summary>
+    /// <remarks>
+    /// Eight signature bytes, a four-byte length, the four-byte chunk type, then
+    /// two big-endian dimensions. Read rather than decoded: nothing here needs a
+    /// codec, and a reader that cannot be handed a corrupt image is a reader a
+    /// control cannot be planted against.
+    /// </remarks>
+    /// <param name="png">The file's bytes.</param>
+    /// <returns>The width and the height.</returns>
+    private static (int Width, int Height) PngSize(byte[] png)
+    {
+        if (png.Length < 24 || !png.AsSpan(0, 4).SequenceEqual(PngSignature))
+        {
+            return (0, 0);
+        }
+
+        return (
+            System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16, 4)),
+            System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20, 4)));
+    }
+
 }

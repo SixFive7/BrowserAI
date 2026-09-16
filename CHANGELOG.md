@@ -36,6 +36,73 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+### Added
+
+- 📦 **BrowserAI has an icon, and it is candidate 3 of the ten drawn on
+  2026-09-15.** A globe with a reading eye, chosen by the maintainer on
+  2026-09-16 (Q196): `browser_snapshot` and `browser_take_screenshot` are the two
+  things this server does most, so an icon about perception is the honest
+  emphasis. [`assets/BrowserAI.ico`](assets/BrowserAI.ico) replaces the candidate
+  1 placeholder and is one file — both executables, the Setup stub, the
+  Add/Remove entry and the Start Menu shortcut carry it, and nothing else
+  changed. It is four entries: 16, 32 and 48 as 32-bit BGRA `BITMAPINFOHEADER`
+  DIBs with an all-zero mask, and 256 as the PNG file verbatim, which is what
+  keeps the file at 46,729 bytes instead of a third of a megabyte. **Each raster
+  is rendered natively at its own size** by headless Chromium's vector
+  rasteriser rather than downscaled from the 256. The master is persisted beside
+  it as [`assets/icon.svg`](assets/icon.svg), with
+  [`assets/icon-256.png`](assets/icon-256.png),
+  [`assets/icon-128.png`](assets/icon-128.png) — which
+  [`README.md`](README.md) now shows beside its title, the first image this
+  project has ever published — and
+  [`assets/social-preview.png`](assets/social-preview.png) at 1280×640 for the
+  repository's **Social preview** setting, which has no API and reaches the world
+  only when the maintainer drags the file into that field.
+  [`assets/README.md`](assets/README.md) records what each file is, how it was
+  made and what holds it. **Every one of them is original work**: SVG primitives
+  drawn from scratch, no `<text>`, no `<image>`, no web font, no third-party
+  mark and no glyph taken from a typeface — the social preview's lettering is
+  rasterised system text and is the one asset whose look depends on the machine
+  that rendered it.
+
+- ✅ **Every asset reference in the prose resolves, and the exclusion hiding
+  them is narrowed.**
+  `DocumentationLinkTests.NotThisRepositorysKind` takes every asset extension out
+  of the link scan, and it was justified by an assertion that the repository
+  tracked no such file — which **had already gone quiet**: `assets\BrowserAI.ico`
+  was committed on 2026-09-15 and `TheAssetExclusionHidesNothing` never saw it,
+  because `assets` was not one of the directories that arm walked. The claim was
+  true of everywhere it looked and false of the repository.
+  `EveryAssetReferenceInTheProseResolvesToTheFileItNames` now resolves every
+  image, every asset-kind link and every HTML `src` and `href` in every `.md`
+  file — the HTML half is not decoration, because an image that has to sit
+  **beside** a heading cannot be written in Markdown at all, so the one image
+  this repository publishes is an `<img>` tag a Markdown-only scan would have
+  missed entirely. `TheAssetExclusionHidesNothing` now asserts the property the
+  exclusion actually needs: that every file of an excluded kind lives in
+  `assets\`, where something resolves references to it. Planted red by pointing
+  `README.md` at a file one character away from the one that is there, and again
+  with a stray asset outside `assets\`.
+
+- ✅ **The shipped icon's shape is a gate, and its planted red is a doctored
+  file.**
+  `ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose` reads the icon
+  directory out of the bytes — four entries, the sizes in order, 32-bit in one
+  plane, a 40-byte `BITMAPINFOHEADER` declaring the **doubled** height a mask
+  entry declares, and a PNG-compressed 256 whose own `IHDR` agrees with the
+  directory — and holds the three published rasters at the sizes their names
+  claim. Not through `System.Drawing`, which answers *a 32×32 icon came back* for
+  any file with one usable entry in it: a file missing the 256 looks perfect to a
+  loader and blurred on a 4K display. **Candidate 1 had the identical directory
+  shape**, so putting it back would not have moved one assertion — a check that
+  cannot fail against the file it replaced is not evidence — so the controls take
+  the real bytes and break one property each. The arm was also watched red
+  against the real file with its entry count doctored from four to three.
+  [`RELEASING.md`](RELEASING.md) item 7 now names candidate 3 and the two files
+  that must agree, and says plainly that **nothing holds the drawing in the
+  `.ico` to be the drawing in the SVG** — that is a render comparison on every
+  build to answer a question a person answers by looking.
+
 ### Fixed
 
 - 📝 **Six stale sentences are corrected and one new hazard is written down.** The

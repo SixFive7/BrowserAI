@@ -154,10 +154,12 @@ $publishes = @(
 # The icon every artifact carries: the Setup stub, the Add/Remove entry, the
 # Start Menu shortcut and both executables.
 #
-# ⚠️ IT IS A PLACEHOLDER UNTIL THE MAINTAINER CHOOSES. Ten candidates were
-# drawn on 2026-09-15 and candidate 1 is copied in so that the packaging is
-# complete and exercised; the winner replaces this ONE FILE and nothing else
-# changes. RELEASING.md carries a pre-cut check that says so.
+# ⚠️ IT IS CANDIDATE 3 OF THE TEN DRAWN ON 2026-09-15 -- a globe with a reading
+# eye, chosen by the maintainer on 2026-09-16 (Q196). Corrected 2026-09-16
+# (previously "IT IS A PLACEHOLDER UNTIL THE MAINTAINER CHOOSES ... candidate 1
+# is copied in so that the packaging is complete and exercised"). It was one
+# file then and it is one file now; RELEASING.md carries the pre-cut check, and
+# ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose holds its shape.
 $icon = Join-Path $root 'assets' 'BrowserAI.ico'
 if (-not $OutputDir) { $OutputDir = Join-Path $root 'Releases' }
 if (-not $ArchiveDir) { $ArchiveDir = Join-Path $OutputDir 'archive' }

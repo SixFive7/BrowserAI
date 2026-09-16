@@ -484,13 +484,31 @@ reviewed pairs plus `ReVerificationIndexTests`' result.
 
 ### 7. Build clean
 
-⚠️ **THE ICON IS A PLACEHOLDER AND THIS IS THE PRE-CUT CHECK FOR IT.** *Added
-2026-09-15.* `assets/BrowserAI.ico` is candidate 1 of the ten drawn that day and
-is wired into both executables, the Setup stub, the Add/Remove entry and the
-Start Menu shortcut. **Before a release is cut, confirm with the maintainer that
-the icon in the tree is the one he chose.** It is one file and nothing else
-changes with it; nothing in the build can tell a chosen icon from a placeholder,
-which is exactly why this is a line a person reads.
+⚠️ **THE ICON IS THE CHOSEN ONE AND THIS IS THE PRE-CUT CHECK FOR IT.** *Added
+2026-09-15; the placeholder was replaced 2026-09-16.* **Corrected 2026-09-16
+(previously "THE ICON IS A PLACEHOLDER … `assets/BrowserAI.ico` is candidate 1
+of the ten drawn that day").** [`assets/BrowserAI.ico`](assets/BrowserAI.ico) is
+**candidate 3** — a globe with a reading eye — chosen by the maintainer on
+2026-09-16 (Q196), and it is wired into both executables, the Setup stub, the
+Add/Remove entry and the Start Menu shortcut. **Before a release is cut, confirm
+that the two files still agree**: `assets/BrowserAI.ico` and
+[`assets/icon.svg`](assets/icon.svg), which is the master the raster was rendered
+from. `ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose` holds the
+`.ico`'s **shape** — four entries, 16/32/48 as 32-bit DIBs and 256 as a
+PNG-compressed entry — and that `icon-256.png` is 256×256; **nothing holds that
+the drawing in the `.ico` is the drawing in the SVG**, because that is a render
+comparison on every build to answer a question a person answers by looking.
+That is what this line is for. *(Its planted red is a **doctored-file** control
+rather than the old placeholder, and that is stated where it lives: candidate 1
+was packed by the same script and has the identical directory shape, so putting
+it back would not move one assertion.)*
+
+📣 **The social preview is uploaded by hand and only the maintainer can do it.**
+[`assets/social-preview.png`](assets/social-preview.png) is 1280×640, which is
+the size GitHub's **Settings → General → Social preview** field expects; there is
+no API for that setting and no file in the repository that supplies it, so a new
+one only reaches the world when somebody drags it into that field. The file in
+the tree is the record of what was uploaded, not the mechanism.
 
 NativeAOT publish, analyzers at error severity. **A warning-as-error is a red
 build**, and a severity is never weakened to make code pass. ILC output empty.
