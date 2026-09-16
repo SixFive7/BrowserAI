@@ -744,8 +744,8 @@ internal sealed partial class ChangelogTests
     }
 
     /// <summary>
-    /// A section becomes a body: the preamble, the groups, a headline a line,
-    /// and every detail behind a fold.
+    /// A section becomes a body: the preamble, the groups, and one line per
+    /// entry carrying its own line range in the tagged changelog.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -756,17 +756,26 @@ internal sealed partial class ChangelogTests
     /// full, which is the only way an exact assertion is readable.
     /// </para>
     /// <para>
-    /// <b>The indentation and the blank lines are load-bearing</b>: two spaces
-    /// put the fold inside the list ITEM rather than ending the list, and a blank
-    /// line on each side of the <c>&lt;summary&gt;</c> is what makes GitHub parse
-    /// the inside as Markdown instead of as the inside of an HTML block. Verified
-    /// against GitHub's own renderer rather than assumed — see
-    /// [the pre-publish check](../../RELEASING.md#the-release-body-is-generated-and-its-rendering-is-checked-before-it-is-published).
+    /// ⚠️ <b>ONE SHAPE SINCE 2026-09-16, the maintainer's choice (Q197 b)</b> —
+    /// <i>previously the detail was emitted behind an HTML <c>&lt;details&gt;</c>
+    /// fold, and this arm asserted the two spaces and the blank lines that made
+    /// GitHub parse the inside of it as Markdown.</i> The fold is gone: a release
+    /// body now points AT the record instead of copying it, so there is no
+    /// second copy of the detail to get the indentation of wrong.
+    /// </para>
+    /// <para>
+    /// <b>The two ranges are the assertion.</b> The fixture's first entry spans
+    /// <b>four</b> lines — a bullet, a continuation, a blank and a second
+    /// paragraph — and its range is <c>L16-L19</c>, which is the half that
+    /// proves the blank line inside an entry is kept and the blank line
+    /// <i>after</i> it is not. The second entry is one line and reads
+    /// <c>L23-L23</c>. Both are line numbers in the FILE rather than in the
+    /// section, which is the only thing a reader's browser can resolve.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AVersionSectionBecomesHeadlinesWithTheDetailFolded()
+    public async Task AVersionSectionBecomesHeadlinesEachLinkedToItsOwnLineRange()
     {
         using var scratch = ScratchDirectory.Create("release-notes");
         var changelog = await WriteAsync(scratch, "CHANGELOG.md", Fixture);
@@ -775,26 +784,18 @@ internal sealed partial class ChangelogTests
         var run = await RunScriptAsync(NotesScript, "-Path", changelog, "-Version", "9.9.9", "-Destination", body);
 
         await Assert.That(run.ExitCode).IsEqualTo(0);
-        await Assert.That(run.StandardOutput).Contains("folded");
+        await Assert.That(run.StandardOutput).Contains("LINKED");
 
         var expected = """
             A preamble sentence wrapped over two lines.
 
             ### Added
 
-            - ✨ **A new thing.**
-
-              <details><summary>read more</summary>
-
-              It does a thing, over two lines.
-
-              And a second paragraph.
-
-              </details>
+            - ✨ **A new thing.** [read more](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md?plain=1#L16-L19)
 
             ### Fixed
 
-            - 🐛 **An old thing was wrong.**
+            - 🐛 **An old thing was wrong.** [read more](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md?plain=1#L23-L23)
 
             ---
 
@@ -815,14 +816,27 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// <b>GitHub's release body limit is 125,000 characters</b>
     /// ([FLOATS](../../kb/re-verification.md): it is their field and they can
-    /// move it), and the 1.0.0 section folded comes to **280,063** — so this is
-    /// not a defensive branch, it is the branch this release takes.
+    /// move it).
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is a PATHOLOGICAL fallback now and it used to be the branch this
+    /// release took</b> — <i>previously "the 1.0.0 section folded comes to
+    /// <b>280,063</b> — so this is not a defensive branch, it is the branch this
+    /// release takes".</i> Re-measured 2026-09-16 over the section as it stands:
+    /// the old folded shape is <b>288,437</b> characters and would have fallen
+    /// back to <b>19,780</b> — headlines with nothing to click. The linked shape
+    /// is <b>41,288</b>, a third of the limit, with a line range on every one of
+    /// the 227 entries. So the release that provoked this guard no longer
+    /// reaches it, and reaching it now takes a release several times the size of
+    /// anything this project has cut.
     /// </para>
     /// <para>
     /// <b>The fallback is driven by a small limit rather than a huge fixture</b>,
     /// which is the same document through the same code and costs nothing to
-    /// read. The control is the arm above, which produces the folded shape from
-    /// the same fixture.
+    /// read. The control is the arm above, which produces the linked shape from
+    /// the same fixture — and what this one asserts is that the links are gone
+    /// entirely rather than truncated, leaving the footer's section link as the
+    /// only way in.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -859,10 +873,154 @@ internal sealed partial class ChangelogTests
 
         await Assert.That(Lf(await File.ReadAllTextAsync(body))).IsEqualTo(Lf(expected));
 
-        // The detail is not in the body at all, which is the whole cost of this
-        // shape and is why the script says so out loud rather than quietly
-        // producing a different document.
+        // The detail is not in the body at all, and neither is a way to reach
+        // one entry of it -- which is the whole cost of this shape and is why
+        // the script says so out loud rather than quietly producing a different
+        // document.
         await Assert.That(await File.ReadAllTextAsync(body)).DoesNotContain("second paragraph");
+        await Assert.That(await File.ReadAllTextAsync(body)).DoesNotContain("read more");
+        await Assert.That(await File.ReadAllTextAsync(body)).DoesNotContain("plain=1");
+    }
+
+    /// <summary>
+    /// The changelog the line numbers are computed from has to be the changelog
+    /// the tag carries, and anything else is a refusal naming both.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-16 with the linked body shape, and it is the failure
+    /// that shape introduces.</b> A <c>read more</c> link is a LINE RANGE into a
+    /// tagged file. Generate the body from a changelog that differs from the one
+    /// the tag carries and every link still resolves, still highlights, and
+    /// highlights the wrong lines — in a document nobody re-reads, for a release
+    /// that is already published.
+    /// </para>
+    /// <para>
+    /// <b>Over a real repository built in scratch, because the property is about
+    /// git rather than about text.</b> Four states, and the first is the one the
+    /// release takes: committed, tagged at HEAD. Then the two refusals — a
+    /// changelog edited after the commit, and a tag left behind on an older
+    /// commit — each asserted on the sentence rather than only on the exit code,
+    /// because a refusal that does not name both halves sends somebody looking
+    /// in the wrong place. The fourth is the control that keeps the other three
+    /// from being a script that refuses everything.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABodyIsGeneratedOnlyFromTheChangelogTheTagCarries()
+    {
+        SuiteEnvironment.RequireGit();
+
+        using var scratch = ScratchDirectory.Create("release-notes-tag");
+
+        // A repository of its own, nested under the gitignored scratch root: git
+        // resolves the innermost one, so this is a repository whose whole
+        // history is what these three commands put in it.
+        var repository = Directory.CreateDirectory(Path.Combine(scratch.Path, "repo")).FullName;
+        var changelog = Path.Combine(repository, "CHANGELOG.md");
+        var body = Path.Combine(scratch.Path, "body.md");
+
+        await File.WriteAllTextAsync(changelog, Lf(Fixture));
+
+        _ = await RunGitAsync(repository, "init", "-q", ".");
+        _ = await RunGitAsync(repository, "add", "CHANGELOG.md");
+        _ = await RunGitAsync(repository, "-c", "user.email=suite@invalid", "-c", "user.name=suite", "commit", "-q", "-m", "the changelog");
+        _ = await RunGitAsync(repository, "tag", "v9.9.9");
+
+        var head = (await RunGitAsync(repository, "rev-parse", "HEAD")).Output.Trim();
+
+        // ---- committed and tagged at HEAD: the state a release is cut in ----
+        var tagged = await RunScriptAsync(NotesScript, "-Path", changelog, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(tagged.ExitCode).IsEqualTo(0);
+        await Assert.That(tagged.StandardOutput).Contains("at v9.9.9");
+        await Assert.That(tagged.StandardOutput).Contains(head);
+
+        // ---- the changelog edited after the commit --------------------------
+        await File.AppendAllTextAsync(changelog, "\nA line nobody committed.\n");
+
+        var edited = await RunScriptAsync(NotesScript, "-Path", changelog, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(edited.ExitCode).IsEqualTo(1);
+        await Assert.That(edited.StandardError).Contains("differs from HEAD");
+        await Assert.That(edited.StandardError).Contains(head);
+        await Assert.That(edited.StandardError).Contains("is at " + head);
+
+        // ---- the tag left behind on an older commit -------------------------
+        _ = await RunGitAsync(repository, "checkout", "-q", "--", "CHANGELOG.md");
+        await File.AppendAllTextAsync(changelog, "\nA line that was committed.\n");
+        _ = await RunGitAsync(repository, "add", "CHANGELOG.md");
+        _ = await RunGitAsync(repository, "-c", "user.email=suite@invalid", "-c", "user.name=suite", "commit", "-q", "-m", "one more");
+
+        var moved = (await RunGitAsync(repository, "rev-parse", "HEAD")).Output.Trim();
+        var behind = await RunScriptAsync(NotesScript, "-Path", changelog, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(behind.ExitCode).IsEqualTo(1);
+        await Assert.That(behind.StandardError).Contains(head);
+        await Assert.That(behind.StandardError).Contains(moved);
+        await Assert.That(behind.StandardError).Contains("Move the tag");
+
+        // ---- THE CONTROL: a changelog git knows nothing about ---------------
+        // Without this the three assertions above are satisfied by a script that
+        // refuses everything, and the fixture arms in this file — which write a
+        // changelog into a gitignored scratch directory — would be the thing
+        // that discovered it.
+        var loose = Path.Combine(scratch.Path, "CHANGELOG.md");
+
+        await File.WriteAllTextAsync(loose, Lf(Fixture));
+
+        var unpinned = await RunScriptAsync(NotesScript, "-Path", loose, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(unpinned.ExitCode).IsEqualTo(0);
+        await Assert.That(unpinned.StandardOutput).Contains("pins these line numbers to a tag");
+    }
+
+    /// <summary>
+    /// Runs git in one directory and waits for it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own runner rather than <see cref="GitOracle"/>'s</b>, which is
+    /// pinned to this repository's root by construction — the whole point here is
+    /// a different repository. <c>CreateNoWindow</c> for the house rule: a
+    /// windowless parent puts a terminal on the user's screen without it.
+    /// </remarks>
+    /// <param name="directory">Where to run it.</param>
+    /// <param name="arguments">The git arguments.</param>
+    /// <returns>The exit code and what it said.</returns>
+    private static async Task<(int ExitCode, string Output)> RunGitAsync(string directory, params string[] arguments)
+    {
+        using var git = new System.Diagnostics.Process
+        {
+            StartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "git",
+                WorkingDirectory = directory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            },
+        };
+
+        git.StartInfo.ArgumentList.Add("-C");
+        git.StartInfo.ArgumentList.Add(directory);
+
+        foreach (var argument in arguments)
+        {
+            git.StartInfo.ArgumentList.Add(argument);
+        }
+
+        _ = git.Start();
+
+        var output = git.StandardOutput.ReadToEndAsync();
+        var error = git.StandardError.ReadToEndAsync();
+
+        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
+
+        await git.WaitForExitAsync(patience.Token);
+
+        return (git.ExitCode, await output + await error);
     }
 
     /// <summary>

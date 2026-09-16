@@ -364,6 +364,49 @@ release body; nothing else depends on it.
   constructed inputs — a Windows-subsystem binary at the registered path, then a
   file that is not a PE — and again on the sentence.
 
+- 📦 **A release body is one shape now: a headline a line, each linked to its own
+  lines of the changelog.** The maintainer's choice (Q197 b). Every entry is
+  `- <icon> **<headline>** [read more](…/CHANGELOG.md?plain=1#L<first>-L<last>)`,
+  a line range into the source view of the changelog **as the tag carries it**,
+  which GitHub highlights exactly. The `<details>` fold is gone with the second
+  shape that came with it: the fold put the detail in the release a second time,
+  which is what made the body enormous, and over the size limit the whole
+  document silently became headlines with nothing to click. **Re-measured
+  2026-09-16 over the 1.0.0 section as it stands: folded is 288,437 characters
+  and would have fallen back to 19,780; linked is 41,288**, a third of GitHub's
+  125,000, with a range on every one of the 227 entries. The size guard survives
+  as a pathological fallback — the links are dropped and the footer's section
+  link is the only way in — and the script still says which shape it produced.
+  **The line numbers are only true of one file, so the generator refuses anything
+  else**: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
+  exists, must be at `HEAD`, or it refuses naming both commits. A dirty tree
+  elsewhere is reported rather than refused, because this runs inside
+  `New-Release.ps1` after a publish that leaves restore artifacts behind and none
+  of those can move a line number. An untracked changelog — a fixture under
+  scratch — is a state rather than a failure and the run says so. **The highlight
+  was verified on github.com in a real browser rather than assumed**: `curl`
+  cannot show it, because it is applied client-side and the served HTML carries
+  only the first 1,000 lines of a 3,682-line file. At
+  `?plain=1#L3496-L3532`, **exactly 37 elements carried a highlighted class**,
+  which is 3532 − 3496 + 1.
+
+- 📝 **A publish leaves `BrowserAI.Core`'s lock file modified, whichever publish
+  it is.** A RID-specific restore adds an empty
+  `"net10.0-windows7.0/win-x64": {}` section to
+  `src/BrowserAI.Core/packages.lock.json`. It was first seen after a standalone
+  `dotnet publish -r win-x64` and reverted in `ac244ff`; **`build/New-Release.ps1`
+  produces the identical diff**, watched on a full pack run on 2026-09-16, so
+  routing publishes through the release script does not avoid it — and publishes
+  should go through it anyway, because it is what stages each publish, reads both
+  ILC logs and refuses a missing executable by name.
+  [`RELEASING.md`](RELEASING.md) and [`TESTING.md`](TESTING.md) now say to revert
+  the diff rather than commit it, and say plainly that **nothing enforces it**: an
+  arm holding the file free of that section would be red for the whole window
+  between item 7's publish and item 8's run, which is a gate that cannot pass
+  after doing what the checklist just told it to do. The two ways it could be
+  closed — accept the section as the resolution, or restore `--locked-mode` so a
+  rewrite fails instead of happening quietly — are recorded as open.
+
 
 ## [1.0.0] - 2026-09-15
 

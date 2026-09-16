@@ -17,15 +17,37 @@
 
         - <icon> **One-sentence headline.** the whole of what happened
 
-    -- and emits the headline as the line and the rest behind a `read more`
-    fold. The icon is the entry's own; nothing here chooses one.
+    -- and emits ONE SHAPE for every release: the headline as the line, and a
+    `read more` link beside it carrying the entry's own LINE RANGE in the tagged
+    changelog. The icon is the entry's own; nothing here chooses one.
+
+    ⚠️ ONE SHAPE, AND THE FOLD IS GONE -- 2026-09-16, the maintainer's choice
+    (Q197 b). Previously each detail was emitted behind an HTML `<details>` fold
+    and the whole body fell back to headlines-only over the size limit, so a
+    reader met one of two documents depending on how much had happened that
+    release. The fold was also the thing that made the body long: the detail was
+    in it twice over, once in the release and once in the file it was copied
+    from. A line range points AT the record instead of copying it, so the body
+    stays a page whatever the release holds, and `?plain=1#L<first>-L<last>`
+    lands a reader on the exact lines with the source view's own highlight.
+
+    ⚠️ THE LINE NUMBERS ARE ONLY TRUE OF ONE FILE, which is why this refuses
+    rather than guesses. They are computed from the changelog on disk and read
+    against the changelog the tag carries, so the two must be the same document:
+    the working copy must match HEAD, and a tag `v<version>`, if it exists, must
+    be at HEAD. Either failing is a refusal naming both. A dirty tree ELSEWHERE
+    is reported rather than refused -- this runs inside `New-Release.ps1` after a
+    publish that can leave restore artifacts behind, and none of those can move a
+    line number in a file that matches HEAD.
 
     THE SIZE GUARD IS NOT AN ESTIMATE. GitHub's release body limit is 125,000
     characters ([FLOATS]: it is their field, not ours, and nothing here can make
-    them keep it). A body over the limit falls back to headlines alone plus the
-    footer, which is an order of magnitude smaller, and the script SAYS WHICH
-    SHAPE IT PRODUCED. A generator that silently produced a different document
-    on a long release is the failure this whole change exists to stop.
+    them keep it). A body over the limit falls back to the headlines with no
+    per-entry links at all, leaving the footer's section link as the only way in,
+    and the script SAYS WHICH SHAPE IT PRODUCED. It is a pathological fallback
+    rather than a second design: the linked shape is roughly a tenth of the size
+    the folded one was, so reaching the limit now takes a release of a size this
+    project has never cut.
 
     THE ANCHOR IS COMPUTED THE WAY GITHUB COMPUTES IT, by the same rule
     DocumentationLinkTests applies to every relative link in this repository --
@@ -46,7 +68,7 @@
     what `gh release create --notes-file` sends.
 
 .PARAMETER Limit
-    The size at which the folded shape is abandoned for headlines alone.
+    The size at which the per-entry links are abandoned for headlines alone.
     Defaults to GitHub's documented 125,000 characters; a parameter so a test
     can drive the fallback without a 125,000-character fixture.
 
@@ -79,6 +101,87 @@ if (-not (Test-Path -LiteralPath $Path)) {
     exit 1
 }
 
+# --- The line numbers have to be the tag's ------------------------------------
+# ⚠️ EVERY ENTRY LINK IS A LINE RANGE INTO A TAGGED FILE, so a body generated
+# from a changelog that differs from the one the tag carries points at the wrong
+# lines -- silently, and in a document nobody re-reads. The link still resolves,
+# still highlights, and highlights something else.
+#
+# What is asserted is the property itself rather than a proxy for it: the file
+# this reads is byte-for-byte what HEAD holds, and when a tag `v<version>` exists
+# it is at HEAD. A dirty tree ELSEWHERE is reported rather than refused -- this
+# script runs inside `New-Release.ps1` step 9, after a publish that can leave
+# restore artifacts in the working tree, and refusing on those would stop a
+# release for something that cannot move one line number.
+#
+# Outside a repository there is nothing to check and nothing to claim. It says
+# so, in the same sentence it says what it produced, rather than passing
+# silently.
+function Invoke-Git {
+    param([Parameter(Mandatory)] [string[]] $Arguments)
+
+    $output = & git @Arguments 2>&1
+    return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = (($output | Out-String).Trim()) }
+}
+
+$directory = Split-Path -Parent $Path
+$inRepository = $false
+$provenance = "'$Path' is not in a git repository, so nothing here pins these line numbers to a tag."
+
+if (Get-Command git -CommandType Application -ErrorAction SilentlyContinue) {
+    $inside = Invoke-Git @('-C', $directory, 'rev-parse', '--is-inside-work-tree')
+    $inRepository = ($inside.ExitCode -eq 0) -and ($inside.Output -eq 'true')
+}
+
+if ($inRepository) {
+    $relative = (Invoke-Git @('-C', $directory, 'ls-files', '--full-name', '--error-unmatch', $Path))
+
+    # ⚠️ TRACKED OR NOT IS A STATE, NOT A FAILURE. An untracked changelog has no
+    # committed version for anything to be compared against, so there is nothing
+    # to claim and nothing to refuse -- which is exactly a fixture under a
+    # gitignored scratch directory. It is announced rather than passed over: the
+    # provenance line says the numbers are pinned to nothing.
+    if ($relative.ExitCode -ne 0) {
+        $inRepository = $false
+        $provenance = "'$Path' is not tracked by the repository it sits in, so nothing here pins these line numbers to a tag."
+    }
+}
+
+if ($inRepository) {
+
+    $head = (Invoke-Git @('-C', $directory, 'rev-parse', 'HEAD')).Output
+    $tagged = Invoke-Git @('-C', $directory, 'rev-parse', '--verify', '--quiet', "refs/tags/v$Version^{commit}")
+    $modified = Invoke-Git @('-C', $directory, 'diff', '--quiet', 'HEAD', '--', $Path)
+    $dirty = (Invoke-Git @('-C', $directory, 'status', '--porcelain')).Output
+
+    if ($modified.ExitCode -ne 0) {
+        Write-Error ("Every entry link in this body is a line range into '$($relative.Output)' as the tag carries it, and the working copy of that file differs from HEAD ($head)." +
+            " The numbers would be computed from one document and read against another -- the links would resolve and highlight the wrong lines." +
+            " Commit the changelog first." +
+            " The tag 'v$Version' " + $(if ($tagged.ExitCode -eq 0) { "is at $($tagged.Output)." } else { 'does not exist yet.' }))
+        exit 1
+    }
+
+    if (($tagged.ExitCode -eq 0) -and ($tagged.Output -ne $head)) {
+        Write-Error ("The tag 'v$Version' points at $($tagged.Output) and HEAD is $head, so the changelog this reads is not the changelog that tag carries." +
+            " Every entry link would be a line range into a file this run never saw." +
+            " Move the tag onto the commit being released -- 'git tag -f v$Version <sha>' -- and generate the body after it lands, which is the order RELEASING.md gives.")
+        exit 1
+    }
+
+    $provenance = if ($tagged.ExitCode -eq 0) {
+        "The line ranges are '$($relative.Output)' at v$Version ($head), which is HEAD."
+    }
+    else {
+        "The line ranges are '$($relative.Output)' at HEAD ($head); the tag v$Version does not exist yet, so nothing has pinned them."
+    }
+
+    if ($dirty) {
+        $provenance += ' The working tree has uncommitted changes elsewhere, which cannot move a line number in a file that matches HEAD: ' +
+            (($dirty -split "`n" | ForEach-Object { $_.Trim() }) -join '; ') + '.'
+    }
+}
+
 $content = (Get-Content -LiteralPath $Path -Raw) -replace "`r`n", "`n"
 
 # --- The version's section -----------------------------------------------------
@@ -90,6 +193,10 @@ if (-not $heading.Success) {
     Write-Error "'$Path' has no '## [$Version]' section. The body is generated from the section the release is cut from, so a missing section is a missing release note rather than an empty one."
     exit 1
 }
+
+# The heading's own 1-based line number, which every entry range is measured
+# from.
+$headingLine = ([regex]::Matches($content.Substring(0, $heading.Index), "`n")).Count + 1
 
 $rest = $content.Substring($heading.Index + $heading.Length)
 $next = [regex]::Match($rest, '(?m)^\#\#[ \t]')
@@ -149,8 +256,13 @@ function Get-GitHubAnchor {
     return $slug.ToString()
 }
 
+# The name the links use. The body always points at the repository's own
+# changelog, whatever file this run was handed -- a fixture is a stand-in for
+# that document rather than a different one.
+$ChangelogName = 'CHANGELOG.md'
+
 $anchor = Get-GitHubAnchor -Heading ($heading.Value -replace '^\#\#[ \t]+', '')
-$permalink = "$Repository/blob/v$Version/CHANGELOG.md#$anchor"
+$permalink = "$Repository/blob/v$Version/$ChangelogName#$anchor"
 
 # --- The section's own parts ---------------------------------------------------
 $lines = $section -split "`n"
@@ -177,7 +289,15 @@ function Complete-Entry {
     $script:entry = $null
 }
 
-foreach ($line in $lines) {
+for ($index = 0; $index -lt $lines.Count; $index++) {
+    $line = $lines[$index]
+
+    # ⚠️ ABSOLUTE, AND THAT IS THE WHOLE POINT OF THE for LOOP. $lines[0] is
+    # whatever followed the heading on its own line -- nothing -- so $lines[$i]
+    # is line ($headingLine + $i) of the file itself. A range computed against
+    # the SECTION would be right about a document nobody can open.
+    $number = $headingLine + $index
+
     if ($line -match '^\#\#\#[ \t]+(?<name>.+?)[ \t]*$') {
         Complete-Entry
         $group = [pscustomobject]@{ Name = $Matches['name']; Entries = [System.Collections.Generic.List[object]]::new() }
@@ -187,7 +307,7 @@ foreach ($line in $lines) {
 
     if ($line -match '^-[ \t]') {
         Complete-Entry
-        $entry = [pscustomobject]@{ Lines = [System.Collections.Generic.List[string]]::new() }
+        $entry = [pscustomobject]@{ Lines = [System.Collections.Generic.List[string]]::new(); First = $number; Last = $number }
         $entry.Lines.Add($line)
         continue
     }
@@ -195,6 +315,12 @@ foreach ($line in $lines) {
     if ($null -ne $entry) {
         if ($line.Trim().Length -eq 0 -or $line -match '^[ \t]') {
             $entry.Lines.Add($line)
+
+            # The blank line before the next entry belongs to nobody, so the
+            # range ends at the last line that carries text. A range ending on a
+            # blank line highlights one line of somebody else's entry.
+            if ($line.Trim().Length -gt 0) { $entry.Last = $number }
+
             continue
         }
         Complete-Entry
@@ -250,6 +376,8 @@ foreach ($g in $groups) {
             Icon     = $match.Groups['icon'].Value
             Headline = ($match.Groups['headline'].Value -replace '\s+', ' ').Trim()
             Detail   = @($detail)
+            First    = $e.First
+            Last     = $e.Last
         })
     }
 
@@ -258,7 +386,7 @@ foreach ($g in $groups) {
 
 # --- The body ------------------------------------------------------------------
 function New-Body {
-    param([bool] $Folded)
+    param([bool] $Linked)
 
     $out = [System.Collections.Generic.List[string]]::new()
 
@@ -279,25 +407,20 @@ function New-Body {
         $out.Add('')
 
         foreach ($item in $g.Items) {
-            $out.Add("- $($item.Icon) **$($item.Headline)**")
+            # ONE SHAPE, and the link is part of the line rather than a fold
+            # under it. The two halves are never adjacent in this SOURCE for the
+            # reason the footer's own line gives.
+            $line = "- $($item.Icon) **$($item.Headline)**"
 
-            if ($Folded -and $item.Detail.Count -gt 0) {
-                # Two spaces, so the block belongs to the list ITEM rather than
-                # ending the list; a blank line on each side, so what is between
-                # <summary> and </summary> is parsed as Markdown rather than as
-                # the inside of an HTML block.
-                $out.Add('')
-                $out.Add('  <details><summary>read more</summary>')
-                $out.Add('')
-                foreach ($paragraph in $item.Detail) {
-                    $out.Add("  $paragraph")
-                    $out.Add('')
-                }
-                $out.Add('  </details>')
+            if ($Linked) {
+                $line += ' [read more]' + '(' + $Repository + '/blob/v' + $Version + '/' +
+                    $ChangelogName + '?plain=1#L' + $item.First + '-L' + $item.Last + ')'
             }
 
-            $out.Add('')
+            $out.Add($line)
         }
+
+        $out.Add('')
     }
 
     $out.Add('---')
@@ -308,16 +431,16 @@ function New-Body {
     # is deliberate rather than fussy: DocumentationLinkTests reads every file in
     # the tree as text, a `](` in a script is a relative link to it, and
     # `$permalink` is not a path that exists.
-    $out.Add('Every entry in full, with its evidence: [CHANGELOG.md]' + '(' + $permalink + ')')
+    $out.Add('Every entry in full, with its evidence: [' + $ChangelogName + ']' + '(' + $permalink + ')')
 
     return (($out -join "`n") -replace "`n{3,}", "`n`n").Trim() + "`n"
 }
 
-$body = New-Body -Folded $true
-$shape = 'folded'
+$body = New-Body -Linked $true
+$shape = 'linked'
 
 if ($body.Length -gt $Limit) {
-    $body = New-Body -Folded $false
+    $body = New-Body -Linked $false
     $shape = 'headlines'
 }
 
@@ -334,11 +457,13 @@ if ($directory -and -not (Test-Path -LiteralPath $directory)) {
 $entries = ($rendered | ForEach-Object { $_.Items.Count } | Measure-Object -Sum).Sum
 
 if ($shape -eq 'headlines') {
-    Write-Host "The folded body for $Version did not fit in $Limit characters, so this one is HEADLINES ONLY: $($body.Length) characters, $entries entries, $($rendered.Count) groups. The detail is not in the release body at all -- the footer link is how a reader reaches it."
+    Write-Host "The linked body for $Version did not fit in $Limit characters, so this one is HEADLINES ONLY, with no per-entry links at all: $($body.Length) characters, $entries entries, $($rendered.Count) groups. The footer's section link is the only way into the detail."
 }
 else {
-    Write-Host "Release body for $Version is FOLDED: $($body.Length) characters against a limit of $Limit, $entries entries, $($rendered.Count) groups, each detail behind a 'read more'."
+    Write-Host "Release body for $Version is LINKED: $($body.Length) characters against a limit of $Limit, $entries entries, $($rendered.Count) groups, each a headline and a line range into the tagged changelog."
 }
+
+Write-Host $provenance
 
 Write-Host "Wrote $Destination."
 

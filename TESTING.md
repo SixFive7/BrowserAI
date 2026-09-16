@@ -824,6 +824,41 @@ would turn it green. This one is not a capability because `published slice`
 question about the same artefact, and the two were conflated by a reader who had
 only the first.
 
+#### A publish rewrites a lock file, and the diff is reverted rather than committed
+
+⚠️ **Measured 2026-09-16, and the first version of this note was wrong about
+which publish does it.** A **RID-specific** restore — `-r win-x64`, which every
+publish of either executable performs — adds an empty
+`"net10.0-windows7.0/win-x64": {}` section to
+[`src/BrowserAI.Core/packages.lock.json`](src/BrowserAI.Core/packages.lock.json).
+`BrowserAI` and `BrowserAI.App` carry that section in the tree already, because
+both are published RID-specific; `BrowserAI.Core` is a library that never was
+until the app started being published with a RID, so it is the one file that
+moves.
+
+**It is not a property of a standalone `dotnet publish`.** It was first seen
+after one — reverted in `ac244ff` as *"a restore artifact nobody asked for rather
+than a resolution anybody reviewed"* — and **`build/New-Release.ps1` produces the
+identical diff**, watched on a full pack run at 04:05 on 2026-09-16. So it is not
+avoidable by routing publishes through the release script, and **publishes should
+still go through the release script**, for every other reason: it is the thing
+that stages each publish into `artifacts\publish-<exe stem>`, reads both ILC
+logs, refuses a missing executable by name and wires the icon into the pack.
+
+**Until somebody decides otherwise, the diff is reverted and never committed** —
+`git checkout -- src/BrowserAI.Core/packages.lock.json` — because an empty
+section is a restore artifact rather than a resolution anybody reviewed, and a
+lock file is a record of what was reviewed.
+
+⚠️ **Nothing enforces this and a test would fight the release gate.**
+`BuildConfigurationTests` could hold the file free of that section in three
+lines, and the arm would be **red for the whole window between item 7's publish
+and item 8's run** — a gate that cannot pass after doing what the checklist just
+told it to do. The question it would be asking is a real one and it is open, not
+answered here: either that section is the honest resolution and belongs in the
+file, or restores should be run `--locked-mode` so a restore that would rewrite a
+lock file fails instead of doing it quietly. Both are the maintainer's to pick.
+
 ## We write our own harness
 
 We do **not** vendor the MCP SDK's test fixtures. They are 1,082 lines

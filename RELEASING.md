@@ -536,6 +536,21 @@ zero — **plus the two things an exit code does not establish**:
   publish stages into `artifacts\publish-<exe stem>` and is copied in.
 - **`UseSystemResourceKeys` unset**, quoted from `Directory.Build.props`.
 
+⚠️ **EVERY PUBLISH GOES THROUGH `build/New-Release.ps1`, AND IT LEAVES A LOCK
+FILE MODIFIED.** *Added 2026-09-16.* A RID-specific restore adds an empty
+`"net10.0-windows7.0/win-x64": {}` section to
+[`src/BrowserAI.Core/packages.lock.json`](src/BrowserAI.Core/packages.lock.json)
+— **including the restore this script performs**, watched on a full pack run on
+2026-09-16, so it is not something a standalone `dotnet publish` does and the
+release script avoids. **Revert it; do not commit it** —
+`git checkout -- src/BrowserAI.Core/packages.lock.json` — because an empty
+section is a restore artifact rather than a resolution anybody reviewed, and a
+`git add -A` after a publish carries it into the release commit, which is how it
+reached `HEAD` once already. Nothing enforces this and a test would be red for
+the whole window between this item and item 8; the reasoning, and the two ways it
+could be closed, are in
+[Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-reverted-rather-than-committed).
+
 > **Corrected 2026-08-16 on the first run of this checklist (previously: "the
 > publish command, its exit code, and the warning count, which is zero").** The
 > item's body demands *ILC output empty* and *`UseSystemResourceKeys` never
@@ -892,19 +907,43 @@ writes beside the release manifest:
 pwsh -File build/New-ReleaseNotes.ps1 -Version <the version item 9 recorded> -Destination <a path>
 ```
 
-Each entry becomes its one-line headline with its own icon, and its detail is
-folded into a `<details><summary>read more</summary>` block nested inside the
-list item. The footer carries the palette legend — read out of the changelog
-rather than written twice — and a link to the section at the tag, whose anchor
-is computed by the same slug rule `DocumentationLinkTests` applies to every
-relative link in the repository.
+Each entry becomes its one-line headline with its own icon and a **`read more`
+link carrying that entry's own line range** in the changelog as the tag carries
+it — `CHANGELOG.md?plain=1#L<first>-L<last>`, the source view, which highlights
+exactly those lines. The footer carries the palette legend — read out of the
+changelog rather than written twice — and a link to the section at the tag, whose
+anchor is computed by the same slug rule `DocumentationLinkTests` applies to
+every relative link in the repository.
+
+⚠️ **ONE SHAPE FOR EVERY RELEASE SINCE 2026-09-16, the maintainer's choice
+(Q197 b).** *Previously: "its detail is folded into a
+`<details><summary>read more</summary>` block nested inside the list item".* The
+fold is gone. It put the detail in the release a second time, which is what made
+the body enormous, and it meant a reader met one of two documents depending on
+how much had happened — the fold under the limit, headlines with nothing to
+click over it. A line range points **at** the record instead of copying it.
+Re-measured 2026-09-16 over the `1.0.0` section as it stands: folded is
+**288,437** characters and would have fallen back to **19,780**; **linked is
+41,288**, a third of the limit, with a range on every one of the 227 entries.
+
+⚠️ **RUN IT AFTER THE TAG IS MOVED AND BEFORE PUBLISH**, which is where the
+running order above already puts it — step 4 creates the tag, step 5 re-packs
+(and `New-Release.ps1` generates the body as its last step), step 6 publishes.
+**The generator refuses anything else**, because a line range is only true of one
+file: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
+exists, must be at `HEAD`. Either failing is a refusal naming both the tag's
+commit and `HEAD`, and the fix is to commit the changelog or move the tag. A
+dirty tree **elsewhere** is reported rather than refused — this runs after a
+publish that can leave restore artifacts behind, and none of those can move a
+line number in a file that matches `HEAD`. The script's last lines say which
+commit the ranges are true of.
 
 ⚠️ **THE SIZE GUARD CHANGES THE DOCUMENT, so read what the script says.** Over
-the limit — 125,000 characters, GitHub's, a `[FLOATS]` fact — the folded shape
-is abandoned for **headlines alone plus the footer**, and the detail is then not
-in the release body at all. The script prints which shape it produced and how
-large it is, and for `1.0.0` it produces the second: folded is **280,063**
-characters against a limit of 125,000, and headlines alone is **19,340**.
+the limit — 125,000 characters, GitHub's, a `[FLOATS]` fact — the per-entry
+links are dropped and the body becomes **headlines alone plus the footer**, whose
+section link is then the only way into the detail. It is a pathological fallback
+rather than a second design: at 41,288 characters for the largest release this
+project has cut, reaching it takes one several times that size.
 
 **Check the rendering before publishing, against GitHub's own renderer:**
 
@@ -912,12 +951,21 @@ characters against a limit of 125,000, and headlines alone is **19,340**.
 gh api -X POST markdown -f mode=gfm -F text=@<the body file> > <an html file>
 ```
 
-The `<details>` must land **inside** an `<li>` and the headline must be a
-`<strong>`; a fold that escaped its list item renders as a stray block between
-entries, and no test in this repository can see it. *(The leading slash is
-omitted from `markdown` deliberately: Git Bash rewrites `/markdown` into a
-filesystem path and `gh` reports an endpoint under `C:/Program Files/Git`.)*
-Evidence for the 2026-09-15 cut is in `.work/2026-09-15-notes/rendered-0.1.0.html`.
+The `read more` must land as an `<a href>` **inside** the `<li>`, beside a
+`<strong>` headline, and no test in this repository can see it if it does not.
+*(The leading slash is omitted from `markdown` deliberately: Git Bash rewrites
+`/markdown` into a filesystem path and `gh` reports an endpoint under
+`C:/Program Files/Git`. And it is `-F`, not `-f`: `-f` sends the literal text
+`@<path>` and the API cheerfully renders that.)* Evidence for the 2026-09-15 cut
+is in `.work/2026-09-15-notes/rendered-0.1.0.html`; for the 2026-09-16 shape,
+`.work/2026-09-16-icon/body/sample.html`.
+
+**The line anchors were verified on github.com rather than assumed.** `curl`
+cannot show it — the highlight is applied client-side from the fragment, and the
+served HTML carries only the first 1,000 lines of a 3,682-line file. Driven in a
+real browser on 2026-09-16 against
+`blob/v1.0.0/CHANGELOG.md?plain=1#L3496-L3532`: the page rendered the range and
+**exactly 37 elements carried a highlighted class**, which is 3532 − 3496 + 1.
 
 **The preamble is checked by a person, not by the test.**
 `ChangelogTests.TheNewestReleasedSectionOpensWithAPreamble` holds that the
