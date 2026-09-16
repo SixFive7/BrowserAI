@@ -1,0 +1,3566 @@
+{
+ "removedEntries": 444,
+ "removedBytes": 220268343,
+ "refusedCount": 0,
+ "failureCount": 0,
+ "absentCount": 0,
+ "report": {
+  "removed": [
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\ms-playwright-mcp",
+    "row": "11 upstream default-profile fallback",
+    "files": 1881,
+    "dirs": 624,
+    "bytes": 173612736,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\ms-playwright\\b",
+    "row": "10 suite-leaked browser descriptors",
+    "files": 27560,
+    "dirs": 0,
+    "bytes": 45836998,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log",
+    "row": "9 test pack id",
+    "files": 1,
+    "dirs": 0,
+    "bytes": 651907,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.log",
+    "row": "8 old pack id",
+    "files": 1,
+    "dirs": 0,
+    "bytes": 166702,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\BrowserAI-test-scratch",
+    "row": "7 test scratch root",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-06H5RH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0S6vaf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0TcsBU",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0iUBmc",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0n5ofK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0oMzXF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0ovtDo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-0zgB5N",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-1NjaSD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-1O69ip",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-1SFVrp",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-1VcxtF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-1gaaQf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-298srC",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2EPP1x",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2QsmxY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2UIxoW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2bfk8g",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2cIs62",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2flnd2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2taAJS",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2ulTWF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-2z4TDN",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3HiIVe",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3bDvxf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3fMY8c",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3jjDL5",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3nPXHl",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3u7yd9",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3v6CS1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-3wkcY6",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-4E43DK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-4Xo1aV",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-516eXw",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-52wjQz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-54mmf6",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-55N7X7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-56IvU7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-5TuvIs",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-5ixmSc",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6B1sjz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6Ef8Lo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6LcDH0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6O12ZM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6TqvbV",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6fdrmN",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-6pbvyn",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-7Fmj0O",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-7IzikO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-7ZbEov",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-7m0vYl",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-7osAit",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-80lSXB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-86kOia",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-8K1Iw7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-8Y4bqR",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-8bKA7a",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-8fTpsS",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-8qgLsD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-96eHIE",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-9U37gr",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-A5WIW2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-AQU2mT",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Aes0sB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-AlKpSf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Aw8MVw",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-B3Ujvq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-C8obQj",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CAhZ5t",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CBpyeP",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CChrDC",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CPHaby",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CW55rf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CWHnVY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-CnzwC9",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Cxrt9g",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-D2DJAF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DRIEWu",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DXtLWr",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DfPE98",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DjeQQO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DlhyEm",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Dmf8oR",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DqcUb3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-DtjJ2z",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-E0J37g",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-EMAMAO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-EQLWsO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Ec73Cl",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-F1uq9w",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-F3a37P",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-F4etgA",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-FDiBAX",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-FIVV5K",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-FNQixa",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-FONlzm",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-GB9T57",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-GOGOMr",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-GOqQjW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-GXUhq8",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Ga3yYv",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-H23Y0o",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-H5gh33",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-HClraq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-HIyJOs",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-HLSiuQ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-HcnX8i",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-He2Fc1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-HxSOTM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Hz4iAI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-IYJePh",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Illi7x",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-IuzCHB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Iz6Jar",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-J8HucN",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-JAzzpc",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-JDjjM2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-JE6ioI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-JG0QYi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Jbl4jw",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Jiq29e",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Jv73R1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-KC8mF3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-KDY9Rf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-KafUsH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Kk1nCj",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Kvdry6",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-KxJBTQ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-LHXmkt",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-LTBkZD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-LaN2jF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Leolt3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Ls5JX3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-M1cUlG",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-M6YYw1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-M6zTK7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MDdAiO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MGnGrO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MLlEQY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MNMwQi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MNayDi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MQh38w",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-McAVEN",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MdLlnZ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MgumZ9",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MiFy7Y",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MpMCjh",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-MxCEyo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-N0TD4w",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NLz81i",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NPjBHg",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NPonh0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NTwVQz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NgBJnp",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NglFyl",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NkmTMW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-NmPPV5",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-O1Y7qY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-O3hKys",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-O6wKae",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-OAeGc6",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-OInUeN",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ONEVit",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ONgkne",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Op45yc",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-OscMpY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-OzgZz3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-P1Sb8l",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-PZkDq1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-PafIqd",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-PguyIk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-PyvBA8",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Pzpyzu",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QCXeIW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QMOUqQ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QShhpK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QUVSKq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QZSPbM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QacJXI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QfwXmT",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Qh6gkk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-QtUSyB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Qx0QV0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Qxtwee",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-R6KpFL",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-RRvcZS",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-RZvTWz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-S5FWjL",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-S8urV3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-SJ8XTW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-SKWdF8",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-SUONhi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Sn64gu",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-T00wPp",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-TO6Xop",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-TOIg8j",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-TUr32M",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-TY7fnr",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-TlKD1L",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Tns0eU",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Tq6iC4",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-TxQPky",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-UMKj8q",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-UcKRlJ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Udc2VB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-UmNJRo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-V57B3A",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-VJB41h",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-VPkp5v",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-VY8IMk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Va06pP",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-VncgfY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Vxb7Wp",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Vyn4qg",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-W38M7c",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-W6KgLX",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-W8jGk0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-WCxjIB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-WWwcWq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-WjQknb",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Wjdspj",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Wn4yvf",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Wtkfa4",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-WxPzxn",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-XFu38g",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-XMCETz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-XfXGld",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Xl2n9O",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-XvSsIn",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Xwlyi1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Y9SNTY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YBGX0Z",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YBgJMH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YFlntc",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YMldmk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YMqryY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YdTuQr",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-YpGgVK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-Yx71wD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZIwa3t",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZPGKT2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZSrSRE",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZT3lWD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZgpCuy",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZpjS4j",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ZwdOFq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-a8MD1e",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-aMBJTa",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-aMUicV",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-aadljt",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-agfmqF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-akimkk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-b1NrZP",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-b6Fpso",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-bL9FTb",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-bRPJg2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-bSjQth",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-bfeJOW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-bjRtkx",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-bu5WB0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-cdYzBG",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ceXFdK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ciJSYR",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-cmeCac",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-cmeGnV",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dA9r6z",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dATQCH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dAqsZK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dJzV8q",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dS3dDy",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dcCntW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dn5iHk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dt0rd7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dt9g2J",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-dySYTX",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-e2QZva",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-e5bueD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-eOZ0PM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-eVeNpQ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-eY7UD7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-eZ4suS",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-epZ5MM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-exCoOo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-f66N0Y",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-f6G7mA",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-f6cuy0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fFugFx",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fOXZVi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fOrhtQ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fP4zwl",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fcNAbK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fhP70T",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fmxByI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fovPXS",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fqyh2v",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-fw4XsL",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-g7UHXb",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-gA4zAB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-gRXZrA",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-gSeG8f",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-gYT1ZX",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-gzMDQe",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-hFc4tu",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-hPTLo7",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-hTco73",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-hYVQTA",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-hZ2nBI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-haxRI8",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-hxi9Jw",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-i1hIhw",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-iG3kPL",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-iKdQV1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-iQHQi3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-iQV1D3",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-iaJ8RR",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ihdqST",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ipqLM2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ix9XFt",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-j1RFLG",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-j1xsPg",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-j4BX8W",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-jERslD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-jQkPzx",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-jbhLCj",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-jdfWil",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-k2hPyV",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-kJOgIg",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-kJPTb4",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-kR3k0n",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-kttiYY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-l3JMCi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-lLmnT1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-lXzkng",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-lcPCNs",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ldEH64",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-lgJDay",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-lzW1sR",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-mK0kZU",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-mMtCQs",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-mO6o7x",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-mhnLqo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-mmWn87",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-my90o1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-n0psAh",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-n69dfF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-nSGak5",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-nVeTHM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-neSQYh",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ngV6LP",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-njB6aG",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-npB8bE",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-o9UDAC",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-oItGuk",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-oRMHIa",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-oVyTn8",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-oWgA4d",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-odnb87",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ojrifM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ovg3DK",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-p42lHM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-p5hXwA",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-pgeyFv",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-phGdSP",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-piOt1N",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-pmui33",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-pu1XF6",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-q4P6jF",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-q9F6v6",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-qIkuOp",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-qVMGmZ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-qX6SJG",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-qa3QVY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-qi9A7n",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-qkwdnD",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-r1Di10",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-rF5L2j",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-rHSaLR",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-rW3bne",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-rbvhkT",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-re4ISZ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-rlUKTI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-s9B3xh",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-sGpg23",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-sROX5J",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-sjFUwI",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-syO5Yq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-t0kFRW",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-t5pqHZ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-tBqzi1",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-tbyN2h",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-tgNfvo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-u4LkBz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-u4OyKo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-uN5Rr8",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-uPnHUY",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-ucSkla",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-utZwdz",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-uzjVJ5",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-vK8JCo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-vWTI4p",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-vX55fH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-vZhZPo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-viL9yS",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-vxCFaw",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-w0B5yx",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-w1shLT",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wAadCm",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wJJbYi",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wag8T0",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wcEHfH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wkT3gX",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wycCrv",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-wyy6GM",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-x13Il2",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-x1RkOZ",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-x8sgIu",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-xIv2G9",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-xmdARr",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-xyAF7b",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-y16POV",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-y4tK4A",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-y6WBpH",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-yNSvxy",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-yRiIwo",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-yUatfU",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-yb0Qpq",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-yyJMal",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-yzCC8z",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-z7U1CE",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-z9XBfB",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-zPuVHc",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-zVbNar",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-zjF3JO",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-znKHyN",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-zplw77",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright-artifacts-zzmtV4",
+    "row": "12 playwright artifact dirs",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright_chromiumdev_profile-6XN40X",
+    "row": "13 throwaway chromium profiles",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\playwright_chromiumdev_profile-7K15As",
+    "row": "13 throwaway chromium profiles",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   },
+   {
+    "path": "C:\\Users\\jori\\AppData\\Local\\Temp\\velopack",
+    "row": "14 velopack temp scratch",
+    "files": 0,
+    "dirs": 0,
+    "bytes": 0,
+    "clean": true
+   }
+  ],
+  "refused": [],
+  "absent": [],
+  "failures": []
+ }
+}
