@@ -112,6 +112,17 @@ internal static partial class TaskDialogInterop
         /// <summary>Custom buttons render as command links.</summary>
         UseCommandLinks = 0x0010,
 
+        /// <summary>
+        /// <c>TDN_TIMER</c> is delivered roughly every 200 ms while the dialog
+        /// is up.
+        /// </summary>
+        /// <remarks>
+        /// It is how a window whose every action runs inside one callback can
+        /// wait for something without freezing: the work runs off this thread
+        /// and the tick asks whether it has finished.
+        /// </remarks>
+        CallbackTimer = 0x0800,
+
         /// <summary>The dialog sizes itself to its content rather than to a fixed width.</summary>
         SizeToContent = 0x0100_0000,
 
@@ -157,6 +168,16 @@ internal static partial class TaskDialogInterop
 
         /// <summary>A hyperlink was clicked. <c>lParam</c> is its href.</summary>
         public const uint HyperlinkClicked = 3;
+
+        /// <summary>
+        /// The callback timer ticked. <c>wParam</c> is the milliseconds since
+        /// the dialog was created, or since the last tick that answered
+        /// <c>S_FALSE</c>.
+        /// </summary>
+        /// <remarks>
+        /// Only delivered with <see cref="Flags.CallbackTimer"/> set.
+        /// </remarks>
+        public const uint Timer = 4;
     }
 
     /// <summary>The messages this product sends back into an open dialog.</summary>

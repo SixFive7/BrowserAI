@@ -38,6 +38,23 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🔧 **The update check runs off the UI thread, under the same deadline the
+  server uses.** `CheckAsync` and `DownloadAsync` were called with
+  `.GetAwaiter().GetResult()` **inside the dialog's callback**, with
+  `CancellationToken.None`. `VelopackUpdateClient` builds its `UpdateManager`
+  from a bare URL, so Velopack's own `SimpleWebSource` supplies the `HttpClient`
+  timeout — **thirty minutes** — and a feed that answered slowly froze the
+  window for that long: no repaint, no cursor, no close button. The server's
+  lane wrapped the identical calls in `UpdateService.CrashTripwire` from the day
+  it was written; this one had nothing. Both now run on the thread pool under
+  that same constant, and the dialog enables `TDF_CALLBACK_TIMER` and polls on
+  `TDN_TIMER` — so it shows *Checking for updates…*, stays fully usable, and
+  redraws itself with the answer, or with *the update check did not finish
+  within N seconds and was stopped* if the deadline passes. The deadline is
+  enforced by the poll rather than by the token, because
+  `UpdateManager.CheckForUpdatesAsync` takes no token at all: what ends is the
+  **waiting**, and the orphaned request finishes into nothing.
+
 - 🐛 **The folder picker is owned by the dialog, and an unresolvable folder
   is no longer a silent cancel.** Two defects in one button. The picker was
   opened with a **zero owner**, because the dialog's window was private — so it

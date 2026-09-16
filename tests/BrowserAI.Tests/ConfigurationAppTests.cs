@@ -6,6 +6,7 @@ using BrowserAI.App;
 using BrowserAI.App.Interop;
 using BrowserAI.App.Ui;
 using BrowserAI.Registration;
+using BrowserAI.Updates;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -343,6 +344,7 @@ internal sealed class ConfigurationAppTests
             () => throw new InvalidOperationException("the page factory threw"),
             _ => throw new InvalidOperationException("the command threw"),
             _ => throw new InvalidOperationException("the link threw"),
+            () => ClickOutcome.Stay,
             failure => reported.Add(failure.Message));
 
         // A hyperlink whose handler throws: reported, and the notification's own
@@ -366,6 +368,7 @@ internal sealed class ConfigurationAppTests
             () => throw new InvalidOperationException("the page factory threw"),
             _ => ClickOutcome.Rerender,
             _ => { },
+            () => ClickOutcome.Stay,
             failure => reported.Add(failure.Message));
 
         await Assert.That(rerendering.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.Register, 0))
@@ -384,11 +387,30 @@ internal sealed class ConfigurationAppTests
             () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
             _ => ClickOutcome.Stay,
             _ => { },
+            () => ClickOutcome.Stay,
             failure => reported.Add(failure.Message));
 
         await Assert.That(quiet.Dispatch(0, TaskDialogInterop.Notification.HyperlinkClicked, 0, 0))
             .IsEqualTo(TaskDialogInterop.Ok);
+        await Assert.That(quiet.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0))
+            .IsEqualTo(TaskDialogInterop.Ok);
         await Assert.That(reported).IsEmpty();
+
+        // ⚠️ AND THE TIMER, which is the notification that arrives five times
+        // a second whether anybody clicked anything or not. An exception out of
+        // it would terminate the process on its own, with no click to blame.
+        reported.Clear();
+
+        using var ticking = new TaskDialogHost(
+            () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
+            _ => ClickOutcome.Stay,
+            _ => { },
+            () => throw new InvalidOperationException("the tick threw"),
+            failure => reported.Add(failure.Message));
+
+        await Assert.That(ticking.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0))
+            .IsEqualTo(TaskDialogInterop.Ok);
+        await Assert.That(reported).IsEquivalentTo(["the tick threw"]);
     }
 
     /// <summary>
@@ -459,6 +481,7 @@ internal sealed class ConfigurationAppTests
             () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
             _ => ClickOutcome.Stay,
             _ => { },
+            () => ClickOutcome.Stay,
             _ => { });
 
         await Assert.That(host.Window).IsEqualTo(nint.Zero);
@@ -466,6 +489,162 @@ internal sealed class ConfigurationAppTests
         _ = host.Dispatch(4321, TaskDialogInterop.Notification.Created, 0, 0);
 
         await Assert.That(host.Window).IsEqualTo((nint)4321);
+    }
+
+    /// <summary>
+    /// Work the dialog waits for is bounded, and the bound is the server's own
+    /// deadline rather than a number invented for the window.
+    /// </summary>
+    /// <remarks>
+    /// <b>The other half of
+    /// <see cref="HouseRuleTests.NoUpdateCallIsMadeWithAnUnboundedToken"/>.</b>
+    /// That one holds that every caller names a token; this holds what the token
+    /// is worth — and it is <c>UpdateService.CrashTripwire</c>, the outer
+    /// deadline the server's own pass runs the same two calls under.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline() =>
+        await Assert.That(BackgroundWork<string>.DefaultBudget).IsEqualTo(UpdateService.CrashTripwire);
+
+    /// <summary>
+    /// Work that never finishes is abandoned at the deadline, with a sentence
+    /// saying so.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The deadline is enforced by the poll and not by the token, and
+    /// this is what says so.</b> The work below ignores its token entirely —
+    /// which is not a contrivance: <c>UpdateManager.CheckForUpdatesAsync</c>
+    /// takes no token at all, so the real call cannot be stopped either. What is
+    /// asserted is that the dialog stops <i>waiting</i>.
+    /// </para>
+    /// <para>
+    /// <b>The budget is the product's parameter and the wait is a hang
+    /// detector.</b> The work is given a deliberately tiny budget, which is what
+    /// is under test; how long this arm is willing to sit in the loop comes from
+    /// <see cref="TestDefaults.InProcessHang"/> and is a bound on a wedge, never
+    /// a claim about promptness.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WorkThatNeverFinishesIsAbandonedAtItsDeadline()
+    {
+        var budget = TimeSpan.FromMilliseconds(200);
+        var gate = new TaskCompletionSource();
+
+        using var work = new BackgroundWork<string>(budget);
+
+        try
+        {
+            await Assert.That(work.Start("Checking for updates…", "The update check", _ =>
+            {
+                gate.Task.GetAwaiter().GetResult();
+                return "never seen";
+            })).IsTrue();
+
+            await Assert.That(work.Running).IsTrue();
+            await Assert.That(work.Progress).IsEqualTo("Checking for updates…");
+
+            // A second start while one is in flight is refused rather than
+            // stacking two checks on one window.
+            await Assert.That(work.Start("again", "The update check", _ => "no")).IsFalse();
+
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            BackgroundPoll<string> poll = default;
+
+            while (clock.Elapsed < TestDefaults.InProcessHang)
+            {
+                poll = work.Poll();
+
+                if (poll.Finished)
+                {
+                    break;
+                }
+
+                await Task.Delay(20);
+            }
+
+            await Assert.That(poll.Finished).IsTrue();
+            await Assert.That(poll.Result).IsNull();
+            await Assert.That(poll.Refusal).IsNotNull();
+            await Assert.That(poll.Refusal!).Contains("did not finish within");
+            await Assert.That(poll.Refusal!).StartsWith("The update check");
+
+            // And it is over: the dialog is not left saying "Checking…" for ever.
+            await Assert.That(work.Running).IsFalse();
+        }
+        finally
+        {
+            _ = gate.TrySetResult();
+        }
+    }
+
+    /// <summary>
+    /// Work that finishes hands its answer back exactly once.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WorkThatFinishesIsReportedOnceAndThenIsOver()
+    {
+        using var work = new BackgroundWork<string>(TimeSpan.FromMinutes(1));
+
+        await Assert.That(work.Start("Checking…", "The update check", _ => "BrowserAI 9.9.9 is available.")).IsTrue();
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        BackgroundPoll<string> poll = default;
+
+        while (clock.Elapsed < TestDefaults.InProcessHang)
+        {
+            poll = work.Poll();
+
+            if (poll.Finished)
+            {
+                break;
+            }
+
+            await Task.Delay(20);
+        }
+
+        await Assert.That(poll.Finished).IsTrue();
+        await Assert.That(poll.Result).IsEqualTo("BrowserAI 9.9.9 is available.");
+        await Assert.That(poll.Refusal).IsNull();
+
+        // Once. A second poll has nothing left to report, which is what stops the
+        // dialog re-rendering on every 200 ms tick after the work is done.
+        await Assert.That(work.Poll().Finished).IsFalse();
+        await Assert.That(work.Running).IsFalse();
+    }
+
+    /// <summary>
+    /// Work that throws is reported with what it said, and never as a timeout.
+    /// </summary>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WorkThatThrowsIsReportedWithWhatItSaid()
+    {
+        using var work = new BackgroundWork<string>(TimeSpan.FromMinutes(1));
+
+        await Assert.That(work.Start("Checking…", "The update check", _ => throw new InvalidOperationException("the feed answered 404"))).IsTrue();
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        BackgroundPoll<string> poll = default;
+
+        while (clock.Elapsed < TestDefaults.InProcessHang)
+        {
+            poll = work.Poll();
+
+            if (poll.Finished)
+            {
+                break;
+            }
+
+            await Task.Delay(20);
+        }
+
+        await Assert.That(poll.Finished).IsTrue();
+        await Assert.That(poll.Refusal).IsEqualTo("the feed answered 404");
     }
 
     /// <summary>

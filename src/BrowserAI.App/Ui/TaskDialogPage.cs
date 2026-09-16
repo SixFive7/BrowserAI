@@ -77,6 +77,7 @@ internal sealed class TaskDialogHost : IDisposable
     private readonly Func<TaskDialogPage> _page;
     private readonly Func<int, ClickOutcome> _onCommand;
     private readonly Action<string> _onLink;
+    private readonly Func<ClickOutcome> _onTick;
     private readonly Action<Exception> _onFailure;
     private readonly List<nint> _allocated = [];
 
@@ -86,8 +87,13 @@ internal sealed class TaskDialogHost : IDisposable
     /// <param name="page">Produces the page to show, called again on every re-render.</param>
     /// <param name="onCommand">What a command link does. Never called for the close button.</param>
     /// <param name="onLink">What a hyperlink does.</param>
+    /// <param name="onTick">
+    /// Asked roughly every 200 ms while the dialog is up.
+    /// <b>It must return immediately</b> — it runs on the same callback as every
+    /// click, so anything it waits for is a frozen window.
+    /// </param>
     /// <param name="onFailure">
-    /// What to do with an exception out of one of the three above.
+    /// What to do with an exception out of one of the four above.
     /// <b>It is expected to record the failure where a person will meet it</b> —
     /// the process log, and the note the next page carries — because this host
     /// re-renders straight afterwards and shows whatever that produced.
@@ -96,16 +102,19 @@ internal sealed class TaskDialogHost : IDisposable
         Func<TaskDialogPage> page,
         Func<int, ClickOutcome> onCommand,
         Action<string> onLink,
+        Func<ClickOutcome> onTick,
         Action<Exception> onFailure)
     {
         ArgumentNullException.ThrowIfNull(page);
         ArgumentNullException.ThrowIfNull(onCommand);
         ArgumentNullException.ThrowIfNull(onLink);
+        ArgumentNullException.ThrowIfNull(onTick);
         ArgumentNullException.ThrowIfNull(onFailure);
 
         _page = page;
         _onCommand = onCommand;
         _onLink = onLink;
+        _onTick = onTick;
         _onFailure = onFailure;
     }
 
@@ -248,6 +257,7 @@ internal sealed class TaskDialogHost : IDisposable
                 | TaskDialogInterop.Flags.UseCommandLinks
                 | TaskDialogInterop.Flags.AllowDialogCancellation
                 | TaskDialogInterop.Flags.SizeToContent
+                | TaskDialogInterop.Flags.CallbackTimer
                 | TaskDialogInterop.Flags.UseHIconMain),
             CommonButtons = (uint)TaskDialogInterop.CommonButton.Close,
             WindowTitle = Keep(page.Title),
@@ -361,6 +371,38 @@ internal sealed class TaskDialogHost : IDisposable
         {
             case TaskDialogInterop.Notification.Created:
                 Window = window;
+                return TaskDialogInterop.Ok;
+
+            case TaskDialogInterop.Notification.Timer:
+                ClickOutcome tick;
+
+                try
+                {
+                    tick = _onTick();
+                }
+#pragma warning disable CA1031 // Same boundary as every other notification: a throw here is a FailFast.
+                catch (Exception failure)
+#pragma warning restore CA1031
+                {
+                    return Failed(failure, TaskDialogInterop.Ok);
+                }
+
+                if (tick is ClickOutcome.Rerender)
+                {
+                    try
+                    {
+                        Rerender();
+                    }
+#pragma warning disable CA1031 // The PAGE FACTORY, again.
+                    catch (Exception failure)
+#pragma warning restore CA1031
+                    {
+                        return Failed(failure, TaskDialogInterop.Ok);
+                    }
+                }
+
+                // S_OK, so the tick count is not reset. Nothing here depends on
+                // it, and S_FALSE would make the interval mean something else.
                 return TaskDialogInterop.Ok;
 
             case TaskDialogInterop.Notification.HyperlinkClicked:

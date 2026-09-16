@@ -1794,6 +1794,105 @@ internal sealed partial class HouseRuleTests
             .OrderBy(file => file.FullName, StringComparer.OrdinalIgnoreCase),
     ];
 
+    /// <summary>The two update calls that reach the network.</summary>
+    private static readonly string[] UpdateCalls = ["CheckAsync(", "DownloadAsync("];
+
+    /// <summary>
+    /// No update call in this tree is made with an unbounded cancellation token.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b><c>CancellationToken.None</c> on one of these is a call with no
+    /// bound at all.</b> <c>VelopackUpdateClient</c> builds its
+    /// <c>UpdateManager</c> from a bare URL, so Velopack's own
+    /// <c>SimpleWebSource</c> supplies the default <c>HttpClient</c> timeout —
+    /// <b>thirty minutes</b>. The server's lane wrapped the identical calls in
+    /// <c>UpdateService.CrashTripwire</c> from the day it was written; the
+    /// configuration app called them on the UI thread with
+    /// <c>.GetAwaiter().GetResult()</c> and <c>CancellationToken.None</c>, which
+    /// is a frozen window — no repaint, no cursor, no close button — for as long
+    /// as the feed takes to answer. <i>Added 2026-09-16.</i>
+    /// </para>
+    /// <para>
+    /// <b>A tree-as-text scan, because the defect is an ARGUMENT again.</b> No
+    /// analyzer can say <i>this parameter may not be this particular static
+    /// property</i>, and no test can hold a slow feed still. What is assertable
+    /// is that every caller names a token of its own.
+    /// </para>
+    /// <para>
+    /// <b>What it cannot see:</b> whether the token is bounded by anything
+    /// sensible. That half is
+    /// <see cref="BrowserAI.Tests.ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline"/>,
+    /// which holds the budget against the server's constant.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoUpdateCallIsMadeWithAnUnboundedToken()
+    {
+        var offenders = new List<string>();
+        var sites = 0;
+
+        foreach (var file in RepositoryLayout.SourceAndScriptFiles.Where(
+            file => file.Extension is ".cs" && Relative(file).StartsWith("src", StringComparison.OrdinalIgnoreCase)))
+        {
+            var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
+
+            foreach (var (number, call) in UnboundedUpdateCalls(lines))
+            {
+                sites++;
+                offenders.Add(
+                    $"{Relative(file)}:{number.ToString(CultureInfo.InvariantCulture)}: {call}"
+                    + " — an update call with no token of its own is bounded only by Velopack's own thirty-minute HttpClient default");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+        await Assert.That(sites).IsEqualTo(0);
+
+        // ⚠️ THE POSITIVE CONTROL, synthetic, in both directions — the exact
+        // shape the configuration app carried until 2026-09-16, and the shape
+        // that replaced it.
+        string[] unbounded =
+        [
+            "            var candidate = client.CheckAsync(CancellationToken.None).GetAwaiter().GetResult();",
+            "            client.DownloadAsync(candidate, _ => { }, CancellationToken.None).GetAwaiter().GetResult();",
+        ];
+
+        await Assert.That(UnboundedUpdateCalls(unbounded).Count).IsEqualTo(2);
+
+        string[] bounded =
+        [
+            "            var candidate = client.CheckAsync(token).GetAwaiter().GetResult();",
+            "            client.DownloadAsync(candidate, _ => { }, token).GetAwaiter().GetResult();",
+        ];
+
+        await Assert.That(UnboundedUpdateCalls(bounded).Count).IsEqualTo(0);
+    }
+
+    /// <summary>Update calls handed <c>CancellationToken.None</c>.</summary>
+    /// <param name="lines">The file, as lines.</param>
+    /// <returns>The one-based line number and the line, trimmed.</returns>
+    private static List<(int Number, string Call)> UnboundedUpdateCalls(string[] lines)
+    {
+        var found = new List<(int, string)>();
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (!lines[index].Contains("CancellationToken.None", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (Array.Exists(UpdateCalls, call => lines[index].Contains(call, StringComparison.Ordinal)))
+            {
+                found.Add((index + 1, lines[index].Trim()));
+            }
+        }
+
+        return found;
+    }
+
     /// <summary>
     /// The call this scan is about — through the type name, so the picker's own
     /// declaration is not read as a call site that forgot its owner.

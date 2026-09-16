@@ -148,7 +148,9 @@ internal static class Program
 
         AppLog.Opening(logger, state.Version, occasion, status);
 
-        return new ConfigurationSession(state, commands, paths, logger, occasion).Show();
+        using var session = new ConfigurationSession(state, commands, paths, logger, occasion);
+
+        return session.Show();
     }
 
     /// <summary>
@@ -191,12 +193,16 @@ internal sealed class ConfigurationSession(
     IRegistrationCommand commands,
     IAppPaths paths,
     ILogger logger,
-    Occasion occasion)
+    Occasion occasion) : IDisposable
 {
+    private readonly BackgroundWork<UpdateAnswer> _work = new();
+
     private AppState _state = state;
     private string? _note;
     private string? _available;
+#pragma warning disable CA2213 // Borrowed rather than owned: Show() creates the host in a using and clears this in its finally.
     private TaskDialogHost? _host;
+#pragma warning restore CA2213
 
     /// <summary>Opens the window and returns when it closes.</summary>
     /// <returns>Zero when the dialog ran.</returns>
@@ -217,6 +223,7 @@ internal sealed class ConfigurationSession(
             () => ConfigurationDialog.Page(_state, occasion, _note, _available),
             OnCommand,
             OnLink,
+            OnTick,
             OnFailure);
 
         _host = host;
@@ -277,6 +284,45 @@ internal sealed class ConfigurationSession(
         AppLog.ClickFailed(logger, failure);
 
         _note = $"Something went wrong and BrowserAI has changed nothing: {failure.Message}";
+    }
+
+    /// <summary>Lets go of anything still in flight.</summary>
+    /// <remarks>
+    /// The work is abandoned rather than waited for — a window that is closing
+    /// must not wait for a feed that is not answering, which is the whole reason
+    /// the work left this thread.
+    /// </remarks>
+    public void Dispose() => _work.Dispose();
+
+    /// <summary>
+    /// The dialog's own timer, roughly every 200 ms: is the thing we are waiting
+    /// for over yet?
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>This is what replaces blocking the UI thread — 2026-09-16.</b> The
+    /// update check and the download used to be called with
+    /// <c>.GetAwaiter().GetResult()</c> from inside the click, against a client
+    /// whose only bound was Velopack's thirty-minute <c>HttpClient</c> default.
+    /// They run on the thread pool now, under
+    /// <see cref="BackgroundWork{TResult}.DefaultBudget"/>, and this asks whether
+    /// they are done. It must return immediately: it is the same callback every
+    /// click arrives on.
+    /// </remarks>
+    /// <returns>Whether the page has to be redrawn.</returns>
+    private ClickOutcome OnTick()
+    {
+        var poll = _work.Poll();
+
+        if (!poll.Finished)
+        {
+            return ClickOutcome.Stay;
+        }
+
+        _note = poll.Refusal ?? poll.Result?.Note;
+        _available = poll.Result?.Available;
+        _state = _state with { LastUpdateCheck = _note };
+
+        return ClickOutcome.Rerender;
     }
 
     private void OnLink(string href)
@@ -382,27 +428,48 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Rerender;
         }
 
+        var version = _state.Version;
+
+        if (!_work.Start("Checking for updates…", "The update check", token => Ask(feed, version, token)))
+        {
+            return ClickOutcome.Stay;
+        }
+
+        _note = _work.Progress;
+        _state = _state with { LastUpdateCheck = _note };
+
+        return ClickOutcome.Rerender;
+    }
+
+    /// <summary>
+    /// The check itself, off the dialog's thread.
+    /// </summary>
+    /// <remarks>
+    /// <b>Static, and it computes the whole sentence.</b> Nothing this touches is
+    /// read by the dialog while it runs, which is what makes the hand-back at
+    /// completion the only place two threads meet.
+    /// </remarks>
+    /// <param name="feed">Where to look.</param>
+    /// <param name="version">What is installed.</param>
+    /// <param name="token">The dialog's deadline.</param>
+    /// <returns>What to say, and what is available.</returns>
+    private static UpdateAnswer Ask(UpdateFeed feed, string version, CancellationToken token)
+    {
         try
         {
             var client = new VelopackUpdateClient(feed);
-            var candidate = client.CheckAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var candidate = client.CheckAsync(token).GetAwaiter().GetResult();
 
-            _available = candidate?.Version;
-            _note = candidate is null
-                ? $"BrowserAI {_state.Version} is up to date."
-                : $"BrowserAI {candidate.Version} is available.";
+            return candidate is null
+                ? new UpdateAnswer($"BrowserAI {version} is up to date.", null)
+                : new UpdateAnswer($"BrowserAI {candidate.Version} is available.", candidate.Version);
         }
 #pragma warning disable CA1031 // A failed check is a sentence in a dialog, never a crash on somebody's screen.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            _available = null;
-            _note = $"The update check did not finish: {failure.Message}";
+            return new UpdateAnswer($"The update check did not finish: {failure.Message}", null);
         }
-
-        _state = _state with { LastUpdateCheck = _note };
-
-        return ClickOutcome.Rerender;
     }
 
     private ClickOutcome ApplyUpdate()
@@ -412,19 +479,43 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
+        if (!_work.Start("Downloading the update…", "The update download", token => Install(feed, token)))
+        {
+            return ClickOutcome.Stay;
+        }
+
+        _note = _work.Progress;
+
+        return ClickOutcome.Rerender;
+    }
+
+    /// <summary>
+    /// The download and the apply, off the dialog's thread.
+    /// </summary>
+    /// <remarks>
+    /// <b>The apply is in here rather than on the click, and the reason is that
+    /// it does not return.</b> <c>ApplyAndRestart</c> hands over to
+    /// <c>Update.exe</c> and ends this process, so there is nothing for a UI
+    /// thread to do afterwards — and putting it on the click would mean the
+    /// download it follows had to be on the click too, which is the defect this
+    /// whole path was rewritten for.
+    /// </remarks>
+    /// <param name="feed">Where to look.</param>
+    /// <param name="token">The dialog's deadline.</param>
+    /// <returns>What to say, when there is anybody left to say it to.</returns>
+    private static UpdateAnswer Install(UpdateFeed feed, CancellationToken token)
+    {
         try
         {
             var client = new VelopackUpdateClient(feed);
-            var candidate = client.CheckAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var candidate = client.CheckAsync(token).GetAwaiter().GetResult();
 
             if (candidate is null)
             {
-                _available = null;
-                _note = "There is nothing to install any more: the feed no longer offers a newer version.";
-                return ClickOutcome.Rerender;
+                return new UpdateAnswer("There is nothing to install any more: the feed no longer offers a newer version.", null);
             }
 
-            client.DownloadAsync(candidate, _ => { }, CancellationToken.None).GetAwaiter().GetResult();
+            client.DownloadAsync(candidate, _ => { }, token).GetAwaiter().GetResult();
 
             // ⚠️ restart: true, which is the opposite of what the SERVER's lane
             // does. A server that restarted would pop this window in the middle
@@ -432,17 +523,26 @@ internal sealed class ConfigurationSession(
             // mid-click with nothing to say it had succeeded.
             client.ApplyAndRestart(candidate);
 
-            return ClickOutcome.Close;
+            return new UpdateAnswer("BrowserAI is restarting into the new version.", candidate.Version);
         }
 #pragma warning disable CA1031 // Same boundary as the check: a sentence, never a crash.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            _note = $"The update did not install: {failure.Message}";
-            return ClickOutcome.Rerender;
+            return new UpdateAnswer($"The update did not install: {failure.Message}", null);
         }
     }
 }
+
+/// <summary>What an update check or an install concluded.</summary>
+/// <remarks>
+/// <b>One value, computed entirely off the dialog's thread.</b> It is the only
+/// thing that crosses back, which is what makes the background work safe without
+/// a lock.
+/// </remarks>
+/// <param name="Note">The sentence the dialog shows.</param>
+/// <param name="Available">The version that is available, when one is.</param>
+internal sealed record UpdateAnswer(string Note, string? Available);
 
 /// <summary>The configuration app's own records.</summary>
 internal static partial class AppLog
