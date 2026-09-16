@@ -271,26 +271,54 @@ internal static partial class TaskDialogInterop
     /// ⚠️ <b>It answers the 32×32 image and nothing else.</b> There is no size and
     /// no DPI in this call: it takes whichever image the group holds at the
     /// system's <i>classic</i> icon size, which a Per-Monitor-V2 process then
-    /// draws stretched. <see cref="LoadIconWithScaleSize"/> is the one that
-    /// takes a size, and this is kept as its fallback.
+    /// draws stretched. <see cref="LoadImageW"/> is the one that takes a size, and this is
+    /// kept as its fallback.
     /// </remarks>
     [LibraryImport("user32.dll", EntryPoint = "LoadIconW", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     internal static partial nint LoadIconW(nint instance, nint resource);
 
+    /// <summary><c>IMAGE_ICON</c>.</summary>
+    public const uint ImageIcon = 1;
+
+    /// <summary><c>LR_DEFAULTCOLOR</c>: no flags at all.</summary>
+    public const uint LoadDefaultColor = 0x0000;
+
     /// <summary>
     /// Loads the image from an icon group that is closest to a given size,
     /// scaling it if it has to.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b><c>LoadImageW</c> rather than <c>LoadIconWithScaleSize</c>, and
+    /// the reason is not taste — measured 2026-09-16.</b> The comctl32 function
+    /// is the one the documentation points at for this job and it is
+    /// <b>exported by ORDINAL only</b>: a <c>LibraryImport</c> naming it fails at
+    /// the call with <c>EntryPointNotFoundException: Unable to find an entry
+    /// point named 'LoadIconWithScaleSize' in native library 'comctl32.dll'</c>,
+    /// which reaches the process boundary from inside <c>Show()</c> and takes the
+    /// window with it. Importing by ordinal would work and would be a number with
+    /// nothing behind it. <c>LoadImageW</c> is exported by name from
+    /// <c>user32</c>, takes the same two dimensions, and picks the closest image
+    /// from the group.
+    /// </remarks>
     /// <param name="instance">The module.</param>
-    /// <param name="resource">The id, cast to a pointer.</param>
+    /// <param name="name">The resource id, cast to a pointer.</param>
+    /// <param name="type">One of the <c>IMAGE_</c> values.</param>
     /// <param name="width">The width wanted, in physical pixels.</param>
     /// <param name="height">The height wanted.</param>
-    /// <param name="icon">The icon, on success.</param>
-    /// <returns>An <c>HRESULT</c>.</returns>
-    [LibraryImport("comctl32.dll", EntryPoint = "LoadIconWithScaleSize", SetLastError = false)]
+    /// <param name="load">The <c>LR_</c> flags.</param>
+    /// <returns>The image, or zero.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "LoadImageW", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    internal static partial int LoadIconWithScaleSize(nint instance, nint resource, int width, int height, out nint icon);
+    internal static partial nint LoadImageW(nint instance, nint name, uint type, int width, int height, uint load);
+
+    /// <summary>Releases an icon this process loaded and owns.</summary>
+    /// <param name="icon">The icon.</param>
+    /// <returns>Whether it went.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "DestroyIcon", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static partial bool DestroyIcon(nint icon);
 
     /// <summary>The DPI a window is being drawn at.</summary>
     /// <param name="window">The window.</param>

@@ -688,7 +688,16 @@ internal sealed class ConfigurationAppTests
         var source = await File.ReadAllTextAsync(
             Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Ui", "TaskDialogPage.cs"));
 
-        await Assert.That(source).Contains("LoadIconWithScaleSize(");
+        await Assert.That(source).Contains("LoadImageW(");
+        await Assert.That(source).Contains("TaskDialogInterop.ImageIcon");
+
+        // ⚠️ AND NEVER LoadIconWithScaleSize, which is the function the
+        // documentation points at for this and is exported from comctl32 by
+        // ORDINAL ONLY: naming it in a LibraryImport fails at the call with
+        // EntryPointNotFoundException, from inside Show(), which takes the
+        // window with it. Measured 2026-09-16 against the published binary,
+        // which exited 0xC0000409 and left the reason in the process log.
+        await Assert.That(source.Contains("LoadIconWithScaleSize", StringComparison.Ordinal)).IsFalse();
         await Assert.That(source).Contains("IconSizeFor(Dpi())");
         await Assert.That(source).Contains("GetDpiForWindow");
         await Assert.That(source).Contains("LoadIconW(");

@@ -92,7 +92,13 @@ release body; nothing else depends on it.
   `SM_CXICON` for the window's own DPI, with the unscaled load kept as the
   fallback it has always been. The DPI is the window's where there is a window
   and the system's on the first page, which is built before the window exists —
-  so a dialog dragged to a second monitor comes back at that monitor's DPI.
+  so a dialog dragged to a second monitor comes back at that monitor's DPI. The
+  loading call is `LoadImageW`, **not** `LoadIconWithScaleSize`: the comctl32
+  function the documentation points at for this is exported **by ordinal only**,
+  and naming it in a `LibraryImport` fails at the call with
+  `EntryPointNotFoundException` from inside `Show()` — which takes the window
+  with it. That was found by the gate, not by review: the published app exited
+  `0xC0000409` and left the reason in its own process log.
 
 - 🐛 **The release-notes generator refuses the two shapes it used to crash on or
   drop.** An entry written above a section's first `### ` heading made

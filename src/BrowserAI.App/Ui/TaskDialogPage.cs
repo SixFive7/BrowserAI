@@ -82,6 +82,8 @@ internal sealed class TaskDialogHost : IDisposable
     private readonly List<nint> _allocated = [];
 
     private GCHandle _self;
+    private nint _icon;
+    private (int Width, int Height) _iconSize;
 
     /// <summary>Creates a host for one dialog.</summary>
     /// <param name="page">Produces the page to show, called again on every re-render.</param>
@@ -324,18 +326,53 @@ internal sealed class TaskDialogHost : IDisposable
         var module = TaskDialogInterop.GetModuleHandleW(0);
         var (width, height) = IconSizeFor(Dpi());
 
-        if (TaskDialogInterop.LoadIconWithScaleSize(
-                module, TaskDialogInterop.ApplicationIconResource, width, height, out var scaled) is 0
-            && scaled is not 0)
+        // Loaded once per size and kept: a re-render at the same DPI is the
+        // ordinary case, and an icon loaded without LR_SHARED is this process's
+        // to destroy.
+        if (_icon is not 0 && _iconSize == (width, height))
         {
+            return _icon;
+        }
+
+        var scaled = TaskDialogInterop.LoadImageW(
+            module,
+            TaskDialogInterop.ApplicationIconResource,
+            TaskDialogInterop.ImageIcon,
+            width,
+            height,
+            TaskDialogInterop.LoadDefaultColor);
+
+        if (scaled is not 0)
+        {
+            ReleaseIcon();
+
+            _icon = scaled;
+            _iconSize = (width, height);
+
             return scaled;
         }
 
         var ours = TaskDialogInterop.LoadIconW(module, TaskDialogInterop.ApplicationIconResource);
 
+        // Not owned: LoadIconW answers a shared icon, which must not be
+        // destroyed. It is deliberately not recorded in _icon for that reason.
         return ours is not 0
             ? ours
             : TaskDialogInterop.LoadIconW(0, TaskDialogInterop.ApplicationIconResource);
+    }
+
+    /// <summary>Destroys the icon this host loaded, if it loaded one.</summary>
+    private void ReleaseIcon()
+    {
+        if (_icon is 0)
+        {
+            return;
+        }
+
+        _ = TaskDialogInterop.DestroyIcon(_icon);
+
+        _icon = 0;
+        _iconSize = (0, 0);
     }
 
     /// <summary>
@@ -382,6 +419,7 @@ internal sealed class TaskDialogHost : IDisposable
         }
 
         _allocated.Clear();
+        ReleaseIcon();
     }
 
     /// <summary>
