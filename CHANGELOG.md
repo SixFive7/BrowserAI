@@ -103,6 +103,39 @@ release body; nothing else depends on it.
   `.ico` to be the drawing in the SVG** — that is a render comparison on every
   build to answer a question a person answers by looking.
 
+### Changed
+
+- 📦 **The RID section a restore writes into `BrowserAI.Core`'s lock file is
+  committed, not reverted.** Q199, decided by the maintainer on 2026-09-16, the
+  third time the same diff had been met in one night. The section is the empty
+  `"net10.0-windows7.0/win-x64": {}` that an `-r win-x64` restore adds. Every
+  publish of either executable is RID-specific, and a RID-specific restore
+  records that section for every project it reaches —
+  [`src/BrowserAI/packages.lock.json`](src/BrowserAI/packages.lock.json) and
+  `BrowserAI.App` have carried theirs since they were written, and
+  `BrowserAI.Core` is the library both of them publish, so the section is **what
+  the restore genuinely resolves** rather than an artifact of one publish shape.
+  The rule it replaces was *revert it, never commit it*, kept by a person
+  remembering, and it had already failed once: the section reached `HEAD` in a
+  `git add -A` and was reverted in `ac244ff` under a sentence calling it an
+  artifact nobody asked for. **The file has two states and the last restore
+  wins** — measured 2026-09-16 *after* the decision: a RID restore writes the
+  section (`fab160c4…`), a non-RID solution restore removes it (`7f30ec57…`),
+  which is what `dotnet test` performs, and each state is byte-stable under
+  repetition of its own kind. So committing it moves which end of the oscillation
+  is the dirty one rather than ending it, and **that is still the right way
+  round**: the diff that matters is the one a commit follows, a publish is
+  followed by a release commit and a suite run is followed by reading a log. The
+  cost is named rather than hidden — `git status` shows the file modified after
+  every suite run, including all six of a release gate, and the release
+  checklist's own re-pack restores with the RID and leaves the tree clean before
+  the release commit is written. The way that would end the oscillation outright,
+  declaring the RID on `BrowserAI.Core` so every restore resolves the same set,
+  is written down in [`TESTING.md`](TESTING.md) and belongs to whoever owns the
+  build.
+  [`RELEASING.md`](RELEASING.md) item 7 and [`TESTING.md`](TESTING.md) are
+  corrected by addition, each quoting in full what it said before.
+
 ### Fixed
 
 - 📝 **Six stale sentences are corrected and one new hazard is written down.** The

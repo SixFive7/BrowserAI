@@ -548,14 +548,30 @@ stages into `artifacts\publish-<exe stem>` and never touches
 [`src/BrowserAI.Core/packages.lock.json`](src/BrowserAI.Core/packages.lock.json)
 — **including the restore this script performs**, watched on a full pack run on
 2026-09-16, so it is not something a standalone `dotnet publish` does and the
-release script avoids. **Revert it; do not commit it** —
-`git checkout -- src/BrowserAI.Core/packages.lock.json` — because an empty
+release script avoids.
+
+⚠️ **COMMIT IT — *corrected 2026-09-16 (previously "**Revert it; do not commit
+it** — `git checkout -- src/BrowserAI.Core/packages.lock.json` — because an empty
 section is a restore artifact rather than a resolution anybody reviewed, and a
 `git add -A` after a publish carries it into the release commit, which is how it
 reached `HEAD` once already. Nothing enforces this and a test would be red for
-the whole window between this item and item 8; the reasoning, and the two ways it
-could be closed, are in
-[Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-reverted-rather-than-committed).
+the whole window between this item and item 8")*.** The section is committed
+under **Q199**, decided 2026-09-16: it is what a RID restore genuinely resolves,
+and the revert habit had already failed once — it reached `HEAD` in a `git add
+-A` and was reverted in `ac244ff` under a sentence calling it an artifact.
+**This item therefore has nothing left to do about that file**, and the window
+the old rule needed protecting is closed rather than narrowed: with the section
+committed, a RID restore leaves the lock file **byte-identical** (measured
+2026-09-16 — SHA-256 `fab160c4…` either side of a RID restore of both
+executables), so a publish no longer produces a diff for anybody to remember to
+revert. ⚠️ **What it does instead is show that file modified after every
+[item 8](#8-run-everything) run**, because `dotnet test` restores the solution
+without a RID and that writes the other of the file's two states (`7f30ec57…`).
+**Nothing needs doing about it here:** step 5's re-pack restores with the RID and
+leaves the tree clean before the release commit is written. What must not happen,
+before this decision and after it, is a `git add -A` taken on trust. The
+reasoning, and the way that was not taken, are in
+[Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-committed-rather-than-reverted).
 
 > **Corrected 2026-08-16 on the first run of this checklist (previously: "the
 > publish command, its exit code, and the warning count, which is zero").** The

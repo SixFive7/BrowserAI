@@ -824,7 +824,7 @@ would turn it green. This one is not a capability because `published slice`
 question about the same artefact, and the two were conflated by a reader who had
 only the first.
 
-#### A publish rewrites a lock file, and the diff is reverted rather than committed
+#### A publish rewrites a lock file, and the diff is committed rather than reverted
 
 ⚠️ **Measured 2026-09-16, and the first version of this note was wrong about
 which publish does it.** A **RID-specific** restore — `-r win-x64`, which every
@@ -849,19 +849,59 @@ is the other publish and is meant to be direct** — it lands under
 `src\<project>\bin\`, which the release script never writes, and
 `PublishedSlice`'s own refusal prints the command.
 
-**Until somebody decides otherwise, the diff is reverted and never committed** —
-`git checkout -- src/BrowserAI.Core/packages.lock.json` — because an empty
-section is a restore artifact rather than a resolution anybody reviewed, and a
-lock file is a record of what was reviewed.
+⚠️ **Somebody decided, and the decision is COMMIT — *corrected 2026-09-16
+(previously the heading read "the diff is reverted rather than committed" and
+this paragraph read "**Until somebody decides otherwise, the diff is reverted and
+never committed** — `git checkout -- src/BrowserAI.Core/packages.lock.json` —
+because an empty section is a restore artifact rather than a resolution anybody
+reviewed, and a lock file is a record of what was reviewed")*.** That is **Q199**,
+taken on 2026-09-16 by the maintainer and executed by the release batch that met
+the diff for the third time in one night. Two reasons, and the second is the one
+that settles it. **It is what a RID restore genuinely resolves** — the same
+section `BrowserAI` and `BrowserAI.App` already carry, written by the same
+restore, over a library they both publish RID-specific. And **the revert habit had
+already failed once**: the paragraph above records the section reaching `HEAD` in
+a `git add -A` and being reverted in `ac244ff`, which is a rule kept by
+remembering, and this repository writes that shape down as a defect rather than
+as care.
 
-⚠️ **Nothing enforces this and a test would fight the release gate.**
-`BuildConfigurationTests` could hold the file free of that section in three
-lines, and the arm would be **red for the whole window between item 7's publish
-and item 8's run** — a gate that cannot pass after doing what the checklist just
-told it to do. The question it would be asking is a real one and it is open, not
-answered here: either that section is the honest resolution and belongs in the
-file, or restores should be run `--locked-mode` so a restore that would rewrite a
-lock file fails instead of doing it quietly. Both are the maintainer's to pick.
+⚠️ **THE FILE HAS TWO STATES AND THE LAST RESTORE WINS — measured 2026-09-16
+*after* the decision, and it changes what the decision buys rather than the
+decision itself.** A RID restore writes one state and a **non-RID** restore
+writes the other, and `dotnet test` performs a non-RID one, so a suite run
+removes the section as reliably as a publish adds it. Measured on this tree, in
+one pass, each state byte-stable under repetition of its own kind:
+
+| Restore | `src/BrowserAI.Core/packages.lock.json` | SHA-256 |
+|---|---|---|
+| `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64` | section **present** | `fab160c4…` |
+| `dotnet restore BrowserAI.slnx` — what `dotnet test` runs | section **absent** | `7f30ec57…` |
+
+**So committing it does not end the oscillation; it moves which end of it is the
+dirty one** — and that is still the right way round, which is the argument rather
+than a restatement of the decision. The diff that matters is the one a **commit**
+follows: in this repository a publish is followed by a release commit, and a
+suite run is followed by reading a log. The one time this file reached `HEAD`
+unreviewed, it was a `git add -A` after a publish. The state a publish leaves
+behind is therefore the state that must be committed, and it now is.
+
+**The cost is stated rather than hidden.** `git status` shows this one file
+modified after every suite run, including all six of a release gate, and the
+repair is `dotnet restore <project> -r win-x64` — or nothing at all, because
+[the release checklist's re-pack step](RELEASING.md#7-build-clean) performs
+exactly that restore and leaves the tree clean before the release commit is
+written. **Never `git add -A` after a suite run**, which was true before this
+decision and is true in the other direction after it.
+
+**The way that would end the oscillation outright was not taken, and is written
+down so that it can be.** `BrowserAI.Core.csproj` declaring the RID it is only
+ever published under would make every restore — solution or project, RID named or
+not — resolve the same set and write the same file. That is a build change to a
+library three projects reference, with its own consequences for their outputs,
+and it belongs to whoever owns the build rather than to a release batch. The
+other way, `--locked-mode` restores that fail rather than rewrite, was not taken
+either: it would have **refused** this section rather than recording it, and the
+section is a resolution rather than a corruption.
 
 ## We write our own harness
 
