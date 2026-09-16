@@ -4,7 +4,7 @@
 # Reviews
 
 Findings that are **too long to inline and too valuable to lose**. Everything
-here was produced in `.work/`, which is gitignored — these are the copies that
+here was produced in `.work/`, which was gitignored — these are the copies that
 survive a clean.
 
 **These are records, not work lists.** Anything actionable is lifted into

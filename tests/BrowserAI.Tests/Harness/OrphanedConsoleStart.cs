@@ -64,7 +64,7 @@ namespace BrowserAI.Tests.Harness;
 /// one, because a handle keeps a dead pid openable … a rig in which the test
 /// host itself launched the product's parent produced a <i>watchable</i>
 /// launcher and the product shut down cleanly, measured 2026-09-15 at
-/// <c>.work/2026-09-15-fix/repro-red-2.txt</c>").</b> That measurement was real
+/// <c>docs/evidence/2026-09-15-fix/repro-red-2.txt</c>").</b> That measurement was real
 /// and the conclusion drawn from it was that the openable corpse had to be
 /// designed <i>out</i> of the rig. It could not be: nothing makes Windows free
 /// a pid on request, and the second full run of the day found the product

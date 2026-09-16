@@ -1011,8 +1011,9 @@ The `read more` must land as an `<a href>` **inside** the `<li>`, beside a
 `/markdown` into a filesystem path and `gh` reports an endpoint under
 `C:/Program Files/Git`. And it is `-F`, not `-f`: `-f` sends the literal text
 `@<path>` and the API cheerfully renders that.)* Evidence for the 2026-09-15 cut
-is in `.work/2026-09-15-notes/rendered-0.1.0.html`; for the 2026-09-16 shape,
-`.work/2026-09-16-icon/body/sample.html`.
+is
+[`docs/evidence/2026-09-16-release-body/rendered-0.1.0.html`](docs/evidence/2026-09-16-release-body/README.md);
+for the 2026-09-16 shape, `sample.html` beside it.
 
 **The line anchors were verified on github.com rather than assumed.** `curl`
 cannot show it — the highlight is applied client-side from the fragment, and the
@@ -1071,7 +1072,9 @@ what its `override` key says.
 > emits this manifest, so it is assembled by hand").** The first wording named
 > an artifact that had never existed and that nothing produced, so the item
 > could be neither satisfied nor failed; the second described the hand-assembly
-> that satisfied it once, at `.work/step20/manifest/`, which is a checklist item
+> that satisfied it once, at
+> [`docs/evidence/2026-08-16-step20-manifest/`](docs/evidence/2026-08-16-step20-manifest/README.md),
+> which is a checklist item
 > nobody satisfies twice.
 >
 > ✅ **It is emitted.** `build/Write-ReleaseManifest.ps1` copies the seven files

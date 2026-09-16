@@ -4,8 +4,8 @@
 // Probe rig for QUESTIONS.md section 8 -- the silent Chromium death.
 // Not product code: nothing builds this, and nothing in the suite runs it.
 // House rules honoured: nothing is ever killed by image name, every launch
-// sets CREATE_NO_WINDOW, and every STARTUPINFO field carries the flag that
-// makes CreateProcessW read it.
+// sets CreateNoWindow (0x08000000), and every STARTUPINFO field carries the flag
+// that makes CreateProcessW read it.
 //
 // Corrected 2026-09-16 (previously "Lives in .work/ and is invisible to the
 // repository's tree-as-text scans (.work is gitignored and RepositoryLayout
@@ -35,7 +35,14 @@ namespace HeapRig
         public const uint GENERIC_ALL = 0x10000000;
 
         public const int STARTF_USESTDHANDLES = 0x00000100;
-        public const uint CREATE_NO_WINDOW = 0x08000000;
+        // Renamed 2026-09-16 from the Win32 spelling. The name is load-bearing
+        // rather than stylistic: HouseRuleTests.EveryProcessLaunchInTheTree-
+        // SuppressesTheConsoleWindow scans with ONE needle so that it covers the
+        // managed property and the native flag alike, and
+        // src/BrowserAI/Interop/JobLauncher.cs names the same constant the same way
+        // for the same reason. Same value, same two launch sites, no behaviour
+        // change -- and the rig now passes the scan it always claimed to satisfy.
+        public const uint CreateNoWindow = 0x08000000;
         public const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
         public const uint CREATE_SUSPENDED = 0x00000004;
 
@@ -338,7 +345,7 @@ namespace HeapRig
                 IntPtr.Zero,
                 IntPtr.Zero,
                 true,
-                Native.CREATE_NO_WINDOW | Native.CREATE_UNICODE_ENVIRONMENT | Native.CREATE_SUSPENDED,
+                Native.CreateNoWindow | Native.CREATE_UNICODE_ENVIRONMENT | Native.CREATE_SUSPENDED,
                 IntPtr.Zero,
                 workingDirectory,
                 ref si,
@@ -548,7 +555,7 @@ namespace HeapRig
                 IntPtr.Zero,
                 IntPtr.Zero,
                 false,
-                Native.CREATE_NO_WINDOW | Native.CREATE_UNICODE_ENVIRONMENT | Native.CREATE_SUSPENDED,
+                Native.CreateNoWindow | Native.CREATE_UNICODE_ENVIRONMENT | Native.CREATE_SUSPENDED,
                 IntPtr.Zero,
                 workingDirectory,
                 ref si,

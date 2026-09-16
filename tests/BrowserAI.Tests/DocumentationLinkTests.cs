@@ -490,6 +490,26 @@ internal sealed partial class DocumentationLinkTests
         await Assert.That(missed.Count).IsEqualTo(1);
         await Assert.That(missed[0]).Contains("gone.png");
 
+        // ⚠️ THE QUOTED-RECORD FALLBACK, in both directions. A ledger is a
+        // verbatim snapshot of a file that was written at the repository root,
+        // so its references resolve from there as well as from beside it -- and
+        // a reference that resolves from NEITHER is still an offender, which is
+        // the half that would silently disappear if the fallback were a skip.
+        await Assert.That(IsQuotedRecord(Path.Combine(
+            RepositoryLayout.Root.FullName, "docs", "ledger", "a-session.md"))).IsTrue();
+        await Assert.That(IsQuotedRecord(Path.Combine(
+            RepositoryLayout.Root.FullName, "docs", "reviews", "a-review.md"))).IsFalse();
+
+        var ledger = new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "docs", "ledger", "planted.md"));
+        var prose = new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "docs", "planted.md"));
+
+        // README.md is at the root, and neither file is beside it.
+        await Assert.That(Resolves(ledger, "README.md")).IsTrue();
+        await Assert.That(Resolves(prose, "README.md")).IsFalse();
+
+        // And the root does not rescue a name that is nowhere.
+        await Assert.That(Resolves(ledger, "no-such-file-anywhere.png")).IsFalse();
+
         // ---- and now the tree ----------------------------------------------
         var found = new List<(FileInfo File, string Line, int Number, string Target)>();
 
@@ -554,15 +574,70 @@ internal sealed partial class DocumentationLinkTests
     private static List<string> Unresolved(List<(FileInfo File, string Line, int Number, string Target)> references) =>
     [
         .. references
-            .Where(reference => !File.Exists(Path.GetFullPath(Path.Combine(
-                reference.File.DirectoryName!,
-                reference.Target.Replace('/', Path.DirectorySeparatorChar)))))
+            .Where(reference => !Resolves(reference.File, reference.Target))
             .Select(reference => Offence(
                 reference.File,
                 reference.Number,
                 reference.Line,
                 $"'{reference.Target}' names a file that is not there")),
     ];
+
+    /// <summary>
+    /// Whether one reference names a file that is there, from where it is
+    /// written.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Beside the file that carries it, and — for a quoted record only — from
+    /// the repository root as well.</b> A document written in this tree points
+    /// at its neighbours, and resolving it any other way would let a wrong path
+    /// pass because something of that name happens to exist at the top.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A ledger is not written in this tree.</b> It is a verbatim snapshot
+    /// of a file that was kept in the scratch directory at the repository root
+    /// and is sealed against editing, so the paths quoted inside it mean what
+    /// they meant where they were written — <c>assets/icon-128.png</c> is the
+    /// front page's icon and not a missing file beside the ledger. That is the
+    /// same principle the remark on
+    /// <see cref="EveryAssetReferenceInTheProseResolvesToTheFileItNames"/>
+    /// already states about somebody else's document; what is new is that the
+    /// document can be ours and still not be written from here. The check stays
+    /// live either way: a reference that resolves from neither place is still
+    /// reported, which is what the planted control below asserts.
+    /// </para>
+    /// </remarks>
+    /// <param name="file">The file the reference is written in.</param>
+    /// <param name="target">The reference's target, already stripped of any fragment.</param>
+    /// <returns>Whether it names a file that exists.</returns>
+    private static bool Resolves(FileInfo file, string target)
+    {
+        var relative = target.Replace('/', Path.DirectorySeparatorChar);
+
+        if (File.Exists(Path.GetFullPath(Path.Combine(file.DirectoryName!, relative))))
+        {
+            return true;
+        }
+
+        return IsQuotedRecord(file.FullName)
+            && File.Exists(Path.GetFullPath(Path.Combine(RepositoryLayout.Root.FullName, relative)));
+    }
+
+    /// <summary>
+    /// Whether a path names a record this repository quotes rather than a
+    /// document it writes.
+    /// </summary>
+    /// <remarks>
+    /// <b>One directory, named rather than inferred.</b> Everything under
+    /// <c>docs/ledger/</c> is a snapshot taken whole from somewhere else and
+    /// never edited afterwards; nothing else in the tree has that property, and
+    /// the day something does it gets named here on purpose rather than
+    /// acquiring the exemption by where it happens to sit.
+    /// </remarks>
+    /// <param name="path">A full or relative path.</param>
+    /// <returns>Whether it is a quoted record.</returns>
+    private static bool IsQuotedRecord(string path) =>
+        path.Replace('\\', '/').Contains("/docs/ledger/", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>A Markdown image reference's target.</summary>
     /// <remarks>

@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The failure was measured end to end and it was a shipping defect</b>
-/// (evidence: <c>.work/2026-09-14-firstrun/</c>). A non-silent <c>Setup.exe</c> —
+/// (evidence: <c>docs/evidence/2026-09-14-firstrun/</c>). A non-silent <c>Setup.exe</c> —
 /// the path <c>README.md</c> tells a person to take — finishes by starting
 /// <c>current\BrowserAI.exe</c> itself, with <c>show_window=true</c>: Velopack
 /// passes <c>CREATE_NO_WINDOW</c> for a hook and <b>not</b> for the app start,
@@ -315,7 +315,7 @@ internal sealed class InstallerHandoffTests
     /// exit: alive sixty seconds later holding a <c>node.exe</c>, with the log
     /// ending at the <i>is exiting</i> line and <c>instances\</c> and
     /// <c>live\</c> still under the root, so the <c>finally</c> had not run
-    /// either. Evidence: <c>.work/2026-09-15-fix/repro-red-3.txt</c>. The cause
+    /// either. Evidence: <c>docs/evidence/2026-09-15-fix/repro-red-3.txt</c>. The cause
     /// was <c>JsonLinesTransport.DisposeAsync</c> awaiting a read loop parked on
     /// a console that nothing can wake.
     /// </para>

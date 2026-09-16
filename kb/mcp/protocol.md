@@ -195,10 +195,13 @@ every session.*
 5. Read `tools` out of the largest captured body and diff each string against
    what the probe published.
 
-The scripts as run live in `.work/truncation/` on the machine that ran them and
-are deliberately untracked — they are scratch, not product. The complete recipe,
-written for a project that has never heard of BrowserAI, is in
-`.work/truncation-prompt-for-sibling-project.md`.
+The scripts as run are in
+[`build/probes/2026-08-18-truncation/`](../../build/probes/2026-08-18-truncation/README.md),
+and the complete recipe, written for a project that has never heard of
+BrowserAI, is [`RECIPE.md`](../../build/probes/2026-08-18-truncation/RECIPE.md)
+beside them. *Corrected 2026-09-16 (previously "live in `.work/truncation/` on
+the machine that ran them and are deliberately untracked — they are scratch, not
+product").*
 
 **`notifications/tools/list_changed` handling changed, and the charter's citation
 is stale.** *"Claude Code registers no handler"* was accurate at **2.0.65**

@@ -503,7 +503,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       on both binaries the child will drive — the provisioned `chromium-1243`
       153.0.8010.12 and the machine's own Google Chrome 153.0.8010.37 — with a
       live pid-tree walk recording which one each run actually drove. Evidence:
-      `.work/2026-09-14-webp-ask/`; the measurement is in
+      [`docs/evidence/2026-09-14-webp-ask/`](docs/evidence/2026-09-14-webp-ask/README.md);
+      the measurement is in
       [kb](kb/playwright/tools-and-artifacts.md#a-webp-screenshot-past-16383-px-comes-back-as-zero-bytes-with-iserror-false--measured-2026-09-14)
       and the consequence in [HAZARDS](HAZARDS.md#hazard-index). A duplicate
       search was run over both trackers with the term-AND REST API after a

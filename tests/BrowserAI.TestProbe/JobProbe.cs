@@ -16,7 +16,7 @@ namespace BrowserAI.TestProbe;
 
 /// <summary>
 /// The three process roles the job-containment acceptance test needs, ported
-/// from the <c>.work/jobtest/</c> prototype that measured 16 runs, 106
+/// from the <c>docs/evidence/2026-08-15-jobtest/</c> prototype that measured 16 runs, 106
 /// processes, 0 escapees and 0 survivors.
 /// </summary>
 /// <remarks>

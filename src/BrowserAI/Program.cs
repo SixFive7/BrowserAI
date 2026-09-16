@@ -217,7 +217,8 @@ internal static class Program
         // WINDOW on the user's screen, holding a stdin that never EOFs. Measured
         // 2026-09-14: the server and its node child then ran until the machine
         // was rebooted, serving nobody, while a terminal window titled with the
-        // full exe path sat on the desktop (evidence: .work/2026-09-14-firstrun/).
+        // full exe path sat on the desktop
+        // (evidence: docs/evidence/2026-09-14-firstrun/).
         //
         // It is here rather than three lines lower because everything below
         // costs something a blink must not: the sweep enumerates the machine,

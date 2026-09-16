@@ -622,7 +622,10 @@ browser's**: the same zero came back from the provisioned `chromium-1243`
 (153.0.8010.12) and from the machine's own Google Chrome (153.0.8010.37), with a
 live pid-tree walk recording which binary each run actually drove — without that
 walk the two runs are indistinguishable, because upstream's default browser
-selection is not the provisioned tree. Artifacts: `.work/2026-09-14-webp-ask/`.
+selection is not the provisioned tree. Artifacts:
+[`docs/evidence/2026-09-14-webp-ask/`](../../docs/evidence/2026-09-14-webp-ask/README.md);
+the rig is
+[`build/probes/2026-09-14-webp-ask/`](../../build/probes/2026-09-14-webp-ask/README.md).
 
 ⚠️ **The `mimeType` is still `image/webp` and the answer still reads as a
 success**, which is the whole of why this is worth a row rather than a note: a

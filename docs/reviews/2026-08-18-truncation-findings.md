@@ -276,3 +276,17 @@ during an upstream review.
   behave the same way. **They almost certainly do not** — this is one client's
   implementation detail, not a protocol rule. The method transfers; the numbers
   do not.
+
+## Addendum — 2026-09-16: where the scratch artifacts went
+
+**Appended; nothing above this line is changed.** The body says these scripts and
+captures live in `.work/`, which is gitignored. That was true when it was
+written and is not true now: the scratch directory was retired on 2026-09-16 and
+everything a record cites was moved into the tree first.
+
+- The probe scripts, and the complete recipe written for a sibling project, are in
+  [`build/probes/2026-08-18-truncation/`](../../build/probes/2026-08-18-truncation/README.md).
+- `.work/description-budget.txt` was **not** persisted and did not need to be: it is
+  regenerated at that path by `ModelSurfaceTests` on every suite run, so the way to
+  read it is to run the suite. If it disagrees with the table above, the table is
+  the older measurement and the run is the newer one.

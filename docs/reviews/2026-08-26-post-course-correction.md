@@ -705,3 +705,24 @@ reachable — `Settle` holds `_inProcess` and returns early on `_disposed`, and
 both disposal paths take the same lock — so this is an asymmetry in the
 `catch` filters rather than a defect. Worth one word if the file is being
 touched anyway.
+
+## Addendum — 2026-09-16: where the scratch artifacts went
+
+**Appended; nothing above this line is changed.** The body says these scripts and
+captures live in `.work/`, which is gitignored. That was true when it was
+written and is not true now: the scratch directory was retired on 2026-09-16 and
+everything a record cites was moved into the tree first.
+
+- Every transcript this review cites is in
+  [`docs/evidence/2026-08-26-post-course-correction/`](../evidence/2026-08-26-post-course-correction/README.md),
+  under the same file names: `drive*-out.txt`, `deadshare.txt`, `dupkey.cs`, `lead7/`.
+- ⚠️ **`drive5-out.txt` is one byte different, twice.** It is the run that plants a
+  `U+0007` in a directory name to prove the refusal, so it arrived carrying two raw
+  `0x07` bytes — which `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` forbids
+  anywhere in this repository. Both are written as the escape `\u0007` in the
+  persisted copy, which is how the same line already spells it in its quoted half.
+  Nothing else in any file was changed.
+- `.work/STATE.md`, cited twice above for the P5 could-not-check, is
+  [`docs/ledger/2026-09-15-release-session.md`](../ledger/2026-09-15-release-session.md).
+  It is a later snapshot of the same live ledger, so the line numbers quoted above do
+  not carry across; search for the text.

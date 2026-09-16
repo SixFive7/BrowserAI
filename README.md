@@ -268,6 +268,21 @@ caught the batch's own tooling**: the control-byte scan named two backspaces tha
 a documentation edit made in this very batch had written into `RELEASING.md` and
 `TESTING.md`, in the same shape it exists for.
 
+**The count did not move on 2026-09-16 when the scratch directory was retired,
+and one arm changed behaviour anyway**, so it is recorded here rather than left
+out for want of a number.
+`DocumentationLinkTests.EveryAssetReferenceInTheProseResolvesToTheFileItNames`
+resolves a reference written in a **quoted record** — anything under
+`docs/ledger/`, which is a verbatim snapshot of a file written at the repository
+root and sealed against editing — from the root as well as from beside the file.
+It was watched red twice: first by the tree, at *"docs\ledger\…:2576:
+'assets/icon-128.png' names a file that is not there"*, which is the front
+page's own icon quoted inside a ledger; then by planting the new predicate
+`false` and watching the arm's own control fail at *"Expected to be true but
+found False"*. The fallback is one named directory and not a skip, and the arm
+asserts in both directions that a reference resolving from neither place is
+still an offender.
+
 **The +17 is one review batch, 2026-09-16, and every arm below was watched red
 against the defect it names.** `ReleaseScriptTests.TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn`,
 red at *"build/New-Release.ps1 no longer assigns $packTitle as a single-quoted

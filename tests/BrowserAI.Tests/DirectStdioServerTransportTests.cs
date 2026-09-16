@@ -191,7 +191,7 @@ internal sealed class DirectStdioServerTransportTests
     /// read has parked, neither cancelling the token nor disposing the stream
     /// completes it — <b>3 s each, both still <c>WaitingForActivation</c>, with
     /// a console stdin and with a pipe stdin alike</b>
-    /// (<c>.work/2026-09-15-fix/consoleprobe/probe-console-a.txt</c>).
+    /// (<c>docs/evidence/2026-09-15-fix/consoleprobe/probe-console-a.txt</c>).
     /// </para>
     /// <para>
     /// <b>So the exit was conditional on the client, and the installer is not a

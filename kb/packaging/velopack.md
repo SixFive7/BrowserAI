@@ -228,8 +228,9 @@ key**, and with it the only Add/Remove entry the release candidate had ever had.
 The probe had exported the key first and restored it byte-identical afterwards,
 so nothing was actually lost; the export had been taken as a precaution against
 a different risk, and this is the one it caught. Evidence:
-`.work/2026-09-14-firstrun/arp-before.reg`, `arp-after.reg` — identical after
-the restore — and `probe-root.txt`.
+[`docs/evidence/2026-09-14-firstrun/`](../../docs/evidence/2026-09-14-firstrun/README.md)
+— `arp-before.reg` and `arp-after.reg`, identical after the restore, and
+`probe-root.txt`.
 
 ⚠️ **So two installs of one app id per user are not a supported shape**, and
 nothing in the installer says so. `--installto` changes where the files land and
@@ -799,8 +800,9 @@ uninstall**, with non-installed runs writing to a machine-shared `velopack.log`.
 ## A non-silent install starts the app in a console window, and nobody is on the other end of it — measured 2026-09-14
 
 **Measured 2026-09-14 @ Velopack 1.2.0**, end to end, against a real install of
-this product. Evidence: `.work/2026-09-14-firstrun/` (`setup.log`,
-`observe.jsonl`, `tree.jsonl`, `uninstall.log`). `[FLOATS]`
+this product. Evidence:
+[`docs/evidence/2026-09-14-firstrun/`](../../docs/evidence/2026-09-14-firstrun/README.md)
+(`setup.log`, `observe.jsonl`, `tree.jsonl`, `uninstall.log`). `[FLOATS]`
 
 **`Setup.exe` without `--silent` finishes by starting the app itself**, through
 `shared::start_package`, and that call passes `show_window = true`
@@ -842,7 +844,9 @@ only as a side effect of hiding every dialog and answering yes to every prompt.
 It is filed as [velopack/velopack#1056](https://github.com/velopack/velopack/issues/1056).
 
 **How to re-establish.** Launch `Setup.exe` from a windowless parent (a detached
-`pwsh` with no console, as `.work/2026-09-14-firstrun/launch-detached.ps1` does),
+`pwsh` with no console, as
+[`build/probes/2026-09-14-firstrun/launch-detached.ps1`](../../build/probes/2026-09-14-firstrun/README.md)
+does),
 without `--silent`, against a scratch `--installto`, and watch the process tree
 and the top-level windows. ⚠️ **Sandbox it**: point `CLAUDE_CONFIG_DIR` at a
 scratch directory first, because the install hook registers with the real client
@@ -856,8 +860,9 @@ deletes it.
 2026-09-15 @ Velopack 1.2.0, BrowserAI 1.0.0, Windows 11 Pro 26200, on the
 maintainer's own machine, installing the **published** `BrowserAI-win-Setup.exe`
 from GitHub Releases with no `--installto` and no `--silent`. Evidence:
-`.work/2026-09-15-install/setup.log` (lines 44 and 51),
-`.work/2026-09-15-install/install-observe.jsonl`, and the product's own log at
+[`docs/evidence/2026-09-15-install/`](../../docs/evidence/2026-09-15-install/README.md)
+— `setup.log` lines 44 and 51, and `install-observe.jsonl` — and the product's
+own log at
 `%LocalAppData%\BrowserAI\logs\browserai-20260915-000.log`. `[FLOATS]`
 
 | | 2026-09-14 | 2026-09-15 |
@@ -874,7 +879,8 @@ unresolved.** The product logged `Startup[72]`/`Startup[9]` — the *general*
 no-client decision — rather than `Startup[8]`, the installer exit, which sits
 thirty lines earlier in `Main`. The same binary **does** take `Startup[8]`, in
 0.313 s, when the variable is set on a start it is not installed for (measured
-the same day through the orphan rig, `.work/2026-09-15-fix/repro-firstrun.txt`),
+the same day through the orphan rig,
+[`docs/evidence/2026-09-15-fix/repro-firstrun.txt`](../../docs/evidence/2026-09-15-fix/README.md)),
 so the read is not broken. What runs in between is `VelopackApp.Run()`, which is
 the only code with the opportunity; **that it clears the variable is INFERRED and
 has not been measured**, and it is recorded here as an open question rather than
@@ -967,15 +973,20 @@ is what the shape was always going to do and is *not* what decided the earlier
 red — a launcher still running at the parent read is a race this rig has never
 been measured to lose. The 0.116 s is smaller than the 0.312 s above for a reason
 that is the rig rather than the product: one `cmd` start on the path instead of
-two. Re-establish it with `.work/2026-09-15-notes/Measure-Corpse.ps1`, or read
+two. Re-establish it with
+[`build/probes/2026-09-15-corpse/Measure-Corpse.ps1`](../../build/probes/2026-09-15-corpse/README.md),
+or read
 the four records the run leaves: `Startup[1]`, `Startup[4]`, `Startup[76]` — the
 new one — and `Startup[9]`.
 
 ## Two binaries in one pack, measured end to end — 2026-09-15
 
 **Measured 2026-09-15 @ Velopack 1.2.0, `vpk` 1.2.0, SDK 10.0.400, ILC 10.0.12,
-win-x64, Windows 11 Pro 26200.** Evidence: `.work/2026-09-15-app/pack2.log` and
-the feed under `.work/2026-09-15-app/packfeed/`. `[FLOATS]`
+win-x64, Windows 11 Pro 26200.** Evidence:
+[`docs/evidence/2026-09-15-app/`](../../docs/evidence/2026-09-15-app/README.md)
+— `pack2.log` and the feed's text under `packfeed/`, with the three large
+binaries recorded by size and digest in `packfeed-inventory.csv` rather than
+kept. `[FLOATS]`
 
 **A second executable is an ordinary payload file.** It is signed with the rest,
 it gets no stub of its own — the root stub is named after `--mainExe` — and
@@ -1181,7 +1192,8 @@ directory, with the old root renamed aside and deleted on success.
 
 **Re-establish it** by running any non-silent `Setup.exe` against a root that
 already holds an install and reading the top-level windows of its pid --
-`.work/2026-09-16-release/Read-Dialog.ps1` enumerates the children and
+[`build/probes/2026-09-16-release/Read-Dialog.ps1`](../../build/probes/2026-09-16-release/README.md)
+enumerates the children and
 `Add-Type -AssemblyName UIAutomationClient` reads the task dialog's text, which
 `GetWindowTextW` cannot because the body is a `DirectUIHWND`.
 

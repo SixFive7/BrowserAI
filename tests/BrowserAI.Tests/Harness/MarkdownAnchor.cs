@@ -13,7 +13,10 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b>Ported from a working implementation rather than derived</b>
-/// (<c>.work\check-anchors.py</c>, 2026-08-18), because the risk the anchor
+/// (a <c>check-anchors.py</c> in the scratch directory, 2026-08-18; the artifact
+/// was not retained and the scratch directory is gone — re-establish it by
+/// scanning the tree for fragment links and resolving each against the target
+/// file's headings, which is what this type does), because the risk the anchor
 /// check carries is a slug rule that is <i>nearly</i> right.
 /// <c>DocumentationLinkTests.TheSlugRuleIsTheOneGitHubApplies</c> pins it to
 /// worked examples.

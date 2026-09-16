@@ -11,7 +11,8 @@
     and a regression bisectable.
 
     NOTHING EMITTED THIS UNTIL NOW. The first run of the checklist, 2026-08-16,
-    satisfied item 11 by copying six files BY HAND into .work/step20/manifest/ --
+    satisfied item 11 by copying six files BY HAND into what is now
+    docs/evidence/2026-08-16-step20-manifest/ --
     and a hand-assembled manifest is one nobody assembles twice, which is why
     this script exists rather than a paragraph of instructions.
 

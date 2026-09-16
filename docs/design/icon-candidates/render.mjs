@@ -4,10 +4,21 @@
 // Renders every SVG in ./svg to ./png at 256/48/32/16 using playwright-core + a
 // Chromium already present in the ms-playwright cache. Writes render.done when finished.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const HERE = 'C:/Source/SixFive7/BrowserAI/.work/2026-09-15-icons';
-const PW = 'file:///C:/Source/SixFive7/BrowserAI/.work/probe2/node_modules/playwright-core/index.mjs';
+// Corrected 2026-09-16 (previously HERE = 'C:/Source/SixFive7/BrowserAI/.work/2026-09-15-icons'
+// and PW = 'file:///C:/Source/SixFive7/BrowserAI/.work/probe2/node_modules/playwright-core/index.mjs').
+// Both pointed into the scratch directory, which was wiped that day, so the
+// script could no longer find its own inputs. HERE is now wherever this file
+// sits, and playwright-core is taken from the payload the product itself
+// ships -- better provenance than the scratch copy, and the only one that is
+// still here. Build the payload first (build/Build-Payload.ps1) or set
+// BROWSERAI_PLAYWRIGHT_CORE to another index.mjs.
+const HERE = dirname(fileURLToPath(import.meta.url));
+const PW = process.env.BROWSERAI_PLAYWRIGHT_CORE
+  ? pathToFileURL(process.env.BROWSERAI_PLAYWRIGHT_CORE).href
+  : pathToFileURL(join(HERE, '..', '..', '..', 'payload', 'mcp', 'node_modules', 'playwright-core', 'index.mjs')).href;
 const CHROME = 'C:/Users/jori/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe';
 const SIZES = [256, 48, 32, 16];
 

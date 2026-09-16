@@ -3,14 +3,29 @@
 
 // Renders the shipped icon assets and the repository's social preview from the
 // master SVG, with the same headless Chromium + playwright-core pipeline the ten
-// candidates were drawn with on 2026-09-15 (.work/2026-09-15-icons/render.mjs).
+// candidates were drawn with on 2026-09-15
+// (docs/design/icon-candidates/render.mjs).
 // Nothing is downloaded; the browser is the one already in the machine's cache.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const HERE = 'C:/Source/SixFive7/BrowserAI/.work/2026-09-16-icon';
-const MASTER = 'C:/Source/SixFive7/BrowserAI/.work/2026-09-15-icons/svg/candidate-03.svg';
-const PW = 'file:///C:/Source/SixFive7/BrowserAI/.work/probe2/node_modules/playwright-core/index.mjs';
+// Corrected 2026-09-16: HERE, MASTER and PW all pointed into the scratch
+// directory, which was wiped that day (previously
+// 'C:/Source/SixFive7/BrowserAI/.work/2026-09-16-icon',
+// '.../.work/2026-09-15-icons/svg/candidate-03.svg' and
+// 'file:///.../.work/probe2/node_modules/playwright-core/index.mjs'). MASTER is
+// now assets/icon.svg, which IS candidate 3 and is the file the product ships;
+// playwright-core comes from the payload; output goes to the scratch root,
+// which is where a generated asset belongs until somebody copies it into
+// assets/ deliberately. Build the payload first (build/Build-Payload.ps1) or
+// set BROWSERAI_PLAYWRIGHT_CORE to another index.mjs.
+const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+const HERE = join(REPO, '.work', '2026-09-16-icon');
+const MASTER = join(REPO, 'assets', 'icon.svg');
+const PW = process.env.BROWSERAI_PLAYWRIGHT_CORE
+  ? pathToFileURL(process.env.BROWSERAI_PLAYWRIGHT_CORE).href
+  : pathToFileURL(join(REPO, 'payload', 'mcp', 'node_modules', 'playwright-core', 'index.mjs')).href;
 const CHROME = 'C:/Users/jori/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe';
 
 const svg = readFileSync(MASTER, 'utf8');

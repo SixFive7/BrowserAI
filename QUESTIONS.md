@@ -506,15 +506,22 @@ none, and it is still not a diagnosis. What would settle it is direction (b) —
 deliberate reproduction — now aimed specifically at **desktop heap** rather than
 at CPU: launch into a session station whose heap has been consumed, and see
 whether this exact shape comes out. *Nobody has run that.* Recorded here rather
-than in `.work/`, because the capture that produced it lives in a scratch
-directory this machine deletes.
+than in `.work/`, because the capture that produced it lived in a scratch
+directory this machine deletes. *Corrected 2026-09-16 (previously "lives in")* —
+that capture is
+[`docs/evidence/2026-08-26-chromium-death/`](docs/evidence/2026-08-26-chromium-death/README.md)
+now, and the reason for writing it down here has not changed.
 
 🔬 **DIRECTION (b) WAS RUN, 2026-08-27, and the verdict is REPRODUCED
 DIFFERENTLY — every element of the measured shape comes out except the exit
 code.** *"Nobody has run that"* is no longer true. The rig is at
-`.work/2026-08-27-desktop-heap`, in a scratch directory this machine deletes, so
-everything it established is written down here and in `kb/windows/processes.md`
-rather than left there.
+[`build/probes/2026-08-27-desktop-heap/`](build/probes/2026-08-27-desktop-heap/README.md)
+and its logs at
+[`docs/evidence/2026-08-27-desktop-heap/`](docs/evidence/2026-08-27-desktop-heap/README.md)
+— *corrected 2026-09-16 (previously "at `.work/2026-08-27-desktop-heap`, in a
+scratch directory this machine deletes")*. Everything it established is still
+written down here and in `kb/windows/processes.md` rather than left there, which
+is the half that was never about where the files were.
 
 **The rig, in two sentences.** A desktop of its own is created inside `WinSta0`
 with `CreateDesktopW` — each desktop gets its own heap allocation, and
@@ -862,7 +869,9 @@ terminator fired on 2026-08-26 at 19:43.** Two produce exactly this trace —
 own reclaim — and **nothing durable records either**. `SpawnRecord.Reclaim`'s
 report lives in memory on `ScratchRoot.LastPassReport` and only a *survivor*
 reaches the coverage block, so a reclaim that succeeded leaves no trace at all.
-The run's own capture survived in `.work/p6/chromium-death-evidence.txt` and
+The run's own capture survived in
+[`docs/evidence/2026-08-26-chromium-death/chromium-death-evidence.txt`](docs/evidence/2026-08-26-chromium-death/README.md)
+and
 names no second process; it does add one number, that the test failed in
 **561 ms**, which is consistent with a kill a few hundred milliseconds into a
 browser that had just been launched. **There is also an argument against the

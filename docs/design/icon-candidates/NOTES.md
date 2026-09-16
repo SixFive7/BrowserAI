@@ -6,6 +6,15 @@
 2026-09-15. Scratch only: everything here is under `.work/2026-09-15-icons/`, which is gitignored.
 Nothing was written to the repository tree, to an install root, to the registry or to `~/.claude.json`.
 
+> ⚠️ **Added 2026-09-16, and the paragraph above is now false in its first half.**
+> This file and what it describes were moved into the repository when the scratch
+> directory was wiped; the SVG masters, both contact sheets, `render.mjs` and
+> `Make-Ico.ps1` are beside it, the forty per-size rasters and the two proof
+> `.ico` files were not retained, and every absolute `.work\…` path below is
+> where a thing *was*. The second half still holds: nothing was written to an
+> install root, to the registry or to `~/.claude.json`. The body is left exactly
+> as it was written — see [`README.md`](README.md) for what is here now.
+
 These are candidates for `BrowserAI.exe`, the native config app — so the chosen one ends up in the
 Start Menu, the Velopack installer, Add/Remove Programs, the window title bar and the taskbar. That
 is why every candidate is shown at 16, 32 and 48 px beside its 256 px master, on both a light and a

@@ -79,7 +79,7 @@ namespace BrowserAI.Proxy;
 /// billed as; the second told the model the image it receives has been shrunk,
 /// which is the opposite of what happens. <b>Measured 2026-09-14</b> through a
 /// raw child at three viewports, both page shapes and three encodings
-/// (<c>.work/2026-09-14-probes/m2c/</c>): the inline block is
+/// (<c>docs/evidence/2026-09-14-probes-m2c/</c>): the inline block is
 /// <b>byte-identical to the file in every case</b>, and bytes follow pixels with
 /// no ceiling anywhere — a <c>fullPage</c> shot of a 20,016 px document came
 /// back as 1280x20016 and 3,724,372 bytes. <b>What replaced the ceiling is the
