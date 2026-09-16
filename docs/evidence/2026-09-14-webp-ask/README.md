@@ -7,7 +7,7 @@ Evidence for
 [A WebP screenshot past 16,383 px comes back as zero bytes](../../../kb/playwright/tools-and-artifacts.md#a-webp-screenshot-past-16383-px-comes-back-as-zero-bytes-with-iserror-false--measured-2026-09-14)
 and for the `TODO.md` entry beside it, including the duplicate search over both
 trackers and the issue as posted. The rig is
-[`build/probes/2026-09-14-webp-ask/`](../../../build/probes/2026-09-14-webp-ask/README.md).
+[`docs/probes/2026-09-14-webp-ask/`](../../../docs/probes/2026-09-14-webp-ask/README.md).
 
 **Cut:** the four large rasters, whose claim is their size and nothing else -
 `page-...-106Z.png` and `page-...-416Z.png` at 137,816 bytes each, and

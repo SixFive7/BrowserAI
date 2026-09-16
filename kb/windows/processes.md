@@ -254,7 +254,7 @@ names rather than filtering for one, or the measurement answers zero both times.
 **Measured 2026-09-15 on Windows 11 Pro 26200 with .NET 10**, against
 `Console.OpenStandardInput()` behind a `System.IO.Pipelines.PipeReader`, with the
 read allowed to park for 1.5 s first. Probe:
-[`build/probes/2026-09-15-consoleprobe/`](../../build/probes/2026-09-15-consoleprobe/README.md);
+[`docs/probes/2026-09-15-consoleprobe/`](../../docs/probes/2026-09-15-consoleprobe/README.md);
 output: [`docs/evidence/2026-09-15-fix/consoleprobe/`](../../docs/evidence/2026-09-15-fix/README.md).
 `[FLOATS]`
 
@@ -1081,7 +1081,7 @@ level:
 > answers about somewhere else. Clean up by pid and by `CloseDesktop`, then
 > enumerate the desktops of `WinSta0` and confirm yours is not among them. The
 > rig that produced this is
-> [`build/probes/2026-08-27-desktop-heap/`](../../build/probes/2026-08-27-desktop-heap/README.md)
+> [`docs/probes/2026-08-27-desktop-heap/`](../../docs/probes/2026-08-27-desktop-heap/README.md)
 > -- `Rig.ps1` and `Rig.cs` -- and the logs it wrote are in
 > [`docs/evidence/2026-08-27-desktop-heap/`](../../docs/evidence/2026-08-27-desktop-heap/README.md).
 > *Corrected 2026-09-16 (previously "in a scratch directory this machine
@@ -1340,7 +1340,7 @@ swapping a browser tree *under a live browser* is not available, which is what
 nothing is running works, and that is the only state the tool acts in anyway.
 `[MACHINE]` for the process count, `[FLOATS]` for the browser revision.
 Re-establish with
-[`build/probes/2026-08-19-rename-under-browser/rename-under-chromium.ps1`](../../build/probes/2026-08-19-rename-under-browser/README.md)'s
+[`docs/probes/2026-08-19-rename-under-browser/rename-under-chromium.ps1`](../../docs/probes/2026-08-19-rename-under-browser/README.md)'s
 shape: start the
 provisioned `chrome.exe` headless with a scratch `--user-data-dir`, try both
 renames, then kill it and try both again as the control. **Re-run 2026-08-19 and
@@ -1427,7 +1427,7 @@ directory its image sits in, and the general rule for a running `.exe` does not
 describe it at any level.
 
 Re-establish with
-[`rename-under-firefox.ps1` and `rename-shared-components.ps1`](../../build/probes/2026-08-19-rename-under-browser/README.md),
+[`rename-under-firefox.ps1` and `rename-shared-components.ps1`](../../docs/probes/2026-08-19-rename-under-browser/README.md),
 which are the Chromium script's shape with
 the paths and the liveness check changed. **Both restore what they renamed in a
 `finally`, and both re-assert the executables are present at the end** — they

@@ -3,7 +3,7 @@ SUMMARY of main1.log -- the 2026-08-27 desktop-heap main pass.
 Every one of the 53 lines is here verbatim except the 5 listed below, each of
 which is a single multi-megabyte line truncated at 4,000 characters. The file as taken was
 12,016,030 bytes; SHA-256 68a84cd04f5ff41dff7bcba0e293aa420f100e26c4f60e6589994cd095fc48a9.
-Re-produce it with build/probes/2026-08-27-desktop-heap/Rig.ps1.
+Re-produce it with docs/probes/2026-08-27-desktop-heap/Rig.ps1.
 
   line 25: 2,402,029 characters
   line 27: 2,402,029 characters

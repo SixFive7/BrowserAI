@@ -11,7 +11,7 @@ Evidence for
 `rc-uninstall.log` the release-candidate uninstall. The `before-*` files are the
 baseline each diff is against - the Add/Remove key, the client registration, the
 default root and the RC root as they stood before anything ran. The rig is
-[`build/probes/2026-09-15-install/`](../../../build/probes/2026-09-15-install/README.md).
+[`docs/probes/2026-09-15-install/`](../../../docs/probes/2026-09-15-install/README.md).
 
 **Cut:** the `BrowserAI.exe` that was installed (54,659,603 B) - it is the
 published `v1.0.0` Setup asset and is downloadable from the release - and four

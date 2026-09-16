@@ -515,7 +515,7 @@ now, and the reason for writing it down here has not changed.
 🔬 **DIRECTION (b) WAS RUN, 2026-08-27, and the verdict is REPRODUCED
 DIFFERENTLY — every element of the measured shape comes out except the exit
 code.** *"Nobody has run that"* is no longer true. The rig is at
-[`build/probes/2026-08-27-desktop-heap/`](build/probes/2026-08-27-desktop-heap/README.md)
+[`docs/probes/2026-08-27-desktop-heap/`](docs/probes/2026-08-27-desktop-heap/README.md)
 and its logs at
 [`docs/evidence/2026-08-27-desktop-heap/`](docs/evidence/2026-08-27-desktop-heap/README.md)
 — *corrected 2026-09-16 (previously "at `.work/2026-08-27-desktop-heap`, in a

@@ -9,7 +9,7 @@
 //
 // Corrected 2026-09-16 (previously "Lives in .work/ and is invisible to the
 // repository's tree-as-text scans (.work is gitignored and RepositoryLayout
-// prunes it)"). It was moved out of .work/ into build/probes/ when the scratch
+// prunes it)"). It was moved out of .work/ into docs/probes/ when the scratch
 // directory was wiped, so it IS read by every scan over
 // RepositoryLayout.SourceAndScriptFiles now -- which is the reason the
 // sentence above says "honoured" rather than "honoured anyway".

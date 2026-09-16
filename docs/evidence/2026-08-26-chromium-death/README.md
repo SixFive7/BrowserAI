@@ -5,4 +5,4 @@
 
 The capture QUESTIONS.md cites for the silent-death run: what the process wrote,
 what it did not, and what the watcher saw. The rig that provokes it is
-[`build/probes/2026-08-27-desktop-heap/`](../../../build/probes/2026-08-27-desktop-heap/README.md).
+[`docs/probes/2026-08-27-desktop-heap/`](../../../docs/probes/2026-08-27-desktop-heap/README.md).

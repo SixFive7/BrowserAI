@@ -625,7 +625,7 @@ walk the two runs are indistinguishable, because upstream's default browser
 selection is not the provisioned tree. Artifacts:
 [`docs/evidence/2026-09-14-webp-ask/`](../../docs/evidence/2026-09-14-webp-ask/README.md);
 the rig is
-[`build/probes/2026-09-14-webp-ask/`](../../build/probes/2026-09-14-webp-ask/README.md).
+[`docs/probes/2026-09-14-webp-ask/`](../../docs/probes/2026-09-14-webp-ask/README.md).
 
 ⚠️ **The `mimeType` is still `image/webp` and the answer still reads as a
 success**, which is the whole of why this is worth a row rather than a note: a

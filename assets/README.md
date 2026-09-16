@@ -24,7 +24,7 @@ Anthropic or Claude mark, no Windows logo and no Model Context Protocol mark.
 **Each raster is rendered natively at its own size rather than downscaled from
 the 256**, by Chromium's own vector rasteriser, with `omitBackground` so the
 corners stay transparent and `deviceScaleFactor: 1` so 16 means 16. The renderer
-is [`build/probes/2026-09-16-icon/render-assets.mjs`](../build/probes/2026-09-16-icon/render-assets.mjs),
+is [`docs/probes/2026-09-16-icon/render-assets.mjs`](../docs/probes/2026-09-16-icon/render-assets.mjs),
 which drives the Chromium already in this machine's
 `%LocalAppData%\ms-playwright` cache through `playwright-core` — nothing is
 downloaded and the product's own browsers root is not touched.

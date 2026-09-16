@@ -14,4 +14,4 @@ and for `InstallerHandoffTests`.
 process-and-window sampling; `tree.jsonl` is the install root filling;
 `arp-before.reg` and `arp-after.reg` are the Add/Remove key before the probe and
 after it was restored - **identical**, which is the finding. The rig is
-[`build/probes/2026-09-14-firstrun/`](../../../build/probes/2026-09-14-firstrun/README.md).
+[`docs/probes/2026-09-14-firstrun/`](../../../docs/probes/2026-09-14-firstrun/README.md).

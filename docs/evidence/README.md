@@ -13,7 +13,7 @@ was cut and the SHA-256 of what it was cut from.
 **These are records, not inputs.** Nothing builds them, nothing in the suite
 reads them, and re-running a probe produces new ones rather than overwriting
 these. The probes themselves live in
-[`build/probes/`](../../build/probes/README.md); where a batch has one, its
+[`docs/probes/`](../probes/README.md); where a batch has one, its
 README links to it.
 
 **Everything here came out of `.work/` on 2026-09-16**, when the scratch

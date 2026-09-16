@@ -845,7 +845,7 @@ It is filed as [velopack/velopack#1056](https://github.com/velopack/velopack/iss
 
 **How to re-establish.** Launch `Setup.exe` from a windowless parent (a detached
 `pwsh` with no console, as
-[`build/probes/2026-09-14-firstrun/launch-detached.ps1`](../../build/probes/2026-09-14-firstrun/README.md)
+[`docs/probes/2026-09-14-firstrun/launch-detached.ps1`](../../docs/probes/2026-09-14-firstrun/README.md)
 does),
 without `--silent`, against a scratch `--installto`, and watch the process tree
 and the top-level windows. ⚠️ **Sandbox it**: point `CLAUDE_CONFIG_DIR` at a
@@ -974,7 +974,7 @@ red — a launcher still running at the parent read is a race this rig has never
 been measured to lose. The 0.116 s is smaller than the 0.312 s above for a reason
 that is the rig rather than the product: one `cmd` start on the path instead of
 two. Re-establish it with
-[`build/probes/2026-09-15-corpse/Measure-Corpse.ps1`](../../build/probes/2026-09-15-corpse/README.md),
+[`docs/probes/2026-09-15-corpse/Measure-Corpse.ps1`](../../docs/probes/2026-09-15-corpse/README.md),
 or read
 the four records the run leaves: `Startup[1]`, `Startup[4]`, `Startup[76]` — the
 new one — and `Startup[9]`.
@@ -1192,7 +1192,7 @@ directory, with the old root renamed aside and deleted on success.
 
 **Re-establish it** by running any non-silent `Setup.exe` against a root that
 already holds an install and reading the top-level windows of its pid --
-[`build/probes/2026-09-16-release/Read-Dialog.ps1`](../../build/probes/2026-09-16-release/README.md)
+[`docs/probes/2026-09-16-release/Read-Dialog.ps1`](../../docs/probes/2026-09-16-release/README.md)
 enumerates the children and
 `Add-Type -AssemblyName UIAutomationClient` reads the task dialog's text, which
 `GetWindowTextW` cannot because the body is a `DirectUIHWND`.

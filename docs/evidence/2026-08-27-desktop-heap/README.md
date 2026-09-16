@@ -6,7 +6,7 @@
 The logs behind
 [Desktop heap: the ceiling nothing reports, measured](../../../kb/windows/processes.md#desktop-heap-the-ceiling-nothing-reports-measured).
 The rig is
-[`build/probes/2026-08-27-desktop-heap/`](../../../build/probes/2026-08-27-desktop-heap/README.md).
+[`docs/probes/2026-08-27-desktop-heap/`](../../../docs/probes/2026-08-27-desktop-heap/README.md).
 
 **Cut, and how much:** `main1.log` was 12,016,030 bytes in 53 lines, five of them
 2.4 MB each; `main1.log.trimmed.txt` holds all 53 verbatim with those five cut at

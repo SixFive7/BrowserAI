@@ -1,5 +1,5 @@
 {
-  "_note": "main1/results.json as taken was 13,250,345 bytes, SHA-256 6df130402d23e0328012c96ba266c55ccf0e35d1c871cb7aa6b0b6b240774a23. All 15 records are here in full; 15 string fields longer than 2,000 characters were cut at that length, each listed in _cut below. Re-produce with build/probes/2026-08-27-desktop-heap/Rig.ps1.",
+  "_note": "main1/results.json as taken was 13,250,345 bytes, SHA-256 6df130402d23e0328012c96ba266c55ccf0e35d1c871cb7aa6b0b6b240774a23. All 15 records are here in full; 15 string fields longer than 2,000 characters were cut at that length, each listed in _cut below. Re-produce with docs/probes/2026-08-27-desktop-heap/Rig.ps1.",
   "_cut": [
     {
       "record": 0,

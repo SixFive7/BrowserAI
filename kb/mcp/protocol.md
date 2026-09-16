@@ -196,9 +196,9 @@ every session.*
    what the probe published.
 
 The scripts as run are in
-[`build/probes/2026-08-18-truncation/`](../../build/probes/2026-08-18-truncation/README.md),
+[`docs/probes/2026-08-18-truncation/`](../../docs/probes/2026-08-18-truncation/README.md),
 and the complete recipe, written for a project that has never heard of
-BrowserAI, is [`RECIPE.md`](../../build/probes/2026-08-18-truncation/RECIPE.md)
+BrowserAI, is [`RECIPE.md`](../../docs/probes/2026-08-18-truncation/RECIPE.md)
 beside them. *Corrected 2026-09-16 (previously "live in `.work/truncation/` on
 the machine that ran them and are deliberately untracked — they are scratch, not
 product").*
