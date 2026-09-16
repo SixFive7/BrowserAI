@@ -58,6 +58,57 @@ internal sealed class InstallerHandoffTests
     /// only from the value Velopack writes.
     /// </summary>
     /// <returns>The assertion task.</returns>
+    /// <summary>
+    /// The app clears the installer's variables <b>after</b> Velopack has read
+    /// them, and before it starts anything.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Both halves, and until 2026-09-16 the order satisfied one of
+    /// them.</b> The clearing exists because a child inherits its parent's
+    /// environment: with <c>VELOPACK_FIRSTRUN</c> still set, clicking
+    /// <i>Register</i> starts <c>claude.exe</c> carrying it, and anything
+    /// <i>that</i> starts carries it too — including the MCP server, which exits
+    /// 0 on that variable by design. But it ran <b>before</b>
+    /// <c>VelopackApp.Run()</c>, and <c>Run()</c> decides whether to invoke
+    /// <c>OnFirstRun</c> and <c>OnRestarted</c> by reading exactly those two
+    /// variables. Both callbacks were therefore unreachable in this binary: two
+    /// log lines that could never be written, with a remark beside them
+    /// describing behaviour that did not happen.
+    /// </para>
+    /// <para>
+    /// <b>A source-order claim, so it is read out of the source.</b> Nothing
+    /// observable distinguishes the two orders without an installer: the
+    /// difference is two log lines in a run this suite cannot start. What is
+    /// assertable is the order itself, and that is what this holds — the clear
+    /// is after the hook call and before the first thing that launches a
+    /// process.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstallersVariablesAreClearedAfterVelopackReadsThemAndBeforeAnythingStarts()
+    {
+        var source = await File.ReadAllTextAsync(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Program.cs"));
+
+        var run = source.IndexOf("VelopackStartup.RunAndServeLifecycleHooks(", StringComparison.Ordinal);
+        var clear = source.IndexOf("        ClearTheInstallersOwnVariables();", StringComparison.Ordinal);
+        var launch = source.IndexOf("new ClientCommandLine()", StringComparison.Ordinal);
+
+        await Assert.That(run).IsGreaterThan(-1);
+        await Assert.That(clear).IsGreaterThan(-1);
+        await Assert.That(launch).IsGreaterThan(-1);
+
+        // After Run(), or Velopack never sees the variables it decides
+        // OnFirstRun and OnRestarted from.
+        await Assert.That(clear).IsGreaterThan(run);
+
+        // And before anything that can start a child, or the guarantee the
+        // clearing exists for is gone.
+        await Assert.That(clear).IsLessThan(launch);
+    }
+
     [Test]
     public async Task TheFirstRunVariableIsReadExactlyAsVelopackWritesIt()
     {

@@ -107,13 +107,23 @@ internal static class Program
         var firstRun = VelopackStartup.StartedByTheInstaller();
         var restarted = Environment.GetEnvironmentVariable(RestartVariable) is { Length: > 0 };
 
-        ClearTheInstallersOwnVariables();
-
         // ⚠️ FIRST. This call serves the installer's four hooks and exits the
         // process when it does, so everything below it belongs to a run that is
         // not a hook. It also carries SetAutoApplyOnStartup(false).
         var buffered = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
         VelopackStartup.RunAndServeLifecycleHooks(args, (level, message, failure) => buffered.Add((level, message, failure)));
+
+        // ⚠️ AFTER Run() AND BEFORE ANYTHING IS STARTED -- corrected 2026-09-16
+        // (previously this ran BEFORE the line above). Velopack decides whether
+        // to invoke OnFirstRun and OnRestarted by reading exactly these two
+        // variables, so clearing them first made both callbacks unreachable in
+        // this binary: two log lines that could never be written, and a remark
+        // beside them describing behaviour that did not happen. Nothing is
+        // started between here and there -- the hook path never reaches this
+        // line at all, because Run() exits the process when it serves one -- so
+        // the guarantee the clearing exists for is unchanged: no child of this
+        // process ever inherits VELOPACK_FIRSTRUN.
+        ClearTheInstallersOwnVariables();
 
         var paths = new LocalAppDataPaths(LocalAppDataPaths.Overridden());
 

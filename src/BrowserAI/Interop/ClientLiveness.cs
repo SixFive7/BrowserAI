@@ -256,10 +256,19 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             // as a handle whose times could not be read, and it goes out under
             // the same record with what Windows said. Read before CloseHandle
             // can replace it with its own.
+            //
+            // WARNING: THE RAW WAIT VALUE GOES IN THE RECORD TOO -- 2026-09-16.
+            // WaitForSingleObject answers one of four things and only one of
+            // them sets a last error: WAIT_FAILED (0xFFFFFFFF). WAIT_ABANDONED
+            // (0x00000080) reaches this branch carrying whatever error was in
+            // the thread from some earlier call, so the message alone can be an
+            // unrelated sentence -- or "The operation completed successfully",
+            // which reads as a bug in the logging rather than as a state. The
+            // number is what distinguishes them and it costs one field.
             var unknown = new Win32Exception(Marshal.GetLastPInvokeError()).Message;
 
             _ = CloseHandle(handle);
-            ClientLivenessLog.ClientCannotBeWatched(logger, processId, unknown);
+            ClientLivenessLog.ClientWaitCannotBeInterpreted(logger, processId, alive, unknown);
 
             return null;
         }
@@ -392,6 +401,29 @@ internal static partial class ClientLivenessLog
         Level = LogLevel.Warning,
         Message = "A handle could not be opened on the MCP client, pid {ProcessId} ({Reason}), so there is no client-liveness watch. Teardown falls back to stdin EOF alone.")]
     public static partial void ClientCannotBeWatched(ILogger logger, int processId, string reason);
+
+    /// <summary>
+    /// A wait on the client's handle answered something that is neither
+    /// <c>WAIT_OBJECT_0</c> nor <c>WAIT_TIMEOUT</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The raw value is here because the message on its own can be
+    /// meaningless.</b> Only <c>WAIT_FAILED</c> (0xFFFFFFFF) sets a last error;
+    /// <c>WAIT_ABANDONED</c> (0x00000080) reaches this record carrying whatever
+    /// error happened to be left in the thread, which can read as <i>The
+    /// operation completed successfully</i> — a sentence that looks like a
+    /// defect in the logging rather than a state of the client. The number is
+    /// what tells them apart, and it costs one field. <i>Added 2026-09-16.</i>
+    /// </remarks>
+    /// <param name="logger">Where it goes.</param>
+    /// <param name="processId">The client's pid.</param>
+    /// <param name="wait">What <c>WaitForSingleObject</c> answered.</param>
+    /// <param name="reason">The last error's message, which may belong to something else.</param>
+    [LoggerMessage(
+        EventId = 76,
+        Level = LogLevel.Warning,
+        Message = "The MCP client's state, pid {ProcessId}, could not be read: WaitForSingleObject answered 0x{Wait:X8} and the thread's last error said '{Reason}'. It is read as neither alive nor gone, so there is no client-liveness watch and teardown falls back to stdin EOF alone.")]
+    public static partial void ClientWaitCannotBeInterpreted(ILogger logger, int processId, uint wait, string reason);
 
     /// <summary>The client exited and teardown was asked for.</summary>
     /// <param name="logger">Where it goes.</param>

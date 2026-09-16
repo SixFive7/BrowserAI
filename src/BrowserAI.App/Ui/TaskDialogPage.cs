@@ -301,21 +301,71 @@ internal sealed class TaskDialogHost : IDisposable
     /// This application's own icon, falling back to the system one.
     /// </summary>
     /// <remarks>
-    /// <b>The fallback is not decoration.</b> If the SDK ever stopped writing
-    /// the icon group under the id below, the load would answer zero and the
-    /// dialog would render with the <i>no icon at all</i> layout — a different
-    /// shape, silently. A stock icon is a visible wrong rather than an invisible
-    /// one.
+    /// <para>
+    /// /// ⚠️ <b>Loaded at the dialog's DPI, and that is the whole point of the
+    /// call it uses — 2026-09-16.</b> <c>LoadIconW</c> has no size parameter: it
+    /// answers the 32×32 image out of the group, which a Per-Monitor-V2 process
+    /// then draws <i>stretched</i> — on a 200% display, a 32-pixel icon blown up
+    /// to 64. The application icon ships larger images; <c>LoadIconWithScaleSize</c>
+    /// is what picks one. The DPI is the window's where there is a window and
+    /// the system's on the first page, which is built before the window exists.
+    /// </para>
+    /// <para>
+    /// <b>The fallback is not decoration</b>, and there are two of them now. If
+    /// <c>LoadIconWithScaleSize</c> fails, the unscaled load is exactly the
+    /// behaviour that shipped; if the SDK ever stopped writing the icon group
+    /// under the id below, that load answers zero and the dialog would render
+    /// with the <i>no icon at all</i> layout — a different shape, silently. A
+    /// stock icon is a visible wrong rather than an invisible one.
+    /// </para>
     /// </remarks>
-    private static nint OurIcon()
+    private nint OurIcon()
     {
-        var ours = TaskDialogInterop.LoadIconW(
-            TaskDialogInterop.GetModuleHandleW(0), TaskDialogInterop.ApplicationIconResource);
+        var module = TaskDialogInterop.GetModuleHandleW(0);
+        var (width, height) = IconSizeFor(Dpi());
+
+        if (TaskDialogInterop.LoadIconWithScaleSize(
+                module, TaskDialogInterop.ApplicationIconResource, width, height, out var scaled) is 0
+            && scaled is not 0)
+        {
+            return scaled;
+        }
+
+        var ours = TaskDialogInterop.LoadIconW(module, TaskDialogInterop.ApplicationIconResource);
 
         return ours is not 0
             ? ours
             : TaskDialogInterop.LoadIconW(0, TaskDialogInterop.ApplicationIconResource);
     }
+
+    /// <summary>
+    /// The DPI this page is being drawn at.
+    /// </summary>
+    /// <remarks>
+    /// <b>The window's when there is one, the system's when there is not.</b>
+    /// The first page is built before <c>TDN_DIALOG_CREATED</c>, so there is no
+    /// window to ask; every re-render has one, which is what makes a dialog
+    /// dragged to a second monitor come back at that monitor's DPI.
+    /// </remarks>
+    /// <returns>Dots per inch.</returns>
+    private uint Dpi() =>
+        Window is not 0 && TaskDialogInterop.GetDpiForWindow(Window) is > 0 and var window
+            ? window
+            : TaskDialogInterop.GetDpiForSystem();
+
+    /// <summary>
+    /// How large a task dialog's main icon is at a given DPI.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Read from Windows rather than written here.</b> <c>SM_CXICON</c> is
+    /// 32 at 96 DPI and scales with the DPI asked for, so the numbers are the
+    /// system's and this method has none of its own.
+    /// </remarks>
+    /// <param name="dpi">The DPI the dialog is being drawn at.</param>
+    /// <returns>The width and height, in physical pixels.</returns>
+    internal static (int Width, int Height) IconSizeFor(uint dpi) =>
+        (TaskDialogInterop.GetSystemMetricsForDpi(TaskDialogInterop.IconWidthMetric, dpi),
+         TaskDialogInterop.GetSystemMetricsForDpi(TaskDialogInterop.IconHeightMetric, dpi));
 
     private nint Keep(string text)
     {

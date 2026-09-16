@@ -934,6 +934,79 @@ internal sealed partial class ChangelogTests
     }
 
     /// <summary>
+    /// The two shapes the generator used to lose or crash on are refused, in
+    /// the script's own words.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>An entry above the first <c>### </c> heading crashed with a message
+    /// about a null-valued expression</b> — <c>$group</c> is
+    /// <see langword="null"/> there and <c>Set-StrictMode</c> turns
+    /// <c>$null.Entries.Add(…)</c> into a stack trace naming a variable nobody
+    /// reading a changelog has heard of.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A paragraph UNDER a group heading was dropped, silently.</b> It is
+    /// not a preamble, it is not an entry, and there is nowhere in a folded body
+    /// for it — so it simply did not appear in the release notes. <b>Refused
+    /// rather than carried, deliberately</b>: inventing a rendering for a shape
+    /// nothing else reads would widen the changelog's format past what
+    /// <see cref="EveryEntryOpensWithOnePaletteIconAndABoldOneSentenceHeadline"/>
+    /// holds it to, and prose already has a place — the section preamble, above
+    /// the first heading, which the body does render. <i>Both added 2026-09-16.</i>
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnEntryAboveTheFirstGroupAndAParagraphInsideOneAreBothRefused()
+    {
+        using var scratch = ScratchDirectory.Create("release-notes-shapes");
+        var body = Path.Combine(scratch.Path, "body.md");
+
+        // An entry above the first '### ' heading.
+        var loose = await WriteAsync(
+            scratch,
+            "LOOSE.md",
+            Fixture.Replace(
+                "### Added",
+                "- ✨ **A loose entry nobody grouped.**\n\n### Added",
+                StringComparison.Ordinal));
+
+        var looseRun = await RunScriptAsync(NotesScript, "-Path", loose, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(looseRun.ExitCode).IsNotEqualTo(0);
+        await Assert.That(looseRun.StandardError).Contains("A loose entry nobody grouped.");
+        await Assert.That(looseRun.StandardError).Contains("group heading");
+
+        // Never PowerShell's own words about a null-valued expression, which is
+        // what this used to say.
+        await Assert.That(looseRun.StandardError.Contains("null-valued", StringComparison.OrdinalIgnoreCase)).IsFalse();
+
+        // A paragraph under a group heading, which used to vanish.
+        var prose = await WriteAsync(
+            scratch,
+            "PROSE.md",
+            Fixture.Replace(
+                "### Fixed",
+                "### Fixed\n\nA paragraph that belongs in the preamble.",
+                StringComparison.Ordinal));
+
+        var proseRun = await RunScriptAsync(NotesScript, "-Path", prose, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(proseRun.ExitCode).IsNotEqualTo(0);
+        await Assert.That(proseRun.StandardError).Contains("A paragraph that belongs in the preamble.");
+        await Assert.That(proseRun.StandardError).Contains("preamble");
+
+        // The positive control on the same call: the unmodified fixture, which
+        // carries a preamble AND a second paragraph inside an entry, is still
+        // accepted — so neither refusal is about prose or about blank lines.
+        var good = await WriteAsync(scratch, "GOOD.md", Fixture);
+        var accepted = await RunScriptAsync(NotesScript, "-Path", good, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(accepted.ExitCode).IsEqualTo(0);
+    }
+
+    /// <summary>
     /// A version with no section refuses rather than producing an empty body.
     /// </summary>
     /// <returns>The assertion task.</returns>

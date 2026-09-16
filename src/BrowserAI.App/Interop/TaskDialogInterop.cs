@@ -257,11 +257,59 @@ internal static partial class TaskDialogInterop
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     internal static partial nint GetModuleHandleW(nint moduleName);
 
+    /// <summary><c>SM_CXICON</c>: the width of the large icon at a given DPI.</summary>
+    public const int IconWidthMetric = 11;
+
+    /// <summary><c>SM_CYICON</c>: its height.</summary>
+    public const int IconHeightMetric = 12;
+
     /// <summary>Loads an icon by numeric resource id.</summary>
     /// <param name="instance">The module, or zero for the system icons.</param>
     /// <param name="resource">The id, cast to a pointer.</param>
     /// <returns>The icon, or zero.</returns>
+    /// <remarks>
+    /// ⚠️ <b>It answers the 32×32 image and nothing else.</b> There is no size and
+    /// no DPI in this call: it takes whichever image the group holds at the
+    /// system's <i>classic</i> icon size, which a Per-Monitor-V2 process then
+    /// draws stretched. <see cref="LoadIconWithScaleSize"/> is the one that
+    /// takes a size, and this is kept as its fallback.
+    /// </remarks>
     [LibraryImport("user32.dll", EntryPoint = "LoadIconW", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     internal static partial nint LoadIconW(nint instance, nint resource);
+
+    /// <summary>
+    /// Loads the image from an icon group that is closest to a given size,
+    /// scaling it if it has to.
+    /// </summary>
+    /// <param name="instance">The module.</param>
+    /// <param name="resource">The id, cast to a pointer.</param>
+    /// <param name="width">The width wanted, in physical pixels.</param>
+    /// <param name="height">The height wanted.</param>
+    /// <param name="icon">The icon, on success.</param>
+    /// <returns>An <c>HRESULT</c>.</returns>
+    [LibraryImport("comctl32.dll", EntryPoint = "LoadIconWithScaleSize", SetLastError = false)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    internal static partial int LoadIconWithScaleSize(nint instance, nint resource, int width, int height, out nint icon);
+
+    /// <summary>The DPI a window is being drawn at.</summary>
+    /// <param name="window">The window.</param>
+    /// <returns>Its DPI, or zero when the handle is not one.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "GetDpiForWindow", SetLastError = false)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    internal static partial uint GetDpiForWindow(nint window);
+
+    /// <summary>The system DPI, for the moment before there is a window.</summary>
+    /// <returns>The DPI.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "GetDpiForSystem", SetLastError = false)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    internal static partial uint GetDpiForSystem();
+
+    /// <summary>A system metric, at a DPI rather than at the process's own.</summary>
+    /// <param name="metric">One of the <c>SM_</c> values.</param>
+    /// <param name="dpi">The DPI to answer for.</param>
+    /// <returns>The metric.</returns>
+    [LibraryImport("user32.dll", EntryPoint = "GetSystemMetricsForDpi", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    internal static partial int GetSystemMetricsForDpi(int metric, uint dpi);
 }

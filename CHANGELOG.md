@@ -38,6 +38,50 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **The installer's own variables are cleared after Velopack has read them,
+  not before.** `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART` are cleared so that
+  no child of the configuration app inherits them — click *Register* with
+  `VELOPACK_FIRSTRUN` still set and `claude.exe` starts carrying it, and so does
+  everything it starts, including the MCP server, which exits 0 on that variable
+  by design. But the clearing ran **before** `VelopackApp.Run()`, and `Run()`
+  decides whether to invoke `OnFirstRun` and `OnRestarted` by reading exactly
+  those two variables — so both callbacks were unreachable in this binary: two
+  log lines that could never be written, with a remark beside them describing
+  behaviour that did not happen. It runs after `Run()` now and still before
+  anything is started, which the hook path never reaches at all because `Run()`
+  exits the process when it serves one.
+
+- 🔧 **The dialog's icon is loaded at the dialog's DPI instead of at the classic
+  size.** `LoadIconW` has no size parameter: it answers the 32×32 image out of
+  the group, which a Per-Monitor-V2 process then draws **stretched** — on a 200%
+  display, thirty-two pixels blown up to sixty-four, beside text that is not.
+  The icon ships larger images, so the load is `LoadIconWithScaleSize` at
+  `SM_CXICON` for the window's own DPI, with the unscaled load kept as the
+  fallback it has always been. The DPI is the window's where there is a window
+  and the system's on the first page, which is built before the window exists —
+  so a dialog dragged to a second monitor comes back at that monitor's DPI.
+
+- 🐛 **The release-notes generator refuses the two shapes it used to crash on or
+  drop.** An entry written above a section's first `### ` heading made
+  `$group` null and `Set-StrictMode` turned `$null.Entries.Add(…)` into *"The
+  property 'Entries' cannot be found on this object"* — a stack trace naming a
+  variable nobody reading a changelog has heard of. A paragraph written *under*
+  a group heading was worse: neither preamble nor entry, it was silently dropped
+  from the body. Both are refused now, in the script's own words, naming the
+  line. Refusing rather than carrying the paragraph is the choice: prose already
+  has a place — the section preamble, above the first heading, which the body
+  does render — and inventing a rendering for a shape nothing else reads would
+  widen the format past what `ChangelogTests` holds it to.
+
+- 🔧 **A wait on the client's handle that cannot be interpreted now records the
+  value it got.** `WaitForSingleObject` answers one of four things and only
+  `WAIT_FAILED` sets a last error; `WAIT_ABANDONED` reaches the same branch
+  carrying whatever error was left in the thread, which can read as *The
+  operation completed successfully* — a sentence that looks like a defect in the
+  logging rather than a state of the client. The record carries the raw value
+  beside the message now, under its own event id, so the two are distinguishable
+  after the fact.
+
 - ✅ **A release date set at the cut is reported as a heading change, not as a
   rewritten record.** A sealed record starts at its own heading, so
   `## [1.0.0] - 2026-09-15` is inside the 281,709 characters

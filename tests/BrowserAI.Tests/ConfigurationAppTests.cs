@@ -648,6 +648,53 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
+    /// The dialog's icon is asked for at the dialog's DPI rather than at the
+    /// classic size.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b><c>LoadIconW</c> has no size parameter at all.</b> It answers the
+    /// 32×32 image out of the group, and a Per-Monitor-V2 process then draws it
+    /// <i>stretched</i> — on a 200% display, thirty-two pixels blown up to
+    /// sixty-four, beside text that is not. The application icon ships larger
+    /// images and <c>LoadIconWithScaleSize</c> is what picks one.
+    /// <i>Changed 2026-09-16.</i>
+    /// </para>
+    /// <para>
+    /// <b>Two claims, because neither alone is the fix.</b> That the size asked
+    /// for really does follow the DPI, which is behaviour and is asserted
+    /// against Windows' own metric; and that the call which takes a size is the
+    /// one the product makes, which is not observable from here — no test in
+    /// this repository can open a dialog and read the pixels off it — so it is
+    /// read out of the source, the way the other unobservable argument rules in
+    /// this suite are.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDialogsIconIsAskedForAtTheDialogsDpi()
+    {
+        // The size follows the DPI, with Windows supplying every number.
+        var (classicWidth, classicHeight) = TaskDialogHost.IconSizeFor(96);
+        var (doubledWidth, doubledHeight) = TaskDialogHost.IconSizeFor(192);
+
+        await Assert.That(classicWidth).IsGreaterThan(0);
+        await Assert.That(classicHeight).IsEqualTo(classicWidth);
+        await Assert.That(doubledWidth).IsGreaterThan(classicWidth);
+        await Assert.That(doubledHeight).IsGreaterThan(classicHeight);
+
+        // And the product asks through the call that takes one, keeping the
+        // unscaled load as the fallback it always was.
+        var source = await File.ReadAllTextAsync(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Ui", "TaskDialogPage.cs"));
+
+        await Assert.That(source).Contains("LoadIconWithScaleSize(");
+        await Assert.That(source).Contains("IconSizeFor(Dpi())");
+        await Assert.That(source).Contains("GetDpiForWindow");
+        await Assert.That(source).Contains("LoadIconW(");
+    }
+
+    /// <summary>
     /// A state with the given registration, and everything else read from this
     /// machine.
     /// </summary>

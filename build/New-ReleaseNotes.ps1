@@ -161,6 +161,18 @@ $entry = $null
 
 function Complete-Entry {
     if ($null -eq $script:entry) { return }
+
+    # WARNING: AN ENTRY BEFORE THE FIRST '### ' HEADING -- 2026-09-16. $group is
+    # $null here, and `$null.Entries.Add(...)` under Set-StrictMode throws
+    # "You cannot call a method on a null-valued expression", which names a
+    # variable nobody reading a changelog has heard of. The body is generated
+    # per group, so an entry outside one has nowhere to go; that is the sentence
+    # to print.
+    if ($null -eq $script:group) {
+        Write-Error "The [$Version] section has an entry before its first '### ' group heading: '$($script:entry.Lines[0].Trim())'. Every entry belongs to a Keep a Changelog group -- Added, Changed, Deprecated, Removed, Fixed or Security -- because the release body is generated group by group, so an entry above the first heading has nowhere to be written."
+        exit 1
+    }
+
     $script:group.Entries.Add($script:entry)
     $script:entry = $null
 }
@@ -189,7 +201,23 @@ foreach ($line in $lines) {
         continue
     }
 
-    if ($null -eq $group) { $preamble.Add($line) }
+    if ($null -eq $group) {
+        $preamble.Add($line)
+        continue
+    }
+
+    # WARNING: A PARAGRAPH UNDER A GROUP HEADING -- 2026-09-16. It is not a
+    # preamble (that is above the first heading), it is not an entry, and there
+    # is nowhere in a folded body for it: every group renders as its heading and
+    # its entries. It used to be DROPPED here, silently, and a release body that
+    # quietly omits a paragraph somebody wrote is worse than one that refuses.
+    # Refusing rather than carrying is the choice: inventing a rendering for a
+    # shape nothing else in this repository reads would make the changelog's
+    # format wider than the one ChangelogTests holds it to.
+    if ($line.Trim().Length -gt 0) {
+        Write-Error "The [$Version] section has a paragraph under the '### $($group.Name)' heading that is not an entry: '$($line.Trim())'. A group holds entries and nothing else -- prose belongs in the section's preamble, above the first '### ' heading, which is where the body renders it."
+        exit 1
+    }
 }
 
 Complete-Entry
