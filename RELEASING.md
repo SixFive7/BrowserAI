@@ -89,11 +89,45 @@ of the order rather than defects in anything:
    [the body step](#the-release-body-is-generated-and-its-rendering-is-checked-before-it-is-published),
    which is what a release page now shows instead of the section cut at a
    heading boundary.
+
+   ⚠️ **THE HEADING DATE IS INSIDE THE SEAL — *added 2026-09-16*.** A sealed
+   record starts at its heading, so `## [1.0.0] - 2026-09-15` is part of the
+   281,709 sealed characters. Setting the real release date therefore **breaks
+   the seal**, and the date change and the re-seal are **one commit** — the same
+   commit as the stamp. Split them and the gate is red in between, on a record
+   nobody rewrote. `AppendOnlyRecordTests` now says so in the failure itself: when
+   the heading line is the *only* thing that moved it reports **the HEADING LINE
+   changed and nothing else did** with the new seal line to paste, instead of
+   *REWRITTEN … revert it* — which was the right sentence for a sweep and the
+   wrong one for the one edit this checklist requires.
 4. **[Item 9](#9-the-version-is-derived-and-000-is-refused): create the tag**, on
    the commit the gate was run at plus the stamp.
 5. **Clean re-pack.** `Releases/` is cleared of everything that is not this
    release — the archive stays — and `New-Release.ps1` is run again, so the feed
    it writes holds the rows this release actually publishes.
+
+   ⚠️ **Four files, by name, and two directories that must survive — *added
+   2026-09-16*.** Delete `Releases/*.nupkg`, `Releases/releases.win.json`,
+   `Releases/RELEASES` and `Releases/assets.win.json`. **Keep `Releases/archive/`**,
+   which is the rollback targets of real releases, and **keep
+   `Releases/test-pack/`**, which is the suite's own installer and is never
+   published. *(The two human-facing downloads, `BrowserAI.exe` and
+   `BrowserAI.zip`, are rewritten by the re-pack, so they need no separate
+   step.)*
+
+   ⚠️ **The cut is REFUSED until this is done, and it says so — *added
+   2026-09-16*.** `build/Test-ReleaseVersion.ps1` refuses a **release** candidate
+   when the local feed's highest version is a **pre-release** newer than it, and
+   names those four files in the refusal. That is the ordinary state between
+   releases: every gate pack is cut at whatever MinVer derives from a commit past
+   the tag, so `Releases/` fills with `1.0.1-alpha.0.N`. Before this rule the
+   script called that a **rollback** and advised `-RollbackRepublish` — which
+   would have published the release into a feed whose manifest and asset list
+   name packages nobody ever released.
+   `ReleaseScriptTests.AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear`
+   holds the refusal, the file names, and the three controls: a real rollback
+   still reads as one, a pre-release gate pack over the same directory is still
+   monotonic, and a release over only *older* pre-releases is still monotonic.
 6. **Publish**, and then **verify the feed over HTTP — by polling the BODY
    until it names the version just published, and not before.** The status code
    is not the check. ⚠️ ***Added 2026-09-15, measured: the release-assets CDN
@@ -772,8 +806,21 @@ the command just wrote is a released section from that moment on, and
 fails until it is registered — by design, so the newest release notes are not the
 one thing nothing protects. Add a `new("CHANGELOG.md#<version>", …)` line to
 `AppendOnlyRecordTests.Sealed`; the sibling test's failure message prints the
-character count and digest to use. See
+character count and both digests to use. See
 [the release gate](TESTING.md#the-dated-records-are-append-only).
+
+⚠️ **THE HEADING DATE IS INSIDE THE SEAL, and that is the trap this item sets
+for a re-ship — *added 2026-09-16*.** A record is sealed from its heading, so
+`## [<version>] - <date>` is part of the sealed prefix. **Changing the date
+breaks the seal**, which means the date change and the re-seal are **one
+commit** — and on a re-ship, where the section already exists and is already
+sealed, that is the only edit there is. Split them and the gate is red in
+between, on a record nobody rewrote. The failure message tells the two apart
+since 2026-09-16: when the heading line is the only thing that moved it says
+**the HEADING LINE changed and nothing else did**, with the seal line to paste;
+a body edit still says *REWRITTEN … revert it*.
+`AppendOnlyRecordTests.ADateSetAtTheCutIsReportedAsAHeadingRatherThanAsARewrite`
+holds both, over a doctored copy of the real 1.0.0 section.
 
 ⚠️ **For the 2026-09-15 re-ship of `1.0.0`, the stamp step is a MERGE rather
 than a new section, and both halves of that sentence matter.** The version being

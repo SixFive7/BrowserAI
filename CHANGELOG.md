@@ -38,6 +38,37 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- ✅ **A release date set at the cut is reported as a heading change, not as a
+  rewritten record.** A sealed record starts at its own heading, so
+  `## [1.0.0] - 2026-09-15` is inside the 281,709 characters
+  `AppendOnlyRecordTests` seals — and setting the real date at the cut breaks
+  the seal. The failure said *REWRITTEN … a dated record says what was true when
+  it was written*, which is the right sentence for a sweep and exactly the wrong
+  one for the one edit [the checklist](RELEASING.md) requires: it reads as
+  *revert this*. Each seal now carries a second digest, of the same prefix
+  **without its first line**, so the test can tell the two apart and say **the
+  HEADING LINE changed and nothing else did** with the seal line to paste. A body
+  edit under an untouched heading still says *REWRITTEN*. `RELEASING.md` says the
+  same in item 10 and in the order section: the date change and the re-seal are
+  one commit.
+
+- 📦 **A release cut over a local feed still holding this machine's gate packs is
+  refused.** `Releases/` is where every gate pack lands, and a gate pack is cut
+  at whatever MinVer derives from a commit past the tag — so between releases
+  the local feed holds `1.0.1-alpha.0.19`, `1.0.1-alpha.0.2` and a manifest
+  naming them. Cutting `1.0.0` against that is *lower than the published
+  version*, and `build/Test-ReleaseVersion.ps1` called it a **rollback** and
+  advised `-RollbackRepublish` — which would have published a release into a
+  feed whose manifest and asset list name packages nobody ever released. It now
+  refuses a **release** candidate whenever the local feed's highest version is a
+  **pre-release** newer than it, and the refusal names the four files to delete
+  — `*.nupkg`, `releases.win.json`, `RELEASES`, `assets.win.json` — and the two
+  directories that must survive, `archive/` and `test-pack/`.
+  [`RELEASING.md`](RELEASING.md) step 5 says the same. The rule is narrow by
+  construction: a genuine rollback over published releases still reads as one, a
+  pre-release gate pack over the same directory is still monotonic, and so is a
+  release over only older pre-releases.
+
 - 🔧 **The update check runs off the UI thread, under the same deadline the
   server uses.** `CheckAsync` and `DownloadAsync` were called with
   `.GetAwaiter().GetResult()` **inside the dialog's callback**, with

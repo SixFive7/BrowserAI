@@ -95,6 +95,40 @@ $highest = ($published |
 
 $candidate = [System.Management.Automation.SemanticVersion]::Parse($Version)
 
+# --- A local feed is not a published feed --------------------------------------
+# WARNING: THIS IS THE STATE THE REPOSITORY IS IN BETWEEN RELEASES, and until
+# 2026-09-16 it read as a rollback. Every gate that installs a real installer
+# needs a pack, and a pack is made by running New-Release.ps1 on whatever MinVer
+# derives from a commit past the tag -- so `Releases/` fills up with
+# `1.0.1-alpha.0.N` packages and a feed manifest naming them. Cutting the actual
+# release then looks LOWER than "the published version", and the rollback branch
+# below offered -RollbackRepublish: advice that would have published a release
+# into a feed whose manifest and asset list name packages nobody ever released.
+#
+# It is narrow on purpose. It fires only when the CANDIDATE is a release and the
+# thing above it is a PRE-RELEASE, which cannot be a published state -- nothing
+# pre-release is ever uploaded. A genuine rollback over published releases is
+# untouched, and a pre-release candidate over the same directory is monotonic and
+# unaffected, which is what keeps the gate pack working.
+$feedDirectory = Split-Path -Parent $Manifest
+
+if ((-not $candidate.PreReleaseLabel) -and $highest.PreReleaseLabel -and ($highest -gt $candidate)) {
+    Write-Error @"
+$Version is a RELEASE and the local feed at '$feedDirectory' still holds the pre-release $highest, which is newer. That is not a rollback: nothing pre-release is ever published, so this is this machine's own gate packs sitting in the feed the cut reads.
+
+Clear them and cut again. In Releases/, delete:
+  *.nupkg
+  releases.win.json
+  RELEASES
+  assets.win.json
+
+KEEP archive/ and test-pack/: the first is the rollback targets of real releases, the second is the suite's own installer and is never published.
+
+Do NOT pass -RollbackRepublish. It would publish $Version into a feed whose manifest and asset list name packages that were never released.
+"@
+    exit 1
+}
+
 if ($candidate -eq $highest) {
     Write-Error "$Version is already the newest release on this channel. Republishing a version over itself would leave two packages claiming one version, and a client cannot tell them apart -- the feed is keyed on the version, not on the bytes."
     exit 1

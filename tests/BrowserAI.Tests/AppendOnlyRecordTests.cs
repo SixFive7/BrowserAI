@@ -71,7 +71,20 @@ internal sealed partial class AppendOnlyRecordTests
     /// arithmetic mismatch a reader can see, and not only a digest that differs.
     /// </param>
     /// <param name="Sha256">The digest of those characters, lower-case hex.</param>
-    private readonly record struct Seal(string Record, int Characters, string Sha256);
+    /// <param name="BodySha256">
+    /// The digest of the same characters <b>without their first line</b>.
+    /// </param>
+    /// <remarks>
+    /// %s <b>The second digest exists to tell one failure apart from every
+    /// other, and that failure is a DATE — 2026-09-16.</b> A sealed record
+    /// starts at its heading, so <c>## [1.0.0] - 2026-09-15</c> is inside the
+    /// prefix: changing the release date at the cut breaks the seal, and the
+    /// failure message read <i>REWRITTEN — a dated record says what was true
+    /// when it was written</i>, which is exactly the wrong advice for the one
+    /// edit the checklist requires. With the body digest the test can say
+    /// <b>only the heading line moved</b>, which is a different instruction.
+    /// </remarks>
+    private readonly record struct Seal(string Record, int Characters, string Sha256, string BodySha256);
 
     /// <summary>
     /// Every dated record in the tree, sealed 2026-08-20 at the state the
@@ -142,16 +155,16 @@ internal sealed partial class AppendOnlyRecordTests
     /// </remarks>
     private static readonly Seal[] Sealed =
     [
-        new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0"),
-        new("CHANGELOG.md#1.0.0", 281709, "6ac6a8b636ca14f847aecc779d0c74a830899f17c7b09f21efa52264ab753114"),
-        new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94"),
-        new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa"),
-        new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea"),
-        new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17223, "f0fd2b224ac80b033a17b518ca500730b1bfc2ded5ae3a546d6d193cdca3fc30"),
-        new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11022, "1a5b9733e0f023de5c0a8a5879ac20298fd7193277b88bac075838c31fea1a65"),
-        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29792, "55a40260c260d23240c069ef846929106a0a20c4ea1f34b8bf073590ec8587e1"),
-        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32404, "5f8fdaa1289f2a945a9c8ac1da91dcaf76c0067ec6aba82d8edc6a18474446d1"),
-        new("docs/reviews/2026-08-26-post-course-correction.md", 38497, "88afab61473649f812083baf9482eeb6aa60924c3b34adff4939098cbf0954cf"),
+        new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0", "29edb87771e3936a0b9054fe3c0159b4a6b3b8e64e6e410e99f00d7b0f0afa17"),
+        new("CHANGELOG.md#1.0.0", 281709, "6ac6a8b636ca14f847aecc779d0c74a830899f17c7b09f21efa52264ab753114", "1cc930379f8d8566a35ec11bddae4f2bc0bcc1e47a60eb1abc2f6c8cf302fdb9"),
+        new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94", "5cbc860979f70f949a05d326c412fc84c1e6499b73a080e7b88652b86573bcac"),
+        new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa", "4605c26694310c9618949d95dee4b66a3f9dea7c8c1067ef68c7e9cda8712b09"),
+        new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea", "b8bdc254fbe734137ce90b746aaa7efbce83c708a29430fb869e7eb31652c5c4"),
+        new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17223, "f0fd2b224ac80b033a17b518ca500730b1bfc2ded5ae3a546d6d193cdca3fc30", "3c03a894cc0430fb67c7171d7154ee9361e5249695c59318b7a9543475d27d54"),
+        new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11022, "1a5b9733e0f023de5c0a8a5879ac20298fd7193277b88bac075838c31fea1a65", "9e06d1b010e6b100a27f8f59165b303adda79fb69171eab67869a96f2c16aeb7"),
+        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29792, "55a40260c260d23240c069ef846929106a0a20c4ea1f34b8bf073590ec8587e1", "67d1959a2c47f9fbd38112d371ab04142a3d68b6a6a7c7a3656e325a775a5fe8"),
+        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32404, "5f8fdaa1289f2a945a9c8ac1da91dcaf76c0067ec6aba82d8edc6a18474446d1", "63667857144f4227feb540f4254d2d4c22344b743606f62724f6215624610992"),
+        new("docs/reviews/2026-08-26-post-course-correction.md", 38497, "88afab61473649f812083baf9482eeb6aa60924c3b34adff4939098cbf0954cf", "0de44412f69d6499f1636eb06c72f11f6201c226b8ec6dd2562c86e17b626ee5"),
     ];
 
     /// <summary>
@@ -172,27 +185,145 @@ internal sealed partial class AppendOnlyRecordTests
                 continue;
             }
 
-            if (text.Length < seal.Characters)
+            if (Explain(seal, text) is { } complaint)
             {
-                broken.Add(
-                    $"{seal.Record}: TRUNCATED — {text.Length} characters where {seal.Characters} were sealed. "
-                    + "A dated record does not get shorter; something removed part of the account.");
-                continue;
-            }
-
-            var prefix = text[..seal.Characters];
-            var actual = Digest(prefix);
-
-            if (!string.Equals(actual, seal.Sha256, StringComparison.Ordinal))
-            {
-                broken.Add(
-                    $"{seal.Record}: REWRITTEN — the first {seal.Characters} characters are no longer what they were. "
-                    + $"If a sweep did this, revert it: a dated record says what was true when it was written. "
-                    + $"If the edit was deliberate, re-seal it here: new(\"{seal.Record}\", {text.Length.ToString(CultureInfo.InvariantCulture)}, \"{Digest(text)}\")");
+                broken.Add(complaint);
             }
         }
 
         await Assert.That(string.Join(Environment.NewLine, broken)).IsEmpty();
+    }
+
+    /// <summary>
+    /// What is wrong with one record, or <see langword="null"/> when nothing is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Separate from the loop so that the message itself can be asserted.</b>
+    /// The tree can only ever be in the passing state, so the only way to hold
+    /// this to anything is to hand it text nobody committed.
+    /// </remarks>
+    /// <param name="seal">What the record said when it was sealed.</param>
+    /// <param name="text">What it says now, line endings already normalised.</param>
+    /// <returns>The complaint, or <see langword="null"/>.</returns>
+    private static string? Explain(Seal seal, string text)
+    {
+        if (text.Length < seal.Characters)
+        {
+            return $"{seal.Record}: TRUNCATED — {text.Length} characters where {seal.Characters} were sealed. "
+                + "A dated record does not get shorter; something removed part of the account.";
+        }
+
+        var prefix = text[..seal.Characters];
+
+        if (string.Equals(Digest(prefix), seal.Sha256, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var reseal =
+            $"new(\"{seal.Record}\", {text.Length.ToString(CultureInfo.InvariantCulture)}, \"{Digest(text)}\", \"{Digest(Body(text))}\")";
+
+        // ⚠️ THE HEADING LINE, ON ITS OWN. A sealed record starts at its
+        // heading, so a changelog section's DATE is inside the prefix — and
+        // changing that date at the cut is a step the release checklist
+        // REQUIRES. Told apart from a rewrite by the body digest, because the
+        // advice is opposite: one is "revert it", the other is "re-seal it, in
+        // the same commit".
+        if (string.Equals(Digest(Body(prefix)), seal.BodySha256, StringComparison.Ordinal))
+        {
+            return $"{seal.Record}: the HEADING LINE changed and nothing else did — now '{FirstLine(prefix)}'. "
+                + "If this is a release date being set at the cut, that is expected: the heading is inside the sealed prefix, "
+                + "so the date change and the re-seal are ONE commit and this is the other half of it. Re-seal it here: "
+                + reseal;
+        }
+
+        return $"{seal.Record}: REWRITTEN — the first {seal.Characters} characters are no longer what they were. "
+            + "If a sweep did this, revert it: a dated record says what was true when it was written. "
+            + $"If the edit was deliberate, re-seal it here: {reseal}";
+    }
+
+    /// <summary>Some text without its first line.</summary>
+    /// <param name="text">The text.</param>
+    /// <returns>Everything after the first newline, or nothing.</returns>
+    private static string Body(string text)
+    {
+        var breakAt = text.IndexOf('\n', StringComparison.Ordinal);
+
+        return breakAt < 0 ? string.Empty : text[(breakAt + 1)..];
+    }
+
+    /// <summary>The first line of some text.</summary>
+    /// <param name="text">The text.</param>
+    /// <returns>Everything before the first newline.</returns>
+    private static string FirstLine(string text)
+    {
+        var breakAt = text.IndexOf('\n', StringComparison.Ordinal);
+
+        return breakAt < 0 ? text : text[..breakAt];
+    }
+
+    /// <summary>
+    /// A heading line that moved on its own is reported as a heading rather than
+    /// as a rewrite.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The failure this exists for is a DATE, and it is a step the
+    /// release checklist requires.</b> A sealed record starts at its heading, so
+    /// <c>## [1.0.0] - 2026-09-15</c> is inside the 281,709 sealed characters:
+    /// setting the real release date at the cut breaks the seal, and the message
+    /// used to say <i>REWRITTEN … a dated record says what was true when it was
+    /// written</i>. That is the right sentence for a sweep and exactly the wrong
+    /// one here — it reads as <i>revert this</i> for the one edit that must be
+    /// made. <i>Added 2026-09-16.</i>
+    /// </para>
+    /// <para>
+    /// <b>Over doctored text, because the tree can only ever be in the passing
+    /// state.</b> The real 1.0.0 seal is taken and its heading is replaced with
+    /// a different date, which is precisely what the cut does.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ADateSetAtTheCutIsReportedAsAHeadingRatherThanAsARewrite()
+    {
+        const char TestNewline = (char)10;
+
+        var records = await RecordsAsync();
+        var seal = Sealed.Single(entry => string.Equals(entry.Record, "CHANGELOG.md#1.0.0", StringComparison.Ordinal));
+        var real = records[seal.Record];
+
+        // The control: untouched, nothing is wrong with it.
+        await Assert.That(Explain(seal, real)).IsNull();
+
+        // The date at the cut: the heading line, and nothing else.
+        var redated = "## [1.0.0] - 2026-09-16" + real[real.IndexOf(TestNewline, StringComparison.Ordinal)..];
+        var heading = Explain(seal, redated);
+
+        await Assert.That(heading).IsNotNull();
+        await Assert.That(heading!).Contains("HEADING LINE");
+        await Assert.That(heading).Contains("2026-09-16");
+        await Assert.That(heading).Contains("ONE commit");
+        await Assert.That(heading).Contains("Re-seal it here");
+
+        // And it is NOT the sweep's sentence, which says revert.
+        await Assert.That(heading.Contains("REWRITTEN", StringComparison.Ordinal)).IsFalse();
+
+        // The other direction: a body edit under an untouched heading is still
+        // a rewrite, so the branch above is about the heading and not about
+        // every mismatch.
+        var body = real[..2000] + "x" + real[2001..];
+        var rewritten = Explain(seal, body);
+
+        await Assert.That(rewritten).IsNotNull();
+        await Assert.That(rewritten!).Contains("REWRITTEN");
+        await Assert.That(rewritten.Contains("HEADING LINE", StringComparison.Ordinal)).IsFalse();
+
+        // And a shorter record is still a truncation, whatever its heading says.
+        var cut = Explain(seal, real[..(seal.Characters - 1)]);
+
+        await Assert.That(cut).IsNotNull();
+        await Assert.That(cut!).Contains("TRUNCATED");
     }
 
     /// <summary>

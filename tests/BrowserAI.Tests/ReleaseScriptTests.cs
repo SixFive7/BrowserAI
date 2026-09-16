@@ -103,6 +103,84 @@ internal sealed class ReleaseScriptTests
         await Assert.That(statedVerdict.Trim()).IsEqualTo("rollback");
     }
 
+    /// <summary>
+    /// A release cut over a local feed still holding this machine's own
+    /// pre-release packs is refused, and the refusal names the files to clear.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>This is the state the repository is actually in between releases,
+    /// and it used to read as a rollback.</b> Every gate that installs a real
+    /// installer needs a pack, and a pack is made by running the release script
+    /// on whatever MinVer derives from a commit past the tag — so
+    /// <c>Releases/</c> accumulates <c>1.0.1-alpha.0.19</c>,
+    /// <c>1.0.1-alpha.0.2</c> and a stale feed manifest naming them. Cutting
+    /// <c>1.0.0</c> against that is <i>lower than the published version</i>, and
+    /// the script said <b>ROLLBACK … re-run with -RollbackRepublish</b> — advice
+    /// that would have published a release into a feed whose manifest and
+    /// asset list name packages that were never released. <i>Added 2026-09-16.</i>
+    /// </para>
+    /// <para>
+    /// <b>It is narrower than the rollback rule on purpose.</b> It fires only
+    /// when the CANDIDATE is a release and the thing above it is a
+    /// PRE-RELEASE — which cannot be a published state, because nothing
+    /// pre-release is ever uploaded. A genuine rollback over published releases
+    /// is untouched, and the arm below is the control that says so.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear()
+    {
+        using var scratch = ScratchDirectory.Create("release-stale-feed");
+        var manifest = await WriteFeedAsync(scratch.Path, "1.0.0", "1.0.1-alpha.0.2", "1.0.1-alpha.0.19");
+
+        var (exit, _, output) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "1.0.0");
+
+        await Assert.That(exit).IsNotEqualTo(0);
+
+        // The version that is in the way, by name.
+        await Assert.That(output).Contains("1.0.1-alpha.0.19");
+
+        // And exactly what to clear, so the reader does not have to work it out
+        // — including the two directories that must SURVIVE.
+        await Assert.That(output).Contains("Releases");
+        await Assert.That(output).Contains(".nupkg");
+        await Assert.That(output).Contains("releases.win.json");
+        await Assert.That(output).Contains("RELEASES");
+        await Assert.That(output).Contains("assets.win.json");
+        await Assert.That(output).Contains("archive");
+        await Assert.That(output).Contains("test-pack");
+
+        // Never the rollback ADVICE, which is the wrong door and would publish a
+        // release into a feed naming packages nobody released — and the switch
+        // is named anyway, to say so.
+        await Assert.That(output.Contains("Re-run with -RollbackRepublish", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(output).Contains("Do NOT pass -RollbackRepublish");
+
+        // ---- The controls, in three directions -------------------------------
+        // (1) A genuine rollback over published RELEASES still reads as one.
+        var released = await WriteFeedAsync(Path.Combine(scratch.Path, "b"), "1.0.0", "1.0.1");
+        var (rollbackExit, _, rollbackOutput) = await RunAsync(ValidationScript, "-Manifest", released, "-Version", "1.0.0");
+
+        await Assert.That(rollbackExit).IsNotEqualTo(0);
+        await Assert.That(rollbackOutput).Contains("ROLLBACK");
+
+        // (2) A PRE-RELEASE candidate over the same stale feed is the ordinary
+        // gate pack and is unaffected: it is newer, so it is monotonic.
+        var (gateExit, gateVerdict, _) = await RunAsync(ValidationScript, "-Manifest", manifest, "-Version", "1.0.1-alpha.0.20");
+
+        await Assert.That(gateExit).IsEqualTo(0);
+        await Assert.That(gateVerdict.Trim()).IsEqualTo("monotonic");
+
+        // (3) A release cut over a feed holding only OLDER pre-releases is
+        // monotonic, because nothing pre-release is above it.
+        var behind = await WriteFeedAsync(Path.Combine(scratch.Path, "c"), "0.9.0", "0.9.1-alpha.0.3");
+        var (cutExit, cutVerdict, _) = await RunAsync(ValidationScript, "-Manifest", behind, "-Version", "1.0.0");
+
+        await Assert.That(cutExit).IsEqualTo(0);
+        await Assert.That(cutVerdict.Trim()).IsEqualTo("monotonic");
+    }
+
     /// <summary>Publishing a version over itself is refused in both directions.</summary>
     [Test]
     public async Task RepublishingTheNewestVersionOverItselfIsRefused()
@@ -1010,6 +1088,8 @@ internal sealed class ReleaseScriptTests
 
     private static async Task<string> WriteFeedAsync(string directory, params string[] versions)
     {
+        _ = Directory.CreateDirectory(directory);
+
         var manifest = Path.Combine(directory, "releases.win.json");
         var assets = versions.Select(version =>
             $$"""{"PackageId":"BrowserAI","Version":"{{version}}","Type":"Full","FileName":"BrowserAI-{{version}}-full.nupkg","SHA1":"","SHA256":"","Size":1}""");
