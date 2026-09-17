@@ -233,7 +233,24 @@ is what `gh release view v1.0.0` says. Nothing enforces this sentence — the ta
 `git tag --list` says, the release is what `gh release view v1.0.0` says, and the
 installed base is still what a person knows.
 
-755 executed test cases, 0 failed, 0 skipped — measured from the **two-shell gate** of 2026-09-17: one full `dotnet test` run from PowerShell forcing `C:\` and one from Git Bash forcing `c:\`, both `FULL RUN` and both `first-run bytes` read (*previously "750"* and *"747"* earlier the same day, *"741"* from the six-run release gate of 2026-09-16, *"737"*, *"720"*, *"706"*, *"685"*, *"676"* and "675" earlier the same day, "671" earlier still, "652", "651", "650", "647", "644", "643", "644", "641", "640", "637", "626", "624", "613", "604", "634", "648", "625", "622", "618", "614", "603", "601", "596", "593", "589", "585", "582", "576", "573", "571", "551", "548", "532", "531", "530", "514", "505", "506", "500", "501", "498", "497", "495", "493", "491", "478", "476", "461", "458", "436" and "419" before that; re-measured each time rather than adjusted). **The +5 is the dated `playwright-core` override and the config key it was
+761 executed test cases, 0 failed, 0 skipped — measured from the **two-shell gate** of 2026-09-17: one full `dotnet test` run from PowerShell forcing `C:\` and one from Git Bash forcing `c:\`, both `FULL RUN` and both `first-run bytes` read (*previously "755"*, *"750"* and *"747"* earlier the same day, *"741"* from the six-run release gate of 2026-09-16, *"737"*, *"720"*, *"706"*, *"685"*, *"676"* and "675" earlier the same day, "671" earlier still, "652", "651", "650", "647", "644", "643", "644", "641", "640", "637", "626", "624", "613", "604", "634", "648", "625", "622", "618", "614", "603", "601", "596", "593", "589", "585", "582", "576", "573", "571", "551", "548", "532", "531", "530", "514", "505", "506", "500", "501", "498", "497", "495", "493", "491", "478", "476", "461", "458", "436" and "419" before that; re-measured each time rather than adjusted). **The +6 is the dead browser server, in both directions, 2026-09-17.** Four arms
+in `DeadChildTests` and two in `ErrorCatalogueTests`, each planted red before the
+change that makes it pass. `ACallForwardedAfterTheChildDiedComesBackRatherThanWaitingForever`
+is the one worth naming: it was watched red at **5 m 00.924 s**, the whole of
+`TestDefaults.InProcessHang`, against a forward handed to a child whose transport
+had already closed — *"No frame arrived on this pipe in 5 minutes while waiting
+for the answer to 'tools/call' (id 3)"* — and it answers in **2.1 s** with the
+door check in. `AResumeRelaunchesAChildThatHasDiedAndSaysSo` was red on the
+relaunch sentence being absent from an answer that said nothing had changed. The
+other two are the controls, and they are the reason the first two cannot be
+satisfied cheaply: a resume of a **healthy** session still changes nothing, and a
+call held open on a **healthy** child still gets the child's own answer, so a
+liveness question answered too readily is a red build rather than a refusal on
+every slow page action. The two catalogue arms provoke the two new refusals
+through real conditions, which is what stops a sentence nobody can reach being
+written.
+
+**The +5 before that is the dated `playwright-core` override and the config key it was
 taken for, 2026-09-17.** Four arms in `PayloadTests` and one in
 `ConfigRoundTripTests`, each planted red before the change that makes it
 pass. `TheDatedPlaywrightCoreOverrideIsStillNeeded` is the exit: it reads the
