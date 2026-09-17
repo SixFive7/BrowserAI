@@ -61,7 +61,6 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private RigSessionEnvironment(
         string root,
         Action<FakePlaywrightChild>? configure,
-        long? freeBytes,
         Func<string, string, IInstallerRun>? installer,
         ProvisioningTimers? timers,
         TimeSpan? browserIdlePeriod,
@@ -164,7 +163,6 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             Provisioner = Provisioner,
             InstanceDirectory = instances,
             OpenSessionLog = OpenSessionLog,
-            FreeBytesOn = _ => freeBytes,
         };
 
         if (browserIdlePeriod is { } period)
@@ -365,10 +363,6 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
     /// <summary>Builds an environment for one rig.</summary>
     /// <param name="configure">Programs each session's double before it is started.</param>
-    /// <param name="freeBytes">
-    /// What the volume reports as free. <see langword="null"/> is "cannot be
-    /// asked", which is how a network share behaves and is never a refusal.
-    /// </param>
     /// <returns>The environment, which the rig owns and disposes.</returns>
     /// <param name="installer">
     /// How the provisioner starts an install. The default lays a complete tree
@@ -407,7 +401,6 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
-        long? freeBytes = long.MaxValue,
         Func<string, string, IInstallerRun>? installer = null,
         ProvisioningTimers? timers = null,
         bool opensDefaultSession = true,
@@ -415,14 +408,9 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         ManualClock? clock = null,
         bool realSessionChildren = false,
         ToolVerdicts? verdicts = null) =>
-        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, freeBytes, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts)
+        new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), configure, installer, timers, browserIdlePeriod, clock, realSessionChildren, verdicts)
         {
             OpensDefaultSession = opensDefaultSession,
-            // A volume this environment reports as full refuses every init,
-            // including the rig's own -- so the rig does not open a default
-            // session there and turn one test's deliberate refusal into a
-            // setup failure with somebody else's name on it.
-            CanOpenSessions = freeBytes is null or >= SessionManager.RequiredFreeBytes,
         };
 
     /// <summary>
@@ -440,7 +428,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         new(Path.Combine(ScratchRoot.Path, $"rig-{Guid.NewGuid():N}"), reason);
 
     private RigSessionEnvironment(string root, string reason)
-        : this(root, configure: null, freeBytes: long.MaxValue, installer: null, timers: null, browserIdlePeriod: null, clock: null, realSessionChildren: false, verdicts: null)
+        : this(root, configure: null, installer: null, timers: null, browserIdlePeriod: null, clock: null, realSessionChildren: false, verdicts: null)
     {
         CanOpenSessions = false;
 

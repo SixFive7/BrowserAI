@@ -866,15 +866,6 @@ internal static class SessionErrors
         $"'{argument}' cannot be set on {SessionToolSurface.Resume}, because {why}. Nothing was changed. "
         + $"Omit the argument to reopen this session as it is, or call {SessionToolSurface.Init} on a new directory if you want different settings.";
 
-    /// <summary>Row 12 — the volume has no room for a first-run provisioning.</summary>
-    /// <param name="path">The session directory.</param>
-    /// <param name="freeBytes">What the volume has.</param>
-    /// <param name="requiredBytes">What provisioning peaks at.</param>
-    /// <returns>The refusal.</returns>
-    public static string InsufficientDisk(string path, long freeBytes, long requiredBytes) =>
-        $"'{path}' is on a volume with {Megabytes(freeBytes)} free; first-run provisioning peaks near {Megabytes(requiredBytes)}. Nothing was changed. "
-        + "Free space, or choose another volume. A download that runs out of space partway through fails at the first navigation rather than here, which is why this is checked up front.";
-
     /// <summary>Row 14 — the machine-wide lock could not be created.</summary>
     /// <remarks>
     /// A hard blocker with no reduced-protection mode to fall back to, and the

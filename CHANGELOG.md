@@ -182,6 +182,32 @@ release body; nothing else depends on it.
   byte-identical platform code, and the float is not dead — it resolved, and what it
   resolved to is 2.4.0. Solution build after the move: 0 warnings, 0 errors.
 
+### Removed
+- 🗑️ **The free-space check is gone, and nothing asks a volume how much room it has.**
+  The maintainer's decision, in his words: *"Remove the free space check.
+  Checking for free space is out of scope and makes our project more
+  complicated. I do not want to check for that at all."* Until today
+  `browserai_init` asked the volume for its free bytes and refused below
+  **640 MiB**, naming the number, before it created anything.
+  `SessionManager.RequiredFreeBytes`, the refusal it drove,
+  `SessionErrors.InsufficientDisk` and the injected free-bytes reader the suite
+  triggered it through are all deleted; the error catalogue is **25 rows**
+  rather than 26. **The removal was planted red first**, two ways: the same
+  condition the old arm provoked — a volume reporting 12 MiB free — asserted
+  *not* to refuse (*"Expected to not be equal to True but received True"*), and
+  a new tree-wide scan,
+  `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`, which named four files
+  before the change and none after. **The old refusal test was deleted rather
+  than skipped**: it asserted behaviour that no longer exists, which is not a
+  gap in coverage. **What it costs is written down rather than implied** — a
+  machine that runs out of room now finds out partway through a 207.3 MB
+  download instead of in a sentence at `init`, which is exactly how any volume
+  that could not answer the question in one call already behaved. The ~635 MiB
+  arithmetic peak stays in
+  [`kb/playwright/provisioning-and-timings.md`](kb/playwright/provisioning-and-timings.md)
+  as a budget for a reader, gating nothing, and the open ask to sample free
+  space across a run is withdrawn as moot.
+
 ### Fixed
 - 🐛 **The coverage block stops printing a download size somebody typed.**
   Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in

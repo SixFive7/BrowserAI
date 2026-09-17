@@ -130,32 +130,29 @@ internal sealed partial class ErrorCatalogueTests
             child.ToolCallsReceived.Count(tool => tool == "browser_navigate"))).IsEqualTo(0);
     }
 
+    /// <summary>
+    /// <c>init</c> refuses a path that is absolute and still unusable.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Renamed 2026-09-17 (previously
+    /// <c>InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume</c>).</b> The
+    /// full-volume half is gone with the free-space check itself, at the
+    /// maintainer's decision — <i>"Checking for free space is out of scope … I do
+    /// not want to check for that at all."</i> That half asserted a refusal this
+    /// build no longer makes, so it was <b>deleted rather than skipped</b>: a test
+    /// for removed behaviour is not a gap in coverage, it is coverage of
+    /// something that is not there. What replaces it is
+    /// <c>HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas</c>, which holds the
+    /// absence. The name also no longer claims the existing-session half, which
+    /// this arm never carried: <c>SessionAlreadyExists</c> is provoked by
+    /// <see cref="ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept"/>.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
-    public async Task InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume()
+    public async Task InitRefusesAnUnusablePath()
     {
-        // Row 12 needs a volume with no room, which is not something a test can
-        // arrange -- so the volume query is the seam and everything downstream of
-        // it, including the refusal itself, is the product's.
-        await using var sessions = RigSessionEnvironment.Create(freeBytes: 12L * 1024 * 1024);
+        await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
-
-        var cramped = Path.Combine(sessions.Root, "cramped");
-        var full = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
-        {
-            ["directory"] = cramped,
-            ["purpose"] = "should never be created",
-        });
-
-        await Assert.That((bool?)full["isError"]).IsTrue();
-
-        Match(
-            TextOf(full),
-            nameof(SessionErrors.InsufficientDisk),
-            SessionErrors.InsufficientDisk(cramped, 12L * 1024 * 1024, SessionManager.RequiredFreeBytes));
-
-        // Nothing was created, which is the half a message cannot claim for
-        // itself.
-        await Assert.That(Directory.Exists(cramped)).IsFalse();
 
         // Row 3's second half: absolute and still unusable.
         var malformed = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -1076,7 +1073,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
     [DependsOn(nameof(TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims))]
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
-    [DependsOn(nameof(InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume))]
+    [DependsOn(nameof(InitRefusesAnUnusablePath))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
     [DependsOn(nameof(TheAnnotationLivenessRowIsEmittedByARealCallNamingAToolThatIsNotAdvertised))]
     [DependsOn(nameof(TheLockRowsAreEmittedByRealLockConditions))]
@@ -1195,7 +1192,17 @@ internal sealed partial class ErrorCatalogueTests
         // fixes -- a denial has none and a gap is answered by `tools/list` --
         // and a single row that said both would be the sentence a model cannot
         // act on that the note above already names.
-        await Assert.That(rows.Count).IsEqualTo(26);
+        //
+        // ⚠️ **Corrected 2026-09-17 to 25 (previously 26).** `InsufficientDisk`
+        // went with the free-space check, at the maintainer's decision: *"Remove
+        // the free space check. Checking for free space is out of scope and makes
+        // our project more complicated. I do not want to check for that at all."*
+        // It is the first row deleted here because the QUESTION was withdrawn
+        // rather than because the answer moved -- there is no condition left for
+        // a provocation to arrange, since nothing asks the volume anything. The
+        // absence is held by `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`,
+        // which is where a reader looking for the check should be sent.
+        await Assert.That(rows.Count).IsEqualTo(25);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

@@ -146,18 +146,29 @@ sum does not land where the number does (207,274,189 B is 197.67 MiB, plus the
 437.24 MiB extracted tree, is ~635 MiB; 640 is 5 × 128 MiB, a round number the
 arithmetic does not give). It also assumes an ordering nobody observed: that the
 archive is fully present before extraction begins and is removed afterwards.
-**It matters because it ships as a refusal** — `SessionManager.RequiredFreeBytes`
-is `640L * 1024 * 1024` and a session is declined against it.
-⚠️ **The margin is still in the safe direction and is now ~5 MiB rather than
-~15 MiB** — the arithmetic peak moved 625 → 635 MiB with the 1237 → 1244 roll,
-and two more rolls of that size would cross it. **The constant is left alone
-here**, because moving a shipped refusal threshold is a decision rather than a
-re-measurement; it is raised where decisions are raised. **This file is where
-that number lives** — the rest of the repository cites it rather than restating
-it. Settle it by sampling free space every 250 ms across the run already timed
-twice at 10.81 s and 10.60 s. The component byte counts above **are** measured;
-re-establish those with a `HEAD` on the three URLs below. `[FLOATS]` for the
-components, `[UNVERIFIED]` for the peak.
+⚠️ **It gates nothing any more, and the `[UNVERIFIED]` ask it carried is closed
+as moot.** *Corrected 2026-09-17 (previously "**It matters because it ships as a
+refusal** — `SessionManager.RequiredFreeBytes` is `640L * 1024 * 1024` and a
+session is declined against it. ⚠️ **The margin is still in the safe direction
+and is now ~5 MiB rather than ~15 MiB** — the arithmetic peak moved 625 →
+635 MiB with the 1237 → 1244 roll, and two more rolls of that size would cross
+it. **The constant is left alone here**, because moving a shipped refusal
+threshold is a decision rather than a re-measurement; it is raised where
+decisions are raised. … Settle it by sampling free space every 250 ms across the
+run already timed twice at 10.81 s and 10.60 s.")* The maintainer removed the
+check outright on 2026-09-17, in his words: *"Remove the free space check.
+Checking for free space is out of scope and makes our project more complicated.
+I do not want to check for that at all."* `SessionManager.RequiredFreeBytes`,
+the `init` refusal it drove and `SessionErrors.InsufficientDisk` are gone, and
+`HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas` holds the absence.
+**The ~635 MiB arithmetic stays here as arithmetic** — it is what a reader
+budgeting a machine wants and it is still the honest sum — but no threshold is
+derived from it, so the open ask to sample free space every 250 ms across a run
+has nothing left to settle and is withdrawn rather than answered. **This file is
+where that number lives** — the rest of the repository cites it rather than
+restating it. The component byte counts above **are** measured; re-establish
+those with a `HEAD` on the three URLs below. `[FLOATS]` for the components, and
+the peak is arithmetic that nothing acts on.
 
 > ⚠️ `Corrected 2026-09-16 @ chromium 1244 / 154.0.8037.0 · playwright-core
 > 1.64.0-alpha-2026-09-14 · @playwright/mcp 0.0.81 (previously "**Settled
@@ -324,9 +335,12 @@ arithmetic, stated as arithmetic: **1 m 44 s at 10 Mbps, 17 m 16 s at 1 Mbps**.
 Peak disk while archive and tree coexist would be ~469 MiB, which is *arithmetic
 and not a measurement* for exactly the reason [the Chromium
 figure](#first-run-provisioning) is — nobody has sampled free space across a run.
-`SessionManager.RequiredFreeBytes` stays at 640 MiB for both families: it is
-sized on the larger, both of Firefox's halves are smaller, and a per-family bound
-would refuse nothing this one permits. *`Corrected 2026-09-16 (previously "62.4%
+*Corrected 2026-09-17 (previously "`SessionManager.RequiredFreeBytes` stays at
+640 MiB for both families: it is sized on the larger, both of Firefox's halves
+are smaller, and a per-family bound would refuse nothing this one permits.")* —
+there is no such constant now; free space is out of scope by the maintainer's
+decision of 2026-09-17, and the figure above is a budget for a reader rather
+than a bound anything enforces. *`Corrected 2026-09-16 (previously "62.4%
 of the download … **1 m 42 s at 10 Mbps, 16 m 58 s at 1 Mbps** … would be
 ~461 MiB")`, all four re-derived from the new measured pair.*
 

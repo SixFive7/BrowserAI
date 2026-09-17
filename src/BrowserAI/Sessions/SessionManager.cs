@@ -39,38 +39,6 @@ namespace BrowserAI.Sessions;
 /// </remarks>
 internal sealed class SessionManager : IAsyncDisposable
 {
-    /// <summary>
-    /// How much room a volume must have before a session is created there.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>One number for both families, sized on the larger.</b> Chromium's
-    /// first-run provisioning needs 207.3 MB down and 437.24 MiB extracted —
-    /// both re-measured 2026-09-16 at chromium 1244 — so peak usage is ~635 MiB
-    /// while both the archive and the tree exist. Firefox needs 129.5 MB down
-    /// and 345.35 MiB extracted (re-measured the same day at firefox 1544),
-    /// which is smaller in both halves, so this bound holds for it without being
-    /// restated per family.
-    /// ⚠️ <b>Corrected 2026-09-17 (previously "needs 203.8 MB down and
-    /// 430.48 MiB extracted … so peak usage is ~640 MiB … Firefox needs
-    /// 127.2 MB down and 340.15 MiB extracted").</b> The constant is unchanged
-    /// and the HEADROOM is what moved: the arithmetic peak went 625 → 635 MiB
-    /// across one browser roll, so this bound now has ~5 MiB of margin rather
-    /// than ~15. It is left alone here because raising a shipped refusal
-    /// threshold is a decision rather than a re-measurement. A
-    /// refusal here that names the number is recoverable in one turn; a failure
-    /// partway through the download is the <c>spawn EFTYPE</c> shape — success
-    /// shaped, stderr empty, discovered at first navigation.
-    /// </para>
-    /// <para>
-    /// <b>It is deliberately not the sum of both families.</b> A session names
-    /// one browser and provisions one tree; a machine that ends up with two has
-    /// paid for them one at a time, and asking for 1.1 GiB free before the first
-    /// session on a volume would refuse work that fits.
-    /// </para>
-    /// </remarks>
-    public const long RequiredFreeBytes = 640L * 1024 * 1024;
-
     /// <summary>The family <c>browserai_init</c> uses when the caller names none.</summary>
     /// <remarks>
     /// <para>
@@ -498,11 +466,6 @@ internal sealed class SessionManager : IAsyncDisposable
             if (Existing(location) is { } existing)
             {
                 return new ToolOutcome(existing, IsError: true);
-            }
-
-            if (FreeSpaceRefusal(location) is { } refusal)
-            {
-                return new ToolOutcome(refusal, IsError: true);
             }
 
             try
@@ -2306,20 +2269,6 @@ internal sealed class SessionManager : IAsyncDisposable
                 record.Created,
                 record.LastUsed,
                 record.Purpose);
-    }
-
-    private string? FreeSpaceRefusal(SessionPath location)
-    {
-        // A volume whose free space cannot be queried in one call -- a network
-        // share, most often -- reports null and is skipped rather than replaced
-        // by a directory walk: the check exists to be cheap, and an expensive
-        // substitute would cost every session start for a case that fails loudly
-        // later anyway.
-        var free = _environment.FreeBytesOn(location.FullPath);
-
-        return free is not (>= 0 and < RequiredFreeBytes)
-            ? null
-            : SessionErrors.InsufficientDisk(location.FullPath, free.Value, RequiredFreeBytes);
     }
 
     /// <summary>

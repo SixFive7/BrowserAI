@@ -154,31 +154,4 @@ internal sealed record SessionEnvironment
                 idPrefix,
                 relay,
                 cancellationToken);
-
-    /// <summary>
-    /// How much room the volume holding a path has, or <see langword="null"/> if
-    /// it cannot be asked in one call.
-    /// </summary>
-    /// <remarks>
-    /// <b>O(1), and only ever O(1).</b> A directory walk here would make the check
-    /// slower than the failure it prevents, and <c>init</c> is on the hot path of
-    /// every session. It is a seam so the suite can trigger
-    /// <see cref="SessionErrors.InsufficientDisk"/> through the
-    /// real refusal path rather than by asserting a literal — a full volume is not
-    /// something a test can arrange, and a row nobody can reach is documentation
-    /// rather than behaviour.
-    /// </remarks>
-    public Func<string, long?> FreeBytesOn { get; init; } = static path =>
-    {
-        try
-        {
-            return new DriveInfo(Path.GetPathRoot(path) ?? path).AvailableFreeSpace;
-        }
-        catch (Exception failure) when (failure is ArgumentException or IOException or UnauthorizedAccessException)
-        {
-            // A network share, most often. Reported as unknown rather than as
-            // zero, because zero would refuse every session on it.
-            return null;
-        }
-    };
 }

@@ -2307,4 +2307,94 @@ internal sealed partial class HouseRuleTests
         await Assert.That(walked.Count).IsGreaterThan(200);
         await Assert.That(oracle.Count).IsEqualTo(walked.Count);
     }
+
+    /// <summary>
+    /// <b>Nothing in this tree asks a volume how much room it has.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's decision, 2026-09-17, in his words:</b> <i>"Remove
+    /// the free space check. Checking for free space is out of scope and makes
+    /// our project more complicated. I do not want to check for that at all."</i>
+    /// <c>SessionManager.RequiredFreeBytes</c>, the <c>init</c> refusal it drove
+    /// and <c>SessionErrors.InsufficientDisk</c> went with it, and so did the
+    /// <c>FreeBytesOn</c> seam that made the refusal reachable from a test.
+    /// </para>
+    /// <para>
+    /// <b>A scan rather than a behaviour arm, because the behaviour is now an
+    /// absence and an absence has no seam.</b> A volume with no room is not
+    /// something a test can arrange — that is why the refusal was injected
+    /// through <c>SessionEnvironment.FreeBytesOn</c> in the first place — so once
+    /// the product stops asking, there is no condition left to provoke. What can
+    /// be held is that nobody asks the question again: the check was cheap to
+    /// write, reads as prudence, and is exactly the shape that comes back.
+    /// </para>
+    /// <para>
+    /// <b>The whole tree, not just <c>src\</c>.</b> A guard re-introduced in the
+    /// suite's own harness would be the same decision taken somewhere a product
+    /// scan cannot see, and the rule is that the question is out of scope rather
+    /// than that one project must not ask it.
+    /// <c>DriveInfo.GetDrives</c> is deliberately NOT a needle — enumerating
+    /// mounted volumes is how <c>SessionIndexTests</c> finds a letter nothing is
+    /// mounted on, and it says nothing about free space.
+    /// </para>
+    /// <para>
+    /// <b>Watched red 2026-09-17 against the tree as it stood</b>, where it named
+    /// <c>src\BrowserAI\Sessions\SessionEnvironment.cs</c> and
+    /// <c>tests\BrowserAI.Tests\Harness\RigSessionEnvironment.cs</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NothingAsksAVolumeHowMuchRoomItHas()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in RepositoryLayout.SourceAndScriptFiles)
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+
+            offenders.AddRange(FreeSpaceNeedles(code)
+                .Select(needle => $"{Relative(file)}: asks a volume for its free space ({needle}), "
+                    + "which is out of scope by the maintainer's decision of 2026-09-17 — see DECISIONS.md"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL. A scan whose needles stopped matching reports
+        // the tree clean, and that reads identically to the tree BEING clean.
+        // Each of the three is a real spelling the deleted code used or could
+        // have used: the managed property, its whole-volume sibling, and the
+        // Win32 entry point underneath both.
+        await Assert.That(FreeSpaceNeedles("var free = new DriveInfo(root).Available" + "FreeSpace;")).IsNotEmpty();
+        await Assert.That(FreeSpaceNeedles("var whole = drive.Total" + "FreeSpace;")).IsNotEmpty();
+        await Assert.That(FreeSpaceNeedles("[LibraryImport] static partial bool GetDiskFree" + "SpaceExW(...);")).IsNotEmpty();
+
+        // And the other direction, so the rule is about free space rather than
+        // about the type: enumerating the mounted volumes stays legal, and one
+        // real caller does it.
+        await Assert.That(FreeSpaceNeedles("var mounted = DriveInfo.GetDrives();")).IsEmpty();
+        await Assert.That(RepositoryLayout.SourceAndScriptFiles.Count).IsGreaterThan(100);
+    }
+
+    /// <summary>
+    /// Every way this tree could ask a volume how much room it has.
+    /// </summary>
+    /// <remarks>
+    /// Composed from halves so that this file does not match its own scan, which
+    /// is the same arrangement <see cref="Flag"/> uses one rule above.
+    /// </remarks>
+    private static readonly string[] FreeSpaceSpellings =
+    [
+        "Available" + "FreeSpace",
+        "Total" + "FreeSpace",
+        "GetDiskFree" + "Space",
+        "Required" + "FreeBytes",
+        "Free" + "BytesOn",
+    ];
+
+    /// <param name="code">A file's text, comment-only lines already blanked.</param>
+    /// <returns>The free-space spellings it carries, in the order they are declared.</returns>
+    private static List<string> FreeSpaceNeedles(string code) =>
+        [.. FreeSpaceSpellings.Where(needle => code.Contains(needle, StringComparison.Ordinal))];
 }

@@ -406,10 +406,13 @@ internal sealed class BrowserProvisioner : IDisposable
     /// count is re-measured at rev 1544 and the "and nothing else" is
     /// NOT</b>: that was established once, on 2026-08-19, by a third run which
     /// was not repeated on 2026-09-16. The
-    /// upper bound is quoted, for the same reason
-    /// <see cref="Sessions.SessionManager.RequiredFreeBytes"/> is sized on the
-    /// larger family: a caller deciding whether to wait is not helped by a
-    /// number that is right only on the machines that already paid.
+    /// upper bound is quoted: a caller deciding whether to wait is not helped by
+    /// a number that is right only on the machines that already paid.
+    /// <i>Corrected 2026-09-17 (previously "for the same reason
+    /// <c>SessionManager.RequiredFreeBytes</c> is sized on the larger family").</i>
+    /// That constant is gone — free space is out of scope by the maintainer's
+    /// decision of 2026-09-17 — so the comparison now points at nothing, while
+    /// the reason it was making stands on its own.
     /// </para>
     /// <para>
     /// ⚠️ <b>Added 2026-08-19 at Firefox support (previously a single
@@ -513,10 +516,15 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// <para>
     /// <b>Same volume as the extraction, which is a small improvement it is worth
-    /// naming.</b> <c>SessionManager.RequiredFreeBytes</c> is sized on archive
-    /// and tree coexisting; before this the archive could be on a different
-    /// volume from the tree, so that figure was checked against a volume only
-    /// half the work landed on.
+    /// naming.</b> The archive and the extracted tree coexist, so a machine
+    /// running out of room runs out of it once rather than in two places.
+    /// <i>Corrected 2026-09-17 (previously "<c>SessionManager.RequiredFreeBytes</c>
+    /// is sized on archive and tree coexisting; before this the archive could be
+    /// on a different volume from the tree, so that figure was checked against a
+    /// volume only half the work landed on").</i> There is no such figure any
+    /// more: the free-space check was removed on the maintainer's instruction,
+    /// and what survives is the layout property rather than the guard it used to
+    /// serve.
     /// </para>
     /// </remarks>
     public const string DownloadDirectoryName = ".downloads";
