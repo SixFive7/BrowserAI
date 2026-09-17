@@ -23,10 +23,22 @@ README says so where it applies. Read it before running anything.
 
 **Because `build/` is code this repository builds and runs, and everything under
 it is read by the tree-as-text scans that govern product code.** These rigs are
-scratch from before several of those rules, and **six of the eleven trip
-`NeverByImageNameTests`** — `Get-Process`, `Win32_Process`, and in
+scratch from before several of those rules, and **7 of the 14 directories hold
+at least one file that would trip `NeverByImageNameTests`** — the predicate
+being a file among the extensions that scan reads (`.cs`, `.ps1`, `.psm1`,
+`.mjs`, `.js`) containing one of its five forbidden needles. `Get-Process` in
+10 files, `Win32_Process` in 7, and in
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) a real
-`GetProcessesByName`.
+`GetProcessesByName`; `taskkill` and `szExeFile` appear in none.
+
+> ⚠️ `Corrected 2026-09-17 (previously "**six of the eleven trip
+> NeverByImageNameTests**")`. **Two separate movements, and only one of them is
+> the new rigs.** Three directories were added on 2026-09-16 and 2026-09-17, of
+> which two trip — so eleven became fourteen and the tripping count rose by two.
+> **The old number was also wrong by one**: re-counted per needle with a
+> positive control, the eleven held **five** tripping directories and not six.
+> Nothing was adjusted to fit; the list of every tripping file is what the count
+> is taken from, and it is short enough to re-derive in one command.
 
 ⚠️ **Every one of those uses is by pid or by parent pid, and not one matches on
 an image name**, so the rigs satisfy the RULE — *never match, count or terminate
@@ -61,4 +73,7 @@ scratch directory was retired; `build/probes/` existed for one commit,
 | [`2026-09-15-install`](2026-09-15-install/README.md) | Installing the published release and watching it | |
 | [`2026-09-16-garbage`](2026-09-16-garbage/README.md) | What old versions and old install paths leave on a machine | |
 | [`2026-09-16-icon`](2026-09-16-icon/README.md) | Rendering the shipped assets, and reading the icon back out | |
+| [`2026-09-16-provisioning`](2026-09-16-provisioning/README.md) | What a first-run browser download costs on the wire, on disk and on the clock | |
 | [`2026-09-16-release`](2026-09-16-release/README.md) | What Setup asks before installing over an install | |
+| [`2026-09-16-resume`](2026-09-16-resume/README.md) | What a resume costs and which stores survive it | yes |
+| [`2026-09-17-cost-ratios`](2026-09-17-cost-ratios/README.md) | Firefox against Chromium on RAM, first paint, idle CPU and profile disk | yes |
