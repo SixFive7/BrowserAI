@@ -52,61 +52,9 @@ release body; nothing else depends on it.
   nothing reading only an exit code can tell a cancelled install from a completed
   one.
 
-### Fixed
-- 🐛 **The coverage block stops printing a download size somebody typed.**
-  Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
-  `FirstRunCache`, in the one place on the screen that reads like a measurement,
-  beside the elapsed seconds and the file count the run really did observe. The
-  2026-09-16 re-measurement moved
-  `BrowserProvisioner.FirstRunDownloadBytes` to **207,274,189 B** and moved every
-  other quotation of the figure; this one could not be corrected by re-running
-  anything, which is what makes a number written at a sentence worse than one
-  nobody wrote down. It is rendered through `DownloadSizeFor` now, the same path
-  the provisioning refusal uses. Planted red and watched: *"Expected to contain
-  \"207.3 MB\" … but received \"downloaded 203.8 MB from the CDN because some
-  reason\""*. **The other surviving mentions of the old figure are deliberately
-  untouched** — they are comments and prose, and which of them read as
-  measurements is a separate decision.
-
-
-- 📦 **`New-Release.ps1` clears its own never-published test feed before it
-  packs into it, so a stale pre-release can never refuse a cut again.** The entry
-  below records the checklist correction that met this failure; this is the fix it
-  said belonged to whoever owns the script. `Releases/test-pack/` is a **second
-  Velopack feed**, every gate pack writes a pre-release into it, and a gate runs
-  far more often than a release is cut — so at the moment of a cut it holds
-  versions above the release and `vpk` refuses, *after* the shipping artifacts
-  have already been built. [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1)
-  now runs immediately before the test pack and deletes exactly what that pack
-  regenerates: `BrowserAI.app.test-*.nupkg`, `releases.win.json`, `RELEASES`,
-  `assets.win.json`, the two renamed downloads, **and the two pre-rename names** a
-  run that died between the pack and the rename leaves instead. It is **not** a
-  directory wipe — a file under `test-pack/` that no pack regenerates survives —
-  and an absent or empty directory is reported rather than refused, because the
-  first cut on a fresh clone meets both. **Q200**, decided 2026-09-17.
-  [`RELEASING.md`](RELEASING.md) item 5's manual step is corrected by addition and
-  kept as a description of the failure mode; the shipping feed is still cleared by
-  hand and `Test-ReleaseVersion.ps1`'s refusal still covers it.
-
-- 📦 **The release checklist now clears the suite's feed as well as the real
-  one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
-  the checklist keeps, and every gate pack writes a pre-release into it. At the
-  moment a release is cut it therefore holds versions newer than the release, and
-  `vpk` refuses it the same way it refuses one in `Releases/` — *"There is a
-  release in channel win which is equal or greater to the current version
-  1.0.0"*. Because the running order packs for the gate first, **this refused
-  every release cut, and it refused this one**: it fired *after* the real pack
-  had succeeded, so the non-zero exit named the suite's installer while the
-  release itself was already on disk. [`RELEASING.md`](RELEASING.md) item 5 is
-  corrected by addition with the file names to clear, and the better fix —
-  `New-Release.ps1` clearing its own regenerated, never-published test output —
-  is written down there as the script owner's to take rather than taken by a
-  release executor.
-
 ### Changed
-- 📝 **The upstream record catches up: ask #1 was granted, the WebP fix was
-  not, and the doc comment beside the environment allowlist stops disagreeing with
-  the row that measures it.** Three corrections by addition, each re-read from the
+- 📝 **The upstream record catches up: one ask granted, one fix declined, one
+  count reconciled.** Three corrections by addition, each re-read from the
   API on 2026-09-17 rather than carried over.
   **(1)** [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497)
   — absolute paths in tool results — **closed `completed`**, by the merge of
@@ -140,8 +88,8 @@ release body; nothing else depends on it.
   exactly that pending judgement** — which is the mechanism working, and a verdict
   is the maintainer's to give.
 
-- ✅ **`NeverByImageNameTests` reads the FILTER rather than the API, and 14 of
-  the 15 files it was flagging turn out never to have violated anything.** The scan
+- ✅ **`NeverByImageNameTests` reads the filter rather than the API.**
+  Fourteen of the fifteen files it was flagging never violated anything. The scan
   asked whether a file contained one of five substrings — `taskkill`,
   `GetProcessesByName`, `Win32_Process`, `Get-Process`, `szExeFile` — which cannot
   tell `Get-Process -Id $pid` from `Get-Process chrome`. Those are opposite things:
@@ -175,9 +123,9 @@ release body; nothing else depends on it.
   `.Where(` under case-insensitive matching, so WQL is recognised by its `FROM`
   clause instead.
 
-- ✅ **A pid that vanishes between the containment walk and the query is now
-  *exited* rather than *unknown*, and unknown is what the host read as a
-  containment failure.** `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
+- ✅ **A pid that vanishes between the walk and the query is *exited*, not
+  *unknown*.**
+  Unknown is what the host was reading as a containment failure. `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
   went red on 2026-09-16 on a **docs-only** commit, *after* `escapees == 0` had
   already passed: a row came back with a null `inOurJob` because `OpenProcess`
   returned `ERROR_INVALID_PARAMETER` for a descendant that had exited between the
@@ -195,8 +143,8 @@ release body; nothing else depends on it.
   carries the row.
 
 
-- 🔧 **`BrowserAI.Core` declares the RID it is only ever published under, and
-  its lock file stops having two answers.** `src/BrowserAI.Core/packages.lock.json`
+- 🔧 **`BrowserAI.Core` declares its RID, and the lock file has one state.**
+  It had two, and the last restore won. `src/BrowserAI.Core/packages.lock.json`
   had **two stable states and the last restore won**: a RID-specific restore (every
   publish, and `build/New-Release.ps1`) wrote a `net10.0-windows7.0/win-x64`
   section, and a solution restore (what `dotnet test` performs) removed it again —
@@ -233,6 +181,57 @@ release body; nothing else depends on it.
   block and the `ITestExecutionFilter` read behind `BROWSERAI_RELEASE_RUN` are on
   byte-identical platform code, and the float is not dead — it resolved, and what it
   resolved to is 2.4.0. Solution build after the move: 0 warnings, 0 errors.
+
+### Fixed
+- 🐛 **The coverage block stops printing a download size somebody typed.**
+  Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
+  `FirstRunCache`, in the one place on the screen that reads like a measurement,
+  beside the elapsed seconds and the file count the run really did observe. The
+  2026-09-16 re-measurement moved
+  `BrowserProvisioner.FirstRunDownloadBytes` to **207,274,189 B** and moved every
+  other quotation of the figure; this one could not be corrected by re-running
+  anything, which is what makes a number written at a sentence worse than one
+  nobody wrote down. It is rendered through `DownloadSizeFor` now, the same path
+  the provisioning refusal uses. Planted red and watched: *"Expected to contain
+  \"207.3 MB\" … but received \"downloaded 203.8 MB from the CDN because some
+  reason\""*. **The other surviving mentions of the old figure are deliberately
+  untouched** — they are comments and prose, and which of them read as
+  measurements is a separate decision.
+
+
+- 📦 **`New-Release.ps1` clears its own test feed before it packs into it.**
+  A stale pre-release can never refuse a cut again. The entry
+  below records the checklist correction that met this failure; this is the fix it
+  said belonged to whoever owns the script. `Releases/test-pack/` is a **second
+  Velopack feed**, every gate pack writes a pre-release into it, and a gate runs
+  far more often than a release is cut — so at the moment of a cut it holds
+  versions above the release and `vpk` refuses, *after* the shipping artifacts
+  have already been built. [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1)
+  now runs immediately before the test pack and deletes exactly what that pack
+  regenerates: `BrowserAI.app.test-*.nupkg`, `releases.win.json`, `RELEASES`,
+  `assets.win.json`, the two renamed downloads, **and the two pre-rename names** a
+  run that died between the pack and the rename leaves instead. It is **not** a
+  directory wipe — a file under `test-pack/` that no pack regenerates survives —
+  and an absent or empty directory is reported rather than refused, because the
+  first cut on a fresh clone meets both. **Q200**, decided 2026-09-17.
+  [`RELEASING.md`](RELEASING.md) item 5's manual step is corrected by addition and
+  kept as a description of the failure mode; the shipping feed is still cleared by
+  hand and `Test-ReleaseVersion.ps1`'s refusal still covers it.
+
+- 📦 **The release checklist now clears the suite's feed as well as the real
+  one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
+  the checklist keeps, and every gate pack writes a pre-release into it. At the
+  moment a release is cut it therefore holds versions newer than the release, and
+  `vpk` refuses it the same way it refuses one in `Releases/` — *"There is a
+  release in channel win which is equal or greater to the current version
+  1.0.0"*. Because the running order packs for the gate first, **this refused
+  every release cut, and it refused this one**: it fired *after* the real pack
+  had succeeded, so the non-zero exit named the suite's installer while the
+  release itself was already on disk. [`RELEASING.md`](RELEASING.md) item 5 is
+  corrected by addition with the file names to clear, and the better fix —
+  `New-Release.ps1` clearing its own regenerated, never-published test output —
+  is written down there as the script owner's to take rather than taken by a
+  release executor.
 
 ## [1.0.0] - 2026-09-16
 
