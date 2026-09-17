@@ -233,7 +233,18 @@ is what `gh release view v1.0.0` says. Nothing enforces this sentence — the ta
 `git tag --list` says, the release is what `gh release view v1.0.0` says, and the
 installed base is still what a person knows.
 
-761 executed test cases, 0 failed, 0 skipped — measured from the **two-shell gate** of 2026-09-17: one full `dotnet test` run from PowerShell forcing `C:\` and one from Git Bash forcing `c:\`, both `FULL RUN` and both `first-run bytes` read (*previously "755"*, *"750"* and *"747"* earlier the same day, *"741"* from the six-run release gate of 2026-09-16, *"737"*, *"720"*, *"706"*, *"685"*, *"676"* and "675" earlier the same day, "671" earlier still, "652", "651", "650", "647", "644", "643", "644", "641", "640", "637", "626", "624", "613", "604", "634", "648", "625", "622", "618", "614", "603", "601", "596", "593", "589", "585", "582", "576", "573", "571", "551", "548", "532", "531", "530", "514", "505", "506", "500", "501", "498", "497", "495", "493", "491", "478", "476", "461", "458", "436" and "419" before that; re-measured each time rather than adjusted). **The +6 is the dead browser server, in both directions, 2026-09-17.** Four arms
+762 executed test cases, 0 failed, 0 skipped — measured from the **six-run release gate** of 2026-09-17: three full `dotnet test` runs from PowerShell forcing `C:\` and three from Git Bash forcing `c:\`, all six `FULL RUN`, all six `release run YES`, and all six `first-run bytes CDN` (*previously "761"* from the two-shell gate earlier the same day, *"755"*, *"750"* and *"747"* earlier the same day, *"741"* from the six-run release gate of 2026-09-16, *"737"*, *"720"*, *"706"*, *"685"*, *"676"* and "675" earlier the same day, "671" earlier still, "652", "651", "650", "647", "644", "643", "644", "641", "640", "637", "626", "624", "613", "604", "634", "648", "625", "622", "618", "614", "603", "601", "596", "593", "589", "585", "582", "576", "573", "571", "551", "548", "532", "531", "530", "514", "505", "506", "500", "501", "498", "497", "495", "493", "491", "478", "476", "461", "458", "436" and "419" before that; re-measured each time rather than adjusted). **The +1 is a read-only file, 2026-09-17.**
+`TreeDeleteTests.AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo`,
+planted red and watched at `Assert.That(File.Exists(loose)).IsFalse()` —
+*"Expected to be false but found True"* — against the shape that found the
+defect: a read-only git loose object under two ordinary directories, a
+read-only directory beside it, and **a held file in the same tree as the
+control**, so that clearing an attribute cannot become swallowing a sharing
+violation. It was not an idea: this release's own gate went red at the head
+of run 1 on a tree nobody had changed, and the defect was in
+`Runtime/TreeDelete` rather than in the rig that provoked it.
+
+**The +6 is the dead browser server, in both directions, 2026-09-17.** Four arms
 in `DeadChildTests` and two in `ErrorCatalogueTests`, each planted red before the
 change that makes it pass. `ACallForwardedAfterTheChildDiedComesBackRatherThanWaitingForever`
 is the one worth naming: it was watched red at **5 m 00.924 s**, the whole of

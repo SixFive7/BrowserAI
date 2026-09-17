@@ -162,6 +162,27 @@ internal sealed partial class AppendOnlyRecordTests
     /// red.
     /// </para>
     /// <para>
+    /// ⚠️ <b>AND A FOURTH TIME ON 2026-09-17, LATER THE SAME DAY, FOR THE
+    /// FOURTH IN-PLACE CUT OF THE SAME VERSION.</b> <i>Corrected 2026-09-17
+    /// (previously sealed at <c>CHANGELOG.md#1.0.0</c> <c>310,216</c> characters
+    /// / <c>06336d69…</c> / <c>47751897…</c>, which was that morning's preamble
+    /// rewrite)</i>. The order is the maintainer's and is the same one: <i>"Let's
+    /// work out this and the other open issues and then re-release v1.0.0.
+    /// Because I very much like the way the changelog is reading now."</i>, with
+    /// <i>"keep moving the release tag until everything is fully green and we
+    /// have a full build and release"</i> standing behind it. <b>Two edits and
+    /// no others</b>, exactly as the re-ship case requires and in one commit: the
+    /// <b>heading date</b> moved <c>2026-09-16</c> → <c>2026-09-17</c>, which is
+    /// inside the sealed prefix by construction, and the <b>twenty-eight
+    /// entries</b> that had accumulated under <c>[Unreleased]</c> since that
+    /// morning — six <c>Added</c>, sixteen <c>Changed</c>, one <c>Removed</c>,
+    /// five <c>Fixed</c> — were merged into the matching <c>1.0.0</c> groups.
+    /// The record grew <c>310,216</c> → <c>349,897</c> characters, which is an
+    /// append at the end of each group and a one-line change at the top; the
+    /// whole prefix moves because a seal starts at the heading. <b>No entry was
+    /// re-shaped and no sentence of the existing body was rewritten.</b>
+    /// </para>
+    /// <para>
     /// <b>Three lifts is not a rule that lifts are free; it is the same version
     /// being cut a third time.</b> Each has been ordered in advance by the
     /// person who owns the record, and each has been narrower than the one
@@ -208,7 +229,7 @@ internal sealed partial class AppendOnlyRecordTests
     private static readonly Seal[] Sealed =
     [
         new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0", "29edb87771e3936a0b9054fe3c0159b4a6b3b8e64e6e410e99f00d7b0f0afa17"),
-        new("CHANGELOG.md#1.0.0", 310216, "06336d694309bb15724200aa3361810d6a402f682d8d62a2109325f98ea8db0d", "4775189752778e186f6e01d135e28cbc9e400e298bfa0439f630a4f2646a5df5"),
+        new("CHANGELOG.md#1.0.0", 349897, "534a3407f93cd94887f9d9e6dd8703fad8287aae1420e12d96a2ccb6faedef11", "ab003af831e5a3cbda529d3478b44c1a0d3366bfe13e1146cd8dbc21db8d26d5"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94", "5cbc860979f70f949a05d326c412fc84c1e6499b73a080e7b88652b86573bcac"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa", "4605c26694310c9618949d95dee4b66a3f9dea7c8c1067ef68c7e9cda8712b09"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea", "b8bdc254fbe734137ce90b746aaa7efbce83c708a29430fb869e7eb31652c5c4"),
@@ -322,9 +343,12 @@ internal sealed partial class AppendOnlyRecordTests
     /// <para>
     /// ⚠️ <b>The failure this exists for is a DATE, and it is a step the
     /// release checklist requires.</b> A sealed record starts at its heading, so
-    /// <c>## [1.0.0] - 2026-09-16</c> is inside the 310,215 sealed characters
-    /// — <i>corrected 2026-09-16 (previously "<c>## [1.0.0] - 2026-09-15</c> is
-    /// inside the 281,709 sealed characters")</i>, by the second cut of the same
+    /// <c>## [1.0.0] - 2026-09-17</c> is inside the 349,897 sealed characters
+    /// — <i>corrected 2026-09-17 (previously "<c>## [1.0.0] - 2026-09-16</c> is
+    /// inside the 310,215 sealed characters")</i>, by the fourth cut of the same
+    /// version doing it again — <i>corrected 2026-09-16 (previously
+    /// "<c>## [1.0.0] - 2026-09-15</c> is inside the 281,709 sealed
+    /// characters")</i>, by the second cut of the same
     /// version doing exactly what this paragraph describes:
     /// setting the real release date at the cut breaks the seal, and the message
     /// used to say <i>REWRITTEN … a dated record says what was true when it was

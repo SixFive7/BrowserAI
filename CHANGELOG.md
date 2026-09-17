@@ -38,572 +38,7 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
-### Added
-
-- ✅ **Nothing in a release body may carry a character a person would not type.**
-  The maintainer's release directive, in his words: *"Ensure there is no trace
-  of AI both in wording and character use."* He added it after reading the
-  published `v1.0.0` body: *"the intro text of the release post is very much
-  reading like AI."*
-  `ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType`
-  is the **character half**, and [`RELEASING.md`](RELEASING.md) says plainly
-  that the wording half needs a reader and always will. Eight code points are
-  refused: the em dash `U+2014`, the en dash `U+2013`, the four curly quotes,
-  the ellipsis `U+2026` and the non-breaking space `U+00A0`. It is a **deny
-  list**, so the twelve palette icons and any other legitimate symbol are
-  allowed without being listed in code, and a **backticked code span is exempt**
-  because a span quotes something that exists rather than choosing a style. The
-  scope is what a release body is actually made of and is stated rather than
-  implied: every section preamble, every entry headline, the legend, and a body
-  generated from the fixture, which is how the generator's own fixed text is
-  covered. **An entry's detail is out of scope by construction** — since
-  2026-09-16 the body carries headlines and a `read more` link, so the 674 em
-  dashes in this file's details never reach a reader of the release page.
-  Planted red against the `1.0.0` preamble, which carried three of them.
-
-- 📝 **Setup asks before installing over an existing install, and says
-  `Repair` on a re-ship.** Measured 2026-09-16
-  against the published `v1.0.0` installer and filed in
-  [`kb/packaging/velopack.md`](kb/packaging/velopack.md) with re-verification row
-  130. The trigger is `!is_dir_empty(&root_path)` — **the directory, not the
-  version** — so every existing user meets a `#32770` titled *"BrowserAI is
-  already installed"* that waits indefinitely; only the affirmative button's
-  label varies with the comparison (`Update` / `Downgrade` / **`Repair`** when
-  equal), and taking it runs the full install over an emptied root. Two edges
-  worth having written down: `--silent` skips the prompt entirely, which is why
-  the suite's own installer arms never meet it, and **Cancel exits 0**, so
-  nothing reading only an exit code can tell a cancelled install from a completed
-  one.
-
-- ✨ **Every file a tool result names is now named absolutely.** A screenshot,
-  a PDF, a snapshot, a console log, a download, a saved response body and a
-  trace all used to come back as `output\page-2026-09-17T14-18-13-427Z.png`, a
-  path relative to the browser server's working directory. The reader of a tool
-  result is a model rather than a process with a working directory, so that
-  named nothing it could open. BrowserAI answered this with a note of its own
-  until 2026-08-26, when artifact routing was deleted and every answer became
-  the child's own bytes; from that day the relative pointers reached a caller
-  with nothing beside them. This is that hole closed, and the fix is upstream's:
-  the generated child config now writes `filePaths: "absolute"`, from PR
-  microsoft/playwright#42673, merged 2026-09-16 and closing
-  microsoft/playwright#42497, which is **this project's own request**, filed
-  2026-08-27. Every pointer shape was measured before and after, and again end
-  to end through the published server: the screenshot, PDF and storage-state
-  links, the snapshot link, both console log pointers, the download line, the
-  binary response body line, the network-requests link and the four trace links
-  are all absolute, including the two the pull request's own text did not name.
-  One shape was not driven and is recorded as owed rather than claimed: the
-  paused-debugger location, which needs a paused session to provoke. The key is
-  written explicitly rather than left to a default, because upstream's default
-  is the opposite of what this product wants, and `PLAYWRIGHT_MCP_FILE_PATHS` is
-  refused for every child so that an inherited variable cannot quietly put it
-  back.
-
-- ✨ **`browser_emulate_media` arrives and is allowed.** It emulates the CSS
-  media features a page responds to on the page a session already owns:
-  `prefers-color-scheme`, `prefers-reduced-motion`, `forced-colors`,
-  `prefers-contrast`, and the print or screen media type. It is the only way to
-  see a site's dark mode or its print stylesheet without starting a second
-  session, it reaches nothing outside the page, and it returns immediately. The
-  maintainer's verdict is `allow`, and the reasoning is in the tool's own row in
-  `tool-verdicts.json`. BrowserAI's `tools/list` now carries 72 tools of the 74
-  a fully capable child exposes, two fewer only because `browser_annotate` and
-  `browser_webmcp_call` are still withheld for liveness.
-
-- 📝 **The gate now says to publish the slice again after a `src/` change.**
-  It always had to be done and the only place it was ever written down was the
-  refusal it produces. A gate attempt on 2026-09-17 cost 34 reds reading *the
-  published binary … is older than 7 source file(s), so this test would prove
-  nothing about the code in the tree* — around thirty arms drive the published
-  NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
-  refuses all of them together. The two-shell gate paragraph in `CLAUDE.md` and
-  in `TESTING.md` now carries the step and the two commands that refusal names,
-  `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
-  --self-contained` and the same shape over `src/BrowserAI.App`. It also names
-  the early signal, which is the run's own `publish freshness` row reading
-  `STALE` with the newest input beside it, and says plainly that a release
-  publish is not a substitute: `New-Release.ps1` stages into
-  `artifacts\publish-<exe stem>` and never writes `src\<project>\bin\`.
-
-- 📝 **The disk total after a first run is stamped stale rather than left reading as current.**
-  `kb/playwright/provisioning-and-timings.md` published *disk after first run is
-  130,434,952 + 451,389,780 = 581,824,732 B*, and both addends had moved under
-  it. The chromium term is `chromium-1237`; the family is at 1245 and weighs
-  454,699,952 B across 308 files, measured the same day on the reference
-  machine. The `current\` term is the one-executable layout of 2026-08-17, and
-  an install has held two binaries since 2026-09-15, so the figure names a
-  directory that no longer exists in that shape. The sum is left exactly as it
-  was measured and marked `[STALE]` with both reasons, which is what the marker
-  is for — and it is the same defect the correction directly beneath it already
-  records against the sentence this one replaced, a derived total carrying no
-  date of its own.
-
-### Changed
-
-- 📝 **First-run provisioning is measured again at the new browser revisions.**
-  Re-verification row 21 went stale one day after it was taken, when the
-  `playwright-core` pull-forward moved chromium 1244 to 1245 and firefox 1544 to
-  1548. Both families were provisioned twice into an empty root through the same
-  rig, and each pair came back identical to the other. Chromium did not move at
-  all, which is worth the sentence: its archive is keyed on the browser version
-  rather than on the revision, and 1245 carries the same 154.0.8037.0 as 1244,
-  so the same archive is fetched and the tree is the same tree to the byte and
-  the file. Firefox moved by 327 bytes on the wire and 902 on disk across the
-  same 61 files, so the quoted download size for that family goes from
-  129,502,321 to 129,502,648 bytes and the Chromium one is re-measured and
-  unchanged at 207,274,189. `ffmpeg` 1011 and `winldd` 1007 are byte-identical,
-  which is the control for the two revisions that moved. The timings moved in
-  both directions on a roll that moved almost no bytes, so they are the link and
-  the machine on the day rather than anything about a revision. The run is kept
-  as evidence this time; the previous one was scratch and went with it. Two of
-  the three sections that went stale that day are still owed: the Firefox
-  against Chromium cost ratios and the resume cost, rows 34 and 38.
-
-- ✅ **The one suite arm that launches an unowned browser runs beside nothing.**
-  Q212 = a. The wild exit 1 this repository has chased since 2026-08-26 was
-  named on 2026-09-17 and it was this product's own stray sweep: a second
-  `BrowserAI.Server.exe`, started by a different arm of the same run, sweeping
-  at startup, finding a browser it could not attribute because no message window
-  had been published yet, falling back to the session directory the command line
-  names, finding it unlocked and terminating it with exit code 1. The rig's
-  scratch session directory holds no lock by construction, so any product server
-  starting while that browser is alive kills it, which makes it deterministic
-  rather than rare. The arm carries a keyless `[NotInParallel]` now: the key it
-  already had holds the arms that run a sweep apart from each other, and the
-  arms that matter are the dozens that start a server, none of which carries
-  that key. What it costs is measured rather than estimated, three runs each:
-  the arm alone is 1.528, 1.513 and 1.476 seconds of total run time against a
-  0.747, 0.732 and 0.763 second zero-test baseline through the same invocation,
-  so about three quarters of a second of critical path. Nothing mechanises the
-  rule and the reason is written down where a reader will meet it: the predicate
-  that matters is that the browser's profile sits in a directory nothing holds a
-  lock on, which is a property of the running rig rather than of its text, and
-  the readable approximation of it would also fire on an arm that was
-  deliberately taken out of a serialisation key on a measured argument. The
-  product is unchanged.
-
-- 🐛 **A browser call into a session whose server has gone comes back now.**
-  Q211 = c. Measured on 2026-09-17:
-  with a session's node child killed under a live BrowserAI, one
-  `browser_navigate` was still outstanding after 900,000 ms, the server alive
-  and nothing in any log after the transport's own end of stream. The cause is
-  read from the MCP SDK's shipped code rather than guessed: it faults every
-  pending request when the transport's channel completes, once, and a request
-  registered after that moment is faulted by nothing, so it waits on the
-  caller's token and on nothing else. BrowserAI asks whether the child is still
-  there before it forwards, and refuses with a sentence that says the browser
-  server for this session has ended, that nothing was forwarded and nothing in
-  the browser changed, and that `browserai_resume` starts a replacement. No
-  timeout was added anywhere: the wait was not slow, it was endless. A call
-  already in flight when the child dies is a different path and has always come
-  back as an error; that is unchanged. The refusal is recorded on the session
-  like every other refused call. The arm was planted red and hit the suite's
-  own five minute hang detector before the check went in, and answers in two
-  seconds with it; two controls stand beside it, a resume of a healthy session
-  and a call held open on a healthy child, because a liveness question answered
-  too readily would turn every slow page action into a refusal.
-
-- 🔧 **`browserai_resume` repairs a session whose browser server has died.**
-  Q211 = a. Until now it asked one question, *do I already own this directory*,
-  and the answer is still yes when the `node` child behind the session has been
-  killed: it answered "This session is already open in this BrowserAI; nothing
-  was changed" in 7.68 ms about a session that could no longer do anything at
-  all. It now asks the second question too, *is the child behind it still
-  there*, and starts a replacement when it is not, with the same launch options
-  the session was opened with. Liveness is read from the transport's own closed
-  state and from the child's process handle, never from a pid lookup by name, so
-  a child on its way out counts as alive until one of those two says otherwise
-  and a resume of a healthy session still changes nothing. The answer says what
-  the replacement did not bring back: the profile is on disk so cookies and
-  stored state survive, and no page is open, so navigate again before acting on
-  what you see. Nothing about the session's identity moves, because the lock is
-  still held and the record is untouched. A replacement that will not start is
-  its own refusal, and it says the session is still open rather than inviting a
-  fresh init.
-
-- ⬆️ **`playwright-core` is pulled one build ahead of the wrapper that pins it,
-  as a dated exception.** `@playwright/mcp` `latest` is
-  0.0.81 and pins `playwright-core` 1.64.0-alpha-2026-09-14 exactly. The first
-  build carrying `--file-paths=absolute` is 1.64.0-alpha-2026-09-17, so the
-  payload manifest now carries an npm `overrides` entry that resolves that one
-  instead. This collides head on with the rule that everything floats and
-  nothing is ever pinned to work around a break, so it is recorded as an
-  exception rather than absorbed. It is the maintainer's decision, and it is a
-  different kind of thing from the one exception that already existed: the
-  vendored SQLite pin holds a version still because nothing floats it, and this
-  moves one forward because a wrapper is one release behind. Both now sit side
-  by side in `DECISIONS.md`, which says in its own words that neither is a
-  precedent for a third. The override brought two browser revisions with it,
-  Chromium 1244 to 1245 and Firefox 1544 to 1548, so a first run downloads a new
-  Chromium once.
-
-- 📝 **The resume wedge is measured, and nothing in the product bounds it.**
-  Q207 = b. Killing a session's `node` child under a **live** BrowserAI was
-  recorded on 2026-09-16 and not diagnosed: `browserai_resume` answered the
-  no-op in 7.8 ms and the next browser call had not returned after 3 min 8 s,
-  when the probe was stopped. Re-run on 2026-09-17 with a clock on it, bounded
-  at **fifteen minutes** because that is the largest timeout in the product plus
-  five minutes of margin rather than a number a probe felt like waiting: **the
-  call never returned**. The 2026-09-16 readings are corroborated to the
-  millisecond, the no-op at **7.68 ms** and the refusal wording byte-for-byte.
-  **Which product timer governs it: none.** `ChildConnection.AskAsync` awaits
-  `SendRequestAsync` under the caller's token and nothing else;
-  `ChildInitializationHang` is ten minutes and governs `initialize` only, and
-  was crossed with no effect; `BrowserIdleTimer.DefaultIdlePeriod` has no
-  browser left to close; `LockScopes.PerDirectoryGate` is released before the
-  call is forwarded. **The process log carries one line and then fifteen minutes
-  of silence** — *"playwright-mcp[surface]: the peer closed its end of the
-  connection"*, 347 ms before the kill even reported complete — so the transport
-  knows the peer is gone and the pending request is never told. **A second
-  client cannot recover it either**, which is the half the first run left open:
-  its `browserai_resume` is refused in 15.3 ms by the ordinary in-use refusal
-  naming the wedged pid. **No product change is taken**; four directions are in
-  [`QUESTIONS.md`](QUESTIONS.md) and the decision is the maintainer's. The
-  transcript is persisted this time, at
-  [`docs/evidence/2026-09-17-resume-wedge`](docs/evidence/2026-09-17-resume-wedge/README.md),
-  and the rig that produced it is `wedge-probe.js`, beside the probe it extends.
-
-- 📝 **The wild exit 1 has a name at last, and it is this product's own stray sweep.**
-  The signature has been chased since 2026-08-26: exit code `1`, nothing on
-  either stream, both pipes at EOF, five lines in the browser's own
-  `--log-file`, no message window. It was blamed on desktop-heap exhaustion
-  until `DesktopHeapProbe` fired on the failure path on 2026-09-17 and said the
-  heap had room, and before that on the test harness's own spawn-record reclaim,
-  which reproduced it 18 of 18 on 2026-08-29. **It was neither.** Read out of the
-  machine-wide process log rather than reasoned about:
-  `BrowserAI.Sweep[5]`, `2026-09-17T12:02:54.5368021Z`, *"Terminated a stray
-  browser: pid=90216 ... Its session directory was unlocked, so nothing owned
-  it"* — written by a second **product** `BrowserAI.Server.exe` that a different
-  arm of the same run had started 173 ms earlier, sweeping at startup 84 ms
-  after the dead browser's last log line. `StrayCandidate.TryTerminate` calls
-  `TerminateProcess(handle, 1)`, which is the `1`. **The harness reclaim is
-  excluded by its own announcements rather than by argument** — the 2026-08-29
-  fix announced exactly three terminations that run, ten seconds earlier, naming
-  three other pids — which is that fix working in the direction nobody designed
-  it for: it was built to stop the harness killing a live run and what it did was
-  prove the harness innocent. **The 2026-08-29 exclusion of the product sweep was
-  backwards**: it ruled the sweep out because *attribution needs the window this
-  browser never published*, and the missing window is exactly why the sweep fell
-  back to the session directory and found it unlocked. The arm's rig holds no
-  `browserai.lock` by construction, so **any** product server starting while that
-  browser is alive kills it: deterministic rather than rare, a suite isolation
-  defect rather than a wild death, and posed as a question with three directions
-  and a plantable red rather than fixed here. The suite's own spawn record could
-  not be consulted — it lives under `.work\`, which is cleared at the end of every
-  batch — and the machine-wide log is what survived.
-
-- 📝 **The 1.0.0 release note opens in plain words now.**
-  The preamble is what a reader of the release page meets first, and the one
-  that shipped read like something generated: an em-dash aside dropped into the
-  first sentence, *"brings its own copy"*, *"The release holds two
-  executables"*, and four claims in one bolded opening line. It is rewritten in
-  short sentences: what BrowserAI is, that this is the first version fit for
-  real use and what it replaces, the two programs in the release, and where to
-  start. No em dashes, and ASCII throughout.
-  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1)'s own fixed text
-  was read with the same eye: the footer now says *"The full changelog for this
-  release"* rather than *"Every entry in full, with its evidence"*, which is a
-  sentence nobody says out loud. **The `1.0.0` seal is re-taken** at 310,216
-  characters, and `AppendOnlyRecordTests` carries the previous values and the
-  order that lifted it, because a re-seal nobody explains is rewriting history
-  with an extra step.
-
-- 🔧 **The icon legend is a compact table now, in the release body and in this file.**
-  The maintainer's words: *"The legend at the bottom of the release notes that
-  explains the icons is missing newlines. Give it a nice yet compact layout."*
-  The release body carries this file's own legend rather than one of its own,
-  and until today that legend was a single paragraph of twelve entries separated
-  by an interpunct, which
-  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1) then flattened
-  further by joining its wrapped lines with spaces. A reader of the release page
-  met one unbroken line. It is a Markdown table now: **two icon-and-meaning
-  pairs per row, six rows for the twelve icons, under a one-word heading row**,
-  in both places, and the generator emits it line for line. **A legend that is
-  not a table is refused rather than flattened**, which is the half that makes
-  this a rule instead of a preference: the body has no legend of its own, so the
-  read is the only place the shape can be held. Planted red on the fixture
-  (*"Expected to contain `table`"*, against a generator that accepted the
-  paragraph) and on the tree (*"Expected to be equal to ... but received
-  `\"\"`"*). Rendered once through GitHub's own renderer: one `<table>`, six
-  `<tbody>` rows, 24 `<td>` cells.
-- 📝 **Two records catch up: where the probe rigs live, and what upstream did with the first ask.**
-  [`docs/probes/`](docs/probes/README.md) keeps all fourteen rigs, decided by the
-  architect on 2026-09-17 after the scan that used to flag seven of them was
-  narrowed to read the filter rather than the API. The blind spot is **one file
-  wide instead of seven rigs wide**, and `2026-09-14-firstrun/observe.ps1` is the
-  one true positive: it watches for a console host appearing anywhere on the
-  machine, which no pid or path form expresses, so re-spelling it would falsify
-  the record of method rather than fix anything. [`CLAUDE.md`](CLAUDE.md) says so
-  by addition with the open question it replaces quoted. And
-  [`TODO.md`](TODO.md)'s ask #1 records that
-  [`dgozman`'s request for a repro was finally answered](https://github.com/microsoft/playwright/issues/42497#issuecomment-5713988873)
-  on 2026-09-17, and that the fix is being adopted by overriding `playwright-core`
-  to the alpha that carries it rather than by waiting for `@playwright/mcp` to
-  roll — a dated exception with a written exit. The row stays open, and what it
-  waits for is the review rather than the roll.
-
-- 📝 **Chromium stays the default browser, on a reason rather than on four numbers that moved.**
-  The maintainer's ground, in his words: *"the reason for the default is that
-  chrome is the most widely used"*. Recorded as a **decision, not a
-  measurement**, which is the point of writing it down this way. What it
-  replaces is the only ground that was on offer anywhere: the four
-  Firefox-against-Chromium cost ratios, which
-  [`kb/playwright/provisioning-and-timings.md`](kb/playwright/provisioning-and-timings.md)
-  described as *"the whole of the evidence behind Chromium being the default
-  family"*. Re-measured on 2026-09-16 with a preserved rig
-  ([re-verification row 34](kb/re-verification.md)), **three of the four
-  collapsed by between 1.7x and 7x and the fourth reversed sign** — RAM 2x to
-  1.19x, first navigate 10x to 4.62x, profile disk 20x to 2.76x, and idle CPU
-  ~24x to **0.77x**, which says Firefox burns *less*. **Nothing about the
-  default changes.** The claim that those ratios justified it is retired in the
-  kb, in the re-verification row, in
-  [`DECISIONS.md`](DECISIONS.md), in `SessionManager.DefaultBrowser`'s own
-  remarks and in [`README.md`](README.md), each corrected by addition with the
-  previous text quoted. No market-share figure is cited: one would be external
-  and would float, and the decision does not need it.
-- 📝 **The upstream record catches up: one ask granted, one fix declined, one
-  count reconciled.** Three corrections by addition, each re-read from the
-  API on 2026-09-17 rather than carried over.
-  **(1)** [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497)
-  — absolute paths in tool results — **closed `completed`**, by the merge of
-  [PR #42673](https://github.com/microsoft/playwright/pull/42673) at
-  2026-09-16T15:38:22Z rather than by a reply. The flag, the `filePaths` config key
-  and `PLAYWRIGHT_MCP_FILE_PATHS` are in `playwright-core`
-  **1.64.0-alpha-2026-09-17** (`next`) and in **no released `@playwright/mcp`** —
-  `latest` is 0.0.81, pinning **1.64.0-alpha-2026-09-14 exactly** — so there is no
-  drift by the build rule and the row becomes *resolved upstream, adoption pending
-  the roll*, with the adoption plan written out so the roll is a review and not a
-  design.
-  **(2)** [PR #42721](https://github.com/microsoft/playwright/pull/42721), the WebP
-  16,383 px fix, was **closed unmerged** at 2026-09-16T00:15:20Z — `dcrousso`:
-  *"this is really an upstream issue and should be fixed there instead"* — so the
-  fix is expected in **Chromium** (CL 8416650, status NEW) and will arrive through
-  a browser-revision bump rather than a `playwright-core` change. The settlement
-  condition is unchanged and the two hazard rows stand.
-  **(3)** `ChildEnvironment`'s opening paragraph said **43** `PLAYWRIGHT_MCP_*`
-  variables with **two** outside the config mapping, stamped at
-  1.63.0-alpha-2026-08-31, while re-verification row 17 said **45** with **three**
-  at the version that ships. Both were right about their own version and neither
-  could see the other; the comment is reconciled to the row, and
-  `RecordedCountTests.TheUpstreamVariableCountInTheDocCommentIsWhatRowSeventeenSays`
-  now holds it there — planted red at *"Expected to be equal to `45` but received
-  `43`"*.
-  **And one thing is written down before it happens:** the next `@playwright/mcp`
-  roll brings a new **default-surface** tool, `browser_emulate_media`
-  (`capability: 'core'`, taking `browser_*` from 83 to 84 with none removed or
-  renamed). [`tool-verdicts.json`](tool-verdicts.json) is deny-by-default and
-  refuses a name it has no row for at startup, so **the suite will be red on
-  exactly that pending judgement** — which is the mechanism working, and a verdict
-  is the maintainer's to give.
-
-- ✅ **`NeverByImageNameTests` reads the filter rather than the API.**
-  Fourteen of the fifteen files it was flagging never violated anything. The scan
-  asked whether a file contained one of five substrings — `taskkill`,
-  `GetProcessesByName`, `Win32_Process`, `Get-Process`, `szExeFile` — which cannot
-  tell `Get-Process -Id $pid` from `Get-Process chrome`. Those are opposite things:
-  one names a pid the caller already holds, the other picks a stranger out of the
-  machine by what its executable is called.
-  [`ProcessSelection`](tests/BrowserAI.Tests/Harness/ProcessSelection.cs) now reads
-  the selection — a `-Name` parameter, a bare positional name, `taskkill /IM`,
-  `GetProcessesByName`, an `szExeFile` read, a `Name` clause inside a WMI query, or
-  a `Name` compared with a comparison operator in a file that enumerates processes
-  — and lets every pid form through. **Q203**, decided 2026-09-17. A narrowing
-  needs both directions, so each shape has a synthetic control that must be caught
-  *and* the pid-keyed spelling of the same call that must pass, plus the mixed line
-  (a pid filter that also names an image, which is still a violation) and the
-  file-scoped gate that keeps `$_.Name -eq` over a **directory** listing out of it.
-  **Measured on the corpus it was built for**, the predicate being *a file among
-  the extensions the scan reads whose code text selects a process by its image
-  name*: over the rigs in [`docs/probes/`](docs/probes/README.md) the old scan
-  flagged **15 of 36 files in 7 of 14 rigs** and the new one flags **1 of 36 in 1
-  of 14**.
-  ⚠️ **That one is real and the move to `build/probes/` is therefore not
-  taken.** `2026-09-14-firstrun/observe.ps1` calls `GetProcessesByName` over a
-  literal watch list — matching and counting by name, which the rule forbids as
-  against the observing it permits — and it cannot be re-spelled pid-keyed,
-  because what it watches for is a console host appearing anywhere on the machine.
-  The move was performed and reverted; `docs/probes/README.md` and
-  [`CLAUDE.md`](CLAUDE.md) are corrected by addition, and both said every use was
-  by pid or parent pid, which was true of fourteen files and false of this one.
-  **Three false positives outside the rigs were found and removed by the same
-  change**, in `build/New-Release.ps1`, `build/Write-ReleaseManifest.ps1` and three
-  test files: `WHERE` as a query marker matches `Where-Object` and LINQ's
-  `.Where(` under case-insensitive matching, so WQL is recognised by its `FROM`
-  clause instead.
-
-- ✅ **A pid that vanishes between the walk and the query is *exited*, not
-  *unknown*.**
-  Unknown is what the host was reading as a containment failure. `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
-  went red on 2026-09-16 on a **docs-only** commit, *after* `escapees == 0` had
-  already passed: a row came back with a null `inOurJob` because `OpenProcess`
-  returned `ERROR_INVALID_PARAMETER` for a descendant that had exited between the
-  toolhelp walk and the per-row query. The rig had one spelling for two opposite
-  answers — *could not be read* and *is no longer there* — and an exited process
-  is neither a survivor nor an escapee. `ProcessQueryVerdict.ForFailedOpen` now
-  decides which it was, **once, from what Windows said**: `87` and `5` are
-  `Exited`, and **everything else stays `Unreadable`**, keeps its note and still
-  reddens the run, so this is a classification rather than a retry or a
-  suppression. `inJobProcessIdList` — the kernel's own membership snapshots taken
-  either side of the walk — is still asserted for every row including an exited
-  one, and `escapees`, `jobMembersTheWalkMissed` and the survivor check are
-  untouched. **Q202**, decided 2026-09-17. Planted red three ways and watched, with
-  the error numbers *measured* rather than quoted. [`HAZARDS.md`](HAZARDS.md)
-  carries the row.
-
-
-- 🔧 **`BrowserAI.Core` declares its RID, and the lock file has one state.**
-  It had two, and the last restore won. `src/BrowserAI.Core/packages.lock.json`
-  had **two stable states and the last restore won**: a RID-specific restore (every
-  publish, and `build/New-Release.ps1`) wrote a `net10.0-windows7.0/win-x64`
-  section, and a solution restore (what `dotnet test` performs) removed it again —
-  so the tree opened dirty after every publish *and* after every suite run, and
-  Q199 could only choose which of the two to commit. Declaring
-  `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` on the library ends it at the
-  source: five restore shapes measured on 2026-09-17 all write `fab160c4…`,
-  including the two that used to disagree
-  (`dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate`
-  against `dotnet restore BrowserAI.slnx --force-evaluate`, each forced to
-  re-resolve so that a no-op restore could not be mistaken for agreement). The
-  other state, `7f30ec57…`, is no longer reachable. Solution build after the
-  change: 0 warnings, 0 errors; the only cost is one directory level in the
-  library's own build output, which nothing in this tree reads by path. **Q201**,
-  decided 2026-09-17. [`RELEASING.md`](RELEASING.md) item 5 and
-  [`TESTING.md`](TESTING.md) are corrected by addition — both said the file would
-  show modified after a run, and neither is true now.
-
-- ⬆️ **TUnit moved 1.67.0 → 1.68.4 and Microsoft.Testing.Platform deliberately
-  did not move at all.** `dotnet restore --force-evaluate` on 2026-09-17 re-resolved
-  the float and took TUnit across two releases: 1.68.0 (2026-09-15) and 1.68.4
-  (2026-09-16). One change in that span touches this tree and it is an analyzer
-  loosening — [*Fix TUnit0023 false positives for disposal through casts*](https://github.com/thomhurst/TUnit/pull/6818)
-  — which can only turn a red build green, never the reverse; TUnit's analyzers run
-  at **error** severity here, so a *tightening* would have been the thing to read
-  carefully and this is its opposite. Nothing else in 1.68.x is reachable: the
-  mocking fix is `TUnit.Mocks`, the video recorder is `TUnit.Playwright` (which
-  `ForbiddenDependencyTests.NoProjectDrivesPlaywrightDirectly` forbids outright),
-  and 1.68.4 itself is a documentation skill plus a `mockolate` bump.
-  **`Microsoft.Testing.Platform` stayed at 2.4.0 even though 2.4.1 exists**, published
-  2026-09-16T14:22Z — three and a half hours *after* TUnit 1.68.4, which declares an
-  exact `Microsoft.Testing.Platform 2.4.0` dependency, and NuGet resolves the lowest
-  applicable version. So the `[After(TestSession)]` hook that writes the coverage
-  block and the `ITestExecutionFilter` read behind `BROWSERAI_RELEASE_RUN` are on
-  byte-identical platform code, and the float is not dead — it resolved, and what it
-  resolved to is 2.4.0. Solution build after the move: 0 warnings, 0 errors.
-
-### Removed
-- 🗑️ **The free-space check is gone, and nothing asks a volume how much room it has.**
-  The maintainer's decision, in his words: *"Remove the free space check.
-  Checking for free space is out of scope and makes our project more
-  complicated. I do not want to check for that at all."* Until today
-  `browserai_init` asked the volume for its free bytes and refused below
-  **640 MiB**, naming the number, before it created anything.
-  `SessionManager.RequiredFreeBytes`, the refusal it drove,
-  `SessionErrors.InsufficientDisk` and the injected free-bytes reader the suite
-  triggered it through are all deleted; the error catalogue is **25 rows**
-  rather than 26. **The removal was planted red first**, two ways: the same
-  condition the old arm provoked — a volume reporting 12 MiB free — asserted
-  *not* to refuse (*"Expected to not be equal to True but received True"*), and
-  a new tree-wide scan,
-  `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`, which named four files
-  before the change and none after. **The old refusal test was deleted rather
-  than skipped**: it asserted behaviour that no longer exists, which is not a
-  gap in coverage. **What it costs is written down rather than implied** — a
-  machine that runs out of room now finds out partway through a 207.3 MB
-  download instead of in a sentence at `init`, which is exactly how any volume
-  that could not answer the question in one call already behaved. The ~635 MiB
-  arithmetic peak stays in
-  [`kb/playwright/provisioning-and-timings.md`](kb/playwright/provisioning-and-timings.md)
-  as a budget for a reader, gating nothing, and the open ask to sample free
-  space across a run is withdrawn as moot.
-
-### Fixed
-
-- 🐛 **A read-only file no longer defeats the delete every tree delete goes through.**
-  `Runtime/TreeDelete` called `File.Delete` on the attribute as it found it, and
-  Windows refuses that with `ERROR_ACCESS_DENIED` — the same code a held handle
-  produces, so the list of nodes it could not remove read like a lock and was an
-  attribute. It now clears `FileAttributes.ReadOnly` and deletes again, and only
-  after a delete has already been refused, so the ordinary path is one call and
-  unchanged and a genuine sharing violation is still reported rather than
-  retried into silence. What it buys is ordinary content: anything a session
-  downloaded, or a user dropped into a directory `browserai_destroy` is handed,
-  was being reported as something the product could not remove when it could.
-  **It was found by a release gate going red at the head of its own first run,
-  on a tree nobody had changed** — git writes every loose object read-only, so a
-  scratch directory holding a real repository survived six refused objects deep,
-  and the documented between-runs clear had been removing the evidence with
-  `Remove-Item -Force` on every pair of runs for as long as anybody had typed
-  it. `TreeDeleteTests.AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo`
-  was planted red against the real shape, with a held file in the same tree as
-  the control so that clearing an attribute cannot become swallowing a hold.
-  The end-to-end half is stronger than the arm: a run that executes the rig now
-  leaves the scratch root empty.
-
-- ✅ **The dated dependency override cannot be forgotten: two instruments go red
-  on the day it expires.** An exception with a written exit is worth
-  nothing if the exit lives only in a document, so the exit is a build failure
-  instead. `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded` reads the
-  committed lock, so it runs from a clean clone on every build and needs no
-  payload assembled; `build/Build-Payload.ps1` reads the live resolution and
-  refuses to assemble a payload past the exit. Each carries its own ordering of
-  the two version shapes upstream publishes and refuses any third rather than
-  guessing that a shape it cannot order is lower, which is how an override
-  outlives its own exit. Both were planted red before the override landed: the
-  test against a lock doctored so the wrapper already pins the override, and the
-  script against an override lowered to the declared pin. The failure names the
-  file, the key, and what to record when it is deleted.
-
-- 🐛 **The coverage block stops printing a download size somebody typed.**
-  Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
-  `FirstRunCache`, in the one place on the screen that reads like a measurement,
-  beside the elapsed seconds and the file count the run really did observe. The
-  2026-09-16 re-measurement moved
-  `BrowserProvisioner.FirstRunDownloadBytes` to **207,274,189 B** and moved every
-  other quotation of the figure; this one could not be corrected by re-running
-  anything, which is what makes a number written at a sentence worse than one
-  nobody wrote down. It is rendered through `DownloadSizeFor` now, the same path
-  the provisioning refusal uses. Planted red and watched: *"Expected to contain
-  \"207.3 MB\" … but received \"downloaded 203.8 MB from the CDN because some
-  reason\""*. **The other surviving mentions of the old figure are deliberately
-  untouched** — they are comments and prose, and which of them read as
-  measurements is a separate decision.
-
-
-- 📦 **`New-Release.ps1` clears its own test feed before it packs into it.**
-  A stale pre-release can never refuse a cut again. The entry
-  below records the checklist correction that met this failure; this is the fix it
-  said belonged to whoever owns the script. `Releases/test-pack/` is a **second
-  Velopack feed**, every gate pack writes a pre-release into it, and a gate runs
-  far more often than a release is cut — so at the moment of a cut it holds
-  versions above the release and `vpk` refuses, *after* the shipping artifacts
-  have already been built. [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1)
-  now runs immediately before the test pack and deletes exactly what that pack
-  regenerates: `BrowserAI.app.test-*.nupkg`, `releases.win.json`, `RELEASES`,
-  `assets.win.json`, the two renamed downloads, **and the two pre-rename names** a
-  run that died between the pack and the rename leaves instead. It is **not** a
-  directory wipe — a file under `test-pack/` that no pack regenerates survives —
-  and an absent or empty directory is reported rather than refused, because the
-  first cut on a fresh clone meets both. **Q200**, decided 2026-09-17.
-  [`RELEASING.md`](RELEASING.md) item 5's manual step is corrected by addition and
-  kept as a description of the failure mode; the shipping feed is still cleared by
-  hand and `Test-ReleaseVersion.ps1`'s refusal still covers it.
-
-- 📦 **The release checklist now clears the suite's feed as well as the real
-  one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
-  the checklist keeps, and every gate pack writes a pre-release into it. At the
-  moment a release is cut it therefore holds versions newer than the release, and
-  `vpk` refuses it the same way it refuses one in `Releases/` — *"There is a
-  release in channel win which is equal or greater to the current version
-  1.0.0"*. Because the running order packs for the gate first, **this refused
-  every release cut, and it refused this one**: it fired *after* the real pack
-  had succeeded, so the non-zero exit named the suite's installer while the
-  release itself was already on disk. [`RELEASING.md`](RELEASING.md) item 5 is
-  corrected by addition with the file names to clear, and the better fix —
-  `New-Release.ps1` clearing its own regenerated, never-published test output —
-  is written down there as the script owner's to take rather than taken by a
-  release executor.
-
-## [1.0.0] - 2026-09-16
+## [1.0.0] - 2026-09-17
 
 BrowserAI is a Windows MCP server that gives an AI agent a real browser, either
 Chromium or Firefox. It carries its own copy of everything it needs, so there is
@@ -1676,6 +1111,104 @@ Read [`README.md`](README.md) first.
   that must agree, and says plainly that **nothing holds the drawing in the
   `.ico` to be the drawing in the SVG** — that is a render comparison on every
   build to answer a question a person answers by looking.
+
+- ✅ **Nothing in a release body may carry a character a person would not type.**
+  The maintainer's release directive, in his words: *"Ensure there is no trace
+  of AI both in wording and character use."* He added it after reading the
+  published `v1.0.0` body: *"the intro text of the release post is very much
+  reading like AI."*
+  `ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType`
+  is the **character half**, and [`RELEASING.md`](RELEASING.md) says plainly
+  that the wording half needs a reader and always will. Eight code points are
+  refused: the em dash `U+2014`, the en dash `U+2013`, the four curly quotes,
+  the ellipsis `U+2026` and the non-breaking space `U+00A0`. It is a **deny
+  list**, so the twelve palette icons and any other legitimate symbol are
+  allowed without being listed in code, and a **backticked code span is exempt**
+  because a span quotes something that exists rather than choosing a style. The
+  scope is what a release body is actually made of and is stated rather than
+  implied: every section preamble, every entry headline, the legend, and a body
+  generated from the fixture, which is how the generator's own fixed text is
+  covered. **An entry's detail is out of scope by construction** — since
+  2026-09-16 the body carries headlines and a `read more` link, so the 674 em
+  dashes in this file's details never reach a reader of the release page.
+  Planted red against the `1.0.0` preamble, which carried three of them.
+
+- 📝 **Setup asks before installing over an existing install, and says
+  `Repair` on a re-ship.** Measured 2026-09-16
+  against the published `v1.0.0` installer and filed in
+  [`kb/packaging/velopack.md`](kb/packaging/velopack.md) with re-verification row
+  130. The trigger is `!is_dir_empty(&root_path)` — **the directory, not the
+  version** — so every existing user meets a `#32770` titled *"BrowserAI is
+  already installed"* that waits indefinitely; only the affirmative button's
+  label varies with the comparison (`Update` / `Downgrade` / **`Repair`** when
+  equal), and taking it runs the full install over an emptied root. Two edges
+  worth having written down: `--silent` skips the prompt entirely, which is why
+  the suite's own installer arms never meet it, and **Cancel exits 0**, so
+  nothing reading only an exit code can tell a cancelled install from a completed
+  one.
+
+- ✨ **Every file a tool result names is now named absolutely.** A screenshot,
+  a PDF, a snapshot, a console log, a download, a saved response body and a
+  trace all used to come back as `output\page-2026-09-17T14-18-13-427Z.png`, a
+  path relative to the browser server's working directory. The reader of a tool
+  result is a model rather than a process with a working directory, so that
+  named nothing it could open. BrowserAI answered this with a note of its own
+  until 2026-08-26, when artifact routing was deleted and every answer became
+  the child's own bytes; from that day the relative pointers reached a caller
+  with nothing beside them. This is that hole closed, and the fix is upstream's:
+  the generated child config now writes `filePaths: "absolute"`, from PR
+  microsoft/playwright#42673, merged 2026-09-16 and closing
+  microsoft/playwright#42497, which is **this project's own request**, filed
+  2026-08-27. Every pointer shape was measured before and after, and again end
+  to end through the published server: the screenshot, PDF and storage-state
+  links, the snapshot link, both console log pointers, the download line, the
+  binary response body line, the network-requests link and the four trace links
+  are all absolute, including the two the pull request's own text did not name.
+  One shape was not driven and is recorded as owed rather than claimed: the
+  paused-debugger location, which needs a paused session to provoke. The key is
+  written explicitly rather than left to a default, because upstream's default
+  is the opposite of what this product wants, and `PLAYWRIGHT_MCP_FILE_PATHS` is
+  refused for every child so that an inherited variable cannot quietly put it
+  back.
+
+- ✨ **`browser_emulate_media` arrives and is allowed.** It emulates the CSS
+  media features a page responds to on the page a session already owns:
+  `prefers-color-scheme`, `prefers-reduced-motion`, `forced-colors`,
+  `prefers-contrast`, and the print or screen media type. It is the only way to
+  see a site's dark mode or its print stylesheet without starting a second
+  session, it reaches nothing outside the page, and it returns immediately. The
+  maintainer's verdict is `allow`, and the reasoning is in the tool's own row in
+  `tool-verdicts.json`. BrowserAI's `tools/list` now carries 72 tools of the 74
+  a fully capable child exposes, two fewer only because `browser_annotate` and
+  `browser_webmcp_call` are still withheld for liveness.
+
+- 📝 **The gate now says to publish the slice again after a `src/` change.**
+  It always had to be done and the only place it was ever written down was the
+  refusal it produces. A gate attempt on 2026-09-17 cost 34 reds reading *the
+  published binary … is older than 7 source file(s), so this test would prove
+  nothing about the code in the tree* — around thirty arms drive the published
+  NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
+  refuses all of them together. The two-shell gate paragraph in `CLAUDE.md` and
+  in `TESTING.md` now carries the step and the two commands that refusal names,
+  `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
+  --self-contained` and the same shape over `src/BrowserAI.App`. It also names
+  the early signal, which is the run's own `publish freshness` row reading
+  `STALE` with the newest input beside it, and says plainly that a release
+  publish is not a substitute: `New-Release.ps1` stages into
+  `artifacts\publish-<exe stem>` and never writes `src\<project>\bin\`.
+
+- 📝 **The disk total after a first run is stamped stale rather than left reading as current.**
+  `kb/playwright/provisioning-and-timings.md` published *disk after first run is
+  130,434,952 + 451,389,780 = 581,824,732 B*, and both addends had moved under
+  it. The chromium term is `chromium-1237`; the family is at 1245 and weighs
+  454,699,952 B across 308 files, measured the same day on the reference
+  machine. The `current\` term is the one-executable layout of 2026-08-17, and
+  an install has held two binaries since 2026-09-15, so the figure names a
+  directory that no longer exists in that shape. The sum is left exactly as it
+  was measured and marked `[STALE]` with both reasons, which is what the marker
+  is for — and it is the same defect the correction directly beneath it already
+  records against the sentence this one replaced, a derived total carrying no
+  date of its own.
 
 ### Changed
 
@@ -3438,6 +2971,356 @@ Read [`README.md`](README.md) first.
   [`RELEASING.md`](RELEASING.md) item 7 and [`TESTING.md`](TESTING.md) are
   corrected by addition, each quoting in full what it said before.
 
+- 📝 **First-run provisioning is measured again at the new browser revisions.**
+  Re-verification row 21 went stale one day after it was taken, when the
+  `playwright-core` pull-forward moved chromium 1244 to 1245 and firefox 1544 to
+  1548. Both families were provisioned twice into an empty root through the same
+  rig, and each pair came back identical to the other. Chromium did not move at
+  all, which is worth the sentence: its archive is keyed on the browser version
+  rather than on the revision, and 1245 carries the same 154.0.8037.0 as 1244,
+  so the same archive is fetched and the tree is the same tree to the byte and
+  the file. Firefox moved by 327 bytes on the wire and 902 on disk across the
+  same 61 files, so the quoted download size for that family goes from
+  129,502,321 to 129,502,648 bytes and the Chromium one is re-measured and
+  unchanged at 207,274,189. `ffmpeg` 1011 and `winldd` 1007 are byte-identical,
+  which is the control for the two revisions that moved. The timings moved in
+  both directions on a roll that moved almost no bytes, so they are the link and
+  the machine on the day rather than anything about a revision. The run is kept
+  as evidence this time; the previous one was scratch and went with it. Two of
+  the three sections that went stale that day are still owed: the Firefox
+  against Chromium cost ratios and the resume cost, rows 34 and 38.
+
+- ✅ **The one suite arm that launches an unowned browser runs beside nothing.**
+  Q212 = a. The wild exit 1 this repository has chased since 2026-08-26 was
+  named on 2026-09-17 and it was this product's own stray sweep: a second
+  `BrowserAI.Server.exe`, started by a different arm of the same run, sweeping
+  at startup, finding a browser it could not attribute because no message window
+  had been published yet, falling back to the session directory the command line
+  names, finding it unlocked and terminating it with exit code 1. The rig's
+  scratch session directory holds no lock by construction, so any product server
+  starting while that browser is alive kills it, which makes it deterministic
+  rather than rare. The arm carries a keyless `[NotInParallel]` now: the key it
+  already had holds the arms that run a sweep apart from each other, and the
+  arms that matter are the dozens that start a server, none of which carries
+  that key. What it costs is measured rather than estimated, three runs each:
+  the arm alone is 1.528, 1.513 and 1.476 seconds of total run time against a
+  0.747, 0.732 and 0.763 second zero-test baseline through the same invocation,
+  so about three quarters of a second of critical path. Nothing mechanises the
+  rule and the reason is written down where a reader will meet it: the predicate
+  that matters is that the browser's profile sits in a directory nothing holds a
+  lock on, which is a property of the running rig rather than of its text, and
+  the readable approximation of it would also fire on an arm that was
+  deliberately taken out of a serialisation key on a measured argument. The
+  product is unchanged.
+
+- 🐛 **A browser call into a session whose server has gone comes back now.**
+  Q211 = c. Measured on 2026-09-17:
+  with a session's node child killed under a live BrowserAI, one
+  `browser_navigate` was still outstanding after 900,000 ms, the server alive
+  and nothing in any log after the transport's own end of stream. The cause is
+  read from the MCP SDK's shipped code rather than guessed: it faults every
+  pending request when the transport's channel completes, once, and a request
+  registered after that moment is faulted by nothing, so it waits on the
+  caller's token and on nothing else. BrowserAI asks whether the child is still
+  there before it forwards, and refuses with a sentence that says the browser
+  server for this session has ended, that nothing was forwarded and nothing in
+  the browser changed, and that `browserai_resume` starts a replacement. No
+  timeout was added anywhere: the wait was not slow, it was endless. A call
+  already in flight when the child dies is a different path and has always come
+  back as an error; that is unchanged. The refusal is recorded on the session
+  like every other refused call. The arm was planted red and hit the suite's
+  own five minute hang detector before the check went in, and answers in two
+  seconds with it; two controls stand beside it, a resume of a healthy session
+  and a call held open on a healthy child, because a liveness question answered
+  too readily would turn every slow page action into a refusal.
+
+- 🔧 **`browserai_resume` repairs a session whose browser server has died.**
+  Q211 = a. Until now it asked one question, *do I already own this directory*,
+  and the answer is still yes when the `node` child behind the session has been
+  killed: it answered "This session is already open in this BrowserAI; nothing
+  was changed" in 7.68 ms about a session that could no longer do anything at
+  all. It now asks the second question too, *is the child behind it still
+  there*, and starts a replacement when it is not, with the same launch options
+  the session was opened with. Liveness is read from the transport's own closed
+  state and from the child's process handle, never from a pid lookup by name, so
+  a child on its way out counts as alive until one of those two says otherwise
+  and a resume of a healthy session still changes nothing. The answer says what
+  the replacement did not bring back: the profile is on disk so cookies and
+  stored state survive, and no page is open, so navigate again before acting on
+  what you see. Nothing about the session's identity moves, because the lock is
+  still held and the record is untouched. A replacement that will not start is
+  its own refusal, and it says the session is still open rather than inviting a
+  fresh init.
+
+- ⬆️ **`playwright-core` is pulled one build ahead of the wrapper that pins it,
+  as a dated exception.** `@playwright/mcp` `latest` is
+  0.0.81 and pins `playwright-core` 1.64.0-alpha-2026-09-14 exactly. The first
+  build carrying `--file-paths=absolute` is 1.64.0-alpha-2026-09-17, so the
+  payload manifest now carries an npm `overrides` entry that resolves that one
+  instead. This collides head on with the rule that everything floats and
+  nothing is ever pinned to work around a break, so it is recorded as an
+  exception rather than absorbed. It is the maintainer's decision, and it is a
+  different kind of thing from the one exception that already existed: the
+  vendored SQLite pin holds a version still because nothing floats it, and this
+  moves one forward because a wrapper is one release behind. Both now sit side
+  by side in `DECISIONS.md`, which says in its own words that neither is a
+  precedent for a third. The override brought two browser revisions with it,
+  Chromium 1244 to 1245 and Firefox 1544 to 1548, so a first run downloads a new
+  Chromium once.
+
+- 📝 **The resume wedge is measured, and nothing in the product bounds it.**
+  Q207 = b. Killing a session's `node` child under a **live** BrowserAI was
+  recorded on 2026-09-16 and not diagnosed: `browserai_resume` answered the
+  no-op in 7.8 ms and the next browser call had not returned after 3 min 8 s,
+  when the probe was stopped. Re-run on 2026-09-17 with a clock on it, bounded
+  at **fifteen minutes** because that is the largest timeout in the product plus
+  five minutes of margin rather than a number a probe felt like waiting: **the
+  call never returned**. The 2026-09-16 readings are corroborated to the
+  millisecond, the no-op at **7.68 ms** and the refusal wording byte-for-byte.
+  **Which product timer governs it: none.** `ChildConnection.AskAsync` awaits
+  `SendRequestAsync` under the caller's token and nothing else;
+  `ChildInitializationHang` is ten minutes and governs `initialize` only, and
+  was crossed with no effect; `BrowserIdleTimer.DefaultIdlePeriod` has no
+  browser left to close; `LockScopes.PerDirectoryGate` is released before the
+  call is forwarded. **The process log carries one line and then fifteen minutes
+  of silence** — *"playwright-mcp[surface]: the peer closed its end of the
+  connection"*, 347 ms before the kill even reported complete — so the transport
+  knows the peer is gone and the pending request is never told. **A second
+  client cannot recover it either**, which is the half the first run left open:
+  its `browserai_resume` is refused in 15.3 ms by the ordinary in-use refusal
+  naming the wedged pid. **No product change is taken**; four directions are in
+  [`QUESTIONS.md`](QUESTIONS.md) and the decision is the maintainer's. The
+  transcript is persisted this time, at
+  [`docs/evidence/2026-09-17-resume-wedge`](docs/evidence/2026-09-17-resume-wedge/README.md),
+  and the rig that produced it is `wedge-probe.js`, beside the probe it extends.
+
+- 📝 **The wild exit 1 has a name at last, and it is this product's own stray sweep.**
+  The signature has been chased since 2026-08-26: exit code `1`, nothing on
+  either stream, both pipes at EOF, five lines in the browser's own
+  `--log-file`, no message window. It was blamed on desktop-heap exhaustion
+  until `DesktopHeapProbe` fired on the failure path on 2026-09-17 and said the
+  heap had room, and before that on the test harness's own spawn-record reclaim,
+  which reproduced it 18 of 18 on 2026-08-29. **It was neither.** Read out of the
+  machine-wide process log rather than reasoned about:
+  `BrowserAI.Sweep[5]`, `2026-09-17T12:02:54.5368021Z`, *"Terminated a stray
+  browser: pid=90216 ... Its session directory was unlocked, so nothing owned
+  it"* — written by a second **product** `BrowserAI.Server.exe` that a different
+  arm of the same run had started 173 ms earlier, sweeping at startup 84 ms
+  after the dead browser's last log line. `StrayCandidate.TryTerminate` calls
+  `TerminateProcess(handle, 1)`, which is the `1`. **The harness reclaim is
+  excluded by its own announcements rather than by argument** — the 2026-08-29
+  fix announced exactly three terminations that run, ten seconds earlier, naming
+  three other pids — which is that fix working in the direction nobody designed
+  it for: it was built to stop the harness killing a live run and what it did was
+  prove the harness innocent. **The 2026-08-29 exclusion of the product sweep was
+  backwards**: it ruled the sweep out because *attribution needs the window this
+  browser never published*, and the missing window is exactly why the sweep fell
+  back to the session directory and found it unlocked. The arm's rig holds no
+  `browserai.lock` by construction, so **any** product server starting while that
+  browser is alive kills it: deterministic rather than rare, a suite isolation
+  defect rather than a wild death, and posed as a question with three directions
+  and a plantable red rather than fixed here. The suite's own spawn record could
+  not be consulted — it lives under `.work\`, which is cleared at the end of every
+  batch — and the machine-wide log is what survived.
+
+- 📝 **The 1.0.0 release note opens in plain words now.**
+  The preamble is what a reader of the release page meets first, and the one
+  that shipped read like something generated: an em-dash aside dropped into the
+  first sentence, *"brings its own copy"*, *"The release holds two
+  executables"*, and four claims in one bolded opening line. It is rewritten in
+  short sentences: what BrowserAI is, that this is the first version fit for
+  real use and what it replaces, the two programs in the release, and where to
+  start. No em dashes, and ASCII throughout.
+  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1)'s own fixed text
+  was read with the same eye: the footer now says *"The full changelog for this
+  release"* rather than *"Every entry in full, with its evidence"*, which is a
+  sentence nobody says out loud. **The `1.0.0` seal is re-taken** at 310,216
+  characters, and `AppendOnlyRecordTests` carries the previous values and the
+  order that lifted it, because a re-seal nobody explains is rewriting history
+  with an extra step.
+
+- 🔧 **The icon legend is a compact table now, in the release body and in this file.**
+  The maintainer's words: *"The legend at the bottom of the release notes that
+  explains the icons is missing newlines. Give it a nice yet compact layout."*
+  The release body carries this file's own legend rather than one of its own,
+  and until today that legend was a single paragraph of twelve entries separated
+  by an interpunct, which
+  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1) then flattened
+  further by joining its wrapped lines with spaces. A reader of the release page
+  met one unbroken line. It is a Markdown table now: **two icon-and-meaning
+  pairs per row, six rows for the twelve icons, under a one-word heading row**,
+  in both places, and the generator emits it line for line. **A legend that is
+  not a table is refused rather than flattened**, which is the half that makes
+  this a rule instead of a preference: the body has no legend of its own, so the
+  read is the only place the shape can be held. Planted red on the fixture
+  (*"Expected to contain `table`"*, against a generator that accepted the
+  paragraph) and on the tree (*"Expected to be equal to ... but received
+  `\"\"`"*). Rendered once through GitHub's own renderer: one `<table>`, six
+  `<tbody>` rows, 24 `<td>` cells.
+- 📝 **Two records catch up: where the probe rigs live, and what upstream did with the first ask.**
+  [`docs/probes/`](docs/probes/README.md) keeps all fourteen rigs, decided by the
+  architect on 2026-09-17 after the scan that used to flag seven of them was
+  narrowed to read the filter rather than the API. The blind spot is **one file
+  wide instead of seven rigs wide**, and `2026-09-14-firstrun/observe.ps1` is the
+  one true positive: it watches for a console host appearing anywhere on the
+  machine, which no pid or path form expresses, so re-spelling it would falsify
+  the record of method rather than fix anything. [`CLAUDE.md`](CLAUDE.md) says so
+  by addition with the open question it replaces quoted. And
+  [`TODO.md`](TODO.md)'s ask #1 records that
+  [`dgozman`'s request for a repro was finally answered](https://github.com/microsoft/playwright/issues/42497#issuecomment-5713988873)
+  on 2026-09-17, and that the fix is being adopted by overriding `playwright-core`
+  to the alpha that carries it rather than by waiting for `@playwright/mcp` to
+  roll — a dated exception with a written exit. The row stays open, and what it
+  waits for is the review rather than the roll.
+
+- 📝 **Chromium stays the default browser, on a reason rather than on four numbers that moved.**
+  The maintainer's ground, in his words: *"the reason for the default is that
+  chrome is the most widely used"*. Recorded as a **decision, not a
+  measurement**, which is the point of writing it down this way. What it
+  replaces is the only ground that was on offer anywhere: the four
+  Firefox-against-Chromium cost ratios, which
+  [`kb/playwright/provisioning-and-timings.md`](kb/playwright/provisioning-and-timings.md)
+  described as *"the whole of the evidence behind Chromium being the default
+  family"*. Re-measured on 2026-09-16 with a preserved rig
+  ([re-verification row 34](kb/re-verification.md)), **three of the four
+  collapsed by between 1.7x and 7x and the fourth reversed sign** — RAM 2x to
+  1.19x, first navigate 10x to 4.62x, profile disk 20x to 2.76x, and idle CPU
+  ~24x to **0.77x**, which says Firefox burns *less*. **Nothing about the
+  default changes.** The claim that those ratios justified it is retired in the
+  kb, in the re-verification row, in
+  [`DECISIONS.md`](DECISIONS.md), in `SessionManager.DefaultBrowser`'s own
+  remarks and in [`README.md`](README.md), each corrected by addition with the
+  previous text quoted. No market-share figure is cited: one would be external
+  and would float, and the decision does not need it.
+- 📝 **The upstream record catches up: one ask granted, one fix declined, one
+  count reconciled.** Three corrections by addition, each re-read from the
+  API on 2026-09-17 rather than carried over.
+  **(1)** [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497)
+  — absolute paths in tool results — **closed `completed`**, by the merge of
+  [PR #42673](https://github.com/microsoft/playwright/pull/42673) at
+  2026-09-16T15:38:22Z rather than by a reply. The flag, the `filePaths` config key
+  and `PLAYWRIGHT_MCP_FILE_PATHS` are in `playwright-core`
+  **1.64.0-alpha-2026-09-17** (`next`) and in **no released `@playwright/mcp`** —
+  `latest` is 0.0.81, pinning **1.64.0-alpha-2026-09-14 exactly** — so there is no
+  drift by the build rule and the row becomes *resolved upstream, adoption pending
+  the roll*, with the adoption plan written out so the roll is a review and not a
+  design.
+  **(2)** [PR #42721](https://github.com/microsoft/playwright/pull/42721), the WebP
+  16,383 px fix, was **closed unmerged** at 2026-09-16T00:15:20Z — `dcrousso`:
+  *"this is really an upstream issue and should be fixed there instead"* — so the
+  fix is expected in **Chromium** (CL 8416650, status NEW) and will arrive through
+  a browser-revision bump rather than a `playwright-core` change. The settlement
+  condition is unchanged and the two hazard rows stand.
+  **(3)** `ChildEnvironment`'s opening paragraph said **43** `PLAYWRIGHT_MCP_*`
+  variables with **two** outside the config mapping, stamped at
+  1.63.0-alpha-2026-08-31, while re-verification row 17 said **45** with **three**
+  at the version that ships. Both were right about their own version and neither
+  could see the other; the comment is reconciled to the row, and
+  `RecordedCountTests.TheUpstreamVariableCountInTheDocCommentIsWhatRowSeventeenSays`
+  now holds it there — planted red at *"Expected to be equal to `45` but received
+  `43`"*.
+  **And one thing is written down before it happens:** the next `@playwright/mcp`
+  roll brings a new **default-surface** tool, `browser_emulate_media`
+  (`capability: 'core'`, taking `browser_*` from 83 to 84 with none removed or
+  renamed). [`tool-verdicts.json`](tool-verdicts.json) is deny-by-default and
+  refuses a name it has no row for at startup, so **the suite will be red on
+  exactly that pending judgement** — which is the mechanism working, and a verdict
+  is the maintainer's to give.
+
+- ✅ **`NeverByImageNameTests` reads the filter rather than the API.**
+  Fourteen of the fifteen files it was flagging never violated anything. The scan
+  asked whether a file contained one of five substrings — `taskkill`,
+  `GetProcessesByName`, `Win32_Process`, `Get-Process`, `szExeFile` — which cannot
+  tell `Get-Process -Id $pid` from `Get-Process chrome`. Those are opposite things:
+  one names a pid the caller already holds, the other picks a stranger out of the
+  machine by what its executable is called.
+  [`ProcessSelection`](tests/BrowserAI.Tests/Harness/ProcessSelection.cs) now reads
+  the selection — a `-Name` parameter, a bare positional name, `taskkill /IM`,
+  `GetProcessesByName`, an `szExeFile` read, a `Name` clause inside a WMI query, or
+  a `Name` compared with a comparison operator in a file that enumerates processes
+  — and lets every pid form through. **Q203**, decided 2026-09-17. A narrowing
+  needs both directions, so each shape has a synthetic control that must be caught
+  *and* the pid-keyed spelling of the same call that must pass, plus the mixed line
+  (a pid filter that also names an image, which is still a violation) and the
+  file-scoped gate that keeps `$_.Name -eq` over a **directory** listing out of it.
+  **Measured on the corpus it was built for**, the predicate being *a file among
+  the extensions the scan reads whose code text selects a process by its image
+  name*: over the rigs in [`docs/probes/`](docs/probes/README.md) the old scan
+  flagged **15 of 36 files in 7 of 14 rigs** and the new one flags **1 of 36 in 1
+  of 14**.
+  ⚠️ **That one is real and the move to `build/probes/` is therefore not
+  taken.** `2026-09-14-firstrun/observe.ps1` calls `GetProcessesByName` over a
+  literal watch list — matching and counting by name, which the rule forbids as
+  against the observing it permits — and it cannot be re-spelled pid-keyed,
+  because what it watches for is a console host appearing anywhere on the machine.
+  The move was performed and reverted; `docs/probes/README.md` and
+  [`CLAUDE.md`](CLAUDE.md) are corrected by addition, and both said every use was
+  by pid or parent pid, which was true of fourteen files and false of this one.
+  **Three false positives outside the rigs were found and removed by the same
+  change**, in `build/New-Release.ps1`, `build/Write-ReleaseManifest.ps1` and three
+  test files: `WHERE` as a query marker matches `Where-Object` and LINQ's
+  `.Where(` under case-insensitive matching, so WQL is recognised by its `FROM`
+  clause instead.
+
+- ✅ **A pid that vanishes between the walk and the query is *exited*, not
+  *unknown*.**
+  Unknown is what the host was reading as a containment failure. `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
+  went red on 2026-09-16 on a **docs-only** commit, *after* `escapees == 0` had
+  already passed: a row came back with a null `inOurJob` because `OpenProcess`
+  returned `ERROR_INVALID_PARAMETER` for a descendant that had exited between the
+  toolhelp walk and the per-row query. The rig had one spelling for two opposite
+  answers — *could not be read* and *is no longer there* — and an exited process
+  is neither a survivor nor an escapee. `ProcessQueryVerdict.ForFailedOpen` now
+  decides which it was, **once, from what Windows said**: `87` and `5` are
+  `Exited`, and **everything else stays `Unreadable`**, keeps its note and still
+  reddens the run, so this is a classification rather than a retry or a
+  suppression. `inJobProcessIdList` — the kernel's own membership snapshots taken
+  either side of the walk — is still asserted for every row including an exited
+  one, and `escapees`, `jobMembersTheWalkMissed` and the survivor check are
+  untouched. **Q202**, decided 2026-09-17. Planted red three ways and watched, with
+  the error numbers *measured* rather than quoted. [`HAZARDS.md`](HAZARDS.md)
+  carries the row.
+
+
+- 🔧 **`BrowserAI.Core` declares its RID, and the lock file has one state.**
+  It had two, and the last restore won. `src/BrowserAI.Core/packages.lock.json`
+  had **two stable states and the last restore won**: a RID-specific restore (every
+  publish, and `build/New-Release.ps1`) wrote a `net10.0-windows7.0/win-x64`
+  section, and a solution restore (what `dotnet test` performs) removed it again —
+  so the tree opened dirty after every publish *and* after every suite run, and
+  Q199 could only choose which of the two to commit. Declaring
+  `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` on the library ends it at the
+  source: five restore shapes measured on 2026-09-17 all write `fab160c4…`,
+  including the two that used to disagree
+  (`dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate`
+  against `dotnet restore BrowserAI.slnx --force-evaluate`, each forced to
+  re-resolve so that a no-op restore could not be mistaken for agreement). The
+  other state, `7f30ec57…`, is no longer reachable. Solution build after the
+  change: 0 warnings, 0 errors; the only cost is one directory level in the
+  library's own build output, which nothing in this tree reads by path. **Q201**,
+  decided 2026-09-17. [`RELEASING.md`](RELEASING.md) item 5 and
+  [`TESTING.md`](TESTING.md) are corrected by addition — both said the file would
+  show modified after a run, and neither is true now.
+
+- ⬆️ **TUnit moved 1.67.0 → 1.68.4 and Microsoft.Testing.Platform deliberately
+  did not move at all.** `dotnet restore --force-evaluate` on 2026-09-17 re-resolved
+  the float and took TUnit across two releases: 1.68.0 (2026-09-15) and 1.68.4
+  (2026-09-16). One change in that span touches this tree and it is an analyzer
+  loosening — [*Fix TUnit0023 false positives for disposal through casts*](https://github.com/thomhurst/TUnit/pull/6818)
+  — which can only turn a red build green, never the reverse; TUnit's analyzers run
+  at **error** severity here, so a *tightening* would have been the thing to read
+  carefully and this is its opposite. Nothing else in 1.68.x is reachable: the
+  mocking fix is `TUnit.Mocks`, the video recorder is `TUnit.Playwright` (which
+  `ForbiddenDependencyTests.NoProjectDrivesPlaywrightDirectly` forbids outright),
+  and 1.68.4 itself is a documentation skill plus a `mockolate` bump.
+  **`Microsoft.Testing.Platform` stayed at 2.4.0 even though 2.4.1 exists**, published
+  2026-09-16T14:22Z — three and a half hours *after* TUnit 1.68.4, which declares an
+  exact `Microsoft.Testing.Platform 2.4.0` dependency, and NuGet resolves the lowest
+  applicable version. So the `[After(TestSession)]` hook that writes the coverage
+  block and the `ITestExecutionFilter` read behind `BROWSERAI_RELEASE_RUN` are on
+  byte-identical platform code, and the float is not dead — it resolved, and what it
+  resolved to is 2.4.0. Solution build after the move: 0 warnings, 0 errors.
+
 ### Removed
 
 - 🗑️ **`browserai-sessions.json`, the per-root roll-up, and every mechanism that
@@ -3828,6 +3711,31 @@ Read [`README.md`](README.md) first.
   installed payload rather than the installer: re-measured off the artifact
   `build/New-Release.ps1` packed for `v1.0.0`, it is **53,567,930 bytes — 51.1
   MiB**.
+
+- 🗑️ **The free-space check is gone, and nothing asks a volume how much room it has.**
+  The maintainer's decision, in his words: *"Remove the free space check.
+  Checking for free space is out of scope and makes our project more
+  complicated. I do not want to check for that at all."* Until today
+  `browserai_init` asked the volume for its free bytes and refused below
+  **640 MiB**, naming the number, before it created anything.
+  `SessionManager.RequiredFreeBytes`, the refusal it drove,
+  `SessionErrors.InsufficientDisk` and the injected free-bytes reader the suite
+  triggered it through are all deleted; the error catalogue is **25 rows**
+  rather than 26. **The removal was planted red first**, two ways: the same
+  condition the old arm provoked — a volume reporting 12 MiB free — asserted
+  *not* to refuse (*"Expected to not be equal to True but received True"*), and
+  a new tree-wide scan,
+  `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`, which named four files
+  before the change and none after. **The old refusal test was deleted rather
+  than skipped**: it asserted behaviour that no longer exists, which is not a
+  gap in coverage. **What it costs is written down rather than implied** — a
+  machine that runs out of room now finds out partway through a 207.3 MB
+  download instead of in a sentence at `init`, which is exactly how any volume
+  that could not answer the question in one call already behaved. The ~635 MiB
+  arithmetic peak stays in
+  [`kb/playwright/provisioning-and-timings.md`](kb/playwright/provisioning-and-timings.md)
+  as a budget for a reader, gating nothing, and the open ask to sample free
+  space across a run is withdrawn as moot.
 
 ### Fixed
 
@@ -5173,6 +5081,91 @@ Read [`README.md`](README.md) first.
   rewrite fails instead of happening quietly — are recorded as open. The
   measurement is filed in [`kb/toolchain.md`](kb/toolchain.md) under the NuGet
   section, with both publishes named and the times they were watched at.
+
+- 🐛 **A read-only file no longer defeats the delete every tree delete goes through.**
+  `Runtime/TreeDelete` called `File.Delete` on the attribute as it found it, and
+  Windows refuses that with `ERROR_ACCESS_DENIED` — the same code a held handle
+  produces, so the list of nodes it could not remove read like a lock and was an
+  attribute. It now clears `FileAttributes.ReadOnly` and deletes again, and only
+  after a delete has already been refused, so the ordinary path is one call and
+  unchanged and a genuine sharing violation is still reported rather than
+  retried into silence. What it buys is ordinary content: anything a session
+  downloaded, or a user dropped into a directory `browserai_destroy` is handed,
+  was being reported as something the product could not remove when it could.
+  **It was found by a release gate going red at the head of its own first run,
+  on a tree nobody had changed** — git writes every loose object read-only, so a
+  scratch directory holding a real repository survived six refused objects deep,
+  and the documented between-runs clear had been removing the evidence with
+  `Remove-Item -Force` on every pair of runs for as long as anybody had typed
+  it. `TreeDeleteTests.AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo`
+  was planted red against the real shape, with a held file in the same tree as
+  the control so that clearing an attribute cannot become swallowing a hold.
+  The end-to-end half is stronger than the arm: a run that executes the rig now
+  leaves the scratch root empty.
+
+- ✅ **The dated dependency override cannot be forgotten: two instruments go red
+  on the day it expires.** An exception with a written exit is worth
+  nothing if the exit lives only in a document, so the exit is a build failure
+  instead. `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded` reads the
+  committed lock, so it runs from a clean clone on every build and needs no
+  payload assembled; `build/Build-Payload.ps1` reads the live resolution and
+  refuses to assemble a payload past the exit. Each carries its own ordering of
+  the two version shapes upstream publishes and refuses any third rather than
+  guessing that a shape it cannot order is lower, which is how an override
+  outlives its own exit. Both were planted red before the override landed: the
+  test against a lock doctored so the wrapper already pins the override, and the
+  script against an override lowered to the declared pin. The failure names the
+  file, the key, and what to record when it is deleted.
+
+- 🐛 **The coverage block stops printing a download size somebody typed.**
+  Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
+  `FirstRunCache`, in the one place on the screen that reads like a measurement,
+  beside the elapsed seconds and the file count the run really did observe. The
+  2026-09-16 re-measurement moved
+  `BrowserProvisioner.FirstRunDownloadBytes` to **207,274,189 B** and moved every
+  other quotation of the figure; this one could not be corrected by re-running
+  anything, which is what makes a number written at a sentence worse than one
+  nobody wrote down. It is rendered through `DownloadSizeFor` now, the same path
+  the provisioning refusal uses. Planted red and watched: *"Expected to contain
+  \"207.3 MB\" … but received \"downloaded 203.8 MB from the CDN because some
+  reason\""*. **The other surviving mentions of the old figure are deliberately
+  untouched** — they are comments and prose, and which of them read as
+  measurements is a separate decision.
+
+
+- 📦 **`New-Release.ps1` clears its own test feed before it packs into it.**
+  A stale pre-release can never refuse a cut again. The entry
+  below records the checklist correction that met this failure; this is the fix it
+  said belonged to whoever owns the script. `Releases/test-pack/` is a **second
+  Velopack feed**, every gate pack writes a pre-release into it, and a gate runs
+  far more often than a release is cut — so at the moment of a cut it holds
+  versions above the release and `vpk` refuses, *after* the shipping artifacts
+  have already been built. [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1)
+  now runs immediately before the test pack and deletes exactly what that pack
+  regenerates: `BrowserAI.app.test-*.nupkg`, `releases.win.json`, `RELEASES`,
+  `assets.win.json`, the two renamed downloads, **and the two pre-rename names** a
+  run that died between the pack and the rename leaves instead. It is **not** a
+  directory wipe — a file under `test-pack/` that no pack regenerates survives —
+  and an absent or empty directory is reported rather than refused, because the
+  first cut on a fresh clone meets both. **Q200**, decided 2026-09-17.
+  [`RELEASING.md`](RELEASING.md) item 5's manual step is corrected by addition and
+  kept as a description of the failure mode; the shipping feed is still cleared by
+  hand and `Test-ReleaseVersion.ps1`'s refusal still covers it.
+
+- 📦 **The release checklist now clears the suite's feed as well as the real
+  one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
+  the checklist keeps, and every gate pack writes a pre-release into it. At the
+  moment a release is cut it therefore holds versions newer than the release, and
+  `vpk` refuses it the same way it refuses one in `Releases/` — *"There is a
+  release in channel win which is equal or greater to the current version
+  1.0.0"*. Because the running order packs for the gate first, **this refused
+  every release cut, and it refused this one**: it fired *after* the real pack
+  had succeeded, so the non-zero exit named the suite's installer while the
+  release itself was already on disk. [`RELEASING.md`](RELEASING.md) item 5 is
+  corrected by addition with the file names to clear, and the better fix —
+  `New-Release.ps1` clearing its own regenerated, never-published test output —
+  is written down there as the script owner's to take rather than taken by a
+  release executor.
 
 ## [0.1.0] - 2026-08-16
 
