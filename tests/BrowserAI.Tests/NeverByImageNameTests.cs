@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using BrowserAI.Tests.Harness;
+
 namespace BrowserAI.Tests;
 
 /// <summary>
@@ -35,41 +37,23 @@ namespace BrowserAI.Tests;
 internal sealed class NeverByImageNameTests
 {
     /// <summary>
-    /// The forbidden spellings, assembled at run time <b>so that this file does
-    /// not match its own scan.</b> The alternative — an exclusion list naming
-    /// this file — would create the one place in the repository where the rule
-    /// does not apply, which is a worse trade than a slightly odd literal.
+    /// Kept as the record of what this scan used to be, and it is not read by
+    /// anything: the five substrings the scan matched until 2026-09-17.
     /// </summary>
-    private static readonly (string Needle, string Why)[] Forbidden =
-    [
-        ("task" + "kill", "kills by image name with /IM, and cannot tell our browser from the user's"),
-        ("GetProcessesBy" + "Name", "enumerates by image name; the analyzer catches the C# call, this catches it in a script"),
-        ("Win32_" + "Process", "a WMI query filtered on Name is the same rule wearing a different API"),
-        ("Get-" + "Process", "PowerShell's name-filtered process enumerator"),
-
-        // ⚠️ Added 2026-08-16 by the plan's final audit, which found it CLAIMED
-        // and absent. `build/BannedSymbols.txt` said in as many words that "a
-        // toolhelp walk that matches szExeFile ... is covered by
-        // NeverByImageNameTests"; it was not, and a false claim of coverage is
-        // worse than no coverage because it stops anyone looking.
-        // The rule this file enforces forbids "any WMI OR TOOLHELP query
-        // filtered by executable name", at zero occurrences asserted -- the
-        // invariant being that BrowserAI can only terminate a process belonging
-        // to a job object it created, or one whose identity it verified against
-        // a path it owns. Two mechanisms, no third.
-        //
-        // The needle is the FIELD rather than the walk. `CreateToolhelp32Snapshot`
-        // and `Process32NextW` are how a process's pid and parent are read
-        // without touching a name at all, and `JobProbe` does exactly that --
-        // its PROCESSENTRY32 declares the last member as `ImageNameWeDoNotRead`
-        // precisely so that the name cannot be compared even by accident.
-        // Banning the walk would have made this repository's one legitimate,
-        // deliberately name-blind toolhelp use into the exclusion this file
-        // refuses to create; banning the field bans the only way a walk can
-        // learn a name.
-        ("szExe" + "File", "the PROCESSENTRY32 member that carries an image name -- reading it is the only way a toolhelp walk can match on one"),
-    ];
-
+    /// <remarks>
+    /// <b>Deleted rather than retired</b> — the shapes moved into
+    /// <see cref="ProcessSelection"/>, which reads them as filters rather than as
+    /// APIs, and each carries its own reason there. The one that needed carrying
+    /// over in full is <c>szExeFile</c>: it was <i>claimed</i> by
+    /// <c>build/BannedSymbols.txt</c> and absent for a day in 2026-08, and a
+    /// false claim of coverage is worse than none because it stops anyone
+    /// looking. The needle is the FIELD rather than the walk, because
+    /// <c>CreateToolhelp32Snapshot</c> is how a pid and a parent are read without
+    /// touching a name at all — <c>JobProbe</c> declares that member as
+    /// <c>ImageNameWeDoNotRead</c> for exactly that reason — so banning the walk
+    /// would have made this repository's one deliberately name-blind toolhelp use
+    /// into the exclusion this file refuses to create.
+    /// </remarks>
     [Test]
     public async Task NoSourceOrScriptFileNamesAProcessToActOnIt()
     {
@@ -80,12 +64,160 @@ internal sealed class NeverByImageNameTests
             var text = await RepositoryLayout.ReadCodeAsync(file);
 
             offenders.AddRange(
-                from forbidden in Forbidden
-                where text.Contains(forbidden.Needle, StringComparison.OrdinalIgnoreCase)
-                select $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}: '{forbidden.Needle}' -- {forbidden.Why}");
+                ProcessSelection.OffencesIn(text)
+                    .Select(offence => $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}: '{offence.Spelling}' -- {offence.Why}"));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+    }
+
+    /// <summary>
+    /// <b>The scan reads the FILTER and not the API: every name form is caught
+    /// and every pid form passes.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why this arm exists at all.</b> Until 2026-09-17 the scan asked
+    /// whether a file contained one of five substrings, which cannot tell
+    /// <c>-Id $pid</c> from a bare image name — opposite things sharing a cmdlet.
+    /// The cost was not theoretical: of the rigs under
+    /// [`docs/probes`](../../docs/probes/README.md), <b>15 files in 7 of the 14
+    /// directories</b> tripped the old scan and <b>fourteen of those fifteen were
+    /// false positives</b> — pid-keyed throughout — so a measurement's own rig
+    /// could not live anywhere the scan reads. <b>Q203</b>, decided 2026-09-17.
+    /// ⚠️ <b>The fifteenth is real and still keeps that directory out of
+    /// <c>build/</c>:</b> <c>2026-09-14-firstrun/observe.ps1</c> calls
+    /// <c>GetProcessesByName</c> over a literal watch list, which is matching and
+    /// counting by name rather than the observing this rule permits.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A narrowing needs both directions or it is a hole with a test in
+    /// front of it.</b> Every violation shape below must be caught <i>and</i> the
+    /// pid-keyed spelling of the same call must pass, so an over-eager rewrite of
+    /// the predicate reddens here rather than quietly permitting a kill by name.
+    /// The third block is the mixed case — a pid filter on a line that also names
+    /// an image — which must be a violation, because the name is what decides and
+    /// the pid is decoration.
+    /// </para>
+    /// <para>
+    /// <b>Every control is composed at run time</b>, exactly as
+    /// <see cref="ProcessSelection"/> does and for the same reason: this file is inside
+    /// the corpus the scan above reads, so a literal control would make the test
+    /// its own first offender.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheScanReadsTheFilterRatherThanTheApi()
+    {
+        var get = "Get-" + "Process";
+        var stop = "Stop-" + "Process";
+        var kill = "task" + "kill";
+        var wmi = "Win32_" + "Process";
+        var byName = "GetProcessesBy" + "Name";
+
+        // The column, composed for the same reason as everything above it:
+        // a literal `Name=` or `$_.Name -eq` in a control would be read by
+        // the scan this file is inside, and this file does process work
+        // (EveryProjectIsCoveredByTheBannedApiAnalyzer names the banned
+        // API, which is enough to make it one).
+        var nm = "Na" + "me";
+        var field = "szExe" + "File";
+
+        // ---- Every shape that MUST be caught ---------------------------------
+        string[] violations =
+        [
+            $"{get} -Name chrome",
+            $"{get} -ProcessName chrome",
+            $"{get} chrome",
+            $"{get} 'chrome'",
+            $"{get} $imageName",
+            $"{stop} -Name chrome -Force",
+            $"{kill} /IM chrome.exe /F",
+            $"& {kill} /F /IM $image",
+            $"var live = Process.{byName}(\"chrome\");",
+            $"Get-CimInstance {wmi} -Filter \"{nm}='chrome.exe'\"",
+            $"Get-CimInstance {wmi} -Filter \"{nm} LIKE 'chrome%'\"",
+            $"Get-CimInstance {wmi} -Query \"SELECT * FROM {wmi} WHERE {nm} = 'chrome.exe'\"",
+            $"$all | Where-Object {{ $_.{nm} -eq 'chrome.exe' }}   # in a file that runs {get}",
+            $"if (entry.{field}[0] == 'c') {{ }}",
+
+            // The unreadable taskkill: neither switch is spelled, so what it
+            // selects cannot be read, and an unreadable case falls to refused.
+            $"{kill} $arguments",
+        ];
+
+        foreach (var violation in violations)
+        {
+            await Assert.That(ProcessSelection.OffencesIn(violation).Count)
+                .IsGreaterThan(0)
+                .Because($"'{violation}' selects a process by its image name and the scan must say so");
+        }
+
+        // ---- Every pid form that MUST pass ------------------------------------
+        string[] permitted =
+        [
+            $"{get} -Id $pid",
+            $"{get} -Id $pid -ErrorAction SilentlyContinue",
+            $"$pwshPath = ({get} -Id $PID).Path",
+            $"{stop} -Id $pid -Force",
+            $"{kill} /F /PID $pid",
+            $"Get-CimInstance {wmi} -Filter \"ProcessId = $pid\"",
+            $"Get-CimInstance {wmi} -Filter \"ParentProcessId = $pid\"",
+            $"Get-CimInstance {wmi} -Filter \"ParentProcessId={{pid}}\"",
+
+            // No filter at all: it enumerates everything and whatever it narrows
+            // on afterwards is read by the rules in their own right.
+            $"$all = Get-CimInstance {wmi} -ErrorAction Stop",
+            $"{get} | Where-Object {{ $_.Path -and $_.Path.StartsWith($ours) }}",
+            $"$procs = {get}",
+
+            // Reading a name to REPORT it, which the rule's own remark permits:
+            // this observes a process, it does not select one.
+            $"Get-CimInstance {wmi} | Select-Object ProcessId,ParentProcessId,Name,ExecutablePath",
+            $"@{{ pid_ = $p.ProcessId; ppid = $p.ParentProcessId; name = $p.Name }}",
+            $"OpenProcess(ProcessQueryLimitedInformation, false, (uint)pid);",
+        ];
+
+        foreach (var allowed in permitted)
+        {
+            await Assert.That(string.Join(" | ", ProcessSelection.OffencesIn(allowed).Select(offence => offence.Spelling)))
+                .IsEmpty()
+                .Because($"'{allowed}' names a pid the caller already holds and the rule has never forbidden that");
+        }
+
+        // ---- The mixed line: a pid filter that ALSO names an image ------------
+        // The name is what decides here and the pid is decoration, so this is a
+        // violation. It is the shape a narrowing is most likely to let through.
+        string[] mixed =
+        [
+            $"Get-CimInstance {wmi} -Filter \"ParentProcessId = $pid AND {nm} = 'chrome.exe'\"",
+            $"{get} -Id $pid -Name chrome",
+            $"{kill} /PID $pid /IM chrome.exe",
+        ];
+
+        foreach (var line in mixed)
+        {
+            await Assert.That(ProcessSelection.OffencesIn(line).Count)
+                .IsGreaterThan(0)
+                .Because($"'{line}' still decides by image name, and a pid beside it does not make that safe");
+        }
+
+        // ---- And the file-scoped gate on the comparison rule -------------------
+        // `$_.Name -eq` over a DIRECTORY listing is not a process selection, and a
+        // scan that flagged it would be unusable in a repository that reads files.
+        var listing = $"$files = Get-ChildItem -LiteralPath $root\n$match = $files | Where-Object {{ $_.{nm} -eq 'payload.json' }}";
+
+        await Assert.That(ProcessSelection.EnumeratesProcesses(listing)).IsFalse();
+        await Assert.That(ProcessSelection.OffencesIn(listing).Count).IsEqualTo(0);
+
+        // The same two lines in a file that DOES enumerate processes is caught,
+        // which is the whole reason the gate is on the file rather than the line:
+        // a query built on one line and filtered on the next.
+        var hunting = $"$all = Get-CimInstance {wmi}\n$match = $all | Where-Object {{ $_.{nm} -eq 'chrome.exe' }}";
+
+        await Assert.That(ProcessSelection.EnumeratesProcesses(hunting)).IsTrue();
+        await Assert.That(ProcessSelection.OffencesIn(hunting).Count).IsGreaterThan(0);
     }
 
     [Test]

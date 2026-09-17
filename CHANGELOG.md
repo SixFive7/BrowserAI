@@ -89,6 +89,41 @@ release body; nothing else depends on it.
   release executor.
 
 ### Changed
+- ✅ **`NeverByImageNameTests` reads the FILTER rather than the API, and 14 of
+  the 15 files it was flagging turn out never to have violated anything.** The scan
+  asked whether a file contained one of five substrings — `taskkill`,
+  `GetProcessesByName`, `Win32_Process`, `Get-Process`, `szExeFile` — which cannot
+  tell `Get-Process -Id $pid` from `Get-Process chrome`. Those are opposite things:
+  one names a pid the caller already holds, the other picks a stranger out of the
+  machine by what its executable is called.
+  [`ProcessSelection`](tests/BrowserAI.Tests/Harness/ProcessSelection.cs) now reads
+  the selection — a `-Name` parameter, a bare positional name, `taskkill /IM`,
+  `GetProcessesByName`, an `szExeFile` read, a `Name` clause inside a WMI query, or
+  a `Name` compared with a comparison operator in a file that enumerates processes
+  — and lets every pid form through. **Q203**, decided 2026-09-17. A narrowing
+  needs both directions, so each shape has a synthetic control that must be caught
+  *and* the pid-keyed spelling of the same call that must pass, plus the mixed line
+  (a pid filter that also names an image, which is still a violation) and the
+  file-scoped gate that keeps `$_.Name -eq` over a **directory** listing out of it.
+  **Measured on the corpus it was built for**, the predicate being *a file among
+  the extensions the scan reads whose code text selects a process by its image
+  name*: over the rigs in [`docs/probes/`](docs/probes/README.md) the old scan
+  flagged **15 of 36 files in 7 of 14 rigs** and the new one flags **1 of 36 in 1
+  of 14**.
+  ⚠️ **That one is real and the move to `build/probes/` is therefore not
+  taken.** `2026-09-14-firstrun/observe.ps1` calls `GetProcessesByName` over a
+  literal watch list — matching and counting by name, which the rule forbids as
+  against the observing it permits — and it cannot be re-spelled pid-keyed,
+  because what it watches for is a console host appearing anywhere on the machine.
+  The move was performed and reverted; `docs/probes/README.md` and
+  [`CLAUDE.md`](CLAUDE.md) are corrected by addition, and both said every use was
+  by pid or parent pid, which was true of fourteen files and false of this one.
+  **Three false positives outside the rigs were found and removed by the same
+  change**, in `build/New-Release.ps1`, `build/Write-ReleaseManifest.ps1` and three
+  test files: `WHERE` as a query marker matches `Where-Object` and LINQ's
+  `.Where(` under case-insensitive matching, so WQL is recognised by its `FROM`
+  clause instead.
+
 - ✅ **A pid that vanishes between the containment walk and the query is now
   *exited* rather than *unknown*, and unknown is what the host read as a
   containment failure.** `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
