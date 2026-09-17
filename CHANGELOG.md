@@ -38,6 +38,21 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+### Changed
+
+- 📝 **Disk after a first run is a measured number again, and it is 598 MB.**
+  The total had gone `[STALE]` that morning because both of its addends had
+  moved under it. It is re-derived from two figures taken the same day and
+  nothing else, which is the property the old sum lacked: the 1.0.0 release cut
+  that afternoon installed itself on the reference machine, so `current\` was
+  weighed as the thing the sentence describes rather than reconstructed —
+  143,574,278 B across 207 files — and `chromium-1245` weighs 454,699,952 B
+  across 308 files, for 598,274,230 B = 570.56 MiB. The stale stamp is left
+  standing above it as the record of what the debt was, and the entry says out
+  loud that the total will go stale again on the next build, because the
+  `current\` term moves with every publish. That is a property of a derived
+  total rather than a defect in this one.
+
 ## [1.0.0] - 2026-09-17
 
 BrowserAI is a Windows MCP server that gives an AI agent a real browser, either

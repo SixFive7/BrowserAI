@@ -43,8 +43,25 @@ describes. **It is left exactly as it was measured rather than adjusted**, which
 is what this marker exists instead of: a derived total carries no date of its
 own, which is the failure the 2026-08-17 correction below already records
 against the previous version of this same sentence — the same defect, in the
-replacement for it. Re-deriving it is one `Measure-Object` over a freshly
-installed `current\` plus the chromium figure above, and it is owed. The ~806 MB total is kept
+replacement for it.
+
+> ✅ **RE-DERIVED 2026-09-17, hours later, from two addends measured that day and
+> nothing else.** The `1.0.0` release cut that afternoon installed itself on the
+> reference machine, so `current\` was weighed as the thing the sentence
+> describes rather than reconstructed: **143,574,278 B across 207 files**
+> (`BrowserAI.Server.exe` 19,210,752 · `BrowserAI.exe` 10,412,544 ·
+> `payload\` 112,410,768 across 200 files · `BrowserAI.Server.xml` 1,045,834 ·
+> `BrowserAI.Core.xml` 386,380 · `BrowserAI.xml` 84,908 ·
+> `THIRD-PARTY-NOTICES.txt` 22,610 · `sq.version` 482). With
+> `chromium-1245` at 454,699,952 B, **disk after first run is 143,574,278 +
+> 454,699,952 = 598,274,230 B = 570.56 MiB ≈ 598 MB.** Both terms were measured
+> within hours of each other on one machine, which is the property the stale sum
+> lacked; the stamp above is left standing as the record of what the debt was.
+> **It will go stale again on the next build**, because the `current\` term moves
+> with every publish — that is a property of a derived total and not a defect in
+> this one.
+
+The ~806 MB total is kept
 because a bundled build is the fallback if the Chrome-for-Testing redistribution
 question is ever resolved favourably — but it is **not** the figure for disk
 after first run, as this file and the charter both once said: it counts
