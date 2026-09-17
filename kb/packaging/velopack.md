@@ -355,8 +355,32 @@ the accident this sentence warns about is no longer reachable by default — onl
 by typing `--installto` and naming the data root, which would hand the whole of
 it to `install.rs`'s rename-and-delete.*
 
-> ⚠️ `[STALE]` **A re-measurement of this whole set is OWED as of 2026-08-27,
-> was OWED AGAIN on 2026-09-14, and HAS NOT BEEN RUN either time.** The
+> ✅ **RUN 2026-09-17, and the staleness is cleared.** The two publishes this
+> notice was waiting for were taken — `1.0.1-reverify.1` and
+> `1.0.1-reverify.2` into a scratch feed — and
+> [the sizes table](#sizes) below now carries measured figures with a
+> `previously` clause naming every one it replaced. **The `[STALE]` marker is
+> removed from this entry**, which is one edit with the sentence in
+> [`kb/README.md`](../README.md) that publishes how many articles carry one.
+> The notice itself is kept below, unedited, because it is the account of what
+> was owed and for how long — three renewals across three weeks — and deleting
+> it would take the record of the gap with it.
+>
+> ⚠️ **One clause of this section is still NOT re-established, and it is named
+> rather than left inside a cleared notice:** *what Velopack costs the AOT
+> binary, 11,874,816 b → 17,853,952 b*. That pair is a publish taken **either
+> side of adding the package**, and `Velopack` is now referenced by three
+> projects and wired into the update lane, the hooks and the restart handover —
+> so producing the "before" half means building a tree with the update lane
+> removed, which is a different product rather than a different measurement. It
+> stays `[STALE]` on its own, in place, with that as the reason.
+>
+> ---
+>
+> ⚠️ **What the notice said until 2026-09-17, kept because it is the record of
+> the gap:** `[STALE]` **A re-measurement of this whole set is OWED as of
+> 2026-08-27, was OWED AGAIN on 2026-09-14, and HAS NOT BEEN RUN either time.**
+> The
 > [Node upstream review](../../upstream-review.json) of 2026-08-27 adopted
 > **v24.19.0 → v24.20.0**, and `node.exe` grew **92,825,416 → 93,381,448
 > bytes**, `+556,032`. That is precisely the trigger
@@ -434,18 +458,64 @@ it to `install.rs`'s rename-and-delete.*
 
 ### Sizes
 
+**Re-measured 2026-09-17** by running `build/New-Release.ps1` twice, at
+`1.0.1-reverify.1` and `1.0.1-reverify.2`, into a scratch feed — the procedure
+[row 85](../re-verification.md) names — against Velopack and `vpk` **1.2.0**,
+node **v24.21.0**, `@playwright/mcp` **0.0.81** and `playwright-core`
+**1.64.0-alpha-2026-09-14**. *(Everything here floats, and it is stamped once at
+the head of this section rather than again on this table: that marker already
+says every number in the section moves with Node, `@playwright/mcp` and the
+toolchain, and a second stamp on the same cluster would add an obligation
+without adding a fact. Written in words because the counter reads the token and
+cannot tell a mention from a stamp.)*
+
 | | Bytes | Note |
 |---|---|---|
-| Publish directory on disk | 206,427,574 | Includes the 75,993,088 b `.pdb`, which `vpk` excludes by default |
-| **What ships** (pdb excluded) | **130,434,486** | `BrowserAI.exe` 17,853,952 · `payload\node` 92,985,968 · `payload\mcp` 18,997,245 · `BrowserAI.xml` 596,517 |
-| **Full `.nupkg`** | **49,043,498** | 46.8 MiB. Compression ratio **0.376** |
-| **Delta `.nupkg`, N→N+1** | **97,216** | **0.198% of the full package — a 504× reduction** |
-| `Setup.exe` | 53,505,061 | |
-| `-Portable.zip` | 49,042,468 | |
+| Publish directory on disk | 262,007,766 | Includes the `.pdb`s, which `vpk` excludes by default |
+| **What ships** (pdb excluded) | **143,503,406** | `payload\node` 93,740,659 · `BrowserAI.Server.exe` 19,202,560 · `payload\mcp` 18,619,618 · `BrowserAI.exe` 10,411,520 · the three `.xml` 1,497,348 · notices 22,610 · `payload` other 9,091 |
+| **Full `.nupkg`** | **54,926,688** | 52.4 MiB. Compression ratio **0.3828** |
+| **Delta `.nupkg`, N→N+1** | **138,515** | **0.2522% of the full package — a 396× reduction** |
+| `Setup.exe` | 59,435,360 | The download, renamed from `BrowserAI.app-win-Setup.exe` |
+| `-Portable.zip` | 54,887,948 | |
+
+> ⚠️ `Corrected 2026-09-17 @ Velopack 1.2.0 · node v24.21.0 · @playwright/mcp
+> 0.0.81 (previously "Publish directory on disk 206,427,574 … **What ships**
+> (pdb excluded) **130,434,486** — `BrowserAI.exe` 17,853,952 · `payload\node`
+> 92,985,968 · `payload\mcp` 18,997,245 · `BrowserAI.xml` 596,517 … **Full
+> `.nupkg`** **49,043,498** … Compression ratio **0.376** … **Delta `.nupkg`,
+> N→N+1** **97,216** … **0.198% of the full package — a 504× reduction** …
+> `Setup.exe` 53,505,061 … `-Portable.zip` 49,042,468")`. **This closes the
+> `[STALE]` notice at the head of this section, which had stood since 2026-08-27
+> and been renewed twice without being run.**
+>
+> **What moved, and it is four inputs rather than one:**
+>
+> - **The two-binary split of 2026-09-15 is the biggest of them.** The old table
+>   is about a single 17,853,952 b `BrowserAI.exe`; what ships now is
+>   `BrowserAI.Server.exe` **19,202,560** *and* `BrowserAI.exe` **10,411,520** —
+>   **29,614,080 b of AOT binary where there was 17,853,952**, `+11,760,128`.
+> - **Node** 92,985,968 → 93,740,659 as measured in the publish tree
+>   (`+754,691`), across the v24.19.0 → v24.21.0 moves the stale notice named.
+> - **`payload\mcp` went the other way**, 18,997,245 → 18,619,618 (`-377,627`),
+>   which is why the notice was right that no single delta could be added.
+> - **The XML documentation trebled**, 596,517 → 1,497,348 across three files,
+>   because the split gave `BrowserAI.Core` and `BrowserAI.Server` their own.
+>
+> **The delta row's PREDICATE changed and the number must be read with it.** The
+> old 97,216 b was for *a release in which only `BrowserAI.exe` changed*. These
+> two packs were cut from the same tree with nothing altered but the version
+> string, so **both** AOT binaries were rebuilt and differ — 29.6 MB of changed
+> input against the old 17.9 MB. **138,515 b for twice as much changed binary is
+> the delta lane working**, and the 396× reduction against the old 504× is a
+> larger absolute delta against a larger full package rather than a regression
+> in compression.
 
 ⚠️ **Take the ratio against what ships, not against the publish directory.** The
-`.pdb` is 76 MB of a 206 MB directory, so the naive ratio reads 0.350 for what is
-really 0.376. The first run of the release script reported the wrong one.
+`.pdb`s are 118,504,360 b of a 262 MB directory, so the naive ratio reads 0.2096
+for what is really 0.3828. The first run of the release script reported the
+wrong one. *`Corrected 2026-09-17 (previously "The `.pdb` is 76 MB of a 206 MB
+directory, so the naive ratio reads 0.350 for what is really 0.376")` — same
+trap, re-derived at the current sizes.*
 
 ⚠️ **`payload\.cache\` was shipping, and it was 37,304,352 b of the package.**
 `Build-Payload.ps1` keeps the downloaded Node archive there so a re-run does not
@@ -457,6 +527,17 @@ succeeded, the suite passed, and the only symptom was a number that had never
 been measured.
 
 ### The delta is real, and what it costs to produce one
+
+⚠️ `Corrected 2026-09-17 (previously "**`BrowserAI-0.9.1-delta.nupkg` is 97,216 b
+against a 49,043,493 b full package**, for a release in which only
+`BrowserAI.exe` changed")` — **re-measured as 138,515 b against a 54,926,688 b
+full package**, for a release in which **both** AOT binaries changed, which is
+the predicate two packs cut from one tree at two versions produce. The
+paragraph below is kept as written because what it argues — that the delta lane
+really produces a delta, and that the receiving end really applies it — is
+unchanged, and only its two numbers moved. **The `deltas=1` confirmation on the
+client was NOT re-run on 2026-09-17**: these two packs were never installed, so
+what is re-measured is the production of a delta and not its application.
 
 **`BrowserAI-0.9.1-delta.nupkg` is 97,216 b against a 49,043,493 b full
 package**, for a release in which only `BrowserAI.exe` changed. That is the
