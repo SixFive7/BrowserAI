@@ -1079,6 +1079,37 @@ real browser on 2026-09-16 against
 `blob/v1.0.0/CHANGELOG.md?plain=1#L3496-L3532`: the page rendered the range and
 **exactly 37 elements carried a highlighted class**, which is 3532 − 3496 + 1.
 
+⚠️ **NO TRACE OF AI, IN WORDING AND IN CHARACTER USE — 2026-09-17, the
+maintainer's directive, in his words:** *"Ensure there is no trace of AI both in
+wording and character use."* He added it to these rules after reading the
+published `v1.0.0` body: *"the intro text of the release post is very much
+reading like AI."* It sits beside the icon and layout rules above and applies to
+everything a reader of the release page meets — the preamble, every headline,
+the legend and the footer.
+
+**The two halves are not enforced the same way, and this says which is which.**
+
+- **The CHARACTER half is a test.**
+  `ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType`
+  reads every section preamble, every entry headline, the legend, and a body
+  generated from the fixture — which is how the generator's own fixed text is
+  covered — and refuses eight code points: the em dash `U+2014`, the en dash
+  `U+2013`, the four curly quotes `U+2018`, `U+2019`, `U+201C` and `U+201D`, the
+  ellipsis `U+2026` and the non-breaking space `U+00A0`. It is a **deny list**,
+  so the twelve palette icons, `U+FE0F` and any other legitimate symbol are
+  allowed without being enumerated in code. A **backticked code span is exempt**,
+  because a span quotes something that exists rather than choosing a style; the
+  live case is this repository's own `previously "..."` token. **An entry's
+  detail is out of scope by construction** — since 2026-09-16 the body carries
+  headlines and a `read more` link, so the detail never reaches a reader of the
+  release page.
+- **The WORDING half needs a person, and nothing will ever close it.** No test
+  can see that a sentence reads generated. What to look for, from the one that
+  did: an em-dash aside dropped into the middle of a sentence, a parade of three
+  things where two would do, *"This release holds"*, *"brings"*, and a long
+  opening sentence in bold that says four things at once. Write short sentences.
+  Write what a person would say to a colleague who asked what this is.
+
 **The preamble is checked by a person, not by the test.**
 `ChangelogTests.TheNewestReleasedSectionOpensWithAPreamble` holds that the
 section opens with a paragraph; whether that paragraph says what this release is

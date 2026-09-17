@@ -144,6 +144,32 @@ internal sealed partial class AppendOnlyRecordTests
     /// seal starts at the heading.
     /// </para>
     /// <para>
+    /// ⚠️ <b>AND A THIRD TIME ON 2026-09-17, FOR THE THIRD IN-PLACE CUT OF
+    /// THE SAME VERSION, AND FOR ONE EDIT ONLY.</b> <i>Corrected 2026-09-17
+    /// (previously sealed at <c>CHANGELOG.md#1.0.0</c> <c>310,215</c> characters
+    /// / <c>c2dd7dde…</c> / <c>79e46755…</c>)</i>. The order is the
+    /// maintainer's, in writing and in advance: <i>"Let's work out this and the
+    /// other open issues and then re-release v1.0.0 … the intro text of the
+    /// release post is very much reading like AI. … add to the release rules
+    /// the following directive: 'Ensure there is no trace of AI both in wording
+    /// and character use.'"</i> The <b>preamble</b> is rewritten in plain words
+    /// and nothing else in the section is touched: no entry, no heading, no
+    /// date. The whole prefix moves because a seal starts at the heading.
+    /// <b>No fact was rewritten</b> — the new preamble says the same four things
+    /// the old one did, in shorter sentences and without the three em dashes
+    /// that made
+    /// <see cref="ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType"/>
+    /// red.
+    /// </para>
+    /// <para>
+    /// <b>Three lifts is not a rule that lifts are free; it is the same version
+    /// being cut a third time.</b> Each has been ordered in advance by the
+    /// person who owns the record, and each has been narrower than the one
+    /// before: entries re-shaped, then entries merged, then one paragraph
+    /// rewritten. The way to need none is the ordinary case — a NEW version,
+    /// stamped by <c>Get-ReleaseNotes.ps1</c>, whose section nobody has sealed.
+    /// </para>
+    /// <para>
     /// <b>This is a SECOND lift, not a precedent that lifts are routine.</b> It
     /// has the same authority as the first — the maintainer's instruction to
     /// re-ship <c>1.0.0</c> so that it carries the fix — and it is narrower: no
@@ -182,7 +208,7 @@ internal sealed partial class AppendOnlyRecordTests
     private static readonly Seal[] Sealed =
     [
         new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0", "29edb87771e3936a0b9054fe3c0159b4a6b3b8e64e6e410e99f00d7b0f0afa17"),
-        new("CHANGELOG.md#1.0.0", 310215, "c2dd7dde2ffe21300987ec5088fee1277140c8f3d0f0897e484ba88182d093cd", "79e467556d0ed4db3d028e31a3f1156b3882a3cdfda9c964fe6108c35f9068e8"),
+        new("CHANGELOG.md#1.0.0", 310216, "06336d694309bb15724200aa3361810d6a402f682d8d62a2109325f98ea8db0d", "4775189752778e186f6e01d135e28cbc9e400e298bfa0439f630a4f2646a5df5"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94", "5cbc860979f70f949a05d326c412fc84c1e6499b73a080e7b88652b86573bcac"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa", "4605c26694310c9618949d95dee4b66a3f9dea7c8c1067ef68c7e9cda8712b09"),
         new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea", "b8bdc254fbe734137ce90b746aaa7efbce83c708a29430fb869e7eb31652c5c4"),

@@ -40,6 +40,27 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **Nothing in a release body may carry a character a person would not type.**
+  The maintainer's release directive, in his words: *"Ensure there is no trace
+  of AI both in wording and character use."* He added it after reading the
+  published `v1.0.0` body: *"the intro text of the release post is very much
+  reading like AI."*
+  `ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType`
+  is the **character half**, and [`RELEASING.md`](RELEASING.md) says plainly
+  that the wording half needs a reader and always will. Eight code points are
+  refused: the em dash `U+2014`, the en dash `U+2013`, the four curly quotes,
+  the ellipsis `U+2026` and the non-breaking space `U+00A0`. It is a **deny
+  list**, so the twelve palette icons and any other legitimate symbol are
+  allowed without being listed in code, and a **backticked code span is exempt**
+  because a span quotes something that exists rather than choosing a style. The
+  scope is what a release body is actually made of and is stated rather than
+  implied: every section preamble, every entry headline, the legend, and a body
+  generated from the fixture, which is how the generator's own fixed text is
+  covered. **An entry's detail is out of scope by construction** — since
+  2026-09-16 the body carries headlines and a `read more` link, so the 674 em
+  dashes in this file's details never reach a reader of the release page.
+  Planted red against the `1.0.0` preamble, which carried three of them.
+
 - 📝 **Setup asks before installing over an existing install, and says
   `Repair` on a re-ship.** Measured 2026-09-16
   against the published `v1.0.0` installer and filed in
@@ -55,6 +76,22 @@ release body; nothing else depends on it.
   one.
 
 ### Changed
+- 📝 **The 1.0.0 release note opens in plain words now.**
+  The preamble is what a reader of the release page meets first, and the one
+  that shipped read like something generated: an em-dash aside dropped into the
+  first sentence, *"brings its own copy"*, *"The release holds two
+  executables"*, and four claims in one bolded opening line. It is rewritten in
+  short sentences: what BrowserAI is, that this is the first version fit for
+  real use and what it replaces, the two programs in the release, and where to
+  start. No em dashes, and ASCII throughout.
+  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1)'s own fixed text
+  was read with the same eye: the footer now says *"The full changelog for this
+  release"* rather than *"Every entry in full, with its evidence"*, which is a
+  sentence nobody says out loud. **The `1.0.0` seal is re-taken** at 310,216
+  characters, and `AppendOnlyRecordTests` carries the previous values and the
+  order that lifted it, because a re-seal nobody explains is rewriting history
+  with an extra step.
+
 - 🔧 **The icon legend is a compact table now, in the release body and in this file.**
   The maintainer's words: *"The legend at the bottom of the release notes that
   explains the icons is missing newlines. Give it a nice yet compact layout."*
@@ -300,16 +337,20 @@ release body; nothing else depends on it.
 
 ## [1.0.0] - 2026-09-16
 
-**BrowserAI is a Windows MCP server that gives an AI agent a real browser —
-Chromium or Firefox — and brings its own copy of everything it needs, so there
-is nothing to install alongside it.** This is the first production-worthy
-version. It replaces the build of the same number published on 2026-08-17,
-which was downloadable for a month, is not known to have been installed
-anywhere but the maintainer's own machine, and did not exit when it had nobody
-to serve. The release holds two executables — `BrowserAI.Server.exe`, the MCP
-server your client starts, and `BrowserAI.exe`, a small configuration app that
-opens when the install finishes and registers the server with your client.
-Start at [`README.md`](README.md).
+BrowserAI is a Windows MCP server that gives an AI agent a real browser, either
+Chromium or Firefox. It carries its own copy of everything it needs, so there is
+nothing else to install.
+
+This is the first version fit for real use. It replaces the build of the same
+number published on 2026-08-17. That build was downloadable for a month. Nobody
+is known to have installed it apart from the maintainer, and it did not exit when
+it had nobody left to serve.
+
+There are two programs in the release. `BrowserAI.Server.exe` is the MCP server
+your client starts. `BrowserAI.exe` is a small configuration app. It opens when
+the install finishes, and it registers the server with your client.
+
+Read [`README.md`](README.md) first.
 
 ### Added
 

@@ -445,7 +445,12 @@ function New-Body {
     # is deliberate rather than fussy: DocumentationLinkTests reads every file in
     # the tree as text, a `](` in a script is a relative link to it, and
     # `$permalink` is not a path that exists.
-    $out.Add('Every entry in full, with its evidence: [' + $ChangelogName + ']' + '(' + $permalink + ')')
+    # WARNING: PLAIN WORDS -- 2026-09-17, the maintainer's release directive,
+    # "Ensure there is no trace of AI both in wording and character use." This
+    # line used to read "Every entry in full, with its evidence:", which is a
+    # sentence nobody says out loud. It is what a reader clicks to get the
+    # detail, so it says that.
+    $out.Add('The full changelog for this release: [' + $ChangelogName + ']' + '(' + $permalink + ')')
 
     return (($out -join "`n") -replace "`n{3,}", "`n`n").Trim() + "`n"
 }
@@ -471,7 +476,7 @@ if ($directory -and -not (Test-Path -LiteralPath $directory)) {
 $entries = ($rendered | ForEach-Object { $_.Items.Count } | Measure-Object -Sum).Sum
 
 if ($shape -eq 'headlines') {
-    Write-Host "The linked body for $Version did not fit in $Limit characters, so this one is HEADLINES ONLY, with no per-entry links at all: $($body.Length) characters, $entries entries, $($rendered.Count) groups. The footer's section link is the only way into the detail."
+    Write-Host "The linked body for $Version did not fit in $Limit characters, so this one is HEADLINES ONLY, with no per-entry links at all: $($body.Length) characters, $entries entries, $($rendered.Count) groups. The footer's changelog link is the only way into the detail."
 }
 else {
     Write-Host "Release body for $Version is LINKED: $($body.Length) characters against a limit of $Limit, $entries entries, $($rendered.Count) groups, each a headline and a line range into the tagged changelog."

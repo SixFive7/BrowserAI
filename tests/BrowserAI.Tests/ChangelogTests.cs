@@ -521,6 +521,190 @@ internal sealed partial class ChangelogTests
         await Assert.That(Preamble("\n\n### Added\n\n- ✨ **A thing.**\n")).IsEmpty();
     }
 
+    /// <summary>
+    /// Nothing that reaches a GitHub release body carries a character a person
+    /// typing it would not have typed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's release directive, 2026-09-17, in his words:</b>
+    /// <i>"Ensure there is no trace of AI both in wording and character use."</i>
+    /// He added it after reading the published <c>v1.0.0</c> body: <i>"the intro
+    /// text of the release post is very much reading like AI."</i>
+    /// </para>
+    /// <para>
+    /// <b>This is the CHARACTER half and only that half.</b> An em dash between
+    /// clauses, a curly quote, a single-character ellipsis and a non-breaking
+    /// space are what a generator emits and a person typing into a text box does
+    /// not, so they are mechanisable. Whether a sentence READS generated is a
+    /// reading and stays one; [`RELEASING.md`](../../RELEASING.md) says so beside
+    /// this rule rather than implying the test closed it.
+    /// </para>
+    /// <para>
+    /// <b>The scope is exactly what a release body is made of, which is narrower
+    /// than this file and is said out loud rather than implied.</b> Since
+    /// 2026-09-16 the body is one shape: each section's preamble, one line per
+    /// entry carrying its icon and its bold headline, the legend, and the
+    /// footer. An entry's DETAIL never reaches it -- a <c>read more</c> link
+    /// points at the changelog instead of copying it -- so the 674 em dashes in
+    /// the details of this file are outside this rule by construction, and
+    /// widening it to cover them would be rewriting a 310,000-character record
+    /// that a human has read and likes. The generator's own fixed text is
+    /// covered by generating a body from the fixture and scanning the whole of
+    /// it: the fixture is ASCII apart from two icons, so anything else in the
+    /// output came from the script.
+    /// </para>
+    /// <para>
+    /// <b>A deny list of eight code points rather than an allowlist of
+    /// permitted ones</b>, because the palette is twelve emoji, each with an
+    /// optional variation selector, and an allowlist would refuse the next
+    /// legitimate symbol rather than the next generated one. <b>What is
+    /// therefore allowed, enumerated so a reader can see it:</b> the twelve
+    /// palette icons and <c>U+FE0F</c>; <c>U+2192</c>, the arrow one headline
+    /// uses for <i>moved to</i>; and every other non-ASCII character this file
+    /// does not ban. Those three are the whole of what the covered text carries
+    /// today.
+    /// </para>
+    /// <para>
+    /// <b>A backticked code span is exempt, in both directions.</b> A span
+    /// quotes something that exists rather than choosing a style, and the live
+    /// case is this repository's own correction token, <c>previously "..."</c>,
+    /// which is spelled with <c>U+2026</c> and would be a different token
+    /// respelled. The same character outside a span is an offence, and both
+    /// halves are controlled below.
+    /// </para>
+    /// <para>
+    /// <b>Watched red 2026-09-17 against the <c>1.0.0</c> preamble</b>, which
+    /// carried three em dashes -- a pair around <i>Chromium or Firefox</i> and
+    /// one before the two executables.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType()
+    {
+        var text = await File.ReadAllTextAsync(Changelog);
+        var offences = new List<string>();
+
+        foreach (var (what, body) in ReleaseBodyText(text))
+        {
+            offences.AddRange(Generated(body).Select(offence => $"CHANGELOG.md {what}: {offence}"));
+        }
+
+        // The generator's own fixed text, read by generating a body rather than
+        // by scanning the script: what the script SAYS and what it EMITS are two
+        // different sets of strings, and only one of them reaches a reader.
+        using var scratch = ScratchDirectory.Create("release-notes-characters");
+        var fixture = await WriteAsync(scratch, "CHANGELOG.md", Fixture);
+        var generated = Path.Combine(scratch.Path, "body.md");
+
+        var run = await RunScriptAsync(NotesScript, "-Path", fixture, "-Version", "9.9.9", "-Destination", generated);
+
+        await Assert.That(run.ExitCode).IsEqualTo(0);
+
+        offences.AddRange(Generated(await File.ReadAllTextAsync(generated))
+            .Select(offence => $"the generated body: {offence}"));
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ---- The controls, over text this file will never contain -----------
+        // One per banned code point, so a needle that stopped matching is a red
+        // build rather than a clean report.
+        foreach (var (character, _) in NotTyped)
+        {
+            await Assert.That(Generated($"a headline{character}with one in it")).IsNotEmpty();
+        }
+
+        // And the other direction: the palette, the arrow, and an ellipsis
+        // inside a code span are all left alone.
+        await Assert.That(Generated(string.Join(" ", Palette.Select(entry => $"{entry.Icon} {entry.Means}")))).IsEmpty();
+        await Assert.That(Generated("TUnit moved 1.67.0 → 1.68.4.")).IsEmpty();
+        await Assert.That(Generated("reads around a `previously \"…\"` clause")).IsEmpty();
+        await Assert.That(Generated("reads around a previously \"…\" clause")).IsNotEmpty();
+
+        // Not vacuous over the tree: every section and every entry is read.
+        await Assert.That(ReleaseBodyText(text).Count).IsGreaterThan(200);
+    }
+
+    /// <summary>The characters a person writing a release note would not type.</summary>
+    /// <remarks>
+    /// Each is what a generator produces where a keyboard produces something
+    /// else: two hyphens, a straight quote, three full stops, an ordinary space.
+    /// </remarks>
+    private static readonly (char Character, string Name)[] NotTyped =
+    [
+        ('—', "an em dash (U+2014); write two hyphens, or a comma, or two sentences"),
+        ('–', "an en dash (U+2013); write a hyphen, or the word 'to'"),
+        ('‘', "a curly opening single quote (U+2018); write a straight apostrophe"),
+        ('’', "a curly closing single quote (U+2019); write a straight apostrophe"),
+        ('“', "a curly opening double quote (U+201C); write a straight double quote"),
+        ('”', "a curly closing double quote (U+201D); write a straight double quote"),
+        ('…', "an ellipsis character (U+2026); write three full stops"),
+        (' ', "a non-breaking space (U+00A0); write an ordinary space"),
+    ];
+
+    /// <summary>Every banned character in one piece of release-body text.</summary>
+    /// <param name="text">The text, code spans and all.</param>
+    /// <returns>One line per offence, naming the character and quoting around it.</returns>
+    private static List<string> Generated(string text)
+    {
+        // A code span quotes something that exists rather than choosing a style,
+        // so it is emptied before anything else looks at the text -- blanked
+        // rather than removed, so the excerpt below still points at the right
+        // part of the sentence.
+        var scanned = CodeSpan().Replace(text, match => new string(' ', match.Length));
+
+        return
+        [
+            .. NotTyped
+                .Where(banned => scanned.Contains(banned.Character, StringComparison.Ordinal))
+                .Select(banned =>
+                {
+                    var at = scanned.IndexOf(banned.Character, StringComparison.Ordinal);
+                    var from = Math.Max(0, at - 40);
+
+                    return $"{banned.Name} - \"{text[from..Math.Min(text.Length, at + 40)].Replace('\n', ' ')}\"";
+                }),
+        ];
+    }
+
+    /// <summary>
+    /// Every piece of this changelog that reaches a release body, each labelled
+    /// with where it came from.
+    /// </summary>
+    /// <param name="changelog">The changelog's text.</param>
+    /// <returns>One entry per preamble, per entry headline, and one for the legend.</returns>
+    private static List<(string What, string Text)> ReleaseBodyText(string changelog)
+    {
+        var text = changelog.Replace("\r\n", "\n", StringComparison.Ordinal);
+        var parts = new List<(string, string)>();
+
+        foreach (var heading in VersionHeading().Matches(text).Cast<Match>())
+        {
+            var rest = text[(heading.Index + heading.Length)..];
+            var next = rest.IndexOf("\n## ", StringComparison.Ordinal);
+
+            parts.Add(($"[{heading.Groups["version"].Value}]'s preamble", Preamble(next < 0 ? rest : rest[..next])));
+        }
+
+        parts.AddRange(EntryBlocks(text)
+            .Select(entry => (entry.Number, Shaped: EntryShape().Match(entry.Line)))
+            .Where(entry => entry.Shaped.Success)
+            .Select(entry => (
+                $"line {entry.Number.ToString(CultureInfo.InvariantCulture)}'s headline",
+                $"{entry.Shaped.Groups["icon"].Value} {entry.Shaped.Groups["headline"].Value}")));
+
+        parts.AddRange(LegendTableRows(text)
+            .SelectMany(row => row)
+            .Select(cell => ("the legend", cell)));
+
+        return parts;
+    }
+
+    /// <summary>A Markdown code span, backticks included.</summary>
+    [GeneratedRegex("`[^`]*`")]
+    private static partial Regex CodeSpan();
+
     /// <summary>The icons the legend publishes, in order.</summary>
     /// <param name="changelog">The changelog's text.</param>
     /// <returns>The icons.</returns>
@@ -537,35 +721,9 @@ internal sealed partial class ChangelogTests
     private static List<string> Malformed(string changelog, List<string> icons)
     {
         var offences = new List<string>();
-        var lines = changelog.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
 
-        for (var index = 0; index < lines.Length; index++)
+        foreach (var (number, line) in EntryBlocks(changelog))
         {
-            if (!lines[index].StartsWith("- ", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            // ⚠️ THE ENTRY, NOT THE LINE. The file is hard-wrapped at 80
-            // columns, so a headline routinely runs over two of them and a
-            // line-at-a-time scan reports every entry as shapeless. The
-            // generator joins an entry's lines before it reads the shape, and so
-            // does this — which is the only arrangement in which the two are
-            // asking one question.
-            var number = index + 1;
-            var block = new StringBuilder(lines[index]);
-
-            for (var next = index + 1; next < lines.Length; next++)
-            {
-                if (lines[next].Length > 0 && !char.IsWhiteSpace(lines[next][0]))
-                {
-                    break;
-                }
-
-                _ = block.Append(' ').Append(lines[next]);
-            }
-
-            var line = Whitespace().Replace(block.ToString(), " ").Trim();
             var shaped = EntryShape().Match(line);
 
             if (!shaped.Success)
@@ -600,6 +758,48 @@ internal sealed partial class ChangelogTests
         }
 
         return offences;
+    }
+
+    /// <summary>Every entry of a changelog, each joined back into one line.</summary>
+    /// <remarks>
+    /// ⚠️ <b>THE ENTRY, NOT THE LINE.</b> The file is hard-wrapped at 80
+    /// columns, so a headline routinely runs over two of them and a
+    /// line-at-a-time scan reports every entry as shapeless. The generator joins
+    /// an entry's lines before it reads the shape, and so does this -- which is
+    /// the only arrangement in which the two are asking one question.
+    /// <i>Extracted 2026-09-17 so the shape check and the character check read
+    /// the same entries; it was inline in <see cref="Malformed"/> before that.</i>
+    /// </remarks>
+    /// <param name="changelog">The changelog's text.</param>
+    /// <returns>Each entry's 1-based line number and its whole text on one line.</returns>
+    private static List<(int Number, string Line)> EntryBlocks(string changelog)
+    {
+        var entries = new List<(int, string)>();
+        var lines = changelog.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (!lines[index].StartsWith("- ", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var block = new StringBuilder(lines[index]);
+
+            for (var next = index + 1; next < lines.Length; next++)
+            {
+                if (lines[next].Length > 0 && !char.IsWhiteSpace(lines[next][0]))
+                {
+                    break;
+                }
+
+                _ = block.Append(' ').Append(lines[next]);
+            }
+
+            entries.Add((index + 1, Whitespace().Replace(block.ToString(), " ").Trim()));
+        }
+
+        return entries;
     }
 
     /// <summary>The first eighty characters of a line, for a failure message.</summary>
@@ -869,7 +1069,7 @@ internal sealed partial class ChangelogTests
             |---|---|---|---|
             | ✨ | new capability | 🐛 | fix |
 
-            Every entry in full, with its evidence: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md#999---2026-01-01)
+            The full changelog for this release: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md#999---2026-01-01)
 
             """;
 
@@ -937,7 +1137,7 @@ internal sealed partial class ChangelogTests
             |---|---|---|---|
             | ✨ | new capability | 🐛 | fix |
 
-            Every entry in full, with its evidence: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md#999---2026-01-01)
+            The full changelog for this release: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md#999---2026-01-01)
 
             """;
 
