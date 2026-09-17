@@ -40,6 +40,32 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **The Firefox-against-Chromium cost ratios are re-taken at chromium 1245 and
+  firefox 1548, and the idle-CPU axis is withdrawn rather than re-stated.**
+  Re-verification row 34, at six rounds per family rather than the stated three, because
+  the axis that had flipped sign is the one three rounds cannot settle. RAM holds at
+  1.19x, profile disk at 2.76x on every one of six rounds, and processes at 0.78x. First
+  navigate moved 4.62x to 4.37x, inside the per-round band of both runs. Second navigate
+  moved 0.90x to 0.68x, which retires this article's own sentence calling that row the
+  one where the two families are genuinely close. Idle CPU read 0.77x in the morning and
+  1.31x in the evening -- a second sign reversal inside one day -- and what follows is a
+  conclusion about the instrument rather than about either browser: Chromium's six rounds
+  span 360 to 955 ms against Firefox's 266 to 781, the two distributions overlap
+  completely, and across 24x, 0.77x and 1.31x exactly one thing is established, which is
+  that Firefox does not burn an order of magnitude more idle CPU than Chromium. Which
+  burns more is not established and more rounds of the same instrument will not establish
+  it; what to do about the axis is left open rather than decided.
+
+  The run carries a control the morning's could not: Chromium did not change. 1245 and
+  1244 hold the same 308 files at the same sizes with chrome.exe identical to the byte, so
+  Chromium's own column between the two runs measures the rig rather than the browser --
+  profile disk repeatable to 0.0006 per cent, resident set to 0.9 per cent, first navigate
+  to 20 per cent, second navigate to 27, and idle CPU to minus 41. Both families also ran
+  15 to 20 per cent slower in the evening while the ratio moved 5 per cent, which is
+  evidence for this section's own claim that the ratio is the transferable half rather
+  than an assertion of it. The procedure gains a sentence with it: both families must run
+  in one sitting, because the two behind this section were six hours apart.
+
 - 📝 **Payload licensing is re-read at chromium 1245 and firefox 1548, and four of its claims did not survive.**
   Re-verification row 26 said `winldd` ships no licence file and full Chromium ships no
   OSS one. Both still hold, and so do `ffmpeg`, Node and `@playwright/mcp`. The Chromium

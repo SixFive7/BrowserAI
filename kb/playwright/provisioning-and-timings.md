@@ -1051,31 +1051,101 @@ update 1–3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
 
 ## Firefox against Chromium: the standing cost ratios
 
-> ⚠️ **`[STALE]` since 2026-09-17, hours after these were taken and against both
-> families at once.** The `playwright-core` pull-forward moved **chromium 1244 →
-> 1245 and firefox 1544 → 1548**, and the header below says of these four that
-> *every one of them moves with a browser revision*. Nothing here is adjusted:
-> three rounds per family is the stated minimum, so re-taking them is a
-> measurement session, with
-> [`docs/probes/2026-09-17-cost-ratios`](../../docs/probes/2026-09-17-cost-ratios/README.md)
-> as the rig. [Re-verification row 34](../re-verification.md) carries the debt.
+✅ **RE-ESTABLISHED 2026-09-17 at chromium 1245 and firefox 1548**, clearing the
+`[STALE]` this section carried for six hours, and taken at **six rounds per
+family** rather than the stated three — because the one axis that had flipped
+sign is the one three rounds cannot settle, and a second set of three costs four
+minutes. *Previously, and kept because it is what the debt looked like:*
+"⚠️ **`[STALE]` since 2026-09-17, hours after these were taken and against
+both families at once.** The `playwright-core` pull-forward moved **chromium 1244
+→ 1245 and firefox 1544 → 1548**, and the header below says of these four that
+*every one of them moves with a browser revision*. Nothing here is adjusted:
+three rounds per family is the stated minimum, so re-taking them is a measurement
+session, with
+[`docs/probes/2026-09-17-cost-ratios`](../../docs/probes/2026-09-17-cost-ratios/README.md)
+as the rig. [Re-verification row 34](../re-verification.md) carries the debt."
 
-**1.19× RAM, 4.6× first navigate, 0.77× idle CPU, 2.76× profile disk.** Measured
-2026-09-17 against Chromium as the unit, **three rounds per family**, through the
-product's own `browserai_init` → `browser_navigate` against a local origin, at
-chromium **1244** / 154.0.8037.0 and firefox **1544** / 155.0 under
-`playwright-core` 1.64.0-alpha-2026-09-14. `[FLOATS]` `[MACHINE]` — every one of
-the four moves with a browser revision, and the absolute numbers are this
-machine's.
+**1.19× RAM, 4.37× first navigate, 2.76× profile disk — and idle CPU has no sign
+at this sample size.** Measured 2026-09-17 against Chromium as the unit, **six
+rounds per family**, through the product's own `browserai_init` →
+`browser_navigate` against a local origin, at chromium **1245** / 154.0.8037.0
+and firefox **1548** / 155.0 under `playwright-core` 1.64.0-alpha-2026-09-17.
+`[FLOATS]` `[MACHINE]` — the absolute numbers are this machine's. Medians, with
+the observed range beside each.
 
-| Axis | Chromium (3 rounds) | Firefox (3 rounds) | Firefox : Chromium |
+| Axis | Chromium (6 rounds) | Firefox (6 rounds) | Firefox : Chromium |
 |---|---:|---:|---:|
-| Resident set, whole browser tree | 487.5 · 494.7 · 507.6 MB | 587.0 · 589.8 · 590.2 MB | **1.19×** (1.16–1.21) |
-| First navigate, cold — includes the launch | 413 · 417 · 1,297 ms | 1,907 · 1,923 · 2,962 ms | **4.62×** on medians |
-| Second navigate, browser already up | 39 · 57 · 66 ms | 49 · 52 · 53 ms | **0.90×** |
-| Idle CPU over 30 s, no page activity | 312 · 813 · 843 ms | 532 · 624 · 750 ms | **0.77×** |
-| Profile directory on disk | 13,207,311 B (181 files) | 36,444,338 B (67 files) | **2.76×** |
-| Processes under the browsers root | 8 · 9 · 10 | 7 · 7 · 7 | **0.78×** |
+| Resident set, whole browser tree | **499.2** MB (485.8–505.9) | **593.7** MB (591.4–595.8) | **1.19×** (1.17–1.22) |
+| First navigate, cold — includes the launch | **500** ms (490–534) | **2,184** ms (2,084–2,339) | **4.37×** (4.00–4.68) |
+| Second navigate, browser already up | **72** ms (64–82) | **49** ms (42–54) | **0.68×** (0.58–0.84) |
+| Idle CPU over 30 s, no page activity | **478** ms (360–955) | **626** ms (266–781) | **1.31×** (0.59–2.17) — **not a sign**, see below |
+| Profile directory on disk | **13,207,388 B** (181 files) | **36,448,380 B** (66 files) | **2.76×** on all six |
+| Processes under the browsers root | 8 · 8 · 9 · 9 · 9 · 9 | 7 every round | **0.78×** |
+
+> ⚠️ `Corrected 2026-09-17 @ chromium 1245 · firefox 1548 · playwright-core
+> 1.64.0-alpha-2026-09-17 (previously "**1.19× RAM, 4.6× first navigate, 0.77×
+> idle CPU, 2.76× profile disk.** Measured 2026-09-17 … **three rounds per
+> family** … at chromium **1244** / 154.0.8037.0 and firefox **1544** / 155.0
+> under `playwright-core` 1.64.0-alpha-2026-09-14", with Chromium 487.5 · 494.7 ·
+> 507.6 MB, 413 · 417 · 1,297 ms, 39 · 57 · 66 ms, 312 · 813 · 843 ms,
+> 13,207,311 B and 8 · 9 · 10 against Firefox 587.0 · 589.8 · 590.2 MB,
+> 1,907 · 1,923 · 2,962 ms, 49 · 52 · 53 ms, 532 · 624 · 750 ms, 36,444,338 B
+> and 7 · 7 · 7)`. **Three axes came back identical, one moved inside its own
+> spread, and two moved — one of them across 1.0 for the second time in a day.**
+>
+> - **RAM 1.19×, profile disk 2.76× and processes 0.78× are unchanged**, the
+>   profile row to three figures on every one of six rounds.
+> - **First navigate 4.62× → 4.37×**, inside the per-round band of both runs.
+> - **Second navigate 0.90× → 0.68×.** *Corrected with it (previously "The
+>   second-navigate row has no such spread and is where the two families are
+>   genuinely close")* — at 0.68× they are not close, and the direction has been
+>   Firefox being the **faster** of the two all along once its browser is up.
+> - ⚠️ **Idle CPU 0.77× → 1.31×, the second sign reversal this one axis has
+>   recorded inside a single day.** What follows from that is a conclusion about
+>   the axis rather than about either browser.
+
+⚠️ **This run carries a control the morning's could not, and it is the reason
+the paragraph above can say which movements are real: Chromium did not change.**
+`chromium-1245` and `chromium-1244` hold the **same 308 files at the same 308
+sizes** and `chrome.exe` is SHA-256 `e3390ab4…` in both, because the archive is
+keyed on `browserVersion` and 154.0.8037.0 did not move with the revision
+([row 21](../re-verification.md), and again in
+[the licensing read](../packaging/dependencies.md#third-party-payload-as-shipped)).
+**So every movement in Chromium's own column between the two runs is the
+instrument rather than the browser**, which makes the pair a repeatability test
+of this rig:
+
+| Chromium's own column — one unchanged binary | morning, 3 rounds | evening, 6 rounds | what that says |
+|---|---:|---:|---|
+| Profile directory | 13,207,311 B | 13,207,388 B | **+77 B, 0.0006% — an instrument** |
+| Resident set | 494.7 MB | 499.2 MB | **+0.9% — an instrument** |
+| First navigate | 417 ms | 500 ms | +20%, and the morning's 1,297 ms outlier did not recur |
+| Second navigate | 57 ms | 72 ms | +27% |
+| Idle CPU over 30 s | 813 ms | 478 ms | **−41%, on a 2.65× spread inside one session** |
+
+**Idle CPU is not measuring the browser at this sample size, and no number of
+further rounds of this instrument will fix that.** Chromium's six rounds span
+**360–955 ms** — 2.65×, on a binary that did not change — and Firefox's span
+**266–781 ms**. **The two distributions overlap completely**: Firefox's lowest
+round is below Chromium's lowest and Chromium's highest is above Firefox's
+highest. So the **1.31×** in the table is what two medians happen to say and is
+**not a claim that Firefox burns more idle CPU**. Across three measurements this
+axis has read ~24×, 0.77× and 1.31×, and exactly one thing is established by
+all three together: **Firefox does not burn an order of magnitude more idle CPU
+than Chromium.** Which of the two burns more, if either, is **not established**,
+and the reason is the instrument — `TotalProcessorTime` differenced across one
+30-second window, on a machine with other things on it — rather than the round
+count. ⚠️ **What to do about that is not decided here**: a longer window, CPU
+sampled rather than differenced, or the axis retired as unmeasurable on a
+developer machine are three different answers, and choosing between them belongs
+to whoever wants the number.
+
+⚠️ **The ratio is the transferable half, and this pair of runs is evidence for
+that rather than an assertion of it.** Both families were 15–20% slower to first
+navigate in the evening than in the morning — Chromium 417 → 500 ms on a binary
+that did not change, Firefox 1,923 → 2,184 ms on one that changed five files —
+and **the ratio moved by 5%**, 4.62× → 4.37×. Machine-wide drift divides out of
+a ratio and does not divide out of a time.
 
 > ⚠️ `Corrected 2026-09-17 @ chromium 1244 · firefox 1544 · playwright-core
 > 1.64.0-alpha-2026-09-14 (previously "**~2× RAM, ~10× first navigate, ~24× idle
@@ -1104,19 +1174,30 @@ machine's.
 > [`docs/probes/2026-09-17-cost-ratios`](../../docs/probes/2026-09-17-cost-ratios/README.md)
 > and the entry no longer carries that marker.
 
-⚠️ **Read the first-navigate row with its spread, not its median.** Chromium's
-three rounds are 413, 417 and **1,297** ms and Firefox's are 1,907, 1,923 and
-**2,962** ms — one outlier each, both high, and the per-round ratio ranges
-**1.47× to 7.16×** against a 4.62× median. A single pair would have supported
-any answer in that band, which is how an order-of-magnitude claim survives being
-quoted. The second-navigate row has no such spread and is where the two families
-are genuinely close.
+⚠️ **Read the first-navigate row with its spread, not its median — and the
+spread is itself not stable.** *Corrected 2026-09-17 (previously "A single pair
+would have supported any answer in that band, which is how an order-of-magnitude
+claim survives being quoted. The second-navigate row has no such spread and is
+where the two families are genuinely close.")* The morning's three rounds were
+Chromium 413, 417 and **1,297** ms against Firefox 1,907, 1,923 and **2,962** ms
+— one outlier each, both high, per-round ratio **1.47× to 7.16×** against a
+4.62× median. The evening's six have **no outlier in either family**: Chromium
+490–534 ms, Firefox 2,084–2,339 ms, per-round ratio **4.00× to 4.68×**. Same
+rig, same machine, **the same Chromium binary** — so a single pair would have
+supported any answer between 1.47× and 7.16× in the morning and nothing outside
+4.00–4.68× in the evening. **Three rounds is a floor rather than a sufficiency**,
+and how much it buys is a property of the day.
 
 ⚠️ **The profile-disk row is the tight one and the only one worth quoting to
-three figures**: 2.76× on all three rounds, varying by under 1 KB per family
-across runs. Note the *file* counts run the other way — Chromium 181 files in
-13.2 MB, Firefox 67 in 36.4 MB — so a comparison by file count says the opposite
-of one by bytes, and neither is wrong.
+three figures**: 2.76× on all six rounds. Five of Chromium's six profiles fall
+inside **6 bytes** of each other, with one round 2,051 B larger; Firefox's six
+span 6,347 B. Note the *file* counts run the other way — Chromium 181 files in
+13.2 MB, Firefox **66** in 36.4 MB — so a comparison by file count says the
+opposite of one by bytes, and neither is wrong. ⚠️ **Firefox's profile lost a
+file on this roll and gained bytes**: *corrected 2026-09-17 (previously "Firefox
+67 in 36.4 MB", 36,444,338 B)* — **67 → 66 files** and 36,444,338 →
+**36,448,380 B**, measured at 1548 against the 1544 reading. Chromium's file
+count is unmoved at 181, which is what a byte-identical browser should do.
 
 **What this does NOT settle, and what has since been settled elsewhere.**
 *Corrected 2026-09-17 (previously "These four were *\"the whole of the evidence
@@ -1136,8 +1217,16 @@ measurements above stand, and what they no longer do is carry a choice.
 **To re-establish:** open one session per family through the product, drive the
 same navigation in each, and compare resident set, wall time to first paint,
 idle CPU over a fixed window with no page activity, and profile-directory size
-on disk. **Three rounds per family minimum** — one pair cannot distinguish a
-ratio from an outlier, which is the defect the spread above exposes. Count
-processes by **`ExecutablePath` under the browsers root** and never by image
-name: a foreign Firefox and Chrome are on this machine. The **ratio** is the
-transferable half; the absolute numbers are whichever machine ran them.
+on disk. **Three rounds per family is the floor and six is what this section was
+last taken at** — *corrected 2026-09-17 (previously "**Three rounds per family
+minimum** — one pair cannot distinguish a ratio from an outlier, which is the
+defect the spread above exposes")*, which is still true and is no longer the
+whole of it: three rounds cannot distinguish a ratio from an outlier, and six
+were not enough to give the idle-CPU axis a sign. Count processes by
+**`ExecutablePath` under the browsers root** and never by image name: a foreign
+Firefox and Chrome are on this machine. The **ratio** is the transferable half;
+the absolute numbers are whichever machine ran them. ⚠️ **Re-take both
+families in one sitting.** The two runs behind this section were six hours apart
+and the machine moved 15–20% between them on an unchanged binary, so a ratio
+assembled from two sittings measures the gap between them as much as the gap
+between the browsers.
