@@ -69,6 +69,27 @@ release body; nothing else depends on it.
   is written down there as the script owner's to take rather than taken by a
   release executor.
 
+### Changed
+
+- ⬆️ **TUnit moved 1.67.0 → 1.68.4 and Microsoft.Testing.Platform deliberately
+  did not move at all.** `dotnet restore --force-evaluate` on 2026-09-17 re-resolved
+  the float and took TUnit across two releases: 1.68.0 (2026-09-15) and 1.68.4
+  (2026-09-16). One change in that span touches this tree and it is an analyzer
+  loosening — [*Fix TUnit0023 false positives for disposal through casts*](https://github.com/thomhurst/TUnit/pull/6818)
+  — which can only turn a red build green, never the reverse; TUnit's analyzers run
+  at **error** severity here, so a *tightening* would have been the thing to read
+  carefully and this is its opposite. Nothing else in 1.68.x is reachable: the
+  mocking fix is `TUnit.Mocks`, the video recorder is `TUnit.Playwright` (which
+  `ForbiddenDependencyTests.NoProjectDrivesPlaywrightDirectly` forbids outright),
+  and 1.68.4 itself is a documentation skill plus a `mockolate` bump.
+  **`Microsoft.Testing.Platform` stayed at 2.4.0 even though 2.4.1 exists**, published
+  2026-09-16T14:22Z — three and a half hours *after* TUnit 1.68.4, which declares an
+  exact `Microsoft.Testing.Platform 2.4.0` dependency, and NuGet resolves the lowest
+  applicable version. So the `[After(TestSession)]` hook that writes the coverage
+  block and the `ITestExecutionFilter` read behind `BROWSERAI_RELEASE_RUN` are on
+  byte-identical platform code, and the float is not dead — it resolved, and what it
+  resolved to is 2.4.0. Solution build after the move: 0 warnings, 0 errors.
+
 ## [1.0.0] - 2026-09-16
 
 **BrowserAI is a Windows MCP server that gives an AI agent a real browser —
