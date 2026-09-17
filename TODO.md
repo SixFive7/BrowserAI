@@ -493,6 +493,35 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       **This row stays open until the roll**, because a resolved ask whose fix
       nobody can install is not a closed item — it is a scheduled one.
 
+      ✅ **THE REPLY IS POSTED, AND THE ADOPTION IS NO LONGER WAITING FOR THE
+      ROLL.** *Added 2026-09-17; nothing above is retracted.* Two things moved on
+      the same day.
+
+      1. **`dgozman`'s request for a repro was finally answered**, under the
+         maintainer's own account, at
+         [#42497 (comment)](https://github.com/microsoft/playwright/issues/42497#issuecomment-5713988873):
+         an apology for the delay, how the server is started, why a relative
+         link does not resolve for either the model or the human reading it, and
+         a thank-you. 1,187 bytes, plain ASCII, LF only; the posted body was
+         fetched back and compared against the approved text. The sentence above
+         — *nobody from this side ever answered* — was true when it was written
+         and is now history rather than state.
+      2. **The pin is being overridden rather than waited out (Q210 = a).** The
+         maintainer's instruction was to adopt the fix and re-release `v1.0.0`
+         rather than wait for `@playwright/mcp` to roll, so `playwright-core` is
+         to be overridden to **1.64.0-alpha-2026-09-17** underneath
+         `@playwright/mcp` 0.0.81, as a **dated exception with a written exit**:
+         it is deleted the day `@playwright/mcp` `latest` pins that alpha or
+         later. That conflicts with *everything floats, never pin*, so it is
+         recorded as an exception rather than absorbed, and it is taken through
+         [the review procedure](UPSTREAM-REVIEW.md) with the four steps above
+         unchanged. **The same roll brings a new tool, `browser_emulate_media`**,
+         which needs a verdict before deny-by-default reddens the suite; the
+         maintainer answered `allow` (Q209 = a).
+
+      **The row still stays open**, and what it is waiting for has changed: the
+      review, not the roll.
+
 - [ ] **Ask `@playwright/mcp` for a no-clobber option on output files, and for
       names Windows will not keep verbatim to be rejected.** Both are losses
       BrowserAI stopped preventing on 2026-08-26, when its own filename gate was

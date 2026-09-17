@@ -74,9 +74,21 @@ one file wide rather than seven rigs wide. *Placed here 2026-09-16, when the
 scratch directory was retired; `build/probes/` existed for one commit, `bc68db0`,
 and went red on exactly this.* **The move to `build/probes/` was performed and
 reverted on 2026-09-17** — thirteen rigs pass the new scan and `observe.ps1` does
-not, and splitting the collection across two homes, or rewriting the rig, are both
-decisions for whoever owns the rule rather than for the batch that improved the
-scan.
+not.
+
+⚠️ **DECIDED 2026-09-17: ALL FOURTEEN STAY HERE.** *Corrected the same day
+(previously "splitting the collection across two homes, or rewriting the rig, are
+both decisions for whoever owns the rule rather than for the batch that improved
+the scan")* — it was put to whoever owns the rule and the answer was (a), leave
+them. **The reason is that the blind spot is now one file wide instead of seven
+rigs wide**, and the two alternatives each cost more than that: splitting
+thirteen rigs into `build/probes/` and leaving one behind under `docs/` makes a
+collection you have to look for in two places, and rewriting `observe.ps1` to be
+pid-keyed falsifies the record of method for a scan's benefit, which is the thing
+the warning at the top of this file forbids. **`observe.ps1` is the one true
+positive and is named here so that it stays one** — if a second rig ever trips
+the scan, that is a new decision rather than a precedent, and the honest move at
+that point is to ask again rather than to widen this paragraph.
 
 | Probe | Re-establishes | Trips the scan |
 |---|---|:-:|

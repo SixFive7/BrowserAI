@@ -1986,3 +1986,80 @@ test asserts on a wall clock*. The reclaim arm was added on 2026-08-20, after
 that sweep, by someone who had read the doctrine. **That is what a habit looks
 like**, and it is a candidate for the mechanism column in `CLAUDE.md` rather
 than the reader column.
+
+
+## Added 2026-09-17, from the wild exit 1 being attributed
+
+### One arm launches a browser the product is entitled to kill, and nothing holds it apart from the arms that start a product server
+
+**The primer, for somebody who has not read the investigation.** A browser died
+during the PowerShell half of the 2026-09-17 gate, with a signature this
+repository has chased since 2026-08-26: exit code `1`, nothing on either stream,
+both pipes at EOF, five lines in the browser's own `--log-file`, and no message
+window. It has been blamed on desktop-heap exhaustion (retired on the day by
+`DesktopHeapProbe`, which found the heap had room) and then on the test harness's
+own spawn-record reclaim (the 2026-08-29 diagnosis, which reproduced that
+signature 18 of 18 and was fixed the same day).
+
+**It was neither.** Read out of the machine-wide process log rather than reasoned
+about:
+
+```
+2026-09-17T12:02:54.5368021Z  WARN  pid=80428  BrowserAI.Sweep[5]
+Terminated a stray browser: pid=90216 image=...\chromium-1244\chrome-win64\chrome.exe
+session=...\.work\test-scratch\sweep-real-browser-29e8...\real.
+Its session directory was unlocked, so nothing owned it.
+```
+
+The killer was a second **product** `BrowserAI.Server.exe`, started by a
+different arm of the same run, performing its ordinary startup stray sweep 84 ms
+after the browser's last log line.
+`StrayCandidate.TryTerminate` calls `TerminateProcess(handle, 1)`, which is the
+`1`. The harness reclaim is excluded by its own announcements: it ran ten seconds
+earlier and named three other pids.
+
+**Why it is open rather than fixed.** `StraySweepTests
+.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession` launches a
+real Chromium against a scratch session directory that carries **no**
+`browserai.lock` — by construction, because the arm's whole subject is a browser
+the sweeper must find and attribute. By the product's own definition that is a
+stray, so **any** product server starting anywhere on the machine while that
+browser is alive will terminate it. That is deterministic rather than rare, which
+makes it a suite isolation defect and not a wild death. The arm carries **no**
+`[NotInParallel]` at all: the class's `SweepGroup` key holds apart the arms that
+*run a sweep themselves*, and says nothing about the dozens of arms that start a
+product `BrowserAI.Server.exe`, each of which sweeps at startup.
+
+**The plantable red, so whichever direction is taken can be watched.** Start a
+real browser the way that arm does, against an unlocked scratch session
+directory; start one product server; assert the browser is still alive. Red today
+by construction rather than by timing, which is what makes it plantable at all —
+the 2026-08-23 rule against provoking a race by timing does not bite here.
+
+**Directions.**
+
+1. **Give the arm a keyless `[NotInParallel]`, so it runs beside nothing.**
+   Smallest change, keeps exactly what the arm proves, and it is the precedent
+   `HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing`
+   already sets for a hazard whose readers cannot be enumerated: the set of arms
+   that start a product server is every arm that starts a product server, and a
+   key only holds apart the arms carrying the same key. **Cost:** the arm's wall
+   time moves onto the suite's critical path, and the class's own remarks record
+   that a previous `[NotInParallel]` there cost 13.05 s of a 20.6 s run.
+   *Recommended.*
+2. **Hold a real `browserai.lock` on the rig's session directory**, so the sweep
+   attributes the browser to an owned session and leaves it alone. **Cost:** it
+   changes what the arm proves. The arm asserts that a sweeper in the interactive
+   session can tie a pid to a profile *through its message window*; owning the
+   directory makes the attribution available a second way, and an arm that can
+   pass for the wrong reason is worse than a slow one.
+3. **Leave it, and rely on the record.** The cause is now named, the observed
+   rate is 1 red in 3 full runs, and a re-run is green. **Cost:** every future
+   occurrence costs somebody the walk from *silent Chromium death* to *the
+   process log*, and this is the third mechanism that signature has been
+   attributed to.
+
+**Not offered: changing the product.** A grace period before the sweep may
+terminate an unattributable browser would weaken the guarantee the sweep exists
+for, on a machine, to make a test comfortable. If that is ever wanted it is a
+charter decision rather than a fix.

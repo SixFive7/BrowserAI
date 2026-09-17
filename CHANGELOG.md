@@ -76,6 +76,35 @@ release body; nothing else depends on it.
   one.
 
 ### Changed
+- 📝 **The wild exit 1 has a name at last, and it is this product's own stray sweep.**
+  The signature has been chased since 2026-08-26: exit code `1`, nothing on
+  either stream, both pipes at EOF, five lines in the browser's own
+  `--log-file`, no message window. It was blamed on desktop-heap exhaustion
+  until `DesktopHeapProbe` fired on the failure path on 2026-09-17 and said the
+  heap had room, and before that on the test harness's own spawn-record reclaim,
+  which reproduced it 18 of 18 on 2026-08-29. **It was neither.** Read out of the
+  machine-wide process log rather than reasoned about:
+  `BrowserAI.Sweep[5]`, `2026-09-17T12:02:54.5368021Z`, *"Terminated a stray
+  browser: pid=90216 ... Its session directory was unlocked, so nothing owned
+  it"* — written by a second **product** `BrowserAI.Server.exe` that a different
+  arm of the same run had started 173 ms earlier, sweeping at startup 84 ms
+  after the dead browser's last log line. `StrayCandidate.TryTerminate` calls
+  `TerminateProcess(handle, 1)`, which is the `1`. **The harness reclaim is
+  excluded by its own announcements rather than by argument** — the 2026-08-29
+  fix announced exactly three terminations that run, ten seconds earlier, naming
+  three other pids — which is that fix working in the direction nobody designed
+  it for: it was built to stop the harness killing a live run and what it did was
+  prove the harness innocent. **The 2026-08-29 exclusion of the product sweep was
+  backwards**: it ruled the sweep out because *attribution needs the window this
+  browser never published*, and the missing window is exactly why the sweep fell
+  back to the session directory and found it unlocked. The arm's rig holds no
+  `browserai.lock` by construction, so **any** product server starting while that
+  browser is alive kills it: deterministic rather than rare, a suite isolation
+  defect rather than a wild death, and posed as a question with three directions
+  and a plantable red rather than fixed here. The suite's own spawn record could
+  not be consulted — it lives under `.work\`, which is cleared at the end of every
+  batch — and the machine-wide log is what survived.
+
 - 📝 **The 1.0.0 release note opens in plain words now.**
   The preamble is what a reader of the release page meets first, and the one
   that shipped read like something generated: an em-dash aside dropped into the
@@ -110,6 +139,22 @@ release body; nothing else depends on it.
   paragraph) and on the tree (*"Expected to be equal to ... but received
   `\"\"`"*). Rendered once through GitHub's own renderer: one `<table>`, six
   `<tbody>` rows, 24 `<td>` cells.
+- 📝 **Two records catch up: where the probe rigs live, and what upstream did with the first ask.**
+  [`docs/probes/`](docs/probes/README.md) keeps all fourteen rigs, decided by the
+  architect on 2026-09-17 after the scan that used to flag seven of them was
+  narrowed to read the filter rather than the API. The blind spot is **one file
+  wide instead of seven rigs wide**, and `2026-09-14-firstrun/observe.ps1` is the
+  one true positive: it watches for a console host appearing anywhere on the
+  machine, which no pid or path form expresses, so re-spelling it would falsify
+  the record of method rather than fix anything. [`CLAUDE.md`](CLAUDE.md) says so
+  by addition with the open question it replaces quoted. And
+  [`TODO.md`](TODO.md)'s ask #1 records that
+  [`dgozman`'s request for a repro was finally answered](https://github.com/microsoft/playwright/issues/42497#issuecomment-5713988873)
+  on 2026-09-17, and that the fix is being adopted by overriding `playwright-core`
+  to the alpha that carries it rather than by waiting for `@playwright/mcp` to
+  roll — a dated exception with a written exit. The row stays open, and what it
+  waits for is the review rather than the roll.
+
 - 📝 **Chromium stays the default browser, on a reason rather than on four numbers that moved.**
   The maintainer's ground, in his words: *"the reason for the default is that
   chrome is the most widely used"*. Recorded as a **decision, not a

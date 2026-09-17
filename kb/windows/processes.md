@@ -380,15 +380,55 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 > **The two rows that carry the weight are the two 1s and the job row.**
 > `taskkill /F` and a hand-rolled `TerminateProcess(h, 1)` are
 > **indistinguishable by exit code**, so a 1 says *ended from outside* and says
-> nothing whatever about by whom. *Since 2026-08-29 one of the two `TerminateProcess`
-> callers on this machine names itself*: the suite's own spawn-record reclaim
-> writes a `WARN` to the process log under `BrowserAI.Tests.SpawnRecordReclaim`
-> for every process it ends, so a 1 found here can be attributed by one grep or
-> shown not to be the harness's — see [QUESTIONS.md](../../QUESTIONS.md) §8a. That
-> narrows the reading; it does not change the table, which is about Windows. And a process taken down by kill-on-job-close
+> nothing whatever about by whom. *Corrected 2026-09-17 (previously "Since
+> 2026-08-29 one of the two `TerminateProcess` callers on this machine names
+> itself")* — **there are two callers on this machine and BOTH name themselves**,
+> which is what turned an eleven-day hunt into one grep. The suite's own
+> spawn-record reclaim writes a `WARN` under
+> `BrowserAI.Tests.SpawnRecordReclaim`; **the product's own stray sweep writes
+> one under `BrowserAI.Sweep`**, and `StrayCandidate.TryTerminate` is where its
+> `TerminateProcess(handle, 1)` lives. See [QUESTIONS.md](../../QUESTIONS.md)
+> §8a. That narrows the reading; it does not change the table, which is about
+> Windows. And a process taken down by kill-on-job-close
 > exits **0** — it is indistinguishable from a clean shutdown, which is the
 > opposite trap: a survivor check that reads exit codes cannot tell containment
 > from a graceful exit. `[STABLE]`
+>
+> ✅ **THE WILD EXIT 1 OF 2026-09-17 IS ATTRIBUTED, AND THE 2026-08-29 READING
+> OF IT WAS WRONG IN BOTH DIRECTIONS** — added 2026-09-17. That day's ledger
+> concluded *"exit code 1 = external `TerminateProcess(handle,1)` … via the
+> HARNESS OWN spawn-record reclaim"* and ruled the **product** sweep out *"BY
+> DESIGN (attribution needs the window this browser never published) — read not
+> run"*. The recurrence on 2026-09-17 was read out of the machine-wide process
+> log rather than reasoned about, and it was the **product sweep**:
+>
+> ```
+> 2026-09-17T12:02:54.5368021Z  made=2026-09-17T12:02:54.5367549Z  WARN   pid=80428@134341201739882745  BrowserAI.Sweep[5]  Terminated a stray browser: pid=90216 image=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1244\chrome-win64\chrome.exe session=C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-29e865154e604cc18ac7a4f7e16f6421\real. Its session directory was unlocked, so nothing owned it.
+> ```
+>
+> **The reclaim is excluded by its own announcements, not by argument.** The same
+> run's reclaim pass announced exactly three terminations, at
+> `12:02:43.7558029Z`, `12:02:43.9795544Z` and `12:02:44.3334638Z` under owner
+> `77360`, and its subjects were `2072`, `87348` and `90064`. The browser that
+> died was `90216`, and it had not been started yet: its own `--log-file` opens
+> at `12:02:54.411Z`, **ten seconds after** the pass finished, and
+> `ScratchRoot.EnsureReclaimed` runs once per process.
+>
+> **The 2026-08-29 exclusion was backwards.** *Attribution needs a window* is
+> exactly why the sweep killed it: with no `Chrome_MessageWindow` there is no pid
+> to tie to a profile, so the sweep fell back to the session directory the
+> browser's command line names — and found it **unlocked**, which is its
+> definition of a stray. The killer was a second **product** `BrowserAI.Server.exe`
+> (pid `80428`) started by a different arm of the same suite run, sweeping at
+> startup **25 ms** after it logged its own child launch and **84 ms** after the
+> browser's last log line. Nothing about the desktop heap, and nothing about the
+> harness.
+>
+> **What this says about the table:** a `1` still means *ended from outside* and
+> still names nobody, and on this machine both callers announce themselves — so
+> the honest procedure for a wild `1` is to grep the process log for the window,
+> under both `BrowserAI.Sweep` and `BrowserAI.Tests.SpawnRecordReclaim`, before
+> reasoning about anything. `[STABLE]`
 >
 > **A handled crash and an unhandled one leave the same exit code.** `chrome.exe
 > --headless=new … --crash-test` writes a real dump into the profile's
