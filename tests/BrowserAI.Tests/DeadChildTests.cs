@@ -147,6 +147,147 @@ internal sealed class DeadChildTests
     }
 
     /// <summary>
+    /// A call forwarded to a session whose child has gone comes back as a
+    /// refusal, rather than never coming back at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The thing this replaces is silence.</b> A request handed to the SDK
+    /// after its transport's channel has completed is registered in a
+    /// pending-request table that nothing will ever walk again — the walk that
+    /// faults it runs once, as the channel completes
+    /// (<see href="../../kb/mcp/sdk.md">kb</see>) — so it waits on the caller's
+    /// token and on nothing else. Measured 2026-09-17 against the published
+    /// slice at 900,000 ms.
+    /// </para>
+    /// <para>
+    /// <b>The bound here is a hang detector and not a promptness claim.</b>
+    /// Nothing asserts how long the refusal takes; what the arm asserts is that
+    /// one arrives at all, and <see cref="TestDefaults.InProcessHang"/> inside
+    /// <c>RawPipeClient</c> is what turns *never* into a failure instead of a
+    /// suite that stops.
+    /// </para>
+    /// <para>
+    /// <b>A call ALREADY IN FLIGHT when the child dies is a different path and
+    /// is not this arm.</b> The SDK faults those itself, which
+    /// <c>LosslessPassthroughTests.AChildThatDiesMidCallProducesANamedErrorRatherThanASuccess</c>
+    /// asserts.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACallForwardedAfterTheChildDiedComesBackRatherThanWaitingForever()
+    {
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools["browser_navigate"] = new FakeToolBehaviour { RawResult = NavigateResult },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "refused");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "the session whose browser server dies before the next call",
+        });
+
+        await sessions.SessionChildren[0].DisposeAsync();
+        await WaitUntilTheTransportNoticedAsync(rig);
+
+        var answer = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite calling into a session whose browser server has gone",
+            ["url"] = "data:text/html,<h1>ok</h1>",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        await Assert.That(TextOf(answer))
+            .Contains(SessionErrors.BrowserServerHasGone("browser_navigate", SessionPath.For(directory).FullPath));
+    }
+
+    /// <summary>
+    /// A slow call on a <b>healthy</b> session is not cut short by the check
+    /// that refuses a dead one.
+    /// </summary>
+    /// <remarks>
+    /// <b>The control, and the failure it guards against is the obvious way to
+    /// get this wrong.</b> A liveness question answered with a clock, or asked
+    /// of a child that is merely busy, would turn every long page action into a
+    /// refusal — and a refusal is what a model would act on. The call below is
+    /// held open while the child goes on listening, exactly as a navigation that
+    /// takes a while does, and it has to come back with the child's own result.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ASlowCallOnAHealthySessionStillGetsTheChildsOwnAnswer()
+    {
+        var holding = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = RigSessionEnvironment.Create(
+            child => child.Tools["browser_navigate"] = new FakeToolBehaviour
+            {
+                RawResult = NavigateResult,
+
+                // Holds the call open WITHOUT blocking the child's read loop, so
+                // the child is demonstrably alive and listening for the whole
+                // time the call is outstanding.
+                HoldUntil = holding.Task,
+            },
+            opensDefaultSession: false);
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "slow");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "the session whose page action takes a while",
+        });
+
+        var slow = CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite holding a call open against a healthy child",
+            ["url"] = "data:text/html,<h1>ok</h1>",
+        });
+
+        // Released only once the call is demonstrably outstanding: the child has
+        // the request and has not answered it.
+        await WaitUntilTheChildIsHoldingAsync(sessions);
+        holding.SetResult();
+
+        var answer = await slow;
+
+        await Assert.That((bool?)answer["isError"]).IsNotEqualTo(true);
+        await Assert.That(TextOf(answer)).IsEqualTo("Page URL: data:text/html,<h1>ok</h1>");
+    }
+
+    /// <summary>
+    /// Waits until the session's child has actually received the held call.
+    /// </summary>
+    /// <remarks>
+    /// The double's own record of what arrived, rather than a duration:
+    /// releasing the hold before the call reached the child would make the arm
+    /// a test of two round trips instead of one outstanding call.
+    /// <see cref="TestDefaults.InProcessHang"/> bounds it as a hang detector.
+    /// </remarks>
+    /// <param name="sessions">The rig whose session child is holding a call.</param>
+    /// <returns>A task that completes once the child has the call.</returns>
+    private static async Task WaitUntilTheChildIsHoldingAsync(RigSessionEnvironment sessions)
+    {
+        using var patience = new CancellationTokenSource(TestDefaults.InProcessHang);
+
+        while (!sessions.SessionChildren[0].ToolCallsReceived.Contains("browser_navigate"))
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), patience.Token);
+        }
+    }
+
+    /// <summary>
     /// Waits until the child's transport has reported end-of-stream, which is
     /// what makes the child dead as far as this process is concerned.
     /// </summary>

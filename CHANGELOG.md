@@ -112,6 +112,27 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🐛 **A browser call into a session whose server has gone comes back now.**
+  Q211 = c. Measured on 2026-09-17:
+  with a session's node child killed under a live BrowserAI, one
+  `browser_navigate` was still outstanding after 900,000 ms, the server alive
+  and nothing in any log after the transport's own end of stream. The cause is
+  read from the MCP SDK's shipped code rather than guessed: it faults every
+  pending request when the transport's channel completes, once, and a request
+  registered after that moment is faulted by nothing, so it waits on the
+  caller's token and on nothing else. BrowserAI asks whether the child is still
+  there before it forwards, and refuses with a sentence that says the browser
+  server for this session has ended, that nothing was forwarded and nothing in
+  the browser changed, and that `browserai_resume` starts a replacement. No
+  timeout was added anywhere: the wait was not slow, it was endless. A call
+  already in flight when the child dies is a different path and has always come
+  back as an error; that is unchanged. The refusal is recorded on the session
+  like every other refused call. The arm was planted red and hit the suite's
+  own five minute hang detector before the check went in, and answers in two
+  seconds with it; two controls stand beside it, a resume of a healthy session
+  and a call held open on a healthy child, because a liveness question answered
+  too readily would turn every slow page action into a refusal.
+
 - 🔧 **`browserai_resume` repairs a session whose browser server has died.**
   Q211 = a. Until now it asked one question, *do I already own this directory*,
   and the answer is still yes when the `node` child behind the session has been

@@ -552,6 +552,39 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
+        // ⚠️ THE CHILD IS ASKED WHETHER IT IS STILL THERE, AND THIS IS THE ONE
+        // PLACE IT CAN BE ASKED CHEAPLY ENOUGH TO ASK EVERY TIME. Added
+        // 2026-09-17. Forwarded to a child whose peer has gone, a call is
+        // registered in the SDK's pending-request table and NEVER completed:
+        // the table is faulted once, as the transport's channel completes, and a
+        // request registered after that moment is faulted by nothing. Measured
+        // the same day against the published slice -- one browser_navigate
+        // outstanding at 900,000 ms with the server alive and no log line after
+        // the transport's own end-of-stream. See HAZARDS.md and
+        // docs/evidence/2026-09-17-resume-wedge.
+        //
+        // ⚠️ A call ALREADY IN FLIGHT when the child dies is not this branch and
+        // never was: the SDK faults every pending request as the channel
+        // completes, which is what LosslessPassthroughTests'
+        // AChildThatDiesMidCallProducesANamedErrorRatherThanASuccess asserts.
+        // What is left uncovered is the window between this check and that
+        // registration, which is microseconds wide and which nothing in the
+        // suite can plant red -- it is named here rather than implied.
+        //
+        // BEFORE the `why` check below, for the reason provisioning is:
+        // a caller whose session has no browser server behind it has a more
+        // useful thing to be told than that it omitted an argument, and being
+        // told the less useful one first costs it a turn.
+        if (live.Child.ChildHasGone)
+        {
+            var gone = SessionErrors.BrowserServerHasGone(tool, live.Location.FullPath);
+
+            ProxyLog.ChildHasGone(live.Logger, tool, live.Location.FullPath);
+            Refused(live, tool, why, gone);
+            await RefuseAsync(caller, request.Id, gone, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // ⚠️ REQUIRED, and refused here rather than left to the child. `why` is
         // injected into every upstream schema beside `session`, so a caller that
         // omits it is not following a schema it was given -- and the child has
@@ -1168,6 +1201,16 @@ internal static partial class ProxyLog
         Level = LogLevel.Debug,
         Message = "Forwarding '{Method}' to the child as {ChildRequestId}. cancellable={Cancellable}")]
     public static partial void Forwarding(ILogger logger, string method, string childRequestId, bool cancellable);
+
+    /// <summary>A call was refused because this session's child has gone.</summary>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="method">The tool that was refused.</param>
+    /// <param name="session">The session directory.</param>
+    [LoggerMessage(
+        EventId = 16,
+        Level = LogLevel.Error,
+        Message = "'{Method}' was not forwarded: the browser server for {Session} has gone. Nothing was sent to it.")]
+    public static partial void ChildHasGone(ILogger logger, string method, string session);
 
     /// <summary>A tool call named a session this process is not driving.</summary>
     /// <param name="logger">Where to write.</param>

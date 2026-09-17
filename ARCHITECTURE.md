@@ -195,6 +195,23 @@ short-circuits both methods, and the answer is the child's `result` sliced by
 passthrough lossless — an unknown content type, an unmodelled tool member and a
 non-ASCII character all survive, none of which a typed round trip preserves.
 
+**A call is refused rather than forwarded when the session's child has gone.**
+⚠️ *Added 2026-09-17.* `BrowserProxy` asks `ChildConnection.ChildHasGone`
+at the door, after the verdict and provisioning and **before** the `why` check,
+for the reason provisioning is there: a caller whose session has no browser
+server behind it has a more useful thing to be told than that it omitted an
+argument. The refusal is `SessionErrors.BrowserServerHasGone`, it names
+`browserai_resume`, and the call is recorded as a refused row like every other.
+**What it replaces is silence.** Forwarded, such a call is registered in the
+SDK's pending-request table and never completed — that table is faulted once,
+as the transport's channel completes, and a request registered afterwards is
+faulted by nothing
+([kb](kb/mcp/sdk.md#a-pending-request-is-faulted-once-at-the-close-and-never-again--measured-2026-09-17)).
+**A call already in flight when the child dies is a different path** and has
+always been answered: the SDK faults it as `IOException: The server shut down
+unexpectedly`. **No timeout was added**, here or anywhere on the forward path;
+the wait was not slow, it was endless.
+
 ### Byte-identical, and the one exception
 
 **A forwarded call goes out byte-identical and its answer comes back

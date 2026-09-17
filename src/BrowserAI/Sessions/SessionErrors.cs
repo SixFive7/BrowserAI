@@ -747,6 +747,39 @@ internal static class SessionErrors
         + $"If this persists, delete that directory and call {SessionToolSurface.Init} again to re-provision. Otherwise fix the cause and call {SessionToolSurface.Resume} on the same directory.";
 
     /// <summary>
+    /// Row 7's other companion — the session's browser server has gone, so the
+    /// call was not forwarded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>What this replaces is a call that never came back.</b> Measured
+    /// 2026-09-17 against the published slice: with the session's child killed
+    /// under a live BrowserAI, one <c>browser_navigate</c> was still outstanding
+    /// after 900,000 ms, with the server alive and nothing in any log after the
+    /// transport's own end-of-stream. A refusal a model can read is the whole
+    /// improvement; nothing here is a timeout and nothing here waits.
+    /// </para>
+    /// <para>
+    /// <b>It names <c>browserai_resume</c> because resume repairs this</b> — it
+    /// checks whether the child behind an owned session is still alive and
+    /// starts a replacement when it is not. Naming a recovery that did not exist
+    /// would be worse than naming none.
+    /// </para>
+    /// <para>
+    /// <b>And it says what the replacement will not bring back.</b> The profile
+    /// is on disk and survives; the pages, the tabs and anything a script left
+    /// in memory were in the process that died.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was not forwarded.</param>
+    /// <param name="path">The session directory.</param>
+    /// <returns>The refusal.</returns>
+    public static string BrowserServerHasGone(string tool, string path) =>
+        $"The browser server for '{path}' has ended, so '{tool}' was not forwarded and nothing in the browser changed. "
+        + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
+        + "The session's profile, files and log are all still on disk, so cookies and stored state survive — but no page is open in a new browser server, so navigate again before you act on what you see.";
+
+    /// <summary>
     /// Row 7's companion — the session's browser server had died and a
     /// replacement would not start.
     /// </summary>

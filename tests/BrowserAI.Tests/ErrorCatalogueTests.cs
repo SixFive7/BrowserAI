@@ -547,6 +547,48 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
+    /// Row 7's other companion — a call forwarded to a session whose browser
+    /// server has gone.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its predecessor was silence.</b> Before 2026-09-17 this condition
+    /// produced no sentence at all: the call was handed to the SDK, registered
+    /// in a pending-request table nothing would walk again, and never answered.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDeadBrowserServerRowIsEmittedByACallForwardedAfterTheChildDied()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "server-gone");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a browser server that has ended",
+        });
+
+        await sessions.SessionChildren[0].DisposeAsync();
+        await WaitUntilTheChildIsGoneAsync(rig);
+
+        var answer = await CallAsync(rig, "browser_navigate", new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = directory,
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
+            ["url"] = "data:text/html,x",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.BrowserServerHasGone),
+            SessionErrors.BrowserServerHasGone("browser_navigate", SessionPath.For(directory).FullPath));
+    }
+
+    /// <summary>
     /// Waits until the session child's transport has reported end-of-stream.
     /// </summary>
     /// <remarks>
@@ -1277,7 +1319,16 @@ internal sealed partial class ErrorCatalogueTests
         // row of its own rather than a clause on `BrowserRuntimeDidNotStart`,
         // whose sentence releases the lock and invites a re-init, because that
         // advice is wrong here.
-        await Assert.That(rows.Count).IsEqualTo(26);
+        //
+        // ⚠️ **Corrected 2026-09-17 to 27 (previously 26), later the same
+        // change.** `BrowserServerHasGone` arrived with the door check that
+        // refuses a forward into a child that has gone. It is a third row rather
+        // than a clause on either of the two above because its recovery is the
+        // only one of the three a caller can take without having been told
+        // anything else first -- call `browserai_resume` and try again -- and
+        // because it is the only one of the three whose predecessor was
+        // silence rather than another sentence.
+        await Assert.That(rows.Count).IsEqualTo(27);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>
