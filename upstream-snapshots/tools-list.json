@@ -4,12 +4,12 @@
   "_before_you_accept_a_change": "UPSTREAM-REVIEW.md. Accepting a diff here is adopting an upstream version.",
   "resolvedFrom": {
     "@playwright/mcp": "0.0.81",
-    "playwright-core": "1.64.0-alpha-2026-09-14",
+    "playwright-core": "1.64.0-alpha-2026-09-17",
     "node": "v24.21.0"
   },
   "serverInfo": {
     "name": "Playwright",
-    "version": "1.64.0-alpha-2026-09-14"
+    "version": "1.64.0-alpha-2026-09-17"
   },
   "serverCapabilities": {
     "tools": {}
@@ -24,9 +24,9 @@
     }
   },
   "counts": {
-    "internalRegistry": 82,
-    "exposedMaximum": 73,
-    "defaultSurface": 26,
+    "internalRegistry": 83,
+    "exposedMaximum": 74,
+    "defaultSurface": 27,
     "skillOnly": 9
   },
   "declaredCapabilities": [
@@ -62,6 +62,7 @@
       "browser_console_messages",
       "browser_console_clear",
       "browser_handle_dialog",
+      "browser_emulate_media",
       "browser_evaluate",
       "browser_file_upload",
       "browser_drop",
@@ -273,6 +274,7 @@
     "browser_resize",
     "browser_console_messages",
     "browser_handle_dialog",
+    "browser_emulate_media",
     "browser_evaluate",
     "browser_file_upload",
     "browser_drop",
@@ -665,6 +667,98 @@
       },
       "annotations": {
         "title": "Handle a dialog",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "browser_emulate_media",
+      "description": "Emulate CSS media features for the page, for example switch between the light and dark color scheme. Omitted parameters are left unchanged; null clears an override.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "colorScheme": {
+            "description": "Emulates the prefers-color-scheme media feature",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reducedMotion": {
+            "description": "Emulates the prefers-reduced-motion media feature",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "reduce",
+                  "no-preference"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "forcedColors": {
+            "description": "Emulates the forced-colors media feature",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "none"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contrast": {
+            "description": "Emulates the prefers-contrast media feature",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "more",
+                  "no-preference"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "media": {
+            "description": "Changes the CSS media type of the page",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "screen",
+                  "print"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "title": "Emulate media features",
         "readOnlyHint": false,
         "destructiveHint": true,
         "openWorldHint": true

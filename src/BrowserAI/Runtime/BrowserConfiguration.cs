@@ -168,6 +168,54 @@ internal static class BrowserConfiguration
     public const string Codegen = "none";
 
     /// <summary>
+    /// How the child renders a file path back to a caller — <b>absolute</b>,
+    /// where upstream's default is <c>relative</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The fix to this project's own upstream ask</b>,
+    /// <see href="https://github.com/microsoft/playwright/issues/42497">microsoft/playwright#42497</see>,
+    /// merged as
+    /// <see href="https://github.com/microsoft/playwright/pull/42673">#42673</see>
+    /// on 2026-09-16 and reached by a
+    /// <see href="https://github.com/SixFive7/BrowserAI/blob/master/DECISIONS.md">dated
+    /// <c>playwright-core</c> override</see> rather than by an
+    /// <c>@playwright/mcp</c> roll.
+    /// </para>
+    /// <para>
+    /// <b>A relative pointer resolves against the child's working directory, and
+    /// the reader of a tool result is a model rather than a process.</b> Every
+    /// artifact the child names — the screenshot, PDF and storage-state links,
+    /// the snapshot link, the console log link, the download line, a binary
+    /// response body and the trace files — arrived as
+    /// <c>output\page-….png</c>, which names nothing a caller can open.
+    /// BrowserAI used to answer that with a note of its own naming each artifact
+    /// absolutely; that note went with artifact routing on 2026-08-26, and from
+    /// then until this key those pointers reached a model unaccompanied.
+    /// </para>
+    /// <para>
+    /// <b>Written rather than omitted</b>, like <see cref="Codegen"/>,
+    /// <c>allowUnrestrictedFileAccess</c> and <c>timeouts.idle</c>: upstream's
+    /// default is the opposite of what this product wants, so an omission would
+    /// be a silent revert rather than a stance, and
+    /// <c>browser_get_config</c> cannot read back a key the file never carried.
+    /// <c>RequiredSessionOpinions</c> names it so a generator that drops it is a
+    /// red build.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It is not in <c>config.d.ts</c>.</b> The typings ship with
+    /// <c>@playwright/mcp</c>, which has not rolled; the implementation is in
+    /// <c>playwright-core</c>, which the override moved. <c>loadConfig</c> is a
+    /// bare <c>JSON.parse</c> with no schema validation, so the key works
+    /// regardless — and because that is the same property that makes a renamed
+    /// key vanish in silence, the honouring is measured over a running child by
+    /// <c>ConfigRoundTripTests.TheChildHonoursFilePathsEvenThoughItsOwnTypingsDoNotDeclareIt</c>
+    /// rather than assumed.
+    /// </para>
+    /// </remarks>
+    public const string FilePaths = "absolute";
+
+    /// <summary>
     /// Upstream's own idle timeout, in milliseconds — <b>one hour</b>, written
     /// rather than omitted.
     /// </summary>
@@ -427,6 +475,14 @@ internal static class BrowserConfiguration
         // otherwise remove it from both sides of the round trip and leave that
         // comparison green.
         "timeouts.idle",
+
+        // Added 2026-09-17 with the key itself, for the same reason -- and this
+        // one has a second: `relative` is upstream's DEFAULT, so a generator
+        // that stopped writing this key would not fail, it would silently go
+        // back to handing a model paths it cannot resolve. That is the exact
+        // failure the key was adopted to end, and it would leave every other
+        // assertion green.
+        "filePaths",
     ];
 
     /// <summary>The config one session's child is started with.</summary>
@@ -729,6 +785,14 @@ internal static class BrowserConfiguration
             // See the constant: it strips a `### Ran Playwright code` block from
             // every response, for a feature this product does not have.
             writer.WriteString("codegen", Codegen);
+
+            // ⚠️ THE OPPOSITE OF UPSTREAM'S DEFAULT, WRITTEN RATHER THAN
+            // OMITTED, AND THE ONE KEY HERE THAT config.d.ts DOES NOT DECLARE.
+            // See the constant. Omitting it is not neutral: `relative` is what
+            // the child falls back to, and that is the defect this key was
+            // adopted to end -- every artifact pointer in every tool result
+            // named against a working directory the reader does not have.
+            writer.WriteString("filePaths", FilePaths);
 
             // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN RATHER THAN OMITTED, AND IT
             // CANNOT FIRE. See `IdleTimeoutMilliseconds`: BrowserAI's own timer

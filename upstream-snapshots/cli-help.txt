@@ -63,6 +63,10 @@ Options:
                                         (Edge/Chrome only). Requires the
                                         "Playwright Extension" to be installed.
   --endpoint <endpoint>                 Bound browser endpoint to connect to.
+  --file-paths <mode>                   how file paths are rendered in tool
+                                        results, "relative" to the workspace
+                                        root or "absolute". Default is
+                                        "relative".
   --grant-permissions <permissions...>  List of permissions to grant to the
                                         browser context, for example
                                         "geolocation", "clipboard-read",

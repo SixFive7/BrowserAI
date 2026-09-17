@@ -133,6 +133,17 @@ throws. `[FLOATS]`
 
 ## First-run provisioning
 
+> ⚠️ **`[STALE]` since 2026-09-17, one day after the figures below were taken.**
+> The `playwright-core` pull-forward to 1.64.0-alpha-2026-09-17 moved **chromium
+> 1244 → 1245 and firefox 1544 → 1548**, and every download and on-disk figure in
+> this section is keyed to a revision. The numbers are left exactly as measured
+> and are **not** adjusted, extrapolated or carried forward as though they still
+> held: re-taking them is a measurement session against the new revisions, with
+> [`docs/probes/2026-09-16-provisioning`](../../docs/probes/2026-09-16-provisioning/README.md)
+> as the rig. [Re-verification row 21](../re-verification.md) carries the debt.
+> `ffmpeg` **1011** and `winldd` **1007** did not move, so the two small
+> components are still current; Chromium and Firefox are what is owed.
+
 **Re-measured 2026-09-16 by exact `content-length` from the CDN: 207.3 MB
 down.** `chrome-win64.zip` 205,733,764 B + `ffmpeg-win64.zip` 1,411,741 B +
 `winldd-win64.zip` 128,684 B = **207,274,189 B**, at chromium **1244** /
@@ -841,6 +852,15 @@ and Chrome are on this machine. The *behaviour* half is asserted on every build
 by `BrowserIdleTimerTests.AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks`;
 only the numbers need the manual run.
 
+> ⚠️ **`[STALE]` since 2026-09-17.** The `playwright-core` pull-forward to
+> 1.64.0-alpha-2026-09-17 is a Playwright bump **and** a chromium revision move,
+> 1244 → 1245, which is both halves of this measurement's trigger. Nothing below
+> is adjusted; the cost is what a revision most plausibly moves, and the
+> **durability** half is the one [reclaim is forever](../../ARCHITECTURE.md#sessions)
+> rests on and the one to re-take first, with
+> [`docs/probes/2026-09-16-resume`](../../docs/probes/2026-09-16-resume/README.md)
+> as the rig. [Re-verification row 38](../re-verification.md) carries the debt.
+
 **Resume costs 336 ms and 367 ms, and loses only `sessionStorage`.** Re-measured
 2026-09-16 at chromium **1244** / 154.0.8037.0 under `playwright-core`
 1.64.0-alpha-2026-09-14 and `@playwright/mcp` 0.0.81, twice, against a real
@@ -964,6 +984,15 @@ product.
 update 1–3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
 
 ## Firefox against Chromium: the standing cost ratios
+
+> ⚠️ **`[STALE]` since 2026-09-17, hours after these were taken and against both
+> families at once.** The `playwright-core` pull-forward moved **chromium 1244 →
+> 1245 and firefox 1544 → 1548**, and the header below says of these four that
+> *every one of them moves with a browser revision*. Nothing here is adjusted:
+> three rounds per family is the stated minimum, so re-taking them is a
+> measurement session, with
+> [`docs/probes/2026-09-17-cost-ratios`](../../docs/probes/2026-09-17-cost-ratios/README.md)
+> as the rig. [Re-verification row 34](../re-verification.md) carries the debt.
 
 **1.19× RAM, 4.6× first navigate, 0.77× idle CPU, 2.76× profile disk.** Measured
 2026-09-17 against Chromium as the unit, **three rounds per family**, through the

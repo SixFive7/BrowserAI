@@ -33,6 +33,16 @@ regenerate into
 [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
 on every build, so a move is a diff rather than a memory. `[FLOATS]`
 
+⚠️ **The three numbers in that paragraph are 0.0.79's and are kept as the
+measurement they were; the current ones are **83 / 74 / 27** at
+`@playwright/mcp` 0.0.81 / `playwright-core` 1.64.0-alpha-2026-09-17, re-measured
+2026-09-17.** The `skillOnly` 9 has not moved across any of it. The paragraph is
+not rewritten because the point it makes — *a golden test written against the
+wrong one of the three fails on day one* — is about which number you pick rather
+than about what it is today, and
+[the per-capability breakdown](#the-per-capability-breakdown-counted) below is
+the entry that carries the live figures.
+
 **The `storage` capability is 17 tools** — the cookie / localStorage /
 `storageState` set. The legacy `interactive` server ran without it, so in that
 process they did not exist at all.
@@ -48,52 +58,59 @@ regenerating the snapshot: `pwsh -File build/Update-UpstreamSnapshots.ps1
 -Accept`, which reads `browserTools` from the resolved bundle and cross-checks
 every number against a real `tools/list`. `[FLOATS]`
 
-⚠️ **What moved, and it is one capability again — a different one.** `core`
-went **21 → 23** when the `playwright-core` roll inside `@playwright/mcp` 0.0.81
-added `browser_webmcp_list` and `browser_webmcp_call`; `devtools` did **not**
-move and is still **13**; **every other capability's count is unchanged to the
-tool, nothing was renamed or removed, and eleven surviving tools changed exactly
-one string each** — the `filename` parameter's description, which now says a
-relative name resolves against the workspace root. All asserted by diffing the
-two accepted snapshots entry by entry rather than by reading the changelog. The
-totals move with it: internal registry **80 → 82**, exposable maximum **71 →
-73**, and the `devtools`-alone surface **37 → 39** (it moved even though
-`devtools` did not, because the base it sits on moved). `skillOnly` is still
-**9**.
+⚠️ **Re-measured 2026-09-17 @ `@playwright/mcp` 0.0.81 / `playwright-core`
+1.64.0-alpha-2026-09-17**, and it is one capability for the third bump running —
+`core` again. It went **23 → 24** with `browser_emulate_media`, which arrived
+through the [dated `playwright-core` override](../../DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
+rather than through an `@playwright/mcp` roll, so the wrapper's version did not
+move with it. **Every other capability's count is unchanged to the tool, nothing
+was renamed or removed, and no surviving tool changed a single byte** — the
+survivors' schemas are identical and their order is preserved, asserted by
+diffing the two accepted snapshots entry by entry. The totals move with it:
+internal registry **82 → 83**, exposable maximum **73 → 74**, default surface
+**26 → 27**, and every per-capability *alone* figure by one, because the base
+they sit on moved. `skillOnly` is still **9**, and still the same nine names.
 
-⚠️ **The default surface moved this time and did not last time: 24 → 26.**
-`core` is unconditional, so a tool arriving there is in the default surface by
-construction, where the 0.0.80 pair landed in `devtools` and was not. A reader
-who learned "the default is 24 and stays there" learned it from a version where
-the arrivals happened to be optional. ⚠️ **These are upstream's numbers, so
-they are unaffected by the verdict those two tools are still awaiting** — what
-BrowserAI itself advertises is a different figure and lives in
+⚠️ **What the paragraph below said of 0.0.81 is left standing as the previous
+measurement.** `core` went **21 → 23** when the roll inside `@playwright/mcp`
+0.0.81 added `browser_webmcp_list` and `browser_webmcp_call`; `devtools` did
+**not** move and is still **13**; eleven surviving tools changed exactly one
+string each — the `filename` parameter's description, which now says a relative
+name resolves against the workspace root. The totals then were internal registry
+**80 → 82**, exposable maximum **71 → 73**, `devtools`-alone **37 → 39**, and
+the default surface **24 → 26**: `core` is unconditional, so a tool arriving
+there is in the default surface by construction, where the 0.0.80 pair landed in
+`devtools` and was not. A reader who learned "the default is 24 and stays there"
+learned it from a version where the arrivals happened to be optional.
+⚠️ **These are upstream's numbers, so they are unaffected by BrowserAI's own
+verdicts** — what BrowserAI itself advertises is a different figure and lives in
 [`DECISIONS.md`](../../DECISIONS.md).
 
 | Capability | Tools it carries | Of those, `skillOnly` | Surface with it alone |
 |---|---|---|---|
-| `core` | 23 | 2 | unconditional |
+| `core` | 24 | 2 | unconditional |
 | `core-input` | 7 | 5 | unconditional |
 | `core-navigation` | 4 | 2 | unconditional |
 | `core-tabs` | 1 | 0 | unconditional |
 | `core-install` | **0** | — | unconditional, and carries nothing |
-| `config` | 1 | 0 | 27 |
-| `network` | 4 | 0 | 30 |
-| `pdf` | 1 | 0 | 27 |
-| `storage` | 17 | 0 | 43 |
-| `testing` | 5 | 0 | 31 |
-| `vision` | 6 | 0 | 32 |
-| `devtools` | 13 | 0 | 39 |
-| **all twelve** | **82** | **9** | **73** |
+| `config` | 1 | 0 | 28 |
+| `network` | 4 | 0 | 31 |
+| `pdf` | 1 | 0 | 28 |
+| `storage` | 17 | 0 | 44 |
+| `testing` | 5 | 0 | 32 |
+| `vision` | 6 | 0 | 33 |
+| `devtools` | 13 | 0 | 40 |
+| **all twelve** | **83** | **9** | **74** |
 
 **The `core` family is unconditional, and that is why every column above starts
-at 26.** `filteredTools(config)` is
+at 27.** `filteredTools(config)` is
 `browserTools.filter(t => t.capability.startsWith("core") || config.capabilities?.includes(t.capability)).filter(t => !t.skillOnly)`,
 so the five `core*` capabilities are on whatever `capabilities` says — setting
-`capabilities: ["config"]` yields **27** tools, not 1. Naming a `core*`
+`capabilities: ["config"]` yields **28** tools, not 1. Naming a `core*`
 capability explicitly therefore does nothing, and **no configuration can reduce
-the surface below the base 26**. *Corrected 2026-09-15 @ `@playwright/mcp`
-0.0.81 (previously "**25** tools" and "the base 24").* `[FLOATS]`
+the surface below the base 27**. *Corrected 2026-09-17 @ `playwright-core`
+1.64.0-alpha-2026-09-17 (previously "**27** tools" and "the base 26"); "**25**
+tools" and "the base 24" before that.* `[FLOATS]`
 
 **The nine `skillOnly` tools, by name:** `browser_console_clear`,
 `browser_network_clear` (`core`); `browser_press_sequentially`,
@@ -104,9 +121,9 @@ and the property is `tool.skillOnly` on the registry entry rather than anything
 on the schema. `[FLOATS]`
 
 **What BrowserAI's own capability sets expose, measured over the wire rather
-than added up:** `config` + `vision` + `devtools` gives **46**, adding `storage`
-gives **63**, and adding `network`, `pdf` and `testing` on top of that gives
-**73** — the whole exposable surface, which is what
+than added up:** `config` + `vision` + `devtools` gives **47**, adding `storage`
+gives **64**, and adding `network`, `pdf` and `testing` on top of that gives
+**74** — the whole exposable surface, which is what
 [every session now gets](../../ARCHITECTURE.md#sessions). The first two are the
 same numbers the `createConnection` experiment below produced from two
 connections in one process, which is a second, independent route to them.
@@ -285,8 +302,15 @@ feature"*. `[FLOATS]`
 
 ### What a BrowserAI session permits, after its own filtering
 
-**Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.81 / `playwright-core`
-1.64.0-alpha-2026-09-14: 71 of 73, one row.** ⚠️ **Corrected 2026-09-15
+**Re-measured 2026-09-17 @ `@playwright/mcp` 0.0.81 / `playwright-core`
+1.64.0-alpha-2026-09-17: 72 of 74, one row.** ⚠️ **Corrected 2026-09-17
+(previously "Re-measured 2026-09-15 @ `@playwright/mcp` 0.0.81 / `playwright-core`
+1.64.0-alpha-2026-09-14: 71 of 73, one row")** — the
+[dated `playwright-core` override](../../DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
+added `browser_emulate_media`, `core` and therefore unconditional, judged
+**`allow`**, so **both** figures moved by one and the withheld set is unchanged
+at two. Numerator and denominator moving together is the ordinary case; the
+0.0.81 move below is the one that did not. ⚠️ **Corrected 2026-09-15
 a second time the same day (previously "Re-measured 2026-09-15 @ `@playwright/mcp`
 0.0.80 / `playwright-core` 1.63.0-alpha-2026-08-31: 70 of 71, one row"; "68 of 69"
 at 0.0.79 before that; corrected 2026-08-20 from three rows,
@@ -309,9 +333,9 @@ both `core` and therefore unconditional, taking the exposable surface from 71 to
 advertised count by one, and **the withheld set became two for the first time
 since it existed**.
 
-Upstream's own per-capability surfaces are 46 and 73 above; this is what survives
-BrowserAI's own decision, out of the **71-tool surface** it advertises to every
-caller — 73 minus the two it withholds. Re-establish by running
+Upstream's own per-capability surfaces are 47 and 74 above; this is what survives
+BrowserAI's own decision, out of the **72-tool surface** it advertises to every
+caller — 74 minus the two it withholds. Re-establish by running
 `SessionPolicyTests.ASessionPermitsEveryToolItAdvertisesAndTheOneThatWouldHangIsNotAdvertised`,
 which computes the surface from the committed snapshot, applies the product's own
 withholding predicate, and asks its decision function about every name that
@@ -319,7 +343,7 @@ survives. `[FLOATS]`
 
 | Session | Advertised | Permitted | Refused, and why |
 |---|---:|---:|---|
-| any | **71** | **71** | nothing it advertises |
+| any | **72** | **72** | nothing it advertises |
 
 **The two that are not there are `browser_annotate` and `browser_webmcp_call`,
 and neither is refused conditionally — neither is offered at all.**
@@ -701,6 +725,76 @@ session-scoped one, so it would reap a peer's descriptors as readily as its own.
 
 Re-establish with a directory listing and a byte total over
 `%LOCALAPPDATA%\ms-playwright\b`, and read one file to see whose it is.
+
+## Every artifact pointer a tool result carries is absolute — measured 2026-09-17
+
+**`filePaths: "absolute"` makes every one of them absolute, and two of the shapes
+it covers were not named by the pull request that added it.** Measured 2026-09-17
+at `@playwright/mcp` **0.0.81** / `playwright-core` **1.64.0-alpha-2026-09-17**,
+node **v24.21.0**, Chromium **154.0.8037.0** (revision **1245**) — twice against
+the payload's own `cli.js`, once per value of the key, and once end to end
+through the published `BrowserAI.Server.exe`. `[FLOATS]`
+
+This closes [upstream ask #1](../../TODO.md#upstream-asks), filed 2026-08-27,
+transferred by upstream to
+[microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497)
+and granted as
+[#42673](https://github.com/microsoft/playwright/pull/42673), merged 2026-09-16.
+The version carrying it is reached through the
+[dated `playwright-core` override](../../DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
+not through an `@playwright/mcp` roll.
+
+| Pointer | `filePaths: "relative"` — before | `filePaths: "absolute"` — after | Absolute? |
+|---|---|---|:-:|
+| Screenshot link, generated name | `output\page-…Z.png` | `C:\…\output\page-…Z.png` | **yes** |
+| Screenshot link, caller's `filename` | `./probe-shot.png` | `C:\…\probe-shot.png` | **yes** |
+| PDF link | `./probe.pdf` | `C:\…\probe.pdf` | **yes** |
+| Storage-state link | `./probe-storage.json` | `C:\…\probe-storage.json` | **yes** |
+| Snapshot link | `output\page-…Z.yml` | `C:\…\output\page-…Z.yml` | **yes** |
+| Console log link, caller's `filename` | `./probe-console.log` | `C:\…\probe-console.log` | **yes** |
+| Console log pointer in `### Events` | `output\console-…Z.log#L1-L2` | `C:\…\output\console-…Z.log#L1-L2` | **yes** |
+| Download line | `- Downloaded file X to "output\X"` | `- Downloaded file X to "C:\…\output\X"` | **yes** |
+| Binary response body line | `output\response-…Z.png` | `C:\…\output\response-…Z.png` | **yes** |
+| Network-requests link, caller's `filename` | `./probe-network.txt` | `C:\…\probe-network.txt` | **yes** |
+| Trace links — `Action log`, `Network log`, `Resources`, `Trace` | `output\traces\trace-….trace` | `C:\…\output\traces\trace-….trace` | **yes** |
+| Paused-debugger location | — | — | **not measured** |
+
+**The mechanism is exactly two call sites, which is what the ask predicted.**
+`Response._printablePath(fileName)` returns `path.resolve(fileName)` when the key
+is `absolute` and a workspace-relative path otherwise, and it is called from four
+places — the file-link builder, `addFileLink`, the download line and the paused
+location. Separately, the snapshot renderer is handed
+`logRelativeTo = filePaths === "absolute" ? undefined : this._clientWorkspace`,
+which is what moves the `#L1-L2` console pointer inside `### Events`. There is no
+third route, so a shape that is relative after this is a shape that does not go
+through `Response` at all.
+
+⚠️ **The paused-debugger location is the one shape the PR body named that no run
+here drove.** It is the fourth `_printablePath` call site —
+``- ${pausedDetails.title} at ${this._printablePath(pausedDetails.location.file)}`` —
+so it is covered by construction, and **that is a reading of the bundle rather
+than a measurement**; provoking it needs a paused session, which is a different
+rig. Recorded as owed rather than claimed.
+
+⚠️ **Two shapes the PR body did *not* name are covered anyway**, and both were
+measured rather than assumed: the **binary response body** line, which goes
+through `addResult`'s `typeof data !== "string"` branch into the same file-link
+builder, and the **trace links**, which come from `addFileLink`.
+
+**End to end through BrowserAI, every row above reads absolute**, which is the
+half a reading of the bundle cannot give: the generated config has to carry the
+key and the child has to honour it. `browser_get_config` on a real session
+answers `"filePaths": "absolute"`, and it does so although
+`@playwright/mcp`'s own `config.d.ts` **does not declare the key** — `loadConfig`
+is a bare `JSON.parse` with no schema validation, and the bundle's own config key
+type map carries `filePaths -> string`.
+
+**Re-establish it** with
+[`docs/probes/2026-09-17-file-paths`](../../docs/probes/2026-09-17-file-paths/README.md):
+run `probe.mjs` twice, once per value, and diff — a shape that reads the same in
+both is a shape the option does not reach — then run `through-browserai.mjs`
+against a published slice. Transcripts:
+[`docs/evidence/2026-09-17-file-paths`](../../docs/evidence/2026-09-17-file-paths/README.md).
 
 ## Artifacts and output-directory behaviour
 

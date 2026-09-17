@@ -138,6 +138,53 @@ internal sealed class ConfigRoundTripTests
     }
 
     /// <summary>
+    /// The child honours <c>filePaths</c>, a key its own <c>config.d.ts</c> does
+    /// not declare.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The one key in the generated config with no entry in the typings this
+    /// project diffs</b>, and it is measured for exactly that reason. It is
+    /// implemented in <c>playwright-core</c>, which the
+    /// <see href="https://github.com/microsoft/playwright/pull/42673">dated
+    /// override</see> moved to 1.64.0-alpha-2026-09-17, while
+    /// <c>config.d.ts</c> ships with <c>@playwright/mcp</c>, which has not
+    /// rolled — so <c>config-schema.d.ts</c> is the one golden snapshot that did
+    /// <i>not</i> move on adoption.
+    /// </para>
+    /// <para>
+    /// That is survivable only because <c>loadConfig</c> is a bare
+    /// <c>JSON.parse</c> with no schema validation, which is the same property
+    /// that makes a renamed key vanish in silence. The typings were never what
+    /// made a key work; a running child saying the value back is. The generic
+    /// walk above would cover this too, and <b>a named arm is what keeps the
+    /// cover honest</b>: a generator that stopped writing the key would remove
+    /// it from both sides of that comparison and leave it green.
+    /// </para>
+    /// <para>
+    /// <b>The value is <c>absolute</c> and upstream's default is
+    /// <c>relative</c>.</b> A caller reading a tool result is a model rather
+    /// than a process with a working directory, so a relative pointer names
+    /// nothing it can resolve.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheChildHonoursFilePathsEvenThoughItsOwnTypingsDoNotDeclareIt()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SessionRun.SharedAsync();
+        var resolved = ResolvedConfig(run);
+
+        await Assert.That((string?)Follow(resolved, "filePaths"))
+            .IsEqualTo(BrowserConfiguration.FilePaths)
+            .Because("the generated config writes filePaths and the child has to hand it back, or every artifact pointer in every tool result is relative to a directory the model does not have");
+
+        await Assert.That(BrowserConfiguration.FilePaths).IsEqualTo("absolute");
+    }
+
+    /// <summary>
     /// Upstream's workspace guardrail is switched on <b>explicitly</b> in every
     /// config this product generates, with no argument that can turn it off.
     /// </summary>

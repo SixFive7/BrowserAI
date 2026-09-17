@@ -12,7 +12,7 @@ namespace BrowserAI.Protocol;
 /// <remarks>
 /// <para>
 /// <b>It has to be an allowlist rather than a strip-list.</b> Upstream reads
-/// <b>45</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
+/// <b>46</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
 /// config mapping, and the merge order is config file → environment → CLI — so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
 /// error anywhere. Naming what may pass makes the next variable upstream adds
@@ -41,13 +41,21 @@ namespace BrowserAI.Protocol;
 /// right</b> — only a re-measurement against the resolved bundle does that.
 /// </para>
 /// <para>
-/// <b>The next one is already known and is deliberately not written in
-/// yet.</b> <c>playwright-core</c> 1.64.0-alpha-2026-09-17 adds
-/// <c>PLAYWRIGHT_MCP_FILE_PATHS</c> inside the mapping, taking it to <b>46</b>
-/// with the same three outside — but that alpha is not what any released
-/// <c>@playwright/mcp</c> pins, so writing it here would be a number about a
-/// version this build cannot reach. It moves at the roll, with the review, and
-/// [TODO](../../../TODO.md#upstream-asks) carries the plan.
+/// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
+/// 1.64.0-alpha-2026-09-17 (previously "<b>45</b> … variables, three of them
+/// outside its own config mapping").</b> The paragraph that stood here said the
+/// next figure was already known and deliberately not written in, because the
+/// alpha carrying it "is not what any released <c>@playwright/mcp</c> pins".
+/// That is still true of the wrapper and is no longer true of this build: the
+/// alpha is reached through the
+/// [dated override](../../../DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
+/// so the number is now about the version that ships and belongs here.
+/// <b>Re-measured rather than taken from that paragraph</b>, with
+/// 1.64.0-alpha-2026-09-14 as the positive control — it returned 42 + 3 = 45,
+/// exactly what the previous sentence carried — against 43 + 3 = 46 on the
+/// bundle that ships. The one addition is <c>PLAYWRIGHT_MCP_FILE_PATHS</c>,
+/// inside the mapping, and it is in <see cref="Refused"/> rather than merely
+/// absent, because the config generator writes <c>filePaths</c> explicitly.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-14 @ <c>playwright-core</c>
@@ -211,16 +219,24 @@ internal static class ChildEnvironment
         // a tool surface that shrank with no error anywhere.
         "PLAYWRIGHT_MCP_CAPS",
 
-        // The five that override a key the config generator writes, read out of
+        // The six that override a key the config generator writes, read out of
         // the shipped `coreBundle.js`'s own `configFromEnv` rather than from a
         // changelog. The first is the one the product cannot afford: it is
         // `allowUnrestrictedFileAccess`, and turning it on gives the child every
         // path on the machine instead of the session's own `output\`.
+        //
+        // ⚠️ SIX SINCE 2026-09-17, previously five. PLAYWRIGHT_MCP_FILE_PATHS
+        // maps onto `filePaths`, which the generator now writes as `absolute`.
+        // An inherited `relative` would not fail -- it would put the child back
+        // to naming every artifact against a working directory the reader does
+        // not have, which is the defect that key was adopted to end, and nothing
+        // anywhere would say so.
         "PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS",
         "PLAYWRIGHT_MCP_CONFIG",
         "PLAYWRIGHT_MCP_OUTPUT_DIR",
         "PLAYWRIGHT_MCP_INIT_SCRIPT",
         "PLAYWRIGHT_MCP_INIT_PAGE",
+        "PLAYWRIGHT_MCP_FILE_PATHS",
 
         "PLAYWRIGHT_DOWNLOAD_HOST",
         "PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST",

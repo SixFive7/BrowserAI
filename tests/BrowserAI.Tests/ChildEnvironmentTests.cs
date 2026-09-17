@@ -51,6 +51,7 @@ internal sealed class ChildEnvironmentTests
         "PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS",
         "PLAYWRIGHT_MCP_CAPS",
         "PLAYWRIGHT_MCP_CONFIG",
+        "PLAYWRIGHT_MCP_FILE_PATHS",
         "PLAYWRIGHT_MCP_INIT_PAGE",
         "PLAYWRIGHT_MCP_INIT_SCRIPT",
         "PLAYWRIGHT_MCP_OUTPUT_DIR",
@@ -61,19 +62,31 @@ internal sealed class ChildEnvironmentTests
 
     /// <summary>
     /// The one variable that would switch off the only containment this product
-    /// has left, and the four beside it that redirect the child's config, its
-    /// output root or the scripts it runs.
+    /// has left, and the five beside it that redirect the child's config, its
+    /// output root, the scripts it runs or how it renders a path back to a
+    /// caller.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Read out of the shipped bundle rather than from a changelog</b>:
     /// <c>playwright-core</c>'s <c>configFromEnv</c> maps every one of these onto
     /// a config key, and the merge order is config file → environment → CLI, so
     /// an inherited value wins over the key BrowserAI generates.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Six since 2026-09-17 (previously five).</b>
+    /// <c>PLAYWRIGHT_MCP_FILE_PATHS</c> maps onto <c>filePaths</c>, which the
+    /// generator now writes as <c>absolute</c>. An inherited <c>relative</c>
+    /// would not fail — it would silently put the child back to naming every
+    /// artifact with a path a model cannot resolve, which is the whole defect
+    /// the key was adopted to end.
+    /// </para>
     /// </remarks>
-    private static readonly string[] TheFiveThatOverrideAGeneratedKey =
+    private static readonly string[] TheSixThatOverrideAGeneratedKey =
     [
         "PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS",
         "PLAYWRIGHT_MCP_CONFIG",
+        "PLAYWRIGHT_MCP_FILE_PATHS",
         "PLAYWRIGHT_MCP_INIT_PAGE",
         "PLAYWRIGHT_MCP_INIT_SCRIPT",
         "PLAYWRIGHT_MCP_OUTPUT_DIR",
@@ -86,7 +99,7 @@ internal sealed class ChildEnvironmentTests
     /// <remarks>
     /// ⚠️ <b>None of these was a hole and none of them is one now — the finding
     /// is against the list's own stated purpose (2026-08-26).</b> The allowlist
-    /// is the child's entire block by construction, so all five were already
+    /// is the child's entire block by construction, so all six were already
     /// absent; what <c>Refused</c> exists for, in its own words, is to turn
     /// <i>absent because nobody added it</i> into <i>absent because it is
     /// refused</i>. <c>PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS</c> is the
@@ -99,7 +112,7 @@ internal sealed class ChildEnvironmentTests
     [Test]
     public async Task TheVariablesThatWouldOverrideAGeneratedConfigKeyAreRefusedByName()
     {
-        foreach (var name in TheFiveThatOverrideAGeneratedKey)
+        foreach (var name in TheSixThatOverrideAGeneratedKey)
         {
             await Assert.That(ChildEnvironment.Refused.Contains(name)).IsTrue();
 

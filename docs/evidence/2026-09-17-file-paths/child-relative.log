@@ -1,0 +1,189 @@
+
+===== get_config =====
+### Result
+{
+  "browser": {
+    "launchOptions": {
+      "channel": "chromium",
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\relative\\downloads",
+      "chromiumSandbox": true,
+      "args": [
+        "--disable-blink-features=AutomationControlled"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\relative\\profile"
+  },
+  "codegen": "typescript",
+  "timeouts": {
+    "action": 5000,
+    "navigation": 60000,
+    "expect": 5000,
+    "settle": 500
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\relative\\output",
+  "saveSession": true,
+  "filePaths": "relative",
+  "capabilities": [
+    "config",
+    "vision",
+    "devtools",
+    "storage",
+    "network",
+    "pdf",
+    "testing"
+  ],
+  "console": {},
+  "network": {},
+  "server": {},
+  "snapshot": {},
+  "configFile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\relative\\config.json"
+}
+
+===== start_tracing =====
+### Result
+Trace recording started
+- [Action log](output\traces\trace-1789653406319.trace)
+- [Network log](output\traces\trace-1789653406319.network)
+- [Resources](output\traces\resources)
+### Page
+- Page URL: about:blank
+
+===== navigate =====
+### Ran Playwright code
+```js
+await page.goto('http://127.0.0.1:56702/');
+```
+### Page
+- Page URL: http://127.0.0.1:56702/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](output\page-2026-09-17T13-56-46-436Z.yml)
+### Events
+- New console entries: output\console-2026-09-17T13-56-46-339Z.log#L1-L2
+
+===== snapshot =====
+### Page
+- Page URL: http://127.0.0.1:56702/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [active] [ref=e1]:
+  - heading "file-paths probe" [level=1] [ref=e2]
+  - paragraph [ref=e3]: a paragraph
+  - img "pixel" [ref=e4]
+  - link "download" [ref=e5] [cursor=pointer]:
+    - /url: /probe-download.txt
+```
+
+===== screenshot (inline) =====
+### Result
+- [Screenshot of viewport](output\page-2026-09-17T13-56-46-568Z.png)
+### Ran Playwright code
+```js
+// Screenshot viewport and save it as output\page-2026-09-17T13-56-46-568Z.png
+await page.screenshot({
+  path: 'output\\page-2026-09-17T13-56-46-568Z.png',
+  scale: 'css',
+  type: 'png'
+});
+```
+[image] image/png 12508 base64 chars
+
+===== screenshot (filename) =====
+### Result
+- [Screenshot of viewport](./probe-shot.png)
+### Ran Playwright code
+```js
+// Screenshot viewport and save it as ./probe-shot.png
+await page.screenshot({
+  path: './probe-shot.png',
+  scale: 'css',
+  type: 'png'
+});
+```
+
+===== pdf_save =====
+### Result
+- [Page as pdf](./probe.pdf)
+### Ran Playwright code
+```js
+await page.pdf({
+  path: './probe.pdf'
+});
+```
+
+===== console_messages (inline) =====
+### Result
+Total messages: 2 (Errors: 1, Warnings: 0)
+
+[LOG] probe console line @ http://127.0.0.1:56702/:5
+[ERROR] probe console error @ http://127.0.0.1:56702/:5
+
+===== console_messages (filename) =====
+### Result
+- [Console](./probe-console.log)
+
+===== download (click) =====
+### Ran Playwright code
+```js
+await page.locator('#d').click();
+```
+### Page
+- Page URL: http://127.0.0.1:56702/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](output\page-2026-09-17T13-56-47-256Z.yml)
+### Events
+- Downloading file probe-download.txt ...
+- Downloaded file probe-download.txt to "output\probe-download.txt"
+
+===== network_requests =====
+### Result
+1. [GET] http://127.0.0.1:56702/ => [200] OK
+2. [GET] http://127.0.0.1:56702/pixel.png => [200] OK
+
+===== network_request (binary response body, index 2) =====
+### Result
+output\response-2026-09-17T13-56-47-264Z.png
+
+===== network_requests (filename) =====
+### Result
+- [Network](./probe-network.txt)
+
+===== storage_state =====
+### Result
+- [Storage state](./probe-storage.json)
+### Ran Playwright code
+```js
+await page.context().storageState({ path: './probe-storage.json' });
+```
+
+===== stop_tracing =====
+### Result
+Trace recording stopped.
+- [Trace](output\traces\trace-1789653406319.trace)
+- [Network log](output\traces\trace-1789653406319.network)
+- [Resources](output\traces\resources)
+
+===== close =====
+### Result
+No open tabs. Navigate to a URL to create one.
+### Ran Playwright code
+```js
+await page.close()
+```
+
+===== stderr =====
+Session: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\relative\output\session-1789653406310
+

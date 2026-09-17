@@ -1,0 +1,246 @@
+
+===== init =====
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+  browser: chromium
+  profile: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\profile
+  output: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output — every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.
+  downloads: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\downloads
+  purpose: One-shot rig for the 2026-09-17 filePaths pointer measurement; destroyed at the end of the run.
+  created: 2026-09-17T16:18:12.4239671+02:00   last used: 2026-09-17T16:18:12.4239671+02:00
+  viewport: 1920x1080 — a screenshot arrives at this size unscaled, so it is what one costs you
+  child protocol: 2025-11-25
+  browserProvisioning: installed — chromium 154.0.8037.0 (revision 1245) is installed at 'C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1245'.
+  other sessions under C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt: 0
+
+
+===== get_config =====
+### Result
+{
+  "browser": {
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\e2e-session\\downloads",
+      "chromiumSandbox": true,
+      "args": [
+        "--disable-blink-features=AutomationControlled"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "locale": "nl-NL",
+      "timezoneId": "Europe/Berlin",
+      "ignoreHTTPSErrors": false,
+      "permissions": [
+        "clipboard-read"
+      ]
+    },
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\e2e-session\\profile"
+  },
+  "codegen": "none",
+  "timeouts": {
+    "action": 5000,
+    "navigation": 60000,
+    "expect": 5000,
+    "settle": 500,
+    "idle": 3600000
+  },
+  "capabilities": [
+    "config",
+    "vision",
+    "devtools",
+    "storage",
+    "network",
+    "pdf",
+    "testing"
+  ],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\e2e-session\\output",
+  "saveSession": true,
+  "allowUnrestrictedFileAccess": false,
+  "console": {
+    "level": "debug"
+  },
+  "snapshot": {
+    "boxes": true
+  },
+  "filePaths": "absolute",
+  "network": {},
+  "server": {},
+  "configFile": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\instances\\97136-fcfc2db491df46f4b17e7ee9c9426fcb\\playwright-mcp-1941A569E000DDA9.json"
+}
+
+===== start_tracing =====
+### Result
+Trace recording started
+- [Action log](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\traces\trace-1789654693146.trace)
+- [Network log](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\traces\trace-1789654693146.network)
+- [Resources](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\traces\resources)
+### Page
+- Page URL: about:blank
+
+===== navigate =====
+### Page
+- Page URL: http://127.0.0.1:62124/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\page-2026-09-17T14-18-13-240Z.yml)
+### Events
+- New console entries: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\console-2026-09-17T14-18-13-165Z.log#L1-L2
+
+===== snapshot =====
+### Page
+- Page URL: http://127.0.0.1:62124/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [active] [ref=e1] [box=8,21,1904,76]:
+  - heading "file-paths probe" [level=1] [ref=e2] [box=8,21,1904,37]
+  - img "pixel" [ref=e3] [box=8,93,1,1]
+  - link "download" [ref=e4] [cursor=pointer] [box=13,80,63,17]:
+    - /url: /probe-download.txt
+```
+
+===== screenshot (inline) =====
+### Result
+- [Screenshot of viewport](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\page-2026-09-17T14-18-13-427Z.png)
+[image] image/png 17344 base64 chars
+
+===== screenshot (filename) =====
+### Result
+- [Screenshot of viewport](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\probe-shot.png)
+
+===== pdf_save =====
+### Result
+- [Page as pdf](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\probe.pdf)
+
+===== console_messages (filename) =====
+### Result
+- [Console](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\probe-console.log)
+
+===== download (click) =====
+### Page
+- Page URL: http://127.0.0.1:62124/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\page-2026-09-17T14-18-14-136Z.yml)
+### Events
+- Downloading file probe-download.txt ...
+- Downloaded file probe-download.txt to "C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\probe-download.txt"
+
+===== network_requests =====
+### Result
+1. [GET] http://127.0.0.1:62124/ => [200] OK
+2. [GET] http://127.0.0.1:62124/pixel.png => [200] OK
+
+===== network_request (binary response body, index 2) =====
+### Result
+C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\response-2026-09-17T14-18-14-148Z.png
+
+===== storage_state =====
+### Result
+- [Storage state](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\probe-storage.json)
+
+===== stop_tracing =====
+### Result
+Trace recording stopped.
+- [Trace](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\traces\trace-1789654693146.trace)
+- [Network log](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\traces\trace-1789654693146.network)
+- [Resources](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output\traces\resources)
+
+===== destroy =====
+Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session' (12.6 MiB). Its purpose was: One-shot rig for the 2026-09-17 filePaths pointer measurement; destroyed at the end of the run.
+You said it was being destroyed because: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+
+===== stderr =====
+info: BrowserAI.Startup[1]
+      BrowserAI 1.0.1-alpha.0.29 started. pid=97136 image=C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 80152, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 80544 in 'C:\Users\jori\AppData\Local\BrowserAI\instances\97136-fcfc2db491df46f4b17e7ee9c9426fcb'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=13.3ms processes=494/335 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=40 titled=8 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.0.1-alpha.0.29) client received server '{"name":"Playwright","version":"1.64.0-alpha-2026-09-17"}' capabilities: '{"tools":{}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.0.1-alpha.0.29) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.0.1-alpha.0.29) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.0.1-alpha.0.29), Client (file-paths-probe 1) method 'initialize' request handler completed in 0.1206ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session under Global\BrowserAI-1941A569E000DDA9E615B1FAFF789E4B.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      playwright-mcp[1941A569]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 73932 in 'C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      Client (BrowserAI 1.0.1-alpha.0.29) client received server '{"name":"Playwright","version":"1.64.0-alpha-2026-09-17"}' capabilities: '{"tools":{}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      Client (BrowserAI 1.0.1-alpha.0.29) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      Session open at C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_get_config: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_start_tracing: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_snapshot: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_take_screenshot: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_pdf_save: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_console_messages: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_click: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_network_requests: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_network_request: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_storage_state: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_stop_tracing: Measuring which artifact pointers in a tool result are absolute after adopting filePaths.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session
+      playwright-mcp[1941A569] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[1941A569]: pid 73932 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session by the process that already held its guard, PID 97136 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\e2e-session; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.DirectStdioServerTransport[4]
+      BrowserAI (stdio): the peer closed its end of the connection.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      playwright-mcp[surface] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[surface]: pid 80544 exited with code 0.
+

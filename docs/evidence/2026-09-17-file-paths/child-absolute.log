@@ -1,0 +1,189 @@
+
+===== get_config =====
+### Result
+{
+  "browser": {
+    "launchOptions": {
+      "channel": "chromium",
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\downloads",
+      "chromiumSandbox": true,
+      "args": [
+        "--disable-blink-features=AutomationControlled"
+      ]
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\profile"
+  },
+  "codegen": "typescript",
+  "timeouts": {
+    "action": 5000,
+    "navigation": 60000,
+    "expect": 5000,
+    "settle": 500
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\output",
+  "saveSession": true,
+  "filePaths": "absolute",
+  "capabilities": [
+    "config",
+    "vision",
+    "devtools",
+    "storage",
+    "network",
+    "pdf",
+    "testing"
+  ],
+  "console": {},
+  "network": {},
+  "server": {},
+  "snapshot": {},
+  "configFile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\config.json"
+}
+
+===== start_tracing =====
+### Result
+Trace recording started
+- [Action log](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\traces\trace-1789653404392.trace)
+- [Network log](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\traces\trace-1789653404392.network)
+- [Resources](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\traces\resources)
+### Page
+- Page URL: about:blank
+
+===== navigate =====
+### Ran Playwright code
+```js
+await page.goto('http://127.0.0.1:58122/');
+```
+### Page
+- Page URL: http://127.0.0.1:58122/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\page-2026-09-17T13-56-44-478Z.yml)
+### Events
+- New console entries: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\console-2026-09-17T13-56-44-413Z.log#L1-L2
+
+===== snapshot =====
+### Page
+- Page URL: http://127.0.0.1:58122/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [active] [ref=e1]:
+  - heading "file-paths probe" [level=1] [ref=e2]
+  - paragraph [ref=e3]: a paragraph
+  - img "pixel" [ref=e4]
+  - link "download" [ref=e5] [cursor=pointer]:
+    - /url: /probe-download.txt
+```
+
+===== screenshot (inline) =====
+### Result
+- [Screenshot of viewport](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\page-2026-09-17T13-56-44-663Z.png)
+### Ran Playwright code
+```js
+// Screenshot viewport and save it as C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\page-2026-09-17T13-56-44-663Z.png
+await page.screenshot({
+  path: 'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\output\\page-2026-09-17T13-56-44-663Z.png',
+  scale: 'css',
+  type: 'png'
+});
+```
+[image] image/png 12508 base64 chars
+
+===== screenshot (filename) =====
+### Result
+- [Screenshot of viewport](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\probe-shot.png)
+### Ran Playwright code
+```js
+// Screenshot viewport and save it as C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\probe-shot.png
+await page.screenshot({
+  path: 'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\probe-shot.png',
+  scale: 'css',
+  type: 'png'
+});
+```
+
+===== pdf_save =====
+### Result
+- [Page as pdf](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\probe.pdf)
+### Ran Playwright code
+```js
+await page.pdf({
+  path: 'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\probe.pdf'
+});
+```
+
+===== console_messages (inline) =====
+### Result
+Total messages: 2 (Errors: 1, Warnings: 0)
+
+[LOG] probe console line @ http://127.0.0.1:58122/:5
+[ERROR] probe console error @ http://127.0.0.1:58122/:5
+
+===== console_messages (filename) =====
+### Result
+- [Console](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\probe-console.log)
+
+===== download (click) =====
+### Ran Playwright code
+```js
+await page.locator('#d').click();
+```
+### Page
+- Page URL: http://127.0.0.1:58122/
+- Page Title: file-paths probe
+- Console: 1 errors, 0 warnings
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\page-2026-09-17T13-56-45-345Z.yml)
+### Events
+- Downloading file probe-download.txt ...
+- Downloaded file probe-download.txt to "C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\probe-download.txt"
+
+===== network_requests =====
+### Result
+1. [GET] http://127.0.0.1:58122/ => [200] OK
+2. [GET] http://127.0.0.1:58122/pixel.png => [200] OK
+
+===== network_request (binary response body, index 2) =====
+### Result
+C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\response-2026-09-17T13-56-45-352Z.png
+
+===== network_requests (filename) =====
+### Result
+- [Network](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\probe-network.txt)
+
+===== storage_state =====
+### Result
+- [Storage state](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\probe-storage.json)
+### Ran Playwright code
+```js
+await page.context().storageState({ path: 'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-adopt\\pointer-probe\\absolute\\probe-storage.json' });
+```
+
+===== stop_tracing =====
+### Result
+Trace recording stopped.
+- [Trace](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\traces\trace-1789653404392.trace)
+- [Network log](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\traces\trace-1789653404392.network)
+- [Resources](C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\traces\resources)
+
+===== close =====
+### Result
+No open tabs. Navigate to a URL to create one.
+### Ran Playwright code
+```js
+await page.close()
+```
+
+===== stderr =====
+Session: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-adopt\pointer-probe\absolute\output\session-1789653404383
+

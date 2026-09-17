@@ -1035,6 +1035,26 @@ space or dot is stored as Windows rewrites it rather than being refused. The
 `init` answer tells the caller about the first. Both are in the
 [hazard index](HAZARDS.md#hazard-index) with what would close them.
 
+✅ **A third property was lost with it and is BACK since 2026-09-17, upstream's
+rather than ours.** *Added by way of correction; nothing above is retracted.*
+The deleted answer named every artifact absolutely in a note of its own, and
+what replaced it forwards the child's own bytes — so from 2026-08-26 until this
+date **every pointer in every tool result was relative to the child's working
+directory**, which is a directory the reader of a tool result does not have,
+because that reader is a model rather than a process. That was
+[upstream ask #1](TODO.md#upstream-asks), filed 2026-08-27, granted as
+[microsoft/playwright#42673](https://github.com/microsoft/playwright/pull/42673)
+and adopted here as `filePaths: "absolute"` in the generated config
+(`BrowserConfiguration.FilePaths`, required by `RequiredSessionOpinions`,
+`PLAYWRIGHT_MCP_FILE_PATHS` refused so nothing inherited can redirect it).
+**Every pointer shape was measured, before and after and end to end**, and all of
+them are absolute:
+[kb](kb/playwright/tools-and-artifacts.md#every-artifact-pointer-a-tool-result-carries-is-absolute--measured-2026-09-17).
+**The fix is upstream's and the doctrine is unchanged** — nothing between the two
+servers except the session system and the reason system; BrowserAI writes a
+config key and forwards bytes, which is why this is a correction to a consequence
+rather than to the sentence that caused it.
+
 | Concern | Implemented by |
 |---|---|
 | Where the folders are | `src/BrowserAI.Core/Sessions/SessionLayout.cs`, `src/BrowserAI.Core/Hosting/IAppPaths.cs` |
