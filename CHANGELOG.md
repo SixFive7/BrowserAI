@@ -110,6 +110,34 @@ release body; nothing else depends on it.
   a fully capable child exposes, two fewer only because `browser_annotate` and
   `browser_webmcp_call` are still withheld for liveness.
 
+- 📝 **The gate now says to publish the slice again after a `src/` change.**
+  It always had to be done and the only place it was ever written down was the
+  refusal it produces. A gate attempt on 2026-09-17 cost 34 reds reading *the
+  published binary … is older than 7 source file(s), so this test would prove
+  nothing about the code in the tree* — around thirty arms drive the published
+  NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
+  refuses all of them together. The two-shell gate paragraph in `CLAUDE.md` and
+  in `TESTING.md` now carries the step and the two commands that refusal names,
+  `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
+  --self-contained` and the same shape over `src/BrowserAI.App`. It also names
+  the early signal, which is the run's own `publish freshness` row reading
+  `STALE` with the newest input beside it, and says plainly that a release
+  publish is not a substitute: `New-Release.ps1` stages into
+  `artifacts\publish-<exe stem>` and never writes `src\<project>\bin\`.
+
+- 📝 **The disk total after a first run is stamped stale rather than left reading as current.**
+  `kb/playwright/provisioning-and-timings.md` published *disk after first run is
+  130,434,952 + 451,389,780 = 581,824,732 B*, and both addends had moved under
+  it. The chromium term is `chromium-1237`; the family is at 1245 and weighs
+  454,699,952 B across 308 files, measured the same day on the reference
+  machine. The `current\` term is the one-executable layout of 2026-08-17, and
+  an install has held two binaries since 2026-09-15, so the figure names a
+  directory that no longer exists in that shape. The sum is left exactly as it
+  was measured and marked `[STALE]` with both reasons, which is what the marker
+  is for — and it is the same defect the correction directly beneath it already
+  records against the sentence this one replaced, a derived total carrying no
+  date of its own.
+
 ### Changed
 
 - 📝 **First-run provisioning is measured again at the new browser revisions.**

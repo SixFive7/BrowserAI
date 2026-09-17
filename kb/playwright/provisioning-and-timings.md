@@ -31,8 +31,20 @@ across 200 files** (`BrowserAI.exe` 17,853,952 · `payload\` 111,984,018 ·
 130,434,486 in [row 85](../re-verification.md), which is not a
 discrepancy: 465 of those bytes are `sq.version`, which Velopack writes into
 `current\` at install and which the package does not carry. **Disk after first
-run is 130,434,952 + 451,389,780 =
-581,824,732 B = 554.87 MiB ≈ 582 MB**. The ~806 MB total is kept
+run was 130,434,952 + 451,389,780 =
+581,824,732 B = 554.87 MiB ≈ 582 MB**, and that sum is `[STALE]` since
+2026-09-17: **both addends have moved and neither was re-measured into it.**
+Chromium's term is `chromium-1237`; the family is at **1245** and weighs
+**454,699,952 B across 308 files**, measured 2026-09-17 on the reference
+machine — 3,310,172 B more. The `current\` term is the **one-executable**
+layout of 2026-08-17, and since 2026-09-15 an install holds **two** binaries
+plus a second XML, so the figure it names is not the directory the sentence
+describes. **It is left exactly as it was measured rather than adjusted**, which
+is what this marker exists instead of: a derived total carries no date of its
+own, which is the failure the 2026-08-17 correction below already records
+against the previous version of this same sentence — the same defect, in the
+replacement for it. Re-deriving it is one `Measure-Object` over a freshly
+installed `current\` plus the chromium figure above, and it is owed. The ~806 MB total is kept
 because a bundled build is the fallback if the Chrome-for-Testing redistribution
 question is ever resolved favourably — but it is **not** the figure for disk
 after first run, as this file and the charter both once said: it counts

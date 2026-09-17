@@ -1463,6 +1463,23 @@ consequences a reader has to carry:
   once in three, which is how [the probe-report race](HAZARDS.md#hazard-index)
   was found on 2026-08-19; nothing about an intermediate batch needs it, and
   [the release checklist](RELEASING.md#8-run-everything) is where it is owed.
+
+  ⚠️ **And publish the slice again after any `src/` change, before either run —
+  *added 2026-09-17 by addition*.** Neither this paragraph nor
+  [`CLAUDE.md`](CLAUDE.md)'s said so, and the only place it was written down was
+  the refusal it produces: a gate attempt on 2026-09-17 cost **34 reds** reading
+  *the published binary … is older than 7 source file(s), so this test would
+  prove nothing about the code in the tree*. Around thirty arms drive the
+  published NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
+  refuses all of them together. The commands are the two that refusal names:
+  `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
+  --self-contained`, and the same shape over
+  `src/BrowserAI.App/BrowserAI.App.csproj`. **A release publish does not do it**
+  — `build/New-Release.ps1` stages into `artifacts\publish-<exe stem>` and never
+  writes `src\<project>\bin\`. The early signal is
+  [the `publish freshness` row](#the-run-states-the-publish-freshness-it-established),
+  which reads `STALE` and names the newest input; the thirty refusals are the
+  late one.
 - **Nothing builds a contributor's pull request any more.** For a public
   repository that is the real cost of the removal: 54% of this project's
   enforcement is a test or a release-phase check, and a pull request can now break
