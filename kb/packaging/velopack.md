@@ -510,6 +510,16 @@ cannot tell a mention from a stamp.)*
 > larger absolute delta against a larger full package rather than a regression
 > in compression.
 
+> ✅ **Corroborated against the real v1.0.0 cut the day before, which nobody
+> planned as a control.** `Releases\BrowserAI.app-1.0.0-full.nupkg` is
+> **54,926,948 b** and its `Setup.exe` **59,435,620 b**, against this
+> measurement's 54,926,688 and 59,435,360 — **260 bytes apart in both**. A
+> re-measurement that landed within 5 ppm of a real release cut from the same
+> tree is measuring the shipped artifact rather than a rig. *What accounts for
+> the 260 bytes was not established* — the version strings differ in length and
+> appear in several places, which is the obvious candidate and is not the same
+> thing as a measurement.
+
 ⚠️ **Take the ratio against what ships, not against the publish directory.** The
 `.pdb`s are 118,504,360 b of a 262 MB directory, so the naive ratio reads 0.2096
 for what is really 0.3828. The first run of the release script reported the
