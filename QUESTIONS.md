@@ -2063,3 +2063,71 @@ the 2026-08-23 rule against provoking a race by timing does not bite here.
 terminate an unattributable browser would weaken the guarantee the sweep exists
 for, on a machine, to make a test comfortable. If that is ever wanted it is a
 charter decision rather than a fix.
+
+### A session whose child died answers one call forever, and nothing on the forward path owns a clock
+
+**The primer, for somebody who has not read the measurement.** BrowserAI proxies
+a `@playwright/mcp` child over stdio. Kill that child while the server is still
+running — a crash, an out-of-memory kill, a session limit, or a person with Task
+Manager — and the session is finished, but nothing says so. Measured 2026-09-17
+against the published slice, bounded deliberately at fifteen minutes, which is
+the largest timeout in the product plus five minutes of margin:
+
+- `browserai_resume` answers **7.68 ms**: *"This session is already open in this
+  BrowserAI; nothing was changed."* Its question is *do I own this directory*,
+  and the answer is still yes. Whether the child behind it is alive is a
+  different question and nothing asks it.
+- The next `browser_navigate` **never returned**, in 900,000 ms.
+- A second client's `browserai_resume` is **refused in 15.3 ms** by the ordinary
+  in-use refusal naming the wedged pid, so nothing recovers the session from
+  outside either.
+- The only measured recovery is to end the server by pid and destroy the session
+  from a later process.
+
+**Which product timer governs it: none, and that is the finding.**
+`ChildConnection.AskAsync` awaits `SendRequestAsync` under the caller's token and
+nothing else. `ChildConnection.ChildInitializationHang` is ten minutes and
+governs the child's `initialize` only — crossed, no effect.
+`BrowserIdleTimer.DefaultIdlePeriod` is ten minutes and has no browser left to
+close. `LockScopes.PerDirectoryGate` is 120 seconds and is released before the
+call is forwarded. **The transport already knows**: the process log carries
+*"playwright-mcp[surface]: the peer closed its end of the connection"* 347 ms
+before the kill even reported complete, and then writes nothing for fifteen
+minutes. So the knowledge exists in the process and the pending request is never
+told.
+
+**No product change has been taken.** The kb entry, the hazard row and
+[`docs/evidence/2026-09-17-resume-wedge`](docs/evidence/2026-09-17-resume-wedge/README.md)
+record what was measured; what to do about it is a decision about the tool
+surface.
+
+**Directions.**
+
+1. **`browserai_resume` asks whether the child is alive, and relaunches it if it
+   is not.** It is the direction the hazard row has been nominating since
+   2026-09-16 and it repairs the session rather than reporting on it: a caller
+   that has lost its browser calls the one tool named for getting it back and
+   gets it back. **Cost:** `resume` stops being a pure no-op on a session this
+   process already owns, so a caller that resumes for reassurance can now cause a
+   child to be started; and *is the child alive* has to be answered without a
+   race against a child that is on its way out. *Recommended if anything is done
+   at all.*
+2. **Put a clock on the forward.** A per-call timeout in `ChildConnection
+   .AskAsync` turns the hang into a refusal naming the cause. **Cost:** it is a
+   number, and every number on this path is wrong for somebody — a real
+   `browser_navigate` on a slow page, a `browser_pdf_save` of a large document
+   and a first-run provisioning wait are all legitimately long, and the house
+   rule is that a duration bound is a hang detector rather than a promptness
+   claim. It would also fire on the healthy case the day upstream gets slower.
+3. **Fail the pending request when the transport reports the peer gone.** The
+   server already logs it 347 ms in; completing the outstanding requests with
+   that as the reason costs no number at all and is the narrowest change of the
+   three. **Cost:** it needs the SDK's transport to surface the close in a way
+   this code can act on, which is unverified here — what is measured is only
+   that `ChildProcessSession` logs it, not that anything reusable is raised. That
+   has to be established before this is a direction rather than a hope.
+4. **Leave it, and let the record carry it.** Nothing in normal operation kills a
+   child under a live server. **Cost:** the four things that do are not rare, the
+   failure is a hang rather than an error, and a model that meets it has no way
+   to find out what happened — which is the failure class this project exists to
+   eliminate.

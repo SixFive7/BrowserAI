@@ -28,6 +28,20 @@ against; a `data:` URL has no storage at all and cannot be used here.
   7.8 ms, and the next browser call against that session had not returned after
   3 min 8 s. It is kept because a procedure that reads plausibly and does not
   work is worth being able to re-run.
+- ⚠️ **`wedge-probe.js` is that third shape with a clock on it, added
+  2026-09-17** for [Q207 b](../../../QUESTIONS.md). It is `resume-probe.js`'s
+  arrangement, with the hanging browser call **fired and polled rather than
+  awaited** and the wait bounded on the command line, so *it never returned* is a
+  measurement rather than the probe giving up at a number nobody chose. It also
+  starts a **second** server 30 s in and resumes the same directory from it,
+  which is the half the 2026-09-16 run left open, and it tears down what it
+  started: the first server is ended by pid and a third process destroys the
+  session. **It does not leave a wedged session behind.** Usage:
+  `node wedge-probe.js <BrowserAI.Server.exe> <sessionDir> <report.json> <boundMs> [browser]`.
+  What it found is
+  [in the kb](../../../kb/playwright/provisioning-and-timings.md#the-resume-wedge-measured--2026-09-17),
+  and the transcript is
+  [`docs/evidence/2026-09-17-resume-wedge`](../../evidence/2026-09-17-resume-wedge/README.md).
 
 ## What it touches
 

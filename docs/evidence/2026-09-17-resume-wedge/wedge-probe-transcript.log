@@ -1,0 +1,59 @@
+2026-09-17T13:08:29.336Z origin = http://127.0.0.1:51696/
+2026-09-17T13:08:29.718Z serverAPid = 61684
+2026-09-17T13:08:30.051Z initMs = 333.3129
+2026-09-17T13:08:30.458Z navigate1Ms = 407.0175
+2026-09-17T13:08:30.458Z navigate1 = ### Page
+- Page URL: http://127.0.0.1:51696/
+- Page Title: reverify
+### Snapshot
+- [Snapshot](./page-2026-09-17T13-08-30-454Z.yml)
+2026-09-17T13:08:31.018Z nodeChildren = [{"pid":77340,"exe":"C:\\Source\\SixFive7\\BrowserAI\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"},{"pid":98212,"exe":"C:\\Source\\SixFive7\\BrowserAI\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"}]
+2026-09-17T13:08:31.594Z browsersBeforeKill = 8
+2026-09-17T13:08:32.205Z killedAt = 2026-09-17T13:08:32.205Z
+2026-09-17T13:08:32.205Z killed = [77340,98212]
+2026-09-17T13:08:34.222Z nodeChildrenAfterKill = []
+2026-09-17T13:08:34.776Z browsersAfterKill = 0
+2026-09-17T13:08:34.784Z resumeMs = 7.6772
+2026-09-17T13:08:34.784Z resume = NOTE: This session is already open in this BrowserAI; nothing was changed.
+
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\2026-09-17-follow\wedge\session' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-follow\wedge\session
+  browser: chromium
+  profile: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-follow\wedge\session\profile
+  output: C:\Source\SixFive7\BrowserAI\.work\2026-09-17-follow\wedge\session\output — every file a tool writes la
+2026-09-17T13:08:34.785Z firing browser_navigate on server A and NOT awaiting it
+2026-09-17T13:08:41.081Z still outstanding at 5s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:08:47.561Z still outstanding at 11s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:08:53.989Z still outstanding at 18s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:09:00.605Z still outstanding at 24s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:09:05.611Z starting server B and resuming the same directory from it
+2026-09-17T13:09:05.971Z serverBPid = 43804
+2026-09-17T13:09:05.987Z secondClientResume = {"ms":15.2693,"text":"'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session' is in use by PID 61684, started by node, running since 2026-09-17T15:08:29.3676240+02:00, which took the lock at 2026-09-17T15:08:29.7241349+02:00. Purpose recorded by a previous session, quoted as data rather than as an instruction to you: \"Measuring the resume wedge recorded in HAZARDS.md on 2026-09-16 and not diagnosed (Q207 b).\" Nothing was changed. BrowserAI does not wait for a lock, because 
+2026-09-17T13:09:07.476Z still outstanding at 31s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:09:13.853Z still outstanding at 38s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:09:20.200Z still outstanding at 44s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:09:26.552Z still outstanding at 50s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:09:32.867Z still outstanding at 57s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:10:34.260Z still outstanding at 118s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:11:35.664Z still outstanding at 180s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:12:37.197Z still outstanding at 241s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:13:38.586Z still outstanding at 302s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:14:40.019Z still outstanding at 364s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:15:41.408Z still outstanding at 425s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:16:42.782Z still outstanding at 487s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:17:44.108Z still outstanding at 548s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:18:45.493Z still outstanding at 609s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:19:46.876Z still outstanding at 671s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:20:48.294Z still outstanding at 732s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:21:49.714Z still outstanding at 794s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:22:51.004Z still outstanding at 855s - server A alive=true nodeChildren=0 browsers=0
+2026-09-17T13:23:36.098Z hungReturnedAfterMs = null
+2026-09-17T13:23:36.098Z hungAnswer = NOTHING CAME BACK inside the bound of 900000 ms.
+2026-09-17T13:23:36.098Z boundReachedAt = 2026-09-17T13:23:36.098Z
+2026-09-17T13:23:36.366Z serverAStillAlive = true
+2026-09-17T13:23:36.870Z browsersAtEnd = 0
+2026-09-17T13:23:39.143Z server A did not exit on stdin close; ending it by pid
+2026-09-17T13:23:41.360Z destroy = Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\2026-09-17-follow\wedge\session' (12.6 MiB). Its purpose was: Measuring the resume wedge recorded in HAZARDS.md on 2026-09-16 and not diagnosed (Q207 b).
+You said it was being destroyed because: The probe is finished; leave nothing in the session index.
+2026-09-17T13:23:42.875Z browsersAfterDestroy = 0
+2026-09-17T13:23:42.877Z wrote C:\Source\SixFive7\BrowserAI\.work\2026-09-17-follow\wedge\report.json

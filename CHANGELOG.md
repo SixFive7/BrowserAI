@@ -76,6 +76,32 @@ release body; nothing else depends on it.
   one.
 
 ### Changed
+- 📝 **The resume wedge is measured, and nothing in the product bounds it.**
+  Q207 = b. Killing a session's `node` child under a **live** BrowserAI was
+  recorded on 2026-09-16 and not diagnosed: `browserai_resume` answered the
+  no-op in 7.8 ms and the next browser call had not returned after 3 min 8 s,
+  when the probe was stopped. Re-run on 2026-09-17 with a clock on it, bounded
+  at **fifteen minutes** because that is the largest timeout in the product plus
+  five minutes of margin rather than a number a probe felt like waiting: **the
+  call never returned**. The 2026-09-16 readings are corroborated to the
+  millisecond, the no-op at **7.68 ms** and the refusal wording byte-for-byte.
+  **Which product timer governs it: none.** `ChildConnection.AskAsync` awaits
+  `SendRequestAsync` under the caller's token and nothing else;
+  `ChildInitializationHang` is ten minutes and governs `initialize` only, and
+  was crossed with no effect; `BrowserIdleTimer.DefaultIdlePeriod` has no
+  browser left to close; `LockScopes.PerDirectoryGate` is released before the
+  call is forwarded. **The process log carries one line and then fifteen minutes
+  of silence** — *"playwright-mcp[surface]: the peer closed its end of the
+  connection"*, 347 ms before the kill even reported complete — so the transport
+  knows the peer is gone and the pending request is never told. **A second
+  client cannot recover it either**, which is the half the first run left open:
+  its `browserai_resume` is refused in 15.3 ms by the ordinary in-use refusal
+  naming the wedged pid. **No product change is taken**; four directions are in
+  [`QUESTIONS.md`](QUESTIONS.md) and the decision is the maintainer's. The
+  transcript is persisted this time, at
+  [`docs/evidence/2026-09-17-resume-wedge`](docs/evidence/2026-09-17-resume-wedge/README.md),
+  and the rig that produced it is `wedge-probe.js`, beside the probe it extends.
+
 - 📝 **The wild exit 1 has a name at last, and it is this product's own stray sweep.**
   The signature has been chased since 2026-08-26: exit code `1`, nothing on
   either stream, both pipes at EOF, five lines in the browser's own

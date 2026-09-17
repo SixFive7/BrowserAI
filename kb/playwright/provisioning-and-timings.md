@@ -884,6 +884,75 @@ decision rests on — the durable thing is the profile, not the process — and
 > is the rig, and it carries both shapes: the one-server arm that wedges and the
 > two-server arm that measures.
 
+### The resume wedge, measured — 2026-09-17
+
+**Nothing bounds it.** Kill a session's `node` child under a **live** BrowserAI,
+resume in the same process, then make one browser call: the call **had not
+returned after 15 minutes**, and 15 minutes was chosen as the largest timeout in
+the product (10 minutes) plus five minutes of margin rather than as a number the
+probe felt like waiting. Measured 2026-09-17 against the published slice at
+`1.0.1-alpha.0.25`, chromium **1244**, `playwright-core` 1.64.0-alpha-2026-09-14,
+through
+[`docs/probes/2026-09-16-resume/wedge-probe.js`](../../docs/probes/2026-09-16-resume/README.md);
+the transcript and the process-log window are
+[`docs/evidence/2026-09-17-resume-wedge`](../../docs/evidence/2026-09-17-resume-wedge/README.md).
+`[FLOATS]`
+
+| | |
+|---|---|
+| `browserai_init` then one `browser_navigate` | 333 ms, 407 ms |
+| node children killed, by pid against a path BrowserAI owns | 2 killed; **all 8 browser processes went with them**, measured either side |
+| `browserai_resume` in the same server | **7.68 ms**, *"This session is already open in this BrowserAI; nothing was changed"* |
+| the next `browser_navigate` | **never returned in 900,000 ms** |
+| a second client's `browserai_resume`, 31 s in | **refused in 15.3 ms**: *"is in use by PID 61684 … Nothing was changed. BrowserAI does not wait for a lock"* |
+| the first server, across the whole 15 minutes | alive, 0 node children, 0 browsers |
+
+> **The 7.68 ms no-op corroborates the 2026-09-16 reading of 7.8 ms** and the
+> refusal wording is byte-for-byte what that run recorded. What is new is that
+> the hang was bounded deliberately and still did not end.
+
+**Which product timer governs it: none.** The forward goes through
+`ChildConnection.AskAsync`, which awaits
+`_client.SendRequestAsync(request, cancellationToken)` under **the caller's token
+and nothing else** — there is no per-call timeout anywhere on that path. The
+three timers a reader would reach for were all crossed or are not on it:
+
+- `ChildConnection.ChildInitializationHang` is **10 minutes** and governs the
+  child's `initialize` only. It was crossed at 600 s with no effect.
+- `BrowserIdleTimer.DefaultIdlePeriod` is **10 minutes** and closes an idle
+  browser. There is no browser left to close, and nothing fired.
+- `LockScopes.PerDirectoryGate` is **120 seconds** and is taken and released
+  before the call is forwarded, so it never sees the wait.
+
+**What the process log records across the hang: one line, then silence.** The
+server *did* notice, immediately —
+`BrowserAI.Protocol.ChildProcessSession[4]`, `13:08:31.858Z`,
+*"playwright-mcp[surface]: the peer closed its end of the connection"*, 347 ms
+before the kill was even reported complete. **After that it writes nothing at
+all** for the remaining fifteen minutes: no timeout, no refusal, no warning. So
+the transport knows the peer is gone and the pending request is never told.
+
+**Why `browserai_resume` does not help, stated as a mechanism rather than as a
+guess:** its question is *do I already own this directory*, and the answer is
+still yes — the session is in this process's own index and the live marker is
+this process's. Whether the **child** behind it is alive is a different question
+and nothing asks it.
+
+**And a second client cannot recover it either**, which is the half the
+2026-09-16 run left open. The directory lock is held by the wedged server, and
+`browserai_resume` from a second process is refused by the ordinary in-use
+refusal naming that pid. **The only recovery measured is the one the 2026-09-16
+run used**: end the first server by pid, then destroy the session from a later
+process. That worked here — 12.6 MiB removed, nothing left in the index.
+
+**To re-establish:** run `wedge-probe.js` with the published
+`BrowserAI.Server.exe`, a scratch session directory and a bound in milliseconds.
+It destroys its session on the way out. **It drives the product's shared data
+root**, so never run it beside a suite run. ⚠️ **No product change is taken on
+this** — what to do about it is raised in
+[`QUESTIONS.md`](../../QUESTIONS.md) and belongs to whoever owns the tool
+surface.
+
 **Proxying costs ~50 ms on a 500 KB payload.** From an equivalent Node prototype:
 images passed through byte-identical (**509,620** base64 bytes), error shapes
 preserved, ~50 ms added latency, ~300 ms one-off child spawn. It measured a

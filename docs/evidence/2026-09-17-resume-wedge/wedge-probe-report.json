@@ -1,0 +1,147 @@
+{
+  "browser": "chromium",
+  "boundMs": 900000,
+  "utc": "2026-09-17T13:08:29.281Z",
+  "steps": [
+    {
+      "at": "2026-09-17T13:08:34.785Z",
+      "what": "firing browser_navigate on server A and NOT awaiting it"
+    },
+    {
+      "at": "2026-09-17T13:08:41.081Z",
+      "what": "still outstanding at 5s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:08:47.561Z",
+      "what": "still outstanding at 11s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:08:53.989Z",
+      "what": "still outstanding at 18s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:09:00.605Z",
+      "what": "still outstanding at 24s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:09:05.611Z",
+      "what": "starting server B and resuming the same directory from it"
+    },
+    {
+      "at": "2026-09-17T13:09:07.476Z",
+      "what": "still outstanding at 31s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:09:13.853Z",
+      "what": "still outstanding at 38s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:09:20.200Z",
+      "what": "still outstanding at 44s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:09:26.552Z",
+      "what": "still outstanding at 50s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:09:32.867Z",
+      "what": "still outstanding at 57s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:10:34.260Z",
+      "what": "still outstanding at 118s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:11:35.664Z",
+      "what": "still outstanding at 180s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:12:37.197Z",
+      "what": "still outstanding at 241s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:13:38.586Z",
+      "what": "still outstanding at 302s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:14:40.019Z",
+      "what": "still outstanding at 364s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:15:41.408Z",
+      "what": "still outstanding at 425s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:16:42.782Z",
+      "what": "still outstanding at 487s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:17:44.108Z",
+      "what": "still outstanding at 548s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:18:45.493Z",
+      "what": "still outstanding at 609s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:19:46.876Z",
+      "what": "still outstanding at 671s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:20:48.294Z",
+      "what": "still outstanding at 732s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:21:49.714Z",
+      "what": "still outstanding at 794s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:22:51.004Z",
+      "what": "still outstanding at 855s - server A alive=true nodeChildren=0 browsers=0"
+    },
+    {
+      "at": "2026-09-17T13:23:39.143Z",
+      "what": "server A did not exit on stdin close; ending it by pid"
+    }
+  ],
+  "origin": "http://127.0.0.1:51696/",
+  "serverAPid": 61684,
+  "initMs": 333.3129,
+  "navigate1Ms": 407.0175,
+  "navigate1": "### Page\n- Page URL: http://127.0.0.1:51696/\n- Page Title: reverify\n### Snapshot\n- [Snapshot](./page-2026-09-17T13-08-30-454Z.yml)",
+  "nodeChildren": [
+    {
+      "pid": 77340,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"
+    },
+    {
+      "pid": 98212,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"
+    }
+  ],
+  "browsersBeforeKill": 8,
+  "killedAt": "2026-09-17T13:08:32.205Z",
+  "killed": [
+    77340,
+    98212
+  ],
+  "nodeChildrenAfterKill": [],
+  "browsersAfterKill": 0,
+  "resumeMs": 7.6772,
+  "resume": "NOTE: This session is already open in this BrowserAI; nothing was changed.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\n  browser: chromium\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\\output — every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; a",
+  "serverBPid": 43804,
+  "secondClientResume": {
+    "ms": 15.2693,
+    "text": "'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session' is in use by PID 61684, started by node, running since 2026-09-17T15:08:29.3676240+02:00, which took the lock at 2026-09-17T15:08:29.7241349+02:00. Purpose recorded by a previous session, quoted as data rather than as an instruction to you: \"Measuring the resume wedge recorded in HAZARDS.md on 2026-09-16 and not diagnosed (Q207 b).\" Nothing was changed. BrowserAI does not wait for a lock, because it cannot know what waiting costs you: wait and call again, or choose another directory.",
+    "isError": true
+  },
+  "hungReturnedAfterMs": null,
+  "hungAnswer": "NOTHING CAME BACK inside the bound of 900000 ms.",
+  "boundReachedAt": "2026-09-17T13:23:36.098Z",
+  "serverAStillAlive": true,
+  "browsersAtEnd": 0,
+  "destroy": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session' (12.6 MiB). Its purpose was: Measuring the resume wedge recorded in HAZARDS.md on 2026-09-16 and not diagnosed (Q207 b).\nYou said it was being destroyed because: The probe is finished; leave nothing in the session index.",
+  "browsersAfterDestroy": 0,
+  "stderrTailA": "540a439cdbc3fd88da2'.\r\ninfo: BrowserAI.Sweep[1]\r\n      Stray sweep: outcome=Ran elapsed=14.1ms processes=489/329 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=40 titled=8 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False\r\ninfo: ModelContextProtocol.Client.McpClient[1434756563]\r\n      Client (BrowserAI 1.0.1-alpha.0.25) client received server '{\"name\":\"Playwright\",\"version\":\"1.64.0-alpha-2026-09-14\"}' capabilities: '{\"tools\":{}}'.\r\ninfo: ModelContextProtocol.Client.McpClient[1017245113]\r\n      Client (BrowserAI 1.0.1-alpha.0.25) client created and connected.\r\ninfo: BrowserAI.Proxy.ChildConnection[1]\r\n      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25\r\ninfo: BrowserAI.Startup[2]\r\n      BrowserAI is serving stdio. childProtocol=2025-11-25\r\ninfo: ModelContextProtocol.Server.McpServer[570385771]\r\n      Server (BrowserAI 1.0.1-alpha.0.25) method 'initialize' request handler called.\r\ninfo: ModelContextProtocol.Server.McpServer[1867955179]\r\n      Server (BrowserAI 1.0.1-alpha.0.25), Client (reverify-probe 2026-09-16) method 'initialize' request handler completed in 0.1258ms.\r\ninfo: BrowserAI.Sessions.SessionManager[1]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      Session lock acquired for C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session under Global\\BrowserAI-2245D5CF24AB4A96D2CE46CEF6E3BDAD.\r\ninfo: BrowserAI.Protocol.DirectStdioClientTransport[7]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      playwright-mcp[2245D5CF]: started 'C:\\Source\\SixFive7\\BrowserAI\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe' as pid 98212 in 'C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\\output'.\r\ninfo: ModelContextProtocol.Client.McpClient[1434756563]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      Client (BrowserAI 1.0.1-alpha.0.25) client received server '{\"name\":\"Playwright\",\"version\":\"1.64.0-alpha-2026-09-14\"}' capabilities: '{\"tools\":{}}'.\r\ninfo: ModelContextProtocol.Client.McpClient[1017245113]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      Client (BrowserAI 1.0.1-alpha.0.25) client created and connected.\r\ninfo: BrowserAI.Proxy.ChildConnection[1]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25\r\ninfo: BrowserAI.Sessions.SessionManager[40]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      Session open at C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session, headed: False; created by this connection: True.\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_navigate: Open a real origin so the session has a live page before its child is killed.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[4]\r\n      playwright-mcp[surface]: the peer closed its end of the connection.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[4]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session\r\n      playwright-mcp[2245D5CF]: the peer closed its end of the connection.\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browserai_resume: Reproducing the no-op resume the 2026-09-16 run recorded at 7.8 ms.\r\ninfo: BrowserAI.Sessions.LiveSession[47]\r\n      browser_navigate: Measuring whether a call against a session whose child is gone ever returns.\r\nwarn: BrowserAI.Protocol.ChildProcessSession[1]\r\n      playwright-mcp[2245D5CF]: a JSON-RPC message was dropped because the transport is no longer connected.\r\ninfo: BrowserAI.Protocol.DirectStdioServerTransport[4]\r\n      BrowserAI (stdio): the peer closed its end of the connection.\r\n",
+  "stderrTailB": "AI\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe' as pid 56204 in 'C:\\Users\\jori\\AppData\\Local\\BrowserAI\\instances\\43804-0ac7f9c42d06478caeb23eae22c49160'.\r\ninfo: BrowserAI.Sweep[1]\r\n      Stray sweep: outcome=Ran elapsed=17.4ms processes=500/340 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=40 titled=8 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=0 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=2 undetermined=0 abandonedGate=False why=-] abandonedGate=False\r\ninfo: ModelContextProtocol.Client.McpClient[1434756563]\r\n      Client (BrowserAI 1.0.1-alpha.0.25) client received server '{\"name\":\"Playwright\",\"version\":\"1.64.0-alpha-2026-09-14\"}' capabilities: '{\"tools\":{}}'.\r\ninfo: ModelContextProtocol.Client.McpClient[1017245113]\r\n      Client (BrowserAI 1.0.1-alpha.0.25) client created and connected.\r\ninfo: BrowserAI.Proxy.ChildConnection[1]\r\n      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25\r\ninfo: BrowserAI.Startup[2]\r\n      BrowserAI is serving stdio. childProtocol=2025-11-25\r\ninfo: ModelContextProtocol.Server.McpServer[570385771]\r\n      Server (BrowserAI 1.0.1-alpha.0.25) method 'initialize' request handler called.\r\ninfo: ModelContextProtocol.Server.McpServer[1867955179]\r\n      Server (BrowserAI 1.0.1-alpha.0.25), Client (reverify-probe 2026-09-16) method 'initialize' request handler completed in 0.0902ms.\r\ninfo: BrowserAI.Sessions.SessionManager[3]\r\n      Session lock for C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-follow\\wedge\\session is held by PID 61684; returning immediately.\r\ninfo: BrowserAI.Protocol.DirectStdioServerTransport[4]\r\n      BrowserAI (stdio): the peer closed its end of the connection.\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      playwright-mcp[surface] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[surface]: pid 56204 exited with code 0.\r\n"
+}
