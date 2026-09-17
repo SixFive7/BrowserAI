@@ -918,30 +918,88 @@ and Chrome are on this machine. The *behaviour* half is asserted on every build
 by `BrowserIdleTimerTests.AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks`;
 only the numbers need the manual run.
 
-> ⚠️ **`[STALE]` since 2026-09-17.** The `playwright-core` pull-forward to
-> 1.64.0-alpha-2026-09-17 is a Playwright bump **and** a chromium revision move,
-> 1244 → 1245, which is both halves of this measurement's trigger. Nothing below
-> is adjusted; the cost is what a revision most plausibly moves, and the
-> **durability** half is the one [reclaim is forever](../../ARCHITECTURE.md#sessions)
-> rests on and the one to re-take first, with
-> [`docs/probes/2026-09-16-resume`](../../docs/probes/2026-09-16-resume/README.md)
-> as the rig. [Re-verification row 38](../re-verification.md) carries the debt.
+✅ **RE-ESTABLISHED 2026-09-17 at chromium 1245 and firefox 1548**, clearing the
+`[STALE]` this section carried for six hours. *Previously, and kept because it is
+what the debt looked like:* "⚠️ **`[STALE]` since 2026-09-17.** The
+`playwright-core` pull-forward to 1.64.0-alpha-2026-09-17 is a Playwright bump
+**and** a chromium revision move, 1244 → 1245, which is both halves of this
+measurement's trigger. Nothing below is adjusted; the cost is what a revision
+most plausibly moves, and the **durability** half is the one
+[reclaim is forever](../../ARCHITECTURE.md#sessions) rests on and the one to
+re-take first, with
+[`docs/probes/2026-09-16-resume`](../../docs/probes/2026-09-16-resume/README.md)
+as the rig. [Re-verification row 38](../re-verification.md) carries the debt."
 
-**Resume costs 336 ms and 367 ms, and loses only `sessionStorage`.** Re-measured
-2026-09-16 at chromium **1244** / 154.0.8037.0 under `playwright-core`
-1.64.0-alpha-2026-09-14 and `@playwright/mcp` 0.0.81, twice, against a real
-published `BrowserAI.Server.exe`. This is the measurement the no-expiry-timer
-decision rests on — the durable thing is the profile, not the process — and
-**the load-bearing half held exactly**:
+⚠️ **"Resume" is TWO paths since 2026-09-17, and this entry now says which
+one each number is of.** Until `5d0d04f` the tool asked one question — *do I
+already own this directory* — so there was only ever one path worth timing.
+It asks a second now, and starts a replacement when the child behind the session
+has gone ([the architecture](../../ARCHITECTURE.md#sessions)), which is a resume
+that did not exist when the figure below was last taken.
 
-| Store | Written before | Read back after the resume |
-|---|---|---|
-| Cookie | `cookie-value` | **survived** |
-| `localStorage` | `local-value` | **survived** |
-| `sessionStorage` | `session-value` | **gone** — the only loss |
-| IndexedDB | `idb-value` | **survived** |
-| CacheStorage | `cache-value` | **survived** |
-| Service worker registrations | 1 | **1** |
+- **Path A, a different process meets the directory.** The case the feature
+  exists for, and the one the headline figure is of.
+- **Path B, the same process repairs a session whose child died.** New on
+  2026-09-17. Where this used to be a 7.68 ms no-op that left the session
+  unusable, it is now a relaunch — [see below](#the-resume-wedge-measured--2026-09-17).
+
+**Path A costs 375 ms and 379 ms on Chromium and 389 ms on Firefox, and loses
+only `sessionStorage`.** Re-measured 2026-09-17 at chromium **1245** /
+154.0.8037.0 and firefox **1548** / 155.0 under `playwright-core`
+1.64.0-alpha-2026-09-17 and `@playwright/mcp` 0.0.81, against a real published
+`BrowserAI.Server.exe` — twice on Chromium and, **for the first time, once on
+Firefox**. This is the measurement the no-expiry-timer decision rests on — the
+durable thing is the profile, not the process — and **the load-bearing half
+held exactly, on both families**:
+
+| Store | Written before | Read back after the resume — Chromium 1245 | … and Firefox 1548 |
+|---|---|---|---|
+| Cookie | `cookie-value` | **survived** | **survived** |
+| `localStorage` | `local-value` | **survived** | **survived** |
+| `sessionStorage` | `session-value` | **gone** — the only loss | **gone** — the only loss |
+| IndexedDB | `idb-value` | **survived** | **survived** |
+| CacheStorage | `cache-value` | **survived** | **survived** |
+| Service worker registrations | 1 | **1** | **1** |
+
+> ⚠️ `Corrected 2026-09-17 @ chromium 1245 · firefox 1548 · playwright-core
+> 1.64.0-alpha-2026-09-17 (previously "**Resume costs 336 ms and 367 ms, and
+> loses only `sessionStorage`.** Re-measured 2026-09-16 at chromium **1244** …
+> under `playwright-core` 1.64.0-alpha-2026-09-14")`. **The cost moved 336 and
+> 367 → 375 and 379 ms, about 9%, and the durability claim is unchanged to the
+> store.** ⭐ **Chromium cannot be the reason it moved**, and that is a control
+> rather than an inference: `chromium-1245` and `chromium-1244` are the same 308
+> files at the same sizes with `chrome.exe` identical to the byte
+> ([row 21](../re-verification.md)). What did change under the number is the
+> **server**: `5d0d04f` landed between the two readings, and a resume now asks
+> `ChildConnection.ChildHasGone` before it answers. 9% is also inside this
+> machine's own drift on the same day
+> ([the cost ratios moved 15–20% on an unchanged binary](#firefox-against-chromium-the-standing-cost-ratios)),
+> so the two cannot be told apart from two readings and no attempt is made to.
+>
+> ⭐ **Firefox is the addition, not a correction.** 389 ms, first reading,
+> against 375 and 379 on Chromium — so the resume cost is **not** a Firefox
+> cost ratio at all: the family that is 4.37× slower to first navigate resumes
+> within 4% of the other. That is what a resume being about the *directory*
+> rather than about the browser looks like, and it is the first evidence for it
+> that is not an argument.
+>
+> ⚠️ **The re-establishment procedure said "kill the node child, resume
+> against the directory", and on 2026-09-16 doing exactly that did not produce a
+> resume.** That measurement stands as a record of the product of that day and
+> **has since been overtaken by a fix, not by a re-measurement** — what it
+> recorded was: with the node child killed under a **live** BrowserAI, the same
+> server's `browserai_resume` answers *"This session is already open in this
+> BrowserAI; nothing was changed"* in **7.8 ms**, and the next browser call
+> **had not returned after 3 min 8 s**. So the number above is measured the way
+> it still should be: the session is created and filled by one server, that
+> server exits and its node child goes with it (verified gone by pid against a
+> path BrowserAI owns), and **a second BrowserAI process meets the directory**.
+> That is Path A, the case the feature exists for, and it is the shape
+> `SessionRun` already uses for the move-versus-copy case.
+>
+> **The wedge was recorded and NOT diagnosed on 2026-09-16, was diagnosed on
+> 2026-09-17, and was then fixed the same day.** The section below carries all
+> three states in order.
 
 > ⚠️ `Corrected 2026-09-16 @ chromium 1244 · playwright-core
 > 1.64.0-alpha-2026-09-14 · @playwright/mcp 0.0.81 (previously "**Resume costs
@@ -971,6 +1029,29 @@ decision rests on — the durable thing is the profile, not the process — and
 > two-server arm that measures.
 
 ### The resume wedge, measured — 2026-09-17
+
+> ✅ **THE PRODUCT MOVED AND THIS SECTION DID NOT UNTIL NOW. Added 2026-09-17,
+> by addition: everything below is true of the slice it was measured against and
+> is false of the current one.** The same three steps — kill both `node`
+> children by pid, `browserai_resume` in the same server, then one
+> `browser_navigate` — were re-run twice against a slice carrying `5d0d04f`,
+> and **there is no wedge left to measure**:
+>
+> | | 2026-09-17, before `5d0d04f` | 2026-09-17, after — two runs |
+> |---|---|---|
+> | `browserai_resume` after the kill | **7.68 ms**, *"already open in this BrowserAI; nothing was changed"* | **345.77 ms** and **330.92 ms**, carrying `SessionManager.ChildWasRelaunched` verbatim — *"the browser server for this session had died and was relaunched … no page is open, there are no tabs"* |
+> | the next `browser_navigate` | **never returned in 900,000 ms** | **444 ms** and **426 ms**, `isError` false, a real page and a snapshot |
+> | browsers under the browsers root | 8, then 0 after the kill, then 0 for fifteen minutes | 8, then **0** after the kill, then **8** again — a fresh tree under the replacement child |
+> | node children of the server | 2, then 0, then 0 | 2, then **0**, then **1** at the five-second poll |
+>
+> **What this does NOT re-measure, said where it is said rather than in a
+> footnote:** the probe resumes before it navigates, so a forward made
+> *without* a resume was not exercised, and neither was
+> `SessionErrors.BrowserServerHasGone`, the door-refusal that `5d0d04f` added
+> for exactly that case. **The paragraph below beginning "Which product timer
+> governs it" is therefore still unrefuted** — nothing acquired a clock; what
+> changed is that the call no longer reaches a dead child. Teardown was clean in
+> both runs: the session destroyed, 0 browsers left.
 
 **Nothing bounds it.** Kill a session's `node` child under a **live** BrowserAI,
 resume in the same process, then make one browser call: the call **had not

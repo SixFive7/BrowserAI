@@ -40,6 +40,33 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **What a resume costs and preserves is re-taken at chromium 1245 and firefox
+  1548, and "resume" is two paths now rather than one.**
+  Re-verification row 38. The load-bearing half held exactly and now on two families:
+  cookie, localStorage, IndexedDB, CacheStorage and one service-worker registration all
+  survived, sessionStorage alone did not, identically on Chromium and on Firefox, which is
+  this row's first Firefox reading. That is the measurement the no-expiry-timer decision
+  rests on, so it holding on a second family is worth more than the cost figure moving.
+
+  The cross-process cost moved 336 and 367 ms to 375 and 379, about 9 per cent, and
+  Chromium cannot be the reason: 1245 and 1244 are the same 308 files at the same sizes
+  with chrome.exe identical to the byte. What changed under the number is the server, or
+  the machine, which drifted 15 to 20 per cent the same day on an unchanged binary, and
+  two readings cannot tell those apart, so no attempt is made to. Firefox resumes within 4
+  per cent of Chromium at 389 ms although it is 4.37 times slower to first navigate, which
+  is the first evidence rather than argument that a resume is about the directory and not
+  about the browser.
+
+  The second path is new since this morning: browserai_resume relaunches a child that has
+  died, so the one-server shape that used to be a 7.68 ms no-op leaving a wedged session is
+  now a resume in its own right. Timed for the first time here at 345.77 and 330.92 ms,
+  with the next browser_navigate returning a real page in 444 and 426 ms where it had never
+  returned in 900,000 ms. That confirms the prediction the wedge row wrote down and nobody
+  had yet run, and the wedge section -- which still read as current -- now says by addition
+  that everything in it is true of the slice it was measured against and false of this one.
+  Not re-measured, and the entry says so where it says it: a forward made WITHOUT a resume,
+  and therefore the door-refusal added for that case.
+
 - 📝 **The Firefox-against-Chromium cost ratios are re-taken at chromium 1245 and
   firefox 1548, and the idle-CPU axis is withdrawn rather than re-stated.**
   Re-verification row 34, at six rounds per family rather than the stated three, because
